@@ -46,7 +46,7 @@ class StreamlitMainAppRunner:
 
         # Configure Streamlit
         st.set_page_config(
-            page_title="Dashboard",
+            page_title="App",
             layout="wide",
             menu_items={},  # hide the menu
             initial_sidebar_state=st.session_state.get('__gws_sidebar_state__', 'expanded'),

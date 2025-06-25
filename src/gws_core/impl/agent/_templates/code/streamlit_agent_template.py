@@ -6,7 +6,7 @@ import streamlit as st
 from pandas import DataFrame
 
 # Your Streamlit app code here
-st.title("Dashboard example")
+st.title("App example")
 
 # show a table from file_path which is a csv file full width
 if sources:

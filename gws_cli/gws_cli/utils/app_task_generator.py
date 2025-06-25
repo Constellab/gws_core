@@ -40,7 +40,7 @@ def generate_app_task(snake_case_name: str, app_folder_path: str,
     # Replace the variables in the generate task
     replace_variables = {
         NAME_VAR: app_pascal_name,
-        DASHBOARD_CLASS_VAR: f"{app_pascal_name}Dashboard",
+        DASHBOARD_CLASS_VAR: f"{app_pascal_name}AppConfig",
         GENERATE_CLASS_VAR: f"Generate{app_pascal_name}",
         FOLDER_APP_NAME_VAR: '_' + snake_case_name,
         APP_TYPE_RESOURCE: app_type.capitalize() + 'Resource',

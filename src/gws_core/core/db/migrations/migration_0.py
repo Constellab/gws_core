@@ -1361,6 +1361,14 @@ class Migration0130(BrickMigration):
 
     @brick_migration('0.15.0-beta.1', short_description='Migrate tag to add Community tag')
     class Migration0141(BrickMigration):
+        """
+        This migration also include renaming
+          - Dashboard to AppConfig
+          - @dashboard_decorator to @app_decorator
+          - DashboardType to AppType
+          - StreamlitResource.set_dashboard to StreamlitResource.set_app_config
+        Convert the output of JsonCodeParam from string to dictionary.
+        """
 
         @classmethod
         def migrate(cls, from_version: Version, to_version: Version) -> None:
