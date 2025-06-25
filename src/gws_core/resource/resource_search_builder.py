@@ -4,12 +4,12 @@ from typing import List, Type
 
 from peewee import Expression
 
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.task_model import TaskModel
 
 from ..core.classes.search_builder import SearchFilterCriteria
@@ -24,7 +24,7 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
     """
 
     def __init__(self) -> None:
-        super().__init__(ResourceModel, EntityType.RESOURCE,
+        super().__init__(ResourceModel, TagEntityType.RESOURCE,
                          default_orders=[ResourceModel.created_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:

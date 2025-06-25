@@ -9,7 +9,6 @@ from gws_core import (BaseTestCase, ConfigParams, File, OutputSpec,
                       OutputSpecs, ResourceModel, ResourceSet, ScenarioProxy,
                       Settings, Table, Task, TaskInputs, TaskOutputs,
                       task_decorator)
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
@@ -28,6 +27,7 @@ from gws_core.share.shared_dto import (GenerateShareLinkDTO,
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.test.gtest import GTest, TestStartUvicornApp
 
 
@@ -130,7 +130,7 @@ class TestShareResource(BaseTestCase):
         new_table: Table = new_resource_model.get_resource()
 
         # Check the tags
-        tags = EntityTagList.find_by_entity(EntityType.RESOURCE, new_resource_model.id)
+        tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, new_resource_model.id)
         self.assertEqual(len(tags.get_tags()), 1)
         tag = tags.get_tags()[0]
 

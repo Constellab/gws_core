@@ -5,7 +5,6 @@ from typing import Callable, List
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.block.rich_text_block_header import \
     RichTextBlockHeaderLevel
@@ -30,6 +29,7 @@ from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_dto import SaveNoteToSpaceDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
@@ -255,8 +255,7 @@ class NoteService():
     def _delete_note_db(cls, note_id: str) -> None:
         note: Note = cls._get_and_check_before_update(note_id)
 
-        Note.delete_by_id(note_id)
-        EntityTagList.delete_by_entity(EntityType.NOTE, note_id)
+        note.delete_instance()
 
         # if the note was sync with space, delete it in space too
         if note.last_sync_at is not None and note.folder is not None:
@@ -457,9 +456,9 @@ class NoteService():
         NoteScenario.create_obj(scenario, note).save()
 
         # add the scenario tags to the note
-        scenario_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, scenario.id)
+        scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario.id)
         propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario.id)
-        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
+        note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
         note_tags.add_tags(propagated_tags)
 
         return scenario
@@ -480,9 +479,9 @@ class NoteService():
         NoteScenario.delete_obj(scenario_id, note_id)
 
         # remove the scenario tags from the note
-        scenario_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, scenario_id)
+        scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario_id)
         propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario_id)
-        note_tags = EntityTagList.find_by_entity(EntityType.NOTE, note_id)
+        note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note_id)
         note_tags.delete_tags(propagated_tags)
 
     @classmethod
@@ -585,7 +584,7 @@ class NoteService():
         # extract the views id from the rich text
         rich_text_views: List[RichTextBlockResourceView] = note.get_content_as_rich_text().get_resource_views_data()
 
-        note_tags: EntityTagList = EntityTagList.find_by_entity(EntityType.NOTE, note.id)
+        note_tags: EntityTagList = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
 
         rich_text_view_ids = {
             rich_text_view.view_config_id for rich_text_view in rich_text_views
@@ -596,7 +595,7 @@ class NoteService():
             if note_view.view.id not in rich_text_view_ids:
                 note_view.delete_instance()
                 # remove the tags of the view from the note
-                view_tags = EntityTagList.find_by_entity(EntityType.VIEW, note_view.view.id)
+                view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, note_view.view.id)
                 propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, note_view.view.id)
                 note_tags.delete_tags(propagated_tags)
 
@@ -612,7 +611,7 @@ class NoteService():
                 if view_config:
                     NoteViewModel(note=note, view=view_config).save()
                     # add the tags of the view to the note
-                    view_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config.id)
+                    view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_config.id)
                     propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, view_config.id)
                     note_tags.add_tags(propagated_tags)
                     note_view_ids.add(view_config.id)

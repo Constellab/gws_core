@@ -6,7 +6,6 @@ from gws_core import (ConfigParams, InputSpec, InputSpecs, OutputSpec,
                       OutputSpecs, Task, TaskInputs, TaskOutputs,
                       task_decorator)
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -29,6 +28,7 @@ from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
@@ -120,7 +120,7 @@ class TestShareScenario(BaseTestCase):
         self.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
 
         # Check the tags
-        tags = EntityTagList.find_by_entity(EntityType.SCENARIO, new_scenario.id)
+        tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, new_scenario.id)
         self.assertEqual(len(tags.get_tags()), 1)
         tag = tags.get_tags()[0]
         self.assertEqual(tag.tag_key, 'scenario_tag')

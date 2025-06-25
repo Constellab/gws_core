@@ -3,10 +3,10 @@ from typing import List, Optional
 
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag, TagOrigin
 from gws_core.tag.tag_dto import EntityTagDTO, TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 
@@ -16,13 +16,13 @@ class EntityTagList():
     """
 
     _entity_id: str
-    _entity_type: EntityType
+    _entity_type: TagEntityType
 
     _tags: List[EntityTag]
 
     _default_origin: TagOrigin = None
 
-    def __init__(self, entity_type: EntityType, entity_id: str,
+    def __init__(self, entity_type: TagEntityType, entity_id: str,
                  tags: List[EntityTag] = None,
                  default_origin: TagOrigin = None) -> None:
         self._entity_type = entity_type
@@ -224,14 +224,14 @@ class EntityTagList():
     def support_multiple_origins(self) -> bool:
         """Return true if the entity support multiple origins for a tag
         """
-        return self._entity_type in [EntityType.NOTE]
+        return self._entity_type in [TagEntityType.NOTE]
 
     #################################### CLASS METHODS ####################################
 
     @classmethod
-    def find_by_entity(cls, entity_type: EntityType, entity_id: str) -> 'EntityTagList':
+    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> 'EntityTagList':
         return EntityTagList(entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id))
 
     @classmethod
-    def delete_by_entity(cls, entity_type: EntityType, entity_id: str) -> None:
+    def delete_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> None:
         EntityTag.delete_by_entity(entity_id, entity_type)

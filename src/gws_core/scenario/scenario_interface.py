@@ -5,8 +5,8 @@ from multiprocessing import Process
 from time import sleep
 from typing import List, Type
 
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import Tag
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_service import TagService
 
 from ..folder.space_folder import SpaceFolder
@@ -116,11 +116,11 @@ class ScenarioProxy:
         return self._scenario.is_success
 
     def add_tag(self, tag: Tag) -> None:
-        TagService.add_tag_to_entity(EntityType.SCENARIO, self._scenario.id,
+        TagService.add_tag_to_entity(TagEntityType.SCENARIO, self._scenario.id,
                                      tag)
 
     def add_tags(self, tags: List[Tag]) -> None:
-        TagService.add_tags_to_entity(EntityType.SCENARIO, self._scenario.id,
+        TagService.add_tags_to_entity(TagEntityType.SCENARIO, self._scenario.id,
                                       tags)
 
     def refresh(self) -> 'ScenarioProxy':

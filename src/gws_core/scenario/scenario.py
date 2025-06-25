@@ -9,8 +9,8 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (EntityType,
-                                                             NavigableEntity)
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity, NavigableEntityType)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
@@ -20,6 +20,7 @@ from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import (ScenarioDTO, ScenarioProgressDTO,
                                             ScenarioSimpleDTO)
 from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..core.classes.enum_field import EnumField
@@ -139,13 +140,13 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def get_current_progress(self) -> ScenarioProgressDTO:
         return self.protocol_model.get_current_progress()
 
-    def get_entity_name(self) -> str:
+    def get_navigable_entity_name(self) -> str:
         return self.title
 
-    def get_entity_type(self) -> EntityType:
-        return EntityType.SCENARIO
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.SCENARIO
 
-    def entity_is_validated(self) -> bool:
+    def navigable_entity_is_validated(self) -> bool:
         return self.is_validated
 
     def is_manual(self) -> bool:
@@ -249,7 +250,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             self.protocol_model.delete_instance()
 
         super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityType.SCENARIO, self.id)
+        EntityTagList.delete_by_entity(TagEntityType.SCENARIO, self.id)
 
     @classmethod
     def get_synced_objects(cls) -> List['Scenario']:

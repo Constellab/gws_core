@@ -6,7 +6,6 @@ from typing import List, Optional, cast
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -20,6 +19,7 @@ from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -192,7 +192,7 @@ class DatahubDifyResource:
     def _get_tags(self) -> EntityTagList:
         """Get the tags of the resource."""
         if self._entity_tag_list is None:
-            self._entity_tag_list = EntityTagList.find_by_entity(EntityType.RESOURCE, self.resource_model.id)
+            self._entity_tag_list = EntityTagList.find_by_entity(TagEntityType.RESOURCE, self.resource_model.id)
         return self._entity_tag_list
 
     def _check_and_check_file(self) -> File:

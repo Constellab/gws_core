@@ -3,7 +3,6 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -73,7 +72,7 @@ class ResourceZipperTask(Task):
 
         file = File(file_path)
         # store information about the entity that generated the zip file
-        file.add_technical_info(TechnicalInfo("origin_entity_type", EntityType.RESOURCE.value))
+        file.add_technical_info(TechnicalInfo("origin_entity_type", 'RESOURCE'))
         file.add_technical_info(TechnicalInfo("origin_entity_id", origin_entity_id))
 
         return {"target": file}

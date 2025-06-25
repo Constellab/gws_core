@@ -5,11 +5,11 @@ from typing import Type
 from peewee import Expression
 
 from gws_core.core.classes.search_builder import SearchFilterCriteria
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.process.process_model import ProcessModel
 from gws_core.tag.entity_with_tag_search_builder import \
     EntityWithTagSearchBuilder
+from gws_core.tag.tag_entity_type import TagEntityType
 
 from .scenario import Scenario
 from .scenario_enums import ScenarioStatus
@@ -18,7 +18,7 @@ from .scenario_enums import ScenarioStatus
 class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
 
     def __init__(self) -> None:
-        super().__init__(Scenario, EntityType.SCENARIO,
+        super().__init__(Scenario, TagEntityType.SCENARIO,
                          default_orders=[Scenario.last_modified_at.desc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:

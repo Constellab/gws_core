@@ -3,10 +3,10 @@ from typing import Type
 from peewee import Expression, Field
 
 from gws_core.core.model.model import Model
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagValueFormat
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_key_model import TagKeyModel
 
 from ..core.classes.search_builder import (SearchBuilder, SearchBuilderType,
@@ -21,10 +21,10 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     :type SearchBuilder: _type_
     """
 
-    entity_type: EntityType = None
+    entity_type: TagEntityType = None
 
     def __init__(self, model_type: Type[Model],
-                 entity_type: EntityType,
+                 entity_type: TagEntityType,
                  default_orders=None) -> None:
         super().__init__(model_type, default_orders=default_orders)
         self.entity_type = entity_type

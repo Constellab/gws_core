@@ -1,16 +1,17 @@
 
 
-from typing import List, final
+from typing import Any, List, final
 
 from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
                     ModelSelect)
 
+from gws_core.core.decorator.transaction import transaction
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (EntityType,
-                                                             NavigableEntity)
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity, NavigableEntityType)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_field import RichTextField
@@ -18,6 +19,8 @@ from gws_core.impl.rich_text.rich_text_modification import \
     RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -118,14 +121,20 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.is_archived = archive
         return self.save()
 
-    def get_entity_name(self) -> str:
+    def get_navigable_entity_name(self) -> str:
         return self.title
 
-    def get_entity_type(self) -> EntityType:
-        return EntityType.NOTE
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.NOTE
 
-    def entity_is_validated(self) -> bool:
+    def navigable_entity_is_validated(self) -> bool:
         return self.is_validated
+
+    @transaction()
+    def delete_instance(self, *args, **kwargs) -> Any:
+        result = super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)
+        return result
 
     @classmethod
     def get_synced_objects(cls) -> List['Note']:

@@ -14,7 +14,6 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file import File
@@ -31,6 +30,7 @@ from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 
 
 class S3ServerService:
@@ -134,7 +134,7 @@ class S3ServerService:
 
             resource_model = resource_model.save_full()
 
-            resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
+            resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_model.id)
 
             # Add the tags, make sure they are not propagable
             origins = cls.get_tag_origin()
@@ -312,7 +312,7 @@ class S3ServerService:
 
     @classmethod
     def _resource_to_s3_object(cls, resource: ResourceModel) -> ObjectTypeDef:
-        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', EntityType.RESOURCE, resource.id).first()
+        entity_tag: EntityTag = EntityTag.find_by_tag_key_and_entity('key', TagEntityType.RESOURCE, resource.id).first()
         if not entity_tag:
             raise S3ServerException(status_code=500, code='invalid_resource',
                                     message='Resource has no key tag', bucket_name='')
@@ -363,7 +363,7 @@ class S3ServerService:
         """
         resource = cls._get_object_and_check(bucket_name, key)
 
-        tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource.id).get_tags()
+        tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource.id).get_tags()
 
         s3_tags: List[TagTypeDef] = []
         for tag in tags:
@@ -407,7 +407,7 @@ class S3ServerService:
         """Update the tags of an object
         """
         resource = cls._get_object_and_check(bucket_name, key)
-        entity_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource.id)
+        entity_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource.id)
 
         # delete all additional tags
         additional_current_tags = cls.get_additional_tags(entity_tags.get_tags_as_dict())

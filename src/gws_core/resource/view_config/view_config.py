@@ -12,14 +12,15 @@ from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
-from gws_core.entity_navigator.entity_navigator_type import (EntityType,
-                                                             NavigableEntity)
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity, NavigableEntityType)
 from gws_core.impl.rich_text.block.rich_text_block_view import \
     RichTextBlockResourceView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_entity_type import TagEntityType
 
 from ...scenario.scenario import Scenario
 from ..resource_model import ResourceModel
@@ -61,22 +62,23 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     def get_config_values(self) -> ConfigParamsDict:
         return self.config.get_values()
 
-    def get_entity_name(self) -> str:
+    def get_navigable_entity_name(self) -> str:
         return self.title
 
-    def get_entity_type(self) -> EntityType:
-        return EntityType.VIEW
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.VIEW
 
     @transaction()
     def save(self, *args, **kwargs) -> Model:
         self.config.save()
         return super().save(*args, **kwargs)
 
+    @transaction()
     def delete_instance(self, *args, **kwargs) -> Any:
         if self.config is not None:
             self.config.delete_instance()
         result = super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityType.VIEW, self.id)
+        EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)
         return result
 
     def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextBlockResourceView:

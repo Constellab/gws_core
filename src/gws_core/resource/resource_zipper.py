@@ -7,7 +7,6 @@ from typing import List, Optional
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.settings import Settings
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.external_lab.external_lab_api_service import \
     ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
@@ -19,6 +18,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagDTO
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.user import User
 
 from .resource_model import ResourceModel
@@ -84,7 +84,7 @@ class ResourceZipper():
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
-        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_id)
+        resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_id)
         tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
 
         resource_zip = ZipResource(

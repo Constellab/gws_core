@@ -2,35 +2,29 @@
 
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, List, Type, TypeVar
+from typing import Any, List
 
-from gws_core.core.model.model import Model
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
-class EntityType(Enum):
+class NavigableEntityType(Enum):
+    """Enum that represent entity that can be navigated in the system.
+    """
     SCENARIO = "SCENARIO"
     RESOURCE = "RESOURCE"
     VIEW = "VIEW"
     NOTE = "NOTE"
-    SCENARIO_TEMPLATE = 'SCENARIO_TEMPLATE'
-    FOLDER = 'FOLDER'
 
-    @staticmethod
-    def get_human_name(entity_type: 'EntityType', capitalize: bool = False, plurial: bool = False) -> str:
+    def get_human_name(self, capitalize: bool = False, plurial: bool = False) -> str:
         human_name: str = None
-        if entity_type == EntityType.SCENARIO:
+        if self == NavigableEntityType.SCENARIO:
             human_name = 'Scenario'
-        elif entity_type == EntityType.RESOURCE:
+        elif self == NavigableEntityType.RESOURCE:
             human_name = 'Resource'
-        elif entity_type == EntityType.VIEW:
+        elif self == NavigableEntityType.VIEW:
             human_name = 'View'
-        elif entity_type == EntityType.NOTE:
+        elif self == NavigableEntityType.NOTE:
             human_name = 'Note'
-        elif entity_type == EntityType.SCENARIO_TEMPLATE:
-            human_name = 'Scenario template'
-        elif entity_type == EntityType.FOLDER:
-            human_name = 'Folder'
         else:
             human_name = 'Unknown'
 
@@ -38,37 +32,7 @@ class EntityType(Enum):
             human_name = human_name.capitalize()
         if plurial:
             human_name += 's'
-
         return human_name
-
-    @staticmethod
-    def get_entity_model_type(entity_type: 'EntityType') -> Type[Model]:
-        from gws_core.folder.space_folder import SpaceFolder
-        from gws_core.note.note import Note
-        from gws_core.resource.resource_model import ResourceModel
-        from gws_core.resource.view_config.view_config import ViewConfig
-        from gws_core.scenario.scenario import Scenario
-        from gws_core.scenario_template.scenario_template import \
-            ScenarioTemplate
-        from gws_core.tag.tag_key_model import TagKeyModel
-        if entity_type == EntityType.SCENARIO:
-            return Scenario
-        elif entity_type == EntityType.RESOURCE:
-            return ResourceModel
-        elif entity_type == EntityType.VIEW:
-            return ViewConfig
-        elif entity_type == EntityType.NOTE:
-            return Note
-        elif entity_type == EntityType.SCENARIO_TEMPLATE:
-            return ScenarioTemplate
-        elif entity_type == EntityType.FOLDER:
-            return SpaceFolder
-
-        raise Exception(f"Unknown entity type {entity_type}")
-
-
-all_entity_types = [EntityType.SCENARIO, EntityType.RESOURCE,
-                    EntityType.VIEW, EntityType.NOTE]
 
 
 class NavigableEntity():
@@ -76,14 +40,14 @@ class NavigableEntity():
     id: str
 
     @abstractmethod
-    def get_entity_type(self) -> EntityType:
+    def get_navigable_entity_type(self) -> NavigableEntityType:
         pass
 
     @abstractmethod
-    def get_entity_name(self) -> str:
+    def get_navigable_entity_name(self) -> str:
         pass
 
-    def entity_is_validated(self) -> bool:
+    def navigable_entity_is_validated(self) -> bool:
         return False
 
     def to_dto(self) -> BaseModelDTO:
@@ -93,8 +57,5 @@ class NavigableEntity():
 class EntityNavGroupDTO(BaseModelDTO):
     """Store the entities nav grouped by type
     """
-    type: EntityType
+    type: NavigableEntityType
     entities: List[Any]
-
-
-GenericNavigableEntity = TypeVar('GenericNavigableEntity', bound=NavigableEntity)

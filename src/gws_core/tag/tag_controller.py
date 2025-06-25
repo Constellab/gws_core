@@ -3,17 +3,18 @@
 from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
+
 from gws_core.community.community_dto import CommunityGetTagKeysBody
 from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, NewTagDTO,
                                   SaveTagModelResonseDTO, ShareTagDTO,
                                   TagKeyModelCreateDTO, TagKeyModelDTO,
                                   TagOriginDetailDTO, TagPropagationImpactDTO,
                                   TagsNotSynchronizedDTO, TagValueEditDTO,
                                   TagValueModelDTO)
+from gws_core.tag.tag_entity_type import TagEntityType
 
 from ..core_controller import core_app
 from ..user.auth_service import AuthService
@@ -340,7 +341,7 @@ def get_tag_origins(entity_tag_id: str,
 
 
 @core_app.get("/tag/entity/{entity_type}/{entity_id}", tags=["Tag"], summary='Get tags of an entity')
-def get_tags_of_entity(entity_type: EntityType,
+def get_tags_of_entity(entity_type: TagEntityType,
                        entity_id: str,
                        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[EntityTagDTO]:
     return TagService.find_by_entity_id(entity_type, entity_id).to_dto()
@@ -349,7 +350,7 @@ def get_tags_of_entity(entity_type: EntityType,
 @core_app.post(
     "/tag/entity/{entity_type}/{entity_id}/{propagate}", tags=["Tag"],
     summary="Save entity tags")
-def add_tag(entity_type: EntityType,
+def add_tag(entity_type: TagEntityType,
             entity_id: str,
             propagate: bool,
             tags: List[NewTagDTO],
@@ -361,7 +362,7 @@ def add_tag(entity_type: EntityType,
 @core_app.delete(
     "/tag/entity/{entity_type}/{entity_id}/{tag_key}/{tag_value}", tags=["Tag"],
     summary="Delete entity tag")
-def delete_tag(entity_type: EntityType,
+def delete_tag(entity_type: TagEntityType,
                entity_id: str,
                tag_key: str,
                tag_value: str,
@@ -373,7 +374,7 @@ def delete_tag(entity_type: EntityType,
 @core_app.post(
     "/tag/check-propagation-add/{entity_type}/{entity_id}", tags=["Tag"],
     summary="Check tag propagation impact for tags addition")
-def check_propagation_add_tags(entity_type: EntityType,
+def check_propagation_add_tags(entity_type: TagEntityType,
                                entity_id: str,
                                tags: List[NewTagDTO],
                                _=Depends(AuthService.check_user_access_token)) -> TagPropagationImpactDTO:
@@ -383,7 +384,7 @@ def check_propagation_add_tags(entity_type: EntityType,
 @core_app.post(
     "/tag/check-propagation-delete/{entity_type}/{entity_id}", tags=["Tag"],
     summary="Check tag propagation impact for tag deletion")
-def check_propagation_delete_tag(entity_type: EntityType,
+def check_propagation_delete_tag(entity_type: TagEntityType,
                                  entity_id: str,
                                  tag: NewTagDTO,
                                  _=Depends(AuthService.check_user_access_token)) -> TagPropagationImpactDTO:

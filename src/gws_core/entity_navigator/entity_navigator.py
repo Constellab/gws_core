@@ -1,12 +1,13 @@
 
 
-from typing import Dict, Generic, Iterable, List, Optional, Set, Type, Union
+from typing import (Dict, Generic, Iterable, List, Optional, Set, Type,
+                    TypeVar, Union)
 
 from peewee import JOIN, ModelSelect
 
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import (
-    EntityType, GenericNavigableEntity, NavigableEntity, all_entity_types)
+    NavigableEntity, NavigableEntityType)
 from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.resource_model import ResourceModel
@@ -18,12 +19,15 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 
+GenericNavigableEntity = TypeVar('GenericNavigableEntity', bound=NavigableEntity)
+
 
 class EntityNavigator(Generic[GenericNavigableEntity]):
 
     _entities: Set[GenericNavigableEntity]
 
-    _all_entity_types = all_entity_types
+    _all_entity_types = [NavigableEntityType.SCENARIO, NavigableEntityType.RESOURCE,
+                         NavigableEntityType.VIEW, NavigableEntityType.NOTE]
 
     def __init__(self, entities: Union[GenericNavigableEntity, Iterable[GenericNavigableEntity]]):
         if entities is None:
@@ -33,12 +37,12 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         else:
             self._entities = set([entities])
 
-    def has_next_entities(self, requested_entities: List[EntityType] = None) -> bool:
+    def has_next_entities(self, requested_entities: List[NavigableEntityType] = None) -> bool:
         if requested_entities is None:
             requested_entities = self._all_entity_types
         return len(self.get_next_entities(requested_entities)) > 0
 
-    def get_next_entities(self, requested_entities: List[EntityType]) -> NavigableEntitySet:
+    def get_next_entities(self, requested_entities: List[NavigableEntityType]) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
         :param requested_entities: [description]
@@ -51,21 +55,21 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         next_entities = set()
 
-        if EntityType.SCENARIO in requested_entities:
+        if NavigableEntityType.SCENARIO in requested_entities:
             next_entities.update(self.get_next_scenarios().get_entities_as_set())
 
-        if EntityType.RESOURCE in requested_entities:
+        if NavigableEntityType.RESOURCE in requested_entities:
             next_entities.update(self.get_next_resources().get_entities_as_set())
 
-        if EntityType.NOTE in requested_entities:
+        if NavigableEntityType.NOTE in requested_entities:
             next_entities.update(self.get_next_notes().get_entities_as_set())
 
-        if EntityType.VIEW in requested_entities:
+        if NavigableEntityType.VIEW in requested_entities:
             next_entities.update(self.get_next_views().get_entities_as_set())
 
         return NavigableEntitySet(next_entities)
 
-    def get_next_entities_recursive(self, requested_entities: List[EntityType] = None,
+    def get_next_entities_recursive(self, requested_entities: List[NavigableEntityType] = None,
                                     include_current_entities: bool = False) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
@@ -89,29 +93,29 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def _get_next_entities_recursive(
-            self, requested_entities: List[EntityType],
+            self, requested_entities: List[NavigableEntityType],
             loaded_entities: NavigableEntitySet,
             deep_level: int) -> NavigableEntitySet:
 
         if self.is_empty():
             return loaded_entities
 
-        if EntityType.SCENARIO in requested_entities:
+        if NavigableEntityType.SCENARIO in requested_entities:
             self._get_next_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_next_scenarios(),
                 EntityNavigatorScenario, deep_level)
 
-        if EntityType.RESOURCE in requested_entities:
+        if NavigableEntityType.RESOURCE in requested_entities:
             self._get_next_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_next_resources(),
                 EntityNavigatorResource, deep_level)
 
-        if EntityType.NOTE in requested_entities:
+        if NavigableEntityType.NOTE in requested_entities:
             self._get_next_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_next_notes(),
                 EntityNavigatorNote, deep_level)
 
-        if EntityType.VIEW in requested_entities:
+        if NavigableEntityType.VIEW in requested_entities:
             self._get_next_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_next_views(),
                 EntityNavigatorView, deep_level)
@@ -119,7 +123,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def _get_next_entities_type_recursive(
-            self, requested_entities: List[EntityType],
+            self, requested_entities: List[NavigableEntityType],
             loaded_entities: NavigableEntitySet,
             entity_nav: 'EntityNavigator',
             nav_class: Type['EntityNavigator'],
@@ -135,7 +139,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         return loaded_entities
 
-    def get_previous_entities_recursive(self, requested_entities: List[EntityType] = None,
+    def get_previous_entities_recursive(self, requested_entities: List[NavigableEntityType] = None,
                                         include_current_entities: bool = False) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
 
@@ -159,28 +163,28 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def _get_previous_entities_recursive(
-            self, requested_entities: List[EntityType],
+            self, requested_entities: List[NavigableEntityType],
             loaded_entities: NavigableEntitySet, deep_level: int) -> NavigableEntitySet:
 
         if self.is_empty():
             return loaded_entities
 
-        if EntityType.SCENARIO in requested_entities:
+        if NavigableEntityType.SCENARIO in requested_entities:
             self._get_previous_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_previous_scenarios(),
                 EntityNavigatorScenario, deep_level)
 
-        if EntityType.RESOURCE in requested_entities:
+        if NavigableEntityType.RESOURCE in requested_entities:
             self._get_previous_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_previous_resources(),
                 EntityNavigatorResource, deep_level)
 
-        if EntityType.NOTE in requested_entities:
+        if NavigableEntityType.NOTE in requested_entities:
             self._get_previous_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_previous_notes(),
                 EntityNavigatorNote, deep_level)
 
-        if EntityType.VIEW in requested_entities:
+        if NavigableEntityType.VIEW in requested_entities:
             self._get_previous_entities_type_recursive(
                 requested_entities, loaded_entities, self.get_previous_views(),
                 EntityNavigatorView, deep_level)
@@ -188,7 +192,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def _get_previous_entities_type_recursive(
-            self, requested_entities: List[EntityType],
+            self, requested_entities: List[NavigableEntityType],
             loaded_entities: NavigableEntitySet,
             entity_nav: 'EntityNavigator',
             nav_class: Type['EntityNavigator'],
@@ -255,7 +259,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             entity_tags_cache = {}
 
         if entity not in entity_tags_cache:
-            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_entity_type(), entity.id)
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_navigable_entity_type(), entity.id)
 
         entity_tags = entity_tags_cache[entity]
 
@@ -273,7 +277,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             entity_tags_cache = {}
 
         if entity not in entity_tags_cache:
-            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_entity_type(), entity.id)
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_navigable_entity_type(), entity.id)
 
         entity_tags = entity_tags_cache[entity]
 
@@ -286,15 +290,16 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def _get_entities_ids(self) -> List[str]:
         return [entity.id for entity in self._entities]
 
+    # TODO A VOIR
     @classmethod
-    def from_entity_id(cls, entity_type: EntityType, entity_id: str) -> 'EntityNavigator':
-        if entity_type == EntityType.SCENARIO:
+    def from_entity_id(cls, entity_type: NavigableEntityType, entity_id: str) -> 'EntityNavigator':
+        if entity_type == NavigableEntityType.SCENARIO:
             return EntityNavigatorScenario(Scenario.get_by_id_and_check(entity_id))
-        elif entity_type == EntityType.NOTE:
+        elif entity_type == NavigableEntityType.NOTE:
             return EntityNavigatorView(Note.get_by_id_and_check(entity_id))
-        elif entity_type == EntityType.VIEW:
+        elif entity_type == NavigableEntityType.VIEW:
             return EntityNavigatorNote(ViewConfig.get_by_id_and_check(entity_id))
-        elif entity_type == EntityType.RESOURCE:
+        elif entity_type == NavigableEntityType.RESOURCE:
             return EntityNavigatorResource(ResourceModel.get_by_id_and_check(entity_id))
 
         raise Exception(f"Entity type {entity_type} not supported")

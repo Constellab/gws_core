@@ -9,7 +9,7 @@ from gws_core.entity_navigator.entity_navigator import (
     EntityNavigator, EntityNavigatorResource, EntityNavigatorScenario)
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResult
-from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.note.note import Note
 from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -118,13 +118,13 @@ class EntityNavigatorService:
         # if yes, raise an error, no force reset for this mode
         if reset_result.has_entities():
             scenarios: List[Scenario] = reset_result.impacted_entities.get_entity_by_type(
-                EntityType.SCENARIO)
+                NavigableEntityType.SCENARIO)
 
             if len(scenarios) > 0:
                 raise ResourceUnknownUsedInAnotherScenarioException(
                     scenarios[0].get_short_name(), scenarios[0].id)
 
-            notes: List[Note] = reset_result.impacted_entities.get_entity_by_type(EntityType.NOTE)
+            notes: List[Note] = reset_result.impacted_entities.get_entity_by_type(NavigableEntityType.NOTE)
             if len(notes) > 0:
                 raise ResourceUnknownUsedInNoteException(notes[0].title, notes[0].id)
 
@@ -190,7 +190,7 @@ class EntityNavigatorService:
         :rtype: ImpactResult
         """
         next_entities = entity_navigator.get_next_entities_recursive(
-            [EntityType.SCENARIO, EntityType.NOTE], include_current_entities=include_current_entities)
+            [NavigableEntityType.SCENARIO, NavigableEntityType.NOTE], include_current_entities=include_current_entities)
 
         return ImpactResult(
             impacted_entities=next_entities
@@ -201,9 +201,9 @@ class EntityNavigatorService:
     def _delete_next_entities(cls, entities: NavigableEntitySet) -> None:
         """Delete the entities
         """
-        cls._check_validated_entities(entities, [EntityType.SCENARIO, EntityType.NOTE])
+        cls._check_validated_entities(entities, [NavigableEntityType.SCENARIO, NavigableEntityType.NOTE])
 
-        notes = entities.get_entities_from_deepest_level(EntityType.NOTE)
+        notes = entities.get_entities_from_deepest_level(NavigableEntityType.NOTE)
         for note in notes:
             NoteService.delete(note.id)
 
@@ -212,25 +212,25 @@ class EntityNavigatorService:
         # Exp 2: input --> A, output --> B
         # Exp 3: input --> A, B
         # In this case the Exp 3 will have the same deep level as the Exp 2
-        scenarios = entities.get_entities_from_deepest_level(EntityType.SCENARIO)
+        scenarios = entities.get_entities_from_deepest_level(NavigableEntityType.SCENARIO)
         for scenario in scenarios:
             ScenarioService.delete_scenario(scenario.id)
 
     @classmethod
     def _check_validated_entities(
             cls, entities: NavigableEntitySet,
-            entity_types: List[EntityType]) -> None:
+            entity_types: List[NavigableEntityType]) -> None:
         """Check if there are some validated entities in the set
         """
         for entity_type in entity_types:
             # check if any of the next scenario is validated
             validated_entities = [entity for entity in entities.get_entity_by_type(
-                entity_type) if entity.entity_is_validated()]
+                entity_type) if entity.navigable_entity_is_validated()]
 
             if len(validated_entities) > 0:
                 # get the title of max 3 validated scenarios
-                validated_entities_titles = [entity.get_entity_name() for entity in validated_entities[:3]]
+                validated_entities_titles = [entity.get_navigable_entity_name() for entity in validated_entities[:3]]
 
-                entity_type_human_name = EntityType.get_human_name(entity_type, plurial=True)
+                entity_type_human_name = entity_type.get_human_name(plurial=True)
                 raise BadRequestException(
                     f"Cannot reset the scenario because there is {len(validated_entities)} validated {entity_type_human_name} that are linked to this scenario. Here are some of the link {entity_type_human_name}: {validated_entities_titles}")

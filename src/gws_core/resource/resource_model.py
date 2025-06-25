@@ -9,8 +9,8 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
 
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
-from gws_core.entity_navigator.entity_navigator_type import (EntityType,
-                                                             NavigableEntity)
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity, NavigableEntityType)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
@@ -22,6 +22,7 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
 
 from ..core.classes.enum_field import EnumField
@@ -109,7 +110,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def delete_instance(self, *args, **kwargs):
         # fs_node_model: FSNodeModel = self.fs_node_model
         result = super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(EntityType.RESOURCE, self.id)
+        EntityTagList.delete_by_entity(TagEntityType.RESOURCE, self.id)
 
         if self.fs_node_model:
             self.fs_node_model.delete_instance()
@@ -441,7 +442,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if resource.tags and isinstance(resource.tags, TagList):
             # Add tags, use current user origin as default origin
             user_origin = TagOrigin.current_user_origin()
-            entity_tags: EntityTagList = EntityTagList(EntityType.RESOURCE, resource_model.id,
+            entity_tags: EntityTagList = EntityTagList(TagEntityType.RESOURCE, resource_model.id,
                                                        default_origin=user_origin)
 
             entity_tags.add_tags(resource.tags.get_tags())
@@ -611,11 +612,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def is_manually_generated(self) -> bool:
         return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
 
-    def get_entity_name(self) -> str:
+    def get_navigable_entity_name(self) -> str:
         return self.name
 
-    def get_entity_type(self) -> EntityType:
-        return EntityType.RESOURCE
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.RESOURCE
 
     def __str__(self):
         return self.name

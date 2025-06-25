@@ -153,7 +153,8 @@ from .entity_navigator.entity_navigator import \
     EntityNavigatorView as EntityNavigatorView
 from .entity_navigator.entity_navigator_service import \
     EntityNavigatorService as EntityNavigatorService
-from .entity_navigator.entity_navigator_type import EntityType as EntityType
+from .entity_navigator.entity_navigator_type import \
+    NavigableEntityType as NavigableEntityType
 # Space Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
 from .folder.space_folder_dto import \

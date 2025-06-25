@@ -7,13 +7,13 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.process.process import Process
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
 
@@ -382,7 +382,7 @@ class TaskModel(ProcessModel):
             tags: List[Tag] = []
 
             for input_resource in self.inputs.get_resource_models().values():
-                entity_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, input_resource.id)
+                entity_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, input_resource.id)
                 tags += entity_tags.build_tags_propagated(TagOriginType.TASK_PROPAGATED, self.id)
 
             self._input_resource_tags = tags
@@ -392,7 +392,7 @@ class TaskModel(ProcessModel):
     def _get_scenario_tags(self) -> List[Tag]:
         """Return all the tags of the scenario
         """
-        entity_tags = EntityTagList.find_by_entity(EntityType.SCENARIO, self.scenario.id)
+        entity_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.scenario.id)
         return entity_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, self.scenario.id)
 
     ################################# CONFIG #################################

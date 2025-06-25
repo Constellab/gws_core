@@ -2,6 +2,8 @@
 
 from typing import Dict, List, Optional
 
+from peewee import ModelSelect
+
 from gws_core.community.community_dto import (CommunityTagKeyDTO,
                                               CommunityTagValueDTO)
 from gws_core.community.community_service import CommunityService
@@ -14,7 +16,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigator
-from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.scenario.scenario import Scenario
@@ -30,12 +32,12 @@ from gws_core.tag.tag_dto import (NewTagDTO, ShareTagMode, TagKeyModelDTO,
                                   TagValueModelDTO,
                                   TagValueNotSynchronizedFields,
                                   TagValueNotSynchronizedFieldsDTO)
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_search_builder import TagSearchBuilder
 from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import ModelSelect
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
@@ -268,17 +270,17 @@ class TagService():
     ################################# TAGGABLE MODEL #################################
 
     @classmethod
-    def get_entities_by_tag(cls, entity_type: EntityType,
+    def get_entities_by_tag(cls, entity_type: TagEntityType,
                             tag: Tag) -> List[Model]:
         search_builder = EntityWithTagSearchBuilder(
-            EntityType.get_entity_model_type(entity_type),
+            entity_type.get_entity_model_type(),
             entity_type)
 
         return search_builder.add_tag_filter(tag).search_all()
 
     @classmethod
     @transaction()
-    def add_tag_to_entity(cls, entity_type: EntityType, entity_id: str,
+    def add_tag_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                           tag: Tag) -> EntityTag:
 
         # add tag to the list of tags
@@ -292,7 +294,7 @@ class TagService():
 
     @classmethod
     @transaction()
-    def add_tags_to_entity(cls, entity_type: EntityType, entity_id: str,
+    def add_tags_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                            tags: List[Tag]) -> List[EntityTag]:
 
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
@@ -306,7 +308,7 @@ class TagService():
 
     @classmethod
     @transaction()
-    def add_tag_dict_to_entity(cls, entity_type: EntityType, entity_id: str,
+    def add_tag_dict_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                                tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
         tags = [
@@ -341,22 +343,22 @@ class TagService():
 
     @classmethod
     @transaction()
-    def add_tags_to_entity_and_propagate(cls, entity_type: EntityType, entity_id: str,
+    def add_tags_to_entity_and_propagate(cls, entity_type: TagEntityType, entity_id: str,
                                          tags: List[Tag]) -> List[EntityTag]:
         entity_tags = cls.add_tags_to_entity(entity_type, entity_id, tags)
 
         # propagate the tag to the next entities
-        entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
+        entity_nav = EntityNavigator.from_entity_id(entity_type.convert_to_navigable_entity_type(), entity_id)
         entity_nav.propagate_tags(tags)
 
         return entity_tags
 
     @classmethod
-    def find_by_entity_id(cls, entity_type: EntityType, entity_id: str) -> EntityTagList:
+    def find_by_entity_id(cls, entity_type: TagEntityType, entity_id: str) -> EntityTagList:
         return EntityTagList.find_by_entity(entity_type, entity_id)
 
     @classmethod
-    def delete_tag_from_entity(cls, entity_type: EntityType, entity_id: str,
+    def delete_tag_from_entity(cls, entity_type: TagEntityType, entity_id: str,
                                tag_key: str, tag_value: TagValueType) -> None:
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
@@ -378,11 +380,11 @@ class TagService():
 
             if current_tag.is_propagable:
                 entity_nav = EntityNavigator.from_entity_id(
-                    entity_type, entity_id)
+                    entity_type.convert_to_navigable_entity_type(), entity_id)
                 entity_nav.delete_propagated_tags([tag_to_delete])
 
     @classmethod
-    def check_propagation_add_tags(cls, entity_type: EntityType, entity_id: str,
+    def check_propagation_add_tags(cls, entity_type: TagEntityType, entity_id: str,
                                    tags: List[NewTagDTO]) -> TagPropagationImpactDTO:
         """Check the impact of the propagation of the given tags
         """
@@ -404,7 +406,7 @@ class TagService():
         return cls._check_tag_propagation_impact(entity_type, entity_id, new_tags)
 
     @classmethod
-    def check_propagation_delete_tag(cls, entity_type: EntityType, entity_id: str,
+    def check_propagation_delete_tag(cls, entity_type: TagEntityType, entity_id: str,
                                      tag: NewTagDTO) -> TagPropagationImpactDTO:
         """Check the impact of deletion of a the propagation of the given tags
         """
@@ -420,7 +422,7 @@ class TagService():
 
         # return only the current entity if the tag is not propagable
         if not existing_tag.is_propagable:
-            entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
+            entity_nav = EntityNavigator.from_entity_id(entity_type.convert_to_navigable_entity_type(), entity_id)
             return TagPropagationImpactDTO(
                 tags=[tag_to_delete.to_dto()],
                 impacted_entities=entity_nav.get_as_nav_set().get_entity_dict_nav_group()
@@ -429,14 +431,15 @@ class TagService():
         return cls._check_tag_propagation_impact(entity_type, entity_id, [tag_to_delete])
 
     @classmethod
-    def _check_tag_propagation_impact(cls, entity_type: EntityType, entity_id: str,
+    def _check_tag_propagation_impact(cls, entity_type: TagEntityType, entity_id: str,
                                       tags: List[Tag]) -> TagPropagationImpactDTO:
         """Check the impact of the propagation of the given tags
         """
-        entity_nav = EntityNavigator.from_entity_id(entity_type, entity_id)
+        entity_nav = EntityNavigator.from_entity_id(entity_type.convert_to_navigable_entity_type(), entity_id)
         # The tags can't be propagated to SCENARIO
         next_entities = entity_nav.get_next_entities_recursive(
-            [EntityType.RESOURCE, EntityType.VIEW, EntityType.NOTE], include_current_entities=True)
+            [NavigableEntityType.RESOURCE, NavigableEntityType.VIEW, NavigableEntityType.NOTE],
+            include_current_entities=True)
 
         return TagPropagationImpactDTO(
             tags=[tag.to_dto() for tag in tags],
@@ -493,7 +496,6 @@ class TagService():
 
 
 ################################### COMMUNITY TAG #################################
-
 
     @classmethod
     def get_community_tag_keys_imported(cls) -> List[TagKeyModel]:

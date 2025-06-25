@@ -8,10 +8,10 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
-from gws_core.entity_navigator.entity_navigator_type import EntityType
 from gws_core.tag.tag import Tag, TagOrigins, TagValueType
 from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
                                   TagOriginType, TagValueFormat)
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 
@@ -30,8 +30,8 @@ class EntityTag(Model):
     # to override in child classes
     entity_id: str = CharField(null=False, max_length=36)
 
-    entity_type: EntityType = EnumField(choices=EntityType,
-                                        null=False)
+    entity_type: TagEntityType = EnumField(choices=TagEntityType,
+                                           null=False)
 
     origins = JSONField(null=False)
 
@@ -121,7 +121,7 @@ class EntityTag(Model):
     def create_entity_tag(cls, key: str, value: TagValueType,
                           is_propagable: bool, origins: TagOrigins,
                           value_format: TagValueFormat, entity_id: str,
-                          entity_type: EntityType, label: str = None,
+                          entity_type: TagEntityType, label: str = None,
                           is_community_tag: bool = False) -> 'EntityTag':
         if not origins or origins.is_empty():
             raise ValueError('The tag origin must be defined to save it')
@@ -138,7 +138,7 @@ class EntityTag(Model):
         return entity_tag.save()
 
     @classmethod
-    def delete_by_entity(cls, entity_id: str, entity_type: EntityType) -> None:
+    def delete_by_entity(cls, entity_id: str, entity_type: TagEntityType) -> None:
         cls.delete().where((cls.entity_id == entity_id) & (
             cls.entity_type == entity_type.value)).execute()
 
@@ -158,7 +158,7 @@ class EntityTag(Model):
         return query_builder.build()
 
     @classmethod
-    def find_by_tag_and_entity(cls, tag: Tag, entity_type: EntityType, entity_id: str) -> 'EntityTag':
+    def find_by_tag_and_entity(cls, tag: Tag, entity_type: TagEntityType, entity_id: str) -> 'EntityTag':
         return cls.select().where(
             (cls.tag_key == tag.key) &
             (cls.tag_value == tag.value) &
@@ -167,7 +167,7 @@ class EntityTag(Model):
         ).first()
 
     @classmethod
-    def find_by_tag_key_and_entity(cls, tag_key: str, entity_type: EntityType, entity_id: str) -> ModelSelect:
+    def find_by_tag_key_and_entity(cls, tag_key: str, entity_type: TagEntityType, entity_id: str) -> ModelSelect:
         return cls.select().where(
             (cls.tag_key == tag_key) &
             (cls.entity_type == entity_type.value) &
@@ -175,7 +175,7 @@ class EntityTag(Model):
         )
 
     @classmethod
-    def find_by_entity(cls, entity_type: EntityType, entity_id: str) -> List['EntityTag']:
+    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> List['EntityTag']:
         return list(cls.select().where(
             (cls.entity_type == entity_type.value) &
             (cls.entity_id == entity_id)
@@ -189,14 +189,14 @@ class EntityTag(Model):
         ).count()
 
     @classmethod
-    def find_by_entities(cls, entity_type: EntityType, entity_ids: List[str]) -> List['EntityTag']:
+    def find_by_entities(cls, entity_type: TagEntityType, entity_ids: List[str]) -> List['EntityTag']:
         return list(cls.select().where(
             (cls.entity_type == entity_type.value) &
             (cls.entity_id.in_(entity_ids))
         ))
 
     @classmethod
-    def find_by_entity_type_and_tag(cls, entity_type: EntityType, tag: Tag) -> ModelSelect:
+    def find_by_entity_type_and_tag(cls, entity_type: TagEntityType, tag: Tag) -> ModelSelect:
         return cls.select().where(
             (cls.entity_type == entity_type.value) &
             (cls.tag_key == tag.key) &

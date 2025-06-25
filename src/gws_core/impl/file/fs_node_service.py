@@ -15,7 +15,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
-from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
@@ -196,7 +196,7 @@ class FsNodeService():
 
         resource_navigation = EntityNavigatorResource(resource_model)
 
-        if resource_navigation.has_next_entities([EntityType.SCENARIO]):
+        if resource_navigation.has_next_entities([NavigableEntityType.SCENARIO]):
             raise BadRequestException(
                 "The folder is used in a scenario, it can't be modified")
 

@@ -5,7 +5,7 @@ from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorView)
 from gws_core.entity_navigator.entity_navigator_service import \
     EntityNavigatorService
-from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.note.note import Note
 from gws_core.note.note_dto import NoteSaveDTO
@@ -285,7 +285,7 @@ class TestEntityNavigator(BaseTestCase):
         self.assertEqual(len(next_exps), 9)
 
         # test the get deepest level
-        scenarios = next_exps.get_entities_from_deepest_level(EntityType.SCENARIO)
+        scenarios = next_exps.get_entities_from_deepest_level(NavigableEntityType.SCENARIO)
         self.assertEqual(len(scenarios), 2)
         self.assertEqual(scenarios[0].id, self.exp_3.id)
         self.assertEqual(scenarios[1].id, self.exp_2.id)
@@ -308,13 +308,13 @@ class TestEntityNavigator(BaseTestCase):
     def _test_entity_nav_service(self):
         result = EntityNavigatorService.check_impact_for_scenario_reset(self.exp_1.id)
         self.assertTrue(result.has_entities())
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.SCENARIO)), 2)
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.NOTE)), 1)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(NavigableEntityType.SCENARIO)), 2)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(NavigableEntityType.NOTE)), 1)
 
         result = EntityNavigatorService.check_impact_for_scenario_reset(self.exp_2.id)
         self.assertTrue(result.has_entities())
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.SCENARIO)), 1)
-        self.assertEqual(len(result.impacted_entities.get_entity_by_type(EntityType.NOTE)), 0)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(NavigableEntityType.SCENARIO)), 1)
+        self.assertEqual(len(result.impacted_entities.get_entity_by_type(NavigableEntityType.NOTE)), 0)
 
         result = EntityNavigatorService.check_impact_for_scenario_reset(self.exp_3.id)
         self.assertFalse(result.has_entities())

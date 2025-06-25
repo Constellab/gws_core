@@ -8,7 +8,7 @@ from peewee import ModelSelect
 from gws_core.config.config import Config
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import EntityType
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.model.typing_style import TypingStyle
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.view.view_dto import ViewTypeDTO
@@ -67,9 +67,9 @@ class ViewConfigService():
             view_config_db = view_config_db.save()
 
         # Copy the resource tags to the view config
-        resource_tags = EntityTagList.find_by_entity(EntityType.RESOURCE, resource_model.id)
+        resource_tags = EntityTagList.find_by_entity(NavigableEntityType.RESOURCE, resource_model.id)
         tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
-        view_config_tags = EntityTagList.find_by_entity(EntityType.VIEW, view_config_db.id)
+        view_config_tags = EntityTagList.find_by_entity(NavigableEntityType.VIEW, view_config_db.id)
         view_config_tags.add_tags(tag_propagated)
 
         # limit the length without blocking the thread
