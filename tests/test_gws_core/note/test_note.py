@@ -148,8 +148,8 @@ class TestNote(BaseTestCase):
         # check that a view exist in the rich text
         resource_views = rich_text.get_resource_views_data()
         self.assertEqual(len(resource_views), 1)
-        self.assertEqual(resource_views[0]['view_method_name'], "view_as_string")
-        self.assertEqual(resource_views[0]['resource_id'], robot_model.id)
+        self.assertEqual(resource_views[0].view_method_name, "view_as_string")
+        self.assertEqual(resource_views[0].resource_id, robot_model.id)
 
         # verify that the note was automatically associated with the scenario
         self.assertEqual(NoteScenario.find_by_pk(scenario.get_model().id, note.id).count(), 1)

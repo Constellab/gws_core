@@ -34,6 +34,20 @@ class NavigableEntityType(Enum):
             human_name += 's'
         return human_name
 
+    def convert_to_tag_entity_type(self) -> 'TagEntityType':
+        from gws_core.tag.tag_entity_type import TagEntityType
+
+        if self == NavigableEntityType.SCENARIO:
+            return TagEntityType.SCENARIO
+        elif self == NavigableEntityType.RESOURCE:
+            return TagEntityType.RESOURCE
+        elif self == NavigableEntityType.VIEW:
+            return TagEntityType.VIEW
+        elif self == NavigableEntityType.NOTE:
+            return TagEntityType.NOTE
+        else:
+            raise Exception(f"The navigable entity type {self} does not have a tag entity type corresponding to it")
+
 
 class NavigableEntity():
 

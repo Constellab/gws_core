@@ -259,7 +259,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             entity_tags_cache = {}
 
         if entity not in entity_tags_cache:
-            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_navigable_entity_type(), entity.id)
+            tag_type = entity.get_navigable_entity_type().convert_to_tag_entity_type()
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(tag_type, entity.id)
 
         entity_tags = entity_tags_cache[entity]
 
@@ -277,7 +278,8 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             entity_tags_cache = {}
 
         if entity not in entity_tags_cache:
-            entity_tags_cache[entity] = EntityTagList.find_by_entity(entity.get_navigable_entity_type(), entity.id)
+            tag_type = entity.get_navigable_entity_type().convert_to_tag_entity_type()
+            entity_tags_cache[entity] = EntityTagList.find_by_entity(tag_type, entity.id)
 
         entity_tags = entity_tags_cache[entity]
 
@@ -290,7 +292,6 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def _get_entities_ids(self) -> List[str]:
         return [entity.id for entity in self._entities]
 
-    # TODO A VOIR
     @classmethod
     def from_entity_id(cls, entity_type: NavigableEntityType, entity_id: str) -> 'EntityNavigator':
         if entity_type == NavigableEntityType.SCENARIO:

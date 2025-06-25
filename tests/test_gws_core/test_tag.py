@@ -412,6 +412,7 @@ class TestTag(BaseTestCase):
         self.assertEqual(len(note_tags.get_tags()), 0)
 
     def test_tag_propagation_after(self):
+        # exp_1 > exp_2 > view > note
         i_scenario: ScenarioProxy = ScenarioProxy()
         i_protocol: ProtocolProxy = i_scenario.get_protocol()
 

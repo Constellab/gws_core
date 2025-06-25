@@ -85,7 +85,7 @@ class TestScenarioTemplate(BaseTestCase):
         self.assertIsNotNone(template_db.get_protocol_config_dto())
 
         # update the template
-        ScenarioTemplateService.update(id=template.id, name='new_name')
+        ScenarioTemplateService.update(id_=template.id, name='new_name')
 
         # get the template
         template_db = template_db.refresh()
