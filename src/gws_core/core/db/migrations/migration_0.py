@@ -1385,6 +1385,7 @@ class Migration0100(BrickMigration):
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.is_community_tag_value)
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.short_description)
             migrator.add_column_if_not_exists(TagValueModel, TagValueModel.additional_infos)
+            migrator.add_column_if_not_exists(TagValueModel, TagValueModel.deprecated)
             migrator.drop_column_if_exists(TagKeyModel, 'is_propagable')
             migrator.migrate()
 
