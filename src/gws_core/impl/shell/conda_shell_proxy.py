@@ -27,9 +27,11 @@ class CondaShellProxy(BaseEnvShell):
         Return true if the env was installed, False if it was already installed.
         """
 
+        # --prefix define the path where the env will be created relative to where the
+        # command is executed. Command is executed in the env dir, so the path is relative to that.
         cmd = [
             self._build_str_conda_command(self.conda_command,
-                                          f'env create -f {self.env_file_path} --yes --prefix {self.VENV_DIR_NAME}')
+                                          f'env create -f {self.env_file_path} --yes --prefix ./{self.VENV_DIR_NAME}')
         ]
 
         self._message_dispatcher.notify_info_message(
@@ -121,10 +123,10 @@ class CondaShellProxy(BaseEnvShell):
         try:
             env_creation_info: VEnvCreationInfo = cls.get_creation_info(folder_path)
 
-            if env_creation_info.env_type != cls.get_env_type():
+            if env_creation_info.env_type in ['conda', 'mamba']:
+                return True
+            else:
                 return False
-
-            return True
         except:
             return False
 

@@ -67,8 +67,6 @@ class VEnvService():
 
         if PipShellProxy.folder_is_env(venv_path):
             config_file_path = os.path.join(venv_path, PipShellProxy.CONFIG_FILE_NAME)
-        elif MambaShellProxy.folder_is_env(venv_path):
-            config_file_path = os.path.join(venv_path, CondaShellProxy.CONFIG_FILE_NAME)
         elif CondaShellProxy.folder_is_env(venv_path):
             config_file_path = os.path.join(venv_path, CondaShellProxy.CONFIG_FILE_NAME)
         else:
