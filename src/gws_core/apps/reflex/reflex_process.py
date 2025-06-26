@@ -6,11 +6,9 @@ import sys
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.reflex.reflex_app import ReflexApp
-from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
 
 
 class ReflexProcess(AppProcess):
@@ -49,13 +47,8 @@ class ReflexProcess(AppProcess):
                f'--backend-port={self.back_port}',
                ]
 
-        if Settings.is_cloud_env():
-            cmd.append(f'--backend-host={self.back_host_url}')
-
         shell_proxy = app.get_and_check_shell_proxy()
 
-        shell_proxy.run('echo "Starting Reflex app... WAOOOOOOOOOOOOOOOOOOOOOOOOOW"',
-                        shell_mode=True, dispatch_stdout=True)
         # force the shell proxy working directory to the app directory
         # because the reflex command must be run in the app directory
         shell_proxy.working_dir = app.get_app_folder()
@@ -68,14 +61,15 @@ class ReflexProcess(AppProcess):
         if not os.path.exists(reflex_modules_path):
             raise Exception(f"Reflex modules not found at {reflex_modules_path}")
 
-        gws_core = BrickHelper.get_brick_info(BrickHelper.GWS_CORE)
+        # retrieve the path of gws_core module from system path
+        gws_core_path = os.path.dirname(sys.modules['gws_core'].__path__[0])
 
         env = {
             'GWS_REFLEX_APP_ID': app.app_id,
             'GWS_REFLEX_MODULES_PATH': reflex_modules_path,
             'GWS_REFLEX_VIRTUAL_ENV': str(app.is_virtual_env_app()),
-            # retrieve the path of gws_core module from system path
-            'GWS_REFLEX_GWS_CORE_PATH': gws_core.get_python_module_path()
+            'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
+            'GWS_REFLEX_API_URL': self.back_host_url,
         }
 
         if app.is_dev_mode():

@@ -3,10 +3,11 @@ import sys
 
 import reflex as rx
 
-
 # [START_AUTO_CODE]
 # Code to load gws_core environment and initialize the main state.
 # DO NOT MODIFY THIS CODE UNLESS YOU KNOW WHAT YOU ARE DOING.
+
+
 def _load_module(module_path: str) -> None:
     if not os.path.exists(module_path):
         raise FileNotFoundError(f"Modules not found at {module_path}")
@@ -62,10 +63,16 @@ is_virtual_env = os.environ.get('GWS_REFLEX_VIRTUAL_ENV', 'false').lower() == 't
 if not is_virtual_env:
     _load_gws_core()
     _load_reflex_main()
-# [END_AUTO_CODE]
 
+api_url = os.environ.get('GWS_REFLEX_API_URL')
+if api_url is None:
+    raise ValueError("GWS_REFLEX_API_URL environment variable is not set")
+# [END_AUTO_CODE]
 
 config = rx.Config(
     app_name="{{APP_NAME}}",
     plugins=[],
+    # [START_AUTO_CODE]
+    api_url=api_url
+    # [END_AUTO_CODE]
 )

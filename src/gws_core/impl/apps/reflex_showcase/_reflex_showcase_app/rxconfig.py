@@ -63,10 +63,15 @@ is_virtual_env = os.environ.get('GWS_REFLEX_VIRTUAL_ENV', 'false').lower() == 't
 if not is_virtual_env:
     _load_gws_core()
     _load_reflex_main()
+api_url = os.environ.get('GWS_REFLEX_API_URL')
+if api_url is None:
+    raise ValueError("GWS_REFLEX_API_URL environment variable is not set")
 # [END_AUTO_CODE]
-
 
 config = rx.Config(
     app_name="reflex_showcase",
     plugins=[],
+    # [START_AUTO_CODE]
+    api_url=api_url
+    # [END_AUTO_CODE]
 )
