@@ -1,5 +1,7 @@
 
 
+import os
+import sys
 from typing import List, Literal, Optional
 
 from typing_extensions import TypedDict
@@ -33,6 +35,12 @@ class BrickInfo(BaseModelDTO):
     # name of the package that depend on this module
     parent_name: Optional[str]
     error: Optional[str]  # provided if the module could not be loaded
+
+    def get_python_module_path(self) -> str:
+        """Returns the python module path of the brick"""
+        if not self.name in sys.modules:
+            raise ValueError(f"Brick {self.name} is not loaded in the system modules")
+        return os.path.dirname(sys.modules[self.name].__path__[0])
 
 
 BrickStatus = Literal['SUCCESS', 'ERROR', 'CRITICAL', 'WARNING']

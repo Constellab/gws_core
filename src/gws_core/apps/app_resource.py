@@ -61,8 +61,6 @@ class AppResource(ResourceList):
     def __init__(self):
         super().__init__()
 
-        self._shell_proxy = ShellProxy().to_dto()
-
     @abstractmethod
     def get_main_app_file_name(self) -> str:
         """
