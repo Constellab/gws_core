@@ -1,5 +1,7 @@
 
 
+from typing import Literal
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 
@@ -10,6 +12,8 @@ class FrontTheme(BaseModelDTO):
     :param BaseModelDTO: _description_
     :type BaseModelDTO: _type_
     """
+
+    theme: Literal['light', 'dark']
 
     # background color of the application
     background_color: str
@@ -159,6 +163,7 @@ class FrontService():
     @staticmethod
     def get_light_theme() -> FrontTheme:
         return FrontTheme(
+            theme='light',
             background_color='#FFFFFF',
             secondary_background_color='#EAEAEA',
             outline_color='#d2d2d2',
@@ -174,6 +179,7 @@ class FrontService():
     @staticmethod
     def get_dark_theme() -> FrontTheme:
         return FrontTheme(
+            theme='dark',
             background_color='#222222',
             secondary_background_color='#2B2D2E',
             outline_color='#494949',

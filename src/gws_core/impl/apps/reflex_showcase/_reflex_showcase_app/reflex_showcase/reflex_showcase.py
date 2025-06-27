@@ -1,7 +1,8 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_base import add_unauthorized_page, render_main_container
+from gws_reflex_base import (add_unauthorized_page, get_theme,
+                             render_main_container)
 from gws_reflex_main import ReflexMainState
 
 
@@ -33,7 +34,9 @@ class State(ReflexMainState):
         self.value += 1
 
 
-app = rx.App()
+app = rx.App(
+    theme=get_theme()
+)
 
 
 # Declare the page and init the main state

@@ -24,8 +24,8 @@ class ReflexProcess(AppProcess):
     back_host_url: str = None
 
     # timeout in second to wait for the main app to start
-    # increase it to 60 to allow the app to start as it compiles the front and back
-    START_APP_TIMEOUT = 60
+    # increase it to 90 to allow the app to start as it compiles the front and back
+    START_APP_TIMEOUT = 90
 
     REFLEX_MODULES_PATH = "_gws_reflex"
 
@@ -64,12 +64,15 @@ class ReflexProcess(AppProcess):
         # retrieve the path of gws_core module from system path
         gws_core_path = os.path.dirname(sys.modules['gws_core'].__path__[0])
 
+        theme = self.get_current_user_theme()
+
         env = {
             'GWS_REFLEX_APP_ID': app.app_id,
             'GWS_REFLEX_MODULES_PATH': reflex_modules_path,
             'GWS_REFLEX_VIRTUAL_ENV': str(app.is_virtual_env_app()),
             'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
             'GWS_REFLEX_API_URL': self.back_host_url,
+            'GWS_THEME': theme.theme,
         }
 
         if app.is_dev_mode():
