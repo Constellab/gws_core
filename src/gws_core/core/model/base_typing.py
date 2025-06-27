@@ -18,7 +18,8 @@ class BaseTyping(Base):
     @final
     @classmethod
     def get_typing_name(cls) -> str:
-        """Get the typing name of the resource
+        """Get the typing name of the object
+        Ex: 'RESOURCE.gws_core.Table'
 
         :return: typing name
         :rtype: str
@@ -28,7 +29,7 @@ class BaseTyping(Base):
     @final
     @classmethod
     def get_human_name(cls) -> str:
-        """Get the human name of the resource
+        """Get the human name of the object
 
         :return: human name
         :rtype: str
@@ -38,7 +39,7 @@ class BaseTyping(Base):
     @final
     @classmethod
     def get_short_description(cls) -> str:
-        """Get the short description of the resource
+        """Get the short description of the object
 
         :return: short description
         :rtype: str
@@ -48,7 +49,7 @@ class BaseTyping(Base):
     @final
     @classmethod
     def get_style(cls) -> TypingStyle:
-        """Get the style of the resource
+        """Get the style of the object
 
         :return: style
         :rtype: str
@@ -60,8 +61,8 @@ class BaseTyping(Base):
     @final
     @classmethod
     def __set_typing_name__(cls, typing_name: str) -> None:
-        """Set the typing name of the resource
-        This method is called by the system when the resource is created,
+        """Set the typing name of the object
+        This method is called by the system when the object is created,
         you should not call this method yourself
 
         :param typing_name: typing name
@@ -72,8 +73,8 @@ class BaseTyping(Base):
     @final
     @classmethod
     def __set_human_name__(cls, human_name: str) -> None:
-        """Set the human name of the resource
-        This method is called by the system when the resource is created,
+        """Set the human name of the object
+        This method is called by the system when the object is created,
         you should not call this method yourself
 
         :param human_name: human name
@@ -84,8 +85,8 @@ class BaseTyping(Base):
     @final
     @classmethod
     def __set_short_description__(cls, short_description: str) -> None:
-        """Set the short description of the resource
-        This method is called by the system when the resource is created,
+        """Set the short description of the object
+        This method is called by the system when the object is created,
         you should not call this method yourself
 
         :param short_description: short description
@@ -96,8 +97,8 @@ class BaseTyping(Base):
     @final
     @classmethod
     def __set_style__(cls, style: TypingStyle) -> None:
-        """Set the style of the resource
-        This method is called by the system when the resource is created,
+        """Set the style of the object
+        This method is called by the system when the object is created,
         you should not call this method yourself
 
         :param style: style

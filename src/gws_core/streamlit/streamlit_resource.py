@@ -136,8 +136,15 @@ class StreamlitResource(AppResource):
         )
 
         for resource_model in resource_models:
-            SqlMigrator.rename_resource_r_field(
+            SqlMigrator.rename_resource_model_r_field(
                 resource_model, '_streamlit_dashboard_typing_name', '_app_config_typing_name')
 
-            SqlMigrator.rename_resource_r_field(
+            SqlMigrator.rename_resource_model_r_field(
                 resource_model, '_streamlit_sub_resource_folder_name', '_code_folder_sub_resource_name')
+
+            resource = cast(StreamlitResource, resource_model.get_resource())
+            if resource._app_config_typing_name is not None and 'DASHBOARD' in resource._app_config_typing_name:
+                # If the app config is a dashboard, we set the resource model r field to None
+                # to avoid confusion with the StreamlitResource
+                new_typing_name = resource._app_config_typing_name.replace('DASHBOARD', 'APP')
+                SqlMigrator.set_resource_model_r_field(resource_model, '_app_config_typing_name', new_typing_name)
