@@ -5,6 +5,8 @@ import os
 from copy import deepcopy
 from typing import Dict, List
 
+from peewee import BigIntegerField, CharField
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -64,7 +66,6 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
 
 from ...utils.logger import Logger
 from ..brick_migrator import BrickMigration
@@ -1359,8 +1360,8 @@ class Migration0130(BrickMigration):
             ShareLink.execute_sql(
                 "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
 
-    @brick_migration('0.15.0-beta.1', short_description='Migrate tag to add Community tag')
-    class Migration0141(BrickMigration):
+    @brick_migration('0.15.0', short_description='Migrate tag to add Community tag')
+    class Migration0150(BrickMigration):
         """
         This migration also include renaming
           - Dashboard to AppConfig
