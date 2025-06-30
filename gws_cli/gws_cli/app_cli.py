@@ -3,12 +3,11 @@ import json
 import os
 
 import typer
-from typing_extensions import Literal
-
 from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
                       LoggerMessageObserver, MambaShellProxy, PipShellProxy,
                       ShellProxy, Utils)
 from gws_core.apps.app_instance import AppInstance
+from typing_extensions import Literal
 
 app = typer.Typer()
 
@@ -99,7 +98,7 @@ class AppCli:
         print("-------------------------------------------------------------------------------------------------------------------------------------")
         env_txt = "" if self._env_type == "NONE" else f" with env type '{self._env_type}'"
         print(
-            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the dashboard at {url}")
+            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}")
         print("-------------------------------------------------------------------------------------------------------------------------------------")
 
     def get_app_dir_path(self) -> str:
