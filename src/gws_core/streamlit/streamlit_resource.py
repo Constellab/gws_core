@@ -5,6 +5,7 @@ from typing import List, cast
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_resource import AppResource
 from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -136,15 +137,19 @@ class StreamlitResource(AppResource):
         )
 
         for resource_model in resource_models:
-            SqlMigrator.rename_resource_model_r_field(
-                resource_model, '_streamlit_dashboard_typing_name', '_app_config_typing_name')
+            try:
+                SqlMigrator.rename_resource_model_r_field(
+                    resource_model, '_streamlit_dashboard_typing_name', '_app_config_typing_name')
 
-            SqlMigrator.rename_resource_model_r_field(
-                resource_model, '_streamlit_sub_resource_folder_name', '_code_folder_sub_resource_name')
+                SqlMigrator.rename_resource_model_r_field(
+                    resource_model, '_streamlit_sub_resource_folder_name', '_code_folder_sub_resource_name')
 
-            resource = cast(StreamlitResource, resource_model.get_resource())
-            if resource._app_config_typing_name is not None and 'DASHBOARD' in resource._app_config_typing_name:
-                # If the app config is a dashboard, we set the resource model r field to None
-                # to avoid confusion with the StreamlitResource
-                new_typing_name = resource._app_config_typing_name.replace('DASHBOARD', 'APP')
-                SqlMigrator.set_resource_model_r_field(resource_model, '_app_config_typing_name', new_typing_name)
+                resource = cast(StreamlitResource, resource_model.get_resource())
+                if resource._app_config_typing_name is not None and 'DASHBOARD' in resource._app_config_typing_name:
+                    # If the app config is a dashboard, we set the resource model r field to None
+                    # to avoid confusion with the StreamlitResource
+                    new_typing_name = resource._app_config_typing_name.replace('DASHBOARD', 'APP')
+                    SqlMigrator.set_resource_model_r_field(resource_model, '_app_config_typing_name', new_typing_name)
+            except Exception as e:
+                Logger.error(f"Error migrating resource {resource_model.id}: {e}")
+                continue
