@@ -2,15 +2,17 @@
 
 from typing import Any, Dict, Optional, Type, final
 
+from peewee import CharField, ModelSelect, TextField
+
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_type import CredentialsDTO
-from peewee import CharField, ModelSelect, TextField
 
 from .credentials_type import (CredentialsDataBase, CredentialsDataBasic,
                                CredentialsDataLab, CredentialsDataOther,
-                               CredentialsDataS3, CredentialsType)
+                               CredentialsDataS3, CredentialsDataS3LabServer,
+                               CredentialsType)
 
 
 @final
@@ -69,6 +71,10 @@ class Credentials(ModelWithUser):
         return cls.select().where(Credentials.type == type_)
 
     @classmethod
+    def search_by_types(cls, types: list[CredentialsType]) -> ModelSelect:
+        return cls.select().where(Credentials.type.in_(types))
+
+    @classmethod
     def search_by_name(cls, name: str) -> ModelSelect:
         return cls.select().where(Credentials.name.contains(name))
 
@@ -83,6 +89,7 @@ class Credentials(ModelWithUser):
         return {
             CredentialsType.BASIC: CredentialsDataBasic,
             CredentialsType.S3: CredentialsDataS3,
+            CredentialsType.S3_LAB_SERVER: CredentialsDataS3LabServer,
             CredentialsType.LAB: CredentialsDataLab,
             CredentialsType.OTHER: CredentialsDataOther,
         }

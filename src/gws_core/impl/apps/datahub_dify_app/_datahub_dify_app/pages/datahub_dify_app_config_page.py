@@ -5,7 +5,7 @@ from datahub_dify_app_state import DatahubDifyAppState
 
 from gws_core.impl.dify.datahub_dify_resource import DatahubDifyResource
 from gws_core.impl.dify.dify_class import DifyDatasetDocument
-from gws_core.impl.s3.s3_server_service import S3ServerService
+from gws_core.impl.s3.datahub_s3_server_service import DataHubS3ServerService
 from gws_core.streamlit import (StreamlitAuthenticateUser, StreamlitContainers,
                                 StreamlitResourceSelect)
 
@@ -49,7 +49,7 @@ def _render_sync_one_resource_section():
     selected_resource_id = selected_resource.resource_model.id if selected_resource else None
 
     resource_select = StreamlitResourceSelect()
-    resource_select.add_tag_filter(S3ServerService.BUCKET_TAG_NAME, S3ServerService.FOLDERS_BUCKET_NAME)
+    resource_select.add_tag_filter(DataHubS3ServerService.BUCKET_TAG_NAME, DataHubS3ServerService.FOLDERS_BUCKET_NAME)
     resource_select.include_not_flagged_resources()
     resource_model = resource_select.select_resource()
     # Uncomment for dev purpose

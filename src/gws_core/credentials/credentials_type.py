@@ -19,6 +19,7 @@ class CredentialsType(Enum):
     """
     BASIC = "BASIC"
     S3 = "S3"
+    S3_LAB_SERVER = "S3_LAB_SERVER"
     LAB = "LAB"
     OTHER = "OTHER"
 
@@ -99,6 +100,25 @@ class CredentialsDataS3(CredentialsDataBase):
             "access_key_id": StrParam(human_name="Access Key ID"),
             "secret_access_key": StrParam(human_name="Secret Access Key"),
             "bucket": StrParam(human_name="Bucket", optional=True),
+        })
+
+
+class CredentialsDataS3LabServer(CredentialsDataBase):
+    """Format of the data for credentials for the lab acting as an S3 server
+    """
+    access_key_id: str
+    secret_access_key: str
+    bucket: str
+    bucket_local_path: str
+
+    @classmethod
+    def get_specs(cls) -> ConfigSpecs:
+        return ConfigSpecs({
+            "access_key_id": StrParam(human_name="Access Key ID"),
+            "secret_access_key": StrParam(human_name="Secret Access Key"),
+            "bucket": StrParam(human_name="Name of the local S3 bucket"),
+            "bucket_local_path": StrParam(human_name="Local Directory",
+                                          short_description="The local directory where the files uploaded to S3 bucket is stored. Warning: use a safe directory path.",),
         })
 
 

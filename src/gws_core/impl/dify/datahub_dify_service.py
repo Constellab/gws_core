@@ -10,7 +10,7 @@ from gws_core.impl.dify.dify_class import (
     DifySendEndMessageStreamResponse, DifySendMessageStreamResponse,
     DifyUpdateDocumentsMetadataRequest)
 from gws_core.impl.dify.dify_service import DifyService
-from gws_core.impl.s3.s3_server_service import S3ServerService
+from gws_core.impl.s3.datahub_s3_server_service import DataHubS3ServerService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_search_builder import ResourceSearchBuilder
 
@@ -159,7 +159,8 @@ class DatahubDifyService:
         """Get all resources compatible with Dify."""
         # retrive all the files stored in the datahub
         research_search = ResourceSearchBuilder()
-        research_search.add_tag_filter(S3ServerService.get_datahub_tag())
+        s3_service = DataHubS3ServerService.get_instance()
+        research_search.add_tag_filter(s3_service.get_datahub_tag())
         research_search.add_is_fs_node_filter()
         research_search.add_is_archived_filter(False)
         research_search.add_has_folder_filter()

@@ -139,6 +139,8 @@ from .credentials.credentials_type import \
     CredentialsDataOther as CredentialsDataOther
 from .credentials.credentials_type import \
     CredentialsDataS3 as CredentialsDataS3
+from .credentials.credentials_type import \
+    CredentialsDataS3LabServer as CredentialsDataS3LabServer
 from .credentials.credentials_type import CredentialsType as CredentialsType
 # EntityNavigator
 from .entity_navigator.entity_navigator import \

@@ -1,6 +1,6 @@
 
 
-from typing import Any, List, Optional
+from typing import List, Optional, cast
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -18,7 +18,8 @@ from gws_core.space.space_service import (ExternalCheckCredentialResponse,
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
 
 from .credentials import Credentials
-from .credentials_type import (CredentialsDataLab, CredentialsDataSpecsDTO,
+from .credentials_type import (CredentialsDataLab, CredentialsDataS3LabServer,
+                               CredentialsDataSpecsDTO,
                                CredentialsDataTypeSpecDTO, SaveCredentialsDTO)
 
 
@@ -111,14 +112,17 @@ class CredentialsService():
         return Credentials.find_by_name(name)
 
     @classmethod
-    def get_s3_credentials_data_by_access_key(cls, access_key_id: str) -> Optional[CredentialsDataS3]:
+    def get_s3_credentials_data_by_access_key(cls, access_key_id: str) -> Optional[CredentialsDataS3 |
+                                                                                   CredentialsDataS3LabServer]:
         """Return the S3 credentials that match the access key id
         """
 
-        s3_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.S3)
+        s3_credentials: List[Credentials] = Credentials.search_by_types(
+            [CredentialsType.S3, CredentialsType.S3_LAB_SERVER])
 
         for credentials in s3_credentials:
-            data: CredentialsDataS3 = credentials.get_data_object()
+            data: CredentialsDataS3 | CredentialsDataS3LabServer = cast(
+                CredentialsDataS3 | CredentialsDataS3LabServer, credentials.get_data_object())
             if data.access_key_id == access_key_id:
                 return data
 
@@ -132,7 +136,7 @@ class CredentialsService():
         lab_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.LAB)
 
         for credentials in lab_credentials:
-            data: CredentialsDataLab = credentials.get_data_object()
+            data: CredentialsDataLab = cast(CredentialsDataLab, credentials.get_data_object())
             if data.api_key == api_key:
                 return data
 

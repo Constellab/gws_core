@@ -11,7 +11,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_modification import RichTextAggregateDTO
-from gws_core.impl.s3.s3_server_service import S3ServerService
+from gws_core.impl.s3.datahub_s3_server_service import DataHubS3ServerService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_search_builder import ResourceSearchBuilder
 from gws_core.resource.resource_service import ResourceService
@@ -217,9 +217,9 @@ class DatahubDifyResource:
     def get_datahub_key(self) -> str:
         """Get the datahub key of the resource."""
         tags = self._get_tags()
-        if not tags.has_tag_key(S3ServerService.KEY_TAG_NAME):
+        if not tags.has_tag_key(DataHubS3ServerService.KEY_TAG_NAME):
             raise ValueError("Could not find the datahub key.")
-        return tags.get_tags_by_key(S3ServerService.KEY_TAG_NAME)[0].tag_value
+        return tags.get_tags_by_key(DataHubS3ServerService.KEY_TAG_NAME)[0].tag_value
 
     @staticmethod
     def from_resource_model_id(resource_model_id: str) -> 'DatahubDifyResource':

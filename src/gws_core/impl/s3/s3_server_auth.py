@@ -11,7 +11,11 @@ from gws_core.core.exception.exceptions.forbidden_exception import \
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.credentials.credentials_service import CredentialsService
-from gws_core.credentials.credentials_type import CredentialsDataS3
+from gws_core.credentials.credentials_type import (CredentialsDataS3,
+                                                   CredentialsDataS3LabServer)
+from gws_core.impl.s3.abstract_s3_service import AbstractS3Service
+from gws_core.impl.s3.datahub_s3_server_service import DataHubS3ServerService
+from gws_core.impl.s3.local_s3_server_service import LocalS3ServerService
 
 
 class S3AuthHeader(BaseModelDTO):
@@ -28,7 +32,7 @@ class S3ServerAuth:
     """
 
     @classmethod
-    def check_s3_server_auth(cls, request: Request) -> None:
+    def check_s3_server_auth(cls, request: Request, bucket: str) -> AbstractS3Service:
         """Check if the request is authorized to access the s3 server
         base on AWS Signature Version 4
         """
@@ -48,7 +52,7 @@ class S3ServerAuth:
         if not s3_header.access_key_id:
             raise ForbiddenException("Access key id is missing")
 
-        s3_credentials: CredentialsDataS3 = CredentialsService.get_s3_credentials_data_by_access_key(
+        s3_credentials = CredentialsService.get_s3_credentials_data_by_access_key(
             s3_header.access_key_id)
 
         if not s3_credentials:
@@ -63,6 +67,16 @@ class S3ServerAuth:
 
         # check the signature (it checks the secret key)
         if expected_signature != s3_header.signature:
+            raise ForbiddenException("Access denied")
+
+        if s3_credentials.bucket != bucket:
+            raise ForbiddenException("Access denied")
+
+        if isinstance(s3_credentials, CredentialsDataS3LabServer):
+            return LocalS3ServerService(s3_credentials.bucket, s3_credentials.bucket_local_path)
+        elif isinstance(s3_credentials, CredentialsDataS3):
+            return DataHubS3ServerService(s3_credentials.bucket)
+        else:
             raise ForbiddenException("Access denied")
 
     @classmethod

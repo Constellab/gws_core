@@ -222,7 +222,7 @@ class FileHelper():
             if ext == 'jfif':
                 return 'image/jpeg'
 
-            return mimetypes.types_map.get('.' + ext)
+            return mimetypes.types_map.get('.' + ext, 'application/octet-stream')
         else:
             return None
 
