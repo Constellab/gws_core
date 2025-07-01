@@ -224,7 +224,7 @@ class FileHelper():
 
             return mimetypes.types_map.get('.' + ext, 'application/octet-stream')
         else:
-            return None
+            return 'application/octet-stream'
 
     @classmethod
     def get_extension_from_content_type(cls, content_type: str) -> str:
