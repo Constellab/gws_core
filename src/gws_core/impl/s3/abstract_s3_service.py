@@ -19,7 +19,8 @@ class AbstractS3Service(ABC):
         """Create a bucket"""
 
     @abstractmethod
-    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None) -> ListObjectsV2OutputTypeDef:
+    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None,
+                     continuation_token: str = None, start_after: str = None) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
 
     @abstractmethod

@@ -160,8 +160,20 @@ class TestS3Server(BaseTestCase):
         self.assertTrue(FileHelper.exists_on_os(download_file_path))
         self.assertTrue(FileHelper.get_size(download_file_path) > 0)
 
+        # test pagination
+        s3_client.upload_file(self.CURRENT_FILE_ABSPATH, Bucket=self.BASIC_BUCKET_NAME, Key='zzz.py')
+        result = s3_client.list_objects_v2(Bucket=self.BASIC_BUCKET_NAME, MaxKeys=1)
+        self.assertEqual(len(result['Contents']), 1)
+        self.assertEqual(result['Contents'][0]['Key'], 'test.py')
+        self.assertTrue('NextContinuationToken' in result)
+        result = s3_client.list_objects_v2(Bucket=self.BASIC_BUCKET_NAME, MaxKeys=1,
+                                           ContinuationToken=result['NextContinuationToken'])
+        self.assertEqual(len(result['Contents']), 1)
+        self.assertEqual(result['Contents'][0]['Key'], 'zzz.py')
+
         # test delete file
         s3_client.delete_object(Bucket=self.BASIC_BUCKET_NAME, Key=key)
+        s3_client.delete_object(Bucket=self.BASIC_BUCKET_NAME, Key='zzz.py')
         self.assertFalse(FileHelper.exists_on_os(file_path_in_bucket))
 
         # test list objects

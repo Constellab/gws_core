@@ -26,7 +26,8 @@ class LocalS3ServerService(AbstractS3Service):
         """Create a bucket (directory) in the local filesystem"""
         os.makedirs(self.bucket_path, exist_ok=True)
 
-    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None) -> ListObjectsV2OutputTypeDef:
+    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None, 
+                     continuation_token: str = None, start_after: str = None) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
         if not path.exists(self.bucket_path):
             return {
@@ -67,7 +68,19 @@ class LocalS3ServerService(AbstractS3Service):
         if prefix:
             all_keys = [(key, file_path) for key, file_path in all_keys if key.startswith(prefix)]
 
-        # Process keys based on delimiter
+        # Sort keys for consistent pagination
+        all_keys.sort(key=lambda x: x[0])
+
+        # Apply start_after filter
+        if start_after:
+            all_keys = [(key, file_path) for key, file_path in all_keys if key > start_after]
+
+        # Apply continuation_token filter (continuation_token is the last key from previous page)
+        if continuation_token:
+            all_keys = [(key, file_path) for key, file_path in all_keys if key > continuation_token]
+
+        # Process keys based on delimiter and collect results
+        processed_objects = []
         for key, file_path in all_keys:
             if delimiter:
                 # Find the next delimiter after the prefix
@@ -81,20 +94,27 @@ class LocalS3ServerService(AbstractS3Service):
                     continue
 
             # Add as regular object
-            if len(objects) < max_keys:
-                stat = os.stat(file_path)
-                last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
-                objects.append({
-                    'Key': key,
-                    'LastModified': DateHelper.to_iso_str(last_modified),
-                    'ETag': '',
-                    'Size': stat.st_size,
-                    'Owner': {
-                        'ID': '',
-                        'DisplayName': 'lab'
-                    },
-                    'StorageClass': 'STANDARD'
-                })
+            stat = os.stat(file_path)
+            last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
+            processed_objects.append({
+                'Key': key,
+                'LastModified': DateHelper.to_iso_str(last_modified),
+                'ETag': '',
+                'Size': stat.st_size,
+                'Owner': {
+                    'ID': '',
+                    'DisplayName': 'lab'
+                },
+                'StorageClass': 'STANDARD'
+            })
+
+        # Apply pagination to processed objects
+        is_truncated = len(processed_objects) > max_keys
+        objects = processed_objects[:max_keys]
+        next_continuation_token = ''
+        
+        if is_truncated and objects:
+            next_continuation_token = objects[-1]['Key']
 
         # Convert common prefixes to the expected format
         common_prefixes_list = [{'Prefix': cp} for cp in sorted(common_prefixes)]
@@ -103,12 +123,12 @@ class LocalS3ServerService(AbstractS3Service):
             'Name': self.bucket_name,
             'Prefix': prefix or '',
             'MaxKeys': max_keys,
-            'IsTruncated': len(objects) >= max_keys,
+            'IsTruncated': is_truncated,
             'Contents': objects,
             'KeyCount': len(objects),
-            'ContinuationToken': '',
-            'NextContinuationToken': '',
-            'StartAfter': '',
+            'ContinuationToken': continuation_token or '',
+            'NextContinuationToken': next_continuation_token,
+            'StartAfter': start_after or '',
             'Delimiter': delimiter or '',
             'EncodingType': 'url',
             'RequestCharged': 'requester',

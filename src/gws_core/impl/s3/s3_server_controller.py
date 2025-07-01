@@ -107,8 +107,12 @@ def download_object(key: str,
 def list_objects(max_keys: int = Query(1000, alias='max-keys'),
                  prefix: str = Query(None, alias='prefix'),
                  delimiter: str = Query(None, alias='delimiter'),
+                 continuation_token: str = Query(None, alias='continuation-token'),
+                 marker: str = Query(None, alias='marker'),  # support for old API
+                 start_after: str = Query(None, alias='start-after'),
                  service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
-    result = service.list_objects(prefix=prefix, max_keys=max_keys, delimiter=delimiter)
+    result = service.list_objects(prefix=prefix, max_keys=max_keys, delimiter=delimiter,
+                                  continuation_token=continuation_token or marker, start_after=start_after)
 
     return ResponseHelper.create_xml_response_from_json({'ListBucketResult': result})
 

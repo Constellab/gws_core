@@ -56,14 +56,6 @@
             "console": "integratedTerminal",
         },
         {
-            "name": "Client s3",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "/lab/user/bricks/gws_core/test_s3/test_s3_client.py",
-            "console": "integratedTerminal",
-            "justMyCode": false
-        },
-        {
             "args": [
                 "streamlit",
                 "run-dev",
