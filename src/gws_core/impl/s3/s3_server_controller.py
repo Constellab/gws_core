@@ -172,14 +172,14 @@ async def _complete_multipart_upload(
     if not isinstance(parts, list):
         parts = [parts]
 
-    etag = service.complete_multipart_upload(key, upload_id, parts)
+    service.complete_multipart_upload(key, upload_id, parts)
 
     return ResponseHelper.create_xml_response_from_json({
         'CompleteMultipartUploadResult': {
             'Location': f'http://localhost/{service.bucket_name}/{key}',
             'Bucket': service.bucket_name,
             'Key': key,
-            'ETag': f'"{etag}"'
+            'ETag': ''
         }
     })
 
@@ -236,10 +236,10 @@ async def _upload_part(
 ) -> Response:
     # Upload part for multipart upload
     file_bytes = await request.body()
-    etag = service.upload_part(key, upload_id, part_number, file_bytes)
+    service.upload_part(key, upload_id, part_number, file_bytes)
     return Response(
         status_code=200,
-        headers={'ETag': f'"{etag}"'}
+        headers={'ETag': f''}
     )
 
 

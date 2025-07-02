@@ -61,11 +61,11 @@ class AbstractS3Service(ABC):
         """Initiate a multipart upload and return upload ID"""
 
     @abstractmethod
-    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> str:
+    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> None:
         """Upload a part for multipart upload and return ETag"""
 
     @abstractmethod
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> str:
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> None:
         """Complete multipart upload and return ETag"""
 
     @abstractmethod
