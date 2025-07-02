@@ -26,7 +26,7 @@ class LocalS3ServerService(AbstractS3Service):
         """Create a bucket (directory) in the local filesystem"""
         os.makedirs(self.bucket_path, exist_ok=True)
 
-    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None, 
+    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None,
                      continuation_token: str = None, start_after: str = None) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
         if not path.exists(self.bucket_path):
@@ -112,7 +112,7 @@ class LocalS3ServerService(AbstractS3Service):
         is_truncated = len(processed_objects) > max_keys
         objects = processed_objects[:max_keys]
         next_continuation_token = ''
-        
+
         if is_truncated and objects:
             next_continuation_token = objects[-1]['Key']
 
@@ -141,7 +141,8 @@ class LocalS3ServerService(AbstractS3Service):
             },
         }
 
-    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None) -> None:
+    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
+                      last_modified: float = None) -> dict:
         """Upload an object to the bucket"""
         self.create_bucket()
 
@@ -150,6 +151,14 @@ class LocalS3ServerService(AbstractS3Service):
 
         with open(file_path, 'wb') as f:
             f.write(data)
+
+        if last_modified:
+            # Set the modification time if provided
+            os.utime(file_path, (last_modified, last_modified))
+
+        return {
+            'ETag': '',
+        }
 
     def get_object(self, key: str) -> FileResponse:
         """Get an object from the bucket"""
@@ -184,10 +193,12 @@ class LocalS3ServerService(AbstractS3Service):
 
         stat = os.stat(file_path)
         last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
+
         return {
-            'Content-Length': str(stat.st_size),
+            'Content-Length': '0' if FileHelper.is_dir(file_path) else str(stat.st_size),
             'Content-Type': FileHelper.get_mime(file_path),
             'Last-Modified': DateHelper.to_rfc7231_str(last_modified),
+            'x-amz-meta-mtime': str(stat.st_mtime),  # rclone compatibility
         }
 
     def get_object_tags(self, key: str) -> S3GetTagResponse:

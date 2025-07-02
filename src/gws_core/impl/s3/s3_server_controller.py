@@ -69,7 +69,10 @@ async def upload_object(
         key: str,
         request: Request,
         tagging: str = Query(None, alias='tagging'),
+        x_id: str = Query(None, alias='x-id'),
         service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+    if x_id == 'CopyObject':
+        raise NotImplementedError("CopyObject operation is not implemented in this S3 server.")
     # update tags
     if key and tagging == '':
         file_bytes = await request.body()
@@ -80,8 +83,20 @@ async def upload_object(
     if key:
         file_bytes = await request.body()
         tags = service.convert_query_param_string_to_dict(request.headers.get(TAG_HEADER))
-        service.upload_object(key, file_bytes, tags)
-        return ResponseHelper.create_xml_response('')
+
+        # Extract modification time from headers (rclone sends this)
+        if 'x-amz-meta-mtime' in request.headers:
+            # rclone sends mtime as Unix timestamp in x-amz-meta-mtime header
+            try:
+                mtime_timestamp = float(request.headers['x-amz-meta-mtime'])
+            except (ValueError, TypeError):
+                pass
+        response_headers = service.upload_object(key, file_bytes, tags, last_modified=mtime_timestamp)
+        # Return proper S3 response with ETag header
+        return Response(
+            status_code=200,
+            headers=response_headers
+        )
     else:
         service.create_bucket()
         return ResponseHelper.create_xml_response('')

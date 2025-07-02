@@ -216,6 +216,11 @@ class FileHelper():
 
     @classmethod
     def get_mime(cls, path: PathType) -> str:
+        if not path:
+            return None
+
+        if cls.is_dir(path):
+            return 'application/x-directory'
         ext: str = cls.get_extension(path)
         if ext:
             # specific case not handled by mimetypes

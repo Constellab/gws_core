@@ -24,7 +24,8 @@ class AbstractS3Service(ABC):
         """List objects in a bucket"""
 
     @abstractmethod
-    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None) -> None:
+    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
+                      last_modified: float = None) -> dict:
         """Upload an object to the bucket"""
 
     @abstractmethod
