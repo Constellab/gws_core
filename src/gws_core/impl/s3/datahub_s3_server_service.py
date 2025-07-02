@@ -431,6 +431,24 @@ class DataHubS3ServerService(AbstractS3Service):
         """
         return Tag(self.BUCKET_TAG_NAME, self.FOLDERS_BUCKET_NAME)
 
+    ##################################################### MULTIPART UPLOAD METHODS #####################################################
+
+    def initiate_multipart_upload(self, key: str, last_modified: float = None) -> str:
+        """Initiate a multipart upload and return upload ID"""
+        raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
+
+    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> str:
+        """Upload a part for multipart upload and return ETag"""
+        raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
+
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> str:
+        """Complete multipart upload and return ETag"""
+        raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
+
+    def abort_multipart_upload(self, key: str, upload_id: str) -> None:
+        """Abort a multipart upload and clean up temp files"""
+        raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
+
     ##################################################### OTHER METHODS #####################################################
 
     @staticmethod

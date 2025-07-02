@@ -19,6 +19,11 @@ TAG_HEADER = 'x-amz-tagging'
 # trigger the s3 request from the client and check the request structure in
 # s3_server_fastapi_app.all_http_exception_handler HTTP handler.
 # Also use doc : https://docs.aws.amazon.com/AmazonS3/latest/API/API_Operations.html
+# Also possible to test with a local Minio server and postamn to see request structure.
+# Start Minio : docker run -p 9000:9000 -p 9001:9001 minio/minio server /data --console-address ":9001"
+# The connect with admin user/password (must be admin).
+# Create a bucket and in the bucket options set the bucket public.
+# The request should work. Upload a file and test the HEAD request: http://localhost:9000/{bucket}/{key}
 
 
 @s3_server_app.get("/health-check")
@@ -39,67 +44,34 @@ async def post(request: Request,
                x_id: str = Query(None, alias='x-id'),
                service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
     if x_id == 'DeleteObjects' or delete == '':
-        # Method to delete multiple objects
-        # return await delete_objectjj(bucket, request)
-        xml_content = await request.body()
-        str_xml = xml_content.decode('utf-8')
-        dict_ = XMLHelper.xml_to_dict(str_xml)
-        objects: Union[dict, List[dict]] = dict_['Delete']['Object']
-        keys: list[str]
-        if not isinstance(objects, list):
-            keys = [objects['Key']]
-        else:
-            keys = [obj['Key'] for obj in objects]
-        service.delete_objects(keys)
-        return Response(status_code=204)
+        return await _delete_object(request, service)
 
     else:
         raise Exception('Not implemented')
+
+
+async def _delete_object(
+        request: Request,
+        service: AbstractS3Service
+) -> Response:
+    # Method to delete a single object
+    xml_content = await request.body()
+    str_xml = xml_content.decode('utf-8')
+    dict_ = XMLHelper.xml_to_dict(str_xml)
+    objects: Union[dict, List[dict]] = dict_['Delete']['Object']
+    keys: list[str]
+    if not isinstance(objects, list):
+        keys = [objects['Key']]
+    else:
+        keys = [obj['Key'] for obj in objects]
+    service.delete_objects(keys)
+    return Response(status_code=204)
 
 
 @s3_server_app.put("/v1/{bucket}")
 def create_bucket(service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
     service.create_bucket()
     return ResponseHelper.create_xml_response('')
-
-
-# use async to await the body of the request
-@s3_server_app.put("/v1/{bucket}/{key:path}")
-async def upload_object(
-        key: str,
-        request: Request,
-        tagging: str = Query(None, alias='tagging'),
-        x_id: str = Query(None, alias='x-id'),
-        service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
-    if x_id == 'CopyObject':
-        raise NotImplementedError("CopyObject operation is not implemented in this S3 server.")
-    # update tags
-    if key and tagging == '':
-        file_bytes = await request.body()
-        body = XMLHelper.xml_to_dict(file_bytes.decode('utf-8'))
-        service.update_object_tags(key, body.get('Tagging', {}))
-        return ResponseHelper.create_xml_response('')
-    # upload object
-    if key:
-        file_bytes = await request.body()
-        tags = service.convert_query_param_string_to_dict(request.headers.get(TAG_HEADER))
-
-        # Extract modification time from headers (rclone sends this)
-        if 'x-amz-meta-mtime' in request.headers:
-            # rclone sends mtime as Unix timestamp in x-amz-meta-mtime header
-            try:
-                mtime_timestamp = float(request.headers['x-amz-meta-mtime'])
-            except (ValueError, TypeError):
-                pass
-        response_headers = service.upload_object(key, file_bytes, tags, last_modified=mtime_timestamp)
-        # Return proper S3 response with ETag header
-        return Response(
-            status_code=200,
-            headers=response_headers
-        )
-    else:
-        service.create_bucket()
-        return ResponseHelper.create_xml_response('')
 
 
 @s3_server_app.get("/v1/{bucket}/{key:path}")
@@ -146,3 +118,168 @@ def delete_object(key: str,
     service.delete_object(key)
 
     return Response(status_code=204)
+
+
+# Multipart upload endpoints
+@s3_server_app.post("/v1/{bucket}/{key:path}")
+async def initiate_multipart_upload(
+        key: str,
+        request: Request,
+        uploads: str = Query(None, alias='uploads'),
+        upload_id: str = Query(None, alias='uploadId'),
+        service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+
+    if uploads == '':
+        return _initiate_multipart_upload(key, request, service)
+
+    elif upload_id:
+        # Complete multipart upload
+        return await _complete_multipart_upload(key, upload_id, request, service)
+    else:
+        return Response(status_code=400, content="Bad Request")
+
+
+def _initiate_multipart_upload(
+        key: str,
+        request: Request,
+        service: AbstractS3Service
+) -> Response:
+    # Initiate a multipart upload
+    mtime_timestamp = _extract_x_amz_meta_mtime(request)
+    upload_id = service.initiate_multipart_upload(key, mtime_timestamp)
+
+    return ResponseHelper.create_xml_response_from_json({
+        'InitiateMultipartUploadResult': {
+            'Bucket': service.bucket_name,
+            'Key': key,
+            'UploadId': upload_id
+        }
+    })
+
+
+async def _complete_multipart_upload(
+        key: str,
+        upload_id: str,
+        request: Request,
+        service: AbstractS3Service
+) -> Response:
+    # Complete a multipart upload
+    xml_content = await request.body()
+    str_xml = xml_content.decode('utf-8')
+    dict_ = XMLHelper.xml_to_dict(str_xml)
+
+    parts = dict_['CompleteMultipartUpload']['Part']
+    if not isinstance(parts, list):
+        parts = [parts]
+
+    etag = service.complete_multipart_upload(key, upload_id, parts)
+
+    return ResponseHelper.create_xml_response_from_json({
+        'CompleteMultipartUploadResult': {
+            'Location': f'http://localhost/{service.bucket_name}/{key}',
+            'Bucket': service.bucket_name,
+            'Key': key,
+            'ETag': f'"{etag}"'
+        }
+    })
+
+
+@s3_server_app.delete("/v1/{bucket}/{key:path}")
+async def delete_multipart_upload_or_object(
+        key: str,
+        upload_id: str = Query(None, alias='uploadId'),
+        service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+
+    if upload_id:
+        # Abort multipart upload
+        service.abort_multipart_upload(key, upload_id)
+        return Response(status_code=204)
+    else:
+        # Regular object deletion
+        service.delete_object(key)
+        return Response(status_code=204)
+
+
+@s3_server_app.put("/v1/{bucket}/{key:path}")
+async def upload_part_or_object(
+        key: str,
+        request: Request,
+        tagging: str = Query(None, alias='tagging'),
+        x_id: str = Query(None, alias='x-id'),
+        part_number: int = Query(None, alias='partNumber'),
+        upload_id: str = Query(None, alias='uploadId'),
+        service: AbstractS3Service = Depends(S3ServerAuth.check_s3_server_auth)) -> Response:
+
+    if part_number and upload_id:
+        return await _upload_part(request, key, upload_id, part_number, service)
+
+    # Regular object upload (existing functionality)
+    if x_id == 'CopyObject':
+        raise NotImplementedError("CopyObject operation is not implemented in this S3 server.")
+    # update tags
+    if key and tagging == '':
+        return await _update_object_tags(request, key, service)
+    # upload object
+    if key:
+        return await _upload_object(request, key, service)
+    else:
+        service.create_bucket()
+        return ResponseHelper.create_xml_response('')
+
+
+async def _upload_part(
+        request: Request,
+        key: str,
+        upload_id: str,
+        part_number: int,
+        service: AbstractS3Service
+) -> Response:
+    # Upload part for multipart upload
+    file_bytes = await request.body()
+    etag = service.upload_part(key, upload_id, part_number, file_bytes)
+    return Response(
+        status_code=200,
+        headers={'ETag': f'"{etag}"'}
+    )
+
+
+async def _update_object_tags(
+        request: Request,
+        key: str,
+        service: AbstractS3Service
+) -> Response:
+    # Update tags for an object
+    file_bytes = await request.body()
+    body = XMLHelper.xml_to_dict(file_bytes.decode('utf-8'))
+    service.update_object_tags(key, body.get('Tagging', {}))
+    return ResponseHelper.create_xml_response('')
+
+
+async def _upload_object(
+        request: Request,
+        key: str,
+        service: AbstractS3Service
+) -> Response:
+    # Upload an object to the bucket
+    file_bytes = await request.body()
+    tags = service.convert_query_param_string_to_dict(request.headers.get(TAG_HEADER))
+
+    # Extract modification time from headers (rclone sends this)
+    mtime_timestamp = _extract_x_amz_meta_mtime(request)
+    response_headers = service.upload_object(key, file_bytes, tags, last_modified=mtime_timestamp)
+
+    return Response(
+        status_code=200,
+        headers=response_headers
+    )
+
+
+def _extract_x_amz_meta_mtime(request: Request) -> float:
+    """Extract x-amz-meta-mtime header as a float."""
+    mtime_header = request.headers.get('x-amz-meta-mtime')
+    if mtime_header:
+        try:
+            return float(mtime_header)
+        except (ValueError, TypeError):
+            pass
+    return None

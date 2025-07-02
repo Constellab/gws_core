@@ -56,6 +56,22 @@ class AbstractS3Service(ABC):
     def update_object_tags_dict(self, key: str, tags: Dict[str, str]) -> None:
         """Update the tags of an object with a dictionary"""
 
+    @abstractmethod
+    def initiate_multipart_upload(self, key: str, last_modified: float = None) -> str:
+        """Initiate a multipart upload and return upload ID"""
+
+    @abstractmethod
+    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> str:
+        """Upload a part for multipart upload and return ETag"""
+
+    @abstractmethod
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> str:
+        """Complete multipart upload and return ETag"""
+
+    @abstractmethod
+    def abort_multipart_upload(self, key: str, upload_id: str) -> None:
+        """Abort a multipart upload and clean up temp files"""
+
     @staticmethod
     def convert_query_param_string_to_dict(query_param: str) -> dict:
         """Convert a query parameter string to a dictionary"""
