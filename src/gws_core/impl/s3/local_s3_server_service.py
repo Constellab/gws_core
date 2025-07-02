@@ -7,7 +7,8 @@ from os import path
 from typing import Any, ByteString, Dict, List
 
 from fastapi.responses import FileResponse
-from mypy_boto3_s3.type_defs import CommonPrefixTypeDef, ListObjectsV2OutputTypeDef, ObjectTypeDef
+from mypy_boto3_s3.type_defs import (CommonPrefixTypeDef,
+                                     ListObjectsV2OutputTypeDef, ObjectTypeDef)
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.impl.file.file_helper import FileHelper
@@ -50,7 +51,7 @@ class LocalS3ServerService(AbstractS3Service):
     def _save_multipart_state(self, state: Dict[str, Any]) -> None:
         """Save multipart upload state to disk"""
         multipart_dir = path.dirname(self._multipart_state_file)
-        
+
         if state:
             # Save state if not empty
             os.makedirs(multipart_dir, exist_ok=True)
@@ -61,7 +62,7 @@ class LocalS3ServerService(AbstractS3Service):
             # Remove state file if it exists
             if path.exists(self._multipart_state_file):
                 os.remove(self._multipart_state_file)
-            
+
             # Remove .multipart directory if it's empty
             if path.exists(multipart_dir):
                 try:
@@ -267,7 +268,7 @@ class LocalS3ServerService(AbstractS3Service):
         """Initiate a multipart upload and return upload ID"""
         # Clean up old uploads before starting new one
         self._cleanup_abandoned_uploads()
-        
+
         upload_id = str(uuid.uuid4())
 
         # Create temp directory for parts
@@ -287,7 +288,7 @@ class LocalS3ServerService(AbstractS3Service):
 
         return upload_id
 
-    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> str:
+    def upload_part(self, key: str, upload_id: str, part_number: int, data: ByteString) -> None:
         """Upload a part for multipart upload and return ETag"""
         state = self._load_multipart_state()
         if upload_id not in state:
@@ -302,12 +303,9 @@ class LocalS3ServerService(AbstractS3Service):
         with open(part_file, 'wb') as f:
             f.write(data)
 
-        # Calculate ETag (MD5 hash)
-        etag = hashlib.md5(data).hexdigest()
-
         # Store part info
         upload_info['parts'][str(part_number)] = {
-            'etag': etag,
+            'etag': '',
             'file': part_file,
             'size': len(data)
         }
@@ -315,9 +313,7 @@ class LocalS3ServerService(AbstractS3Service):
         # Save updated state
         self._save_multipart_state(state)
 
-        return etag
-
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> str:
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> None:
         """Complete multipart upload and return ETag"""
         state = self._load_multipart_state()
         if upload_id not in state:
@@ -335,8 +331,7 @@ class LocalS3ServerService(AbstractS3Service):
         file_path = path.join(self.bucket_path, key)
         os.makedirs(path.dirname(file_path), exist_ok=True)
 
-        # Combine all parts
-        combined_data = b''
+        # Combine all parts and calculate MD5 hash incrementally
         with open(file_path, 'wb') as final_file:
             for part in sorted_parts:
                 part_number = str(part['PartNumber'])
@@ -345,12 +340,12 @@ class LocalS3ServerService(AbstractS3Service):
 
                 part_file = upload_info['parts'][part_number]['file']
                 with open(part_file, 'rb') as pf:
-                    part_data = pf.read()
-                    final_file.write(part_data)
-                    combined_data += part_data
-
-        # Calculate final ETag
-        final_etag = hashlib.md5(combined_data).hexdigest()
+                    # Read and write in chunks to avoid memory issues
+                    while True:
+                        chunk = pf.read(8192)  # 8KB chunks
+                        if not chunk:
+                            break
+                        final_file.write(chunk)
 
         # Apply modification time if provided
         if upload_info.get('last_modified'):
@@ -364,17 +359,15 @@ class LocalS3ServerService(AbstractS3Service):
         del state[upload_id]
         self._save_multipart_state(state)
 
-        return final_etag
-
     def _cleanup_abandoned_uploads(self, max_age_hours: int = 24) -> None:
         """Clean up abandoned multipart uploads older than max_age_hours"""
         try:
             state = self._load_multipart_state()
             current_time = time.time()
             max_age_seconds = max_age_hours * 3600
-            
+
             uploads_to_remove = []
-            
+
             for upload_id, upload_info in state.items():
                 # Check if temp directory exists and get its age
                 temp_dir = upload_info.get('temp_dir')
@@ -387,14 +380,14 @@ class LocalS3ServerService(AbstractS3Service):
                 elif temp_dir:
                     # Temp directory doesn't exist, remove from state
                     uploads_to_remove.append(upload_id)
-            
+
             # Remove abandoned uploads from state
             for upload_id in uploads_to_remove:
                 del state[upload_id]
-            
+
             if uploads_to_remove:
                 self._save_multipart_state(state)
-                
+
         except Exception:
             # Don't let cleanup errors break normal operations
             pass
@@ -407,7 +400,7 @@ class LocalS3ServerService(AbstractS3Service):
                 part_file = part_info.get('file')
                 if part_file and path.exists(part_file):
                     os.remove(part_file)
-            
+
             # Remove temp directory if empty
             temp_dir = upload_info.get('temp_dir')
             if temp_dir and path.exists(temp_dir):
@@ -425,14 +418,14 @@ class LocalS3ServerService(AbstractS3Service):
         state = self._load_multipart_state()
         if upload_id not in state:
             raise ValueError(f"Upload ID {upload_id} not found")
-        
+
         upload_info = state[upload_id]
         if upload_info['key'] != key:
             raise ValueError(f"Key mismatch for upload ID {upload_id}")
-        
+
         # Clean up temp files
         self._cleanup_upload_files(upload_info)
-        
+
         # Remove from state
         del state[upload_id]
         self._save_multipart_state(state)
