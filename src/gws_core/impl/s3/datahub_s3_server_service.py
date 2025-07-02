@@ -99,7 +99,8 @@ class DataHubS3ServerService(AbstractS3Service):
             }
 
     @transaction()
-    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None) -> None:
+    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
+                      last_modified: float = None) -> None:
         """Upload an object to the bucket
         """
 
