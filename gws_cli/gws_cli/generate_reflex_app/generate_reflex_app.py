@@ -2,7 +2,6 @@ import os
 import shutil
 
 import typer
-
 from gws_cli.utils.app_task_generator import generate_app_task
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.typer_message_observer import TyperMessageObserver
@@ -88,6 +87,15 @@ def generate_reflex_app(name: str) -> str:
         reflex_main_template_path = os.path.join(TEMPLATE_FOLDER, REFLEX_MAIN_FILE)
         app_reflex_main_path = os.path.join(reflex_app_folder, snake_case_name, snake_case_name + '.py')
         shutil.copy2(reflex_main_template_path, app_reflex_main_path)
+
+        # add "uploaded_files/" to the .gitignore file
+        gitignore_path = os.path.join(reflex_app_folder, '.gitignore')
+        if FileHelper.exists_on_os(gitignore_path):
+            with open(gitignore_path, 'a') as gitignore_file:
+                gitignore_file.write('uploaded_files/\n')
+        else:
+            typer.echo(f"Expected .gitignore not found at '{gitignore_path}'", err=True)
+            raise typer.Abort()
 
         # Create the generate task file
         generate_app_task(snake_case_name, app_folder, 'reflex')
