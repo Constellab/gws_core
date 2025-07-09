@@ -10,6 +10,7 @@ from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.progress_bar.progress_bar_dto import ProgressBarDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class ProcessDTO(ModelWithUserDTO):
@@ -21,6 +22,7 @@ class ProcessDTO(ModelWithUserDTO):
     process_typing_name: str
     brick_version_on_create: str
     brick_version_on_run: Optional[str]
+    run_by: Optional[UserDTO]
     status: ProcessStatus
     error_info: Optional[ProcessErrorInfo]
     started_at: Optional[datetime]

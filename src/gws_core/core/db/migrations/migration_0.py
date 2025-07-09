@@ -1404,3 +1404,22 @@ class Migration0130(BrickMigration):
 
             ViewConfig.execute_sql(
                 "UPDATE [TABLE_NAME] SET view_type = 'app-view' where view_type = 'streamlit-view'")
+
+    @brick_migration('0.15.2', short_description='Add run by in process model')
+    class Migration0152(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            migrator = SqlMigrator(ProtocolModel.get_db())
+            migrator.add_column_if_not_exists(ProtocolModel, ProcessModel.run_by)
+            migrator.add_column_if_not_exists(TaskModel, ProcessModel.run_by)
+            migrator.alter_column_type(TaskModel, 'brick_version_on_create', CharField(null=False, max_length=50))
+            migrator.alter_column_type(TaskModel, 'brick_version_on_run', CharField(null=True, max_length=50))
+            migrator.alter_column_type(ProtocolModel, 'brick_version_on_create', CharField(null=False, max_length=50))
+            migrator.alter_column_type(ProtocolModel, 'brick_version_on_run', CharField(null=True, max_length=50))
+            migrator.migrate()
+
+            ProtocolModel.execute_sql(
+                "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")
+            TaskModel.execute_sql(
+                "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")

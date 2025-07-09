@@ -24,6 +24,7 @@ from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -62,9 +63,10 @@ class ProcessModel(ModelWithUser):
         ProgressBar, null=True, backref='+')
     process_typing_name = CharField(null=False)
     # version of the brick when the process was created
-    brick_version_on_create = CharField(null=False, max_length=50, default="")
+    brick_version_on_create = CharField(null=False, max_length=50)
     # version of the brick when the process was run
-    brick_version_on_run = CharField(null=True, max_length=50, default="")
+    brick_version_on_run = CharField(null=True, max_length=50)
+    run_by = ForeignKeyField(User, null=True, backref='+')
     status: ProcessStatus = EnumField(choices=ProcessStatus,
                                       default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
@@ -342,6 +344,9 @@ class ProcessModel(ModelWithUser):
         # save the version of the brick when the process was run
         self.brick_version_on_run = self._get_type_brick_version()
 
+        # Set the run by user
+        self.run_by = CurrentUserService().get_and_check_current_user()
+
         self.save()
 
     def _run_after_task(self):
@@ -520,6 +525,7 @@ class ProcessModel(ModelWithUser):
             process_typing_name=self.process_typing_name,
             brick_version_on_create=self.brick_version_on_create,
             brick_version_on_run=self.brick_version_on_run,
+            run_by=self.run_by.to_dto() if self.run_by else None,
             status=self.status,
             error_info=self.get_error_info(),
             started_at=self.started_at,
@@ -654,6 +660,8 @@ class ProcessModel(ModelWithUser):
         self.ended_at = None
         self.status = ProcessStatus.DRAFT
         self.set_error_info(None)
+        self.brick_version_on_run = None
+        self.run_by = None
         self.save()
         self.progress_bar.reset()
 

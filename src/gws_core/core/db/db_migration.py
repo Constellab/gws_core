@@ -80,7 +80,6 @@ class DbMigrationService:
                 previous_brick_model: BrickMigrationLog = Settings.get_instance().get_brick_migration_log(brick_name)
 
                 if not previous_brick_model:
-                    Logger.info(f"Skipping migration for brick {brick_name} because it is new")
                     continue
 
                 previous_version = Version(previous_brick_model["version"])
