@@ -423,8 +423,17 @@ class ProcessModel(ModelWithUser):
     def get_process_type(self) -> Type[Process]:
         return TypingManager.get_and_check_type_from_name(self.process_typing_name)
 
-    def get_process_typing(self) -> Typing:
+    def get_process_typing(self) -> Optional[Typing]:
         return TypingManager.get_typing_from_name(self.process_typing_name)
+
+    def process_type_exists(self) -> bool:
+        """Check if the process typing exists
+
+        :return: True if the process typing exists, False otherwise
+        :rtype: bool
+        """
+        typing = self.get_process_typing()
+        return typing is not None and typing.type_exists()
 
     def is_input_task(self) -> bool:
         """return true if the process is of type InputTask
@@ -440,6 +449,14 @@ class ProcessModel(ModelWithUser):
         """Return true if the process is automatically run when added to a protocol
         """
         return self.get_process_type().__auto_run__
+
+    def can_be_auto_run(self) -> bool:
+        """ Return true if the process can be auto run now.
+
+        :return: _description_
+        :rtype: bool
+        """
+        return self.process_type_exists() and self.is_auto_run() and self.is_runnable and self.config.mandatory_values_are_set()
 
     def is_enable_in_sub_protocol(self) -> bool:
         """Return true if the process is enable in sub protocol

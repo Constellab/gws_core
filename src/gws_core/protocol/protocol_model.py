@@ -224,7 +224,7 @@ class ProtocolModel(ProcessModel):
         """Run all the auto run processes of the protocol
         """
         for process in self.processes.values():
-            if process.is_auto_run() and process.is_runnable and process.config.mandatory_values_are_set():
+            if process.can_be_auto_run():
                 self._run_process(process)
 
     def _run_protocol(self) -> None:

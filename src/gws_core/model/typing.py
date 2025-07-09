@@ -84,6 +84,11 @@ class Typing(Model):
     def get_type(self) -> Optional[Type]:
         return Utils.get_model_type(self.model_type)
 
+    def type_exists(self) -> bool:
+        """Check if the type exists in the system.
+        """
+        return self.get_type() is not None
+
     @property
     def typing_name(self) -> str:
         return TypingNameObj.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
