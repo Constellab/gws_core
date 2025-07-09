@@ -49,7 +49,6 @@ class GWSException(Enum):
     NOTE_NO_LINKED_SCENARIO = "The note is not linked with a scenario. Please link it to a scenario to access views."
     DELETE_FOLDER_WITH_SCENARIOS = "The folder can't be deleted because it contains validated scenarios"
     DELETE_FOLDER_WITH_NOTES = "The folder can't be deleted because it contains validated notes"
-    EXP_CONTINUE_LAB_INCOMPATIBLE = "The scenario cannot be continued because the lab version has changed since last execution. Please reset the scenario first."
     PROCESS_UPDATE_RUNNING_ERROR = "The process is running. Please stop the process or wait for it to finish before modifying it."
     PROCESS_UPDATE_FISHINED_ERROR = "The process is finished. Please reset the process before modifying it."
     RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP = "Can't reset the scenario because one of the output resource is used in scenario '<a href=\"{{scenario_url}}\" target=\"_blank\">{{scenario}}</a>'"

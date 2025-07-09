@@ -372,14 +372,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.is_success:
             raise BadRequestException("The scenario is already finished")
 
-        # if this is a start and stop, we check that the lab
-        # is in the same version as the scenario
-        if not self.is_draft and self.lab_config:
-            current_lab_config = LabConfigModel.get_current_config()
-            if not current_lab_config.is_compatible_with(self.lab_config):
-                raise BadRequestException(GWSException.EXP_CONTINUE_LAB_INCOMPATIBLE.value,
-                                          unique_code=GWSException.EXP_CONTINUE_LAB_INCOMPATIBLE.name)
-
     def check_is_stopable(self) -> None:
         """Throw an error if the scenario is not stopable
         """
