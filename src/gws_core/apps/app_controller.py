@@ -28,7 +28,7 @@ def stop_all_processes(_=Depends(AuthService.check_user_access_token)) -> None:
     return AppsManager.stop_all_processes()
 
 
-@core_app.post("/apps/stop/{id}", tags=["App"],
+@core_app.post("/apps/stop/{id_}", tags=["App"],
                summary="Stop main app")
 def stop_process(id_: str,
                  _=Depends(AuthService.check_user_access_token)) -> None:
