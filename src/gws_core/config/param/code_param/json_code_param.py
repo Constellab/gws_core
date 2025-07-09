@@ -1,7 +1,7 @@
 
 
 import re
-from json import loads
+from json import dumps, loads
 from typing import Any, Dict
 
 from gws_core.config.param.param_spec import ParamSpec
@@ -53,6 +53,8 @@ class JsonCodeParam(ParamSpec):
     def validate(self, value: Any) -> Any:
         if value is None:
             return value
+        if isinstance(value, dict) or isinstance(value, list):
+            value = dumps(value, indent=4)
         if not isinstance(value, str):
             raise ValueError("Invalid value for JsonCodeParam, expected a string.")
         return value.strip()

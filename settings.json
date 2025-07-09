@@ -93,7 +93,7 @@
                     },
                     {
                         "name": "openai",
-                        "version": "1.60.2"
+                        "version": "1.93.0"
                     },
                     {
                         "name": "typing_extensions",
