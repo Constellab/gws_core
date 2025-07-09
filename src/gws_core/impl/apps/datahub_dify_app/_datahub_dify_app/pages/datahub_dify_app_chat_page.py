@@ -2,11 +2,10 @@ import uuid
 from typing import List, Literal, Optional
 
 import streamlit as st
+from _datahub_dify_app.datahub_dify_app_state import DatahubDifyAppState
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
-from gws_core.impl.apps.datahub_dify_app._datahub_dify_app.datahub_dify_app_state import \
-    DatahubDifyAppState
 from gws_core.impl.dify.dify_class import (DifySendEndMessageStreamResponse,
                                            DifySendMessageSource,
                                            DifySendMessageStreamResponse)

@@ -1,11 +1,11 @@
 
 import importlib
 
+from _datahub_dify_app.datahub_dify_app_expert_state import \
+    DatahubDifyAppExpertState
 from datahub_dify_app_state import DatahubDifyAppState
 from pages import datahub_dify_app_chat_page, datahub_dify_app_config_page
 
-from gws_core.impl.apps.datahub_dify_app._datahub_dify_app.datahub_dify_app_expert_state import \
-    DatahubDifyAppExpertState
 from gws_core.impl.dify import doc_expert_ai_page
 from gws_core.impl.dify.dify_service import DifyService
 from gws_core.impl.dify.doc_expert_ai_page_state import DocExpertAIPageConfig

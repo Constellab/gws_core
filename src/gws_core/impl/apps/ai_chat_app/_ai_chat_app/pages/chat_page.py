@@ -1,9 +1,8 @@
 import streamlit as st
+from _ai_chat_app.ai_chat_app_state import AiChatAppState
 
 from gws_core import (DifySendEndMessageStreamResponse,
                       DifySendMessageStreamResponse, DifyService)
-from gws_core.impl.apps.ai_chat_app._ai_chat_app.ai_chat_app_state import \
-    AiChatAppState
 from gws_core.streamlit import StreamlitContainers
 
 

@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from {{folderAppName}}.pages import first_page
+from _gws_core_ma_super_app.pages import first_page
 
 sources: list
 params: dict

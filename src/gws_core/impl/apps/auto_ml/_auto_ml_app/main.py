@@ -3,13 +3,16 @@
 import importlib.util
 
 import streamlit as st
+from _auto_ml_app.pages import (auto_ml_ai_multi_tables_page,
+                                auto_ml_ai_plot_page,
+                                auto_ml_ai_transform_page,
+                                auto_ml_getting_started_page,
+                                auto_ml_import_page,
+                                auto_ml_manual_transform_page,
+                                auto_ml_tables_page)
 from auto_ml_state import AutoMlState
 
 from gws_core import Table
-from gws_core.impl.apps.auto_ml._auto_ml_app.pages import (
-    auto_ml_ai_multi_tables_page, auto_ml_ai_plot_page,
-    auto_ml_ai_transform_page, auto_ml_getting_started_page,
-    auto_ml_import_page, auto_ml_manual_transform_page, auto_ml_tables_page)
 from gws_core.streamlit import StreamlitHelper
 
 sources: list

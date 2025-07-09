@@ -3,9 +3,7 @@
 import importlib.util
 
 import streamlit as st
-
-from gws_core.impl.apps.doc_assistant._doc_assistant_app.pages import \
-    doc_assistant_page
+from _doc_assistant_app.pages import doc_assistant_page
 
 sources: list
 params: dict

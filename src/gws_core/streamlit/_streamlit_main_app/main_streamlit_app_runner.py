@@ -3,7 +3,6 @@ import importlib.util
 import os
 import sys
 from json import load
-from types import ModuleType
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
@@ -32,7 +31,6 @@ class StreamlitMainAppRunner:
     :rtype: _type_
     """
 
-    module: ModuleType = None
     spec = None
     config: StreamlitConfigDTO = None
 
@@ -40,6 +38,10 @@ class StreamlitMainAppRunner:
     app_dir: str = None
     dev_mode: bool = False
     dev_config_file: str = None
+
+    app_dir_path: str = None
+    app_main_path: str = None
+    variables: Dict[str, Any] = {}
 
     def init(self) -> None:
         """ Check the parameters (token) and loaf the config and app file"""
@@ -105,7 +107,7 @@ class StreamlitMainAppRunner:
         self._load_args()
         app_config_file: str = self._load_app_config_file()
 
-        self.module = self._load_app(app_config_file)
+        self._load_app(app_config_file)
         self.load_user()
 
     def _load_args(self) -> None:
@@ -121,10 +123,68 @@ class StreamlitMainAppRunner:
         self.dev_config_file = args.dev_config_file
 
     def set_variable(self, name: str, value: Any) -> None:
-        setattr(self.module, name, value)
+        self.variables[name] = value
 
     def start_app(self) -> None:
-        self.spec.loader.exec_module(self.module)
+        # Add the parent directory of the app to sys.path so Python can find the package
+        parent_dir = os.path.dirname(self.app_dir_path)
+        if parent_dir not in sys.path:
+            sys.path.insert(0, parent_dir)
+
+        module_name = os.path.basename(self.app_dir_path)
+
+        # Check if module already exists with a different path
+        if module_name in sys.modules:
+            existing_module = sys.modules[module_name]
+            if hasattr(existing_module, '__file__') and existing_module.__file__:
+                existing_path = os.path.dirname(existing_module.__file__)
+                if os.path.abspath(existing_path) != os.path.abspath(self.app_dir_path):
+                    raise ImportError(
+                        f"There is 2 streamlit running app stored in different location with the name '{module_name}'. "
+                        f"Original running app from : {existing_path}, current app from: {self.app_dir_path}. "
+                        f"The 2 apps cannot be run simultaneously. Please stop the original app before starting the new one. "
+                        f"If you are the author of the app, please rename one of the app to avoid this conflict. "
+                        f"You can stop the app in Settings > Monitoring > Other > Running Apps.")
+
+        # First, we need to make sure the directory is treated as a package
+        # by ensuring it has an __init__.py file
+        init_file = os.path.join(self.app_dir_path, '__init__.py')
+        if not os.path.exists(init_file):
+            # Create an empty __init__.py file if it doesn't exist
+            with open(init_file, 'w', encoding='utf-8') as f:
+                pass
+
+        try:
+            # Import the package first
+            importlib.import_module(module_name)
+
+            # Create the main module spec but don't execute it yet
+            main_module_name = f"{module_name}.main"
+            main_spec = importlib.util.find_spec(main_module_name)
+
+            if main_spec is None:
+                raise ImportError(f"Could not find spec for {main_module_name}")
+
+            # Create the module from spec
+            main_module = importlib.util.module_from_spec(main_spec)
+
+            # Set the sources and params variables BEFORE executing the module
+            for key, value in self.variables.items():
+                setattr(main_module, key, value)
+
+            # Add the module to sys.modules so it can be imported by other modules
+            sys.modules[main_module_name] = main_module
+
+            # Now execute the module
+            main_spec.loader.exec_module(main_module)
+
+        except ImportError as e:
+            st.error(f"Failed to import module {module_name}: {e}")
+            st.stop()
+        except Exception as e:
+            st.error(f"Error starting app: {e}")
+            st.exception(e)
+            st.stop()
 
     def load_user(self) -> str:
         # skip user load if authentication is not required
@@ -202,7 +262,7 @@ class StreamlitMainAppRunner:
 
         return app_config_file
 
-    def _load_app(self, app_config_file: str) -> ModuleType:
+    def _load_app(self, app_config_file: str):
         try:
 
             # load config from the app path
@@ -234,15 +294,8 @@ class StreamlitMainAppRunner:
                     f"Main python script file not found: {app_main_path}. Please make sure you have a main.py file in the app folder.")
                 st.stop()
 
-            # load the module ('main' is the file name)
-            self.spec = importlib.util.spec_from_file_location("main", app_main_path)
-            if self.spec is None:
-                st.error(f"Python script file not found: {app_main_path}")
-                st.stop()
-
-            # due to dynamic import, streamlit lose track of the module so it doesn't refresh it correctly when the file changes
-            # only the main.py file is refresh because it is load dynamically but its dependencies are not
-            return importlib.util.module_from_spec(self.spec)
+            self.app_main_path = app_main_path
+            self.app_dir_path = app_dir_abs_path
 
         except Exception as e:
             st.error(f"Error loading python script: {e}")

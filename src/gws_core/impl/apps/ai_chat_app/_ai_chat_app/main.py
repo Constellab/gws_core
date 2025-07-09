@@ -3,10 +3,8 @@
 import importlib
 
 import streamlit as st
-from pages import chat_page
-
-from gws_core.impl.apps.ai_chat_app._ai_chat_app.ai_chat_app_state import \
-    AiChatAppState
+from _ai_chat_app.ai_chat_app_state import AiChatAppState
+from _ai_chat_app.pages import chat_page
 
 sources: list
 params: dict

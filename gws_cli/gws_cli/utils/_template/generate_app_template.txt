@@ -5,7 +5,7 @@ from gws_core import (ConfigParams, AppConfig, AppType, OutputSpec,
 
 
 @app_decorator("{{appClass}}", app_type=AppType.{{appType}},
-               human_name="Generate show case app")
+               human_name="Generate {{name}} app")
 class {{appClass}}(AppConfig):
 
     # retrieve the path of the app folder, relative to this file

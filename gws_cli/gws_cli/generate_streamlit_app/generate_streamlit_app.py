@@ -4,7 +4,8 @@ import shutil
 
 import typer
 
-from gws_cli.utils.app_task_generator import generate_app_task
+from gws_cli.utils.app_task_generator import (generate_app_task,
+                                              replace_vars_in_file)
 from gws_core import FileHelper, StringHelper
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), '_template')
@@ -42,6 +43,9 @@ def generate_streamlit_app(name: str) -> str:
         streamlit_app_folder,
         dirs_exist_ok=True
     )
+
+    main_destination = os.path.join(streamlit_app_folder, 'main.py')
+    replace_vars_in_file(snack_case_name, main_destination, 'streamlit')
 
     try:
 

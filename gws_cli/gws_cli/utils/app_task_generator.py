@@ -22,7 +22,7 @@ TEMPLATE_GENERATE_APP_NAME = 'generate_app_template.txt'
 
 def generate_app_task(snake_case_name: str, app_folder_path: str,
                       app_type: Literal['streamlit', 'reflex']) -> None:
-    """ Method to create a new streamlit app with the given name.
+    """ Method to create the generate app task file.
 
     :param name: _description_
     :type name: str
@@ -35,6 +35,13 @@ def generate_app_task(snake_case_name: str, app_folder_path: str,
     generate_app_new_path = os.path.join(app_folder_path, f"generate_{snake_case_name}.py")
     shutil.copy2(generate_app_old_path, generate_app_new_path)
 
+    replace_vars_in_file(snake_case_name, generate_app_new_path, app_type)
+
+
+def replace_vars_in_file(snake_case_name: str, file_path: str,
+                         app_type: Literal['streamlit', 'reflex']) -> None:
+    """ Method to replace variables in app file ."""
+    # Rename the generate task
     app_pascal_name = StringHelper.to_pascal_case(snake_case_name)
 
     # Replace the variables in the generate task
@@ -47,4 +54,4 @@ def generate_app_task(snake_case_name: str, app_folder_path: str,
         APP_TYPE_VAR: app_type + '_app',
         APP_TYPE: app_type.upper()
     }
-    CLIUtils.replace_vars_in_file(generate_app_new_path, replace_variables)
+    CLIUtils.replace_vars_in_file(file_path, replace_variables)
