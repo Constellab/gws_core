@@ -7,11 +7,11 @@ from gws_cli.generate_streamlit_app.generate_streamlit_app import \
     generate_streamlit_app
 from gws_core import StreamlitApp
 
-app = typer.Typer()
+app = typer.Typer(help="Generate and run Streamlit applications")
 
 
-@app.command("run-dev")
-def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the json config file app to run.")]):
+@app.command("run-dev", help="Run a Streamlit app in development mode")
+def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path to the JSON config file for the app to run.")]):
 
     app_cli = AppCli(config_file_path)
     shell_proxy = app_cli.build_shell_proxy()
@@ -22,9 +22,9 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path of the js
     app_cli.start_app(streamit_app)
 
 
-@app.command("generate")
+@app.command("generate", help="Generate a new Streamlit app")
 def generate(
-        name: Annotated[str, typer.Argument(help="Name of the streamlit app (snake_case).")]):
+        name: Annotated[str, typer.Argument(help="Name of the Streamlit app (snake_case).")]):
     print(f"Generating streamlit app: '{name}'")
     app_folder = generate_streamlit_app(name)
     print(f"Streamlit app '{name}' created successfully in '{app_folder}'.")

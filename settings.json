@@ -141,7 +141,7 @@
                     },
                     {
                         "name": "typer",
-                        "version": "0.12.3"
+                        "version": "0.16.0"
                     },
                     {
                         "name": "schedule",

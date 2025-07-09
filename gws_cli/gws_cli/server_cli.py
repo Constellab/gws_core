@@ -8,7 +8,7 @@ from typing_extensions import Annotated
 from gws_core import BrickService
 from gws_core.manage import AppManager
 
-app = typer.Typer()
+app = typer.Typer(help="Manage server operations - run server, execute tests, run scenarios and processes")
 
 
 class LogLevel(str, Enum):
@@ -25,7 +25,7 @@ ShowSqlAnnotation = Annotated[bool, typer.Option("--show-sql", help="Log sql que
 IsTestAnnotation = Annotated[bool, typer.Option("--test", help="Run in test mode.", is_flag=True)]
 
 
-@app.command("run")
+@app.command("run", help="Start the server")
 def run(
         port: Annotated[str, typer.Option(help="Server port.")] = "3000",
         main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
@@ -39,7 +39,7 @@ def run(
         show_sql=show_sql)
 
 
-@app.command("test")
+@app.command("test", help="Run tests for a specific brick or all bricks")
 def test(
         test_name: Annotated[List[str], typer.Argument(help="The name test file to launch (regular expression). Enter 'all' to launch all the tests.")],
         brick_name: Annotated[str, typer.Option("--brick-name", help="Name of the brick to test. If not provided, use brick of current folder.")] = None,
@@ -66,7 +66,7 @@ def test(
         show_sql=show_sql)
 
 
-@app.command("run-scenario")
+@app.command("run-scenario", help="Execute a specific scenario by ID")
 def run_exp(
         scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
         user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the scenario.")],
@@ -83,7 +83,7 @@ def run_exp(
         is_test=is_test)
 
 
-@app.command("run-process")
+@app.command("run-process", help="Execute a specific process within a scenario")
 def run_process(
         scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
         protocol_model_id: Annotated[str, typer.Option("--protocol-model-id", help="Id of the protocol model.")],
