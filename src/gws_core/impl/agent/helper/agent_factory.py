@@ -4,7 +4,8 @@ from typing import Any, Dict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
-from gws_core.community.community_dto import CommunityAgentFileDTO
+from gws_core.community.community_dto import (CommunityAgentFileDTO,
+                                              CommunityAgentFileParams)
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.impl.agent.py_agent import PyAgent
@@ -111,7 +112,7 @@ class AgentFactory:
 
         return CommunityAgentFileDTO.from_json({
             "json_version": cls.current_json_version,
-            "params": params,
+            "params": params if params is not None else CommunityAgentFileParams(specs={}, values={}).to_json_dict(),
             "code": code,
             "environment": env,
             "input_specs": inputs,

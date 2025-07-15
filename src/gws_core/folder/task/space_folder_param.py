@@ -2,7 +2,7 @@
 from typing import Any, Dict, Optional
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+from gws_core.config.param.param_spec_decorator import (ParamSpecType,
                                                         param_spec_decorator)
 from gws_core.config.param.param_types import (ParamSpecDTO, ParamSpecTypeStr,
                                                ParamSpecVisibilty)
@@ -10,7 +10,7 @@ from gws_core.core.classes.validator import StrValidator
 from gws_core.folder.space_folder import SpaceFolder
 
 
-@param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
 class SpaceFolderParam(ParamSpec):
     """ Space folder param spec. When used, the end user will be able to select a space folder from
     the list of available space folders. The config stores only the space folder id, not the full space folder object.

@@ -2,14 +2,14 @@
 
 from typing import Dict
 
-from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+from gws_core.config.param.param_spec_decorator import (ParamSpecType,
                                                         param_spec_decorator)
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(type_=ParamaSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
 class PythonCodeParam(TextParam):
     """Param for python code. It shows a simple python IDE
       in the interface to provide code for python.

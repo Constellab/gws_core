@@ -5,13 +5,15 @@ from typing import Any, Dict, List, Type
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.string_helper import StringHelper
 
 from .param_spec import ParamSpec
 from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
                                    NESTED_PARAM_SPEC_TYPES_LIST,
                                    PARAM_SPEC_TYPES_LIST,
-                                   SIMPLE_PARAM_SPEC_TYPES_LIST)
-from .param_types import DynamicParamAllowedSpecsDict, ParamSpecTypeStr
+                                   SIMPLE_PARAM_SPEC_TYPES_LIST, ParamSpecType)
+from .param_types import (CompleteDynamicParamAllowedSpecsDict,
+                          DynamicParamAllowedSpecsDict, ParamSpecTypeStr)
 
 
 class ParamSpecHelper():
@@ -54,7 +56,7 @@ class ParamSpecHelper():
         return NESTED_PARAM_SPEC_TYPES_LIST
 
     @staticmethod
-    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> DynamicParamAllowedSpecsDict:
+    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> CompleteDynamicParamAllowedSpecsDict:
         """_summary_
 
         :param lab_allowed: _description_, defaults to False
@@ -62,15 +64,24 @@ class ParamSpecHelper():
         :return: _description_
         :rtype: _type_
         """
-        res: DynamicParamAllowedSpecsDict = {}
+        res: CompleteDynamicParamAllowedSpecsDict = {}
+        key = StringHelper.snake_case_to_sentence(ParamSpecType.SIMPLE.value)
+        res[key] = {}
 
         list_spec_types: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types().copy()
-        if lab_allowed:
-            list_spec_types.extend(ParamSpecHelper.get_lab_specific_param_spec_types())
 
         for spec_type in list_spec_types:
             spec_name = spec_type.get_str_type()
             infos = spec_type.to_param_spec_info_specs()
-            res[spec_name] = infos
+            res[key][spec_name] = infos
+
+        if lab_allowed:
+            list_spec_types = ParamSpecHelper.get_lab_specific_param_spec_types()
+            key = StringHelper.snake_case_to_sentence(ParamSpecType.LAB_SPECIFIC.value)
+            res[key] = {}
+            for spec_type in list_spec_types:
+                spec_name = spec_type.get_str_type()
+                infos = spec_type.to_param_spec_info_specs()
+                res[key][spec_name] = infos
 
         return res

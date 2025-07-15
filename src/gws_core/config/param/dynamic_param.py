@@ -1,10 +1,11 @@
 from typing import Any, Dict
 
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import (BoolParam, DictParam, FloatParam,
                                               IntParam, ListParam, ParamSpec,
                                               StrParam, TextParam)
-from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+from gws_core.config.param.param_spec_decorator import (ParamSpecType,
                                                         param_spec_decorator)
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -13,7 +14,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from .param_types import ParamSpecDTO, ParamSpecTypeStr
 
 
-@param_spec_decorator(type_=ParamaSpecType.NESTED)
+@param_spec_decorator(type_=ParamSpecType.NESTED)
 class DynamicParam(ParamSpec):
     """Dynamic param"""
 
@@ -50,6 +51,19 @@ class DynamicParam(ParamSpec):
 
     def get_default_value(self):
         return self.specs.get_default_values()
+
+    def build(self, value: Any) -> ConfigParamsDict:
+        """Build the dynamic param value from the provided value.
+
+        :param value: The value to build
+        :type value: Any
+        :return: The built value as a ConfigParamsDict
+        :rtype: ConfigParamsDict
+        """
+        if value is None:
+            return {}
+
+        return self.specs.build_config_params(value)
 
     def validate(self, value: Dict[str, Any]) -> Dict[str, Any]:
         if value is None:
@@ -96,15 +110,24 @@ class DynamicParam(ParamSpec):
     def add_spec(self, param_name: str, spec_dto: ParamSpecDTO) -> None:
         spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
+        if spec.default_value is not None:
+            spec.optional = True
+
         self.specs.add_spec(param_name, spec)
 
     def update_spec(self, param_name: str, spec_dto: ParamSpecDTO) -> None:
         spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
+        if spec.default_value is not None:
+            spec.optional = True
+
         self.specs.update_spec(param_name, spec)
 
     def rename_and_update_spec(self, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO) -> None:
         spec: ParamSpec = self.get_spec_from_dto(spec_dto)
+
+        if spec.default_value is not None:
+            spec.optional = True
 
         self.specs.remove_spec(param_name)
         self.specs.add_spec(new_param_name, spec)

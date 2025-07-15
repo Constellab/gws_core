@@ -5,8 +5,8 @@ from typing import Any, Dict, List, Literal, Optional, Set, Type, Union, cast
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import (DynamicParamAllowedSpecsDict,
-                                               ParamSpecDTO, ParamValue)
+from gws_core.config.param.param_types import (
+    CompleteDynamicParamAllowedSpecsDict, ParamSpecDTO, ParamValue)
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -128,7 +128,8 @@ class ProtocolService():
                 outputs_dto=process_model.to_config_dto().outputs,
                 style=process_model.style,
                 community_agent_version_id=process_model.community_agent_version_id,
-                name=process_model.name + " (copy)"
+                name=process_model.name + " (copy)",
+                config_specs=process_model.config.get_specs()
             )
         elif isinstance(process_model, ProtocolModel):
             factory = ProtocolGraphFactoryFromType(process_model.to_protocol_config_dto())
@@ -752,7 +753,15 @@ class ProtocolService():
 
         # generate the default spec and add port
         io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
-        io_spec = IOSpec.from_dto(io_spec_dto) if io_spec_dto is not None else io_specs.get_default_spec()
+
+        io_spec: IOSpec = None
+        if io_spec_dto is None:
+            io_spec = io_specs.get_default_spec()
+        else:
+            if port_type == 'output':
+                io_spec = OutputSpec.from_dto(io_spec_dto)
+            else:
+                io_spec = InputSpec.from_dto(io_spec_dto)
         io.create_port(StringHelper.generate_uuid(), io_spec)
 
         process_model.save()
@@ -1038,6 +1047,18 @@ class ProtocolService():
         return dynamic_param_spec
 
     @classmethod
+    def _check_and_set_default_value(
+        cls, process_model: ProcessModel, config_spec_name: str,
+        param_name: str, spec_dto: ParamSpecDTO
+    ) -> None:
+        """Check if the dynamic param spec has a default value and set it if not already set."""
+        values = process_model.config.get_value(config_spec_name)
+        if spec_dto.default_value is not None:
+            if param_name not in values or values[param_name] is None:
+                values[param_name] = spec_dto.default_value
+                process_model.config.set_value(config_spec_name, values, skip_validate=True)
+
+    @classmethod
     def _update_dynamic_param_config_spec(
             cls, process_model: ProcessModel, config_spec_name: str, dynamic_param_spec: DynamicParam,
             values: Dict[str, Any] = None) -> ProtocolUpdate:
@@ -1065,6 +1086,8 @@ class ProtocolService():
 
         dynamic_param_spec.add_spec(param_name, spec_dto)
 
+        cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
+
         return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
 
     @classmethod
@@ -1085,6 +1108,8 @@ class ProtocolService():
                 process_model.config.set_value(config_spec_name, value, skip_validate=True)
 
         dynamic_param_spec.update_spec(param_name, spec_dto)
+
+        cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
 
         return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec)
 
@@ -1107,6 +1132,8 @@ class ProtocolService():
             del values[param_name]
 
         dynamic_param_spec.rename_and_update_spec(param_name, new_param_name, spec_dto)
+
+        cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
 
         return cls._update_dynamic_param_config_spec(process_model, config_spec_name, dynamic_param_spec, values)
 
@@ -1143,7 +1170,7 @@ class ProtocolService():
 
     @classmethod
     def get_dynamic_param_allowed_param_spec_types(
-            cls, protocol_id: str, process_name: str) -> DynamicParamAllowedSpecsDict:
+            cls, protocol_id: str, process_name: str) -> CompleteDynamicParamAllowedSpecsDict:
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 

@@ -2,9 +2,8 @@
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from typing_extensions import TypedDict
 
 from ...core.classes.validator import (BoolValidator, DictValidator,
                                        FloatValidator, IntValidator,
@@ -177,6 +176,8 @@ class ParamSpec():
             #     default_value='public', human_name='Visibility',
             #     allowed_values=['public', 'protected', 'private']).to_dto(),
             short_description=StrParam(optional=True, human_name='Short description').to_dto(),
+            human_name=StrParam(
+                optional=True, human_name='Human name').to_dto(),
             default_value=default_value_param.to_dto()
         )
 
