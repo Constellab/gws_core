@@ -2,6 +2,7 @@
 
 from typing import Callable, List
 
+from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -375,43 +376,46 @@ class NoteService():
             note=note.to_full_dto(),
             scenario_ids=[scenario.id for scenario in scenarios],
             lab_config=lab_config.to_dto(),
-            resource_views={}
         )
 
         rich_text = note.get_content_as_rich_text()
 
         # retrieve all the figures file path
-        file_paths: List[str] = []
+        form_data = FormData()
 
         for figure in rich_text.get_figures_data():
-            file_paths.append(RichTextFileService.get_figure_file_path(RichTextObjectType.NOTE, note.id,
-                                                                       figure.filename))
+            file_path = RichTextFileService.get_figure_file_path(RichTextObjectType.NOTE, note.id,
+                                                                 figure.filename)
+            form_data.add_file_from_path('files', file_path)
 
         for file in rich_text.get_files_data():
-            file_paths.append(RichTextFileService.get_uploaded_file_path(RichTextObjectType.NOTE, note.id,
-                                                                         file.name))
+            file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.NOTE, note.id,
+                                                                   file.name)
+            form_data.add_file_from_path('files', file_path)
 
-        # set the resource views in the json object
+        # create temporary files for resource views
         for resource_view in rich_text.get_resource_views_data():
-            # set the json view in the resource_views object
-            # with the view id as key
             view_result = ResourceService.get_and_call_view_on_resource_model(
                 resource_view.resource_id,
                 resource_view.view_method_name,
                 resource_view.view_config)
-            save_note_dto.resource_views[resource_view.id] = view_result.to_dto()
 
-        # set the file views in the json object
+            form_data.add_file_from_json(view_result.to_dto().to_json_dict(),
+                                         'files',
+                                         resource_view.id + '.json')
+
+        # create temporary files for file views
         for file_view_block in rich_text.get_file_views_data():
-
             # retrieve the file view
             view_result_dto = RichTextFileService.get_file_view(RichTextObjectType.NOTE,
                                                                 note.id,
                                                                 file_view_block.filename)
-            save_note_dto.resource_views[file_view_block.id] = view_result_dto
+            form_data.add_file_from_json(view_result_dto.to_json_dict(),
+                                         'files',
+                                         file_view_block.id + '.json')
 
         # Save the scenario in space
-        SpaceService.get_instance().save_note(note.folder.id, save_note_dto, file_paths)
+        SpaceService.get_instance().save_note(note.folder.id, save_note_dto, form_data)
 
         return note
 

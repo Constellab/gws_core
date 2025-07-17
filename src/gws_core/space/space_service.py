@@ -166,15 +166,10 @@ class SpaceService(SpaceServiceBase):
     #################################### NOTE ####################################
 
     def save_note(self, folder_id: str, note: SaveNoteToSpaceDTO,
-                  file_paths: List[str]) -> SpaceHierarchyObjectDTO:
+                  form_data: FormData) -> SpaceHierarchyObjectDTO:
 
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2")
-
-        # convert the file paths to file object supported by the form data request
-        form_data = FormData()
-        for file_path in file_paths:
-            form_data.add_file_from_path('files', file_path)
 
         try:
             body = {"body": json.dumps(jsonable_encoder(note))}

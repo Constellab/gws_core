@@ -1,6 +1,7 @@
 
 
 import json
+import tempfile
 from io import BufferedReader
 from typing import Any, Dict, List, Tuple
 
@@ -30,6 +31,15 @@ class FormData():
 
     def add_file_from_path(self, key: str,  file_path: str, filename: str = None) -> None:
         self.file_paths.append((key, file_path, filename))
+
+    def add_file_from_json(self, json_data: Any, key: str, filename: str) -> None:
+        """
+        Create a file from the json and add it to the form data.
+        """
+        # Create temporary file for the file view
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as tmp_file:
+            json.dump(json_data, tmp_file)
+            self.add_file_from_path(key, tmp_file.name, filename)
 
     def add_json_data(self, key: str, data: Any) -> None:
         self.json_data.append((key, data))
