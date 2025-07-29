@@ -61,13 +61,23 @@ class IOSpec:
 
     _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
+
     def __init__(self, resource_types: ResourceTypes, is_optional: bool = False, human_name: Optional[str] = None,
                  short_description: Optional[str] = None) -> None:
-        """[summary]
+        """ Initialize the IOSpec with resource types and optional parameters.
 
-        :param resource_types: type of supported resource or resources
-        :type resource_types: Type[Union[Resource, Iterable[Resource]]]
+        :param resource_types: _description_
+        :type resource_types: ResourceTypes
+        :param is_optional: this input might not be connected to another task output and the task will still be executed.
+                      If the input is connected, the system will wait for the input to be provided before running the task.
+                      Also tells that None value is allowed as input.  , defaults to False
+        :type is_optional: bool, optional
+        :param human_name: _description_, defaults to None
+        :type human_name: Optional[str], optional
+        :param short_description: _description_, defaults to None
+        :type short_description: Optional[str], optional
         """
+
 
         self.resource_types = []
         if not isinstance(resource_types, IterableClass):
@@ -224,35 +234,6 @@ class InputSpec(IOSpec):
     """ Spec for an input task port
     """
     _name: str = "InputSpec"
-
-    def __init__(self, resource_types: ResourceTypes,
-                 is_optional: bool = False,
-                 is_skippable: bool = False,
-                 human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
-        """_summary_
-
-        :param resource_types: _description_
-        :type resource_types: ResourceTypes
-        :param is_optional: this input might not be connected to another task output and the task will still be executed.
-                      If the input is connected, the system will wait for the input to be provided before running the task.
-                      Also tells that None value is allowed as input.  , defaults to False
-        :type is_optional: bool, optional
-        :param is_skippable DEPRECATED, use is_optional instead.
-        :type is_skippable: bool, optional
-        :param human_name: _description_, defaults to None
-        :type human_name: Optional[str], optional
-        :param short_description: _description_, defaults to None
-        :type short_description: Optional[str], optional
-        """
-        # if the input is skippable force it to be optional
-        if is_skippable:
-            Logger.warning(
-                '[DEPRECATED] is_skippable is deprecated, use is_optional instead')
-            is_optional = True
-
-        super().__init__(resource_types=resource_types, is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
 
     def is_constant_out(self) -> bool:
         return False
