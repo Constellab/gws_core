@@ -239,7 +239,7 @@ class OutputSpecs(IOSpecs):
             error = output_resource.check_resource()
 
             if error is not None and len(error) > 0:
-                return OutputCheckResult(error=error, resource=None)
+                return OutputCheckResult(error=error, resource=None, auto_convert_message=auto_convert_message)
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)

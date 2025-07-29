@@ -55,7 +55,7 @@ def test(
         brick_dir = BrickService.get_parent_brick_folder(os.getcwd())
         if not brick_dir:
             typer.echo(
-                "The current folder is not inside a brick, please run the command inside a brick folder of provide a brick name.",
+                "The current folder is not inside a brick, please run the command inside a brick folder or provide the brick name.",
                 err=True)
             raise typer.Abort()
 
