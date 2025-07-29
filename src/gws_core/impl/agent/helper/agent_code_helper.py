@@ -101,11 +101,11 @@ class AgentCodeHelper:
         return content
 
     @classmethod
-    def get_streamlit_code_param(cls) -> PythonCodeParam:
+    def get_streamlit_code_param(cls, is_env: bool = False) -> PythonCodeParam:
         """Get the code parameter for the streamlit agent.
         """
         return PythonCodeParam(
-            default_value=cls.get_streamlit_code_template(),
+            default_value=cls.get_streamlit_code_template() if not is_env else cls.get_streamlit_env_code_template(),
             human_name="Streamlit app code",
             short_description="Code of the streamlit app to run"
         )

@@ -24,7 +24,7 @@ class StreamlitPipenvAgent(StreamlitEnvAgent):
             default_value=AgentCodeHelper.get_streamlit_pip_env_file_template(),
             human_name="Conda environment (YAML)", short_description="YAML configuration of the conda environment (contains the 'streamlit' package)"
         ),
-        'code': AgentCodeHelper.get_streamlit_code_param(),
+        'code': AgentCodeHelper.get_streamlit_code_param(is_env=True),
         'requires_authentication': AgentCodeHelper.get_streamlit_requires_auth_param()
     })
 

@@ -38,7 +38,7 @@ class StreamlitEnvAgent(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(FSNode, human_name="Resource", is_optional=True))
+        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", is_optional=True))
     output_specs: OutputSpecs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })
