@@ -74,7 +74,7 @@ class AppResource(ResourceList):
     @abstractmethod
     def init_app_instance(self,
                           shell_proxy: ShellProxy,
-                          app_id: str, app_name: str,
+                          resource_model_id: str, app_name: str,
                           requires_authentification: bool) -> AppInstance:
         """
         Initialize the app instance with the shell proxy.
@@ -314,11 +314,11 @@ class AppResource(ResourceList):
         # add the params
         app.set_params(self._params)
 
-        # create the app
-        url = AppsManager.create_or_get_app(app)
+        # create the app asynchronously and return the instance ID
+        result = AppsManager.create_or_get_app_async(app)
 
-        # create the view
-        view_ = AppView(url)
+        # create the view with the app instance ID
+        view_ = AppView(result)
         view_.set_favorite(True)
         view_.set_title(self.get_name())
         return view_

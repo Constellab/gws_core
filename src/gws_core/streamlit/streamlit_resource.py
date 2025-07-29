@@ -87,9 +87,9 @@ class StreamlitResource(AppResource):
         with open(streamlit_app_code_path, 'r', encoding="utf-8") as file_path:
             self._streamlit_app_code = file_path.read()
 
-    def init_app_instance(self, shell_proxy: ShellProxy, app_id: str, app_name: str,
+    def init_app_instance(self, shell_proxy: ShellProxy, resource_model_id: str, app_name: str,
                           requires_authentification: bool = True) -> AppInstance:
-        streamlit_app = StreamlitApp(app_id,
+        streamlit_app = StreamlitApp(resource_model_id,
                                      app_name,
 
                                      shell_proxy,

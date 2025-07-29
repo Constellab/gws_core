@@ -37,6 +37,16 @@ class TagList():
 
         return tags
 
+    def get_first_by_key(self, tag_key: str) -> Optional[Tag]:
+        """return the first tag with the given key or None if it does not exist
+        """
+        tags = self.get_by_key(tag_key)
+
+        if len(tags) > 0:
+            return tags[0]
+
+        return None
+
     def has_tag_key(self, tag_key: str) -> bool:
         """return true if the tag key already exist in the model
         """

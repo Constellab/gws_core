@@ -1,9 +1,13 @@
 
+from typing import List
+
 from gws_core.apps.app_instance import AppInstance
-from gws_core.apps.app_process import AppProcess
-from gws_core.core.model.sys_proc import SysProc
+from gws_core.apps.app_nginx_service import (AppNginxRedirectServiceInfo,
+                                             AppNginxServiceInfo)
+from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_plugin import StreamlitPlugin
 
@@ -15,12 +19,11 @@ class StreamlitProcess(AppProcess):
 
     port: int = None
 
-    def __init__(self, port: int, host_url: str, env_hash: str = None):
-        super().__init__(host_url, env_hash)
+    def __init__(self, port: int, id_: str, env_hash: str = None):
+        super().__init__(id_, env_hash)
         self.port = port
 
-
-    def _start_process(self, app: AppInstance) -> SysProc:
+    def _start_process(self, app: AppInstance) -> AppProcessStartResult:
         if not isinstance(app, StreamlitApp):
             raise Exception("The app must be a StreamlitApp instance")
         Logger.debug(f"Starting streamlit process for port {self.port}")
@@ -65,10 +68,15 @@ class StreamlitProcess(AppProcess):
                 f'--app_dir={self.get_working_dir()}',
             ]
 
-        shell_proxy = app.get_and_check_shell_proxy()
+        shell_proxy = self._get_and_check_shell_proxy(app)
 
         # Must use the shell_mode=False to retrieve the correct pid to check the number of connections
-        return shell_proxy.run_in_new_thread(cmd, shell_mode=False)
+        process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
+
+        return AppProcessStartResult(
+            process=process,
+            services=self._get_nginx_services(),
+        )
 
     def call_health_check(self) -> bool:
         try:
@@ -81,3 +89,19 @@ class StreamlitProcess(AppProcess):
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
         return self.port == port
+
+    def _get_nginx_services(self) -> List[AppNginxServiceInfo]:
+        if Settings.is_local_env():
+            return []
+
+        service = AppNginxRedirectServiceInfo(
+            source_port=self.get_service_source_port(),
+            service_id=self.id,
+            server_name=self.get_cloud_host_name(),
+            destination_port=self.port,
+        )
+
+        return [service]
+
+    def _get_front_port(self):
+        return self.port

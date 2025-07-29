@@ -319,7 +319,10 @@ class Settings():
 
         if not os.path.exists(dir_):
             os.makedirs(dir_)
-        return tempfile.mkdtemp(dir=dir_)
+
+        temp_dir = tempfile.mkdtemp(dir=dir_)
+        os.chmod(temp_dir, 0o755)
+        return temp_dir
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
@@ -330,38 +333,21 @@ class Settings():
             return "/logs"
 
     ##### APPS ####
-    @classmethod
-    def get_app_ports(cls) -> List[int]:
-        """Returns available port for streamlit addtional app (running in virtual env)
-        """
-        if os.environ.get("APP_PORTS"):
-            # if the APP_PORTS is set, use it as the first port
-            return [int(port) for port in os.environ.get("APP_PORTS").split(",")]
-        # TODO remove once all lab manager are updated to v1.21.0
-        elif os.environ.get("STREAMLIT_APP_SERVER_PORT") and os.environ.get("STREAMLIT_APP_ADDITIONAL_PORTS"):
-            main_port = int(os.environ.get("STREAMLIT_APP_SERVER_PORT"))
-            other_ports = [int(port) for port in os.environ.get(
-                "STREAMLIT_APP_ADDITIONAL_PORTS").split(",")]
-            return [main_port] + other_ports
-        else:
-            # default ports
-            return [8501, 8502, 8503]
 
     @classmethod
-    def get_app_hosts(cls) -> List[str]:
-        """Returns available port for streamlit addtional app (running in virtual env)
+    def get_app_external_port(cls) -> int:
+        """Returns the port where all the external request to app are sent.
         """
-        if os.environ.get("APP_HOSTS"):
-            # if the APP_HOSTS is set, use it as the first host
-            return [host for host in os.environ.get("APP_HOSTS").split(",")]
-        # TODO remove once all lab manager are updated to v1.21.0
-        elif os.environ.get("STREAMLIT_APP_SERVER_HOST") and os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS"):
-            main_host = os.environ.get("STREAMLIT_APP_SERVER_HOST")
-            other_hosts = [host for host in os.environ.get("STREAMLIT_APP_ADDITIONAL_HOSTS").split(",")]
-            return [main_host] + other_hosts
+        if os.environ.get("APP_EXTERNAL_PORT"):
+            return int(os.environ.get("APP_EXTERNAL_PORT"))
         else:
-            # default hosts
-            return ["dashboard1", "dashboard2", "dashboard3"]
+            return 8510
+
+    @classmethod
+    def get_app_sub_domain(cls) -> str:
+        """Returns the sub domain of the app
+        """
+        return os.environ.get("APP_SUB_DOMAIN", "app-dev")
 
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'

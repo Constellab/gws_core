@@ -40,9 +40,24 @@ class AppInstanceDTO(BaseModelDTO):
     env_file_content: Optional[str] = None  # for env app
 
 
+class AppProcessStatus(Enum):
+    STOPPED = "STOPPED"
+    STARTING = "STARTING"
+    RUNNING = "RUNNING"
+
+
+class CreateAppAsyncResultDTO(BaseModelDTO):
+    app_id: str
+    app_url: AppInstanceUrl
+    get_status_route: str
+    status: AppProcessStatus
+    status_text: Optional[str] = None
+
+
 class AppProcessStatusDTO(BaseModelDTO):
     id: str
-    status: Literal["RUNNING", "STOPPED"]
+    status: AppProcessStatus
+    status_text: Optional[str] = None
     running_apps: List[AppInstanceDTO]
     nb_of_connections: int
 

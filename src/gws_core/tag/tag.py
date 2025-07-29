@@ -5,11 +5,13 @@ from datetime import datetime
 from typing import Dict, List, Optional, Union
 
 from fastapi.encoders import jsonable_encoder
+
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.tag_dto import (TagDTO, TagOriginDTO, TagOriginType,
                                   TagValueFormat)
 from gws_core.user.current_user_service import CurrentUserService
+from gws_core.user.user import User
 
 MAX_TAG_LENGTH = 1000
 
@@ -51,6 +53,11 @@ class TagOrigin():
     def current_user_origin() -> 'TagOrigin':
         user_id = CurrentUserService.get_and_check_current_user().id
         return TagOrigin(origin_type=TagOriginType.USER, origin_id=user_id)
+
+    @staticmethod
+    def system_origin() -> 'TagOrigin':
+        """Create a tag origin for a system user"""
+        return TagOrigin(origin_type=TagOriginType.SYSTEM, origin_id=User.get_and_check_sysuser().id)
 
 
 class TagOrigins():
@@ -166,6 +173,13 @@ class TagOrigins():
     def current_user_origins(cls) -> 'TagOrigins':
         tag_origins = TagOrigins()
         tag_origins.add_origin(TagOrigin.current_user_origin())
+        return tag_origins
+
+    @classmethod
+    def system_origins(cls) -> 'TagOrigins':
+        """Create a tag origin for a system user"""
+        tag_origins = TagOrigins()
+        tag_origins.add_origin(TagOrigin.system_origin())
         return tag_origins
 
 

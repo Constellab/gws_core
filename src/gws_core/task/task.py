@@ -10,7 +10,6 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_register_decorator import typing_registrator
 from gws_core.model.typing_style import TypingStyle
 
@@ -207,12 +206,6 @@ class Task(Process):
     @classmethod
     def get_output_specs(cls) -> OutputSpecs:
         return cls.output_specs
-
-    @final
-    @classmethod
-    def get_brick_name(cls) -> str:
-        typing_name = TypingNameObj.from_typing_name(cls.get_typing_name())
-        return typing_name.brick_name
 
     def create_tmp_dir(self) -> str:
         """

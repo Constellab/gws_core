@@ -1,4 +1,6 @@
 
+import os
+
 from gws_core.apps.app_config import AppConfig, app_decorator
 from gws_core.apps.app_dto import AppType
 from gws_core.config.config_params import ConfigParams
@@ -22,6 +24,14 @@ class StreamlitShowcaseApp(AppConfig):
             __file__,
             "_streamlit_showcase_app"
         )
+
+    def get_dev_config_json_path(self) -> str:
+        """Get the path to the dev config json file.
+
+        :return: path to the dev config json file
+        :rtype: str
+        """
+        return os.path.join(self.get_app_folder_path(), 'dev_config.json')
 
 
 @task_decorator("GenerateStreamlitShowcaseApp", human_name="Generate streamlit showcase app",

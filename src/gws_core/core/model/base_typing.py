@@ -2,7 +2,10 @@
 
 from typing import final
 
+from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.db.version import Version
 from gws_core.core.model.base import Base
+from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_style import TypingStyle
 
 
@@ -55,6 +58,21 @@ class BaseTyping(Base):
         :rtype: str
         """
         return cls.__style__
+
+    @final
+    @classmethod
+    def get_typing_name_obj(cls) -> TypingNameObj:
+        return TypingNameObj.from_typing_name(cls.get_typing_name())
+
+    @final
+    @classmethod
+    def get_brick_name(cls) -> str:
+        return cls.get_typing_name_obj().brick_name
+
+    @final
+    @classmethod
+    def get_brick_version(cls) -> Version:
+        return BrickHelper.get_brick_version(cls.get_brick_name())
 
     ############################################### SYSTEM METHODS ####################################################
 

@@ -6,6 +6,7 @@ import reflex as rx
 from typing_extensions import TypedDict
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
+APP_CONFIG_FILENAME = 'app_config.json'
 
 
 class StreamlitConfigDTO(TypedDict):
@@ -17,6 +18,27 @@ class StreamlitConfigDTO(TypedDict):
     # Only provided if the app requires authentication
     # Key is access token, value is user id
     user_access_tokens: Dict[str, str]
+
+
+class QueryParamObject():
+
+    def __init__(self, query_param_str: str):
+        """Initialize the QueryParamObject with a query parameter string."""
+        self.query_param_str = query_param_str
+        self.params = self._parse_query_params()
+
+    def _parse_query_params(self) -> Dict[str, str]:
+        """Parse the query parameter string into a dictionary."""
+        params = {}
+        if self.query_param_str:
+            for param in self.query_param_str.split('&'):
+                key, value = param.split('=', 1)
+                params[key] = value
+        return params
+
+    def get(self, key: str, default=None) -> Optional[str]:
+        """Get a parameter value by key."""
+        return self.params.get(key, default)
 
 
 class ReflexMainStateBase(rx.State):
@@ -52,9 +74,7 @@ class ReflexMainStateBase(rx.State):
 
     def _load_app_config(self) -> dict:
         """Load the app configuration from the environment variable."""
-        app_config_path = os.environ.get('GWS_REFLEX_APP_CONFIG_FILE_PATH')
-        if not app_config_path:
-            raise ValueError("GWS_REFLEX_APP_CONFIG_FILE_PATH environment variable is not set")
+        app_config_path = self._get_app_config_file_path()
 
         if not os.path.exists(app_config_path):
             raise FileNotFoundError(f"App config file not found at {app_config_path}")
@@ -65,6 +85,23 @@ class ReflexMainStateBase(rx.State):
 
         except Exception as e:
             raise ValueError(f"Error reading app config file: {e}")
+
+    def _get_app_config_file_path(self) -> str:
+        if self.is_dev_mode():
+            file_path = os.environ.get('GWS_REFLEX_DEV_CONFIG_FILE_PATH')
+            if not file_path:
+                raise ValueError("GWS_REFLEX_DEV_CONFIG_FILE_PATH environment variable is not set in development mode")
+            return file_path
+        else:
+            config_dir = os.environ.get('GWS_REFLEX_APP_CONFIG_DIR_PATH')
+            if not config_dir:
+                raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
+
+            query_param = self.get_query_params()
+            app_id = query_param.get('gws_app_id')
+            if not app_id:
+                raise ValueError("gws_app_id query parameter is not set")
+            return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
 
     def is_dev_mode(self) -> bool:
         """Check if the app is running in development mode."""
@@ -87,6 +124,10 @@ class ReflexMainStateBase(rx.State):
         """Check if the app is running in a virtual environment."""
         return os.environ.get('GWS_REFLEX_VIRTUAL_ENV', 'false').lower() == 'true'
 
+    def get_query_params(self) -> QueryParamObject:
+        """Get the query parameters from the app configuration."""
+        return QueryParamObject(self.router.url.query)
+
     ##################### AUTHENTICATION #####################
 
     def requires_authentication(self) -> bool:
@@ -94,7 +135,9 @@ class ReflexMainStateBase(rx.State):
         return self.get_app_config().get('requires_authentication', False)
 
     def is_authenticated(self) -> bool:
-        url_token = self.router.page.params.get('gws_token')
+        query_params = self.get_query_params()
+
+        url_token = query_params.get('gws_token')
 
         env_token = os.environ.get('GWS_REFLEX_TOKEN')
 
@@ -118,7 +161,8 @@ class ReflexMainStateBase(rx.State):
         if not self.requires_authentication():
             return None
 
-        return self.router.page.params.get('gws_user_access_token')
+        query_params = self.get_query_params()
+        return query_params.get('gws_user_access_token')
 
     def get_user_id(self) -> Optional[str]:
         """Get the user ID from the app configuration."""

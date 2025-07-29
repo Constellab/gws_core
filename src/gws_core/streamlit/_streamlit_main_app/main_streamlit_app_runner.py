@@ -295,6 +295,9 @@ class StreamlitMainAppRunner:
                 st.stop()
 
             self.app_main_path = app_main_path
+            # clean the path to remove trailing slash if any
+            if app_dir_abs_path.endswith('/'):
+                app_dir_abs_path = app_dir_abs_path[:-1]
             self.app_dir_path = app_dir_abs_path
 
         except Exception as e:

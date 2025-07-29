@@ -93,7 +93,7 @@ class BrickHelper():
     def get_brick_version(cls, obj: Any) -> Version:
         """Methode to return a brick version of any object
            If object, retrieve the brick of the object
-           If string, retrieve the brick of name
+           If string, retrieve the brick from the provided name
         """
 
         brick_info = cls.get_brick_info_and_check(obj)

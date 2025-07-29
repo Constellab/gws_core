@@ -54,6 +54,16 @@ class EntityTagList():
         """
         return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
 
+    def get_first_tag_by_key(self, tag_key: str) -> Optional[EntityTag]:
+        """return the first tag with the given key or None if it does not exist
+        """
+        tags = self.get_tags_by_key(tag_key)
+
+        if len(tags) > 0:
+            return tags[0]
+
+        return None
+
     def has_tag_key(self, tag_key: str) -> bool:
         """return true if the tag key already exist in the model
         """

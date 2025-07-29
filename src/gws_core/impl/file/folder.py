@@ -8,6 +8,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_view import LocalFolderView
 from gws_core.model.typing_style import TypingStyle
@@ -176,6 +177,13 @@ class Folder(FSNode):
 
         FileHelper.delete_node(sub_node_path, ignore_errors)
 
+    def empty_folder(self) -> None:
+        """
+        Empty the folder content. This will delete all files and sub folders inside this folder.
+        The folder itself will not be deleted.
+        """
+        FileHelper.delete_dir_content(self.path)
+
     @view(view_type=LocalFolderView, human_name="View folder content",
           short_description="View the sub files and folders", default_view=True)
     def view_as_json(self, params: ConfigParams) -> LocalFolderView:
@@ -199,3 +207,15 @@ class Folder(FSNode):
         view_ = sub_file.get_default_view(params.get('line_number', 1))
         view_.set_title(sub_file.get_base_name())
         return view_
+
+    @staticmethod
+    def new_temp_folder() -> 'Folder':
+        """
+        Create a new temporary folder. The folder will be created in the system temporary directory.
+        If this resource is then saved, it will be moved to the file store.
+
+        :return: a new temporary folder
+        :rtype: Folder
+        """
+        temp_folder_path = Settings.make_temp_dir()
+        return Folder(temp_folder_path)

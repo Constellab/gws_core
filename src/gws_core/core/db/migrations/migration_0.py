@@ -2,6 +2,7 @@
 
 import ast
 import os
+import subprocess
 from copy import deepcopy
 from typing import Dict, List
 
@@ -1423,3 +1424,11 @@ class Migration0130(BrickMigration):
                 "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")
             TaskModel.execute_sql(
                 "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")
+
+    @brick_migration('0.15.3', short_description='Fix access write in filestore')
+    class Migration0153(BrickMigration):
+
+        @classmethod
+        def migrate(cls, from_version: Version, to_version: Version) -> None:
+            # Set chmod to 755 for filestore directory and all sub directories/file recursively
+            subprocess.run(['chmod', '-R', '755', '/data/filestore'], check=True)

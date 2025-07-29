@@ -15,9 +15,9 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path to the JS
     app_cli = AppCli(config_file_path)
     shell_proxy = app_cli.build_shell_proxy()
 
-    streamit_app = ReflexApp("main", "main", shell_proxy)
+    streamit_app = ReflexApp("123", "main", shell_proxy)
     streamit_app.set_dev_mode(config_file_path)
-    streamit_app.set_app_folder(app_cli.get_app_dir_path())
+    streamit_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
 
     app_cli.start_app(streamit_app)
 

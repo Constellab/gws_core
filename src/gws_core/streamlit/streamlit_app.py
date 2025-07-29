@@ -80,4 +80,4 @@ class StreamlitApp(AppInstance):
 
     def get_app_type(self) -> AppType:
         """Get the type of the app."""
-        return AppType.REFLEX
+        return AppType.STREAMLIT

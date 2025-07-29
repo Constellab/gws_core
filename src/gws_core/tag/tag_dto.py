@@ -14,11 +14,12 @@ ShareTagMode = Literal['PUBLIC', 'SPACE']
 # Origin of the tag (who created the tag)
 # If USER, the origin_id is the user id
 # If S3, the origin_id is the external source id
-# If TASK, (when the task tagged the resource object directly) the origin_id is task model id
+# If TASK, (when the task tags the resource object directly) the origin_id is task model id
 # If TASK_PROPAGATED, the origin_id is task model id that propagated the tag
 # If EXP_PROPAGATED, the origin_id is scenario model id that propagated the tag
 # If RESOURCE_PROPAGATED, the origin_id is resource model id that propagated the tag
 # If VIEW_PROPAGATED, the origin_id is view config id that propagated the tag
+# If SYSTEM, the origin_id is automatically set to system user id
 
 
 class TagOriginType(Enum):
@@ -29,6 +30,7 @@ class TagOriginType(Enum):
     SCENARIO_PROPAGATED = 'SCENARIO_PROPAGATED'
     RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
     VIEW_PROPAGATED = 'VIEW_PROPAGATED'
+    SYSTEM = 'SYSTEM'
 
 
 class TagValueFormat(Enum):

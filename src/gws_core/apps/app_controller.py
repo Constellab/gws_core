@@ -1,7 +1,7 @@
 
 from fastapi import Depends
 
-from gws_core.apps.app_dto import AppsStatusDTO
+from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO
 from gws_core.apps.apps_manager import AppsManager
 
 from ..core_controller import core_app
@@ -10,7 +10,7 @@ from ..user.auth_service import AuthService
 
 @core_app.get("/apps/status", tags=["App"],
               summary="Get apps status")
-def get_app_status(_=Depends(AuthService.check_user_access_token)) -> AppsStatusDTO:
+def get_all_apps_status(_=Depends(AuthService.check_user_access_token)) -> AppsStatusDTO:
     """
     Get app apps status
     """
@@ -37,3 +37,18 @@ def stop_process(id_: str,
     """
 
     return AppsManager.stop_process(id_)
+
+
+@core_app.get("/apps/process/{token}/status", tags=["App"],
+              summary="Get app status by ID")
+def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
+    """
+    Get the status of a specific app by its ID
+    """
+
+    app_process = AppsManager.find_process_by_token(token)
+
+    if app_process is None:
+        raise Exception("Invalid token")
+
+    return app_process.get_status_dto()

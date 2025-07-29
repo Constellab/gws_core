@@ -1,7 +1,6 @@
 
 
 import os
-import threading
 from abc import abstractmethod
 from typing import Dict, List, Optional
 
@@ -23,7 +22,7 @@ from gws_core.user.user import User
 
 class AppInstance():
 
-    app_id: str = None
+    resource_model_id: str = None
     name: str = None
 
     # for normal app, the resources are the source ids
@@ -48,10 +47,11 @@ class AppInstance():
 
     APP_CONFIG_FILENAME = 'app_config.json'
 
-    def __init__(self, app_id: str,
+    def __init__(self, resource_model_id: str,
                  name: str,
-                 shell_proxy: ShellProxy, requires_authentication: bool = True):
-        self.app_id = app_id
+                 shell_proxy: ShellProxy,
+                 requires_authentication: bool = True):
+        self.resource_model_id = resource_model_id
         self.name = name
         self.resources = []
         self._shell_proxy = shell_proxy
@@ -106,26 +106,13 @@ class AppInstance():
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
         """Return true if the app was generated from the given resource model id
         """
-        return self.app_id == resource_model_id
+        return self.resource_model_id == resource_model_id
 
     def is_virtual_env_app(self) -> bool:
         return isinstance(self._shell_proxy, BaseEnvShell)
 
     def get_shell_proxy(self) -> ShellProxy:
         return self._shell_proxy
-
-    def get_and_check_shell_proxy(self) -> ShellProxy:
-        # check if the env is installed
-        # if should be installed by the task that generated the app
-        # otherwise the env would installed when the user open the app, leading to a long loading time
-        shell_proxy = self.get_shell_proxy()
-        if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
-            thread = threading.Thread(target=shell_proxy.install_env)
-            thread.daemon = True
-            thread.start()
-            raise Exception(
-                "The virtual environment is not installed, it was deleted. Reinstalling the virtual environment in background. Follow the progress in the log and retry later. If the problem persists, please re-execute the task that generated the app to re-install the virtual environment.")
-        return shell_proxy
 
     def add_user(self, user_id: str) -> str:
         """Add the user to the list of users that can access the app and return the user access token
@@ -151,7 +138,7 @@ class AppInstance():
 
         params = {
             'gws_token': token,
-            'gws_app_id': self.app_id
+            'gws_app_id': self.resource_model_id
         }
 
         user: User = None
@@ -186,7 +173,7 @@ class AppInstance():
         shell_proxy = self.get_shell_proxy()
         app_instance_dto = AppInstanceDTO(
             app_type=self.get_app_type(),
-            app_resource_id=self.app_id,
+            app_resource_id=self.resource_model_id,
             name=self.name,
             app_config_path=self.get_config_file_path(),
             env_type='',
@@ -231,7 +218,7 @@ class AppInstance():
     def _generate_config_dir(self, working_dir: str) -> str:
         """Generate the app config directory where the config file will be stored
         """
-        self._app_config_dir = os.path.join(working_dir, self.app_id)
+        self._app_config_dir = os.path.join(working_dir, self.resource_model_id)
         FileHelper.create_dir_if_not_exist(self._app_config_dir)
 
         return self._app_config_dir

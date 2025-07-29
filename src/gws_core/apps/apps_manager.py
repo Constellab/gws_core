@@ -1,14 +1,16 @@
 
 
-from typing import Dict, List
+from typing import Dict
 
-from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO
+from gws_core.apps.app_dto import (AppInstanceUrl, AppsStatusDTO,
+                                   CreateAppAsyncResultDTO)
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.streamlit.streamlit_app import StreamlitApp
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 
@@ -31,73 +33,100 @@ class AppsManager():
     # key is the env hash
     running_processes: Dict[str, AppProcess] = {}
 
+    MAX_RUNNING_APPS = 50
+
     @classmethod
     def create_or_get_app(cls, app: AppInstance) -> AppInstanceUrl:
-        cls._refresh_processes()
-        # check if the app is already running in one of the processes
-        for running_process in cls.running_processes.values():
-            if running_process.has_app(app.app_id):
-                app = running_process.get_app(app.app_id)
-                return cls.get_app_full_url(app.app_id)
+        app_process = cls._create_or_get_app_async(app)
 
-        cls._create_app(app)
-        return cls.get_app_full_url(app.app_id)
+        app_process.wait_for_start()
+
+        if not app_process.is_running():
+            raise Exception("App failed to start")
+
+        return cls.get_app_full_url(app.resource_model_id)
 
     @classmethod
-    def _create_app(cls, app: AppInstance) -> None:
+    def create_or_get_app_async(cls, app: AppInstance) -> CreateAppAsyncResultDTO:
+        """Create app asynchronously and return the app ID. The app will be started in background."""
+        # Create or get process and add app to it
+        app_process = cls._create_or_get_app_async(app)
 
+        get_status_route = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/apps/process/" + \
+                           f"{app_process.get_token()}/status"
+
+        return CreateAppAsyncResultDTO(
+            app_id=app.resource_model_id,
+            app_url=app_process.get_app_full_url(app.resource_model_id),
+            get_status_route=get_status_route,
+            status=app_process.get_status(),
+            status_text=app_process.get_status_text()
+        )
+
+    @classmethod
+    def _create_or_get_app_async(cls, app: AppInstance) -> AppProcess:
+        """Create app asynchronously and return the app ID. The app will be registered and started in background."""
+        cls._refresh_processes()
+
+        # Create or get process and add app to it
+        app_process = cls._register_app_and_process(app)
+
+        app_process.start_app_async(app.resource_model_id)
+
+        return app_process
+
+    @classmethod
+    def _register_app_and_process(cls, app: AppInstance) -> AppProcess:
+        """Create or get process and add app to it if not exists"""
         # get the env hash for this app
         env_hash: str = app.get_app_process_hash()
 
-        # if the process for this env already exist, create the app in this process
-        # no need to create a new process with a new port
-        if env_hash in cls.running_processes:
-            app_process = cls.running_processes[env_hash]
-            app_process.add_app_to_process(app)
-            return
+        app_process = cls.running_processes.get(env_hash)
 
-        # create a new streamlit process
-        # find available port
-        # env apps run on different ports
-        available_ports = cls._get_env_app_available_ports()
+        # register the process if it does not exist
+        if not app_process:
 
-        if len(available_ports) == 0:
-            raise Exception(
-                "No available port for the app, please stop existing app in Settings > Monitoring > Others > Apps")
+            # check number of running apps
+            if len(cls.running_processes) >= cls.MAX_RUNNING_APPS:
+                raise Exception(f"Maximum number of running apps reached ({cls.MAX_RUNNING_APPS}). "
+                                "Please stop some apps before starting new ones.")
 
-        # retrieve the corresponding host for the port
-        front_port = available_ports[0]  # take the first available port
+            # retrieve the corresponding host for the port
+            front_port = cls._get_next_available_port()  # take the first available port
 
-        # create a new process
-        new_app_process: AppProcess = None
-        if isinstance(app, StreamlitApp):
-            new_app_process = StreamlitProcess(front_port.port, front_port.host_url, env_hash)
-        elif isinstance(app, ReflexApp):
-            # reflex needs both front and back ports
-            if len(available_ports) < 2:
-                raise Exception(
-                    "No available port for the reflex app, please stop existing app in Settings > Monitoring > Others > Apps")
-            back_port = available_ports[1]  # take the second available port
-            new_app_process = ReflexProcess(front_port.port, front_port.host_url,
-                                            back_port.port, back_port.host_url, env_hash)
-        else:
-            raise Exception(f"Unsupported app type: {type(app)}")
+            # create a new process with assigned ports
+            if isinstance(app, StreamlitApp):
+                app_process = StreamlitProcess(front_port, StringHelper.generate_uuid(), env_hash)
+            elif isinstance(app, ReflexApp):
+                back_port = cls._get_next_available_port(front_port + 1)  # take the next available port for the backend
+                # for reflex app, we need both front and back ports
+                # also we set the id as the resource model id because 1 Process = 1 app
+                # and the id is used to build the app front and back URL and the url must not change
+                # when the app is restarted (because back url is in front build)
+                app_process = ReflexProcess(front_port, back_port, app.resource_model_id, env_hash)
+            else:
+                raise Exception(f"Unsupported app type: {type(app)}")
 
-        cls.running_processes[env_hash] = new_app_process
+        # Add the app to the process if it does not exist
+        app_process.add_app_if_not_exists(app)
 
-        try:
-            new_app_process.add_app_and_start_process(app)
-        except Exception as e:
-            cls.stop_process(env_hash)
-            raise e
+        # Add the app to the process and register the process
+        cls.running_processes[env_hash] = app_process
+
+        return app_process
 
     @classmethod
-    def _get_env_app_available_ports(cls) -> List[AppPort]:
-        available_ports: List[AppPort] = []
-        for app_port in cls.get_env_app_ports():
-            if not cls._port_is_used(app_port.port):
-                available_ports.append(app_port)
-        return available_ports
+    def _get_next_available_port(cls, start_port: int = None) -> int:
+        """Get the next available port for an app.
+        This is used to find a port for the env apps.
+        """
+        if start_port is None:
+            start_port = Settings.get_app_external_port() + 1
+
+        while cls._port_is_used(start_port):
+            start_port += 1
+
+        return start_port
 
     @classmethod
     def _port_is_used(cls, port: int) -> bool:
@@ -126,7 +155,7 @@ class AppsManager():
         """Method to remove the stopped processes from the running_processes dict.
         Because if it is killed after inactivity, the APpManager does not know it.
         """
-        stopped_processes = [x for x in cls.running_processes.values() if not x.process_is_running()]
+        stopped_processes = [x for x in cls.running_processes.values() if x.is_stopped()]
 
         for process in stopped_processes:
             del cls.running_processes[process.env_hash]
@@ -137,22 +166,6 @@ class AppsManager():
         return AppsStatusDTO(
             processes=[process.get_status_dto() for process in cls.running_processes.values()],
         )
-
-    @classmethod
-    def get_env_app_ports(cls) -> List[AppPort]:
-        ports = Settings.get_app_ports()
-        hosts = Settings.get_app_hosts()
-        virtual_host = Settings.get_virtual_host()
-
-        app_ports: List[AppPort] = []
-        for i, port in enumerate(ports):
-            if Settings.is_cloud_env():
-                host_url = f"https://{hosts[i]}.{virtual_host}"
-            else:
-                host_url = f"http://localhost:{port}"
-
-            app_ports.append(AppPort(port=port, host_url=host_url))
-        return app_ports
 
     @classmethod
     def get_app_full_url(cls, app_id: str) -> AppInstanceUrl:
@@ -175,6 +188,26 @@ class AppsManager():
         for running_process in cls.running_processes.values():
             if running_process.has_app(app_id):
                 return running_process.user_has_access_to_app(app_id, user_access_token)
+
+        return None
+
+    @classmethod
+    def find_process_of_app(cls, resource_model_id: str) -> AppProcess | None:
+        """Find the process that contains the app with the given resource model id
+        """
+        for running_process in cls.running_processes.values():
+            if running_process.has_app(resource_model_id):
+                return running_process
+
+        return None
+
+    @classmethod
+    def find_process_by_token(cls, token: str) -> AppProcess | None:
+        """Find the process that contains the app with the given token
+        """
+        for running_process in cls.running_processes.values():
+            if running_process.get_token() == token:
+                return running_process
 
         return None
 

@@ -3,29 +3,56 @@
 import time
 from abc import abstractmethod
 from threading import Thread
-from typing import Dict
+from typing import Dict, List
 
 import psutil
 
-from gws_core.apps.app_dto import AppInstanceUrl, AppProcessStatusDTO
+from gws_core.apps.app_dto import (AppInstanceUrl, AppProcessStatus,
+                                   AppProcessStatusDTO)
 from gws_core.apps.app_instance import AppInstance
+from gws_core.apps.app_nginx_manager import AppNginxManager
+from gws_core.apps.app_nginx_service import AppNginxServiceInfo
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.shell.base_env_shell import BaseEnvShell
+from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.user.current_user_service import CurrentUserService
 
 
-class AppProcess:
+class AppProcessStartResult:
 
-    host_url: str = None
+    process: SysProc
+    services: List[AppNginxServiceInfo]
+
+    def __init__(self, process: SysProc, services: List[AppNginxServiceInfo]):
+        self.process = process
+        self.services = services
+
+
+class AppProcess:
+    """ Process of an app. A process is an instance of a running command that serves the app.
+
+    A process can have multiple apps running in it.
+
+    The apps are served on local ports. A Nginx reverse proxy is used to
+    expose the apps on the host URL.All the apps are externally exposed to the
+    same port, but depending on the sub domain, the local reverse proxy will
+    redirect the request to the correct app.
+    """
+
+    id: str = None
 
     _token: str = None
 
     env_hash: str = None
 
     current_running_apps: Dict[str, AppInstance] = None
+
+    is_dev_mode: bool = None
 
     _process: SysProc = None
     _working_dir: str = None
@@ -35,8 +62,14 @@ class AppProcess:
 
     _check_is_running: bool = False
 
+    _services: List[AppNginxServiceInfo] = None
+
+    # Status tracking
+    _status: AppProcessStatus = AppProcessStatus.STOPPED
+    _status_text: str = ""
+
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 30
+    CHECK_RUNNING_INTERVAL = 5
 
     # timeout in second to wait for the main app to start
     START_APP_TIMEOUT = 30
@@ -45,14 +78,19 @@ class AppProcess:
     # before killing it
     SUCCESSIVE_CHECK_BEFORE_KILL = 3
 
-    def __init__(self, host_url: str, env_hash: str = None):
-        self.host_url = host_url
+    MAX_WAIT_TIME = 120  # seconds
+
+    def __init__(self, id_: str, env_hash: str = None):
+        self.id = id_
         self.env_hash = env_hash
         self._token = StringHelper.generate_random_chars(50)
         self.current_running_apps = {}
+        self._services = []
+        self._status = AppProcessStatus.STOPPED
+        self._status_text = ""
 
     @abstractmethod
-    def _start_process(self, app: AppInstance) -> SysProc:
+    def _start_process(self, app: AppInstance) -> AppProcessStartResult:
         """Start the process for the app"""
 
     @abstractmethod
@@ -63,33 +101,102 @@ class AppProcess:
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
 
-    def add_app_and_start_process(self, app: AppInstance) -> None:
-        """Start the process for the app"""
-        app.generate_app(self.get_working_dir())
+    @abstractmethod
+    def _get_front_port(self) -> int:
+        """Get the front port of the app process.
+        This is used to expose the app on the host URL.
+        """
 
-        self._process = self._start_process(app)
+    def get_status(self) -> AppProcessStatus:
+        """Get the current status of the app process"""
+        return self._status
 
-        self._current_no_connection_check = 0
+    def is_stopped(self) -> bool:
+        """Check if the app process is stopped"""
+        return self._status == AppProcessStatus.STOPPED
+
+    def is_running(self) -> bool:
+        """Check if the app process is running"""
+        return self._status == AppProcessStatus.RUNNING
+
+    def is_starting(self) -> bool:
+        """Check if the app process is starting"""
+        return self._status == AppProcessStatus.STARTING
+
+    def get_status_text(self) -> str:
+        """Get the current status text of the app process"""
+        return self._status_text
+
+    def set_status(self, status: AppProcessStatus, status_text: str = ""):
+        """Set the status and status text of the app process"""
+        self._status = status
+        self._status_text = status_text
+        Logger.debug(f"App process {self.id} status changed to {status.value}: {status_text}")
+
+    def get_token(self) -> str:
+        """Get the token of the app process.
+        This is used to secure the app and allow access to it.
+        """
+        return self._token
+
+    def add_app_if_not_exists(self, app: AppInstance) -> None:
+        """Add an app to the process."""
+        if self.is_dev_mode is None:
+            self.is_dev_mode = app.is_dev_mode()
+
+        if app.is_dev_mode() != self.is_dev_mode:
+            raise Exception("Cannot add an app with a different dev mode to the process")
+
+        if app.resource_model_id in self.current_running_apps:
+            return
+
+        self.current_running_apps[app.resource_model_id] = app
+
+    def start_app_async(self, app_id: str) -> None:
+        """Start the process for the app using app_id"""
+
+        if self._status != AppProcessStatus.STOPPED:
+            return
+
+        # Find the app instance
+        app = self.get_app(app_id)
+        if not app:
+            raise Exception(f"App with ID {app_id} not found in process")
+
+        self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
         try:
-            self.wait_main_app_health_check()
+            app.generate_app(self.get_working_dir())
+
+            thread = Thread(target=self._start_app_and_watch, args=(app,))
+            thread.start()
         except Exception as e:
             Logger.error("Error while starting streamlit app, killing the process")
             self.stop_process()
             raise e
 
-        self.start_check_running()
+    def _start_app_and_watch(self, app: AppInstance) -> None:
+        try:
 
-        self.current_running_apps[app.app_id] = app
+            result = self._start_process(app)
+            self._process = result.process
+            self._services = result.services
 
-    def add_app_to_process(self, app: AppInstance) -> None:
-        """Add the app to an existing process.
+            if self._services:
+                AppNginxManager.get_instance().register_services(self._services)
 
-        :param app: _description_
-        :type app: AppInstance
-        """
-        app.generate_app(self.get_working_dir())
-        self.current_running_apps[app.app_id] = app
+            self._current_no_connection_check = 0
+
+            self.set_status(AppProcessStatus.STARTING, "Waiting for app to be ready...")
+            self.wait_main_app_health_check()
+
+            self.set_status(AppProcessStatus.RUNNING, "App running successfully")
+
+            self.start_check_running()
+        except Exception as e:
+            Logger.error(f"Error while starting app {app.resource_model_id}: {e}")
+            self.stop_process()
+            raise e
 
     def wait_main_app_health_check(self) -> None:
         # wait until ping http://localhost:8080/healthz  returns 200
@@ -103,10 +210,10 @@ class AppProcess:
             Logger.debug("Waiting for app to start")
             i += 1
             if i > self.START_APP_TIMEOUT:
+                self.set_status(
+                    AppProcessStatus.STOPPED,
+                    "The app did not start in time, please check the logs for more details or retry later.")
                 raise Exception("The app did not start in time, please check the logs for more details or retry later.")
-
-    def process_is_running(self) -> bool:
-        return self._process is not None and self._process.is_alive()
 
     def get_working_dir(self) -> str:
         if self._working_dir is None:
@@ -116,21 +223,43 @@ class AppProcess:
     def stop_process(self) -> None:
         """Kill the process and all apps
         """
+        if self.is_stopped():
+            return
+
+        Logger.debug("Killing the app")
         if self._process is not None:
             self._process.kill_with_children()
             self._process = None
 
         for app in self.current_running_apps.values():
             app.destroy()
+        self.current_running_apps = {}
 
         self.current_running_apps = {}
         self._current_no_connection_check = 0
+
+        FileHelper.delete_dir(self.get_working_dir())
+
+        if self._services:
+            # unregister the nginx services
+            services_ids = [service.service_id for service in self._services]
+            AppNginxManager.get_instance().unregister_services(services_ids)
+        self._services = []
+
+        self.set_status(AppProcessStatus.STOPPED, "Process stopped")
 
     def has_app(self, app_id: str) -> bool:
         return app_id in self.current_running_apps
 
     def get_app(self, app_id: str) -> AppInstance | None:
         return self.current_running_apps.get(app_id)
+
+    def get_and_check_app(self, app_id: str) -> AppInstance:
+        """Get the app instance and check if it exists"""
+        app = self.get_app(app_id)
+        if not app:
+            raise Exception(f"App with ID {app_id} not found in process")
+        return app
 
     def user_has_access_to_app(self, app_id: str, user_access_token: str) -> str | None:
         """Return the user id from the user access token if the user has access to the app
@@ -150,12 +279,27 @@ class AppProcess:
 
         return None
 
-    def get_app_full_url(self, app_id: str) -> AppInstanceUrl:
-        app = self.get_app(app_id)
-        if not app:
-            raise Exception(f"App {app_id} not found")
+    def get_cloud_host_name(self, suffix: str = "") -> str:
+        """Get the host name for the app process based on the port and suffix.
+        This is used to generate the host URL for the app.
+        """
+        sub_domain = Settings.get_app_sub_domain()
+        virtual_host = Settings.get_virtual_host()
 
-        return app.get_app_full_url(self.host_url, self._token)
+        return f"{sub_domain}-{self.id}{suffix}.{virtual_host}"
+
+    def get_host_url(self) -> str:
+        if Settings.is_cloud_env():
+            return f"https://{self.get_cloud_host_name()}"
+        else:
+            return f"http://localhost:{self._get_front_port()}"
+
+    def get_app_full_url(self, app_id: str) -> AppInstanceUrl:
+        app = self.get_and_check_app(app_id)
+        return app.get_app_full_url(self.get_host_url(), self._token)
+
+    def get_service_source_port(self) -> int:
+        return Settings.get_app_external_port()
 
     ############################################ CHECK RUNNING ############################################
 
@@ -167,41 +311,61 @@ class AppProcess:
             return
 
         self._check_is_running = True
-        Thread(target=self._check_running_loop).start()
+        self._check_running_loop()
 
     def _check_running_loop(self) -> None:
-        while self.process_is_running():
-            time.sleep(self.CHECK_RUNNING_INTERVAL)
-            Logger.debug("Checking running app")
 
-            try:
+        try:
+            while True:
+
+                time.sleep(self.CHECK_RUNNING_INTERVAL)
+                Logger.debug("Checking running app")
+
+                # stop the loop if the status was changed to stopped
+                if not self.is_running():
+                    Logger.debug("App process is not running, stopping the check running loop")
+                    self.stop_process()
+                    return
+
+                if not self.subprocess_is_running():
+                    Logger.debug("Subprocess is not running, stopping the app")
+                    self.stop_process()
+                    return
+                # if there is not more connection to the app, we stop it
                 if not self._check_running():
-                    break
-            except Exception as e:
-                Logger.error(f"Error while checking running app: {e}")
+                    Logger.debug("No more connection to the app, stopping the app")
+                    self.stop_process()
+                    return
 
-        Logger.debug("Killing the app")
-        self.stop_process()
+        finally:
+            self._check_is_running = False
 
-        self._check_is_running = False
+    def subprocess_is_running(self) -> bool:
+        return self._process is not None and self._process.is_alive()
 
     def _check_running(self) -> bool:
-        # count the number of network connections of the app
-        connection_count = self.count_connections()
 
-        Logger.debug(f"App has {connection_count} connections")
-        if connection_count <= 0:
-            # if connection_count <= 0 or connection_count < app.default_number_of_connection:
-            self._current_no_connection_check += 1
+        try:
+            # count the number of network connections of the app
+            connection_count = self.count_connections()
 
-            if self._current_no_connection_check >= self.SUCCESSIVE_CHECK_BEFORE_KILL:
-                Logger.debug("No connections, killing the app")
-                return False
+            Logger.debug(f"App has {connection_count} connections")
+            if connection_count <= 0:
+                # if connection_count <= 0 or connection_count < app.default_number_of_connection:
+                self._current_no_connection_check += 1
 
-        else:
-            self._current_no_connection_check = 0
+                if self._current_no_connection_check >= self.SUCCESSIVE_CHECK_BEFORE_KILL:
+                    Logger.debug("No connections, killing the app")
+                    return False
 
-        return True
+            else:
+                self._current_no_connection_check = 0
+
+            return True
+        except Exception as e:
+            # if an error occurs, we assume the app is still running
+            Logger.error(f"Error while checking running app: {e}")
+            return True
 
     def count_connections(self) -> int:
         if not self._process:
@@ -218,7 +382,8 @@ class AppProcess:
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
             id=self.env_hash,
-            status="RUNNING" if self.process_is_running() else "STOPPED",
+            status=self._status,
+            status_text=self._status_text,
             running_apps=[app.to_dto() for app in self.current_running_apps.values()],
             nb_of_connections=self.count_connections(),
         )
@@ -232,3 +397,22 @@ class AppProcess:
             return FrontService.get_dark_theme()
 
         return FrontService.get_light_theme()
+
+    def _get_and_check_shell_proxy(self, app_instance: AppInstance) -> ShellProxy:
+        # check if the env is installed
+        # if should be installed by the task that generated the app
+        # otherwise the env would installed when the user open the app, leading to a long loading time
+        shell_proxy = app_instance.get_shell_proxy()
+        if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
+            self.set_status(AppProcessStatus.STARTING, "Installing virtual environment (it may take a while)...")
+            shell_proxy.install_env()
+        return shell_proxy
+
+    def wait_for_start(self) -> AppProcessStatus:
+        """Wait for the process to start"""
+        i = 0
+        while self.is_starting() and i < self.MAX_WAIT_TIME:
+            time.sleep(1)  # wait for 1 second
+            i += 1
+
+        return self.get_status()

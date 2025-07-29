@@ -1,4 +1,6 @@
 
+import os
+
 from gws_core.apps.app_config import AppConfig, app_decorator
 from gws_core.apps.app_dto import AppType
 from gws_core.apps.reflex.reflex_resource import ReflexResource
@@ -23,6 +25,14 @@ class ReflexShowcaseApp(AppConfig):
             __file__,
             "_reflex_showcase_app"
         )
+
+    def get_dev_config_json_path(self) -> str:
+        """Get the path to the dev config json file.
+
+        :return: path to the dev config json file
+        :rtype: str
+        """
+        return os.path.join(self.get_app_folder_path(), 'dev_config.json')
 
 #     def get_shell_proxy(self) -> ShellProxy:
 #         return MambaShellProxy.from_env_str("""
@@ -69,7 +79,7 @@ class GenerateReflexShowcaseApp(Task):
             reflex_app.add_resource(resource, create_new_resource=False)
 
         reflex_app.set_app_config(ReflexShowcaseApp())
-        # reflex_app.set_requires_authentication(False)
+        reflex_app.set_requires_authentication(False)
         reflex_app.set_name("Reflex Showcase App")
 
         return {"reflex_app": reflex_app}

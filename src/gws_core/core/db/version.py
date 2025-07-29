@@ -112,6 +112,10 @@ class Version():
         """
         return Infinity if self.sub_patch is None else self.sub_patch
 
+    def to_string(self) -> str:
+        """return the version as a string
+        """
+        return str(self)
 
 class VersionInvalidException(Exception):
     def __init__(self, str_version: str) -> None:
