@@ -38,7 +38,8 @@ class CorsConfig():
     @classmethod
     def configure_response_cors(cls, request: Request, response: Response) -> Response:
         """Manually configure the response with cors information, this use the actual cors config
-
+        
+        Note: Security headers are automatically added by SecurityHeadersMiddleware
         """
 
         origin = request.headers.get('origin')

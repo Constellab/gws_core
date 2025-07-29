@@ -11,6 +11,7 @@ from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 
 from .core.classes.cors_config import CorsConfig
+from .core.classes.security_headers import SecurityHeadersMiddleware
 from .core_controller import core_app
 from .lab.system_service import SystemService
 from .space.space_controller import space_app
@@ -81,6 +82,9 @@ class App:
 
         # Configure the CORS
         CorsConfig.configure_app_cors(app)
+
+        # Add security headers middleware
+        app.add_middleware(SecurityHeadersMiddleware)
 
         # Registrer the lab start. Use a new thread to prevent blocking the start
         th = Thread(target=SystemService.register_lab_start)

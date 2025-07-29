@@ -44,11 +44,17 @@ class TestLocalFileStore(TestCase):
         self.assertFalse(file_store.node_exists(file))
 
     def test_sanitizer(self):
+        self.assertEqual(FileHelper.sanitize_name("\"Az02'{([$*!%?-_/.txt"), "Az02-_/.txt")
 
-        dangerous_file_name = "\"Az02'{([$*!%?-_/.txt"
-        safe_file_name = "Az02-_/.txt"
+        # Test path traversal prevention
+        self.assertEqual(FileHelper.sanitize_name("../../../etc/passwd"), "etc/passwd")
 
-        self.assertEqual(FileHelper.sanitize_name(dangerous_file_name), safe_file_name)
+        # Test null byte and control character removal
+        self.assertEqual(FileHelper.sanitize_name("file\x00name\x01.txt"), "filename.txt")
+
+        # Test empty/dangerous inputs
+        self.assertEqual(FileHelper.sanitize_name(".."), "sanitized_file")
+        self.assertEqual(FileHelper.sanitize_name(""), "")
 
         # same names without the ending /
         dangerous_file_name = "\"Az02'{([$*!%?-_.txt"

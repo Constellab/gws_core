@@ -347,14 +347,39 @@ class FileHelper():
     def sanitize_name(cls, name: str) -> str:
         """
         Sanitize a file name, folder name or path in order to prevent injection when using the file name
-        Basically, it keeps only the alphanumeric characters and -,_,\,/
+        Removes dangerous characters and prevents path traversal attacks
 
         :param name: name to sanitize
         :type name: str
         :return: sanitized name
         :rtype: str
         """
-        return sub(r"[^a-zA-Z0-9-_/.]", '', name)
+        if not name or not isinstance(name, str):
+            return ""
+        
+        # Remove null bytes and control characters
+        name = ''.join(char for char in name if ord(char) >= 32)
+        
+        # Keep only safe characters first - alphanumeric, hyphens, underscores, dots, and forward slashes
+        name = sub(r"[^a-zA-Z0-9-_/.]", '', name)
+        
+        # Prevent path traversal attacks
+        name = name.replace('..', '')
+        name = name.replace('//', '/')
+        name = name.replace('\\', '')
+        
+        # Remove leading/trailing dots and slashes to prevent hidden files and relative paths
+        name = name.strip('./')
+        
+        # Ensure we don't have empty result or only dots/slashes
+        if not name or name in ('.', '/', '..'):
+            return "sanitized_file"
+            
+        # Limit length to prevent filesystem issues
+        if len(name) > 255:
+            name = name[:255]
+            
+        return name
 
     @classmethod
     def detect_file_encoding(cls, file_path: PathType, default_encoding: str = 'utf-8') -> str:
