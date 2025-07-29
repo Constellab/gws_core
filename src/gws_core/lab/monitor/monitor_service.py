@@ -18,18 +18,14 @@ from .monitor_dto import (CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO,
 
 
 class MonitorService():
-
-    TICK_INTERVAL_SECONDS = 30  # 30 seconds
-    TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
-    MONITORING_MAX_LINES = 86400  # 86400 = 1 log every 30 seconds for 1 month
     _is_initialized: bool = False
 
     # Define the percentage of free disk space to keep
     # We will keep 10% of free space on the disk to avoid disk full with
     # a min of 5GB and a max of 20GB
-    PERCENTAGE_FREE_DISK_SPACE = 10  # 10%
-    MIN_FREE_DISK_SPACE = 5 * 1024 * 1024 * 1024  # 5GB
-    MAX_FREE_DISK_SPACE = 20 * 1024 * 1024 * 1024  # 20GB
+    DEFAULT_PERCENTAGE_FREE_DISK_SPACE = 10  # 10%
+    DEFAULT_MIN_FREE_DISK_SPACE = 5 * 1024 * 1024 * 1024  # 5GB
+    DEFAULT_MAX_FREE_DISK_SPACE = 20 * 1024 * 1024 * 1024  # 20GB
 
     @classmethod
     def init(cls):
@@ -48,7 +44,7 @@ class MonitorService():
             Logger.error(f"Error while saving current monitor : {str(err)}")
         finally:
             thread = threading.Timer(
-                cls.TICK_INTERVAL_SECONDS, cls._system_monitor_tick)
+                Settings.get_monitor_tick_interval_log(), cls._system_monitor_tick)
             thread.daemon = True
             thread.start()
 
@@ -62,7 +58,7 @@ class MonitorService():
             Logger.error(f"Error while cleaning monitor data : {str(err)}")
         finally:
             thread = threading.Timer(
-                cls.TICK_INTERVAL_CLEANUP, cls._system_monitor_cleanup)
+                Settings.get_monitor_tick_interval_cleanup(), cls._system_monitor_cleanup)
             thread.daemon = True
             thread.start()
 
@@ -138,7 +134,7 @@ class MonitorService():
 
         # add tick interval to be sure to have at least one tick
         if seconds_margin is None:
-            seconds_margin = cls.TICK_INTERVAL_SECONDS
+            seconds_margin = Settings.get_monitor_tick_interval_log()
 
         from_date = from_date - timedelta(seconds=seconds_margin)
         to_date = to_date + timedelta(seconds=seconds_margin)
@@ -219,7 +215,9 @@ class MonitorService():
     def cleanup_old_monitor_data(cls):
 
         # Keep only last x records
-        monitor: Monitor = Monitor.select().order_by(Monitor.created_at.desc()).offset(cls.MONITORING_MAX_LINES).first()
+        monitor: Monitor = Monitor.select().order_by(
+            Monitor.created_at.desc()).offset(
+            Settings.get_monitor_log_max_lines()).first()
 
         if monitor is None:
             return
@@ -231,10 +229,20 @@ class MonitorService():
         """Get information about the free disk space.
         """
         disk_usage = Monitor.get_current_disk_usage()
-        required_free_space = disk_usage.total * cls.PERCENTAGE_FREE_DISK_SPACE / 100
-        required_free_space_normalized = max(min(required_free_space, cls.MAX_FREE_DISK_SPACE), cls.MIN_FREE_DISK_SPACE)
+
+        required_free_disk = Settings.get_monitor_required_free_disk_space()
+
+        # if required_free_disk is not set, calculate it based on the disk size
+        if required_free_disk is None:
+            required_free_tmp = disk_usage.total * cls.DEFAULT_PERCENTAGE_FREE_DISK_SPACE / 100
+            required_free_disk = max(
+                min(required_free_tmp, cls.DEFAULT_MAX_FREE_DISK_SPACE),
+                cls.DEFAULT_MIN_FREE_DISK_SPACE)
+
+        # Ensure required_free_disk is not negative
+        required_free_disk = max(required_free_disk, 0)
 
         return MonitorFreeDiskDTO(
-            required_disk_free_space=required_free_space_normalized,
+            required_disk_free_space=required_free_disk,
             disk_usage_free=disk_usage.free
         )

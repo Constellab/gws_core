@@ -132,7 +132,8 @@ class Monitor(Model):
 
     @classmethod
     def get_current_disk_usage(cls):
-        return psutil.disk_usage("/")
+        disk_path = Settings.get_monitor_disk_path()
+        return psutil.disk_usage(disk_path)
 
     @classmethod
     def get_gpu_info(cls) -> GpuInfo:

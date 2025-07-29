@@ -349,6 +349,48 @@ class Settings():
         """
         return os.environ.get("APP_SUB_DOMAIN", "app-dev")
 
+    ###### MONITOR #####
+    @classmethod
+    def get_monitor_disk_path(cls) -> str:
+        """Return the path where the monitor disk data is stored
+        """
+        return os.environ.get("GWS_MONITOR_DISK_PATH", "/")
+
+    @classmethod
+    def get_monitor_tick_interval_log(cls) -> int:
+        """Return the tick interval for the monitor log in seconds.
+        This is the interval at which the monitor data is logged.
+        """
+        return int(os.environ.get("GWS_MONITOR_TICK_INTERVAL_LOG", 30))
+
+    @classmethod
+    def get_monitor_tick_interval_cleanup(cls) -> int:
+        """Return the tick interval for the monitor cleanup in seconds.
+        This is the interval at which the monitor data is cleaned up.
+        """
+        return int(os.environ.get("GWS_MONITOR_TICK_INTERVAL_CLEANUP", 60 * 60 * 24))
+
+    @classmethod
+    def get_monitor_log_max_lines(cls) -> int:
+        """Return the maximum number of lines to keep in the monitor log.
+        This is the maximum number of lines to keep in the monitor log.
+        With 1 log every 30 seconds, this is 86400 lines for 1 month.
+        """
+        return int(os.environ.get("GWS_MONITOR_LOG_MAX_LINES", 86400))
+
+    @classmethod
+    def get_monitor_required_free_disk_space(cls) -> int | None:
+        """Return the required free disk space in bytes.
+        This is the minimum free disk space required to avoid disk full.
+        Once reached, no more data can be uploaded or scenario run.
+        By default it is set to 10% of the disk space with a minimum of 5GB and a maximum of 20GB.
+        """
+        free_space = os.environ.get("GWS_MONITOR_REQUIRED_FREE_DISK_SPACE")
+        if free_space is None:
+            return None
+        return int(free_space)
+    ###### DATABASE #####
+
     def get_gws_core_db_name(self) -> str:
         return 'gws_core'
 
