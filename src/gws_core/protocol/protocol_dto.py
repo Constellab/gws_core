@@ -110,7 +110,6 @@ class AddConnectorDTO(BaseModelDTO):
 class ProtocolTypingFullDTO(TypingFullDTO):
     input_specs: Optional[IOSpecsDTO] = None
     output_specs: Optional[IOSpecsDTO] = None
-    config_specs: Optional[dict] = None
 
     def to_markdown(self) -> str:
         markdown = super().to_markdown()

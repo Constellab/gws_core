@@ -67,6 +67,5 @@ class ProtocolTyping(Typing):
             # json_["graph"] = protocol.dumps_data(minimize=False)
             protocol_typing.input_specs = protocol.get_input_specs_self().to_dto()
             protocol_typing.output_specs = protocol.get_output_specs_self().to_dto()
-            protocol_typing.config_specs = ConfigSpecs({})
 
         return protocol_typing
