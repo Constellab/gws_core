@@ -6,7 +6,6 @@ from threading import Thread
 from typing import Dict, List
 
 import psutil
-
 from gws_core.apps.app_dto import (AppInstanceUrl, AppProcessStatus,
                                    AppProcessStatusDTO)
 from gws_core.apps.app_instance import AppInstance
@@ -69,7 +68,7 @@ class AppProcess:
     _status_text: str = ""
 
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 5
+    CHECK_RUNNING_INTERVAL = 30
 
     # timeout in second to wait for the main app to start
     START_APP_TIMEOUT = 30
@@ -77,8 +76,6 @@ class AppProcess:
     # number of successive check when there is not connection to the main app
     # before killing it
     SUCCESSIVE_CHECK_BEFORE_KILL = 3
-
-    MAX_WAIT_TIME = 120  # seconds
 
     def __init__(self, id_: str, env_hash: str = None):
         self.id = id_
@@ -150,6 +147,12 @@ class AppProcess:
         if app.resource_model_id in self.current_running_apps:
             return
 
+        try:
+            app.generate_app(self.get_working_dir())
+        except Exception as e:
+            Logger.error(f"Error while generating app {app.resource_model_id}: {e}")
+            raise e
+
         self.current_running_apps[app.resource_model_id] = app
 
     def start_app_async(self, app_id: str) -> None:
@@ -157,16 +160,12 @@ class AppProcess:
 
         if self._status != AppProcessStatus.STOPPED:
             return
-
         # Find the app instance
         app = self.get_app(app_id)
-        if not app:
-            raise Exception(f"App with ID {app_id} not found in process")
 
         self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
         try:
-            app.generate_app(self.get_working_dir())
 
             thread = Thread(target=self._start_app_and_watch, args=(app,))
             thread.start()
@@ -411,7 +410,7 @@ class AppProcess:
     def wait_for_start(self) -> AppProcessStatus:
         """Wait for the process to start"""
         i = 0
-        while self.is_starting() and i < self.MAX_WAIT_TIME:
+        while self.is_starting() and i < self.START_APP_TIMEOUT:
             time.sleep(1)  # wait for 1 second
             i += 1
 
