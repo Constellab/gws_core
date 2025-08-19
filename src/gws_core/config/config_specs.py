@@ -172,7 +172,7 @@ class ConfigSpecs():
 
         for key, spec in self.specs.items():
             # if the config was not set
-            if not key in param_values:
+            if not key in param_values or param_values[key] is None:
                 if spec.optional:
                     full_values[key] = spec.get_default_value()
                 else:

@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Optional
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec_decorator import (ParamaSpecType,
+from gws_core.config.param.param_spec_decorator import (ParamSpecType,
                                                         param_spec_decorator)
 from gws_core.core.utils.logger import Logger
 
@@ -12,7 +12,7 @@ from .param_spec import ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 
 
-@param_spec_decorator(type_=ParamaSpecType.NESTED)
+@param_spec_decorator(type_=ParamSpecType.NESTED)
 class ParamSet(ParamSpec):
     """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]

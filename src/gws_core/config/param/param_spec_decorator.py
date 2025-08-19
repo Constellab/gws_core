@@ -17,13 +17,13 @@ NESTED_PARAM_SPEC_TYPES_LIST: List[Type[ParamSpec]] = []
 LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST: List[Type[ParamSpec]] = []
 
 
-class ParamaSpecType(Enum):
+class ParamSpecType(Enum):
     SIMPLE = "simple"
     NESTED = "nested"
     LAB_SPECIFIC = "lab_specific"
 
 
-def param_spec_decorator(type_: ParamaSpecType = ParamaSpecType.SIMPLE) -> Callable:
+def param_spec_decorator(type_: ParamSpecType = ParamSpecType.SIMPLE) -> Callable:
     """Decorator of ParamSpec class to add it to the list of param spec types
     """
     def decorator(param_class: Type[ParamSpec]):
@@ -32,11 +32,11 @@ def param_spec_decorator(type_: ParamaSpecType = ParamaSpecType.SIMPLE) -> Calla
         if not issubclass(param_class, ParamSpec):
             raise Exception("The param decorator can only be used on a ParamSpec child class")
         PARAM_SPEC_TYPES_LIST.append(param_class)
-        if type_ == ParamaSpecType.SIMPLE:
+        if type_ == ParamSpecType.SIMPLE:
             SIMPLE_PARAM_SPEC_TYPES_LIST.append(param_class)
-        elif type_ == ParamaSpecType.NESTED:
+        elif type_ == ParamSpecType.NESTED:
             NESTED_PARAM_SPEC_TYPES_LIST.append(param_class)
-        elif type_ == ParamaSpecType.LAB_SPECIFIC:
+        elif type_ == ParamSpecType.LAB_SPECIFIC:
             LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST.append(param_class)
         return param_class
     return decorator

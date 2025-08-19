@@ -80,8 +80,11 @@ class ParamSpecInfoSpecs(BaseModelDTO):
     # visibility: ParamSpecDTO
     name: ParamSpecDTO
     short_description: ParamSpecDTO
+    human_name: Optional[ParamSpecDTO] = None
     default_value: Optional[ParamSpecDTO] = None
     additional_info: Optional[Dict[str, ParamSpecDTO]] = None
 
 
 DynamicParamAllowedSpecsDict = Dict[str, ParamSpecInfoSpecs]
+
+CompleteDynamicParamAllowedSpecsDict = Dict[str, DynamicParamAllowedSpecsDict]
