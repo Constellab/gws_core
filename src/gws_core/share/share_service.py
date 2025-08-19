@@ -3,6 +3,7 @@ from typing import List, Optional, Type, cast
 
 from peewee import JOIN
 
+from gws_core.apps.app_resource import AppResource
 from gws_core.community.community_service import CommunityService
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.classes.paginator import Paginator
@@ -229,7 +230,7 @@ class ShareService():
             resource = cast(ResourceModel, shared_entity_link.get_model_and_check(
                 shared_entity_link.entity_id, shared_entity_link.entity_type)).get_resource()
 
-            if isinstance(resource, StreamlitResource):
+            if isinstance(resource, AppResource):
                 cls._init_send_resource_app_stat_to_community_thread(
                     app_url=shared_entity_link.get_public_link())
 
