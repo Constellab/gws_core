@@ -1,6 +1,6 @@
 
 
-from typing import Any, Callable, Dict, Type
+from typing import Any, Callable, Dict, Type, Optional
 
 import streamlit as st
 
@@ -40,6 +40,23 @@ class StreamlitTaskRunner():
         """
         return self._generate_component_and_call_run(key, default_config_values, inputs)
 
+    def generate_config_form_without_run(self, session_state_key: str, default_config_values: ConfigParamsDict = None,
+                                         key: str = 'config-task-form') -> None:
+        """Generate the configuration form a specified task without running the task afterwards, config values are set the in streamlit session state.
+        """
+
+        if st.session_state.get(
+                session_state_key,
+                None) is None and default_config_values is not None:
+            st.session_state[session_state_key] = default_config_values
+            st.rerun()
+
+        result = self._generate_component(key, default_config_values)
+
+        if result is not None and result != st.session_state.get(session_state_key, None):
+            st.session_state[session_state_key] = result
+            st.rerun()
+
     def generate_form_dialog(self, default_config_values: ConfigParamsDict = None,
                              inputs: Dict[str, Resource] = None,
                              on_run_success: Callable[[TaskOutputs], None] = None,
@@ -65,8 +82,8 @@ class StreamlitTaskRunner():
         """Open the dialog, on form submit, the value will be stored in the session state and the page will be rerun.
         Call get_dialog_value to get the value
         """
-        result = self._generate_component_and_call_run(key, config_values, inputs)
 
+        result = self._generate_component_and_call_run(key, config_values, inputs)
         if result is not None:
             if on_run_success is not None:
                 on_run_success(result)
@@ -75,7 +92,8 @@ class StreamlitTaskRunner():
     def _generate_component_and_call_run(self,
                                          key: str,
                                          default_config_values: ConfigParamsDict = None,
-                                         inputs: Dict[str, Resource] = None) -> TaskOutputs | None:
+                                         inputs: Dict[str, Resource] = None,
+                                         ) -> TaskOutputs | None:
         """Generate the form from the values, and run the task
         """
         component_value = self._generate_component(key, default_config_values)
@@ -85,7 +103,8 @@ class StreamlitTaskRunner():
 
         return self._run_task(component_value, inputs)
 
-    def _generate_component(self, key: str, default_config_values: ConfigParamsDict = None) -> ConfigParamsDict | None:
+    def _generate_component(
+            self, key: str, default_config_values: ConfigParamsDict = None) -> Optional[ConfigParamsDict]:
 
         config = Config()
         config.set_specs(self.task_type.config_specs)

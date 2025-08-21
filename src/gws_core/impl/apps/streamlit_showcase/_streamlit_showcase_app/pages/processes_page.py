@@ -5,13 +5,45 @@ import streamlit as st
 from gws_core import (File, FileHelper, Settings, Table, TableImporter,
                       TaskOutputs)
 from gws_core.streamlit import StreamlitTaskRunner
+from gws_core.task.plug.input_task import InputTask
 
 
 def render_processes_page():
     st.title("Processes")
-    st.info("This page contains a showcase for streamlit component to interact with tasks and protocols. The preview is not enable yet")
+    st.info("This page contains a showcase for streamlit component to interact with tasks and protocols.")
+
+    _render_task_config_form()
+
+    st.divider()
 
     _render_task_runner()
+
+
+def _render_task_config_form():
+
+    st.subheader("Task configuration form")
+
+    if "config_data" not in st.session_state:
+        st.session_state["config_data"] = None
+
+    form_config = StreamlitTaskRunner(TableImporter)
+    form_config.generate_config_form_without_run(
+        session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
+
+    st.write(f"Task config : {st.session_state['config_data']}")
+
+    st.code('''
+        import streamlit as st
+        from gws_core import TableImporter
+        from gws_core.streamlit import StreamlitTaskRunner
+
+        st.session_state["config_data"] = None
+
+        form_config = StreamlitTaskRunner(TableImporter)
+        form_config.generate_config_form_without_run(session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
+
+        st.write(f"Task config : {st.session_state['config_data']}")
+    ''')
 
 
 def _render_task_runner():
