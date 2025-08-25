@@ -17,6 +17,23 @@ from gws_core.task.task_io import TaskOutputs
 from gws_core.task.task_runner import TaskRunner
 
 
+class StreamlitTaskRunnerConfigOutput():
+    """Class to represent the output of the Angular Streamlit Process Config Component
+    """
+    config: ConfigParamsDict
+    is_valid: bool
+
+    def __init__(self, config: ConfigParamsDict, is_valid: bool):
+        self.config = config
+        self.is_valid = is_valid
+
+    def to_dict(self) -> dict:
+        return {
+            "config": self.config,
+            "is_valid": self.is_valid
+        }
+
+
 class StreamlitTaskRunner():
     """Class to generate a form to configure a task in streamlit.
     The task is then automatically run when the form is submitted.
@@ -33,13 +50,6 @@ class StreamlitTaskRunner():
             raise ValueError("task_type must be a subclass of Task")
         self.task_type = task_type
 
-    def generate_form(self, default_config_values: ConfigParamsDict = None,
-                      inputs: Dict[str, Resource] = None,
-                      key: str = 'task-runner') -> TaskOutputs:
-        """Generate the form from the values
-        """
-        return self._generate_component_and_call_run(key, default_config_values, inputs)
-
     def generate_config_form_without_run(self, session_state_key: str, default_config_values: ConfigParamsDict = None,
                                          key: str = 'config-task-form') -> None:
         """Generate the configuration form a specified task without running the task afterwards, config values are set the in streamlit session state.
@@ -48,13 +58,13 @@ class StreamlitTaskRunner():
         if st.session_state.get(
                 session_state_key,
                 None) is None and default_config_values is not None:
-            st.session_state[session_state_key] = default_config_values
+            st.session_state[session_state_key] = StreamlitTaskRunnerConfigOutput(
+                config=default_config_values, is_valid=True).to_dict()
             st.rerun()
 
-        result = self._generate_component(key, default_config_values)
-
-        if result is not None and result != st.session_state.get(session_state_key, None):
-            st.session_state[session_state_key] = result
+        result = self._generate_component(key, default_config_values, is_dialog=False)
+        if result is not None and result.config is not None and result.to_dict() != st.session_state.get(session_state_key, None):
+            st.session_state[session_state_key] = result.to_dict()
             st.rerun()
 
     def generate_form_dialog(self, default_config_values: ConfigParamsDict = None,
@@ -96,15 +106,15 @@ class StreamlitTaskRunner():
                                          ) -> TaskOutputs | None:
         """Generate the form from the values, and run the task
         """
-        component_value = self._generate_component(key, default_config_values)
+        component_value = self._generate_component(key, default_config_values, is_dialog=True)
 
-        if component_value is None:
+        if component_value is None or component_value.config is None or component_value.is_valid is False:
             return None
 
-        return self._run_task(component_value, inputs)
+        return self._run_task(component_value.config, inputs)
 
     def _generate_component(
-            self, key: str, default_config_values: ConfigParamsDict = None) -> Optional[ConfigParamsDict]:
+            self, key: str, default_config_values: ConfigParamsDict = None, is_dialog: bool = True) -> Optional[StreamlitTaskRunnerConfigOutput]:
 
         config = Config()
         config.set_specs(self.task_type.config_specs)
@@ -118,6 +128,7 @@ class StreamlitTaskRunner():
             'values': default_config_values,
             'process_description': self.task_type.get_short_description(),
             'doc_url': CommunityFrontService.get_typing_doc_url(self.task_type.get_typing_name()),
+            'is_dialog': is_dialog
         }
 
         component_value = self._streamlit_component_loader.call_component(
@@ -125,10 +136,20 @@ class StreamlitTaskRunner():
             authentication_info=StreamlitState.get_user_auth_info())
 
         if component_value is None:
-            return None
+            return StreamlitTaskRunnerConfigOutput(is_valid=False, config=None)
 
-        config.set_values(component_value)
-        return config.get_and_check_values()
+        res = StreamlitTaskRunnerConfigOutput(
+            config=component_value['config'],
+            is_valid=component_value['is_valid']
+        )
+
+        if not res.is_valid:
+            res.config = None
+            return res
+
+        config.set_values(res.config)
+        res.config = config.get_and_check_values()
+        return res
 
     def _get_task_specs_json(self, config: Config) -> Dict[str, Any]:
         specs = config.to_specs_dto()
