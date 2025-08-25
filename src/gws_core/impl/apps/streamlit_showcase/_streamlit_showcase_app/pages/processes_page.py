@@ -37,7 +37,8 @@ def _render_task_config_form():
         from gws_core import TableImporter
         from gws_core.streamlit import StreamlitTaskRunner
 
-        st.session_state["config_data"] = None
+        if "config_data" not in st.session_state:
+            st.session_state["config_data"] = None
 
         form_config = StreamlitTaskRunner(TableImporter)
         form_config.generate_config_form_without_run(session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
