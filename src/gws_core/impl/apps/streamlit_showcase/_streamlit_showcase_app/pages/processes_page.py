@@ -5,7 +5,6 @@ import streamlit as st
 from gws_core import (File, FileHelper, Settings, Table, TableImporter,
                       TaskOutputs)
 from gws_core.streamlit import StreamlitTaskRunner
-from gws_core.task.plug.input_task import InputTask
 
 
 def render_processes_page():
@@ -13,6 +12,10 @@ def render_processes_page():
     st.info("This page contains a showcase for streamlit component to interact with tasks and protocols.")
 
     _render_task_config_form()
+
+    st.divider()
+
+    _render_task_config_form_in_dialog()
 
     st.divider()
 
@@ -44,6 +47,57 @@ def _render_task_config_form():
         form_config.generate_config_form_without_run(session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
 
         st.write(f"Task config : {st.session_state['config_data']}")
+    ''')
+
+
+def _render_task_config_form_in_dialog():
+    st.subheader("Task configuration form in dialog")
+
+    if "config_data_dialog" not in st.session_state:
+        st.session_state["config_data_dialog"] = None
+
+    @st.dialog("Task Configuration")
+    def dialog():
+        form_config = StreamlitTaskRunner(TableImporter)
+        form_config.generate_config_form_without_run(
+            session_state_key="config_data_dialog", default_config_values=TableImporter.config_specs.get_default_values(),
+            key="config-task-form-dialog")
+
+        if st.button("Save"):
+            st.rerun()
+
+        st.write(f"Task config : {st.session_state['config_data_dialog']}")
+
+    if st.button("Open Config form dialog"):
+        dialog()
+
+    st.write(f"Task config : {st.session_state['config_data_dialog']}")
+
+    st.code('''
+        import streamlit as st
+        from gws_core import TableImporter
+        from gws_core.streamlit import StreamlitTaskRunner
+
+        if "config_data_dialog" not in st.session_state:
+        st.session_state["config_data_dialog"] = None
+
+        @st.dialog("Task Configuration")
+        def dialog():
+            form_config = StreamlitTaskRunner(TableImporter)
+            form_config.generate_config_form_without_run(
+                session_state_key="config_data_dialog", default_config_values=TableImporter.config_specs.get_default_values(),
+                key="config-task-form-dialog")
+
+            if st.button("Save"):
+                st.rerun()
+
+            st.write(f"Task config : {st.session_state['config_data_dialog']}")
+
+        if st.button("Open Config form dialog"):
+            dialog()
+
+        st.write(f"Task config : {st.session_state['config_data_dialog']}")
+
     ''')
 
 

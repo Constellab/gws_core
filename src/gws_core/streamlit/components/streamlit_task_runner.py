@@ -50,8 +50,9 @@ class StreamlitTaskRunner():
             raise ValueError("task_type must be a subclass of Task")
         self.task_type = task_type
 
-    def generate_config_form_without_run(self, session_state_key: str, default_config_values: ConfigParamsDict = None,
-                                         key: str = 'config-task-form') -> None:
+    def generate_config_form_without_run(
+            self, session_state_key: str, default_config_values: ConfigParamsDict = None,
+            key: str = 'config-task-form') -> None:
         """Generate the configuration form a specified task without running the task afterwards, config values are set the in streamlit session state.
         """
 
@@ -60,12 +61,10 @@ class StreamlitTaskRunner():
                 None) is None and default_config_values is not None:
             st.session_state[session_state_key] = StreamlitTaskRunnerConfigOutput(
                 config=default_config_values, is_valid=True).to_dict()
-            st.rerun()
 
         result = self._generate_component(key, default_config_values, is_dialog=False)
         if result is not None and result.config is not None and result.to_dict() != st.session_state.get(session_state_key, None):
             st.session_state[session_state_key] = result.to_dict()
-            st.rerun()
 
     def generate_form_dialog(self, default_config_values: ConfigParamsDict = None,
                              inputs: Dict[str, Resource] = None,
