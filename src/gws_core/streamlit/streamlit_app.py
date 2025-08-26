@@ -44,27 +44,27 @@ class StreamlitApp(AppInstance):
         """
         Method to create the streamlit app code file and return the url to access the app.
         """
-        # no need to generate the app if in dev mode
-        if self._dev_mode:
-            return
         app_config_dir = self._generate_config_dir(working_dir)
 
-        if self.app_folder_path is None and self.streamlit_code is None:
-            raise Exception("streamlit_code or streamlit_folder must be set before starting the app")
-
-        app_dir: str = None
-        if self.app_folder_path is not None:
-            app_dir = self.app_folder_path
+        if self._dev_mode:
+            self._generate_config_dev_mode()
         else:
-            # write the main app code into the config dir
-            main_app_path = os.path.join(app_config_dir, self.MAIN_FILE)
-            Logger.debug("Writing streamlit app to " + main_app_path)
-            with open(main_app_path, 'w', encoding="utf-8") as file_path:
-                file_path.write(self.streamlit_code)
+            if self.app_folder_path is None and self.streamlit_code is None:
+                raise Exception("streamlit_code or streamlit_folder must be set before starting the app")
 
-            app_dir = app_config_dir
+            app_dir: str = None
+            if self.app_folder_path is not None:
+                app_dir = self.app_folder_path
+            else:
+                # write the main app code into the config dir
+                main_app_path = os.path.join(app_config_dir, self.MAIN_FILE)
+                Logger.debug("Writing streamlit app to " + main_app_path)
+                with open(main_app_path, 'w', encoding="utf-8") as file_path:
+                    file_path.write(self.streamlit_code)
 
-        self._generate_config(app_dir)
+                app_dir = app_config_dir
+
+            self._generate_config(app_dir)
 
     def get_main_app_file_path(self) -> str:
         if self.is_virtual_env_app():

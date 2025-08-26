@@ -1,5 +1,6 @@
 
 
+import json
 import os
 from abc import abstractmethod
 from typing import Dict, List, Optional
@@ -46,6 +47,8 @@ class AppInstance():
     _dev_config_file: str = None
 
     APP_CONFIG_FILENAME = 'app_config.json'
+    DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
+    DEV_MODE_APP_ID = '1'
 
     def __init__(self, resource_model_id: str,
                  name: str,
@@ -114,7 +117,7 @@ class AppInstance():
     def get_shell_proxy(self) -> ShellProxy:
         return self._shell_proxy
 
-    def add_user(self, user_id: str) -> str:
+    def _add_user(self, user_id: str, user_access_token: str = None) -> str:
         """Add the user to the list of users that can access the app and return the user access token
         """
 
@@ -123,7 +126,8 @@ class AppInstance():
             if user_id == user_id:
                 return token
 
-        user_access_token = StringHelper.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds())
+        if not user_access_token:
+            user_access_token = StringHelper.generate_uuid() + '_' + str(DateHelper.now_utc_as_milliseconds())
         self.user_access_tokens[user_access_token] = user_id
 
         # store the user access token in the config file
@@ -134,6 +138,8 @@ class AppInstance():
 
     def get_app_full_url(self, host_url: str, token: str) -> AppInstanceUrl:
         if self._dev_mode:
+            # in dev mode, we authenticate the system user
+            self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
             return AppInstanceUrl(host_url=host_url)
 
         params = {
@@ -150,7 +156,7 @@ class AppInstance():
         if not user:
             raise UnauthorizedException(
                 f"The user could not be be authenticated with requires_authentication : {self.requires_authentication}")
-        user_access_token = self.add_user(user.id)
+        user_access_token = self._add_user(user.id)
         params['gws_user_access_token'] = user_access_token
 
         return AppInstanceUrl(host_url=host_url, params=params)
@@ -161,9 +167,6 @@ class AppInstance():
 
     def is_dev_mode(self) -> bool:
         return self._dev_mode
-
-    def get_dev_config_file(self) -> str:
-        return self._dev_config_file
 
     def destroy(self) -> None:
         if self._app_config_dir is not None:
@@ -211,6 +214,33 @@ class AppInstance():
             params=self.params,
             requires_authentication=self.requires_authentication,
             user_access_tokens={}
+        )
+
+        self._write_config_file(config)
+
+    def _generate_config_dev_mode(self) -> None:
+        """ Generate the config dir and file from dev config file
+
+        """
+        dev_config_dict: dict = None
+
+        with open(self._dev_config_file, 'r', encoding="utf-8") as file_path:
+            dev_config_dict = json.load(file_path)
+
+        # Making the app dir path relative to the dev config file
+        app_dir_path = dev_config_dict.get('app_dir_path', '')
+        if not os.path.isabs(app_dir_path):
+            # make the path absolute relative to the dev config file
+            dev_config_dir = os.path.dirname(self._dev_config_file)
+            app_dir_path = os.path.join(dev_config_dir, app_dir_path)
+
+        # write the streamlit config file
+        config = AppInstanceConfigDTO(
+            app_dir_path=app_dir_path,
+            source_ids=dev_config_dict.get('source_ids', []),
+            params=dev_config_dict.get('params', {}),
+            requires_authentication=dev_config_dict.get('requires_authentication', False),
+            user_access_tokens=dev_config_dict.get('user_access_tokens', {})
         )
 
         self._write_config_file(config)

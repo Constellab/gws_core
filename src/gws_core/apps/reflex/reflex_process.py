@@ -75,7 +75,6 @@ class ReflexProcess(AppProcess):
 
         env = self._get_base_env(app)
         env['GWS_REFLEX_DEV_MODE'] = 'true'
-        env['GWS_REFLEX_DEV_CONFIG_FILE_PATH'] = app.get_dev_config_file()
 
         process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
         services = self._get_dev_nginx_services()
@@ -110,7 +109,6 @@ class ReflexProcess(AppProcess):
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
         env = self._get_base_env(app)
         env['GWS_REFLEX_TOKEN'] = self._token
-        env['GWS_REFLEX_APP_CONFIG_DIR_PATH'] = self.get_working_dir()
 
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
@@ -152,6 +150,7 @@ class ReflexProcess(AppProcess):
             'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
             'GWS_REFLEX_API_URL': self.get_back_host_url(),
             'GWS_THEME': theme.theme,
+            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir()
         }
 
     def _build_frontend(self, shell_proxy: ShellProxy, env: dict, app: ReflexApp) -> str:

@@ -49,6 +49,13 @@ class ReflexMainStateBase(rx.State):
     _app_config: dict = None
     is_initialized: bool = False
 
+    # None if the user is not authenticated
+    authenticated_user_id: Optional[str] = None
+
+    # Constant for dev mode
+    DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
+    DEV_MODE_APP_ID = '1'
+
     @rx.event
     async def on_load(self):
         """Load the main state of the app. It initializes the app configuration and checks authentication.
@@ -58,17 +65,19 @@ class ReflexMainStateBase(rx.State):
         :return: _description_
         :rtype: _type_
         """
+
         if self.is_initialized:
             # If already initialized, do nothing
             return
 
         self._app_config = self._load_app_config()
 
-        if not self.is_dev_mode():
-            if self.requires_authentication() and not self.is_authenticated():
-                # If the app requires authentication and the user is not authenticated,
-                # redirect to the unauthorized page
-                return rx.redirect(UNAUTHORIZED_ROUTE)
+        self.authenticated_user_id = self._check_user_token()
+
+        if self.requires_authentication() and not self.authenticated_user_id:
+            # If the app requires authentication and the user is not authenticated,
+            # redirect to the unauthorized page
+            return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self.is_initialized = True
 
@@ -87,21 +96,44 @@ class ReflexMainStateBase(rx.State):
             raise ValueError(f"Error reading app config file: {e}")
 
     def _get_app_config_file_path(self) -> str:
-        if self.is_dev_mode():
-            file_path = os.environ.get('GWS_REFLEX_DEV_CONFIG_FILE_PATH')
-            if not file_path:
-                raise ValueError("GWS_REFLEX_DEV_CONFIG_FILE_PATH environment variable is not set in development mode")
-            return file_path
-        else:
-            config_dir = os.environ.get('GWS_REFLEX_APP_CONFIG_DIR_PATH')
-            if not config_dir:
-                raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
+        config_dir = os.environ.get('GWS_REFLEX_APP_CONFIG_DIR_PATH')
+        if not config_dir:
+            raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
 
+        app_id: str = None
+        if self.is_dev_mode():
+            app_id = self.DEV_MODE_APP_ID
+        else:
             query_param = self.get_query_params()
             app_id = query_param.get('gws_app_id')
             if not app_id:
                 raise ValueError("gws_app_id query parameter is not set")
-            return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
+
+        return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
+
+    def _check_user_token(self) -> Optional[str]:
+        user_access_tokens = self._get_user_access_tokens_dict()
+
+        if self.is_dev_mode():
+            return user_access_tokens.get(self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+
+        query_params = self.get_query_params()
+
+        url_token = query_params.get('gws_token')
+
+        env_token = os.environ.get('GWS_REFLEX_TOKEN')
+
+        print(f"URL Token: {url_token}, Env Token: {env_token}")
+
+        if url_token != env_token:
+            return False
+
+        # load user id from access token
+        user_access_token = self._get_user_access_token()
+        if user_access_token is None:
+            return None
+
+        return user_access_tokens.get(user_access_token)
 
     def is_dev_mode(self) -> bool:
         """Check if the app is running in development mode."""
@@ -134,48 +166,26 @@ class ReflexMainStateBase(rx.State):
         """Check if the app requires authentication."""
         return self.get_app_config().get('requires_authentication', False)
 
-    def is_authenticated(self) -> bool:
-        query_params = self.get_query_params()
-
-        url_token = query_params.get('gws_token')
-
-        env_token = os.environ.get('GWS_REFLEX_TOKEN')
-
-        if url_token != env_token:
-            return False
-
-        user_id = self.get_user_id()
-        if user_id is None:
-            return False
-        return True
-
     def check_authentication(self) -> bool:
         if not self.is_initialized:
             return False
+        if self.is_dev_mode():
+            return True
         if not self.requires_authentication():
             return True
-        return self.is_authenticated()
+        return self.authenticated_user_id is not None
 
-    def get_user_access_token(self) -> Optional[str]:
+    def _get_user_access_token(self) -> Optional[str]:
         """Get the user access token from the app configuration."""
-        if not self.requires_authentication():
-            return None
-
         query_params = self.get_query_params()
         return query_params.get('gws_user_access_token')
 
-    def get_user_id(self) -> Optional[str]:
-        """Get the user ID from the app configuration."""
-        user_access_token = self.get_user_access_token()
-        if user_access_token is None:
-            return None
-
-        user_access_tokens = self.get_app_config().get('user_access_tokens')
-        if user_access_tokens is None:
-            return None
-        return user_access_tokens.get(user_access_token)
+    def _get_user_access_tokens_dict(self) -> Dict[str, str]:
+        """Get the user access tokens from the app configuration."""
+        return self.get_app_config().get('user_access_tokens', {})
 
     ####################### PARAMS #####################
+
     def get_param(self, key: str, default=None) -> Optional[str]:
         """Get a parameter from the app configuration."""
         params = self.get_params()

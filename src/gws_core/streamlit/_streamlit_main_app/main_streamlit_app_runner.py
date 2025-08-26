@@ -37,11 +37,13 @@ class StreamlitMainAppRunner:
     gws_token: str = None
     app_dir: str = None
     dev_mode: bool = False
-    dev_config_file: str = None
 
     app_dir_path: str = None
     app_main_path: str = None
     variables: Dict[str, Any] = {}
+
+    DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
+    DEV_MODE_APP_ID = '1'
 
     def init(self) -> None:
         """ Check the parameters (token) and loaf the config and app file"""
@@ -115,12 +117,10 @@ class StreamlitMainAppRunner:
         parser.add_argument('--gws_token', type=str, default=None)
         parser.add_argument('--app_dir', type=str, default=None)
         parser.add_argument('--dev_mode', type=bool, default=False)
-        parser.add_argument('--dev_config_file', type=str, default=None)
         args = parser.parse_args()
         self.gws_token = args.gws_token
         self.app_dir = args.app_dir
         self.dev_mode = args.dev_mode
-        self.dev_config_file = args.dev_config_file
 
     def set_variable(self, name: str, value: Any) -> None:
         self.variables[name] = value
@@ -216,47 +216,38 @@ class StreamlitMainAppRunner:
         if st.session_state.get('__app_config_file__'):
             return st.session_state['__app_config_file__']
 
-        if self.dev_mode:
-            app_config_file = self.dev_config_file
-            if not app_config_file:
-                st.error('Dev config file not provided')
-                st.stop()
-
-            if not os.path.exists(app_config_file):
-                st.error(f"Dev config file not found: {app_config_file}")
-                st.stop()
-        else:
+        if not self.dev_mode:
             # retreive the token from query params
             url_token = st.query_params.get('gws_token')
             if url_token != self.gws_token:
                 st.error('Invalid token')
                 st.stop()
 
-            app_config_dir = self.app_dir
-            if not app_config_dir:
-                st.error('App dir not provided')
-                st.stop()
+        app_config_dir = self.app_dir
+        if not app_config_dir:
+            st.error('App dir not provided')
+            st.stop()
 
-            if not os.path.exists(app_config_dir):
-                st.error(f"Config dir not found: {app_config_dir}")
-                st.stop()
+        if not os.path.exists(app_config_dir):
+            st.error(f"Config dir not found: {app_config_dir}")
+            st.stop()
 
-            # check the app path
-            app_id = self.get_app_id()
-            if not app_id:
-                st.error('App id not provided')
-                st.stop()
+        # check the app path
+        app_id = self.get_app_id()
+        if not app_id:
+            st.error('App id not provided')
+            st.stop()
 
-            # check if the app id folder exists
-            app_config_folder = os.path.join(app_config_dir, app_id)
-            if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
-                st.error('App config folder not found or is not a folder')
-                st.stop()
+        # check if the app id folder exists
+        app_config_folder = os.path.join(app_config_dir, app_id)
+        if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
+            st.error('App config folder not found or is not a folder')
+            st.stop()
 
-            app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
-            if not os.path.exists(app_config_file):
-                st.error('App config file not found')
-                st.stop()
+        app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
+        if not os.path.exists(app_config_file):
+            st.error('App config file not found')
+            st.stop()
 
         st.session_state['__app_config_file__'] = app_config_file
 
@@ -306,6 +297,8 @@ class StreamlitMainAppRunner:
             st.stop()
 
     def get_app_id(self) -> str:
+        if self.dev_mode:
+            return self.DEV_MODE_APP_ID
         return st.query_params.get('gws_app_id')
 
     def get_user_access_token(self) -> str:

@@ -78,19 +78,6 @@
             "request": "launch",
             "program": "${workspaceFolder}/gws_cli/gws_cli/main_cli.py",
             "console": "integratedTerminal",
-        },
-        {
-            "name": "Debug streamlit",
-            "type": "debugpy",
-            "request": "launch",
-            "program": "/usr/local/lib/python3.10/dist-packages/streamlit", // /home/xx/tmp/venv/bin/streamlit",
-            "args": [
-                "run",
-                "/lab/user/bricks/gws_core/src/gws_core/streamlit/_streamlit_main_app/main_streamlit_app.py",
-                "--",
-                "--dev_mode=True",
-                "--dev_config_file=${input:configFilePath}"
-            ]
         }
     ],
     "inputs": [

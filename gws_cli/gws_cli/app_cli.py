@@ -7,6 +7,7 @@ from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
                       LoggerMessageObserver, MambaShellProxy, PipShellProxy,
                       ShellProxy, Utils)
 from gws_core.apps.app_instance import AppInstance
+from gws_core.core.db.db_manager_service import DbManagerService
 from typing_extensions import Literal
 
 app = typer.Typer()
@@ -93,6 +94,10 @@ class AppCli:
         return shell_proxy
 
     def start_app(self, app_: AppInstance) -> None:
+        AppsManager.register_signal_handlers()
+
+        # Init the db, it is needed to load the system user
+        DbManagerService.init_all_db()
 
         url = AppsManager.create_or_get_app(app_).get_url()
         print("-------------------------------------------------------------------------------------------------------------------------------------")

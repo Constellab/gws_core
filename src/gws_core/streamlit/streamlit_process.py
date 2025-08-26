@@ -1,10 +1,11 @@
-
+import os
 from typing import List
 
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_service import (AppNginxRedirectServiceInfo,
                                              AppNginxServiceInfo)
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -33,50 +34,47 @@ class StreamlitProcess(AppProcess):
         # Install gws plugin if not already installed
         StreamlitPlugin.install_plugin()
 
-        cmd = ['streamlit', 'run', app.get_main_app_file_path(),
-               f'--theme.backgroundColor={theme.background_color}',
-               f'--theme.secondaryBackgroundColor={theme.secondary_background_color}',
-               f'--theme.textColor={theme.text_color}',
-               f'--theme.primaryColor={theme.primary_color}',
-               f'--server.port={str(self.port)}',
-               # prevent streamlit to open the browser
-               '--server.headless=true',
-               '--browser.gatherUsageStats=false',
-               # Disable XSRF protection to make file uploader work
-               # when used in iframe.
-               # This is not ideal but it is the only way to make it work
-               # It is ok as the ap are secured with a dynamically generated token
-               # TODO : check https://github.com/streamlit/streamlit/issues/5793
-               '--server.enableXsrfProtection=false'
-               #    '--theme.font=Roboto Serif',
-               ]
+        process: SysProc = None
+
+        options = [
+            f'--server.port={str(self.port)}',
+            f'--theme.backgroundColor={theme.background_color}',
+            f'--theme.secondaryBackgroundColor={theme.secondary_background_color}',
+            f'--theme.textColor={theme.text_color}',
+            f'--theme.primaryColor={theme.primary_color}',
+            # prevent streamlit to open the browser
+            '--server.headless=true',
+            '--browser.gatherUsageStats=false',
+            # Disable XSRF protection to make file uploader work
+            # when used in iframe.
+            # This is not ideal but it is the only way to make it work
+            # It is ok as the ap are secured with a dynamically generated token
+            # TODO : check https://github.com/streamlit/streamlit/issues/5793
+            '--server.enableXsrfProtection=false',
+            # custom options
+            '--',
+            f'--app_dir={self.get_working_dir()}',
+        ]
 
         if app.is_dev_mode():
-            cmd += [
-                # custom options
-                '--',
-                # configure a token to secure the app
-                f'--dev_mode={app.is_dev_mode()}',
-                f'--dev_config_file={app.get_dev_config_file()}',
-            ]
+            # Run streamlit through python to keep the debugger enable
+            # So streamlit app is debuggable
+            cmd = ['python3', self._get_streamlit_package_path(), 'run',
+                   app.get_main_app_file_path()] + options + [f"--dev_mode={app.is_dev_mode()}"]
+            process = SysProc.popen(cmd)
         else:
-            cmd += [
-                # custom options
-                '--',
-                # configure a token to secure the app
-                f'--gws_token={self._token}',
-                f'--app_dir={self.get_working_dir()}',
-            ]
-
-        shell_proxy = self._get_and_check_shell_proxy(app)
-
-        # Must use the shell_mode=False to retrieve the correct pid to check the number of connections
-        process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
+            shell_proxy = self._get_and_check_shell_proxy(app)
+            cmd = ['streamlit', 'run', app.get_main_app_file_path()] + options + [f'--gws_token={self._token}']
+            process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
 
         return AppProcessStartResult(
             process=process,
             services=self._get_nginx_services(),
         )
+
+    def _get_streamlit_package_path(self) -> str:
+        import streamlit
+        return os.path.dirname(streamlit.__file__)
 
     def call_health_check(self) -> bool:
         try:

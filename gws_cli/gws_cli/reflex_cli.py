@@ -1,10 +1,9 @@
 
 import typer
-from typing_extensions import Annotated
-
 from gws_cli.app_cli import AppCli
 from gws_cli.generate_reflex_app.generate_reflex_app import generate_reflex_app
 from gws_core.apps.reflex.reflex_app import ReflexApp
+from typing_extensions import Annotated
 
 app = typer.Typer(help="Generate and run Reflex applications")
 
@@ -15,11 +14,11 @@ def run_dev(config_file_path: Annotated[str, typer.Argument(help="Path to the JS
     app_cli = AppCli(config_file_path)
     shell_proxy = app_cli.build_shell_proxy()
 
-    streamit_app = ReflexApp("123", "main", shell_proxy)
-    streamit_app.set_dev_mode(config_file_path)
-    streamit_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
+    reflex_app = ReflexApp(ReflexApp.DEV_MODE_APP_ID, "main", shell_proxy)
+    reflex_app.set_dev_mode(config_file_path)
+    reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
 
-    app_cli.start_app(streamit_app)
+    app_cli.start_app(reflex_app)
 
 
 @app.command("generate", help="Generate a new Reflex app")

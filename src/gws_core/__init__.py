@@ -110,6 +110,7 @@ from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
 from .core.service.external_api_service import \
     ExternalApiService as ExternalApiService
+from .core.service.external_api_service import FormData as FormData
 from .core.service.front_service import FrontService as FrontService
 from .core.service.front_service import FrontTheme as FrontTheme
 # Core > Utils
@@ -118,6 +119,7 @@ from .core.utils.compress.gzip_compress import GzipCompress as GzipCompress
 from .core.utils.compress.tar_compress import TarCompress as TarCompress
 from .core.utils.compress.tar_compress import TarGzCompress as TarGzCompress
 from .core.utils.compress.zip_compress import ZipCompress as ZipCompress
+from .core.utils.date_helper import DateHelper as DateHelper
 from .core.utils.gws_core_packages import GwsCorePackages as GwsCorePackages
 from .core.utils.logger import LogContext as LogContext
 from .core.utils.logger import Logger as Logger
@@ -223,6 +225,7 @@ from .impl.openai.open_ai_helper import OpenAiHelper as OpenAiHelper
 from .impl.plotly.plotly_r_field import PlotlyRField as PlotlyRField
 from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
+# Impl > RichText
 from .impl.rich_text.block.rich_text_block import \
     RichTextBlockDataBase as RichTextBlockDataBase
 from .impl.rich_text.block.rich_text_block import \
@@ -259,13 +262,16 @@ from .impl.rich_text.block.rich_text_block_view import \
     RichTextBlockResourceView as RichTextBlockResourceView
 from .impl.rich_text.block.rich_text_block_view import \
     RichTextBlockViewFile as RichTextBlockViewFile
-# Impl > RichText
 from .impl.rich_text.rich_text import RichText as RichText
+from .impl.rich_text.rich_text_modification import \
+    RichTextAggregateDTO as RichTextAggregateDTO
 from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock
 from .impl.rich_text.rich_text_types import RichTextDTO as RichTextDTO
 from .impl.rich_text.rich_text_types import \
     RichTextObjectType as RichTextObjectType
 from .impl.rich_text.rich_text_view import RichTextView as RichTextView
+from .impl.s3.datahub_s3_server_service import \
+    DataHubS3ServerService as DataHubS3ServerService
 # Impl > s3
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket
 # Impl > Shell
@@ -545,7 +551,12 @@ from .streamlit.streamlit_resource import \
     StreamlitResource as StreamlitResource
 # Tag
 from .tag.entity_tag import EntityTag as EntityTag
+from .tag.entity_tag_list import EntityTagList as EntityTagList
 from .tag.tag import Tag as Tag
+from .tag.tag import TagOrigin as TagOrigin
+from .tag.tag import TagOrigins as TagOrigins
+from .tag.tag_dto import TagOriginType as TagOriginType
+from .tag.tag_entity_type import TagEntityType as TagEntityType
 from .tag.tag_helper import TagHelper as TagHelper
 from .tag.tag_key_model import TagKeyModel as TagKeyModel
 from .tag.tag_list import TagList as TagList
@@ -585,6 +596,7 @@ from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.view_tester import ViewTester as ViewTester
 # User
 from .user.auth_service import AuthService as AuthService
+from .user.current_user_service import AuthenticateUser as AuthenticateUser
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
 from .user.user_credentials_dto import UserCredentialsDTO as UserCredentialsDTO

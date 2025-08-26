@@ -86,12 +86,12 @@ class ReflexApp(AppInstance):
         :param working_dir: _description_
         :type working_dir: str
         """
-        if self._dev_mode:
-            return
-
         app_config_dir = self._generate_config_dir(working_dir)
 
-        self._generate_config(app_config_dir)
+        if self._dev_mode:
+            self._generate_config_dev_mode()
+        else:
+            self._generate_config(app_config_dir)
 
     def get_app_process_hash(self) -> str:
         # all app are using a different process
