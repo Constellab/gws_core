@@ -532,6 +532,13 @@ from .scenario_template.scenario_template import \
     ScenarioTemplate as ScenarioTemplate
 from .scenario_template.scenario_template_factory import \
     ScenarioTemplateFactory as ScenarioTemplateFactory
+from .share.share_link import ShareLink as ShareLink
+# Share
+from .share.share_link_service import ShareLinkService as ShareLinkService
+from .share.shared_dto import GenerateShareLinkDTO as GenerateShareLinkDTO
+from .share.shared_dto import ShareLinkEntityType as ShareLinkEntityType
+from .share.shared_dto import ShareLinkType as ShareLinkType
+from .share.shared_dto import UpdateShareLinkDTO as UpdateShareLinkDTO
 # Space
 from .space.mail_service import MailService as MailService
 from .space.space_dto import SaveNoteToSpaceDTO as SaveNoteToSpaceDTO

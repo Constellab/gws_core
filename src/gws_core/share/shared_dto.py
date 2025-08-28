@@ -1,11 +1,12 @@
 
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_zipper import ZipScenarioInfo
@@ -45,6 +46,15 @@ class GenerateShareLinkDTO(BaseModelDTO):
     entity_id: str
     entity_type: ShareLinkEntityType
     valid_until: Optional[datetime] = None
+
+    @staticmethod
+    def get_1_hour_validity(entity_id: str,
+                            entity_type: ShareLinkEntityType) -> 'GenerateShareLinkDTO':
+        return GenerateShareLinkDTO(
+            entity_id=entity_id,
+            entity_type=entity_type,
+            valid_until=DateHelper.now_utc() + timedelta(hours=1)
+        )
 
 
 class UpdateShareLinkDTO(BaseModelDTO):

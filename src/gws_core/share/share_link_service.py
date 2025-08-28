@@ -83,12 +83,20 @@ class ShareLinkService:
 
     @classmethod
     def get_or_create_valid_public_share_link(cls, share_dto: GenerateShareLinkDTO) -> ShareLink:
+        """
+        Method that get a valid share link for a given entity.
+        If it does not exist, it creates it.
+        If it is expired at the valid_until date, it updates the expiration date.
+        """
         return cls.get_or_create_valid_share_link(share_dto, ShareLinkType.PUBLIC)
 
     @classmethod
     def get_or_create_valid_share_link(cls, share_dto: GenerateShareLinkDTO,
                                        link_type: ShareLinkType) -> ShareLink:
-        """Method that get a valid share link for a given entity or create a new one if it does not exist or expired
+        """
+        Method that get a valid share link for a given entity.
+        If it does not exist, it creates it.
+        If it is expired at the valid_until date, it updates the expiration date.
         """
 
         existing_link = ShareLink.find_by_entity_type_and_id(
