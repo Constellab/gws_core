@@ -70,7 +70,7 @@ if api_url is None:
 
 config = rx.Config(
     app_name="reflex_showcase",
-    plugins=[],
+    plugins=[rx.plugins.SitemapPlugin()],
     # [START_AUTO_CODE]
     api_url=api_url
     # [END_AUTO_CODE]

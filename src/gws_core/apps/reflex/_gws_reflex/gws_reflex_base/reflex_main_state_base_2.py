@@ -1,4 +1,5 @@
 import os
+from asyncio import sleep
 from json import load
 from typing import Dict, List, Optional, cast
 
@@ -41,7 +42,7 @@ class QueryParamObject():
         return self.params.get(key, default)
 
 
-class ReflexMainStateBase(rx.State):
+class ReflexMainStateBase2(rx.State):
     """Base State of Reflex. This state is used by normal app and virtual environment app.
 
     It is used to manage the app configuration, authentication, and parameters.
@@ -62,6 +63,8 @@ class ReflexMainStateBase(rx.State):
         If the app requires authentication and the user is not authenticated,
         it redirects to the unauthorized page.
 
+        To avoid circular dependency, this method should not call the `get_app_config` method.
+
         :return: _description_
         :rtype: _type_
         """
@@ -70,16 +73,27 @@ class ReflexMainStateBase(rx.State):
             # If already initialized, do nothing
             return
 
-        self._app_config = self._load_app_config()
+        if not self._app_config:
+            self._app_config = self._load_app_config()
 
-        self.authenticated_user_id = self._check_user_token()
+        user_access_tokens = self._app_config.get('user_access_tokens', {})
 
-        if self.requires_authentication() and not self.authenticated_user_id:
+        if not self.authenticated_user_id:
+            self.authenticated_user_id = await self._check_user_token(user_access_tokens)
+
+        requires_authentication = self._app_config.get('requires_authentication', False)
+
+        if requires_authentication and not self.authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
             # redirect to the unauthorized page
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self.is_initialized = True
+
+    @rx.var
+    def is_initialized_computed(self) -> bool:
+        """Computed property for frontend access."""
+        return self.is_initialized
 
     def _load_app_config(self) -> dict:
         """Load the app configuration from the environment variable."""
@@ -111,8 +125,7 @@ class ReflexMainStateBase(rx.State):
 
         return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
 
-    def _check_user_token(self) -> Optional[str]:
-        user_access_tokens = self._get_user_access_tokens_dict()
+    async def _check_user_token(self, user_access_tokens: Dict[str, str]) -> Optional[str]:
 
         if self.is_dev_mode():
             return user_access_tokens.get(self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
@@ -137,15 +150,16 @@ class ReflexMainStateBase(rx.State):
         """Check if the app is running in development mode."""
         return os.environ.get('GWS_REFLEX_DEV_MODE', 'false').lower() == 'true'
 
-    def get_app_config(self) -> StreamlitConfigDTO:
+    async def get_app_config(self) -> StreamlitConfigDTO:
         """Get the app configuration."""
         if self._app_config is None:
-            raise ValueError("App configuration is not loaded. Call on_load() first.")
+            await self.on_load()
+            # raise ValueError("App configuration is not loaded. Call on_load() first.")
         return cast(StreamlitConfigDTO, self._app_config)
 
-    def get_sources_ids(self) -> List[str]:
+    async def get_sources_ids(self) -> List[str]:
         """Get the source IDs from the app configuration."""
-        source_ids = self.get_app_config().get('source_ids')
+        source_ids = (await self.get_app_config()).get('source_ids')
         if source_ids is None:
             return []
         return source_ids
@@ -160,16 +174,16 @@ class ReflexMainStateBase(rx.State):
 
     ##################### AUTHENTICATION #####################
 
-    def requires_authentication(self) -> bool:
+    async def requires_authentication(self) -> bool:
         """Check if the app requires authentication."""
-        return self.get_app_config().get('requires_authentication', False)
+        return (await self.get_app_config()).get('requires_authentication', False)
 
-    def check_authentication(self) -> bool:
+    async def check_authentication(self) -> bool:
         if not self.is_initialized:
             return False
         if self.is_dev_mode():
             return True
-        if not self.requires_authentication():
+        if not await self.requires_authentication():
             return True
         return self.authenticated_user_id is not None
 
@@ -178,22 +192,16 @@ class ReflexMainStateBase(rx.State):
         query_params = self.get_query_params()
         return query_params.get('gws_user_access_token')
 
-    def _get_user_access_tokens_dict(self) -> Dict[str, str]:
-        """Get the user access tokens from the app configuration."""
-        return self.get_app_config().get('user_access_tokens', {})
-
     ####################### PARAMS #####################
 
-    def get_param(self, key: str, default=None) -> Optional[str]:
+    async def get_param(self, key: str, default=None) -> Optional[str]:
         """Get a parameter from the app configuration."""
-        params = self.get_params()
+        params = await self.get_params()
         return params.get(key, default)
 
-    def get_params(self) -> dict:
+    async def get_params(self) -> dict:
         """Get the parameters from the app configuration."""
-        if not self.is_initialized:
-            return {}
-        params = self.get_app_config().get('params')
+        params = (await self.get_app_config()).get('params')
         if params is None:
             return {}
         return params
