@@ -52,15 +52,14 @@ class StreamlitTaskRunner():
 
     def generate_config_form_without_run(
             self, session_state_key: str, default_config_values: ConfigParamsDict = None,
-            key: str = 'config-task-form') -> None:
+            is_default_config_valid: ConfigParamsDict = True, key: str = 'config-task-form') -> None:
         """Generate the configuration form a specified task without running the task afterwards, config values are set the in streamlit session state.
         """
-
         if st.session_state.get(
                 session_state_key,
                 None) is None and default_config_values is not None:
             st.session_state[session_state_key] = StreamlitTaskRunnerConfigOutput(
-                config=default_config_values, is_valid=True).to_dict()
+                config=default_config_values, is_valid=is_default_config_valid).to_dict()
 
         result = self._generate_component(key, default_config_values, is_dialog=False)
         if result is not None and result.config is not None and result.to_dict() != st.session_state.get(session_state_key, None):

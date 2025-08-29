@@ -21,7 +21,7 @@ from ..table import Table
 @importer_decorator(unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS)
 class TableImporter(ResourceImporter):
     config_specs = ConfigSpecs({
-        'file_format': StrParam(allowed_values=['auto', *Table.ALLOWED_FILE_FORMATS], default_value='auto', human_name="File format", short_description="File format"),
+        'file_format': StrParam(allowed_values=['auto', *Table.ALLOWED_FILE_FORMATS], optional=False, human_name="File format", short_description="File format"),
         'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
         'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
         'format_header_names': BoolParam(default_value=False, optional=True, human_name="Format header names", short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed)."),

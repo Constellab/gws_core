@@ -42,7 +42,7 @@ class StreamlitComponentLoader():
     IFRAME_MESSAGE = "iframe-message"
     IFRAME_MESSAGE_VERSION = "dc_iframe_message_1.2.0"
 
-    IS_RELEASED = True
+    IS_RELEASED = False
     # url for dev front app
     DEV_FRONT_URL = "http://localhost:4201"
 

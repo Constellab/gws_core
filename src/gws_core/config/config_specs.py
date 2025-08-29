@@ -112,7 +112,7 @@ class ConfigSpecs():
             return True
 
         for key, spec in self.specs.items():
-            if not spec.optional and not key in param_values:
+            if not spec.optional and param_values.get(key, None) is None:
                 return False
 
         return True

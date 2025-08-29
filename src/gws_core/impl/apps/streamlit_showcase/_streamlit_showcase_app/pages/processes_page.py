@@ -31,7 +31,9 @@ def _render_task_config_form():
 
     form_config = StreamlitTaskRunner(TableImporter)
     form_config.generate_config_form_without_run(
-        session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
+        session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values(),
+        is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(
+            TableImporter.config_specs.get_default_values()))
 
     st.write(f"Task config : {st.session_state['config_data']}")
 
@@ -44,7 +46,8 @@ def _render_task_config_form():
             st.session_state["config_data"] = None
 
         form_config = StreamlitTaskRunner(TableImporter)
-        form_config.generate_config_form_without_run(session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values())
+        form_config.generate_config_form_without_run(session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values(), is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(
+            TableImporter.config_specs.get_default_values()))
 
         st.write(f"Task config : {st.session_state['config_data']}")
     ''')
@@ -61,6 +64,7 @@ def _render_task_config_form_in_dialog():
         form_config = StreamlitTaskRunner(TableImporter)
         form_config.generate_config_form_without_run(
             session_state_key="config_data_dialog", default_config_values=TableImporter.config_specs.get_default_values(),
+            is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(TableImporter.config_specs.get_default_values()),
             key="config-task-form-dialog")
 
         if st.button("Save"):
@@ -86,6 +90,7 @@ def _render_task_config_form_in_dialog():
             form_config = StreamlitTaskRunner(TableImporter)
             form_config.generate_config_form_without_run(
                 session_state_key="config_data_dialog", default_config_values=TableImporter.config_specs.get_default_values(),
+                is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(TableImporter.config_specs.get_default_values()),
                 key="config-task-form-dialog")
 
             if st.button("Save"):
