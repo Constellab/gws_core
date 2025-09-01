@@ -27,7 +27,7 @@ class ReflexMainState(ReflexMainStateBase2):
         # in dev mode we load the system user by default
         # if authentication is enabled
 
-        if not self.is_initialized:
+        if not self._is_initialized:
             await self.on_load()
 
         user_id = self.authenticated_user_id

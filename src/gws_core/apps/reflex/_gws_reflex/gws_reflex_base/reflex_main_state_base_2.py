@@ -48,7 +48,7 @@ class ReflexMainStateBase2(rx.State):
     It is used to manage the app configuration, authentication, and parameters.
     """
     _app_config: dict = None
-    is_initialized: bool = False
+    _is_initialized: bool = False
 
     # None if the user is not authenticated
     authenticated_user_id: Optional[str] = None
@@ -69,7 +69,7 @@ class ReflexMainStateBase2(rx.State):
         :rtype: _type_
         """
 
-        if self.is_initialized:
+        if self._is_initialized:
             # If already initialized, do nothing
             return
 
@@ -88,12 +88,12 @@ class ReflexMainStateBase2(rx.State):
             # redirect to the unauthorized page
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
-        self.is_initialized = True
+        self._is_initialized = True
 
     @rx.var
     def is_initialized_computed(self) -> bool:
         """Computed property for frontend access."""
-        return self.is_initialized
+        return self._is_initialized
 
     def _load_app_config(self) -> dict:
         """Load the app configuration from the environment variable."""
@@ -179,7 +179,7 @@ class ReflexMainStateBase2(rx.State):
         return (await self.get_app_config()).get('requires_authentication', False)
 
     async def check_authentication(self) -> bool:
-        if not self.is_initialized:
+        if not self._is_initialized:
             return False
         if self.is_dev_mode():
             return True

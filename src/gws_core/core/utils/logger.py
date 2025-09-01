@@ -18,7 +18,8 @@ LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = "log"
 RESET_COLOR = "\x1b[0m"
 
-MessageType = Literal['ERROR', 'WARNING', 'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
+MessageType = Literal['ERROR', 'WARNING',
+                      'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
 
 LoggerLevel = Literal['INFO', 'DEBUG', 'ERROR']
 
@@ -117,7 +118,8 @@ class Logger:
         self._logger.setLevel(level)
 
         # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
-        formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
+        formatter = logging.Formatter(
+            "%(levelname)s - %(asctime)s - %(message)s")
 
         # Configure the console logger
         console_logger = logging.StreamHandler()
@@ -134,7 +136,8 @@ class Logger:
         # this write the log in a file with a json format
         file_handler = TimedRotatingFileHandler(
             self._file_path, when="midnight")
-        file_handler.setFormatter(JSONFormatter(context=context, context_id=context_id))
+        file_handler.setFormatter(JSONFormatter(
+            context=context, context_id=context_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
         self._logger.addHandler(file_handler)
@@ -202,21 +205,22 @@ class Logger:
             logger = cls._logger_instance
 
             if level_name == "EXCEPTION":
-                logger.log_exception(obj)
+                logger._log_exception(obj)
                 return
 
             if level_name == "ERROR":
-                logger.log_error(obj)
+                logger._log_error(obj)
             elif level_name == "WARNING":
-                logger.log_warning(obj)
+                logger._log_warning(obj)
             elif level_name == "INFO" or level_name == "PROGRESS":
-                logger.log_info(obj)
+                logger._log_info(obj)
             elif level_name == "DEBUG":
-                logger.log_debug(obj)
+                logger._log_debug(obj)
 
         else:
             # add the message in the waiting list to be logged later
-            cls._waiting_messages.append({"level_name": level_name, "obj": obj})
+            cls._waiting_messages.append(
+                {"level_name": level_name, "obj": obj})
 
     @classmethod
     def _log_waiting_message(cls) -> None:
@@ -278,23 +282,23 @@ class Logger:
         """Clear the logger
         """
         if cls._logger_instance:
-            cls._logger_instance.clear()
+            cls._logger_instance._clear()
             cls._logger_instance = None
 
-    def clear(self) -> None:
+    def _clear(self) -> None:
         self._logger.handlers.clear()
 
-    def log_exception(self, message: str) -> None:
+    def _log_exception(self, message: str) -> None:
         self._logger.exception(message, exc_info=True)
 
-    def log_error(self, message: str) -> None:
+    def _log_error(self, message: str) -> None:
         self._logger.error(message)
 
-    def log_warning(self, message: str) -> None:
+    def _log_warning(self, message: str) -> None:
         self._logger.warning(message)
 
-    def log_info(self, message: str) -> None:
+    def _log_info(self, message: str) -> None:
         self._logger.info(message)
 
-    def log_debug(self, message: str) -> None:
+    def _log_debug(self, message: str) -> None:
         self._logger.debug(message)
