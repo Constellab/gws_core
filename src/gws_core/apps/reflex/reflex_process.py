@@ -172,7 +172,11 @@ class ReflexProcess(AppProcess):
         zip_file_path = os.path.join(app_build_folder.path, ReflexProcess.ZIP_FILE_NAME)
         FileHelper.delete_file(zip_file_path)
 
-        result = shell_proxy.run(build_cmd, env=env)
+        # Log in debug the command to build manually the app
+        env_str_cmd = " ".join(f"{key}={value}" for key, value in env.items())
+        Logger.debug(f'Command to build frontend: {env_str_cmd} {" ".join(build_cmd)}')
+
+        result = shell_proxy.run(build_cmd, env=env, dispatch_stderr=True, dispatch_stdout=True)
         if result != 0:
             raise Exception(f"Failed to build REFLEX frontend app {app.get_app_folder()}.")
 

@@ -4,6 +4,7 @@ from json import load
 from typing import Dict, List, Optional, cast
 
 import reflex as rx
+from gws_core.core.utils.logger import Logger
 from typing_extensions import TypedDict
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
@@ -99,7 +100,12 @@ class ReflexMainStateBase2(rx.State):
         """Load the app configuration from the environment variable."""
         app_config_path = self._get_app_config_file_path()
 
+        if not app_config_path:
+            return {}
+
         if not os.path.exists(app_config_path):
+            # Logger.warning(f"App config file not found at {app_config_path}")
+            # return {}
             raise FileNotFoundError(f"App config file not found at {app_config_path}")
 
         try:
@@ -121,7 +127,11 @@ class ReflexMainStateBase2(rx.State):
             query_param = self.get_query_params()
             app_id = query_param.get('gws_app_id')
             if not app_id:
-                raise ValueError("gws_app_id query parameter is not set")
+                # Return None and don't throw an error because this is called
+                # during the build
+                Logger.warning("gws_app_id query parameter is not set. This is normal during build")
+                return None
+                # raise ValueError("gws_app_id query parameter is not set")
 
         return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
 
@@ -137,7 +147,7 @@ class ReflexMainStateBase2(rx.State):
         env_token = os.environ.get('GWS_REFLEX_TOKEN')
 
         if url_token != env_token:
-            return False
+            return None
 
         # load user id from access token
         user_access_token = self._get_user_access_token()
@@ -154,7 +164,7 @@ class ReflexMainStateBase2(rx.State):
         """Get the app configuration."""
         if self._app_config is None:
             await self.on_load()
-            # raise ValueError("App configuration is not loaded. Call on_load() first.")
+        # raise ValueError("App configuration is not loaded. Call on_load() first.")
         return cast(StreamlitConfigDTO, self._app_config)
 
     async def get_sources_ids(self) -> List[str]:
