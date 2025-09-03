@@ -29,7 +29,7 @@
                     },
                     {
                         "name": "fastapi",
-                        "version": "0.115.12"
+                        "version": "0.116.1"
                     },
                     {
                         "name": "pydantic",
@@ -149,7 +149,7 @@
                     },
                     {
                         "name": "reflex",
-                        "version": "0.8.2"
+                        "version": "0.8.8"
                     }
                 ]
             }
