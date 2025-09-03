@@ -6,7 +6,6 @@ from fastapi import Depends
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingDTO
@@ -62,7 +61,8 @@ def download_a_file(id_: str,
 
 @core_app.get("/fs-node/{id_}/preview/{file_name}", tags=["Files"], summary="Preview a file")
 def preview_a_file(id_: str,
-                   _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+                   #    _=Depends(AuthService.check_user_access_token) # TODO THIS IS TEMPORARY, TO RENABLE
+                   ) -> FileResponse:
     """
     Preview a file. The access is made with a unique  code generated with get_download_file_url
     """
