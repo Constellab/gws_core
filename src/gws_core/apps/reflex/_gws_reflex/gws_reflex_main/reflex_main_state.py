@@ -6,7 +6,7 @@ from gws_core.user.user import User
 from gws_reflex_base import ReflexMainStateBase2
 
 
-class ReflexMainState(ReflexMainStateBase2):
+class ReflexMainState(ReflexMainStateBase2, mixin=True):
     """Main state for the normal (not in virtual environment) Reflex app. extending the base state with resource management.
 
     It provides methods to access the input resources of the app.

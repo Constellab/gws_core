@@ -43,7 +43,7 @@ class QueryParamObject():
         return self.params.get(key, default)
 
 
-class ReflexMainStateBase2(rx.State):
+class ReflexMainStateBase2(rx.State, mixin=True):
     """Base State of Reflex. This state is used by normal app and virtual environment app.
 
     It is used to manage the app configuration, authentication, and parameters.
