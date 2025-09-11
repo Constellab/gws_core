@@ -70,6 +70,9 @@ class File(FSNode):
     def is_csv(self):
         return FileHelper.is_csv(self.path)
 
+    def is_csv_or_excel(self):
+        return FileHelper.is_csv(self.path) or self.extension in ['xls', 'xlsx']
+
     def is_txt(self):
         return FileHelper.is_txt(self.path)
 
@@ -302,7 +305,8 @@ class File(FSNode):
 
     def check_if_exists(self):
         if not self.exists():
-            raise BadRequestException(f"File {self.name or self.get_base_name()} does not exist")
+            raise BadRequestException(
+                f"File {self.name or self.get_base_name()} does not exist")
 
     def get_default_style(self) -> TypingStyle:
         icon = self.get_icon_from_extension()
