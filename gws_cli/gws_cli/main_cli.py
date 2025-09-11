@@ -1,5 +1,14 @@
 
 import typer
+from enum import Enum
+from typing_extensions import Annotated
+
+
+class LogLevel(str, Enum):
+    INFO = "INFO"
+    DEBUG = "DEBUG"
+    ERROR = "ERROR"
+
 
 
 def main():
@@ -12,6 +21,14 @@ def main():
         context_settings={"help_option_names": ["-h", "--help"]}
     )
 
+    @app.callback()
+    def global_options(
+        log_level: Annotated[LogLevel, typer.Option("--log-level", help="Global logging level for all commands.")] = LogLevel.INFO
+    ):
+        """GWS CLI with global options"""
+        # Enable logger with the specified log level
+        enable_logger(log_level.value)
+
     app.add_typer(server_cli.app, name="server",
                   help="Manage server operations (run, test, execute scenarios/processes)")
     app.add_typer(brick_cli.app, name="brick", help="Generate and manage bricks")
@@ -23,10 +40,10 @@ def main():
     return app
 
 
-def enable_logger() -> None:
+def enable_logger(log_level: str = "INFO") -> None:
     from gws_core import Logger, Settings
     log_dir = Settings.build_log_dir(is_test=False)
-    Logger.build_main_logger(log_dir=log_dir)
+    Logger.build_main_logger(log_dir=log_dir, level=log_level)
 
 
 def start():
@@ -34,7 +51,6 @@ def start():
     from gws_cli.utils.gws_core_loader import load_gws_core
 
     load_gws_core()
-    enable_logger()
     app = main()
     app()
 
