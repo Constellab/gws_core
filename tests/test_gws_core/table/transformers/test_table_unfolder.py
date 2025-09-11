@@ -2,11 +2,10 @@
 
 from unittest import TestCase
 
-from numpy import NaN
-from pandas import DataFrame
-
 from gws_core import Table, TableUnfolderHelper
 from gws_core.test.base_test_case import BaseTestCase
+from numpy import NaN
+from pandas import DataFrame
 
 
 # test_table_unfolder
@@ -70,3 +69,53 @@ class TestTableUnfolder(TestCase):
         # check the unfolding
         expected_result = Table(DataFrame({0: [1, 2, 10, 8], 1: [6, 4, 3, 4]}, index=['a_M', 'b_M', 'a_F', 'b_F']))
         self.assertTrue(result.get_data().equals(expected_result.get_data()))
+
+    def test_helper_unfold_columns_by_rows(self):
+        """Test the TableUnfolderHelper.unfold_columns_by_rows method directly."""
+        initial_df = DataFrame({
+            'A': [1, 2, 3],
+            'B': [10, 20, 30]
+        })
+        initial_df.index = ['row1', 'row2', 'header_row']
+
+        table = Table(data=initial_df)
+        helper = TableUnfolderHelper()
+
+        # Test the helper method directly
+        result = helper.unfold_by_rows(table, ['header_row'], 'original_column')
+
+        # Verify the header_row was extracted and used for column tags
+        self.assertNotIn('header_row', result.get_data().index)
+
+        # Check that new rows were created based on the values from header_row
+        # The values [3, 30] should be used to create column tags and unfold
+        self.assertTrue(len(result.get_data().index) > 0)
+        self.assertEqual(result.get_data().shape[1], 1)  # Should have 1 column after unfolding
+
+    def test_helper_unfold_rows_by_columns(self):
+        """Test the TableUnfolderHelper.unfold_rows_by_columns method directly."""
+        initial_df = DataFrame({
+            'A': ['header1', 'header2'],
+            'B': [10, 20],
+            'C': [100, 200]
+        })
+        initial_df.index = ['row1', 'row2']
+
+        table = Table(data=initial_df)
+        helper = TableUnfolderHelper()
+
+        # Test the helper method directly
+        result = helper.unfold_by_columns(table, ['A'], 'original_row')
+
+        # Verify column A was extracted and used for row tags
+        self.assertNotIn('A', result.get_data().columns)
+
+        # Check that new columns were created based on the values from column A
+        # The values ['header1', 'header2'] should be used to create row tags and unfold
+        column_names = result.get_data().columns.tolist()
+        self.assertTrue(any('header1' in col for col in column_names))
+        self.assertTrue(any('header2' in col for col in column_names))
+
+        # Should have 1 row and multiple columns after unfolding
+        self.assertEqual(result.get_data().shape[0], 1)
+        self.assertTrue(result.get_data().shape[1] > 2)
