@@ -32,7 +32,8 @@ class AppManager:
                      log_context: LogContext = LogContext.MAIN,
                      log_context_id: str = None,
                      show_sql: bool = False,
-                     is_test: bool = False) -> Settings:
+                     is_test: bool = False,
+                     skip_typings_names: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
@@ -56,8 +57,9 @@ class AppManager:
         # Init the db
         DbManagerService.init_all_db()
 
-        # Init the typings
-        TypingManager.init_typings()
+        if not skip_typings_names:
+            # Init the typings
+            TypingManager.init_typings()
 
         # Init plotly color, use the default plotly color
         # Force this init because it is overriden when importing streamlit

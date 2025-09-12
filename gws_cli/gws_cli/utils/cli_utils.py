@@ -1,9 +1,26 @@
 
 
+import os
 from typing import Dict
+
+import typer
+
+from gws_core import BrickService
+from gws_core.settings_loader import SettingsLoader
 
 
 class CLIUtils:
+
+    @staticmethod
+    def get_global_option_log_level(ctx: typer.Context) -> str:
+        """Get the global log level option from the context.
+
+        :param ctx: Typer context
+        :type ctx: typer.Context
+        :return: Log level
+        :rtype: str
+        """
+        return ctx.obj['log_level']
 
     @staticmethod
     def replace_vars_in_file(file_path: str, variables: Dict[str, str]):
@@ -29,3 +46,35 @@ class CLIUtils:
         # variable are formatted as {{var_name}}
         text = text.replace('{{' + var_name + '}}', value)
         return text
+
+    @staticmethod
+    def get_and_check_current_brick_dir() -> str:
+        """Get the current brick dir, if the current dir is not inside a brick, return None.
+
+        :return: path to the brick dir or None
+        :rtype: str | None
+        """
+        brick_dir = BrickService.get_parent_brick_folder(os.getcwd())
+        if not brick_dir:
+            typer.echo(
+                "The current folder is not inside a brick, please run the command inside a brick folder or provide the brick name.",
+                err=True)
+            raise typer.Abort()
+
+        return brick_dir
+
+    @staticmethod
+    def get_current_brick_settings_file_path() -> str:
+        """Get the current brick settings file path, if the current dir is not inside a brick, return None.
+
+        :return: path to the brick settings file or None
+        :rtype: str | None
+        """
+        brick_dir = CLIUtils.get_and_check_current_brick_dir()
+
+        settings_file_path = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
+        if not os.path.exists(settings_file_path):
+            typer.echo(f"'settings.json' file not found in the brick '{brick_dir}'.", err=True)
+            raise typer.Abort()
+
+        return settings_file_path

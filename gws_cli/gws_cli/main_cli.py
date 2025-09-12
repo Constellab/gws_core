@@ -1,6 +1,7 @@
 
-import typer
 from enum import Enum
+
+import typer
 from typing_extensions import Annotated
 
 
@@ -8,7 +9,6 @@ class LogLevel(str, Enum):
     INFO = "INFO"
     DEBUG = "DEBUG"
     ERROR = "ERROR"
-
 
 
 def main():
@@ -23,9 +23,14 @@ def main():
 
     @app.callback()
     def global_options(
+        ctx: typer.Context,
         log_level: Annotated[LogLevel, typer.Option("--log-level", help="Global logging level for all commands.")] = LogLevel.INFO
     ):
         """GWS CLI with global options"""
+        # Store log_level in the context object so it can be accessed in subcommands
+        if ctx.obj is None:
+            ctx.obj = {}
+        ctx.obj["log_level"] = log_level.value
         # Enable logger with the specified log level
         enable_logger(log_level.value)
 
