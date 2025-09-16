@@ -231,7 +231,6 @@ class ScenarioRunService():
         options: List[str] = [
             "--scenario-id", scenario.id,
             "--user-id", user.id,
-            "--log-level", Logger.level,
         ]
 
         if settings.is_test:
@@ -251,6 +250,7 @@ class ScenarioRunService():
         cmd = [
             "python3",
             os.path.join(gws_core_path, 'gws_cli', 'gws_cli', "main_cli.py"),
+            "--log-level", Logger.level,
             "server",
             command,
         ] + options

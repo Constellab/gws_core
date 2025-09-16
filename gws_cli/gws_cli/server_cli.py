@@ -61,7 +61,7 @@ def test(
 
 
 @app.command("run-scenario", help="Execute a specific scenario by ID")
-def run_exp(
+def run_scenario(
         ctx: typer.Context,
         scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
         user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the scenario.")],
