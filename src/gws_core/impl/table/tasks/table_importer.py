@@ -1,10 +1,11 @@
 
 
-from typing import Type
+from typing import Dict, Optional, Type
+
+from pandas import DataFrame, ExcelFile, read_excel, read_table
 
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.impl.file.file_helper import FileHelper
-from pandas import DataFrame, read_excel, read_table
 
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
@@ -30,6 +31,7 @@ class TableImporter(ResourceImporter):
         'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
         'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines. Set empty to disable comment lines."),
         'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
+        'sheet_name': StrParam(default_value=None, optional=True, human_name="Sheet name", short_description="Name of the Excel sheet to import. If not provided, imports the first sheet."),
         "metadata_columns": ParamSet(ConfigSpecs({
             'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
             'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
@@ -56,7 +58,7 @@ class TableImporter(ResourceImporter):
         dataframe: DataFrame = None
         # import the dataframe
         if source.extension in Table.ALLOWED_XLS_FILE_FORMATS or file_format in Table.ALLOWED_XLS_FILE_FORMATS:
-            dataframe = self._import_excel(source)
+            dataframe = self._import_excel(source, params.get_value('sheet_name'))
         elif source.extension in Table.ALLOWED_TXT_FILE_FORMATS or file_format in Table.ALLOWED_TXT_FILE_FORMATS:
             dataframe = self._import_csv(
                 source, params, comment_char, encoding)
@@ -89,8 +91,21 @@ class TableImporter(ResourceImporter):
 
         return clean_file_format
 
-    def _import_excel(self, source: File) -> DataFrame:
-        return read_excel(source.path)
+    def _import_excel(self, source: File, sheet_name: Optional[str] = None) -> DataFrame:
+
+        if sheet_name is not None:
+            # Validate that the sheet exists
+            excel_file = ExcelFile(source.path)
+            available_sheets = excel_file.sheet_names
+
+            if sheet_name not in available_sheets:
+                raise BadRequestException(
+                    f"Sheet '{sheet_name}' not found in Excel file. Available sheets: {', '.join(available_sheets)}")
+
+            return read_excel(source.path, sheet_name=sheet_name)
+        else:
+            # Default behavior: import first sheet
+            return read_excel(source.path)
 
     def _import_csv(self, source: File, params: ConfigParams, comment_char: str, encoding: str) -> DataFrame:
 
@@ -139,3 +154,35 @@ class TableImporter(ResourceImporter):
                         break
 
         return comments
+
+    @staticmethod
+    def import_excel_multiple_sheets(file: File, params: dict = None) -> Dict[str, Table]:
+        """
+        Import an Excel file with multiple sheets and return a dictionary with sheet names as keys and Table objects as values.
+
+        Args:
+            file: Excel file to import
+            params: Optional parameters dictionary for TableImporter
+
+        Returns:
+            Dictionary with sheet names as keys and Table objects as values
+        """
+        if params is None:
+            params = {}
+
+        # Read the Excel file to get all sheet names
+        excel_file = ExcelFile(file.path)
+        sheet_names = excel_file.sheet_names
+
+        result = {}
+
+        for sheet_name in sheet_names:
+            # Set the sheet_name parameter for this specific sheet
+            sheet_params = params.copy()
+            sheet_params['sheet_name'] = sheet_name
+
+            # Use TableImporter.call to import the table for this sheet
+            table = TableImporter.call(file, sheet_params)
+            result[sheet_name] = table
+
+        return result

@@ -3,10 +3,6 @@
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
-from pandas import DataFrame, Series
-from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
-                              is_string_dtype)
-
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
@@ -17,6 +13,9 @@ from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import \
     TableVulcanoPlotView
 from gws_core.model.typing_style import TypingStyle
+from pandas import DataFrame, Series
+from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
+                              is_string_dtype)
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -129,9 +128,11 @@ class Table(Resource):
                     "The data must be an instance of DataFrame or Numpy array")
 
             if (column_names is not None) and not isinstance(column_names, list):
-                raise BadRequestException("The column_names must be an instance of list")
+                raise BadRequestException(
+                    "The column_names must be an instance of list")
             if (row_names is not None) and not isinstance(row_names, list):
-                raise BadRequestException("The row_names must be an instance of list")
+                raise BadRequestException(
+                    "The row_names must be an instance of list")
 
             if column_names:
                 data.columns = column_names
@@ -141,7 +142,8 @@ class Table(Resource):
 
         # format the row and column names
         # prevent having duplicate column and row names
-        self._data = DataframeHelper.format_column_and_row_names(data, strict=strict_format_header_names)
+        self._data = DataframeHelper.format_column_and_row_names(
+            data, strict=strict_format_header_names)
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
@@ -245,7 +247,8 @@ class Table(Resource):
         if isinstance(data, Series):
             data = data.tolist()
         if not isinstance(data, list):
-            raise BadRequestException("The column data must be a list or a Series")
+            raise BadRequestException(
+                "The column data must be a list or a Series")
 
         name = DataframeHelper.format_header_name(name)
 
@@ -257,9 +260,11 @@ class Table(Resource):
             return
 
         if len(data) != self.nb_rows:
-            raise BadRequestException("The length of column data must be equal to the number of rows")
+            raise BadRequestException(
+                "The length of column data must be equal to the number of rows")
         if self.column_exists(name):
-            raise BadRequestException(f"The column name `{name}` already exists")
+            raise BadRequestException(
+                f"The column name `{name}` already exists")
 
         # insert columns
         if index is None:
@@ -270,7 +275,8 @@ class Table(Resource):
         self._column_tags.insert_new_empty_tags(index)
 
         # clean the index name if new rows were created
-        self._data.index = DataframeHelper.format_header_names(self._data.index)
+        self._data.index = DataframeHelper.format_header_names(
+            self._data.index)
 
     def remove_column(self, column_name: str) -> None:
         """
@@ -299,7 +305,8 @@ class Table(Resource):
         self.check_column_exists(current_name)
 
         if self.column_exists(new_name):
-            raise BadRequestException(f"The column name `{new_name}` already exists")
+            raise BadRequestException(
+                f"The column name `{new_name}` already exists")
 
         self._data.rename(columns={current_name: new_name}, inplace=True)
 
@@ -495,7 +502,8 @@ class Table(Resource):
         if isinstance(data, Series):
             data = data.tolist()
         if not isinstance(data, list):
-            raise BadRequestException("The row data must be a list or a Series")
+            raise BadRequestException(
+                "The row data must be a list or a Series")
 
         name = DataframeHelper.format_header_name(name)
 
@@ -504,9 +512,11 @@ class Table(Resource):
             self._column_tags.insert_new_empty_tags(count=len(data))
 
             # generate column names
-            columns_names = DataframeHelper.format_header_names(list(range(len(data))))
+            columns_names = DataframeHelper.format_header_names(
+                list(range(len(data))))
 
-            self._set_data([data], row_names=[name], column_names=columns_names)
+            self._set_data([data], row_names=[name],
+                           column_names=columns_names)
             return
 
         if self.row_exists(name):
@@ -549,7 +559,8 @@ class Table(Resource):
         self.check_row_exists(current_name)
 
         if self.row_exists(new_name):
-            raise BadRequestException(f"The row name `{new_name}` already exists")
+            raise BadRequestException(
+                f"The row name `{new_name}` already exists")
 
         self._data.rename(index={current_name: new_name}, inplace=True)
 
@@ -562,7 +573,8 @@ class Table(Resource):
         """
 
         if len(row_names) != self.nb_rows:
-            raise BadRequestException("The length of row names must be equal to the number of rows")
+            raise BadRequestException(
+                "The length of row names must be equal to the number of rows")
 
         self._data.index = row_names
 
@@ -693,9 +705,11 @@ class Table(Resource):
             index_instersect: List[int] = []
             for key, value in tag.items():
                 if not index_instersect:
-                    index_instersect = [i for i, t in enumerate(header_tags) if t.get(key) == value]
+                    index_instersect = [i for i, t in enumerate(
+                        header_tags) if t.get(key) == value]
                 else:
-                    pos = [i for i, t in enumerate(header_tags) if t.get(key) == value]
+                    pos = [i for i, t in enumerate(
+                        header_tags) if t.get(key) == value]
                     index_instersect = list(set(pos) & set(index_instersect))
 
                 if len(index_instersect) == 0:
@@ -791,7 +805,8 @@ class Table(Resource):
         """
 
         if len(tags) != self.nb_columns:
-            raise Exception("The length of tags must be equal to the number of columns")
+            raise Exception(
+                "The length of tags must be equal to the number of columns")
 
         self._column_tags = TableAxisTags(tags)
 
@@ -874,7 +889,8 @@ class Table(Resource):
         :param to_index: end index of the columns to copy, defaults to None
         :type to_index: int, optional
         """
-        self.set_all_column_tags(source_table.get_column_tags(from_index=from_index, to_index=to_index))
+        self.set_all_column_tags(source_table.get_column_tags(
+            from_index=from_index, to_index=to_index))
 
     def copy_column_tags_by_name(self, source_table: 'Table') -> None:
         """
@@ -885,7 +901,8 @@ class Table(Resource):
         """
         for column_name in self.column_names:
             if source_table.column_exists(column_name):
-                self.set_column_tags_by_name(column_name, source_table.get_column_tags_by_name(column_name))
+                self.set_column_tags_by_name(
+                    column_name, source_table.get_column_tags_by_name(column_name))
 
     def extract_column_tags_to_new_row(self, tag_key: str,
                                        new_row_name: str = None) -> None:
@@ -1101,7 +1118,8 @@ class Table(Resource):
         :param to_index: end index of the rows to copy, defaults to None
         :type to_index: int, optional
         """
-        self.set_all_row_tags(source_table.get_row_tags(from_index=from_index, to_index=to_index))
+        self.set_all_row_tags(source_table.get_row_tags(
+            from_index=from_index, to_index=to_index))
 
     def copy_row_tags_by_name(self, source_table: 'Table') -> None:
         """
@@ -1112,7 +1130,8 @@ class Table(Resource):
         """
         for row_name in self.row_names:
             if source_table.row_exists(row_name):
-                self.set_row_tags_by_name(row_name, source_table.get_row_tag_by_name(row_name))
+                self.set_row_tags_by_name(
+                    row_name, source_table.get_row_tag_by_name(row_name))
 
     def extract_row_tags_to_new_column(self, tag_key: str,
                                        new_column_name: str = None) -> None:
@@ -1197,7 +1216,8 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_by_axis_names(self._data, 'row', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(
+            self._data, 'row', filters)
 
         return self.create_sub_table_filtered_by_rows(data)
 
@@ -1211,7 +1231,8 @@ class Table(Resource):
         :rtype: Table
         """
 
-        data = DataframeFilterHelper.filter_by_axis_names(self._data, 'column', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(
+            self._data, 'column', filters)
 
         return self.create_sub_table_filtered_by_columns(data)
 
@@ -1321,10 +1342,12 @@ class Table(Resource):
         indexes = self._get_indexes_by_tags(axis, tags)
 
         # get all the existing indexes
-        all_indexes = list(range(self.nb_rows)) if is_row_axis(axis) else list(range(self.nb_columns))
+        all_indexes = list(range(self.nb_rows)) if is_row_axis(
+            axis) else list(range(self.nb_columns))
 
         # get the indexes to keep by removing the selected ones from all index
-        indexes_to_keep = [index for index in all_indexes if index not in indexes]
+        indexes_to_keep = [
+            index for index in all_indexes if index not in indexes]
 
         return self.select_by_row_indexes(indexes_to_keep) if is_row_axis(axis) else self.select_by_column_indexes(
             indexes_to_keep)
@@ -1347,7 +1370,8 @@ class Table(Resource):
             return self
 
         column_tags = self.get_column_tags()
-        selected_col_tags = [column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns]
+        selected_col_tags = [column_tags[i] for i, name in enumerate(
+            self.column_names) if name in data.columns]
 
         return self.create_sub_table(data, self.get_row_tags(), selected_col_tags)
 
@@ -1362,7 +1386,8 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'row', filters)
+        data = DataframeFilterHelper.filter_out_by_axis_names(
+            self._data, 'row', filters)
 
         return self.create_sub_table_filtered_by_rows(data)
 
@@ -1375,7 +1400,8 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, 'column', filters)
+        data = DataframeFilterHelper.filter_out_by_axis_names(
+            self._data, 'column', filters)
 
         return self.create_sub_table_filtered_by_columns(data)
 
@@ -1393,7 +1419,8 @@ class Table(Resource):
         :rtype: Table
         """
 
-        indexes = [self._data.index.get_loc(k) for k in filtered_df.index if k in self._data.index]
+        indexes = [self._data.index.get_loc(
+            k) for k in filtered_df.index if k in self._data.index]
 
         # get the row tags for the filtered rows
         row_tags = self._row_tags.get_tags_at_indexes(indexes)
@@ -1413,7 +1440,8 @@ class Table(Resource):
         :rtype: Table
         """
 
-        indexes = [self._data.columns.get_loc(k) for k in filtered_df.columns if k in self._data.columns]
+        indexes = [self._data.columns.get_loc(
+            k) for k in filtered_df.columns if k in self._data.columns]
 
         # get the column tags for the filtered columns
         column_tags = self._column_tags.get_tags_at_indexes(indexes)
@@ -1569,6 +1597,23 @@ class Table(Resource):
         :rtype: dict
         """
         return self._data.to_json()
+
+    ################################################# AI #################################################
+    def get_ai_description(self) -> str:
+        """
+        Get a description of the table for AI usage.
+
+        :return: The AI metadata
+        :rtype: Dict[str, Any]
+        """
+        column_info = []
+        for col in self._data.columns:
+            dtype = str(self._data[col].dtype)
+            column_info.append(f"{col}: {dtype}")
+
+        return f"""Table Information:
+- Columns ({self.nb_columns}): {', '.join(column_info)}
+- Number of rows: {self.nb_rows}"""
 
     ################################################# TABLE VIEW #################################################
 
