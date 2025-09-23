@@ -24,8 +24,10 @@ class StreamlitAppInfo(TypedDict):
 class StreamlitState():
 
     @classmethod
-    def get_current_user(cls) -> User | None:
-        """ Return the current connected user. If no user is connected, return None
+    def get_current_user(cls) -> User:
+        """ Return the current connected user.
+        If the app does not require authentication, the user will be the system user.
+        To check if a real user is authenticated, use user_is_authenticated().
 
         :return: the current connected user
         :rtype: User | None
@@ -40,6 +42,15 @@ class StreamlitState():
         :type user: User
         """
         st.session_state['__gws_user__'] = user
+
+    @classmethod
+    def user_is_authenticated(cls) -> bool:
+        """ Return True if a real user is authenticated.
+
+        :return: if a real user is authenticated
+        :rtype: bool
+        """
+        return not cls.get_current_user().is_sysuser
 
     @classmethod
     def app_requires_authentication(cls) -> bool:

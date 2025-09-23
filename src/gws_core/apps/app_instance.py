@@ -122,8 +122,8 @@ class AppInstance():
         """
 
         # check if the user is already in the list
-        for token, user_id in self.user_access_tokens.items():
-            if user_id == user_id:
+        for token, user_access_id in self.user_access_tokens.items():
+            if user_id == user_access_id:
                 return token
 
         if not user_access_token:
