@@ -609,3 +609,24 @@ class SpaceService(SpaceServiceBase):
             f"{self._EXTERNAL_LABS_ROUTE}/send-notification")
         return ExternalApiService.post(space_api_url, send_notification_dto, self._get_request_header(),
                                        raise_exception_if_error=True)
+
+    ############################################## OTHER ##############################################
+
+    def get_reflex_access_token(self) -> str:
+        """ Get the reflex access token
+
+        :return: the reflex access token
+        :rtype: str
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/reflex-access_token")
+
+        try:
+            response = ExternalApiService.get(space_api_url, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return response.json().get('reflexAccessToken')
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve reflex access token for the lab. Error : {err.detail}"
+            raise err

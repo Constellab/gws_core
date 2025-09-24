@@ -4,17 +4,17 @@ import shutil
 import typer
 from gws_cli.utils.app_task_generator import generate_app_task
 from gws_cli.utils.cli_utils import CLIUtils
+from gws_cli.utils.dev_config_generator import create_dev_config_json
 from gws_cli.utils.typer_message_observer import TyperMessageObserver
 from gws_core import FileHelper, ShellProxy, StringHelper
 
 APP_NAME_VAR = 'APP_NAME'
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), '_template')
-DEV_CONFIG_FILE = 'dev_config.json'
 REFLEX_MAIN_FILE = 'reflex_main.py'
 
 
-def generate_reflex_app(name: str) -> str:
+def generate_reflex_app(name: str, is_enterprise: bool) -> str:
     """ Method to create a new reflex app with the given name.
 
     :param name: _description_
@@ -75,13 +75,8 @@ def generate_reflex_app(name: str) -> str:
         }
         CLIUtils.replace_vars_in_file(app_rxconfig_path, replace_variables)
 
-        # Copy the dev_config.json file
-        dev_config_path = os.path.join(TEMPLATE_FOLDER, DEV_CONFIG_FILE)
-        app_dev_config_path = os.path.join(reflex_app_folder, DEV_CONFIG_FILE)
-        if not FileHelper.exists_on_os(dev_config_path):
-            typer.echo(f"Expected dev_config.json not found at '{dev_config_path}'", err=True)
-            raise typer.Abort()
-        shutil.copy2(dev_config_path, app_dev_config_path)
+        # Create the dev_config.json file
+        create_dev_config_json(reflex_app_folder, is_reflex_enterprise=is_enterprise)
 
         # Copy the reflex_main.py file, override the default one
         reflex_main_template_path = os.path.join(TEMPLATE_FOLDER, REFLEX_MAIN_FILE)
@@ -91,7 +86,7 @@ def generate_reflex_app(name: str) -> str:
         # add "uploaded_files/" to the .gitignore file
         gitignore_path = os.path.join(reflex_app_folder, '.gitignore')
         if FileHelper.exists_on_os(gitignore_path):
-            with open(gitignore_path, 'a') as gitignore_file:
+            with open(gitignore_path, 'a', encoding='utf-8') as gitignore_file:
                 gitignore_file.write('uploaded_files/\n')
         else:
             typer.echo(f"Expected .gitignore not found at '{gitignore_path}'", err=True)

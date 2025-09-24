@@ -349,6 +349,12 @@ class Settings():
         """
         return os.environ.get("APP_SUB_DOMAIN", "app-dev")
 
+    @classmethod
+    def get_reflex_access_token(cls) -> str | None:
+        """Return the reflex access token to authenticate reflex app
+        """
+        return os.environ.get("REFLEX_ACCESS_TOKEN")
+
     ###### MONITOR #####
     @classmethod
     def get_monitor_disk_path(cls) -> str:

@@ -3,15 +3,14 @@ import json
 import os
 
 import typer
-from typing_extensions import Literal
-
 from gws_cli.utils.cli_utils import CLIUtils
+from gws_cli.utils.dev_config_generator import AppDevConfig
 from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
                       LoggerMessageObserver, MambaShellProxy, PipShellProxy,
                       ShellProxy, Utils)
 from gws_core.apps.app_instance import AppInstance
-from gws_core.core.db.db_manager_service import DbManagerService
 from gws_core.manage import AppManager
+from typing_extensions import Literal
 
 app = typer.Typer()
 
@@ -21,7 +20,7 @@ EnvType = Literal['NONE', 'PIP', 'CONDA', 'MAMBA']
 class AppCli:
 
     _config_file_path: str = None
-    _config: dict = None
+    _config: AppDevConfig = None
     _env_type: EnvType = "NONE"
     _env_file_path: str | None = None
 
@@ -40,11 +39,12 @@ class AppCli:
             raise typer.Abort()
 
         with open(config_file_path, "r", encoding='UTF-8') as file:
-            self._config = json.load(file)
+            config_dict = json.load(file)
+            self._config = AppDevConfig.from_json(config_dict)
 
     def _load_env(self) -> None:
         # Load env_type from config
-        env_type: EnvType = self._config.get("env_type")
+        env_type: EnvType = self._config.env_type
         if not env_type:
             env_type = "NONE"
 
@@ -53,7 +53,7 @@ class AppCli:
                 f"Invalid app type '{env_type}', supported values {Utils.get_literal_values(EnvType)}", err=True)
             raise typer.Abort()
 
-        env_file_path = self._config.get("env_file_path")
+        env_file_path = self._config.env_file_path
 
         if env_type != "NONE":
 
@@ -114,11 +114,8 @@ class AppCli:
         print("-------------------------------------------------------------------------------------------------------------------------------------")
 
     def get_app_dir_path(self) -> str:
-        if 'app_dir_path' not in self._config:
-            typer.echo(f"Config file '{self._config_file_path}' does not contain 'app_dir_path'.", err=True)
-            raise typer.Abort()
 
-        app_dir_path = self._config.get("app_dir_path")
+        app_dir_path = self._config.app_dir_path
         # if the app dir path is not absolute (usually on dev mode), make it absolute
         if not os.path.isabs(app_dir_path):
             # make the path absolute relative to the config file
@@ -134,16 +131,15 @@ class AppCli:
         return app_dir_path
 
     def _check_resource_ids(self) -> None:
-        if 'source_ids' not in self._config:
-            typer.echo(f"Config file '{self._config_file_path}' does not contain 'source_ids'.", err=True)
-            raise typer.Abort()
-
-        resource_ids = self._config.get("source_ids")
+        resource_ids = self._config.source_ids
         if not isinstance(resource_ids, list):
-            typer.echo(f"'resources' in config file '{self._config_file_path}' must be a list.", err=True)
+            typer.echo(f"'source_ids' in config file '{self._config_file_path}' must be a list.", err=True)
             raise typer.Abort()
 
         for resource_id in resource_ids:
             if not isinstance(resource_id, str):
-                typer.echo(f"Each resource in 'resources' must be a string. Found: {resource_id}", err=True)
+                typer.echo(f"Each resource in 'source_ids' must be a string. Found: {resource_id}", err=True)
                 raise typer.Abort()
+
+    def is_reflex_enterprise(self) -> bool:
+        return self._config.is_reflex_enterprise

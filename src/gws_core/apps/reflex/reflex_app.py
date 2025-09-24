@@ -32,6 +32,8 @@ class ReflexApp(AppInstance):
     # The folder that contains the front build of the app.
     _front_app_build_folder: Folder = None
 
+    _is_enterprise: bool = False
+
     MAIN_FILE_NAME = "rxconfig.py"
 
     # Keys of the tag set in the ReflexResource to store the version of front build.
@@ -189,3 +191,9 @@ class ReflexApp(AppInstance):
 
     def get_front_build_path_from_app(self, app_path: str) -> str:
         return os.path.join(app_path, '.web', 'build', 'client')
+
+    def set_is_enterprise(self, is_enterprise: bool) -> None:
+        self._is_enterprise = is_enterprise
+
+    def is_enterprise(self) -> bool:
+        return self._is_enterprise

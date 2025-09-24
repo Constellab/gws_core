@@ -3,9 +3,9 @@ import os
 import shutil
 
 import typer
-
 from gws_cli.utils.app_task_generator import (generate_app_task,
                                               replace_vars_in_file)
+from gws_cli.utils.dev_config_generator import create_dev_config_json
 from gws_core import FileHelper, StringHelper
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), '_template')
@@ -43,6 +43,9 @@ def generate_streamlit_app(name: str) -> str:
         streamlit_app_folder,
         dirs_exist_ok=True
     )
+
+    # Generate dev_config.json using the common function
+    create_dev_config_json(streamlit_app_folder, is_reflex_enterprise=False)
 
     main_destination = os.path.join(streamlit_app_folder, 'main.py')
     replace_vars_in_file(snack_case_name, main_destination, 'streamlit')

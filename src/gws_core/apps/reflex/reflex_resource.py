@@ -7,7 +7,7 @@ from gws_core.apps.app_resource import AppResource
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.shell.shell_proxy import ShellProxy
-from gws_core.resource.r_field.primitive_r_field import StrRField
+from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 from gws_core.resource.resource_decorator import resource_decorator
 
 
@@ -47,6 +47,7 @@ class ReflexResource(AppResource):
     """
 
     _front_build_sub_resource_uid: str = StrRField()
+    _is_enterprise_app: bool = BoolRField(default_value=False)
 
     def set_app_config(self, app_config):
         super().set_app_config(app_config)
@@ -55,6 +56,22 @@ class ReflexResource(AppResource):
     def set_static_folder(self, app_folder_path):
         super().set_static_folder(app_folder_path)
         self._init_front_build_sub_resource()
+
+    def set_enterprise_app(self, is_enterprise: bool):
+        """Set whether the app is an enterprise app.
+
+        :param is_enterprise: Whether the app is an enterprise app.
+        :type is_enterprise: bool
+        """
+        self._is_enterprise_app = is_enterprise
+
+    def is_enterprise_app(self) -> bool:
+        """Return whether the app is an enterprise app.
+
+        :return: Whether the app is an enterprise app.
+        :rtype: bool
+        """
+        return self._is_enterprise_app
 
     def _init_front_build_sub_resource(self):
         """Init the reflex app resource. This must be called after creating the resource.
@@ -105,6 +122,9 @@ class ReflexResource(AppResource):
 
         reflex_app = ReflexApp(resource_model_id, app_name, shell_proxy,
                                requires_authentification)
+
+        if self.is_enterprise_app():
+            reflex_app.set_is_enterprise(True)
 
         front_build_folder = self.get_and_check_front_build_folder()
         app_config = self._get_app_config()

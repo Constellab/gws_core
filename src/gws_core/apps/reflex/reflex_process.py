@@ -2,7 +2,8 @@
 
 import os
 import sys
-from typing import List
+import time
+from typing import List, Optional
 
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.app_instance import AppInstance
@@ -17,6 +18,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.shell_proxy import ShellProxy
+from gws_core.space.space_service import SpaceService
 
 
 class ReflexProcess(AppProcess):
@@ -42,6 +44,11 @@ class ReflexProcess(AppProcess):
     INDEX_HTML_FILE = "index.html"
 
     _front_app_build_folder: str = None
+
+    # Cache for reflex access token (class variables for shared caching)
+    _cached_access_token: Optional[str] = None
+    _cache_timestamp: Optional[float] = None
+    _cache_duration_seconds: int = 3600  # 1 hour
 
     def __init__(self,
                  front_port: int,
@@ -143,17 +150,23 @@ class ReflexProcess(AppProcess):
         gws_core_path = os.path.dirname(sys.modules['gws_core'].__path__[0])
         theme = self.get_current_user_theme()
 
-        return {
+        env_dict = {
             'GWS_REFLEX_APP_ID': app.resource_model_id,
             'GWS_REFLEX_MODULES_PATH': reflex_modules_path,
             'GWS_REFLEX_VIRTUAL_ENV': str(app.is_virtual_env_app()),
             'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
             'GWS_REFLEX_API_URL': self.get_back_host_url(),
             'GWS_THEME': theme.theme,
-            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir(),
-            # TODO A VOIR
-            'REFLEX_ACCESS_TOKEN': '9626a3a6-d727-4399-b0d6-cfe5c575d703'
+            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir()
         }
+
+        # Get access token based on whether this is an enterprise app
+        access_token: str | None = None  # Default token
+        if isinstance(app, ReflexApp) and app.is_enterprise():
+            access_token = self._get_cached_reflex_access_token()
+            env_dict['REFLEX_ACCESS_TOKEN'] = access_token
+
+        return env_dict
 
     def _build_frontend(self, shell_proxy: ShellProxy, env: dict, app: ReflexApp) -> str:
         """Build the frontend for production"""
@@ -265,3 +278,28 @@ class ReflexProcess(AppProcess):
 
     def _get_front_port(self):
         return self.front_port
+
+    @classmethod
+    def _get_cached_reflex_access_token(cls) -> str:
+        """Get cached reflex access token if valid, otherwise retrieve and cache new one"""
+        reflex_access_token = Settings.get_reflex_access_token()
+        if reflex_access_token:
+            return reflex_access_token
+
+        current_time = time.time()
+
+        # Check if cache is still valid
+        if (cls._cached_access_token is not None and
+            cls._cache_timestamp is not None and
+                current_time - cls._cache_timestamp < cls._cache_duration_seconds):
+            return cls._cached_access_token
+
+        # Cache is invalid, retrieve new token
+        space_service = SpaceService.get_instance()
+        new_token = space_service.get_reflex_access_token()
+
+        # Update cache
+        cls._cached_access_token = new_token
+        cls._cache_timestamp = current_time
+
+        return new_token
