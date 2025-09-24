@@ -544,7 +544,6 @@ class ProtocolService():
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
 
-        config_specs = process_model.config.get_specs()
         if process_model.config.has_spec(EnvAgent.ENV_CONFIG_NAME):
             env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
             env_spec.visibility = new_visibility

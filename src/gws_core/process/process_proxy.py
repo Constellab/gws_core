@@ -190,3 +190,9 @@ class ProcessProxy:
         out_port = list(self._process_model.outputs.ports.values())[0]
 
         return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=out_port.name)
+
+    def is_input_task(self) -> bool:
+        return self._process_model.is_input_task()
+
+    def is_output_task(self) -> bool:
+        return self._process_model.is_output_task()

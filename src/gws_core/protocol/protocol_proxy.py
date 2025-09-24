@@ -1,7 +1,7 @@
 
 
 from inspect import isclass
-from typing import List, Tuple, Type
+from typing import Dict, List, Set, Tuple, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import \
@@ -106,6 +106,61 @@ class ProtocolProxy(ProcessProxy):
         ProtocolService.delete_process_of_protocol(
             self._process_model, instance_name)
 
+    def get_direct_next_processes(self, instance_name: str) -> Set[ProcessProxy]:
+        """Return the direct next processes of the specified process in this protocol
+
+        :param instance_name: the instance name of the process
+        :type instance_name: str
+        :return: the list of direct next processes
+        :rtype: List[IProcess]
+        """
+        next_process_models = self._process_model.get_direct_next_processes(instance_name)
+
+        return self._get_process_proxies(next_process_models)
+
+    def get_direct_previous_processes(self, instance_name: str) -> Set[ProcessProxy]:
+        """Return the direct previous processes of the specified process in this protocol
+
+        :param instance_name: the instance name of the process
+        :type instance_name: str
+        :return: the list of direct previous processes
+        :rtype: List[IProcess]
+        """
+        previous_process_models = self._process_model.get_direct_previous_processes(instance_name)
+
+        return self._get_process_proxies(previous_process_models)
+
+    def get_all_next_processes(self, instance_name: str) -> Set[ProcessProxy]:
+        """Return all the next processes of the specified process in this protocol
+
+        :param instance_name: the instance name of the process
+        :type instance_name: str
+        :return: the list of all next processes
+        :rtype: List[IProcess]
+        """
+        next_process_models = self._process_model.get_all_next_processes(instance_name)
+
+        return self._get_process_proxies(next_process_models)
+
+    def get_all_processes(self) -> Dict[str, ProcessProxy]:
+        """Return all the processes of this protocol
+
+        :return: the list of all processes
+        :rtype: List[IProcess]
+        """
+        process_proxies: Dict[str, ProcessProxy] = {}
+        for process_instance_name in self._process_model.processes.keys():
+            process_proxies[process_instance_name] = self.get_process(process_instance_name)
+
+        return process_proxies
+
+    def _get_process_proxies(self, process_models: Set[ProcessModel]) -> Set[ProcessProxy]:
+        next_processes: Set[ProcessProxy] = set()
+        for next_process_model in process_models:
+            next_processes.add(self.get_process(next_process_model.instance_name))
+
+        return next_processes
+
     ####################################### CONNECTORS #########################################
 
     def add_connector(self, out_port: ProcessWithPort, in_port: ProcessWithPort) -> None:
@@ -116,14 +171,14 @@ class ProtocolProxy(ProcessProxy):
         OR
         protocol.add_connector(create >> 'robot', sub_proto << 'robot_i')
         """
-        self.add_connector_new(
+        self.add_connector_by_names(
             out_port.process_instance_name, out_port.port_name, in_port.process_instance_name, in_port.port_name)
 
-    def add_connector_new(self, from_process_name: str, from_port_name: str,
-                          to_process_name: str, to_port_name: str) -> None:
+    def add_connector_by_names(self, from_process_name: str, from_port_name: str,
+                               to_process_name: str, to_port_name: str) -> None:
         """Add a connector between to process of this protocol
 
-        Exemple : protocol.add_connector('create', 'robot', 'sub_proto','robot_i')
+        Exemple : protocol.add_connector_by_names('create', 'robot', 'sub_proto','robot_i')
         """
 
         ProtocolService.add_connector_to_protocol(self._process_model, from_process_name, from_port_name,
@@ -146,7 +201,14 @@ class ProtocolProxy(ProcessProxy):
         ProtocolService.add_connectors_to_protocol(
             self._process_model, new_connectors)
 
-    ####################################### INTERFACE & OUTERFACE #########################################
+    def delete_connector(self, to_process_name: str, to_port_name: str) -> None:
+        """Delete a connector between to process of this protocol
+
+        Exemple : protocol.delete_connector('sub_proto','robot_i')
+        """
+        ProtocolService.delete_connector_of_protocol(self._process_model, to_process_name, to_port_name)
+
+        ####################################### INTERFACE & OUTERFACE #########################################
 
     def add_interface(self, name: str, from_process_name: str, process_input_name: str) -> None:
         """Add an interface to link an input of the protocol to the input of one of the protocol's process
@@ -254,25 +316,94 @@ class ProtocolProxy(ProcessProxy):
         self.add_connector(out_port, output_task << OutputTask.input_name)
         return output_task
 
-    # TODO v0.11.0 to remove
-    def add_sink(self, instance_name: str, out_port: ProcessWithPort,
-                 flag_resource: bool = True) -> TaskProxy:
-        """Add an output task to the protocol that receive the out_port resource
+    def replace_output_with_process(self, output_instance_name: str,
+                                    instance_name: str, process_type: Type[Process],
+                                    new_process_input_port_name: str,
+                                    config_params: ConfigParamsDict = None) -> ProcessProxy:
+        """Replace an output task by another process (task or protocol).
+        Connect the input of the new process to the process that was connected to the output task.
 
-        :param instance_name: instance name of the task
+        :param output_instance_name: the instance name of the output task to replace
+        :type output_instance_name: str
+        :param instance_name: the instance name of the new process
         :type instance_name: str
-        :param out_port: out_port connect to connect to the output task
-        :type out_port: OutPort
-        :param flag_resource: flag the resource, defaults to True
-        :type flag_resource: bool, optional
-        :return: [description]
-        :rtype: ITask
+        :param process_type: the type of the new process (task or protocol)
+        :type process_type: Type[Process]
+        :param new_process_input_port_name: the name of the input port of the new process
+        :type new_process_input_port_name: str
+        :param config_params: the config params of the new process, defaults to None
+        :type config_params: ConfigParamsDict, optional
+        :return: the new process
+        :rtype: ProcessProxy
         """
-        Logger.warning(
-            "The add_sink method is deprecated, please use add_output instead")
-        return self.add_output(instance_name, out_port, flag_resource)
+        return self.replace_process(
+            existing_process_instance_name=output_instance_name,
+            new_process_instance_name=instance_name,
+            new_process_process_type=process_type,
+            new_process_input_port_name=new_process_input_port_name,
+            existing_process_input_port_name=OutputTask.input_name,
+            new_process_config_params=config_params)
 
-    ############################################### CLASS METHODS ####################################
+    def replace_process(self, existing_process_instance_name: str,
+                        new_process_instance_name: str,
+                        new_process_process_type: Type[Process],
+                        new_process_input_port_name: str = None,
+                        existing_process_input_port_name: str = None,
+                        new_process_config_params: ConfigParamsDict = None) -> ProcessProxy:
+        """Replace a process (task or protocol) by another process (task or protocol).
+        If the new_process_input_port_name and existing_process_input_port_name are provided,
+        the input of the new process is connected to the process that was connected
+        to the existing_process_input_port_name (replace the process and connect it as the predecessor).
+
+        :param output_instance_name: the instance name of the output task to replace
+        :type output_instance_name: str
+        :param new_process_instance_name: the instance name of the new process
+        :type new_process_instance_name: str
+        :param new_process_process_type: the type of the new process (task or protocol)
+        :type new_process_process_type: Type[Process]
+        :param new_process_input_port_name: the name of the input port of the new process
+        :type new_process_input_port_name: str
+        :param existing_process_output_port_name: the name of the output port of the existing process
+        :type existing_process_output_port_name: str
+        :param new_process_config_params: the config params of the new process, defaults to None
+        :type new_process_config_params: ConfigParamsDict, optional
+        :return: the new process
+        :rtype: ProcessProxy
+        """
+        existing_process = self.get_process(existing_process_instance_name)
+        if not existing_process.is_output_task():
+            raise BadRequestException(
+                f"The process '{existing_process_instance_name}' is not an output task")
+
+        previous_process_name: str | None = None
+        previous_process_port_name: str | None = None
+
+        if existing_process_input_port_name and new_process_input_port_name:
+            # get the connector to the output task
+            connector = self._process_model.get_connector_from_right(
+                existing_process.instance_name, existing_process_input_port_name)
+
+            if not connector:
+                raise BadRequestException(
+                    f"The output task '{existing_process.instance_name}' is not connected")
+
+            previous_process_name = connector.left_process.instance_name
+            previous_process_port_name = connector.left_port_name
+
+        # delete the output task
+        self.delete_process(existing_process.instance_name)
+
+        new_process: ProcessProxy = self.add_process(
+            new_process_process_type, new_process_instance_name, new_process_config_params)
+
+        if previous_process_name and previous_process_port_name and new_process_input_port_name:
+            self.add_connector_by_names(
+                previous_process_name, previous_process_port_name,
+                new_process.instance_name, new_process_input_port_name)
+
+        return new_process
+
+        ############################################### CLASS METHODS ####################################
 
     @classmethod
     def get_by_id(cls, id: str) -> 'ProtocolProxy':
