@@ -13,7 +13,7 @@ class LogLevel(str, Enum):
 
 def main():
     from gws_cli import (brick_cli, dev_env_cli, reflex_cli, server_cli,
-                         streamlit_cli, task_cli)
+                         streamlit_cli, task_cli, utils_cli)
 
     app = typer.Typer(
         pretty_exceptions_enable=False,
@@ -41,6 +41,7 @@ def main():
     app.add_typer(streamlit_cli.app, name="streamlit", help="Generate and run Streamlit applications")
     app.add_typer(reflex_cli.app, name="reflex", help="Generate and run Reflex applications")
     app.add_typer(dev_env_cli.app, name="dev-env", help="Manage development environment (reset data)")
+    app.add_typer(utils_cli.app, name="utils", help="Utility commands for development environment setup")
 
     return app
 
