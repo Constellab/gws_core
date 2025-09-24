@@ -1,6 +1,8 @@
 {
     "app_dir_path": "",
-    "source_ids": [],
+    "source_ids": [
+        "54a750ad-f54f-4435-8ec3-7e2b629fbe95"
+    ],
     "params": {
         "param_name": "reflex_showcase_app"
     },

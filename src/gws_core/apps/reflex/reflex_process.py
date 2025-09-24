@@ -151,6 +151,7 @@ class ReflexProcess(AppProcess):
             'GWS_REFLEX_API_URL': self.get_back_host_url(),
             'GWS_THEME': theme.theme,
             'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir(),
+            # TODO A VOIR
             'REFLEX_ACCESS_TOKEN': '9626a3a6-d727-4399-b0d6-cfe5c575d703'
         }
 

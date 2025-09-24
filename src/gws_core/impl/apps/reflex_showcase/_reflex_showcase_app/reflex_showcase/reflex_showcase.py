@@ -1,12 +1,11 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_base import (add_unauthorized_page, get_theme,
-                             render_main_container)
+from gws_reflex_base import add_unauthorized_page, get_theme
 from gws_reflex_main import ReflexMainState
 
 
-class State(ReflexMainState):
+class State(ReflexMainState, rx.State):
     value = 0
 
     @rx.var
@@ -15,18 +14,18 @@ class State(ReflexMainState):
 
         # Secure the method to ensure it checks authentication
         # before accessing resources.
-        if not self.check_authentication():
+        if not await self.check_authentication():
             return 'Unauthorized'
-        resources = self.get_resources()
+        resources = await self.get_resources()
         return resources[0].name if resources else 'No resource'
 
     @rx.var
-    def get_param_name(self) -> Optional[str]:
+    async def get_param_name(self) -> Optional[str]:
         """
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
         """
-        return self.get_param('param_name', 'default_value')
+        return await self.get_param('param_name', 'default_value')
 
     @rx.event
     def increment(self):
@@ -40,22 +39,22 @@ app = rx.App(
 
 
 # Declare the page and init the main state
-@rx.page(on_load=ReflexMainState.on_load)
+@rx.page()
 def index():
     # Render the main container with the app content.
     # The content will be displayed once the state is initialized.
     # If the state is not initialized, a loading spinner will be shown.
-    return render_main_container(rx.box(
+    return rx.box(
         rx.heading("Reflex app", font_size="2em"),
         rx.text("Input resource name: " + State.get_resource_name),
         rx.text("Param name: " + State.get_param_name),
-        rx.text("Value: " + State.value.to_string()),
+        rx.text(f"Value: {State.value}"),
         rx.button(
             "Click me",
             on_click=State.increment,
             style={"margin-top": "20px"}
         )
-    ))
+    )
 
 
 # Add the unauthorized page to the app.

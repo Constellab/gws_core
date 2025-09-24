@@ -1,12 +1,13 @@
 from typing import List, Optional
 
+import reflex as rx
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user import User
-from gws_reflex_base import ReflexMainStateBase2
+from gws_reflex_base import ReflexMainStateBase
 
 
-class ReflexMainState(ReflexMainStateBase2, mixin=True):
+class ReflexMainState(ReflexMainStateBase, rx.State, mixin=True):
     """Main state for the normal (not in virtual environment) Reflex app. extending the base state with resource management.
 
     It provides methods to access the input resources of the app.
