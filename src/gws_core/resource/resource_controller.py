@@ -134,6 +134,18 @@ def advanced_search(search_dict: SearchParams,
     return ResourceService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
+@core_app.post("/resource/search-app", tags=["Resource"], summary="Advanced search for apps")
+def search_apps(search_dict: SearchParams,
+                page: Optional[int] = 1,
+                number_of_items_per_page: Optional[int] = 20,
+                _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[ResourceModelDTO]:
+    """
+    Advanced search on apps
+    """
+
+    return ResourceService.search_apps(search_dict, page, number_of_items_per_page).to_dto()
+
+
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")
 def update_name(id_: str, name: str,
                 _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:

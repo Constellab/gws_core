@@ -2,6 +2,7 @@
 
 from typing import Any, Callable, Dict, List, Optional, Type
 
+from gws_core.apps.app_resource import AppResource
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
@@ -330,6 +331,28 @@ class ResourceService():
             page, number_of_items_per_page)
         if column_tags_filter_function is not None:
             pagination.filter(column_tags_filter_function, number_of_items_per_page)
+        return pagination
+
+    @classmethod
+    def search_apps(cls, search: SearchParams,
+                    page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ResourceModel]:
+
+        search_builder = ResourceSearchBuilder()
+
+        # Handle 'include_not_flagged'
+        # If not provided or false, filter with resource where flagged = True
+        # Otherwise, not filter
+        include_non_output: SearchFilterCriteria = search.get_filter_criteria(
+            'include_not_flagged')
+        if include_non_output is None or not include_non_output.value:
+            search_builder.add_expression(ResourceModel.flagged == True)
+        search.remove_filter_criteria('include_not_flagged')
+
+        search_builder.add_search_params(search)
+        search_builder.add_resource_type_and_sub_types_filter(AppResource)
+
+        pagination = search_builder.search_page(
+            page, number_of_items_per_page)
         return pagination
 
     @classmethod
