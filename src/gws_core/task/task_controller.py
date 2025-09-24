@@ -10,13 +10,13 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.task.task_input_model import TaskInputModel
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .task_service import TaskService
 
 
 @core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
 def get_a_task(id: str,
-               _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+               _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     """
     Retrieve a task
 
@@ -30,7 +30,7 @@ def get_a_task(id: str,
 # TODO CHECK WHAT TO DO WITH THIS
 @core_app.post("/task/{id}/fix", tags=["Task"], summary="Fix a task")
 def fix_a_task(id: str,
-               _=Depends(AuthService.check_user_access_token)) -> None:
+               _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Fix a task
 
@@ -43,7 +43,7 @@ def fix_a_task(id: str,
 
 
 @core_app.post("/task/fix", tags=["Task"], summary="Run a task")
-def fix_all_protocol(_=Depends(AuthService.check_user_access_token)):
+def fix_all_protocol(_=Depends(AuthorizationService.check_user_access_token)):
     Logger.info('Start fixing all protocols')
     protocol_models = list(ProtocolModel.select())
     for protocol in protocol_models:

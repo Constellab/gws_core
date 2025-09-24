@@ -26,7 +26,7 @@ from gws_core.task.transformer.transformer_service import TransformerService
 from gws_core.task.transformer.transformer_type import TransformerDict
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .resource_service import ResourceService
 
 ############################# VIEW ###########################
@@ -35,7 +35,7 @@ from .resource_service import ResourceService
 @core_app.get("/resource/{id_}/views/{view_name}/specs", tags=["Resource"],
               summary="Get the specs for a view of a resource")
 def get_view_specs_from_resource(id_: str, view_name: str,
-                                 _=Depends(AuthService.check_user_access_token)) -> ResourceViewMetadatalDTO:
+                                 _=Depends(AuthorizationService.check_user_access_token)) -> ResourceViewMetadatalDTO:
     return ResourceService.get_view_specs_from_resource(id_, view_name)
 
 
@@ -49,7 +49,7 @@ class CallViewParams(BaseModelDTO):
 def call_view_on_resource(id_: str,
                           view_name: str,
                           call_view_params: CallViewParams,
-                          _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> CallViewResultDTO:
 
     return ResourceService.get_and_call_view_on_resource_model(
         id_, view_name, call_view_params.values,
@@ -60,7 +60,7 @@ def call_view_on_resource(id_: str,
                summary="Get the json file of a view for a resource")
 def get_view_json_file(id_: str, view_name: str,
                        call_view_params: CallViewParams,
-                       _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
+                       _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
     return ResponseHelper.create_file_response_from_object(ResourceService.get_view_json_file(
         id_, view_name, call_view_params.values,
         call_view_params.save_view_config),
@@ -72,7 +72,7 @@ def get_view_json_file(id_: str, view_name: str,
 
 @core_app.get("/resource/{id_}", tags=["Resource"], summary="Get a resource")
 def get_a_resource(id_: str,
-                   _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> ResourceModelDTO:
+                   _=Depends(AuthorizationService.check_user_access_token_or_app)) -> ResourceModelDTO:
     """
     Retrieve a ResourceModel from a ResourceModel id_
 
@@ -84,7 +84,7 @@ def get_a_resource(id_: str,
 
 @core_app.get("/resource/{id_}/children", tags=["Resource"], summary="Get a resource")
 def get_resource_children(id_: str,
-                          _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[ResourceModelDTO]:
+                          _=Depends(AuthorizationService.check_user_access_token_or_app)) -> List[ResourceModelDTO]:
     """
     Retrieve a ResourceModel children resource of a ResourceModel id_
     """
@@ -95,7 +95,7 @@ def get_resource_children(id_: str,
 
 @core_app.delete("/resource/{id_}", tags=["Resource"], summary="Delete a resource")
 def delete_resource(id_: str,
-                    _=Depends(AuthService.check_user_access_token)) -> None:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Delete a resource.
     """
@@ -105,7 +105,7 @@ def delete_resource(id_: str,
 
 @core_app.get("/resource/{id_}/delete/check-impact", tags=["Resource"], summary="Check impact of resource deletion")
 def check_impact_delete_resource(id_: str,
-                                 _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+                                 _=Depends(AuthorizationService.check_user_access_token)) -> ImpactResultDTO:
 
     return EntityNavigatorService.check_impact_delete_resource(id_).to_dto()
 
@@ -114,7 +114,7 @@ def check_impact_delete_resource(id_: str,
               summary="Search resource by name")
 def search_resource_by_name(
         name: str, page: Optional[int] = 1, number_of_items_per_page: Optional[int] = 20,
-        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ResourceModelDTO]:
+        _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[ResourceModelDTO]:
     """
     Search resource by name
     """
@@ -126,7 +126,7 @@ def search_resource_by_name(
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ResourceModelDTO]:
+                    _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[ResourceModelDTO]:
     """
     Advanced search on resources
     """
@@ -136,7 +136,7 @@ def advanced_search(search_dict: SearchParams,
 
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")
 def update_name(id_: str, name: str,
-                _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     """
     Advanced search on resources
     """
@@ -147,7 +147,7 @@ def update_name(id_: str, name: str,
 @core_app.put("/resource/{id_}/type/{resource_typing_name}", tags=["Files"], summary="Update resource type")
 def update_file_type(id_: str,
                      resource_typing_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_resource_type(id_, resource_typing_name).to_dto()
 
 
@@ -155,7 +155,7 @@ def update_file_type(id_: str,
               summary="Update the flagged of a resource")
 def update_flagged(id_: str,
                    body: dict,
-                   _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_flagged(id_, body["flagged"]).to_dto()
 
 
@@ -167,7 +167,7 @@ class UpdateFolder(BaseModelDTO):
               summary="Update the folder of a resource")
 def update_folder(id_: str,
                   folder: UpdateFolder,
-                  _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceService.update_folder(id_, folder.folder_id).to_dto()
 
 ############################# TRANSFORMER ###########################
@@ -176,7 +176,7 @@ def update_folder(id_: str,
 @core_app.post("/resource/{resource_model_id}/transform", tags=["Resource"],
                summary="Transform the resource")
 def create_transformer_scenario(transformers: List[TransformerDict], resource_model_id: str,
-                                _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                                _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
 
     return TransformerService.create_and_run_transformer_scenario(
         transformers, resource_model_id).to_dto()
@@ -190,7 +190,7 @@ def create_transformer_scenario(transformers: List[TransformerDict], resource_mo
 def import_resource(config: dict,
                     resource_model_id: str,
                     importer_typing_name: str,
-                    _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
 
     return ConverterService.call_importer(
         resource_model_id, importer_typing_name, config).to_dto()
@@ -202,7 +202,7 @@ def import_resource(config: dict,
               summary="Get the exporter info of a resource type")
 def get_exporter_config(
         resource_typing_name: str,
-        _=Depends(AuthService.check_user_access_token)) -> TaskTypingDTO:
+        _=Depends(AuthorizationService.check_user_access_token)) -> TaskTypingDTO:
 
     return ConverterService.get_resource_exporter_from_name(resource_typing_name).to_full_dto()
 
@@ -213,7 +213,7 @@ def export_resource(
         id_: str,
         exporter_typing_name: str,
         params: dict,
-        _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+        _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     """
     Export a resource.
     """
@@ -226,7 +226,7 @@ def export_resource(
 @core_app.get("/resource-type/{resource_typing_name}/views", tags=["Resource type"],
               summary="Get the list of view for a resource type")
 def get_resource_type_views(resource_typing_name: str,
-                            _=Depends(AuthService.check_user_access_token)) -> List[ResourceViewMetadatalDTO]:
+                            _=Depends(AuthorizationService.check_user_access_token)) -> List[ResourceViewMetadatalDTO]:
     view_metadatas = ResourceService.get_views_of_resource(resource_typing_name)
     return [view_metadata.to_dto() for view_metadata in view_metadatas]
 
@@ -234,7 +234,7 @@ def get_resource_type_views(resource_typing_name: str,
 @core_app.get("/resource-type/{resource_type}/views/{view_name}/specs", tags=["Resource type"],
               summary="Get the specs for a view of a resource type")
 def get_view_specs_from_type(resource_type: str, view_name: str,
-                             _=Depends(AuthService.check_user_access_token)) -> ResourceViewMetadatalDTO:
+                             _=Depends(AuthorizationService.check_user_access_token)) -> ResourceViewMetadatalDTO:
     return ResourceService.get_view_specs_from_type(resource_type, view_name)
 
 
@@ -244,7 +244,7 @@ def get_view_specs_from_type(resource_type: str, view_name: str,
 @core_app.get("/resource/{id_}/shared-origin", tags=["Resource"],
               summary="Get origin of this imported resource", response_model=None)
 def get_shared_resource_origin_info(id_: str,
-                                    _=Depends(AuthService.check_user_access_token)) -> ShareEntityInfoDTO:
+                                    _=Depends(AuthorizationService.check_user_access_token)) -> ShareEntityInfoDTO:
     return ResourceService.get_shared_resource_origin_info(id_).to_dto()
 
 
@@ -254,31 +254,33 @@ def get_shared_resource_origin_info(id_: str,
 @core_app.post("/resource/import-from-link", tags=["Share"],
                summary="Download a resource from an external link")
 def import_resource_from_link(values: ConfigParamsDict,
-                              _=Depends(AuthService.check_user_access_token)) -> ResourceModelDTO:
+                              _=Depends(AuthorizationService.check_user_access_token)) -> ResourceModelDTO:
     return ResourceTransfertService.import_resource_from_link_sync(values).to_dto()
 
 
 @core_app.get("/resource/import-from-link/config-specs", tags=["Share"],
               summary="Get config specs for importing a resource from a link")
-def get_import_resource_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+def get_import_resource_config_specs(_=Depends(AuthorizationService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ResourceTransfertService.get_import_from_link_config_specs()
 
 
 @core_app.post("/resource/{resource_id}/export-to-lab", tags=["Share"],
                summary="Export a resource to a lab")
 def export_resource_to_lab(resource_id: str, values: ConfigParamsDict,
-                           _=Depends(AuthService.check_user_access_token)) -> None:
+                           _=Depends(AuthorizationService.check_user_access_token)) -> None:
     ResourceTransfertService.export_resource_to_lab(resource_id, values)
 
 
 @core_app.get("/resource/export-to-lab/config-specs", tags=["Share"],
               summary="Get config specs for exporting a resource to a lab")
-def get_export_resource_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+def get_export_resource_to_lab_config_specs(
+        _=Depends(AuthorizationService.check_user_access_token)) -> Dict[
+        str, ParamSpecDTO]:
     return ResourceTransfertService.get_export_resource_to_lab_config_specs()
 
 
 @core_app.post("/resource/{resource_id}/share-with-space", tags=["Share"],
                summary="Share a resource with the space")
 def share_resource_with_space(resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO,
-                              _=Depends(AuthService.check_user_access_token)) -> ShareLinkDTO:
+                              _=Depends(AuthorizationService.check_user_access_token)) -> ShareLinkDTO:
     return ResourceTransfertService.share_resource_with_space(resource_id, request_dto).to_dto()

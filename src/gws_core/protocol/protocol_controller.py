@@ -5,6 +5,7 @@ from typing import Any, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
+
 from gws_core.config.param.param_types import (
     CompleteDynamicParamAllowedSpecsDict, ParamSpecDTO)
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
@@ -28,7 +29,7 @@ from ..community.community_dto import (CommunityAgentDTO,
                                        CommunityGetAgentsBody)
 from ..config.param.param_types import ParamSpecVisibilty
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .protocol_service import ProtocolService
 
 # use to prevent multiple request to modify a protocol at the same time, they will be queued
@@ -40,7 +41,7 @@ update_lock = threading.Lock()
 
 @core_app.get("/protocol/{id_}", tags=["Protocol"], summary="Get a protocol")
 def get_a_protocol(id_: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ProtocolDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolDTO:
     """
     Retrieve a protocol
 
@@ -54,7 +55,7 @@ def get_a_protocol(id_: str,
                summary="Add a process to a protocol")
 def add_process(id_: str,
                 process_typing_name: str,
-                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_process_to_protocol_id(
             protocol_id=id_,
@@ -65,7 +66,7 @@ def add_process(id_: str,
 @core_app.post("/protocol/{id_}/add-empty-protocol", tags=["Protocol"],
                summary="Add an empty protocol to a protocol")
 def add_empty_protocol(id_: str,
-                       _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                       _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_empty_protocol_to_protocol_id(
             protocol_id=id_,
@@ -76,7 +77,7 @@ def add_empty_protocol(id_: str,
                summary="Duplicate process in protocol")
 def duplicate_process(id_: str,
                       process_instance_name: str,
-                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                      _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
     Add a duplication of a process to a protocol
     """
@@ -92,7 +93,7 @@ def duplicate_process(id_: str,
                summary="Add a community agent to a protocol")
 def add_community_agent(id_: str,
                         agent_version_id: str,
-                        _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                        _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
     Add a constellab community agent to a protocol
     """
@@ -102,7 +103,7 @@ def add_community_agent(id_: str,
 
 @core_app.post("/protocol/get-community-available-spaces", tags=["Protocol"],
                summary="Get community spaces available for the protocol")
-def get_community_available_space(_=Depends(AuthService.check_user_access_token)) -> Any:
+def get_community_available_space(_=Depends(AuthorizationService.check_user_access_token)) -> Any:
     """
     Add a constellab community agent to a protocol
     """
@@ -111,10 +112,9 @@ def get_community_available_space(_=Depends(AuthService.check_user_access_token)
 
 @core_app.post("/protocol/get-community-available-agents", tags=["Protocol"],
                summary="Get community agents available for the protocol")
-def get_community_available_agents(page: int,
-                                   number_of_items_per_page: int,
-                                   body: CommunityGetAgentsBody,
-                                   _=Depends(AuthService.check_user_access_token)) -> PageDTO[CommunityAgentDTO]:
+def get_community_available_agents(
+        page: int, number_of_items_per_page: int, body: CommunityGetAgentsBody,
+        _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[CommunityAgentDTO]:
     """
     Add a constellab community agent to a protocol
     """
@@ -126,14 +126,14 @@ def get_community_available_agents(page: int,
 @core_app.get("/protocol/get-current-agent/{agent_version_id}", tags=["Protocol"],
               summary="Get community agent by agent version id")
 def get_community_agent(agent_version_id: str,
-                        _=Depends(AuthService.check_user_access_token)) -> CommunityAgentDTO:
+                        _=Depends(AuthorizationService.check_user_access_token)) -> CommunityAgentDTO:
     return ProtocolService.get_community_agent(agent_version_id)
 
 
 @core_app.get("/protocol/get-current-agent-and-check-rights/{agent_version_id}", tags=["Protocol"],
               summary="Get community agent by agent version id and check rights")
-def get_community_agent_and_check_rights(agent_version_id: str,
-                                         _=Depends(AuthService.check_user_access_token)) -> Optional[CommunityAgentDTO]:
+def get_community_agent_and_check_rights(
+        agent_version_id: str, _=Depends(AuthorizationService.check_user_access_token)) -> Optional[CommunityAgentDTO]:
     return ProtocolService.get_community_agent_and_check_rights(agent_version_id)
 
 
@@ -141,7 +141,7 @@ def get_community_agent_and_check_rights(agent_version_id: str,
                summary="Create a community agent in community")
 def create_community_agent(id_: str,
                            form_data: CommunityCreateAgentDTO,
-                           _=Depends(AuthService.check_user_access_token)) -> Any:
+                           _=Depends(AuthorizationService.check_user_access_token)) -> Any:
     """
     Create a constellab community agent
     """
@@ -153,7 +153,7 @@ def create_community_agent(id_: str,
 def fork_community_agent(id_: str,
                          form_data: CommunityCreateAgentDTO,
                          agent_version_id: str,
-                         _=Depends(AuthService.check_user_access_token)) -> Any:
+                         _=Depends(AuthorizationService.check_user_access_token)) -> Any:
     """
     Create a constellab community agent
     """
@@ -164,7 +164,7 @@ def fork_community_agent(id_: str,
                summary="Create a community agent in community")
 def create_new_community_agent_version(id_: str,
                                        agent_id: str,
-                                       _=Depends(AuthService.check_user_access_token)) -> Any:
+                                       _=Depends(AuthorizationService.check_user_access_token)) -> Any:
     """
     Create a new constellab community agent version
     """
@@ -178,7 +178,7 @@ def add_process_connected_to_output(id_: str,
                                     process_typing_name: str,
                                     process_name: str,
                                     port_name: str,
-                                    _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                    _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
     Add a process to a protocol
     """
@@ -198,7 +198,7 @@ def add_process_connected_to_input(id_: str,
                                    process_typing_name: str,
                                    process_name: str,
                                    port_name: str,
-                                   _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                   _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     """
     Add a process to a protocol
     """
@@ -215,7 +215,7 @@ def add_process_connected_to_input(id_: str,
                  summary="Delete a process of a protocol")
 def delete_process(id_: str,
                    process_instance_name: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_process_of_protocol_id(
             protocol_id=id_,
@@ -227,7 +227,7 @@ def delete_process(id_: str,
               summary="Reset a process of a protocol")
 def reset_process(id_: str,
                   process_instance_name: str,
-                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return EntityNavigatorService.reset_process_of_protocol_id(
             protocol_id=id_,
@@ -238,7 +238,7 @@ def reset_process(id_: str,
               summary="Reset a process of a protocol")
 def check_impact_for_process_reset(id_: str,
                                    process_instance_name: str,
-                                   _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+                                   _=Depends(AuthorizationService.check_user_access_token)) -> ImpactResultDTO:
     return EntityNavigatorService.check_impact_for_process_reset(
         protocol_id=id_,
         process_instance_name=process_instance_name).to_dto()
@@ -248,7 +248,7 @@ def check_impact_for_process_reset(id_: str,
               summary="Run a process of a protocol")
 def run_process(id_: str,
                 process_instance_name: str,
-                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     return ProtocolService.run_process(
         protocol_id=id_,
         process_instance_name=process_instance_name
@@ -262,7 +262,7 @@ def run_process(id_: str,
                summary="Add a connector between 2 process of a protocol")
 def add_connector(id_: str,
                   connector: AddConnectorDTO,
-                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_connector_to_protocol_id(
             protocol_id=id_,
@@ -278,7 +278,7 @@ def add_connector(id_: str,
 def delete_connector(id_: str,
                      dest_process_name: str,
                      dest_process_port_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_connector_of_protocol(
             protocol_id=id_,
@@ -293,7 +293,7 @@ def delete_connector(id_: str,
 def configure_process(id_: str,
                       process_instance_name: str,
                       config_values: dict,
-                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                      _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.configure_process(
             protocol_id=id_, process_instance_name=process_instance_name, config_values=config_values).to_dto()
@@ -304,7 +304,7 @@ def configure_process(id_: str,
 def update_code_params_visitility(id_: str,
                                   process_instance_name: str,
                                   visibility: ParamSpecVisibilty,
-                                  _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+                                  _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     with update_lock:
         return ProtocolService.update_code_params_visitility(
             protocol_id=id_, process_instance_name=process_instance_name, new_visibility=visibility
@@ -319,7 +319,7 @@ def update_code_params_visitility(id_: str,
 def add_interface(id_: str,
                   target_process_name: str,
                   target_port_name: str,
-                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_interface_to_protocol_id(
             id_, target_process_name, target_port_name).to_dto()
@@ -330,7 +330,7 @@ def add_interface(id_: str,
 def add_outerface(id_: str,
                   target_process_name: str,
                   target_port_name: str,
-                  _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_outerface_to_protocol_id(
             id_, target_process_name, target_port_name).to_dto()
@@ -340,7 +340,7 @@ def add_outerface(id_: str,
                  summary="Delete an interface")
 def delete_interface(id_: str,
                      interface_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_interface_of_protocol_id(
             id_, interface_name).to_dto()
@@ -350,7 +350,7 @@ def delete_interface(id_: str,
                  summary="Delete an outerface")
 def delete_outerface(id_: str,
                      outerface_name: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_outerface_of_protocol_id(
             id_, outerface_name).to_dto()
@@ -364,7 +364,7 @@ def add_input_resource_to_process_input(id_: str,
                                         resource_id: str,
                                         process_name: str,
                                         input_port_name: str,
-                                        _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                        _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_input_resource_to_process_input(
             protocol_id=id_, resource_id=resource_id, process_name=process_name,
@@ -375,7 +375,7 @@ def add_input_resource_to_process_input(id_: str,
                summary="Add a resource link to a process' input")
 def add_input_resource_to_protocol(id_: str,
                                    resource_id: str,
-                                   _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                   _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_input_resource_to_protocol_id(
             protocol_id=id_, resource_id=resource_id).to_dto()
@@ -386,7 +386,7 @@ def add_input_resource_to_protocol(id_: str,
 def add_output_task_to_process_ouput(id_: str,
                                      process_name: str,
                                      output_port_name: str,
-                                     _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                     _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_output_task_to_process_ouput(
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
@@ -397,7 +397,7 @@ def add_output_task_to_process_ouput(id_: str,
 def add_viewer_to_process_ouput(id_: str,
                                 process_name: str,
                                 output_port_name: str,
-                                _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_viewer_to_process_output(
             protocol_id=id_, process_name=process_name, output_port_name=output_port_name).to_dto()
@@ -407,7 +407,7 @@ def add_viewer_to_process_ouput(id_: str,
                summary="Add a viewer link a process' output")
 def add_scenario_template_to_protocol(id_: str,
                                       scenario_template_id: str,
-                                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                      _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_scenario_template_to_protocol(
             protocol_id=id_, scenario_template_id=scenario_template_id).to_dto()
@@ -418,7 +418,7 @@ def add_scenario_template_to_protocol(id_: str,
               summary="Save the layout of a protocol")
 def save_layout(id_: str,
                 layout_dict: ProtocolLayoutDTO,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthorizationService.check_user_access_token)) -> None:
     ProtocolService.save_layout(id_, layout_dict)
 
 
@@ -427,7 +427,7 @@ def save_layout(id_: str,
 def save_process_layout(id_: str,
                         process_name: str,
                         layout_dict: ProcessLayoutDTO,
-                        _=Depends(AuthService.check_user_access_token)) -> None:
+                        _=Depends(AuthorizationService.check_user_access_token)) -> None:
     ProtocolService.save_process_layout(id_, process_name, layout_dict)
 
 
@@ -436,7 +436,7 @@ def save_process_layout(id_: str,
 def save_interface_layout(id_: str,
                           interface_name: str,
                           layout_dict: ProcessLayoutDTO,
-                          _=Depends(AuthService.check_user_access_token)) -> None:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> None:
     ProtocolService.save_interface_layout(id_, interface_name, layout_dict)
 
 
@@ -445,7 +445,7 @@ def save_interface_layout(id_: str,
 def save_outerface_layout(id_: str,
                           outerface_name: str,
                           layout_dict: ProcessLayoutDTO,
-                          _=Depends(AuthService.check_user_access_token)) -> None:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> None:
     ProtocolService.save_outerface_layout(id_, outerface_name, layout_dict)
 
 
@@ -454,7 +454,7 @@ def save_outerface_layout(id_: str,
                summary="Add a dynamic port to a process")
 def add_dynamic_input_port_to_process(id_: str,
                                       process_name: str,
-                                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                      _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_dynamic_input_port_to_process(
             id_, process_name).to_dto()
@@ -464,7 +464,7 @@ def add_dynamic_input_port_to_process(id_: str,
                summary="Add a dynamic port to a process")
 def add_dynamic_output_port_to_process(id_: str,
                                        process_name: str,
-                                       _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                       _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.add_dynamic_output_port_to_process(
             id_, process_name).to_dto()
@@ -475,7 +475,7 @@ def add_dynamic_output_port_to_process(id_: str,
 def delete_dynamic_input_port_of_process(id_: str,
                                          process_name: str,
                                          port_name: str,
-                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                         _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_dynamic_input_port_of_process(id_, process_name, port_name).to_dto()
 
@@ -485,7 +485,7 @@ def delete_dynamic_input_port_of_process(id_: str,
 def delete_dynamic_output_port_of_process(id_: str,
                                           process_name: str,
                                           port_name: str,
-                                          _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                          _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.delete_dynamic_output_port_of_process(id_, process_name, port_name).to_dto()
 
@@ -496,7 +496,7 @@ def update_dynamic_input_port_of_process(id_: str,
                                          process_name: str,
                                          port_name: str,
                                          io_spec: IOSpecDTO,
-                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                         _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     print(process_name, port_name, io_spec)
     with update_lock:
         return ProtocolService.update_dynamic_input_port_of_process(id_, process_name, port_name, io_spec).to_dto()
@@ -508,7 +508,7 @@ def update_dynamic_output_port_of_process(id_: str,
                                           process_name: str,
                                           port_name: str,
                                           io_spec: IOSpecDTO,
-                                          _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                          _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.update_dynamic_output_port_of_process(id_, process_name, port_name, io_spec).to_dto()
 
@@ -523,7 +523,7 @@ class UpdateProcessNameDTO(BaseModelDTO):
 def rename_process(id_: str,
                    process_name: str,
                    new_name: UpdateProcessNameDTO,
-                   _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     with update_lock:
         return ProtocolService.rename_process(id_, process_name,
                                               new_name.new_name).to_dto()
@@ -534,7 +534,7 @@ def rename_process(id_: str,
 def update_process_style(id_: str,
                          process_name: str,
                          style: TypingStyle,
-                         _=Depends(AuthService.check_user_access_token)) -> ProcessDTO:
+                         _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     with update_lock:
         return ProtocolService.update_process_style(id_, process_name,
                                                     style).to_dto()
@@ -551,14 +551,14 @@ class CreateScenarioTemplate(BaseModelDTO):
                summary="Create a template from a protocol")
 def create_template(id_: str,
                     template: CreateScenarioTemplate,
-                    _=Depends(AuthService.check_user_access_token)) -> ScenarioTemplateDTO:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioTemplateDTO:
     return ProtocolService.create_scenario_template_from_id(id_, template.name, template.description).to_dto()
 
 
 @core_app.get("/protocol/{id_}/template/download", tags=["Protocol"],
               summary="Download a template from a protocol")
 def download_template(id_: str,
-                      _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
+                      _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
     template = ProtocolService.generate_scenario_template(id_)
     return ResponseHelper.create_file_response_from_str(template.to_export_dto().to_json_str(), template.name + '.json')
 
@@ -569,7 +569,7 @@ def download_template(id_: str,
 def get_dynamic_param_allowed_param_spec_types(
         id_: str,
         process_name: str,
-        _=Depends(AuthService.check_user_access_token)) -> CompleteDynamicParamAllowedSpecsDict:
+        _=Depends(AuthorizationService.check_user_access_token)) -> CompleteDynamicParamAllowedSpecsDict:
     return ProtocolService.get_dynamic_param_allowed_param_spec_types(protocol_id=id_, process_name=process_name)
 
 
@@ -581,7 +581,7 @@ def add_dynamic_param_spec_of_process(id_: str,
                                       config_spec_name: str,
                                       param_name: str,
                                       spec_dto: ParamSpecDTO,
-                                      _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                      _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.add_dynamic_param_spec_of_process(
@@ -596,7 +596,7 @@ def update_dynamic_param_spec_of_process(id_: str,
                                          config_spec_name: str,
                                          param_name: str,
                                          spec_dto: ParamSpecDTO,
-                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                         _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.update_dynamic_param_spec_of_process(
@@ -609,7 +609,7 @@ def update_dynamic_param_spec_of_process(id_: str,
     summary="Rename and update a dynamic param of a process")
 def rename_and_update_dynamic_param_spec_of_process(
     id_: str, process_name: str, config_spec_name: str, param_name: str, new_param_name: str,
-        spec_dto: ParamSpecDTO, _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+        spec_dto: ParamSpecDTO, _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
     with update_lock:
         return ProtocolService.rename_and_update_dynamic_param_spec_of_process(
             id_, process_name, config_spec_name, param_name, new_param_name, spec_dto).to_dto()
@@ -622,7 +622,7 @@ def remove_dynamic_param_spec_of_process(id_: str,
                                          process_name: str,
                                          config_spec_name: str,
                                          param_name: str,
-                                         _=Depends(AuthService.check_user_access_token)) -> ProtocolUpdateDTO:
+                                         _=Depends(AuthorizationService.check_user_access_token)) -> ProtocolUpdateDTO:
 
     with update_lock:
         return ProtocolService.remove_dynamic_param_spec_of_process(

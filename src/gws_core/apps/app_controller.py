@@ -5,12 +5,12 @@ from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO
 from gws_core.apps.apps_manager import AppsManager
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 
 
 @core_app.get("/apps/status", tags=["App"],
               summary="Get apps status")
-def get_all_apps_status(_=Depends(AuthService.check_user_access_token)) -> AppsStatusDTO:
+def get_all_apps_status(_=Depends(AuthorizationService.check_user_access_token)) -> AppsStatusDTO:
     """
     Get app apps status
     """
@@ -20,7 +20,7 @@ def get_all_apps_status(_=Depends(AuthService.check_user_access_token)) -> AppsS
 
 @core_app.post("/apps/stop", tags=["App"],
                summary="Stop all apps")
-def stop_all_processes(_=Depends(AuthService.check_user_access_token)) -> None:
+def stop_all_processes(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Stop all apps
     """
@@ -31,7 +31,7 @@ def stop_all_processes(_=Depends(AuthService.check_user_access_token)) -> None:
 @core_app.post("/apps/stop/{id_}", tags=["App"],
                summary="Stop main app")
 def stop_process(id_: str,
-                 _=Depends(AuthService.check_user_access_token)) -> None:
+                 _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Stop the app
     """

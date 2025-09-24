@@ -16,7 +16,7 @@ from gws_core.scenario.scenario_transfert_service import \
     ScenarioTransfertService
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .queue_service import QueueService
 from .scenario_dto import (RunningScenarioInfoDTO,
                            ScenarioCountByTitleResultDTO, ScenarioDTO,
@@ -30,7 +30,7 @@ from .scenario_service import ScenarioService
 @core_app.get("/scenario/running", tags=["Scenario"],
               summary="Get the list of running scenarios")
 def get_the_list_of_running_scenarios(
-        _=Depends(AuthService.check_user_access_token)) -> List[RunningScenarioInfoDTO]:
+        _=Depends(AuthorizationService.check_user_access_token)) -> List[RunningScenarioInfoDTO]:
     """
     Retrieve a list of running scenarios.
     """
@@ -40,7 +40,7 @@ def get_the_list_of_running_scenarios(
 
 @core_app.get("/scenario/{id_}", tags=["Scenario"], summary="Get a scenario")
 def get_an_scenario(id_: str,
-                    _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Retrieve a scenario
 
@@ -54,7 +54,7 @@ def get_an_scenario(id_: str,
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ScenarioDTO]:
+                    _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """
@@ -63,7 +63,7 @@ def advanced_search(search_dict: SearchParams,
 
 @core_app.get("/scenario/title/{title}/count", tags=["Scenario"], summary="Count scenario by title")
 def count_by_title(title: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ScenarioCountByTitleResultDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioCountByTitleResultDTO:
     return ScenarioCountByTitleResultDTO(count=ScenarioService.count_by_title(title))
 
 
@@ -71,7 +71,7 @@ def count_by_title(title: str,
 def search_by_title(title: str,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[ScenarioDTO]:
+                    _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """
@@ -83,7 +83,7 @@ def search_by_title(title: str,
 def get_by_input_resource(resource_id: str,
                           page: Optional[int] = 1,
                           number_of_items_per_page: Optional[int] = 20,
-                          _=Depends(AuthService.check_user_access_token)) -> PageDTO[ScenarioDTO]:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ScenarioDTO]:
     """
     Retrieve a list of scenarios by the input resource
     """
@@ -99,7 +99,7 @@ def get_by_input_resource(resource_id: str,
 
 @core_app.post("/scenario", tags=["Scenario"], summary="Create a scenario")
 def create_an_scenario(scenario: ScenarioSaveDTO,
-                       _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                       _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Create a scenario.
     """
@@ -113,7 +113,7 @@ def create_an_scenario(scenario: ScenarioSaveDTO,
 @core_app.put("/scenario/{id_}/validate/{folder_id}", tags=["Scenario"], summary="Validate a scenario")
 def validate_an_scenario(id_: str,
                          folder_id: str = None,
-                         _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                         _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Validate a protocol
 
@@ -127,7 +127,7 @@ def validate_an_scenario(id_: str,
               summary="Update the title of a scenario")
 def update_title(id_: str,
                  body: dict,
-                 _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                 _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.update_scenario_title(id_, body["title"]).to_dto()
 
 
@@ -138,7 +138,7 @@ class UpdateFolder(BaseModelDTO):
 @core_app.put("/scenario/{id_}/folder", tags=["Scenario"], summary="Update the folder of a scenario")
 def update_scenario_folder(id_: str,
                            folder: UpdateFolder,
-                           _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                           _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Update the folder of a scenario
 
@@ -152,7 +152,7 @@ def update_scenario_folder(id_: str,
 @core_app.put("/scenario/{id_}/description", tags=["Scenario"], summary="Update a scenario's description")
 def update_scenario_description(id_: str,
                                 description: RichTextDTO,
-                                _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                                _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Update a scenario's description
     """
@@ -162,20 +162,20 @@ def update_scenario_description(id_: str,
 
 @core_app.put("/scenario/{id_}/reset", tags=["Scenario"], summary="Reset a scenario")
 def reset_an_scenario(id_: str,
-                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                      _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return EntityNavigatorService.reset_scenario(id_).to_dto()
 
 
 @core_app.get("/scenario/{id_}/reset/check-impact", tags=["Scenario"], summary="Check impact for scenario reset")
 def check_impact_for_scenario_reset(id_: str,
-                                    _=Depends(AuthService.check_user_access_token)) -> ImpactResultDTO:
+                                    _=Depends(AuthorizationService.check_user_access_token)) -> ImpactResultDTO:
     return EntityNavigatorService.check_impact_for_scenario_reset(id_).to_dto()
 
 
 @core_app.put("/scenario/{id_}/sync-with-space", tags=["Scenario"],
               summary="Synchronise the scenario with the space")
 def sync_with_space(id_: str,
-                    _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.synchronize_with_space_by_id(id_).to_dto()
 
 ###################################### RUN ################################
@@ -183,7 +183,7 @@ def sync_with_space(id_: str,
 
 @core_app.post("/scenario/{id_}/start", tags=["Scenario"], summary="Start a scenario")
 def start_an_scenario(id_: str,
-                      _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                      _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Start a scenario
 
@@ -195,7 +195,7 @@ def start_an_scenario(id_: str,
 
 @core_app.post("/scenario/{id_}/stop", tags=["Scenario"], summary="Stop a scenario")
 def stop_an_scenario(id_: str,
-                     _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     """
     Stop a scenario
 
@@ -209,7 +209,7 @@ def stop_an_scenario(id_: str,
 
 @core_app.put("/scenario/{id_}/clone", tags=["Scenario"], summary="Clone a scenario")
 def clone_scenario(id_: str,
-                   _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                   _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.clone_scenario(id_).to_dto()
 
 ################################### DELETE ##############################
@@ -217,20 +217,20 @@ def clone_scenario(id_: str,
 
 @core_app.delete("/scenario/{id_}", tags=["Scenario"], summary="Delete a scenario")
 def delete_scenario(id_: str,
-                    _=Depends(AuthService.check_user_access_token)) -> None:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> None:
     return EntityNavigatorService.delete_scenario(id_)
 
 
 ################################### ARCHIVE ##############################
 @core_app.put("/scenario/{id_}/archive", tags=["Scenario"], summary="Archive a scenario")
 def archive(id_: str,
-            _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+            _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.archive_scenario_by_id(id_).to_dto()
 
 
 @core_app.put("/scenario/{id_}/unarchive", tags=["Scenario"], summary="Unarchive a scenario")
 def unarchive(id_: str,
-              _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+              _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioService.unarchive_scenario_by_id(id_).to_dto()
 
 
@@ -239,7 +239,7 @@ def unarchive(id_: str,
 @core_app.delete("/scenario/{id_}/intermediate-resources", tags=["Scenario"],
                  summary="Delete all intermediate resources of a scenario")
 def delete_intermediate_resources(id_: str,
-                                  _=Depends(AuthService.check_user_access_token)) -> None:
+                                  _=Depends(AuthorizationService.check_user_access_token)) -> None:
     return ScenarioService.delete_intermediate_resources(id_)
 
     ################################### CREATE SCENARIO FROM LINK ##############################
@@ -248,13 +248,13 @@ def delete_intermediate_resources(id_: str,
 @core_app.post("/scenario/import-from-lab", tags=["Share"],
                summary="Import a scenario from another lab")
 def import_from_lab(values: ConfigParamsDict,
-                    _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioTransfertService.import_from_lab_sync(values).to_dto()
 
 
 @core_app.get("/scenario/import-from-lab/config-specs", tags=["Share"],
               summary="Get config specs for importing a scenario from another lab")
-def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+def get_import_scenario_config_specs(_=Depends(AuthorizationService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_import_scenario_config_specs()
 
 
@@ -262,11 +262,11 @@ def get_import_scenario_config_specs(_=Depends(AuthService.check_user_access_tok
                summary="Export a scenario to another lab")
 def export_to_lab(id_: str,
                   values: ConfigParamsDict,
-                  _=Depends(AuthService.check_user_access_token)) -> ScenarioDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> ScenarioDTO:
     return ScenarioTransfertService.export_scenario_to_lab(id_, values).to_dto()
 
 
 @core_app.get("/scenario/export-to-lab/config-specs", tags=["Share"],
               summary="Get config specs for exporting a scenario to another lab")
-def get_export_to_lab_config_specs(_=Depends(AuthService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
+def get_export_to_lab_config_specs(_=Depends(AuthorizationService.check_user_access_token)) -> Dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()

@@ -263,9 +263,9 @@ class File(FSNode):
         if self.extension == 'html':
             return HTMLView(self.read())
         if self.extension == 'pdf':
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name)
+            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
         if self.is_video():
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name)
+            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
         if self.extension == 'md':
             return MarkdownView(self.read())
 

@@ -18,10 +18,10 @@ from gws_core.share.shared_dto import GenerateUserAccessTokenForSpaceResponse
 from gws_core.space.space_dto import LabActivityReponseDTO, SpaceSyncObjectDTO
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.user.activity.activity_service import ActivityService
+from gws_core.user.authentication_service import AuthenticationService
 
 from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
-from ..user.auth_service import AuthService
 from ..user.user_dto import UserFullDTO, UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_space import AuthSpace
@@ -80,7 +80,7 @@ def generate_user_temp_access(user_login_info: UserLoginInfo,
     Generate a temporary link for the user to login in the lab
     """
 
-    return {"temp_token":  AuthService.generate_user_temp_access(user_login_info)}
+    return {"temp_token":  AuthenticationService.generate_user_temp_access(user_login_info)}
 
 
 @space_app.put("/user/{id_}/activate", tags=["User management"])

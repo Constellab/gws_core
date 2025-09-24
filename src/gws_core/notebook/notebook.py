@@ -2,7 +2,7 @@
 
 from ..core.console.console import Console
 from ..core.exception.exceptions import BadRequestException
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from ..user.user import User
 
 
@@ -22,7 +22,7 @@ class Notebook(Console):
             raise BadRequestException("User not found. Authentication failed!")
 
         try:
-            AuthService.authenticate(id_=user.id)
+            AuthorizationService.authenticate_user(user_id=user.id)
         except:
             raise BadRequestException("Authentication failed!")
 

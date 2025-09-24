@@ -3,7 +3,8 @@
 from gws_core import BaseTestCase, User, UserGroup, UserService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authentication_service import AuthenticationService
+from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.user_dto import UserFullDTO, UserTheme
 
 
@@ -54,10 +55,10 @@ class TestUser(BaseTestCase):
         )
         UserService.create_or_update_user_dto(user_dto)
 
-        token = AuthService.generate_user_access_token(user_dto.id)
+        token = AuthenticationService.generate_user_access_token(user_dto.id)
 
-        user_data: User = AuthService.authenticate_from_token(token)
-        self.assertEqual(user_data.id, user_dto.id)
+        auth_context = AuthorizationService.authenticate_from_token(token)
+        self.assertEqual(auth_context.get_user().id, user_dto.id)
 
     def test_deactivate_user(self):
         self._delete_users()

@@ -5,14 +5,14 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.shell.virtual_env.venv_dto import (VEnsStatusDTO,
                                                       VEnvCompleteInfoDTO)
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authorization_service import AuthorizationService
 
 from ....core_controller import core_app
 
 
 @core_app.get("/venv", tags=["VEnv"],
               summary="Get the list of virtual environments")
-def get_venv_list(_=Depends(AuthService.check_user_access_token)) -> VEnsStatusDTO:
+def get_venv_list(_=Depends(AuthorizationService.check_user_access_token)) -> VEnsStatusDTO:
     """
     Retrieve a list of running scenarios.
     """
@@ -27,7 +27,7 @@ class VenvNameRequest(BaseModelDTO):
 @core_app.post("/venv/get", tags=["VEnv"],
                summary="Get a virtual environment")
 def get_venv(venv_name: VenvNameRequest,
-             _=Depends(AuthService.check_user_access_token)) -> VEnvCompleteInfoDTO:
+             _=Depends(AuthorizationService.check_user_access_token)) -> VEnvCompleteInfoDTO:
     """
     Use a post and body to retrieve the name because the name can be weird
     """
@@ -38,7 +38,7 @@ def get_venv(venv_name: VenvNameRequest,
 @core_app.post("/venv/delete", tags=["VEnv"],
                summary="Delete a virtual environment")
 def delete_venv(venv_name: VenvNameRequest,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Delete a virtual environment
     Use body to retrieve the name because the name can be weird
@@ -49,7 +49,7 @@ def delete_venv(venv_name: VenvNameRequest,
 @core_app.delete("/venv", tags=["VEnv"],
                  summary="Delete all virtual environments")
 def delete_all_venv(
-        _=Depends(AuthService.check_user_access_token)) -> None:
+        _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Delete all virtual environments
     """

@@ -11,7 +11,7 @@ from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
 from gws_core.lab.monitor.monitor_dto import (GetMonitorTimezoneDTO,
                                               MonitorBetweenDateGraphicsDTO)
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authorization_service import AuthorizationService
 
 from .process_service import ProcessService, ProcessType
 
@@ -21,7 +21,7 @@ from .process_service import ProcessService, ProcessType
 def get_process_logs(process_type: ProcessType,
                      id: str,
                      from_page_date: datetime = None,
-                     _=Depends(AuthService.check_user_access_token)) -> LogsBetweenDatesDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> LogsBetweenDatesDTO:
     """
     Retrieve a list of running scenarios.
     """
@@ -33,7 +33,7 @@ def get_process_logs(process_type: ProcessType,
               summary="Download the log of a process", response_model=None)
 def download_process_logs(process_type: ProcessType,
                           id: str,
-                          _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
     """
     Retrieve a list of running scenarios.
     """
@@ -48,7 +48,7 @@ def download_process_logs(process_type: ProcessType,
 def get_process_monitors(process_type: ProcessType,
                          id: str,
                          body: GetMonitorTimezoneDTO,
-                         _=Depends(AuthService.check_user_access_token)) -> MonitorBetweenDateGraphicsDTO:
+                         _=Depends(AuthorizationService.check_user_access_token)) -> MonitorBetweenDateGraphicsDTO:
     """
     Retrieve a list of running scenarios.
     """

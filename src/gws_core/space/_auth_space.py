@@ -1,6 +1,6 @@
 from fastapi import Depends
 
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authorization_service import AuthorizationService
 
 from ..core.exception.exceptions import UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
@@ -36,7 +36,7 @@ class AuthSpace:
 
         # if a user was passed in the header, we check that the user exists and authenticate him
         if user_id:
-            AuthService.authenticate(user_id)
+            AuthorizationService.authenticate_user(user_id)
 
     @classmethod
     def _check_space_api_key(cls, api_key: str) -> None:

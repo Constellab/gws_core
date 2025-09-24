@@ -2,7 +2,7 @@
 
 from gws_core import BaseTestCase, UserService
 from gws_core.lab.dev_env_service import DevEnvService
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.user_dto import UserFullDTO, UserLanguage, UserTheme
 from gws_core.user.user_group import UserGroup
 
@@ -36,6 +36,6 @@ class TestDevEnvService(BaseTestCase):
         self.assertEqual(user_dto.to_json_str(), user_data_db.to_full_dto().to_json_str())
 
         # check that we can generate the response containing token
-        response = AuthService.log_user(user_data_db)
+        response = AuthenticationService.log_user(user_data_db)
 
         self.assertEqual(response.status_code, 200)

@@ -8,7 +8,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.table.resource_table_service import (ResourceTableService,
                                                         TableChart)
 from gws_core.resource.view.view_dto import CallViewResultDTO
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authorization_service import AuthorizationService
 
 from ...core_controller import core_app
 
@@ -24,7 +24,7 @@ class CallChartTable(BaseModelDTO):
                summary="Call a chart view on a table view")
 def call_chart_on_table(id: str,
                         call_chart_table: CallChartTable,
-                        _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
+                        _=Depends(AuthorizationService.check_user_access_token)) -> CallViewResultDTO:
     """Method to call a chart on a table from the table view
 
     """

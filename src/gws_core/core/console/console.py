@@ -8,7 +8,7 @@ from ...core.exception.exceptions import BadRequestException
 from ...core.model.base_model_service import BaseModelService
 from ...core.utils.settings import Settings
 from ...lab.system_service import SystemService
-from ...user.auth_service import AuthService
+from ...user.authorization_service import AuthorizationService
 from ...user.user import User
 
 
@@ -37,7 +37,7 @@ class Console:
             user = User.get_and_check_sysuser()
 
         # refresh user information from DB
-        AuthService.authenticate(id_=user.id)
+        AuthorizationService.authenticate_user(user_id=user.id)
 
         cls.user = user
 

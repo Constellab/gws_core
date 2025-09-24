@@ -9,19 +9,20 @@ from starlette.responses import JSONResponse, Response
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.service.front_service import FrontService
 from gws_core.lab.dev_env_service import DevEnvService
+from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user import User
 from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 from ..core_controller import core_app
-from .auth_service import AuthService
+from .authorization_service import AuthorizationService
 from .user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 from .user_service import UserService
 
 
 @core_app.get("/user/me", tags=["User"])
-def read_user_me(_=Depends(AuthService.check_user_access_token)) -> UserFullDTO:
+def read_user_me(_=Depends(AuthorizationService.check_user_access_token)) -> UserFullDTO:
     """
     Get current user details.
     """
@@ -35,7 +36,7 @@ def login(credentials: UserCredentialsDTO) -> Response:
     Log the user using space
     """
 
-    return AuthService.login(credentials)
+    return AuthenticationService.login(credentials)
 
 
 @core_app.post("/login-2fa", tags=["User"], summary="Login 2FA to the lab by requesting space")
@@ -44,11 +45,11 @@ def login_2_fa(credentials: UserCredentials2Fa) -> Response:
     Login 2FA to the lab by requesting space
     """
 
-    return AuthService.login_with_2fa(credentials)
+    return AuthenticationService.login_with_2fa(credentials)
 
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")
-def check_token(current_user: User = Depends(AuthService.check_user_access_token)) -> str:
+def check_token(current_user: User = Depends(AuthorizationService.check_user_access_token)) -> str:
     """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
     """
     return current_user.id
@@ -59,10 +60,10 @@ def check_token(current_user: User = Depends(AuthService.check_user_access_token
 def login_from_temp_token(unique_code: str) -> Response:
 
     try:
-        user: User = AuthService.check_unique_code(unique_code)
+        auth_context = AuthorizationService.check_unique_code(unique_code)
 
         response = RedirectResponse(FrontService.get_auto_login_url(JWTService.get_token_duration_in_milliseconds()))
-        return AuthService.log_user(user, response=response)
+        return AuthenticationService.log_user(auth_context.get_user(), response=response)
     except Exception:
         # if there is any problem redirect to the front base url (login)
         return RedirectResponse(FrontService.get_front_url())
@@ -79,7 +80,7 @@ def dev_login(code: str) -> Response:
 
 @core_app.get("/dev-login-unique-code/generate", tags=["User"],
               summary="Generate a temp unique code to login to the dev lab")
-def generate_dev_login_unique_code(current_user: User = Depends(AuthService.check_user_access_token)) -> str:
+def generate_dev_login_unique_code(current_user: User = Depends(AuthorizationService.check_user_access_token)) -> str:
     """
     Generate a temp unique code to login to the dev lab
     """
@@ -101,11 +102,11 @@ def logout() -> JSONResponse:
     Logout
     """
 
-    return AuthService.logout()
+    return AuthenticationService.logout()
 
 
 @core_app.get("/user", tags=["User"])
-def get_all_users(_=Depends(AuthService.check_user_access_token)) -> List[UserDTO]:
+def get_all_users(_=Depends(AuthorizationService.check_user_access_token)) -> List[UserDTO]:
     """
     List the users.
     """
@@ -115,7 +116,7 @@ def get_all_users(_=Depends(AuthService.check_user_access_token)) -> List[UserDT
 
 
 @core_app.post("/user/synchronize", tags=["User"])
-def synchronize_users(_=Depends(AuthService.check_user_access_token)) -> None:
+def synchronize_users(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Synchronize the folders from space
     """
@@ -125,7 +126,7 @@ def synchronize_users(_=Depends(AuthService.check_user_access_token)) -> None:
 
 @core_app.get("/user/{id}", tags=["User"])
 def get_by_id_and_check(id: str,
-                        _=Depends(AuthService.check_user_access_token)) -> UserDTO:
+                        _=Depends(AuthorizationService.check_user_access_token)) -> UserDTO:
     return UserService.get_by_id_and_check(id).to_dto()
 
 
@@ -133,7 +134,7 @@ def get_by_id_and_check(id: str,
 def search_user_by_name(name: str,
                         page: int = 0,
                         number_of_items_per_page: int = 20,
-                        _=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> PageDTO[UserDTO]:
+                        _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[UserDTO]:
     """
     Search users by name
     """

@@ -1,6 +1,7 @@
 
 
 from gws_core.streamlit.widgets.streamlit_state import StreamlitState
+from gws_core.user.auth_context import AuthContextApp
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -18,23 +19,25 @@ class StreamlitAuthenticateUser:
     was_already_authenticated: bool = False
 
     def __enter__(self) -> User:
-        user = StreamlitState.get_current_user()
-        if user is None:
+        state_user = StreamlitState.get_current_user()
+        if state_user is None:
             raise Exception("There is no user in the streamlit context")
+
         if CurrentUserService.get_current_user() is None:
-            CurrentUserService.set_current_user(user)
+            auth_context = AuthContextApp(app_id=StreamlitState.get_app_id(), user=state_user)
+            CurrentUserService.set_auth_context(auth_context)
         else:
-            if CurrentUserService.get_current_user().id != user.id:
+            if CurrentUserService.get_current_user().id != state_user.id:
                 raise Exception("The user in the context is different from the current user")
             self.was_already_authenticated = True
 
         # Set streamlit context
         CurrentUserService.set_app_context()
-        return user
+        return state_user
 
     def __exit__(self, exc_type, exc_value, traceback):
         if not self.was_already_authenticated:
-            CurrentUserService.set_current_user(None)
+            CurrentUserService.clear_auth_context()
 
         # raise the exception if exists
         if exc_value:

@@ -29,13 +29,19 @@ class IFrameView(View):
         return {'src': self._src}
 
     @staticmethod
-    def from_file_model_id(file_model_id: str, file_name: str) -> 'IFrameView':
-        """Create an IFrameView from a file model id
+    def from_file_model_id(file_model_id: str, file_name: str, resource_uid: str) -> 'IFrameView':
+        """Create an IFrameView from a file model id.
+        We use the filename and resource uid to ensure the link is valid, because this route is public.
+
 
         :param file_model_id: The file model id
         :type file_model_id: str
+        :param file_name: The file name
+        :type file_name: str
+        :param resource_uid: The resource uid
+        :type resource_uid: str
         :return: The IFrameView
         :rtype: IFrameView
         """
-        url = f'{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/fs-node/{file_model_id}/preview/{file_name}'
+        url = f'{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/fs-node/{file_model_id}/resource/{resource_uid}/preview/{file_name}'
         return IFrameView(url)

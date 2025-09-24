@@ -11,13 +11,13 @@ from gws_core.progress_bar.progress_bar_dto import \
     ProgressBarMessagesBetweenDatesDTO
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .progress_bar_service import ProgressBarService
 
 
 @core_app.get("/progress-bar/{id}/download", tags=["Progress bar"], summary="Get a progress bar")
 def download_progress_bar(id: str,
-                          _=Depends(AuthService.check_user_access_token)) -> StreamingResponse:
+                          _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
 
     logs = ProgressBarService.download_progress_bar(id=id)
 
@@ -29,7 +29,7 @@ def download_progress_bar(id: str,
     summary="Get messages of a progress bar")
 def get_messages(id: str,
                  nb_of_messages: Optional[int] = 20,
-                 _=Depends(AuthService.check_user_access_token)) -> ProgressBarMessagesBetweenDatesDTO:
+                 _=Depends(AuthorizationService.check_user_access_token)) -> ProgressBarMessagesBetweenDatesDTO:
     """Get last progress bar messages
     """
 
@@ -42,7 +42,7 @@ def get_messages(id: str,
 def get_messages_from_date(id: str,
                            from_datetime: Optional[datetime],
                            nb_of_messages: Optional[int] = 20,
-                           _=Depends(AuthService.check_user_access_token)) -> ProgressBarMessagesBetweenDatesDTO:
+                           _=Depends(AuthorizationService.check_user_access_token)) -> ProgressBarMessagesBetweenDatesDTO:
     """Get progress bar messages older than a given date
     """
 

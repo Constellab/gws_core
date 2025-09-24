@@ -53,6 +53,26 @@ class FsNodeService():
 
         return resource
 
+    @classmethod
+    def preview_file(cls, fs_node_id: str, file_name: str, resource_uid: str) -> File:
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(fs_node_id)
+        resource = resource_model.get_resource()
+
+        if not isinstance(resource, File):
+            raise BadRequestException(
+                "Can't preview resource because it is not an File")
+
+        file_store: FileStore = LocalFileStore.get_default_instance()
+        if not file_store.node_path_exists(resource.path):
+            raise NotFoundException(
+                "The file does not exists on the server. It has been deleted")
+
+        # check if the filename and resource uid are valid
+        if resource.get_name() != file_name or resource.uid != resource_uid:
+            raise BadRequestException("The preview link is not valid")
+
+        return resource
+
     ############################# UPLOAD / CREATION  ###########################
 
     @classmethod

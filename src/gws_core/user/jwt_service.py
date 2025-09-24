@@ -8,9 +8,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from ..core.utils.settings import Settings
 from .user_exception import InvalidTokenException
 
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2        # 2 days
-
 
 class JWTData(TypedDict):
     sub: str
@@ -21,6 +18,10 @@ class JWTService:
     """Service to manage the JWT, (check, create)
     """
 
+    AUTH_SCHEME = "Bearer "
+    ALGORITHM = "HS256"
+    ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2        # 2 days
+
     _secret: str = None
 
     @classmethod
@@ -30,8 +31,8 @@ class JWTService:
 
         data: JWTData = {"sub": user_id, "exp": expire}
 
-        encoded_jwt = encode(data, cls._get_secret(), algorithm=ALGORITHM)
-        return encoded_jwt
+        encoded_jwt = encode(data, cls._get_secret(), algorithm=cls.ALGORITHM)
+        return JWTService.AUTH_SCHEME + encoded_jwt
 
     @classmethod
     def check_user_access_token(cls, token: str) -> str:
@@ -42,8 +43,12 @@ class JWTService:
         :return: user jwt
         :rtype: str
         """
+        if not token or not token.startswith(cls.AUTH_SCHEME):
+            raise InvalidTokenException()
+
+        token = token[len(cls.AUTH_SCHEME):]
         payload: JWTData = decode(token, cls._get_secret(),
-                                  algorithms=[ALGORITHM])
+                                  algorithms=[cls.ALGORITHM])
         id_: str = payload.get("sub")
         if id_ is None:
             raise InvalidTokenException()
@@ -52,7 +57,7 @@ class JWTService:
 
     @classmethod
     def get_token_duration_in_seconds(cls) -> int:
-        return ACCESS_TOKEN_EXPIRE_SECONDS
+        return cls.ACCESS_TOKEN_EXPIRE_SECONDS
 
     @classmethod
     def get_token_duration_in_milliseconds(cls) -> int:

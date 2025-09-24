@@ -39,6 +39,7 @@ class StreamlitEnvLoader:
         """
         from gws_core import CurrentUserService, User, UserService
         from gws_core.streamlit import StreamlitState
+        from gws_core.user.auth_context import AuthContextApp
 
         user: User = StreamlitState.get_current_user()
 
@@ -66,7 +67,8 @@ class StreamlitEnvLoader:
             StreamlitState.set_current_user(user)
 
         # Authenticate user
-        CurrentUserService.set_current_user(user)
+        auth_content = AuthContextApp(app_id=self.app_id, user=user)
+        CurrentUserService.set_auth_context(auth_content)
 
         # Set the running context as streamlit
         CurrentUserService.set_app_context()
@@ -74,7 +76,7 @@ class StreamlitEnvLoader:
     def __exit__(self, exc_type, exc_value, traceback):
         # remove the current user
         from gws_core import CurrentUserService
-        CurrentUserService.set_current_user(None)
+        CurrentUserService.clear_auth_context()
 
     def _load_env(self):
 

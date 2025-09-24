@@ -61,7 +61,7 @@ class ExternalLabAuth:
 
         user = UserService.get_or_import_user_info(user_id)
 
-        CurrentUserService.set_current_user(user)
+        CurrentUserService.set_auth_user(user)
 
     @classmethod
     def _get_user_id(cls, request: Request) -> Optional[str]:

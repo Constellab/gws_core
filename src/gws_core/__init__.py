@@ -602,7 +602,8 @@ from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.view_tester import ViewTester as ViewTester
 # User
-from .user.auth_service import AuthService as AuthService
+from .user.authorization_service import \
+    AuthorizationService as AuthorizationService
 from .user.current_user_service import AuthenticateUser as AuthenticateUser
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User

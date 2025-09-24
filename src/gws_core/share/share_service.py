@@ -5,7 +5,6 @@ from peewee import JOIN
 
 from gws_core.apps.app_resource import AppResource
 from gws_core.community.community_service import CommunityService
-from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
@@ -36,7 +35,6 @@ from gws_core.share.shared_dto import (SharedEntityMode, ShareLinkEntityType,
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel

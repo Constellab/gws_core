@@ -7,13 +7,13 @@ from fastapi import Depends
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO, PageDTO
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .model_service import ModelService
 
 
 @core_app.get("/model/{typing_name}/count", tags=["Models"], summary="Count the number of models")
 def count_the_number_of_models(typing_name: str,
-                               _=Depends(AuthService.check_user_access_token)) -> int:
+                               _=Depends(AuthorizationService.check_user_access_token)) -> int:
     """
     Get the count of objects of a given model type
 
@@ -32,7 +32,7 @@ def search(typing_name: str,
            search: SearchBody,
            page: Optional[int] = 0,
            number_of_items_per_page: Optional[int] = 20,
-           _=Depends(AuthService.check_user_access_token)) -> PageDTO[ModelDTO]:
+           _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ModelDTO]:
     """
     Call search in a model
 

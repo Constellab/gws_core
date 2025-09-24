@@ -8,7 +8,7 @@ from gws_core.core.model.model_dto import PageDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
 
 from ...core_controller import core_app
-from ..auth_service import AuthService
+from ..authorization_service import AuthorizationService
 from .activity_service import ActivityService
 
 
@@ -16,7 +16,7 @@ from .activity_service import ActivityService
 def advanced_search(search_dict: SearchParams,
                     page: Optional[int] = 1,
                     number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthService.check_user_access_token)) -> PageDTO[ActivityDTO]:
+                    _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ActivityDTO]:
     """
     Advanced search on scenario
     """

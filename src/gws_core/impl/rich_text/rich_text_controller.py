@@ -15,7 +15,7 @@ from gws_core.impl.rich_text.rich_text_transcription_service import \
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
                                                      RichTextObjectType)
 from gws_core.resource.view.view_dto import CallViewResultDTO
-from gws_core.user.auth_service import AuthService
+from gws_core.user.authorization_service import AuthorizationService
 
 ########################################### IMAGE ###########################################
 
@@ -26,7 +26,7 @@ from gws_core.user.auth_service import AuthService
 def upload_image(object_type: RichTextObjectType,
                  object_id: str,
                  image: UploadFile = FastAPIFile(...),
-                 _=Depends(AuthService.check_user_access_token)) -> RichTextUploadImageResultDTO:
+                 _=Depends(AuthorizationService.check_user_access_token)) -> RichTextUploadImageResultDTO:
     return RichTextFileService.upload_image(object_type, object_id, image)
 
 
@@ -36,7 +36,7 @@ def upload_image(object_type: RichTextObjectType,
 def get_image(object_type: RichTextObjectType,
               object_id: str,
               filename: str,
-              _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+              _=Depends(AuthorizationService.check_user_access_token)) -> FileResponse:
     file_path = RichTextFileService.get_figure_file_path(object_type, object_id, filename)
     return FileHelper.create_file_response(file_path, filename=filename)
 
@@ -49,7 +49,7 @@ def get_image(object_type: RichTextObjectType,
 def get_file_view(object_type: RichTextObjectType,
                   object_id: str,
                   filename: str,
-                  _=Depends(AuthService.check_user_access_token)) -> CallViewResultDTO:
+                  _=Depends(AuthorizationService.check_user_access_token)) -> CallViewResultDTO:
     return RichTextFileService.get_file_view(object_type, object_id, filename)
 
 
@@ -58,7 +58,7 @@ def get_file_view(object_type: RichTextObjectType,
 def upload_file(object_type: RichTextObjectType,
                 object_id: str,
                 file: UploadFile = FastAPIFile(...),
-                _=Depends(AuthService.check_user_access_token)) -> RichTextUploadFileResultDTO:
+                _=Depends(AuthorizationService.check_user_access_token)) -> RichTextUploadFileResultDTO:
     return RichTextFileService.upload_file(object_type, object_id, file)
 
 
@@ -68,7 +68,7 @@ def upload_file(object_type: RichTextObjectType,
 def get_file(object_type: RichTextObjectType,
              object_id: str,
              filename: str,
-             _=Depends(AuthService.check_user_access_token)) -> FileResponse:
+             _=Depends(AuthorizationService.check_user_access_token)) -> FileResponse:
     file_path = RichTextFileService.get_uploaded_file_path(object_type, object_id, filename)
     return FileHelper.create_file_response(file_path, filename=filename)
 
@@ -77,7 +77,7 @@ def get_file(object_type: RichTextObjectType,
     "/rich-text/transcribe-audio", tags=["Rich text"],
     summary="Transcribe audio file to rich text")
 def transcribe_audio(file: UploadFile = FastAPIFile(...),
-                     _=Depends(AuthService.check_user_access_token)) -> RichTextDTO:
+                     _=Depends(AuthorizationService.check_user_access_token)) -> RichTextDTO:
     """ Transcribe an audio file to a rich text
     """
 

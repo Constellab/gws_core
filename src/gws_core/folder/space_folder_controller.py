@@ -7,12 +7,12 @@ from fastapi.param_functions import Depends
 from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .space_folder_service import SpaceFolderService
 
 
 @core_app.post("/space-folder/synchronize", tags=["Folder"])
-def synchronize_folder(_=Depends(AuthService.check_user_access_token)) -> None:
+def synchronize_folder(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Synchronize the folders from space
     """
@@ -21,7 +21,7 @@ def synchronize_folder(_=Depends(AuthService.check_user_access_token)) -> None:
 
 
 @core_app.get("/space-folder/trees", tags=["Folder"])
-def get_folder_trees(_=Depends(AuthService.check_user_access_token_or_streamlit_app)) -> List[SpaceFolderTreeDTO]:
+def get_folder_trees(_=Depends(AuthorizationService.check_user_access_token_or_app)) -> List[SpaceFolderTreeDTO]:
     """
     Get the list of available folders with children.
     """
@@ -31,7 +31,7 @@ def get_folder_trees(_=Depends(AuthService.check_user_access_token_or_streamlit_
 
 
 @core_app.get("/space-folder/{id_}", tags=["Folder"])
-def get_folder(id_: str, _=Depends(AuthService.check_user_access_token)) -> SpaceFolderDTO:
+def get_folder(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> SpaceFolderDTO:
     """
     Get the folder with the given id.
     """

@@ -22,13 +22,13 @@ class S3ServerContext:
 
     def __enter__(self):
         # Authenticate sys user because in S3 server we don't have a user
-        CurrentUserService.set_current_user(User.get_and_check_sysuser())
+        CurrentUserService.set_auth_user(User.get_and_check_sysuser())
         # Code to set up and acquire resources
         return self  # You can return an object that you want to use in the with block
 
     def __exit__(self, exc_type, exc_value, traceback):
         # remove the current user
-        CurrentUserService.set_current_user(None)
+        CurrentUserService.clear_auth_context()
         if exc_value:
             Logger.log_exception_stack_trace(exc_value)
             raise S3ServerException.from_exception(exc_value, self.bucket_name, self.key)

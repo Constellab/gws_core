@@ -1,11 +1,11 @@
 
 
 from enum import Enum
-from typing import Union
 
 from starlette_context import context
 
 from gws_core.core.service.front_service import FrontService, FrontTheme
+from gws_core.user.auth_context import AuthContextBase, AuthContextUser
 
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -26,6 +26,7 @@ class CurrentUserService:
     """
 
     _no_context_user: User = None
+    _no_http_context_auth: AuthContextBase = None
 
     _run_context: CurrentUserContext = CurrentUserContext.NORMAL
 
@@ -49,14 +50,25 @@ class CurrentUserService:
         return user
 
     @classmethod
-    def get_current_user(cls) -> Union[User, None]:
+    def get_auth_context(cls) -> AuthContextBase | None:
+        """
+        Get the auth context in the current session, return none if not exists
+        """
+        if HTTPHelper.is_http_context():
+            return context.data.get("auth_context")
+        elif cls._no_http_context_auth is not None:
+            return cls._no_http_context_auth
+
+        return None
+
+    @classmethod
+    def get_current_user(cls) -> User | None:
         """
         Get the user in the current session, return none if the user is not authenticated
         """
-        if HTTPHelper.is_http_context():
-            return context.data.get("user")
-        elif cls._no_context_user is not None:
-            return cls._no_context_user
+        auth_context = cls.get_auth_context()
+        if auth_context is not None:
+            return auth_context.get_user()
 
         return None
 
@@ -68,28 +80,57 @@ class CurrentUserService:
         return cls.get_current_user() is not None
 
     @classmethod
-    def set_current_user(cls, user: User) -> None:
+    def set_auth_user(cls, user: User) -> AuthContextUser:
         """
         Set the user in the current session
         """
-        # clear the user if None
-        if user is None:
-            if HTTPHelper.is_http_context():
-                # is http context
-                context.data["user"] = None
-            else:
-                cls._no_context_user = None
-
-            return
 
         if not isinstance(user, User):
             raise BadRequestException("Invalid current user")
 
+        auth_context = AuthContextUser(user)
+        cls.set_auth_context(auth_context)
+        return auth_context
+
+    @classmethod
+    def set_auth_context(cls, auth_context: AuthContextBase) -> None:
+        """
+        Set the auth context in the current session
+        """
+
+        if not isinstance(auth_context, AuthContextBase):
+            raise BadRequestException("Invalid auth context")
+
         if HTTPHelper.is_http_context():
             # is http contexts
-            context.data["user"] = user
+            context.data["auth_context"] = auth_context
         else:
-            cls._no_context_user = user
+            cls._no_http_context_auth = auth_context
+            cls._no_context_user = auth_context.get_user()
+
+    @classmethod
+    def clear_auth_context(cls) -> None:
+        """
+        Clear the auth context in the current session
+        """
+        if HTTPHelper.is_http_context():
+            # is http contexts
+            context.data["auth_context"] = None
+        else:
+            cls._no_http_context_auth = None
+            cls._no_context_user = None
+
+    @classmethod
+    def set_current_user_from_share_auth(cls) -> None:
+        """
+        Set the user in the current session from a share authentication
+        """
+
+        if not HTTPHelper.is_http_context():
+            # is http contexts
+            raise BadRequestException("Cannot set share user in non http context")
+        system_user = User.get_and_check_sysuser()
+        context.data["auth_context"] = AuthContextBase('share', system_user)
 
     @classmethod
     def check_is_sysuser(cls):
@@ -129,8 +170,8 @@ class CurrentUserService:
 
 
 class AuthenticateUser:
-    """ Context to support with statement to catch exceptions and convert
-    them to S3ServerException"""
+    """ Class to authenticate a user in a context.
+    """
 
     user: User
 
@@ -141,7 +182,7 @@ class AuthenticateUser:
 
     def __enter__(self):
         if CurrentUserService.get_current_user() is None:
-            CurrentUserService.set_current_user(self.user)
+            CurrentUserService.set_auth_user(self.user)
         else:
             self.was_already_authenticated = True
         # Code to set up and acquire resources
@@ -149,7 +190,7 @@ class AuthenticateUser:
 
     def __exit__(self, exc_type, exc_value, traceback):
         if not self.was_already_authenticated:
-            CurrentUserService.set_current_user(None)
+            CurrentUserService.clear_auth_context()
 
         # raise the exception if exists
         if exc_value:

@@ -6,22 +6,22 @@ from gws_core.lab.system_dto import (LabInfoDTO, LabStatusDTO, LabSystemConfig,
 
 from ..core.service.settings_service import SettingsService
 from ..core_controller import core_app
-from ..user.auth_service import AuthService
+from ..user.authorization_service import AuthorizationService
 from .system_service import SystemService
 
 
 @core_app.get("/system/info", tags=["System"], summary="Get system info")
-def system_info(_=Depends(AuthService.check_user_access_token)) -> LabInfoDTO:
+def system_info(_=Depends(AuthorizationService.check_user_access_token)) -> LabInfoDTO:
     return SystemService.get_lab_info()
 
 
 @core_app.get("/system/status", tags=["System"], summary="Get system status")
-def system_status(_=Depends(AuthService.check_user_access_token)) -> LabStatusDTO:
+def system_status(_=Depends(AuthorizationService.check_user_access_token)) -> LabStatusDTO:
     return SystemService.get_system_status()
 
 
 @core_app.post("/system/dev-reset", tags=["System"], summary="Reset dev environment")
-def dev_reset(_=Depends(AuthService.check_user_access_token)) -> None:
+def dev_reset(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Reset dev environment
     """
@@ -30,12 +30,12 @@ def dev_reset(_=Depends(AuthService.check_user_access_token)) -> None:
 
 
 @core_app.post("/system/kill", tags=["System"], summary="Stop the python process and the API")
-def kill_process(_=Depends(AuthService.check_user_access_token)) -> None:
+def kill_process(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     SystemService.kill_dev_environment()
 
 
 @core_app.post("/system/garbage-collector",  tags=["System"], summary="Trigger garbage collector")
-def garbage_collector(_=Depends(AuthService.check_user_access_token)) -> None:
+def garbage_collector(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     SystemService.garbage_collector()
 
 
@@ -48,7 +48,7 @@ class SynchronizeDTO(BaseModelDTO):
 
 @core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with space")
 def synchronize(sync_dto: SynchronizeDTO,
-                _=Depends(AuthService.check_user_access_token)) -> None:
+                _=Depends(AuthorizationService.check_user_access_token)) -> None:
     SystemService.synchronize_with_space(sync_users=sync_dto.sync_users,
                                          sync_folders=sync_dto.sync_folders,
                                          sync_notes=sync_dto.sync_notes,
@@ -56,10 +56,10 @@ def synchronize(sync_dto: SynchronizeDTO,
 
 
 @core_app.get("/system/settings",  tags=["System"], summary="Get settings")
-def get_settings(_=Depends(AuthService.check_user_access_token)) -> SettingsDTO:
+def get_settings(_=Depends(AuthorizationService.check_user_access_token)) -> SettingsDTO:
     return SettingsService.get_settings().to_dto()
 
 
 @core_app.get("/system/config",  tags=["System"], summary="Get system config")
-def get_pip_packages(_=Depends(AuthService.check_user_access_token)) -> LabSystemConfig:
+def get_pip_packages(_=Depends(AuthorizationService.check_user_access_token)) -> LabSystemConfig:
     return SystemService.get_system_config()
