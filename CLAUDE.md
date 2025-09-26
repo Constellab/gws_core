@@ -57,7 +57,9 @@ The main CLI entry point is `gws_cli/gws_cli/main_cli.py` which provides command
 #### Task Framework
 - Tasks are decorated classes that process resources
 - Support for dynamic I/O, parameter specifications, and converters
+- Tasks must extend : `/lab/user/bricks/gws_core/src/gws_core/task/task.py` and define inputs, outputs and parameters
 - Located in `src/gws_core/task/`
+- Tasks should have a detailed docstring at the class level in markdown format to explain their purpose. It should also explain the inputs, outputs, and parameters if their descriptions are not self-explanatory.
 
 #### Protocol/Pipeline System
 - Protocols define workflows connecting tasks

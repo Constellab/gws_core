@@ -144,6 +144,16 @@ from .credentials.credentials_type import \
 from .credentials.credentials_type import \
     CredentialsDataS3LabServer as CredentialsDataS3LabServer
 from .credentials.credentials_type import CredentialsType as CredentialsType
+# Docker
+from .docker.docker_dto import \
+    DockerComposeResponseDTO as DockerComposeResponseDTO
+from .docker.docker_dto import DockerComposeStatus as DockerComposeStatus
+from .docker.docker_dto import \
+    DockerComposeStatusInfoDTO as DockerComposeStatusInfoDTO
+from .docker.docker_dto import StartComposeRequestDTO as StartComposeRequestDTO
+from .docker.docker_dto import SubComposeInfoDTO as SubComposeInfoDTO
+from .docker.docker_dto import SubComposeListDTO as SubComposeListDTO
+from .docker.docker_service import DockerService as DockerService
 # EntityNavigator
 from .entity_navigator.entity_navigator import \
     EntityNavigator as EntityNavigator

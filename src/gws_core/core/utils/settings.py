@@ -103,6 +103,10 @@ class Settings():
         return os.environ.get("LAB_DEV_API_URL")
 
     @classmethod
+    def get_lab_manager_api_url(cls) -> str:
+        return os.environ.get('LAB_MANAGER_API_URL')
+
+    @classmethod
     def get_lab_api_url(cls) -> str:
         return cls.get_lab_prod_api_url() if cls.is_prod_mode() else cls.get_lab_dev_api_url()
 
