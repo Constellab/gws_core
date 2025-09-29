@@ -1,8 +1,9 @@
 import os
 
 import streamlit as st
+
 from gws_core.streamlit import (StreamlitHelper, StreamlitRouter,
-                                StreamlitTranslateLang,
+                                StreamlitState, StreamlitTranslateLang,
                                 StreamlitTranslateService)
 
 
@@ -11,6 +12,7 @@ def render_utils_page():
     st.info('This page contains a showcase for streamlit utilities.')
 
     _render_authenticate_user()
+    _render_streamlit_state()
     _render_hide_sidebar_toggle()
     _render_toggle_sidebar()
     _render_router()
@@ -35,6 +37,28 @@ def _on_click():
         st.write('User is authenticated ' + user.first_name)
 ''')
     st.divider()
+
+
+def _render_streamlit_state():
+    st.subheader('Streamlit State')
+    st.info('This utility allows to access state information.')
+    user = StreamlitState.get_current_user()
+
+    if user:
+        st.write(f"Current user: {user.first_name} {user.last_name}")
+    else:
+        st.write("No user connected")
+
+    st.code('''
+import gws_core.streamlit as StreamlitState
+
+user = StreamlitState.get_current_user()
+
+if user:
+    st.write(f"Current user: {user.first_name} {user.last_name}")
+else:
+    st.write("No user connected")
+''')
 
 
 def _render_hide_sidebar_toggle():

@@ -32,6 +32,6 @@ class ShareTokenAuth:
             space_access_info = ShareLinkSpaceAccessService.find_by_token_and_check_validity(
                 user_access_token, share_link.id)
 
-            AuthService.authenticate(space_access_info.user_id)
+            AuthService.authenticate(space_access_info.user_id, allow_inactive=True)
 
         return share_link

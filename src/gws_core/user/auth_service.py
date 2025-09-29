@@ -210,7 +210,7 @@ class AuthService():
             raise InvalidTokenException()
 
     @classmethod
-    def authenticate(cls, id_: str) -> User:
+    def authenticate(cls, id_: str, allow_inactive: bool = False) -> User:
         """
         Authenticate a user. Return the DB user if ok, throw an exception if not ok
 
@@ -219,7 +219,7 @@ class AuthService():
         """
         user: User = User.get_by_id_and_check(id_)
 
-        if not user.is_active:
+        if not user.is_active and not allow_inactive:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.value,
                 unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.name,
