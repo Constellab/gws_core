@@ -2,13 +2,12 @@
 
 from typing import List, Type
 
+from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
                     ForeignKeyMetadata)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
-
-from gws_core.core.db.db_manager import AbstractDbManager
-from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 
 from ...core.exception.exceptions import BadRequestException
 from .base import Base
@@ -97,6 +96,17 @@ class BaseModel(Base, PeeweeModel):
         """
 
         return format_table_name(cls)
+
+    @classmethod
+    def has_table_name(cls) -> bool:
+        """
+        Returns True if the class has a table name defined
+
+        :return: True if the class has a table name defined
+        :rtype: `bool`
+        """
+
+        return cls.get_table_name() is not None
 
     @classmethod
     def column_exists(cls, column_name: str) -> bool:

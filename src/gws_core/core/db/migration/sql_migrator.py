@@ -1,11 +1,10 @@
 
 from typing import Any, List, Type
 
-from peewee import DatabaseProxy, Field
-from playhouse.migrate import MySQLMigrator
-
 from gws_core.core.model.base_model import BaseModel
 from gws_core.resource.resource_model import ResourceModel
+from peewee import DatabaseProxy, Field
+from playhouse.migrate import MySQLMigrator
 
 
 class SqlMigrator:
@@ -71,6 +70,8 @@ class SqlMigrator:
     def migrate(self) -> None:
         for operation in self._operations:
             operation.run()
+
+        self._operations = []
 
     ############################### CLASS METHODS ####################################
     # thoses methods are executed directly, no need to create an instance of the class and call the method

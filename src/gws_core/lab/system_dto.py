@@ -55,6 +55,7 @@ class BrickMigrationLog(TypedDict):
     version: str
     last_date_check: str
     history: List[BrickMigrationLogHistory]
+    db_manager_unique_name: str
 
 
 class PipPackage(BaseModelDTO):

@@ -5,6 +5,7 @@ from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
+from gws_core.docker.docker_dto import StartComposeRequestDTO
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -115,6 +116,9 @@ class StartDockerComposeTask(Task):
                                optional=False),
         'unique_name': StrParam(human_name='Unique Name',
                                 short_description='Unique name for the compose',
+                                optional=False),
+        'description': StrParam(human_name='Description',
+                                short_description='Description of the compose instance',
                                 optional=False)
     })
 
@@ -126,7 +130,7 @@ class StartDockerComposeTask(Task):
         yaml_file: File = inputs.get('yaml_file')
         if yaml_file is not None:
             # Use file content
-            yaml_config = yaml_file.get_content_as_str()
+            yaml_config = yaml_file.read()
         else:
             # Use config parameter
             yaml_config: str = params.get_value('yaml_config')
@@ -140,8 +144,13 @@ class StartDockerComposeTask(Task):
 
         # Start the Docker Compose
         docker_service = DockerService()
-        response = docker_service.start_compose_from_string(
-            compose_content=yaml_config,
+
+        compose_request = StartComposeRequestDTO(
+            composeContent=yaml_config,
+            description=params.get_value('description')
+        )
+        response = docker_service.register_and_start_compose(
+            compose=compose_request,
             brick_name=brick_name,
             unique_name=unique_name
         )
@@ -149,8 +158,8 @@ class StartDockerComposeTask(Task):
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'message': response.message,
-            'output': response.output,
+            'status': response.status.value,
+            'info': response.info,
             'brick_name': brick_name,
             'unique_name': unique_name
         }

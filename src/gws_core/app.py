@@ -4,11 +4,10 @@ from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI
-from starlette_context.middleware.context_middleware import ContextMiddleware
-
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
+from starlette_context.middleware.context_middleware import ContextMiddleware
 
 from .core.classes.cors_config import CorsConfig
 from .core.classes.security_headers import SecurityHeadersMiddleware
@@ -77,7 +76,6 @@ class App:
         Starts FastAPI uvicorn
         """
 
-        SystemService.migrate_db()
         SystemService.init()
 
         # Configure the CORS

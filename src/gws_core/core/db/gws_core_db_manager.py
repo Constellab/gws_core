@@ -1,9 +1,8 @@
 
 
-from peewee import DatabaseProxy
-
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.settings import Settings
+from peewee import DatabaseProxy
 
 from .db_manager import AbstractDbManager
 
@@ -11,6 +10,8 @@ from .db_manager import AbstractDbManager
 class GwsCoreDbManager(AbstractDbManager):
 
     db = DatabaseProxy()
+
+    lazy_init = False
 
     @classmethod
     def get_config(cls, mode: DbMode) -> DbConfig:

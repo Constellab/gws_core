@@ -510,20 +510,37 @@ class Settings():
         return self.data.get("brick_migrations", {})
 
     def get_brick_migration_log(self, brick_name: str) -> Union[BrickMigrationLog, None]:
-        brick_migrations = self.get_brick_migrations_logs()
+        """Get a brick migration log for the specified brick and db_manager
 
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param db_manager_unique_name: Unique name of the database manager. If None, will try the old key format for backward compatibility.
+        :type db_manager_unique_name: str
+        :return: The brick migration log or None
+        :rtype: Union[BrickMigrationLog, None]
+        """
+        brick_migrations = self.get_brick_migrations_logs()
         return brick_migrations.get(brick_name)
 
-    def update_brick_migration_log(self, brick_name: str, version: str) -> None:
+    def update_brick_migration_log(self, brick_name: str, version: str, db_manager_unique_name: str) -> None:
         """Add a new brick migration log and update last migration version
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param version: Version of the brick
+        :type version: str
+        :param db_manager_unique_name: Unique name of the database manager
+        :type db_manager_unique_name: str
         """
         brick_migrations: Dict[str,
                                BrickMigrationLog] = self.get_brick_migrations_logs()
         brick_migration: BrickMigrationLog
-        # if this is the first time the migration is executed for this brick
+
+        # if this is the first time the migration is executed for this brick and db_manager
         if brick_name not in brick_migrations:
             brick_migration = {
-                "brick_name": brick_name, "version": None, "history": [], "last_date_check": None
+                "brick_name": brick_name, "version": None, "history": [], "last_date_check": None,
+                "db_manager_unique_name": db_manager_unique_name
             }
             # add the new migration to the list of migration and save it in data
             brick_migrations[brick_name] = brick_migration

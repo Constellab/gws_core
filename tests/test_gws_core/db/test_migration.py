@@ -1,8 +1,9 @@
 
 
 from gws_core import BaseTestCase
-from gws_core.core.db.brick_migrator import (BrickMigration, BrickMigrator,
-                                             MigrationObject)
+from gws_core.core.db.migration.brick_migrator import (BrickMigration,
+                                                       BrickMigrator,
+                                                       MigrationObject)
 from gws_core.core.db.version import Version, VersionInvalidException
 
 

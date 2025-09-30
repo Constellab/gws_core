@@ -239,8 +239,11 @@ class EntityTagList():
     #################################### CLASS METHODS ####################################
 
     @classmethod
-    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> 'EntityTagList':
-        return EntityTagList(entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id))
+    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str,
+                       default_origin: TagOrigin = None) -> 'EntityTagList':
+        return EntityTagList(entity_type, entity_id,
+                             EntityTag.find_by_entity(entity_type, entity_id),
+                             default_origin)
 
     @classmethod
     def delete_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> None:

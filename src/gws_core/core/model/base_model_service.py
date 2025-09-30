@@ -39,7 +39,7 @@ class BaseModelService:
         return cls.__model_types
 
     @classmethod
-    def create_tables(cls):
+    def create_all_tables(cls):
         """
         Create tables (if they don't exist)
 
@@ -49,33 +49,46 @@ class BaseModelService:
         :type model_type: `type`
         """
 
-        db_with_models = cls._get_db_and_model_types()
-        for db_with_model in db_with_models:
-            db_manager = db_with_model.db_manager
-            try:
+        all_db_with_models = cls._get_all_db_and_model_types()
+        for db_with_models in all_db_with_models.values():
+            cls._create_database_tables(db_with_models)
 
-                models = [t for t in db_with_model.models if not t.table_exists()]
+    @classmethod
+    def create_database_tables(cls, db_manager_type: Type[AbstractDbManager]):
+        """
+        Create tables (if they don't exist) for the provided DbManager
 
-                db_manager.db.create_tables(models)
-            except Exception as err:
-                # if we can't load the gws_core db, raise error
-                if db_manager.get_brick_name() == Settings.get_gws_core_brick_name():
-                    raise err
+        :param db_manager: The DbManager class to create the tables for
+        :type db_manager: Type[AbstractDbManager]
+        """
 
-                # if this is another DB, log exception and continues
-                Logger.log_exception_stack_trace(err)
+        all_db_with_models = cls._get_all_db_and_model_types()
 
-                # get the brick from the first model type
-                brick_info = BrickHelper.get_brick_info(db_manager.get_brick_name())
-                if brick_info is not None:
-                    BrickService.log_brick_message(
-                        brick_info.name,
-                        f"Cannot initialize databse {db_manager.get_unique_name()}. Error : {err}", "CRITICAL")
+        if db_manager_type.get_unique_name() not in all_db_with_models:
+            raise Exception(f"No model found for the db manager '{db_manager_type.get_unique_name()}'")
+
+        db_with_models = all_db_with_models[db_manager_type.get_unique_name()]
+        cls._create_database_tables(db_with_models)
+
+    @classmethod
+    def _create_database_tables(cls, db_with_models: DbWithModels):
+        """
+        Create tables (if they don't exist) for the provided DbManager
+
+        :param db_manager: The DbManager class to create the tables for
+        :type db_manager: Type[AbstractDbManager]
+        """
+
+        db_manager = db_with_models.db_manager
+
+        # Filter classes that have a table name (not abstract) and that don't exist yet
+        models = [t for t in db_with_models.models if t.has_table_name() and not t.table_exists()]
+
+        db_manager.create_tables(models)
 
         # Create the foreign keys after if necessary (for DeferredForeignKey for example)
-        for db_with_model in db_with_models:
-            for model in db_with_model.models:
-                model.after_all_tables_init()
+        for model in db_with_models.models:
+            model.after_all_tables_init()
 
     @classmethod
     def drop_tables(cls):
@@ -88,11 +101,11 @@ class BaseModelService:
         :type model_type: `type`
         """
 
-        db_with_models = cls._get_db_and_model_types()
-        for db_with_model in db_with_models:
+        all_db_with_models = cls._get_all_db_and_model_types()
+        for db_with_models in all_db_with_models.values():
 
             models: List[Type[BaseModel]] = [
-                t for t in db_with_model.models if t.table_exists()]
+                t for t in db_with_models.models if t.table_exists()]
 
             if len(models) == 0:
                 Logger.debug("No table to drop")
@@ -100,15 +113,15 @@ class BaseModelService:
 
             # Disable foreigne key on my sql to drop the tables
             if models[0].is_mysql_engine():
-                db_with_model.db_manager.db.execute_sql("SET FOREIGN_KEY_CHECKS=0")
+                db_with_models.db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=0")
             # Drop all the tables
-            db_with_model.db_manager.db.drop_tables(models)
+            db_with_models.db_manager.drop_tables(models)
 
             if models[0].is_mysql_engine():
-                db_with_model.db_manager.db.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+                db_with_models.db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
-    def _get_db_and_model_types(cls) -> List[DbWithModels]:
+    def _get_all_db_and_model_types(cls) -> Dict[str, DbWithModels]:
         db_with_models: Dict[str, DbWithModels] = {}
         models = cls.get_base_model_types()
 
@@ -124,4 +137,4 @@ class BaseModelService:
             db_with_model = db_with_models[db_manager.get_unique_name()]
             db_with_model.models.append(model)
 
-        return list(db_with_models.values())
+        return db_with_models

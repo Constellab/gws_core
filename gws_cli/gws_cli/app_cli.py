@@ -100,8 +100,7 @@ class AppCli:
         settings_file_path = CLIUtils.get_current_brick_settings_file_path()
 
         AppManager.init_gws_env(settings_file_path,
-                                log_level=CLIUtils.get_global_option_log_level(ctx),
-                                skip_typings_names=True)
+                                log_level=CLIUtils.get_global_option_log_level(ctx))
 
         # TODO A Voir
         AppsManager.register_signal_handlers()

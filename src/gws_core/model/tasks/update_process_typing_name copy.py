@@ -2,7 +2,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.model.typing import Typing
 from gws_core.model.typing_style import TypingStyle
 from gws_core.task.task import Task

@@ -76,7 +76,7 @@ class StopDockerComposeTask(Task):
 
         # Stop the Docker Compose
         docker_service = DockerService()
-        response = docker_service.delete_compose(
+        response = docker_service.unregister_compose(
             brick_name=brick_name,
             unique_name=unique_name
         )
@@ -84,8 +84,8 @@ class StopDockerComposeTask(Task):
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'message': response.message,
-            'output': response.output,
+            'status': response.status.value,
+            'info': response.info,
             'brick_name': brick_name,
             'unique_name': unique_name
         }

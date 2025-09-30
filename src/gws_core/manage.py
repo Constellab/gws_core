@@ -7,7 +7,6 @@ from typing import List
 from unittest.suite import TestSuite
 
 import plotly.express as px
-
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
@@ -32,8 +31,7 @@ class AppManager:
                      log_context: LogContext = LogContext.MAIN,
                      log_context_id: str = None,
                      show_sql: bool = False,
-                     is_test: bool = False,
-                     skip_typings_names: bool = False) -> Settings:
+                     is_test: bool = False) -> Settings:
 
         log_dir = Settings.build_log_dir(is_test=is_test)
 
@@ -54,12 +52,8 @@ class AppManager:
                                          is_test=is_test)
         settings_loader.load_settings()
 
-        # Init the db
-        DbManagerService.init_all_db()
-
-        if not skip_typings_names:
-            # Init the typings
-            TypingManager.init_typings()
+        # Init the typings
+        TypingManager.init_typings()
 
         # Init plotly color, use the default plotly color
         # Force this init because it is overriden when importing streamlit

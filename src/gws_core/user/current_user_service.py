@@ -2,10 +2,9 @@
 
 from enum import Enum
 
-from starlette_context import context
-
 from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.user.auth_context import AuthContextBase, AuthContextUser
+from starlette_context import context
 
 from ..core.exception.exceptions import (BadRequestException,
                                          UnauthorizedException)
@@ -195,3 +194,9 @@ class AuthenticateUser:
         # raise the exception if exists
         if exc_value:
             raise exc_value
+
+    @staticmethod
+    def system_user() -> 'AuthenticateUser':
+        """ Authenticate the system user in a context.
+        """
+        return AuthenticateUser(User.get_and_check_sysuser())

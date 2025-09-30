@@ -4,7 +4,7 @@ from typing import List, cast
 
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_resource import AppResource
-from gws_core.core.db.sql_migrator import SqlMigrator
+from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder

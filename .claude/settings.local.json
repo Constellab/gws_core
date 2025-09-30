@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(python:*)",
-      "Bash(gws server test:*)"
+      "Bash(gws server test:*)",
+      "Bash(python3:*)"
     ],
     "deny": []
   }

@@ -6,7 +6,7 @@ from threading import Thread
 from typing import List
 
 from gws_core.apps.app_nginx_manager import AppNginxManager
-from gws_core.core.db.db_migration import DbMigrationService
+from gws_core.core.db.db_manager_service import DbManagerService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.sys_proc import SysProc
@@ -50,10 +50,6 @@ from .system_status import SystemStatus
 class SystemService:
 
     @classmethod
-    def migrate_db(cls):
-        DbMigrationService.migrate()
-
-    @classmethod
     def init(cls):
         """
         Init method init all the api.
@@ -61,7 +57,7 @@ class SystemService:
          - register the processes and resources
          - create the sysuser if not exists
         """
-        cls.create_all_tables()
+        DbManagerService.init_all_db()
         ModelService.register_all_processes_and_resources()
         UserService.create_sysuser()
         SystemStatus.app_is_initialized = True
@@ -133,14 +129,6 @@ class SystemService:
     def deinit_queue_and_monitor(cls) -> None:
         MonitorService.deinit()
         QueueService.deinit()
-
-    @classmethod
-    def create_all_tables(cls):
-        """
-        Create tables
-        """
-
-        BaseModelService.create_tables()
 
     @classmethod
     def drop_all_tables(cls):

@@ -39,6 +39,10 @@ class BrickService():
         cls.log_brick_message_from_obj(obj, message, 'ERROR')
 
     @classmethod
+    def log_brick_critical(cls, obj: Any, message: str) -> None:
+        cls.log_brick_message_from_obj(obj, message, 'CRITICAL')
+
+    @classmethod
     def log_brick_info(cls, obj: Any, message: str) -> None:
         cls.log_brick_message_from_obj(obj, message, 'INFO')
 

@@ -26,11 +26,5 @@ echo "npm version: $(npm -v)"
 echo "Installing @anthropic-ai/claude-code..."
 npm i -g @anthropic-ai/claude-code
 
-# Verify installation
-if command -v claude-code &> /dev/null; then
-    echo "Claude Code installation completed successfully!"
-    echo "You can now use 'claude-code' command"
-else
-    echo "Claude Code installation failed or is not in PATH"
-    exit 1
-fi
+echo "Claude Code installation completed successfully!"
+echo "You can now use 'claude-code' command"

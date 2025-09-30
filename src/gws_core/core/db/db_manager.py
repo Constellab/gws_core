@@ -3,18 +3,11 @@
 from abc import abstractmethod
 from typing import Set, Type
 
+from gws_core.core.utils.utils import Utils
 from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
 
-from gws_core.core.utils.utils import Utils
-
 from .db_config import DbConfig, DbMode, SupportedDbEngine
-
-# ####################################################################
-#
-# ReconnectMySQLDatabase class
-#
-# ####################################################################
 
 
 class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
@@ -23,12 +16,6 @@ class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
     Allow to auto-reconnect to the MySQL database.
     """
     pass
-
-# ####################################################################
-#
-# AbstractDbManager class
-#
-# ####################################################################
 
 
 class AbstractDbManager:
@@ -41,9 +28,13 @@ class AbstractDbManager:
     :type db: `DatabaseProxy`
     """
 
-    db = DatabaseProxy()
+    db: DatabaseProxy = None
 
     mode: DbMode = None
+
+    # If True, the db will be initialized after the app start, and app won't fail if db is not available
+    # If False, the db will be initialized immediately (not recommended), and app fails if db is not available
+    lazy_init = True
 
     @classmethod
     @abstractmethod
@@ -85,8 +76,14 @@ class AbstractDbManager:
     @classmethod
     def inheritors(cls) -> Set[Type['AbstractDbManager']]:
         """ Get all the classes that inherit this class """
-        return set(cls.__subclasses__()).union(
+        db_managers = set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in c.inheritors()])
+
+        # filter out abstract classes, check if get_unique_name and get_brick_name return a value
+        return {db_manager for db_manager in db_managers
+                if db_manager.db is not None
+                and db_manager.get_unique_name() is not None
+                and db_manager.get_brick_name() is not None}
 
     @classmethod
     def get_db(cls) -> DatabaseProxy:
@@ -120,36 +117,26 @@ class AbstractDbManager:
         if cls.db.is_closed():
             cls.db.connect()
 
-    # -- C --
+    @classmethod
+    def create_tables(cls, models: list[Type]) -> None:
+        """ Create the tables for the provided models """
 
-    # @classmethod
-    # def connect_db(cls):
-    #     """ Open the db connection """
+        if not models or len(models) == 0:
+            return
 
-    #     if cls.db.is_closed():
-    #         cls.db.connect()
+        cls.db.create_tables(models)
 
-    # @classmethod
-    # def disconnect_db(cls):
-    #     """ Close the db connection """
+    @classmethod
+    def drop_tables(cls, models: list[Type]) -> None:
+        """ Drop the tables for the provided models """
 
-    #     if not cls.db.is_closed():
-    #         cls.db.close()
+        if not models or len(models) == 0:
+            return
 
-    # @classmethod
-    # def create_maria_db(cls):
-    #     """
-    #     Creates maria database
-    #     """
+        cls.db.drop_tables(models)
 
-    #     if not cls._engine == "mariadb":
-    #         raise Exception("gws.db.manager.DbManager", "create_maria_database", "Db engine is not mariab")
+    @classmethod
+    def execute_sql(cls, sql: str) -> None:
+        """ Execute the provided sql command """
 
-    #     conn = pymysql.connect(host='mariadb', port=3306, user="root", password="gencovery")
-    #     conn.cursor().execute(f"CREATE DATABASE IF NOT EXISTS {cls._db_name}")
-    #     conn.cursor().execute(f"GRANT ALL PRIVILEGES ON ${cls._db_name}.* TO 'gws'@'localhost';")
-    #     conn.close()
-
-    # -- D --
-
-    # -- G --
+        cls.db.execute_sql(sql)

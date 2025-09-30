@@ -9,6 +9,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.exception.exceptions.unauthorized_exception import \
     UnauthorizedException
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.string_helper import StringHelper
 from gws_core.credentials.credentials_search_builder import \
     CredentialsSearchBuilder
 from gws_core.credentials.credentials_type import (CredentialsDataS3,
@@ -18,7 +19,8 @@ from gws_core.space.space_service import (ExternalCheckCredentialResponse,
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
 
 from .credentials import Credentials
-from .credentials_type import (CredentialsDataLab, CredentialsDataS3LabServer,
+from .credentials_type import (CredentialsDataBasic, CredentialsDataLab,
+                               CredentialsDataS3LabServer,
                                CredentialsDataSpecsDTO,
                                CredentialsDataTypeSpecDTO, SaveCredentialsDTO)
 
@@ -156,3 +158,52 @@ class CredentialsService():
             ))
 
         return CredentialsDataSpecsDTO(data_specs=data_specs)
+
+    @classmethod
+    def get_or_create_basic_credential(cls, name: str, username: str,
+                                       password: Optional[str] = None,
+                                       url: Optional[str] = None,
+                                       description: Optional[str] = None) -> Credentials:
+        """Get or create a BASIC credential. If the credential exists, check that it's BASIC type and return it.
+        Otherwise create a new BASIC credential.
+
+        :param name: Name of the credential
+        :param username: Username for the credential
+        :param password: Password for the credential. If not provided, a random 30-character password will be generated
+        :param url: Optional URL for the credential
+        :param description: Optional description for the credential
+        :return: The existing or newly created BASIC credential
+        """
+        # Check if credentials with this name already exist
+        existing_credentials = cls.find_by_name(name)
+
+        if existing_credentials:
+            # Check that it's the correct type
+            if existing_credentials.type != CredentialsType.BASIC:
+                raise BadRequestException(
+                    f"Credentials '{name}' already exists but has type '{existing_credentials.type}', expected 'BASIC'"
+                )
+            return existing_credentials
+
+        # Generate password if not provided
+        if password is None:
+            password = StringHelper.generate_random_chars(30)
+
+        # Create the credentials data
+        credentials_data = {
+            'username': username,
+            'password': password,
+        }
+        if url is not None:
+            credentials_data['url'] = url
+
+        # Create the SaveCredentialsDTO
+        save_dto = SaveCredentialsDTO(
+            name=name,
+            type=CredentialsType.BASIC,
+            description=description,
+            data=credentials_data
+        )
+
+        # Create and return the new credentials
+        return cls.create(save_dto)

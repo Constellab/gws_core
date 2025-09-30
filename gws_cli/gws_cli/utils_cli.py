@@ -37,7 +37,7 @@ def install_node():
         raise typer.Exit(1)
 
 
-@app.command("install-claude-code", help="Install Claude Code (requires Node.js)")
+@app.command("install-claude-code", help="Install Claude Code")
 def install_claude_code():
     """Install Claude Code CLI tool (automatically installs Node.js if needed)"""
 

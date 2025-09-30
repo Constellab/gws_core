@@ -82,14 +82,15 @@ from .core.classes.validator import NumericValidator as NumericValidator
 from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
-# Core > DB
-from .core.db.brick_migrator import BrickMigration as BrickMigration
 from .core.db.db_config import DbConfig as DbConfig
 from .core.db.db_config import DbMode as DbMode
 from .core.db.db_manager import AbstractDbManager as AbstractDbManager
-from .core.db.db_migration import brick_migration as brick_migration
+from .core.db.migration.brick_migration_decorator import \
+    brick_migration as brick_migration
+# Core > DB
+from .core.db.migration.brick_migrator import BrickMigration as BrickMigration
+from .core.db.migration.sql_migrator import SqlMigrator as SqlMigrator
 from .core.db.pool_db import PoolDb as PoolDb
-from .core.db.sql_migrator import SqlMigrator as SqlMigrator
 from .core.db.version import Version as Version
 # Core > Transaction
 from .core.decorator.transaction import transaction as transaction
@@ -145,8 +146,6 @@ from .credentials.credentials_type import \
     CredentialsDataS3LabServer as CredentialsDataS3LabServer
 from .credentials.credentials_type import CredentialsType as CredentialsType
 # Docker
-from .docker.docker_dto import \
-    DockerComposeResponseDTO as DockerComposeResponseDTO
 from .docker.docker_dto import DockerComposeStatus as DockerComposeStatus
 from .docker.docker_dto import \
     DockerComposeStatusInfoDTO as DockerComposeStatusInfoDTO
