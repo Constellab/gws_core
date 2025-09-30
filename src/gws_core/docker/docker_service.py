@@ -1,14 +1,17 @@
 
+import os
+import tempfile
 import time
 from typing import Literal, Optional, cast
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
-from gws_core.core.service.external_api_service import ExternalApiService
+from gws_core.core.service.external_api_service import (ExternalApiService,
+                                                        FormData)
+from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
-from gws_core.docker.docker_dto import (DockerComposeStatus,
-                                        DockerComposeStatusInfoDTO,
+from gws_core.docker.docker_dto import (DockerComposeStatusInfoDTO,
                                         RegisterSQLDBComposeRequestDTO,
                                         RegisterSQLDBComposeResponseDTO,
                                         StartComposeRequestDTO,
@@ -226,6 +229,52 @@ class DockerService(LabManagerServiceBase):
 
         except BaseHTTPException as err:
             err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
+            raise err
+
+    def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
+                                         folder_path: str, description: str) -> DockerComposeStatusInfoDTO:
+        """
+        Register a docker compose from a folder by zipping it and uploading
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param folder_path: Path to the folder containing the compose files
+        :type folder_path: str
+        :param description: Description for the compose
+        :type description: str
+        :return: Status information of the compose
+        :rtype: DockerComposeStatusInfoDTO
+        """
+
+        lab_api_url = self._get_lab_manager_api_url(
+            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/register-from-zip')
+
+        try:
+            # Create zip file in temporary location
+            zip_file_path = tempfile.NamedTemporaryFile(suffix='.zip', delete=False).name
+            ZipCompress.compress_dir_content(folder_path, zip_file_path)
+
+            # Create form data with the zip file
+            form_data = FormData()
+            form_data.add_file_from_path('file', zip_file_path, 'compose.zip')
+            form_data.add_json_data('body', {'description': description})
+
+            response = ExternalApiService.post_form_data(
+                lab_api_url,
+                form_data=form_data,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True
+            )
+
+            # Clean up temporary file
+            os.unlink(zip_file_path)
+
+            return DockerComposeStatusInfoDTO.from_json(response.json())
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't register compose from zip. Error: {err.detail}"
             raise err
 
     def get_or_create_basic_credentials(self, brick_name: str, unique_name: str,

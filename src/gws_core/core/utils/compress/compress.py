@@ -1,4 +1,5 @@
 
+import os
 from abc import abstractmethod
 from typing import List, Optional, Set, Type
 
@@ -84,6 +85,24 @@ class Compress:
 
         compress = cls(destination_file_path)
         compress.add_dir(dir_path)
+        compress.close()
+
+    @classmethod
+    def compress_dir_content(cls, dir_path: str, destination_file_path: str) -> None:
+        """
+        Compress the content of a folder without creating a subfolder hierarchy.
+        Files and folders inside dir_path will be at the root of the compressed file.
+
+        :param dir_path: Path of the folder whose content to compress
+        :param dir_path: `str`
+        :param destination_file_path: Path of the compressed file to create
+        :param destination_file_path: `str`
+        """
+
+        compress = cls(destination_file_path)
+        for item in os.listdir(dir_path):
+            item_path = os.path.join(dir_path, item)
+            compress.add_fs_node(item_path, item)
         compress.close()
 
     @staticmethod
