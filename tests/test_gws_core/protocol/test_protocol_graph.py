@@ -6,7 +6,7 @@ from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug.output_task import OutputTask
-from gws_core.test.gtest import GTest
+from gws_core.test.test_helper import TestHelper
 
 from ..protocol_examples import TestSubProtocol
 
@@ -19,7 +19,7 @@ class TestProtocolGraph(BaseTestCase):
         resources_count = ResourceModel.select().count()
 
         # Build the scenario
-        resource_model = GTest.save_robot_resource()
+        resource_model = TestHelper.save_robot_resource()
 
         scenario = ScenarioProxy()
         protocol = scenario.get_protocol()

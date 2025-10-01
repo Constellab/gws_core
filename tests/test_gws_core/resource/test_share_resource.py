@@ -28,7 +28,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
-from gws_core.test.gtest import GTest, TestStartUvicornApp
+from gws_core.test.test_helper import TestHelper
+from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
 
 
 def get_table() -> Table:
@@ -244,7 +245,7 @@ class TestShareResource(BaseTestCase):
         # save the resource model
         original_resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
-        lab_credentials = GTest.create_lab_credentials()
+        lab_credentials = TestHelper.create_lab_credentials()
 
         # Call the external lab API to import the resource
         scenario = ResourceTransfertService.export_resource_to_lab(

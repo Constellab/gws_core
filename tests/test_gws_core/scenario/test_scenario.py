@@ -22,7 +22,7 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.task.plug.output_task import OutputTask
-from gws_core.test.gtest import GTest
+from gws_core.test.test_helper import TestHelper
 
 
 # test_scenario
@@ -137,7 +137,7 @@ class TestScenario(BaseTestCase):
             protocol_model=proto)
 
         ScenarioRunService.create_cli_for_scenario(
-            scenario=scenario, user=GTest.user)
+            scenario=scenario, user=TestHelper.user)
         self.assertEqual(scenario.status,
                          ScenarioStatus.WAITING_FOR_CLI_PROCESS)
         self.assertTrue(scenario.pid > 0)

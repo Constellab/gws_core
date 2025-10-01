@@ -12,7 +12,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug.input_task import InputTask
-from gws_core.test.gtest import GTest
+from gws_core.test.test_helper import TestHelper
 
 from ..protocol_examples import TestSimpleProtocol
 
@@ -52,23 +52,23 @@ class TestTask(BaseTestCase):
         p2: TaskModel = proto.get_process('p2')
 
         self.assertTrue(p0.created_by.is_sysuser)
-        self.assertEqual(proto.created_by, GTest.user)
+        self.assertEqual(proto.created_by, TestHelper.user)
 
         p2.config.set_value('food_weight', '5.6')
 
         scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=proto)
 
-        self.assertEqual(scenario.created_by, GTest.user)
+        self.assertEqual(scenario.created_by, TestHelper.user)
 
         scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
         # Refresh the processes
         protocol: ProtocolModel = scenario.protocol_model
-        self.assertEqual(protocol.created_by, GTest.user)
+        self.assertEqual(protocol.created_by, TestHelper.user)
 
         p0 = protocol.get_process("p0")
-        self.assertEqual(protocol.created_by, GTest.user)
+        self.assertEqual(protocol.created_by, TestHelper.user)
 
         p1 = protocol.get_process("p1")
         p2 = protocol.get_process("p2")

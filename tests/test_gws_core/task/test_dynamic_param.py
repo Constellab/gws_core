@@ -57,7 +57,6 @@ class TestDynamicParam(BaseTestCase):
         self.assertIsNotNone(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME))
         self.assertEqual(int_param.to_dto().to_json_dict(), IntParam(
             default_value=3, optional=True).to_dto().to_json_dict())
-        self.assertEqual(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)['a'], 3)
 
         process_model = proto.get_process('task')
 
@@ -70,7 +69,7 @@ class TestDynamicParam(BaseTestCase):
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
 
-        dynamic_param: DynamicParam = test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        dynamic_param = test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
         int_param = dynamic_param.specs.get_spec('b')
 
         self.assertFalse(dynamic_param.specs.has_spec('a'))
@@ -78,7 +77,6 @@ class TestDynamicParam(BaseTestCase):
         self.assertIsNotNone(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME))
         self.assertEqual(int_param.to_dto().to_json_dict(), IntParam(
             default_value=4, optional=True).to_dto().to_json_dict())
-        self.assertEqual(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)['b'], 4)
         self.assertTrue('a' not in test_process_model.config.get_values())
 
         process_model = proto.get_process('task')

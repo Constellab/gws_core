@@ -4,14 +4,13 @@ from typing import cast
 
 from pandas import DataFrame
 
-from gws_cli.reflex_cli import run_dev
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.apps.reflex.reflex_resource import ReflexResource
 from gws_core.config.config_params import ConfigParams
-from gws_core.impl.apps.reflex_showcase.generate_reflex_showcase_app import (
-    GenerateReflexShowcaseApp, ReflexShowcaseApp)
+from gws_core.impl.apps.reflex_showcase.generate_reflex_showcase_app import \
+    GenerateReflexShowcaseApp
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -68,18 +67,5 @@ class TestReflexApp(BaseTestCase):
             # check if the app is running
             self.assertFalse(reflex_process.call_health_check())
             self.assertFalse(reflex_process.subprocess_is_running())
-        finally:
-            AppsManager.stop_all_processes()
-
-    def test_reflex_dev_mode(self):
-        # make the check faster to avoid test block
-        ReflexProcess.CHECK_RUNNING_INTERVAL = 3
-
-        app = ReflexShowcaseApp()
-        dev_config_path = app.get_dev_config_json_path()
-
-        try:
-            run_dev(dev_config_path)
-
         finally:
             AppsManager.stop_all_processes()

@@ -117,7 +117,7 @@ class BrickMigrator():
 
         # retrieve all the migration objects that have an higher version of current brick version
         # and match the db_manager_type
-        to_migrate_list: List[MigrationObject] = self._get_to_migrate_list(db_manager_type)
+        to_migrate_list: List[MigrationObject] = self.get_to_migrate_list(db_manager_type)
 
         if len(to_migrate_list) == 0:
             Logger.debug(
@@ -129,7 +129,7 @@ class BrickMigrator():
 
         return True
 
-    def _get_to_migrate_list(self, db_manager_type: Type[AbstractDbManager]) -> List[MigrationObject]:
+    def get_to_migrate_list(self, db_manager_type: Type[AbstractDbManager]) -> List[MigrationObject]:
         # retrieve all the migration objects that have an higher version of current brick version
         # and match the db_manager_type
         to_migrate: List[MigrationObject] = [

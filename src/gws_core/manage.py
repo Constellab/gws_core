@@ -7,11 +7,13 @@ from typing import List
 from unittest.suite import TestSuite
 
 import plotly.express as px
+
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.settings_loader import SettingsLoader
+from gws_core.test.test_helper import TestHelper
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
@@ -20,7 +22,6 @@ from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
 from .core.utils.logger import LogContext, Logger
 from .core.utils.settings import Settings
-from .notebook.notebook import Notebook
 
 
 class AppManager:
@@ -167,7 +168,7 @@ class AppManager:
     @classmethod
     def run_notebook(cls, main_settings_path: str, log_level: str) -> None:
         cls.init_gws_env(main_setting_file_path=main_settings_path, log_level=log_level)
-        Notebook.init_complete()
+        TestHelper.init_complete()
 
     @classmethod
     def reset_environment(cls) -> None:

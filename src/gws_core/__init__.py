@@ -444,8 +444,6 @@ from .note_template.task.note_template_param import \
     NoteTemplateParam as NoteTemplateParam
 from .note_template.task.note_template_resource import \
     NoteTemplateResource as NoteTemplateResource
-# Core > Notebook
-from .notebook.notebook import Notebook as Notebook
 # Process
 from .process.process import Process as Process
 from .process.process_factory import ProcessFactory as ProcessFactory

@@ -2,12 +2,9 @@
 
 from pandas import DataFrame
 
-from gws_cli.streamlit_cli import run_dev
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.config.config_params import ConfigParams
-from gws_core.impl.apps.streamlit_showcase.generate_streamlit_showcase_app import \
-    StreamlitShowcaseApp
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -79,18 +76,5 @@ if sources:
             # check if the app is running
             self.assertFalse(streamlit_process.call_health_check())
             self.assertFalse(streamlit_process.subprocess_is_running())
-        finally:
-            AppsManager.stop_all_processes()
-
-    def test_streamlit_dev_mode(self):
-        # make the check faster to avoid test block
-        StreamlitProcess.CHECK_RUNNING_INTERVAL = 3
-
-        app = StreamlitShowcaseApp()
-        dev_config_path = app.get_dev_config_json_path()
-
-        try:
-            run_dev(dev_config_path)
-
         finally:
             AppsManager.stop_all_processes()

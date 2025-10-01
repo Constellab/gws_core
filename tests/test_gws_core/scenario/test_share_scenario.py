@@ -34,7 +34,8 @@ from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.test.gtest import GTest, TestStartUvicornApp
+from gws_core.test.test_helper import TestHelper
+from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
 
 
 @task_decorator(unique_name="RobotsGeneratorShare")
@@ -76,10 +77,10 @@ class TestShareScenario(BaseTestCase):
 
     def test_share_scenario(self):
 
-        input_robot_model = GTest.save_robot_resource()
+        input_robot_model = TestHelper.save_robot_resource()
 
         # Create and run a scenario
-        folder = GTest.create_default_folder()
+        folder = TestHelper.create_default_folder()
         scenario = ScenarioProxy(title='Test scenario', folder=folder)
 
         scenario.add_tag(Tag('scenario_tag', 'scenario_value', is_propagable=True,
@@ -223,10 +224,10 @@ class TestShareScenario(BaseTestCase):
         self.assertIsNotNone(new_output_resource)
 
     def test_send_scenario(self):
-        input_robot_model = GTest.save_robot_resource()
+        input_robot_model = TestHelper.save_robot_resource()
 
         # Create and run a scenario
-        folder = GTest.create_default_folder()
+        folder = TestHelper.create_default_folder()
         scenario = ScenarioProxy(title='Test scenario', folder=folder)
 
         scenario.add_tag(Tag('scenario_tag', 'scenario_value', is_propagable=True,
@@ -240,7 +241,7 @@ class TestShareScenario(BaseTestCase):
         protocol.add_output('output', move >> 'robot')
         scenario.run()
 
-        lab_credentials = GTest.create_lab_credentials()
+        lab_credentials = TestHelper.create_lab_credentials()
 
         scenario_count = Scenario.select().count()
 

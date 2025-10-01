@@ -1,12 +1,10 @@
 
 
-from typing import Dict, List, Type
+from typing import List, Type
 
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.db.db_config import DbConfig, DbMode
+from gws_core.core.db.db_config import DbMode
 from gws_core.core.db.migration.db_migration_service import DbMigrationService
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
 from gws_core.core.model.base_model_service import BaseModelService
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -15,8 +13,6 @@ from .db_manager import AbstractDbManager
 
 
 class DbManagerService():
-    # store the db manager that were initialized and check that the keys are unique
-    _db_managers: Dict[str, Type[AbstractDbManager]] = {}
 
     @classmethod
     def init_all_db(cls, full_init: bool = True) -> None:
@@ -56,11 +52,6 @@ class DbManagerService():
     def _init_db(cls, db_manager_type: Type[AbstractDbManager], mode: DbMode, full_init: bool) -> None:
         unique_name = db_manager_type.get_unique_name()
 
-        if unique_name in cls._db_managers:
-            Logger.warning(f"The db manager with the name '{unique_name}' was already initialized")
-            return
-            # raise Exception(f"The db manager with the name '{unique_name}' was already initialized")
-
         # initialize the db manager and connect to the db
         try:
             db_manager_type.init(mode)
@@ -86,9 +77,6 @@ class DbManagerService():
                 cls._handle_db_init_error(db_manager_type, err, error)
                 return
 
-        # save the db manager as initiliazed
-        cls._db_managers[unique_name] = db_manager_type
-
         Logger.debug(f"Db manager '{unique_name}' initialized in '{mode}' mode")
 
     @classmethod
@@ -108,15 +96,6 @@ class DbManagerService():
     def _get_db_manager_classes(cls) -> List[Type[AbstractDbManager]]:
         """ Get all the classes that inherit this class """
         return list(AbstractDbManager.inheritors())
-
-    @classmethod
-    def get_db_manager_config(cls, db_manager_name: str) -> DbConfig:
-
-        if not db_manager_name in cls._db_managers:
-            raise BadRequestException(
-                f"The db manager with the name '{db_manager_name}' doesn't exist")
-
-        return cls._db_managers[db_manager_name].get_config(cls.get_db_mode())
 
     @classmethod
     def get_db_mode(cls) -> DbMode:

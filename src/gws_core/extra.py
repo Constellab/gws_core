@@ -18,4 +18,3 @@ from .impl.table.view.table_venn_diagram_view import \
     TableVennDiagramView as TableVennDiagramView
 from .impl.table.view.table_view import TableView as TableView
 from .lab.system_service import SystemService as SystemService
-from .test.data_provider import DataProvider

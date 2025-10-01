@@ -6,7 +6,7 @@ from gws_core import (BaseTestCase, Queue, QueueService, Scenario,
                       ScenarioService, ScenarioStatus)
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_service import RobotService
-from gws_core.test.gtest import GTest
+from gws_core.test.test_helper import TestHelper
 
 
 # test_queue
@@ -21,7 +21,7 @@ class TestQueue(BaseTestCase):
         proto1 = RobotService.create_robot_world_travel()
         scenario1: Scenario = ScenarioService.create_scenario_from_protocol_model(
             protocol_model=proto1)
-        Queue.add_job(user=GTest.user, scenario=scenario1)
+        Queue.add_job(user=TestHelper.user, scenario=scenario1)
 
         scenario1 = scenario1.refresh()
         self.assertEqual(scenario1.status, ScenarioStatus.IN_QUEUE)
@@ -31,7 +31,7 @@ class TestQueue(BaseTestCase):
         self.assertEqual(Queue.length(), 0)
         self.assertEqual(scenario1.id, job1.scenario.id)
 
-        Queue.add_job(user=GTest.user, scenario=scenario1)
+        Queue.add_job(user=TestHelper.user, scenario=scenario1)
         self.assertEqual(Queue.length(), 1)
         Queue.remove_scenario(scenario1.id)
         self.assertEqual(Queue.length(), 0)
@@ -49,8 +49,8 @@ class TestQueue(BaseTestCase):
         scenario3: Scenario = ScenarioService.create_scenario_from_protocol_type(
             RobotSimpleTravel)
 
-        QueueService._add_job(user=GTest.user, scenario=scenario2)
-        QueueService._add_job(user=GTest.user, scenario=scenario3)
+        QueueService._add_job(user=TestHelper.user, scenario=scenario2)
+        QueueService._add_job(user=TestHelper.user, scenario=scenario3)
 
         self.assertEqual(Queue.length(), 2)
         self._wait_for_scenarios()

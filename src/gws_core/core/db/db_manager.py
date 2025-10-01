@@ -3,9 +3,10 @@
 from abc import abstractmethod
 from typing import Set, Type
 
-from gws_core.core.utils.utils import Utils
 from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
+
+from gws_core.core.utils.utils import Utils
 
 from .db_config import DbConfig, DbMode, SupportedDbEngine
 
@@ -36,6 +37,8 @@ class AbstractDbManager:
     # If False, the db will be initialized immediately (not recommended), and app fails if db is not available
     lazy_init = True
 
+    _is_initialized = False
+
     @classmethod
     @abstractmethod
     def get_config(cls, mode: DbMode) -> DbConfig:
@@ -54,6 +57,9 @@ class AbstractDbManager:
     @classmethod
     def init(cls, mode: DbMode):
         """ Initialize the DbManager """
+
+        if cls.is_initialized():
+            return
         cls.mode = mode
         db_config = cls.get_config(mode)
 
@@ -72,6 +78,7 @@ class AbstractDbManager:
             port=db_config['port']
         )
         cls.db.initialize(_db)
+        cls._is_initialized = True
 
     @classmethod
     def inheritors(cls) -> Set[Type['AbstractDbManager']]:
@@ -140,3 +147,9 @@ class AbstractDbManager:
         """ Execute the provided sql command """
 
         cls.db.execute_sql(sql)
+
+    @classmethod
+    def is_initialized(cls) -> bool:
+        """ Return if the db manager was initialized """
+
+        return cls._is_initialized

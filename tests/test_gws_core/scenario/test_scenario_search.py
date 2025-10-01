@@ -7,7 +7,7 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.test.gtest import GTest
+from gws_core.test.test_helper import TestHelper
 
 
 # test_scenario_search
@@ -21,7 +21,7 @@ class TestScenarioSearch(BaseTestCase):
             title="The second one world")
         scenario_2.mark_as_success()
 
-        folder: SpaceFolder = GTest.create_default_folder()
+        folder: SpaceFolder = TestHelper.create_default_folder()
         scenario_2.folder = folder
         scenario_2.is_validated = True
         scenario_2.save()

@@ -1,11 +1,8 @@
 
 
-from multiprocessing import Process
-from time import sleep
+import shutil
 
-import requests
-
-from gws_core.app import App
+from gws_core.core.model.base_model_service import BaseModelService
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
@@ -14,20 +11,73 @@ from gws_core.credentials.credentials_type import (CredentialsDataLab,
                                                    SaveCredentialsDTO)
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
+from gws_core.lab.system_service import SystemService
+from gws_core.lab.system_status import SystemStatus
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.user import User
 from gws_core.user.user_group import UserGroup
 
-from ..core.console.console import Console
 
-
-class GTest(Console):
+class TestHelper():
     """
-    GTest class.
-
     Provides functionalities to initilize unit testing environments
     """
+
+    user: User = None
+
+    @classmethod
+    def init_complete(cls):
+        """
+        This function initializes objects for unit testing
+        """
+
+        if not Settings.is_dev_mode():
+            raise Exception(
+                "The unit tests can only be initialized in dev mode")
+
+        SystemService.init()
+
+        user = User.get_and_check_sysuser()
+
+        # refresh user information from DB
+        AuthorizationService.authenticate_user(user_id=user.id)
+
+        cls.user = user
+
+    @classmethod
+    def init(cls):
+        """
+        This function initializes objects for unit testing
+        """
+
+        if not Settings.is_dev_mode():
+            raise Exception(
+                "The unit tests can only be initialized in dev mode")
+
+        SystemService.init_data_folder()
+        SystemStatus.app_is_initialized = True
+
+    @classmethod
+    def drop_tables(cls):
+        """
+        Drops tables
+        """
+
+        BaseModelService.drop_tables()
+
+    @classmethod
+    def delete_data_and_temp_folder(cls):
+        """
+        Drops tables
+        """
+        settings: Settings = Settings.get_instance()
+
+        if not settings.is_test:
+            raise Exception('Can only delete the data and temp folder in test env')
+        shutil.rmtree(path=settings.get_data_dir(), ignore_errors=True)
+        SystemService.delete_temp_folder()
 
     @classmethod
     def create_default_folder(cls) -> SpaceFolder:
@@ -63,46 +113,3 @@ class GTest(Console):
         lab_credentials = CredentialsDataLab(lab_domain="http://localhost", api_key="test")
         return CredentialsService.create(SaveCredentialsDTO(name="test", type=CredentialsType.LAB,
                                                             data=lab_credentials.to_json_dict()))
-
-
-class TestStartUvicornApp():
-    """ Context to support with statement start the uvicorn api server in tests.
-    It automatically starts the server when entering the context and stops it when exiting.
-    """
-
-    process: Process = None
-
-    def enter(self):
-        self.__enter__()
-
-    def exit(self, exc_type, exc_value, traceback):
-        self.__exit__(exc_type, exc_value, traceback)
-
-    def __enter__(self):
-        # Registrer the lab start. Use a new thread to prevent blocking the start
-        self.process = Process(target=App.start_uvicorn_app)
-        self.process.start()
-
-        health_check_route = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/health-check"
-
-        # Wait for the server to start
-        i = 0
-        while i < 10:
-            try:
-                response = requests.get(health_check_route, timeout=1)
-                if response.status_code == 200:
-                    return
-            except Exception:
-                pass
-            i += 1
-            sleep(1)
-
-        raise Exception("Server not started")
-
-    def __exit__(self, exc_type, exc_value, traceback):
-        # force kill the thread
-        self.process.terminate()
-
-        # raise the exception if exists
-        if exc_value:
-            raise exc_value

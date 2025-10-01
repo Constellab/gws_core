@@ -1,6 +1,7 @@
 
 
 from gws_core import BaseTestCase
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.migration.brick_migrator import (BrickMigration,
                                                        BrickMigrator,
                                                        MigrationObject)
@@ -64,25 +65,25 @@ class TestMigration(BaseTestCase):
         brick_migrator: BrickMigrator = BrickMigrator(
             'gws_core_test', Version('1.0.0'))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.2.0'), '', False))
+            MigrationObject(MigrationTest, Version('1.2.0'), '', False, GwsCoreDbManager))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.0.0'), '', False))
+            MigrationObject(MigrationTest, Version('1.0.0'), '', False, GwsCoreDbManager))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.0.1'), '', False))
+            MigrationObject(MigrationTest, Version('1.0.1'), '', False, GwsCoreDbManager))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('2.0.1'), '', False))
+            MigrationObject(MigrationTest, Version('2.0.1'), '', False, GwsCoreDbManager))
 
         # check that the migration list is in order and without the 1.0.0
-        to_migrate = brick_migrator._get_to_migrate_list()
+        to_migrate = brick_migrator.get_to_migrate_list(GwsCoreDbManager)
         self.assertEqual(to_migrate[0].version,  Version('1.0.1'))
         self.assertEqual(to_migrate[1].version,  Version('1.2.0'))
         self.assertEqual(to_migrate[2].version,  Version('2.0.1'))
 
         # Append a version that already exists
         with self.assertRaises(Exception):
-            brick_migrator.append_migration(MigrationTest, Version('2.0.1'))
+            brick_migrator.append_migration(MigrationTest)
 
         # Check that the migrate worked and update brick version
-        brick_migrator.migrate()
+        brick_migrator.migrate(GwsCoreDbManager)
         self.assertEqual(brick_migrator.current_brick_version,
                          Version('2.0.1'))

@@ -5,7 +5,7 @@ from unittest import TestCase
 
 from gws_core.core.utils.utils import Utils
 
-from .gtest import GTest
+from .test_helper import TestHelper
 
 
 class BaseTestCaseLight(TestCase):
@@ -54,12 +54,12 @@ class BaseTestCaseLight(TestCase):
 
     @classmethod
     def init_before_test(cls):
-        GTest.delete_data_and_temp_folder()
-        GTest.init()
+        TestHelper.delete_data_and_temp_folder()
+        TestHelper.init()
 
     @classmethod
     def clear_after_test(cls):
-        GTest.delete_data_and_temp_folder()
+        TestHelper.delete_data_and_temp_folder()
 
     @classmethod
     def print(cls, text: str):
