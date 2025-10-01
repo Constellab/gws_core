@@ -21,8 +21,8 @@ class GwsCoreDbManager(AbstractDbManager):
             return Settings.get_gws_core_db_config()
 
     @classmethod
-    def get_unique_name(cls) -> str:
-        return 'gws_core'
+    def get_name(cls) -> str:
+        return 'db'
 
     @classmethod
     def get_brick_name(cls) -> str:

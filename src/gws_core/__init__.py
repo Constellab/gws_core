@@ -134,6 +134,8 @@ from .core.utils.xml_helper import XMLHelper as XMLHelper
 # Credentials
 from .credentials.credentials import Credentials as Credentials
 from .credentials.credentials_param import CredentialsParam as CredentialsParam
+from .credentials.credentials_service import \
+    CredentialsService as CredentialsService
 from .credentials.credentials_type import \
     CredentialsDataBasic as CredentialsDataBasic
 from .credentials.credentials_type import \

@@ -3,10 +3,9 @@
 from abc import abstractmethod
 from typing import Set, Type
 
+from gws_core.core.utils.utils import Utils
 from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
-
-from gws_core.core.utils.utils import Utils
 
 from .db_config import DbConfig, DbMode, SupportedDbEngine
 
@@ -45,9 +44,16 @@ class AbstractDbManager:
         pass
 
     @classmethod
-    @abstractmethod
     def get_unique_name(cls) -> str:
-        pass
+        return cls.get_brick_name() + '-' + cls.get_name()
+
+    @classmethod
+    @abstractmethod
+    def get_name(cls) -> str:
+        """
+        Return the name of the DbManager.
+        The combination of brick name and unique name must be unique accross all DbManager inheritors.
+        """
 
     @classmethod
     @abstractmethod

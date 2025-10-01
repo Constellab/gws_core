@@ -1,6 +1,6 @@
 
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.credentials.credentials_type import CredentialsDataBasic
@@ -39,14 +39,19 @@ class SubComposeListDTO(BaseModelDTO):
 
 
 class RegisterSQLDBComposeRequestDTO(BaseModelDTO):
-    host: str
     username: str
     password: str
     database: str
     description: str
-    env: Literal['prod', 'dev', 'test']
+    env: Optional[Dict[str, str]] | None = None
+
+
+class RegisterSQLDBComposeAPIResponseDTO(BaseModelDTO):
+    status: DockerComposeStatusInfoDTO
+    dbHost: str
 
 
 class RegisterSQLDBComposeResponseDTO(BaseModelDTO):
     composeStatus: DockerComposeStatusInfoDTO
+    db_host: str
     credentials: CredentialsDataBasic

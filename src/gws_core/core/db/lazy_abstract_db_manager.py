@@ -4,6 +4,7 @@ from abc import abstractmethod
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.db.db_manager import AbstractDbManager
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.docker.docker_service import DockerService
 from gws_core.user.current_user_service import AuthenticateUser
 
@@ -32,11 +33,14 @@ class LazyAbstractDbManager(AbstractDbManager):
     # Internal state
     _db_username: str | None = None
     _db_password: str | None = None
+    _db_host: str | None = None
 
     @classmethod
     def init(cls, mode: DbMode):
         """Initialize the database by starting the Docker container first"""
-        cls._start_docker_compose(mode)
+
+        if mode != 'test':
+            cls._start_docker_compose(mode)
         return super().init(mode)
 
     @classmethod
@@ -52,14 +56,13 @@ class LazyAbstractDbManager(AbstractDbManager):
                 response_dto = docker_service.register_sqldb_compose(
                     brick_name=brick_name,
                     unique_name=f'{unique_name}_{mode}',
-                    host=cls.get_host(mode),
-                    database=cls.get_database_name(),
+                    database_name=cls.get_database_name(),
                     description=f'{brick_name} brick database in {mode} mode',
-                    env=mode
                 )
 
                 cls._db_username = response_dto.credentials.username
                 cls._db_password = response_dto.credentials.password
+                cls._db_host = response_dto.db_host
 
                 Logger.debug(f'{brick_name} database container started')
 
@@ -71,11 +74,15 @@ class LazyAbstractDbManager(AbstractDbManager):
     @classmethod
     def get_config(cls, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""
-        if not cls._db_username or not cls._db_password:
+
+        if mode == 'test':
+            return Settings.get_test_db_config()
+
+        if not cls._db_username or not cls._db_password or not cls._db_host:
             raise Exception(f"{cls.get_brick_name()} DbManager not initialized")
 
         return {
-            'host': cls.get_host(mode),
+            'host': cls._db_host,
             'port': cls.PORT,
             'user': cls._db_username,
             'password': cls._db_password,
@@ -84,21 +91,16 @@ class LazyAbstractDbManager(AbstractDbManager):
         }
 
     @classmethod
-    def get_host(cls, mode: DbMode) -> str:
-        """Generate host name based on brick name and mode"""
-        return f"{cls.get_brick_name()}_db_{mode}"
-
-    @classmethod
     def get_database_name(cls) -> str:
         """Get database name, auto-generated from brick name if not set"""
-        return f"{cls.get_brick_name()}_db"
+        return "gws_pmo_db"
 
     @classmethod
     @abstractmethod
-    def get_unique_name(cls) -> str:
+    def get_name(cls) -> str:
         """
-        Return the unique name for this database manager.
-        Must be implemented by subclasses.
+        Return the name of the DbManager.
+        The combination of brick name and unique name must be unique accross all DbManager inheritors.
         """
 
     @classmethod

@@ -2,7 +2,7 @@
 import os
 import tempfile
 import time
-from typing import Literal, Optional, cast
+from typing import Dict, Literal, Optional, cast
 
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -12,6 +12,7 @@ from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_dto import (DockerComposeStatusInfoDTO,
+                                        RegisterSQLDBComposeAPIResponseDTO,
                                         RegisterSQLDBComposeRequestDTO,
                                         RegisterSQLDBComposeResponseDTO,
                                         StartComposeRequestDTO,
@@ -167,9 +168,9 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't get all composes. Error: {err.detail}"
             raise err
 
-    def register_sqldb_compose(self, brick_name: str, unique_name: str, host: str,
-                               database: str, description: str,
-                               env: Literal['prod', 'dev', 'test']) -> RegisterSQLDBComposeResponseDTO:
+    def register_sqldb_compose(self, brick_name: str, unique_name: str,
+                               database_name: str, description: str,
+                               env: Dict[str, str] | None = None) -> RegisterSQLDBComposeResponseDTO:
         """
         Register and start a SQL database docker compose.
         The username and password for the database will be created as basic credentials.
@@ -178,14 +179,12 @@ class DockerService(LabManagerServiceBase):
         :type brick_name: str
         :param unique_name: Unique name for the compose
         :type unique_name: str
-        :param host: Database host
-        :type host: str
         :param database: Database name
         :type database: str
         :param description: Description for the compose
         :type description: str
-        :param env: Environment for the compose ('prod', 'dev', or 'test')
-        :type env: Literal['prod', 'dev', 'test']
+        :param env: Environment variables for the compose
+        :type env: Dict[str, str]
         :return: Response containing message and output
         :rtype: DockerComposeResponseDTO
         """
@@ -197,10 +196,9 @@ class DockerService(LabManagerServiceBase):
 
         # Create the request DTO with credentials from the credential service
         request_dto = RegisterSQLDBComposeRequestDTO(
-            host=host,
             username=credentials_data.username,
             password=credentials_data.password,
-            database=database,
+            database=database_name,
             description=description,
             env=env
         )
@@ -216,15 +214,16 @@ class DockerService(LabManagerServiceBase):
                 raise_exception_if_error=True
             )
 
-            compose_status = DockerComposeStatusInfoDTO.from_json(response.json())
+            sql_response = RegisterSQLDBComposeAPIResponseDTO.from_json(response.json())
 
-            if compose_status.is_in_progress_status():
+            if sql_response.status:
                 # Wait for the compose to be running
-                compose_status = self.wait_for_compose_status(brick_name, unique_name)
+                sql_response = self.wait_for_compose_status(brick_name, unique_name)
 
             return RegisterSQLDBComposeResponseDTO(
-                composeStatus=compose_status,
-                credentials=credentials_data
+                composeStatus=sql_response,
+                credentials=credentials_data,
+                db_host=sql_response.dbHost
             )
 
         except BaseHTTPException as err:
@@ -232,7 +231,8 @@ class DockerService(LabManagerServiceBase):
             raise err
 
     def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
-                                         folder_path: str, description: str) -> DockerComposeStatusInfoDTO:
+                                         folder_path: str, description: str,
+                                         env: Dict[str, str] | None = None) -> DockerComposeStatusInfoDTO:
         """
         Register a docker compose from a folder by zipping it and uploading
 
@@ -244,6 +244,8 @@ class DockerService(LabManagerServiceBase):
         :type folder_path: str
         :param description: Description for the compose
         :type description: str
+        :param env: Environment variables for the compose
+        :type env: Dict[str, str]
         :return: Status information of the compose
         :rtype: DockerComposeStatusInfoDTO
         """
@@ -259,7 +261,7 @@ class DockerService(LabManagerServiceBase):
             # Create form data with the zip file
             form_data = FormData()
             form_data.add_file_from_path('file', zip_file_path, 'compose.zip')
-            form_data.add_json_data('body', {'description': description})
+            form_data.add_json_data('body', {'description': description, 'env': env})
 
             response = ExternalApiService.post_form_data(
                 lab_api_url,
