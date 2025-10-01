@@ -93,6 +93,8 @@ class AppManager:
                          is_test=True,
                          log_context=LogContext.MAIN)
 
+        DbManagerService.init_all_db(full_init=False)
+
         if len(tests) == 1 and tests[0] in ["*", "all"]:
             tests = ["test*"]
 
@@ -131,6 +133,8 @@ class AppManager:
                          log_context=LogContext.SCENARIO,
                          log_context_id=scenario_id)
 
+        DbManagerService.init_all_db(full_init=False)
+
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         with AuthenticateUser(user):
@@ -153,6 +157,8 @@ class AppManager:
                          log_context=LogContext.SCENARIO,
                          log_context_id=scenario_id)
 
+        DbManagerService.init_all_db(full_init=False)
+
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         with AuthenticateUser(user):
@@ -166,7 +172,7 @@ class AppManager:
     @classmethod
     def reset_environment(cls) -> None:
         # Init the db
-        DbManagerService.init_all_db()
+        DbManagerService.init_all_db(full_init=False)
         SystemService.reset_dev_envionment(check_user=False)
 
 

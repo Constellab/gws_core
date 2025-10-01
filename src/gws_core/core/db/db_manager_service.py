@@ -19,12 +19,12 @@ class DbManagerService():
     _db_managers: Dict[str, Type[AbstractDbManager]] = {}
 
     @classmethod
-    def init_all_db(cls) -> None:
+    def init_all_db(cls, full_init: bool = True) -> None:
         """
         Initialize the databases of all DbManagers that inherit the  AbstractDbManager
 
-        :param test: Set `True` to use the test db. The non-test db is used instead
-        :type test: `bool`
+        :param full_init: If true, the migration and table creation will be done. If false, only the connection to the DB will be done. Defaults to True.
+        :type full_init: bool, optional
         """
 
         # define DB mode
@@ -36,22 +36,24 @@ class DbManagerService():
         db_managers.sort(key=lambda x: x.lazy_init)
 
         for manager in db_managers:
-            cls._init_db(manager, mode)
+            cls._init_db(manager, mode, full_init=full_init)
 
     @classmethod
-    def init_db(cls, db_manager_type: Type[AbstractDbManager]) -> None:
+    def init_db(cls, db_manager_type: Type[AbstractDbManager], full_init: bool = True) -> None:
         """
         Initialize the database of the provided DbManager
 
         :param db_manager_type: The DbManager class to initialize
         :type db_manager_type: Type[AbstractDbManager]
+        :param full_init: If true, the migration and table creation will be done. If false, only the connection to the DB will be done. Defaults to True.
+        :type full_init: bool, optional
         """
 
         mode: DbMode = cls.get_db_mode()
-        cls._init_db(db_manager_type, mode)
+        cls._init_db(db_manager_type, mode, full_init=full_init)
 
     @classmethod
-    def _init_db(cls, db_manager_type: Type[AbstractDbManager], mode: DbMode) -> None:
+    def _init_db(cls, db_manager_type: Type[AbstractDbManager], mode: DbMode, full_init: bool) -> None:
         unique_name = db_manager_type.get_unique_name()
 
         if unique_name in cls._db_managers:
@@ -67,21 +69,22 @@ class DbManagerService():
             cls._handle_db_init_error(db_manager_type, err, error)
             return
 
-        # call the migration for that db manager
-        try:
-            DbMigrationService.migrate(db_manager_type)
-        except Exception as err:
-            error = f"Error while migrating the db '{unique_name}'. Error: {err}"
-            cls._handle_db_init_error(db_manager_type, err, error)
-            return
+        if full_init:
+            # call the migration for that db manager
+            try:
+                DbMigrationService.migrate(db_manager_type)
+            except Exception as err:
+                error = f"Error while migrating the db '{unique_name}'. Error: {err}"
+                cls._handle_db_init_error(db_manager_type, err, error)
+                return
 
-        try:
-            # create the tables for the models of this db manager
-            BaseModelService.create_database_tables(db_manager_type)
-        except Exception as err:
-            error = f"Error while creating the tables for the db '{unique_name}'. Error: {err}"
-            cls._handle_db_init_error(db_manager_type, err, error)
-            return
+            try:
+                # create the tables for the models of this db manager
+                BaseModelService.create_database_tables(db_manager_type)
+            except Exception as err:
+                error = f"Error while creating the tables for the db '{unique_name}'. Error: {err}"
+                cls._handle_db_init_error(db_manager_type, err, error)
+                return
 
         # save the db manager as initiliazed
         cls._db_managers[unique_name] = db_manager_type
@@ -124,22 +127,3 @@ class DbManagerService():
             return 'prod'
         else:
             return 'dev'
-
-    @classmethod
-    def initialize_lazy_db(cls, db_manager_type: Type[AbstractDbManager]) -> None:
-        """
-        Initialize the database of the provided DbManager if it was not initialized yet
-
-        :param db_manager_type: The DbManager class to initialize
-        :type db_manager_type: Type[AbstractDbManager]
-        """
-
-        if not db_manager_type.lazy_init:
-            raise BadRequestException(
-                f"The db manager '{db_manager_type.get_unique_name()}' is not a lazy db manager")
-
-        if db_manager_type.get_unique_name() in cls._db_managers:
-            # already initialized
-            return
-
-        cls.init_db(db_manager_type)
