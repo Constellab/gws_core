@@ -57,7 +57,7 @@ class SettingsLoader:
         # save the settings
         self.settings.save()
 
-        # /!\ Ensure that all bricks' modules are loaded on Application startup
+        # //!\\ Ensure that all bricks' modules are loaded on Application startup
         # Is important to be able to traverse all Bricks/Model/Object inheritors
         BrickService.import_all_bricks_in_python()
 

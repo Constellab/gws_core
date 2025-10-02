@@ -20,7 +20,7 @@ from gws_core.task.task_typing import TaskTyping
 class ResourceSetExporter(ResourceExporter):
     """ Export a sub resources of a resource set to a zip file
 
-        /!\ If an exporter doesn't exist for a resource type, the resource will be ignored.
+        //!\\ If an exporter doesn't exist for a resource type, the resource will be ignored.
         If the exporter of the resource type has some required parameters, the resource will be ignored.
     """
 

@@ -113,7 +113,7 @@ class ResourceImporter(Converter):
     Override the import_from_path method to import the file to the destination resource
     """
 
-    # /!\ The input specs can be overrided, BUT the RessourceImporter task must
+    # //!\\ The input specs can be overrided, BUT the RessourceImporter task must
     # have 1 input called source that extend FsNode (like File or Folder)
     input_specs = InputSpecs({'source': InputSpec(FSNode)})
 

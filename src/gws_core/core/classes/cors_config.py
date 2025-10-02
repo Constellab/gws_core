@@ -95,4 +95,4 @@ class CorsConfig():
                 "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
 
         # allow all request from sub domain or virtual host
-        return "https://.*\." + virtual_host.replace('.', '\.')  # escape the . in virtual host
+        return r"https://.*\." + virtual_host.replace('.', r'\.')  # escape the . in virtual host

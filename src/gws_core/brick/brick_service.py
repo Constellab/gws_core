@@ -258,7 +258,7 @@ class BrickService():
 
     @classmethod
     def rename_brick(cls, old_brick_name: str, new_brick_name: str):
-        """Rename brick objects and delete brick from settings
+        r"""Rename brick objects and delete brick from settings
         /!\ This method is not safe and should be used with caution"""
 
         BrickModel.delete().where(BrickModel.name == old_brick_name).execute()

@@ -60,7 +60,7 @@ class ConfigParams(ConfigParamsDict):
         self[param_name] = value
 
     def save_params(self) -> None:
-        """Special method to update the config during the task run.
+        r"""Special method to update the config during the task run.
         The update is directly saved in the database
         /!\ To use with caution, only when you know what you are doing /!\
 

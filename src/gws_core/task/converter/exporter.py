@@ -5,8 +5,6 @@ import traceback
 from abc import abstractmethod
 from typing import Callable, Type, final
 
-from typing_extensions import TypedDict
-
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -14,6 +12,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
+from typing_extensions import TypedDict
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -127,7 +126,7 @@ class ResourceExporter(Converter):
     # The output spec can't be overrided, it will be automatically define with the correct resource type
     input_specs = InputSpecs({"source": InputSpec(Resource)})
 
-    # /!\ The output specs can be overrided, BUT the ResourceExporter task must
+    # //!\\ The output specs can be overrided, BUT the ResourceExporter task must
     # have 1 output called file that extend File (like File)
     output_specs = OutputSpecs({"target": OutputSpec(File)})
 

@@ -332,9 +332,9 @@ class Settings():
     def build_log_dir(cls, is_test: bool) -> str:
         """ Return the log dir """
         if is_test:
-            return "/logs-test"
+            return os.path.join(cls._get_system_folder(), "logs-test")
         else:
-            return "/logs"
+            return os.path.join(cls._get_system_folder(), "logs")
 
     ##### APPS ####
 

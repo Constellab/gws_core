@@ -24,7 +24,7 @@ from .fs_node import FSNode
 @resource_decorator("Folder", human_name="Folder",
                     style=TypingStyle.material_icon("folder"))
 class Folder(FSNode):
-    """
+    r"""
     Resource that represents a folder in the system.
 
 

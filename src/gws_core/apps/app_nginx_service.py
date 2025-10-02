@@ -75,7 +75,7 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
 
     def get_nginx_service_config(self, ) -> str:
         """Generate nginx configuration block for serving the front-end of this service"""
-        return f"""
+        return rf"""
 server {{
         listen {self.source_port};
         server_name {self.server_name};

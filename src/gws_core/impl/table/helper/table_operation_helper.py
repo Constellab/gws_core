@@ -159,7 +159,7 @@ class TableOperationHelper():
         clean_operation = StringHelper.remove_whitespaces(operation)
 
         # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
-        column_names = split('\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
+        column_names = split(r'\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
         column_names = [x for x in column_names if x]
 
         # check if the column name is in the table or a float
@@ -182,7 +182,7 @@ class TableOperationHelper():
         clean_operation = StringHelper.remove_whitespaces(operation)
 
         # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
-        column_names = split('\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
+        column_names = split(r'\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
         column_names = [x for x in column_names if x]
 
         # check if the column name is in the table or a float
@@ -199,5 +199,5 @@ class TableOperationHelper():
                 clean_operation = sub(rf'\b{column_name}\b', '0', clean_operation)
 
         # replace +0 and -0 with empty string to lighten the operation
-        clean_operation = sub('\+0|\-0', '', clean_operation)
+        clean_operation = sub(r'\+0|\-0', '', clean_operation)
         return clean_operation
