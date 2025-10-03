@@ -90,7 +90,7 @@ class StreamlitEnvLoader:
                 sys.path.insert(0, core_lib_path)
 
                 from gws_core import LogContext, Settings, manage
-                manage.AppManager.init_gws_env(
+                manage.AppManager.init_gws_env_and_db(
                     main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
                     log_level='INFO', log_context=LogContext.STREAMLIT, log_context_id=self.app_id)
 

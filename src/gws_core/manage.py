@@ -27,6 +27,23 @@ from .core.utils.settings import Settings
 class AppManager:
 
     @classmethod
+    def init_gws_env_and_db(cls, main_setting_file_path: str,
+                     log_level: str,
+                     log_context: LogContext = LogContext.MAIN,
+                     log_context_id: str = None,
+                     show_sql: bool = False,
+                     is_test: bool = False) -> Settings:
+        settings = cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+                         log_level=log_level,
+                         log_context=log_context,
+                         log_context_id=log_context_id,
+                         show_sql=show_sql,
+                         is_test=is_test)
+        # Init the db
+        DbManagerService.init_all_db(full_init=False)
+        return settings
+
+    @classmethod
     def init_gws_env(cls, main_setting_file_path: str,
                      log_level: str,
                      log_context: LogContext = LogContext.MAIN,
@@ -88,13 +105,12 @@ class AppManager:
         if not os.path.exists(settings_file):
             raise BadRequestException(f"'settings.json' file not found in the brick '{brick_dir}'.")
 
-        cls.init_gws_env(main_setting_file_path=settings_file,
+        cls.init_gws_env_and_db(main_setting_file_path=settings_file,
                          log_level=log_level,
                          show_sql=show_sql,
                          is_test=True,
                          log_context=LogContext.MAIN)
 
-        DbManagerService.init_all_db(full_init=False)
 
         if len(tests) == 1 and tests[0] in ["*", "all"]:
             tests = ["test*"]
@@ -127,14 +143,13 @@ class AppManager:
                      log_level: str,
                      show_sql: bool,
                      is_test: bool) -> None:
-        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+        cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
                          show_sql=show_sql,
                          is_test=is_test,
                          log_context=LogContext.SCENARIO,
                          log_context_id=scenario_id)
 
-        DbManagerService.init_all_db(full_init=False)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
@@ -151,14 +166,13 @@ class AppManager:
                     log_level: str,
                     show_sql: bool,
                     is_test: bool) -> None:
-        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
+        cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
                          log_level=log_level,
                          show_sql=show_sql,
                          is_test=is_test,
                          log_context=LogContext.SCENARIO,
                          log_context_id=scenario_id)
 
-        DbManagerService.init_all_db(full_init=False)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)

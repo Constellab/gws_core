@@ -273,20 +273,20 @@ class Settings():
         return os.path.join(cls.get_lab_folder(), 'user', 'bricks')
 
     @classmethod
-    def _get_system_folder(cls) -> str:
+    def get_system_folder(cls) -> str:
         return os.path.join(cls.get_lab_folder(), '.sys')
 
     @classmethod
     def get_main_app_folder(cls) -> str:
-        return os.path.join(cls._get_system_folder(), 'app')
+        return os.path.join(cls.get_system_folder(), 'app')
 
     @classmethod
     def get_global_env_dir(cls) -> str:
-        return os.path.join(cls._get_system_folder(), ".env")
+        return os.path.join(cls.get_system_folder(), ".env")
 
     @classmethod
     def get_sys_bricks_folder(cls) -> str:
-        return os.path.join(cls._get_system_folder(), "bricks")
+        return os.path.join(cls.get_system_folder(), "bricks")
 
     @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
@@ -314,7 +314,7 @@ class Settings():
     def get_root_temp_dir(cls) -> str:
         """ Return the root temp dir """
 
-        return os.path.join(cls._get_system_folder(), 'tmp')
+        return os.path.join(cls.get_system_folder(), 'tmp')
 
     @classmethod
     def make_temp_dir(cls) -> str:
@@ -331,7 +331,7 @@ class Settings():
     @classmethod
     def get_test_folder(cls) -> str:
         """ Return the test dir """
-        return os.path.join(cls._get_system_folder(), "test")
+        return os.path.join(cls.get_system_folder(), "test")
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
@@ -339,7 +339,7 @@ class Settings():
         if is_test:
             return os.path.join(cls.get_test_folder(), "logs")
         else:
-            return os.path.join(cls._get_system_folder(), "logs")
+            return os.path.join(cls.get_system_folder(), "logs")
 
     ##### APPS ####
 
@@ -457,9 +457,9 @@ class Settings():
         :rtype: `str`
         """
         if self.is_test:
-            return os.path.join(self._get_system_folder(), 'brick-data-test')
+            return os.path.join(self.get_system_folder(), 'brick-data-test')
         else:
-            return os.path.join(self._get_system_folder(), 'brick-data')
+            return os.path.join(self.get_system_folder(), 'brick-data')
 
     def get_brick_data_dir(self, brick_name: str) -> str:
         """

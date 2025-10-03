@@ -3,6 +3,8 @@ import json
 import os
 
 import typer
+from typing_extensions import Literal
+
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import AppDevConfig
 from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
@@ -10,7 +12,6 @@ from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
                       ShellProxy, Utils)
 from gws_core.apps.app_instance import AppInstance
 from gws_core.manage import AppManager
-from typing_extensions import Literal
 
 app = typer.Typer()
 
@@ -99,11 +100,10 @@ class AppCli:
     def start_app(self, app_: AppInstance, ctx: typer.Context) -> None:
         settings_file_path = CLIUtils.get_current_brick_settings_file_path()
 
-        AppManager.init_gws_env(settings_file_path,
+        AppManager.init_gws_env_and_db(settings_file_path,
                                 log_level=CLIUtils.get_global_option_log_level(ctx))
 
-        # TODO A Voir
-        AppsManager.register_signal_handlers()
+        AppsManager.init()
 
         url = AppsManager.create_or_get_app(app_).get_url()
         print("-------------------------------------------------------------------------------------------------------------------------------------")
