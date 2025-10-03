@@ -620,7 +620,7 @@ class SpaceService(SpaceServiceBase):
         """
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTE}/reflex-access_token")
+            f"{self._EXTERNAL_LABS_ROUTE}/reflex-access-token")
 
         try:
             response = ExternalApiService.get(space_api_url, self._get_request_header(),
