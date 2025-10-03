@@ -5,7 +5,7 @@ import sys
 from threading import Thread
 from typing import List
 
-from gws_core.apps.app_nginx_manager import AppNginxManager
+from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.db.db_manager_service import DbManagerService
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -74,8 +74,10 @@ class SystemService:
         if not Settings.get_instance().is_test:
             ProcessService.init_cron_thread_run_stats()
 
-        # Init AppNginxManager
-        AppNginxManager.init()
+        # Init AppsManager
+        AppsManager.init()
+
+
 
     @classmethod
     def register_start_activity(cls):

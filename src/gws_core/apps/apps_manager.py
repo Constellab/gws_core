@@ -7,6 +7,7 @@ from typing import Dict
 from gws_core.apps.app_dto import (AppInstanceUrl, AppsStatusDTO,
                                    CreateAppAsyncResultDTO)
 from gws_core.apps.app_instance import AppInstance
+from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
@@ -138,7 +139,7 @@ class AppsManager():
         return False
 
     @classmethod
-    def register_signal_handlers(cls):
+    def init(cls):
         """Register signal handlers to gracefully stop all processes on exit"""
         def signal_handler(sig, frame):
             print("Stopping all app processes before exit...")
@@ -148,6 +149,8 @@ class AppsManager():
         # Register handlers for common termination signals
         signal.signal(signal.SIGINT, signal_handler)  # CTRL+C
         signal.signal(signal.SIGTERM, signal_handler)  # Termination request
+
+        AppNginxManager.init()
 
     @classmethod
     def stop_all_processes(cls) -> None:
