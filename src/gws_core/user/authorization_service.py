@@ -3,7 +3,6 @@
 from enum import Enum
 
 from fastapi import Request
-
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import \
     ForbiddenException
@@ -150,7 +149,7 @@ class AuthorizationService():
             space_access_info = ShareLinkSpaceAccessService.find_by_token_and_check_validity(
                 user_access_token, share_link.id)
 
-            user = cls._get_and_check_user(space_access_info.user_id)
+            user = cls._get_and_check_user(space_access_info.user_id, allow_inactive=True)
         else:
             user = User.get_and_check_sysuser()
 
@@ -206,10 +205,10 @@ class AuthorizationService():
         return CurrentUserService.set_auth_user(user)
 
     @classmethod
-    def _get_and_check_user(cls, user_id: str) -> User:
+    def _get_and_check_user(cls, user_id: str, allow_inactive: bool = False) -> User:
         user: User = User.get_by_id_and_check(user_id)
 
-        if not user.is_active:
+        if not user.is_active and not allow_inactive:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.value,
                 unique_code=GWSException.WRONG_CREDENTIALS_USER_NOT_ACTIVATED.name,
