@@ -37,6 +37,10 @@ class ReflexMainState(ReflexMainStateBase, rx.State, mixin=True):
         return User.get_by_id_and_check(user_id)
 
     async def get_and_check_current_user(self) -> User:
+
+        if not await self.requires_authentication():
+            return User.get_and_check_sysuser()
+
         user = await self.get_current_user()
         if not user:
             raise Exception("User not authenticated")
