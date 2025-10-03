@@ -224,8 +224,23 @@ class FileHelper():
         ext: str = cls.get_extension(path)
         if ext:
             # specific case not handled by mimetypes
-            if ext == 'jfif':
-                return 'image/jpeg'
+            custom_mimes = {
+                'jfif': 'image/jpeg',
+                # Office documents
+                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+                'doc': 'application/msword',
+                'xls': 'application/vnd.ms-excel',
+                'ppt': 'application/vnd.ms-powerpoint',
+                'odt': 'application/vnd.oasis.opendocument.text',
+                'ods': 'application/vnd.oasis.opendocument.spreadsheet',
+                'odp': 'application/vnd.oasis.opendocument.presentation',
+                'rtf': 'application/rtf'
+            }
+
+            if ext in custom_mimes:
+                return custom_mimes[ext]
 
             return mimetypes.types_map.get('.' + ext, 'application/octet-stream')
         else:
@@ -356,29 +371,29 @@ class FileHelper():
         """
         if not name or not isinstance(name, str):
             return ""
-        
+
         # Remove null bytes and control characters
         name = ''.join(char for char in name if ord(char) >= 32)
-        
+
         # Keep only safe characters first - alphanumeric, hyphens, underscores, dots, and forward slashes
         name = sub(r"[^a-zA-Z0-9-_/.]", '', name)
-        
+
         # Prevent path traversal attacks
         name = name.replace('..', '')
         name = name.replace('//', '/')
         name = name.replace('\\', '')
-        
+
         # Remove leading/trailing dots and slashes to prevent hidden files and relative paths
         name = name.strip('./')
-        
+
         # Ensure we don't have empty result or only dots/slashes
         if not name or name in ('.', '/', '..'):
             return "sanitized_file"
-            
+
         # Limit length to prevent filesystem issues
         if len(name) > 255:
             name = name[:255]
-            
+
         return name
 
     @classmethod

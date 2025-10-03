@@ -22,6 +22,9 @@ class ShareLinkSpaceAccess(BaseModelDTO):
 
 class ShareLinkSpaceAccessService:
     """Service to generate access token for share link of type space access
+
+    The space API call it before opening a Resource in a space to check
+    generate a token to access the resource. Then the token is used to access the resource.
     """
 
     accesses: List[ShareLinkSpaceAccess] = []

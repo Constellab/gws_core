@@ -1,10 +1,9 @@
 
 
-from starlette.responses import JSONResponse, Response
-
 from gws_core.lab.system_service import SystemService
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
+from starlette.responses import JSONResponse, Response
 
 from ..core.exception.exceptions import UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
