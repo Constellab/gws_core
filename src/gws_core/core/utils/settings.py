@@ -329,10 +329,15 @@ class Settings():
         return temp_dir
 
     @classmethod
+    def get_test_folder(cls) -> str:
+        """ Return the test dir """
+        return os.path.join(cls._get_system_folder(), "test")
+
+    @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
         """ Return the log dir """
         if is_test:
-            return os.path.join(cls._get_system_folder(), "logs-test")
+            return os.path.join(cls.get_test_folder(), "logs")
         else:
             return os.path.join(cls._get_system_folder(), "logs")
 
@@ -437,7 +442,7 @@ class Settings():
         :rtype: `str`
         """
         if self.is_test:
-            return "/data-test"
+            return os.path.join(self.get_test_folder(), "test")
         else:
             return "/data"
 

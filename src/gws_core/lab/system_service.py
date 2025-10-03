@@ -278,6 +278,10 @@ class SystemService:
 
         Logger.info('Starting the garbage collector')
 
+        # delete test folder
+        test_folder = Settings.get_test_folder()
+        FileHelper.delete_dir(test_folder)
+
         temp_root_dir = Settings.get_instance().get_root_temp_dir()
         if FileHelper.exists_on_os(temp_root_dir):
             Logger.info('Deleting all the temp files')
