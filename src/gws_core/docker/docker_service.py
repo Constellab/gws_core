@@ -22,7 +22,7 @@ from gws_core.docker.lab_manager_service_base import LabManagerServiceBase
 
 class DockerService(LabManagerServiceBase):
 
-    _DOCKER_ROUTE: str = 'docker-compose'
+    _DOCKER_ROUTE: str = 'sub-compose'
 
     def register_and_start_compose(
             self, compose: StartComposeRequestDTO, brick_name: str, unique_name: str) -> None:
@@ -42,7 +42,7 @@ class DockerService(LabManagerServiceBase):
         """
 
         lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/register')
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register')
 
         try:
             ExternalApiService.post(
@@ -69,7 +69,7 @@ class DockerService(LabManagerServiceBase):
         """
 
         lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/unregister')
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/unregister')
 
         try:
             response = ExternalApiService.delete(
@@ -97,7 +97,7 @@ class DockerService(LabManagerServiceBase):
         """
 
         lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/status')
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/status')
 
         try:
             response = ExternalApiService.get(
@@ -151,7 +151,7 @@ class DockerService(LabManagerServiceBase):
         :rtype: SubComposeListDTO
         """
 
-        lab_api_url = self._get_lab_manager_api_url(f'{self._DOCKER_ROUTE}/sub-compose/list')
+        lab_api_url = self._get_lab_manager_api_url(f'{self._DOCKER_ROUTE}/list')
 
         try:
             response = ExternalApiService.get(
@@ -202,7 +202,7 @@ class DockerService(LabManagerServiceBase):
         )
 
         lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/register/sqldb')
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register/sqldb')
 
         try:
             response = ExternalApiService.post(
@@ -227,7 +227,7 @@ class DockerService(LabManagerServiceBase):
 
     def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
                                          folder_path: str, description: str,
-                                         env: Dict[str, str] | None = None) -> DockerComposeStatusInfoDTO:
+                                         env: Dict[str, str] | None = None) -> None:
         """
         Register a docker compose from a folder by zipping it and uploading
 
@@ -246,7 +246,7 @@ class DockerService(LabManagerServiceBase):
         """
 
         lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/register-from-zip')
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register-from-zip')
 
         try:
             # Create zip file in temporary location
@@ -258,7 +258,7 @@ class DockerService(LabManagerServiceBase):
             form_data.add_file_from_path('file', zip_file_path, 'compose.zip')
             form_data.add_json_data('body', {'description': description, 'env': env})
 
-            response = ExternalApiService.post_form_data(
+            ExternalApiService.post_form_data(
                 lab_api_url,
                 form_data=form_data,
                 headers=self._get_request_header(),
@@ -267,8 +267,6 @@ class DockerService(LabManagerServiceBase):
 
             # Clean up temporary file
             os.unlink(zip_file_path)
-
-            return DockerComposeStatusInfoDTO.from_json(response.json())
 
         except BaseHTTPException as err:
             err.detail = f"Can't register compose from zip. Error: {err.detail}"
