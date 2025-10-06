@@ -25,7 +25,7 @@ class DockerService(LabManagerServiceBase):
     _DOCKER_ROUTE: str = 'docker-compose'
 
     def register_and_start_compose(
-            self, compose: StartComposeRequestDTO, brick_name: str, unique_name: str) -> DockerComposeStatusInfoDTO:
+            self, compose: StartComposeRequestDTO, brick_name: str, unique_name: str) -> None:
         """
         Start a docker compose from string content
 
@@ -45,14 +45,12 @@ class DockerService(LabManagerServiceBase):
             f'{self._DOCKER_ROUTE}/sub-compose/{brick_name}/{unique_name}/register')
 
         try:
-            response = ExternalApiService.post(
+            ExternalApiService.post(
                 lab_api_url,
                 compose,
                 headers=self._get_request_header(),
                 raise_exception_if_error=True
             )
-
-            return DockerComposeStatusInfoDTO.from_json(response.json())
 
         except BaseHTTPException as err:
             err.detail = f"Can't start compose from string. Error: {err.detail}"

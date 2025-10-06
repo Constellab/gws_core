@@ -5,7 +5,7 @@ from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.docker.docker_dto import StartComposeRequestDTO
+from gws_core.docker.docker_dto import DockerComposeStatus, StartComposeRequestDTO
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -154,6 +154,20 @@ class StartDockerComposeTask(Task):
             brick_name=brick_name,
             unique_name=unique_name
         )
+
+        self.log_info_message(f"Docker Compose started, waiting for ready status...")
+        response = docker_service.wait_for_compose_status(
+            brick_name=brick_name,
+            unique_name=unique_name,
+            max_attempts=20,
+        )
+        self.log_info_message(f"Docker Compose is ready with status: {response.status.value}")
+
+        if response.info:
+            self.log_info_message(f"Docker Compose info: {response.info}")
+
+        if response.status != DockerComposeStatus.UP:
+            raise Exception(f"Docker Compose did not start successfully, status: {response.status.value}")
 
         # Create JSON output
         json_dict = JSONDict()
