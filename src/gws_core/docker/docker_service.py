@@ -214,9 +214,6 @@ class DockerService(LabManagerServiceBase):
 
             sql_response = RegisterSQLDBComposeAPIResponseDTO.from_json(response.json())
 
-            if sql_response.status:
-                # Wait for the compose to be running
-                sql_response.status = self.wait_for_compose_status(brick_name, unique_name)
 
             return RegisterSQLDBComposeResponseDTO(
                 composeStatus=sql_response.status,
