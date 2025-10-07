@@ -1,11 +1,13 @@
+from time import sleep
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.code_param.json_code_param import JsonCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
-from gws_core.docker.docker_dto import DockerComposeStatus, StartComposeRequestDTO
+from gws_core.docker.docker_dto import DockerComposeStatus
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -119,7 +121,12 @@ class StartDockerComposeTask(Task):
                                 optional=False),
         'description': StrParam(human_name='Description',
                                 short_description='Description of the compose instance',
-                                optional=False)
+                                optional=False),
+        'env': JsonCodeParam(human_name='Environment Variables',
+                             short_description='Optional environment variables for the compose as JSON object. Must be a Dict[str, str]'),
+        'auto_start': BoolParam(human_name='Auto Start',
+                             short_description='Whether to automatically start the compose on lab start',
+                             default_value=False)
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -142,18 +149,30 @@ class StartDockerComposeTask(Task):
         if brick_model is None:
             raise BadRequestException(f"Brick '{brick_name}' does not exist")
 
+        # check that env is a dict of str to str if provided
+        env = params.get_value('env')
+        if env is not None:
+            if not isinstance(env, dict):
+                raise BadRequestException("Environment variables must be a dictionary")
+
+            for k, v in env.items():
+                if not isinstance(k, str) or not isinstance(v, str):
+                    raise BadRequestException("Environment variable keys and values must be strings")
+
         # Start the Docker Compose
         docker_service = DockerService()
 
-        compose_request = StartComposeRequestDTO(
-            composeContent=yaml_config,
-            description=params.get_value('description')
-        )
         response = docker_service.register_and_start_compose(
-            compose=compose_request,
             brick_name=brick_name,
-            unique_name=unique_name
+            unique_name=unique_name,
+            compose_yaml_content=yaml_config,
+            description=params.get_value('description'),
+            env=env,
+            auto_start=params.get_value('auto_start')
         )
+
+        # Wait a bit for the compose to start
+        sleep(5)
 
         self.log_info_message(f"Docker Compose started, waiting for ready status...")
         response = docker_service.wait_for_compose_status(

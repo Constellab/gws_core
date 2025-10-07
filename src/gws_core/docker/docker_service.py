@@ -25,7 +25,14 @@ class DockerService(LabManagerServiceBase):
     _DOCKER_ROUTE: str = 'sub-compose'
 
     def register_and_start_compose(
-            self, compose: StartComposeRequestDTO, brick_name: str, unique_name: str) -> None:
+            self,
+            brick_name: str,
+            unique_name: str,
+            compose_yaml_content: str,
+            description: str,
+            env: Optional[Dict[str, str]] = None,
+            auto_start: bool = False
+            ) -> None:
         """
         Start a docker compose from string content
 
@@ -35,14 +42,27 @@ class DockerService(LabManagerServiceBase):
         :type brick_name: str
         :param unique_name: Unique name for the compose
         :type unique_name: str
-        :param options: Options for starting the compose
-        :type options: Optional[StartComposeRequestOptionsDTO]
+        :param compose_yaml_content: Content of the docker-compose YAML file
+        :type compose_yaml_content: str
+        :param description: Description for the compose
+        :type description: str
+        :param env: Environment variables for the compose
+        :type env: Dict[str, str]
+        :param auto_start: Whether to automatically start the compose on lab start (default: False)
+        :type auto_start: bool
         :return: Response containing message and output
         :rtype: DockerComposeResponseDTO
         """
 
         lab_api_url = self._get_lab_manager_api_url(
             f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register')
+
+        compose = StartComposeRequestDTO(
+            compose_yaml_content=compose_yaml_content,
+            description=description,
+            env=env,
+            auto_start=auto_start
+        )
 
         try:
             ExternalApiService.post(
@@ -55,6 +75,123 @@ class DockerService(LabManagerServiceBase):
         except BaseHTTPException as err:
             err.detail = f"Can't start compose from string. Error: {err.detail}"
             raise err
+
+
+    def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
+                                         folder_path: str, description: str,
+                                         env: Dict[str, str] | None = None,
+                                         auto_start: bool = False) -> None:
+        """
+        Register a docker compose from a folder by zipping it and uploading
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param folder_path: Path to the folder containing the compose files
+        :type folder_path: str
+        :param description: Description for the compose
+        :type description: str
+        :param env: Environment variables for the compose
+        :type env: Dict[str, str]
+        :param auto_start: Whether to automatically start the compose on lab start (default: False)
+        :type auto_start: bool
+        :return: Status information of the compose
+        :rtype: DockerComposeStatusInfoDTO
+        """
+
+        lab_api_url = self._get_lab_manager_api_url(
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register-from-zip')
+
+        try:
+            # Create zip file in temporary location
+            zip_file_path = tempfile.NamedTemporaryFile(suffix='.zip', delete=False).name
+            ZipCompress.compress_dir_content(folder_path, zip_file_path)
+
+            # Create form data with the zip file
+            form_data = FormData()
+            form_data.add_file_from_path('file', zip_file_path, 'compose.zip')
+            form_data.add_json_data('body', {'description': description, 'env': env, 'auto_start': auto_start})
+
+            ExternalApiService.post_form_data(
+                lab_api_url,
+                form_data=form_data,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True
+            )
+
+            # Clean up temporary file
+            os.unlink(zip_file_path)
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't register compose from zip. Error: {err.detail}"
+            raise err
+
+
+
+    def register_sqldb_compose(self, brick_name: str, unique_name: str,
+                               database_name: str, description: str,
+                               env: Dict[str, str] | None = None,
+                               auto_start: bool = False) -> RegisterSQLDBComposeResponseDTO:
+        """
+        Register and start a SQL database docker compose.
+        The username and password for the database will be created as basic credentials.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param database: Database name
+        :type database: str
+        :param description: Description for the compose
+        :type description: str
+        :param env: Environment variables for the compose
+        :type env: Dict[str, str]
+        :param auto_start: Whether to automatically start the compose on lab start (default: False)
+        :type auto_start: bool
+        :return: Response containing message and output
+        :rtype: DockerComposeResponseDTO
+        """
+        # Get credentials using the internal method
+        credentials_data = self.get_or_create_basic_credentials(
+            brick_name=brick_name,
+            unique_name=unique_name,
+        )
+
+        # Create the request DTO with credentials from the credential service
+        request_dto = RegisterSQLDBComposeRequestDTO(
+            username=credentials_data.username,
+            password=credentials_data.password,
+            database=database_name,
+            description=description,
+            env=env,
+            auto_start=auto_start
+        )
+
+        lab_api_url = self._get_lab_manager_api_url(
+            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register/sqldb')
+
+        try:
+            response = ExternalApiService.post(
+                lab_api_url,
+                request_dto,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True
+            )
+
+            sql_response = RegisterSQLDBComposeAPIResponseDTO.from_json(response.json())
+
+
+            return RegisterSQLDBComposeResponseDTO(
+                composeStatus=sql_response.status,
+                credentials=credentials_data,
+                db_host=sql_response.dbHost
+            )
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
+            raise err
+
 
     def unregister_compose(self, brick_name: str, unique_name: str) -> DockerComposeStatusInfoDTO:
         """
@@ -166,111 +303,6 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't get all composes. Error: {err.detail}"
             raise err
 
-    def register_sqldb_compose(self, brick_name: str, unique_name: str,
-                               database_name: str, description: str,
-                               env: Dict[str, str] | None = None) -> RegisterSQLDBComposeResponseDTO:
-        """
-        Register and start a SQL database docker compose.
-        The username and password for the database will be created as basic credentials.
-
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param unique_name: Unique name for the compose
-        :type unique_name: str
-        :param database: Database name
-        :type database: str
-        :param description: Description for the compose
-        :type description: str
-        :param env: Environment variables for the compose
-        :type env: Dict[str, str]
-        :return: Response containing message and output
-        :rtype: DockerComposeResponseDTO
-        """
-        # Get credentials using the internal method
-        credentials_data = self.get_or_create_basic_credentials(
-            brick_name=brick_name,
-            unique_name=unique_name,
-        )
-
-        # Create the request DTO with credentials from the credential service
-        request_dto = RegisterSQLDBComposeRequestDTO(
-            username=credentials_data.username,
-            password=credentials_data.password,
-            database=database_name,
-            description=description,
-            env=env
-        )
-
-        lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register/sqldb')
-
-        try:
-            response = ExternalApiService.post(
-                lab_api_url,
-                request_dto,
-                headers=self._get_request_header(),
-                raise_exception_if_error=True
-            )
-
-            sql_response = RegisterSQLDBComposeAPIResponseDTO.from_json(response.json())
-
-
-            return RegisterSQLDBComposeResponseDTO(
-                composeStatus=sql_response.status,
-                credentials=credentials_data,
-                db_host=sql_response.dbHost
-            )
-
-        except BaseHTTPException as err:
-            err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
-            raise err
-
-    def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
-                                         folder_path: str, description: str,
-                                         env: Dict[str, str] | None = None) -> None:
-        """
-        Register a docker compose from a folder by zipping it and uploading
-
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param unique_name: Unique name for the compose
-        :type unique_name: str
-        :param folder_path: Path to the folder containing the compose files
-        :type folder_path: str
-        :param description: Description for the compose
-        :type description: str
-        :param env: Environment variables for the compose
-        :type env: Dict[str, str]
-        :return: Status information of the compose
-        :rtype: DockerComposeStatusInfoDTO
-        """
-
-        lab_api_url = self._get_lab_manager_api_url(
-            f'{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register-from-zip')
-
-        try:
-            # Create zip file in temporary location
-            zip_file_path = tempfile.NamedTemporaryFile(suffix='.zip', delete=False).name
-            ZipCompress.compress_dir_content(folder_path, zip_file_path)
-
-            # Create form data with the zip file
-            form_data = FormData()
-            form_data.add_file_from_path('file', zip_file_path, 'compose.zip')
-            form_data.add_json_data('body', {'description': description, 'env': env})
-
-            ExternalApiService.post_form_data(
-                lab_api_url,
-                form_data=form_data,
-                headers=self._get_request_header(),
-                raise_exception_if_error=True
-            )
-
-            # Clean up temporary file
-            os.unlink(zip_file_path)
-
-        except BaseHTTPException as err:
-            err.detail = f"Can't register compose from zip. Error: {err.detail}"
-            raise err
 
     def get_or_create_basic_credentials(self, brick_name: str, unique_name: str,
                                         username: Optional[str] = None,

@@ -1,14 +1,16 @@
 
 from enum import Enum
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 
 
 class StartComposeRequestDTO(BaseModelDTO):
-    composeContent: str  # content of the yaml file
+    compose_yaml_content: str  # content of the yaml file
     description: str
+    env: Optional[Dict[str, str]] | None = None
+    auto_start: bool = False
 
 
 class DockerComposeStatus(str, Enum):
@@ -44,6 +46,7 @@ class RegisterSQLDBComposeRequestDTO(BaseModelDTO):
     database: str
     description: str
     env: Optional[Dict[str, str]] | None = None
+    auto_start: bool = False
 
 
 class RegisterSQLDBComposeAPIResponseDTO(BaseModelDTO):
