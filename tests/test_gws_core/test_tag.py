@@ -12,6 +12,8 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.note.note_dto import NoteSaveDTO
 from gws_core.note.note_service import NoteService
 from gws_core.protocol.protocol_proxy import ProtocolProxy
+from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
@@ -283,12 +285,14 @@ class TestTag(BaseTestCase):
         tag_robot = i_protocol.add_process(TagRobot, 'move')
         first_robot = Robot.empty()
         first_robot.tags.add_tags([tag_a, tag_b, tag_r_not_propagable])
-        tag_robot.set_input('robot', first_robot)
+        first_robot_model = ResourceModel.save_from_resource(first_robot, origin=ResourceOrigin.UPLOADED)
+        i_protocol.add_source('source', first_robot_model.id, tag_robot << 'robot')
 
         eat = i_protocol.add_process(RobotEat, 'eat')
         robot_food = RobotFood.empty()
         robot_food.tags.add_tags([tag_a_1, tag_b])
-        eat.set_input('food', robot_food)
+        robot_food_model = ResourceModel.save_from_resource(robot_food, origin=ResourceOrigin.UPLOADED)
+        i_protocol.add_resource('food_source', robot_food_model.id, eat << 'food')
 
         i_protocol.add_connector(tag_robot >> 'robot', eat << 'robot')
 
@@ -357,7 +361,8 @@ class TestTag(BaseTestCase):
 
         tag_robot = i_protocol.add_process(RobotEat, 'tag')
         first_robot = Robot.empty()
-        tag_robot.set_input('robot', first_robot)
+        first_robot_model = ResourceModel.save_from_resource(first_robot, origin=ResourceOrigin.UPLOADED)
+        i_protocol.add_source('source', first_robot_model.id, tag_robot << 'robot')
 
         i_scenario.run()
         tag_robot.refresh()

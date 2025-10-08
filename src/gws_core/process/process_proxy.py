@@ -82,21 +82,6 @@ class ProcessProxy:
 
     ############################################### INPUTS & OUTPUTS #########################################
 
-    def set_input(self, name: str, resource: Resource) -> None:
-        """Set the resource of an input. If you want to manually set the input resource of a process
-
-        :param name: [description]
-        :type name: str
-        :param resource: [description]
-        :type resource: Resource
-        """
-
-        # create the resource and save it
-        resource_model: ResourceModel = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.UPLOADED)
-        self._process_model.inputs.set_resource_model(
-            port_name=name, resource_model=resource_model)
-
     def get_input(self, name: str) -> Resource:
         """retrieve the resource of the input
 
