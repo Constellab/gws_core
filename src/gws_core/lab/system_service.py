@@ -273,7 +273,7 @@ class SystemService:
             return None
 
     @classmethod
-    def garbage_collector(cls) -> None:
+    def garbage_collector(cls, skip_test_folder: bool = False) -> None:
         if len(ScenarioRunService.get_all_running_scenarios()) > 0:
             raise BadRequestException(
                 'Cannot run the lab cleaning while there are running or waiting scenarios')
@@ -281,8 +281,9 @@ class SystemService:
         Logger.info('Starting the garbage collector')
 
         # delete test folder
-        test_folder = Settings.get_test_folder()
-        FileHelper.delete_dir(test_folder)
+        if not skip_test_folder:
+            test_folder = Settings.get_test_folder()
+            FileHelper.delete_dir(test_folder)
 
         temp_root_dir = Settings.get_instance().get_root_temp_dir()
         if FileHelper.exists_on_os(temp_root_dir):

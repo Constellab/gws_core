@@ -285,6 +285,17 @@ class Logger:
             cls._logger_instance._clear()
             cls._logger_instance = None
 
+    @classmethod
+    def is_debug_level(cls) -> bool:
+        """Check if the logger is in debug level
+
+        :return: True if the logger is in debug level, False otherwise
+        :rtype: bool
+        """
+        if cls._logger_instance and cls._logger_instance.level == "DEBUG":
+            return True
+        return False
+
     def _clear(self) -> None:
         self._logger.handlers.clear()
 
@@ -302,3 +313,5 @@ class Logger:
 
     def _log_debug(self, message: str) -> None:
         self._logger.debug(message)
+
+

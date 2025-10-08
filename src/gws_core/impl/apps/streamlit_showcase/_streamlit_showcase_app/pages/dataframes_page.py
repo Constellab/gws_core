@@ -3,7 +3,6 @@ import streamlit as st
 from pandas import DataFrame
 
 from gws_core.streamlit import StreamlitContainers, dataframe_paginated
-from gws_core.test.data_provider import DataProvider
 
 
 def render_dataframes_page():
@@ -11,7 +10,14 @@ def render_dataframes_page():
     st.title('Dataframes')
     st.info('This page contains a showcase for custom streamlit component for dataframe.')
 
-    dataframe = DataProvider.get_iris_table().get_data()
+    dataframe = DataFrame({
+        'A': range(1, 101),
+        'B': [x * 2 for x in range(1, 101)],
+        'C': [x ** 2 for x in range(1, 101)],
+        'D': [x ** 0.5 for x in range(1, 101)],
+        'E': ['Category 1' if x % 2 == 0 else 'Category 2' for x in range(1, 101)],
+        'F': ['Text ' + str(x) for x in range(1, 101)]
+    })
     _render_full_width_dataframe_container(dataframe)
     _render_dataframe_paginated(dataframe)
 

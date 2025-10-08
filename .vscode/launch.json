@@ -19,9 +19,9 @@
         // configuration to start the gws
         {
             "args": [
+                "--log-level=DEBUG",
                 "server",
                 "run",
-                "--log-level=DEBUG"
             ],
             "name": "Starts GWS server - DEBUG log",
             "type": "debugpy",
@@ -45,6 +45,7 @@
         // config to run test on GWS
         {
             "args": [
+                "--log-level=DEBUG",
                 "server",
                 "test",
                 "${input:testFileName}"
@@ -59,7 +60,8 @@
             "args": [
                 "streamlit",
                 "run-dev",
-                "${input:configFilePath}"
+                "${input:configFilePath}",
+                "--enable-debugger"
             ],
             "name": "Streamlit dev",
             "type": "debugpy",

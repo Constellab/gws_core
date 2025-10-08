@@ -75,6 +75,8 @@ class ExceptionHandler():
 
         Logger.info(
             f"Handle exception - {unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}")
+        if Logger.is_debug_level():
+            Logger.log_exception_stack_trace(exception)
 
         return ExceptionResponse(
             status_code=exception.status_code, code=unique_code, detail=detail, instance_id=exception.instance_id,

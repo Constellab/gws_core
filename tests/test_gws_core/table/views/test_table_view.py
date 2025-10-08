@@ -2,7 +2,8 @@
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
-from gws_core.extra import DataProvider, TableView
+from gws_core.extra import TableView
+from gws_core.test.data_provider import DataProvider
 
 
 # test_table_view

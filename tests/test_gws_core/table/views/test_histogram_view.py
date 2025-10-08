@@ -5,7 +5,7 @@ from unittest import TestCase
 import numpy
 
 from gws_core import BaseTestCase, ViewTester, ViewType
-from gws_core.extra import DataProvider, TableHistogramView
+from gws_core.extra import TableHistogramView
 from gws_core.impl.table.view.table_selection import Serie1d
 
 

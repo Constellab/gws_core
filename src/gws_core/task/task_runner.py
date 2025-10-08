@@ -7,6 +7,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import (
     BasicMessageObserver, LoggerMessageObserver, MessageObserver)
+from gws_core.core.utils.logger import Logger
 
 from ..config.config_params import ConfigParams
 from ..io.io_exception import InvalidOutputsException
@@ -110,6 +111,7 @@ class TaskRunner():
         task: Task = self._get_task_instance()
         task.__set_status__('RUN')
 
+        Logger.debug(f"Running task {self._task_type}")
         try:
             task_outputs: TaskOutputs = task.run(self._config_params, inputs)
         except KeyError as exception:
