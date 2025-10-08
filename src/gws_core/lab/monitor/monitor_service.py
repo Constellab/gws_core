@@ -1,11 +1,12 @@
 
 
-import threading
 from datetime import datetime, timedelta
+from time import sleep
 
 import plotly.express as px
 from pandas import DataFrame, Series, Timedelta, concat, to_datetime
 
+from gws_core.core.db.thread_db import ThreadDb
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -31,36 +32,40 @@ class MonitorService():
     def init(cls):
         if not cls._is_initialized:
             cls._is_initialized = True
-            cls._system_monitor_tick()
-            cls._system_monitor_cleanup()
+
+            # Start a single thread for monitoring tick
+            tick_thread = ThreadDb(target=cls._system_monitor_tick_loop)
+            tick_thread.daemon = True
+            tick_thread.start()
+
+            # Start a single thread for cleanup
+            cleanup_thread = ThreadDb(target=cls._system_monitor_cleanup_loop)
+            cleanup_thread.daemon = True
+            cleanup_thread.start()
 
     @classmethod
-    def _system_monitor_tick(cls):
-        if not MonitorService._is_initialized:
-            return
-        try:
-            MonitorService.save_current_monitor()
-        except Exception as err:
-            Logger.error(f"Error while saving current monitor : {str(err)}")
-        finally:
-            thread = threading.Timer(
-                Settings.get_monitor_tick_interval_log(), cls._system_monitor_tick)
-            thread.daemon = True
-            thread.start()
+    def _system_monitor_tick_loop(cls):
+        """Continuous loop for monitoring tick - runs in a separate thread with DB connection"""
+        while cls._is_initialized:
+            try:
+                MonitorService.save_current_monitor()
+            except Exception as err:
+                Logger.error(f"Error while saving current monitor : {str(err)}")
+
+            # Sleep for the configured interval
+            sleep(Settings.get_monitor_tick_interval_log())
 
     @classmethod
-    def _system_monitor_cleanup(cls):
-        if not MonitorService._is_initialized:
-            return
-        try:
-            MonitorService.cleanup_old_monitor_data()
-        except Exception as err:
-            Logger.error(f"Error while cleaning monitor data : {str(err)}")
-        finally:
-            thread = threading.Timer(
-                Settings.get_monitor_tick_interval_cleanup(), cls._system_monitor_cleanup)
-            thread.daemon = True
-            thread.start()
+    def _system_monitor_cleanup_loop(cls):
+        """Continuous loop for cleanup - runs in a separate thread with DB connection"""
+        while cls._is_initialized:
+            try:
+                MonitorService.cleanup_old_monitor_data()
+            except Exception as err:
+                Logger.error(f"Error while cleaning monitor data : {str(err)}")
+
+            # Sleep for the configured interval
+            sleep(Settings.get_monitor_tick_interval_cleanup())
 
     @classmethod
     def deinit(cls):
