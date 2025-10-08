@@ -269,7 +269,7 @@ class TaskModel(ProcessModel):
 
             port: Port = self.outputs.get_port(key)
 
-            if port.is_constant_out:
+            if port.constant_out:
                 # If the port is mark as is_constant_out, we don't create a new resource
                 # We use the same resource
                 resource_model = ResourceModel.get_by_id_and_check(

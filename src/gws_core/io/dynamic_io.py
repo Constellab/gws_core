@@ -68,7 +68,7 @@ class DynamicInputs(InputSpecs):
         if self.additionnal_port_spec:
             return self.additionnal_port_spec
 
-        return InputSpec(Resource, is_optional=True)
+        return InputSpec(Resource, optional=True)
 
     @classmethod
     def from_dto(cls, io_specs: Dict[str, InputSpec], additional_info: dict) -> 'DynamicInputs':

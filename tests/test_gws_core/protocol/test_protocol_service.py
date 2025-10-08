@@ -276,8 +276,8 @@ class TestProtocolService(BaseTestCase):
                 'environment': None,
                 'code': '# This is a template for a streamlit agent.\n# This generates an app with one dataframe as input. Then the user can select 2 columns to plot a scatter plot.\n\nimport plotly.express as px\nimport streamlit as st\nfrom pandas import DataFrame\n\n# Your Streamlit app code here\nst.title("App example")\n\n# show a table from file_path which is a csv file full width\nif sources:\n    df: DataFrame = sources[0].get_data()\n\n    # show the dataframe\n    st.dataframe(df)\n\n    # add a select widget with the columns names with no default value\n    # set the selectbox side by side\n    col1, col2 = st.columns(2)\n\n    with col1:\n        x_col = st.selectbox("Select x column", options=df.columns, index=0)\n\n    with col2:\n        y_col = st.selectbox("Select y column", options=df.columns, index=1)\n\n    if x_col and y_col:\n        # Generate a scatter plot with plotly express\n        fig = px.scatter(df, x=x_col, y=y_col)\n        st.plotly_chart(fig)\n',
                 'params': {'specs': {}, 'values': {}},
-                'input_specs': {'specs': {"source": {"resource_types": [{"typing_name": "RESOURCE.gws_core.Resource", "brick_version": "0.10.0", "human_name": "Resource", "style": {"icon_technical_name": "resource", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc", "icon_color": "#000000"}, "short_description": ""}], "human_name": "Resource", "short_description": "", "is_optional": True, "sub_class": None, "is_constant": None}}},
-                'output_specs': {'specs': {"streamlit_app": {"resource_types": [{"typing_name": "RESOURCE.gws_core.StreamlitResource", "brick_version": "0.10.0", "human_name": "Streamlit App", "style": {"icon_technical_name": "dashboard", "icon_type": "MATERIAL_ICON", "background_color": "#ff4b4b", "icon_color": "#000000"}, "short_description": "Streamlit App"}], "human_name": "Streamlit app", "short_description": "Streamlit App", "is_optional": False, "sub_class": False, "is_constant": False}}},
+                'input_specs': {'specs': {"source": {"resource_types": [{"typing_name": "RESOURCE.gws_core.Resource", "brick_version": "0.10.0", "human_name": "Resource", "style": {"icon_technical_name": "resource", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc", "icon_color": "#000000"}, "short_description": ""}], "human_name": "Resource", "short_description": "", "optional": True, "sub_class": None, "constant": None}}},
+                'output_specs': {'specs': {"streamlit_app": {"resource_types": [{"typing_name": "RESOURCE.gws_core.StreamlitResource", "brick_version": "0.10.0", "human_name": "Streamlit App", "style": {"icon_technical_name": "dashboard", "icon_type": "MATERIAL_ICON", "background_color": "#ff4b4b", "icon_color": "#000000"}, "short_description": "Streamlit App"}], "human_name": "Streamlit app", "short_description": "Streamlit App", "optional": False, "sub_class": False, "constant": False}}},
                 'config_specs': {},
                 'agent': {'id': 'd4816577-94b6-4cc7-a363-52127f4e4525', 'title': 'Test Streamlit', 'latest_publish_version': 2}
             })
@@ -311,8 +311,8 @@ class TestProtocolService(BaseTestCase):
               {"icon_technical_name": "resource", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc",
                "icon_color": "#000000"},
               "short_description": ""}],
-            "human_name": "Resource", "short_description": "", "is_optional": True, "sub_class": None,
-            "is_constant": None}
+            "human_name": "Resource", "short_description": "", "optional": True, "sub_class": None,
+            "constant": None}
         second_input = {
             "resource_types":
             [{"typing_name": "RESOURCE.gws_core.Table", "brick_version": "0.10.0", "human_name": "Table",
@@ -320,8 +320,8 @@ class TestProtocolService(BaseTestCase):
               {"icon_technical_name": "table", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc",
                "icon_color": "#000000"},
               "short_description": ""}],
-            "human_name": "Table", "short_description": "", "is_optional": True, "sub_class": None,
-            "is_constant": None}
+            "human_name": "Table", "short_description": "", "optional": True, "sub_class": None,
+            "constant": None}
 
         first_output = {
             "resource_types":
@@ -330,8 +330,8 @@ class TestProtocolService(BaseTestCase):
               {"icon_technical_name": "resource", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc",
                "icon_color": "#000000"},
               "short_description": ""}],
-            "human_name": "Res Resource", "short_description": "", "is_optional": False, "sub_class": True,
-            "is_constant": False}
+            "human_name": "Res Resource", "short_description": "", "optional": False, "sub_class": True,
+            "constant": False}
 
         second_output = {
             "resource_types":
@@ -340,8 +340,8 @@ class TestProtocolService(BaseTestCase):
               {"icon_technical_name": "table", "icon_type": "MATERIAL_ICON", "background_color": "#c7c8cc",
                "icon_color": "#000000"},
               "short_description": ""}],
-            "human_name": "Res Table", "short_description": "", "is_optional": False, "sub_class": True,
-            "is_constant": False}
+            "human_name": "Res Table", "short_description": "", "optional": False, "sub_class": True,
+            "constant": False}
 
         community_agent_version: CommunityAgentVersionDTO = CommunityAgentVersionDTO.from_json(
             {

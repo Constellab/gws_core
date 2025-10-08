@@ -42,7 +42,7 @@ class GenerateAutoMLApp(Task):
     input_specs = InputSpecs({
         'getting_started_note': InputSpec(LabNoteResource, human_name='Getting started note',
                                           short_description='Note that is being displayed in the getting started section'),
-        'table': InputSpec(Table, human_name='Table', short_description='Optional table to init dashboard with', is_optional=True)
+        'table': InputSpec(Table, human_name='Table', short_description='Optional table to init dashboard with', optional=True)
     })
     output_specs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource)

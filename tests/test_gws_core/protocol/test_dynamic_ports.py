@@ -65,7 +65,7 @@ class TestDynamicPorts(BaseTestCase):
         typing = Typing.get_by_model_type(Robot)
         io_spec = IOSpecDTO(
             resource_types=[typing.to_ref_dto()],
-            is_optional=False,
+            optional=False,
         )
         process_model = ProtocolService.update_dynamic_input_port_of_process(protocol.id,
                                                                              process_model.instance_name,

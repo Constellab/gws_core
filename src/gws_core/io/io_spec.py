@@ -20,9 +20,9 @@ class IOSpecDTO(BaseModelDTO):
     resource_types: List[TypingRefDTO]
     human_name: Optional[str] = None
     short_description: Optional[str] = None
-    is_optional: bool
+    optional: bool
     sub_class: Optional[bool] = None
-    is_constant: Optional[bool] = None
+    constant: Optional[bool] = None
 
     def to_markdown(self) -> str:
 
@@ -34,7 +34,7 @@ class IOSpecDTO(BaseModelDTO):
         else:
             text += f"`{self.resource_types[0].human_name}`"
 
-        if self.is_optional:
+        if self.optional:
             text += ', optional'
 
         text += ')'
@@ -54,7 +54,7 @@ class IOSpec:
     # Description of the param, showed in the interface
     short_description: Optional[str]
 
-    is_optional: bool = False
+    optional: bool = False
 
     # not activated yet
     validators: List[IOValidator] = []
@@ -62,15 +62,19 @@ class IOSpec:
     _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
 
 
-    def __init__(self, resource_types: ResourceTypes, is_optional: bool = False, human_name: Optional[str] = None,
+    def __init__(self, resource_types: ResourceTypes,
+                 optional: bool = False,
+                 is_optional: bool = False, human_name: Optional[str] = None,
                  short_description: Optional[str] = None) -> None:
         """ Initialize the IOSpec with resource types and optional parameters.
 
         :param resource_types: _description_
         :type resource_types: ResourceTypes
-        :param is_optional: this input might not be connected to another task output and the task will still be executed.
+        :param optional: this input might not be connected to another task output and the task will still be executed.
                       If the input is connected, the system will wait for the input to be provided before running the task.
                       Also tells that None value is allowed as input.  , defaults to False
+        :type optional: bool, optional
+        :param is_optional: Deprecated, use optional instead, defaults to False
         :type is_optional: bool, optional
         :param human_name: _description_, defaults to None
         :type human_name: Optional[str], optional
@@ -86,7 +90,10 @@ class IOSpec:
             for r_type in resource_types:
                 self.resource_types.append(r_type)
 
-        self.is_optional = is_optional
+        if is_optional:
+            Logger.warning(f"[IOSpec] 'is_optional' parameter is deprecated, please use 'optional' instead")
+            optional = is_optional
+        self.optional = optional
 
         self.check_resource_types()
 
@@ -115,7 +122,7 @@ class IOSpec:
 
     def is_compatible_with_in_spec(self, in_spec: 'IOSpec') -> bool:
         # Handle the generic SubClasss
-        if self.is_subclass_out():
+        if self.subclass_out():
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
             return self._resource_types_are_compatible(
@@ -134,11 +141,11 @@ class IOSpec:
         return self._resource_types_are_compatible(resource_types=resource_types, expected_types=self.resource_types)
 
     @abstractmethod
-    def is_constant_out(self) -> bool:
+    def constant_out(self) -> bool:
         pass
 
     @abstractmethod
-    def is_subclass_out(self) -> bool:
+    def subclass_out(self) -> bool:
         pass
 
     def get_default_resource_type(self) -> Type[Resource]:
@@ -197,7 +204,7 @@ class IOSpec:
     def to_dto(self) -> IOSpecDTO:
         spec_dto = IOSpecDTO(
             resource_types=[],
-            is_optional=self.is_optional,
+            optional=self.optional,
             human_name=self.human_name,
             short_description=self.short_description,
         )
@@ -224,7 +231,7 @@ class IOSpec:
                     f"[IOSpec] Invalid resource type '{spec_dto.typing_name}'")
             resource_types.append(resource_type)
 
-        io_spec: IOSpec = cls(resource_types=resource_types, is_optional=dto.is_optional,
+        io_spec: IOSpec = cls(resource_types=resource_types, optional=dto.optional,
                               human_name=dto.human_name,
                               short_description=dto.short_description,)
         return io_spec
@@ -235,10 +242,10 @@ class InputSpec(IOSpec):
     """
     _name: str = "InputSpec"
 
-    def is_constant_out(self) -> bool:
+    def constant_out(self) -> bool:
         return False
 
-    def is_subclass_out(self) -> bool:
+    def subclass_out(self) -> bool:
         return False
 
 
@@ -251,8 +258,10 @@ class OutputSpec(IOSpec):
     _is_constant: bool
 
     def __init__(self, resource_types: ResourceTypes,
+                 optional: bool = False,
                  is_optional: bool = False,
                  sub_class: bool = False,
+                 constant: bool = False,
                  is_constant: bool = False,
                  human_name: Optional[str] = None,
                  short_description: Optional[str] = None) -> None:
@@ -260,34 +269,45 @@ class OutputSpec(IOSpec):
 
         :param resource_types: _description_
         :type resource_types: ResourceTypes
-        :param is_optional: tell that this output may return None or not being provided, defaults to False
+        :param optional: tell that this output may return None or not being provided, defaults to False
+        :type optional: bool, optional
+        :param is_optional: Deprecated, use optional instead, defaults to False
         :type is_optional: bool, optional
         :param sub_class: When true, it tells that the resource_types
                 are compatible with any child class of the provided resource type, defaults to False
-        :param is_constant: When true, this tells the system that the output resource was not modified from the input resource
+        :param constant: When true, this tells the system that the output resource was not modified from the input resource
               and it does not need to create a new resource after the task, defaults to False
+        :type constant: bool, optional
+        :param is_constant: Deprecated, use constant instead, defaults to False
+        :type is_constant: bool, optional
         :param human_name: _description_, defaults to None
         :type human_name: Optional[str], optional
         :param short_description: _description_, defaults to None
         :type short_description: Optional[str], optional
         """
 
-        super().__init__(resource_types=resource_types, is_optional=is_optional,
+        super().__init__(resource_types=resource_types,
+                         optional=optional,
+                         is_optional=is_optional,
                          human_name=human_name, short_description=short_description)
         self._sub_class = sub_class
-        self._is_constant = is_constant
 
-    def is_constant_out(self) -> bool:
+        if is_constant:
+            Logger.warning(f"[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead")
+            constant = is_constant
+        self._is_constant = constant
+
+    def constant_out(self) -> bool:
         return self._is_constant
 
-    def is_subclass_out(self) -> bool:
+    def subclass_out(self) -> bool:
         return self._sub_class
 
     def to_dto(self) -> IOSpecDTO:
         spec_dto = super().to_dto()
 
         spec_dto.sub_class = self._sub_class
-        spec_dto.is_constant = self._is_constant
+        spec_dto.constant = self._is_constant
 
         return spec_dto
 
@@ -296,6 +316,6 @@ class OutputSpec(IOSpec):
         output_spec: OutputSpec = super().from_dto(dto)
 
         output_spec._sub_class = dto.sub_class or False
-        output_spec._is_constant = dto.is_constant or False
+        output_spec._is_constant = dto.constant or False
 
         return output_spec

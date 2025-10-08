@@ -369,7 +369,7 @@ class ScenarioDownloader(Task):
         """
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             for port_name, out_port in process_model.outputs.ports.items():
-                if not out_port.is_constant_out and out_port.get_resource_model_id() == old_resource_id:
+                if not out_port.constant_out and out_port.get_resource_model_id() == old_resource_id:
                     return process_model, port_name
 
         return None, None

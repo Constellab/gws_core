@@ -51,13 +51,13 @@ class Port(Base):
         """
 
         # If the type is skippable, the port is always ready
-        if self.is_optional:
+        if self.optional:
             return True
 
         return self._resource_provided
 
     @property
-    def is_optional(self) -> bool:
+    def optional(self) -> bool:
         """
         Returns True if the resource in this port is optional (optional or skippable), False otherwise
 
@@ -65,20 +65,20 @@ class Port(Base):
         :rtype: bool
         """
 
-        return self.resource_spec.is_optional
+        return self.resource_spec.optional
 
     @property
     def is_empty(self) -> bool:
         return self._resource_id is None
 
     @property
-    def is_constant_out(self) -> bool:
+    def constant_out(self) -> bool:
         """return true if the port type is ConstantOut
 
         :return: [description]
         :rtype: bool
         """
-        return self.resource_spec.is_constant_out()
+        return self.resource_spec.constant_out()
 
     @property
     def resource_provided(self) -> bool:
@@ -147,7 +147,7 @@ class Port(Base):
         :type resource: ResourceModel
         """
 
-        if self.is_optional and resource_type is None:
+        if self.optional and resource_type is None:
             return True
 
         return self.resource_spec.is_compatible_with_resource_type(resource_type)

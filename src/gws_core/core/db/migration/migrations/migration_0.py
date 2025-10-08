@@ -1517,3 +1517,24 @@ class Migration0160(BrickMigration):
                 to_version: Version) -> None:
         # Set chmod to 755 for filestore directory and all sub directories/file recursively
         subprocess.run(['chmod', '-R', '755', '/data/filestore'], check=True)
+
+
+
+@brick_migration('0.17.0', short_description='Migrate is_optional and is_constant in IOSpec')
+class Migration0170(BrickMigration):
+
+    @classmethod
+    def migrate(cls,
+                sql_migrator: SqlMigrator,
+                from_version: Version,
+                to_version: Version) -> None:
+        # Migrate is_optional to optional and is_constant to constant in TaskModel, ProtocolModel and ScenarioTemplate
+        # replace string "is_optional": with "optional":
+        TaskModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+        ProtocolModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+        ScenarioTemplate.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+
+        # replace string "is_constant": with "constant":
+        TaskModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+        ProtocolModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+        ScenarioTemplate.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')

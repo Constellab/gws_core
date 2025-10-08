@@ -43,7 +43,7 @@ class EnvAgent(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", is_optional=True))
+        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", optional=True))
     output_specs: OutputSpecs = DynamicOutputs(
         additionnal_port_spec=OutputSpec(FSNode, human_name="File or folder", sub_class=True))
 

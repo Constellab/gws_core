@@ -34,7 +34,7 @@ class InputTaskFromProcessOutput(Task):
     config_name: str = 'resource_id'
 
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
+        Resource, sub_class=True, constant=True, human_name="Resource", short_description="Loaded resource")})
 
     config_specs = ConfigSpecs({
         'process_model_id': StrParam(human_name="Process model id", short_description="The id of the process model that contains the output"),

@@ -30,7 +30,7 @@ class InputTask(Task):
 
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        Resource, sub_class=True, is_constant=True, human_name="Resource", short_description="Loaded resource")})
+        Resource, sub_class=True, constant=True, human_name="Resource", short_description="Loaded resource")})
     config_specs = ConfigSpecs({
         'resource_id': StrParam(human_name="Resource"),
     }

@@ -191,7 +191,7 @@ class TestResourceSet(BaseTestCase):
                                  input_specs=DynamicInputs({
                                      'resource_1': InputSpec(Robot),
                                      'resource_2': InputSpec(Robot),
-                                     'resource_3': InputSpec(Robot, is_optional=True),
+                                     'resource_3': InputSpec(Robot, optional=True),
                                      'resource_4': InputSpec(ResourceSet)
                                  })
                                  )

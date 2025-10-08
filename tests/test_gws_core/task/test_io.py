@@ -97,8 +97,8 @@ class Fly(Task):
 
 @task_decorator("OptionalTask")
 class OptionalTask(Task):
-    input_specs = InputSpecs({'first': InputSpec([Person], is_optional=True),
-                              'second': InputSpec(Person, is_optional=True),
+    input_specs = InputSpecs({'first': InputSpec([Person], optional=True),
+                              'second': InputSpec(Person, optional=True),
                               'third': InputSpec(Person)})
     output_specs = OutputSpecs({})
     config_specs = ConfigSpecs({})
@@ -122,7 +122,7 @@ class OptionalTaskOut(Task):
 @task_decorator("Log")
 class Log(Task):
     input_specs = InputSpecs({'person': InputSpec(Person)})
-    output_specs = OutputSpecs({'samePerson': OutputSpec(Person, is_constant=True),
+    output_specs = OutputSpecs({'samePerson': OutputSpec(Person, constant=True),
                                 'otherPerson': OutputSpec(Person)})
     config_specs = ConfigSpecs({})
 
@@ -144,10 +144,10 @@ class TestPersonProtocol(Protocol):
 @task_decorator(unique_name="FIFO2")
 class Skippable(Task):
 
-    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, is_optional=True),
-                                          'resource_2': InputSpec(Resource, is_optional=True)})
+    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, optional=True),
+                                          'resource_2': InputSpec(Resource, optional=True)})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)})
+        resource_types=Resource, sub_class=True, constant=True)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
 
@@ -241,9 +241,9 @@ class TestIO(BaseTestCase):
         opt: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=OptionalTask, instance_name="optional")
 
-        self.assertTrue(opt.in_port("first").is_optional)
-        self.assertTrue(opt.in_port("second").is_optional)
-        self.assertFalse(opt.in_port("third").is_optional)
+        self.assertTrue(opt.in_port("first").optional)
+        self.assertTrue(opt.in_port("second").optional)
+        self.assertFalse(opt.in_port("third").optional)
 
         opt_car: TaskModel = ProcessFactory.create_task_model_from_type(
             task_type=OptionalTaskOut, instance_name="optional2")

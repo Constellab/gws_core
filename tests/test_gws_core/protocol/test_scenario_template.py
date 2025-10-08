@@ -259,7 +259,7 @@ class TestScenarioTemplate(BaseTestCase):
                                                 "human_name": "Table"
                                             }
                                         ],
-                                        "is_optional": False,
+                                        "optional": False,
                                         "human_name": "Table",
                                         "short_description": "2d excel like table"
                                     }
@@ -280,11 +280,11 @@ class TestScenarioTemplate(BaseTestCase):
                                                 "human_name": "Table"
                                             }
                                         ],
-                                        "is_optional": False,
+                                        "optional": False,
                                         "human_name": "Table",
                                         "short_description": "2d excel like table",
                                                              "sub_class": False,
-                                                             "is_constant": False
+                                                             "constant": False
                                     }
                                 }
                             },
@@ -336,11 +336,11 @@ class TestScenarioTemplate(BaseTestCase):
                                                 "human_name": "Resource"
                                             }
                                         ],
-                                        "is_optional": False,
+                                        "optional": False,
                                         "human_name": "Resource",
                                         "short_description": "Loaded resource",
                                                              "sub_class": True,
-                                                             "is_constant": True
+                                                             "constant": True
                                     }
                                 }
                             },

@@ -101,7 +101,7 @@ class StartDockerComposeTask(Task):
     input_specs: InputSpecs = InputSpecs({
         'yaml_file': InputSpec(File, human_name='Docker Compose YAML File',
                                short_description='Optional YAML file for Docker Compose configuration',
-                               is_optional=True)
+                               optional=True)
     })
 
     output_specs: OutputSpecs = OutputSpecs({

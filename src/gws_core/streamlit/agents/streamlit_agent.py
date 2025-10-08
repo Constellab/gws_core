@@ -40,7 +40,7 @@ class StreamlitAgent(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(Resource, human_name="Resource", is_optional=True))
+        additionnal_port_spec=InputSpec(Resource, human_name="Resource", optional=True))
     output_specs: OutputSpecs = OutputSpecs({
         'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
     })

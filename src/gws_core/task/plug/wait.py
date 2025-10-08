@@ -27,7 +27,7 @@ class Wait(Task):
 
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)})
+        resource_types=Resource, sub_class=True, constant=True)})
     config_specs = ConfigSpecs({"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")})
 
@@ -59,7 +59,7 @@ class ShellWait(Task):
 
     input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, is_constant=True)})
+        resource_types=Resource, sub_class=True, constant=True)})
     config_specs = ConfigSpecs({"waiting_time": FloatParam(
         default_value=3, min_value=0, short_description="The waiting time in seconds. Defaults to 3 second.")})
 

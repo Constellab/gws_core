@@ -87,7 +87,7 @@ class ResourcePicker(Task):
         "resource_set": InputSpec(ResourceSet),
     })
     output_specs: OutputSpecs = DynamicOutputs(
-        additionnal_port_spec=OutputSpec(Resource, sub_class=True, is_constant=True))
+        additionnal_port_spec=OutputSpec(Resource, sub_class=True, constant=True))
 
     config_specs = ConfigSpecs({'keys': ParamSet(ConfigSpecs(
         {'key': StrParam(human_name="Resource key", short_description="The key of the resource to pick")}),

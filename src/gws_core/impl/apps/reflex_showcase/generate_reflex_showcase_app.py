@@ -60,7 +60,7 @@ class GenerateReflexShowcaseApp(Task):
     """
 
     input_specs = InputSpecs({
-        'resource': InputSpec(Resource, is_optional=True)
+        'resource': InputSpec(Resource, optional=True)
     })
 
     output_specs = OutputSpecs({

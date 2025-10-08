@@ -116,7 +116,7 @@ class InputSpecs(IOSpecs):
             # If the resource is None
             if key not in inputs or inputs[key] is None:
                 # If the resource is empty and the spec not optional, add an error
-                if not spec.is_optional:
+                if not spec.optional:
                     missing_resource.append(key)
                 else:
                     input_dict[key] = None
@@ -180,7 +180,7 @@ class OutputSpecs(IOSpecs):
 
             # handle the case where the output is None
             if key not in task_outputs or task_outputs[key] is None:
-                if not spec.is_optional:
+                if not spec.optional:
                     text = "was not provided" if key not in task_outputs else "is None"
                     error_text = error_text + \
                         f"The output '{self._get_spec_key_pretty_name(key)}' {text}."
