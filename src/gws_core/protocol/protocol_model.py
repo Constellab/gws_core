@@ -650,13 +650,14 @@ class ProtocolModel(ProcessModel):
 
     def _load_connectors(self) -> None:
         if self._connectors is None:
+            self._connectors = []
 
-            graph = self.get_graph()
-            # Init the connector from the graph
-            if graph:
-                self.init_connectors_from_graph(graph.links, check_compatiblity=False)
-            else:
-                self._connectors = []
+            if "graph" in self.data:
+                graph = self.get_graph()
+                # Init the connector from the graph
+                if graph:
+                    self.init_connectors_from_graph(graph.links, check_compatiblity=False)
+
 
     def add_connectors(self, connectors: List[ConnectorSpec]) -> None:
         for connector in connectors:
