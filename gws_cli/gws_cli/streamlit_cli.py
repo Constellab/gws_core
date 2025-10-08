@@ -10,10 +10,12 @@ from gws_core import StreamlitApp
 app = typer.Typer(help="Generate and run Streamlit applications")
 
 
-@app.command("run-dev", help="Run a Streamlit app in development mode")
+@app.command("run-dev",
+             help="Run a Streamlit app in development mode")
 def run_dev(
     ctx: typer.Context,
-    config_file_path: Annotated[str, typer.Argument(help="Path to the JSON config file for the app to run.")]
+    config_file_path: Annotated[str, typer.Argument(help="Path to the JSON config file for the app to run.")],
+    enable_debugger: Annotated[bool, typer.Option("--enable-debugger", help="Enable the debugger in the Streamlit app.", is_flag=True)] = False,
 ):
 
     app_cli = AppCli(config_file_path)
@@ -21,6 +23,7 @@ def run_dev(
 
     streamit_app = StreamlitApp(StreamlitApp.DEV_MODE_APP_ID, "main", shell_proxy)
     streamit_app.set_dev_mode(config_file_path)
+    streamit_app.set_enable_debugger(enable_debugger)
 
     app_cli.start_app(streamit_app, ctx)
 

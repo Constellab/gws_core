@@ -57,11 +57,22 @@ class StreamlitProcess(AppProcess):
         ]
 
         if app.is_dev_mode():
-            # Run streamlit through python to keep the debugger enable
-            # So streamlit app is debuggable
-            cmd = ['python3', self._get_streamlit_package_path(), 'run',
+            cmd = ['run',
                    app.get_main_app_file_path()] + options + [f"--dev_mode={app.is_dev_mode()}"]
-            process = SysProc.popen(cmd)
+
+            if app.enable_debugger:
+                # Run streamlit through python to keep the debugger enable
+                # So streamlit app is debuggable
+                cmd = ['python3', self._get_streamlit_package_path()] + cmd
+                Logger.debug(f"Running streamlit in dev mode with debugger enabled: {' '.join(cmd)}")
+                process = SysProc.popen(cmd)
+            else:
+                # when debugger not active (running from CLI) we can use the normal streamlit command
+                # if we use the python command, there is a streamlit error
+                cmd = ['streamlit'] + cmd
+                shell_proxy = self._get_and_check_shell_proxy(app)
+                Logger.debug(f"Running streamlit in dev mode: {' '.join(cmd)}")
+                process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
         else:
             shell_proxy = self._get_and_check_shell_proxy(app)
             cmd = ['streamlit', 'run', app.get_main_app_file_path()] + options + [f'--gws_token={self._token}']

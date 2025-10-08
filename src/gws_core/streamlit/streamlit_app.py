@@ -20,6 +20,8 @@ class StreamlitApp(AppInstance):
     streamlit_code: str = None
     app_folder_path: str = None
 
+    enable_debugger: bool = False
+
     MAIN_FILE = 'main.py'
 
     MAIN_APP_FILE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_streamlit_main_app')
@@ -81,3 +83,6 @@ class StreamlitApp(AppInstance):
     def get_app_type(self) -> AppType:
         """Get the type of the app."""
         return AppType.STREAMLIT
+
+    def set_enable_debugger(self, enable_debugger: bool) -> None:
+        self.enable_debugger = enable_debugger
