@@ -1,11 +1,12 @@
 
 
 from inspect import isclass
-from multiprocessing import Process
 from time import sleep
 from typing import List, Type
 
+from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -95,10 +96,14 @@ class ScenarioProxy:
         """
 
         # run the scenario in a sub process so it can be stopped
-        process = Process(
-            target=ScenarioRunService.run_scenario, args=(self._scenario,))
+        process = ProcessDb(
+            target=ScenarioRunService.run_scenario_by_id,
+            args=(self._scenario.id,)
+        )
         process.start()
-        process.join()
+        process.join()  # Wait for process to complete
+
+        exitcode = process.exitcode
 
         self.refresh()
 
@@ -107,27 +112,26 @@ class ScenarioProxy:
                 self.delete()
             raise Exception(self._scenario.get_error_info().detail)
 
-        # when stop manually the scenario, wait a bit for the status to be updated
-        # because the scenario status is updated after the process is stopped
-        if process.exitcode is None:
-            sleep(2)
-            self.refresh()
-            if self._scenario.is_error:
-                raise Exception(self._scenario.get_error_info().detail)
-
-        if process.exitcode != 0:
+        if exitcode != 0:
             raise Exception("Error in during the execution of the scenario")
 
     def run_async(self) -> ScenarioWaiterBasic:
         """Run the scenario in a separate process but don't wait for it to finish
 
-        :return: the process that is running the scenario
-        :rtype: Process
+        :return: the scenario waiter
+        :rtype: ScenarioWaiterBasic
         """
-        process = Process(
-            target=ScenarioRunService.run_scenario, args=(self._scenario,))
+        # Pass only the scenario ID to avoid Peewee connection issues across processes
+        scenario_id = self._scenario.id
+
+        # Create and start a background process with clean db connection
+        process = ProcessDb(
+            target=ScenarioRunService.run_scenario_by_id,
+            args=(scenario_id,)
+        )
         process.start()
 
+        # Wait for scenario to start running
         count = 0
         while count < 15:
             self.refresh()
@@ -180,6 +184,13 @@ class ScenarioProxy:
         self._scenario = self._scenario.refresh()
         self._protocol.refresh()
 
+        return self
+
+    def reset(self) -> 'ScenarioProxy':
+        """Reset the scenario to draft and delete all logs and progress
+        """
+        EntityNavigatorService.reset_scenario(self._scenario.id)
+        self.refresh()
         return self
 
     def get_url(self) -> str:

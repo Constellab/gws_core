@@ -56,6 +56,17 @@ class ScenarioRunService():
         cls.run_scenario(scenario)
 
     @classmethod
+    def run_scenario_by_id(cls, scenario_id: str) -> Scenario:
+        """
+        Run the scenario by ID.
+
+        :param scenario_id: The ID of the scenario to run
+        :type scenario_id: str
+        """
+        scenario = Scenario.get_by_id_and_check(scenario_id)
+        return cls.run_scenario(scenario)
+
+    @classmethod
     def run_scenario(cls, scenario: Scenario) -> Scenario:
         """
         Run the scenario
