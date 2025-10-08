@@ -66,7 +66,6 @@ ProtocolGraphConfigDTO.model_rebuild()
 
 
 class ProtocolMinimumDTO(BaseModelDTO):
-    nodes: Dict[str, ProcessMinimumDTO]
     links: List[ConnectorDTO]
     interfaces: Dict[str, IOFaceDTO]
     outerfaces: Dict[str, IOFaceDTO]

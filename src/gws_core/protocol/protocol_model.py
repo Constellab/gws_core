@@ -155,8 +155,6 @@ class ProtocolModel(ProcessModel):
     def refresh_graph_from_dump(self) -> None:
         """Refresh the graph json object inside the data from the dump method
         """
-        # TODO remove nodes from the graph once the load from DB is stable
-        # load was introduced in v 0.15.0
         self.data["graph"] = self.to_protocol_minimum_dto().to_json_dict()
 
     def get_graph(self) -> ProtocolMinimumDTO:
@@ -164,8 +162,6 @@ class ProtocolModel(ProcessModel):
         """
         graph = self.data["graph"]
         if not isinstance(graph, dict):
-            return None
-        if not isinstance(graph.get("nodes"), dict) or not graph["nodes"]:
             return None
         return ProtocolMinimumDTO.from_json(graph)
 
@@ -654,10 +650,11 @@ class ProtocolModel(ProcessModel):
 
     def _load_connectors(self) -> None:
         if self._connectors is None:
+
+            graph = self.get_graph()
             # Init the connector from the graph
-            if "graph" in self.data and "links" in self.data["graph"]:
-                links_dto = ConnectorDTO.from_json_list(self.data["graph"]["links"])
-                self.init_connectors_from_graph(links_dto, check_compatiblity=False)
+            if graph:
+                self.init_connectors_from_graph(graph.links, check_compatiblity=False)
             else:
                 self._connectors = []
 
@@ -1113,7 +1110,6 @@ class ProtocolModel(ProcessModel):
 
     def to_protocol_minimum_dto(self) -> ProtocolMinimumDTO:
         return ProtocolMinimumDTO(
-            nodes={key: process.to_minimum_dto() for key, process in self.processes.items()},
             links=[connector.to_dto() for connector in self.connectors],
             interfaces={key: interface.to_dto() for key, interface in self.interfaces.items()},
             outerfaces={key: outerface.to_dto() for key, outerface in self.outerfaces.items()}

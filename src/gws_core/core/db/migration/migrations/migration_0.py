@@ -1520,7 +1520,7 @@ class Migration0160(BrickMigration):
 
 
 
-@brick_migration('0.17.0', short_description='Migrate is_optional and is_constant in IOSpec')
+@brick_migration('0.17.0', short_description='Migrate is_optional and is_constant in IOSpec. Remove nodes from protocol graph')
 class Migration0170(BrickMigration):
 
     @classmethod
@@ -1538,3 +1538,12 @@ class Migration0170(BrickMigration):
         TaskModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
         ProtocolModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
         ScenarioTemplate.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+
+        # Remove nodes from protocol graph
+        protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
+        for protocol_model in protocol_models:
+            try:
+                protocol_model.refresh_graph_from_dump()
+                protocol_model.save(skip_hook=True)
+            except Exception as exception:
+                Logger.error(f'Error while migrating protocol {protocol_model.id} : {exception}')
