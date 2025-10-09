@@ -1,14 +1,15 @@
 
 import typer
+from typing_extensions import Annotated
+
 from gws_cli.app_cli import AppCli
 from gws_cli.generate_reflex_app.generate_reflex_app import generate_reflex_app
 from gws_core.apps.reflex.reflex_app import ReflexApp
-from typing_extensions import Annotated
 
 app = typer.Typer(help="Generate and run Reflex applications")
 
 
-@app.command("run-dev", help="Run a Reflex app in development mode")
+@app.command("run", help="Run a Reflex app in development mode")
 def run_dev(
     ctx: typer.Context,
     config_file_path: Annotated[str, typer.Argument(help="Path to the JSON config file for the app to run.")]

@@ -10,7 +10,7 @@ from gws_core import StreamlitApp
 app = typer.Typer(help="Generate and run Streamlit applications")
 
 
-@app.command("run-dev",
+@app.command("run",
              help="Run a Streamlit app in development mode")
 def run_dev(
     ctx: typer.Context,

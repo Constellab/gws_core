@@ -14,8 +14,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Tests are located in `tests/test_gws_core/` directory
 
 ### Development Apps
-- Run Streamlit app in dev mode: `gws streamlit run-dev [CONFIG_FILE_PATH]`
-- Run Reflex app in dev mode: `gws reflex run-dev [CONFIG_FILE_PATH]`
+- Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
+- Run Reflex app in dev mode: `gws reflex run [CONFIG_FILE_PATH]`
 
 ### CLI Structure
 The main CLI entry point is `gws_cli/gws_cli/main_cli.py` which provides commands for:

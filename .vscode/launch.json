@@ -59,7 +59,7 @@
         {
             "args": [
                 "streamlit",
-                "run-dev",
+                "run",
                 "${input:configFilePath}",
                 "--enable-debugger"
             ],
@@ -72,7 +72,7 @@
         {
             "args": [
                 "reflex",
-                "run-dev",
+                "run",
                 "${input:configFilePath}"
             ],
             "name": "Reflex dev",
