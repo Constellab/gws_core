@@ -24,16 +24,16 @@ def render_dataframes_page():
 
 def _render_full_width_dataframe_container(df: DataFrame):
     st.subheader('Full width dataframe container')
-    st.info('This allow the dataframe to take the full width of the container (with use_container_width=True option) without creating a horizontal scroll.')
+    st.info('This allow the dataframe to take the full width of the container (with width='stretch' option) without creating a horizontal scroll.')
 
     with StreamlitContainers.full_width_dataframe_container('container-full-dataframe'):
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, width='stretch')
 
     st.code('''
 from gws_core.streamlit import StreamlitContainers
 
 with StreamlitContainers.full_width_dataframe_container('container-full-dataframe'):
-    st.dataframe(dataframe, use_container_width=True)
+    st.dataframe(dataframe, width='stretch')
 ''')
 
     st.divider()

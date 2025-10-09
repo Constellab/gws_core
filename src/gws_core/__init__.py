@@ -188,26 +188,6 @@ from .impl.agent.py_mamba_agent import PyMambaAgent as PyMambaAgent
 from .impl.agent.py_pipenv_agent import PyPipenvAgent as PyPipenvAgent
 from .impl.agent.r_conda_agent import RCondaAgent as RCondaAgent
 from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
-# Impl > Dify
-from .impl.dify.dify_class import DifyChunkDocument as DifyChunkDocument
-from .impl.dify.dify_class import DifyChunkRecord as DifyChunkRecord
-from .impl.dify.dify_class import DifyChunksResponse as DifyChunksResponse
-from .impl.dify.dify_class import DifyDocumentChunk as DifyDocumentChunk
-from .impl.dify.dify_class import \
-    DifyDocumentChunksResponse as DifyDocumentChunksResponse
-from .impl.dify.dify_class import DifySegment as DifySegment
-from .impl.dify.dify_class import \
-    DifySendDocumentOptions as DifySendDocumentOptions
-from .impl.dify.dify_class import \
-    DifySendEndMessageStreamResponse as DifySendEndMessageStreamResponse
-from .impl.dify.dify_class import \
-    DifySendMessageSource as DifySendMessageSource
-from .impl.dify.dify_class import \
-    DifySendMessageStreamResponse as DifySendMessageStreamResponse
-from .impl.dify.dify_class import DifyUploadFile as DifyUploadFile
-from .impl.dify.dify_class import \
-    DifyUploadFileResponse as DifyUploadFileResponse
-from .impl.dify.dify_service import DifyService as DifyService
 # Impl > File
 from .impl.file.file import File as File
 from .impl.file.file_helper import FileHelper as FileHelper
