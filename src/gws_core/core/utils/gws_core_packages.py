@@ -15,7 +15,6 @@ class GwsCorePackages():
     STARLETTE_CONTEXT = "starlette-context"
     UVICORN = "uvicorn"
     CHARSET_NORMALIZER = "charset-normalizer"
-    DILL = "dill"
     NUMPY = "numpy"
     PANDAS = "pandas"
     MATPLOTLIB = "matplotlib"
