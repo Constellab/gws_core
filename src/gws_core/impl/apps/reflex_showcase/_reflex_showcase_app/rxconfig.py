@@ -47,11 +47,14 @@ def _load_gws_core():
 
         # retrieve the reflex app id to the logs context
         app_id = os.environ.get('GWS_REFLEX_APP_ID', 'reflex_app')
+        test_env = os.environ.get('GWS_REFLEX_TEST_ENV', 'false').lower() == 'true'
 
         from gws_core import LogContext, Settings, manage
         manage.AppManager.init_gws_env_and_db(
             main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-            log_level='INFO', log_context=LogContext.REFLEX, log_context_id=app_id)
+            log_level='INFO', log_context=LogContext.REFLEX,
+            log_context_id=app_id,
+            is_test=test_env)
 
 
 _load_reflex_base()

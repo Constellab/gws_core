@@ -157,7 +157,8 @@ class ReflexProcess(AppProcess):
             'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
             'GWS_REFLEX_API_URL': self.get_back_host_url(),
             'GWS_THEME': theme.theme,
-            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir()
+            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir(),
+            'GWS_REFLEX_TEST_ENV': str(Settings.get_instance().is_test),
         }
 
         # Get access token based on whether this is an enterprise app
