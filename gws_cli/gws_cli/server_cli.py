@@ -2,11 +2,13 @@ from enum import Enum
 from typing import List
 
 import typer
-from typing_extensions import Annotated
-
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_core import BrickService
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.manage import AppManager
+from gws_core.user.authorization_service import AuthorizationService
+from typing_extensions import Annotated
 
 app = typer.Typer(help="Manage server operations - run server, execute tests, run scenarios and processes")
 
@@ -29,7 +31,16 @@ def run(
         ctx: typer.Context,
         port: Annotated[str, typer.Option(help="Server port.")] = "3000",
         main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
-        show_sql: ShowSqlAnnotation = False):
+        show_sql: ShowSqlAnnotation = False,
+        allow_dev_app_connections: Annotated[bool, typer.Option("--allow-dev-app-connections",
+                                                                help="Allow connections to the api from the apps running in dev mode.", is_flag=True)] = False):
+
+    if allow_dev_app_connections:
+        if Settings.is_prod_mode():
+            print("Error: --allow-dev-app-connections cannot be used in production mode.")
+            raise typer.Exit(code=1)
+        Logger.warning(f"Dev mode app connections are allowed. Only use if you are working on apps.")
+        AuthorizationService.allow_dev_app_connections = True
 
     AppManager.start_app(
         main_setting_file_path=main_setting_file_path,

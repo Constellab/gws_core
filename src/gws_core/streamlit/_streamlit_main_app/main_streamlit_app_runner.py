@@ -302,6 +302,8 @@ class StreamlitMainAppRunner:
         return st.query_params.get('gws_app_id')
 
     def get_user_access_token(self) -> str:
+        if self.dev_mode:
+            return self.DEV_MODE_USER_ACCESS_TOKEN_KEY
         return st.query_params.get('gws_user_access_token')
 
     def authentication_is_required(self) -> bool:

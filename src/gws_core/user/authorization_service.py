@@ -3,9 +3,11 @@
 from enum import Enum
 
 from fastapi import Request
+from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import \
     ForbiddenException
+from gws_core.core.utils.settings import Settings
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_link_space_access import ShareLinkSpaceAccessService
 from gws_core.share.shared_dto import ShareLinkType
@@ -33,6 +35,8 @@ class AuthorizationService():
     """
 
     SHARE_LINK_AUTH_SCHEME = "ShareToken "
+    # Flag to allow connections from dev mode apps
+    allow_dev_app_connections: bool = False
 
     @classmethod
     def check_user_access_token(cls, request: Request) -> AuthContext:
@@ -107,15 +111,31 @@ class AuthorizationService():
         if not app_id or not user_access_token:
             return None
 
-        user_id = AppsManager.user_has_access_to_app(app_id, user_access_token)
+        user: User = None
 
-        if not user_id:
-            raise UnauthorizedException(
-                detail=GWSException.INVALID_APP_TOKEN.value,
-                unique_code=GWSException.INVALID_APP_TOKEN.name,
-            )
+        if app_id == AppInstance.DEV_MODE_APP_ID and user_access_token == AppInstance.DEV_MODE_USER_ACCESS_TOKEN_KEY:
+            if Settings.is_prod_mode():
+                raise UnauthorizedException(
+                    detail="Dev mode app cannot be used in production",
+                    unique_code=GWSException.INVALID_APP_TOKEN.name,
+                )
+            if not cls.allow_dev_app_connections:
+                raise UnauthorizedException(
+                    detail="Dev mode app connections are not allowed, please start the dev server with the option --allow-dev-app-connections",
+                    unique_code=GWSException.INVALID_APP_TOKEN.name,
+                )
+            user = User.get_and_check_sysuser()
 
-        user = cls._get_and_check_user(user_id)
+        else:
+            user_id = AppsManager.user_has_access_to_app(app_id, user_access_token)
+
+            if not user_id:
+                raise UnauthorizedException(
+                    detail=GWSException.INVALID_APP_TOKEN.value,
+                    unique_code=GWSException.INVALID_APP_TOKEN.name,
+                )
+
+            user = cls._get_and_check_user(user_id)
 
         auth_context = AuthContextApp(app_id=app_id, user=user)
         CurrentUserService.set_auth_context(auth_context)

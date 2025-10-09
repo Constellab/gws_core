@@ -3,7 +3,6 @@ from json import load
 from typing import Dict, List, Optional, Type, cast
 
 import reflex as rx
-from gws_core.core.utils.logger import Logger
 from typing_extensions import TypedDict
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
