@@ -6,13 +6,15 @@ from fastapi import Depends
 from fastapi.responses import RedirectResponse
 from starlette.responses import JSONResponse, Response
 
+from gws_core.core.exception.exceptions.unauthorized_exception import \
+    UnauthorizedException
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.service.front_service import FrontService
 from gws_core.lab.dev_env_service import DevEnvService
+from gws_core.user.auth_context import AuthContext, AuthContextUser
 from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
-from gws_core.user.user import User
 from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 from ..core_controller import core_app
@@ -49,10 +51,10 @@ def login_2_fa(credentials: UserCredentials2Fa) -> Response:
 
 
 @core_app.get("/check-token", tags=["User"], summary="Check user's token")
-def check_token(current_user: User = Depends(AuthorizationService.check_user_access_token)) -> str:
+def check_token(auth_context: AuthContext = Depends(AuthorizationService.check_user_access_token)) -> str:
     """Simple route to check the user's token (used in automatic dev login), returns the user's id if valid
     """
-    return current_user.id
+    return auth_context.get_user().id
 
 
 @core_app.get("/login-temp-access/{unique_code}", tags=["User"],
@@ -80,11 +82,13 @@ def dev_login(code: str) -> Response:
 
 @core_app.get("/dev-login-unique-code/generate", tags=["User"],
               summary="Generate a temp unique code to login to the dev lab")
-def generate_dev_login_unique_code(current_user: User = Depends(AuthorizationService.check_user_access_token)) -> str:
+def generate_dev_login_unique_code(auth_context: AuthContext = Depends(AuthorizationService.check_user_access_token)) -> str:
     """
     Generate a temp unique code to login to the dev lab
     """
-    return DevEnvService.generate_dev_login_unique_code(current_user.id)
+    if not isinstance(auth_context, AuthContextUser):
+        raise UnauthorizedException("Only users can generate dev login unique codes")
+    return DevEnvService.generate_dev_login_unique_code(auth_context.get_user().id)
 
 
 @core_app.post("/dev-login-unique-code/check/{unique_code}", tags=["User"],
