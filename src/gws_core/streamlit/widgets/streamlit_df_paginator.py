@@ -18,7 +18,6 @@ def dataframe_paginated(dataframe: DataFrame,
                         transformer: Callable[[Any], DataFrame] = None,
                         width: int | None = None,
                         height: int | None = None,
-                        use_container_width: bool = False,
                         hide_index: bool = False,
                         column_order: Iterable[str] | None = None,
                         column_config: ColumnConfigMappingInput | None = None,
@@ -48,8 +47,6 @@ def dataframe_paginated(dataframe: DataFrame,
     :type width: int | None, optional
     :param height: view st.dataframe height parameter, defaults to None
     :type height: int | None, optional
-    :param use_container_width: view st.dataframe use_container_width parameter, defaults to False
-    :type use_container_width: bool, optional
     :param hide_index: view st.dataframe hide_index parameter, defaults to False
     :type hide_index: bool, optional
     :param column_order: view st.dataframe column_order parameter, defaults to None
@@ -117,7 +114,6 @@ def dataframe_paginated(dataframe: DataFrame,
     if transformer is not None:
         pages = transformer(pages)
     return pagination.dataframe(pages,
-                                use_container_width=use_container_width,
                                 hide_index=hide_index,
                                 column_order=column_order,
                                 column_config=column_config,

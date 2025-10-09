@@ -121,7 +121,7 @@
                     },
                     {
                         "name": "streamlit",
-                        "version": "1.45.1"
+                        "version": "1.50.0"
                     },
                     {
                         "name": "streamlit-searchbox",
@@ -149,7 +149,7 @@
                     },
                     {
                         "name": "reflex",
-                        "version": "0.8.8"
+                        "version": "0.8.14.post1"
                     }
                 ]
             }

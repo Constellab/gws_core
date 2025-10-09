@@ -161,7 +161,7 @@ class StreamlitContainers():
 
     @classmethod
     def full_width_dataframe_container(cls, key: str, additional_style: str = None):
-        """Define a container for a dataframe that uses use_container_width=True.
+        """Define a container for a dataframe that uses width='stretch'.
         This prevent the dataframe to be too large and to create a horizontal scroll.
         The horizontal scroll of the dataframe is due to the resize absolute cursor.
 
@@ -244,7 +244,7 @@ class StreamlitContainers():
 }}
 
 /* Set cell to fill height */
-[CLASS_NAME] [data-testid="stVerticalBlockBorderWrapper"] > div {{
+[CLASS_NAME] [data-testid="stLayoutWrapper"] {{
     height: 100%;
 }}
 """
@@ -253,10 +253,9 @@ class StreamlitContainers():
             child_class = StreamlitHelper.get_element_css_class(f'{key}_{i}')
 
             style += f"""
-[CLASS_NAME] [data-testid="stVerticalBlockBorderWrapper"]:has(.{child_class}) {{
+[CLASS_NAME] [data-testid="stLayoutWrapper"]:has(.{child_class}) {{
     grid-column: span {cell.col_span};
     grid-row: span {cell.row_span};
-    border: solid black
 }}
 """
             i += 1

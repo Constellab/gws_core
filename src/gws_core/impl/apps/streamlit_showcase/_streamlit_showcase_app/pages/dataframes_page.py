@@ -1,8 +1,7 @@
 
 import streamlit as st
-from pandas import DataFrame
-
 from gws_core.streamlit import StreamlitContainers, dataframe_paginated
+from pandas import DataFrame
 
 
 def render_dataframes_page():
@@ -24,7 +23,7 @@ def render_dataframes_page():
 
 def _render_full_width_dataframe_container(df: DataFrame):
     st.subheader('Full width dataframe container')
-    st.info('This allow the dataframe to take the full width of the container (with width='stretch' option) without creating a horizontal scroll.')
+    st.info("This allow the dataframe to take the full width of the container (with width='stretch' option) without creating a horizontal scroll.")
 
     with StreamlitContainers.full_width_dataframe_container('container-full-dataframe'):
         st.dataframe(df, width='stretch')

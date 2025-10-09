@@ -1,6 +1,5 @@
 
 import streamlit as st
-
 from gws_core.streamlit import StreamlitContainers, StreamlitGridCell
 
 
@@ -200,25 +199,25 @@ def _render_grid():
     """),
     ]
     cell1, cell2, cell3, cell4, cell5, cell6 = StreamlitContainers.grid_container(
-        nb_columns=3, cells=grid_cells, key='grid', row_height='100px', gap='10px')
+        nb_columns=3, cells=grid_cells, key='custom-grid', row_height='100px', gap='10px')
 
     with cell1:
-        st.write('first cell')
-
+        st.write('First cell. Col span 1. Row span 1')
     with cell2:
-        st.write('second cell')
+        st.write('Second cell. Col span 1. Row span 2')
+
 
     with cell3:
-        st.write('third cell')
+        st.write('Third cell. Col span 1. Row span 2')
 
     with cell4:
-        st.write('fourth cell')
+        st.write('Fourth cell. Col span 1. Row span 1')
 
     with cell5:
-        st.write('fifth cell')
+        st.write('Fifth cell. Col span 1. Row span 1')
 
     with cell6:
-        st.write('sixth cell')
+        st.write('Sixth cell. Col span 2. Row span 1')
 
     st.code('''
 import streamlit as st

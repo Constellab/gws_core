@@ -3,7 +3,6 @@
 from typing import Literal
 
 import streamlit as st
-
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_types import AiChatMessage
 
@@ -83,7 +82,7 @@ class StreamlitOpenAiChat():
             dataframes = message.get_dataframes()
             if dataframes:
                 for dataframe in dataframes:
-                    st.dataframe(dataframe, use_container_width=True)
+                    st.dataframe(dataframe, width='stretch')
 
             # write plots
             plots = message.get_plots()
