@@ -42,13 +42,14 @@ class QueryParamObject():
         return self.params.get(key, default)
 
 
-class ReflexMainStateBase(rx.State, mixin=True):
+class ReflexMainStateBase(rx.State):
     """Base State of Reflex. This state is used by normal app and virtual environment app.
 
     It is used to manage the app configuration, authentication, and parameters.
     """
     _app_config: dict = None
     _is_initialized: bool = False
+    main_component_initialized: bool = False
 
     # None if the user is not authenticated
     authenticated_user_id: Optional[str] = None
@@ -56,6 +57,17 @@ class ReflexMainStateBase(rx.State, mixin=True):
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
     DEV_MODE_APP_ID = '1'
+
+    @rx.event
+    async def on_main_component_mount(self):
+        """
+        Event handler for when the main component is mounted.
+
+        Use a specific method and a variable because the _is_initialized is
+        set from a call that does not refresh the state.
+        """
+        await self.on_load()
+        self.main_component_initialized = True
 
     @rx.event
     async def on_load(self):
@@ -68,6 +80,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         :return: _description_
         :rtype: _type_
         """
+
 
         if self._is_initialized:
             # If already initialized, do nothing
@@ -89,11 +102,6 @@ class ReflexMainStateBase(rx.State, mixin=True):
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self._is_initialized = True
-
-    @rx.var
-    def is_initialized_computed(self) -> bool:
-        """Computed property for frontend access."""
-        return self._is_initialized
 
     def _load_app_config(self) -> dict:
         """Load the app configuration from the environment variable."""
@@ -123,14 +131,9 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if self.is_dev_mode():
             app_id = self.DEV_MODE_APP_ID
         else:
-            query_param = self.get_query_params()
-            app_id = query_param.get('gws_app_id')
+            app_id = os.environ.get('GWS_REFLEX_APP_ID')
             if not app_id:
-                # Return None and don't throw an error because this is called
-                # during the build
-                Logger.warning("gws_app_id query parameter is not set. This is normal during build")
-                return None
-                # raise ValueError("gws_app_id query parameter is not set")
+                raise ValueError("GWS_REFLEX_APP_ID environment variable is not set")
 
         return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
 

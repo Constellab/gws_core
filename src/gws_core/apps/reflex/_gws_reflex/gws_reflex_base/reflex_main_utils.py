@@ -4,8 +4,29 @@ import os
 
 import reflex as rx
 
-from .reflex_main_state_base import UNAUTHORIZED_ROUTE
+from .reflex_main_state_base import UNAUTHORIZED_ROUTE, ReflexMainStateBase
 
+
+def main_component(content: rx.Component) -> rx.Component:
+    """ Wrapper to wait for the app to be initialized before showing the content.
+
+    :param content: The content of the app.
+    :type content: rx.Component
+    :return: The wrapped component.
+    :rtype: rx.Component
+    """
+    return rx.fragment(
+        rx.cond(
+            ReflexMainStateBase.main_component_initialized,
+            content,
+
+            rx.center(
+                rx.spinner(size="3"),
+                height="100vh",
+            ),
+        ),
+        on_mount=ReflexMainStateBase.on_main_component_mount,
+    )
 
 def _unauthorized_page():
     return rx.box(

@@ -1,13 +1,12 @@
 from typing import List, Optional
 
-import reflex as rx
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user import User
 from gws_reflex_base import ReflexMainStateBase
 
 
-class ReflexMainState(ReflexMainStateBase, rx.State, mixin=True):
+class ReflexMainState(ReflexMainStateBase):
     """Main state for the normal (not in virtual environment) Reflex app. extending the base state with resource management.
 
     It provides methods to access the input resources of the app.
@@ -37,11 +36,18 @@ class ReflexMainState(ReflexMainStateBase, rx.State, mixin=True):
         return User.get_by_id_and_check(user_id)
 
     async def get_and_check_current_user(self) -> User:
+        """ Get the current user and check if it is authenticated.
+        Don't call this method in a @rx.var, use get_current_user instead (because it will fail during build).
+        Use this method in @rx.event or other methods only.
 
-        if not await self.requires_authentication():
-            return User.get_and_check_sysuser()
+        Raises:
+            Exception: If the user is not authenticated.
 
+        Returns:
+            User: The current user.
+        """
         user = await self.get_current_user()
+
         if not user:
             raise Exception("User not authenticated")
         return user

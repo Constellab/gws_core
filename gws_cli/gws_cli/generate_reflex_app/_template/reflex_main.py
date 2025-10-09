@@ -1,11 +1,11 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_base import add_unauthorized_page, get_themeontainer
-from gws_reflex_main import ReflexMainState
+from gws_reflex_main import (ReflexMainState, add_unauthorized_page, get_theme,
+                             main_component)
 
 
-class State(ReflexMainState, rx.State):
+class State(ReflexMainState):
     value = 0
 
     @rx.var
@@ -44,7 +44,7 @@ def index():
     # Render the main container with the app content.
     # The content will be displayed once the state is initialized.
     # If the state is not initialized, a loading spinner will be shown.
-    return rx.box(
+    return main_component(
         rx.heading("Reflex app", font_size="2em"),
         rx.text("Input resource name: " + State.get_resource_name),
         rx.text("Param name: " + State.get_param_name),

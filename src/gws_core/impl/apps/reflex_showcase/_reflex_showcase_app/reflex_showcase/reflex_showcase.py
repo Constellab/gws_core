@@ -1,11 +1,10 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_base import add_unauthorized_page, get_theme
-from gws_reflex_main import ReflexMainState
+from gws_reflex_main import ReflexMainState, add_unauthorized_page, get_theme
 
 
-class State(ReflexMainState, rx.State):
+class State(ReflexMainState):
     value = 0
 
     @rx.var
