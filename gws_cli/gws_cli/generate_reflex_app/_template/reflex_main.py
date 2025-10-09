@@ -34,7 +34,8 @@ class State(ReflexMainState):
 
 
 app = rx.App(
-    theme=get_theme()
+    theme=get_theme(),
+    stylesheets=["/style.css"],
 )
 
 

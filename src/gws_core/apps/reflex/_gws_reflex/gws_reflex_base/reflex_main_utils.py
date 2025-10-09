@@ -7,18 +7,18 @@ import reflex as rx
 from .reflex_main_state_base import UNAUTHORIZED_ROUTE, ReflexMainStateBase
 
 
-def main_component(content: rx.Component) -> rx.Component:
+def main_component(*contents: rx.Component) -> rx.Component:
     """ Wrapper to wait for the app to be initialized before showing the content.
 
-    :param content: The content of the app.
-    :type content: rx.Component
+    :param contents: The content components of the app.
+    :type contents: rx.Component
     :return: The wrapped component.
     :rtype: rx.Component
     """
     return rx.fragment(
         rx.cond(
             ReflexMainStateBase.main_component_initialized,
-            content,
+            rx.fragment(*contents),
 
             rx.center(
                 rx.spinner(size="3"),
