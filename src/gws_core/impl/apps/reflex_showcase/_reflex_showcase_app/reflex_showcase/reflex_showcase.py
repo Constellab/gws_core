@@ -3,6 +3,8 @@ from typing import Optional
 import reflex as rx
 from gws_reflex_main import ReflexMainState, add_unauthorized_page, get_theme
 
+from gws_core.core.utils.logger import Logger
+
 
 class State(ReflexMainState):
     value = 0
@@ -30,6 +32,7 @@ class State(ReflexMainState):
     def increment(self):
         """Increment the value."""
         self.value += 1
+        Logger.info(f"Value incremented to {self.value}")
 
 
 app = rx.App(

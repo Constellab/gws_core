@@ -4,7 +4,7 @@ import os
 from unittest import TestCase
 
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.log.log import LogCompleteInfo, LogsBetweenDates
@@ -90,7 +90,8 @@ INFO - 2022-12-02 09:26:46.906581 - first - log day 2
 
         # get only log from scenario
         result = LogService.get_logs_between_dates(from_date, to_date,
-                                                   from_scenario_id="1234567890")
+                                                   context=LogContext.SCENARIO,
+                                                   context_id="1234567890")
         self.assertEqual(len(result.logs), 2)
 
         # get logs paginated and skip the first log and the last log

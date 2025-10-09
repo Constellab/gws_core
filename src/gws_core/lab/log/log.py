@@ -133,9 +133,6 @@ class LogLine():
     def get_datetime_without_microseconds(self) -> datetime:
         return self.date_time.replace(microsecond=self.date_time.microsecond // 1000 * 1000)
 
-    def is_scenario_context(self) -> bool:
-        return self.context == LogContext.SCENARIO
-
     def to_dto(self) -> LogDTO:
         return LogDTO(level=self.level, date_time=self.date_time,
                       message=self.message, context=self.context,
@@ -159,17 +156,21 @@ class LogCompleteInfo():
         return Logger.file_name_to_date(name).date()
 
     def get_log_lines_by_time(self, start_time: datetime, end_time: datetime,
-                              from_scenario_id: str = None,
+                              context: LogContext = None, context_id: str = None,
                               nb_of_lines: int = None) -> List[LogLine]:
-        """Filter the log lines by time and if it is from a scenario
+        """Filter the log lines by time and context
 
         :param start_time: start time of the filter
         :type start_time: datetime
         :param end_time: end time of the filter
         :type end_time: datetime
-        :param from_scenario: if provided filter only log with the bool, defaults to None
-        :type from_scenario: bool, optional
-        :return: _description_
+        :param context: if provided filter only logs with this context, defaults to None
+        :type context: LogContext, optional
+        :param context_id: if provided filter only logs with this context_id, defaults to None
+        :type context_id: str, optional
+        :param nb_of_lines: maximum number of lines to return, defaults to None
+        :type nb_of_lines: int, optional
+        :return: list of log lines matching the filters
         :rtype: List[LogLine]
         """
         log_lines: List[LogLine] = []
@@ -188,12 +189,13 @@ class LogCompleteInfo():
             if stop_date is not None and log_line.get_datetime_without_microseconds() != stop_date:
                 break
 
-            # if the scenario id is provided, filter the log lines
-            # skip lines that are not from the scenario
-            # also skip lines that are from another scenario
-            if from_scenario_id is not None:
-                if not log_line.is_scenario_context() or log_line.context_id != from_scenario_id:
-                    continue
+            # if context is provided, filter the log lines by context
+            if context is not None and log_line.context != context:
+                continue
+
+            # if context_id is provided, filter the log lines by context_id
+            if context_id is not None and log_line.context_id != context_id:
+                continue
 
             if start_time <= log_line.date_time <= end_time:
                 log_lines.append(log_line)
@@ -238,15 +240,17 @@ class LogsBetweenDates():
     logs: List[LogLine]
     from_date: datetime
     to_date: datetime
-    from_scenario_id: str
+    context: LogContext
+    context_id: str
     is_last_page: bool
 
     def __init__(self, logs: List[LogLine], from_date: datetime, to_date: datetime,
-                 from_scenario_id: str, is_last_page: bool) -> None:
+                 context: LogContext = None, context_id: str = None, is_last_page: bool = False) -> None:
         self.logs = logs
         self.from_date = from_date
         self.to_date = to_date
-        self.from_scenario_id = from_scenario_id
+        self.context = context
+        self.context_id = context_id
         self.is_last_page = is_last_page
 
     def to_dto(self) -> LogsBetweenDatesDTO:
@@ -254,7 +258,8 @@ class LogsBetweenDates():
             logs=[log.to_dto() for log in self.logs],
             from_date=self.from_date,
             to_date=self.to_date,
-            from_scenario_id=self.from_scenario_id,
+            context=self.context,
+            context_id=self.context_id,
             is_last_page=self.is_last_page
         )
 

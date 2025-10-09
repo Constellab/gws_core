@@ -35,5 +35,6 @@ class LogsBetweenDatesDTO(BaseModelDTO):
     logs: List[LogDTO]
     from_date: datetime
     to_date: datetime
-    from_scenario_id: Optional[str]
+    context: Optional[LogContext] = None
+    context_id: Optional[str] = None
     is_last_page: bool

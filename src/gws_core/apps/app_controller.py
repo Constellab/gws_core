@@ -1,8 +1,14 @@
 
+from datetime import datetime
+
 from fastapi import Depends
+from fastapi.responses import StreamingResponse
 
 from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.core.utils.response_helper import ResponseHelper
+from gws_core.lab.log.log import LogsBetweenDates
+from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
 
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
@@ -52,3 +58,28 @@ def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
         raise Exception("Invalid token")
 
     return app_process.get_status_dto()
+
+
+@core_app.get("/apps/{app_id}/logs", tags=["App"],
+              summary="Get the log of an app", response_model=None)
+def get_app_logs(app_id: str,
+                 from_page_date: datetime = None,
+                 _=Depends(AuthorizationService.check_user_access_token)) -> LogsBetweenDatesDTO:
+    """
+    Get the logs of a specific app by its ID
+    """
+
+    return AppsManager.get_logs_of_app(app_id, from_page_date).to_dto()
+
+
+@core_app.get("/apps/{app_id}/logs/download", tags=["App"],
+              summary="Download the log of an app", response_model=None)
+def download_app_logs(app_id: str,
+                      _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
+    """
+    Download the logs of a specific app by its ID
+    """
+
+    logs: LogsBetweenDates = AppsManager.get_logs_of_app(app_id)
+
+    return ResponseHelper.create_file_response_from_str(logs.to_str(), "logs.txt")
