@@ -132,7 +132,7 @@ class ResourceImporter(Converter):
             raise Exception("Cannot import the file because the path is not defined.")
 
         if not source.exists():
-            raise Exception(f"Cannot import file '{source.name or source.path}' because it doesn't exists.")
+            raise Exception(f"Cannot import file '{source.name or source.path}' because it doesn't exists. It seems to have been deleted. Please check the file resource to check its status.")
 
         try:
             target: Resource = self.import_from_path(source, params, target_type)
