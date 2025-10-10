@@ -1,13 +1,15 @@
 {
+  "env": {},
   "permissions": {
     "allow": [
       "Bash(python:*)",
       "Bash(gws server test:*)",
       "Bash(python3:*)",
       "Bash(gws:*)",
-      "Read(//home/labuser/.claude/agents/gws-agents/**)"
+      "Read(//home/labuser/.claude/agents/gws-agents/**)",
+      "Read(//lab/user/**)",
+      "Bash(cat:*)"
     ],
     "deny": []
-  },
-  "env": {}
+  }
 }

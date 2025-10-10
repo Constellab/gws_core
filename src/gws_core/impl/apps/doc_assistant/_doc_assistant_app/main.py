@@ -2,36 +2,27 @@
 
 import importlib.util
 
-import streamlit as st
-from _doc_assistant_app.pages import doc_assistant_page
+from _doc_assistant_app.pages import chat_page, config_page
+
+from gws_core.streamlit import StreamlitRouter
 
 sources: list
 params: dict
 
-
-def _render_product_doc_page():
-    importlib.reload(doc_assistant_page)
-    doc_assistant_page.render_assistant_page(
-        'product',
-        params['product_doc_default_prompt'],
-        'Product documentation assistant',
-        'This assistant helps you to generate the product documentation of Constellab.')
+router = StreamlitRouter.load_from_session()
 
 
-def _render_technical_doc_page():
-    importlib.reload(doc_assistant_page)
-    doc_assistant_page.render_assistant_page(
-        'technical',
-        params['technical_doc_default_prompt'],
-        'Technical documentation assistant',
-        'This assistant helps you to generate the technical documentation of Constellab.')
+def _render_chat_page():
+    importlib.reload(chat_page)
+    chat_page.render_chat_page(params['prompts_json_path'])
 
 
-product_page = st.Page(_render_product_doc_page, title='Product documentation',
-                       url_path='product-doc', icon='🚀')
-technical_page = st.Page(_render_technical_doc_page, title='Technical documentation',
-                         url_path='technical-doc', icon='🛠️')
+def _render_config_page():
+    importlib.reload(config_page)
+    config_page.render_config_page(params['prompts_json_path'])
 
-pg = st.navigation([product_page, technical_page])
 
-pg.run()
+router.add_page(_render_chat_page, title='Chat', url_path='chat', icon='💬')
+router.add_page(_render_config_page, title='Config', url_path='config', icon='⚙️')
+
+router.run()
