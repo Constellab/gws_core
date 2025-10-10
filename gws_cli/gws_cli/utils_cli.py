@@ -1,76 +1,63 @@
-import os
-import subprocess
-from pathlib import Path
 
 import typer
+from gws_cli.utils.node_service import NodeService
+from gws_cli.utils.screenshot_service import ScreenshotService
 
 app = typer.Typer(help="Utility commands for development environment setup")
 
 
-@app.command("install-node", help="Install Node.js via NVM")
+@app.command("install node", help="Install Node.js via NVM")
 def install_node():
     """Install Node.js using NVM (Node Version Manager)"""
-    script_dir = Path(__file__).parent / "scripts"
-    script_path = script_dir / "install-node.sh"
-
-    if not script_path.exists():
-        typer.echo(f"Error: Install script not found at {script_path}", err=True)
-        raise typer.Exit(1)
-
-    typer.echo("Starting Node.js installation...")
-
-    try:
-        # Execute the bash script
-        result = subprocess.run(["bash", str(script_path)], check=True, capture_output=False)
-
-        if result.returncode == 0:
-            typer.echo("Node.js installation completed successfully!")
-        else:
-            typer.echo("Node.js installation failed!", err=True)
-            raise typer.Exit(1)
-
-    except subprocess.CalledProcessError as e:
-        typer.echo(f"Error during Node.js installation: {e}", err=True)
-        raise typer.Exit(1)
-    except Exception as e:
-        typer.echo(f"Unexpected error: {e}", err=True)
-        raise typer.Exit(1)
+    exit_code = NodeService.install_node()
+    if exit_code != 0:
+        raise typer.Exit(exit_code)
 
 
-@app.command("install-claude-code", help="Install Claude Code")
-def install_claude_code():
-    """Install Claude Code CLI tool (automatically installs Node.js if needed)"""
+@app.command("screenshot", help="Take a screenshot of a web application")
+def screenshot(
+    url: str = typer.Option(
+        "http://localhost:8511",
+        "--url",
+        "-u",
+        help="Base URL of the application"
+    ),
+    route: str = typer.Option(
+        "/",
+        "--route",
+        "-r",
+        help="Route to navigate to"
+    ),
+    output: str = typer.Option(
+        None,
+        "--output",
+        "-o",
+        help="Output path for the screenshot (default: /lab/user/app_screenshot.png)"
+    ),
+    no_logs: bool = typer.Option(
+        False,
+        "--no-logs",
+        help="Don't save console logs"
+    ),
+    headless: bool = typer.Option(
+        True,
+        "--headless/--no-headless",
+        help="Run browser in headless mode (default: headless)"
+    ),
+):
+    """
+    Take a screenshot of a web application using Playwright.
+    Automatically installs Playwright if not already installed.
 
-    # First, check if Node.js is available
-    try:
-        subprocess.run(["node", "--version"], check=True, capture_output=True)
-        subprocess.run(["npm", "--version"], check=True, capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        typer.echo("Node.js not found. Installing Node.js first...")
-        install_node()
-
-    script_dir = Path(__file__).parent / "scripts"
-    script_path = script_dir / "install-claude-code.sh"
-
-    if not script_path.exists():
-        typer.echo(f"Error: Install script not found at {script_path}", err=True)
-        raise typer.Exit(1)
-
-    typer.echo("Starting Claude Code installation...")
-
-    try:
-        # Execute the bash script
-        result = subprocess.run(["bash", str(script_path)], check=True, capture_output=False)
-
-        if result.returncode == 0:
-            typer.echo("Claude Code installation completed successfully!")
-        else:
-            typer.echo("Claude Code installation failed!", err=True)
-            raise typer.Exit(1)
-
-    except subprocess.CalledProcessError as e:
-        typer.echo(f"Error during Claude Code installation: {e}", err=True)
-        raise typer.Exit(1)
-    except Exception as e:
-        typer.echo(f"Unexpected error: {e}", err=True)
-        raise typer.Exit(1)
+    Example:
+        gws utils screenshot --route /dashboard --output ./screenshots/dashboard.png
+    """
+    exit_code = ScreenshotService.take_screenshot(
+        url=url,
+        route=route,
+        output_path=output,
+        save_console_logs=not no_logs,
+        headless=headless
+    )
+    if exit_code != 0:
+        raise typer.Exit(exit_code)
