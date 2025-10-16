@@ -18,9 +18,6 @@ class LogLevel(str, Enum):
     DEBUG = "DEBUG"
     ERROR = "ERROR"
 
-
-MAIN_SETTINGS_FILE_DEFAULT_PATH = "/lab/.sys/app/settings.json"
-
 MainSettingFilePathAnnotation = Annotated[str, typer.Option('--settings-path', help="Path to the main settings file.")]
 ShowSqlAnnotation = Annotated[bool, typer.Option("--show-sql", help="Log sql queries in the console.", is_flag=True)]
 IsTestAnnotation = Annotated[bool, typer.Option("--test", help="Run in test mode.", is_flag=True)]
@@ -30,7 +27,7 @@ IsTestAnnotation = Annotated[bool, typer.Option("--test", help="Run in test mode
 def run(
         ctx: typer.Context,
         port: Annotated[str, typer.Option(help="Server port.")] = "3000",
-        main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
+        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
         show_sql: ShowSqlAnnotation = False,
         allow_dev_app_connections: Annotated[bool, typer.Option("--allow-dev-app-connections",
                                                                 help="Allow connections to the api from the apps running in dev mode.", is_flag=True)] = False):
@@ -76,7 +73,7 @@ def run_scenario(
         ctx: typer.Context,
         scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
         user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the scenario.")],
-        main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
+        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
         show_sql: ShowSqlAnnotation = False,
         is_test: IsTestAnnotation = False):
     AppManager.run_scenario(
@@ -95,7 +92,7 @@ def run_process(
         protocol_model_id: Annotated[str, typer.Option("--protocol-model-id", help="Id of the protocol model.")],
         process_instance_name: Annotated[str, typer.Option("--process-instance-name", help="Name of the process instance.")],
         user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the process.")],
-        main_setting_file_path: MainSettingFilePathAnnotation = MAIN_SETTINGS_FILE_DEFAULT_PATH,
+        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
         show_sql: ShowSqlAnnotation = False,
         is_test: IsTestAnnotation = False):
     AppManager.run_process(

@@ -4,12 +4,14 @@ import os
 from typing import Dict
 
 import typer
-
-from gws_core import BrickService
+from gws_core import BrickService, Logger
 from gws_core.settings_loader import SettingsLoader
 
 
 class CLIUtils:
+
+    MAIN_SETTINGS_FILE_DEFAULT_PATH = "/lab/.sys/app/settings.json"
+
 
     @staticmethod
     def get_global_option_log_level(ctx: typer.Context) -> str:
@@ -48,14 +50,25 @@ class CLIUtils:
         return text
 
     @staticmethod
+    def get_current_brick_dir() -> str | None:
+        """Get the current brick dir, if the current dir is not inside a brick, return None.
+
+        :return: path to the brick dir or None
+        :rtype: str | None
+        """
+        return BrickService.get_parent_brick_folder(os.getcwd())
+
+
+    @staticmethod
     def get_and_check_current_brick_dir() -> str:
         """Get the current brick dir, if the current dir is not inside a brick, return None.
 
         :return: path to the brick dir or None
         :rtype: str | None
         """
-        brick_dir = BrickService.get_parent_brick_folder(os.getcwd())
+        brick_dir = CLIUtils.get_current_brick_dir()
         if not brick_dir:
+
             typer.echo(
                 "The current folder is not inside a brick, please run the command inside a brick folder or provide the brick name.",
                 err=True)
@@ -70,7 +83,17 @@ class CLIUtils:
         :return: path to the brick settings file or None
         :rtype: str | None
         """
-        brick_dir = CLIUtils.get_and_check_current_brick_dir()
+        brick_dir = CLIUtils.get_current_brick_dir()
+
+        if not brick_dir:
+            Logger.info(
+                f"Command not run inside a brick folder, using the default main settings file path: '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}'")
+
+            if not os.path.exists(CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH):
+                typer.echo(f"Default main settings file '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}' does not exist.", err=True)
+                raise typer.Abort()
+
+            return CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH
 
         settings_file_path = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
         if not os.path.exists(settings_file_path):
