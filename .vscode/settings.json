@@ -34,4 +34,10 @@
   "mypy-type-checker.args": [
     "--config-file=${workspaceFolder}/.mypy.ini"
   ],
+  "python.autoComplete.extraPaths": [
+    "/lab/user/bricks/gws_core/src/gws_core/apps/reflex/_gws_reflex"
+  ],
+  "python.analysis.extraPaths": [
+    "/lab/user/bricks/gws_core/src/gws_core/apps/reflex/_gws_reflex"
+  ]
 }

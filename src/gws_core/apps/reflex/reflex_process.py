@@ -77,6 +77,7 @@ class ReflexProcess(AppProcess):
         cmd = ['reflex', 'run',
                f'--frontend-port={self.front_port}',
                f'--backend-port={self.back_port}',
+               self._get_log_level_option(),
                #    f'--env=prod',
                ]
 
@@ -124,6 +125,7 @@ class ReflexProcess(AppProcess):
         backend_cmd = ['reflex', 'run',
                        f'--backend-port={self.back_port}',
                        '--backend-only',
+                       self._get_log_level_option(),
                        # For now disabled prod for backend because it
                        # files with gws_core imports
                        #    '--env=prod'
@@ -184,12 +186,17 @@ class ReflexProcess(AppProcess):
             Logger.info("Frontend is already built, skipping build.")
             return front_build_path
 
+        # delete the cache before building because it seems to be used by reflex build
+        # so if the cache is corrupted or on old version, the build may fail
+        app.clear_app_cache()
+
         self.set_status(AppProcessStatus.STARTING, "Building app (it may take a while)...")
         app_build_folder = app.get_front_app_build_folder()
         if not app_build_folder.exists():
             raise Exception(f"Destination folder {app_build_folder} does not exist.")
 
-        build_cmd = ['reflex', 'export', '--env=prod', '--frontend-only', '--zip-dest-dir', app_build_folder.path]
+        build_cmd = ['reflex', 'export', '--env=prod', '--frontend-only',
+                     '--zip-dest-dir', app_build_folder.path, '--no-ssr']
 
         zip_file_path = os.path.join(app_build_folder.path, ReflexProcess.ZIP_FILE_NAME)
         FileHelper.delete_file(zip_file_path)
@@ -285,6 +292,9 @@ class ReflexProcess(AppProcess):
 
     def _get_front_port(self):
         return self.front_port
+
+    def _get_log_level_option(self) -> str:
+        return f'--loglevel={Logger.get_instance().level.lower()}'
 
     @classmethod
     def _get_cached_reflex_access_token(cls) -> str:

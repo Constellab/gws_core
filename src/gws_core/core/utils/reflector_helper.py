@@ -129,32 +129,46 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
+    def get_func_doc(cls, func: Callable, func_name: str, type_: Optional[Type] = None) -> Optional[MethodDoc]:
+        """Get documentation for a single function.
+
+        :param func: The function to document
+        :param func_name: The name of the function
+        :param type_: Optional type/class to check for method type (classmethod, staticmethod, etc.)
+        :return: MethodDoc object or None if documentation cannot be generated
+        """
+        try:
+            if not callable(func):
+                return None
+
+            method_type: str = MethodDocType.BASICMETHOD
+
+            if type_ is not None:
+                if isinstance(inspect.getattr_static(type_, func_name), classmethod):
+                    method_type = MethodDocType.CLASSMETHOD
+
+                if isinstance(inspect.getattr_static(type_, func_name), staticmethod):
+                    method_type = MethodDocType.STATICMETHOD
+
+            signature: inspect.Signature = inspect.signature(func)
+            arguments: List = cls.get_method_named_args_json(func)
+            return_type = Utils.stringify_type(
+                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
+
+            doc = cls.get_cleaned_doc(func)
+            return MethodDoc(name=func_name, doc=doc,
+                           args=arguments, return_type=return_type, method_type=method_type)
+        except Exception:
+            Logger.error(f"Error while getting method doc of {func_name}")
+            return None
+
+    @classmethod
     def get_methods_doc(cls, type_: Type, methods: List[MethodDocFunction]) -> List[MethodDoc]:
         res: List[MethodDoc] = []
         for method in methods:
-            try:
-                if not callable(method.func):
-                    continue
-
-                method_type: str = MethodDocType.BASICMETHOD
-
-                if isinstance(inspect.getattr_static(type_, method.name), classmethod):
-                    method_type = MethodDocType.CLASSMETHOD
-
-                if isinstance(inspect.getattr_static(type_, method.name), staticmethod):
-                    method_type = MethodDocType.STATICMETHOD
-
-                signature: inspect.Signature = inspect.signature(method.func)
-                arguments: List = cls.get_method_named_args_json(method.func)
-                return_type = Utils.stringify_type(
-                    signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
-
-                doc = cls.get_cleaned_doc(method.func)
-                res.append(MethodDoc(name=method.name, doc=doc,
-                                     args=arguments, return_type=return_type, method_type=method_type))
-            except Exception:
-                Logger.error(f"Error while getting method doc of {method.name} in {type_}")
-                continue
+            method_doc = cls.get_func_doc(method.func, method.name, type_)
+            if method_doc is not None:
+                res.append(method_doc)
         return res
 
     @classmethod

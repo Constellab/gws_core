@@ -13,7 +13,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class AppPackageDownloader:
+class AppPluginDownloader:
     """Class to download and manage dashboard component packages from GitHub releases.
 
     This class handles downloading component packages (iframe-message and streamlit-components)
@@ -35,11 +35,12 @@ class AppPackageDownloader:
     RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
     # Main version that contains both packages
-    DASHBOARD_COMPONENTS_VERSION = "dc_2.0.0"
+    DASHBOARD_COMPONENTS_VERSION = "dc_2.0.1"
 
     # Package names
     IFRAME_MESSAGE = "iframe-message"
     STREAMLIT_COMPONENTS = "streamlit-components"
+    REFLEX_COMPONENTS = "reflex-components"
 
     package_name: str
     message_dispatcher: MessageDispatcher
@@ -56,9 +57,13 @@ class AppPackageDownloader:
         :param message_dispatcher: Optional message dispatcher for logging, defaults to None
         :type message_dispatcher: MessageDispatcher, optional
         """
-        if package_name not in [self.IFRAME_MESSAGE, self.STREAMLIT_COMPONENTS]:
-            raise ValueError(f"Invalid package name: {package_name}. "
-                             f"Must be either '{self.IFRAME_MESSAGE}' or '{self.STREAMLIT_COMPONENTS}'")
+        available_packages = [self.IFRAME_MESSAGE,
+                              self.STREAMLIT_COMPONENTS,
+                              self.REFLEX_COMPONENTS]
+        if package_name not in available_packages:
+            raise ValueError(
+                f"Invalid package name: {package_name}. "
+                f"Must be either {', '.join(available_packages)}.")
 
         if message_dispatcher is None:
             message_dispatcher = MessageDispatcher()
@@ -100,7 +105,7 @@ class AppPackageDownloader:
         if not force_download:
             existing_version = self.get_installed_version()
             if existing_version == self.DASHBOARD_COMPONENTS_VERSION:
-                Logger.info(f"Package {self.package_name} version {existing_version} is already installed.")
+                Logger.debug(f"Package {self.package_name} version {existing_version} is already installed.")
                 return self.destination_folder
 
         # Uninstall existing package if it exists

@@ -7,7 +7,6 @@ from typing import List
 from unittest.suite import TestSuite
 
 import plotly.express as px
-
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
@@ -26,19 +25,21 @@ from .core.utils.settings import Settings
 
 class AppManager:
 
+    gws_env_initialized: bool = False
+
     @classmethod
     def init_gws_env_and_db(cls, main_setting_file_path: str,
-                     log_level: str,
-                     log_context: LogContext = LogContext.MAIN,
-                     log_context_id: str = None,
-                     show_sql: bool = False,
-                     is_test: bool = False) -> Settings:
+                            log_level: str,
+                            log_context: LogContext = LogContext.MAIN,
+                            log_context_id: str = None,
+                            show_sql: bool = False,
+                            is_test: bool = False) -> Settings:
         settings = cls.init_gws_env(main_setting_file_path=main_setting_file_path,
-                         log_level=log_level,
-                         log_context=log_context,
-                         log_context_id=log_context_id,
-                         show_sql=show_sql,
-                         is_test=is_test)
+                                    log_level=log_level,
+                                    log_context=log_context,
+                                    log_context_id=log_context_id,
+                                    show_sql=show_sql,
+                                    is_test=is_test)
         # Init the db
         DbManagerService.init_all_db(full_init=False)
         return settings
@@ -77,6 +78,8 @@ class AppManager:
         # Force this init because it is overriden when importing streamlit
         px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
 
+        cls.gws_env_initialized = True
+
         return settings_loader.settings
 
     @classmethod
@@ -106,11 +109,10 @@ class AppManager:
             raise BadRequestException(f"'settings.json' file not found in the brick '{brick_dir}'.")
 
         cls.init_gws_env_and_db(main_setting_file_path=settings_file,
-                         log_level=log_level,
-                         show_sql=show_sql,
-                         is_test=True,
-                         log_context=LogContext.MAIN)
-
+                                log_level=log_level,
+                                show_sql=show_sql,
+                                is_test=True,
+                                log_context=LogContext.MAIN)
 
         if len(tests) == 1 and tests[0] in ["*", "all"]:
             tests = ["test*"]
@@ -144,12 +146,11 @@ class AppManager:
                      show_sql: bool,
                      is_test: bool) -> None:
         cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
-                         log_level=log_level,
-                         show_sql=show_sql,
-                         is_test=is_test,
-                         log_context=LogContext.SCENARIO,
-                         log_context_id=scenario_id)
-
+                                log_level=log_level,
+                                show_sql=show_sql,
+                                is_test=is_test,
+                                log_context=LogContext.SCENARIO,
+                                log_context_id=scenario_id)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
@@ -167,12 +168,11 @@ class AppManager:
                     show_sql: bool,
                     is_test: bool) -> None:
         cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
-                         log_level=log_level,
-                         show_sql=show_sql,
-                         is_test=is_test,
-                         log_context=LogContext.SCENARIO,
-                         log_context_id=scenario_id)
-
+                                log_level=log_level,
+                                show_sql=show_sql,
+                                is_test=is_test,
+                                log_context=LogContext.SCENARIO,
+                                log_context_id=scenario_id)
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)

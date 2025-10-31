@@ -35,10 +35,10 @@ def rich_text_editor(placeholder: str = None,
 
     data = {
         "placeholder": placeholder,
-        "initial_value": default_value_json,
+        "initialValue": default_value_json,
         "disabled": disabled,
-        "min_height": min_height,
-        "max_height": max_height
+        "minHeight": min_height,
+        "maxHeight": max_height
     }
     component_value = streamlit_component_loader.call_component(data, key=key)
 

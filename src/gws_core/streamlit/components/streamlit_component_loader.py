@@ -6,7 +6,8 @@ from typing import Any, Callable
 import streamlit as st
 import streamlit.components.v1 as components
 from fastapi.encoders import jsonable_encoder
-from gws_core.apps.app_package_downloader import AppPackageDownloader
+
+from gws_core.apps.app_plugin_downloader import AppPluginDownloader
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.streamlit.widgets.streamlit_helper import StreamlitHelper
@@ -84,7 +85,7 @@ class StreamlitComponentLoader():
 
         # Download the iframe-message package using ComponentPackageDownloader
         with st.spinner('Installing the component...'):
-            downloader = AppPackageDownloader(AppPackageDownloader.IFRAME_MESSAGE)
+            downloader = AppPluginDownloader(AppPluginDownloader.IFRAME_MESSAGE)
             folder_path = downloader.install_package()
 
         return components.declare_component(

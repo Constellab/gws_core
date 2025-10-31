@@ -1,98 +1,87 @@
-from typing import Optional
-
 import reflex as rx
-from gws_core.core.utils.logger import Logger
-from gws_core.user.current_user_service import CurrentUserService
-from gws_reflex_main import ReflexMainState, add_unauthorized_page, get_theme
+from gws_reflex_main import add_unauthorized_page, get_theme
 
-
-class State(ReflexMainState):
-    value = 0
-
-    @rx.var
-    async def get_resource_name(self) -> str:
-        """Return the name of the resource."""
-
-        # Secure the method to ensure it checks authentication
-        # before accessing resources.
-        if not await self.check_authentication():
-            return 'Unauthorized'
-        resources = await self.get_resources()
-        return resources[0].name if resources else 'No resource'
-
-    @rx.var
-    async def get_param_name(self) -> Optional[str]:
-        """
-        Get a parameter from the app configuration.
-        This route is not secured, so it can be accessed without authentication.
-        """
-        return await self.get_param('param_name', 'default_value')
-
-    @rx.event
-    def increment(self):
-        """Increment the value."""
-        self.value += 1
-        Logger.info(f"Value incremented to {self.value}")
-
-    @rx.var
-    async def get_current_user_name(self) -> Optional[str]:
-        """Return the name of the current user, or None if no user is set."""
-        user = await self.get_current_user()
-        return user.email if user else None
-
-    @rx.var(cache=False)
-    async def get_current_user_name2(self) -> Optional[str]:
-        """Return the name of the current user, or None if no user is set."""
-        user = CurrentUserService.get_current_user()
-        return user.email if user else None
-
-    @rx.event
-    async def load_current_user(self):
-        """Load the current user."""
-        user = CurrentUserService.get_current_user()
-        if user:
-            Logger.info(f"Current user in load_current_user: {user.email}")
-        else:
-            Logger.info("No current user in load_current_user")
-
-        # # authenticate_user = await self.authenticate_user()
-        with await self.authenticate_user() as user:
-            user2 = CurrentUserService.get_current_user()
-            if user2:
-                Logger.info(f"Current user in load_current_user: {user2.email}")
-            else:
-                Logger.info("No current user in load_current_user")
-
+from .pages import doc_component_page, home_page, rich_text_page
 
 app = rx.App(
     theme=get_theme()
 )
 
 
-# Declare the page and init the main state
-@rx.page()
-def index():
-    # Render the main container with the app content.
-    # The content will be displayed once the state is initialized.
-    # If the state is not initialized, a loading spinner will be shown.
-    return rx.box(
-        rx.heading("Reflex app", font_size="2em"),
-        rx.text("Input resource name: " + State.get_resource_name),
-        rx.text("Param name: " + State.get_param_name),
-        rx.text(f"Value: {State.value}"),
-        rx.text("Current user: " + State.get_current_user_name),
-        rx.text("Current user2: " + State.get_current_user_name2),
-        rx.button(
-            "Click me",
-            on_click=State.increment,
-            style={"margin-top": "20px"}
+def sidebar_link(text: str, url: str, icon: str) -> rx.Component:
+    """Create a sidebar navigation link."""
+    return rx.link(
+        rx.hstack(
+            rx.icon(icon, size=20),
+            rx.text(text, size="3"),
+            width="100%",
+            padding_y="0.5em",
+            padding_x="1em",
+            border_radius="0.5em",
+            _hover={
+                "bg": rx.color("accent", 3),
+            },
         ),
-        rx.button(
-            "Load current user",
-            on_click=State.load_current_user,
-            style={"margin-top": "20px", "margin-left": "10px"}
+        href=url,
+        underline="none",
+        width="100%",
+    )
+
+
+def sidebar() -> rx.Component:
+    """Create the sidebar with navigation links."""
+    return rx.box(
+        rx.vstack(
+            rx.heading("Reflex Showcase", size="6", margin_bottom="1em"),
+            rx.divider(margin_bottom="1em"),
+
+            # Navigation links
+            sidebar_link("Home", "/", "home"),
+            sidebar_link("Rich Text", "/rich-text", "pencil"),
+            sidebar_link("Doc Component", "/doc-component", "file-text"),
+
+            width="100%",
+            spacing="2",
+        ),
+        width="250px",
+        padding="1.5em",
+        bg=rx.color("gray", 2),
+        height="100vh",
+        position="fixed",
+        left="0",
+        top="0",
+    )
+
+
+def layout(content: rx.Component) -> rx.Component:
+    """Create the main layout with sidebar and content."""
+    return rx.box(
+        sidebar(),
+        rx.box(
+            content,
+            margin_left="250px",
+            width="calc(100% - 250px)",
+            min_height="100vh",
         ),
     )
+
+
+@rx.page(route="/")
+def index():
+    """Home page."""
+    return layout(home_page.home_page())
+
+
+@rx.page(route="/rich-text")
+def rich_text():
+    """Rich text component demo page."""
+    return layout(rich_text_page.rich_text_page())
+
+
+@rx.page(route="/doc-component")
+def doc_component():
+    """Doc component demo page."""
+    return layout(doc_component_page.doc_component_page())
 
 
 # Add the unauthorized page to the app.

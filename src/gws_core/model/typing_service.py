@@ -2,10 +2,8 @@
 
 from typing import Callable, List, Literal, Type
 
-from peewee import ModelSelect
-
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import SearchOperator, SearchParams
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.utils.utils import Utils
@@ -75,7 +73,7 @@ class TypingService():
             search_builder = TypingSearchBuilder(Typing)
 
         # force to add a filter hide to False
-        search.override_filter_criteria('hide', 'EQ', False)
+        search.override_filter_criteria('hide', SearchOperator.EQ, False)
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 

@@ -1,16 +1,17 @@
 import json
 import os
 import re
-import shutil
 
 import streamlit
 from bs4 import BeautifulSoup, Comment
-from gws_core.apps.app_package_downloader import AppPackageDownloader
+
+from gws_core.apps.app_plugin_downloader import AppPluginDownloader
+from gws_core.apps.app_plugin_html_parser import AppPluginHtmlParser
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 
 
-class StreamlitPlugin(AppPackageDownloader):
+class StreamlitPlugin(AppPluginDownloader):
     """Class to install the gws_plugin in the streamlit app.
     Extends ComponentPackageDownloader to add Streamlit-specific installation logic.
 
@@ -160,16 +161,6 @@ class StreamlitPlugin(AppPackageDownloader):
         with open(json_file_path, 'w', encoding='utf-8') as json_file:
             json.dump(dict_, json_file, indent=4)
 
-    def replace_relative_path(self, original_path: str, prefix: str) -> str:
-        """
-        Replace relative paths with a prefixed path.
-        """
-        if original_path.startswith(('http://', 'https://', 'mailto:', '#', './static/custom')):
-            return original_path
-        if original_path.startswith('./'):
-            return prefix + original_path[1:]
-        return prefix + '/' + original_path
-
     def modifiy_streamlit_index_html(self):
         """Modify the Streamlit index.html file to inject the plugin."""
         # Read the HTML files
@@ -179,23 +170,21 @@ class StreamlitPlugin(AppPackageDownloader):
         with open(self.get_streamlit_html_file_path(), 'r', encoding='utf-8') as file:
             destination_html = file.read()
 
-        # Parse the HTML files with BeautifulSoup
-        source_soup = BeautifulSoup(source_html, 'html.parser')
-        destination_soup = BeautifulSoup(destination_html, 'html.parser')
+        # Parse source HTML using HtmlParser
+        html_parser = AppPluginHtmlParser(relative_path_prefix=self.get_plugin_relative_path())
+        parsed_html = html_parser.parse(source_html)
 
-        # 1. Copy styles from source to destination
-        source_styles = source_soup.find_all('style')
-        source_link_styles = source_soup.find_all('link', {'rel': 'stylesheet'})
+        # Parse destination HTML with BeautifulSoup
+        destination_soup = BeautifulSoup(destination_html, 'html.parser')
 
         # Add version comment to the head of destination_soup
         self._add_version_comment(destination_soup)
-        # Add styles to the head of destination_soup
-        self._add_styles_to_head(source_styles, destination_soup)
-        self._add_link_styles_to_head(source_link_styles, destination_soup)
 
-        # 2. Copy body content from source to destination
-        if source_soup.body:
-            self._add_body_content(source_soup, destination_soup)
+        # Add styles to the head of destination_soup
+        self._add_parsed_styles_to_head(parsed_html.head_styles, destination_soup)
+
+        # Add body content from parsed HTML (this now includes links, scripts, and HTML content)
+        self._add_parsed_body_to_destination(parsed_html.body, destination_soup)
 
         self._write_streamlit_html_file(destination_soup)
 
@@ -242,38 +231,26 @@ class StreamlitPlugin(AppPackageDownloader):
         with open(index_path, 'w', encoding='utf-8') as file:
             file.write(str(destination_soup.prettify()))
 
-    def _add_styles_to_head(self, source_styles, destination_soup: BeautifulSoup):
-        for style in source_styles:
-            # Process the content to add ./static/custom to url() references
-            if style.string:
-                # Regular expression to find url() patterns with relative paths
-                url_pattern = re.compile(r'url\([\'"]?(?!https?://|data:|\/\/|\.\/static\/custom)([^\'")]+)[\'"]?\)')
-                style_text = style.string
-                # Replace relative paths with prefixed paths
-                style_text = url_pattern.sub(f'url({self.get_plugin_relative_path()}/\\1)', style_text)
-                style.string = style_text
-
-            # Add comment before the style to mark it as added
+    def _add_parsed_styles_to_head(self, styles, destination_soup: BeautifulSoup):
+        """Add parsed styles to the destination head.
+        Note: The parser now only returns external stylesheets (no inline styles).
+        """
+        for style_obj in styles:
+            # Add start comment
             comment = Comment(self.START_COMMENT)
             destination_soup.head.append(comment)
-            destination_soup.head.append(style)
-            comment = Comment(self.END_COMMENT)
-            destination_soup.head.append(comment)
 
-    def _add_link_styles_to_head(self, source_link_styles, destination_soup: BeautifulSoup):
-        for link in source_link_styles:
-            # Skip if it's within a noscript tag
-            if link.parent.name == 'noscript':
-                continue
+            # Create <link> tag for external stylesheet
+            link_tag = destination_soup.new_tag('link', rel='stylesheet')
+            link_tag['href'] = style_obj.href
 
-            # Modify relative paths in href
-            if link.has_attr('href'):
-                link['href'] = self.replace_relative_path(link['href'], self.get_plugin_relative_path())
+            # Add any additional attributes
+            for attr_name, attr_value in style_obj.attributes.items():
+                link_tag[attr_name] = attr_value
 
-            # Add comment before the link to mark it as added
-            comment = Comment(self.START_COMMENT)
-            destination_soup.head.append(comment)
-            destination_soup.head.append(link)
+            destination_soup.head.append(link_tag)
+
+            # Add end comment
             comment = Comment(self.END_COMMENT)
             destination_soup.head.append(comment)
 
@@ -285,31 +262,47 @@ class StreamlitPlugin(AppPackageDownloader):
             f"{self.VERSION_COMMENT}{self.DASHBOARD_COMPONENTS_VERSION}{self.VERSION_COMMENT}")
         destination_soup.head.append(version_comment)
 
-    def _add_body_content(self, source_soup, destination_soup):
-        # Remove noscript tags from body content we'll copy
-        for noscript in source_soup.body.find_all('noscript'):
-            noscript.decompose()
-
-        # Process all href attributes in the source body before copying
-        for element in source_soup.body.find_all(href=True):
-            element['href'] = self.replace_relative_path(element['href'], self.get_plugin_relative_path())
-
-        # Process all src attributes in the source body before copying
-        for element in source_soup.body.find_all(src=True):
-            element['src'] = self.replace_relative_path(element['src'], self.get_plugin_relative_path())
-
-        # Add a comment before appending content to clearly mark what's been added
+    def _add_parsed_body_to_destination(self, body_obj, destination_soup: BeautifulSoup):
+        """Add parsed body content (HTML, links, and scripts) to the destination body.
+        Note: The parser now only returns external scripts (no inline scripts).
+        """
+        # Add start comment
         comment = Comment(self.START_COMMENT)
         destination_soup.body.append(comment)
 
-        # Append all children from the processed source body
-        for element in list(source_soup.body.children):
-            # Skip empty or whitespace-only text nodes
-            if element.name is None and not element.strip():
-                continue
+        # 1. Add HTML content first
+        if body_obj.content:
+            body_content_soup = BeautifulSoup(body_obj.content, 'html.parser')
+            for element in body_content_soup.children:
+                # Skip empty or whitespace-only text nodes
+                if hasattr(element, 'name') and element.name is None and not str(element).strip():
+                    continue
+                destination_soup.body.append(element)
 
-            destination_soup.body.append(element)
+        # 2. Add links (modulepreload, etc.)
+        for link_obj in body_obj.links:
+            link_tag = destination_soup.new_tag('link')
+            link_tag['href'] = link_obj.href
+            link_tag['rel'] = link_obj.rel
 
-        # Add a closing comment
+            # Add any additional attributes
+            for attr_name, attr_value in link_obj.attributes.items():
+                link_tag[attr_name] = attr_value
+
+            destination_soup.body.append(link_tag)
+
+        # 3. Add external scripts
+        for script_obj in body_obj.scripts:
+            # Create <script> tag with src
+            script_tag = destination_soup.new_tag('script')
+            script_tag['src'] = script_obj.src
+
+            # Add any additional attributes
+            for attr_name, attr_value in script_obj.attributes.items():
+                script_tag[attr_name] = attr_value
+
+            destination_soup.body.append(script_tag)
+
+        # Add end comment
         comment = Comment(self.END_COMMENT)
         destination_soup.body.append(comment)

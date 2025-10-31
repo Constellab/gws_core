@@ -1,7 +1,6 @@
 
 
 import os
-import sys
 
 
 class ReflexInit:
@@ -21,18 +20,14 @@ class ReflexInit:
             ReflexInit._load_gws_core()
 
     @staticmethod
-    def _load_module(module_path: str) -> None:
-        if not os.path.exists(module_path):
-            raise FileNotFoundError(f"Modules not found at {module_path}")
-
-        sys.path.insert(0, module_path)
-
-    @staticmethod
     def _load_gws_core():
         # retrieve the reflex app id to the logs context
+        from gws_core import LogContext, Settings, manage
+
+        if manage.AppManager.gws_env_initialized:
+            return
         app_id = os.environ.get('GWS_REFLEX_APP_ID', 'reflex_app')
 
-        from gws_core import LogContext, Settings, manage
         manage.AppManager.init_gws_env_and_db(
             main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
             log_level='INFO', log_context=LogContext.REFLEX, log_context_id=app_id)

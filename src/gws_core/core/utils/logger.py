@@ -191,6 +191,10 @@ class Logger:
         return cls._file_path
 
     @classmethod
+    def get_instance(cls) -> Optional['Logger']:
+        return cls._logger_instance
+
+    @classmethod
     def _log_message(cls, level_name: MessageType, obj: Any) -> None:
         """Log a message
 

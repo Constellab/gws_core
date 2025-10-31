@@ -43,6 +43,12 @@ class ReflexApp(AppInstance):
 
     INDEX_FILE_NAME = "index.html"
 
+    CACHE_FOLDER_NAMES = [
+        ".states",
+        ".web",
+        os.path.join("assets", "external")
+    ]
+
     def set_app_config(self, app_config: AppConfig, front_app_build_folder: Folder) -> None:
         """Set the app config for this app instance.
         The app config is used to generate the app code and configuration files.
@@ -197,3 +203,26 @@ class ReflexApp(AppInstance):
 
     def is_enterprise(self) -> bool:
         return self._is_enterprise
+
+    def clear_app_cache(self) -> None:
+        """Clear the Reflex app cache by deleting specific folders.
+        Deletes the following folders if they exist:
+        - .states
+        - .web
+        - assets/external
+        """
+        app_src_folder_path = self._shell_proxy.working_dir
+        if not FileHelper.exists_on_os(app_src_folder_path):
+            return
+
+        cache_folders = [
+            os.path.join(app_src_folder_path, folder_name) for folder_name in self.CACHE_FOLDER_NAMES
+        ]
+
+        for folder_path in cache_folders:
+            if FileHelper.exists_on_os(folder_path):
+                try:
+                    FileHelper.delete_dir(folder_path, ignore_errors=False)
+                    Logger.info(f"Deleted cache folder: {folder_path}")
+                except Exception as e:
+                    Logger.error(f"Failed to delete cache folder {folder_path}: {str(e)}")
