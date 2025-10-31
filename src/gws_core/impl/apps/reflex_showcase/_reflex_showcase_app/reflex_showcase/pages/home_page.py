@@ -107,7 +107,6 @@ rx.box(
             code=resource_access_code,
             title="Resource Access",
             description="Shows how to access input resources and configuration parameters from the Constellab platform.",
-            show_doc=False,
         ),
 
         # Authentication demo
@@ -116,7 +115,7 @@ rx.box(
             code=authentication_code,
             title="Authentication",
             description="Demonstrates how to access the current authenticated user in your Reflex application.",
-            show_doc=False,
+
         ),
 
         rx.divider(margin_top="2em", margin_bottom="1em"),

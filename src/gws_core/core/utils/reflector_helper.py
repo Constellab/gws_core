@@ -3,8 +3,8 @@ import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, Type
 
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.reflector_types import (MethodArgDoc, MethodDoc,
-                                                 MethodDocFunction,
+from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
+                                                 MethodArgDoc, MethodDoc,
                                                  MethodDocType)
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
@@ -129,11 +129,10 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
-    def get_func_doc(cls, func: Callable, func_name: str = None, type_: Optional[Type] = None) -> Optional[MethodDoc]:
+    def get_func_doc(cls, func: Callable, type_: Optional[Type] = None) -> Optional[MethodDoc]:
         """Get documentation for a single function.
 
         :param func: The function to document
-        :param func_name: The name of the function
         :param type_: Optional type/class to check for method type (classmethod, staticmethod, etc.)
         :return: MethodDoc object or None if documentation cannot be generated
         """
@@ -142,8 +141,7 @@ class ReflectorHelper():
                 return None
 
             method_type: str = MethodDocType.BASICMETHOD
-            if func_name is None:
-                func_name = func.__name__
+            func_name = func.__name__
 
             if type_ is not None:
                 if isinstance(inspect.getattr_static(type_, func_name), classmethod):
@@ -157,21 +155,12 @@ class ReflectorHelper():
             return_type = Utils.stringify_type(
                 signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
 
-            doc = cls.get_cleaned_doc(func)
+            doc = cls.get_cleaned_doc_string(func)
             return MethodDoc(name=func_name, doc=doc,
                              args=arguments, return_type=return_type, method_type=method_type)
         except Exception:
             Logger.error(f"Error while getting method doc of {func_name}")
             return None
-
-    @classmethod
-    def get_methods_doc(cls, type_: Type, methods: List[MethodDocFunction]) -> List[MethodDoc]:
-        res: List[MethodDoc] = []
-        for method in methods:
-            method_doc = cls.get_func_doc(method.func, method.name, type_)
-            if method_doc is not None:
-                res.append(method_doc)
-        return res
 
     @classmethod
     def get_all_public_args(cls, type_: Type) -> Optional[Dict[str, str]]:
@@ -212,13 +201,76 @@ class ReflectorHelper():
             return {}
 
     @classmethod
-    def get_cleaned_doc(cls, object: object) -> str | None:
+    def get_public_method_names(cls, type_: Type, include_init: bool = False) -> List[str]:
+        """Get the names of all public methods of a class.
+
+        :param type_: The class type to inspect
+        :param include_init: Whether to include the __init__ method in the results
+        :return: List of public method names
+        """
+        if not inspect.isclass(type_):
+            return []
+
+        methods: Any = inspect.getmembers(
+            type_, predicate=inspect.isfunction) + inspect.getmembers(type_, predicate=inspect.ismethod)
+
+        if include_init:
+            return [m[0] for m in methods if not m[0].startswith('_') or m[0] == '__init__']
+        else:
+            return [m[0] for m in methods if not m[0].startswith('_')]
+
+    @classmethod
+    def get_public_methods_doc(cls, type_: Type, include_init: bool = False) -> List[MethodDoc]:
+        """Get documentation for all public methods of a class.
+
+        :param type_: The class type to inspect
+        :param include_init: Whether to include the __init__ method in the results
+        :return: List of MethodDoc objects for all public methods
+        """
+        if not inspect.isclass(type_):
+            return []
+
+        # Get public method names
+        public_method_names = cls.get_public_method_names(type_, include_init=include_init)
+
+        res: List[MethodDoc] = []
+        for public_method in public_method_names:
+            method = inspect.getattr_static(type_, public_method)
+            method_doc = cls.get_func_doc(method, type_)
+            if method_doc is not None:
+                res.append(method_doc)
+        return res
+
+    @classmethod
+    def get_class_docs(cls, type_: Type) -> Optional[ClassicClassDocDTO]:
+        """Get the cleaned docstring of a class.
+
+        :param type_: The class type to inspect
+        :return: Cleaned docstring of the class or None if not available
+        """
+        if not inspect.isclass(type_):
+            return None
+
+        variables = cls.get_all_public_args(type_)
+        methods = cls.get_public_methods_doc(type_, include_init=True)
+
+        name: str = None
+        if not hasattr(type_, '__name__'):
+            name = str(type_)
+        else:
+            name = type_.__name__
+
+        doc = cls.get_cleaned_doc_string(type_)
+        return ClassicClassDocDTO(name=name, doc=doc, methods=methods, variables=variables)
+
+    @classmethod
+    def get_cleaned_doc_string(cls, object_: object) -> str | None:
         """Method to retrieve the doc of a class or a method and clean it
         The clean replace header 1 with header 2
 
         This is to prevent header 1 in community.
         """
-        doc = inspect.getdoc(object)
+        doc = inspect.getdoc(object_)
         if doc is None:
             return None
 

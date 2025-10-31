@@ -1,11 +1,10 @@
 import inspect
 import sys
-from typing import Any, List, Type
+from typing import List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
-from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
-                                                 MethodDocFunction)
+from gws_core.core.utils.reflector_types import ClassicClassDocDTO
 from gws_core.model.typing_dto import TypingFullDTO, TypingStatus
 from gws_core.protocol.protocol_typing import ProtocolTyping
 
@@ -76,32 +75,10 @@ class TechnicalDocService():
                     ok = False
                     break
             if ok:
-                doc: ClassicClassDocDTO = cls._get_non_typing_obj_technical_doc(obj)
+                doc: ClassicClassDocDTO = ReflectorHelper.get_class_docs(obj)
                 other_classes.append(doc)
 
         return other_classes
-
-    @classmethod
-    def _get_non_typing_obj_technical_doc(cls, obj: Type) -> ClassicClassDocDTO:
-        '''
-        Get the doc of a class who is not a Resource, Task or Protocol
-        '''
-
-        variables = ReflectorHelper.get_all_public_args(obj)
-
-        functions: Any = inspect.getmembers(
-            obj, predicate=inspect.isfunction) + inspect.getmembers(obj, predicate=inspect.ismethod)
-        public_func_methods: Any = [MethodDocFunction(name=m[0], func=m[1])
-                                    for m in functions if not m[0].startswith('_') or m[0] == '__init__']
-        methods = ReflectorHelper.get_methods_doc(obj, public_func_methods)
-
-        if not hasattr(obj, '__name__'):
-            name = str(obj)
-        else:
-            name = obj.__name__
-
-        doc = ReflectorHelper.get_cleaned_doc(obj)
-        return ClassicClassDocDTO(name=name, doc=doc, methods=methods, variables=variables)
 
     @classmethod
     def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:

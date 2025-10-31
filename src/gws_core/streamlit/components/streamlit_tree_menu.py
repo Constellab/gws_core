@@ -157,10 +157,15 @@ class StreamlitTreeMenu:
             st.session_state[self.key] = {'item_key': None}  # for backward compatibility
 
     def add_item(self, item: StreamlitTreeMenuItem) -> None:
+        """Add an item to the tree menu.
+
+        :param item: Item to add to the tree menu
+        :type item: StreamlitTreeMenuItem
+        """
         self._items.append(item)
 
     def add_items(self, items: List[StreamlitTreeMenuItem]) -> None:
-        """ Add a list of items to the tree menu
+        """Add a list of items to the tree menu.
 
         :param items: List of items to add
         :type items: List[StreamlitTreeMenuItem]
@@ -168,10 +173,11 @@ class StreamlitTreeMenu:
         self._items.extend(items)
 
     def set_selected_item(self, item_key: str) -> None:
-        """ Override the current value and set the selected item in the tree menu
+        """Override the current value and set the selected item in the tree menu.
 
         :param item_key: Key of the item to set as selected
         :type item_key: str
+        :raises Exception: If the item with the specified key is not found
         """
         item = self.find_item_by_key(item_key)
         if item is None:
@@ -182,7 +188,8 @@ class StreamlitTreeMenu:
         st.session_state[self.key]['item_key'] = item.key  # for backward compatibility
 
     def set_default_selected_item(self, item_key: str) -> None:
-        """ Set the default selected item in the tree menu.
+        """Set the default selected item in the tree menu.
+
         If there is a selected item already, it will not be changed.
 
         :param item_key: Key of the item to set as default selected
@@ -193,7 +200,7 @@ class StreamlitTreeMenu:
             self.set_selected_item(item_key)
 
     def get_selected_item(self) -> Optional[StreamlitTreeMenuItem]:
-        """ Get the selected item in the tree menu
+        """Get the selected item in the tree menu.
 
         :return: Selected item or None if no item is selected
         :rtype: Optional[StreamlitTreeMenuItem]
@@ -206,11 +213,11 @@ class StreamlitTreeMenu:
         return self.find_item_by_key(item_key)
 
     def find_item_by_key(self, key: str) -> Optional[StreamlitTreeMenuItem]:
-        """ Find an item by its id
+        """Find an item by its key.
 
-        :param id: Id of the item to find
-        :type id: str
-        :return: Item found or None
+        :param key: Key of the item to find
+        :type key: str
+        :return: Item found or None if not found
         :rtype: Optional[StreamlitTreeMenuItem]
         """
         for item in self._items:
@@ -221,11 +228,10 @@ class StreamlitTreeMenu:
         return None
 
     def render(self) -> StreamlitTreeMenuItem | None:
-        """
-        Render the menu button and return the button clicked
+        """Render the tree menu and return the selected item.
 
-        :return: Button clicked
-        :rtype: StreamlitTreeMenuItem
+        :return: Selected item or None if no item is selected
+        :rtype: StreamlitTreeMenuItem | None
         """
 
         selected_item = self.get_selected_item()

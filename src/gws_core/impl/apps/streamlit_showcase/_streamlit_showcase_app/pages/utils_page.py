@@ -6,24 +6,29 @@ from gws_core.streamlit import (StreamlitHelper, StreamlitRouter,
                                 StreamlitState, StreamlitTranslateLang,
                                 StreamlitTranslateService)
 
+from ..components.example_tabs_component import example_tabs
+from ..components.page_layout_component import page_layout
+
 
 def render_utils_page():
-    st.title('Utils')
-    st.info('This page contains a showcase for streamlit utilities.')
+    def page_content():
+        _render_authenticate_user()
+        _render_streamlit_state()
+        _render_hide_sidebar_toggle()
+        _render_toggle_sidebar()
+        _render_router()
+        _render_translation()
 
-    _render_authenticate_user()
-    _render_streamlit_state()
-    _render_hide_sidebar_toggle()
-    _render_toggle_sidebar()
-    _render_router()
-    _render_translation()
+    page_layout(
+        title="Utils",
+        description="This page contains a showcase for streamlit utilities.",
+        content_function=page_content
+    )
 
 
 def _render_authenticate_user():
-    st.subheader('Authenticate User')
-    st.info('By default the user is authenticated if the user is logged in. But in some run context (like a button click), the execution context is different and the user may not be authenticated. This utility allows to force authenticate the user.')
-    st.code('''
-import streamlit as st
+
+    code = """import streamlit as st
 import gws_core.streamlit as StreamlitAuthenticateUser
 
 def render():
@@ -34,58 +39,71 @@ def render():
 def _on_click():
     st.write('User is not authenticated')
     with StreamlitAuthenticateUser() as user:
-        st.write('User is authenticated ' + user.first_name)
-''')
-    st.divider()
+        st.write('User is authenticated ' + user.first_name)"""
+
+    example_tabs(
+        code=code,
+        title="Authenticate User",
+        description="Force authenticate the user in different execution contexts.",
+        doc_func=None,
+    )
 
 
 def _render_streamlit_state():
-    st.subheader('Streamlit State')
-    st.info('This utility allows to access state information.')
-    user = StreamlitState.get_current_user()
+    def example_demo():
+        user = StreamlitState.get_current_user()
 
-    if user:
-        st.write(f"Current user: {user.first_name} {user.last_name}")
-    else:
-        st.write("No user connected")
+        if user:
+            st.write(f"Current user: {user.first_name} {user.last_name}")
+        else:
+            st.write("No user connected")
 
-    st.code('''
-import gws_core.streamlit as StreamlitState
+    code = """import streamlit as st
+from gws_core.streamlit import StreamlitState
 
 user = StreamlitState.get_current_user()
 
 if user:
     st.write(f"Current user: {user.first_name} {user.last_name}")
 else:
-    st.write("No user connected")
-''')
+    st.write("No user connected")"""
+
+    example_tabs(
+        example_function=example_demo,
+        code=code,
+        title="Streamlit State",
+        description="Access state information like current user.",
+        doc_func=StreamlitState.get_current_user,
+    )
 
 
 def _render_hide_sidebar_toggle():
-    st.subheader('Hide Toolbar Toogle Buttons')
-    st.info('This utility allows to hide the sidebar toogle buttons.')
-    st.code('''
-import gws_core.streamlit as StreamlitHelper'
 
-StreamlitHelper.hide_toolbar()
-''')
-    st.divider()
+    code = """from gws_core.streamlit import StreamlitHelper
+
+StreamlitHelper.hide_toolbar()"""
+
+    example_tabs(
+        code=code,
+        title="Hide Toolbar Toggle Buttons",
+        description="Hide the sidebar toggle buttons from the toolbar.",
+    )
 
 
 def _render_toggle_sidebar():
-    st.subheader('Programatically Toggle Sidebar')
-    st.info('This utility allows to toggle the sidebar programatically. It uses st.rerun() to refresh the page.')
+    def example_demo():
 
-    if st.button('Toggle Sidebar'):
-        StreamlitHelper.toggle_sidebar()
+        if st.button('Toggle Sidebar'):
+            StreamlitHelper.toggle_sidebar()
 
-    if st.button('Show sidebar'):
-        StreamlitHelper.show_sidebar()
+        if st.button('Show sidebar'):
+            StreamlitHelper.show_sidebar()
 
-    if st.button('Hide sidebar'):
-        StreamlitHelper.hide_sidebar()
-    st.code('''
-import gws_core.streamlit as StreamlitHelper
+        if st.button('Hide sidebar'):
+            StreamlitHelper.hide_sidebar()
+
+    code = """import streamlit as st
+from gws_core.streamlit import StreamlitHelper
 
 if st.button('Toggle Sidebar'):
     StreamlitHelper.toggle_sidebar()
@@ -94,24 +112,29 @@ if st.button('Show sidebar'):
     StreamlitHelper.show_sidebar()
 
 if st.button('Hide sidebar'):
-    StreamlitHelper.hide_sidebar()
-''')
-    st.divider()
+    StreamlitHelper.hide_sidebar()"""
+
+    example_tabs(
+        example_function=example_demo,
+        code=code,
+        title="Programmatically Toggle Sidebar",
+        description="Toggle the sidebar visibility programmatically.",
+        doc_func=StreamlitHelper.toggle_sidebar,
+    )
 
 
 def _render_router():
-    st.subheader('Router')
-    st.info('This utility allows to create streamlit pages and navigate between them.')
+    def example_demo():
 
-    router = StreamlitRouter.load_from_session()
+        router = StreamlitRouter.load_from_session()
 
-    if st.button('Navigate to Containers'):
-        router.navigate('containers')
+        if st.button('Navigate to Containers'):
+            router.navigate('containers')
 
-    st.code('''
-# Define the pages
+    code = """import streamlit as st
 from gws_core.streamlit import StreamlitRouter
 
+# Define the pages
 router = StreamlitRouter.load_from_session()
 
 router.add_page(_render_containers_page_function, title='Containers', url_path='containers', icon='📦')
@@ -121,37 +144,40 @@ router.add_page(_render_resources_page_function, title='Resources',
                 url_path='resources', icon='📁', hide_from_sidebar=True)
 
 # Navigate to a page
-from gws_core.streamlit import StreamlitRouter
-
 router = StreamlitRouter.load_from_session()
 
 if st.button('Navigate to Containers'):
-    router.navigate('containers')
-''')
-    st.divider()
+    router.navigate('containers')"""
+
+    example_tabs(
+        example_function=example_demo,
+        code=code,
+        title="Router",
+        description="Create streamlit pages and navigate between them.",
+        doc_func=StreamlitRouter.navigate,
+    )
 
 
 def _render_translation():
-    st.subheader('Translation')
-    st.info('This utility allows to translate the app in different languages.')
+    def example_demo():
 
-    lang_translation_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, 'lang')
-    translate_service = StreamlitTranslateService(lang_translation_folder_path)
+        lang_translation_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, 'lang')
+        translate_service = StreamlitTranslateService(lang_translation_folder_path)
 
-    current_lang = translate_service.get_lang()
-    st.write(f"Current language: {current_lang.value}")
+        current_lang = translate_service.get_lang()
+        st.write(f"Current language: {current_lang.value}")
 
-    if st.button(translate_service.translate("change_language")):
-        if current_lang == StreamlitTranslateLang.EN:
-            translate_service.change_lang(StreamlitTranslateLang.FR)
-        else:
-            translate_service.change_lang(StreamlitTranslateLang.EN)
+        if st.button(translate_service.translate("change_language")):
+            if current_lang == StreamlitTranslateLang.EN:
+                translate_service.change_lang(StreamlitTranslateLang.FR)
+            else:
+                translate_service.change_lang(StreamlitTranslateLang.EN)
 
-    st.write(translate_service.translate("test_key"))
+        st.write(translate_service.translate("test_key"))
 
-    st.code('''
-from gws_core.streamlit import StreamlitTranslateLang,
-                               StreamlitTranslateService
+    code = """import streamlit as st
+import os
+from gws_core.streamlit import StreamlitTranslateLang, StreamlitTranslateService
 
 # Path of the folder containing the translation files that you created ("en.json" and "fr.json" by default)
 lang_translation_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, 'lang')
@@ -167,6 +193,12 @@ if st.button("Change lang"):
     else:
         translate_service.change_lang(StreamlitTranslateLang.EN)
 
-st.write(translate_service.translate("key"))
-''')
-    st.divider()
+st.write(translate_service.translate("key"))"""
+
+    example_tabs(
+        example_function=example_demo,
+        code=code,
+        title="Translation",
+        description="Translate the app in different languages.",
+        doc_func=StreamlitTranslateService.translate,
+    )

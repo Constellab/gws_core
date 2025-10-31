@@ -1,9 +1,9 @@
 
 
 import inspect
-from typing import Any, Dict, List, Literal, Type
+from typing import List, Literal, Type
 
-from gws_core.core.utils.reflector_types import MethodDoc, MethodDocFunction
+from gws_core.core.utils.reflector_types import MethodDoc
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dto import TypingDTO
 from gws_core.resource.resource_typing_dto import (ResourceTypingDTO,
@@ -49,16 +49,17 @@ class ResourceTyping(Typing):
         if not inspect.isclass(type_):
             return None
 
-        methods: Any = inspect.getmembers(
-            type_, predicate=inspect.isfunction) + inspect.getmembers(type_, predicate=inspect.ismethod)
+        # Get all public methods including __init__
+        all_methods: List[MethodDoc] = ReflectorHelper.get_public_methods_doc(type_, include_init=True)
+
+        # Get view methods to exclude them from funcs
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
         views_methods_dto = [m.to_dto() for m in views_methods]
+        view_method_names = [v.method_name for v in views_methods]
 
-        func_methods: Any = [m for m in methods if m[0] not in [v.method_name for v in views_methods]]
+        # Filter out view methods from all methods
+        funcs: List[MethodDoc] = [m for m in all_methods if m.name not in view_method_names]
 
-        public_func_methods: Any = [MethodDocFunction(name=m[0], func=m[1])
-                                    for m in func_methods if not m[0].startswith('_') or m[0] == '__init__']
-        funcs: List[MethodDoc] = ReflectorHelper.get_methods_doc(type_, public_func_methods)
         return ResourceTypingMethodDTO(
             funcs=funcs if len(funcs) > 0 else None,
             views=views_methods_dto if len(views_methods_dto) > 0 else None

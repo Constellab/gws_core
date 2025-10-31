@@ -15,12 +15,16 @@ from .components.streamlit_tree_menu import \
 # Widgets
 from .widgets.streamlit_auth_user import \
     StreamlitAuthenticateUser as StreamlitAuthenticateUser
+from .widgets.streamlit_class_doc_component import \
+    class_doc_component as class_doc_component
 from .widgets.streamlit_containers import \
     StreamlitContainers as StreamlitContainers
 from .widgets.streamlit_containers import \
     StreamlitGridCell as StreamlitGridCell
 from .widgets.streamlit_df_paginator import \
     dataframe_paginated as dataframe_paginated
+from .widgets.streamlit_doc_component import \
+    method_doc_component as method_doc_component
 from .widgets.streamlit_helper import StreamlitHelper as StreamlitHelper
 from .widgets.streamlit_open_ai_chat import \
     StreamlitOpenAiChat as StreamlitOpenAiChat

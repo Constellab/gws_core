@@ -11,11 +11,6 @@ class MethodDocType(str):
     BASICMETHOD = None
 
 
-class MethodDocFunction(BaseModelDTO):
-    name: str
-    func: Any
-
-
 class MethodArgDoc(BaseModelDTO):
     arg_name: str
     arg_type: str

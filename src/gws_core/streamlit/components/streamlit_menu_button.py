@@ -178,10 +178,15 @@ class StreamlitMenuButton:
         self._buttons = []
 
     def add_button_item(self, button: StreamlitMenuButtonItem) -> None:
+        """Add a button item to the menu button.
+
+        :param button: Button item to add to the menu
+        :type button: StreamlitMenuButtonItem
+        """
         self._buttons.append(button)
 
     def add_button_items(self, buttons: List[StreamlitMenuButtonItem]) -> None:
-        """ Add a list of buttons to the menu button
+        """Add a list of buttons to the menu button.
 
         :param buttons: List of buttons to add
         :type buttons: List[StreamlitMenuButtonItem]
@@ -189,11 +194,11 @@ class StreamlitMenuButton:
         self._buttons.extend(buttons)
 
     def find_button_item_by_key(self, key: str) -> Optional[StreamlitMenuButtonItem]:
-        """ Find a button by its id
+        """Find a button by its key.
 
-        :param id: Id of the button to find
-        :type id: str
-        :return: Button found or None
+        :param key: Key of the button to find
+        :type key: str
+        :return: Button found or None if not found
         :rtype: Optional[StreamlitMenuButtonItem]
         """
         for button in self._buttons:
@@ -204,15 +209,15 @@ class StreamlitMenuButton:
         return None
 
     def render(self, icon: str = 'more_vert', disabled: bool = False) -> StreamlitMenuButtonItem:
-        """
-        Render the menu button and return the button clicked
+        """Render the menu button and return the button clicked.
 
         :param icon: Icon to show on the button, defaults to 'more_vert'
         :type icon: str, optional
         :param disabled: If the menu button is disabled, defaults to False
         :type disabled: bool, optional
-        :return: Button clicked
-        :rtype: StreamlitMenuButtonItem
+        :return: Button clicked or None if no button was clicked
+        :rtype: StreamlitMenuButtonItem | None
+        :raises Exception: If the button with the clicked key is not found or has no on_click handler
         """
 
         data = {

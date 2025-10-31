@@ -31,7 +31,6 @@ def example_tabs(
     title: Optional[str] = None,
     description: Optional[str] = None,
     func: Optional[Callable] = None,
-    show_doc: bool = True,
 ) -> rx.Component:
     """
     Create a tabbed interface to display an example with its code and documentation.
@@ -46,7 +45,6 @@ def example_tabs(
     :param title: Optional title for the example section
     :param description: Optional brief description of what the example demonstrates
     :param func: Optional function to document in the API tab. If None, API tab is hidden
-    :param show_doc: Whether to show the API tab (only applies if func is provided)
     :return: A Reflex component with tabbed interface
     """
     # Build the tabs list
@@ -55,8 +53,8 @@ def example_tabs(
         rx.tabs.trigger("Code", value="code"),
     ]
 
-    # Add API tab trigger if function is provided and show_doc is True
-    if func is not None and show_doc:
+    # Add API tab trigger if function is provided
+    if func is not None:
         tabs_content.append(rx.tabs.trigger("API", value="api"))
 
     # Build tab content panels
@@ -92,8 +90,8 @@ def example_tabs(
         ),
     ]
 
-    # Add API tab panel if function is provided and show_doc is True
-    if func is not None and show_doc:
+    # Add API tab panel if function is provided
+    if func is not None:
         tab_panels.append(
             rx.tabs.content(
                 rx.box(

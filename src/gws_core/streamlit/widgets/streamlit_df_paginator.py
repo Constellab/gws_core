@@ -119,6 +119,6 @@ def dataframe_paginated(dataframe: DataFrame,
                                 column_config=column_config,
                                 on_select=on_select,
                                 selection_mode=selection_mode,
-                                width=width,
-                                height=height,
+                                width=width or 'stretch',
+                                height=height or 'auto',
                                 key=f"{key}_dataframe")
