@@ -107,3 +107,4 @@ class TaskTyping(Typing):
 
     class Meta:
         is_table = False
+        table_name = 'gws_typing'

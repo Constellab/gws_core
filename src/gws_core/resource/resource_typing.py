@@ -67,6 +67,7 @@ class ResourceTyping(Typing):
 
     class Meta:
         is_table = False
+        table_name = 'gws_typing'
 
 
 class FileTyping(ResourceTyping):
@@ -89,3 +90,4 @@ class FileTyping(ResourceTyping):
 
     class Meta:
         is_table = False
+        table_name = 'gws_typing'
