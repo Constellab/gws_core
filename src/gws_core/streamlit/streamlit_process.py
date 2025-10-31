@@ -32,7 +32,7 @@ class StreamlitProcess(AppProcess):
         theme = self.get_current_user_theme()
 
         # Install gws plugin if not already installed
-        StreamlitPlugin.install_plugin()
+        StreamlitPlugin().install_package()
 
         process: SysProc = None
 
