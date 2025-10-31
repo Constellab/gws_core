@@ -3,10 +3,9 @@
 from multiprocessing import Pool
 from unittest import TestCase
 
-from peewee import CharField
-
 from gws_core.core.db.pool_db import PoolDb
 from gws_core.core.model.model import Model
+from peewee import CharField
 
 
 class TestTable(Model):
@@ -14,7 +13,9 @@ class TestTable(Model):
     id = CharField(primary_key=True, max_length=36)
     text = CharField()
 
-    _table_name = 'test_table'
+    class Meta:
+        table_name = 'test_table'
+        is_table = True
 
 
 def _simple_select(_):

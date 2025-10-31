@@ -50,13 +50,13 @@ class LazyAbstractDbManager(AbstractDbManager):
             brick_name = cls.get_brick_name()
             unique_name = cls.get_unique_name()
 
-            Logger.debug(f'Starting {brick_name} database container')
+            Logger.info(f'Starting {cls.get_unique_name()} database container')
             with AuthenticateUser.system_user():
                 docker_service = DockerService()
                 response_dto = docker_service.register_sqldb_compose(
                     brick_name=brick_name,
                     unique_name=f'{unique_name}_{mode}',
-                    database_name=cls.get_database_name(),
+                    database_name=cls.get_unique_name(),
                     description=f'{brick_name} brick database in {mode} mode',
                 )
 
@@ -64,7 +64,7 @@ class LazyAbstractDbManager(AbstractDbManager):
                 cls._db_password = response_dto.credentials.password
                 cls._db_host = response_dto.db_host
 
-                Logger.debug(f'{brick_name} database container started')
+                Logger.info(f'{cls.get_unique_name()} database container started')
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)
@@ -86,14 +86,9 @@ class LazyAbstractDbManager(AbstractDbManager):
             'port': cls.PORT,
             'user': cls._db_username,
             'password': cls._db_password,
-            'db_name': cls.get_database_name(),
+            'db_name': cls.get_unique_name(),
             'engine': 'mariadb'
         }
-
-    @classmethod
-    def get_database_name(cls) -> str:
-        """Get database name, auto-generated from brick name if not set"""
-        return "gws_pmo_db"
 
     @classmethod
     @abstractmethod

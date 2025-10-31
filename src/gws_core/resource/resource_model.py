@@ -4,9 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
-
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -24,6 +21,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
+from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
+                    ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -95,7 +94,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     content_is_deleted = BooleanField(default=False)
     style: TypingStyle = BaseDTOField(TypingStyle, null=False)
 
-    _table_name = 'gws_resource'
     _resource: Resource = None
 
     def __init__(self, *args, **kwargs):
@@ -623,3 +621,4 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     class Meta:
         table_name = 'gws_resource'
+        is_table = True

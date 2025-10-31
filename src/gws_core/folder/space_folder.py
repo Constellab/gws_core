@@ -2,10 +2,9 @@
 
 from typing import List
 
-from peewee import CharField, ForeignKeyField, ModelSelect
-
 from gws_core.core.model.model import Model
 from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
+from peewee import CharField, ForeignKeyField, ModelSelect
 
 
 class SpaceFolder(Model):
@@ -13,8 +12,6 @@ class SpaceFolder(Model):
     parent: 'SpaceFolder' = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
 
     children: List['SpaceFolder']
-
-    _table_name = 'gws_folder'
 
     def to_dto(self) -> SpaceFolderDTO:
         return SpaceFolderDTO(
@@ -82,3 +79,8 @@ class SpaceFolder(Model):
 
     def _before_update(self) -> None:
         pass
+
+    class Meta:
+        table_name = 'gws_folder'
+        is_table = True
+

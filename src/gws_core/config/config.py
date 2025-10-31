@@ -22,8 +22,6 @@ class Config(ModelWithUser):
 
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = 'gws_config'
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -198,3 +196,4 @@ class Config(ModelWithUser):
 
     class Meta:
         table_name = 'gws_config'
+        is_table = True

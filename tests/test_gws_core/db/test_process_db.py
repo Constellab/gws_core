@@ -2,10 +2,9 @@
 
 from unittest import TestCase
 
-from peewee import CharField
-
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.model.model import Model
+from peewee import CharField
 
 
 class TestProcessTable(Model):
@@ -13,7 +12,9 @@ class TestProcessTable(Model):
     id = CharField(primary_key=True, max_length=36)
     text = CharField()
 
-    _table_name = 'test_process_table'
+    class Meta:
+        table_name = 'test_process_table'
+        is_table = True
 
 
 def _simple_select_and_insert(text: str):

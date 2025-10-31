@@ -241,3 +241,6 @@ class LocalFileStore(FileStore):
         FileHelper.delete_dir(self.path)
 
         return result
+
+    class Meta:
+        is_table = False

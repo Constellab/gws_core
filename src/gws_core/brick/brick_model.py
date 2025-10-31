@@ -3,12 +3,11 @@
 from time import time
 from typing import Any, Dict, List
 
-from peewee import CharField
-
 from gws_core.brick.brick_dto import (BrickDTO, BrickInfo, BrickMessageDTO,
                                       BrickMessageStatus, BrickStatus)
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.db_field import JSONField
+from peewee import CharField
 
 from ..core.model.model import Model
 
@@ -19,7 +18,6 @@ class BrickModel(Model):
     status: BrickStatus = CharField()
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = "gws_brick"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -97,12 +95,9 @@ class BrickModel(Model):
             return None
 
     @classmethod
-    def delete_all(cls) -> None:
-        cls.delete().execute(cls._db_manager.db)
-
-    @classmethod
     def clear_all_message(cls) -> None:
-        BrickModel.update(data={'messages': []}).execute(cls._db_manager.db)
+        BrickModel.update(data={'messages': []}).execute(cls.get_db())
 
     class Meta:
         table_name = 'gws_brick'
+        is_table = True

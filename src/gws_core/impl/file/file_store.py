@@ -20,8 +20,6 @@ class FileStore(Model):
 
     data: Dict[str, Any] = JSONField(null=True)
 
-    _table_name = "gws_file_store"
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -147,3 +145,4 @@ class FileStore(Model):
 
     class Meta:
         table_name = 'gws_file_store'
+        is_table = True

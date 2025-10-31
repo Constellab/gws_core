@@ -33,8 +33,6 @@ class TaskInputModel(BaseModel):
     port_name: str = CharField()
     is_interface: bool = BooleanField()
 
-    _table_name = 'gws_task_inputs'
-
     @classmethod
     def get_by_resource_model(cls, resource_model_id: str) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.resource_model == resource_model_id)
@@ -93,4 +91,5 @@ class TaskInputModel(BaseModel):
 
     class Meta:
         table_name = 'gws_task_inputs'
+        is_table = True
         primary_key = CompositeKey("task_model", "port_name")

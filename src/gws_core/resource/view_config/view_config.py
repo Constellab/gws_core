@@ -1,8 +1,6 @@
 
 from typing import Any, List, Optional
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
-
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
@@ -21,6 +19,7 @@ from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ...scenario.scenario import Scenario
 from ..resource_model import ResourceModel
@@ -39,8 +38,6 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     is_favorite = BooleanField(default=False)
 
     style: TypingStyle = BaseDTOField(TypingStyle, null=True)
-
-    _table_name = 'gws_view_config'
 
     def to_dto(self) -> ViewConfigDTO:
         return ViewConfigDTO(
@@ -133,3 +130,4 @@ class ViewConfig(ModelWithUser, NavigableEntity):
 
     class Meta:
         table_name = 'gws_view_config'
+        is_table = True

@@ -2,8 +2,6 @@
 
 from typing import List
 
-from peewee import BooleanField, CharField, Expression, ModelSelect
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.model.db_field import JSONField
@@ -14,6 +12,7 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
+from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -36,8 +35,6 @@ class EntityTag(Model):
     origins = JSONField(null=False)
 
     is_propagable = BooleanField(default=False)
-
-    _table_name = 'gws_entity_tag'
 
     def get_tag_value(self) -> TagValueType:
         return TagHelper.convert_str_value_to_type(self.tag_value, self.value_format)
@@ -215,6 +212,7 @@ class EntityTag(Model):
 
     class Meta:
         table_name = 'gws_entity_tag'
+        is_table = True
         indexes = (
             (("tag_key", "tag_value"), False),
             (("entity_id", "entity_type"), False),

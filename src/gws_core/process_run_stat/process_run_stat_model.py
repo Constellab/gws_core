@@ -1,17 +1,14 @@
 from datetime import datetime
 from typing import Dict, Optional
 
-from peewee import BooleanField, CharField, FloatField
-
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model import Model
 from gws_core.process_run_stat.process_run_stat_dto import (
     ProcessRunStatDTO, ProcessRunStatLabEnv, ProcessRunStatStatus)
+from peewee import BooleanField, CharField, FloatField
 
 
 class ProcessRunStatModel(Model):
-
-    _table_name = 'gws_process_run_stat'
 
     process_typing_name: str = CharField()
     community_agent_version_id: str = CharField(null=True)
@@ -78,3 +75,7 @@ class ProcessRunStatModel(Model):
             executed_by=self.executed_by,
             sync_with_community=self.sync_with_community
         )
+
+    class Meta:
+        table_name = 'gws_process_run_stat'
+        is_table = True

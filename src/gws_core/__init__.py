@@ -86,6 +86,8 @@ from .core.classes.validator import Validator as Validator
 from .core.db.db_config import DbConfig as DbConfig
 from .core.db.db_config import DbMode as DbMode
 from .core.db.db_manager import AbstractDbManager as AbstractDbManager
+from .core.db.lazy_abstract_db_manager import \
+    LazyAbstractDbManager as LazyAbstractDbManager
 from .core.db.migration.brick_migration_decorator import \
     brick_migration as brick_migration
 # Core > DB
@@ -106,6 +108,7 @@ from .core.exception.exceptions import *
 from .core.exception.gws_exceptions import GWSException as GWSException
 # Core > Model
 from .core.model.base import Base as Base
+from .core.model.base_model import BaseModel as BaseModel
 from .core.model.db_field import DateTimeUTC as DateTimeUTC
 from .core.model.db_field import JSONField as JSONField
 from .core.model.model import Model as Model

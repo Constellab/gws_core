@@ -42,7 +42,6 @@ class ProtocolModel(ProcessModel):
     _connectors: List[Connector] = None
     _interfaces: Dict[str, IOface] = {}
     _outerfaces: Dict[str, IOface] = {}
-    _table_name = "gws_protocol"  # is locked for all the protocols
 
     def __init__(self, *args, **kwargs):
 
@@ -1299,3 +1298,7 @@ class ProtocolModel(ProcessModel):
 
     def get_community_agent_version_modified(self) -> bool:
         return None
+
+    class Meta:
+        table_name = 'gws_protocol'
+        is_table = True

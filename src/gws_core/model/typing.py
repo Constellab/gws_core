@@ -3,8 +3,6 @@
 import inspect
 from typing import Any, Dict, List, Optional, Type
 
-from peewee import BooleanField, CharField, ModelSelect
-
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
@@ -12,6 +10,7 @@ from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
                                        TypingRefDTO, TypingStatus)
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_style import TypingStyle
+from peewee import BooleanField, CharField, ModelSelect
 
 from ..core.model.base import Base
 from ..core.model.model import Model
@@ -51,7 +50,6 @@ class Typing(Model):
     data: Dict[str, Any] = JSONField(null=True)
 
     _object_type: TypingObjectType = "MODEL"
-    _table_name = 'gws_typing'
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -257,6 +255,8 @@ class Typing(Model):
 
     class Meta:
         # Unique constrains on brick, model_name and object_type
+        table_name = 'gws_typing'
+        is_table = True
         indexes = (
             (('brick', 'model_name', 'object_type'), True),
         )

@@ -2,8 +2,6 @@
 from traceback import format_exc
 from typing import Any, Dict, List, Type
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
-
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.utils.date_helper import DateHelper
@@ -16,6 +14,7 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
@@ -57,8 +56,6 @@ class TaskModel(ProcessModel):
     community_agent_version_id: str = CharField(null=True, max_length=36, default="")
 
     community_agent_version_modified: bool = BooleanField(default=False)
-
-    _table_name = 'gws_task'
 
     # cache to store the list of tags of all inputs
     _input_resource_tags: List[Tag] = None
@@ -472,3 +469,7 @@ class TaskModel(ProcessModel):
 
     def get_community_agent_version_modified(self) -> bool:
         return self.community_agent_version_modified
+
+    class Meta:
+        table_name = 'gws_task'
+        is_table = True

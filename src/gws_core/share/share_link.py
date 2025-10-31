@@ -3,8 +3,6 @@
 from datetime import datetime
 from typing import Optional, Type
 
-from peewee import CharField
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -18,11 +16,10 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.share.shared_dto import (ShareLinkDTO, ShareLinkEntityType,
                                        ShareLinkType)
+from peewee import CharField
 
 
 class ShareLink(ModelWithUser):
-
-    _table_name = 'gws_share_link'
 
     entity_id: str = CharField(null=True, max_length=36)
 
@@ -184,6 +181,7 @@ class ShareLink(ModelWithUser):
 
     class Meta:
         table_name = 'gws_share_link'
+        is_table = True
         indexes = (
             (("entity_id", "entity_type", "link_type"), True),
         )

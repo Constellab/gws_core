@@ -2,9 +2,6 @@
 
 from typing import Any, List, final
 
-from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
-                    ModelSelect)
-
 from gws_core.core.decorator.transaction import transaction
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -23,6 +20,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
+from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
+                    ModelSelect)
 
 from ..core.model.base_model import BaseModel
 from ..core.model.db_field import BaseDTOField, DateTimeUTC
@@ -54,7 +53,6 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     modifications: RichTextModificationsDTO = BaseDTOField(RichTextModificationsDTO, null=True)
 
-    _table_name = 'gws_note'
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -151,6 +149,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     class Meta:
         table_name = 'gws_note'
+        is_table = True
 
 
 class NoteScenario(BaseModel):
@@ -165,7 +164,6 @@ class NoteScenario(BaseModel):
     scenario = ForeignKeyField(Scenario, on_delete='CASCADE')
     note = ForeignKeyField(Note, on_delete='CASCADE')
 
-    _table_name = 'gws_note_scenario'
 
     ############################################# CLASS METHODS ########################################
 
@@ -216,4 +214,5 @@ class NoteScenario(BaseModel):
 
     class Meta:
         table_name = 'gws_note_scenario'
+        is_table = True
         primary_key = CompositeKey("scenario", "note")

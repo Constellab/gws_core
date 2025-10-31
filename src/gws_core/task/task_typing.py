@@ -2,11 +2,10 @@
 
 from typing import List, Literal, Set, Type, Union, final
 
-from peewee import CharField, Expression, ModelSelect
-
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.task.task_dto import TaskTypingDTO
+from peewee import CharField, Expression, ModelSelect
 
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
@@ -105,3 +104,6 @@ class TaskTyping(Typing):
                 task_typing.additional_data = {"supported_extensions": importer_t.__supported_extensions__}
 
         return task_typing
+
+    class Meta:
+        is_table = False

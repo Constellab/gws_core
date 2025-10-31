@@ -2,8 +2,6 @@
 
 from typing import Any, Dict
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
-
 from gws_core.community.community_dto import CommunityTagValueDTO
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.decorator.transaction import transaction
@@ -13,12 +11,12 @@ from gws_core.tag.tag import TagValueType
 from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 
 class TagValueModel(Model):
     """ Table to store all the existing tag values"""
 
-    _table_name = 'gws_tag_value'
 
     tag_key: TagKeyModel = ForeignKeyField(TagKeyModel, null=False, index=True,
                                            on_delete='CASCADE', on_update='CASCADE',
@@ -167,6 +165,7 @@ class TagValueModel(Model):
 
     class Meta:
         table_name = 'gws_tag_value'
+        is_table = True
         indexes = (
             (("tag_key", "tag_value"), True),
         )

@@ -2,10 +2,9 @@
 
 from typing import TYPE_CHECKING, List, Optional, final
 
-from peewee import BigIntegerField, BooleanField, CharField, Expression
-
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
+from peewee import BigIntegerField, BooleanField, CharField, Expression
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -25,8 +24,6 @@ class FSNodeModel(Model):
     file_store_id = CharField(null=True, index=True)
     size = BigIntegerField(null=True)
     is_symbolic_link = BooleanField(null=False, default=False)
-
-    _table_name = "gws_fs_node"
 
     def delete_instance(self, *args, **kwargs):
         result = super().delete_instance(*args, **kwargs)
@@ -72,3 +69,4 @@ class FSNodeModel(Model):
 
     class Meta:
         table_name = "gws_fs_node"
+        is_table = True

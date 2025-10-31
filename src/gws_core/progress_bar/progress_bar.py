@@ -4,14 +4,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, final
 
 from fastapi.encoders import jsonable_encoder
-from peewee import CharField, FloatField
-
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.progress_bar.progress_bar_dto import (
     ProgressBarConfigDTO, ProgressBarDTO, ProgressBarMessageDTO,
     ProgressBarMessageWithTypeDTO)
+from peewee import CharField, FloatField
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -38,8 +37,6 @@ class ProgressBar(Model):
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
     _MAX_MESSAGE_LENGTH = 10000
-
-    _table_name = "gws_process_progress_bar"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -307,3 +304,7 @@ class ProgressBar(Model):
         progress_bar.elapsed_time = dto.elapsed_time
         progress_bar.second_start = dto.second_start
         return progress_bar
+
+    class Meta:
+        table_name = 'gws_process_progress_bar'
+        is_table = True

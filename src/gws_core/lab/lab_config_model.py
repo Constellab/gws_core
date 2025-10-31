@@ -4,13 +4,12 @@ import hashlib
 from json import dumps
 from typing import List, Optional
 
-from peewee import CharField, IntegerField
-
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
+from peewee import CharField, IntegerField
 
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.utils.date_helper import DateHelper
@@ -30,8 +29,6 @@ class LabConfigModel(BaseModel):
     version = IntegerField(null=False)  # version of the config
     brick_versions = JSONField(null=False)
     hash = CharField(null=False)
-
-    _table_name = 'gws_lab_config'
 
     _current_config: 'LabConfigModel' = None
 
@@ -110,3 +107,4 @@ class LabConfigModel(BaseModel):
 
     class Meta:
         table_name = 'gws_lab_config'
+        is_table = True

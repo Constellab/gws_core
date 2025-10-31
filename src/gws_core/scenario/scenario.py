@@ -5,8 +5,6 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
-
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -22,6 +20,7 @@ from gws_core.scenario.scenario_dto import (ScenarioDTO, ScenarioProgressDTO,
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
 from ..core.decorator.transaction import transaction
@@ -66,8 +65,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     is_archived = BooleanField(default=False, index=True)
     data: Dict[str, Any] = JSONField(null=True)
-
-    _table_name = 'gws_scenario'
 
     # cache of the _protocol
     _protocol: ProtocolModel = None
@@ -445,3 +442,4 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     class Meta:
         table_name = 'gws_scenario'
+        is_table = True

@@ -27,8 +27,6 @@ class User(Model):
 
     photo: str = CharField(null=True)
 
-    _table_name = 'gws_user'
-
     @classmethod
     def get_and_check_sysuser(cls) -> 'User':
         sys_user = User.get_or_none(User.group == UserGroup.SYSUSER)
@@ -113,3 +111,7 @@ class User(Model):
         self.theme = data.theme or UserTheme.LIGHT_THEME
         self.lang = data.lang or UserLanguage.EN
         self.photo = data.photo
+
+    class Meta:
+        table_name = 'gws_user'
+        is_table = True

@@ -2,10 +2,9 @@
 
 from typing import List, Optional, Union
 
-from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
-
 from gws_core.core.decorator.transaction import transaction
 from gws_core.scenario.queue_dto import JobDTO
+from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -29,7 +28,6 @@ class Queue(Model):
     max_length = IntegerField(default=10)
 
     _current_queue: 'Queue' = None
-    _table_name = "gws_queue"
 
     @classmethod
     def get_current_queue(cls) -> Optional['Queue']:
@@ -120,6 +118,7 @@ class Queue(Model):
 
     class Meta:
         table_name = 'gws_queue'
+        is_table = True
 
 
 class Job(Model):
@@ -135,7 +134,6 @@ class Job(Model):
     user: User = ForeignKeyField(User, null=False, backref='+')
     scenario: Scenario = ForeignKeyField(Scenario, null=False, backref='+', unique=True)
     queue: Queue = ForeignKeyField(Queue, null=False, backref='+')
-    _table_name = "gws_queue_job"
 
     @classmethod
     def pop_first_job(cls, queue_id: str) -> Union['Job', None]:
@@ -181,3 +179,4 @@ class Job(Model):
 
     class Meta:
         table_name = 'gws_queue_job'
+        is_table = True

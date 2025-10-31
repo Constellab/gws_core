@@ -64,6 +64,9 @@ class ResourceTyping(Typing):
             views=views_methods_dto if len(views_methods_dto) > 0 else None
         )
 
+    class Meta:
+        is_table = False
+
 
 class FileTyping(ResourceTyping):
 
@@ -82,3 +85,6 @@ class FileTyping(ResourceTyping):
             typing_dto.additional_data = {"default_extensions": model_t.__default_extensions__ or []}
 
         return typing_dto
+
+    class Meta:
+        is_table = False

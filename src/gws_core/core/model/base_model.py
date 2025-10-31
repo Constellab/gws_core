@@ -5,7 +5,7 @@ from typing import List, Type
 from gws_core.core.db.db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
-                    ForeignKeyMetadata)
+                    ForeignKeyMetadata, Metadata)
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 
@@ -13,15 +13,14 @@ from ...core.exception.exceptions import BadRequestException
 from .base import Base
 
 
-def format_table_name(model: Type['BaseModel']) -> str:
-    return model._table_name.lower() if hasattr(model, "_table_name") else None
-
+class ModelMetadata(Metadata):
+    db_manager: AbstractDbManager
+    # If False, the model does not represent a table in the database
+    is_table: bool
 
 class BaseModel(Base, PeeweeModel):
     """ BaseModel that contains no column but management for Tables (create, delete, foreign key...)
     """
-
-    _db_manager = GwsCoreDbManager
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -29,7 +28,7 @@ class BaseModel(Base, PeeweeModel):
         Create model table
         """
 
-        if not hasattr(cls, "_table_name") or cls.table_exists():
+        if not cls.is_table() or cls.table_exists():
             return
         super().create_table(*args, **kwargs)
         cls.after_table_creation()
@@ -67,7 +66,7 @@ class BaseModel(Base, PeeweeModel):
         """
         if not cls.get_db_manager().is_mysql_engine():
             return
-        cls.get_db_manager().db.execute_sql(
+        cls.execute_sql(
             f"CREATE FULLTEXT INDEX {index_name} ON {cls.get_table_name()}({','.join(columns)})")
 
     @classmethod
@@ -87,26 +86,27 @@ class BaseModel(Base, PeeweeModel):
         super().drop_table(*args, **kwargs)
 
     @classmethod
-    def get_table_name(cls) -> str:
+    def get_table_name(cls) -> str | None:
         """
         Returns the table name of this class
 
         :return: The table name
         :rtype: `str`
         """
+        if not cls.is_table():
+            return None
 
-        return format_table_name(cls)
+        return cls.get_metadata().table_name
 
     @classmethod
-    def has_table_name(cls) -> bool:
+    def is_table(cls) -> bool:
         """
         Returns True if the class has a table name defined
 
         :return: True if the class has a table name defined
         :rtype: `bool`
         """
-
-        return cls.get_table_name() is not None
+        return cls.get_metadata().is_table
 
     @classmethod
     def column_exists(cls, column_name: str) -> bool:
@@ -157,7 +157,11 @@ class BaseModel(Base, PeeweeModel):
         :rtype: `DbManager`
         """
 
-        return cls._db_manager
+        return cls.get_metadata().db_manager
+
+    @classmethod
+    def get_metadata(cls) -> ModelMetadata:
+        return cls._meta
 
     @classmethod
     def search(cls, phrase: str, modifier: str = None) -> ModelSelect:
@@ -175,8 +179,8 @@ class BaseModel(Base, PeeweeModel):
         return cls.get_db_manager().is_mysql_engine()
 
     def save(self, *args, **kwargs) -> 'BaseModel':
-        if not hasattr(self, "_table_name"):
-            raise Exception(f"The class '{type(self).__name__}' does not have the attribute '_table_name'")
+        if not self.is_table():
+            raise Exception(f"The class '{type(self).__name__}' is not a table, cannot save it. Set is_table to True in the Meta class to make it a table.")
 
         super().save(*args, **kwargs)
 
@@ -184,4 +188,7 @@ class BaseModel(Base, PeeweeModel):
 
     class Meta:
         database = GwsCoreDbManager.db
-        table_function = format_table_name
+        legacy_table_names = False
+
+        db_manager = GwsCoreDbManager
+        is_table: bool = False

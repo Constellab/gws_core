@@ -33,8 +33,6 @@ class TagKeyModel(Model):
 
     additional_infos_specs: Dict = JSONField(null=True)
 
-    _table_name = "gws_tag"
-
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return TagHelper.convert_str_value_to_type(value, self.value_format)
 
@@ -125,3 +123,4 @@ class TagKeyModel(Model):
 
     class Meta:
         table_name = "gws_tag"
+        is_table = True

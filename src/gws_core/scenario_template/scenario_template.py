@@ -1,8 +1,6 @@
 
 from typing import Any, Dict
 
-from peewee import CharField, IntegerField
-
 from gws_core.core.model.db_field import JSONField
 from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
@@ -11,6 +9,7 @@ from gws_core.protocol.protocol_graph_factory import \
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario_template.scenario_template_dto import (
     ScenarioTemplateDTO, ScenarioTemplateExportDTO)
+from peewee import CharField, IntegerField
 
 from ..core.model.model_with_user import ModelWithUser
 
@@ -31,8 +30,6 @@ class ScenarioTemplate(ModelWithUser):
     # version number of the scenario template
     version = IntegerField(null=False, default=1)
     data: Dict[str, Any] = JSONField(null=True)
-
-    _table_name = "gws_scenario_template"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -79,3 +76,7 @@ class ScenarioTemplate(ModelWithUser):
         protocol_model.name = self.name
 
         return protocol_model
+
+    class Meta:
+        table_name = 'gws_scenario_template'
+        is_table = True

@@ -3,12 +3,11 @@
 from datetime import datetime, timedelta
 from typing import Optional, final
 
-from peewee import CharField, ForeignKeyField
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.user.activity.activity_dto import (ActivityDTO,
                                                  ActivityObjectType,
                                                  ActivityType)
+from peewee import CharField, ForeignKeyField
 
 from ...core.model.model import Model
 from ..current_user_service import CurrentUserService
@@ -25,8 +24,6 @@ class Activity(Model):
     activity_type = EnumField(choices=ActivityType, null=False)
     object_type = EnumField(choices=ActivityObjectType, null=False)
     object_id = CharField(null=False, max_length=36)
-
-    _table_name = "gws_user_activity"
 
     # For add of update activity, if the last activity or same type is less than ACTIVITY_MERGE_MAX_TIME seconds,
     # the activity will be updated
@@ -100,3 +97,7 @@ class Activity(Model):
             object_type=self.object_type,
             object_id=self.object_id,
         )
+
+    class Meta:
+        table_name = 'gws_user_activity'
+        is_table = True

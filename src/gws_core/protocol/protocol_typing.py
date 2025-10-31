@@ -2,11 +2,10 @@
 
 from typing import Literal, Type, final
 
-from peewee import CharField, ModelSelect
-
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
+from peewee import CharField, ModelSelect
 
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
@@ -69,3 +68,7 @@ class ProtocolTyping(Typing):
             protocol_typing.output_specs = protocol.get_output_specs_self().to_dto()
 
         return protocol_typing
+
+    # Disable table creation
+    class Meta:
+        is_table = False

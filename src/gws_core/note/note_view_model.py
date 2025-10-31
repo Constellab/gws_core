@@ -2,10 +2,9 @@
 
 from typing import List
 
-from peewee import CompositeKey, ForeignKeyField, ModelSelect
-
 from gws_core.core.model.base_model import BaseModel
 from gws_core.resource.view_config.view_config import ViewConfig
+from peewee import CompositeKey, ForeignKeyField, ModelSelect
 
 from .note import Note
 
@@ -16,7 +15,6 @@ class NoteViewModel(BaseModel):
     note: Note = ForeignKeyField(Note, null=False, index=True, on_delete='CASCADE')
     view: ViewConfig = ForeignKeyField(ViewConfig, null=False, index=True, on_delete='RESTRICT')
 
-    _table_name = 'gws_note_view'
 
     @classmethod
     def get_by_note(cls, note_id: str) -> List['NoteViewModel']:
@@ -62,4 +60,5 @@ class NoteViewModel(BaseModel):
 
     class Meta:
         table_name = 'gws_note_view'
+        is_table = True
         primary_key = CompositeKey("note", "view")

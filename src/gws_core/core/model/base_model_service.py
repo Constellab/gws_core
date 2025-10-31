@@ -82,7 +82,7 @@ class BaseModelService:
         db_manager = db_with_models.db_manager
 
         # Filter classes that have a table name (not abstract) and that don't exist yet
-        models = [t for t in db_with_models.models if t.has_table_name() and not t.table_exists()]
+        models = [t for t in db_with_models.models if not t.table_exists()]
 
         db_manager.create_tables(models)
 
@@ -126,7 +126,16 @@ class BaseModelService:
         models = cls.get_base_model_types()
 
         for model in models:
+            if not model.is_table():
+                continue
             db_manager = model.get_db_manager()
+
+            if db_manager is None:
+                raise Exception(f"The model '{model.__name__}' has no db manager. Please set the db_manager in the Meta class of the model.")
+
+            # Check that the database and db_manager match
+            if db_manager.get_db() != model.get_metadata().database:
+                raise Exception(f"The model '{model.__name__}' has a db manager that does not match its database. Please check the db_manager and database in the Meta class of the model.")
 
             if db_manager.get_unique_name() not in db_with_models:
                 db_with_models[db_manager.get_unique_name()] = DbWithModels(

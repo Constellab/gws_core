@@ -2,12 +2,11 @@
 
 from typing import Any, Dict, Optional, Type, final
 
-from peewee import CharField, ModelSelect, TextField
-
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_type import CredentialsDTO
+from peewee import CharField, ModelSelect, TextField
 
 from .credentials_type import (CredentialsDataBase, CredentialsDataBasic,
                                CredentialsDataLab, CredentialsDataOther,
@@ -24,8 +23,6 @@ class Credentials(ModelWithUser):
     description = TextField(null=True)
 
     data: Dict[str, Any] = JSONField(null=True)
-
-    _table_name = "gws_credentials"
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -96,3 +93,4 @@ class Credentials(ModelWithUser):
 
     class Meta:
         table_name = "gws_credentials"
+        is_table = True

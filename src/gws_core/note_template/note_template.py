@@ -2,13 +2,12 @@
 
 from typing import final
 
-from peewee import CharField
-
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_field import RichTextField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note_template.note_template_dto import NoteTemplateDTO
+from peewee import CharField
 
 
 @final
@@ -16,8 +15,6 @@ class NoteTemplate(ModelWithUser):
     title = CharField()
 
     content: RichTextDTO = RichTextField(null=True)
-
-    _table_name = 'gws_note_template'
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -37,3 +34,4 @@ class NoteTemplate(ModelWithUser):
 
     class Meta:
         table_name = 'gws_note_template'
+        is_table = True
