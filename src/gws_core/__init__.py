@@ -58,6 +58,7 @@ from .config.param.param_types import ParamValue as ParamValue
 from .config.param.tags_param_spec import TagsParam as TagsParam
 # Core
 # Core > Classes
+from .core.classes.enum_field import EnumField as EnumField
 from .core.classes.expression_builder import \
     ExpressionBuilder as ExpressionBuilder
 from .core.classes.file_downloader import FileDownloader as FileDownloader
@@ -86,6 +87,7 @@ from .core.classes.validator import Validator as Validator
 from .core.db.abstract_db_manager import AbstractDbManager as AbstractDbManager
 from .core.db.db_config import DbConfig as DbConfig
 from .core.db.db_config import DbMode as DbMode
+from .core.db.gws_core_db_manager import GwsCoreDbManager as GwsCoreDbManager
 from .core.db.lazy_abstract_db_manager import \
     LazyAbstractDbManager as LazyAbstractDbManager
 from .core.db.migration.brick_migration_decorator import \
@@ -407,6 +409,12 @@ from .io.port import Port as Port
 from .lab.monitor.monitor import Monitor as Monitor
 from .lab.monitor.monitor_service import MonitorService as MonitorService
 # Model
+from .model.event.base_event import BaseEvent as BaseEvent
+from .model.event.event import Event as Event
+from .model.event.event_dispatcher import EventDispatcher as EventDispatcher
+from .model.event.event_listener import EventListener as EventListener
+from .model.event.event_listener_decorator import \
+    event_listener as event_listener
 from .model.model_service import ModelService as ModelService
 from .model.typing import Typing as Typing
 from .model.typing_deprecated import TypingDeprecated as TypingDeprecated
@@ -601,5 +609,6 @@ from .user.current_user_service import AuthenticateUser as AuthenticateUser
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
 from .user.user_credentials_dto import UserCredentialsDTO as UserCredentialsDTO
+from .user.user_events import *
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService

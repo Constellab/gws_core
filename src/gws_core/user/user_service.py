@@ -3,8 +3,11 @@
 from typing import List, Union
 
 from gws_core.core.utils.logger import Logger
+from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserFullDTO
+from gws_core.user.user_events import (UserActivatedEvent, UserCreatedEvent,
+                                       UserUpdatedEvent)
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
@@ -15,20 +18,27 @@ from .user_group import UserGroup
 class UserService():
 
     @classmethod
-    def activate_user(cls, id_: str) -> User:
-        return cls.set_user_active(id_, True)
+    def activate_user(cls, id_: str, triggered_by: User | None = None) -> User:
+        return cls.set_user_active(id_, True, triggered_by)
 
     @classmethod
-    def create_or_update_user_dto(cls, user_dto: UserFullDTO) -> User:
+    def create_or_update_user_dto(cls, user_dto: UserFullDTO, triggered_by: User | None = None) -> User:
         db_user: User | None = cls.get_user_by_id(user_dto.id)
         if db_user is not None:
             db_user.from_full_dto(user_dto)
-            return db_user.save()
+            user = db_user.save()
 
-        return cls._create_user(user_dto)
+            # Dispatch update event
+            EventDispatcher.get_instance().dispatch(
+                UserUpdatedEvent(data=user, triggered_by=triggered_by)
+            )
+
+            return user
+
+        return cls._create_user(user_dto, triggered_by)
 
     @classmethod
-    def _create_user(cls, user_dto: UserFullDTO) -> User:
+    def _create_user(cls, user_dto: UserFullDTO, triggered_by: User | None = None) -> User:
         if user_dto.group == UserGroup.SYSUSER:
             raise BadRequestException("Cannot create sysuser")
 
@@ -37,11 +47,18 @@ class UserService():
         user.id = user_dto.id
         user.from_full_dto(user_dto)
         user.save()
-        return User.get_by_id(user.id)
+        user = User.get_by_id(user.id)
+
+        # Dispatch creation event
+        EventDispatcher.get_instance().dispatch(
+            UserCreatedEvent(data=user, triggered_by=triggered_by)
+        )
+
+        return user
 
     @classmethod
-    def deactivate_user(cls, id_: str) -> User:
-        return cls.set_user_active(id_, False)
+    def deactivate_user(cls, id_: str, triggered_by: User | None = None) -> User:
+        return cls.set_user_active(id_, False, triggered_by)
 
     @classmethod
     def get_by_id_or_none(cls, id_: str) -> Union[User, None]:
@@ -60,7 +77,7 @@ class UserService():
         return User.get_by_email(email)
 
     @classmethod
-    def set_user_active(cls, id_: str, is_active: bool) -> User:
+    def set_user_active(cls, id_: str, is_active: bool, triggered_by: User | None = None) -> User:
         user: User = User.get_by_id_and_check(id_)
 
         if not is_active:
@@ -72,7 +89,14 @@ class UserService():
                     raise BadRequestException("Cannot deactivate the last admin")
 
         user.is_active = is_active
-        return user.save()
+        user = user.save()
+
+        # Dispatch activation/deactivation event
+        EventDispatcher.get_instance().dispatch(
+            UserActivatedEvent(data=user, triggered_by=triggered_by, activated=is_active)
+        )
+
+        return user
 
     @classmethod
     def get_all_users(cls) -> List[User]:
@@ -109,14 +133,21 @@ class UserService():
         return cls.get_user_by_id(id_) is not None
 
     @classmethod
-    def synchronize_all_space_users(cls) -> None:
+    def synchronize_all_space_users(cls, triggered_by: User | None = None) -> None:
         Logger.info("Synchronizing users from space")
         try:
-            users = SpaceService.get_instance().get_all_lab_users()
-            for user in users:
-                cls.create_or_update_user_dto(user)
+            user_dtos = SpaceService.get_instance().get_all_lab_users()
+            synced_users = []
+            errors = []
 
-            Logger.info(f"{len(users)} synchronized users from space")
+            for user_dto in user_dtos:
+                try:
+                    user = cls.create_or_update_user_dto(user_dto, triggered_by)
+                    synced_users.append(user)
+                except Exception as e:
+                    errors.append(str(e))
+
+            Logger.info(f"{len(synced_users)} synchronized users from space")
         except Exception as err:
             Logger.error(f"Error while synchronizing users: {err}")
             raise err

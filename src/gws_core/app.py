@@ -7,6 +7,8 @@ from fastapi import FastAPI
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
+from gws_core.lab.system_event import SystemStartedEvent
+from gws_core.model.event.event_dispatcher import EventDispatcher
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
 from .core.classes.cors_config import CorsConfig
@@ -87,6 +89,9 @@ class App:
         # Registrer the lab start. Use a new thread to prevent blocking the start
         th = Thread(target=SystemService.register_lab_start)
         th.start()
+
+        # Dispatch the system started event
+        EventDispatcher.get_instance().dispatch(SystemStartedEvent())
 
         cls.start_uvicorn_app(port)
 

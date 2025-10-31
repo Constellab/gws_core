@@ -92,9 +92,11 @@ The codebase supports multiple Python environment agents:
 ### Dependencies
 Dependencies are managed via `settings.json` rather than traditional requirements files. Install packages listed in the pip section manually or use the installation scripts.
 
-### Test Data
-Test data is located in `tests/testdata/` and accessible via `DataProvider.get_testdata_dir()`.
-
+### Best Practices
+- Follow existing coding conventions and styles
+- Write comprehensive docstrings for classes and methods
+- Do not export classes in the __init__.py files unless necessary
+- 
 ### Code Organization
 - Use the existing typing system and decorators when creating new tasks/resources
 - Follow the established patterns for database models and services

@@ -242,5 +242,3 @@ class LocalFileStore(FileStore):
 
         return result
 
-    class Meta:
-        is_table = False
