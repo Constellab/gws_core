@@ -2,16 +2,17 @@
 
 from typing import Any, Dict, Optional
 
+from peewee import BooleanField, CharField, IntegerField, ModelSelect
+
 from gws_core.community.community_dto import CommunityTagKeyDTO
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.tag.tag import TagValueType
 from gws_core.tag.tag_dto import TagKeyModelDTO, TagValueFormat
 from gws_core.tag.tag_helper import TagHelper
-from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from ..core.model.model import Model
 
@@ -25,7 +26,7 @@ class TagKeyModel(Model):
 
     label = CharField(null=True)
 
-    description: RichTextDTO = RichTextField(null=True)
+    description: RichTextDTO = RichTextDbField(null=True)
 
     is_community_tag = BooleanField(default=False)
 

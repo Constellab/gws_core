@@ -5,9 +5,9 @@ from peewee import TextField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 
-class RichTextField(TextField):
+class RichTextDbField(TextField):
     """
-    Custom field that support serialization and deserialization RichTextDTO to JSON.
+    Custom database table field for peewee that support serialization and deserialization RichTextDTO to JSON.
     """
 
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"

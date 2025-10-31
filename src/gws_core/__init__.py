@@ -75,6 +75,7 @@ from .core.classes.observer.message_observer import \
     ProgressBarMessageObserver as ProgressBarMessageObserver
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.search_builder import SearchBuilder as SearchBuilder
+from .core.classes.search_builder import SearchOperator as SearchOperator
 from .core.classes.search_builder import SearchParams as SearchParams
 from .core.classes.validator import BoolValidator as BoolValidator
 from .core.classes.validator import DictValidator as DictValidator
@@ -260,6 +261,8 @@ from .impl.rich_text.block.rich_text_block_view import \
 from .impl.rich_text.block.rich_text_block_view import \
     RichTextBlockViewFile as RichTextBlockViewFile
 from .impl.rich_text.rich_text import RichText as RichText
+from .impl.rich_text.rich_text_db_field import \
+    RichTextDbField as RichTextDbField
 from .impl.rich_text.rich_text_modification import \
     RichTextAggregateDTO as RichTextAggregateDTO
 from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock

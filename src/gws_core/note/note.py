@@ -2,6 +2,9 @@
 
 from typing import Any, List, final
 
+from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
+                    ModelSelect)
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
@@ -11,7 +14,7 @@ from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity, NavigableEntityType)
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_modification import \
     RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
@@ -20,8 +23,6 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
-                    ModelSelect)
 
 from ..core.model.base_model import BaseModel
 from ..core.model.db_field import BaseDTOField, DateTimeUTC
@@ -35,7 +36,7 @@ from ..scenario.scenario import Scenario
 class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     title = CharField()
 
-    content: RichTextDTO = RichTextField(null=True)
+    content: RichTextDTO = RichTextDbField(null=True)
 
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
@@ -52,7 +53,6 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     is_archived = BooleanField(default=False, index=True)
 
     modifications: RichTextModificationsDTO = BaseDTOField(RichTextModificationsDTO, null=True)
-
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -163,7 +163,6 @@ class NoteScenario(BaseModel):
 
     scenario = ForeignKeyField(Scenario, on_delete='CASCADE')
     note = ForeignKeyField(Note, on_delete='CASCADE')
-
 
     ############################################# CLASS METHODS ########################################
 

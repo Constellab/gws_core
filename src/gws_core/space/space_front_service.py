@@ -3,6 +3,7 @@
 from typing import Literal
 
 from gws_core.core.utils.settings import Settings
+from gws_core.space.space_dto import SpaceHierarchyObjectType
 
 
 class SpaceFrontService:
@@ -49,6 +50,23 @@ class SpaceFrontService:
     def get_folder_chat_url(self, folder_id: str) -> str:
         """Get the URL of the chat for a specific folder of the Space app."""
         return f"{self.get_app_url()}/chat/folder/{folder_id}"
+
+    def get_hierarchy_object_url(self, object_id: str, object_type: SpaceHierarchyObjectType) -> str:
+        """Get the URL of a specific hierarchy object of the Space app."""
+        if object_type == SpaceHierarchyObjectType.FOLDER:
+            return self.get_folder_url(object_id)
+        elif object_type == SpaceHierarchyObjectType.DOCUMENT:
+            return self.get_document_url(object_id)
+        elif object_type == SpaceHierarchyObjectType.CONSTELLAB_DOCUMENT:
+            return self.get_note_url(object_id)
+        elif object_type == SpaceHierarchyObjectType.NOTE:
+            return self.get_lab_note_url(object_id)
+        elif object_type == SpaceHierarchyObjectType.SCENARIO:
+            return self.get_scenario_url(object_id)
+        elif object_type == SpaceHierarchyObjectType.RESOURCE:
+            return self.get_resource_url(object_id)
+        else:
+            raise ValueError(f"Unsupported object type: {object_type}")
 
     ################################### LAB ###################################
 

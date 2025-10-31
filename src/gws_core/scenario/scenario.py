@@ -5,13 +5,15 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity, NavigableEntityType)
 from gws_core.folder.model_with_folder import ModelWithFolder
-from gws_core.impl.rich_text.rich_text_field import RichTextField
+from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
@@ -21,7 +23,6 @@ from gws_core.scenario.scenario_dto import (ScenarioDTO, ScenarioProgressDTO,
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
@@ -52,7 +53,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
                                                     max_length=20)
 
     title = CharField(max_length=50)
-    description: RichTextDTO = RichTextField(null=True)
+    description: RichTextDTO = RichTextDbField(null=True)
     lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)

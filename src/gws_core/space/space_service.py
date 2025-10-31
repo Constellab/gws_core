@@ -279,15 +279,15 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "upload document to space")
 
-    def download_document(self, document_id: str, filename: str = None) -> str:
-        """Download a document from space and save it to a temporary location
+    def download_document_bytes(self, document_id: str, filename: str = None) -> bytes:
+        """Download a document from space and return the bytes directly
 
         :param document_id: id of the document to download
         :type document_id: str
         :param filename: filename for URL readability (not used in logic), defaults to None
         :type filename: str, optional
-        :return: path to the downloaded file
-        :rtype: str
+        :return: document content as bytes
+        :rtype: bytes
         """
         # Use empty string if filename is None to match the URL pattern
         url_filename = filename if filename else ''
@@ -300,24 +300,7 @@ class SpaceService(SpaceServiceBase):
                 self._get_request_header(),
                 raise_exception_if_error=True)
 
-            # Get filename from Content-Disposition header if available
-            content_disposition = response.headers.get('Content-Disposition', '')
-            if 'filename=' in content_disposition:
-                # Extract filename from header
-                import re
-                match = re.search(r'filename="?([^"]+)"?', content_disposition)
-                if match:
-                    download_filename = match.group(1)
-                else:
-                    download_filename = filename if filename else 'downloaded_file'
-            else:
-                download_filename = filename if filename else 'downloaded_file'
-
-            # Create temporary file
-            with tempfile.NamedTemporaryFile(mode='wb', delete=False,
-                                             suffix=f'_{download_filename}') as tmp_file:
-                tmp_file.write(response.content)
-                return tmp_file.name
+            return response.content
         except Exception as err:
             self.handle_error(err, "download document from space")
 
