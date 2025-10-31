@@ -1,18 +1,20 @@
 
 
-from typing import Dict, NoReturn, Optional, Type, TypeVar
+from typing import Callable, Dict, List, NoReturn, Optional, Type, TypeVar
 
 import requests
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
 from ..user.user import User
 
 SpaceServiceBaseType = TypeVar('SpaceServiceBaseType', bound='SpaceServiceBase')
+T = TypeVar('T', bound=BaseModelDTO)
 
 
 class SpaceServiceBase():
@@ -92,6 +94,65 @@ class SpaceServiceBase():
             headers[self.ACCESS_TOKEN_HEADER] = self._access_token
 
         return headers
+
+    #################################### PAGE DTO CONVERSION ####################################
+
+    @staticmethod
+    def build_page_dto_from_space_json(
+            json_data: dict,
+            object_converter: Callable[[dict], T]) -> PageDTO[T]:
+        """Build a PageDTO from Space API JSON response format (ClPageI).
+
+        The Space API returns paginated data in the ClPageI format:
+        {
+            "objects": T[],
+            "first": boolean,
+            "last": boolean,
+            "totalElements": number,
+            "currentPage": number,
+            "pageSize": number,
+            "totalIsApproximate"?: boolean
+        }
+
+        This method converts it to the internal PageDTO format.
+
+        :param json_data: The JSON response from the Space API
+        :type json_data: dict
+        :param object_converter: Function to convert each object in the list from JSON to the target DTO type
+        :type object_converter: Callable[[dict], T]
+        :return: PageDTO with converted objects
+        :rtype: PageDTO[T]
+        """
+        current_page = json_data.get('currentPage', 0)
+        page_size = json_data.get('pageSize', 20)
+        total_elements = json_data.get('totalElements', 0)
+        is_first = json_data.get('first', True)
+        is_last = json_data.get('last', True)
+        total_is_approximate = json_data.get('totalIsApproximate', False)
+
+        # Convert objects using the provided converter function
+        objects_json = json_data.get('objects', [])
+        objects = [object_converter(obj) for obj in objects_json]
+
+        # Calculate pagination metadata
+        total_pages = max(1, (total_elements + page_size - 1) // page_size) if page_size > 0 else 1
+        prev_page = max(0, current_page - 1)
+        next_page = min(total_pages - 1, current_page + 1)
+        last_page = max(0, total_pages - 1)
+
+        return PageDTO[T](
+            page=current_page,
+            prev_page=prev_page,
+            next_page=next_page,
+            last_page=last_page,
+            total_number_of_items=total_elements,
+            total_number_of_pages=total_pages,
+            number_of_items_per_page=page_size,
+            is_first_page=is_first,
+            is_last_page=is_last,
+            total_is_approximate=total_is_approximate,
+            objects=objects
+        )
 
      #################################### ERROR HANDLING ####################################
 

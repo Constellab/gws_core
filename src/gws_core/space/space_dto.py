@@ -149,3 +149,12 @@ class SpaceGroupDTO(BaseModelDTO):
 
 class SpaceGroupListDTO(BaseModelDTO):
     groups: List[SpaceGroupDTO]
+
+
+class DocumentUploadOverrideMode(str, Enum):
+    """Enum representing how to handle existing files with the same name when uploading documents
+    """
+    IGNORE = 'IGNORE'  # ignore the new document if it already exists
+    ERROR = 'ERROR'  # throw an error if the document already exists
+    REPLACE = 'REPLACE'  # replace the existing document with the new one
+    RENAME = 'RENAME'  # rename the new document with '_1' if it already exists

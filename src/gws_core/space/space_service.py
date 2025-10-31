@@ -1,18 +1,21 @@
 
 
 import json
+import tempfile
 from typing import List, Literal, Optional
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.brick.brick_service import BrickService
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
-from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.impl.rich_text.rich_text_modification import \
     RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
-from gws_core.space.space_dto import (LabStartDTO, SaveNoteToSpaceDTO,
+from gws_core.space.space_dto import (DocumentUploadOverrideMode, LabStartDTO,
+                                      SaveNoteToSpaceDTO,
                                       SaveScenarioToSpaceDTO,
                                       ShareResourceWithSpaceDTO, SpaceGroupDTO,
                                       SpaceHierarchyObjectDTO,
@@ -242,6 +245,123 @@ class SpaceService(SpaceServiceBase):
             return SpaceSyncObjectDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "get note sync")
+
+    #################################### DOCUMENT ####################################
+
+    def upload_document(self, parent_folder_id: str, file_path: str, override_mode: DocumentUploadOverrideMode,
+                        filename: str = None) -> SpaceHierarchyObjectDTO:
+        """Upload a document to a folder in space
+
+        :param parent_folder_id: id of the parent folder
+        :type parent_folder_id: str
+        :param file_path: path to the file to upload
+        :type file_path: str
+        :param override_mode: how to handle existing files with the same name (IGNORE, ERROR, REPLACE, RENAME)
+        :type override_mode: DocumentUploadOverrideMode
+        :param filename: custom filename, defaults to None (uses original filename)
+        :type filename: str, optional
+        :return: the uploaded document hierarchy object
+        :rtype: SpaceHierarchyObjectDTO
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{parent_folder_id}/document/upload/{override_mode.value}")
+
+        try:
+            form_data = FormData()
+            form_data.add_file_from_path('file', file_path, filename)
+
+            response = ExternalApiService.put_form_data(
+                space_api_url,
+                form_data=form_data,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json(response.json())
+        except Exception as err:
+            self.handle_error(err, "upload document to space")
+
+    def download_document(self, document_id: str, filename: str = None) -> str:
+        """Download a document from space and save it to a temporary location
+
+        :param document_id: id of the document to download
+        :type document_id: str
+        :param filename: filename for URL readability (not used in logic), defaults to None
+        :type filename: str, optional
+        :return: path to the downloaded file
+        :rtype: str
+        """
+        # Use empty string if filename is None to match the URL pattern
+        url_filename = filename if filename else ''
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}/download/{url_filename}")
+
+        try:
+            response = ExternalApiService.get(
+                space_api_url,
+                self._get_request_header(),
+                raise_exception_if_error=True)
+
+            # Get filename from Content-Disposition header if available
+            content_disposition = response.headers.get('Content-Disposition', '')
+            if 'filename=' in content_disposition:
+                # Extract filename from header
+                import re
+                match = re.search(r'filename="?([^"]+)"?', content_disposition)
+                if match:
+                    download_filename = match.group(1)
+                else:
+                    download_filename = filename if filename else 'downloaded_file'
+            else:
+                download_filename = filename if filename else 'downloaded_file'
+
+            # Create temporary file
+            with tempfile.NamedTemporaryFile(mode='wb', delete=False,
+                                             suffix=f'_{download_filename}') as tmp_file:
+                tmp_file.write(response.content)
+                return tmp_file.name
+        except Exception as err:
+            self.handle_error(err, "download document from space")
+
+    def rename_document(self, document_id: str, name: str) -> None:
+        """Rename a document in space
+
+        :param document_id: id of the document to rename
+        :type document_id: str
+        :param name: new name for the document
+        :type name: str
+        :return: the renamed document
+        :rtype: SpaceDocumentDTO
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}/rename")
+
+        try:
+            ExternalApiService.put(
+                space_api_url,
+                {'name': name},
+                self._get_request_header(),
+                raise_exception_if_error=True)
+        except Exception as err:
+            self.handle_error(err, "rename document in space")
+
+    def delete_document(self, document_id: str) -> SpaceHierarchyObjectDTO:
+        """Delete a document by moving it to trash
+
+        :param document_id: id of the document to delete
+        :type document_id: str
+        :return: the deleted document hierarchy object
+        :rtype: SpaceHierarchyObjectDTO
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}")
+
+        try:
+            response = ExternalApiService.delete(
+                space_api_url,
+                self._get_request_header(),
+                raise_exception_if_error=True)
+            return SpaceHierarchyObjectDTO.from_json(response.json())
+        except Exception as err:
+            self.handle_error(err, "delete document in space")
 
     #################################### RESOURCE ####################################
 
@@ -526,6 +646,43 @@ class SpaceService(SpaceServiceBase):
             return SpaceHierarchyObjectDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "retrieve folders for the lab")
+
+    def get_project_children_objects_paginated(self, folder_id: str, search_params: SearchParams,
+                                               page: int, size: int) -> PageDTO[SpaceHierarchyObjectDTO]:
+        """Get paginated children of a folder with search capabilities
+
+        :param folder_id: id of the folder to get children from
+        :type folder_id: str
+        :param search_params: search and filter parameters
+        :type search_params: SearchParams
+        :param page: page number (0-indexed)
+        :type page: int
+        :param size: page size (number of items per page)
+        :type size: int
+        :return: paginated list of hierarchy objects
+        :rtype: PageDTO[SpaceHierarchyObjectDTO]
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/children/paginated")
+
+        try:
+            # Add query parameters to the URL
+            url_with_params = f"{space_api_url}?page={page}&size={size}"
+
+            response = ExternalApiService.post(
+                url_with_params,
+                search_params,
+                self._get_request_header(),
+                raise_exception_if_error=True)
+
+            # Parse the response using the base service helper method
+            page_data = response.json()
+            return self.build_page_dto_from_space_json(
+                page_data,
+                SpaceHierarchyObjectDTO.from_json
+            )
+        except Exception as err:
+            self.handle_error(err, "get paginated children of folder")
 
     ############################################# ENTITY #############################################
 
