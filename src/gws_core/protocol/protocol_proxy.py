@@ -9,6 +9,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import \
 from gws_core.core.utils.logger import Logger
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_update import ProtocolUpdate
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
@@ -160,6 +162,16 @@ class ProtocolProxy(ProcessProxy):
             next_processes.add(self.get_process(next_process_model.instance_name))
 
         return next_processes
+
+    def get_output(self, name) -> Resource:
+        return self.get_output_resource_model(name).get_resource()
+
+    def get_output_resource_model(self, name) -> ResourceModel:
+        if self.has_parent_protocol():
+            return super().get_output_resource_model(name)
+
+        output_task: ProcessProxy = self.get_process(name)
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
     ####################################### CONNECTORS #########################################
 

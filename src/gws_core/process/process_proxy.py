@@ -60,6 +60,9 @@ class ProcessProxy:
     def get_model_id(self) -> str:
         return self._process_model.id
 
+    def has_parent_protocol(self) -> bool:
+        return not (self._process_model.parent_protocol is None)
+
     ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:
