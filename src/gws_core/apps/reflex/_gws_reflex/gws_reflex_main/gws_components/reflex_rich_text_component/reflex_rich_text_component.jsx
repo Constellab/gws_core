@@ -44,6 +44,7 @@ export function RichTextComponent({
     <dc-text-editor
       ref={componentRef}
       inputData={JSON.stringify(inputData)}
+      style={{ display: 'flex', flexDirection: 'column' }}
     ></dc-text-editor>
   );
 }

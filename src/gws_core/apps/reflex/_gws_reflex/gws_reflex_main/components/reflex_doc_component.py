@@ -11,7 +11,6 @@ from gws_core.core.utils.reflector_types import MethodDoc
 def doc_component(
     func: Callable,
     title: Optional[str] = None,
-    show_function_name: bool = True,
     show_description: bool = True,
     show_parameters: bool = True,
     show_return_type: bool = False,
@@ -31,7 +30,7 @@ def doc_component(
     :return: A Reflex component displaying the function documentation
     """
     # Extract documentation using ReflectorHelper
-    func_doc: Optional[MethodDoc] = ReflectorHelper.get_func_doc(func, func.__name__)
+    func_doc: Optional[MethodDoc] = ReflectorHelper.get_func_doc(func)
 
     if func_doc is None:
         return rx.card(
@@ -43,10 +42,7 @@ def doc_component(
     elements = []
 
     # Title
-    if show_function_name:
-        heading_text = f"{title or 'Function Documentation'}: {func_doc.name}"
-    else:
-        heading_text = title or "Function Documentation"
+    heading_text = title or func_doc.name
     elements.append(rx.heading(heading_text, size="6", margin_bottom="1em"))
 
     # Function description

@@ -1,18 +1,20 @@
 import reflex as rx
 from gws_reflex_main import add_unauthorized_page, get_theme
 
-from .pages import doc_component_page, home_page, rich_text_page
+from .pages import (doc_component_page, home_page, rich_text_page,
+                    user_components_page)
 
 app = rx.App(
-    theme=get_theme()
+    theme=get_theme(),
+    stylesheets=["/style.css"],
 )
 
 
-def sidebar_link(text: str, url: str, icon: str) -> rx.Component:
+def sidebar_link(text: str, url: str, emoji: str) -> rx.Component:
     """Create a sidebar navigation link."""
     return rx.link(
         rx.hstack(
-            rx.icon(icon, size=20),
+            rx.text(emoji, size="5"),
             rx.text(text, size="3"),
             width="100%",
             padding_y="0.5em",
@@ -32,20 +34,18 @@ def sidebar() -> rx.Component:
     """Create the sidebar with navigation links."""
     return rx.box(
         rx.vstack(
-            rx.heading("Reflex Showcase", size="6", margin_bottom="1em"),
-            rx.divider(margin_bottom="1em"),
-
             # Navigation links
-            sidebar_link("Home", "/", "home"),
-            sidebar_link("Rich Text", "/rich-text", "pencil"),
-            sidebar_link("Doc Component", "/doc-component", "file-text"),
+            sidebar_link("Home", "/", "🏠"),
+            sidebar_link("Rich Text", "/rich-text", "✏️"),
+            sidebar_link("User Components", "/user-components", "👤"),
+            sidebar_link("Doc Component", "/doc-component", "📄"),
 
             width="100%",
             spacing="2",
         ),
         width="250px",
         padding="1.5em",
-        bg=rx.color("gray", 2),
+        bg='var(--accent-2)',
         height="100vh",
         position="fixed",
         left="0",
@@ -76,6 +76,12 @@ def index():
 def rich_text():
     """Rich text component demo page."""
     return layout(rich_text_page.rich_text_page())
+
+
+@rx.page(route="/user-components")
+def user_components():
+    """User components demo page."""
+    return layout(user_components_page.user_components_page())
 
 
 @rx.page(route="/doc-component")

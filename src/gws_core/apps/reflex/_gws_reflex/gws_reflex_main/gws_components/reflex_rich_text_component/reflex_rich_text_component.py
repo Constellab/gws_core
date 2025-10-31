@@ -37,7 +37,7 @@ def rich_text_component(placeholder: Optional[str] = None,
                         max_height: Optional[str] = None,
                         output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]] = None,
                         **kwargs) -> RichTextComponent:
-    """Convenience function to create the RichTextComponent.
+    """Create a RichTextComponent instance.
 
     :param placeholder: Placeholder text for the editor, defaults to None
     :type placeholder: Optional[str], optional

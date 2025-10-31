@@ -129,7 +129,7 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
-    def get_func_doc(cls, func: Callable, func_name: str, type_: Optional[Type] = None) -> Optional[MethodDoc]:
+    def get_func_doc(cls, func: Callable, func_name: str = None, type_: Optional[Type] = None) -> Optional[MethodDoc]:
         """Get documentation for a single function.
 
         :param func: The function to document
@@ -142,6 +142,8 @@ class ReflectorHelper():
                 return None
 
             method_type: str = MethodDocType.BASICMETHOD
+            if func_name is None:
+                func_name = func.__name__
 
             if type_ is not None:
                 if isinstance(inspect.getattr_static(type_, func_name), classmethod):
@@ -157,7 +159,7 @@ class ReflectorHelper():
 
             doc = cls.get_cleaned_doc(func)
             return MethodDoc(name=func_name, doc=doc,
-                           args=arguments, return_type=return_type, method_type=method_type)
+                             args=arguments, return_type=return_type, method_type=method_type)
         except Exception:
             Logger.error(f"Error while getting method doc of {func_name}")
             return None

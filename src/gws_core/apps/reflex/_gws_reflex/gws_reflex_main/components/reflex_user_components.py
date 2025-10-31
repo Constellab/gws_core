@@ -11,19 +11,9 @@ def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "norm
     This component displays a user's photo in a circular frame. If no photo is
     available, it shows the user's initials in a colored circle instead.
 
-    Args:
-        user (UserDTO): User data transfer object containing:
-            - first_name: User's first name
-            - last_name: User's last name
-            - photo: Optional URL to user's photo
-        size (Literal["small", "normal"]): Size of the avatar - "small" (24px) or "normal" (32px, default)
-
-    Returns:
-        rx.Component: Circular avatar with photo or initials
-
-    Example:
-        profile_pic = user_profile_picture(user_dto, size="small")
-        # Displays circular photo or initials
+    :param user: User data transfer object containing first_name, last_name, and optional photo
+    :param size: Size of the avatar - "small" (24px) or "normal" (32px), defaults to "normal"
+    :return: Circular avatar with photo or initials
     """
     # Determine pixel size and font size based on size parameter
     pixel_size = "24px" if size == "small" else "32px"
@@ -68,19 +58,9 @@ def user_inline_component(user: UserDTO, size: Literal["small", "normal"] = "nor
     with a border. If no photo is available, it shows the user's initials in a
     colored circle.
 
-    Args:
-        user (UserDTO): User data transfer object containing:
-            - first_name: User's first name
-            - last_name: User's last name
-            - photo: Optional URL to user's photo
-        size (Literal["small", "normal"]): Size of the avatar - "small" (24px) or "normal" (32px, default)
-
-    Returns:
-        rx.Component: Horizontal stack with user photo/initials and name
-
-    Example:
-        user_component = user_inline_component(user_dto, size="small")
-        # Displays circular photo with name beside it
+    :param user: User data transfer object containing first_name, last_name, and optional photo
+    :param size: Size of the avatar - "small" (24px) or "normal" (32px), defaults to "normal"
+    :return: Horizontal stack with user photo/initials and name
     """
     # Determine font size based on size parameter
     font_size = "12px" if size == "small" else "14px"
@@ -107,16 +87,13 @@ def user_select(users: List[UserDTO],
     This component displays a dropdown select with user profile pictures/initials
     and names. Users are displayed using the user_inline_component with small size.
 
-    Args:
-        users (List[UserDTO]): List of users to display in the select
-        placeholder (str): Placeholder text when no user is selected (default: "Select a user")
-        name (str): Name attribute for the select element
-        disabled (bool): Whether the select is disabled (default: False)
-        width (str): Width of the select component
-        **kwargs: Additional props to pass to the select.root component
-
-    Returns:
-        rx.Component: User select component
+    :param users: List of users to display in the select
+    :param placeholder: Placeholder text when no user is selected, defaults to "Select a user"
+    :param name: Name attribute for the select element
+    :param disabled: Whether the select is disabled, defaults to False
+    :param width: Width of the select component
+    :param kwargs: Additional props to pass to the select.root component
+    :return: User select component
     """
 
     return rx.select.root(
