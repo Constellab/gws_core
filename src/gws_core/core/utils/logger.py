@@ -12,8 +12,6 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 
-from ..exception.exceptions.bad_request_exception import BadRequestException
-
 LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = "log"
 RESET_COLOR = "\x1b[0m"
@@ -108,7 +106,7 @@ class Logger:
         self.level = level
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
-            raise BadRequestException(
+            raise Exception(
                 f"The logging level '{level}' is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
 
         # Create the logger
@@ -160,7 +158,7 @@ class Logger:
         if not log_level:
             return "INFO"
         if not Utils.value_is_in_literal(log_level, LoggerLevel):
-            raise BadRequestException(
+            raise Exception(
                 f"The logging level '{log_level}' is incorrect, please use one of the following [INFO, DEBUG, ERROR]")
         return log_level
 
@@ -313,5 +311,3 @@ class Logger:
 
     def _log_debug(self, message: str) -> None:
         self._logger.debug(message)
-
-

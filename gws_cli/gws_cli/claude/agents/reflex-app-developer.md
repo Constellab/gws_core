@@ -31,10 +31,13 @@ app_name/
 └── _app_name/                            # Root application directory (prefixed with underscore)
    ├── rxconfig.py                        # Reflex configuration file
    ├── dev_config.json                    # Development configuration file. Use to run the app in dev mode.
-   └── app_name/                          # Main application package
+   ├── app_name/                          # Main application package
       ├── app_name.py                     # Main app entry point with rx.App() definition
       ├── main_state.py                   # Root state class for the application
       └── ...                             # (additional states and components)
+   ├── .web/                            # Reflex web build output(auto-generated, do not edit)
+   └── .state/                          # Reflex state build output(auto-generated, do not edit)
+
 ```
 
 Note: the `dev_config.json` simulate configuration values that would normally be provided by the Constellab task that generates the reflex app in production.

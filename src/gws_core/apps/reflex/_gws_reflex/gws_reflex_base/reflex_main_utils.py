@@ -3,6 +3,8 @@
 import os
 
 import reflex as rx
+from gws_reflex_base.component.reflex_confirm_dialog_component import \
+    confirm_dialog
 
 from .reflex_main_state_base import UNAUTHORIZED_ROUTE, ReflexMainStateBase
 
@@ -25,8 +27,10 @@ def main_component(*contents: rx.Component) -> rx.Component:
                 height="100vh",
             ),
         ),
+        confirm_dialog(),
         on_mount=ReflexMainStateBase.on_main_component_mount,
     )
+
 
 def _unauthorized_page():
     return rx.box(

@@ -1,8 +1,8 @@
+import traceback
 from abc import abstractmethod
 from typing import AsyncGenerator, Union
 
 import reflex as rx
-from gws_core.core.utils.logger import Logger
 
 
 class FormDialogState(rx.State, mixin=True):
@@ -93,7 +93,11 @@ class FormDialogState(rx.State, mixin=True):
                 async for event in self._create(form_data):
                     yield event
         except Exception as e:
-            Logger.log_exception_stack_trace(e)
+            # TODO to improve, this should use the Logger but
+            # gws_core package is not available here
+            print(f"Error in submit_form: {e}")
+            # print the exception for debugging
+            traceback.print_exc()
             yield rx.toast.error(str(e))
             return
         finally:

@@ -1,5 +1,5 @@
 
-from typing import List
+from typing import Literal, List
 
 import reflex as rx
 from gws_core.space.space_dto import SpaceGroupDTO
@@ -7,7 +7,7 @@ from gws_core.space.space_dto import SpaceGroupDTO
 from .reflex_user_components import user_inline_component
 
 
-def group_inline_component(group: SpaceGroupDTO, size: str = "32px") -> rx.Component:
+def group_inline_component(group: SpaceGroupDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
     """Group inline component that displays group icon/user and label horizontally.
 
     This component displays a group's representation alongside its label in a
@@ -20,15 +20,19 @@ def group_inline_component(group: SpaceGroupDTO, size: str = "32px") -> rx.Compo
             - label: Group's display name
             - user: Optional associated user for SINGLE_USER type groups
             - type: Group type (SINGLE_USER or TEAM)
-        size (str): Size of the icon/avatar circle (default: "32px")
+        size (Literal["small", "normal"]): Size of the icon/avatar - "small" (24px) or "normal" (32px, default)
 
     Returns:
         rx.Component: Horizontal stack with group icon/user and label
 
     Example:
-        group_component = group_inline_component(group_dto)
+        group_component = group_inline_component(group_dto, size="small")
         # Displays circular icon/user photo with label beside it
     """
+    # Determine icon size and font size based on size parameter
+    icon_size = 12 if size == "small" else 16
+    font_size = "12px" if size == "small" else "14px"
+
     return rx.cond(
         group.user is not None,
         # If user exists, show user inline component
@@ -37,12 +41,12 @@ def group_inline_component(group: SpaceGroupDTO, size: str = "32px") -> rx.Compo
         rx.hstack(
             rx.icon(
                 tag="users",
-                size=16,
+                size=icon_size,
                 color="var(--accent-10)",
             ),
             rx.text(
                 group.label,
-                size="2",
+                font_size=font_size,
             ),
             spacing="2",
             align="center",
@@ -60,15 +64,17 @@ def group_select(
     """Group select component for choosing from a list of groups.
 
     This component provides a dropdown select interface for choosing a group
-    from a list. Each group is displayed using the group_inline_component,
-    showing either the user's profile (for SINGLE_USER groups) or a people
-    icon with the group label (for TEAM groups).
+    from a list. Each group is displayed using the group_inline_component with
+    small size, showing either the user's profile (for SINGLE_USER groups) or
+    a people icon with the group label (for TEAM groups).
 
     Args:
         groups (List[SpaceGroupDTO]): List of group data transfer objects
         placeholder (str): Placeholder text shown when no group is selected
             (default: "Select a group")
         name (str): Optional name attribute for form submission
+        disabled (bool): Whether the select is disabled (default: False)
+        **kwargs: Additional props to pass to the select.root component
 
     Returns:
         rx.Component: Select dropdown with group options
@@ -86,7 +92,7 @@ def group_select(
             rx.foreach(
                 groups,
                 lambda group: rx.select.item(
-                    group_inline_component(group, size="24px"),
+                    group_inline_component(group, size="small"),
                     value=group.id,
                 ),
             )
