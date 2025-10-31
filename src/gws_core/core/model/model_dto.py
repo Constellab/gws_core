@@ -84,3 +84,22 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
     is_last_page: bool
     total_is_approximate: bool
     objects: List[BaseModelDTOType]
+
+    @classmethod
+    def empty_page(cls: Type['PageDTO']) -> 'PageDTO':
+        """
+        Create an empty PageDTO.
+        """
+        return cls(
+            page=1,
+            prev_page=0,
+            next_page=0,
+            last_page=0,
+            total_number_of_items=0,
+            total_number_of_pages=0,
+            number_of_items_per_page=0,
+            is_first_page=True,
+            is_last_page=True,
+            total_is_approximate=False,
+            objects=[]
+        )

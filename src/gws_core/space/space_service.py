@@ -1,12 +1,10 @@
 
 
 import json
-import tempfile
 from typing import List, Literal, Optional
 
 from fastapi.encoders import jsonable_encoder
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
@@ -23,6 +21,8 @@ from gws_core.space.space_dto import (DocumentUploadOverrideMode, LabStartDTO,
                                       SpaceSendMailToUsersDTO,
                                       SpaceSendNotificationDTO,
                                       SpaceSyncObjectDTO)
+from gws_core.space.space_hierarchy_object_search_params import \
+    SpaceHierarchyObjectSearchParams
 from gws_core.space.space_service_base import SpaceServiceBase
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
@@ -476,22 +476,22 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "update folder")
 
-    def share_root_folder(self, root_folder_id: str, group_id: str,
+    def share_root_folder(self, root_folder_id: str, group_or_user_id: str,
                           role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER) -> List[SpaceFolderUser]:
-        """Share a root folder with a group
+        """Share a root folder with a group or a user
 
         :param root_folder_id: id of the root folder
         :type root_folder_id: str
-        :param group_id: id of the group (can be a user id or a team id)
-        :type group_id: str
-        :param role: role to assign to the group
+        :param group_or_user_id: id of the group or user
+        :type group_or_user_id: str
+        :param role: role to assign to the group or user
         :type role: SpaceRootFolderUserRole
         :return: list of all users with whom the folder is shared
         :rtype: List[SpaceFolderUser]
         """
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_id}/role/{role.value}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_or_user_id}/role/{role.value}")
 
         try:
             result = ExternalApiService.put(space_api_url, None, self._get_request_header(),
@@ -501,17 +501,17 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "share root folder")
 
-    def unshare_root_folder(self, root_folder_id: str, group_id: str) -> None:
-        """Unshare a folder from a group
+    def unshare_root_folder(self, root_folder_id: str, user_id: str) -> None:
+        """Unshare a folder from a user
 
         :param folder_id: id of the folder
         :type folder_id: str
-        :param group_id: id of the group (can be a user id or a team id)
-        :type group_id: str
+        :param user_id: id of the user
+        :type user_id: str
         """
 
         space_api_url: str = self._get_space_api_url(
-            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_id}")
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{user_id}")
 
         try:
             ExternalApiService.delete(space_api_url, self._get_request_header(),
@@ -630,8 +630,8 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "retrieve folders for the lab")
 
-    def get_project_children_objects_paginated(self, folder_id: str, search_params: SearchParams,
-                                               page: int, size: int) -> PageDTO[SpaceHierarchyObjectDTO]:
+    def search_project_children_objects_paginated(self, folder_id: str, search_params: SpaceHierarchyObjectSearchParams,
+                                                  page: int, size: int) -> PageDTO[SpaceHierarchyObjectDTO]:
         """Get paginated children of a folder with search capabilities
 
         :param folder_id: id of the folder to get children from

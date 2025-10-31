@@ -115,6 +115,7 @@ from .core.model.db_field import DateTimeUTC as DateTimeUTC
 from .core.model.db_field import JSONField as JSONField
 from .core.model.model import Model as Model
 from .core.model.model_dto import BaseModelDTO as BaseModelDTO
+from .core.model.model_dto import PageDTO as PageDTO
 from .core.model.sys_proc import SysProc as SysProc
 # Core > Service
 from .core.service.external_api_service import \
@@ -547,6 +548,8 @@ from .share.shared_dto import UpdateShareLinkDTO as UpdateShareLinkDTO
 from .space.mail_service import MailService as MailService
 from .space.space_dto import *
 from .space.space_front_service import SpaceFrontService as SpaceFrontService
+from .space.space_hierarchy_object_search_params import \
+    SpaceHierarchyObjectSearchParams as SpaceHierarchyObjectSearchParams
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
 from .streamlit.streamlit_app import StreamlitApp as StreamlitApp
