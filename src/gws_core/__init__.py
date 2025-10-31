@@ -75,6 +75,7 @@ from .core.classes.observer.message_observer import \
     ProgressBarMessageObserver as ProgressBarMessageObserver
 from .core.classes.paginator import Paginator as Paginator
 from .core.classes.search_builder import SearchBuilder as SearchBuilder
+from .core.classes.search_builder import SearchParams as SearchParams
 from .core.classes.validator import BoolValidator as BoolValidator
 from .core.classes.validator import DictValidator as DictValidator
 from .core.classes.validator import FloatValidator as FloatValidator
@@ -178,8 +179,7 @@ from .entity_navigator.entity_navigator_type import \
     NavigableEntityType as NavigableEntityType
 # Space Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
-from .folder.space_folder_dto import \
-    ExternalSpaceCreateFolder as ExternalSpaceCreateFolder
+from .folder.space_folder_dto import *
 from .folder.task.space_folder_param import \
     SpaceFolderParam as SpaceFolderParam
 from .folder.task.space_folder_resource import \
@@ -542,14 +542,7 @@ from .share.shared_dto import ShareLinkType as ShareLinkType
 from .share.shared_dto import UpdateShareLinkDTO as UpdateShareLinkDTO
 # Space
 from .space.mail_service import MailService as MailService
-from .space.space_dto import SaveNoteToSpaceDTO as SaveNoteToSpaceDTO
-from .space.space_dto import SaveScenarioToSpaceDTO as SaveScenarioToSpaceDTO
-from .space.space_dto import \
-    ShareResourceWithSpaceDTO as ShareResourceWithSpaceDTO
-from .space.space_dto import SpaceSendMailToMailsDTO as SpaceSendMailToMailsDTO
-from .space.space_dto import SpaceSendMailToUsersDTO as SpaceSendMailToUsersDTO
-from .space.space_dto import \
-    SpaceSendNotificationDTO as SpaceSendNotificationDTO
+from .space.space_dto import *
 from .space.space_front_service import SpaceFrontService as SpaceFrontService
 from .space.space_service import SpaceService as SpaceService
 # Streamlit
@@ -601,7 +594,8 @@ from .task.transformer.transformer import \
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
-from .test.view_tester import ViewTester as ViewTester
+from .test.test_mock_space_service import \
+    TestMockSpaceService as TestMockSpaceService
 # User
 from .user.authorization_service import \
     AuthorizationService as AuthorizationService

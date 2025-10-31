@@ -111,8 +111,9 @@ A Constellab Task must:
      - `default_value`: Default (makes optional=True)
      - `optional`: Allow None value
      - `visibility`: 'public', 'protected', 'private'
-     - `allowed_values`: Restrict choices
+     - `allowed_values`: Restrict choices (list)
      - `unit`: Measurement unit
+   - When the param is a choice from a list of values, use `allowed_values` to restrict choices (usually for StrParam). This should be a list of objects of the same type as the param (e.g. list of strings for StrParam).
 
 6. **Implement run method**:
    ```python

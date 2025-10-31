@@ -60,13 +60,13 @@ class ExternalSpaceCreateFolderDTO(BaseModelDTO):
 
 class ExternalSpaceCreateFolder():
     name: str
-    code: str
+    code: Optional[str] = None
     tags: List[Tag] = None
     starting_date: Optional[datetime] = None
     ending_date: Optional[datetime] = None
 
-    def __init__(self, name: str, code: str = None,
-                 tags: List[Tag] = None,
+    def __init__(self, name: str, code: Optional[str] = None,
+                 tags: Optional[List[Tag]] = None,
                  starting_date: Optional[datetime] = None,
                  ending_date: Optional[datetime] = None):
         self.name = name

@@ -4,8 +4,6 @@ import json
 from typing import List, Literal, Optional
 
 from fastapi.encoders import jsonable_encoder
-from requests.models import Response
-
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
@@ -27,6 +25,7 @@ from gws_core.space.space_service_base import SpaceServiceBase
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.user.user_dto import UserFullDTO, UserSpace
+from requests.models import Response
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.service.external_api_service import ExternalApiService, FormData
@@ -410,6 +409,46 @@ class SpaceService(SpaceServiceBase):
             err.detail = f"Can't share root folder. Error : {err.detail}"
             raise err
 
+    def unshare_root_folder(self, root_folder_id: str, group_id: str) -> None:
+        """Unshare a folder from a group
+
+        :param folder_id: id of the folder
+        :type folder_id: str
+        :param group_id: id of the group (can be a user id or a team id)
+        :type group_id: str
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/share/{group_id}")
+
+        try:
+            ExternalApiService.delete(space_api_url, self._get_request_header(),
+                                      raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't unshare folder. Error : {err.detail}"
+            raise err
+
+    def update_share_folder(self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole) -> None:
+        """Update the role of a user for a shared folder
+
+        :param folder_id: id of the folder
+        :type folder_id: str
+        :param user_id: id of the user
+        :type user_id: str
+        :param role: new role for the user
+        :type role: SpaceRootFolderUserRole
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/share/{user_id}/role/{role.value}")
+
+        try:
+            ExternalApiService.put(space_api_url, None, self._get_request_header(),
+                                   raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't update share folder role. Error : {err.detail}"
+            raise err
+
     def share_root_folder_with_current_lab(self, root_folder_id: str) -> ExternalSpaceFolder:
         """Share a root folder with the current lab
 
@@ -428,6 +467,43 @@ class SpaceService(SpaceServiceBase):
             return ExternalSpaceFolder.from_json(response.json())
         except BaseHTTPException as err:
             err.detail = f"Can't share root folder with current lab. Error : {err.detail}"
+            raise err
+
+    def get_folder_users(self, folder_id: str) -> List[UserSpace]:
+        """Get all users who have access to a folder
+
+        :param folder_id: id of the folder
+        :type folder_id: str
+        :return: list of users with access to the folder
+        :rtype: List[UserSpace]
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/users")
+
+        try:
+            response = ExternalApiService.get(space_api_url, self._get_request_header(),
+                                              raise_exception_if_error=True)
+            return UserSpace.from_json_list(response.json())
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve folder users. Error : {err.detail}"
+            raise err
+
+    def delete_folder(self, folder_id: str) -> None:
+        """Move a folder to trash
+
+        :param folder_id: id of the folder to delete
+        :type folder_id: str
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}")
+
+        try:
+            ExternalApiService.delete(space_api_url, self._get_request_header(),
+                                      raise_exception_if_error=True)
+        except BaseHTTPException as err:
+            err.detail = f"Can't delete folder. Error : {err.detail}"
             raise err
 
     def get_all_current_user_root_folders(self) -> List[SpaceHierarchyObjectDTO]:

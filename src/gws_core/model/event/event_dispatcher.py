@@ -54,7 +54,7 @@ class EventDispatcher:
         # Start single worker thread that will process all events
         self._worker_thread = ThreadDb(target=self._worker_loop, daemon=True)
         self._worker_thread.start()
-        Logger.info("EventDispatcher worker thread started")
+        Logger.debug("EventDispatcher worker thread started")
 
     @classmethod
     def get_instance(cls) -> 'EventDispatcher':
@@ -81,7 +81,7 @@ class EventDispatcher:
         with self._listeners_lock:
             if listener not in self._listeners:
                 self._listeners.append(listener)
-                Logger.info(f"Registered event listener: {listener.__class__.__name__}")
+                Logger.debug(f"Registered event listener: {listener.__class__.__name__}")
 
     def unregister(self, listener: EventListener) -> None:
         """Unregister an event listener.
@@ -92,7 +92,7 @@ class EventDispatcher:
         with self._listeners_lock:
             if listener in self._listeners:
                 self._listeners.remove(listener)
-                Logger.info(f"Unregistered event listener: {listener.__class__.__name__}")
+                Logger.debug(f"Unregistered event listener: {listener.__class__.__name__}")
 
     def dispatch(self, event: Event) -> None:
         """Dispatch an event to all registered listeners asynchronously.

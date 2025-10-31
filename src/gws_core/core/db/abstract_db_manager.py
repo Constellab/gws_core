@@ -103,7 +103,6 @@ class AbstractDbManager:
         self.db.initialize(_db)
         self._is_initialized = True
 
-
     def get_db(self) -> DatabaseProxy:
         """ Get the db object """
 
@@ -196,7 +195,7 @@ class AbstractDbManager:
     ############################### CLASS METHODS ###############################
 
     @classmethod
-    def transaction(cls, nested_transaction: bool = False):
+    def transaction(cls, nested_transaction: bool = False) -> Callable:
         """Decorator to create a new transaction around a method
         If an exception is raised, the transaction is rolled back
 
@@ -216,7 +215,8 @@ class AbstractDbManager:
             def wrapper(*args, **kwargs):
                 db_manager = cls.get_instance()
                 if db_manager is None:
-                    raise Exception("The DbManager instance is not available, did you implement the 'get_instance' in your DbManager ?")
+                    raise Exception(
+                        "The DbManager instance is not available, did you implement the 'get_instance' in your DbManager ?")
                 # If we are in unique transaction mode and a transaction already exists,
                 # don't create a transaction
                 if not nested_transaction and db_manager.has_transaction():
@@ -240,13 +240,11 @@ class AbstractDbManager:
 
         return decorator
 
-
     @classmethod
     def get_db_managers(cls) -> Set['AbstractDbManager']:
         """ Get all the classes that inherit this class """
         db_managers = set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in c.get_db_managers()])
-
 
         return {db_manager.get_instance() for db_manager in db_managers if db_manager.get_instance() is not None}
 
