@@ -9,6 +9,7 @@ from gws_core.core.exception.exceptions.base_http_exception import \
 from gws_core.core.service.external_api_service import (ExternalApiService,
                                                         FormData)
 from gws_core.core.utils.compress.zip_compress import ZipCompress
+from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_dto import (DockerComposeStatusInfoDTO,
@@ -153,10 +154,12 @@ class DockerService(LabManagerServiceBase):
         :rtype: DockerComposeResponseDTO
         """
         # Get credentials using the internal method
-        credentials_data = self.get_or_create_basic_credentials(
+        credentials = self._get_or_create_basic_credentials_model(
             brick_name=brick_name,
             unique_name=unique_name,
         )
+
+        credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
 
         # Create the request DTO with credentials from the credential service
         request_dto = RegisterSQLDBComposeRequestDTO(
@@ -181,11 +184,21 @@ class DockerService(LabManagerServiceBase):
 
             sql_response = RegisterSQLDBComposeAPIResponseDTO.from_json(response.json())
 
+            # Update credentials with the actual DB host
+            if sql_response.dbHost != credentials_data.url:
+                credentials = CredentialsService.update_basic_credential(
+                    credentials_name=credentials.name,
+                    credentials_data=CredentialsDataBasic(
+                        username=credentials_data.username,
+                        password=credentials_data.password,
+                        url=sql_response.dbHost
+                    )
+                )
+                credentials = cast(CredentialsDataBasic, credentials.get_data_object())
 
             return RegisterSQLDBComposeResponseDTO(
                 composeStatus=sql_response.status,
-                credentials=credentials_data,
-                db_host=sql_response.dbHost
+                credentials=credentials,
             )
 
         except BaseHTTPException as err:
@@ -303,6 +316,39 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't get all composes. Error: {err.detail}"
             raise err
 
+    def _get_or_create_basic_credentials_model(self, brick_name: str, unique_name: str,
+                                        username: Optional[str] = None,
+                                        password: Optional[str] = None,
+                                        url: Optional[str] = None) -> Credentials:
+        """
+        Get or create basic credentials using the brick_name_unique_name format as the credential name.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param username: Username for the credential. If not provided, set to 'brick_name_unique_name'
+        :type username: str
+        :param password: Password for the credential. If not provided, a random 30-character password will be generated
+        :type password: Optional[str]
+        :param url: Optional URL for the credential
+        :type url: Optional[str]
+        :return: The existing or newly created BASIC credential
+        :rtype: Credentials
+        """
+        credentials_name = self.get_basic_credentials_name(brick_name, unique_name)
+
+        if username is None:
+            username = f"{brick_name}_{unique_name}"
+
+        return CredentialsService.get_or_create_basic_credential(
+            name=credentials_name,
+            username=username,
+            password=password,
+            url=url,
+            description=f"Basic credentials for Docker compose {brick_name}/{unique_name}"
+        )
+
 
     def get_or_create_basic_credentials(self, brick_name: str, unique_name: str,
                                         username: Optional[str] = None,
@@ -324,17 +370,41 @@ class DockerService(LabManagerServiceBase):
         :return: The existing or newly created BASIC credential
         :rtype: Credentials
         """
-        credentials_name = f"docker_{brick_name}_{unique_name}"
 
-        if username is None:
-            username = f"{brick_name}_{unique_name}"
-
-        credentials = CredentialsService.get_or_create_basic_credential(
-            name=credentials_name,
+        credentials = self._get_or_create_basic_credentials_model(
+            brick_name=brick_name,
+            unique_name=unique_name,
             username=username,
             password=password,
             url=url,
-            description=f"Basic credentials for Docker compose {brick_name}/{unique_name}"
         )
 
         return cast(CredentialsDataBasic, credentials.get_data_object())
+
+    def get_basic_credentials(self, brick_name: str, unique_name: str) -> Optional[Credentials]:
+        """
+        Get basic credentials using the brick_name_unique_name format as the credential name.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :return: The existing BASIC credential or None if not found
+        :rtype: Optional[Credentials]
+        """
+        credentials_name = self.get_basic_credentials_name(brick_name, unique_name)
+
+        return CredentialsService.find_by_name(credentials_name)
+
+    def get_basic_credentials_name(self, brick_name: str, unique_name: str) -> str:
+        """
+        Get the name of the basic credentials using the brick_name_unique_name format.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :return: The name of the BASIC credential
+        :rtype: str
+        """
+        return f"docker_{brick_name}_{unique_name}"

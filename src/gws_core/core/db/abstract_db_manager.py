@@ -254,11 +254,13 @@ class AbstractDbManager:
     def reconnect_dbs(cls) -> None:
         """Reconnect all db managers"""
         for db_manager in cls.get_db_managers():
-            db_manager.close_db()
-            db_manager.connect_db()
+            if db_manager.is_initialized():
+                db_manager.close_db()
+                db_manager.connect_db()
 
     @classmethod
     def close_dbs(cls) -> None:
         """Close all db managers"""
         for db_manager in cls.get_db_managers():
-            db_manager.close_db()
+            if db_manager.is_initialized():
+                db_manager.close_db()

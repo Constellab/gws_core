@@ -77,6 +77,7 @@ class CredentialsService():
     def get_by_id_and_check(cls, credentials_id: str) -> Credentials:
         return Credentials.get_by_id_and_check(credentials_id)
 
+
     @classmethod
     def get_all(cls, page: int = 0,
                 number_of_items_per_page: int = 20) -> Paginator[Credentials]:
@@ -110,8 +111,12 @@ class CredentialsService():
         return credentials.get_data_object().convert_to_dict()
 
     @classmethod
-    def find_by_name(cls, name: str) -> Credentials:
+    def find_by_name(cls, name: str) -> Credentials | None:
         return Credentials.find_by_name(name)
+
+    @classmethod
+    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> Credentials:
+        return Credentials.find_by_name_and_check(name, type_)
 
     @classmethod
     def get_s3_credentials_data_by_access_key(cls, access_key_id: str) -> Optional[CredentialsDataS3 |
@@ -207,3 +212,29 @@ class CredentialsService():
 
         # Create and return the new credentials
         return cls.create(save_dto)
+
+    @classmethod
+    def update_basic_credential(cls, credentials_name: str, credentials_data: CredentialsDataBasic,
+                                description: Optional[str] = None) -> Credentials:
+        """Update an existing BASIC credential. If the credential does not exist or is not of type BASIC, an exception is raised.
+
+        :param credentials_name: Name of the credential to update
+        :param username: New username for the credential
+        :param password: New password for the credential. If not provided, the existing password will be kept
+        :param url: New optional URL for the credential
+        :param description: New optional description for the credential
+        :return: The updated BASIC credential
+        """
+        # Get and check the existing credentials
+        existing_credentials = cls.find_by_name_and_check(credentials_name, CredentialsType.BASIC)
+
+        # Create the SaveCredentialsDTO with updated data
+        save_dto = SaveCredentialsDTO(
+            name=existing_credentials.name,
+            type=CredentialsType.BASIC,
+            description=description if description is not None else existing_credentials.description,
+            data=credentials_data.to_json_dict()
+        )
+
+        # Update and return the credentials
+        return cls.update(credentials_name, save_dto)

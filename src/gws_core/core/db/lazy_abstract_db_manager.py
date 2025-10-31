@@ -1,10 +1,12 @@
 
 from abc import abstractmethod
+from typing import cast
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_service import DockerService
 from gws_core.user.current_user_service import AuthenticateUser
 from typing_extensions import final
@@ -36,37 +38,56 @@ class LazyAbstractDbManager(AbstractDbManager):
 
     def init(self, mode: DbMode):
         """Initialize the database by starting the Docker container first"""
-
-        if mode != 'test':
-            self._start_docker_compose(mode)
+        self._start_docker_compose(mode)
         return super().init(mode)
 
     def _start_docker_compose(self, mode: DbMode):
         """Start the Docker container for the database"""
+        if mode == 'test':
+            return
+        docker_service = DockerService()
+
         try:
             brick_name = self.get_brick_name()
-            unique_name = self.get_unique_name()
 
             Logger.info(f'Starting {self.get_unique_name()} database container')
             with AuthenticateUser.system_user():
-                docker_service = DockerService()
                 response_dto = docker_service.register_sqldb_compose(
                     brick_name=brick_name,
-                    unique_name=f'{unique_name}_{mode}',
+                    unique_name=self.get_name(),
                     database_name=self.get_unique_name(),
                     description=f'{brick_name} brick database in {mode} mode',
                 )
-
-                self._db_username = response_dto.credentials.username
-                self._db_password = response_dto.credentials.password
-                self._db_host = response_dto.db_host
-
+                self._store_credentials(response_dto.credentials)
                 Logger.info(f'{self.get_unique_name()} database container started')
 
         except Exception as err:
+            # If the lab manager failed to start the docker, we try to get the credentials to connect
+            Logger.info(f"Cannot start the {self.get_brick_name()} db compose, trying to get existing credentials.")
+            credentials = docker_service.get_basic_credentials(
+                brick_name=brick_name,
+                unique_name=self.get_name(),
+            )
+            if credentials:
+                credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
+                if not isinstance(credentials_data, CredentialsDataBasic):
+                    raise Exception(
+                        f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} is not a basic credentials."
+                    )
+                self._store_credentials(credentials_data)
+                Logger.info(f"Using existing credentials for the {self.get_brick_name()} db compose.")
+                return
+
             Logger.log_exception_stack_trace(err)
             raise Exception(
-                f"Error while registering the {self.get_brick_name()} db compose. Error: {err}")
+                f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials. Error: {err}")
+
+    def _store_credentials(self, credentials: CredentialsDataBasic):
+        """Store the database credentials"""
+        self._db_username = credentials.username
+        self._db_password = credentials.password
+        self._db_host = credentials.url
+
 
     def get_config(self, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""

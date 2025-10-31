@@ -56,5 +56,4 @@ class RegisterSQLDBComposeAPIResponseDTO(BaseModelDTO):
 
 class RegisterSQLDBComposeResponseDTO(BaseModelDTO):
     composeStatus: DockerComposeStatusInfoDTO
-    db_host: str
     credentials: CredentialsDataBasic
