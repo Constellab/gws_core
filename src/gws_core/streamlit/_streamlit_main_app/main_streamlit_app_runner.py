@@ -65,10 +65,16 @@ class StreamlitMainAppRunner:
                 .block-container {
                     padding: 8px;
                 }
-                /* hide the streamlit header menu */
                 header {
-                    display: none !important;
+                    background: transparent !important;
+                    width: fit-content !important;
+
+                    .e3g0k5y6 {
+                        display: none !important;
+                    }
                 }
+
+
                 /* use same top and bottom padding for title to be able to align element with the title */
                 h1, h2 {
                     padding: 0.5rem 0 !important;

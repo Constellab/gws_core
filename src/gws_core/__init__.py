@@ -53,6 +53,7 @@ from .config.param.param_spec import NumericParam as NumericParam
 from .config.param.param_spec import ParamSpec as ParamSpec
 from .config.param.param_spec import StrParam as StrParam
 from .config.param.param_spec import TextParam as TextParam
+from .config.param.param_spec import DictParam as DictParam
 from .config.param.param_types import ParamValue as ParamValue
 from .config.param.tags_param_spec import TagsParam as TagsParam
 # Core
