@@ -35,7 +35,7 @@ class AppPluginDownloader:
     RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
 
     # Main version that contains both packages
-    DASHBOARD_COMPONENTS_VERSION = "dc_2.0.1"
+    DASHBOARD_COMPONENTS_VERSION = "dc_1.0.0"
 
     # Package names
     IFRAME_MESSAGE = "iframe-message"

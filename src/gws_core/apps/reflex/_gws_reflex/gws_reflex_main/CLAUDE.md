@@ -61,6 +61,13 @@ Group selection component for forms and filters.
 
 ---
 
+## Rich Text Components
+
+### `rich_text_component()`
+Rich text editor component using dc-text-editor Angular component. Provides a WYSIWYG editor for formatted text content.
+
+---
+
 ## Usage
 
 Import components and state from `gws_reflex_main` module:
@@ -79,6 +86,9 @@ from gws_reflex_main import (
     ConfirmDialogState2,
     main_component,
 )
+
+# Rich text component (requires separate import)
+from gws_reflex_main.gws_components import rich_text_component
 ```
 
 ---
