@@ -9,9 +9,9 @@ export function RichTextComponent({
   placeholder = null,
   value = null,
   disabled = null,
-  minHeight = null,
-  maxHeight = null,
-  outputEvent = null  // Event handler callback
+  changeEventDebounceTime = null,
+  outputEvent = null,  // Event handler callback
+  customStyle = {}
 }) {
   const componentRef = useRef(null);
 
@@ -20,18 +20,14 @@ export function RichTextComponent({
     placeholder,
     value,
     disabled,
-    minHeight,
-    maxHeight
-  }), [placeholder, value, disabled, minHeight, maxHeight]);
-
+    changeEventDebounceTime,
+  }), [placeholder, value, disabled, changeEventDebounceTime]);
 
   useEffect(() => {
     const element = componentRef.current;
     if (!element || !outputEvent) return;
 
     const handleEvent = (event) => {
-      console.log('Received outputEvent from dc-text-editor:', JSON.stringify(event.detail));
-      console.log(event.detail)
       outputEvent(event.detail);
       };
 
@@ -46,8 +42,8 @@ export function RichTextComponent({
     <dc-text-editor
       ref={componentRef}
       inputData={JSON.stringify(inputData)}
-      style={{ display: 'flex', flexDirection: 'column', width: '100%', 
-        ...(disabled && { padding: '0' }) }}
+      style={{ display: 'flex', flexDirection: 'column', width: '100%',
+       ...(customStyle || {}) }}
     ></dc-text-editor>
   );
 }
