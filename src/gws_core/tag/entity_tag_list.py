@@ -1,7 +1,7 @@
 
 from typing import List, Optional
 
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag, TagOrigin
@@ -86,7 +86,7 @@ class EntityTagList():
     def is_empty(self) -> bool:
         return len(self._tags) == 0
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tag(self, tag: Tag) -> EntityTag:
         """Add a tag to the list if it does not exist
 
@@ -132,7 +132,7 @@ class EntityTagList():
         self._tags.append(new_tag)
         return new_tag
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tags(self, tags: List[Tag]) -> List[EntityTag]:
         """Add a list of tags to the list if it does not exist
 
@@ -148,28 +148,28 @@ class EntityTagList():
 
         return new_tags
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def replace_tags(self, tags: List[Tag]) -> None:
         """Remove the tag with the same key and add the new tags
         """
         for tag in tags:
             self.replace_tag(tag)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def replace_tag(self, tag: Tag) -> None:
         """Remove the tag with the same key and add the new tag
         """
         self.delete_tag_by_key(tag.key)
         self.add_tag(tag)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tags(self, tags: List[Tag]) -> None:
         """Delete a tag from the entity tags. Check if the tag is still used by other entities
         """
         for tag in tags:
             self.delete_tag(tag)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tag(self, tag: Tag) -> None:
         """Delete a tag from the entity tags.
         If the entity support multiple origins, and the tag origin is defined, delete only the origin
@@ -181,7 +181,7 @@ class EntityTagList():
         else:
             self._delete_tag(tag)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tag_by_key(self, tag_key: str) -> None:
         """Delete a tag from the entity tags by key
         """
@@ -189,7 +189,7 @@ class EntityTagList():
         for tag in tags:
             self._delete_tag(tag.to_simple_tag())
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_tag_origin(self, tag: Tag) -> None:
         """Delete a tag origin from the list, if there is no more origins, delete the tag
         """
@@ -209,7 +209,7 @@ class EntityTagList():
             existing_tag.set_origins(current_origins)
             existing_tag.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_tag(self, tag: Tag) -> None:
         """Delete a tag from the entity tags. Check if the tag is still used by other entities
         """

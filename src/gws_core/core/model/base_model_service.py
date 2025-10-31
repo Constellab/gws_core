@@ -1,19 +1,17 @@
 
 
+from dataclasses import dataclass
 from typing import Dict, List, Type
 
-from gws_core.brick.brick_helper import BrickHelper
-from gws_core.brick.brick_service import BrickService
-from gws_core.core.db.db_manager import AbstractDbManager
-from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.settings import Settings
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 
 from ..utils.logger import Logger
 from .base_model import BaseModel
 
 
-class DbWithModels(BaseModelDTO):
-    db_manager: Type[AbstractDbManager]
+@dataclass
+class DbWithModels():
+    db_manager: AbstractDbManager
     models: List[Type[BaseModel]]
 
 
@@ -54,20 +52,20 @@ class BaseModelService:
             cls._create_database_tables(db_with_models)
 
     @classmethod
-    def create_database_tables(cls, db_manager_type: Type[AbstractDbManager]):
+    def create_database_tables(cls, db_manager: AbstractDbManager):
         """
         Create tables (if they don't exist) for the provided DbManager
 
         :param db_manager: The DbManager class to create the tables for
-        :type db_manager: Type[AbstractDbManager]
+        :type db_manager: AbstractDbManager
         """
 
         all_db_with_models = cls._get_all_db_and_model_types()
 
-        if db_manager_type.get_unique_name() not in all_db_with_models:
-            raise Exception(f"No model found for the db manager '{db_manager_type.get_unique_name()}'")
+        if db_manager.get_unique_name() not in all_db_with_models:
+            raise Exception(f"No model found for the db manager '{db_manager.get_unique_name()}'")
 
-        db_with_models = all_db_with_models[db_manager_type.get_unique_name()]
+        db_with_models = all_db_with_models[db_manager.get_unique_name()]
         cls._create_database_tables(db_with_models)
 
     @classmethod
@@ -76,7 +74,7 @@ class BaseModelService:
         Create tables (if they don't exist) for the provided DbManager
 
         :param db_manager: The DbManager class to create the tables for
-        :type db_manager: Type[AbstractDbManager]
+        :type db_manager: AbstractDbManager
         """
 
         db_manager = db_with_models.db_manager
@@ -132,6 +130,9 @@ class BaseModelService:
 
             if db_manager is None:
                 raise Exception(f"The model '{model.__name__}' has no db manager. Please set the db_manager in the Meta class of the model.")
+
+            if not isinstance(db_manager, AbstractDbManager):
+                raise Exception(f"The model '{model.__name__}' has a db manager that is not an instance of AbstractDbManager. Please check the db_manager in the Meta class of the model.")
 
             # Check that the database and db_manager match
             if db_manager.get_db() != model.get_metadata().database:

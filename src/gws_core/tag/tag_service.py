@@ -2,14 +2,13 @@
 
 from typing import Dict, List, Optional
 
-from peewee import ModelSelect
-
 from gws_core.community.community_dto import (CommunityTagKeyDTO,
                                               CommunityTagValueDTO)
 from gws_core.community.community_service import CommunityService
 from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.date_helper import DateHelper
@@ -38,8 +37,8 @@ from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
+from peewee import ModelSelect
 
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from .tag import Tag, TagOrigin, TagValueType
@@ -90,7 +89,7 @@ class TagService():
         return TagKeyModel.select().where(TagKeyModel.key == tag_key).first()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def update_registered_tag_value(
             cls, tag_key: str, old_value: TagValueType, new_value: TagValueType) -> TagValueModel:
         """Update a registerer tag value. It update the tag of all entities that use it"""
@@ -108,7 +107,7 @@ class TagService():
         return TagValueModel.update_tag_value(tag_key, old_value, new_value)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tag_key(cls, key: str) -> None:
         """Delete a registerer tag key. It removes the tag of all entities that use it"""
         tag_key_model: TagKeyModel = cls.get_by_key(key)
@@ -127,7 +126,7 @@ class TagService():
         TagKeyModel.delete_instance(tag_key_model)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tag_value(cls, tag_value_id: str) -> None:
         """Delete a registerer tag value. It removes the tag of all entities that use it"""
         tag_value: TagValueModel = cls.get_tag_value_by_id(tag_value_id)
@@ -143,7 +142,7 @@ class TagService():
         TagValueModel.delete_instance(tag_value)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_registered_tag(cls, tag_key: str, tag_value: TagValueType) -> None:
         """Update a registerer tag value. It removes the tag of all entities that use it"""
         tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
@@ -158,7 +157,7 @@ class TagService():
         TagValueModel.delete_tag_value(tag_key, tag_value)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reorder_tags(cls, tag_keys: List[str]) -> List[TagKeyModel]:
         """Update the order of the tags"""
 
@@ -181,7 +180,7 @@ class TagService():
         return result
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_tag(cls, tag_key: str, tag_value: TagValueType) -> TagValueModel:
         """Create a new tag with the given key and value"""
         tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
@@ -279,7 +278,7 @@ class TagService():
         return search_builder.add_tag_filter(tag).search_all()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tag_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                           tag: Tag) -> EntityTag:
 
@@ -293,7 +292,7 @@ class TagService():
         return entity_tags.add_tag(tag)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tags_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                            tags: List[Tag]) -> List[EntityTag]:
 
@@ -307,7 +306,7 @@ class TagService():
         return entity_tags.add_tags(tags)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tag_dict_to_entity(cls, entity_type: TagEntityType, entity_id: str,
                                tag_dicts: List[NewTagDTO], propagate: bool) -> List[EntityTag]:
 
@@ -342,7 +341,7 @@ class TagService():
             return cls.add_tags_to_entity(entity_type, entity_id, tags)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_tags_to_entity_and_propagate(cls, entity_type: TagEntityType, entity_id: str,
                                          tags: List[Tag]) -> List[EntityTag]:
         entity_tags = cls.add_tags_to_entity(entity_type, entity_id, tags)
@@ -551,7 +550,7 @@ class TagService():
         return tag_key_model.save()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def get_community_available_tags(
             cls, spaces_filter: List[str],
             title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> PageDTO[TagKeyModelDTO]:
@@ -572,7 +571,7 @@ class TagService():
         return cls.community_tag_key_page_to_tag_key_model_page(community_tags_keys)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def get_community_tag_values(
             cls, community_tag_key: str, page: int, number_of_items_per_page: int) -> PageDTO[TagValueModelDTO]:
         """Get the community tags"""
@@ -946,7 +945,7 @@ class TagService():
         return tag_key_model.additional_infos_specs
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def import_all_community_tag_key_values(cls, tag_key_model: TagKeyModel) -> None:
         """Import all community tag key values for a given key"""
 

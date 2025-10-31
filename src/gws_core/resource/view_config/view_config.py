@@ -4,7 +4,7 @@ from typing import Any, List, Optional
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
@@ -65,12 +65,12 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     def get_navigable_entity_type(self) -> NavigableEntityType:
         return NavigableEntityType.VIEW
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def save(self, *args, **kwargs) -> Model:
         self.config.save()
         return super().save(*args, **kwargs)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs) -> Any:
         if self.config is not None:
             self.config.delete_instance()

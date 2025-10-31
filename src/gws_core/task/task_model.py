@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Type
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process import Process
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -16,7 +17,6 @@ from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -83,7 +83,7 @@ class TaskModel(ProcessModel):
         self.progress_bar.save()
         return self.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> 'TaskModel':
         """
         Archive the process
@@ -98,7 +98,7 @@ class TaskModel(ProcessModel):
         self.is_archived = archive
         return self.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset(self) -> 'ProcessModel':
         """
         Reset the process

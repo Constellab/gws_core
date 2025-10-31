@@ -4,7 +4,7 @@ from typing import Dict
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.process.process_proxy import ProcessProxy
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ShareResourceWithSpaceRequestDTO
@@ -102,7 +102,7 @@ class ResourceTransfertService():
         return SendResourceToLab.config_specs.to_dto()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def share_resource_with_space(cls, resource_id: str, request_dto: ShareResourceWithSpaceRequestDTO) -> ShareLink:
 
         resource_model = ResourceService.get_by_id_and_check(resource_id)

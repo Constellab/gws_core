@@ -2,7 +2,7 @@
 
 from typing import List, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
                     ForeignKeyMetadata, Metadata)
@@ -149,7 +149,7 @@ class BaseModel(Base, PeeweeModel):
         return cls.get_db_manager().db
 
     @classmethod
-    def get_db_manager(cls) -> Type[AbstractDbManager]:
+    def get_db_manager(cls) -> AbstractDbManager:
         """
         Returns the (current) DbManager of this model
 
@@ -187,8 +187,7 @@ class BaseModel(Base, PeeweeModel):
         return self
 
     class Meta:
-        database = GwsCoreDbManager.db
-        legacy_table_names = False
-
-        db_manager = GwsCoreDbManager
+        db_manager = GwsCoreDbManager.get_instance()
         is_table: bool = False
+        database = db_manager.db
+        legacy_table_names = False

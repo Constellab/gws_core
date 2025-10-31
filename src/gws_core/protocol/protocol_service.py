@@ -7,6 +7,7 @@ from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (
     CompleteDynamicParamAllowedSpecsDict, ParamSpecDTO, ParamValue)
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
@@ -48,7 +49,6 @@ from ..community.community_dto import (CommunityAgentDTO,
                                        CommunityCreateAgentDTO)
 from ..community.community_service import CommunityService
 from ..config.param.param_types import ParamSpecVisibilty
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..impl.agent.helper.agent_factory import AgentFactory
 from ..io.connector import Connector
@@ -92,7 +92,7 @@ class ProtocolService():
     ########################## UPDATE PROCESS #####################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_process_to_protocol_id(cls, protocol_id: str, process_typing_name: str,
                                    instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
 
@@ -106,7 +106,7 @@ class ProtocolService():
                                            instance_name=instance_name, config_params=config_params)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def duplicate_process_to_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -141,7 +141,7 @@ class ProtocolService():
         return cls.add_process_model_to_protocol(protocol_model=protocol_model, process_model=duplicate_process_model)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_empty_protocol_to_protocol_id(cls, protocol_id: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
             protocol_id)
@@ -149,7 +149,7 @@ class ProtocolService():
         return cls.add_empty_protocol_to_protocol(protocol_model=protocol_model, name="Sub-scenario")
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_empty_protocol_to_protocol(
             cls, protocol_model: ProtocolModel, instance_name: str = None,
             name: str = None) -> ProtocolUpdate:
@@ -160,7 +160,7 @@ class ProtocolService():
                                                  instance_name=instance_name)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_process_to_protocol(cls, protocol_model: ProtocolModel, process_type: Type[Process],
                                 instance_name: str = None, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
         # create the process
@@ -171,7 +171,7 @@ class ProtocolService():
                                                  instance_name=instance_name)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_process_model_to_protocol(cls, protocol_model: ProtocolModel, process_model: ProcessModel,
                                       instance_name: str = None) -> ProtocolUpdate:
 
@@ -190,7 +190,7 @@ class ProtocolService():
         return cls._on_protocol_object_updated(protocol_model=protocol_model, process_model=process_model)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_process_connected_to_output(
             cls, protocol_id: str, process_typing_name: str, output_process_name: str, output_port_name: str,
             config_params: ConfigParamsDict = None) -> ProtocolUpdate:
@@ -209,7 +209,7 @@ class ProtocolService():
             protocol_model, new_process_type, existing_process, output_port_name, config_params)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _add_process_connected_to_output(
             cls, protocol_model: ProtocolModel, new_process_type: Type[Process],
             out_process: ProcessModel, out_port_name: str, config_params: ConfigParamsDict = None) -> ProtocolUpdate:
@@ -238,7 +238,7 @@ class ProtocolService():
         return protocol_update.merge(protocol_update_2)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_process_connected_to_input(
             cls, protocol_id: str, process_typing_name: str, input_process_name: str, input_port_name: str,
             config_params: ConfigParamsDict = None) -> ProtocolUpdate:
@@ -283,7 +283,7 @@ class ProtocolService():
             protocol_model=protocol_model, process_instance_name=process_instance_name)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
         process_model.check_is_updatable()
@@ -301,7 +301,7 @@ class ProtocolService():
         return ProtocolUpdate(protocol=protocol_model, protocol_updated=True, process=process_model)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset_process_of_protocol(cls, protocol_model: ProtocolModel, process_instance_name: str) -> ProtocolUpdate:
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
         process_model.check_is_updatable(error_if_finished=False)
@@ -399,7 +399,7 @@ class ProtocolService():
         return cls._on_connector_updated(protocol_model, connector)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_connector_of_protocol(
             cls, protocol_id: str, dest_process_name: str, dest_process_port_name: str) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -506,7 +506,7 @@ class ProtocolService():
         return cls._on_protocol_object_updated(protocol_model=protocol_model, protocol_updated=True)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
         factory = ProtocolGraphFactoryFromType(protocol_model.to_protocol_config_dto())
         new_protocol_model: ProtocolModel = factory.create_protocol_model()
@@ -517,7 +517,7 @@ class ProtocolService():
     ########################## CONFIG #####################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def configure_process(
             cls, protocol_id: str, process_instance_name: str, config_values: ConfigParamsDict) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -537,7 +537,7 @@ class ProtocolService():
         return update_dto
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def update_code_params_visitility(cls, protocol_id: str, process_instance_name: str,
                                       new_visibility: ParamSpecVisibilty) -> ProcessDTO:
 
@@ -566,7 +566,7 @@ class ProtocolService():
         return process_model.to_dto()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def configure_process_model(cls, process_model: ProcessModel, config_values: ConfigParamsDict) -> ProtocolUpdate:
 
         for key in process_model.config.get_specs().specs:
@@ -582,7 +582,7 @@ class ProtocolService():
         return process_model.save()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def set_process_model_config_value(cls, process_model: ProcessModel,
                                        param_name: str, value: ParamValue) -> ProtocolUpdate:
         # set config value and save
@@ -649,7 +649,7 @@ class ProtocolService():
             process_name, output_port_name)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_viewer_to_process_output(
             cls, protocol_id: str, process_name: str, output_port_name: str) -> ProtocolUpdate:
         """ Add a view task to the protocol. And add connector from process to view task
@@ -671,7 +671,7 @@ class ProtocolService():
             viewer_config)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_scenario_template_to_protocol(
             cls, protocol_id: str, scenario_template_id: str) -> ProtocolUpdate:
         """Insert a sub protocol in the protocol from a template.
@@ -779,7 +779,7 @@ class ProtocolService():
         return cls._delete_dynamic_port_of_process(protocol_id, process_name, port_name, 'output')
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_dynamic_port_of_process(cls, protocol_id: str, process_name: str,
                                         port_name: str, port_type: Literal['input', 'output']) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(
@@ -813,7 +813,7 @@ class ProtocolService():
         return cls._update_dynamic_port_of_process(protocol_id, process_name, port_name, io_spec, 'output')
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _update_dynamic_port_of_process(
             cls, protocol_id: str, process_name: str, port_name: str, io_spec_dto: IOSpecDTO,
             port_type: Literal['input', 'output']) -> ProtocolUpdate:
@@ -901,7 +901,7 @@ class ProtocolService():
     ########################## COMMUNITY #####################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_agent_to_protocol_id_by_agent_version_id(
             cls, protocol_id: str, agent_version_id: str) -> ProtocolUpdate:
         community_agent_version: CommunityAgentVersionDTO = CommunityService.get_community_agent_version(
@@ -910,7 +910,7 @@ class ProtocolService():
         return cls.add_community_agent_version_to_protocol_id(protocol_id, community_agent_version)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_community_agent_version_to_protocol_id(
             cls, protocol_id: str, community_agent_version: CommunityAgentVersionDTO) -> ProtocolUpdate:
 
@@ -997,12 +997,12 @@ class ProtocolService():
         return protocol_update
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def get_community_available_space(cls) -> Any:
         return CommunityService.get_community_available_space()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def get_community_available_agents(
             cls, spaces_filter: List[str],
             title_filter: str, personal_only: bool, page: int, number_of_items_per_page: int) -> PageDTO[CommunityAgentDTO]:

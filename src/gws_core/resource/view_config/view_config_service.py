@@ -3,10 +3,8 @@
 from threading import Thread
 from typing import List
 
-from peewee import ModelSelect
-
 from gws_core.config.config import Config
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.model.typing_style import TypingStyle
@@ -15,6 +13,7 @@ from gws_core.resource.view.view_dto import ViewTypeDTO
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
+from peewee import ModelSelect
 
 from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import SearchBuilder, SearchParams
@@ -34,7 +33,7 @@ class ViewConfigService():
         return ViewConfig.get_by_id_and_check(id_)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def save_view_config(cls, resource_model: ResourceModel, view: View,
                          view_name: str, config: Config,
                          is_favorite: bool = False,

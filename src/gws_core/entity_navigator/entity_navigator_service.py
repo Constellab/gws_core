@@ -2,7 +2,7 @@
 
 from typing import List
 
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.entity_navigator.entity_navigator import (
@@ -33,14 +33,14 @@ class EntityNavigatorService:
     ############################################# SCENARIO #############################################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def check_impact_for_scenario_reset(cls, id_: str) -> ImpactResult:
         scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         return cls._calculate_scenario_reset_impact(scenario)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset_scenario(cls, id_: str) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
@@ -50,7 +50,7 @@ class EntityNavigatorService:
         return ScenarioService.reset_scenario(scenario)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_scenario(cls, scenario_id: str) -> None:
         """Delete the scenario
         """
@@ -74,7 +74,7 @@ class EntityNavigatorService:
     ############################################# PROCESS #############################################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def check_impact_for_process_reset(cls, protocol_id: str, process_instance_name: str) -> ImpactResult:
         """Reset the process of a protocol. To check the impacted entities,
         it check the next entities of the scenario of the protocol
@@ -87,7 +87,7 @@ class EntityNavigatorService:
         return cls._calculate_scenario_reset_impact(protocol_model.scenario)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset_process_of_protocol_id(cls, protocol_id: str, process_instance_name: str) -> ProtocolUpdate:
         """Reset the process of a protocol. To check the impacted entities,
         it check the next entities of the scenario of the protocol
@@ -104,7 +104,7 @@ class EntityNavigatorService:
         return ProtocolService.reset_process_of_protocol(protocol_model, process_instance_name)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset_error_processes_of_protocol(cls, protocol_model: ProtocolModel) -> None:
         """Specific method to reset all the error process of a protocol.
 
@@ -141,7 +141,7 @@ class EntityNavigatorService:
     ############################################# RESOURCE #############################################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def check_impact_delete_resource(cls, resource_id: str) -> ImpactResult:
         resource = ResourceService.get_by_id_and_check(resource_id)
 
@@ -155,7 +155,7 @@ class EntityNavigatorService:
             return cls._calculate_impact(resource_nav)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_resource(cls, resource_id: str, allow_s3_folder_storage: bool = False) -> None:
         """Delete the resource
         """
@@ -197,7 +197,7 @@ class EntityNavigatorService:
         )
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_next_entities(cls, entities: NavigableEntitySet) -> None:
         """Delete the entities
         """

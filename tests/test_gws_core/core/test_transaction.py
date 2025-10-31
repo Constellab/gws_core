@@ -1,9 +1,10 @@
 
 from gws_core.config.config import Config
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.test.base_test_case import BaseTestCase
 
 
+# test_transaction.py
 class TestTransaction(BaseTestCase):
 
     def test_transaction(self):
@@ -28,20 +29,20 @@ class TestTransaction(BaseTestCase):
             pass
         self.assertIsNotNone(Config.get_by_id(config.id))
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _create_config_success(self, config: Config) -> Config:
         return config.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _create_config_error(self, config: Config) -> None:
         self._create_config_success(config)
         raise Exception()
 
-    @transaction(nested_transaction=True)
+    @GwsCoreDbManager.transaction(nested_transaction=True)
     def _create_config_success_nested(self, config: Config) -> Config:
         return config.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _create_config_error_nested(self, config: Config) -> None:
         self._create_config_success_nested(config)
         raise Exception()

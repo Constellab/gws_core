@@ -3,12 +3,11 @@
 from typing import Dict, List, Literal, Optional, Set, Tuple
 
 import requests
-
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import \
@@ -237,7 +236,7 @@ class ScenarioDownloader(Task):
 
         return resource
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def build_scenario(self, scenario_load: ScenarioLoader) -> Scenario:
 
         self.log_info_message("Building the scenario")

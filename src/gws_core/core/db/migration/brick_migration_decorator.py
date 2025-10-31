@@ -3,7 +3,7 @@
 from typing import Callable, Type
 
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.migration.brick_migrator import (BrickMigration,
                                                        MigrationObject)
@@ -16,7 +16,7 @@ def brick_migration(
         version: str,
         short_description: str,
         authenticate_sys_user: bool = True,
-        db_manager_type: Type[AbstractDbManager] = None) -> Callable:
+        db_manager: AbstractDbManager = None) -> Callable:
     """Decorator to place on sub class of BrickMigration to declare a new migration code
 
     :param version: version of this migration
@@ -26,11 +26,14 @@ def brick_migration(
     :param authenticate_sys_user: if True, the migration will be executed with the sys user authenticated.
                                   Can be useful to set to False when User table is changed.
     :type authenticate_sys_user: bool
-    :param db_manager_type: The DbManager type to use for the migration. Defaults to GwsCoreDbManager.
-    :type db_manager_type: Type
+    :param db_manager: The DbManager type to use for the migration. Defaults to GwsCoreDbManager.
+    :type db_manager: AbstractDbManager
     :return: [description]
     :rtype: Callable
     """
+
+    if not db_manager:
+        db_manager = GwsCoreDbManager.get_instance()
 
     def decorator(class_: Type[BrickMigration]):
 
@@ -50,7 +53,7 @@ def brick_migration(
 
         # Register the migration
         DbMigrationService.register_migration_object(MigrationObject(
-            class_, version_obj, short_description, authenticate_sys_user, db_manager_type or GwsCoreDbManager))
+            class_, version_obj, short_description, authenticate_sys_user, db_manager))
 
         return class_
 

@@ -2,7 +2,7 @@
 
 from typing import List, Optional, Union
 
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.scenario.queue_dto import JobDTO
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
@@ -34,7 +34,7 @@ class Queue(Model):
         return cls._current_queue
 
     @classmethod
-    @transaction(nested_transaction=True)  # force new transaction to commit anyway
+    @GwsCoreDbManager.transaction(nested_transaction=True)  # force new transaction to commit anyway
     def _get_or_create_instance(cls) -> 'Queue':
         if cls._current_queue is None:
             queue = Queue.select().first()
@@ -66,7 +66,7 @@ class Queue(Model):
             cls._current_queue = None
 
     @classmethod
-    @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
+    @GwsCoreDbManager.transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
     def add_job(cls, user: User, scenario: Scenario) -> 'Queue':
 
         if Job.scenario_in_queue(scenario.id):
@@ -83,7 +83,7 @@ class Queue(Model):
         return queue
 
     @classmethod
-    @transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
+    @GwsCoreDbManager.transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
     def remove_scenario(cls, scenario_id: str) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 

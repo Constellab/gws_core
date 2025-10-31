@@ -1,7 +1,6 @@
 
 
-from peewee import ModelSelect
-
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
@@ -13,21 +12,21 @@ from gws_core.note_template.note_template_search_builder import \
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
-from ..core.decorator.transaction import transaction
 
 
 class NoteTemplateService():
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_empty(cls, title: str) -> NoteTemplate:
         return cls._create(title)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_from_note(cls, note_id: str) -> NoteTemplate:
         note: Note = Note.get_by_id_and_check(note_id)
 
@@ -41,7 +40,7 @@ class NoteTemplateService():
         return note_template
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _create(cls, title: str, content: RichTextDTO = None) -> NoteTemplate:
         document = NoteTemplate()
         document.title = title
@@ -69,7 +68,7 @@ class NoteTemplateService():
         return document.save()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def update_content(cls, doc_id: str, note_content: RichTextDTO) -> NoteTemplate:
         document: NoteTemplate = cls.get_by_id_and_check(doc_id)
 
@@ -86,7 +85,7 @@ class NoteTemplateService():
         RichTextFileService.delete_object_dir(RichTextObjectType.NOTE_TEMPLATE, doc_id)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_in_db(cls, doc_id: str) -> None:
 
         NoteTemplate.delete_by_id(doc_id)

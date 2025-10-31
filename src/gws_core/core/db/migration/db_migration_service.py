@@ -5,7 +5,7 @@ from typing import Dict, List, Type
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.migration.brick_migrator import (BrickMigrator,
                                                        MigrationObject)
 from gws_core.core.db.version import Version
@@ -26,11 +26,11 @@ class DbMigrationService:
     _migration_objects: List[MigrationObject] = []
 
     @classmethod
-    def migrate(cls, db_manager_type: Type[AbstractDbManager] = None):
+    def migrate(cls, db_manager: AbstractDbManager = None):
         """Migrate all bricks for the specified db_manager
 
-        :param db_manager_type: The AbstractDbManager type to migrate. Defaults to GwsCoreDbManager.
-        :type db_manager_type: Type[AbstractDbManager]
+        :param db_manager: The AbstractDbManager instance to migrate. Defaults to GwsCoreDbManager.
+        :type db_manager: AbstractDbManager
         """
 
         settings: Settings = Settings.get_instance()
@@ -40,22 +40,22 @@ class DbMigrationService:
         # If migration objetcs already exists, meaning this is not the first start
         if len(settings.get_brick_migrations_logs()) > 0:
             for migrator in brick_migrators.values():
-                migrated = migrator.migrate(db_manager_type)
+                migrated = migrator.migrate(db_manager)
 
                 if migrated:
                     settings.update_brick_migration_log(
                         migrator.brick_name,
                         str(migrator.current_brick_version),
-                        db_manager_type.get_unique_name())
+                        db_manager.get_unique_name())
 
         # save all the brick current version as last migration
         bricks = BrickHelper.get_all_bricks()
         for brick in bricks.values():
-            settings.update_brick_migration_log(brick.name, brick.version, db_manager_type.get_unique_name())
+            settings.update_brick_migration_log(brick.name, brick.version, db_manager.get_unique_name())
 
     @classmethod
     def _get_brick_migrators(cls) -> Dict[str, BrickMigrator]:
-        """ Retrieve all brick migrators for the specified db_manager_type
+        """ Retrieve all brick migrators for the specified db_manager
 
         """
         if cls._brick_migrators:

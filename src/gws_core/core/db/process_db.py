@@ -3,7 +3,7 @@
 from multiprocessing import Process
 from typing import Any, Callable, Set, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 
 
 class ProcessDb(Process):
@@ -59,23 +59,11 @@ class ProcessDb(Process):
         Override the run method to reset db connections before running the target function
         """
         # Reset db connections in the subprocess
-        db_managers = self.get_dbs()
-        for db_manager in db_managers:
-            db_manager.close_db()
-            db_manager.connect_db()
+        AbstractDbManager.reconnect_dbs()
 
         try:
             # Run the target function
             super().run()
         finally:
             # Clean up db connections after the process finishes
-            for db_manager in db_managers:
-                db_manager.close_db()
-
-    def get_dbs(self) -> Set[Type[AbstractDbManager]]:
-        """Get all database managers
-
-        :return: set of database manager classes
-        :rtype: Set[Type[AbstractDbManager]]
-        """
-        return AbstractDbManager.inheritors()
+            AbstractDbManager.close_dbs()

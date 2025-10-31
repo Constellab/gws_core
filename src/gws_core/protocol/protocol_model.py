@@ -3,6 +3,7 @@
 import re
 from typing import Dict, List, Literal, Optional, Set
 
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
@@ -17,7 +18,6 @@ from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.scenario.scenario_dto import ScenarioProgressDTO
 from gws_core.task.plug.input_task import InputTask
 
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.db_field import SerializableDBField
 from ..io.connector import Connector
@@ -53,7 +53,7 @@ class ProtocolModel(ProcessModel):
 
     ############################### MODEL METHODS #################################
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def save_full(self) -> 'ProtocolModel':
         """Save the protocol, its progress bar, its config and all its processes
         """
@@ -67,7 +67,7 @@ class ProtocolModel(ProcessModel):
 
         return self
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> 'ProtocolModel':
         """
         Archive the protocol
@@ -81,7 +81,7 @@ class ProtocolModel(ProcessModel):
         self.is_archived = archive
         return self.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset(self) -> 'ProtocolModel':
         """
         Reset the protocol
@@ -114,7 +114,7 @@ class ProtocolModel(ProcessModel):
         for process in self.processes.values():
             process.set_scenario(scenario)
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes
 

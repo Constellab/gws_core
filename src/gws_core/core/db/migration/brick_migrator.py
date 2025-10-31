@@ -2,7 +2,7 @@
 from abc import abstractmethod
 from typing import List, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.migration.migration_dto import MigrationDTO
 from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.core.db.version import Version
@@ -41,15 +41,15 @@ class MigrationObject():
     version: Version
     short_description: str
     authenticate_sys_user: bool
-    db_manager_type: Type[AbstractDbManager]
+    db_manager: AbstractDbManager
 
     def __init__(self, brick_migration: Type['BrickMigration'], version: Version, short_description: str,
-                 authenticate_sys_user: bool, db_manager_type: Type[AbstractDbManager]) -> None:
+                 authenticate_sys_user: bool, db_manager: AbstractDbManager) -> None:
         self.brick_migration = brick_migration
         self.version = version
         self.short_description = short_description
         self.authenticate_sys_user = authenticate_sys_user
-        self.db_manager_type = db_manager_type
+        self.db_manager = db_manager
 
     def call_migration(self, from_version: Version) -> None:
         """Call the migration
@@ -58,7 +58,7 @@ class MigrationObject():
         :type from_version: Version
         """
 
-        sql_migrator = SqlMigrator(self.db_manager_type.get_db())
+        sql_migrator = SqlMigrator(self.db_manager.get_db())
 
         if self.authenticate_sys_user:
             # Authenticate the system user if there is no current user (when calling migration on start)
@@ -68,7 +68,7 @@ class MigrationObject():
             self.brick_migration.migrate(sql_migrator, from_version, self.version)
 
     def get_db_unique_name(self) -> str:
-        return self.db_manager_type.get_unique_name()
+        return self.db_manager.get_unique_name()
 
     def to_dto(self) -> MigrationDTO:
         return MigrationDTO(
@@ -105,23 +105,23 @@ class BrickMigrator():
 
         self._migration_objects.append(migration_obj)
 
-    def migrate(self, db_manager_type: Type[AbstractDbManager]) -> bool:
+    def migrate(self, db_manager: AbstractDbManager) -> bool:
         """Migrate the brick by calling all the migration scripts for the specified db_manager.
         If there were not migration return false, otherwise True
 
-        :param db_manager_type: The AbstractDbManager type to filter migrations
-        :type db_manager_type: Type[AbstractDbManager]
+        :param db_manager: The AbstractDbManager instance to filter migrations
+        :type db_manager: AbstractDbManager
         :return: _description_
         :rtype: bool
         """
 
         # retrieve all the migration objects that have an higher version of current brick version
-        # and match the db_manager_type
-        to_migrate_list: List[MigrationObject] = self.get_to_migrate_list(db_manager_type)
+        # and match the db_manager
+        to_migrate_list: List[MigrationObject] = self.get_to_migrate_list(db_manager)
 
         if len(to_migrate_list) == 0:
             Logger.debug(
-                f"Skipping migration for brick '{self.brick_name}' and DB '{db_manager_type.get_unique_name()}' because it is up to date")
+                f"Skipping migration for brick '{self.brick_name}' and DB '{db_manager.get_unique_name()}' because it is up to date")
             return False
 
         for migration_obj in to_migrate_list:
@@ -129,13 +129,13 @@ class BrickMigrator():
 
         return True
 
-    def get_to_migrate_list(self, db_manager_type: Type[AbstractDbManager]) -> List[MigrationObject]:
+    def get_to_migrate_list(self, db_manager: AbstractDbManager) -> List[MigrationObject]:
         # retrieve all the migration objects that have an higher version of current brick version
-        # and match the db_manager_type
+        # and match the db_manager
         to_migrate: List[MigrationObject] = [
             x for x in self._migration_objects
-            if x.version > self.current_brick_version and x.db_manager_type.get_unique_name()
-            == db_manager_type.get_unique_name()]
+            if x.version > self.current_brick_version and x.db_manager.get_unique_name()
+            == db_manager.get_unique_name()]
 
         # sort them to migrate in order
         to_migrate.sort(key=lambda x: x.version)
@@ -178,7 +178,7 @@ class BrickMigrator():
     def get_migration_object(self, version: Version, db_unique_name: str) -> MigrationObject:
         # Check if that version was already added
         migration_objects = list([x for x in self._migration_objects if x.version ==
-                                 version and x.db_manager_type.get_unique_name() == db_unique_name])
+                                 version and x.db_manager.get_unique_name() == db_unique_name])
         return migration_objects[0] if len(migration_objects) > 0 else None
 
     def get_migration_versions(self, version: Version) -> List[MigrationObject]:

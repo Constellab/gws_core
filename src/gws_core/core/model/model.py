@@ -3,14 +3,13 @@
 import uuid
 from typing import List, Type, TypeVar
 
-from peewee import CharField, DoesNotExist
-from peewee import Model as PeeweeModel
-
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.utils.date_helper import DateHelper
+from peewee import CharField, DoesNotExist
+from peewee import Model as PeeweeModel
 
-from ..decorator.transaction import transaction
 from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
 from .db_field import DateTimeUTC
@@ -154,7 +153,7 @@ class Model(BaseModel, PeeweeModel):
         self.last_modified_at = DateHelper.now_utc()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def save_all(cls: Type[ModelType], model_list: List[ModelType] = None) -> List[ModelType]:
         """
         Automically and safely save a list of models in the database. If an error occurs

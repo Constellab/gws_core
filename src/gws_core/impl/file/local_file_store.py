@@ -8,10 +8,10 @@ from tempfile import SpooledTemporaryFile
 from time import time
 from typing import List, Type, Union
 
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.monitor.monitor_service import MonitorService
 
-from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions import BadRequestException
 from ...core.utils.settings import Settings
 from .file import File
@@ -216,7 +216,7 @@ class LocalFileStore(FileStore):
         return str(Path(cls._base_dir))
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def remove_all_file_stores(cls):
         """
         Remove all the files from the FileStore

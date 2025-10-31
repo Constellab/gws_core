@@ -4,11 +4,8 @@ from os import path
 from typing import ByteString, Dict, List, Optional
 
 from fastapi.responses import FileResponse
-from mypy_boto3_s3.type_defs import (ListObjectsV2OutputTypeDef, ObjectTypeDef,
-                                     TagTypeDef)
-
 from gws_core.core.classes.search_builder import SearchOperator
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -32,6 +29,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
+from mypy_boto3_s3.type_defs import (ListObjectsV2OutputTypeDef, ObjectTypeDef,
+                                     TagTypeDef)
 
 
 class DataHubS3ServerService(AbstractS3Service):
@@ -98,7 +97,7 @@ class DataHubS3ServerService(AbstractS3Service):
                 },
             }
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
                       last_modified: float = None) -> None:
         """Upload an object to the bucket

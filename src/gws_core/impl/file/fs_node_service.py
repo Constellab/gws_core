@@ -8,8 +8,7 @@ from typing import List, Literal, Type
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from typing_extensions import Buffer
-
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -19,8 +18,8 @@ from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
+from typing_extensions import Buffer
 
-from ...core.decorator.transaction import transaction
 from ...core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
@@ -76,7 +75,7 @@ class FsNodeService():
     ############################# UPLOAD / CREATION  ###########################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
         """Upload a file to the store and create the resource.
         """
@@ -125,7 +124,7 @@ class FsNodeService():
 
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def upload_folder(cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
         if len(files) == 0:
             raise BadRequestException('The folder is empty')

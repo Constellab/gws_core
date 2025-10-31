@@ -1,9 +1,8 @@
 
 
 from threading import Thread
-from typing import Set, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 
 
 class ThreadDb(Thread):
@@ -58,23 +57,11 @@ class ThreadDb(Thread):
         Override the run method to reset db connections once before running the target function
         """
         # Reset db connections in the thread (only once at startup)
-        db_managers = self.get_dbs()
-        for db_manager in db_managers:
-            db_manager.close_db()
-            db_manager.connect_db()
+        AbstractDbManager.reconnect_dbs()
 
         try:
             # Run the target function
             super().run()
         finally:
             # Clean up db connections when the thread exits
-            for db_manager in db_managers:
-                db_manager.close_db()
-
-    def get_dbs(self) -> Set[Type[AbstractDbManager]]:
-        """Get all database managers
-
-        :return: set of database manager classes
-        :rtype: Set[Type[AbstractDbManager]]
-        """
-        return AbstractDbManager.inheritors()
+            AbstractDbManager.close_dbs()

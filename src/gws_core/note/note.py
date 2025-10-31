@@ -2,7 +2,7 @@
 
 from typing import Any, List, final
 
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -128,7 +128,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     def navigable_entity_is_validated(self) -> bool:
         return self.is_validated
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs) -> Any:
         result = super().delete_instance(*args, **kwargs)
         EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)

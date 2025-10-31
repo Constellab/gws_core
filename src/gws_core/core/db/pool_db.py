@@ -1,9 +1,8 @@
 
 
 from multiprocessing.pool import Pool
-from typing import Set, Type
 
-from gws_core.core.db.db_manager import AbstractDbManager
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 
 
 class PoolDb(Pool):
@@ -20,19 +19,10 @@ class PoolDb(Pool):
     """
 
     def __enter__(self):
-        db_managers = self.get_dbs()
-
-        for db_manager in db_managers:
-            db_manager.close_db()
-            db_manager.connect_db()
+        AbstractDbManager.reconnect_dbs()
         return super().__enter__()
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        db_managers = self.get_dbs()
 
-        for db_manager in db_managers:
-            db_manager.close_db()
+        AbstractDbManager.close_dbs()
         return super().__exit__(exc_type, exc_val, exc_tb)
-
-    def get_dbs(self) -> Set[Type[AbstractDbManager]]:
-        return AbstractDbManager.inheritors()

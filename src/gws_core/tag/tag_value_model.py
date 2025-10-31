@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from gws_core.community.community_dto import CommunityTagValueDTO
 from gws_core.core.classes.expression_builder import ExpressionBuilder
-from gws_core.core.decorator.transaction import transaction
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
 from gws_core.tag.tag import TagValueType
@@ -77,7 +77,7 @@ class TagValueModel(Model):
         return cls.get_tag_value_model(tag_key, tag_value) is not None
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_tag_value(
             cls, tag_key_model: TagKeyModel, tag_value: TagValueType, additional_info: Dict[str, Any] = {},
             is_community_tag_value: bool = False) -> 'TagValueModel':
@@ -99,7 +99,7 @@ class TagValueModel(Model):
                           tag_value=TagHelper.convert_value_to_str(tag_value))
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_tag_value(cls, tag_key: str, tag_value: TagValueType) -> None:
         """Delete a tag value model, and the tag key if it has no more values
         """

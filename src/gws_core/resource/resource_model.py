@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -25,7 +26,6 @@ from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
                     ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.model.model_with_user import ModelWithUser
@@ -104,7 +104,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     ########################################## MODEL METHODS ######################################
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs):
         # fs_node_model: FSNodeModel = self.fs_node_model
         result = super().delete_instance(*args, **kwargs)
@@ -116,7 +116,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.remove_kv_store()
         return result
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_resource_content(self) -> 'ResourceModel':
         """
         Delete the content of the resource, the data, the kv store and the fs node
@@ -133,7 +133,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.remove_kv_store()
         return self
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> 'ResourceModel':
         """
         Archive the process
@@ -186,7 +186,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return ResourceModel.select().where(cls.get_by_types_and_sub_expression([type_.get_typing_name()]))
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def save_full(self) -> 'ResourceModel':
         """Save the resource and the fs_node if exists
 

@@ -5,9 +5,8 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, final
 
-from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
-
 from gws_core.config.config_params import ConfigParamsDict
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
@@ -25,10 +24,10 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
+from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
@@ -101,7 +100,7 @@ class ProcessModel(ModelWithUser):
 
     ################################# MODEL METHODS #############################
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> ProcessModel:
         """
         Archive the process
@@ -113,7 +112,7 @@ class ProcessModel(ModelWithUser):
         self.is_archived = archive
         return self.save()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs):
         """Override delete instance to delete all the sub processes
 
@@ -139,7 +138,7 @@ class ProcessModel(ModelWithUser):
 
         return self._parent_protocol
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset(self) -> 'ProcessModel':
         """
         Reset the process

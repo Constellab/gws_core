@@ -1,12 +1,13 @@
 
 from abc import abstractmethod
 
+from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.db_config import DbConfig, DbMode
-from gws_core.core.db.db_manager import AbstractDbManager
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.docker.docker_service import DockerService
 from gws_core.user.current_user_service import AuthenticateUser
+from typing_extensions import final
 
 
 class LazyAbstractDbManager(AbstractDbManager):
@@ -25,8 +26,6 @@ class LazyAbstractDbManager(AbstractDbManager):
             db = DatabaseProxy()
     """
 
-    lazy_init = True
-
     # Default configuration
     PORT = 3306
 
@@ -35,73 +34,75 @@ class LazyAbstractDbManager(AbstractDbManager):
     _db_password: str | None = None
     _db_host: str | None = None
 
-    @classmethod
-    def init(cls, mode: DbMode):
+    def init(self, mode: DbMode):
         """Initialize the database by starting the Docker container first"""
 
         if mode != 'test':
-            cls._start_docker_compose(mode)
+            self._start_docker_compose(mode)
         return super().init(mode)
 
-    @classmethod
-    def _start_docker_compose(cls, mode: DbMode):
+    def _start_docker_compose(self, mode: DbMode):
         """Start the Docker container for the database"""
         try:
-            brick_name = cls.get_brick_name()
-            unique_name = cls.get_unique_name()
+            brick_name = self.get_brick_name()
+            unique_name = self.get_unique_name()
 
-            Logger.info(f'Starting {cls.get_unique_name()} database container')
+            Logger.info(f'Starting {self.get_unique_name()} database container')
             with AuthenticateUser.system_user():
                 docker_service = DockerService()
                 response_dto = docker_service.register_sqldb_compose(
                     brick_name=brick_name,
                     unique_name=f'{unique_name}_{mode}',
-                    database_name=cls.get_unique_name(),
+                    database_name=self.get_unique_name(),
                     description=f'{brick_name} brick database in {mode} mode',
                 )
 
-                cls._db_username = response_dto.credentials.username
-                cls._db_password = response_dto.credentials.password
-                cls._db_host = response_dto.db_host
+                self._db_username = response_dto.credentials.username
+                self._db_password = response_dto.credentials.password
+                self._db_host = response_dto.db_host
 
-                Logger.info(f'{cls.get_unique_name()} database container started')
+                Logger.info(f'{self.get_unique_name()} database container started')
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             raise Exception(
-                f"Error while registering the {cls.get_brick_name()} db compose. Error: {err}")
+                f"Error while registering the {self.get_brick_name()} db compose. Error: {err}")
 
-    @classmethod
-    def get_config(cls, mode: DbMode) -> DbConfig:
+    def get_config(self, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""
 
         if mode == 'test':
             return Settings.get_test_db_config()
 
-        if not cls._db_username or not cls._db_password or not cls._db_host:
-            raise Exception(f"{cls.get_brick_name()} DbManager not initialized")
+        if not self._db_username or not self._db_password or not self._db_host:
+            raise Exception(f"{self.get_brick_name()} DbManager not initialized")
 
         return {
-            'host': cls._db_host,
-            'port': cls.PORT,
-            'user': cls._db_username,
-            'password': cls._db_password,
-            'db_name': cls.get_unique_name(),
+            'host': self._db_host,
+            'port': self.PORT,
+            'user': self._db_username,
+            'password': self._db_password,
+            'db_name': self.get_unique_name(),
             'engine': 'mariadb'
         }
 
-    @classmethod
     @abstractmethod
-    def get_name(cls) -> str:
+    def get_name(self) -> str:
         """
         Return the name of the DbManager.
         The combination of brick name and unique name must be unique accross all DbManager inheritors.
         """
 
-    @classmethod
     @abstractmethod
-    def get_brick_name(cls) -> str:
+    def get_brick_name(self) -> str:
         """
         Return the brick name for this database manager.
         Must be implemented by subclasses.
         """
+
+    @final
+    def is_lazy_init(self) -> bool:
+        """
+        This DbManager is always lazy initialized.
+        """
+        return True

@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
 
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -23,7 +24,6 @@ from gws_core.user.current_user_service import CurrentUserService
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ..core.classes.enum_field import EnumField
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.model.db_field import DateTimeUTC, JSONField
@@ -151,7 +151,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     ########################################## MODEL METHODS ######################################
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> 'Scenario':
         """
         Archive the scenario
@@ -193,7 +193,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def count_queued_scenarios(cls) -> int:
         return Scenario.select().where((Scenario.status == ScenarioStatus.IN_QUEUE)).count()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def reset(self) -> 'Scenario':
         """
         Reset the scenario.
@@ -215,7 +215,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.mark_as_draft()
         return self
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def validate(self) -> None:
         """
         Validate the scenario
@@ -239,7 +239,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.validated_at = DateHelper.now_utc()
         self.validated_by = CurrentUserService.get_and_check_current_user()
 
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs):
         self.reset()
 

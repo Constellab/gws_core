@@ -2,6 +2,7 @@
 
 from typing import Callable, List
 
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -40,7 +41,6 @@ from gws_core.user.user_service import UserService
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -54,7 +54,7 @@ from .note_search_builder import NoteSearchBuilder
 class NoteService():
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create(cls, note_dto: NoteSaveDTO, scenario_ids: List[str] = None) -> Note:
         note = Note()
         note.title = note_dto.title
@@ -147,7 +147,7 @@ class NoteService():
         return note
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _update_note_folder(cls, note: Note, new_folder_id: str) -> Note:
 
         # update folder
@@ -181,7 +181,7 @@ class NoteService():
         return note
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -200,7 +200,7 @@ class NoteService():
         return note
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def insert_template(cls, note_id: str, data: NoteInsertTemplateDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -225,7 +225,7 @@ class NoteService():
         return note
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_view_to_content(cls, note_id: str, view_config_id: str) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -252,7 +252,7 @@ class NoteService():
         RichTextFileService.delete_object_dir(RichTextObjectType.NOTE, note_id)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _delete_note_db(cls, note_id: str) -> None:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -267,7 +267,7 @@ class NoteService():
                             object_id=note_id)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _validate(cls, note_id: str, folder_id: str = None) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -332,7 +332,7 @@ class NoteService():
         return note.save()
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def validate_and_send_to_space(cls, note_id: str, folder_id: str = None) -> Note:
         note = cls._validate(note_id, folder_id)
 
@@ -432,7 +432,7 @@ class NoteService():
     ###################################  LINKED SCENARIO  ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def add_scenario(cls, note_id: str, scenario_id: str) -> Scenario:
         note: Note = cls._get_and_check_before_update(note_id)
 
@@ -633,7 +633,7 @@ class NoteService():
     ################################################# ARCHIVE ########################################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive_note(cls, note_id: str) -> Note:
         note: Note = Note.get_by_id_and_check(note_id)
 
@@ -648,7 +648,7 @@ class NoteService():
         return note.archive(True)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def unarchive_note(cls, note_id: str) -> Note:
         note: Note = Note.get_by_id_and_check(note_id)
 
@@ -703,7 +703,7 @@ class NoteService():
         return SpaceService.get_instance().get_undo_content(note.content, note.modifications, modification_id)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def rollback_content(cls, note_id: str, modification_id: str) -> Note:
         note: Note = Note.get_by_id_and_check(note_id)
 

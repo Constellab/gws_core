@@ -2,8 +2,7 @@
 
 from typing import List, Optional, Type
 
-from peewee import ModelSelect
-
+from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
@@ -21,10 +20,10 @@ from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.activity.activity_service import ActivityService
+from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
-from ..core.decorator.transaction import transaction
 from ..core.exception.exceptions import BadRequestException
 from ..folder.space_folder import SpaceFolder
 from ..process.process_factory import ProcessFactory
@@ -47,7 +46,7 @@ class ScenarioService():
     ################################### CREATE ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_scenario_from_dto(cls, scenario_dto: ScenarioSaveDTO) -> Scenario:
 
         scenario_template: ScenarioTemplate = None
@@ -66,7 +65,7 @@ class ScenarioService():
         )
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_scenario(cls, folder_id: str = None, title: str = "",
                         scenario_template: ScenarioTemplate = None,
                         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL) -> Scenario:
@@ -98,7 +97,7 @@ class ScenarioService():
         return scenario
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def create_scenario_from_protocol_model(
             cls, protocol_model: ProtocolModel, folder: SpaceFolder = None, title: str = "",
             description: RichTextDTO = None,
@@ -162,7 +161,7 @@ class ScenarioService():
         return scenario
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _update_scenario_folder(cls, scenario: Scenario,
                                 new_folder_id: Optional[str],
                                 check_notes: bool) -> Scenario:
@@ -238,7 +237,7 @@ class ScenarioService():
     ###################################  VALIDATION  ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def validate_scenario_by_id(cls, id: str, folder_id: str = None) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(id)
 
@@ -249,7 +248,7 @@ class ScenarioService():
         return cls.validate_scenario(scenario)
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def validate_scenario(cls, scenario: Scenario) -> Scenario:
         scenario.validate()
 
@@ -297,7 +296,7 @@ class ScenarioService():
         return scenario
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def _unsynchronize_with_space(cls, scenario: Scenario, folder_id: str,
                                   check_notes: bool) -> Scenario:
 
@@ -319,7 +318,7 @@ class ScenarioService():
     ################################### ARCHIVE  ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def archive_scenario_by_id(cls, id: str) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(id)
 
@@ -451,7 +450,7 @@ class ScenarioService():
     ################################### COPY  ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def clone_scenario(cls, scenario_id: str) -> Scenario:
         """ Copy the scenario into a new draft scenario
         """
@@ -470,7 +469,7 @@ class ScenarioService():
     ################################### DELETE ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_scenario(cls, scenario_id: str) -> None:
 
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
@@ -489,7 +488,7 @@ class ScenarioService():
     ################################### INTERMEDIATE RESOURCES ##############################
 
     @classmethod
-    @transaction()
+    @GwsCoreDbManager.transaction()
     def delete_intermediate_resources(cls, scenario_id: str) -> None:
         """Delete the intermediate resources of a scenario
         An intermediate resource is a resource that is not used as input or output and not flagged

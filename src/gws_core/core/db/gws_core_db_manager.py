@@ -4,26 +4,33 @@ from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.settings import Settings
 from peewee import DatabaseProxy
 
-from .db_manager import AbstractDbManager
+from .abstract_db_manager import AbstractDbManager
 
 
 class GwsCoreDbManager(AbstractDbManager):
 
     db = DatabaseProxy()
 
-    lazy_init = False
+    _instance: 'GwsCoreDbManager' = None
 
     @classmethod
-    def get_config(cls, mode: DbMode) -> DbConfig:
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
+
+
+    def get_config(self, mode: DbMode) -> DbConfig:
         if mode == 'test':
             return Settings.get_test_db_config()
         else:
             return Settings.get_gws_core_db_config()
 
-    @classmethod
-    def get_name(cls) -> str:
+    def get_name(self) -> str:
         return 'db'
 
-    @classmethod
-    def get_brick_name(cls) -> str:
+    def get_brick_name(self) -> str:
         return Settings.get_gws_core_brick_name()
+
+    def is_lazy_init(self):
+        return False
