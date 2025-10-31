@@ -1,13 +1,11 @@
 import reflex as rx
-from gws_reflex_main import add_unauthorized_page, get_theme
+from gws_reflex_main import register_gws_reflex_app
 
 from .pages import (doc_component_page, home_page, rich_text_page,
                     user_components_page)
 
-app = rx.App(
-    theme=get_theme(),
-    stylesheets=["/style.css"],
-)
+# Option 1: Simplest - create app with all GWS defaults
+app = register_gws_reflex_app()
 
 
 def sidebar_link(text: str, url: str, emoji: str) -> rx.Component:
@@ -88,8 +86,3 @@ def user_components():
 def doc_component():
     """Doc component demo page."""
     return layout(doc_component_page.doc_component_page())
-
-
-# Add the unauthorized page to the app.
-# This page will be displayed if the user is not authenticated
-add_unauthorized_page(app)

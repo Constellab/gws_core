@@ -1,11 +1,11 @@
 """Rich text component demo page for the Reflex showcase app."""
 
 import reflex as rx
-from gws_core.core.utils.logger import Logger
-from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_reflex_main import ReflexMainState
 from gws_reflex_main.gws_components import rich_text_component
+
+from gws_core.impl.rich_text.rich_text import RichText
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 from ..components import example_tabs, page_layout
 
@@ -56,7 +56,6 @@ def rich_text_page() -> rx.Component:
             placeholder="Type something here...",
             value=RichTextPageState.rich_text,
             output_event=RichTextPageState.handle_rich_text_change,
-            min_height="500px",
         ),
         rx.cond(
             RichTextPageState.is_not_empty,
@@ -112,7 +111,6 @@ rx.box(
         placeholder="Type something here...",
         value=MyState.rich_text,
         output_event=MyState.handle_rich_text_change,
-        min_height="500px",
     ),
     rx.button("Reset Content",
               on_click=MyState.reset_rich_text,

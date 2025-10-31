@@ -1,8 +1,8 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_main import (ReflexMainState, add_unauthorized_page, get_theme,
-                             main_component)
+from gws_reflex_main import (ReflexMainState, main_component,
+                             register_gws_reflex_app)
 
 
 class State(ReflexMainState):
@@ -33,10 +33,7 @@ class State(ReflexMainState):
         self.value += 1
 
 
-app = rx.App(
-    theme=get_theme(),
-    stylesheets=["/style.css"],
-)
+app = register_gws_reflex_app()
 
 
 # Declare the page and init the main state
@@ -56,8 +53,3 @@ def index():
             style={"margin-top": "20px"}
         )
     )
-
-
-# Add the unauthorized page to the app.
-# This page will be displayed if the user is not authenticated
-add_unauthorized_page(app)
