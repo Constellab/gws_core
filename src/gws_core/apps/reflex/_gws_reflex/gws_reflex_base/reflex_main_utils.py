@@ -3,9 +3,8 @@
 import os
 
 import reflex as rx
-from gws_reflex_base.component.reflex_confirm_dialog_component import \
-    confirm_dialog
 
+from .component.reflex_confirm_dialog_component import confirm_dialog
 from .reflex_main_state_base import UNAUTHORIZED_ROUTE, ReflexMainStateBase
 
 

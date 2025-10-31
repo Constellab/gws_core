@@ -150,11 +150,17 @@ class ReflexProcess(AppProcess):
         gws_core_path = os.path.dirname(sys.modules['gws_core'].__path__[0])
         theme = self.get_current_user_theme()
 
+        python_path = reflex_modules_path
+
+        # for non virtual env apps, add gws_core to python path
+        if not app.is_virtual_env_app():
+            python_path += ':' + gws_core_path
+
         env_dict = {
+            # define python path to include gws_reflex_base and gws_reflex_main and gws_core
+            'PYTHONPATH': python_path,
             'GWS_REFLEX_APP_ID': app.resource_model_id,
-            'GWS_REFLEX_MODULES_PATH': reflex_modules_path,
             'GWS_REFLEX_VIRTUAL_ENV': str(app.is_virtual_env_app()),
-            'GWS_REFLEX_GWS_CORE_PATH': gws_core_path,
             'GWS_REFLEX_API_URL': self.get_back_host_url(),
             'GWS_THEME': theme.theme,
             'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir(),
