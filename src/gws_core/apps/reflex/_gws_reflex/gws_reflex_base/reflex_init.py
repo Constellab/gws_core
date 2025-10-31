@@ -28,6 +28,8 @@ class ReflexInit:
             return
         app_id = os.environ.get('GWS_REFLEX_APP_ID', 'reflex_app')
 
+        is_test = os.environ.get('GWS_REFLEX_TEST_ENV', 'false').lower() == 'true'
+
         manage.AppManager.init_gws_env_and_db(
             main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-            log_level='INFO', log_context=LogContext.REFLEX, log_context_id=app_id)
+            log_level='INFO', log_context=LogContext.REFLEX, log_context_id=app_id, is_test=is_test)

@@ -46,6 +46,7 @@ from .config.param.code_param.yaml_code_param import \
 # from .config.param_spec import DictParam as DictParam
 from .config.param.param_set import ParamSet as ParamSet
 from .config.param.param_spec import BoolParam as BoolParam
+from .config.param.param_spec import DictParam as DictParam
 from .config.param.param_spec import FloatParam as FloatParam
 from .config.param.param_spec import IntParam as IntParam
 from .config.param.param_spec import ListParam as ListParam
@@ -53,7 +54,6 @@ from .config.param.param_spec import NumericParam as NumericParam
 from .config.param.param_spec import ParamSpec as ParamSpec
 from .config.param.param_spec import StrParam as StrParam
 from .config.param.param_spec import TextParam as TextParam
-from .config.param.param_spec import DictParam as DictParam
 from .config.param.param_types import ParamValue as ParamValue
 from .config.param.tags_param_spec import TagsParam as TagsParam
 # Core
@@ -602,6 +602,7 @@ from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.test_mock_space_service import \
     TestMockSpaceService as TestMockSpaceService
+from .test.view_tester import ViewTester as ViewTester
 # User
 from .user.authorization_service import \
     AuthorizationService as AuthorizationService

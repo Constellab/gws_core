@@ -5,6 +5,7 @@ from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.migration.brick_migrator import (BrickMigration,
                                                        BrickMigrator,
                                                        MigrationObject)
+from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.core.db.version import Version, VersionInvalidException
 
 
@@ -14,7 +15,7 @@ class MigrationTest(BrickMigration):
 
 class MigrationError(BrickMigration):
     @classmethod
-    def migrate(cls, from_version: Version, to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         raise Exception()
 
 
@@ -64,26 +65,27 @@ class TestMigration(BaseTestCase):
 
         brick_migrator: BrickMigrator = BrickMigrator(
             'gws_core_test', Version('1.0.0'))
+        db_manager = GwsCoreDbManager.get_instance()
+        migration_v120 = MigrationObject(MigrationTest, Version('1.2.0'), '', False, db_manager)
+        brick_migrator.append_migration(migration_v120)
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.2.0'), '', False, GwsCoreDbManager))
+            MigrationObject(MigrationTest, Version('1.0.0'), '', False, db_manager))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.0.0'), '', False, GwsCoreDbManager))
+            MigrationObject(MigrationTest, Version('1.0.1'), '', False, db_manager))
         brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('1.0.1'), '', False, GwsCoreDbManager))
-        brick_migrator.append_migration(
-            MigrationObject(MigrationTest, Version('2.0.1'), '', False, GwsCoreDbManager))
+            MigrationObject(MigrationTest, Version('2.0.1'), '', False, db_manager))
 
         # check that the migration list is in order and without the 1.0.0
-        to_migrate = brick_migrator.get_to_migrate_list(GwsCoreDbManager)
+        to_migrate = brick_migrator.get_to_migrate_list(db_manager)
         self.assertEqual(to_migrate[0].version,  Version('1.0.1'))
         self.assertEqual(to_migrate[1].version,  Version('1.2.0'))
         self.assertEqual(to_migrate[2].version,  Version('2.0.1'))
 
         # Append a version that already exists
         with self.assertRaises(Exception):
-            brick_migrator.append_migration(MigrationTest)
+            brick_migrator.append_migration(migration_v120)
 
         # Check that the migrate worked and update brick version
-        brick_migrator.migrate(GwsCoreDbManager)
+        brick_migrator.migrate(db_manager)
         self.assertEqual(brick_migrator.current_brick_version,
                          Version('2.0.1'))

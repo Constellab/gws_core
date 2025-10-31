@@ -5,9 +5,6 @@ from typing import Optional
 import reflex as rx
 from gws_reflex_main import ReflexMainState
 
-from gws_core.core.utils.logger import Logger
-from gws_core.user.current_user_service import CurrentUserService
-
 from ..components import example_tabs, page_layout
 
 
