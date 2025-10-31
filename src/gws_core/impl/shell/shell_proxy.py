@@ -321,20 +321,8 @@ class ShellProxy(BaseTyping):
 
         return {}
 
-    def _self_dispatch_stdouts(self, messages: List[bytes]) -> None:
-        if len(messages) > 0:
-            message = "\n".join([message.decode().strip()
-                                for message in messages])
-            self._message_dispatcher.notify_info_message(message)
-
-    def _self_dispatch_stderrs(self, messages: List[bytes]) -> None:
-        if len(messages) > 0:
-            message = "\n".join([message.decode().strip()
-                                for message in messages])
-            self._message_dispatcher.notify_error_message(message)
-
     def _self_dispatch_stdout(self, message: bytes) -> None:
-        self._message_dispatcher.notify_info_message(
+        self._message_dispatcher.notify_message_with_format(
             message.decode().strip())
 
     def _self_dispatch_stderr(self, message: bytes) -> None:
@@ -362,7 +350,7 @@ class ShellProxy(BaseTyping):
 
     def log_info_message(self, message: str):
         """ Log an info message using the dispatcher """
-        self._message_dispatcher.notify_info_message(message)
+        self._message_dispatcher.notify_message_with_format(message)
 
     def log_error_message(self, message: str):
         """ Log an error message using the dispatcher """

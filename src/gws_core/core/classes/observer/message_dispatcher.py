@@ -94,40 +94,115 @@ class MessageDispatcher:
         """
         Trigger an update in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.PROGRESS, progress)
+        self._build_and_notify_message(message, MessageLevel.PROGRESS, progress)
+
+    def notify_message_with_format(self, message: str) -> None:
+        """
+        Parse and trigger a message in each subscriber based on format prefix.
+
+        Supported formats:
+        - [INFO] Message - Sends an info message
+        - [WARNING] Message - Sends a warning message
+        - [ERROR] Message - Sends an error message
+        - [SUCCESS] Message - Sends a success message
+        - [DEBUG] Message - Sends a debug message
+        - [PROGRESS:XX] Message - Sends a progress message with value XX (0-100)
+
+        If no format prefix is found, the message is sent as an info message.
+
+        Examples:
+        - "[INFO] Processing data" -> Info message
+        - "[WARNING] Low memory" -> Warning message
+        - "[PROGRESS:50] Half way done" -> Progress at 50% with message "Half way done"
+        - "[PROGRESS:75.5] Almost complete" -> Progress at 75.5%
+        - "Regular message" -> Info message (no prefix)
+
+        :param message: The formatted message string
+        :type message: str
+        """
+        # Fast path: check for format prefix
+        if not message.startswith('['):
+            # No prefix, treat as info message
+            self._build_and_notify_message(message, MessageLevel.INFO)
+            return
+
+        try:
+            # Find the closing bracket
+            close_idx = message.find(']')
+            if close_idx == -1:
+                # No closing bracket, treat as info message
+                self._build_and_notify_message(message, MessageLevel.INFO)
+                return
+
+            # Extract the prefix (e.g., "INFO", "PROGRESS:50")
+            prefix = message[1:close_idx]
+            # Extract the message after the closing bracket (strip leading space)
+            content = message[close_idx + 1:].lstrip()
+
+            # Check if it's a progress message with value
+            if prefix.startswith('PROGRESS:'):
+                value_str = prefix[9:]  # Remove "PROGRESS:" prefix
+                progress_value = float(value_str)
+                # Verify the progress value is between 0 and 100
+                if 0 <= progress_value <= 100:
+                    self._build_and_notify_message(content, MessageLevel.PROGRESS, progress_value)
+                    return
+                # Invalid progress value, treat as info message
+                self._build_and_notify_message(message, MessageLevel.INFO)
+                return
+
+            # Map prefix to message level
+            level_map = {
+                'INFO': MessageLevel.INFO,
+                'WARNING': MessageLevel.WARNING,
+                'ERROR': MessageLevel.ERROR,
+                'SUCCESS': MessageLevel.SUCCESS,
+                'DEBUG': MessageLevel.DEBUG,
+            }
+
+            level = level_map.get(prefix)
+            if level is not None:
+                self._build_and_notify_message(content, level)
+            else:
+                # Unknown prefix, treat as info message with original content
+                self._build_and_notify_message(message, MessageLevel.INFO)
+
+        except (ValueError, IndexError):
+            # If parsing fails, treat as normal info message
+            self._build_and_notify_message(message, MessageLevel.INFO)
 
     def notify_info_message(self, message: str) -> None:
         """
         Trigger an info in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.INFO)
+        self._build_and_notify_message(message, MessageLevel.INFO)
 
     def notify_warning_message(self, message: str) -> None:
         """
         Trigger a warning in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.WARNING)
+        self._build_and_notify_message(message, MessageLevel.WARNING)
 
     def notify_error_message(self, message: str) -> None:
         """
         Trigger a error in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.ERROR)
+        self._build_and_notify_message(message, MessageLevel.ERROR)
 
     def notify_success_message(self, message: str) -> None:
         """
         Trigger a success in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.SUCCESS)
+        self._build_and_notify_message(message, MessageLevel.SUCCESS)
 
     def notify_debug_message(self, message: str) -> None:
         """
         Trigger a debug in each subscriber.
         """
-        self._build_mand_notify_message(message, MessageLevel.DEBUG)
+        self._build_and_notify_message(message, MessageLevel.DEBUG)
 
-    def _build_mand_notify_message(self, message: str, level: MessageLevel,
-                                   progress: Optional[float] = None) -> None:
+    def _build_and_notify_message(self, message: str, level: MessageLevel,
+                                  progress: Optional[float] = None) -> None:
         """
         Trigger a message in each subscriber.
         """
