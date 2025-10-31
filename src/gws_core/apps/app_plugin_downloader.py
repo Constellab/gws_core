@@ -32,7 +32,7 @@ class AppPluginDownloader:
     """
 
     # If True and Settings.is_local_env() is True, use local gws_plugin folder instead of downloading
-    IS_RELEASE = False
+    IS_RELEASE = True
 
     # Path to the local plugin folder (already unzipped) used when IS_RELEASE is True
     LOCAL_PLUGIN_PATH = "/lab/user/bricks/gws_core/.data/browser"

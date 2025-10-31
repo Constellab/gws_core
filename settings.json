@@ -3,7 +3,7 @@
     "author": "Gencovery",
     "author_email": "admin@gencovery.com",
     "description": "Kernel brick of Constellab data lab",
-    "version": "0.17.1",
+    "version": "0.17.2",
     "app_dir": "./",
     "app_host": "0.0.0.0",
     "app_port": 3000,
@@ -11,7 +11,7 @@
         "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-        "FRONT_VERSION": "2.6.0",
+        "FRONT_VERSION": "2.6.1",
         "GLAB_VERSION": "2.11.1"
     },
     "environment": {
@@ -145,7 +145,7 @@
                     },
                     {
                         "name": "reflex",
-                        "version": "0.8.14.post1"
+                        "version": "0.8.17"
                     }
                 ]
             }
