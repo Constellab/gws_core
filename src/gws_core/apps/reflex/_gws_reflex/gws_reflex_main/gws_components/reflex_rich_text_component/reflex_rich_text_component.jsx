@@ -7,7 +7,7 @@ import '/public/external/gws_plugin/main.js';
 // Component that matches DcRichTextConfig interface
 export function RichTextComponent({
   placeholder = null,
-  initialValue = null,
+  value = null,
   disabled = null,
   minHeight = null,
   maxHeight = null,
@@ -18,11 +18,11 @@ export function RichTextComponent({
   // Combine all input data into a single JSON object
   const inputData = useMemo(() => ({
     placeholder,
-    initialValue,
+    value,
     disabled,
     minHeight,
     maxHeight
-  }), [placeholder, initialValue, disabled, minHeight, maxHeight]);
+  }), [placeholder, value, disabled, minHeight, maxHeight]);
 
 
   useEffect(() => {
@@ -30,8 +30,10 @@ export function RichTextComponent({
     if (!element || !outputEvent) return;
 
     const handleEvent = (event) => {
+      console.log('Received outputEvent from dc-text-editor:', JSON.stringify(event.detail));
+      console.log(event.detail)
       outputEvent(event.detail);
-    };
+      };
 
     element.addEventListener('outputEvent', handleEvent);
 
@@ -44,7 +46,8 @@ export function RichTextComponent({
     <dc-text-editor
       ref={componentRef}
       inputData={JSON.stringify(inputData)}
-      style={{ display: 'flex', flexDirection: 'column' }}
+      style={{ display: 'flex', flexDirection: 'column', width: '100%', 
+        ...(disabled && { padding: '0' }) }}
     ></dc-text-editor>
   );
 }

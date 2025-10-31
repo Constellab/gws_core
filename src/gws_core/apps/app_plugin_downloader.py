@@ -1,6 +1,7 @@
 
 
 import os
+import shutil
 from json import load
 
 from gws_core.brick.brick_helper import BrickHelper
@@ -27,7 +28,14 @@ class AppPluginDownloader:
     - Manages versioning with version.json files
     - Automatically decompresses zip files
     - Caches downloaded packages to avoid redundant downloads
+    - Supports local installation from a pre-unzipped folder when IS_RELEASE is True and in local environment
     """
+
+    # If True and Settings.is_local_env() is True, use local gws_plugin folder instead of downloading
+    IS_RELEASE = False
+
+    # Path to the local plugin folder (already unzipped) used when IS_RELEASE is True
+    LOCAL_PLUGIN_PATH = "/lab/user/bricks/gws_core/.data/browser"
 
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
@@ -101,6 +109,10 @@ class AppPluginDownloader:
         :raises Exception: If download or extraction fails
         """
 
+        if self.is_development_mode():
+            self._install_from_local_folder()
+            return self.destination_folder
+
         # Check if package already exists with correct version
         if not force_download:
             existing_version = self.get_installed_version()
@@ -112,13 +124,13 @@ class AppPluginDownloader:
         self.uninstall_package()
 
         # Download and install the package (calls post_install which can be overridden by subclasses)
-        self._download_and_install()
+        self._download_from_github()
 
         return self.destination_folder
 
-    def _download_and_install(self) -> None:
-        """Download and install the package. Calls post_install() after download for custom logic.
-        This is an internal method called by install_package().
+    def _download_from_github(self) -> None:
+        """Download and install the package from GitHub releases.
+        This is the standard installation method.
         """
 
         # Ensure download destination exists
@@ -156,6 +168,44 @@ class AppPluginDownloader:
                 f"Installed version is '{installed_version}'.")
 
         Logger.info(f"Successfully installed package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}")
+
+    def _install_from_local_folder(self) -> None:
+        """Move the gws_plugin from the local folder to the destination.
+        This is used when IS_RELEASE is True and Settings.is_local_env() is True.
+
+        The local folder should already contain the unzipped plugin files.
+        If the source folder doesn't exist, this method does nothing (no error is raised).
+        Version checking is skipped in this mode.
+        """
+        Logger.info(f"Installing package {self.package_name} from local folder: {self.LOCAL_PLUGIN_PATH}")
+        if not os.path.exists(self.LOCAL_PLUGIN_PATH):
+            Logger.info(
+                f"Local plugin path does not exist: {self.LOCAL_PLUGIN_PATH}. Skipping installation from local folder.")
+            return
+
+        # Uninstall existing package if it exists
+        self.uninstall_package()
+
+        # Ensure destination parent directory exists
+        parent_dir = os.path.dirname(self.destination_folder)
+        FileHelper.create_dir_if_not_exist(parent_dir)
+
+        # Remove existing destination folder if it exists
+        if os.path.exists(self.destination_folder):
+            FileHelper.delete_dir(self.destination_folder)
+
+        # Move the entire local plugin folder to the destination
+        shutil.move(self.LOCAL_PLUGIN_PATH, self.destination_folder)
+
+        try:
+            # Call post-install hook (can be overridden by subclasses)
+            self.post_install()
+        except Exception as e:
+            Logger.error(f"Post-installation failed for package {self.package_name}: {e}")
+            self.uninstall_package()
+            raise e
+
+        Logger.info(f"Successfully installed package {self.package_name} from local folder")
 
     def post_install(self) -> None:
         """Post-installation hook. Override this method in subclasses to add custom installation logic.
@@ -222,3 +272,11 @@ class AppPluginDownloader:
         :rtype: str
         """
         return f"{self.RELEASE_BASE_URL}{self.DASHBOARD_COMPONENTS_VERSION}/{package_name}.zip"
+
+    def is_development_mode(self) -> bool:
+        """Check if the downloader is in development mode.
+
+        :return: True if in development mode, False otherwise
+        :rtype: bool
+        """
+        return Settings.is_local_env() and not self.IS_RELEASE

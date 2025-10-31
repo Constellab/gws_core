@@ -126,7 +126,6 @@ class StreamlitPlugin(AppPluginDownloader):
         Extract the text between the version comment tags.
         """
         index_html_path = self.get_streamlit_html_file_path()
-        print(f'Looking for version in {index_html_path}')
         if not os.path.exists(index_html_path):
             return None
 

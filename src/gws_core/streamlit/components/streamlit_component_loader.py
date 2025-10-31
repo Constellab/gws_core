@@ -1,14 +1,13 @@
 
 
-import os
 from typing import Any, Callable
 
 import streamlit as st
 import streamlit.components.v1 as components
 from fastapi.encoders import jsonable_encoder
-
 from gws_core.apps.app_plugin_downloader import AppPluginDownloader
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.streamlit.widgets.streamlit_helper import StreamlitHelper
 from gws_core.streamlit.widgets.streamlit_state import StreamlitUserAuthInfo
@@ -70,6 +69,8 @@ class StreamlitComponentLoader():
             return self._get_dev_function()
 
     def _get_dev_function(self) -> Callable:
+        Logger.info(f'Loading dev component: {self.component_name} from {self.DEV_FRONT_URL}')
+
         return components.declare_component(
             self.component_name,
             url=self.DEV_FRONT_URL,

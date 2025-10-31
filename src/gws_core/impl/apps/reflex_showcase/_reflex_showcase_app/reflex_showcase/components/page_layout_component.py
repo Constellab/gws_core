@@ -8,6 +8,7 @@ def page_layout(
     title: str,
     description: str,
     *content: rx.Component,
+    **kwargs,
 ) -> rx.Component:
     """
     Create a consistent page layout with title, description, divider, and content.
@@ -38,4 +39,5 @@ def page_layout(
 
         # Page padding
         padding="2em",
+        **kwargs,
     )

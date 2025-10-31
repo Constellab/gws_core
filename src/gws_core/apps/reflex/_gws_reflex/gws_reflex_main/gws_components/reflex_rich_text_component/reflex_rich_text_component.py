@@ -21,7 +21,7 @@ class RichTextComponent(rx.Component):
 
     # Component props matching DcRichTextConfig interface
     placeholder: Var[Optional[str]]
-    initial_value: Var[Optional[RichTextDTO]]
+    value: Var[Optional[RichTextDTO]]
     disabled: Var[Optional[bool]]
     min_height: Var[Optional[str]]
     max_height: Var[Optional[str]]
@@ -31,7 +31,7 @@ class RichTextComponent(rx.Component):
 
 
 def rich_text_component(placeholder: Optional[str] = None,
-                        initial_value: Optional[RichTextDTO] = None,
+                        value: Optional[RichTextDTO] = None,
                         disabled: Optional[bool] = None,
                         min_height: Optional[str] = None,
                         max_height: Optional[str] = None,
@@ -41,8 +41,8 @@ def rich_text_component(placeholder: Optional[str] = None,
 
     :param placeholder: Placeholder text for the editor, defaults to None
     :type placeholder: Optional[str], optional
-    :param initial_value: Initial value for the editor, defaults to None
-    :type initial_value: Optional[RichTextDTO], optional
+    :param value: Value for the editor, defaults to None
+    :type value: Optional[RichTextDTO], optional
     :param disabled: Whether the editor is disabled, defaults to None
     :type disabled: Optional[bool], optional
     :param min_height: Minimum height of the editor, defaults to None
@@ -57,7 +57,7 @@ def rich_text_component(placeholder: Optional[str] = None,
 
     return RichTextComponent.create(
         placeholder=placeholder,
-        initial_value=initial_value,
+        value=value,
         disabled=disabled,
         min_height=min_height,
         max_height=max_height,

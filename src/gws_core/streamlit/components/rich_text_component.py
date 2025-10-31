@@ -43,7 +43,7 @@ def rich_text_editor(placeholder: str = None,
     component_value = streamlit_component_loader.call_component(data, key=key)
 
     if component_value is None:
-        return RichText()
+        return initial_value or RichText()
 
     rich_text_dto = RichTextDTO.from_json(component_value)
 
