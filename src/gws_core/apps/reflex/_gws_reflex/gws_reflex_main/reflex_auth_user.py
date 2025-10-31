@@ -13,6 +13,8 @@ class ReflexAuthUser:
 
     def __enter__(self) -> User:
 
+        CurrentUserService.set_reflex_context()
+
         if CurrentUserService.get_current_user() is None:
             CurrentUserService.set_auth_context(self.auth_context)
         else:
@@ -20,8 +22,6 @@ class ReflexAuthUser:
                 raise Exception("The user in the context is different from the current user")
             self.was_already_authenticated = True
 
-        # Set streamlit context
-        CurrentUserService.set_app_context()
         return self.auth_context.user
 
     def __exit__(self, exc_type, exc_value, traceback):

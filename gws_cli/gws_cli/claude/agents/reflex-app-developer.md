@@ -52,6 +52,11 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Optimize rendering performance by minimizing unnecessary state updates
 - Use Reflex's built-in styling system effectively
 - Set state attributes to public only when they are accessed from the frontend (UI).
+- In a function @rx.event(background=True), always wrap statements that update state and `self.get_state` in a `async with state:` block.
+- for menu button use icon 'ellipsis-vertical'
+
+### GWS Core custom Reflex Components
+- Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
 
 ### Running and Debugging the App
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 

@@ -3,10 +3,9 @@
 from enum import Enum
 from typing import Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.user.user_group import UserGroup
+from typing_extensions import TypedDict
 
 
 class UserTheme(Enum):
@@ -57,6 +56,20 @@ class UserDTO(BaseModelDTO):
     first_name: str
     last_name: str
     photo: Optional[str]
+
+    @staticmethod
+    def from_user_space(user_space: UserSpace | dict) -> "UserDTO":
+        if not user_space:
+            return None
+        if isinstance(user_space, dict):
+            user_space = UserSpace.from_json(user_space)
+        return UserDTO(
+            id=user_space.id,
+            email=user_space.email,
+            first_name=user_space.firstname,
+            last_name=user_space.lastname,
+            photo=user_space.photo,
+        )
 
 
 class UserFullDTO(UserDTO):

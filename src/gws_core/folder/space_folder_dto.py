@@ -1,9 +1,12 @@
 from datetime import datetime
+from enum import Enum
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_dto import TagDTO
+from gws_core.user.user_dto import UserDTO
+from pydantic import field_validator
 
 
 class ExternalSpaceFolder(BaseModelDTO):
@@ -83,3 +86,23 @@ class ExternalSpaceCreateFolder():
             starting_date=self.starting_date,
             ending_date=self.ending_date,
         )
+
+
+class SpaceRootFolderUserRole(Enum):
+    OWNER = 'OWNER'
+    USER = 'USER'
+    VIEWER = 'VIEWER'
+
+    @staticmethod
+    def get_as_str_list() -> List[str]:
+        return [role.value for role in SpaceRootFolderUserRole]
+
+
+class SpaceFolderUser(BaseModelDTO):
+    user: UserDTO
+    role: SpaceRootFolderUserRole
+
+    @field_validator('user', mode='before')
+    @classmethod
+    def convert_user(cls, v):
+        return UserDTO.from_user_space(v)

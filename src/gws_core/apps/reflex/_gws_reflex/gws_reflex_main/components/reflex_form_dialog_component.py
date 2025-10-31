@@ -12,7 +12,7 @@ class FormDialogState(rx.State, mixin=True):
     and form submission handling for both create and update operations.
     """
 
-    is_editing_item: bool = False
+    is_update_mode: bool = False
     dialog_opened: bool = False
     is_loading: bool = False
 
@@ -24,7 +24,6 @@ class FormDialogState(rx.State, mixin=True):
         and prepare the dialog for creating a new item.
         """
         self.dialog_opened = True
-        await self._clear_form_state()
 
     @rx.event
     async def close_dialog(self):
@@ -87,7 +86,7 @@ class FormDialogState(rx.State, mixin=True):
             self.is_loading = True
 
         try:
-            if self.is_editing_item:
+            if self.is_update_mode:
                 async for event in self._update(form_data):
                     yield event
             else:
@@ -103,6 +102,11 @@ class FormDialogState(rx.State, mixin=True):
 
         async with self:
             await self.close_dialog()
+
+    @rx.var
+    def is_create_mode(self) -> bool:
+        """Return True if the dialog is in create mode."""
+        return not self.is_update_mode
 
 
 def form_dialog_component(

@@ -1,6 +1,12 @@
 
 
-from typing import Dict, Optional, Type, TypeVar
+from typing import Dict, NoReturn, Optional, Type, TypeVar
+
+import requests
+from gws_core.core.exception.exceptions.bad_request_exception import \
+    BadRequestException
+from gws_core.core.exception.exceptions.base_http_exception import \
+    BaseHTTPException
 
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
@@ -86,3 +92,32 @@ class SpaceServiceBase():
             headers[self.ACCESS_TOKEN_HEADER] = self._access_token
 
         return headers
+
+     #################################### ERROR HANDLING ####################################
+
+    def handle_error(self, error: Exception, operation_description: str) -> NoReturn:
+        """
+        Centralized error handler for all space service operations.
+        Converts connection errors to user-friendly messages.
+
+        :param error: The exception that was raised
+        :type error: Exception
+        :param operation_description: Description of the operation that failed (e.g., "create folder", "save scenario")
+        :type operation_description: str
+        :raises BadRequestException: When space is not available (connection error)
+        :raises BaseHTTPException: For other HTTP-related errors
+        """
+        if isinstance(error, requests.exceptions.ConnectionError):
+            raise BadRequestException(
+                f"Can't {operation_description}, space is not available. "
+                "Please ensure the space server is running and accessible."
+            )
+        elif isinstance(error, BaseHTTPException):
+            # Re-raise HTTP exceptions with additional context
+            error.detail = f"Can't {operation_description}. Error: {error.detail}"
+            raise error
+        else:
+            # For any other unexpected errors, wrap them in a BadRequestException
+            raise BadRequestException(
+                f"Can't {operation_description}. Unexpected error: {str(error)}"
+            )

@@ -69,7 +69,6 @@ class CurrentUserService:
         else:
             return cls._no_http_context_auth
 
-
     @classmethod
     def get_current_user(cls) -> User | None:
         """
@@ -114,7 +113,6 @@ class CurrentUserService:
             # is http contexts
             context.data["auth_context"] = auth_context
         elif cls.is_reflex_context():
-            print('Setting auth context in Reflex context')
             # In Reflex context, use contextvars (thread-safe, async-safe)
             _reflex_auth_context.set(auth_context)
         else:

@@ -3,7 +3,6 @@ from typing import List, Optional
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.auth_context import AuthContextApp
-from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 from gws_reflex_base import ReflexMainStateBase
 
@@ -56,7 +55,6 @@ class ReflexMainState(ReflexMainStateBase):
         return user
 
     async def authenticate_user(self) -> ReflexAuthUser:
-        CurrentUserService.set_reflex_context()
         user = await self.get_and_check_current_user()
         app_id = self.get_app_id()
         auth_context = AuthContextApp(app_id=app_id, user=user)

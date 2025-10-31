@@ -2,6 +2,8 @@
 
 This module provides utilities, components, and state management for building Reflex applications within the GWS Core (Constellab) ecosystem.
 
+All public components and states must be exported in the `__init__.py` file of the `gws_reflex_main` module. If you add new components or states, ensure they are properly documented here.
+
 ---
 
 ## State Management

@@ -10,7 +10,8 @@ from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.folder.space_folder_dto import (ExternalSpaceCreateFolder,
                                               ExternalSpaceFolder,
-                                              ExternalSpaceFolders)
+                                              ExternalSpaceFolders,
+                                              SpaceRootFolderUserRole)
 from gws_core.impl.rich_text.rich_text_modification import \
     RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
@@ -20,7 +21,6 @@ from gws_core.space.space_dto import (SaveNoteToSpaceDTO,
                                       ShareResourceWithSpaceDTO,
                                       SpaceHierarchyObjectDTO,
                                       SpaceHierarchyObjectType,
-                                      SpaceRootFolderUserRole,
                                       SpaceSendMailToMailsDTO,
                                       SpaceSendMailToUsersDTO,
                                       SpaceSendNotificationDTO,
