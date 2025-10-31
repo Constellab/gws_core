@@ -3,15 +3,16 @@ import json
 import os
 
 import typer
-from typing_extensions import Literal
-
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import AppDevConfig
 from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
                       LoggerMessageObserver, MambaShellProxy, PipShellProxy,
                       ShellProxy, Utils)
 from gws_core.apps.app_instance import AppInstance
+from gws_core.core.utils.logger import Logger
 from gws_core.manage import AppManager
+from gws_core.user.user import User
+from typing_extensions import Literal
 
 app = typer.Typer()
 
@@ -104,6 +105,12 @@ class AppCli:
                                 log_level=CLIUtils.get_global_option_log_level(ctx))
 
         AppsManager.init()
+
+        dev_user_email = self._config.dev_user_email
+        if dev_user_email:
+            user = User.get_by_email_and_check(dev_user_email)
+            Logger.info(f"Using dev user '{user.email}'")
+            app_.set_dev_user(user.id)
 
         url = AppsManager.create_or_get_app(app_).get_url()
         print("-------------------------------------------------------------------------------------------------------------------------------------")

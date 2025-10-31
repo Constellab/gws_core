@@ -41,6 +41,15 @@ class User(Model):
         return User.get(User.email == email)
 
     @classmethod
+    def get_by_email_and_check(cls, email: str) -> 'User':
+        user = User.get_or_none(User.email == email)
+
+        if user is None:
+            raise BadRequestException(f"User with email '{email}' not found")
+
+        return user
+
+    @classmethod
     def search_by_firstname_or_lastname(cls, search: str) -> ModelSelect:
         return User.select().where(
             (User.group != UserGroup.SYSUSER) &

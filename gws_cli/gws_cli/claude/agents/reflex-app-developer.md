@@ -51,6 +51,7 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Handle user interactions with proper event handlers and state updates
 - Optimize rendering performance by minimizing unnecessary state updates
 - Use Reflex's built-in styling system effectively
+- Set state attributes to public only when they are accessed from the frontend (UI).
 
 ### Running and Debugging the App
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 

@@ -1,5 +1,6 @@
 
 
+import contextvars
 from enum import Enum
 
 from gws_core.core.service.front_service import FrontService, FrontTheme
@@ -11,11 +12,19 @@ from ..core.exception.exceptions import (BadRequestException,
 from ..core.utils.http_helper import HTTPHelper
 from .user import User
 
+# Context variable for Reflex apps (thread-safe, async-safe)
+_reflex_auth_context: contextvars.ContextVar[AuthContextBase | None] = contextvars.ContextVar(
+    'reflex_auth_context',
+    default=None
+)
+
 
 class CurrentUserContext(Enum):
     NORMAL = 'NORMAL'
     # set to app context when the code is executed in app
     APP = 'APP'
+    # set to reflex context when the code is executed in reflex app
+    REFLEX = 'REFLEX'
 
 
 class CurrentUserService:
@@ -24,7 +33,6 @@ class CurrentUserService:
     Use to set and get the user in a session
     """
 
-    _no_context_user: User = None
     _no_http_context_auth: AuthContextBase = None
 
     _run_context: CurrentUserContext = CurrentUserContext.NORMAL
@@ -55,10 +63,12 @@ class CurrentUserService:
         """
         if HTTPHelper.is_http_context():
             return context.data.get("auth_context")
-        elif cls._no_http_context_auth is not None:
+        elif cls.is_reflex_context():
+            # In Reflex context, use contextvars (thread-safe, async-safe)
+            return _reflex_auth_context.get()
+        else:
             return cls._no_http_context_auth
 
-        return None
 
     @classmethod
     def get_current_user(cls) -> User | None:
@@ -103,9 +113,13 @@ class CurrentUserService:
         if HTTPHelper.is_http_context():
             # is http contexts
             context.data["auth_context"] = auth_context
+        elif cls.is_reflex_context():
+            print('Setting auth context in Reflex context')
+            # In Reflex context, use contextvars (thread-safe, async-safe)
+            _reflex_auth_context.set(auth_context)
         else:
+            # For other non-http contexts
             cls._no_http_context_auth = auth_context
-            cls._no_context_user = auth_context.get_user()
 
     @classmethod
     def clear_auth_context(cls) -> None:
@@ -115,9 +129,11 @@ class CurrentUserService:
         if HTTPHelper.is_http_context():
             # is http contexts
             context.data["auth_context"] = None
+        elif cls.is_reflex_context():
+            _reflex_auth_context.set(None)
         else:
+            # For other non-http contexts
             cls._no_http_context_auth = None
-            cls._no_context_user = None
 
     @classmethod
     def set_current_user_from_share_auth(cls) -> None:
@@ -166,6 +182,16 @@ class CurrentUserService:
     @classmethod
     def is_app_context(cls) -> bool:
         return cls._run_context == CurrentUserContext.APP
+
+    @classmethod
+    def set_reflex_context(cls):
+        """Set the context to Reflex mode to enable contextvars-based user isolation"""
+        cls._run_context = CurrentUserContext.REFLEX
+
+    @classmethod
+    def is_reflex_context(cls) -> bool:
+        """Check if the current context is Reflex"""
+        return cls._run_context == CurrentUserContext.REFLEX
 
 
 class AuthenticateUser:

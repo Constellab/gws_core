@@ -2,15 +2,18 @@ from typing import List, Optional
 
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.user.auth_context import AuthContextApp
+from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 from gws_reflex_base import ReflexMainStateBase
+
+from .reflex_auth_user import ReflexAuthUser
 
 
 class ReflexMainState(ReflexMainStateBase):
     """Main state for the normal (not in virtual environment) Reflex app. extending the base state with resource management.
 
     It provides methods to access the input resources of the app.
-
     """
 
     async def get_resources(self) -> List[Resource]:
@@ -28,7 +31,7 @@ class ReflexMainState(ReflexMainStateBase):
         # if authentication is enabled
 
         if not self._is_initialized:
-            await self.on_load()
+            await self._on_load()
 
         user_id = self.authenticated_user_id
         if not user_id:
@@ -51,3 +54,10 @@ class ReflexMainState(ReflexMainStateBase):
         if not user:
             raise Exception("User not authenticated")
         return user
+
+    async def authenticate_user(self) -> ReflexAuthUser:
+        CurrentUserService.set_reflex_context()
+        user = await self.get_and_check_current_user()
+        app_id = self.get_app_id()
+        auth_context = AuthContextApp(app_id=app_id, user=user)
+        return ReflexAuthUser(auth_context)

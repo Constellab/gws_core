@@ -45,6 +45,7 @@ class AppInstance():
 
     _dev_mode: bool = False
     _dev_config_file: str = None
+    _dev_user_id: str = None
 
     APP_CONFIG_FILENAME = 'app_config.json'
     DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
@@ -136,10 +137,22 @@ class AppInstance():
         self._write_config_file(config)
         return user_access_token
 
+    def set_dev_user(self, user_id: str) -> str:
+        """Set the user to be used in dev mode and return the user access token
+        """
+        if not self._dev_mode:
+            raise Exception("Cannot set dev user if the app is not in dev mode")
+        self._dev_user_id = user_id
+
     def get_app_full_url(self, host_url: str, token: str) -> AppInstanceUrl:
         if self._dev_mode:
-            # in dev mode, we authenticate the system user
-            self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+            if self._dev_user_id:
+                # add the dev user to the list of users that can access the app
+                self._add_user(self._dev_user_id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+            else:
+                # add the system user to the list of users that can access the app
+                # in dev mode, we authenticate the system user
+                self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
             return AppInstanceUrl(host_url=host_url)
 
         params = {

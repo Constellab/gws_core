@@ -603,6 +603,7 @@ from .user.current_user_service import AuthenticateUser as AuthenticateUser
 from .user.current_user_service import CurrentUserService as CurrentUserService
 from .user.user import User as User
 from .user.user_credentials_dto import UserCredentialsDTO as UserCredentialsDTO
+from .user.user_dto import UserDTO as UserDTO
 from .user.user_events import *
 from .user.user_group import UserGroup as UserGroup
 from .user.user_service import UserService as UserService

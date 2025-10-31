@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from gws_core import BaseModelDTO
 
@@ -15,6 +15,7 @@ class AppDevConfig(BaseModelDTO):
     env_type: str = "NONE"
     env_file_path: str = ""
     is_reflex_enterprise: bool = False
+    dev_user_email: Optional[str] = ""
 
 
 def create_dev_config_json(app_folder: str, is_reflex_enterprise: bool = False) -> None:

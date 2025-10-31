@@ -65,11 +65,10 @@ class ReflexMainStateBase(rx.State):
         Use a specific method and a variable because the _is_initialized is
         set from a call that does not refresh the state.
         """
-        await self.on_load()
+        await self._on_load()
         self.main_component_initialized = True
 
-    @rx.event
-    async def on_load(self):
+    async def _on_load(self):
         """Load the main state of the app. It initializes the app configuration and checks authentication.
         If the app requires authentication and the user is not authenticated,
         it redirects to the unauthorized page.
@@ -79,7 +78,6 @@ class ReflexMainStateBase(rx.State):
         :return: _description_
         :rtype: _type_
         """
-
 
         if self._is_initialized:
             # If already initialized, do nothing
@@ -126,15 +124,19 @@ class ReflexMainStateBase(rx.State):
         if not config_dir:
             raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
 
-        app_id: str = None
-        if self.is_dev_mode():
-            app_id = self.DEV_MODE_APP_ID
-        else:
-            app_id = os.environ.get('GWS_REFLEX_APP_ID')
-            if not app_id:
-                raise ValueError("GWS_REFLEX_APP_ID environment variable is not set")
+        app_id: str = self.get_app_id()
 
         return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
+
+    def get_app_id(self) -> str:
+        """Get the app ID from the environment variable."""
+        if self.is_dev_mode():
+            return self.DEV_MODE_APP_ID
+
+        app_id = os.environ.get('GWS_REFLEX_APP_ID')
+        if not app_id:
+            raise ValueError("GWS_REFLEX_APP_ID environment variable is not set")
+        return app_id
 
     async def _check_user_token(self, user_access_tokens: Dict[str, str]) -> Optional[str]:
 
@@ -164,7 +166,7 @@ class ReflexMainStateBase(rx.State):
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
         if self._app_config is None:
-            await self.on_load()
+            await self._on_load()
         # raise ValueError("App configuration is not loaded. Call on_load() first.")
         return cast(ReflexConfigDTO, self._app_config)
 
