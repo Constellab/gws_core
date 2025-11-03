@@ -44,6 +44,9 @@ http {
     # config for logging
     access_log [NGINX_CONFIG_DIR]/access.log;
 
+    # Allow large file uploads (e.g., for data files, archives)
+    client_max_body_size 10G;
+
     # Temp paths writable by non-root user
     client_body_temp_path [TMP_DIR]/client_body;
     proxy_temp_path [TMP_DIR]/proxy;
