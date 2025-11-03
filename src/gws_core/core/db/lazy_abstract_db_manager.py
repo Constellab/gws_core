@@ -17,8 +17,8 @@ class LazyAbstractDbManager(AbstractDbManager):
     Abstract Database Manager that automatically handles Docker container startup logic.
 
     Subclasses only need to define:
-    - brick_name: Name of the brick
-    - unique_name: Unique identifier for the database
+    - get_name: Name of the DB for this brick
+    - get_brick_name: Name of the brick
 
     Everything else (host, database name, port, credentials, network configuration)
     is handled automatically.
@@ -31,10 +31,7 @@ class LazyAbstractDbManager(AbstractDbManager):
     # Default configuration
     PORT = 3306
 
-    # Internal state
-    _db_username: str | None = None
-    _db_password: str | None = None
-    _db_host: str | None = None
+    _config: DbConfig = None
 
     def init(self, mode: DbMode):
         """Initialize the database by starting the Docker container first"""
@@ -52,60 +49,52 @@ class LazyAbstractDbManager(AbstractDbManager):
 
             Logger.info(f'Starting {self.get_unique_name()} database container')
             with AuthenticateUser.system_user():
-                response_dto = docker_service.register_sqldb_compose(
+                docker_service.register_sqldb_compose(
                     brick_name=brick_name,
                     unique_name=self.get_name(),
                     database_name=self.get_unique_name(),
                     description=f'{brick_name} brick database in {mode} mode',
                 )
-                self._store_credentials(response_dto.credentials)
                 Logger.info(f'{self.get_unique_name()} database container started')
 
         except Exception as err:
             # If the lab manager failed to start the docker, we try to get the credentials to connect
-            Logger.info(f"Cannot start the {self.get_brick_name()} db compose, trying to get existing credentials.")
-            credentials = docker_service.get_basic_credentials(
-                brick_name=brick_name,
-                unique_name=self.get_name(),
-            )
-            if credentials:
-                credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
-                if not isinstance(credentials_data, CredentialsDataBasic):
-                    raise Exception(
-                        f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} is not a basic credentials."
-                    )
-                self._store_credentials(credentials_data)
-                Logger.info(f"Using existing credentials for the {self.get_brick_name()} db compose.")
-                return
+            Logger.info(f"Cannot start the {self.get_brick_name()} db compose, skipping startup.")
 
-            Logger.log_exception_stack_trace(err)
-            raise Exception(
-                f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials. Error: {err}")
-
-    def _store_credentials(self, credentials: CredentialsDataBasic):
-        """Store the database credentials"""
-        self._db_username = credentials.username
-        self._db_password = credentials.password
-        self._db_host = credentials.url
-
+            if not Settings.is_local_env():
+                Logger.log_exception_stack_trace(err)
 
     def get_config(self, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""
-
         if mode == 'test':
             return Settings.get_test_db_config()
 
-        if not self._db_username or not self._db_password or not self._db_host:
-            raise Exception(f"{self.get_brick_name()} DbManager not initialized")
+        if self._config is None:
+            docker_service = DockerService()
+            credentials = docker_service.get_basic_credentials(
+                brick_name=self.get_brick_name(),
+                unique_name=self.get_name(),
+            )
+            if not credentials:
+                raise Exception(
+                    f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials.")
 
-        return {
-            'host': self._db_host,
-            'port': self.PORT,
-            'user': self._db_username,
-            'password': self._db_password,
-            'db_name': self.get_unique_name(),
-            'engine': 'mariadb'
-        }
+            credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
+            if not isinstance(credentials_data, CredentialsDataBasic):
+                raise Exception(
+                    f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} is not a basic credentials."
+                )
+
+            self._config = {
+                'host': credentials_data.url,
+                'port': self.PORT,
+                'user': credentials_data.username,
+                'password': credentials_data.password,
+                'db_name': self.get_unique_name(),
+                'engine': 'mariadb'
+            }
+
+        return self._config
 
     @abstractmethod
     def get_name(self) -> str:

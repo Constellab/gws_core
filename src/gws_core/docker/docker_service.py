@@ -33,7 +33,7 @@ class DockerService(LabManagerServiceBase):
             description: str,
             env: Optional[Dict[str, str]] = None,
             auto_start: bool = False
-            ) -> None:
+    ) -> None:
         """
         Start a docker compose from string content
 
@@ -76,7 +76,6 @@ class DockerService(LabManagerServiceBase):
         except BaseHTTPException as err:
             err.detail = f"Can't start compose from string. Error: {err.detail}"
             raise err
-
 
     def register_sub_compose_from_folder(self, brick_name: str, unique_name: str,
                                          folder_path: str, description: str,
@@ -127,8 +126,6 @@ class DockerService(LabManagerServiceBase):
         except BaseHTTPException as err:
             err.detail = f"Can't register compose from zip. Error: {err.detail}"
             raise err
-
-
 
     def register_sqldb_compose(self, brick_name: str, unique_name: str,
                                database_name: str, description: str,
@@ -194,17 +191,17 @@ class DockerService(LabManagerServiceBase):
                         url=sql_response.dbHost
                     )
                 )
-                credentials = cast(CredentialsDataBasic, credentials.get_data_object())
+
+            credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
 
             return RegisterSQLDBComposeResponseDTO(
                 composeStatus=sql_response.status,
-                credentials=credentials,
+                credentials=credentials_data,
             )
 
         except BaseHTTPException as err:
             err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
             raise err
-
 
     def unregister_compose(self, brick_name: str, unique_name: str) -> DockerComposeStatusInfoDTO:
         """
@@ -317,9 +314,9 @@ class DockerService(LabManagerServiceBase):
             raise err
 
     def _get_or_create_basic_credentials_model(self, brick_name: str, unique_name: str,
-                                        username: Optional[str] = None,
-                                        password: Optional[str] = None,
-                                        url: Optional[str] = None) -> Credentials:
+                                               username: Optional[str] = None,
+                                               password: Optional[str] = None,
+                                               url: Optional[str] = None) -> Credentials:
         """
         Get or create basic credentials using the brick_name_unique_name format as the credential name.
 
@@ -348,7 +345,6 @@ class DockerService(LabManagerServiceBase):
             url=url,
             description=f"Basic credentials for Docker compose {brick_name}/{unique_name}"
         )
-
 
     def get_or_create_basic_credentials(self, brick_name: str, unique_name: str,
                                         username: Optional[str] = None,
