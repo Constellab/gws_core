@@ -77,7 +77,6 @@ class CredentialsService():
     def get_by_id_and_check(cls, credentials_id: str) -> Credentials:
         return Credentials.get_by_id_and_check(credentials_id)
 
-
     @classmethod
     def get_all(cls, page: int = 0,
                 number_of_items_per_page: int = 20) -> Paginator[Credentials]:
@@ -237,4 +236,4 @@ class CredentialsService():
         )
 
         # Update and return the credentials
-        return cls.update(credentials_name, save_dto)
+        return cls.update(existing_credentials.id, save_dto)
