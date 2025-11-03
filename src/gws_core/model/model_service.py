@@ -105,19 +105,11 @@ class ModelService():
             if brick.status == 'CRITICAL':
                 continue
 
-            typings: List[Typing]
-
             try:
-                typings = list(Typing.select().where(Typing.brick == brick.name))
+                list(Typing.select().where(Typing.brick == brick.name))
             except Exception as e:
                 BrickService.log_brick_message(
                     brick_name=brick.name,
                     message=f"Error while getting typings from the database: {str(e)}",
                     status='CRITICAL')
                 continue
-            for typing in typings:
-                if typing.get_type() is None:
-                    BrickService.log_brick_message(
-                        brick_name=typing.brick,
-                        message=f"The {typing.object_type} with unique name '{typing.unique_name}' is invalid. Is the brick loaded ? Did you delete the corresponding python model or rename its unique name ?",
-                        status='WARNING')
