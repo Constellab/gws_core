@@ -53,17 +53,17 @@ class SpaceFrontService:
 
     def get_hierarchy_object_url(self, object_id: str, object_type: SpaceHierarchyObjectType) -> str:
         """Get the URL of a specific hierarchy object of the Space app."""
-        if object_type == SpaceHierarchyObjectType.FOLDER:
+        if object_type == 'FOLDER':
             return self.get_folder_url(object_id)
-        elif object_type == SpaceHierarchyObjectType.DOCUMENT:
+        elif object_type == 'DOCUMENT':
             return self.get_document_url(object_id)
-        elif object_type == SpaceHierarchyObjectType.CONSTELLAB_DOCUMENT:
+        elif object_type == 'CONSTELLAB_DOCUMENT':
             return self.get_note_url(object_id)
-        elif object_type == SpaceHierarchyObjectType.NOTE:
+        elif object_type == 'NOTE':
             return self.get_lab_note_url(object_id)
-        elif object_type == SpaceHierarchyObjectType.SCENARIO:
+        elif object_type == 'SCENARIO':
             return self.get_scenario_url(object_id)
-        elif object_type == SpaceHierarchyObjectType.RESOURCE:
+        elif object_type == 'RESOURCE' or object_type == 'APPLICATION':
             return self.get_resource_url(object_id)
         else:
             raise ValueError(f"Unsupported object type: {object_type}")

@@ -86,7 +86,7 @@ class TestMockSpaceService(SpaceService):
         return SpaceHierarchyObjectDTO(
             id=save_scenario_dto.scenario.id,
             name=save_scenario_dto.scenario.title,
-            objectType=SpaceHierarchyObjectType.SCENARIO,
+            objectType='SCENARIO',
             parentId=folder_id
         )
 
@@ -109,7 +109,7 @@ class TestMockSpaceService(SpaceService):
         return SpaceHierarchyObjectDTO(
             id=note.note.id,
             name=note.note.title,
-            objectType=SpaceHierarchyObjectType.NOTE,
+            objectType='NOTE',
             parentId=folder_id
         )
 
@@ -142,7 +142,7 @@ class TestMockSpaceService(SpaceService):
         return SpaceHierarchyObjectDTO(
             id=resource_dto.resource_id,
             name=resource_dto.name,
-            objectType=SpaceHierarchyObjectType.RESOURCE,
+            objectType='RESOURCE',
             parentId=folder_id
         )
 

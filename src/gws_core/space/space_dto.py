@@ -2,10 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Literal, Optional
-
-from pydantic import field_validator
-from typing_extensions import TypedDict
+from typing import Any, List, Literal, Optional, Union
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
@@ -15,6 +12,8 @@ from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
 from gws_core.user.user_dto import UserDTO
+from pydantic import field_validator
+from typing_extensions import TypedDict
 
 
 class LabStartDTO(BaseModelDTO):
@@ -112,15 +111,18 @@ class SpaceDocumentDTO(BaseModelDTO):
     type: Literal['UPLOADED_DOCUMENT', 'CONSTELLAB_DOCUMENT']
 
 
-class SpaceHierarchyObjectType(Enum):
-    """Enum representing the type of a space hierarchy object
-    """
-    FOLDER = 'FOLDER'
-    DOCUMENT = 'DOCUMENT'
-    CONSTELLAB_DOCUMENT = 'CONSTELLAB_DOCUMENT'
-    NOTE = 'NOTE'
-    SCENARIO = 'SCENARIO'
-    RESOURCE = 'RESOURCE'
+SpaceHierarchyObjectType = Union[
+    Literal[
+        'FOLDER',
+        'DOCUMENT',
+        'CONSTELLAB_DOCUMENT',
+        'NOTE',
+        'SCENARIO',
+        'RESOURCE',
+        'APPLICATION'
+    ],
+    str  # Allow any string value,if a new type is added in space
+]
 
 
 class SpaceHierarchyObjectDTO(BaseModelDTO):
