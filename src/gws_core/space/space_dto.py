@@ -4,6 +4,9 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, List, Literal, Optional
 
+from pydantic import field_validator
+from typing_extensions import TypedDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 from gws_core.model.typing_style import TypingStyle
@@ -12,8 +15,6 @@ from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
 from gws_core.user.user_dto import UserDTO
-from pydantic import field_validator
-from typing_extensions import TypedDict
 
 
 class LabStartDTO(BaseModelDTO):
@@ -89,6 +90,7 @@ class ShareResourceWithSpaceDTO(BaseModelDTO):
     style: TypingStyle
     token: str
     valid_until: Optional[datetime] = None
+    is_application: bool
 
 
 class SpaceSyncObjectDTO(BaseModelDTO):

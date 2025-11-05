@@ -122,7 +122,8 @@ class ResourceTransfertService():
             style=resource_model.style,
             typing_name=resource_model.resource_typing_name,
             token=share_link.token,
-            valid_until=share_link.valid_until
+            valid_until=share_link.valid_until,
+            is_application=resource_model.is_application()
         )
 
         SpaceService.get_instance().share_resource(request_dto.folder_id, resource_dto)
