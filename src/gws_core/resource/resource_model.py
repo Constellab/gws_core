@@ -4,10 +4,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
-
-from gws_core.apps.app_resource import AppResource
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
@@ -26,6 +22,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
+from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
+                    ForeignKeyField, ModelDelete, ModelSelect)
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions.bad_request_exception import \
@@ -619,6 +617,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return NavigableEntityType.RESOURCE
 
     def is_application(self) -> bool:
+        from gws_core.apps.app_resource import AppResource
+
         resource_type: Type[Resource] = self.get_resource_type()
         if resource_type is not None:
             return Utils.issubclass(resource_type, AppResource)
