@@ -1,5 +1,5 @@
 
-from typing import Literal, List
+from typing import List, Literal
 
 import reflex as rx
 from gws_core.space.space_dto import SpaceGroupDTO
@@ -30,11 +30,11 @@ def group_inline_component(group: SpaceGroupDTO, size: Literal["small", "normal"
         # Displays circular icon/user photo with label beside it
     """
     # Determine icon size and font size based on size parameter
-    icon_size = 12 if size == "small" else 16
+    icon_size = 16 if size == "small" else 20
     font_size = "12px" if size == "small" else "14px"
 
     return rx.cond(
-        group.user is not None,
+        group.user,
         # If user exists, show user inline component
         user_inline_component(group.user, size),
         # Otherwise show people icon with group label
@@ -42,7 +42,8 @@ def group_inline_component(group: SpaceGroupDTO, size: Literal["small", "normal"
             rx.icon(
                 tag="users",
                 size=icon_size,
-                color="var(--accent-10)",
+                margin_left="6px",
+                margin_right="8px",
             ),
             rx.text(
                 group.label,
