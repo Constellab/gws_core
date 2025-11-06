@@ -12,7 +12,7 @@ def profile_picture_url(photo: str) -> str:
     :param photo: Base URL of the user's photo
     :return: URL with size parameter appended
     """
-    return Settings.get_space_api_url() + f'/user/photo-v2/{photo}'
+    return Settings.get_space_api_url() + f'/users/photo-v2/{photo}'
 
 
 def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
