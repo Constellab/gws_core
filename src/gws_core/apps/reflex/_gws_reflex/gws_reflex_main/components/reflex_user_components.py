@@ -2,7 +2,17 @@
 from typing import List, Literal
 
 import reflex as rx
+from gws_core.core.utils.settings import Settings
 from gws_core.user.user_dto import UserDTO
+
+
+def profile_picture_url(photo: str) -> str:
+    """Generate URL for user profile picture with specified size.
+
+    :param photo: Base URL of the user's photo
+    :return: URL with size parameter appended
+    """
+    return Settings.get_space_api_url() + f'/user/photo-v2/{photo}'
 
 
 def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
@@ -24,7 +34,7 @@ def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "norm
         user.photo,
         # If photo exists, show image
         rx.image(
-            src=user.photo,
+            src=profile_picture_url(user.photo),
             width=pixel_size,
             height=pixel_size,
             border_radius="50%",

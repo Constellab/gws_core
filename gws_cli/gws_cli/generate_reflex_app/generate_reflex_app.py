@@ -12,7 +12,6 @@ APP_NAME_VAR = 'APP_NAME'
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), '_template')
 REFLEX_MAIN_FILE = 'reflex_main.py'
-CSS_FILE = 'style.css'
 ASSETS_FOLDER = 'assets'
 
 
@@ -100,9 +99,8 @@ def generate_reflex_app(name: str, is_enterprise: bool) -> str:
         # Copy the CSS file into assets folder
         assets_folder = os.path.join(reflex_app_folder, ASSETS_FOLDER)
         FileHelper.create_dir_if_not_exist(assets_folder)
-        css_source_path = os.path.join(TEMPLATE_FOLDER, CSS_FILE)
-        css_dest_path = os.path.join(assets_folder, CSS_FILE)
-        shutil.copy2(css_source_path, css_dest_path)
+        source_assets_folder = os.path.join(TEMPLATE_FOLDER, ASSETS_FOLDER)
+        FileHelper.copy_dir_content_to_dir(source_assets_folder, assets_folder)
 
         typer.echo(f"Successfully created Reflex app at '{reflex_app_folder}'")
         return reflex_app_folder

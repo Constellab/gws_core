@@ -1,0 +1,72 @@
+/* Temporary hide build with reflex */
+a[href="https://reflex.dev"] {
+    display: none !important;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/font/PlusJakartaSans-Regular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/font/PlusJakartaSans-Light.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 100;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/font/PlusJakartaSans-SemiBold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/font/PlusJakartaSans-Bold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+}
+
+.dense-markdown{
+    line-height: 1;
+}
+
+.dense-markdown h1,
+.dense-markdown h2,
+.dense-markdown h3,
+.dense-markdown h4,
+.dense-markdown h5,
+.dense-markdown h6,
+.dense-markdown p,
+.dense-markdown ul,
+.dense-markdown ol,
+.dense-markdown li {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+
+.radix-themes{
+    --default-font-family: 'Plus Jakarta Sans', sans-serif;
+    --cursor-button: pointer;
+    --cursor-checkbox: pointer;
+    --cursor-disabled: not-allowed;
+    --cursor-link: pointer;
+    --cursor-menu-item: pointer;
+    --cursor-radio: pointer;
+    --cursor-slider-thumb: grab;
+    --cursor-slider-thumb-active: grabbing;
+    --cursor-switch: pointer; 
+}
+
+.AccordionTrigger {
+    cursor: pointer;
+}

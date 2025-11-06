@@ -11,7 +11,7 @@ class SpaceHierarchyObjectSearchParams(SearchParams):
 
     def add_object_type_filter(self, operator: SearchOperator, value: SpaceHierarchyObjectType) -> None:
         """Add a filter to search for specific object types (file or folder)"""
-        self.add_filter_criteria('objectType', operator, value.value)
+        self.add_filter_criteria('objectType', operator, value)
 
     def add_name_filter(self, operator: SearchOperator, name: str) -> None:
         """Add a filter to search for specific names"""
