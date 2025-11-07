@@ -1,4 +1,4 @@
-from time import sleep
+
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -125,8 +125,8 @@ class StartDockerComposeTask(Task):
         'env': JsonCodeParam(human_name='Environment Variables',
                              short_description='Optional environment variables for the compose as JSON object. Must be a Dict[str, str]'),
         'auto_start': BoolParam(human_name='Auto Start',
-                             short_description='Whether to automatically start the compose on lab start',
-                             default_value=False)
+                                short_description='Whether to automatically start the compose on lab start',
+                                default_value=False)
     })
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -162,7 +162,7 @@ class StartDockerComposeTask(Task):
         # Start the Docker Compose
         docker_service = DockerService()
 
-        response = docker_service.register_and_start_compose(
+        docker_service.register_and_start_compose(
             brick_name=brick_name,
             unique_name=unique_name,
             compose_yaml_content=yaml_config,
@@ -171,28 +171,25 @@ class StartDockerComposeTask(Task):
             auto_start=params.get_value('auto_start')
         )
 
-        # Wait a bit for the compose to start
-        sleep(5)
-
-        self.log_info_message(f"Docker Compose started, waiting for ready status...")
+        self.log_info_message("Docker Compose started, waiting for ready status...")
         response = docker_service.wait_for_compose_status(
             brick_name=brick_name,
             unique_name=unique_name,
             max_attempts=20,
+            message_dispatcher=self.message_dispatcher
         )
-        self.log_info_message(f"Docker Compose is ready with status: {response.status.value}")
 
-        if response.info:
-            self.log_info_message(f"Docker Compose info: {response.info}")
-
-        if response.status != DockerComposeStatus.UP:
-            raise Exception(f"Docker Compose did not start successfully, status: {response.status.value}")
+        if response.composeStatus.status != DockerComposeStatus.UP:
+            text = f"Docker Compose did not start successfully, status: {response.composeStatus.status.value}."
+            if response.composeStatus.info:
+                text += f" Info: {response.composeStatus.info}."
+            raise Exception(text)
 
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'status': response.status.value,
-            'info': response.info,
+            'status': response.composeStatus.status.value,
+            'info': response.composeStatus.info,
             'brick_name': brick_name,
             'unique_name': unique_name
         }

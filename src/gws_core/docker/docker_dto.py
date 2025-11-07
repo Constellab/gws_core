@@ -1,4 +1,5 @@
 
+from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -24,9 +25,6 @@ class DockerComposeStatus(str, Enum):
 class DockerComposeStatusInfoDTO(BaseModelDTO):
     status: DockerComposeStatus
     info: Optional[str] = None
-
-    def is_in_progress_status(self) -> bool:
-        return False
 
 
 class SubComposeInfoDTO(BaseModelDTO):
@@ -57,3 +55,44 @@ class RegisterSQLDBComposeAPIResponseDTO(BaseModelDTO):
 class RegisterSQLDBComposeResponseDTO(BaseModelDTO):
     composeStatus: DockerComposeStatusInfoDTO
     credentials: CredentialsDataBasic
+
+
+class SubComposeProcessStatus(str, Enum):
+    """Status for sub compose registration/unregistration processes"""
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+
+
+class SubComposeProcessType(str, Enum):
+    """Type of process being performed on a sub compose"""
+    REGISTERING = "registering"
+    UNREGISTERING = "unregistering"
+
+
+class SubComposeProcessInfoDTO(BaseModelDTO):
+    """Information about a running/finished process on a sub compose"""
+    processType: SubComposeProcessType
+    status: SubComposeProcessStatus
+    message: str
+    startedAt: datetime
+    completedAt: Optional[datetime] = None
+
+    def get_duration_seconds(self) -> Optional[float]:
+        if self.completedAt:
+            return (self.completedAt - self.startedAt).total_seconds()
+        return None
+
+
+class SubComposeStatusDTO(BaseModelDTO):
+    """Overall status of a sub compose, including any running process and the docker-compose status"""
+    subComposeProcess: Optional[SubComposeProcessInfoDTO] = None
+    composeStatus: DockerComposeStatusInfoDTO
+
+    def is_in_progress_status(self) -> bool:
+        return self.subComposeProcess is not None and self.subComposeProcess.status == SubComposeProcessStatus.RUNNING
+
+    def get_process_message(self) -> Optional[str]:
+        if self.subComposeProcess:
+            return self.subComposeProcess.message
+        return None

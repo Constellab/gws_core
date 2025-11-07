@@ -84,8 +84,8 @@ class StopDockerComposeTask(Task):
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'status': response.status.value,
-            'info': response.info,
+            'status': response.composeStatus.status.value,
+            'info': response.composeStatus.info,
             'brick_name': brick_name,
             'unique_name': unique_name
         }

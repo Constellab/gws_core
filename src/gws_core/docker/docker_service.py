@@ -4,20 +4,21 @@ import tempfile
 import time
 from typing import Dict, Literal, Optional, cast
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.exception.exceptions.base_http_exception import \
     BaseHTTPException
 from gws_core.core.service.external_api_service import (ExternalApiService,
                                                         FormData)
 from gws_core.core.utils.compress.zip_compress import ZipCompress
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
-from gws_core.docker.docker_dto import (DockerComposeStatusInfoDTO,
-                                        RegisterSQLDBComposeAPIResponseDTO,
+from gws_core.docker.docker_dto import (RegisterSQLDBComposeAPIResponseDTO,
                                         RegisterSQLDBComposeRequestDTO,
                                         RegisterSQLDBComposeResponseDTO,
                                         StartComposeRequestDTO,
-                                        SubComposeListDTO)
+                                        SubComposeListDTO, SubComposeStatusDTO)
 from gws_core.docker.lab_manager_service_base import LabManagerServiceBase
 
 
@@ -203,7 +204,7 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
             raise err
 
-    def unregister_compose(self, brick_name: str, unique_name: str) -> DockerComposeStatusInfoDTO:
+    def unregister_compose(self, brick_name: str, unique_name: str) -> SubComposeStatusDTO:
         """
         Stop and unregister a docker compose
 
@@ -212,7 +213,7 @@ class DockerService(LabManagerServiceBase):
         :param unique_name: Unique name for the compose
         :type unique_name: str
         :return: Response containing message and output
-        :rtype: DockerComposeResponseDTO
+        :rtype: SubComposeStatusDTO
         """
 
         lab_api_url = self._get_lab_manager_api_url(
@@ -225,13 +226,13 @@ class DockerService(LabManagerServiceBase):
                 raise_exception_if_error=True
             )
 
-            return DockerComposeStatusInfoDTO.from_json(response.json())
+            return SubComposeStatusDTO.from_json(response.json())
 
         except BaseHTTPException as err:
             err.detail = f"Can't stop compose. Error: {err.detail}"
             raise err
 
-    def get_compose_status(self, brick_name: str, unique_name: str) -> DockerComposeStatusInfoDTO:
+    def get_compose_status(self, brick_name: str, unique_name: str) -> SubComposeStatusDTO:
         """
         Get the status of a docker compose
 
@@ -240,7 +241,7 @@ class DockerService(LabManagerServiceBase):
         :param unique_name: Unique name for the compose
         :type unique_name: str
         :return: Status information of the compose
-        :rtype: DockerComposeStatusInfoDTO
+        :rtype: SubComposeStatusDTO
         """
 
         lab_api_url = self._get_lab_manager_api_url(
@@ -253,7 +254,7 @@ class DockerService(LabManagerServiceBase):
                 raise_exception_if_error=True
             )
 
-            return DockerComposeStatusInfoDTO.from_json(response.json())
+            return SubComposeStatusDTO.from_json(response.json())
 
         except BaseHTTPException as err:
             err.detail = f"Can't get compose status. Error: {err.detail}"
@@ -261,7 +262,8 @@ class DockerService(LabManagerServiceBase):
 
     def wait_for_compose_status(self, brick_name: str, unique_name: str,
                                 interval_seconds: float = 5.0,
-                                max_attempts: int = 12) -> DockerComposeStatusInfoDTO:
+                                max_attempts: int = 0,
+                                message_dispatcher: MessageDispatcher = None) -> SubComposeStatusDTO:
         """
         Wait for the compose status to stabilize (not STARTING or STOPPING)
 
@@ -269,19 +271,39 @@ class DockerService(LabManagerServiceBase):
         :type brick_name: str
         :param unique_name: Unique name for the compose
         :type unique_name: str
-        :param interval_seconds: Time in seconds between status checks (default: 5.0)
+        :param interval_seconds: Time in seconds between status checks (default: 5.0). 0 means no limit.
         :type interval_seconds: float
         :param max_attempts: Maximum number of attempts to check the status (default: 12)
         :type max_attempts: int
         :return: Final stable status information of the compose
-        :rtype: DockerComposeStatusInfoDTO
+        :rtype: SubComposeStatusDTO
         """
         attempts = 0
-        while attempts < max_attempts:
+        last_running_message: str = None
+        while attempts < max_attempts or max_attempts == 0:
             status_info = self.get_compose_status(brick_name, unique_name)
 
             if not status_info.is_in_progress_status():
+                if message_dispatcher is not None:
+                    text = f"Docker Compose status: {status_info.composeStatus.status.value}."
+                    if status_info.composeStatus.info:
+                        text += f" Info: {status_info.composeStatus.info}."
+
+                    if status_info.subComposeProcess:
+                        text = f"Docker Compose process info: {status_info.subComposeProcess.status} {status_info.subComposeProcess.message}. "
+                        duration = status_info.subComposeProcess.get_duration_seconds()
+                        if duration is not None:
+                            text += f" Start duration: {DateHelper.get_duration_pretty_text(duration)}."
+                    message_dispatcher.notify_info_message(text)
+
                 return status_info
+
+            # Dispatch process message if it has changed
+            process_message = status_info.get_process_message()
+            if process_message is not None and message_dispatcher is not None:
+                if process_message != last_running_message:
+                    message_dispatcher.notify_info_message(process_message)
+                    last_running_message = process_message
 
             time.sleep(interval_seconds)
 
