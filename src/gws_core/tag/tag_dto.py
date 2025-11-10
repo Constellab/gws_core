@@ -53,6 +53,9 @@ class TagDTO(BaseModelDTO):
     is_propagable: Optional[bool] = None
     origins: Optional[List[TagOriginDTO]] = None
     value_format: Optional[TagValueFormat] = TagValueFormat.STRING
+    is_community_tag_key: Optional[bool] = None
+    is_community_tag_value: Optional[bool] = None
+    additional_info: Optional[Dict] = None
 
 
 class TagOriginDetailDTO(TagOriginDTO):

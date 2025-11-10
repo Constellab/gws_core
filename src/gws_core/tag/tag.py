@@ -258,7 +258,8 @@ class Tag():
         """ Return a new instance of tag with the new origin.
         Only the origin_type and origin_id are propagated
         """
-        tag = Tag(self.key, self.value, self.is_propagable)
+        tag = Tag(self.key, self.value, self.is_propagable, None, self.is_community_tag_key,
+                  self.is_community_tag_value, self.additional_info)
         tag.origins.add_origin(TagOrigin(origin_type, origin_id))
         return tag
 
@@ -302,7 +303,9 @@ class Tag():
 
         value = Tag.convert_str_value_to_type(dto.value, dto.value_format)
         return Tag(key=dto.key, value=value, is_propagable=dto.is_propagable,
-                   origins=origins)
+                   origins=origins, is_community_tag_key=dto.is_community_tag_key,
+                   is_community_tag_value=dto.is_community_tag_value,
+                   additional_info=dto.additional_info)
 
     @staticmethod
     def validate_tag(tag_str: str) -> None:

@@ -12,6 +12,7 @@ from gws_core.tag.tag_dto import (EntityTagDTO, EntityTagFullDTO, TagOriginDTO,
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
+from gws_core.tag.tag_value_model import TagValueModel
 from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
@@ -79,9 +80,13 @@ class EntityTag(Model):
         )
 
     def to_simple_tag(self) -> Tag:
+        tag_key_model = self.get_tag_key_model()
+        tag_value_model = self.get_tag_value_model(tag_key_model)
         return Tag(key=self.tag_key, value=self.get_tag_value(),
                    is_propagable=self.is_propagable,
-                   origins=self.get_origins())
+                   origins=self.get_origins(),
+                   additional_info=tag_value_model.additional_infos
+                   )
 
     def merge_tag(self, tag: Tag) -> 'EntityTag':
         """Merge the tag with the current tag. It update the origins and propagable
@@ -111,6 +116,14 @@ class EntityTag(Model):
         if not tag_key_model:
             raise ValueError(f'Tag key {self.tag_key} not found in tag keys')
         return tag_key_model
+
+    def get_tag_value_model(self, tag_key_model: TagKeyModel) -> TagValueModel:
+        """Get the tag value model
+        """
+        tag_value_model = TagValueModel.get_tag_value_model(tag_key_model, str(self.tag_value))
+        if not tag_value_model:
+            raise ValueError(f'Tag value model for key {self.tag_key} and value {self.tag_value} not found')
+        return tag_value_model
 
     ###################################### EDITION ######################################
 
