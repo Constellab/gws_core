@@ -163,6 +163,16 @@ class ProtocolProxy(ProcessProxy):
 
         return next_processes
 
+    def get_input(self, name):
+        return self.get_input_resource_model(name).get_resource()
+
+    def get_input_resource_model(self, name) -> ResourceModel:
+        if self.has_parent_protocol():
+            return super().get_input_resource_model(name)
+
+        input_task: ProcessProxy = self.get_process(name)
+        return input_task.get_output_resource_model(InputTask.output_name)
+
     def get_output(self, name) -> Resource:
         return self.get_output_resource_model(name).get_resource()
 
