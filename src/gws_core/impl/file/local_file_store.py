@@ -163,7 +163,7 @@ class LocalFileStore(FileStore):
         node_path = str(Path(node_path))
 
         # Check that the file path is in the file store
-        if not node_path.startswith(self.get_base_dir()):
+        if not node_path.startswith(self.path):
             return False
 
         return os.path.exists(node_path)
@@ -242,3 +242,6 @@ class LocalFileStore(FileStore):
 
         return result
 
+    class Meta:
+        is_table = False
+        table_name = 'gws_file_store'

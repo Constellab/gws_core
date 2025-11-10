@@ -2,9 +2,11 @@
 
 from typing import TYPE_CHECKING, List, Optional, final
 
+from peewee import (BigIntegerField, BooleanField, CharField, Expression,
+                    ForeignKeyField)
+
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
-from peewee import BigIntegerField, BooleanField, CharField, Expression
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -21,7 +23,7 @@ class FSNodeModel(Model):
     :type Model: [type]
     """
     path = CharField(null=False, max_length=1024)
-    file_store_id = CharField(null=True, index=True)
+    file_store_id: str = ForeignKeyField(FileStore, null=False, lazy_load=False)
     size = BigIntegerField(null=True)
     is_symbolic_link = BooleanField(null=False, default=False)
 

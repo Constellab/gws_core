@@ -6,6 +6,8 @@ import subprocess
 from copy import deepcopy
 from typing import Dict, List
 
+from peewee import BigIntegerField, CharField
+
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -22,6 +24,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.file.fs_node_model import FSNodeModel
+from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
@@ -65,7 +68,6 @@ from gws_core.user.activity.activity import Activity
 from gws_core.user.activity.activity_dto import (ActivityObjectType,
                                                  ActivityType)
 from gws_core.user.user import User
-from peewee import BigIntegerField, CharField
 
 from ....utils.logger import Logger
 from ...version import Version
@@ -1519,7 +1521,6 @@ class Migration0160(BrickMigration):
         subprocess.run(['chmod', '-R', '755', '/data/filestore'], check=True)
 
 
-
 @brick_migration('0.17.0', short_description='Migrate is_optional and is_constant in IOSpec. Remove nodes from protocol graph')
 class Migration0170(BrickMigration):
 
@@ -1530,14 +1531,20 @@ class Migration0170(BrickMigration):
                 to_version: Version) -> None:
         # Migrate is_optional to optional and is_constant to constant in TaskModel, ProtocolModel and ScenarioTemplate
         # replace string "is_optional": with "optional":
-        TaskModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
-        ProtocolModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
-        ScenarioTemplate.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+        TaskModel.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+        ProtocolModel.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+        ScenarioTemplate.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
 
         # replace string "is_constant": with "constant":
-        TaskModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
-        ProtocolModel.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
-        ScenarioTemplate.execute_sql('UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+        TaskModel.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+        ProtocolModel.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+        ScenarioTemplate.execute_sql(
+            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
 
         # Remove nodes from protocol graph
         protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
@@ -1547,3 +1554,79 @@ class Migration0170(BrickMigration):
                 protocol_model.save(skip_hook=True)
             except Exception as exception:
                 Logger.error(f'Error while migrating protocol {protocol_model.id} : {exception}')
+
+
+@brick_migration('0.18.0', short_description='Delete local_file_store table and migrate all files to local filestore')
+class Migration0180(BrickMigration):
+
+    @classmethod
+    def migrate(cls,
+                sql_migrator: SqlMigrator,
+                from_version: Version,
+                to_version: Version) -> None:
+
+        # Get the database connection
+        db = sql_migrator.migrator.database
+
+        db.execute_sql("DROP TABLE IF EXISTS local_file_store;")
+
+        file_store_base_dir = LocalFileStore.get_base_dir()
+        local_file_store: LocalFileStore = LocalFileStore.get_default_instance()
+
+        # loop thourgh all filestores
+        for item in os.listdir(file_store_base_dir):
+            # skip local filestore
+            if item == local_file_store.id:
+                continue
+
+            # for other, migrate files to local filestore
+            source_dir = os.path.join(file_store_base_dir, item)
+
+            has_error = False
+
+            # loop thourgh all files and folders in source_dir and move them to dest_dir
+            for item in os.listdir(source_dir):
+
+                try:
+                    source_path = os.path.join(source_dir, item)
+                    # Find the fsnode model object by path
+                    fsnode: FSNode = FSNodeModel.select().where(FSNodeModel.path == source_path).first()
+
+                    if fsnode:
+                        result = local_file_store.add_node_from_path(source_path, item)
+                        if result:
+                            fsnode.path = result.path
+                            fsnode.file_store_id = local_file_store.id
+                            fsnode.save(skip_hook=True)
+
+                            # update the path of all other fsnodes that are children of this fsnode
+                            child_fsnodes: List[FSNodeModel] = list(FSNodeModel.select().where(
+                                FSNodeModel.path.startswith(source_path + os.sep)))
+
+                            for child_fsnode in child_fsnodes:
+                                relative_path = os.path.relpath(
+                                    child_fsnode.path, source_path)
+                                new_child_path = os.path.join(
+                                    result.path, relative_path)
+                                child_fsnode.path = new_child_path
+                                child_fsnode.file_store_id = local_file_store.id
+                                child_fsnode.save(skip_hook=True)
+                except Exception as exception:
+                    has_error = True
+                    Logger.error(f'Error while migrating file {source_path} to local filestore: {exception}')
+
+            # if no error, delete the source dir
+            if not has_error:
+                FileHelper.delete_dir(source_dir)
+
+        # Set all fsnode with null filestore to local filestore
+        FSNodeModel.execute_sql(
+            f"UPDATE [TABLE_NAME] SET file_store_id = '{local_file_store.id}' WHERE file_store_id IS NULL")
+
+        # Set the file_store_id column to not null
+        sql_migrator.alter_column_type(
+            FSNodeModel, FSNodeModel.file_store_id.column_name, CharField(null=False))
+        sql_migrator.migrate()
+
+        # create foreign key if not exist
+        FSNodeModel.create_foreign_key_if_not_exist(FSNodeModel.file_store_id)
