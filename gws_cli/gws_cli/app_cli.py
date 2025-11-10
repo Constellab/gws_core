@@ -41,8 +41,15 @@ class AppCli:
             raise typer.Abort()
 
         with open(config_file_path, "r", encoding='UTF-8') as file:
-            config_dict = json.load(file)
-            self._config = AppDevConfig.from_json(config_dict)
+            try:
+                config_dict = json.load(file)
+                self._config = AppDevConfig.from_json(config_dict)
+            except json.JSONDecodeError as e:
+                typer.echo(f"Error parsing config file '{config_file_path}': {e}", err=True)
+                raise typer.Abort()
+            except Exception as e:
+                typer.echo(f"Unexpected error reading config file '{config_file_path}': {e}", err=True)
+                raise typer.Abort()
 
     def _load_env(self) -> None:
         # Load env_type from config
@@ -102,7 +109,7 @@ class AppCli:
         settings_file_path = CLIUtils.get_current_brick_settings_file_path()
 
         AppManager.init_gws_env_and_db(settings_file_path,
-                                log_level=CLIUtils.get_global_option_log_level(ctx))
+                                       log_level=CLIUtils.get_global_option_log_level(ctx))
 
         AppsManager.init()
 

@@ -32,9 +32,9 @@ def generate_brick(name: str):
     )
 
     update_settings_file(brick_folder, name)
-    udpate_readme(brick_folder, name)
+    update_readme(brick_folder, name)
     update_code(brick_folder, name)
-    print(f"The brick {name} was successfully created.")
+    print(f"The brick {name} was successfully created at {brick_folder}")
 
 
 def update_settings_file(dest_dir: str, name: str):
@@ -47,7 +47,7 @@ def update_settings_file(dest_dir: str, name: str):
         json.dump(settings, f, indent=4)
 
 
-def udpate_readme(dest_dir: str, name: str):
+def update_readme(dest_dir: str, name: str):
     """ Replace all words 'skeleton' in README.md """
     file = os.path.join(dest_dir, "./README.md")
     with open(file, 'r', encoding='UTF-8') as f:
