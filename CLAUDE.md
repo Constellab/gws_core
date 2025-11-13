@@ -100,5 +100,4 @@ Dependencies are managed via `settings.json` rather than traditional requirement
 ### Code Organization
 - Use the existing typing system and decorators when creating new tasks/resources
 - Follow the established patterns for database models and services
-- Resource views should extend the base view classes
 - New implementations go in `src/gws_core/impl/`

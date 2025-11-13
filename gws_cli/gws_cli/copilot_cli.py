@@ -45,7 +45,7 @@ def update():
     Only runs if GitHub Copilot is already installed. Does nothing if not installed.
     """
     service = CopilotService()
-    exit_code = service.pull_copilot_commands()
+    exit_code = service.update()
     if exit_code != 0:
         raise typer.Exit(exit_code)
 

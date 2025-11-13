@@ -6,6 +6,7 @@ from pathlib import Path
 
 from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 from gws_cli.utils.node_service import NodeService
+from gws_core.core.utils.settings import Settings
 
 
 class ClaudeService(AICodeService):
@@ -67,6 +68,14 @@ argument-hint: [{frontmatter.argument_hint}]
             Command string to initialize Claude Code
         """
         return 'gws claude update'
+
+    def get_main_instructions_path(self) -> Path:
+        """Get the path where main instructions file should be generated
+
+        Returns:
+            Path to ~/CLAUDE.md
+        """
+        return Path(os.path.join(Settings.get_user_folder(), "CLAUDE.md"))
 
     def is_claude_code_installed(self) -> bool:
         """Check if Claude Code is installed
@@ -191,6 +200,7 @@ argument-hint: [{frontmatter.argument_hint}]
         This helper method performs the configuration update steps:
         1. Pulls GWS commands to global Claude commands folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
+        3. Generates main instructions file
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -205,6 +215,12 @@ argument-hint: [{frontmatter.argument_hint}]
         result = self.init_settings()
         if result != 0:
             print("Failed to update settings")
+            return result
+
+        # Generate main instructions
+        result = self.generate_main_instructions()
+        if result != 0:
+            print("Failed to generate main instructions")
             return result
 
         return 0

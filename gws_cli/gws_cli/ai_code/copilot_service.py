@@ -70,6 +70,42 @@ argument-hint: {frontmatter.argument_hint}
         """
         return 'gws copilot pull'
 
+    def get_main_instructions_path(self) -> Path:
+        """Get the path where main instructions file should be generated
+
+        Returns:
+            Path to ~/.github/copilot-instructions.md
+        """
+        return Path(os.path.join(Settings.get_user_folder(), ".github", "copilot-instructions.md"))
+
+    def update(self) -> int:
+        """Update GitHub Copilot configuration for GWS
+
+        This method performs the following steps:
+        1. Pulls GWS commands to global GitHub Copilot prompts folder
+        2. Generates main instructions file
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        print("=== Updating GitHub Copilot configuration for GWS ===\n")
+
+        # Pull commands
+        result = self.pull_commands_to_global()
+        if result != 0:
+            print("Failed to pull commands")
+            return result
+
+        # Generate main instructions
+        result = self.generate_main_instructions()
+        if result != 0:
+            print("Failed to generate main instructions")
+            return result
+
+        print("\n=== GitHub Copilot configuration updated successfully! ===")
+        self._log_post_installation_instructions()
+        return 0
+
     def pull_copilot_commands(self) -> int:
         """Pull GWS commands to global GitHub Copilot prompts folder and display usage instructions
 
@@ -83,12 +119,16 @@ argument-hint: {frontmatter.argument_hint}
         result = self.pull_commands_to_global()
 
         if result == 0:
-            print("\n" + "=" * 70)
-            print("How to use GWS commands in GitHub Copilot:")
-            print("=" * 70)
-            print("\n1. Open GitHub Copilot Chat in your editor (VS Code, JetBrains, etc.)")
-            print("\n2. Use the / symbol to reference GWS prompts followed by your task description.")
-            print("   Exemple: /gws-streamlit-app-developer Create a data visualization dashboard")
-            print("\n" + "=" * 70)
+            self._log_post_installation_instructions()
 
         return result
+
+    def _log_post_installation_instructions(self):
+        """Log instructions for using GitHub Copilot with GWS commands"""
+        print("\n" + "=" * 70)
+        print("How to use GWS commands in GitHub Copilot:")
+        print("=" * 70)
+        print("\n1. Open GitHub Copilot Chat in your editor (VS Code, JetBrains, etc.)")
+        print("\n2. Use the / symbol to reference GWS prompts followed by your task description.")
+        print("   Exemple: /gws-streamlit-app-developer Create a data visualization dashboard")
+        print("\n" + "=" * 70)

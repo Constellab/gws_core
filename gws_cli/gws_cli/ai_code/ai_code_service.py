@@ -90,6 +90,14 @@ class AICodeService(ABC):
             Command string (e.g., 'gws claude init' or 'gws copilot pull')
         """
 
+    @abstractmethod
+    def get_main_instructions_path(self) -> Path:
+        """Get the path where main instructions file should be generated
+
+        Returns:
+            Path to the main instructions file (e.g., ~/CLAUDE.md or ~/.github/copilot-instructions.md)
+        """
+
     def pull_commands_to_global(self) -> int:
         """Pull commands from source to global AI tool commands folder
 
@@ -218,4 +226,70 @@ class AICodeService(ABC):
 
         except Exception as e:
             print(f"Error listing commands: {e}")
+            return 1
+
+    def generate_main_instructions(self) -> int:
+        """Generate main instructions file from template
+
+        This method reads the main_instructions.md template and generates
+        the main instructions file for the specific AI tool. If the file already
+        exists, it replaces only the generated section without touching custom content.
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        try:
+            # Define markers for generated content
+            start_marker = "<!-- BEGIN AUTO-GENERATED GWS INSTRUCTIONS -->"
+            end_marker = "<!-- END AUTO-GENERATED GWS INSTRUCTIONS -->"
+
+            # Read the template
+            template_path = Path(__file__).parent / "main_instructions.md"
+            if not template_path.exists():
+                print(f"Error: Template file not found at {template_path}")
+                return 1
+
+            template_content = template_path.read_text(encoding='utf-8')
+
+            # Prepare the generated content with markers
+            generated_content = f"{start_marker}\n{template_content}\n{end_marker}"
+
+            # Get the target path from child class
+            target_path = self.get_main_instructions_path()
+
+            # Create parent directories if needed
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+
+            # Check if file exists
+            if target_path.exists():
+                # Read existing content
+                existing_content = target_path.read_text(encoding='utf-8')
+
+                # Check if markers exist
+                if start_marker in existing_content and end_marker in existing_content:
+                    # Find positions of markers
+                    start_pos = existing_content.find(start_marker)
+                    end_pos = existing_content.find(end_marker) + len(end_marker)
+
+                    # Replace only the generated section
+                    new_content = (
+                        existing_content[:start_pos] +
+                        generated_content +
+                        existing_content[end_pos:]
+                    )
+                else:
+                    # No markers found, prepend generated content at the top
+                    new_content = generated_content + "\n\n" + existing_content
+            else:
+                # File doesn't exist, create with generated content
+                new_content = generated_content + "\n"
+
+            # Write the file
+            target_path.write_text(new_content, encoding='utf-8')
+
+            print(f"Main instructions generated successfully at: {target_path}")
+            return 0
+
+        except Exception as e:
+            print(f"Error generating main instructions: {e}")
             return 1
