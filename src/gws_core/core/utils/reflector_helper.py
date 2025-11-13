@@ -164,9 +164,9 @@ class ReflectorHelper():
 
     @classmethod
     def get_all_public_args(cls, type_: Type) -> Optional[Dict[str, str]]:
-        '''
+        """
             Get all the public args of a class and its ancestors
-        '''
+        """
         if not inspect.isclass(type_):
             # return None if the type is not a class
             return None

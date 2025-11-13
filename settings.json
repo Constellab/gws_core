@@ -146,6 +146,10 @@
                     {
                         "name": "reflex",
                         "version": "0.8.17"
+                    },
+                    {
+                        "name": "docstring-parser",
+                        "version": "0.17.0"
                     }
                 ]
             }

@@ -1,6 +1,6 @@
-import re
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
+from docstring_parser import parse
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
@@ -43,10 +43,14 @@ class MethodDoc(BaseModelDTO):
         if not self.doc:
             return None
 
-        pattern = re.compile(rf":param {arg_name}: (.+?)(?=, defaults to|\n\s*:\w|\Z)", re.DOTALL)
-        match = pattern.search(self.doc)
-        if match:
-            return match.group(1).strip()
+        try:
+            parsed_doc = parse(self.doc)
+            for param in parsed_doc.params:
+                if param.arg_name == arg_name:
+                    return param.description
+        except Exception:
+            # Fallback to None if parsing fails
+            pass
         return None
 
     def get_return_description(self) -> Optional[str]:
@@ -59,10 +63,13 @@ class MethodDoc(BaseModelDTO):
         if not self.doc:
             return None
 
-        pattern = re.compile(r":return: (.+?)(?=\n\s*:\w|\Z)", re.DOTALL)
-        match = pattern.search(self.doc)
-        if match:
-            return match.group(1).strip()
+        try:
+            parsed_doc = parse(self.doc)
+            if parsed_doc.returns:
+                return parsed_doc.returns.description
+        except Exception:
+            # Fallback to None if parsing fails
+            pass
         return None
 
     def get_doc_without_args(self) -> str:
@@ -74,10 +81,21 @@ class MethodDoc(BaseModelDTO):
         if not self.doc:
             return None
 
-        pattern = re.compile(r"(.*?)(?=\n\s*:(param|type|rtype|return)|\Z)", re.DOTALL)
-        match = pattern.search(self.doc)
-        if match:
-            return match.group(1).strip()
+        try:
+            parsed_doc = parse(self.doc)
+            # Get short and long description, combining them
+            short_desc = parsed_doc.short_description or ""
+            long_desc = parsed_doc.long_description or ""
+
+            if short_desc and long_desc:
+                return f"{short_desc}\n\n{long_desc}"
+            elif short_desc:
+                return short_desc
+            elif long_desc:
+                return long_desc
+        except Exception:
+            # Fallback to returning the original doc if parsing fails
+            pass
         return self.doc
 
     def to_markdown(self, class_name: str) -> str:
