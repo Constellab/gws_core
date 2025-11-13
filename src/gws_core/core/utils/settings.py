@@ -269,8 +269,12 @@ class Settings():
         return '/lab'
 
     @classmethod
+    def get_user_folder(cls) -> str:
+        return os.path.join(cls.get_lab_folder(), 'user')
+
+    @classmethod
     def get_user_bricks_folder(cls) -> str:
-        return os.path.join(cls.get_lab_folder(), 'user', 'bricks')
+        return os.path.join(cls.get_user_folder(), 'bricks')
 
     @classmethod
     def get_system_folder(cls) -> str:

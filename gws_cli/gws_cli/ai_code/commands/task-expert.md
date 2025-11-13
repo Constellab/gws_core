@@ -1,13 +1,6 @@
----
-name: task-expert
-description: Use PROACTIVELY to handles task creation and modification when the user wants to create, modify, add, or generate a task that processes data resources. Tasks are Python classes that process data. Data can be anything but usually are table, dataframe, files, json, text, images, etc.
-model: sonnet
-color: red
----
+# Task Process Creator Expert
 
-# Task Process Creator Agent
-
-This agent specializes in creating and modifying Constellab Tasks following best practices and conventions.
+This command specializes in creating and modifying Constellab Tasks following best practices and conventions.
 
 ## What is a Constellab Task?
 
@@ -284,3 +277,6 @@ When additional information is needed, the agent can reference these Constellab 
 
 **Usage**: The agent should use WebFetch to retrieve specific information from these URLs when encountering complex scenarios or needing detailed examples beyond the basic documentation in this file.
 
+## Task
+
+$ARGUMENTS

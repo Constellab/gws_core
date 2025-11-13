@@ -1,18 +1,74 @@
 import importlib.util
 import json
 import os
-import shutil
 import subprocess
 from pathlib import Path
 
+from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 from gws_cli.utils.node_service import NodeService
 
 
-class ClaudeService:
+class ClaudeService(AICodeService):
     """Service for managing Claude Code installation and related operations"""
 
-    @staticmethod
-    def is_claude_code_installed() -> bool:
+    def __init__(self):
+        """Initialize ClaudeService"""
+        super().__init__(
+            ai_tool_name="Claude Code"
+        )
+
+    def format_frontmatter(self, frontmatter: CommandFrontmatter) -> str:
+        """Format frontmatter for Claude Code
+
+        Args:
+            frontmatter: The frontmatter configuration to format
+
+        Returns:
+            Frontmatter with description and argument-hint
+        """
+        return f"""---
+description: {frontmatter.description}
+argument-hint: [{frontmatter.argument_hint}]
+---
+
+"""
+
+    def get_target_dir(self) -> Path:
+        """Get the base directory for Claude Code commands
+
+        Returns:
+            Path to ~/.claude/commands/gws-commands
+        """
+        return Path(os.path.join(Path.home(), ".claude", "commands", "gws-commands"))
+
+    def format_filename(self, base_filename: str) -> str:
+        """Format the filename for Claude Code
+
+        Args:
+            base_filename: The base filename (e.g., 'streamlit-app-developer.md')
+
+        Returns:
+            The same filename (Claude uses .md files)
+        """
+        return base_filename
+
+    def get_file_pattern(self) -> str:
+        """Get the glob pattern to match command files in the target directory
+
+        Returns:
+            Glob pattern for Claude Code command files
+        """
+        return 'gws-*.md'
+
+    def get_install_command(self) -> str:
+        """Get the command to install/pull commands for Claude Code
+
+        Returns:
+            Command string to initialize Claude Code
+        """
+        return 'gws claude update'
+
+    def is_claude_code_installed(self) -> bool:
         """Check if Claude Code is installed
 
         Returns:
@@ -24,8 +80,7 @@ class ClaudeService:
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
-    @staticmethod
-    def install_claude_code() -> int:
+    def install_claude_code(self) -> int:
         """Install Claude Code CLI tool (automatically installs Node.js if needed)
 
         Returns:
@@ -65,66 +120,20 @@ class ClaudeService:
             print(f"Unexpected error: {e}")
             return 1
 
-    @staticmethod
-    def install_claude_code_if_not_installed() -> int:
+    def install_claude_code_if_not_installed(self) -> int:
         """Install Claude Code only if it's not already installed
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        if ClaudeService.is_claude_code_installed():
+        if self.is_claude_code_installed():
             print("Claude Code is already installed.")
             return 0
 
         print("Claude Code not found. Starting installation...")
-        return ClaudeService.install_claude_code()
+        return self.install_claude_code()
 
-    @staticmethod
-    def pull_agents() -> int:
-        """Pull GWS agents to global Claude agents folder
-
-        This command copies the agents from gws_cli/gws_cli/claude/agents to ~/.claude/agents/gws-agents,
-        replacing any existing agents in that location.
-
-        Returns:
-            int: Exit code (0 for success, 1 for failure)
-        """
-        try:
-            # Source: agents folder in the gws_cli package
-            source_agents_dir = Path(__file__).parent / "agents"
-
-            # Target: ~/.claude/agents/gws-agents
-            home_dir = Path.home()
-            target_base_dir = home_dir / ".claude" / "agents"
-            target_agents_dir = target_base_dir / "gws-agents"
-
-            # Validate source directory exists
-            if not source_agents_dir.exists():
-                print(f"Error: Source agents directory not found at {source_agents_dir}")
-                return 1
-
-            # Create ~/.claude/agents if it doesn't exist
-            target_base_dir.mkdir(parents=True, exist_ok=True)
-
-            # Remove existing gws-agents folder if it exists
-            if target_agents_dir.exists():
-                print(f"Removing existing agents at {target_agents_dir}")
-                shutil.rmtree(target_agents_dir)
-
-            # Copy the agents folder
-            print(f"Copying agents from {source_agents_dir} to {target_agents_dir}")
-            shutil.copytree(source_agents_dir, target_agents_dir)
-
-            print("GWS agents successfully pulled to global Claude agents folder! Restart claude command to use them.")
-            print(f"Location: {target_agents_dir}")
-            return 0
-
-        except Exception as e:
-            print(f"Error pulling agents: {e}")
-            return 1
-
-    @staticmethod
-    def init_settings() -> int:
+    def init_settings(self) -> int:
         """Initialize Claude Code settings with GWS_CORE_SRC environment variable
 
         This method retrieves the path of the gws_core Python package and sets the
@@ -142,7 +151,6 @@ class ClaudeService:
 
             # Get the source directory (parent of the __init__.py file)
             gws_core_path = Path(gws_core_spec.origin).parent
-            print(f"Found gws_core at: {gws_core_path}")
 
             # Path to settings.json
             home_dir = Path.home()
@@ -155,7 +163,6 @@ class ClaudeService:
             # Read existing settings or create empty dict
             settings = {}
             if settings_file.exists():
-                print(f"Reading existing settings from {settings_file}")
                 with open(settings_file, 'r') as f:
                     settings = json.load(f)
             else:
@@ -172,49 +179,42 @@ class ClaudeService:
             with open(settings_file, 'w') as f:
                 json.dump(settings, f, indent=2)
 
-            print(f"Successfully set GWS_CORE_SRC={gws_core_path} in Claude settings")
             return 0
 
         except Exception as e:
             print(f"Error initializing settings: {e}")
             return 1
 
-    @staticmethod
-    def _update_claude_config() -> int:
-        """Common method to update Claude Code configuration (agents and settings)
+    def _update_claude_config(self) -> int:
+        """Common method to update Claude Code configuration (commands and settings)
 
         This helper method performs the configuration update steps:
-        1. Pulls GWS agents to global Claude agents folder
+        1. Pulls GWS commands to global Claude commands folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        # Pull agents
-        print("Pulling GWS agents...")
-        result = ClaudeService.pull_agents()
+        # Pull commands
+        result = self.pull_commands_to_global()
         if result != 0:
-            print("Failed to pull agents")
+            print("Failed to pull commands")
             return result
-        print()
 
         # Update settings
-        print("Updating Claude settings...")
-        result = ClaudeService.init_settings()
+        result = self.init_settings()
         if result != 0:
             print("Failed to update settings")
             return result
-        print()
 
         return 0
 
-    @staticmethod
-    def init() -> int:
+    def init(self) -> int:
         """Initialize Claude Code environment for GWS
 
         This method performs the following steps:
         1. Installs Claude Code (if not already installed)
-        2. Pulls GWS agents to global Claude agents folder
+        2. Pulls GWS commands to global Claude commands folder
         3. Initializes Claude Code settings with GWS_CORE_SRC environment variable
 
         Returns:
@@ -224,29 +224,29 @@ class ClaudeService:
 
         # Step 1: Install Claude Code
         print("Installing Claude Code...")
-        result = ClaudeService.install_claude_code_if_not_installed()
+        result = self.install_claude_code_if_not_installed()
         if result != 0:
             print("Failed to install Claude Code")
             return result
         print()
 
         # Step 2 & 3: Update configuration
-        result = ClaudeService._update_claude_config()
+        result = self._update_claude_config()
         if result != 0:
             return result
 
         print("=== Claude Code initialization completed successfully! ===")
+        self._log_post_installation_instructions()
         return 0
 
-    @staticmethod
-    def update() -> int:
+    def update(self) -> int:
         """Update Claude Code configuration for GWS
 
         This method performs the same steps as init() but only if Claude Code is already installed.
         If Claude Code is not installed, it does nothing and returns success.
 
         Steps performed (if Claude Code is installed):
-        1. Pulls GWS agents to global Claude agents folder
+        1. Pulls GWS commands to global Claude commands folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
 
         Returns:
@@ -255,16 +255,44 @@ class ClaudeService:
         print("=== Updating Claude Code configuration for GWS ===\n")
 
         # Check if Claude Code is installed
-        if not ClaudeService.is_claude_code_installed():
+        if not self.is_claude_code_installed():
             print("Claude Code is not installed. Nothing to update.")
             return 0
 
         print("Claude Code is installed. Proceeding with update...\n")
 
         # Update configuration
-        result = ClaudeService._update_claude_config()
+        result = self._update_claude_config()
         if result != 0:
             return result
 
         print("=== Claude Code configuration updated successfully! ===")
+        self._log_post_installation_instructions()
         return 0
+
+    def pull_claude_commands(self) -> int:
+        """Pull GWS commands to global Claude Code commands folder and display usage instructions
+
+        This method wraps pull_commands_to_global() and provides helpful information about
+        how to use the installed commands in Claude Code.
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        # Call the base method to pull commands
+        result = self.pull_commands_to_global()
+
+        if result == 0:
+            self._log_post_installation_instructions()
+
+        return result
+
+    def _log_post_installation_instructions(self):
+        """Log instructions for installing Claude Code manually if needed"""
+        print("\n" + "=" * 70)
+        print("How to use GWS commands in Claude Code:")
+        print("=" * 70)
+        print("\n1. Open Claude Code in your terminal or editor")
+        print("\n2. Use the / symbol to invoke GWS slash commands followed by your task description.")
+        print("   Example: /gws-streamlit-app-developer Create a data visualization dashboard")
+        print("\n" + "=" * 70)

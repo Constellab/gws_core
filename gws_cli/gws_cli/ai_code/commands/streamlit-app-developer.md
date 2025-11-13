@@ -137,3 +137,7 @@ You should be proactive in:
 - Identifying potential issues
 - Recommending best practices
 - Delivering production-ready Streamlit applications that are maintainable, performant, and well-integrated with the GWS Core ecosystem
+
+## Task
+
+$ARGUMENTS
