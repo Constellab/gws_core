@@ -38,6 +38,18 @@ def instructions(
     _manage_instructions(pull, list_commands)
 
 
+@app.command("update", help="Update GitHub Copilot configuration")
+def update():
+    """Update GitHub Copilot configuration for GWS (instructions and settings)
+
+    Only runs if GitHub Copilot is already installed. Does nothing if not installed.
+    """
+    service = CopilotService()
+    exit_code = service.pull_copilot_commands()
+    if exit_code != 0:
+        raise typer.Exit(exit_code)
+
+
 @app.command("commands", help="Manage GitHub Copilot commands (alias for instructions)")
 def commands(
     pull: bool = typer.Option(False, "--pull", help="Pull GWS commands to global Copilot instructions folder"),
