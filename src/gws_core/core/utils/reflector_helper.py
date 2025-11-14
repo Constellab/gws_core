@@ -1,6 +1,6 @@
 
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
@@ -17,7 +17,24 @@ class ReflectorHelper():
 
     @classmethod
     def get_property_names_of_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
-        """return the property name and value of all property of a type
+        """Get all properties of a class that match a specific type.
+
+        Retrieves non-callable, non-class members of a class that are instances
+        of the specified type.
+
+        :param class_type: The class to inspect for properties
+        :type class_type: type
+        :param type_: The type to filter properties by
+        :type type_: type
+        :return: Dictionary mapping property names to their values
+        :rtype: Dict[str, Any]
+
+        Example:
+            >>> class MyClass:
+            ...     text: str = "hello"
+            ...     number: int = 42
+            >>> ReflectorHelper.get_property_names_of_type(MyClass, str)
+            {'text': 'hello'}
         """
         properties: Dict[str, Any] = {}
         member_list: List[Tuple[str, Any]] = inspect.getmembers(class_type)
@@ -34,13 +51,21 @@ class ReflectorHelper():
         return properties
 
     @classmethod
-    def get_function_arguments(cls, func: Callable) -> FuncArgsMetaData:
-        """Function to get the arguments with type (Any if not provided) of a method or a function
+    def get_function_arguments(cls, func: Callable[..., Any]) -> FuncArgsMetaData:
+        """Extract metadata about all arguments of a function or method.
 
-        :param func: [description]
-        :type func: Callable
-        :return: [description]
-        :rtype: Dict[str, type]
+        Analyzes a function's signature and returns detailed metadata about each
+        argument including its name, type annotation, and default value.
+
+        :param func: The function or method to analyze
+        :type func: Callable[..., Any]
+        :return: Metadata object containing information about all function arguments
+        :rtype: FuncArgsMetaData
+
+        Note:
+            - Type annotations default to 'Any' if not specified
+            - Captures default values for optional parameters
+            - Works with both functions and methods
         """
 
         parameters: dict[str, inspect.Parameter] = inspect.signature(func).parameters
@@ -54,13 +79,24 @@ class ReflectorHelper():
         return arguments
 
     @classmethod
-    def function_args_are_optional(cls, func: Callable) -> bool:
-        """Function to get the arguments with type (Any if not provided) of a method or a function
+    def function_args_are_optional(cls, func: Callable[..., Any]) -> bool:
+        """Check if all arguments of a function have default values.
 
-        :param func: [description]
-        :type func: Callable
-        :return: [description]
-        :rtype: Dict[str, type]
+        Determines whether a function can be called without providing any arguments,
+        i.e., all parameters have default values.
+
+        :param func: The function or method to check
+        :type func: Callable[..., Any]
+        :return: True if all arguments have default values, False otherwise
+        :rtype: bool
+
+        Example:
+            >>> def func1(a, b=1): pass
+            >>> def func2(a=1, b=2): pass
+            >>> ReflectorHelper.function_args_are_optional(func1)
+            False
+            >>> ReflectorHelper.function_args_are_optional(func2)
+            True
         """
 
         func_args: FuncArgsMetaData = cls.get_function_arguments(func)
@@ -68,7 +104,30 @@ class ReflectorHelper():
 
     @classmethod
     def object_has_metadata(cls, object_: Any, meta_data_name: str, meta_obj_type: type = None) -> bool:
-        """Check if the object has meta data. If meta_obj_type is provided, it also check if the type of the metadata is valid
+        """Check if an object has a specific metadata attribute.
+
+        Verifies whether an object has an attribute with the given name, and optionally
+        validates that the attribute is of a specific type.
+
+        :param object_: The object to check for metadata
+        :type object_: Any
+        :param meta_data_name: The name of the metadata attribute to look for
+        :type meta_data_name: str
+        :param meta_obj_type: Optional type to validate the metadata against
+        :type meta_obj_type: type
+        :return: True if the metadata exists (and matches the type if specified), False otherwise
+        :rtype: bool
+
+        Example:
+            >>> class MyClass:
+            ...     my_meta = "value"
+            >>> obj = MyClass()
+            >>> ReflectorHelper.object_has_metadata(obj, "my_meta")
+            True
+            >>> ReflectorHelper.object_has_metadata(obj, "my_meta", str)
+            True
+            >>> ReflectorHelper.object_has_metadata(obj, "my_meta", int)
+            False
         """
         # Check if the method is annotated with view
         return hasattr(object_, meta_data_name) and (
@@ -76,7 +135,28 @@ class ReflectorHelper():
 
     @classmethod
     def get_and_check_object_metadata(cls, object_: Any, meta_data_name: str, meta_obj_type: type = None) -> Any:
-        """Check and get the object meta data. If meta_obj_type is provided, it also check if the type of the metadata is valid
+        """Retrieve metadata from an object with optional type validation.
+
+        Gets the value of a metadata attribute if it exists on the object, with optional
+        type checking. Returns None if the metadata doesn't exist or fails type validation.
+
+        :param object_: The object to retrieve metadata from
+        :type object_: Any
+        :param meta_data_name: The name of the metadata attribute to retrieve
+        :type meta_data_name: str
+        :param meta_obj_type: Optional type to validate the metadata against
+        :type meta_obj_type: type
+        :return: The metadata value if it exists and passes validation, None otherwise
+        :rtype: Any
+
+        Example:
+            >>> class MyClass:
+            ...     my_meta = "value"
+            >>> obj = MyClass()
+            >>> ReflectorHelper.get_and_check_object_metadata(obj, "my_meta")
+            'value'
+            >>> ReflectorHelper.get_and_check_object_metadata(obj, "missing")
+            None
         """
 
         if cls.object_has_metadata(object_, meta_data_name, meta_obj_type):
@@ -85,14 +165,44 @@ class ReflectorHelper():
         return None
 
     @classmethod
-    def set_object_has_metadata(cls, object_: Any, meta_data_name: str, value: Any) -> bool:
-        """Set meta data of an object
+    def set_object_has_metadata(cls, object_: Any, meta_data_name: str, value: Any) -> None:
+        """Set metadata on an object.
+
+        Dynamically adds or updates a metadata attribute on the given object.
+
+        :param object_: The object to set metadata on
+        :type object_: Any
+        :param meta_data_name: The name of the metadata attribute to set
+        :type meta_data_name: str
+        :param value: The value to assign to the metadata attribute
+        :type value: Any
+
+        Example:
+            >>> obj = MyClass()
+            >>> ReflectorHelper.set_object_has_metadata(obj, "custom_meta", "my_value")
+            >>> obj.custom_meta
+            'my_value'
         """
-        # Check if the method is annotated with view
-        return setattr(object_, meta_data_name, value)
+        setattr(object_, meta_data_name, value)
 
     @classmethod
     def get_method_named_args_json(cls, method: Any) -> List[MethodArgDoc]:
+        """Convert method arguments to JSON-serializable documentation format.
+
+        Extracts and formats method argument information into a list of MethodArgDoc
+        objects suitable for JSON serialization. Handles type annotations, default
+        values, and type inference.
+
+        :param method: The method to extract argument documentation from
+        :type method: Any
+        :return: List of argument documentation objects
+        :rtype: List[MethodArgDoc]
+
+        Note:
+            - Infers types from default values when annotations are missing
+            - Handles empty string default values specially
+            - Converts all default values to string representation
+        """
         arguments: Dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
         arguments_json: List[MethodArgDoc] = []
         for arg in arguments.items():
@@ -109,10 +219,7 @@ class ReflectorHelper():
                     arg_type = Utils.stringify_type(type(arg_default_value))
                 else:
                     arg_type = 'Any'
-            if not isinstance(arg_name, str):
-                print(arg_name)
-            if not isinstance(arg_type, str):
-                print(arg_type)
+
             if isinstance(arg_default_value, str) and len(arg_default_value) == 0:
                 arg_default_value = "''"
             if not isinstance(arg_default_value, str):
@@ -129,11 +236,14 @@ class ReflectorHelper():
         return arguments_json
 
     @classmethod
-    def get_func_doc(cls, func: Callable, type_: Optional[Type] = None) -> Optional[MethodDoc]:
+    def get_func_doc(
+            cls, func: Callable[..., Any],
+            type_: Optional[type] = None, func_name: Optional[str] = None) -> Optional[MethodDoc]:
         """Get documentation for a single function.
 
         :param func: The function to document
         :param type_: Optional type/class to check for method type (classmethod, staticmethod, etc.)
+        :param func_name: Optional function name (useful when func is a wrapper and __name__ is incorrect)
         :return: MethodDoc object or None if documentation cannot be generated
         """
         try:
@@ -141,17 +251,23 @@ class ReflectorHelper():
                 return None
 
             method_type: str = MethodDocType.BASICMETHOD
-            func_name = func.__name__
+            if func_name is None:
+                func_name = func.__name__
 
             if type_ is not None:
-                if isinstance(inspect.getattr_static(type_, func_name), classmethod):
-                    method_type = MethodDocType.CLASSMETHOD
-
-                if isinstance(inspect.getattr_static(type_, func_name), staticmethod):
-                    method_type = MethodDocType.STATICMETHOD
+                # Use getattr_static to check for classmethod/staticmethod decorators
+                try:
+                    static_attr = inspect.getattr_static(type_, func_name)
+                    if isinstance(static_attr, classmethod):
+                        method_type = MethodDocType.CLASSMETHOD
+                    elif isinstance(static_attr, staticmethod):
+                        method_type = MethodDocType.STATICMETHOD
+                except AttributeError:
+                    # If getattr_static fails, method_type remains BASICMETHOD
+                    pass
 
             signature: inspect.Signature = inspect.signature(func)
-            arguments: List = cls.get_method_named_args_json(func)
+            arguments = cls.get_method_named_args_json(func)
             return_type = Utils.stringify_type(
                 signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
 
@@ -159,13 +275,33 @@ class ReflectorHelper():
             return MethodDoc(name=func_name, doc=doc,
                              args=arguments, return_type=return_type, method_type=method_type)
         except Exception:
-            Logger.error(f"Error while getting method doc of {func_name}")
+            Logger.error(f"Error while getting method doc of {func_name if func_name else 'unknown'}")
             return None
 
     @classmethod
-    def get_all_public_args(cls, type_: Type) -> Optional[Dict[str, str]]:
-        """
-            Get all the public args of a class and its ancestors
+    def get_all_public_args(cls, type_: type) -> Optional[Dict[str, str]]:
+        """Get all public type-annotated attributes from a class and its entire inheritance hierarchy.
+
+        Traverses the Method Resolution Order (MRO) to collect all public type-annotated
+        attributes from the class and all its parent classes.
+
+        :param type_: The class to inspect
+        :type type_: type
+        :return: Dictionary mapping attribute names to type strings, or None if not a class
+        :rtype: Optional[Dict[str, str]]
+
+        Example:
+            >>> class Parent:
+            ...     parent_var: str
+            >>> class Child(Parent):
+            ...     child_var: int
+            >>> ReflectorHelper.get_all_public_args(Child)
+            {'child_var': 'int', 'parent_var': 'str'}
+
+        Note:
+            - Includes attributes from all ancestor classes
+            - Returns None if the input is not a class
+            - Later classes in MRO can override earlier attributes
         """
         if not inspect.isclass(type_):
             # return None if the type is not a class
@@ -178,18 +314,41 @@ class ReflectorHelper():
 
     @classmethod
     def get_public_args(cls, class_) -> Dict[str, str]:
-        '''
-            Get the public args of a class
-        '''
+        """Get the public type-annotated attributes of a class.
+
+        This method extracts type annotations from a class definition, filtering out
+        private attributes (those starting with underscore) and returning them as
+        a dictionary mapping attribute names to their type representations.
+
+        :param class_: The class to inspect for annotated attributes
+        :type class_: type
+        :return: Dictionary mapping public attribute names to their string type representations.
+                 Returns empty dict if no annotations are found or if an error occurs.
+        :rtype: Dict[str, str]
+
+        Example:
+            >>> class MyClass:
+            ...     public_var: str
+            ...     another_var: int
+            ...     _private_var: bool
+            >>> ReflectorHelper.get_public_args(MyClass)
+            {'another_var': 'int', 'public_var': 'str'}
+
+        Note:
+            - Only returns attributes that have type annotations
+            - Excludes attributes starting with underscore (_)
+            - Returns sorted keys alphabetically
+            - Handles both named types (__name__) and complex type hints (converted to string)
+        """
         arr_variables = [d for (t, d) in inspect.getmembers(class_) if t == '__annotations__']
 
         if len(arr_variables) == 0:
             return {}
 
-        variables: dict = arr_variables[0]
+        variables = cast(dict, arr_variables[0])
         try:
             vars_keys = sorted([i for i in variables.keys() if i[0] != '_'])  # get the sorted keys of public variables
-            res: Dict = {}
+            res: Dict[str, str] = {}
             for k in vars_keys:
                 if hasattr(variables[k], '__name__'):
                     res.update({k: variables[k].__name__})
@@ -201,7 +360,7 @@ class ReflectorHelper():
             return {}
 
     @classmethod
-    def get_public_method_names(cls, type_: Type, include_init: bool = False) -> List[str]:
+    def get_public_method_names(cls, type_: type, include_init: bool = False) -> List[str]:
         """Get the names of all public methods of a class.
 
         :param type_: The class type to inspect
@@ -220,7 +379,7 @@ class ReflectorHelper():
             return [m[0] for m in methods if not m[0].startswith('_')]
 
     @classmethod
-    def get_public_methods_doc(cls, type_: Type, include_init: bool = False) -> List[MethodDoc]:
+    def get_class_public_methods_doc(cls, type_: type, include_init: bool = False) -> List[MethodDoc]:
         """Get documentation for all public methods of a class.
 
         :param type_: The class type to inspect
@@ -235,14 +394,17 @@ class ReflectorHelper():
 
         res: List[MethodDoc] = []
         for public_method in public_method_names:
-            method = inspect.getattr_static(type_, public_method)
-            method_doc = cls.get_func_doc(method, type_)
+            # Use getattr instead of getattr_static to handle decorated methods properly
+            # getattr_static returns wrappers (e.g., deprecated_func), but getattr unwraps them
+            method = getattr(type_, public_method)
+            # Pass the actual method name to handle cases where wrapper functions have different __name__
+            method_doc = cls.get_func_doc(method, type_, func_name=public_method)
             if method_doc is not None:
                 res.append(method_doc)
         return res
 
     @classmethod
-    def get_class_docs(cls, type_: Type) -> Optional[ClassicClassDocDTO]:
+    def get_class_docs(cls, type_: type) -> Optional[ClassicClassDocDTO]:
         """Get the cleaned docstring of a class.
 
         :param type_: The class type to inspect
@@ -252,7 +414,7 @@ class ReflectorHelper():
             return None
 
         variables = cls.get_all_public_args(type_)
-        methods = cls.get_public_methods_doc(type_, include_init=True)
+        methods = cls.get_class_public_methods_doc(type_, include_init=True)
 
         name: str = None
         if not hasattr(type_, '__name__'):

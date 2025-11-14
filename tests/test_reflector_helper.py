@@ -354,7 +354,7 @@ class TestReflectorHelper(unittest.TestCase):
 
     def test_get_public_methods_doc(self):
         """Test get_public_methods_doc method."""
-        methods_doc = ReflectorHelper.get_public_methods_doc(RestStyleClass, include_init=False)
+        methods_doc = ReflectorHelper.get_class_public_methods_doc(RestStyleClass, include_init=False)
 
         self.assertIsInstance(methods_doc, list)
         self.assertTrue(len(methods_doc) > 0)

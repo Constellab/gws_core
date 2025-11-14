@@ -50,7 +50,7 @@ class ResourceTyping(Typing):
             return None
 
         # Get all public methods including __init__
-        all_methods: List[MethodDoc] = ReflectorHelper.get_public_methods_doc(type_, include_init=True)
+        all_methods: List[MethodDoc] = ReflectorHelper.get_class_public_methods_doc(type_, include_init=True)
 
         # Get view methods to exclude them from funcs
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
