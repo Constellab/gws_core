@@ -243,5 +243,5 @@ class LocalFileStore(FileStore):
         return result
 
     class Meta:
-        is_table = False
+        is_table = True
         table_name = 'gws_file_store'

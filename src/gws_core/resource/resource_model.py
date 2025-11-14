@@ -414,12 +414,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
             # update the resource path and file store
             resource.path = new_node.path
-            resource.file_store_id = new_node.file_store_id
 
         # create the node model
         new_fs_node_model = FSNodeModel()
         new_fs_node_model.path = resource.path
-        new_fs_node_model.file_store_id = resource.file_store_id
+        new_fs_node_model.file_store_id = local_file_store.id
         new_fs_node_model.size = resource.get_size()
         new_fs_node_model.is_symbolic_link = resource.is_symbolic_link
         self.fs_node_model = new_fs_node_model
