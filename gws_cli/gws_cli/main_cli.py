@@ -22,12 +22,18 @@ def main():
         context_settings={"help_option_names": ["-h", "--help"]}
     )
 
-    @app.callback()
+    @app.callback(invoke_without_command=True)
     def global_options(
         ctx: typer.Context,
+        version: Annotated[bool, typer.Option("--version", help="Show installed bricks and their versions.")] = False,
         log_level: Annotated[LogLevel, typer.Option("--log-level", help="Global logging level for all commands.")] = LogLevel.INFO
     ):
         """GWS CLI with global options"""
+        # Handle --version flag
+        if version:
+            _show_version()
+            raise typer.Exit()
+
         # Store log_level in the context object so it can be accessed in subcommands
         if ctx.obj is None:
             ctx.obj = {}
@@ -47,6 +53,27 @@ def main():
     app.add_typer(utils_cli.app, name="utils", help="Utility commands for development environment setup")
 
     return app
+
+
+def _show_version() -> None:
+    """Show versions of all installed bricks."""
+    from gws_cli.utils.brick_cli_service import BrickCliService
+
+    typer.echo("Installed bricks:\n")
+
+    bricks = BrickCliService.list_installed_bricks_with_versions()
+
+    if not bricks:
+        typer.echo("No bricks found.")
+        return
+
+    # Find the longest brick name for formatting
+    max_name_length = max(len(brick.name) for brick in bricks)
+
+    for brick in bricks:
+        version_str = brick.version if brick.version else "unknown"
+        location_str = f" ({brick.location})" if brick.location else ""
+        typer.echo(f"  {brick.name.ljust(max_name_length + 2)}{version_str}{location_str}")
 
 
 def enable_logger(log_level: str = "INFO") -> None:

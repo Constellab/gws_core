@@ -1,10 +1,10 @@
 
-import json
 import subprocess
-from pathlib import Path
 
 import typer
 from gws_cli.generate_brick.generate_brick import generate_brick
+from gws_cli.utils.brick_cli_service import BrickCliService
+from gws_core.brick.brick_service import BrickService
 from typing_extensions import Annotated
 
 app = typer.Typer(help="Generate and manage bricks - reusable components for data processing")
@@ -16,64 +16,43 @@ def generate(name: Annotated[str, typer.Argument(help="Name of the brick to crea
 
 
 @app.command("install-deps", help="Install pip dependencies from a brick's settings.json file")
-def install_deps(settings_path: Annotated[str, typer.Argument(help="Path to the settings.json file")]):
+def install_deps(
+        settings_path: Annotated[str, typer.Argument(help="Path to the settings.json file or brick directory")]):
     """Install pip dependencies from a brick's settings.json file."""
-    settings_file = Path(settings_path)
 
-    if not settings_file.exists():
-        typer.echo(f"Error: settings.json file not found at {settings_path}", err=True)
+    if not BrickService.folder_is_brick(settings_path):
+        typer.echo(f"Error: {settings_path} is not a valid brick directory or settings.json file", err=True)
         raise typer.Exit(1)
 
-    if not settings_file.is_file():
-        typer.echo(f"Error: {settings_path} is not a file", err=True)
+    # Use BrickCliService to read settings
+    settings = BrickCliService.get_brick_settings(settings_path)
+
+    if not settings:
+        typer.echo(f"Error: Could not read settings.json from {settings_path}", err=True)
         raise typer.Exit(1)
 
-    settings_data = _load_settings_file(settings_file)
-    pip_sources = _extract_pip_sources(settings_data)
-
-    if not pip_sources:
+    # Extract pip sources from settings DTO
+    if not settings.environment or not settings.environment.pip:
         typer.echo("No pip dependencies found in settings.json")
         return
 
-    total_packages = _count_total_packages(pip_sources)
+    pip_sources = settings.environment.pip
+
+    total_packages = sum(len(source.packages) if source.packages else 0 for source in pip_sources)
     if total_packages == 0:
         typer.echo("No pip packages found in settings.json")
         return
 
-    typer.echo(f"Found {total_packages} pip packages to install")
-    _install_packages_from_sources(pip_sources)
+    typer.echo(f"Found {total_packages} pip packages to install from {settings.name} brick")
+    _install_packages_from_settings(pip_sources)
     typer.echo("\nDependency installation completed")
 
 
-def _load_settings_file(settings_file: Path) -> dict:
-    """Load and parse the settings.json file."""
-    try:
-        with open(settings_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except json.JSONDecodeError as e:
-        typer.echo(f"Error: Invalid JSON in settings.json: {e}", err=True)
-        raise typer.Exit(1) from e
-    except Exception as e:
-        typer.echo(f"Error reading settings.json: {e}", err=True)
-        raise typer.Exit(1) from e
-
-
-def _extract_pip_sources(settings_data: dict) -> list:
-    """Extract pip sources from settings data."""
-    environment = settings_data.get('environment', {})
-    return environment.get('pip', [])
-
-
-def _count_total_packages(pip_sources: list) -> int:
-    """Count total packages across all sources."""
-    return sum(len(source.get('packages', [])) for source in pip_sources)
-
-
-def _install_packages_from_sources(pip_sources: list) -> None:
-    """Install packages from all pip sources."""
+def _install_packages_from_settings(pip_sources) -> None:
+    """Install packages from all pip sources from BrickSettingsDTO."""
     for source in pip_sources:
-        source_url = source.get('source', 'https://pypi.python.org/simple')
-        packages = source.get('packages', [])
+        source_url = source.source if source.source else 'https://pypi.python.org/simple'
+        packages = source.packages
 
         if not packages:
             continue
@@ -82,18 +61,16 @@ def _install_packages_from_sources(pip_sources: list) -> None:
         _install_packages_batch(packages, source_url)
 
 
-def _install_packages_batch(packages: list, source_url: str) -> None:
+def _install_packages_batch(packages, source_url: str) -> None:
     """Install all packages from a specific source in a single command."""
     package_specs = []
 
     for package in packages:
-        name = package.get('name')
-        if not name:
+        if not package.name:
             typer.echo("Warning: Package with no name found, skipping")
             continue
 
-        version = package.get('version')
-        package_spec = f"{name}=={version}" if version else name
+        package_spec = f"{package.name}=={package.version}" if package.version else package.name
         package_specs.append(package_spec)
 
     if not package_specs:

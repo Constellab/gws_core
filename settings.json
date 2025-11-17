@@ -1,12 +1,7 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "author_email": "admin@gencovery.com",
-    "description": "Kernel brick of Constellab data lab",
     "version": "0.17.7",
-    "app_dir": "./",
-    "app_host": "0.0.0.0",
-    "app_port": 3000,
     "variables": {
         "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },

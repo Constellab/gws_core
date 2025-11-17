@@ -1,22 +1,18 @@
 import json
 import os
 import shutil
-from typing import Dict, List
+from typing import List
 
 import typer
 from gws_cli.ai_code.claude_service import ClaudeService
 from gws_cli.ai_code.copilot_service import CopilotService
-from gws_core.brick.brick_helper import BrickHelper
+from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class DevEnvService:
+class DevEnvCliService:
     """Service for configuring development environment settings."""
-
-    # Constants
-    SOURCE_FOLDER = 'src'
-    SETTING_JSON_FILE = "settings.json"
 
     # Get the directory where the dev_env module is located
     TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template')
@@ -112,32 +108,27 @@ class DevEnvService:
         # Add the brick paths to the extra paths
         existing_paths: List[str] = settings['python.autoComplete.extraPaths']
 
-        # Set all the brick src paths in the extraPaths
-        brick_infos = cls.list_all_brick_paths()
-        new_paths: List[str] = []
+        # remove all bricks paths from existing paths
+        user_folder = Settings.get_user_bricks_folder()
+        system_folder = Settings.get_sys_bricks_folder()
+        existing_paths = [path for path in existing_paths
+                          if not path.startswith(user_folder) and not path.startswith(system_folder)]
 
-        for brick_name, brick_path in brick_infos.items():
-            brick_src_path = os.path.join(brick_path, cls.SOURCE_FOLDER)
-            new_paths.append(brick_src_path)
+        # Set all the brick src paths in the extraPaths
+        brick_folders = BrickService.list_brick_directories(distinct=True)
+
+        for brick_folder in brick_folders:
+            brick_src_path = os.path.join(brick_folder.path, BrickService.SOURCE_FOLDER)
+            existing_paths.append(brick_src_path)
 
             # Add special path for gws_core Reflex
-            if brick_name == 'gws_core':
+            if brick_folder.name == Settings.get_gws_core_brick_name():
                 reflex_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_REFLEX_PATH)
                 if os.path.exists(reflex_path):
-                    new_paths.append(reflex_path)
+                    existing_paths.append(reflex_path)
 
-        # Add the existing path that are not brick path (added manually by the user)
-        for existing_path in existing_paths:
-            found = False
-            for brick_name in brick_infos.keys():
-                if brick_name in existing_path:
-                    found = True
-                    break
-            if not found:
-                new_paths.append(existing_path)
-
-        settings['python.autoComplete.extraPaths'] = new_paths
-        settings['python.analysis.extraPaths'] = new_paths
+        settings['python.autoComplete.extraPaths'] = existing_paths
+        settings['python.analysis.extraPaths'] = existing_paths
 
         try:
             typer.echo('Writing the vscode settings file...')
@@ -168,48 +159,6 @@ class DevEnvService:
 
         FileHelper.create_dir_if_not_exist(destination_dir)
         FileHelper.copy_dir_content_to_dir(src_notebook_dir, destination_dir)
-
-    @classmethod
-    def list_all_brick_paths(cls) -> Dict[str, str]:
-        """Return a list of all the bricks in the user and sys folder.
-
-        Returns:
-            Dict where key = brick_name and value = brick_path
-        """
-
-        bricks = BrickHelper.get_all_bricks()
-        for brick_name, brick_info in bricks.items():
-            print(f"Found brick: {brick_name} at path: {brick_info.path}")
-        user_bricks = cls.get_bricks_in_folder(Settings.get_user_bricks_folder())
-        sys_bricks = cls.get_bricks_in_folder(Settings.get_sys_bricks_folder())
-
-        for brick_name, brick_path in sys_bricks.items():
-            if brick_name not in user_bricks:
-                user_bricks[brick_name] = brick_path
-        return user_bricks
-
-    @classmethod
-    def get_bricks_in_folder(cls, path: str) -> Dict[str, str]:
-        """Return a list of all the bricks in the provided folder."""
-        brick_paths: Dict[str, str] = {}
-
-        if not os.path.exists(path):
-            return brick_paths
-
-        for brick_folder in os.listdir(path):
-            brick_path = os.path.join(path, brick_folder)
-            if cls.folder_is_brick(brick_path):
-                brick_paths[brick_folder] = brick_path
-        return brick_paths
-
-    @classmethod
-    def folder_is_brick(cls, path: str) -> bool:
-        """Return true if the provided folder is a brick.
-
-        If the folder contains a settings.json and a src folder it is a brick.
-        """
-        return os.path.exists(os.path.join(path, cls.SETTING_JSON_FILE)) and \
-            os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))
 
     @classmethod
     def _install_vscode_extensions(cls, extension_file_path: str) -> None:

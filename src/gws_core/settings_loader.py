@@ -8,6 +8,7 @@ import sys
 from typing import Dict, List, Literal, Optional
 
 from gws_core.brick.brick_dto import BrickInfo
+from gws_core.brick.brick_settings import BrickSettings
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_dto import ModuleInfo
 
@@ -104,12 +105,19 @@ class SettingsLoader:
         main_brick_name: str = None
         settings_dir = os.path.dirname(self.main_settings_file_path)
         if BrickService.folder_is_brick(settings_dir):
-            main_brick_name = settings.get("name")
+            # Use BrickSettings to get the name
+            try:
+                brick_settings = BrickSettings.from_file_path(self.main_settings_file_path)
+                main_brick_name = brick_settings.name if brick_settings else None
+            except Exception:
+                # Fallback to raw dict if BrickSettings fails
+                main_brick_name = settings.get("name")
+
             if not main_brick_name:
                 raise Exception(
                     f"Error: missing 'name' in the main settings file '{self.main_settings_file_path}'")
 
-            self.load_brick(settings['name'], parent_name=None)
+            self.load_brick(main_brick_name, parent_name=None)
             return main_brick_name
 
         return None
@@ -148,26 +156,26 @@ class SettingsLoader:
             self._save_brick(brick_module)
             return
 
-        # read settings file
-        file_path = os.path.join(brick_path, "settings.json")
-        with open(file_path, 'r', encoding='utf-8') as fp:
-            try:
-                settings_data: dict = json.load(fp)
-            except Exception as err:
-                Logger.error(
-                    f"Error: cannot parse the the settings file of brick '{brick_name}'")
-                Logger.log_exception_stack_trace(err)
-                brick_module.error = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
-                self._save_brick(brick_module)
-                return
+        # read settings file using BrickSettings
+        settings_file_path = os.path.join(brick_path, BrickSettings.FILE_NAME)
+        brick_settings: BrickSettings
+        try:
+            brick_settings = BrickSettings.from_file_path(settings_file_path)
+        except Exception as err:
+            Logger.error(
+                f"Error: cannot parse the the settings file of brick '{brick_name}'")
+            Logger.log_exception_stack_trace(err)
+            brick_module.error = f"Error: cannot parse the the settings file of brick '{brick_name}'. Error {err}"
+            self._save_brick(brick_module)
+            return
 
         # get brick version
-        if not settings_data.get('version'):
+        if not brick_settings.version:
             brick_module.error = f"Missing version in settings.json for brick {brick_name}. Skipping brick."
             self._save_brick(brick_module)
             return
 
-        brick_module.version = settings_data.get('version')
+        brick_module.version = brick_settings.version
 
         # add src folder to python path
         sys.path.insert(0, os.path.join(brick_path, self.SOURCE_FOLDER_NAME))
@@ -179,19 +187,40 @@ class SettingsLoader:
         self._save_brick(brick_module)
 
         # parse and save variables
-        self._save_brick_variables(
-            brick_name, brick_path, settings_data["variables"])
+        if brick_settings.variables:
+            self._save_brick_variables(
+                brick_name, brick_path, brick_settings.variables)
 
         # loads git packages
-        git_env = settings_data["environment"].get("git", [])
-        self._load_git_dependencies(git_env)
+        if brick_settings.environment and brick_settings.environment.git:
+            self._load_git_dependencies(brick_settings.environment.git)
 
         # loads pip packages
-        pip_env = settings_data["environment"].get("pip", [])
-        self._load_pip_dependencies(pip_env)
+        if brick_settings.environment and brick_settings.environment.pip:
+            # Convert BrickSettingsPipSource objects to dicts for compatibility
+            pip_env = []
+            for pip_source in brick_settings.environment.pip:
+                source_dict = {
+                    "source": pip_source.source,
+                    "packages": []
+                }
+                if pip_source.packages:
+                    for package in pip_source.packages:
+                        source_dict["packages"].append({
+                            "name": package.name,
+                            "version": package.version
+                        })
+                pip_env.append(source_dict)
+            self._load_pip_dependencies(pip_env)
 
-        bricks = settings_data["environment"].get("bricks", [])
-        self._load_brick_dependencies(bricks, parent_name=brick_name)
+        # loads brick dependencies
+        # Note: brick dependencies are loaded from environment.bricks which is not in BrickSettings yet
+        # We need to read the raw settings for this
+        settings_file_path = os.path.join(brick_path, "settings.json")
+        with open(settings_file_path, 'r', encoding='utf-8') as fp:
+            settings_data = json.load(fp)
+            bricks = settings_data.get("environment", {}).get("bricks", [])
+            self._load_brick_dependencies(bricks, parent_name=brick_name)
 
     def _read_settings_file(self, setting_file_path) -> dict:
         file_path = os.path.join(setting_file_path)

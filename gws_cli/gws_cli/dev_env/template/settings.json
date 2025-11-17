@@ -27,6 +27,12 @@
   "pylint.args": [
     "--rcfile=${workspaceFolder}/.pylintrc"
   ],
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.indexing": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.importFormat": "absolute",
   "python.autoComplete.extraPaths": [],
   "python.analysis.extraPaths": []
 }

@@ -4,9 +4,8 @@ import os
 import sys
 from typing import List, Literal, Optional
 
-from typing_extensions import TypedDict
-
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
+from typing_extensions import TypedDict
 
 
 class BrickVersion(BaseModelDTO):
@@ -62,3 +61,11 @@ class BrickDTO(ModelDTO):
     repo_commit: Optional[str] = None
     parent_name: Optional[str] = None
     messages: List[BrickMessageDTO]
+
+
+class BrickDirectoryDTO(BaseModelDTO):
+    """DTO representing a brick directory"""
+    name: str
+    path: str
+    # Either the brick is in the system folder or in the user folder
+    folder: Literal['system', 'user']

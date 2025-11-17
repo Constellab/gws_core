@@ -26,4 +26,4 @@ extension-pkg-whitelist=pydantic
 
 
 [FORMAT]
-max-line-length=200
+max-line-length=140

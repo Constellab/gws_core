@@ -6,8 +6,10 @@ import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
-from gws_core.brick.brick_dto import BrickInfo, BrickMessageStatus
+from gws_core.brick.brick_dto import (BrickDirectoryDTO, BrickInfo,
+                                      BrickMessageStatus)
 from gws_core.brick.brick_model import BrickModel
+from gws_core.brick.brick_settings import BrickSettings
 from gws_core.core.exception.exceptions.bad_request_exception import \
     BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -29,7 +31,6 @@ class WaitingMessage(BaseModelDTO):
 
 class BrickService():
 
-    SETTINGS_JSON_FILE = "settings.json"
     SOURCE_FOLDER = "src"
 
     _waiting_messages: List[WaitingMessage] = []
@@ -152,6 +153,62 @@ class BrickService():
         return brick.get_version()
 
     @classmethod
+    def list_brick_directories(cls, distinct: bool = False) -> List[BrickDirectoryDTO]:
+        """List all brick directories from both user and system brick folders.
+
+        Returns a list of BrickDirectoryDTO containing brick name and path.
+        Only returns folders that are valid bricks (contain settings.json and src folder).
+
+        :param distinct: If True, returns only one entry per brick name.
+                        User folder bricks take priority over system folder bricks.
+        :type distinct: bool
+        :return: List of brick directories
+        :rtype: List[BrickDirectoryDTO]
+        """
+        brick_directories: List[BrickDirectoryDTO] = []
+        seen_brick_names = set()
+
+        # Get both user and system brick folders
+        user_bricks_folder = Settings.get_user_bricks_folder()
+        sys_bricks_folder = Settings.get_sys_bricks_folder()
+
+        # Check user bricks folder first (priority)
+        if os.path.exists(user_bricks_folder) and os.path.isdir(user_bricks_folder):
+            for item in os.listdir(user_bricks_folder):
+                item_path = os.path.join(user_bricks_folder, item)
+                if os.path.isdir(item_path) and cls.folder_is_brick(item_path):
+                    brick_directories.append(BrickDirectoryDTO(name=item, path=item_path, folder='user'))
+                    if distinct:
+                        seen_brick_names.add(item)
+
+        # Check system bricks folder
+        if os.path.exists(sys_bricks_folder) and os.path.isdir(sys_bricks_folder):
+            for item in os.listdir(sys_bricks_folder):
+                item_path = os.path.join(sys_bricks_folder, item)
+                if os.path.isdir(item_path) and cls.folder_is_brick(item_path):
+                    # If distinct mode, skip bricks already seen in user folder
+                    if distinct and item in seen_brick_names:
+                        continue
+                    brick_directories.append(BrickDirectoryDTO(name=item, path=item_path, folder='system'))
+
+        # Sort by name for consistent ordering
+        brick_directories.sort(key=lambda x: x.name)
+
+        return brick_directories
+
+    @classmethod
+    def read_brick_settings(cls, brick_path: str) -> Optional[BrickSettings]:
+        """Read and parse the settings.json file from a brick folder path.
+
+        :param brick_path: Path to the brick folder
+        :type brick_path: str
+        :return: BrickSettingsDTO with all settings, or None if file doesn't exist or can't be parsed
+        :rtype: Optional[BrickSettingsDTO]
+        """
+        settings_file_path = os.path.join(brick_path, BrickSettings.FILE_NAME)
+        return BrickSettings.from_file_path(settings_file_path)
+
+    @classmethod
     def import_all_bricks_in_python(cls) -> None:
         bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
@@ -205,7 +262,7 @@ class BrickService():
         """return true if the provided folder is a brick.
         If the folder contains a settings.json and a src folder it is a brick
         """
-        return os.path.exists(os.path.join(path, cls.SETTINGS_JSON_FILE)) and \
+        return os.path.exists(os.path.join(path, BrickSettings.FILE_NAME)) and \
             os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))
 
     @classmethod
