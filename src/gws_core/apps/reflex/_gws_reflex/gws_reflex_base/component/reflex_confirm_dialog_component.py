@@ -15,6 +15,9 @@ class ConfirmDialogState(rx.State):
     IMPORTANT: The `open_dialog` method must be called from another state (backend), not directly
     from the frontend. This ensures proper state management and action execution.
 
+    No need to declare the dialog component in your page/component, as it is imported in the main_component
+    to be globally available.
+
     Usage Example:
         ```python
         # In your state class

@@ -222,19 +222,20 @@ def form_dialog_component(
         ```
     """
 
-    # Convert title and description to components if they are strings
+    # Convert title to component if it is a string
     title_component = rx.text(title) if isinstance(title, str) else title
-    description_component = rx.text(
-        description, size="2", margin_bottom="1rem") if isinstance(
-        description, str) else description
 
     return rx.dialog.root(
         rx.dialog.content(
             rx.vstack(
                 rx.dialog.title(title_component),
                 rx.cond(
-                    description_component,
-                    rx.dialog.description(description_component),
+                    description,
+                    rx.dialog.description(
+                        description,
+                        size="2",
+                        margin_bottom="1rem"
+                    ),
                 ),
                 rx.form(
                     form_content,
