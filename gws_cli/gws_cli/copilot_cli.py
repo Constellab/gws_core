@@ -1,4 +1,5 @@
 import typer
+
 from gws_cli.ai_code.copilot_service import CopilotService
 
 app = typer.Typer(help="GitHub Copilot management commands")
@@ -13,7 +14,7 @@ def _manage_instructions(pull: bool, list_commands: bool):
         if exit_code != 0:
             raise typer.Exit(exit_code)
     elif list_commands:
-        exit_code = service.list_commands()
+        exit_code = service.print_commands()
         if exit_code != 0:
             raise typer.Exit(exit_code)
     else:

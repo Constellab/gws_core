@@ -2,7 +2,7 @@
 import os
 import tempfile
 import time
-from typing import Dict, Literal, Optional, cast
+from typing import Dict, Optional, cast
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.exception.exceptions.base_http_exception import \

@@ -27,13 +27,12 @@
   "pylint.args": [
     "--rcfile=${workspaceFolder}/.pylintrc"
   ],
-  "mypy-type-checker.path": [
-    "/home/labuser/.local/bin/mypy"
-  ],
-  "mypy-type-checker.importStrategy": "fromEnvironment",
-  "mypy-type-checker.args": [
-    "--config-file=${workspaceFolder}/.mypy.ini"
-  ],
+  "python.languageServer": "Pylance",
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.indexing": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.importFormat": "absolute",
   "python.autoComplete.extraPaths": [
     "/lab/user/bricks/gws_core/src/gws_core/apps/reflex/_gws_reflex"
   ],

@@ -1,4 +1,5 @@
 import typer
+
 from gws_cli.ai_code.claude_service import ClaudeService
 
 app = typer.Typer(help="Claude Code management commands")
@@ -42,7 +43,7 @@ def commands(
         if exit_code != 0:
             raise typer.Exit(exit_code)
     elif list_commands:
-        exit_code = service.list_commands()
+        exit_code = service.print_commands()
         if exit_code != 0:
             raise typer.Exit(exit_code)
     else:

@@ -1,0 +1,32 @@
+{
+  "workbench.editor.enablePreview": false,
+  "git.ignoreMissingGitWarning": true,
+  "diffEditor.ignoreTrimWhitespace": false,
+  "workbench.editor.revealIfOpen": true,
+  "editor.minimap.enabled": false,
+  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "files.trimTrailingWhitespace": true,
+    "editor.defaultFormatter": "ms-python.autopep8"
+  },
+  "autopep8.path": [
+    "/home/labuser/.local/bin/autopep8"
+  ],
+  "autopep8.args": [
+    "--max-line-length",
+    "120",
+    "--experimental"
+  ],
+  "pylint.path": [
+    "/home/labuser/.local/bin/pylint"
+  ],
+  "pylint.args": [
+    "--rcfile=${workspaceFolder}/.pylintrc"
+  ],
+  "python.autoComplete.extraPaths": [],
+  "python.analysis.extraPaths": []
+}

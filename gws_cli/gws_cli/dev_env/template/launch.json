@@ -1,0 +1,115 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    // configuration to start the gws
+    {
+      "args": [
+        "server",
+        "run"
+      ],
+      "name": "Start and debug dev server",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    },
+    // configuration to start the gws with debug log
+    {
+      "args": [
+        "server",
+        "run",
+        "--log-level=DEBUG"
+      ],
+      "name": "Starts and debug dev server - DEBUG log",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    },
+    // config to run test on GWS
+    {
+      "args": [
+        "server",
+        "test",
+        "all",
+        "--brick-name",
+        "${input:brickNameAllTest}"
+      ],
+      "name": "Test and debug all files",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    },
+    // config to run test on GWS
+    {
+      "args": [
+        "server",
+        "test",
+        "${input:testFileName}",
+        "--brick-name",
+        "${input:brickName}"
+      ],
+      "name": "Test and debug a single file",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "args": [
+        "streamlit",
+        "run",
+        "${input:streamlitConfigFilePath}",
+        "--enable-debugger"
+      ],
+      "name": "Streamlit run and debug",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "args": [
+        "reflex",
+        "run",
+        "${input:reflexConfigFilePath}"
+      ],
+      "name": "Reflex run",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "/lab/.sys/bricks/gws_core/gws_cli/gws_cli/main_cli.py",
+      "console": "integratedTerminal"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "brickNameAllTest",
+      "type": "promptString",
+      "description": "Name of the brick to test. It will run all the test file of this brick"
+    },
+    {
+      "id": "testFileName",
+      "type": "promptString",
+      "description": "Name of the test files to run. It supports multiple filenames separated with space"
+    },
+    {
+      "id": "brickName",
+      "type": "promptString",
+      "description": "Name of the brick that contains the tests file."
+    },
+    {
+      "id": "streamlitConfigFilePath",
+      "type": "promptString",
+      "description": "Path to the streamlit dev config file"
+    },
+    {
+      "id": "reflexConfigFilePath",
+      "type": "promptString",
+      "description": "Path to the reflex dev config file"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 
 @dataclass
@@ -10,6 +10,14 @@ class CommandFrontmatter:
     filename: str
     description: str
     argument_hint: str
+
+
+@dataclass
+class CommandInfo:
+    """Information about an installed command"""
+    name: str
+    description: Optional[str]
+    file_path: Path
 
 
 class AICodeService(ABC):
@@ -98,6 +106,14 @@ class AICodeService(ABC):
             Path to the main instructions file (e.g., ~/CLAUDE.md or ~/.github/copilot-instructions.md)
         """
 
+    @abstractmethod
+    def update(self) -> int:
+        """Update AI tool configuration (commands and instructions)
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+
     def pull_commands_to_global(self) -> int:
         """Pull commands from source to global AI tool commands folder
 
@@ -161,32 +177,22 @@ class AICodeService(ABC):
             print(f"Error pulling commands: {e}")
             return 1
 
-    def list_commands(self) -> int:
-        """List all available GWS commands for the AI tool
+    def get_commands_list(self) -> List[CommandInfo]:
+        """Get a structured list of all available GWS commands for the AI tool
 
         Returns:
-            int: Exit code (0 for success, 1 for failure)
+            List[CommandInfo]: List of command information objects
         """
+        commands = []
         try:
             target_dir = self.get_target_dir()
 
-            print("\n" + "=" * 70)
-            print(f"Available GWS commands for {self.ai_tool_name}:")
-            print("=" * 70)
-
             if not target_dir.exists():
-                print(f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands.")
-                return 0
+                return commands
 
             # Find all GWS command files using the pattern from child class
             file_pattern = self.get_file_pattern()
             gws_files = sorted(target_dir.glob(file_pattern))
-
-            if not gws_files:
-                print(f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands.")
-                return 0
-
-            print(f"\nLocation: {target_dir}\n")
 
             for gws_file in gws_files:
                 # Extract command name (remove 'gws-' prefix and any extension)
@@ -212,10 +218,46 @@ class AICodeService(ABC):
                 except Exception:
                     pass
 
-                # Print command info
-                print(f"  /{command_name}")
-                if description:
-                    print(f"    {description}")
+                commands.append(CommandInfo(
+                    name=command_name,
+                    description=description,
+                    file_path=gws_file
+                ))
+
+        except Exception:
+            pass
+
+        return commands
+
+    def print_commands(self) -> int:
+        """Print all available GWS commands for the AI tool in a user-friendly format
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        try:
+            target_dir = self.get_target_dir()
+
+            print("\n" + "=" * 70)
+            print(f"Available GWS commands for {self.ai_tool_name}:")
+            print("=" * 70)
+
+            if not target_dir.exists():
+                print(f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands.")
+                return 0
+
+            commands = self.get_commands_list()
+
+            if not commands:
+                print(f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands.")
+                return 0
+
+            print(f"\nLocation: {target_dir}\n")
+
+            for command in commands:
+                print(f"  /{command.name}")
+                if command.description:
+                    print(f"    {command.description}")
                 print()
 
             print("Usage: /gws-<command-name> [your task description]")
@@ -225,8 +267,9 @@ class AICodeService(ABC):
             return 0
 
         except Exception as e:
-            print(f"Error listing commands: {e}")
+            print(f"Error printing commands: {e}")
             return 1
+
 
     def generate_main_instructions(self) -> int:
         """Generate main instructions file from template
@@ -293,3 +336,33 @@ class AICodeService(ABC):
         except Exception as e:
             print(f"Error generating main instructions: {e}")
             return 1
+
+    def update_if_configured(self) -> None:
+        """Update AI tool configuration only if it is already configured
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        if not self.is_configured():
+            return
+
+        print(f"{self.ai_tool_name} is configured. Updating configuration...")
+        exit_code = self.update()
+        if exit_code != 0:
+            print(f"Error updating {self.ai_tool_name} configuration.")
+        else:
+            print(f"{self.ai_tool_name} configuration updated successfully.")
+
+    def is_configured(self) -> bool:
+        """Check if the AI tool is configured (i.e., if the target commands directory exists)
+
+        Returns:
+            bool: True if configured, False otherwise
+        """
+        target_dir = self.get_target_dir()
+
+        if not target_dir.exists():
+            return False
+
+        commands = self.get_commands_list()
+        return len(commands) > 0

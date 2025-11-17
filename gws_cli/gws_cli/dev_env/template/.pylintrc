@@ -1,0 +1,29 @@
+# File to describe the pylint rules
+
+[MASTER]
+disable=
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+
+    no-else-raise,
+    no-else-return,
+
+    too-many-arguments,
+    too-many-instance-attributes,
+    too-many-locals,
+    too-many-public-methods,
+    too-few-public-methods,
+
+    bare-except,
+    raise-missing-from,
+    broad-exception-raised,
+    broad-exception-caught
+
+# White list pydantic to prevent warnings on imports 
+# https://github.com/samuelcolvin/pydantic/issues/1961#issuecomment-759522422
+extension-pkg-whitelist=pydantic
+
+
+[FORMAT]
+max-line-length=200

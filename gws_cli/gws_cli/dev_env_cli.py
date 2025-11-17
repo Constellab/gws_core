@@ -1,6 +1,8 @@
 import typer
 from gws_core.manage import AppManager
 
+from .dev_env.dev_env_service import DevEnvService
+
 app = typer.Typer(help="Manage development environment data and settings")
 
 
@@ -15,3 +17,9 @@ def reset_dev_env():
 
     AppManager.reset_environment()
     typer.echo("Development environment has been reset successfully.")
+
+
+@app.command("configure", help="Configure VsCode and AI tools for development environment")
+def configure():
+    """Configure VS Code with recommended settings, extensions, and Python paths for all bricks."""
+    DevEnvService.configure_dev_env()

@@ -12,6 +12,6 @@ echo "Cli installed successfully"
 
 # Update Claude Code configuration if in dev mode
 if [ "$LAB_MODE" = "dev" ]; then
-    echo "LAB_MODE is dev, updating Claude Code configuration..."
-    gws claude update
+    echo "LAB_MODE is dev, configuring dev environment..."
+    gws dev-env configure
 fi
