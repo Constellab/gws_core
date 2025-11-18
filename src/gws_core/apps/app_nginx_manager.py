@@ -57,6 +57,13 @@ http {
     # Fix for long server names
     server_names_hash_bucket_size 128;
 
+    # Default server block to handle unmatched requests
+    server {
+		listen 8510 default_server;
+		server_name _;
+		return 444;  # Close connection without response
+	}
+
     # This will be replaced with the actual server blocks
     [SERVERS]
 

@@ -20,7 +20,7 @@ class AppNginxServiceInfo():
 
 
 class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
-    """Service to redirect requests to a backend app"""
+    """Service to redirect requests to a backend app or dev frontend app"""
 
     destination_port: int
 
@@ -41,7 +41,9 @@ server {{
 
     location / {{
         proxy_pass http://localhost:{self.destination_port};
-        proxy_set_header Host $host;
+        # Use localhost as new host to avoid error on frontend apps when
+        # running in dev mode
+        proxy_set_header Host localhost:{self.destination_port};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
@@ -61,7 +63,7 @@ server {{
 
 
 class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
-    """Service to serve a reflex front app"""
+    """Service to serve a built reflex front app"""
 
     front_folder_path: str
 
