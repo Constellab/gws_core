@@ -2,11 +2,10 @@
 
 from typing import TYPE_CHECKING, List, Optional, final
 
-from peewee import (BigIntegerField, BooleanField, CharField, Expression,
-                    ForeignKeyField)
-
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
+from peewee import (BigIntegerField, BooleanField, CharField, Expression,
+                    ForeignKeyField)
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -59,6 +58,13 @@ class FSNodeModel(Model):
     def get_resource_model(self) -> 'ResourceModel':
         from gws_core.resource.resource_model import ResourceModel
         return ResourceModel.get(ResourceModel.fs_node_model == self)
+
+    def get_resource_addional_data(self) -> dict:
+        return {
+            'path': self.path,
+            'file_store_id': self.file_store_id,
+            'is_symbolic_link': self.is_symbolic_link,
+        }
 
     def to_dto(self) -> FsNodeModelDTO:
         return FsNodeModelDTO(

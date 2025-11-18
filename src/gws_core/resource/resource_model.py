@@ -39,7 +39,7 @@ from ..model.typing import Typing
 from ..model.typing_manager import TypingManager
 from ..resource.kv_store import KVStore
 from ..resource.resource import Resource
-from .r_field.r_field import BaseRField
+from .r_field.r_field import BaseRField, RFieldStorage
 from .resource_factory import ResourceFactory
 
 if TYPE_CHECKING:
@@ -295,15 +295,25 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         Create the Resource object from the resource_typing_name
         """
 
+        kv_store = self.get_kv_store()
+
+        if kv_store is None:
+            raise Exception("Cannot create resource because its kv store is missing")
+
+        additional_data = self.fs_node_model.get_resource_addional_data() if self.fs_node_model else {}
+
         return ResourceFactory.create_resource(self.get_and_check_resource_type(),
-                                               kv_store=self.get_kv_store(), data=self.data,
-                                               resource_model_id=self.id, name=self.name,
-                                               style=self.style)
+                                               kv_store=kv_store,
+                                               data=self.data,
+                                               resource_model_id=self.id,
+                                               name=self.name,
+                                               style=self.style,
+                                               additional_data=additional_data)
 
     @classmethod
     def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
                       scenario: Optional[Scenario] = None, task_model: Optional[TaskModel] = None,
-                      port_name: str = None, flagged: bool = None) -> ResourceModel:
+                      port_name: str | None = None, flagged: bool | None = None) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get ( avoid using same instance)
@@ -363,7 +373,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             resource_model.style = resource.get_default_style()
 
         # synchronize the model fields with the resource fields
-        resource_model.receive_fields_from_resource(resource)
+        resource_model._receive_fields_from_resource(resource)
 
         # set the resource model id in the resource
         # it can be useful for the resource to have access to the model id
@@ -451,7 +461,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.resource_typing_name = typing_name
         self.brick_version = typing.brick_version
 
-    def receive_fields_from_resource(self, resource: Resource):
+    def _receive_fields_from_resource(self, resource: Resource):
         """for each BaseRField of the resource, store its value to the data or kvstore
 
         :param resource: [description]
@@ -470,22 +480,16 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
             # specific case for the FileRField
             if isinstance(r_field, FileRField):
-                # generate a new file path inside the kv store directory
-                file_path = kv_store.generate_new_file()
-
-                # dump the resource value into the file
-                r_field.dump_to_file(r_field_value, str(file_path))
-                # store the file name (not absolute path) in the kv_store
-                kv_store[key] = FileHelper.get_name(file_path)
+                kv_store.set_file(key, r_field, r_field_value)
                 continue
 
             value: Any = r_field.serialize(r_field_value)
-            # If the property is searchable, store it in the DB
-            if r_field.searchable:
+            # Store the property in the correct place
+            if r_field.storage == RFieldStorage.DATABASE:
                 self.data[key] = value
 
             # Otherwise, store it in the kvstore
-            else:
+            elif r_field.storage == RFieldStorage.KV_STORE:
                 kv_store[key] = value
 
     def _get_resource_r_fields(self, resource_type: Type[Resource]) -> Dict[str, BaseRField]:
@@ -512,7 +516,12 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             return None
 
         # Create the KVStore from the path
-        kv_store: KVStore = KVStore(self.kv_store_path)
+        kv_store: KVStore = KVStore(str(self.kv_store_path))
+
+        if self.fs_node_model:
+            kv_store['path'] = self.fs_node_model.path
+            kv_store['file_store_id'] = self.fs_node_model.file_store_id
+            kv_store['is_symbolic_link'] = self.fs_node_model.is_symbolic_link
 
         # Lock the kvstore so the file can't be updated
         kv_store.lock(KVStore.get_full_file_path(
@@ -539,7 +548,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def to_dto(self) -> ResourceModelDTO:
 
-        resource_type_ref: TypingRefDTO = None
+        resource_type_ref: TypingRefDTO | None = None
         is_downloadable: Optional[bool] = False
         type_status: TypingStatus = TypingStatus.OK
         has_children: bool = False

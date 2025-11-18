@@ -7,7 +7,7 @@ class TagListField():
     """Class similare to a RField to lazy load the tags of a resource
     """
 
-    def load_tags(self, resource_model_id: str) -> TagList:
+    def load_tags(self, resource_model_id: str | None = None) -> TagList:
         from gws_core.tag.entity_tag_list import EntityTagList
         from gws_core.tag.tag_entity_type import TagEntityType
 

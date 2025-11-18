@@ -6,9 +6,10 @@ from pathlib import Path
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
 from time import time
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.impl.file.file_r_field import FileRField
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.utils.settings import Settings
@@ -83,6 +84,27 @@ class KVStore(Dict[str, Any]):
         self._create_dir()
         file_path: str = os.path.join(self.full_file_dir, StringHelper.generate_uuid())
         return FileHelper.create_empty_file_if_not_exist(file_path)
+
+    def set_file(self, key: str, file_r_field: FileRField, r_field_value: Any) -> None:
+        # generate a new file path inside the kv store directory
+        file_path = self.generate_new_file()
+
+        # dump the resource value into the file
+        file_r_field.dump_to_file(r_field_value, str(file_path))
+        # store the file name (not absolute path) in the kv_store
+        self[key] = FileHelper.get_name(file_path)
+
+    def get_key_file_path(self, key: str) -> str:
+        """ Get the file path of a specific key in the kv store
+        Use when the generate_new_file was used to store a file
+
+        :param key: The key to get the file path
+        :type key: str
+        :return: The file path of the key
+        :rtype: str
+        """
+        file_name = cast(str, self.get(key))
+        return os.path.join(self.full_file_dir, file_name)
 
     def get(self, key, default=None):
         self._check_key(key)

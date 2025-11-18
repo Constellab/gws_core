@@ -1,8 +1,9 @@
 
 
+import warnings
 from typing import final
 
-from .r_field.r_field import BaseRField
+from .r_field.r_field import BaseRField, RFieldStorage
 from .resource import Resource
 from .resource_model import ResourceModel
 
@@ -18,10 +19,20 @@ class ResourceRField(BaseRField):
     //!\\ WARNING: the linked resource MUST be a resource provided as input of the task that generate
     the resource marked with ResourceRField. Otherwise there will be an error before saving the generated resource because it can
     break the tracability of resources
+
+    .. deprecated::
+        ResourceRField is deprecated and will be removed in a future version.
+        Please consider alternative approaches for resource linking.
     """
 
     def __init__(self) -> None:
-        super().__init__(searchable=True, default_value=None, include_in_dict_view=False)
+        warnings.warn(
+            "ResourceRField is deprecated and will be removed in a future version. "
+            "Please dfine a sub class of ResourceSet instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        super().__init__(default_value=None, include_in_dict_view=False, storage=RFieldStorage.DATABASE)
 
     def deserialize(self, r_field_value: str) -> Resource:
         if r_field_value is None:

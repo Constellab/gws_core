@@ -6,6 +6,7 @@ from pathlib import PosixPath
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
+from gws_core.resource.r_field.r_field import RFieldStorage
 
 from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
@@ -22,12 +23,15 @@ class FSNode(Resource):
     provided when creating the resource
     """
 
-    path: str = StrRField(searchable=True)
-    file_store_id: str = StrRField(searchable=True)
+    # Using None storage as thoses field are special and stored in
+    # the fs_node_model linked to the resource model
+    # There are provided to the resource thank to get_resource_addional_data
+    path: str = StrRField(storage=RFieldStorage.NONE)
+    file_store_id: str = StrRField(storage=RFieldStorage.NONE)
 
     # when true, the node is considered as a symoblic link.
     # The node is not delete on resource deletion
-    is_symbolic_link: bool = BoolRField(default_value=False)
+    is_symbolic_link: bool = BoolRField(default_value=False, storage=RFieldStorage.NONE)
 
     def __init__(self, path: str = ""):
         """ Create a new FSNode

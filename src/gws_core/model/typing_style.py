@@ -47,10 +47,10 @@ class TypingStyle(BaseModelDTO):
             self.icon_color = style.icon_color
 
     def clone_with_overrides(self,
-                             icon_technical_name: str = None,
-                             icon_type: TypingIconType = None,
-                             background_color: str = None,
-                             icon_color: TypingIconColor = None) -> 'TypingStyle':
+                             icon_technical_name: str | None = None,
+                             icon_type: TypingIconType | None = None,
+                             background_color: str | None = None,
+                             icon_color: TypingIconColor | None = None) -> 'TypingStyle':
         """Method to clone the style and override some values
 
         :param icon_technical_name: technical name of the icon if provided, the icon_type must also be provided, defaults to None

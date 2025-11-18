@@ -19,7 +19,7 @@ class TestResourceFields(Resource):
     age: int = IntRField()
     position: List[float] = ListRField()
 
-    long_str = StrRField(searchable=False)
+    long_str = StrRField()
 
 
 @resource_decorator(unique_name="TestResourceFieldsFile")
@@ -28,7 +28,7 @@ class TestResourceFieldsFile(File):
     age: int = IntRField()
     position: List[float] = ListRField()
 
-    long_str = StrRField(searchable=False)
+    long_str = StrRField()
 
 
 # test_resource

@@ -2,6 +2,7 @@
 
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import StrRField
+from gws_core.resource.r_field.r_field import RFieldStorage
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -15,7 +16,7 @@ from .text_view import TextView
                     style=TypingStyle.material_icon("text_snippet", background_color="#e4debe"))
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
-    _data: str = StrRField(searchable=False)
+    _data: str = StrRField(storage=RFieldStorage.KV_STORE)
 
     def __init__(self, data: str = None):
         super().__init__()

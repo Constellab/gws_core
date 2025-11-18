@@ -2,7 +2,7 @@
 
 import os
 from copy import deepcopy
-from typing import Dict, Optional, TypeVar, final
+from typing import Dict, Optional, TypeVar, cast, final
 
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.impl.file.file_r_field import FileRField
@@ -14,6 +14,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 from gws_core.tag.tag_list import TagList
 from gws_core.tag.tag_list_field import TagListField
+from regex import T
 
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import \
@@ -22,7 +23,7 @@ from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
 from .r_field.primitive_r_field import UUIDRField
-from .r_field.r_field import BaseRField
+from .r_field.r_field import BaseRField, RFieldStorage
 from .r_field.serializable_r_field import SerializableRField
 from .view.view_decorator import view
 
@@ -36,24 +37,24 @@ ResourceType = TypeVar('ResourceType', bound='Resource')
                     style=TypingStyle.default_resource())
 class Resource(BaseTyping):
 
-    uid: str = UUIDRField(searchable=True)
-    name: str
-    technical_info: TechnicalInfoDict = SerializableRField(TechnicalInfoDict)
+    uid: str = UUIDRField(storage=RFieldStorage.DATABASE)
+    name: str | None
+    technical_info = cast(TechnicalInfoDict, SerializableRField(TechnicalInfoDict))
 
     # set this during the run of a task to apply a dynamic style to the resource
     # This overrides the style set byt the resource_decorator
-    style: TypingStyle
+    style: TypingStyle | None
 
     # provide tags to this attribute to save them on resource generation
-    tags: TagList = TagListField()
+    tags: TagList = cast(TagList, TagListField())
 
     flagged: bool
 
     # Set by the resource parent on creation
     # //!\\ Do not modify theses values
-    __model_id__: str = None
-    __kv_store__: KVStore = None
-    __origin__: ResourceOrigin = None
+    __model_id__: str | None = None
+    __kv_store__: KVStore | None = None
+    __origin__: ResourceOrigin | None = None
 
     # Provided at the Class level automatically by the @ResourceDecorator
     # //!\\ Do not modify theses values
@@ -93,7 +94,7 @@ class Resource(BaseTyping):
         """
         properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
 
-        json_: dict = {}
+        json_ = {}
         for key, r_field in properties.items():
             if r_field.include_in_dict_view:
                 json_[key] = r_field.serialize(getattr(self, key))
@@ -183,13 +184,16 @@ class Resource(BaseTyping):
         :return: The cloned resource
         :rtype: Resource
         """
-        clone: Resource = type(self)()
-        clone.__set_model_id__(self.get_model_id())
+        clone: ResourceType = type(self)()
+
+        model_id = self.get_model_id()
+        if model_id:
+            clone.__set_model_id__(model_id)
         # TODO copy other attributes (like tags, style, etc)
 
         # get the r_fields of the resource
         r_fields: Dict[str, BaseRField] = self.__get_resource_r_fields__()
-        for fieldname, r_field in r_fields.items():
+        for fieldname, _ in r_fields.items():
             value = getattr(self, fieldname)
             setattr(clone, fieldname, deepcopy(value))
 
@@ -215,9 +219,11 @@ class Resource(BaseTyping):
         attr = super().__getattribute__(name)
 
         if isinstance(attr, BaseRField):
+            if not self.__kv_store__:
+                return attr
             if name in self.__kv_store__:
                 if isinstance(attr, FileRField):
-                    value = attr.deserialize(os.path.join(self.__kv_store__.full_file_dir, self.__kv_store__.get(name)))
+                    value = attr.deserialize(self.__kv_store__.get_key_file_path(name))
                 else:
                     value = attr.deserialize(self.__kv_store__.get(name))
                 setattr(self, name, value)
@@ -236,7 +242,7 @@ class Resource(BaseTyping):
         return attr
 
     @final
-    def get_model_id(self) -> str:
+    def get_model_id(self) -> str | None:
         """Get the id of the resource model in the database.
         It is provided by the system for input resources of a task.
 
@@ -248,10 +254,10 @@ class Resource(BaseTyping):
     ############################################### CLASS METHODS ####################################################
 
     @classmethod
-    def copy_style(cls, icon_technical_name: str = None,
-                   icon_type: TypingIconType = None,
-                   background_color: str = None,
-                   icon_color: TypingIconColor = None) -> TypingStyle:
+    def copy_style(cls, icon_technical_name: str | None = None,
+                   icon_type: TypingIconType | None = None,
+                   background_color: str | None = None,
+                   icon_color: TypingIconColor | None = None) -> TypingStyle:
         """Copy the style of the resource with the possibility to override some properties.
         Useful when settings the style for a task based on the resource style.
 

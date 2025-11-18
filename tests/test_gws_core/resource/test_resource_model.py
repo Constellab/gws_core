@@ -8,6 +8,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.search_builder import (SearchFilterCriteria,
                                                   SearchOperator, SearchParams)
 from gws_core.impl.robot.robot_resource import Robot
+from gws_core.resource.r_field.r_field import RFieldStorage
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.test.data_provider import DataProvider
@@ -16,7 +17,7 @@ from gws_core.test.data_provider import DataProvider
 @resource_decorator(unique_name="ForSearch")
 class ForSearch(Resource):
 
-    searchable_text: str = RField(searchable=True)
+    searchable_text: str = RField(storage=RFieldStorage.KV_STORE)
 
     @classmethod
     def create(cls, text) -> 'ForSearch':

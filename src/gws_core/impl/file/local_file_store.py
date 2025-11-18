@@ -159,11 +159,12 @@ class LocalFileStore(FileStore):
         return os.path.join(self.path, node_name)
 
     def node_path_exists(self, node_path: str) -> bool:
-        # clean the file path
+        # clean the file path and normalize (removes trailing slashes)
         node_path = str(Path(node_path))
+        store_path = str(Path(self.path))
 
-        # Check that the file path is in the file store
-        if not node_path.startswith(self.path):
+        # Check that the file path is a subpath of the file store path, but not the path itself
+        if not node_path.startswith(store_path) or node_path == store_path:
             return False
 
         return os.path.exists(node_path)
