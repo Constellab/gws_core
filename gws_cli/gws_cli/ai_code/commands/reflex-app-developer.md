@@ -48,11 +48,61 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Optimize rendering performance by minimizing unnecessary state updates
 - Use Reflex's built-in styling system effectively
 - Set state attributes to public only when they are accessed from the frontend (UI).
+
+### Specific rules
 - In a function @rx.event(background=True), always wrap statements that update state and `self.get_state` in a `async with state:` block.
-- for menu button use icon 'ellipsis-vertical'
+- Mark the method with `@rx.event` only if it is called from the frontend. If it is called only from the backend, do not use the decorator.
+- From the backend, never call a method decorated with `@rx.event`, instead call a private method without the decorator.
+- For menu button use icon 'ellipsis-vertical'
+- To handle the event calls from the frontend. 
+   - If you don't need to pass a custom argument, use `on_click=MyState.my_event` instead of `on_click=lambda: MyState.my_event()`
+   - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
+- Do not use state_auto_setters, it is deprecated. Define setters explicitly for state attributes that need them.
 
 ### GWS Core custom Reflex Components
 - Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
+
+### Main State Classes
+
+Any state can access `ReflexMainState` (from `gws_reflex_main`), which provides core functionality for resource, parameter and user management. 
+
+To retrieve the main state use `await self.get_state(ReflexMainState)`.
+
+```python
+from gws_reflex_main.states.reflex_main_state import ReflexMainState
+import reflex as rx
+
+class MainState(rx.State):
+    ...
+
+    @rx.event
+    async def some_event(self):
+        main_state: ReflexMainState = await self.get_state(ReflexMainState)
+        resources = await main_state.get_resources()
+        my_param = await main_state.get_param("my_param")
+        ... 
+```
+
+**Key Public Methods:**
+
+**Resource Management:**
+- `async get_resources() -> List[Resource]`: Returns the input resources configured for the app
+- `async get_sources_ids() -> List[str]`: Returns the input resource IDs configured for the app
+
+**User Management:**
+- `async get_current_user() -> Optional[User]`: Returns the current authenticated user (safe for `@rx.var`)
+- `async get_and_check_current_user() -> User`: Returns current user or raises exception if not authenticated (use in `@rx.event` only, not `@rx.var`)
+- `async authenticate_user() -> ReflexAuthUser`: Use in `with self.authenticate_user() as user:` block to get authenticated user in `@rx.event` functions. 
+
+**Configuration:**
+- To retrieve the configuration defined in the `dev_config.json` key `params` (for local dev):
+- `async get_params() -> dict`: Returns app parameters from configuration
+- `async get_param(key: str, default=None) -> Optional[str]`: Gets a specific parameter value
+
+**Authentication:**
+- `async requires_authentication() -> bool`: Checks if app requires authentication
+- `async check_authentication() -> bool`: Validates current authentication status
+- `is_dev_mode() -> bool`: Checks if running in development mode
 
 ### Running and Debugging the App
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 
@@ -65,6 +115,7 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Important: After completing all development work or capturing screenshots, terminate the app process
 
 ### Test app in browser
+- Only if the user request it, otherwise assume that running the app locally is sufficient
 - To take a screen shot of the app and check browser console, use the `gws utils screenshot --url=[URL]` (in root folder of project) script.
 - The dev app must be running to use the screenshot utility, you can find the front url in the console logs of the app run process
 - The screenshot command print the path to the screenshot and console logs file

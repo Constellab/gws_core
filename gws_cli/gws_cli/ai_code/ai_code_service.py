@@ -40,6 +40,11 @@ class AICodeService(ABC):
             filename="task-expert.md",
             description="Create or modify a Constellab Task that processes data resources",
             argument_hint="task description or modification request"
+        ),
+        CommandFrontmatter(
+            filename="agent-expert.md",
+            description="Create or modify a Constellab Agent that processes data resources",
+            argument_hint="agent description or modification request"
         )
     ]
 
@@ -269,7 +274,6 @@ class AICodeService(ABC):
         except Exception as e:
             print(f"Error printing commands: {e}")
             return 1
-
 
     def generate_main_instructions(self) -> int:
         """Generate main instructions file from template
