@@ -73,7 +73,7 @@ class Settings():
             self.set_data("secret_key", secrete_key_env)
 
         # if no secrete key is set, generate one if not already set
-        if self.get_data('secret_key') is None:
+        if self._get_data('secret_key') is None:
             # secret_key
             secret_key = StringHelper.generate_random_chars(128)
             self.set_data("secret_key", secret_key)
@@ -422,7 +422,7 @@ class Settings():
     def set_main_settings_file_path(self, main_settings_file_path: str):
         self.data["main_settings_file_path"] = main_settings_file_path
 
-    def get_data(self, k: str, default=None) -> str:
+    def _get_data(self, k: str, default=None) -> str:
         if k == "session_key":
             return self.data[k]
         else:
@@ -449,6 +449,16 @@ class Settings():
             return os.path.join(self.get_test_folder(), "test")
         else:
             return "/data"
+
+    def get_data_extensions_dir(self) -> str:
+        """
+        Get the data extensions directory.
+        It contains folder for each brick containing data extensions of the brick.
+
+        :return: The data extensions directory
+        :rtype: `str`
+        """
+        return os.path.join(self.get_data_dir(), "extensions")
 
     def get_brick_data_main_dir(self) -> str:
         """

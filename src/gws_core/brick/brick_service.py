@@ -336,3 +336,43 @@ class BrickService():
 
         Typing.get_db().execute_sql(
             f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+
+    ################################ EXTENSIONS ################################
+
+    @classmethod
+    def get_brick_extensions_base_dir(cls, brick_name: str) -> str:
+        """
+        Get the extensions directory for a specific brick.
+        You can store data of the brick in this folder.
+        This folder is backup during backup process.
+
+        :param brick_name: The name of the brick
+        :type brick_name: `str`
+        :return: The extensions directory for the brick
+        :rtype: `str`
+        """
+        settings = Settings.get_instance()
+        extensions_dir = settings.get_data_extensions_dir()
+        return os.path.join(extensions_dir, brick_name)
+
+    @classmethod
+    def get_brick_extension_dir(cls, brick_name: str, extension_name: str) -> str:
+        """
+        Get the directory for a specific extension of a specific brick.
+        You can store data of the brick in this folder.
+        This folder is backup during backup process.
+
+        Warnings: The docker service creates a directory in the extension folder
+        with the unique_name of the compose service.
+        So don't create a folder with the same name.
+
+        :param brick_name: The name of the brick
+        :type brick_name: `str`
+        :param extension_name: The name of the extension
+        :type extension_name: `str`
+        :return: The directory for the extension of the brick
+        :rtype: `str`
+        """
+
+        brick_extensions_dir = cls.get_brick_extensions_base_dir(brick_name)
+        return os.path.join(brick_extensions_dir, extension_name)

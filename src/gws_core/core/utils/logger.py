@@ -6,7 +6,7 @@ from enum import Enum
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from typing import Any, Literal, Optional
+from typing import Any, List, Literal, Optional, cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
@@ -41,9 +41,9 @@ class LogFileLine(BaseModelDTO):
 class JSONFormatter(logging.Formatter):
 
     context: LogContext
-    context_id: str = None
+    context_id: str | None = None
 
-    def __init__(self, context: LogContext = LogContext.MAIN, context_id: str = None) -> None:
+    def __init__(self, context: LogContext = LogContext.MAIN, context_id: str | None = None) -> None:
         super().__init__()
         self.context = context
         self.context_id = context_id
@@ -69,22 +69,22 @@ class Logger:
 
     FILE_NAME_DATE_FORMAT = "%Y-%m-%d"
 
-    _logger: Optional[PythonLogger] = None
-    _file_path: str = None
+    _logger: PythonLogger
+    _file_path: str | None = None
 
     _context: LogContext
-    _context_id: str = None
+    _context_id: str | None = None
 
     level: LoggerLevel = "INFO"
 
     # class level
-    _waiting_messages: list = []
-    _logger_instance: 'Logger' = None
+    _waiting_messages: List[dict] = []
+    _logger_instance: Optional['Logger'] = None
 
     def __init__(self, log_dir: str,
                  level: LoggerLevel = "INFO",
                  context: LogContext = LogContext.MAIN,
-                 context_id: str = None
+                 context_id: str | None = None
                  ) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
@@ -144,7 +144,7 @@ class Logger:
     def build_main_logger(cls, log_dir: str,
                           level: LoggerLevel = "INFO",
                           context: LogContext = LogContext.MAIN,
-                          context_id: str = None) -> 'Logger':
+                          context_id: str | None = None) -> 'Logger':
         cls.clear_logger()
         logger = Logger(log_dir, level, context, context_id)
         cls._logger_instance = logger
@@ -160,7 +160,7 @@ class Logger:
         if not Utils.value_is_in_literal(log_level, LoggerLevel):
             raise Exception(
                 f"The logging level '{log_level}' is incorrect, please use one of the following [INFO, DEBUG, ERROR]")
-        return log_level
+        return cast(LoggerLevel, log_level)
 
     @classmethod
     def error(cls, message: str) -> None:
@@ -187,11 +187,13 @@ class Logger:
         cls._log_message("PROGRESS", message)
 
     @classmethod
-    def get_file_path(cls) -> str:
+    def get_file_path(cls) -> str | None:
         return cls._file_path
 
     @classmethod
-    def get_instance(cls) -> Optional['Logger']:
+    def get_instance(cls) -> 'Logger':
+        if cls._logger_instance is None:
+            raise Exception("Logger instance is not initialized")
         return cls._logger_instance
 
     @classmethod

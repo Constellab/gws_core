@@ -7,6 +7,7 @@ from typing import List
 from unittest.suite import TestSuite
 
 import plotly.express as px
+from dotenv import load_dotenv
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
@@ -31,7 +32,7 @@ class AppManager:
     def init_gws_env_and_db(cls, main_setting_file_path: str,
                             log_level: str,
                             log_context: LogContext = LogContext.MAIN,
-                            log_context_id: str = None,
+                            log_context_id: str | None = None,
                             show_sql: bool = False,
                             is_test: bool = False) -> Settings:
         settings = cls.init_gws_env(main_setting_file_path=main_setting_file_path,
@@ -48,7 +49,7 @@ class AppManager:
     def init_gws_env(cls, main_setting_file_path: str,
                      log_level: str,
                      log_context: LogContext = LogContext.MAIN,
-                     log_context_id: str = None,
+                     log_context_id: str | None = None,
                      show_sql: bool = False,
                      is_test: bool = False) -> Settings:
 
@@ -124,6 +125,12 @@ class AppManager:
 
         if not os.path.exists(brick_test_folder):
             raise Error(f"'tests' folder not found in brick '{brick_dir}'.")
+
+        # Check for .env.test file and load environment variables
+        env_test_file = os.path.join(brick_dir, ".env.test")
+        if os.path.exists(env_test_file):
+            load_dotenv(env_test_file)
+            Logger.info(f"Loaded environment variables from: {env_test_file}")
 
         for test_file in tests:
             pattern = test_file + ".py" if not test_file.endswith(".py") else test_file

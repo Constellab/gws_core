@@ -145,6 +145,10 @@
                     {
                         "name": "docstring-parser",
                         "version": "0.17.0"
+                    },
+                    {
+                        "name": "python-dotenv",
+                        "version": "1.2.1"
                     }
                 ]
             }

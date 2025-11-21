@@ -26,6 +26,20 @@ class LazyAbstractDbManager(AbstractDbManager):
     Example:
         class MyBrickDbManager(LazyAbstractDbManager):
             db = DatabaseProxy()
+
+            _instance: Optional['MyBrickDbManager'] = None
+
+            @classmethod
+            def get_instance(cls) -> 'MyBrickDbManager':
+                if cls._instance is None:
+                    cls._instance = cls()
+                return cls._instance
+
+            def get_name(self) -> str:
+                return 'db'
+
+            def get_brick_name(self) -> str:
+                return 'my_brick'
     """
 
     # Default configuration
