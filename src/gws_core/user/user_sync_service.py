@@ -1,7 +1,5 @@
-
-
 from abc import abstractmethod
-from typing import Generic, List, Type, TypeVar
+from typing import Generic, TypeVar
 
 from gws_core.core.model.model import Model
 from gws_core.core.utils.logger import Logger
@@ -12,7 +10,7 @@ from gws_core.user.user_service import UserService
 from .user import User
 
 # Type variable for custom user models that must extend Model
-TCustomUser = TypeVar('TCustomUser', bound=Model)
+TCustomUser = TypeVar("TCustomUser", bound=Model)
 
 
 class UserSyncService(EventListener, Generic[TCustomUser]):
@@ -45,7 +43,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
                 return custom_user
     """
 
-    def sync_all_users(self, gws_core_users: List[User]) -> None:
+    def sync_all_users(self, gws_core_users: list[User]) -> None:
         """
         Synchronize multiple users from gws_core to the custom database.
 
@@ -69,15 +67,10 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
                 Logger.error(error_msg)
                 errors.append(error_msg)
 
-        Logger.debug(
-            f"Synchronization completed: "
-            f"{synced_count} succeeded, {len(errors)} failed"
-        )
+        Logger.debug(f"Synchronization completed: {synced_count} succeeded, {len(errors)} failed")
 
         if errors:
-            Logger.warning(
-                f"Encountered {len(errors)} errors during synchronization"
-            )
+            Logger.warning(f"Encountered {len(errors)} errors during synchronization")
 
     def sync_user(self, gws_core_user: User) -> TCustomUser:
         """
@@ -93,22 +86,22 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         :rtype: TCustomUser
         """
         user_type = self.get_user_type()
-        custom_user = user_type.get_by_id(gws_core_user.id)
+        custom_user_db = user_type.get_by_id(gws_core_user.id)
 
         force_insert = False
-        if custom_user is None:
+        if custom_user_db is None:
             # Build new user object (not yet saved)
-            custom_user = user_type(id=gws_core_user.id)
             force_insert = True
 
         # Update the custom user object with gws_core user data (not yet saved)
-        custom_user = self.update_custom_user_attributes(custom_user, gws_core_user)
+        custom_user = self.from_gws_core_user(gws_core_user)
+        custom_user.id = gws_core_user.id
 
         # Save and return
         return custom_user.save(force_insert=force_insert)
 
     @abstractmethod
-    def get_user_type(self) -> Type[TCustomUser]:
+    def get_user_type(self) -> type[TCustomUser]:
         """
         Return the custom user model class type.
 
@@ -124,9 +117,9 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         """
 
     @abstractmethod
-    def update_custom_user_attributes(self, custom_user: TCustomUser, gws_core_user: User) -> TCustomUser:
+    def from_gws_core_user(self, gws_core_user: User) -> TCustomUser:
         """
-        Update the attributes of a custom user object with data from a gws_core user.
+        Create a custom user object with data from a gws_core user.
 
         This method should copy all relevant fields from the gws_core user to the
         custom user object and return the updated object.
@@ -134,16 +127,15 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         IMPORTANT: This method should only update the object attributes.
         Do NOT save it to the database. The object will be saved by the sync_user method.
 
-        :param custom_user: The custom user object to update
-        :type custom_user: TCustomUser
         :param gws_core_user: The source User object from gws_core
         :type gws_core_user: User
         :return: The updated custom user object (NOT saved to database)
         :rtype: TCustomUser
 
         Example:
-            def update_custom_user_attributes(self, custom_user: ProjectUser, gws_core_user: User) -> ProjectUser:
+            def update_custom_user_attributes(self, gws_core_user: User) -> ProjectUser:
                 # Only update attributes, do not save
+                custom_user = ProjectUser()
                 custom_user.email = gws_core_user.email
                 custom_user.first_name = gws_core_user.first_name
                 custom_user.last_name = gws_core_user.last_name
@@ -165,7 +157,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         user_type = self.get_user_type()
         return user_type.get_by_id(user_id)
 
-    def get_all_custom_users(self) -> List[TCustomUser]:
+    def get_all_custom_users(self) -> list[TCustomUser]:
         """
         Retrieve all custom users from the custom database.
 
@@ -216,10 +208,10 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         :type event: Event
         """
         # Sync all users when system starts
-        if event.type == 'system' and event.action == 'started':
+        if event.type == "system" and event.action == "started":
             gws_core_users = UserService.get_all_users()
             self.sync_all_users(gws_core_users)
 
         # Sync individual user on user events
-        elif event.type == 'user' and event.action in ('created', 'updated', 'activated'):
+        elif event.type == "user" and event.action in ("created", "updated", "activated"):
             self.sync_user(event.data)

@@ -1,14 +1,10 @@
-from .component.reflex_confirm_dialog_component import \
-    ConfirmDialogAction as ConfirmDialogAction
-from .component.reflex_confirm_dialog_component import \
-    ConfirmDialogState as ConfirmDialogState
+from .component.reflex_confirm_dialog_component import ConfirmDialogAction as ConfirmDialogAction
+from .component.reflex_confirm_dialog_component import ConfirmDialogState as ConfirmDialogState
 from .component.reflex_dialog_components import dialog_header as dialog_header
-from .component.reflex_form_dialog_component import \
-    FormDialogState as FormDialogState
-from .component.reflex_form_dialog_component import \
-    form_dialog_component as form_dialog_component
-from .component.reflex_loader_section_component import \
-    loader_section as loader_section
+from .component.reflex_form_dialog_component import FormDialogState as FormDialogState
+from .component.reflex_form_dialog_component import form_dialog_component as form_dialog_component
+from .component.reflex_loader_section_component import loader_section as loader_section
+from .component.reflex_page_sidebar import page_sidebar_component as page_sidebar_component
 from .reflex_init import ReflexInit as ReflexInit
 from .reflex_main_state_base import ReflexConfigDTO as ReflexConfigDTO
 from .reflex_main_state_base import ReflexMainStateBase as ReflexMainStateBase
