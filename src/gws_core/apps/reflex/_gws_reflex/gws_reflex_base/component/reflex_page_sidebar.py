@@ -34,20 +34,23 @@ def _create_desktop_sidebar(
     sidebar_width: str,
 ) -> rx.Component:
     """Create the fixed sidebar for desktop."""
-    return rx.desktop_only(
-        rx.vstack(
-            sidebar_content,
-            width=sidebar_width,
-            min_width=sidebar_width,
-            padding="1.5rem",
-            background="var(--gray-2)",
-            border_radius="8px",
-            align_items="start",
-            height="100vh",
-            position="fixed",
-            left="0",
-            top="0",
-            z_index="5",
+    return rx.vstack(
+        sidebar_content,
+        width=sidebar_width,
+        min_width=sidebar_width,
+        padding="1.5rem",
+        background="var(--gray-2)",
+        border_radius="8px",
+        align_items="start",
+        height="100vh",
+        position="fixed",
+        left="0",
+        top="0",
+        z_index="5",
+        display=rx.breakpoints(
+            initial="none",  # Mobile: hidden
+            sm="none",       # Tablet: hidden
+            md="flex",       # Desktop: visible
         ),
     )
 
@@ -60,70 +63,70 @@ def _create_mobile_header(
     if header_content is None:
         return rx.fragment()
 
-    return rx.mobile_and_tablet(
-        rx.hstack(
-            sidebar_drawer,
-            header_content,
-            width="100%",
-            align_items="center",
-            spacing="3",
-            padding="1rem",
-            position="fixed",
-            top="0",
-            left="0",
-            z_index="10",
-            background="var(--color-background)",
+    return rx.hstack(
+        sidebar_drawer,
+        header_content,
+        width="100%",
+        align_items="center",
+        spacing="3",
+        padding="1rem",
+        position="fixed",
+        top="0",
+        left="0",
+        z_index="10",
+        background="var(--color-background)",
+        display=rx.breakpoints(
+            initial="flex",  # Mobile: visible
+            sm="flex",       # Tablet: visible
+            md="none",       # Desktop: hidden
         ),
     )
 
 
-def _create_desktop_content(
+def _create_content_wrapper(
     content: rx.Component,
     header_content: rx.Component | None,
     sidebar_width: str,
 ) -> rx.Component:
-    """Create the desktop content area with optional header."""
-    return rx.desktop_only(
-        rx.vstack(
-            rx.cond(
-                header_content is not None,
-                rx.box(
-                    header_content,
-                    width="100%",
-                    padding_bottom="1rem",
+    """Create a single content wrapper with responsive styling."""
+    padding_top_mobile = "5rem" if header_content is not None else "1rem"
+
+    return rx.box(
+        # Desktop header (conditional)
+        rx.cond(
+            header_content is not None,
+            rx.box(
+                header_content,
+                width="100%",
+                padding_bottom="1rem",
+                display=rx.breakpoints(
+                    initial="none",  # Mobile: hidden
+                    sm="none",       # Tablet: hidden
+                    md="block",      # Desktop: visible
                 ),
-                rx.fragment(),
             ),
-            content,
-            margin_left=sidebar_width,
-            width=f"calc(100% - {sidebar_width})",
-            height="100vh",
-            overflow_y="auto",
-            padding="2rem",
-            spacing="0",
-            align_items="stretch",
+            rx.fragment(),
         ),
-    )
-
-
-def _create_mobile_content(
-    content: rx.Component,
-    header_content: rx.Component | None,
-) -> rx.Component:
-    """Create the mobile/tablet content area."""
-    padding_top = "5rem" if header_content is not None else "1rem"
-
-    return rx.mobile_and_tablet(
-        rx.box(
-            content,
-            width="100%",
-            height="100vh",
-            overflow_y="auto",
-            padding_top=padding_top,
-            padding_left="1rem",
-            padding_right="1rem",
-            padding_bottom="2rem",
+        # The actual content (rendered only once)
+        content,
+        # Responsive styling
+        width=rx.breakpoints(
+            initial="100%",                        # Mobile: full width
+            sm="100%",                             # Tablet: full width
+            md=f"calc(100% - {sidebar_width})",   # Desktop: account for sidebar
         ),
+        margin_left=rx.breakpoints(
+            initial="0",         # Mobile: no margin
+            sm="0",              # Tablet: no margin
+            md=sidebar_width,    # Desktop: offset by sidebar width
+        ),
+        padding=rx.breakpoints(
+            initial=f"{padding_top_mobile} 1rem 2rem 1rem",  # Mobile: top, right, bottom, left
+            sm=f"{padding_top_mobile} 1rem 2rem 1rem",       # Tablet: same as mobile
+            md="2rem",                                        # Desktop: uniform padding
+        ),
+        height="100vh",
+        overflow_y="auto",
     )
 
 
@@ -161,9 +164,8 @@ def page_sidebar_component(
         _create_desktop_sidebar(sidebar_content, sidebar_width),
         # Mobile/Tablet: Header with hamburger (if header provided)
         _create_mobile_header(header_content, sidebar_drawer),
-        # Content areas
-        _create_desktop_content(content, header_content, sidebar_width),
-        _create_mobile_content(content, header_content),
+        # Content wrapper (single instance with responsive styling)
+        _create_content_wrapper(content, header_content, sidebar_width),
         width="100%",
         height=height,
         position="relative",
