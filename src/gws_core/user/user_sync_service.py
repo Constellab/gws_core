@@ -43,7 +43,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
                 return custom_user
     """
 
-    def sync_all_users(self, gws_core_users: list[User]) -> None:
+    def sync_all_users(self) -> None:
         """
         Synchronize multiple users from gws_core to the custom database.
 
@@ -53,6 +53,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         :param gws_core_users: List of User objects from gws_core to synchronize
         :type gws_core_users: List[User]
         """
+        gws_core_users = UserService.get_all_users()
         Logger.debug(f"Starting synchronization of {len(gws_core_users)} users")
 
         errors = []
@@ -99,6 +100,23 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
 
         # Save and return
         return custom_user.save(force_insert=force_insert)
+
+    def _sync_user_by_id(self, user_id: str) -> TCustomUser:
+        """
+        Synchronize a single user from gws_core to the custom database by user ID.
+
+        This method retrieves the user from gws_core by ID and then calls sync_user.
+
+        :param user_id: The ID of the user to synchronize
+        :type user_id: str
+        :return: The synchronized custom user object if found, None otherwise
+        :rtype: TCustomUser | None
+        """
+        gws_core_user = UserService.get_user_by_id(user_id)
+        if gws_core_user is None:
+            raise Exception(f"User with ID {user_id} not found in gws_core database.")
+
+        return self.sync_user(gws_core_user)
 
     @abstractmethod
     def get_user_type(self) -> type[TCustomUser]:
@@ -170,7 +188,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         user_type = self.get_user_type()
         return list(user_type.select())
 
-    def get_or_import_user(self, user_id: str, gws_core_user: User | None = None) -> TCustomUser | None:
+    def get_or_import_user(self, user_id: str) -> TCustomUser | None:
         """
         Get a custom user by ID, or import from gws_core if not found.
 
@@ -180,17 +198,36 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
 
         :param user_id: The ID of the user to retrieve
         :type user_id: str
-        :param gws_core_user: Optional gws_core user to sync if not found
-        :type gws_core_user: User | None
         :return: The custom user object if found or synchronized, None otherwise
         :rtype: TCustomUser | None
         """
         custom_user = self.get_custom_user_by_id(user_id)
 
-        if custom_user is None and gws_core_user is not None:
-            custom_user = self.sync_user(gws_core_user)
+        if custom_user is None:
+            custom_user = self._sync_user_by_id(user_id)
 
         return custom_user
+
+    def get_or_import_from_space_user(self, user_id: str) -> TCustomUser | None:
+        """
+        Get a custom user by ID, or import from space service if not found.
+
+        This is a convenience method for lazy synchronization. It first tries to
+        retrieve the user from the custom database. If not found, it retrieves
+        the user from gws_core DB. If not found, it retrieves info from the space
+        service and synchronizes it.
+
+        :param user_id: The ID of the user to retrieve
+        :type user_id: str
+        :return: The custom user object if found or synchronized, None otherwise
+        :rtype: TCustomUser | None
+        """
+        custom_user = self.get_custom_user_by_id(user_id)
+
+        if custom_user is None:
+            UserService.get_or_import_user_info(user_id)
+
+        return self.get_or_import_user(user_id)
 
     def handle(self, event: Event) -> None:
         """
@@ -209,8 +246,7 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
         """
         # Sync all users when system starts
         if event.type == "system" and event.action == "started":
-            gws_core_users = UserService.get_all_users()
-            self.sync_all_users(gws_core_users)
+            self.sync_all_users()
 
         # Sync individual user on user events
         elif event.type == "user" and event.action in ("created", "updated", "activated"):
