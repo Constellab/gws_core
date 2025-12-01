@@ -1,7 +1,7 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.18.3",
+    "version": "0.18.4",
     "variables": {
         "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
