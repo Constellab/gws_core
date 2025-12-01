@@ -23,17 +23,22 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
     """Service to redirect requests to a backend app or dev frontend app"""
 
     destination_port: int
+    use_localhost_host_header: bool
 
     def __init__(self,
                  service_id: str,
                  source_port: int,
                  server_name: str,
-                 destination_port: int):
+                 destination_port: int,
+                 use_localhost_host_header: bool = False):
         super().__init__(service_id, source_port, server_name)
         self.destination_port = destination_port
+        self.use_localhost_host_header = use_localhost_host_header
 
     def get_nginx_service_config(self) -> str:
         """Generate nginx configuration block for this service"""
+
+        host_header = f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
         return f"""
 server {{
     listen {self.source_port};
@@ -43,7 +48,7 @@ server {{
         proxy_pass http://localhost:{self.destination_port};
         # Use localhost as new host to avoid error on frontend apps when
         # running in dev mode
-        proxy_set_header Host localhost:{self.destination_port};
+        proxy_set_header Host {host_header};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
