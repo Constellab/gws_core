@@ -1,13 +1,12 @@
-
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Type
+from typing import TYPE_CHECKING, Any
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.io.io_spec import IOSpecDTO
 from gws_core.process.process import Process
 from gws_core.protocol.protocol_service import ProtocolService
-from gws_core.resource.resource_dto import ResourceOrigin
 
 from ..config.param.param_types import ParamValue
 from ..resource.resource import Resource
@@ -24,7 +23,6 @@ class ProcessWithPort(BaseModelDTO):
 
 
 class ProcessProxy:
-
     _process_model: ProcessModel
 
     def __init__(self, process_model: ProcessModel) -> None:
@@ -35,19 +33,18 @@ class ProcessProxy:
         return self._process_model.instance_name
 
     @property
-    def parent_protocol(self) -> Optional[ProtocolProxy]:
+    def parent_protocol(self) -> ProtocolProxy | None:
         """return the parent protocol of this process.
         If this is the main protocol (the one linked to the scenario), it returns None
         """
         from ..protocol.protocol_proxy import ProtocolProxy
 
         if self._process_model.parent_protocol is None:
-            raise Exception(
-                f"The process '{self.instance_name}' does not have a parent protocol")
+            raise Exception(f"The process '{self.instance_name}' does not have a parent protocol")
 
         return ProtocolProxy(self._process_model.parent_protocol)
 
-    def get_process_type(self) -> Type[Process]:
+    def get_process_type(self) -> type[Process]:
         return self._process_model.get_process_type()
 
     def refresh(self) -> ProcessProxy:
@@ -61,21 +58,17 @@ class ProcessProxy:
         return self._process_model.id
 
     def has_parent_protocol(self) -> bool:
-        return not (self._process_model.parent_protocol is None)
+        return self._process_model.parent_protocol is not None
 
     ############################################### CONFIG #########################################
 
     def set_param(self, param_name: str, value: ParamValue) -> None:
-        """Set the param value
-        """
-        ProtocolService.set_process_model_config_value(
-            self._process_model, param_name, value)
+        """Set the param value"""
+        ProtocolService.set_process_model_config_value(self._process_model, param_name, value)
 
     def set_config_params(self, config_params: ConfigParamsDict) -> None:
-        """Set the config param values
-        """
-        ProtocolService.configure_process_model(
-            self._process_model, config_params)
+        """Set the config param values"""
+        ProtocolService.configure_process_model(self._process_model, config_params)
 
     def get_param(self, name: str) -> Any:
         return self._process_model.config.get_value(name)
@@ -125,6 +118,12 @@ class ProcessProxy:
         """
         return self._process_model.outputs.get_resource_model(name)
 
+    def has_dynamic_inputs(self) -> bool:
+        return self._process_model.inputs.is_dynamic
+
+    def has_dynamic_outputs(self) -> bool:
+        return self._process_model.outputs.is_dynamic
+
     ############################################### PORTS #########################################
 
     def get_input_port(self, port_name: str) -> ProcessWithPort:
@@ -132,10 +131,41 @@ class ProcessProxy:
         Access input port information of a process to create connectors in protocol
         """
         if not self._process_model.inputs.port_exists(port_name):
-            raise Exception(
-                f"The process '{self.instance_name}' does not have an input port named '{port_name}'")
+            raise Exception(f"The process '{self.instance_name}' does not have an input port named '{port_name}'")
 
-        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=port_name)
+        return ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
+
+    def get_input_ports(self) -> list[ProcessWithPort]:
+        """
+        Access all input port information of a process to create connectors in protocol
+
+        :return: List of input ports
+        :rtype: list[ProcessWithPort]
+        """
+        ports = []
+        for port_name in self._process_model.inputs.ports:
+            ports.append(ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name))
+        return ports
+
+    def add_dynamic_input_port(self, port_spec_dto: IOSpecDTO | None = None) -> ProcessWithPort:
+        """Add a dynamic input port to the process
+
+        :param port_name: Name of the port to add
+        :type port_name: str
+        """
+        if not self.has_dynamic_inputs():
+            raise Exception(f"The process '{self.instance_name}' does not have dynamic inputs")
+
+        update = ProtocolService.add_dynamic_input_port_to_process(
+            self._process_model.parent_protocol_id, self.instance_name, port_spec_dto
+        )
+
+        if update.process:
+            self._process_model = update.process
+
+        input_ports = self.get_input_ports()
+        # return the last added port
+        return input_ports[-1]
 
     def __lshift__(self, port_name: str) -> ProcessWithPort:
         """Visual way to access port information of a process:
@@ -150,10 +180,21 @@ class ProcessProxy:
         Access output port information of a process to create connectors in protocol
         """
         if not self._process_model.outputs.port_exists(port_name):
-            raise Exception(
-                f"The process '{self.instance_name}' does not have an output port named '{port_name}'")
+            raise Exception(f"The process '{self.instance_name}' does not have an output port named '{port_name}'")
 
-        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=port_name)
+        return ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
+
+    def get_output_ports(self) -> list[ProcessWithPort]:
+        """
+        Access all output port information of a process to create connectors in protocol
+
+        :return: List of output ports
+        :rtype: list[ProcessWithPort]
+        """
+        ports = []
+        for port_name in self._process_model.outputs.ports:
+            ports.append(ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name))
+        return ports
 
     def __rshift__(self, port_name: str) -> ProcessWithPort:
         """Visual way to access port information of a process:
@@ -163,17 +204,15 @@ class ProcessProxy:
 
     def get_first_inport(self) -> ProcessWithPort:
         if len(self._process_model.inputs.ports) == 0:
-            raise Exception(
-                f"The process '{self.instance_name}' does not have any input port")
+            raise Exception(f"The process '{self.instance_name}' does not have any input port")
 
         in_port = list(self._process_model.inputs.ports.values())[0]
 
-        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=in_port.name)
+        return ProcessWithPort(process_instance_name=self.instance_name, port_name=in_port.name)
 
     def get_first_outport(self) -> ProcessWithPort:
         if len(self._process_model.outputs.ports) == 0:
-            raise Exception(
-                f"The process '{self.instance_name}' does not have any output port")
+            raise Exception(f"The process '{self.instance_name}' does not have any output port")
 
         out_port = list(self._process_model.outputs.ports.values())[0]
 
