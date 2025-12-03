@@ -1,6 +1,7 @@
-
 from abc import abstractmethod
 from typing import cast
+
+from typing_extensions import final
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.db_config import DbConfig, DbMode
@@ -9,7 +10,6 @@ from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_service import DockerService
 from gws_core.user.current_user_service import AuthenticateUser
-from typing_extensions import final
 
 
 class LazyAbstractDbManager(AbstractDbManager):
@@ -54,33 +54,33 @@ class LazyAbstractDbManager(AbstractDbManager):
 
     def _start_docker_compose(self, mode: DbMode):
         """Start the Docker container for the database"""
-        if mode == 'test':
+        if mode == "test":
             return
         docker_service = DockerService()
 
         try:
             brick_name = self.get_brick_name()
 
-            Logger.info(f'Starting {self.get_unique_name()} database container')
+            Logger.info(f"Starting {self.get_unique_name()} database container")
             with AuthenticateUser.system_user():
                 docker_service.register_sqldb_compose(
                     brick_name=brick_name,
                     unique_name=self.get_name(),
                     database_name=self.get_unique_name(),
-                    description=f'{brick_name} brick database in {mode} mode',
+                    description=f"{brick_name} brick database in {mode} mode",
                 )
-                Logger.info(f'{self.get_unique_name()} database container started')
+                Logger.info(f"{self.get_unique_name()} database container started")
 
         except Exception as err:
             # If the lab manager failed to start the docker, we try to get the credentials to connect
             Logger.info(f"Cannot start the {self.get_brick_name()} db compose, skipping startup.")
 
-            if not Settings.is_local_env():
+            if not Settings.is_local_dev_env():
                 Logger.log_exception_stack_trace(err)
 
     def get_config(self, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""
-        if mode == 'test':
+        if mode == "test":
             return Settings.get_test_db_config()
 
         if self._config is None:
@@ -91,7 +91,8 @@ class LazyAbstractDbManager(AbstractDbManager):
             )
             if not credentials:
                 raise Exception(
-                    f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials.")
+                    f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials."
+                )
 
             credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
             if not isinstance(credentials_data, CredentialsDataBasic):
@@ -100,12 +101,12 @@ class LazyAbstractDbManager(AbstractDbManager):
                 )
 
             self._config = {
-                'host': credentials_data.url,
-                'port': self.PORT,
-                'user': credentials_data.username,
-                'password': credentials_data.password,
-                'db_name': self.get_unique_name(),
-                'engine': 'mariadb'
+                "host": credentials_data.url,
+                "port": self.PORT,
+                "user": credentials_data.username,
+                "password": credentials_data.password,
+                "db_name": self.get_unique_name(),
+                "engine": "mariadb",
             }
 
         return self._config

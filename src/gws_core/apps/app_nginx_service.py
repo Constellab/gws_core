@@ -1,10 +1,9 @@
-
-
 from abc import abstractmethod
 
 
-class AppNginxServiceInfo():
+class AppNginxServiceInfo:
     """Information about a registered nginx service"""
+
     service_id: str
     source_port: int
     server_name: str
@@ -25,12 +24,14 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
     destination_port: int
     use_localhost_host_header: bool
 
-    def __init__(self,
-                 service_id: str,
-                 source_port: int,
-                 server_name: str,
-                 destination_port: int,
-                 use_localhost_host_header: bool = False):
+    def __init__(
+        self,
+        service_id: str,
+        source_port: int,
+        server_name: str,
+        destination_port: int,
+        use_localhost_host_header: bool = False,
+    ):
         super().__init__(service_id, source_port, server_name)
         self.destination_port = destination_port
         self.use_localhost_host_header = use_localhost_host_header
@@ -57,11 +58,13 @@ server {{
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+        proxy_set_header Origin "";
+        proxy_buffering off;
 
         # Timeout settings
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        proxy_read_timeout 300s;
     }}
 }}
 """
@@ -72,15 +75,13 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
 
     front_folder_path: str
 
-    def __init__(self,
-                 service_id: str,
-                 source_port: int,
-                 server_name: str,
-                 front_folder_path: str):
+    def __init__(self, service_id: str, source_port: int, server_name: str, front_folder_path: str):
         super().__init__(service_id, source_port, server_name)
         self.front_folder_path = front_folder_path
 
-    def get_nginx_service_config(self, ) -> str:
+    def get_nginx_service_config(
+        self,
+    ) -> str:
         """Generate nginx configuration block for serving the front-end of this service"""
         return rf"""
 server {{

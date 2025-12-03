@@ -1,5 +1,3 @@
-
-
 import os
 import shutil
 from json import load
@@ -7,8 +5,7 @@ from json import load
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.classes.observer.message_observer import \
-    LoggerMessageObserver
+from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -31,7 +28,7 @@ class AppPluginDownloader:
     - Supports local installation from a pre-unzipped folder when IS_RELEASE is True and in local environment
     """
 
-    # If True and Settings.is_local_env() is True, use local gws_plugin folder instead of downloading
+    # If True and Settings.is_local_dev_env() is True, use local gws_plugin folder instead of downloading
     IS_RELEASE = True
 
     # Path to the local plugin folder (already unzipped) used when IS_RELEASE is True
@@ -40,7 +37,7 @@ class AppPluginDownloader:
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
 
-    RELEASE_BASE_URL = 'https://github.com/Constellab/dashboard-components/releases/download/'
+    RELEASE_BASE_URL = "https://github.com/Constellab/dashboard-components/releases/download/"
 
     # Main version that contains both packages
     DASHBOARD_COMPONENTS_VERSION = "dc_1.0.0"
@@ -54,8 +51,7 @@ class AppPluginDownloader:
     message_dispatcher: MessageDispatcher
     destination_folder: str
 
-    def __init__(self, package_name: str, destination_folder: str = None,
-                 message_dispatcher: MessageDispatcher = None):
+    def __init__(self, package_name: str, destination_folder: str = None, message_dispatcher: MessageDispatcher = None):
         """Initialize the ComponentPackageDownloader.
 
         :param package_name: Name of the package to manage (iframe-message or streamlit-components)
@@ -65,13 +61,9 @@ class AppPluginDownloader:
         :param message_dispatcher: Optional message dispatcher for logging, defaults to None
         :type message_dispatcher: MessageDispatcher, optional
         """
-        available_packages = [self.IFRAME_MESSAGE,
-                              self.STREAMLIT_COMPONENTS,
-                              self.REFLEX_COMPONENTS]
+        available_packages = [self.IFRAME_MESSAGE, self.STREAMLIT_COMPONENTS, self.REFLEX_COMPONENTS]
         if package_name not in available_packages:
-            raise ValueError(
-                f"Invalid package name: {package_name}. "
-                f"Must be either {', '.join(available_packages)}.")
+            raise ValueError(f"Invalid package name: {package_name}. Must be either {', '.join(available_packages)}.")
 
         if message_dispatcher is None:
             message_dispatcher = MessageDispatcher()
@@ -145,11 +137,7 @@ class AppPluginDownloader:
         download_url = self._get_package_download_url(self.package_name)
 
         # Use custom folder name if provided, otherwise use package_name
-        file_downloader.download_file_if_missing(
-            download_url,
-            folder_name,
-            decompress_file=True
-        )
+        file_downloader.download_file_if_missing(download_url, folder_name, decompress_file=True)
 
         try:
             # Call post-install hook (can be overridden by subclasses)
@@ -165,13 +153,14 @@ class AppPluginDownloader:
             self.uninstall_package()
             raise Exception(
                 f"Failed to download the package '{self.package_name}' version '{self.DASHBOARD_COMPONENTS_VERSION}'. "
-                f"Installed version is '{installed_version}'.")
+                f"Installed version is '{installed_version}'."
+            )
 
         Logger.info(f"Successfully installed package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}")
 
     def _install_from_local_folder(self) -> None:
         """Move the gws_plugin from the local folder to the destination.
-        This is used when IS_RELEASE is True and Settings.is_local_env() is True.
+        This is used when IS_RELEASE is True and Settings.is_local_dev_env() is True.
 
         The local folder should already contain the unzipped plugin files.
         If the source folder doesn't exist, this method does nothing (no error is raised).
@@ -180,7 +169,8 @@ class AppPluginDownloader:
         Logger.info(f"Installing package {self.package_name} from local folder: {self.LOCAL_PLUGIN_PATH}")
         if not os.path.exists(self.LOCAL_PLUGIN_PATH):
             Logger.info(
-                f"Local plugin path does not exist: {self.LOCAL_PLUGIN_PATH}. Skipping installation from local folder.")
+                f"Local plugin path does not exist: {self.LOCAL_PLUGIN_PATH}. Skipping installation from local folder."
+            )
             return
 
         # Uninstall existing package if it exists
@@ -256,7 +246,7 @@ class AppPluginDownloader:
             if FileHelper.exists_on_os(self.destination_folder):
                 version_file_path = os.path.join(self.destination_folder, self.VERSION_FILE_NAME)
                 if FileHelper.exists_on_os(version_file_path):
-                    with open(version_file_path, 'r', encoding='UTF-8') as file:
+                    with open(version_file_path, encoding="UTF-8") as file:
                         version_json = load(file)
                         return version_json.get(self.VERSION_KEY)
         except Exception as e:
@@ -279,4 +269,4 @@ class AppPluginDownloader:
         :return: True if in development mode, False otherwise
         :rtype: bool
         """
-        return Settings.is_local_env() and not self.IS_RELEASE
+        return Settings.is_local_dev_env() and not self.IS_RELEASE

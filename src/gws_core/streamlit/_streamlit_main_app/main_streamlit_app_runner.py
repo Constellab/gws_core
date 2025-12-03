@@ -3,24 +3,24 @@ import importlib.util
 import os
 import sys
 from json import load
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import streamlit as st
 from typing_extensions import TypedDict
 
-APP_CONFIG_FILENAME = 'app_config.json'
-APP_MAIN_FILENAME = 'main.py'
+APP_CONFIG_FILENAME = "app_config.json"
+APP_MAIN_FILENAME = "main.py"
 
 
 class StreamlitConfigDTO(TypedDict):
     app_dir_path: str
-    source_ids: List[str]
-    params: Optional[dict]
+    source_ids: list[str]
+    params: dict | None
     requires_authentication: bool
     # List of token of user that can access the app
     # Only provided if the app requires authentication
     # Key is access token, value is user id
-    user_access_tokens: Dict[str, str]
+    user_access_tokens: dict[str, str]
 
 
 class StreamlitMainAppRunner:
@@ -40,24 +40,25 @@ class StreamlitMainAppRunner:
 
     app_dir_path: str = None
     app_main_path: str = None
-    variables: Dict[str, Any] = {}
+    variables: dict[str, Any] = {}
 
-    DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
-    DEV_MODE_APP_ID = '1'
+    DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
+    DEV_MODE_APP_ID = "dev-app"
 
     def init(self) -> None:
-        """ Check the parameters (token) and loaf the config and app file"""
+        """Check the parameters (token) and loaf the config and app file"""
 
         # Configure Streamlit
         st.set_page_config(
             page_title="App",
             layout="wide",
             menu_items={},  # hide the menu
-            initial_sidebar_state=st.session_state.get('__gws_sidebar_state__', 'expanded'),
+            initial_sidebar_state=st.session_state.get("__gws_sidebar_state__", "expanded"),
         )
 
         # Add custom css to hide the streamlit menu
-        st.markdown("""
+        st.markdown(
+            """
             <style>
                 html{
                     font-size: 14px;
@@ -110,7 +111,9 @@ class StreamlitMainAppRunner:
                 }
 
             </style>
-        """, unsafe_allow_html=True)
+        """,
+            unsafe_allow_html=True,
+        )
 
         self._load_args()
         app_config_file: str = self._load_app_config_file()
@@ -120,9 +123,9 @@ class StreamlitMainAppRunner:
 
     def _load_args(self) -> None:
         parser = argparse.ArgumentParser()
-        parser.add_argument('--gws_token', type=str, default=None)
-        parser.add_argument('--app_dir', type=str, default=None)
-        parser.add_argument('--dev_mode', type=bool, default=False)
+        parser.add_argument("--gws_token", type=str, default=None)
+        parser.add_argument("--app_dir", type=str, default=None)
+        parser.add_argument("--dev_mode", type=bool, default=False)
         args = parser.parse_args()
         self.gws_token = args.gws_token
         self.app_dir = args.app_dir
@@ -142,7 +145,7 @@ class StreamlitMainAppRunner:
         # Check if module already exists with a different path
         if module_name in sys.modules:
             existing_module = sys.modules[module_name]
-            if hasattr(existing_module, '__file__') and existing_module.__file__:
+            if hasattr(existing_module, "__file__") and existing_module.__file__:
                 existing_path = os.path.dirname(existing_module.__file__)
                 if os.path.abspath(existing_path) != os.path.abspath(self.app_dir_path):
                     raise ImportError(
@@ -150,14 +153,15 @@ class StreamlitMainAppRunner:
                         f"Original running app from : {existing_path}, current app from: {self.app_dir_path}. "
                         f"The 2 apps cannot be run simultaneously. Please stop the original app before starting the new one. "
                         f"If you are the author of the app, please rename one of the app to avoid this conflict. "
-                        f"You can stop the app in Settings > Monitoring > Other > Running Apps.")
+                        f"You can stop the app in Settings > Monitoring > Other > Running Apps."
+                    )
 
         # First, we need to make sure the directory is treated as a package
         # by ensuring it has an __init__.py file
-        init_file = os.path.join(self.app_dir_path, '__init__.py')
+        init_file = os.path.join(self.app_dir_path, "__init__.py")
         if not os.path.exists(init_file):
             # Create an empty __init__.py file if it doesn't exist
-            with open(init_file, 'w', encoding='utf-8') as f:
+            with open(init_file, "w", encoding="utf-8") as f:
                 pass
 
         try:
@@ -197,41 +201,40 @@ class StreamlitMainAppRunner:
         if self.dev_mode:
             return None
 
-        if st.session_state.get('__gws_user_id__'):
-            return st.session_state['__gws_user_id__']
+        if st.session_state.get("__gws_user_id__"):
+            return st.session_state["__gws_user_id__"]
 
         user_access_token = self.get_user_access_token()
         if not user_access_token:
-            st.error('User access token not provided')
+            st.error("User access token not provided")
             st.stop()
 
         # retrieve the list of users that can access the app
-        user_access_tokens = self.config.get('user_access_tokens', {})
+        user_access_tokens = self.config.get("user_access_tokens", {})
         user_id = user_access_tokens.get(user_access_token)
         if not user_id:
-            st.error('Invalid user access token')
+            st.error("Invalid user access token")
             st.stop()
 
         # save the user id and app config file in the session state
-        st.session_state['__gws_user_id__'] = user_id
+        st.session_state["__gws_user_id__"] = user_id
 
         return user_id
 
     def _load_app_config_file(self) -> str:
-
-        if st.session_state.get('__app_config_file__'):
-            return st.session_state['__app_config_file__']
+        if st.session_state.get("__app_config_file__"):
+            return st.session_state["__app_config_file__"]
 
         if not self.dev_mode:
             # retreive the token from query params
-            url_token = st.query_params.get('gws_token')
+            url_token = st.query_params.get("gws_token")
             if url_token != self.gws_token:
-                st.error('Invalid token')
+                st.error("Invalid token")
                 st.stop()
 
         app_config_dir = self.app_dir
         if not app_config_dir:
-            st.error('App dir not provided')
+            st.error("App dir not provided")
             st.stop()
 
         if not os.path.exists(app_config_dir):
@@ -241,32 +244,31 @@ class StreamlitMainAppRunner:
         # check the app path
         app_id = self.get_app_id()
         if not app_id:
-            st.error('App id not provided')
+            st.error("App id not provided")
             st.stop()
 
         # check if the app id folder exists
         app_config_folder = os.path.join(app_config_dir, app_id)
         if not os.path.exists(app_config_folder) or not os.path.isdir(app_config_folder):
-            st.error('App config folder not found or is not a folder')
+            st.error("App config folder not found or is not a folder")
             st.stop()
 
         app_config_file = os.path.join(app_config_folder, APP_CONFIG_FILENAME)
         if not os.path.exists(app_config_file):
-            st.error('App config file not found')
+            st.error("App config file not found")
             st.stop()
 
-        st.session_state['__app_config_file__'] = app_config_file
+        st.session_state["__app_config_file__"] = app_config_file
 
         return app_config_file
 
     def _load_app(self, app_config_file: str):
         try:
-
             # load config from the app path
-            with open(app_config_file, 'r', encoding="utf-8") as file_path:
+            with open(app_config_file, encoding="utf-8") as file_path:
                 self.config = load(file_path)
 
-            app_dir_abs_path = self.config['app_dir_path']
+            app_dir_abs_path = self.config["app_dir_path"]
 
             # if the app dir path is not absolute (usually on dev mode), make it absolute
             if not os.path.isabs(app_dir_abs_path):
@@ -288,12 +290,13 @@ class StreamlitMainAppRunner:
 
             if not os.path.exists(app_main_path):
                 st.error(
-                    f"Main python script file not found: {app_main_path}. Please make sure you have a main.py file in the app folder.")
+                    f"Main python script file not found: {app_main_path}. Please make sure you have a main.py file in the app folder."
+                )
                 st.stop()
 
             self.app_main_path = app_main_path
             # clean the path to remove trailing slash if any
-            if app_dir_abs_path.endswith('/'):
+            if app_dir_abs_path.endswith("/"):
                 app_dir_abs_path = app_dir_abs_path[:-1]
             self.app_dir_path = app_dir_abs_path
 
@@ -305,12 +308,12 @@ class StreamlitMainAppRunner:
     def get_app_id(self) -> str:
         if self.dev_mode:
             return self.DEV_MODE_APP_ID
-        return st.query_params.get('gws_app_id')
+        return st.query_params.get("gws_app_id")
 
     def get_user_access_token(self) -> str:
         if self.dev_mode:
             return self.DEV_MODE_USER_ACCESS_TOKEN_KEY
-        return st.query_params.get('gws_user_access_token')
+        return st.query_params.get("gws_user_access_token")
 
     def authentication_is_required(self) -> bool:
-        return self.config.get('requires_authentication')
+        return self.config.get("requires_authentication")

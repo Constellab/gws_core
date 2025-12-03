@@ -1,10 +1,10 @@
-
-
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import streamlit as st
 import streamlit.components.v1 as components
 from fastapi.encoders import jsonable_encoder
+
 from gws_core.apps.app_plugin_downloader import AppPluginDownloader
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
@@ -13,8 +13,8 @@ from gws_core.streamlit.widgets.streamlit_helper import StreamlitHelper
 from gws_core.streamlit.widgets.streamlit_state import StreamlitUserAuthInfo
 
 
-class StreamlitComponentLoader():
-    """ Class to load a streamlit component.
+class StreamlitComponentLoader:
+    """Class to load a streamlit component.
     In dev mode
         - the component is loaded from the dev front app running in (DEV_FRONT_URL).
     In release mode
@@ -58,18 +58,18 @@ class StreamlitComponentLoader():
             # we pass the key so streamlit knows the component
             # key and set a class to the component container
             key=key,
-            timestamp=DateHelper.now_utc_as_milliseconds()
+            timestamp=DateHelper.now_utc_as_milliseconds(),
         )
 
     def get_function(self) -> Callable:
         # use dev mode only in local environment and is not released
-        if not Settings.is_local_env() or self.IS_RELEASED:
+        if not Settings.is_local_dev_env() or self.IS_RELEASED:
             return self._get_released_function()
         else:
             return self._get_dev_function()
 
     def _get_dev_function(self) -> Callable:
-        Logger.info(f'Loading dev component: {self.component_name} from {self.DEV_FRONT_URL}')
+        Logger.info(f"Loading dev component: {self.component_name} from {self.DEV_FRONT_URL}")
 
         return components.declare_component(
             self.component_name,
@@ -77,7 +77,7 @@ class StreamlitComponentLoader():
         )
 
     def _get_released_function(self) -> Callable:
-        """ Load the component in release mode.
+        """Load the component in release mode.
         The iframe message component is loaded from the github release using ComponentPackageDownloader.
 
         :return: _description_
@@ -85,7 +85,7 @@ class StreamlitComponentLoader():
         """
 
         # Download the iframe-message package using ComponentPackageDownloader
-        with st.spinner('Installing the component...'):
+        with st.spinner("Installing the component..."):
             downloader = AppPluginDownloader(AppPluginDownloader.IFRAME_MESSAGE)
             folder_path = downloader.install_package()
 

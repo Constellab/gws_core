@@ -1,13 +1,10 @@
-
-
 import time
 from abc import abstractmethod
 from threading import Thread
-from typing import Dict, List
 
 import psutil
-from gws_core.apps.app_dto import (AppInstanceUrl, AppProcessStatus,
-                                   AppProcessStatusDTO)
+
+from gws_core.apps.app_dto import AppInstanceUrl, AppProcessStatus, AppProcessStatusDTO
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_nginx_service import AppNginxServiceInfo
@@ -23,17 +20,16 @@ from gws_core.user.current_user_service import CurrentUserService
 
 
 class AppProcessStartResult:
-
     process: SysProc
-    services: List[AppNginxServiceInfo]
+    services: list[AppNginxServiceInfo]
 
-    def __init__(self, process: SysProc, services: List[AppNginxServiceInfo]):
+    def __init__(self, process: SysProc, services: list[AppNginxServiceInfo]):
         self.process = process
         self.services = services
 
 
 class AppProcess:
-    """ Process of an app. A process is an instance of a running command that serves the app.
+    """Process of an app. A process is an instance of a running command that serves the app.
 
     A process can have multiple apps running in it.
 
@@ -49,7 +45,7 @@ class AppProcess:
 
     env_hash: str = None
 
-    current_running_apps: Dict[str, AppInstance] = None
+    current_running_apps: dict[str, AppInstance] = None
 
     is_dev_mode: bool = None
 
@@ -61,7 +57,7 @@ class AppProcess:
 
     _check_is_running: bool = False
 
-    _services: List[AppNginxServiceInfo] = None
+    _services: list[AppNginxServiceInfo] = None
 
     # Status tracking
     _status: AppProcessStatus = AppProcessStatus.STOPPED
@@ -97,12 +93,6 @@ class AppProcess:
     @abstractmethod
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
-
-    @abstractmethod
-    def _get_front_port(self) -> int:
-        """Get the front port of the app process.
-        This is used to expose the app on the host URL.
-        """
 
     def get_status(self) -> AppProcessStatus:
         """Get the current status of the app process"""
@@ -166,7 +156,6 @@ class AppProcess:
         self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
         try:
-
             thread = Thread(target=self._start_app_and_watch, args=(app,))
             thread.start()
         except Exception as e:
@@ -176,7 +165,6 @@ class AppProcess:
 
     def _start_app_and_watch(self, app: AppInstance) -> None:
         try:
-
             result = self._start_process(app)
             self._process = result.process
             self._services = result.services
@@ -211,7 +199,8 @@ class AppProcess:
             if i > self.START_APP_TIMEOUT:
                 self.set_status(
                     AppProcessStatus.STOPPED,
-                    "The app did not start in time, please check the logs for more details or retry later.")
+                    "The app did not start in time, please check the logs for more details or retry later.",
+                )
                 raise Exception("The app did not start in time, please check the logs for more details or retry later.")
 
     def get_working_dir(self) -> str:
@@ -220,8 +209,7 @@ class AppProcess:
         return self._working_dir
 
     def stop_process(self) -> None:
-        """Kill the process and all apps
-        """
+        """Kill the process and all apps"""
         if self.is_stopped():
             return
 
@@ -261,8 +249,7 @@ class AppProcess:
         return app
 
     def user_has_access_to_app(self, app_id: str, user_access_token: str) -> str | None:
-        """Return the user id from the user access token if the user has access to the app
-        """
+        """Return the user id from the user access token if the user has access to the app"""
         app = self.get_app(app_id)
         if not app:
             return None
@@ -270,28 +257,31 @@ class AppProcess:
         return app.get_user_from_token(user_access_token)
 
     def find_app_by_resource_model_id(self, resource_model_id: str) -> AppInstance | None:
-        """Find the app that was generated from the given resource model id
-        """
+        """Find the app that was generated from the given resource model id"""
         for app in self.current_running_apps.values():
             if app.was_generated_from_resource_model_id(resource_model_id):
                 return app
 
         return None
 
-    def get_cloud_host_name(self, suffix: str = "") -> str:
+    def get_host_name(self, suffix: str = "") -> str:
         """Get the host name for the app process based on the port and suffix.
         This is used to generate the host URL for the app.
         """
+
+        if Settings.is_local_or_desktop_env():
+            return f"{self.id}{suffix}.localhost"
+
         sub_domain = Settings.get_app_sub_domain()
         virtual_host = Settings.get_virtual_host()
 
         return f"{sub_domain}-{self.id}{suffix}.{virtual_host}"
 
     def get_host_url(self) -> str:
-        if Settings.is_cloud_env():
-            return f"https://{self.get_cloud_host_name()}"
+        if Settings.is_local_or_desktop_env():
+            return f"http://{self.get_host_name()}:{Settings.get_app_external_port()}"
         else:
-            return f"http://localhost:{self._get_front_port()}"
+            return f"https://{self.get_host_name()}"
 
     def get_app_full_url(self, app_id: str) -> AppInstanceUrl:
         app = self.get_and_check_app(app_id)
@@ -313,10 +303,8 @@ class AppProcess:
         self._check_running_loop()
 
     def _check_running_loop(self) -> None:
-
         try:
             while True:
-
                 time.sleep(self.CHECK_RUNNING_INTERVAL)
                 Logger.debug("Checking running app")
 
@@ -343,7 +331,6 @@ class AppProcess:
         return self._process is not None and self._process.is_alive()
 
     def _check_running(self) -> bool:
-
         try:
             # count the number of network connections of the app
             connection_count = self.count_connections()
@@ -371,12 +358,12 @@ class AppProcess:
             return 0
 
         # get the list of the connections
-        connections = psutil.net_connections(kind='inet')
+        connections = psutil.net_connections(kind="inet")
 
         pid_with_children = [child.pid for child in self._process.get_all_children()]
         pid_with_children.append(self._process.pid)
 
-        return len([x for x in connections if x.pid in pid_with_children and x.status == 'ESTABLISHED'])
+        return len([x for x in connections if x.pid in pid_with_children and x.status == "ESTABLISHED"])
 
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(

@@ -1,24 +1,18 @@
-
-
 import signal
 import sys
 from datetime import datetime, timedelta
-from typing import Dict
 
-from gws_core.apps.app_dto import (AppInstanceUrl, AppsStatusDTO,
-                                   CreateAppAsyncResultDTO)
+from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogContext
 from gws_core.core.utils.settings import Settings
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.streamlit.streamlit_app import StreamlitApp
@@ -27,11 +21,12 @@ from gws_core.streamlit.streamlit_process import StreamlitProcess
 
 class AppPort(BaseModelDTO):
     """Class to represent a port for an app"""
+
     port: int = None
     host_url: str = None
 
 
-class AppsManager():
+class AppsManager:
     """Class to manage the different apps
 
     All the normal apps (without env) run in the same streamlit process (8501)
@@ -41,7 +36,7 @@ class AppsManager():
     app_dir: str = None
 
     # key is the env hash
-    running_processes: Dict[str, AppProcess] = {}
+    running_processes: dict[str, AppProcess] = {}
 
     MAX_RUNNING_APPS = 50
 
@@ -62,15 +57,17 @@ class AppsManager():
         # Create or get process and add app to it
         app_process = cls._create_or_get_app_async(app)
 
-        get_status_route = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/apps/process/" + \
-                           f"{app_process.get_token()}/status"
+        get_status_route = (
+            f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/apps/process/"
+            + f"{app_process.get_token()}/status"
+        )
 
         return CreateAppAsyncResultDTO(
             app_id=app.resource_model_id,
             app_url=app_process.get_app_full_url(app.resource_model_id),
             get_status_route=get_status_route,
             status=app_process.get_status(),
-            status_text=app_process.get_status_text()
+            status_text=app_process.get_status_text(),
         )
 
     @classmethod
@@ -95,18 +92,19 @@ class AppsManager():
 
         # register the process if it does not exist
         if not app_process:
-
             # check number of running apps
             if len(cls.running_processes) >= cls.MAX_RUNNING_APPS:
-                raise Exception(f"Maximum number of running apps reached ({cls.MAX_RUNNING_APPS}). "
-                                "Please stop some apps before starting new ones.")
+                raise Exception(
+                    f"Maximum number of running apps reached ({cls.MAX_RUNNING_APPS}). "
+                    "Please stop some apps before starting new ones."
+                )
 
             # retrieve the corresponding host for the port
             front_port = cls._get_next_available_port()  # take the first available port
 
             # create a new process with assigned ports
             if isinstance(app, StreamlitApp):
-                app_process = StreamlitProcess(front_port, StringHelper.generate_uuid(), env_hash)
+                app_process = StreamlitProcess(front_port, app.resource_model_id, env_hash)
             elif isinstance(app, ReflexApp):
                 back_port = cls._get_next_available_port(front_port + 1)  # take the next available port for the backend
                 # for reflex app, we need both front and back ports
@@ -148,6 +146,7 @@ class AppsManager():
     @classmethod
     def init(cls):
         """Register signal handlers to gracefully stop all processes on exit"""
+
         def signal_handler(sig, frame):
             print("Stopping all app processes before exit...")
             cls.stop_all_processes()
@@ -207,8 +206,7 @@ class AppsManager():
 
     @classmethod
     def user_has_access_to_app(cls, app_id: str, user_access_token: str) -> str | None:
-        """Return the user id from the user access token if the user has access to the app
-        """
+        """Return the user id from the user access token if the user has access to the app"""
         for running_process in cls.running_processes.values():
             if running_process.has_app(app_id):
                 return running_process.user_has_access_to_app(app_id, user_access_token)
@@ -217,8 +215,7 @@ class AppsManager():
 
     @classmethod
     def find_process_of_app(cls, resource_model_id: str) -> AppProcess | None:
-        """Find the process that contains the app with the given resource model id
-        """
+        """Find the process that contains the app with the given resource model id"""
         for running_process in cls.running_processes.values():
             if running_process.has_app(resource_model_id):
                 return running_process
@@ -227,8 +224,7 @@ class AppsManager():
 
     @classmethod
     def find_process_by_token(cls, token: str) -> AppProcess | None:
-        """Find the process that contains the app with the given token
-        """
+        """Find the process that contains the app with the given token"""
         for running_process in cls.running_processes.values():
             if running_process.get_token() == token:
                 return running_process
@@ -237,8 +233,7 @@ class AppsManager():
 
     @classmethod
     def find_app_by_resource_model_id(cls, resource_model_id: str) -> AppInstance | None:
-        """Find the streamlit app that was generated from the given resource model id
-        """
+        """Find the streamlit app that was generated from the given resource model id"""
         for running_process in cls.running_processes.values():
             app = running_process.find_app_by_resource_model_id(resource_model_id)
             if app:
@@ -280,6 +275,4 @@ class AppsManager():
         end_date = DateHelper.now_utc()
 
         # Retrieve the log generated by the app
-        return LogService.get_logs_between_dates(start_date, end_date,
-                                                 context=context,
-                                                 context_id=app_id)
+        return LogService.get_logs_between_dates(start_date, end_date, context=context, context_id=app_id)

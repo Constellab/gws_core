@@ -1,15 +1,14 @@
-
-
 import os
 import sys
 import time
-from typing import List, Optional
 
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_service import (
-    AppNginxRedirectServiceInfo, AppNginxReflexFrontServerServiceInfo,
-    AppNginxServiceInfo)
+    AppNginxRedirectServiceInfo,
+    AppNginxReflexFrontServerServiceInfo,
+    AppNginxServiceInfo,
+)
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.core.service.external_api_service import ExternalApiService
@@ -46,15 +45,11 @@ class ReflexProcess(AppProcess):
     _front_app_build_folder: str = None
 
     # Cache for reflex access token (class variables for shared caching)
-    _cached_access_token: Optional[str] = None
-    _cache_timestamp: Optional[float] = None
+    _cached_access_token: str | None = None
+    _cache_timestamp: float | None = None
     _cache_duration_seconds: int = 3600  # 1 hour
 
-    def __init__(self,
-                 front_port: int,
-                 back_port: int,
-                 id_: str,
-                 env_hash: str):
+    def __init__(self, front_port: int, back_port: int, id_: str, env_hash: str):
         super().__init__(id_, env_hash)
         self.front_port = front_port
         self.back_port = back_port
@@ -62,8 +57,7 @@ class ReflexProcess(AppProcess):
     def _start_process(self, app: AppInstance) -> AppProcessStartResult:
         if not isinstance(app, ReflexApp):
             raise Exception("The app must be a ReflexApp instance")
-        Logger.debug(
-            f"Starting reflex process for front port {self.front_port} and back port {self.back_port}")
+        Logger.debug(f"Starting reflex process for front port {self.front_port} and back port {self.back_port}")
 
         shell_proxy = self._get_and_check_shell_proxy(app)
         shell_proxy.working_dir = app.get_app_folder()
@@ -75,15 +69,17 @@ class ReflexProcess(AppProcess):
 
     def _start_dev_process(self, app: AppInstance, shell_proxy: ShellProxy) -> AppProcessStartResult:
         """Start reflex in dev mode with standard 'reflex run' command"""
-        cmd = ['reflex', 'run',
-               f'--frontend-port={self.front_port}',
-               f'--backend-port={self.back_port}',
-               self._get_log_level_option(),
-               #    f'--env=prod',
-               ]
+        cmd = [
+            "reflex",
+            "run",
+            f"--frontend-port={self.front_port}",
+            f"--backend-port={self.back_port}",
+            self._get_log_level_option(),
+            #    f'--env=prod',
+        ]
 
         env = self._get_base_env(app)
-        env['GWS_REFLEX_DEV_MODE'] = 'true'
+        env["GWS_REFLEX_DEV_MODE"] = "true"
 
         process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
         services = self._get_dev_nginx_services()
@@ -93,24 +89,21 @@ class ReflexProcess(AppProcess):
             services=services,
         )
 
-    def _get_dev_nginx_services(self) -> List[AppNginxServiceInfo]:
-        if Settings.is_local_env():
-            # In local environment, we don't need nginx services
-            if self.is_dev_mode:
-                return []
-
-        services: List[AppNginxServiceInfo] = []
+    def _get_dev_nginx_services(self) -> list[AppNginxServiceInfo]:
+        services: list[AppNginxServiceInfo] = []
 
         # When dev mode is activated, both front and back are served by the same process
         # so we use a redirect service for the front
-        services.append(AppNginxRedirectServiceInfo(
-            service_id=self.id + '-front',
-            source_port=self.get_service_source_port(),
-            server_name=self.get_cloud_host_name(),
-            destination_port=self.front_port,
-            # Use localhost host header to avoid issues with some frontend frameworks
-            use_localhost_host_header=True
-        ))
+        services.append(
+            AppNginxRedirectServiceInfo(
+                service_id=self.id + "-front",
+                source_port=self.get_service_source_port(),
+                server_name=self.get_host_name(),
+                destination_port=self.front_port,
+                # Use localhost host header to avoid issues with some frontend frameworks
+                use_localhost_host_header=True,
+            )
+        )
 
         services.append(self._get_cloud_back_nginx_services())
 
@@ -119,23 +112,24 @@ class ReflexProcess(AppProcess):
     def _start_prod_process(self, app: ReflexApp, shell_proxy: ShellProxy) -> AppProcessStartResult:
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
         env = self._get_base_env(app)
-        env['GWS_REFLEX_TOKEN'] = self._token
+        env["GWS_REFLEX_TOKEN"] = self._token
 
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
 
         # Start backend-only
-        backend_cmd = ['reflex', 'run',
-                       f'--backend-port={self.back_port}',
-                       '--backend-only',
-                       self._get_log_level_option(),
-                       # For now disabled prod for backend because it
-                       # files with gws_core imports
-                       #    '--env=prod'
-                       ]
+        backend_cmd = [
+            "reflex",
+            "run",
+            f"--backend-port={self.back_port}",
+            "--backend-only",
+            self._get_log_level_option(),
+            # For now disabled prod for backend because it
+            # files with gws_core imports
+            #    '--env=prod'
+        ]
 
-        process = shell_proxy.run_in_new_thread(
-            backend_cmd, shell_mode=False, env=env)
+        process = shell_proxy.run_in_new_thread(backend_cmd, shell_mode=False, env=env)
 
         services = self._get_prod_nginx_services(front_build_path)
 
@@ -147,38 +141,36 @@ class ReflexProcess(AppProcess):
     def _get_base_env(self, app: AppInstance) -> dict:
         """Get base environment variables for reflex processes"""
         reflex_modules_path = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
-            ReflexProcess.REFLEX_MODULES_PATH
+            os.path.abspath(os.path.dirname(__file__)), ReflexProcess.REFLEX_MODULES_PATH
         )
         if not os.path.exists(reflex_modules_path):
-            raise Exception(
-                f"Reflex modules not found at {reflex_modules_path}")
+            raise Exception(f"Reflex modules not found at {reflex_modules_path}")
 
-        gws_core_path = os.path.dirname(sys.modules['gws_core'].__path__[0])
+        gws_core_path = os.path.dirname(sys.modules["gws_core"].__path__[0])
         theme = self.get_current_user_theme()
 
         python_path = reflex_modules_path
 
         # for non virtual env apps, add gws_core to python path
         if not app.is_virtual_env_app():
-            python_path += ':' + gws_core_path
+            python_path += ":" + gws_core_path
 
         env_dict = {
             # define python path to include gws_reflex_base and gws_reflex_main and gws_core
-            'PYTHONPATH': python_path,
-            'GWS_REFLEX_APP_ID': app.resource_model_id,
-            'GWS_REFLEX_VIRTUAL_ENV': str(app.is_virtual_env_app()),
-            'GWS_REFLEX_API_URL': self.get_back_host_url(),
-            'GWS_THEME': theme.theme,
-            'GWS_REFLEX_APP_CONFIG_DIR_PATH': self.get_working_dir(),
-            'GWS_REFLEX_TEST_ENV': str(Settings.get_instance().is_test),
+            "PYTHONPATH": python_path,
+            "GWS_REFLEX_APP_ID": app.resource_model_id,
+            "GWS_REFLEX_VIRTUAL_ENV": str(app.is_virtual_env_app()),
+            "GWS_REFLEX_API_URL": self.get_back_host_url(),
+            "GWS_THEME": theme.theme,
+            "GWS_REFLEX_APP_CONFIG_DIR_PATH": self.get_working_dir(),
+            "GWS_REFLEX_TEST_ENV": str(Settings.get_instance().is_test),
         }
 
         # Get access token based on whether this is an enterprise app
         access_token: str | None = None  # Default token
         if isinstance(app, ReflexApp) and app.is_enterprise():
             access_token = self._get_cached_reflex_access_token()
-            env_dict['REFLEX_ACCESS_TOKEN'] = access_token
+            env_dict["REFLEX_ACCESS_TOKEN"] = access_token
 
         return env_dict
 
@@ -195,46 +187,44 @@ class ReflexProcess(AppProcess):
         # so if the cache is corrupted or on old version, the build may fail
         app.clear_app_cache()
 
-        self.set_status(AppProcessStatus.STARTING,
-                        "Building app (it may take a while)...")
+        self.set_status(AppProcessStatus.STARTING, "Building app (it may take a while)...")
         app_build_folder = app.get_front_app_build_folder()
         if not app_build_folder.exists():
-            raise Exception(
-                f"Destination folder {app_build_folder} does not exist.")
+            raise Exception(f"Destination folder {app_build_folder} does not exist.")
 
-        build_cmd = ['reflex', 'export', '--env=prod', '--frontend-only',
-                     '--zip-dest-dir', app_build_folder.path, '--no-ssr']
+        build_cmd = [
+            "reflex",
+            "export",
+            "--env=prod",
+            "--frontend-only",
+            "--zip-dest-dir",
+            app_build_folder.path,
+            "--no-ssr",
+        ]
 
-        zip_file_path = os.path.join(
-            app_build_folder.path, ReflexProcess.ZIP_FILE_NAME)
+        zip_file_path = os.path.join(app_build_folder.path, ReflexProcess.ZIP_FILE_NAME)
         FileHelper.delete_file(zip_file_path)
 
         # Log in debug the command to build manually the app
         env_str_cmd = " ".join(f"{key}={value}" for key, value in env.items())
-        Logger.debug(
-            f'Command to build frontend: {env_str_cmd} {" ".join(build_cmd)}')
+        Logger.debug(f"Command to build frontend: {env_str_cmd} {' '.join(build_cmd)}")
 
-        result = shell_proxy.run(
-            build_cmd, env=env, dispatch_stderr=True, dispatch_stdout=True)
+        result = shell_proxy.run(build_cmd, env=env, dispatch_stderr=True, dispatch_stdout=True)
         if result != 0:
-            raise Exception(
-                f"Failed to build REFLEX frontend app {app.get_app_folder()}.")
+            raise Exception(f"Failed to build REFLEX frontend app {app.get_app_folder()}.")
 
         # Unzip the build  and delete the zip file
         if not FileHelper.exists_on_os(zip_file_path):
-            raise Exception(
-                f"Frontend build zip file {zip_file_path} does not exist after build.")
+            raise Exception(f"Frontend build zip file {zip_file_path} does not exist after build.")
 
         ZipCompress.decompress(zip_file_path, app_build_folder.path)
         FileHelper.delete_file(zip_file_path)
 
         # Check the build folder
         # path of the build generated by the command
-        index_html_file = os.path.join(
-            app_build_folder.path, ReflexProcess.INDEX_HTML_FILE)
+        index_html_file = os.path.join(app_build_folder.path, ReflexProcess.INDEX_HTML_FILE)
         if not os.path.exists(index_html_file):
-            raise Exception(
-                f"Index html file {index_html_file} does not exist after build.")
+            raise Exception(f"Index html file {index_html_file} does not exist after build.")
 
         # store the build info
         app.update_front_build_info()
@@ -242,27 +232,33 @@ class ReflexProcess(AppProcess):
         Logger.info("Frontend built successfully")
         return app_build_folder.path
 
-    def _get_prod_nginx_services(self, front_build_folder: str) -> List[AppNginxServiceInfo]:
+    def _get_prod_nginx_services(self, front_build_folder: str) -> list[AppNginxServiceInfo]:
         # In local prod, we need to serve the front from the build folder
-        if Settings.is_local_env():
-            Logger.info(f"Reflex frontend is served by nginx in port {self.front_port}." +
-                        " In local environment you must forward this port manually.")
-            return [AppNginxReflexFrontServerServiceInfo(
-                service_id=self.id,
-                    source_port=self.front_port,
-                    server_name='localhost',
-                    front_folder_path=front_build_folder,
-                    )]
+        # if Settings.is_local_env():
+        #     Logger.info(
+        #         f"Reflex frontend is served by nginx in port {self.front_port}."
+        #         + " In local environment you must forward this port manually."
+        #     )
+        #     return [
+        #         AppNginxReflexFrontServerServiceInfo(
+        #             service_id=self.id,
+        #             source_port=self.front_port,
+        #             server_name="localhost",
+        #             front_folder_path=front_build_folder,
+        #         )
+        #     ]
 
-        services: List[AppNginxServiceInfo] = []
+        services: list[AppNginxServiceInfo] = []
 
         # In prod mode, we serve the front from the build folder
-        services.append(AppNginxReflexFrontServerServiceInfo(
-            service_id=self.id + '-front',
-            source_port=self.get_service_source_port(),
-            server_name=self.get_cloud_host_name(),
-            front_folder_path=front_build_folder,
-        ))
+        services.append(
+            AppNginxReflexFrontServerServiceInfo(
+                service_id=self.id + "-front",
+                source_port=self.get_service_source_port(),
+                server_name=self.get_host_name(),
+                front_folder_path=front_build_folder,
+            )
+        )
 
         # the back is always served by a redirect service
         services.append(self._get_cloud_back_nginx_services())
@@ -272,29 +268,35 @@ class ReflexProcess(AppProcess):
     def _get_cloud_back_nginx_services(self) -> AppNginxServiceInfo:
         # the back is always served by a redirect service
         return AppNginxRedirectServiceInfo(
-            service_id=self.id + '-back',
+            service_id=self.id + "-back",
             source_port=self.get_service_source_port(),
-            server_name=self.get_cloud_host_name('-back'),
+            server_name=self.get_host_name("-back"),
             destination_port=self.back_port,
         )
 
     def get_back_host_url(self) -> str:
         if Settings.is_cloud_env():
-            return f"https://{self.get_cloud_host_name('-back')}"
+            return f"https://{self.get_host_name('-back')}"
         else:
             return f"http://localhost:{self.back_port}"
 
     def call_health_check(self) -> bool:
         # health check for both front and back
         try:
-            ExternalApiService.get(self.get_back_host_url() + '/ping',
-                                   raise_exception_if_error=True)
+            ExternalApiService.get(f"http://localhost:{self.back_port}/ping", raise_exception_if_error=True)
         except Exception:
             return False
 
         try:
-            ExternalApiService.get(self.get_host_url(),
-                                   raise_exception_if_error=True)
+            # Check the front via Nginx using server_name routing so it works inside container
+            # Otherwise this does not work on prod mode with nginx serving the front
+            source_port = self.get_service_source_port()
+            host_name = self.get_host_name()
+            ExternalApiService.get(
+                f"http://127.0.0.1:{source_port}",
+                headers={"Host": host_name},
+                raise_exception_if_error=True,
+            )
         except Exception:
             return False
 
@@ -304,11 +306,8 @@ class ReflexProcess(AppProcess):
         """Check if the process uses the given port"""
         return self.front_port == port or self.back_port == port
 
-    def _get_front_port(self):
-        return self.front_port
-
     def _get_log_level_option(self) -> str:
-        return f'--loglevel={Logger.get_instance().level.lower()}'
+        return f"--loglevel={Logger.get_instance().level.lower()}"
 
     @classmethod
     def _get_cached_reflex_access_token(cls) -> str:
@@ -320,9 +319,11 @@ class ReflexProcess(AppProcess):
         current_time = time.time()
 
         # Check if cache is still valid
-        if (cls._cached_access_token is not None and
-            cls._cache_timestamp is not None and
-                current_time - cls._cache_timestamp < cls._cache_duration_seconds):
+        if (
+            cls._cached_access_token is not None
+            and cls._cache_timestamp is not None
+            and current_time - cls._cache_timestamp < cls._cache_duration_seconds
+        ):
             return cls._cached_access_token
 
         # Cache is invalid, retrieve new token

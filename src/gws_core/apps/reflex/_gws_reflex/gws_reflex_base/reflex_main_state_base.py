@@ -1,42 +1,41 @@
 import os
 from json import load
-from typing import Dict, List, Optional, Type, cast
+from typing import cast
 
 import reflex as rx
 from typing_extensions import TypedDict
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
-APP_CONFIG_FILENAME = 'app_config.json'
+APP_CONFIG_FILENAME = "app_config.json"
 
 
 class ReflexConfigDTO(TypedDict):
     app_dir_path: str
-    source_ids: List[str]
-    params: Optional[dict]
+    source_ids: list[str]
+    params: dict | None
     requires_authentication: bool
     # List of token of user that can access the app
     # Only provided if the app requires authentication
     # Key is access token, value is user id
-    user_access_tokens: Dict[str, str]
+    user_access_tokens: dict[str, str]
 
 
-class QueryParamObject():
-
+class QueryParamObject:
     def __init__(self, query_param_str: str):
         """Initialize the QueryParamObject with a query parameter string."""
         self.query_param_str = query_param_str
         self.params = self._parse_query_params()
 
-    def _parse_query_params(self) -> Dict[str, str]:
+    def _parse_query_params(self) -> dict[str, str]:
         """Parse the query parameter string into a dictionary."""
         params = {}
         if self.query_param_str:
-            for param in self.query_param_str.split('&'):
-                key, value = param.split('=', 1)
+            for param in self.query_param_str.split("&"):
+                key, value = param.split("=", 1)
                 params[key] = value
         return params
 
-    def get(self, key: str, default=None) -> Optional[str]:
+    def get(self, key: str, default=None) -> str | None:
         """Get a parameter value by key."""
         return self.params.get(key, default)
 
@@ -46,16 +45,17 @@ class ReflexMainStateBase(rx.State):
 
     It is used to manage the app configuration, authentication, and parameters.
     """
+
     _app_config: dict = None
     _is_initialized: bool = False
     main_component_initialized: bool = False
 
     # None if the user is not authenticated
-    authenticated_user_id: Optional[str] = None
+    authenticated_user_id: str | None = None
 
     # Constant for dev mode
-    DEV_MODE_USER_ACCESS_TOKEN_KEY = 'dev_mode_token'
-    DEV_MODE_APP_ID = '1'
+    DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
+    DEV_MODE_APP_ID = "dev-app"
 
     @rx.event
     async def on_main_component_mount(self):
@@ -86,12 +86,12 @@ class ReflexMainStateBase(rx.State):
         if not self._app_config:
             self._app_config = self._load_app_config()
 
-        user_access_tokens = self._app_config.get('user_access_tokens', {})
+        user_access_tokens = self._app_config.get("user_access_tokens", {})
 
         if not self.authenticated_user_id:
             self.authenticated_user_id = await self._check_user_token(user_access_tokens)
 
-        requires_authentication = self._app_config.get('requires_authentication', False)
+        requires_authentication = self._app_config.get("requires_authentication", False)
 
         if requires_authentication and not self.authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
@@ -113,14 +113,14 @@ class ReflexMainStateBase(rx.State):
             raise FileNotFoundError(f"App config file not found at {app_config_path}")
 
         try:
-            with open(app_config_path, 'r', encoding='utf-8') as file:
+            with open(app_config_path, encoding="utf-8") as file:
                 return load(file)
 
         except Exception as e:
             raise ValueError(f"Error reading app config file: {e}")
 
     def _get_app_config_file_path(self) -> str:
-        config_dir = os.environ.get('GWS_REFLEX_APP_CONFIG_DIR_PATH')
+        config_dir = os.environ.get("GWS_REFLEX_APP_CONFIG_DIR_PATH")
         if not config_dir:
             raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
 
@@ -133,21 +133,20 @@ class ReflexMainStateBase(rx.State):
         if self.is_dev_mode():
             return self.DEV_MODE_APP_ID
 
-        app_id = os.environ.get('GWS_REFLEX_APP_ID')
+        app_id = os.environ.get("GWS_REFLEX_APP_ID")
         if not app_id:
             raise ValueError("GWS_REFLEX_APP_ID environment variable is not set")
         return app_id
 
-    async def _check_user_token(self, user_access_tokens: Dict[str, str]) -> Optional[str]:
-
+    async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
         if self.is_dev_mode():
             return user_access_tokens.get(self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
 
         query_params = self.get_query_params()
 
-        url_token = query_params.get('gws_token')
+        url_token = query_params.get("gws_token")
 
-        env_token = os.environ.get('GWS_REFLEX_TOKEN')
+        env_token = os.environ.get("GWS_REFLEX_TOKEN")
 
         if url_token != env_token:
             return None
@@ -161,7 +160,7 @@ class ReflexMainStateBase(rx.State):
 
     def is_dev_mode(self) -> bool:
         """Check if the app is running in development mode."""
-        return os.environ.get('GWS_REFLEX_DEV_MODE', 'false').lower() == 'true'
+        return os.environ.get("GWS_REFLEX_DEV_MODE", "false").lower() == "true"
 
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
@@ -170,16 +169,16 @@ class ReflexMainStateBase(rx.State):
         # raise ValueError("App configuration is not loaded. Call on_load() first.")
         return cast(ReflexConfigDTO, self._app_config)
 
-    async def get_sources_ids(self) -> List[str]:
+    async def get_sources_ids(self) -> list[str]:
         """Get the source IDs from the app configuration."""
-        source_ids = (await self.get_app_config()).get('source_ids')
+        source_ids = (await self.get_app_config()).get("source_ids")
         if source_ids is None:
             return []
         return source_ids
 
     def is_virtual_env_app(self) -> bool:
         """Check if the app is running in a virtual environment."""
-        return os.environ.get('GWS_REFLEX_VIRTUAL_ENV', 'false').lower() == 'true'
+        return os.environ.get("GWS_REFLEX_VIRTUAL_ENV", "false").lower() == "true"
 
     def get_query_params(self) -> QueryParamObject:
         """Get the query parameters from the app configuration."""
@@ -189,7 +188,7 @@ class ReflexMainStateBase(rx.State):
 
     async def requires_authentication(self) -> bool:
         """Check if the app requires authentication."""
-        return (await self.get_app_config()).get('requires_authentication', False)
+        return (await self.get_app_config()).get("requires_authentication", False)
 
     async def check_authentication(self) -> bool:
         if not self._is_initialized:
@@ -200,28 +199,28 @@ class ReflexMainStateBase(rx.State):
             return True
         return self.authenticated_user_id is not None
 
-    def _get_user_access_token(self) -> Optional[str]:
+    def _get_user_access_token(self) -> str | None:
         """Get the user access token from the app configuration."""
         query_params = self.get_query_params()
-        return query_params.get('gws_user_access_token')
+        return query_params.get("gws_user_access_token")
 
     ####################### PARAMS #####################
 
-    async def get_param(self, key: str, default=None) -> Optional[str]:
+    async def get_param(self, key: str, default=None) -> str | None:
         """Get a parameter from the app configuration."""
         params = await self.get_params()
         return params.get(key, default)
 
     async def get_params(self) -> dict:
         """Get the parameters from the app configuration."""
-        params = (await self.get_app_config()).get('params')
+        params = (await self.get_app_config()).get("params")
         if params is None:
             return {}
         return params
 
     ###################### UTILITIES #####################
 
-    async def get_first_child_of_state(self, state_class: Type[rx.State]) -> Optional[rx.State]:
+    async def get_first_child_of_state(self, state_class: type[rx.State]) -> rx.State | None:
         """Get the first child state of a given type.
 
         Args:
