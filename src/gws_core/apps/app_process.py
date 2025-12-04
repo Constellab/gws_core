@@ -327,7 +327,7 @@ class AppProcess:
                     return
                 # if there is not more connection to the app, we stop it
                 # In dev mode, we do not stop the app even if there is no connection
-                if not self._check_running():
+                if not self.is_dev_mode and not self._check_running():
                     Logger.debug("No more connection to the app, stopping the app")
                     self.stop_process()
                     return
