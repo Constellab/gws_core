@@ -1,26 +1,34 @@
-
 import json
 import os
+from typing import Literal
 
 import typer
-from gws_cli.utils.cli_utils import CLIUtils
-from gws_cli.utils.dev_config_generator import AppDevConfig
-from gws_core import (AppsManager, BaseEnvShell, CondaShellProxy, FileHelper,
-                      LoggerMessageObserver, MambaShellProxy, PipShellProxy,
-                      ShellProxy, Utils)
+from gws_core import (
+    AppsManager,
+    BaseEnvShell,
+    CondaShellProxy,
+    FileHelper,
+    LoggerMessageObserver,
+    MambaShellProxy,
+    PipShellProxy,
+    ShellProxy,
+    Utils,
+)
 from gws_core.apps.app_instance import AppInstance
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.manage import AppManager
 from gws_core.user.user import User
-from typing_extensions import Literal
+
+from gws_cli.utils.cli_utils import CLIUtils
+from gws_cli.utils.dev_config_generator import AppDevConfig
 
 app = typer.Typer()
 
-EnvType = Literal['NONE', 'PIP', 'CONDA', 'MAMBA']
+EnvType = Literal["NONE", "PIP", "CONDA", "MAMBA"]
 
 
 class AppCli:
-
     _config_file_path: str = None
     _config: AppDevConfig = None
     _env_type: EnvType = "NONE"
@@ -40,7 +48,7 @@ class AppCli:
             typer.echo(f"Config file '{config_file_path}' does not exist.", err=True)
             raise typer.Abort()
 
-        with open(config_file_path, "r", encoding='UTF-8') as file:
+        with open(config_file_path, encoding="UTF-8") as file:
             try:
                 config_dict = json.load(file)
                 self._config = AppDevConfig.from_json(config_dict)
@@ -58,18 +66,17 @@ class AppCli:
             env_type = "NONE"
 
         if not Utils.value_is_in_literal(env_type, EnvType):
-            typer.echo(
-                f"Invalid app type '{env_type}', supported values {Utils.get_literal_values(EnvType)}", err=True)
+            typer.echo(f"Invalid app type '{env_type}', supported values {Utils.get_literal_values(EnvType)}", err=True)
             raise typer.Abort()
 
         env_file_path = self._config.env_file_path
 
         if env_type != "NONE":
-
             if not env_file_path:
                 typer.echo(
                     f"Env type is '{env_type}' but the config file '{self._config_file_path}' does not contain 'env_file_path'.",
-                    err=True)
+                    err=True,
+                )
                 raise typer.Abort()
 
             # if the app dir path is not absolute (usually on dev mode), make it absolute
@@ -78,7 +85,8 @@ class AppCli:
                 config_file_dir = os.path.dirname(self._config_file_path)
                 env_file_path = os.path.join(config_file_dir, env_file_path)
                 print(
-                    f"env_file_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {env_file_path}")
+                    f"env_file_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {env_file_path}"
+                )
 
         self._env_type = env_type
         self._env_file_path = env_file_path
@@ -96,7 +104,6 @@ class AppCli:
             raise ValueError(f"Invalid env type '{env_type}'")
 
     def build_shell_proxy(self) -> ShellProxy:
-
         # create shell and install env if needed
         shell_proxy = self._get_shell_proxy(self._env_type, self._env_file_path)
         shell_proxy.attach_observer(LoggerMessageObserver())
@@ -108,8 +115,7 @@ class AppCli:
     def start_app(self, app_: AppInstance, ctx: typer.Context) -> None:
         settings_file_path = CLIUtils.get_current_brick_settings_file_path()
 
-        AppManager.init_gws_env_and_db(settings_file_path,
-                                       log_level=CLIUtils.get_global_option_log_level(ctx))
+        AppManager.init_gws_env_and_db(settings_file_path, log_level=CLIUtils.get_global_option_log_level(ctx))
 
         AppsManager.init()
 
@@ -120,14 +126,22 @@ class AppCli:
             app_.set_dev_user(user.id)
 
         url = AppsManager.create_or_get_app(app_).get_url()
-        print("-------------------------------------------------------------------------------------------------------------------------------------")
+        is_localhost = Settings.is_local_or_desktop_env()
+        additional_message = (
+            f"\nPlease make sure the port {Settings.get_app_external_port()} is open." if is_localhost else ""
+        )
+        print(
+            "-------------------------------------------------------------------------------------------------------------------------------------"
+        )
         env_txt = "" if self._env_type == "NONE" else f" with env type '{self._env_type}'"
         print(
-            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}")
-        print("-------------------------------------------------------------------------------------------------------------------------------------")
+            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}.{additional_message}"
+        )
+        print(
+            "-------------------------------------------------------------------------------------------------------------------------------------"
+        )
 
     def get_app_dir_path(self) -> str:
-
         app_dir_path = self._config.app_dir_path
         # if the app dir path is not absolute (usually on dev mode), make it absolute
         if not os.path.isabs(app_dir_path):
@@ -135,7 +149,8 @@ class AppCli:
             config_file_dir = os.path.dirname(self._config_file_path)
             app_dir_path = os.path.join(config_file_dir, app_dir_path)
             print(
-                f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_path}")
+                f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_path}"
+            )
 
         if not FileHelper.exists_on_os(app_dir_path):
             typer.echo(f"App directory '{app_dir_path}' does not exist.", err=True)

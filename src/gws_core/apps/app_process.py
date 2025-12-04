@@ -39,26 +39,25 @@ class AppProcess:
     redirect the request to the correct app.
     """
 
-    id: str = None
+    id: str
 
-    _token: str = None
+    _token: str
 
-    env_hash: str = None
+    env_hash: str | None
 
-    current_running_apps: dict[str, AppInstance] = None
+    current_running_apps: dict[str, AppInstance]
 
-    is_dev_mode: bool = None
+    is_dev_mode: bool | None
 
-    _process: SysProc = None
-    _working_dir: str = None
+    _process: SysProc | None
+    _working_dir: str | None
 
     # number of successive check when there is not connection to the main app
     _current_no_connection_check: int = 0
 
     _check_is_running: bool = False
 
-    _services: list[AppNginxServiceInfo] = None
-
+    _services: list[AppNginxServiceInfo]
     # Status tracking
     _status: AppProcessStatus = AppProcessStatus.STOPPED
     _status_text: str = ""
@@ -73,7 +72,7 @@ class AppProcess:
     # before killing it
     SUCCESSIVE_CHECK_BEFORE_KILL = 3
 
-    def __init__(self, id_: str, env_hash: str = None):
+    def __init__(self, id_: str, env_hash: str | None = None):
         self.id = id_
         self.env_hash = env_hash
         self._token = StringHelper.generate_random_chars(50)
@@ -81,6 +80,9 @@ class AppProcess:
         self._services = []
         self._status = AppProcessStatus.STOPPED
         self._status_text = ""
+        self._process = None
+        self._working_dir = None
+        self.is_dev_mode = None
 
     @abstractmethod
     def _start_process(self, app: AppInstance) -> AppProcessStartResult:
@@ -277,11 +279,11 @@ class AppProcess:
 
         return f"{sub_domain}-{self.id}{suffix}.{virtual_host}"
 
-    def get_host_url(self) -> str:
+    def get_host_url(self, suffix: str = "") -> str:
         if Settings.is_local_or_desktop_env():
-            return f"http://{self.get_host_name()}:{Settings.get_app_external_port()}"
+            return f"http://{self.get_host_name(suffix)}:{Settings.get_app_external_port()}"
         else:
-            return f"https://{self.get_host_name()}"
+            return f"https://{self.get_host_name(suffix)}"
 
     def get_app_full_url(self, app_id: str) -> AppInstanceUrl:
         app = self.get_and_check_app(app_id)
@@ -296,6 +298,7 @@ class AppProcess:
         """
         Method to start the check running loop to check if the app is still used
         """
+        # do not start multiple check running loops
         if self._check_is_running:
             return
 
@@ -319,6 +322,7 @@ class AppProcess:
                     self.stop_process()
                     return
                 # if there is not more connection to the app, we stop it
+                # In dev mode, we do not stop the app even if there is no connection
                 if not self._check_running():
                     Logger.debug("No more connection to the app, stopping the app")
                     self.stop_process()

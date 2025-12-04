@@ -189,7 +189,7 @@ class ReflexProcess(AppProcess):
 
         self.set_status(AppProcessStatus.STARTING, "Building app (it may take a while)...")
         app_build_folder = app.get_front_app_build_folder()
-        if not app_build_folder.exists():
+        if not app_build_folder or not app_build_folder.exists():
             raise Exception(f"Destination folder {app_build_folder} does not exist.")
 
         build_cmd = [
@@ -233,21 +233,6 @@ class ReflexProcess(AppProcess):
         return app_build_folder.path
 
     def _get_prod_nginx_services(self, front_build_folder: str) -> list[AppNginxServiceInfo]:
-        # In local prod, we need to serve the front from the build folder
-        # if Settings.is_local_env():
-        #     Logger.info(
-        #         f"Reflex frontend is served by nginx in port {self.front_port}."
-        #         + " In local environment you must forward this port manually."
-        #     )
-        #     return [
-        #         AppNginxReflexFrontServerServiceInfo(
-        #             service_id=self.id,
-        #             source_port=self.front_port,
-        #             server_name="localhost",
-        #             front_folder_path=front_build_folder,
-        #         )
-        #     ]
-
         services: list[AppNginxServiceInfo] = []
 
         # In prod mode, we serve the front from the build folder
@@ -275,10 +260,7 @@ class ReflexProcess(AppProcess):
         )
 
     def get_back_host_url(self) -> str:
-        if Settings.is_cloud_env():
-            return f"https://{self.get_host_name('-back')}"
-        else:
-            return f"http://localhost:{self.back_port}"
+        return self.get_host_url("-back")
 
     def call_health_check(self) -> bool:
         # health check for both front and back
