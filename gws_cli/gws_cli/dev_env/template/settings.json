@@ -11,22 +11,8 @@
       "source.organizeImports": "explicit"
     },
     "files.trimTrailingWhitespace": true,
-    "editor.defaultFormatter": "ms-python.autopep8"
+    "editor.defaultFormatter": "charliermarsh.ruff"
   },
-  "autopep8.path": [
-    "/home/labuser/.local/bin/autopep8"
-  ],
-  "autopep8.args": [
-    "--max-line-length",
-    "120",
-    "--experimental"
-  ],
-  "pylint.path": [
-    "/home/labuser/.local/bin/pylint"
-  ],
-  "pylint.args": [
-    "--rcfile=${workspaceFolder}/.pylintrc"
-  ],
   "python.languageServer": "Pylance",
   "python.analysis.typeCheckingMode": "basic",
   "python.analysis.diagnosticMode": "openFilesOnly",

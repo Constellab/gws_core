@@ -1,23 +1,23 @@
 import json
 import os
 import shutil
-from typing import List
 
 import typer
-from gws_cli.ai_code.claude_service import ClaudeService
-from gws_cli.ai_code.copilot_service import CopilotService
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
+
+from gws_cli.ai_code.claude_service import ClaudeService
+from gws_cli.ai_code.copilot_service import CopilotService
 
 
 class DevEnvCliService:
     """Service for configuring development environment settings."""
 
     # Get the directory where the dev_env module is located
-    TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'template')
+    TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "template")
 
-    CUSTOM_GWS_CORE_REFLEX_PATH = os.path.join('gws_core', 'apps', 'reflex', '_gws_reflex')
+    CUSTOM_GWS_CORE_REFLEX_PATH = os.path.join("gws_core", "apps", "reflex", "_gws_reflex")
     OPENVSCODE_SERVER_BIN = "/home/.openvscode-server/bin/openvscode-server"
 
     @classmethod
@@ -43,16 +43,20 @@ class DevEnvCliService:
             os.mkdir(vs_code_folder)
 
         # Always override the extensions.json file
-        extensions_dest = os.path.join(vs_code_folder, 'extensions.json')
-        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, 'extensions.json'), extensions_dest)
+        extensions_dest = os.path.join(vs_code_folder, "extensions.json")
+        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, "extensions.json"), extensions_dest)
 
         # Always override the launch.json file
-        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, 'launch.json'),
-                        os.path.join(vs_code_folder, 'launch.json'))
+        shutil.copyfile(
+            os.path.join(cls.TEMPLATE_DIR, "launch.json"),
+            os.path.join(vs_code_folder, "launch.json"),
+        )
 
-        # Copy the pylint file
-        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, '.pylintrc'),
-                        os.path.join(Settings.get_user_folder(), '.pylintrc'))
+        # Copy the ruff.toml file
+        shutil.copyfile(
+            os.path.join(cls.TEMPLATE_DIR, "ruff.toml"),
+            os.path.join(Settings.get_user_folder(), "ruff.toml"),
+        )
 
         cls.config_vs_code_settings_json()
         cls.install_notebook_template()
@@ -77,42 +81,51 @@ class DevEnvCliService:
         settings_path = cls.get_vs_code_settings_file_path()
 
         # Load the settings file into a dict
-        settings: dict = None
+        settings: dict
         if not os.path.exists(settings_path):
-            typer.echo('Creating a new vscode settings file')
+            typer.echo("Creating a new vscode settings file")
             settings = cls.generate_vs_code_settings_json(settings_path)
         else:
-            typer.echo('Reading the existing vscode settings file')
+            typer.echo("Reading the existing vscode settings file")
             try:
-                with open(settings_path, 'r', encoding='UTF-8') as file:
+                with open(settings_path, encoding="UTF-8") as file:
                     settings = json.load(file)
             except Exception as err:
                 typer.echo(f"Error during parsing of the vscode settings file: {err}", err=True)
-                typer.echo("Moving the existing file to settings_backup.json and creating a new one...")
-                shutil.move(settings_path, os.path.join(
-                    cls.get_vs_code_setting_folder(), "settings_backup.json"))
+                typer.echo(
+                    "Moving the existing file to settings_backup.json and creating a new one..."
+                )
+                shutil.move(
+                    settings_path,
+                    os.path.join(cls.get_vs_code_setting_folder(), "settings_backup.json"),
+                )
                 # Create a new settings file
                 settings = cls.generate_vs_code_settings_json(settings_path)
                 return
 
         typer.echo("Adding the bricks to the python path...")
         # Init the extra paths if not already done
-        if 'python.autoComplete.extraPaths' not in settings \
-                or not isinstance(settings['python.autoComplete.extraPaths'], list):
-            settings['python.autoComplete.extraPaths'] = []
+        if "python.autoComplete.extraPaths" not in settings or not isinstance(
+            settings["python.autoComplete.extraPaths"], list
+        ):
+            settings["python.autoComplete.extraPaths"] = []
 
-        if 'python.analysis.extraPaths' not in settings \
-                or not isinstance(settings['python.analysis.extraPaths'], list):
-            settings['python.analysis.extraPaths'] = []
+        if "python.analysis.extraPaths" not in settings or not isinstance(
+            settings["python.analysis.extraPaths"], list
+        ):
+            settings["python.analysis.extraPaths"] = []
 
         # Add the brick paths to the extra paths
-        existing_paths: List[str] = settings['python.autoComplete.extraPaths']
+        existing_paths: list[str] = settings["python.autoComplete.extraPaths"]
 
         # remove all bricks paths from existing paths
         user_folder = Settings.get_user_bricks_folder()
         system_folder = Settings.get_sys_bricks_folder()
-        existing_paths = [path for path in existing_paths
-                          if not path.startswith(user_folder) and not path.startswith(system_folder)]
+        existing_paths = [
+            path
+            for path in existing_paths
+            if not path.startswith(user_folder) and not path.startswith(system_folder)
+        ]
 
         # Set all the brick src paths in the extraPaths
         brick_folders = BrickService.list_brick_directories(distinct=True)
@@ -127,13 +140,13 @@ class DevEnvCliService:
                 if os.path.exists(reflex_path):
                     existing_paths.append(reflex_path)
 
-        settings['python.autoComplete.extraPaths'] = existing_paths
-        settings['python.analysis.extraPaths'] = existing_paths
+        settings["python.autoComplete.extraPaths"] = existing_paths
+        settings["python.analysis.extraPaths"] = existing_paths
 
         try:
-            typer.echo('Writing the vscode settings file...')
+            typer.echo("Writing the vscode settings file...")
             # Write the settings file
-            with open(settings_path, 'w', encoding='UTF-8') as file:
+            with open(settings_path, "w", encoding="UTF-8") as file:
                 json.dump(settings, file, indent=2)
         except Exception as err:
             typer.echo(f"Error during writing the vscode settings file: {err}", err=True)
@@ -143,10 +156,10 @@ class DevEnvCliService:
     def generate_vs_code_settings_json(cls, settings_path: str) -> dict:
         """Generate a new VS Code settings.json file from template."""
         # Copy the settings.json file only if it does not exist
-        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, 'settings.json'), settings_path)
+        shutil.copyfile(os.path.join(cls.TEMPLATE_DIR, "settings.json"), settings_path)
 
         # Load the settings file into a dict
-        with open(settings_path, 'r', encoding='UTF-8') as file:
+        with open(settings_path, encoding="UTF-8") as file:
             return json.load(file)
 
     @classmethod
@@ -172,7 +185,7 @@ class DevEnvCliService:
 
         try:
             # Load the extensions file
-            with open(extension_file_path, 'r', encoding='UTF-8') as file:
+            with open(extension_file_path, encoding="UTF-8") as file:
                 extensions = json.load(file)
 
             # Install each extension
