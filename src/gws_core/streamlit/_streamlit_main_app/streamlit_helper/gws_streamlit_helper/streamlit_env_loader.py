@@ -15,15 +15,12 @@ class StreamlitEnvLoader:
     dev_mode: bool = False
     user_id: str = None
 
-    def __init__(self, app_id: str,
-                 dev_mode: bool,
-                 user_id: str = None) -> None:
+    def __init__(self, app_id: str, dev_mode: bool, user_id: str = None) -> None:
         self.app_id = app_id
         self.dev_mode = dev_mode
         self.user_id = user_id
 
     def __enter__(self):
-
         self._load_env()
 
         # Authenticate user
@@ -45,7 +42,6 @@ class StreamlitEnvLoader:
 
         # if the user was not already authenticated
         if not user:
-
             # get the connected user
             user = None
             try:
@@ -76,12 +72,12 @@ class StreamlitEnvLoader:
     def __exit__(self, exc_type, exc_value, traceback):
         # remove the current user
         from gws_core import CurrentUserService
+
         CurrentUserService.clear_auth_context()
 
     def _load_env(self):
-
-        if 'gws_core' not in sys.modules:
-            with st.spinner('Initializing app...'):
+        if "gws_core" not in sys.modules:
+            with st.spinner("Initializing app..."):
                 core_lib_path = "/lab/user/bricks/gws_core/src"
                 if not os.path.exists(core_lib_path):
                     core_lib_path = "/lab/.sys/bricks/gws_core/src"
@@ -90,9 +86,13 @@ class StreamlitEnvLoader:
                 sys.path.insert(0, core_lib_path)
 
                 from gws_core import LogContext, Settings, manage
+
                 manage.AppManager.init_gws_env_and_db(
                     main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-                    log_level='INFO', log_context=LogContext.STREAMLIT, log_context_id=self.app_id)
+                    log_level="INFO",
+                    log_context=LogContext.STREAMLIT,
+                    log_context_id=self.app_id,
+                )
 
     def _wait_for_env_loading(self):
         """When call when the environment is not loaded yet.
@@ -103,7 +103,7 @@ class StreamlitEnvLoader:
         current_time = 0
         time_limit = 60
         time_step = 5
-        with st.spinner('Initializing app...'):
+        with st.spinner("Initializing app..."):
             while current_time < time_limit:
                 sleep(time_step)
                 try:
@@ -124,4 +124,4 @@ class StreamlitEnvLoader:
         if not isinstance(e, AttributeError):
             return False
 
-        return str(e) == 'Cannot use uninitialized Proxy.'
+        return str(e) == "Cannot use uninitialized Proxy."

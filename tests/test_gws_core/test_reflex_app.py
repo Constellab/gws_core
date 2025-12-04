@@ -1,5 +1,3 @@
-
-
 from typing import cast
 
 from pandas import DataFrame
@@ -9,8 +7,9 @@ from gws_core.apps.apps_manager import AppsManager
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.apps.reflex.reflex_resource import ReflexResource
 from gws_core.config.config_params import ConfigParams
-from gws_core.impl.apps.reflex_showcase.generate_reflex_showcase_app import \
-    GenerateReflexShowcaseApp
+from gws_core.impl.apps.reflex_showcase.generate_reflex_showcase_app import (
+    GenerateReflexShowcaseApp,
+)
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -20,9 +19,8 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_reflex_app
 class TestReflexApp(BaseTestCase):
-
     def test_reflex_resource(self):
-        df = DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
 
         table = Table(df)
 
@@ -30,14 +28,16 @@ class TestReflexApp(BaseTestCase):
 
         scenario_proxy = ScenarioProxy()
         protocol_proxy = scenario_proxy.get_protocol()
-        generate_task = protocol_proxy.add_task(GenerateReflexShowcaseApp, 'generate')
-        protocol_proxy.add_source('resource', resource_model.id, generate_task.get_input_port('resource'))
+        generate_task = protocol_proxy.add_task(GenerateReflexShowcaseApp, "generate")
+        protocol_proxy.add_source(
+            "resource", resource_model.id, generate_task.get_input_port("resource")
+        )
 
         scenario_proxy.run()
 
         generate_task = generate_task.refresh()
 
-        reflex_resource = cast(ReflexResource, generate_task.get_output('reflex_app'))
+        reflex_resource = cast(ReflexResource, generate_task.get_output("reflex_app"))
         # make the check faster to avoid test block
         ReflexProcess.CHECK_RUNNING_INTERVAL = 3
 

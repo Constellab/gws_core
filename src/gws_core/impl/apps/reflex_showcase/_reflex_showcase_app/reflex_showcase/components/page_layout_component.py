@@ -1,6 +1,5 @@
 """Component to provide consistent page layout across showcase pages."""
 
-
 import reflex as rx
 
 
@@ -26,17 +25,14 @@ def page_layout(
     return rx.box(
         # Page header
         rx.heading(title, size="7", margin_bottom="0.5em"),
-
         rx.text(
             description,
             size="3",
             color="gray",
             margin_bottom="2em",
         ),
-
         # Page content
         *content,
-
         # Page padding
         padding="2em",
         **kwargs,

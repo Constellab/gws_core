@@ -18,16 +18,19 @@ from ..table.view.table_view import TableView
 from ..text.text_view import TextView
 
 
-@resource_decorator(unique_name="Robot", human_name="Robot", hide=True,
-                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
+@resource_decorator(
+    unique_name="Robot",
+    human_name="Robot",
+    hide=True,
+    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"),
+)
 class Robot(Resource):
-
     age: int = IntRField()
     position: List[float] = ListRField()
     weight: float = FloatRField()
 
     @classmethod
-    def empty(cls) -> 'Robot':
+    def empty(cls) -> "Robot":
         robot: Robot = Robot()
         # default values
         robot.age = 9
@@ -45,11 +48,20 @@ class Robot(Resource):
         elif direction == "east":
             self.position[0] += moving_step
 
-    @view(view_type=JSONView, human_name="View position",
-          specs=ConfigSpecs({"position": StrParam(default_value="latitude", allowed_values=['latitude', 'longitude'])}))
+    @view(
+        view_type=JSONView,
+        human_name="View position",
+        specs=ConfigSpecs(
+            {
+                "position": StrParam(
+                    default_value="latitude", allowed_values=["latitude", "longitude"]
+                )
+            }
+        ),
+    )
     def view_only_position(self, params: ConfigParams) -> JSONView:
-        position: str = params.get_value('position')
-        position_value = self.position[1] if position == 'latitude' else self.position[0]
+        position: str = params.get_value("position")
+        position_value = self.position[1] if position == "latitude" else self.position[0]
         return JSONView({"position": position, "value": position_value})
 
     @view(view_type=TextView, human_name="View as text")
@@ -61,18 +73,21 @@ class Robot(Resource):
         return {"age": self.age, "position": self.position, "weight": self.weight}
 
 
-@resource_decorator("RobotAddOn", hide=True,
-                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
+@resource_decorator(
+    "RobotAddOn",
+    hide=True,
+    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"),
+)
 class RobotAddOn(Resource):
     pass
 
 
-@resource_decorator("MegaRobot", hide=True,
-                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
+@resource_decorator(
+    "MegaRobot", hide=True, style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57")
+)
 class MegaRobot(Robot):
-
     @classmethod
-    def from_robot(cls, robot: Robot) -> 'MegaRobot':
+    def from_robot(cls, robot: Robot) -> "MegaRobot":
         mega = MegaRobot()
         mega.position = robot.position
         mega.weight = robot.weight
@@ -80,14 +95,14 @@ class MegaRobot(Robot):
         return mega
 
 
-@resource_decorator("RobotFood", hide=True,
-                    style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"))
+@resource_decorator(
+    "RobotFood", hide=True, style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57")
+)
 class RobotFood(Resource):
-
     multiplicator: int = IntRField()
 
     @classmethod
-    def empty(cls) -> 'RobotFood':
+    def empty(cls) -> "RobotFood":
         food = RobotFood()
         food.multiplicator = 1
         return food

@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from pandas import DataFrame
@@ -15,22 +13,24 @@ from gws_core.task.task_runner import TaskRunner
 
 # test_table_smart_plotly
 class TestSmartPlotly(TestCase):
-
     def test_smart_plotly(self):
-        initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 9]})
+        initial_df = DataFrame({"A": [1, 2, 3, 4], "B": [8, 6, 4, 9]})
         table: Table = Table(initial_df)
 
         # Simulate a chat with openAI
         prompt: OpenAiChatDict = {
-            "messages":  [{
-                "role": "user",
-                "content": "Generate a scatter plot",
-            }, {
-                "role": "assistant",
-                "content": """Here is the result : ```import plotly.express as px
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Generate a scatter plot",
+                },
+                {
+                    "role": "assistant",
+                    "content": """Here is the result : ```import plotly.express as px
 
-target = px.scatter(source, x="A", y="B")```"""
-            }]
+target = px.scatter(source, x="A", y="B")```""",
+                },
+            ]
         }
         tester = TaskRunner(
             task_type=SmartPlotly,
@@ -38,8 +38,8 @@ target = px.scatter(source, x="A", y="B")```"""
                 "source": table,
             },
             params={
-                'prompt': prompt,
-            }
+                "prompt": prompt,
+            },
         )
 
         outputs = tester.run()
@@ -55,12 +55,9 @@ target = px.scatter(source, x="A", y="B")```"""
         tester = TaskRunner(
             task_type=PyAgent,
             inputs={
-                'source': table,
+                "source": table,
             },
-            params={
-                'code': code.get_data(),
-                'params': {}
-            }
+            params={"code": code.get_data(), "params": {}},
         )
         outputs = tester.run()
 

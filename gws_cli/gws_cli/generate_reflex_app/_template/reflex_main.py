@@ -1,8 +1,7 @@
 from typing import Optional
 
 import reflex as rx
-from gws_reflex_main import (ReflexMainState, main_component,
-                             register_gws_reflex_app)
+from gws_reflex_main import ReflexMainState, main_component, register_gws_reflex_app
 
 
 class State(ReflexMainState):
@@ -15,9 +14,9 @@ class State(ReflexMainState):
         # Secure the method to ensure it checks authentication
         # before accessing resources.
         if not await self.check_authentication():
-            return 'Unauthorized'
+            return "Unauthorized"
         resources = await self.get_resources()
-        return resources[0].name if resources else 'No resource'
+        return resources[0].name if resources else "No resource"
 
     @rx.var
     async def get_param_name(self) -> Optional[str]:
@@ -25,7 +24,7 @@ class State(ReflexMainState):
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
         """
-        return await self.get_param('param_name', 'default_value')
+        return await self.get_param("param_name", "default_value")
 
     @rx.event
     def increment(self):
@@ -47,9 +46,5 @@ def index():
         rx.text("Input resource name: " + State.get_resource_name),
         rx.text("Param name: " + State.get_param_name),
         rx.text(f"Value: {State.value}"),
-        rx.button(
-            "Click me",
-            on_click=State.increment,
-            style={"margin-top": "20px"}
-        )
+        rx.button("Click me", on_click=State.increment, style={"margin-top": "20px"}),
     )

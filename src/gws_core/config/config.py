@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, final
 
 from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
@@ -26,10 +24,7 @@ class Config(ModelWithUser):
         super().__init__(*args, **kwargs)
 
         if not self.is_saved():
-            self.data = {
-                "specs": {},
-                "values": {}
-            }
+            self.data = {"specs": {}, "values": {}}
 
     ########################################## SPEC #####################################
 
@@ -141,7 +136,6 @@ class Config(ModelWithUser):
         self.data["values"] = {}
 
     def to_dto(self) -> ConfigDTO:
-
         specs = self.to_specs_dto()
 
         # get the values of the config (skip private values)
@@ -158,7 +152,7 @@ class Config(ModelWithUser):
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
             specs=specs,
-            values=values
+            values=values,
         )
 
     def to_simple_dto(self, ignore_values: bool = False) -> ConfigSimpleDTO:
@@ -168,11 +162,11 @@ class Config(ModelWithUser):
 
         return ConfigSimpleDTO(
             specs=self.to_specs_dto(skip_private=False),
-            values=self.get_values() if not ignore_values else {}
+            values=self.get_values() if not ignore_values else {},
         )
 
     @classmethod
-    def from_simple_dto(cls, config_dto: ConfigSimpleDTO) -> 'Config':
+    def from_simple_dto(cls, config_dto: ConfigSimpleDTO) -> "Config":
         """
         Import the config from a dto
         """
@@ -183,9 +177,8 @@ class Config(ModelWithUser):
 
         return config
 
-    def copy(self) -> 'Config':
-        """Copy the config to a new Config with a new Id
-        """
+    def copy(self) -> "Config":
+        """Copy the config to a new Config with a new Id"""
 
         new_config: Config = Config()
         new_config.data = self.data
@@ -195,5 +188,5 @@ class Config(ModelWithUser):
         return self.get_specs().to_dto(skip_private=skip_private)
 
     class Meta:
-        table_name = 'gws_config'
+        table_name = "gws_config"
         is_table = True

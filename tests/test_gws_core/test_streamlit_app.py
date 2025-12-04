@@ -1,5 +1,3 @@
-
-
 from pandas import DataFrame
 
 from gws_core.apps.app_dto import AppProcessStatus
@@ -15,9 +13,8 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_streamlit_app
 class TestStreamlitApp(BaseTestCase):
-
     def test_streamlit_resource(self):
-        df = DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        df = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
 
         table = Table(df)
         resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
@@ -43,8 +40,8 @@ if sources:
         streamlit_resource.set_streamlit_code(streamlit_code)
         streamlit_resource.add_resource(resource_model.get_resource())
         resource_model = ResourceModel.save_from_resource(
-            streamlit_resource,
-            origin=ResourceOrigin.UPLOADED)
+            streamlit_resource, origin=ResourceOrigin.UPLOADED
+        )
 
         streamlit_resource = resource_model.get_resource()
         # make the check faster to avoid test block
@@ -69,7 +66,9 @@ if sources:
             status = streamlit_process.get_status_dto()
             self.assertEqual(status.status, AppProcessStatus.RUNNING)
             self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(status.running_apps[0].app_resource_id, streamlit_resource.get_model_id())
+            self.assertEqual(
+                status.running_apps[0].app_resource_id, streamlit_resource.get_model_id()
+            )
 
             AppsManager.stop_all_processes()
 

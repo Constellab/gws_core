@@ -15,12 +15,10 @@ from ..task.task_typing import TaskTyping
 from .brick_helper import BrickHelper
 
 
-class TechnicalDocService():
-
+class TechnicalDocService:
     @classmethod
     def generate_technical_doc(cls, brick_name: str) -> TechnicalDocDTO:
-        """Method to return the technical doc information about a brick to upload it on the hub
-        """
+        """Method to return the technical doc information about a brick to upload it on the hub"""
 
         brick_info = BrickHelper.get_brick_info_and_check(brick_name)
 
@@ -29,7 +27,9 @@ class TechnicalDocService():
         protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
 
         # Get all the classes of the brick except the resources, tasks and protocols
-        other_classes = cls.export_other_classes_technical_doc(brick_name, resources + tasks + protocols)
+        other_classes = cls.export_other_classes_technical_doc(
+            brick_name, resources + tasks + protocols
+        )
 
         return TechnicalDocDTO(
             json_version=1,
@@ -38,11 +38,13 @@ class TechnicalDocService():
             resources=resources,
             tasks=tasks,
             protocols=protocols,
-            other_classes=other_classes
+            other_classes=other_classes,
         )
 
     @classmethod
-    def export_typing_technical_doc(cls, brick_name: str, typing_class: Type[Typing]) -> List[TypingFullDTO]:
+    def export_typing_technical_doc(
+        cls, brick_name: str, typing_class: Type[Typing]
+    ) -> List[TypingFullDTO]:
         typings: List[Typing] = typing_class.get_by_brick_and_object_type(brick_name)
         sorted_typings = sorted(typings, key=lambda x: len(x.get_ancestors()))
         json_list = []
@@ -64,7 +66,8 @@ class TechnicalDocService():
 
     @classmethod
     def export_other_classes_technical_doc(
-            cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]) -> List[ClassicClassDocDTO]:
+        cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]
+    ) -> List[ClassicClassDocDTO]:
         other_classes: List[ClassicClassDocDTO] = []
         clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
 
@@ -82,28 +85,28 @@ class TechnicalDocService():
 
     @classmethod
     def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
-        """Method to return the technical doc information about a brick to upload it on the hub
-        """
+        """Method to return the technical doc information about a brick to upload it on the hub"""
         tasks = cls.export_typing_technical_doc(brick_name, TaskTyping)
 
-        return cls._generate_objects_technical_doc_as_md(tasks, 'Tasks', separator)
+        return cls._generate_objects_technical_doc_as_md(tasks, "Tasks", separator)
 
     @classmethod
     def generate_protocols_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
         protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
 
-        return cls._generate_objects_technical_doc_as_md(protocols, 'Protocols', separator)
+        return cls._generate_objects_technical_doc_as_md(protocols, "Protocols", separator)
 
     @classmethod
     def generate_resources_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
         resources = cls.export_typing_technical_doc(brick_name, ResourceTyping)
 
-        return cls._generate_objects_technical_doc_as_md(resources, 'Resources', separator)
+        return cls._generate_objects_technical_doc_as_md(resources, "Resources", separator)
 
     @classmethod
-    def _generate_objects_technical_doc_as_md(cls, objects: List[TypingFullDTO], title: str,
-                                              separator: str = None) -> str:
-        markdown = f'# {title}\n\n'
+    def _generate_objects_technical_doc_as_md(
+        cls, objects: List[TypingFullDTO], title: str, separator: str = None
+    ) -> str:
+        markdown = f"# {title}\n\n"
 
         for obj in objects:
             if obj.status == TypingStatus.UNAVAILABLE:
@@ -112,8 +115,8 @@ class TechnicalDocService():
                 continue
             markdown += obj.to_markdown()
 
-            markdown += '\n\n'
+            markdown += "\n\n"
             if separator:
-                markdown += separator + '\n'
+                markdown += separator + "\n"
 
         return markdown

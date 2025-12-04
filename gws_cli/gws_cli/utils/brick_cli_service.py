@@ -44,17 +44,18 @@ class BrickCliService:
 
             bricks_with_versions.append(
                 BrickDirectoryWithVersionDTO(
-                    name=brick_dir.name,
-                    path=brick_dir.path,
-                    version=version,
-                    location=location
+                    name=brick_dir.name, path=brick_dir.path, version=version, location=location
                 )
             )
 
         # Sort with gws_core first, then alphabetically, prefer user bricks over system
         bricks_with_versions.sort(
-            key=lambda x: (x.name != Settings.get_gws_core_brick_name(),
-                           x.name, x.location != 'user'))
+            key=lambda x: (
+                x.name != Settings.get_gws_core_brick_name(),
+                x.name,
+                x.location != "user",
+            )
+        )
 
         return bricks_with_versions
 

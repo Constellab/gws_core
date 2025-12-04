@@ -1,23 +1,25 @@
-
-
 from typing import Any, Dict, List, Type
 
 from gws_core.config.param.param_types import ParamSpecDTO
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.string_helper import StringHelper
 
 from .param_spec import ParamSpec
-from .param_spec_decorator import (LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
-                                   NESTED_PARAM_SPEC_TYPES_LIST,
-                                   PARAM_SPEC_TYPES_LIST,
-                                   SIMPLE_PARAM_SPEC_TYPES_LIST, ParamSpecType)
-from .param_types import (CompleteDynamicParamAllowedSpecsDict,
-                          DynamicParamAllowedSpecsDict, ParamSpecTypeStr)
+from .param_spec_decorator import (
+    LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
+    NESTED_PARAM_SPEC_TYPES_LIST,
+    PARAM_SPEC_TYPES_LIST,
+    SIMPLE_PARAM_SPEC_TYPES_LIST,
+    ParamSpecType,
+)
+from .param_types import (
+    CompleteDynamicParamAllowedSpecsDict,
+    DynamicParamAllowedSpecsDict,
+    ParamSpecTypeStr,
+)
 
 
-class ParamSpecHelper():
-
+class ParamSpecHelper:
     @staticmethod
     def create_param_spec_from_json(json_: Dict[str, Any]) -> ParamSpec:
         spec_dto = ParamSpecDTO.from_json(json_)
@@ -56,7 +58,9 @@ class ParamSpecHelper():
         return NESTED_PARAM_SPEC_TYPES_LIST
 
     @staticmethod
-    def get_dynamic_param_allowed_param_spec_types(lab_allowed: bool = False) -> CompleteDynamicParamAllowedSpecsDict:
+    def get_dynamic_param_allowed_param_spec_types(
+        lab_allowed: bool = False,
+    ) -> CompleteDynamicParamAllowedSpecsDict:
         """_summary_
 
         :param lab_allowed: _description_, defaults to False
@@ -68,7 +72,9 @@ class ParamSpecHelper():
         key = StringHelper.snake_case_to_sentence(ParamSpecType.SIMPLE.value)
         res[key] = {}
 
-        list_spec_types: List[type[ParamSpec]] = ParamSpecHelper.get_simple_param_spec_types().copy()
+        list_spec_types: List[type[ParamSpec]] = (
+            ParamSpecHelper.get_simple_param_spec_types().copy()
+        )
 
         for spec_type in list_spec_types:
             spec_name = spec_type.get_str_type()

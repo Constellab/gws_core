@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Union
 
 import numpy
@@ -69,8 +67,7 @@ class HistogramView(View):
     _type: ViewType = ViewType.HISTOGRAM
     _title: str = "Histogram"
 
-    def __init__(self,
-                 nbins: int = 10, mode: HistogramMode = "FREQUENCY"):
+    def __init__(self, nbins: int = 10, mode: HistogramMode = "FREQUENCY"):
         super().__init__()
         self.nbins = nbins
         self.mode = mode
@@ -89,7 +86,9 @@ class HistogramView(View):
             self._series = []
 
         if data is None or not isinstance(data, list):
-            raise BadRequestException("The data is required and must be a list of float or a DataFrame")
+            raise BadRequestException(
+                "The data is required and must be a list of float or a DataFrame"
+            )
 
         nbins = self.nbins
         if nbins is None or nbins <= 0:
@@ -105,11 +104,7 @@ class HistogramView(View):
         if self.mode == "PROBABILITY":
             hist = hist / hist.sum()
 
-        self.add_series(
-            x=bin_edges.tolist(),
-            y=hist.tolist(),
-            name=name
-        )
+        self.add_series(x=bin_edges.tolist(), y=hist.tolist(), name=name)
 
     def add_data_from_dataframe(self, dataframe: DataFrame = None, name: str = None) -> None:
         """
@@ -119,7 +114,9 @@ class HistogramView(View):
             raise BadRequestException("The data must be row or column vector")
         return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)
 
-    def add_series(self, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None):
+    def add_series(
+        self, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None
+    ):
         """
         Add series of pre-computed x and y histogram values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
@@ -140,13 +137,15 @@ class HistogramView(View):
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
-        self._series.append({
-            "data": {
-                "x": x,
-                "y": y,
-            },
-            "name": name,
-        })
+        self._series.append(
+            {
+                "data": {
+                    "x": x,
+                    "y": y,
+                },
+                "name": name,
+            }
+        )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         return {

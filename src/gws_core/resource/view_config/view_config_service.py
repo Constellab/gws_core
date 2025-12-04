@@ -1,5 +1,3 @@
-
-
 from threading import Thread
 from typing import List
 
@@ -24,8 +22,7 @@ from .view_config import ViewConfig
 from .view_config_search_builder import ViewConfigSearchBuilder
 
 
-class ViewConfigService():
-
+class ViewConfigService:
     MAX_HISTORY_SIZE = 5000
 
     @classmethod
@@ -34,11 +31,18 @@ class ViewConfigService():
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def save_view_config(cls, resource_model: ResourceModel, view: View,
-                         view_name: str, config: Config,
-                         is_favorite: bool = False,
-                         view_style: TypingStyle = None) -> ViewConfig:
-        view_meta_data = ViewHelper.get_and_check_view_meta(resource_model.get_and_check_resource_type(), view_name)
+    def save_view_config(
+        cls,
+        resource_model: ResourceModel,
+        view: View,
+        view_name: str,
+        config: Config,
+        is_favorite: bool = False,
+        view_style: TypingStyle = None,
+    ) -> ViewConfig:
+        view_meta_data = ViewHelper.get_and_check_view_meta(
+            resource_model.get_and_check_resource_type(), view_name
+        )
 
         view_config: ViewConfig = ViewConfig(
             resource_model=resource_model,
@@ -49,7 +53,7 @@ class ViewConfigService():
             config_values={},
             is_favorite=is_favorite or view.is_favorite(),
             config=config,
-            style=view_style
+            style=view_style,
         )
 
         # check is the view config already exists
@@ -66,8 +70,12 @@ class ViewConfigService():
             view_config_db = view_config_db.save()
 
         # Copy the resource tags to the view config
-        resource_tags = EntityTagList.find_by_entity(NavigableEntityType.RESOURCE, resource_model.id)
-        tag_propagated = resource_tags.build_tags_propagated(TagOriginType.RESOURCE_PROPAGATED, resource_model.id)
+        resource_tags = EntityTagList.find_by_entity(
+            NavigableEntityType.RESOURCE, resource_model.id
+        )
+        tag_propagated = resource_tags.build_tags_propagated(
+            TagOriginType.RESOURCE_PROPAGATED, resource_model.id
+        )
         view_config_tags = EntityTagList.find_by_entity(NavigableEntityType.VIEW, view_config_db.id)
         view_config_tags.add_tags(tag_propagated)
 
@@ -80,7 +88,7 @@ class ViewConfigService():
     @classmethod
     def _limit_length_history(cls) -> None:
         # limit the length of the history
-        if (ViewConfig.select().count() > cls.MAX_HISTORY_SIZE):
+        if ViewConfig.select().count() > cls.MAX_HISTORY_SIZE:
             to_delete: List[ViewConfig] = cls.get_old_views_to_delete()
 
             for view_config in to_delete:
@@ -88,10 +96,14 @@ class ViewConfigService():
 
     @classmethod
     def get_old_views_to_delete(cls) -> List[ViewConfig]:
-        """ return the 100 oldest view config that are not favorite and not used in a note"""
-        return list(ViewConfig.select().left_outer_join(NoteViewModel).where(
-            (ViewConfig.is_favorite == False) & (NoteViewModel.note.is_null(True))).order_by(
-            ViewConfig.last_modified_at.asc()).limit(100))
+        """return the 100 oldest view config that are not favorite and not used in a note"""
+        return list(
+            ViewConfig.select()
+            .left_outer_join(NoteViewModel)
+            .where((ViewConfig.is_favorite == False) & (NoteViewModel.note.is_null(True)))
+            .order_by(ViewConfig.last_modified_at.asc())
+            .limit(100)
+        )
 
     @classmethod
     def update_title(cls, view_config_id: str, title: str) -> ViewConfig:
@@ -108,16 +120,17 @@ class ViewConfigService():
     ############################################ SEARCH ############################################
 
     @classmethod
-    def search(cls, search: SearchParams,
-               page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-
+    def search(
+        cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[ViewConfig]:
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
 
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
-    def search_by_note(cls, note_id: str, search: SearchParams,
-                       page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
+    def search_by_note(
+        cls, note_id: str, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[ViewConfig]:
         from ...note.note_service import NoteService
 
         search_builder: SearchBuilder = ViewConfigSearchBuilder()
@@ -133,9 +146,13 @@ class ViewConfigService():
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
     @classmethod
-    def _search(cls, search_builder: SearchBuilder, search: SearchParams,
-                page: int = 0, number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-
+    def _search(
+        cls,
+        search_builder: SearchBuilder,
+        search: SearchParams,
+        page: int = 0,
+        number_of_items_per_page: int = 20,
+    ) -> Paginator[ViewConfig]:
         # # if the include not favorite is not checked, filter favorite
         if not search.get_filter_criteria_value("include_not_favorite"):
             search_builder.add_expression(ViewConfig.is_favorite == True)
@@ -143,22 +160,29 @@ class ViewConfigService():
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
-     ############################################ GET ############################################
+    ############################################ GET ############################################
 
     @classmethod
-    def get_by_resource(cls, resource_id: str,
-                        favorite: bool = False,
-                        page: int = 0,
-                        number_of_items_per_page: int = 20) -> Paginator[ViewConfig]:
-
+    def get_by_resource(
+        cls,
+        resource_id: str,
+        favorite: bool = False,
+        page: int = 0,
+        number_of_items_per_page: int = 20,
+    ) -> Paginator[ViewConfig]:
         query: ModelSelect = None
         if favorite:
-            query = ViewConfig.get_by_resource_and_favorite(resource_id).order_by(ViewConfig.last_modified_at.desc())
+            query = ViewConfig.get_by_resource_and_favorite(resource_id).order_by(
+                ViewConfig.last_modified_at.desc()
+            )
         else:
-            query = ViewConfig.get_by_resource(resource_id).order_by(ViewConfig.last_modified_at.desc())
+            query = ViewConfig.get_by_resource(resource_id).order_by(
+                ViewConfig.last_modified_at.desc()
+            )
 
         paginator: Paginator[ViewConfig] = Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page
+        )
 
         return paginator
 
@@ -170,11 +194,13 @@ class ViewConfigService():
         for view_type in ViewType:
             if view_type in [ViewType.VIEW, ViewType.EMPTY, ViewType.TABULAR]:
                 continue
-            view_types_dto.append(ViewTypeDTO(
-                type=view_type,
-                human_name=view_type.get_human_name(),
-                style=view_type.get_typing_style()
-            ))
+            view_types_dto.append(
+                ViewTypeDTO(
+                    type=view_type,
+                    human_name=view_type.get_human_name(),
+                    style=view_type.get_typing_style(),
+                )
+            )
 
         # sort by human name
         view_types_dto.sort(key=lambda x: x.human_name)

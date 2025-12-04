@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Type
 
@@ -19,7 +17,8 @@ class IOValidator(object):
         """
         if not isinstance(resource, self.resource_type):
             raise Exception(
-                f"Resource type '{resource.__class__.__name__}' is not valid. Expected '{self.resource_type.__name__}'")
+                f"Resource type '{resource.__class__.__name__}' is not valid. Expected '{self.resource_type.__name__}'"
+            )
 
     @abstractmethod
     def validate(self, resource: Resource) -> None:

@@ -1,9 +1,6 @@
-
-
 from typing import Dict
 
-from gws_core.config.param.param_spec_decorator import (ParamSpecType,
-                                                        param_spec_decorator)
+from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 
 from ..param_spec import TextParam

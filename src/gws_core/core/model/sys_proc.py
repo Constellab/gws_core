@@ -62,13 +62,14 @@ class SysProc:
         return self._process.pid
 
     @classmethod
-    def popen(cls, cmd, *args, **kwargs) -> 'SysProc':
+    def popen(cls, cmd, *args, **kwargs) -> "SysProc":
         try:
             return SysProc(Popen(cmd, *args, **kwargs))
         except Exception as err:
             raise BadRequestException(
-                f"An error occured when calling command {cmd}. Error: {err}") from err
+                f"An error occured when calling command {cmd}. Error: {err}"
+            ) from err
 
     @staticmethod
-    def from_pid(pid) -> 'SysProc':
+    def from_pid(pid) -> "SysProc":
         return SysProc(Process(pid))

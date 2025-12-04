@@ -46,7 +46,11 @@ class AppInstance:
     DEV_MODE_APP_ID = "dev-app"
 
     def __init__(
-        self, resource_model_id: str, name: str, shell_proxy: ShellProxy, requires_authentication: bool = True
+        self,
+        resource_model_id: str,
+        name: str,
+        shell_proxy: ShellProxy,
+        requires_authentication: bool = True,
     ):
         self.resource_model_id = resource_model_id
         self.name = name
@@ -119,7 +123,9 @@ class AppInstance:
                 return token
 
         if not user_access_token:
-            user_access_token = StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds())
+            user_access_token = (
+                StringHelper.generate_uuid() + "_" + str(DateHelper.now_utc_as_milliseconds())
+            )
         self.user_access_tokens[user_access_token] = user_id
 
         # store the user access token in the config file
@@ -203,7 +209,9 @@ class AppInstance:
         str_resources: list[str] = []
         if self.is_virtual_env_app():
             # for virtual env app, the resources are the file paths
-            str_resources = [resource.path for resource in self.resources if isinstance(resource, FSNode)]
+            str_resources = [
+                resource.path for resource in self.resources if isinstance(resource, FSNode)
+            ]
         else:
             # for normal app, the resources are the model ids
             str_resources = [resource.get_model_id() for resource in self.resources]

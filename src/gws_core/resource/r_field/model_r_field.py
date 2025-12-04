@@ -1,5 +1,3 @@
-
-
 """
 ModelRField module for Resource fields that store Pydantic models.
 
@@ -13,8 +11,7 @@ from typing import Any, Type
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.utils import Utils
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .r_field import BaseRField
 
 
@@ -74,6 +71,7 @@ class ModelRfield(BaseRField):
         - Models can have complex nested structures
         - Default value is None (model is not instantiated by default)
     """
+
     object_type: Type[BaseModelDTO]
 
     def __init__(self, object_type: Type[BaseModelDTO], include_in_dict_view: bool = False) -> None:

@@ -1,5 +1,3 @@
-
-
 from gws_core.core.classes.file_downloader import FileDownloader
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.settings import Settings

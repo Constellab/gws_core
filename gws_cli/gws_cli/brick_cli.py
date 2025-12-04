@@ -1,4 +1,3 @@
-
 import subprocess
 
 import typer
@@ -11,17 +10,26 @@ app = typer.Typer(help="Generate and manage bricks - reusable components for dat
 
 
 @app.command("generate", help="Generate a new brick with boilerplate code and structure")
-def generate(name: Annotated[str, typer.Argument(help="Name of the brick to create (snake_case recommended).")]):
+def generate(
+    name: Annotated[
+        str, typer.Argument(help="Name of the brick to create (snake_case recommended).")
+    ],
+):
     generate_brick(name)
 
 
 @app.command("install-deps", help="Install pip dependencies from a brick's settings.json file")
 def install_deps(
-        settings_path: Annotated[str, typer.Argument(help="Path to the settings.json file or brick directory")]):
+    settings_path: Annotated[
+        str, typer.Argument(help="Path to the settings.json file or brick directory")
+    ],
+):
     """Install pip dependencies from a brick's settings.json file."""
 
     if not BrickService.folder_is_brick(settings_path):
-        typer.echo(f"Error: {settings_path} is not a valid brick directory or settings.json file", err=True)
+        typer.echo(
+            f"Error: {settings_path} is not a valid brick directory or settings.json file", err=True
+        )
         raise typer.Exit(1)
 
     # Use BrickCliService to read settings
@@ -51,7 +59,7 @@ def install_deps(
 def _install_packages_from_settings(pip_sources) -> None:
     """Install packages from all pip sources from BrickSettingsDTO."""
     for source in pip_sources:
-        source_url = source.source if source.source else 'https://pypi.python.org/simple'
+        source_url = source.source if source.source else "https://pypi.python.org/simple"
         packages = source.packages
 
         if not packages:
@@ -82,7 +90,9 @@ def _install_packages_batch(packages, source_url: str) -> None:
 
     try:
         subprocess.run(pip_cmd, check=True, capture_output=True, text=True)
-        typer.echo(f"✓ Successfully installed {len(package_specs)} packages: {', '.join(package_specs)}")
+        typer.echo(
+            f"✓ Successfully installed {len(package_specs)} packages: {', '.join(package_specs)}"
+        )
     except subprocess.CalledProcessError as e:
         typer.echo(f"✗ Failed to install packages: {e.stderr}", err=True)
         typer.echo(f"Command: {' '.join(pip_cmd)}", err=True)

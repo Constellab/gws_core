@@ -203,7 +203,9 @@ class AppProcess:
                     AppProcessStatus.STOPPED,
                     "The app did not start in time, please check the logs for more details or retry later.",
                 )
-                raise Exception("The app did not start in time, please check the logs for more details or retry later.")
+                raise Exception(
+                    "The app did not start in time, please check the logs for more details or retry later."
+                )
 
     def get_working_dir(self) -> str:
         if self._working_dir is None:
@@ -369,7 +371,9 @@ class AppProcess:
         pid_with_children = [child.pid for child in self._process.get_all_children()]
         pid_with_children.append(self._process.pid)
 
-        return len([x for x in connections if x.pid in pid_with_children and x.status == "ESTABLISHED"])
+        return len(
+            [x for x in connections if x.pid in pid_with_children and x.status == "ESTABLISHED"]
+        )
 
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
@@ -396,7 +400,9 @@ class AppProcess:
         # otherwise the env would installed when the user open the app, leading to a long loading time
         shell_proxy = app_instance.get_shell_proxy()
         if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
-            self.set_status(AppProcessStatus.STARTING, "Installing virtual environment (it may take a while)...")
+            self.set_status(
+                AppProcessStatus.STARTING, "Installing virtual environment (it may take a while)..."
+            )
             shell_proxy.install_env()
         return shell_proxy
 

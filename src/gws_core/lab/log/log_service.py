@@ -1,11 +1,8 @@
-
-
 import os
 from datetime import datetime
 from typing import List
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.core.utils.settings import Settings
@@ -16,15 +13,10 @@ from .log import LogCompleteInfo, LogLine, LogsBetweenDates
 
 
 class LogService:
-
     @classmethod
     def get_logs_status(cls) -> LogsStatusDTO:
-
         log_folder = Settings.get_instance().get_log_dir()
-        log_status: LogsStatusDTO = LogsStatusDTO(
-            log_folder=log_folder,
-            log_files=[]
-        )
+        log_status: LogsStatusDTO = LogsStatusDTO(log_folder=log_folder, log_files=[])
 
         for node_name in os.listdir(log_folder):
             log_info = cls.get_log_info(node_name)
@@ -48,7 +40,7 @@ class LogService:
         log_folder = Settings.get_instance().get_log_dir()
         log_file_path = os.path.join(log_folder, node_name)
 
-        with open(log_file_path, "r", encoding='UTF-8') as f:
+        with open(log_file_path, "r", encoding="UTF-8") as f:
             content = f.read()
 
         return LogCompleteInfo(log_info, content)
@@ -57,7 +49,7 @@ class LogService:
     def get_log_info(cls, node_name: str) -> LogInfo:
         log_folder = Settings.get_instance().get_log_dir()
 
-        if not node_name.startswith('log'):
+        if not node_name.startswith("log"):
             return None
 
         log_file_path = os.path.join(log_folder, node_name)
@@ -70,10 +62,14 @@ class LogService:
         )
 
     @classmethod
-    def get_logs_between_dates(cls, from_date: datetime, to_date: datetime,
-                               context: LogContext = None, context_id: str = None,
-                               nb_of_lines: int = 100) -> LogsBetweenDates:
-
+    def get_logs_between_dates(
+        cls,
+        from_date: datetime,
+        to_date: datetime,
+        context: LogContext = None,
+        context_id: str = None,
+        nb_of_lines: int = 100,
+    ) -> LogsBetweenDates:
         log_lines: List[LogLine] = []
 
         # retrieve logs for each day
@@ -86,7 +82,8 @@ class LogService:
                 one_day_from = DateHelper.convert_datetime_to_utc(from_date)
             else:
                 one_day_from = DateHelper.convert_datetime_to_utc(
-                    datetime(year=date.year, month=date.month, day=date.day))
+                    datetime(year=date.year, month=date.month, day=date.day)
+                )
 
             # if the to_date is the same day as the date, we use the to_date
             # otherwise with use the date at 23:59:59
@@ -95,12 +92,21 @@ class LogService:
             else:
                 one_day_to = DateHelper.convert_datetime_to_utc(
                     datetime(
-                        year=date.year, month=date.month, day=date.day,
-                        hour=23, minute=59, second=59))
+                        year=date.year,
+                        month=date.month,
+                        day=date.day,
+                        hour=23,
+                        minute=59,
+                        second=59,
+                    )
+                )
 
             try:
-                log_lines.extend(cls.get_logs_between_dates_same_day(
-                    one_day_from, one_day_to, context, context_id, nb_of_lines - len(log_lines)))
+                log_lines.extend(
+                    cls.get_logs_between_dates_same_day(
+                        one_day_from, one_day_to, context, context_id, nb_of_lines - len(log_lines)
+                    )
+                )
             # skip error : file is not log file
             except BadRequestException:
                 continue
@@ -109,14 +115,24 @@ class LogService:
             if len(log_lines) >= nb_of_lines:
                 break
 
-        return LogsBetweenDates(logs=log_lines, from_date=from_date, to_date=to_date,
-                                context=context, context_id=context_id, is_last_page=len(log_lines) < nb_of_lines)
+        return LogsBetweenDates(
+            logs=log_lines,
+            from_date=from_date,
+            to_date=to_date,
+            context=context,
+            context_id=context_id,
+            is_last_page=len(log_lines) < nb_of_lines,
+        )
 
     @classmethod
-    def get_logs_between_dates_same_day(cls, from_date: datetime, to_date: datetime,
-                                        context: LogContext = None, context_id: str = None,
-                                        nb_of_lines: int = 100) -> List[LogLine]:
-
+    def get_logs_between_dates_same_day(
+        cls,
+        from_date: datetime,
+        to_date: datetime,
+        context: LogContext = None,
+        context_id: str = None,
+        nb_of_lines: int = 100,
+    ) -> List[LogLine]:
         if not DateHelper.are_same_day(from_date, to_date):
             raise BadRequestException("The dates must be on the same day")
 
@@ -124,7 +140,8 @@ class LogService:
 
         log_complete_info = cls.get_log_complete_info(log_file_name)
         return log_complete_info.get_log_lines_by_time(
-            from_date, to_date, context, context_id, nb_of_lines)
+            from_date, to_date, context, context_id, nb_of_lines
+        )
 
     @classmethod
     def get_log_file_path(cls, node_name: str) -> str:

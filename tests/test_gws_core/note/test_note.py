@@ -1,9 +1,6 @@
-
-
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import (RichTextBlockType,
-                                                     RichTextDTO)
+from gws_core.impl.rich_text.rich_text_types import RichTextBlockType, RichTextDTO
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.note.note import Note, NoteScenario
@@ -21,21 +18,21 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_note
 class TestNote(BaseTestCase):
-
     def test_note(self):
-        folder = SpaceFolder(title='Folder').save()
+        folder = SpaceFolder(title="Folder").save()
 
         # test create an empty note
-        note: Note = NoteService.create(NoteSaveDTO(title='Test note'))
+        note: Note = NoteService.create(NoteSaveDTO(title="Test note"))
 
         self.assertIsInstance(note, Note)
-        self.assertEqual(note.title, 'Test note')
+        self.assertEqual(note.title, "Test note")
 
-        note = NoteService.update(note.id, NoteSaveDTO(title='New title'))
-        self.assertEqual(note.title, 'New title')
+        note = NoteService.update(note.id, NoteSaveDTO(title="New title"))
+        self.assertEqual(note.title, "New title")
 
         content: RichTextDTO = RichText.create_rich_text_dto(
-            [RichText.create_paragraph('1', 'Hello world!')])
+            [RichText.create_paragraph("1", "Hello world!")]
+        )
         NoteService.update_content(note.id, content)
         note = note.refresh()
         self.assertEqual(len(note.content.blocks), 1)
@@ -44,7 +41,7 @@ class TestNote(BaseTestCase):
 
         # Create a second scenario with a note
         scenario_2 = ScenarioService.create_scenario()
-        note_2 = NoteService.create(NoteSaveDTO(title='Note 2'), [scenario_2.id])
+        note_2 = NoteService.create(NoteSaveDTO(title="Note 2"), [scenario_2.id])
 
         # Add exp 1 on note 1
         NoteService.add_scenario(note.id, scenario.id)
@@ -86,17 +83,18 @@ class TestNote(BaseTestCase):
         self.assertEqual(len(NoteService.get_scenarios_by_note(note.id)), 0)
 
     def test_associated_views(self):
-        """ Test when we add a resource view, it created an associated resource for the note
-        """
+        """Test when we add a resource view, it created an associated resource for the note"""
         # create note and resource
-        note = NoteService.create(NoteSaveDTO(title='Test note'))
+        note = NoteService.create(NoteSaveDTO(title="Test note"))
         resource_model = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
 
-        view_result = ResourceService.call_view_on_resource_model(resource_model, "view_as_json", {}, True)
+        view_result = ResourceService.call_view_on_resource_model(
+            resource_model, "view_as_json", {}, True
+        )
 
         # simulate the rich text with resource id
         rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
-        block = RichText.create_block('1', RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
+        block = RichText.create_block("1", RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
 
         # update note content
         new_content = RichText.create_rich_text_dto([block])
@@ -128,16 +126,18 @@ class TestNote(BaseTestCase):
     def test_add_view_config_to_note(self):
         # generate a resource from a scenario
         scenario = ScenarioProxy()
-        scenario.get_protocol().add_process(RobotCreate, 'create')
+        scenario.get_protocol().add_process(RobotCreate, "create")
         scenario.run()
 
-        i_process = scenario.get_protocol().get_process('create')
-        robot_model = i_process.get_output_resource_model('robot')
+        i_process = scenario.get_protocol().get_process("create")
+        robot_model = i_process.get_output_resource_model("robot")
 
         # create a view config
-        result = ResourceService.call_view_on_resource_model(robot_model, "view_as_string", {}, True)
+        result = ResourceService.call_view_on_resource_model(
+            robot_model, "view_as_string", {}, True
+        )
 
-        note = NoteService.create(NoteSaveDTO(title='Test note'))
+        note = NoteService.create(NoteSaveDTO(title="Test note"))
         # add the view to the note
         NoteService.add_view_to_content(note.id, result.view_config.id)
 
@@ -166,16 +166,16 @@ class TestNote(BaseTestCase):
 
     def test_insert_note_template(self):
         # prepare the data
-        note_template = NoteTemplateService.create_empty('title')
+        note_template = NoteTemplateService.create_empty("title")
         rich_text = RichText()
-        rich_text.add_paragraph('First paragraph')
-        rich_text.add_paragraph('Second paragraph')
+        rich_text.add_paragraph("First paragraph")
+        rich_text.add_paragraph("Second paragraph")
         NoteTemplateService.update_content(note_template.id, rich_text.to_dto())
 
-        note = NoteService.create(NoteSaveDTO(title='Test note'))
+        note = NoteService.create(NoteSaveDTO(title="Test note"))
         note_rich_text = RichText()
-        note_rich_text.add_paragraph('Start note')
-        note_rich_text.add_paragraph('End note')
+        note_rich_text.add_paragraph("Start note")
+        note_rich_text.add_paragraph("End note")
         NoteService.update_content(note.id, note_rich_text.to_dto())
 
         # inser the note template in the note
@@ -189,7 +189,7 @@ class TestNote(BaseTestCase):
             {"id": "1", "type": "paragraph", "data": {"text": "Start note"}},
             {"id": "2", "type": "paragraph", "data": {"text": "First paragraph"}},
             {"id": "3", "type": "paragraph", "data": {"text": "Second paragraph"}},
-            {"id": "4", "type": "paragraph", "data": {"text": "End note"}}
+            {"id": "4", "type": "paragraph", "data": {"text": "End note"}},
         ]
 
-        self.assert_json(note_rich_text.to_dto_json_dict().get('blocks'), expected_blocks, ['id'])
+        self.assert_json(note_rich_text.to_dto_json_dict().get("blocks"), expected_blocks, ["id"])

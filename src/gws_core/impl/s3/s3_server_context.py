@@ -1,5 +1,3 @@
-
-
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.s3.s3_server_exception import S3ServerException
 from gws_core.user.current_user_service import CurrentUserService
@@ -7,7 +5,7 @@ from gws_core.user.user import User
 
 
 class S3ServerContext:
-    """ Context to support with statement to catch exceptions and convert
+    """Context to support with statement to catch exceptions and convert
     them to S3ServerException.
     It also sets the current user to sys user because in S3 server we don't have a user
 

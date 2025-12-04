@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from peewee import ForeignKeyField
@@ -9,7 +7,6 @@ from gws_core.folder.space_folder import SpaceFolder
 
 
 class ModelWithFolder(PeeweeModel):
-
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     @classmethod

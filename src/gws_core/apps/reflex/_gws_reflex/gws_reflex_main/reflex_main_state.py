@@ -38,7 +38,7 @@ class ReflexMainState(ReflexMainStateBase):
         return User.get_by_id_and_check(user_id)
 
     async def get_and_check_current_user(self) -> User:
-        """ Get the current user and check if it is authenticated.
+        """Get the current user and check if it is authenticated.
         Don't call this method in a @rx.var, use get_current_user instead (because it will fail during build).
         Use this method in @rx.event or other methods only.
 

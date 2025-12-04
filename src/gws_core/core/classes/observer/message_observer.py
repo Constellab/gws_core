@@ -1,19 +1,15 @@
-
-
 from abc import abstractmethod
 from typing import List
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.logger import Logger
 from gws_core.progress_bar.progress_bar import ProgressBar
-from gws_core.progress_bar.progress_bar_dto import \
-    ProgressBarMessageWithTypeDTO
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageWithTypeDTO
 
 from .dispatched_message import DispatchedMessage
 
 
 class MessageObserver:
-
     @abstractmethod
     def update(self, messages: List[DispatchedMessage]) -> None:
         """Method called when a message is dispatched"""
@@ -33,13 +29,10 @@ class ProgressBarMessageObserver(MessageObserver):
         self.progress_bar = progress_bar
 
     def update(self, messages: List[DispatchedMessage]) -> None:
-
         # convert message to ProgressBarMessageWithType
         progress_bar_messages: List[ProgressBarMessageWithTypeDTO] = [
             ProgressBarMessageWithTypeDTO(
-                message=message.message,
-                type=message.status,
-                progress=message.progress
+                message=message.message, type=message.status, progress=message.progress
             )
             for message in messages
         ]

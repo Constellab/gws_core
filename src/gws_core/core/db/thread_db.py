@@ -1,5 +1,3 @@
-
-
 from threading import Thread
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
@@ -32,8 +30,15 @@ class ThreadDb(Thread):
     :type Thread: type
     """
 
-    def __init__(self, group=None, target=None, name: str = None,
-                 args: tuple = (), kwargs: dict = None, daemon: bool = None):
+    def __init__(
+        self,
+        group=None,
+        target=None,
+        name: str = None,
+        args: tuple = (),
+        kwargs: dict = None,
+        daemon: bool = None,
+    ):
         """
         Initialize the ThreadDb
 
@@ -50,7 +55,9 @@ class ThreadDb(Thread):
         """
         if kwargs is None:
             kwargs = {}
-        super().__init__(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
+        super().__init__(
+            group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon
+        )
 
     def run(self):
         """

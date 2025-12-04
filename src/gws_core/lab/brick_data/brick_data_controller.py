@@ -1,4 +1,3 @@
-
 from typing import List
 
 from fastapi.param_functions import Depends
@@ -12,7 +11,9 @@ from .brick_data_service import BrickDataService
 
 
 @core_app.get("/brick-data", tags=["Brick data"], summary="Get brick data info")
-def get_brick_data_list(_=Depends(AuthorizationService.check_user_access_token)) -> List[BrickDataDTO]:
+def get_brick_data_list(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> List[BrickDataDTO]:
     """
     Reset dev environment
     """
@@ -25,8 +26,9 @@ class DeleteBrickData(BaseModelDTO):
 
 
 @core_app.post("/brick-data/delete", tags=["Brick data"], summary="Delete a brick data")
-def delete_brick_data(delete_brick_data: DeleteBrickData,
-                      _=Depends(AuthorizationService.check_user_access_token)) -> None:
+def delete_brick_data(
+    delete_brick_data: DeleteBrickData, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
     """
     Reset dev environment
     """

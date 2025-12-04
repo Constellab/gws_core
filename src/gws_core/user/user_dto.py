@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from typing import Optional
 
@@ -9,13 +7,14 @@ from typing_extensions import TypedDict
 
 
 class UserTheme(Enum):
-    LIGHT_THEME = 'light-theme'
-    DARK_THEME = 'dark-theme'
+    LIGHT_THEME = "light-theme"
+    DARK_THEME = "dark-theme"
 
 
 class UserLanguage(Enum):
-    EN = 'en'
-    FR = 'fr'
+    EN = "en"
+    FR = "fr"
+
 
 # object that represent the user in the Space
 

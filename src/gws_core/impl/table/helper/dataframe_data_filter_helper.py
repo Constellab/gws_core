@@ -1,5 +1,3 @@
-
-
 from typing import Literal
 
 from pandas import DataFrame
@@ -8,11 +6,10 @@ from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
 from ....core.exception.exceptions import BadRequestException
-from .dataframe_aggregator_helper import (DataframeAggregatorHelper,
-                                          DfAggregationFunctions)
+from .dataframe_aggregator_helper import DataframeAggregatorHelper, DfAggregationFunctions
 
 DfNumericComparator = Literal["=", "!=", ">=", "<=", ">", "<"]
-DfTextComparator = Literal["=", "!=", "contains", "contains not" "startswith", "endswith"]
+DfTextComparator = Literal["=", "!=", "contains", "contains notstartswith", "endswith"]
 
 
 class DataframeDataFilterHelper:
@@ -22,8 +19,9 @@ class DataframeDataFilterHelper:
     TEXT_COMPARATORS = Utils.get_literal_values(DfTextComparator)
 
     @classmethod
-    def filter_columns_by_aggregated_values(cls, data: DataFrame, func: DfAggregationFunctions,
-                                            comp: DfNumericComparator, value: float) -> DataFrame:
+    def filter_columns_by_aggregated_values(
+        cls, data: DataFrame, func: DfAggregationFunctions, comp: DfNumericComparator, value: float
+    ) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with numeric comparator"""
         if not func or not comp or value is None:
             return data
@@ -34,8 +32,9 @@ class DataframeDataFilterHelper:
         return result.T
 
     @classmethod
-    def filter_rows_by_aggregated_values(cls, data: DataFrame, func: DfAggregationFunctions,
-                                         comp: DfNumericComparator, value: float) -> DataFrame:
+    def filter_rows_by_aggregated_values(
+        cls, data: DataFrame, func: DfAggregationFunctions, comp: DfNumericComparator, value: float
+    ) -> DataFrame:
         if not func or not comp or value is None:
             return data
         DataframeAggregatorHelper._check_func(func)
@@ -61,7 +60,8 @@ class DataframeDataFilterHelper:
 
     @classmethod
     def filter_rows_numeric(
-            cls, data: DataFrame, column_name_regex: str, comp: DfNumericComparator, value: float) -> DataFrame:
+        cls, data: DataFrame, column_name_regex: str, comp: DfNumericComparator, value: float
+    ) -> DataFrame:
         """Filter the dataframe rows based on value of the provided columns with numeric comparator"""
         if (not column_name_regex) or (not comp) or (value is None):
             return data
@@ -89,7 +89,9 @@ class DataframeDataFilterHelper:
         return cls._select_df_rows_from_bool_df(data, bool_df)
 
     @classmethod
-    def filter_rows_text(cls, data: DataFrame, column_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
+    def filter_rows_text(
+        cls, data: DataFrame, column_name_regex: str, comp: DfTextComparator, value: str
+    ) -> DataFrame:
         """Filter the dataframe rows based on value of the provided columns with text comparator"""
         if (not column_name_regex) or (not comp) or (value is None):
             return data
@@ -118,7 +120,8 @@ class DataframeDataFilterHelper:
 
     @classmethod
     def filter_columns_numeric(
-            cls, data: DataFrame, row_name_regex: str, comp: DfNumericComparator, value: float) -> DataFrame:
+        cls, data: DataFrame, row_name_regex: str, comp: DfNumericComparator, value: float
+    ) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with numeric comparator"""
         if not row_name_regex or not comp or value is None:
             return data
@@ -129,7 +132,9 @@ class DataframeDataFilterHelper:
         return result.T
 
     @classmethod
-    def filter_columns_text(cls, data: DataFrame, row_name_regex: str, comp: DfTextComparator, value: str) -> DataFrame:
+    def filter_columns_text(
+        cls, data: DataFrame, row_name_regex: str, comp: DfTextComparator, value: str
+    ) -> DataFrame:
         """Filter the dataframe columns based on value of the provided rows with text comparator"""
         if not row_name_regex or not comp or value is None:
             return data
@@ -142,7 +147,7 @@ class DataframeDataFilterHelper:
     @classmethod
     def _filter_columns(cls, data: DataFrame, column_name_regex: str) -> DataFrame:
         """Keep columns based on regex"""
-        if not column_name_regex or column_name_regex == '*':
+        if not column_name_regex or column_name_regex == "*":
             return data
         return data.filter(regex=column_name_regex, axis=1)
 

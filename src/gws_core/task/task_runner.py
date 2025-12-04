@@ -1,12 +1,13 @@
-
-
 from typing import Dict, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import (
-    BasicMessageObserver, LoggerMessageObserver, MessageObserver)
+    BasicMessageObserver,
+    LoggerMessageObserver,
+    MessageObserver,
+)
 from gws_core.core.utils.logger import Logger
 
 from ..config.config_params import ConfigParams
@@ -18,7 +19,7 @@ from ..task.task import CheckBeforeTaskResult, Task
 from ..task.task_io import TaskInputs, TaskOutputs
 
 
-class TaskRunner():
+class TaskRunner:
     """This is used to run a Task. It can be used in unit test to test a Task.
 
     Simply provide the task type, config params and inputs. then you can call the run method to test your task
@@ -45,14 +46,18 @@ class TaskRunner():
 
     _config_params: ConfigParams = None
 
-    def __init__(self, task_type: Type[Task], params: ConfigParamsDict = None,
-                 inputs: Dict[str, Resource] = None,
-                 config_model_id: str = None,
-                 input_specs: InputSpecs = None,
-                 output_specs: OutputSpecs = None,
-                 config_specs: ConfigSpecs = None,
-                 task_id: str = None,
-                 scenario_id: str = None):
+    def __init__(
+        self,
+        task_type: Type[Task],
+        params: ConfigParamsDict = None,
+        inputs: Dict[str, Resource] = None,
+        config_model_id: str = None,
+        input_specs: InputSpecs = None,
+        output_specs: OutputSpecs = None,
+        config_specs: ConfigSpecs = None,
+        task_id: str = None,
+        scenario_id: str = None,
+    ):
         self._task_type = task_type
 
         if inputs is None:
@@ -87,7 +92,7 @@ class TaskRunner():
         inputs: TaskInputs = self._get_and_check_input()
 
         task: Task = self._get_task_instance()
-        task.__set_status__('CHECK_BEFORE_RUN')
+        task.__set_status__("CHECK_BEFORE_RUN")
 
         result = None
         try:
@@ -109,7 +114,7 @@ class TaskRunner():
         """
         inputs: TaskInputs = self._get_and_check_input()
         task: Task = self._get_task_instance()
-        task.__set_status__('RUN')
+        task.__set_status__("RUN")
 
         Logger.debug(f"Running task {self._task_type}")
         try:
@@ -126,7 +131,7 @@ class TaskRunner():
 
     def run_after_task(self) -> None:
         task: Task = self._get_task_instance()
-        task.__set_status__('RUN_AFTER_TASK')
+        task.__set_status__("RUN_AFTER_TASK")
 
         try:
             task.run_after_task()

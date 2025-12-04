@@ -26,7 +26,9 @@ def page_layout(
     st.title(title)
 
     # Page description with gray color
-    st.markdown(f'<p style="color: gray; font-size: 1.1rem;">{description}</p>', unsafe_allow_html=True)
+    st.markdown(
+        f'<p style="color: gray; font-size: 1.1rem;">{description}</p>', unsafe_allow_html=True
+    )
 
     # Render page content
     content_function()

@@ -1,10 +1,7 @@
-
-
 from fastapi import FastAPI
 from starlette.exceptions import HTTPException
 
-from gws_core.impl.s3.s3_server_exception_handler import \
-    S3ServerExceptionHandler
+from gws_core.impl.s3.s3_server_exception_handler import S3ServerExceptionHandler
 
 s3_server_app = FastAPI()
 

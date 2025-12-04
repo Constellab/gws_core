@@ -1,5 +1,3 @@
-
-
 import os
 from abc import abstractmethod
 from typing import Any, List
@@ -10,8 +8,7 @@ from gws_core.apps.app_view import AppView
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
-from gws_core.core.classes.observer.message_observer import \
-    LoggerMessageObserver
+from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -32,10 +29,13 @@ from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view.view_decorator import view
 
 
-@resource_decorator("AppResource", human_name="App base",
-                    short_description="Base class for all apps",
-                    style=TypingStyle.material_icon("dashboard", background_color='#ff4b4b'),
-                    hide=True)
+@resource_decorator(
+    "AppResource",
+    human_name="App base",
+    short_description="Base class for all apps",
+    style=TypingStyle.material_icon("dashboard", background_color="#ff4b4b"),
+    hide=True,
+)
 class AppResource(ResourceList):
     """
     Abstract class for all app resources. The resource
@@ -72,10 +72,13 @@ class AppResource(ResourceList):
         """
 
     @abstractmethod
-    def init_app_instance(self,
-                          shell_proxy: ShellProxy,
-                          resource_model_id: str, app_name: str,
-                          requires_authentification: bool) -> AppInstance:
+    def init_app_instance(
+        self,
+        shell_proxy: ShellProxy,
+        resource_model_id: str,
+        app_name: str,
+        requires_authentification: bool,
+    ) -> AppInstance:
         """
         Initialize the app instance with the shell proxy.
         This method is used to create the app instance that will be used to run the app.
@@ -97,7 +100,9 @@ class AppResource(ResourceList):
 
         shell_proxy = app_config.get_shell_proxy()
         if not isinstance(shell_proxy, ShellProxy):
-            raise Exception("The app config 'get_shell_proxy' method must return a 'ShellProxy' instance")
+            raise Exception(
+                "The app config 'get_shell_proxy' method must return a 'ShellProxy' instance"
+            )
 
         if isinstance(shell_proxy, BaseEnvShell):
             # Installing the virtual environemnt so when the app is run, the environment is already set up.
@@ -130,7 +135,7 @@ class AppResource(ResourceList):
         self.add_resource(stats_folder, create_new_resource=True)
 
         # store the name of the sub resource
-        self._code_folder_sub_resource_name = 'AppConfig code'
+        self._code_folder_sub_resource_name = "AppConfig code"
 
     def set_requires_authentication(self, requires_authentication: bool) -> None:
         """
@@ -147,22 +152,28 @@ class AppResource(ResourceList):
             raise Exception(f"Folder '{folder_path}' does not exist or is not a folder")
 
         folder_name = FileHelper.get_dir_name(folder_path)
-        if not folder_name.startswith('_'):
+        if not folder_name.startswith("_"):
             raise Exception(
-                f"App folder path must start with a underscore to avoid being loaded when the brick is loaded: {folder_path}")
+                f"App folder path must start with a underscore to avoid being loaded when the brick is loaded: {folder_path}"
+            )
 
         # check if the main app file exists
         config_app_file_path = os.path.join(folder_path, self.get_main_app_file_name())
-        if not FileHelper.exists_on_os(config_app_file_path) or not FileHelper.is_file(config_app_file_path):
+        if not FileHelper.exists_on_os(config_app_file_path) or not FileHelper.is_file(
+            config_app_file_path
+        ):
             raise Exception(
-                f"Main file script file not found: {config_app_file_path}. Please make sure you have a {self.get_main_app_file_name()} file in the app folder.")
+                f"Main file script file not found: {config_app_file_path}. Please make sure you have a {self.get_main_app_file_name()} file in the app folder."
+            )
 
     def _get_app_config(self) -> AppConfig | None:
         if not self._app_config_typing_name:
             return None
 
         if not self._app_config:
-            self._app_config = TypingManager.get_and_check_type_from_name(self._app_config_typing_name)()
+            self._app_config = TypingManager.get_and_check_type_from_name(
+                self._app_config_typing_name
+            )()
 
         return self._app_config
 
@@ -220,7 +231,9 @@ class AppResource(ResourceList):
 
         typing_name = shell_proxy.get_typing_name()
         if not typing_name:
-            raise Exception("The shell proxy must have a typing name, is it decorated with @typing_registrator ?")
+            raise Exception(
+                "The shell proxy must have a typing name, is it decorated with @typing_registrator ?"
+            )
 
         self._shell_proxy = shell_proxy.to_dto()
 
@@ -246,6 +259,7 @@ class AppResource(ResourceList):
             return ShellProxyFactory.build_shell_proxy(self._shell_proxy)
 
         return ShellProxy()
+
     #################################### RESOURCES ####################################
 
     def add_resource(self, resource, create_new_resource=True) -> None:
@@ -261,13 +275,14 @@ class AppResource(ResourceList):
         """
         if self.is_virtual_env() and not isinstance(resource, FSNode):
             raise Exception(
-                "Only FSNode resources can be added to a AppResource when the app is executed in a virtual environment")
+                "Only FSNode resources can be added to a AppResource when the app is executed in a virtual environment"
+            )
 
         return super().add_resource(resource, create_new_resource)
 
     def add_multiple_resources(
-            self, resources: List[Resource],
-            message_dispatcher: MessageDispatcher = None) -> None:
+        self, resources: List[Resource], message_dispatcher: MessageDispatcher = None
+    ) -> None:
         """
 
         :param resources: _description_
@@ -280,12 +295,14 @@ class AppResource(ResourceList):
             if resource:
                 # prevent nesting resource sets
                 if isinstance(resource, ResourceListBase):
-                    if (isinstance(resource, ResourceSet)):
+                    if isinstance(resource, ResourceSet):
                         message_dispatcher.notify_warning_message(
-                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource set. The order of the resources will not be kept.')
+                            f"Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource set. The order of the resources will not be kept."
+                        )
                     else:
                         message_dispatcher.notify_warning_message(
-                            f'Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource list.')
+                            f"Flatten sub resource for resource {resource.name} ({str(i + 1)}) because it is a resource list."
+                        )
                     for sub_resource in resource.get_resources_as_set():
                         self.add_resource(sub_resource, create_new_resource=False)
                 else:
@@ -295,18 +312,21 @@ class AppResource(ResourceList):
 
     ########################### VIEW ####################################
 
-    @view(view_type=AppView, human_name="View app",
-          short_description="View the app in a web browser",
-          default_view=True)
+    @view(
+        view_type=AppView,
+        human_name="View app",
+        short_description="View the app in a web browser",
+        default_view=True,
+    )
     def default_view(self, _: ConfigParams) -> AppView:
-        """This view generates the app and returns a AppView.
-        """
+        """This view generates the app and returns a AppView."""
 
         shell_proxy = self._get_shell_proxy()
         shell_proxy.attach_observer(LoggerMessageObserver())
 
         app = self.init_app_instance(
-            shell_proxy, self.get_model_id(), self.get_name(), self._requires_authentification)
+            shell_proxy, self.get_model_id(), self.get_name(), self._requires_authentification
+        )
 
         # add the resources as input to the app
         app.set_input_resources(self.get_resources())

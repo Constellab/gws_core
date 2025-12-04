@@ -1,5 +1,3 @@
-
-
 import math
 from typing import Dict, List, Union
 
@@ -69,8 +67,9 @@ class BoxPlotView(View):
     _type: ViewType = ViewType.BOX_PLOT
     _title: str = "Box Plot"
 
-    def add_data(self, data: List[float] = None, name: str = None,
-                 tags: List[Dict[str, str]] = None) -> None:
+    def add_data(
+        self, data: List[float] = None, name: str = None, tags: List[Dict[str, str]] = None
+    ) -> None:
         """
         Add series of raw data.
 
@@ -86,8 +85,9 @@ class BoxPlotView(View):
         data = DataFrame(data)
         self.add_data_from_dataframe(DataFrame(data), name, tags)
 
-    def add_data_from_dataframe(self, data: DataFrame = None, name: str = None,
-                                tags: List[Dict[str, str]] = None) -> None:
+    def add_data_from_dataframe(
+        self, data: DataFrame = None, name: str = None, tags: List[Dict[str, str]] = None
+    ) -> None:
         if data is None or not isinstance(data, DataFrame):
             raise BadRequestException("The data is required and must be a DataFrame")
 
@@ -96,7 +96,9 @@ class BoxPlotView(View):
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != data.shape[1]:
-                raise BadRequestException("The tags must a list of length equal to the number of columns in data")
+                raise BadRequestException(
+                    "The tags must a list of length equal to the number of columns in data"
+                )
 
         data = DataframeHelper.dataframe_to_float(data)
 
@@ -122,21 +124,22 @@ class BoxPlotView(View):
             lower_whisker=lower_whisker.tolist(),
             upper_whisker=upper_whisker.tolist(),
             name=name,
-            tags=tags
+            tags=tags,
         )
 
     def add_series(
-            self,
-            x: List[float] = None,
-            median: List[float] = None,
-            q1: List[float] = None,
-            q3: List[float] = None,
-            min: List[float] = None,
-            max: List[float] = None,
-            lower_whisker: List[float] = None,
-            upper_whisker: List[float] = None,
-            name: str = None,
-            tags: List[Dict[str, str]] = None) -> None:
+        self,
+        x: List[float] = None,
+        median: List[float] = None,
+        q1: List[float] = None,
+        q3: List[float] = None,
+        min: List[float] = None,
+        max: List[float] = None,
+        lower_whisker: List[float] = None,
+        upper_whisker: List[float] = None,
+        name: str = None,
+        tags: List[Dict[str, str]] = None,
+    ) -> None:
         """
         Add series of pre-computed x and y box values.
         Vector x is the vector of bin centers and y contains the magnitudes at corresponding x positions.
@@ -171,28 +174,34 @@ class BoxPlotView(View):
         if (q3 is None) or not isinstance(q3, list):
             raise BadRequestException("The q3 data is required and must be a list of float")
         if (lower_whisker is None) or not isinstance(lower_whisker, list):
-            raise BadRequestException("The lower_whisker data is required and must be a list of float")
+            raise BadRequestException(
+                "The lower_whisker data is required and must be a list of float"
+            )
         if (upper_whisker is None) or not isinstance(upper_whisker, list):
-            raise BadRequestException("The upper_whisker data is required and must be a list of float")
+            raise BadRequestException(
+                "The upper_whisker data is required and must be a list of float"
+            )
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
                 raise BadRequestException("The tags must a list of length equal to the length of x")
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
-        self._series.append({
-            "data": {
-                "x": [float(val) for val in x],
-                "median": self._clean_nan(median),
-                "q1": self._clean_nan(q1),
-                "q3": self._clean_nan(q3),
-                "min": self._clean_nan(min),
-                "max": self._clean_nan(max),
-                "lower_whisker": self._clean_nan(lower_whisker),
-                "upper_whisker": self._clean_nan(upper_whisker),
-                "tags": tags
-            },
-            "name": name
-        })
+        self._series.append(
+            {
+                "data": {
+                    "x": [float(val) for val in x],
+                    "median": self._clean_nan(median),
+                    "q1": self._clean_nan(q1),
+                    "q3": self._clean_nan(q3),
+                    "min": self._clean_nan(min),
+                    "max": self._clean_nan(max),
+                    "lower_whisker": self._clean_nan(lower_whisker),
+                    "upper_whisker": self._clean_nan(upper_whisker),
+                    "tags": tags,
+                },
+                "name": name,
+            }
+        )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         return {
@@ -203,4 +212,4 @@ class BoxPlotView(View):
         }
 
     def _clean_nan(self, data: List[float]):
-        return ['' if math.isnan(x) else float(x) for x in data]
+        return ["" if math.isnan(x) else float(x) for x in data]

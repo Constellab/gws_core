@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
@@ -52,22 +50,22 @@ class TableVennDiagramView(BaseTableView):
     _type: ViewType = ViewType.VENN_DIAGRAM
     _table: Table
 
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-    })
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+        }
+    )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-
         series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) < 2 or len(series) > 4:
-            raise BadRequestException("The venn diagram only supports from 2 to 4 series (including)")
+            raise BadRequestException(
+                "The venn diagram only supports from 2 to 4 series (including)"
+            )
 
         view = VennDiagramView()
         for serie in series:
-            view.add_group(
-                name=serie.name,
-                data=self.get_values_from_selection_range(serie.y)
-            )
+            view.add_group(name=serie.name, data=self.get_values_from_selection_range(serie.y))
 
         return view.data_to_dict(params)

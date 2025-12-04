@@ -1,12 +1,9 @@
-
-
 from typing import List, Optional
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
-from gws_core.protocol.protocol_graph_factory import \
-    ProtocolGraphFactoryFromConfig
+from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactoryFromConfig
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioCreationType
@@ -19,8 +16,7 @@ from gws_core.tag.tag_helper import TagHelper
 # TODO doesn't work if a task uses a resource typing (input or output) not
 # available in the lab. Or if we download a resource that uses a typing not
 # available in the lab.
-class ScenarioLoader():
-
+class ScenarioLoader:
     exp_info: ZipScenarioInfo
 
     _scenario: Scenario
@@ -30,9 +26,12 @@ class ScenarioLoader():
 
     _mode: ShareEntityCreateMode
 
-    def __init__(self, scenario_info: ZipScenarioInfo,
-                 mode: ShareEntityCreateMode,
-                 message_dispatcher: Optional[MessageDispatcher] = None) -> None:
+    def __init__(
+        self,
+        scenario_info: ZipScenarioInfo,
+        mode: ShareEntityCreateMode,
+        message_dispatcher: Optional[MessageDispatcher] = None,
+    ) -> None:
         self.exp_info = scenario_info
 
         if message_dispatcher is None:
@@ -43,7 +42,6 @@ class ScenarioLoader():
         self._mode = mode
 
     def load_scenario(self) -> Scenario:
-
         self._scenario = self._load_scenario(self.exp_info.scenario)
 
         # load the protocol
@@ -69,7 +67,8 @@ class ScenarioLoader():
 
             if folder is None:
                 self._message_dispatcher.notify_info_message(
-                    f"Folder '{zip_scenario.folder.name}' not found, skipping linking scenario to folder.")
+                    f"Folder '{zip_scenario.folder.name}' not found, skipping linking scenario to folder."
+                )
             else:
                 scenario.folder = folder
 

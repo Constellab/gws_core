@@ -1,5 +1,3 @@
-
-
 import time
 from threading import Timer
 from typing import List, Optional
@@ -48,13 +46,16 @@ class MessageDispatcher:
 
     # when set, the message dispatcher will forward the message to the parent dispatcher
     # after prefix and log level modification
-    _parent_dispatcher: 'MessageDispatcher' = None
+    _parent_dispatcher: "MessageDispatcher" = None
 
-    def __init__(self, interval_time_merging_message=0.1,
-                 interval_time_dispatched_buffer=1,
-                 log_level: MessageLevel = MessageLevel.INFO,
-                 prefix: str = None,
-                 parent_dispatcher: 'MessageDispatcher' = None):
+    def __init__(
+        self,
+        interval_time_merging_message=0.1,
+        interval_time_dispatched_buffer=1,
+        log_level: MessageLevel = MessageLevel.INFO,
+        prefix: str = None,
+        parent_dispatcher: "MessageDispatcher" = None,
+    ):
         self._observers = []
         self._waiting_messages = []
         self.interval_time_merging_message = interval_time_merging_message
@@ -121,14 +122,14 @@ class MessageDispatcher:
         :type message: str
         """
         # Fast path: check for format prefix
-        if not message.startswith('['):
+        if not message.startswith("["):
             # No prefix, treat as info message
             self._build_and_notify_message(message, MessageLevel.INFO)
             return
 
         try:
             # Find the closing bracket
-            close_idx = message.find(']')
+            close_idx = message.find("]")
             if close_idx == -1:
                 # No closing bracket, treat as info message
                 self._build_and_notify_message(message, MessageLevel.INFO)
@@ -137,10 +138,10 @@ class MessageDispatcher:
             # Extract the prefix (e.g., "INFO", "PROGRESS:50")
             prefix = message[1:close_idx]
             # Extract the message after the closing bracket (strip leading space)
-            content = message[close_idx + 1:].lstrip()
+            content = message[close_idx + 1 :].lstrip()
 
             # Check if it's a progress message with value
-            if prefix.startswith('PROGRESS:'):
+            if prefix.startswith("PROGRESS:"):
                 value_str = prefix[9:]  # Remove "PROGRESS:" prefix
                 progress_value = float(value_str)
                 # Verify the progress value is between 0 and 100
@@ -153,11 +154,11 @@ class MessageDispatcher:
 
             # Map prefix to message level
             level_map = {
-                'INFO': MessageLevel.INFO,
-                'WARNING': MessageLevel.WARNING,
-                'ERROR': MessageLevel.ERROR,
-                'SUCCESS': MessageLevel.SUCCESS,
-                'DEBUG': MessageLevel.DEBUG,
+                "INFO": MessageLevel.INFO,
+                "WARNING": MessageLevel.WARNING,
+                "ERROR": MessageLevel.ERROR,
+                "SUCCESS": MessageLevel.SUCCESS,
+                "DEBUG": MessageLevel.DEBUG,
             }
 
             level = level_map.get(prefix)
@@ -201,8 +202,9 @@ class MessageDispatcher:
         """
         self._build_and_notify_message(message, MessageLevel.DEBUG)
 
-    def _build_and_notify_message(self, message: str, level: MessageLevel,
-                                  progress: Optional[float] = None) -> None:
+    def _build_and_notify_message(
+        self, message: str, level: MessageLevel, progress: Optional[float] = None
+    ) -> None:
         """
         Trigger a message in each subscriber.
         """
@@ -240,9 +242,12 @@ class MessageDispatcher:
         if current_time - self._last_notify_time < self.interval_time_merging_message:
             # if there is already a waiting message and the last message type is the same,
             # merge the messages
-            if len(self._waiting_messages) > 0 and self._waiting_messages[-1].status == message.status:
+            if (
+                len(self._waiting_messages) > 0
+                and self._waiting_messages[-1].status == message.status
+            ):
                 last_message = self._waiting_messages[-1]
-                last_message.message += '\n' + message.message
+                last_message.message += "\n" + message.message
                 last_message.progress = message.progress
             # if there is no waiting message or the last message type is different, add the message
             else:
@@ -257,8 +262,9 @@ class MessageDispatcher:
     # launch a timer to dispatch the message after a delay
     def _launch_dispatch_timer(self):
         if self._waiting_dispatch_timer is None:
-            self._waiting_dispatch_timer = Timer(self.interval_time_dispatched_buffer,
-                                                 self._dispatch_waiting_messages_after_timer)
+            self._waiting_dispatch_timer = Timer(
+                self.interval_time_dispatched_buffer, self._dispatch_waiting_messages_after_timer
+            )
             self._waiting_dispatch_timer.start()
 
     def _dispatch_waiting_messages_after_timer(self):
@@ -303,15 +309,19 @@ class MessageDispatcher:
     def has_parent_dispatcher(self) -> bool:
         return self._parent_dispatcher is not None
 
-    def create_sub_dispatcher(self, log_level:  Optional[MessageLevel] = None, prefix: Optional[str] = None):
+    def create_sub_dispatcher(
+        self, log_level: Optional[MessageLevel] = None, prefix: Optional[str] = None
+    ):
         """
         Create a sub dispatcher with the same configuration as the current dispatcher.
         The message will be forwarded to the parent dispatcher after prefix and log level modification.
         This is useful to override the prefix or the log level for a specific part of the code without
         affecting the parent dispatcher.
         """
-        return MessageDispatcher(interval_time_merging_message=self.interval_time_merging_message,
-                                 interval_time_dispatched_buffer=self.interval_time_dispatched_buffer,
-                                 log_level=log_level or self.message_level,
-                                 prefix=prefix or self.prefix,
-                                 parent_dispatcher=self)
+        return MessageDispatcher(
+            interval_time_merging_message=self.interval_time_merging_message,
+            interval_time_dispatched_buffer=self.interval_time_dispatched_buffer,
+            log_level=log_level or self.message_level,
+            prefix=prefix or self.prefix,
+            parent_dispatcher=self,
+        )

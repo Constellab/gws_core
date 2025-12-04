@@ -1,5 +1,3 @@
-
-
 from inspect import isclass
 from time import sleep
 from typing import List, Type
@@ -34,12 +32,13 @@ class ScenarioProxy:
     _protocol: ProtocolProxy
 
     def __init__(
-            self,
-            protocol_type: Type[Protocol] = None,
-            folder: SpaceFolder = None,
-            title: str = '',
-            creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
-            scenario_id: str = None) -> None:
+        self,
+        protocol_type: Type[Protocol] = None,
+        folder: SpaceFolder = None,
+        title: str = "",
+        creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
+        scenario_id: str = None,
+    ) -> None:
         """This create a scenario in the database with the provided Task or Protocol
 
         :param process_type: Can be the type of a Protocol or a Task.
@@ -64,19 +63,22 @@ class ScenarioProxy:
 
         if protocol_type is None:
             self._scenario = ScenarioService.create_scenario(
-                title=title, folder_id=folder, creation_type=creation_type)
+                title=title, folder_id=folder, creation_type=creation_type
+            )
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
                 raise Exception(
-                    f"The provided process_type '{str(protocol_type)}' is not a process")
+                    f"The provided process_type '{str(protocol_type)}' is not a process"
+                )
             self._scenario = ScenarioService.create_scenario_from_protocol_type(
-                protocol_type=protocol_type, title=title, folder=folder, creation_type=creation_type)
+                protocol_type=protocol_type, title=title, folder=folder, creation_type=creation_type
+            )
 
         # Init the IProtocol
         self._protocol = ProtocolProxy(self._scenario.protocol_model)
 
     @staticmethod
-    def from_existing_scenario(scenario_id: str) -> 'ScenarioProxy':
+    def from_existing_scenario(scenario_id: str) -> "ScenarioProxy":
         """Create a ScenarioProxy from an existing scenario
 
         :param scenario_id: id of the scenario
@@ -87,19 +89,14 @@ class ScenarioProxy:
         return ScenarioProxy(scenario_id=scenario_id)
 
     def get_protocol(self) -> ProtocolProxy:
-        """retrieve the main protocol of the scenario
-        """
+        """retrieve the main protocol of the scenario"""
         return self._protocol
 
     def run(self, auto_delete_if_error: bool = False) -> None:
-        """execute the scenario, after that the resource should be generated and can be retrieve by process
-        """
+        """execute the scenario, after that the resource should be generated and can be retrieve by process"""
 
         # run the scenario in a sub process so it can be stopped
-        process = ProcessDb(
-            target=ScenarioRunService.run_scenario_by_id,
-            args=(self._scenario.id,)
-        )
+        process = ProcessDb(target=ScenarioRunService.run_scenario_by_id, args=(self._scenario.id,))
         process.start()
         process.join()  # Wait for process to complete
 
@@ -125,10 +122,7 @@ class ScenarioProxy:
         scenario_id = self._scenario.id
 
         # Create and start a background process with clean db connection
-        process = ProcessDb(
-            target=ScenarioRunService.run_scenario_by_id,
-            args=(scenario_id,)
-        )
+        process = ProcessDb(target=ScenarioRunService.run_scenario_by_id, args=(scenario_id,))
         process.start()
 
         # Wait for scenario to start running
@@ -173,22 +167,19 @@ class ScenarioProxy:
         return self._scenario.is_success
 
     def add_tag(self, tag: Tag) -> None:
-        TagService.add_tag_to_entity(TagEntityType.SCENARIO, self._scenario.id,
-                                     tag)
+        TagService.add_tag_to_entity(TagEntityType.SCENARIO, self._scenario.id, tag)
 
     def add_tags(self, tags: List[Tag]) -> None:
-        TagService.add_tags_to_entity(TagEntityType.SCENARIO, self._scenario.id,
-                                      tags)
+        TagService.add_tags_to_entity(TagEntityType.SCENARIO, self._scenario.id, tags)
 
-    def refresh(self) -> 'ScenarioProxy':
+    def refresh(self) -> "ScenarioProxy":
         self._scenario = self._scenario.refresh()
         self._protocol.refresh()
 
         return self
 
-    def reset(self) -> 'ScenarioProxy':
-        """Reset the scenario to draft and delete all logs and progress
-        """
+    def reset(self) -> "ScenarioProxy":
+        """Reset the scenario to draft and delete all logs and progress"""
         EntityNavigatorService.reset_scenario(self._scenario.id)
         self.refresh()
         return self

@@ -1,5 +1,3 @@
-
-
 from peewee import ForeignKeyField
 
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
@@ -17,9 +15,10 @@ class ModelWithUser(Model):
     :return: [description]
     :rtype: [type]
     """
+
     # set null=True because otherwise the attribute can't be None, peewee prevents it
-    created_by = ForeignKeyField(User, null=True, backref='+')
-    last_modified_by = ForeignKeyField(User, null=True, backref='+')
+    created_by = ForeignKeyField(User, null=True, backref="+")
+    last_modified_by = ForeignKeyField(User, null=True, backref="+")
 
     def _before_insert(self) -> None:
         super()._before_insert()

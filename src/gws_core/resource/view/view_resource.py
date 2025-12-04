@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
@@ -12,12 +10,14 @@ from gws_core.resource.view.view_dto import ViewDTO
 from gws_core.resource.view.view_runner import ViewRunner
 
 
-@resource_decorator(unique_name="ViewResource", human_name="View resource",
-                    short_description="Resource that contains a view",
-                    style=TypingStyle.material_icon("multiline_chart", background_color='#496989'))
+@resource_decorator(
+    unique_name="ViewResource",
+    human_name="View resource",
+    short_description="Resource that contains a view",
+    style=TypingStyle.material_icon("multiline_chart", background_color="#496989"),
+)
 class ViewResource(Resource):
-    """Special resource that holds a view
-    """
+    """Special resource that holds a view"""
 
     view_dict: dict = DictRField()
 
@@ -35,9 +35,10 @@ class ViewResource(Resource):
         return AnyView(self.view_dict)
 
     @staticmethod
-    def from_resource(resource: Resource, view_method_name: str,
-                      config_values: ConfigParamsDict = None) -> 'ViewResource':
-        """ Create a view resource from a resource and a view method name
+    def from_resource(
+        resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None
+    ) -> "ViewResource":
+        """Create a view resource from a resource and a view method name
 
         :param resource: resource to call the view method on
         :type resource: Resource
@@ -58,7 +59,7 @@ class ViewResource(Resource):
         return ViewResource(view_dto.to_json_dict())
 
     @staticmethod
-    def from_view(view_: View, view_config_values: ConfigParamsDict = None) -> 'ViewResource':
+    def from_view(view_: View, view_config_values: ConfigParamsDict = None) -> "ViewResource":
         """Create a view resource directly from the view object
 
         :param view_: view object to use
@@ -72,13 +73,17 @@ class ViewResource(Resource):
             raise Exception("The view object must be an instance of View")
 
         # create a new config for the view to_dict method based on view specs
-        config_params: ConfigParams = view_.get_specs().build_config_params(dict(view_config_values or {}))
+        config_params: ConfigParams = view_.get_specs().build_config_params(
+            dict(view_config_values or {})
+        )
         # disable the pagination of the view because it contains only the data of 1 page
         view_.disable_pagination()
         return ViewResource.from_view_dto(view_.to_dto(config_params))
 
     @staticmethod
-    def from_view_dto(view_dto: ViewDTO, ) -> 'ViewResource':
+    def from_view_dto(
+        view_dto: ViewDTO,
+    ) -> "ViewResource":
         """Create a view resource directly from the view dto object
 
         :param view_: view object to use

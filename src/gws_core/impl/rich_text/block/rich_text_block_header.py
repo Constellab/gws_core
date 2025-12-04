@@ -1,8 +1,6 @@
-
 from enum import Enum
 
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockHeaderLevel(Enum):
@@ -11,7 +9,7 @@ class RichTextBlockHeaderLevel(Enum):
     HEADER_3 = 4
 
     @classmethod
-    def from_int(cls, level: int) -> 'RichTextBlockHeaderLevel':
+    def from_int(cls, level: int) -> "RichTextBlockHeaderLevel":
         if not isinstance(level, int):
             return cls.HEADER_1
         if level == 1:
@@ -28,11 +26,11 @@ class RichTextBlockHeaderLevel(Enum):
         :rtype: str
         """
         if self == RichTextBlockHeaderLevel.HEADER_1:
-            return '##'
+            return "##"
         elif self == RichTextBlockHeaderLevel.HEADER_2:
-            return '###'
+            return "###"
         else:
-            return '####'
+            return "####"
 
 
 class RichTextBlockHeader(RichTextBlockDataBase):
@@ -41,6 +39,7 @@ class RichTextBlockHeader(RichTextBlockDataBase):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     text: str
     level: RichTextBlockHeaderLevel
 

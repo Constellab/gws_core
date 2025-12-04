@@ -1,17 +1,16 @@
-
-
 import inspect
 from typing import Any, Dict, Type, Union
 
 EmptyClass: Type = inspect.Signature.empty
 
 
-class FuncArgMetaData():
+class FuncArgMetaData:
     """Class to manipulate a specific argument of a function metadata
 
     :return: [description]
     :rtype: [type]
     """
+
     arg_name: str
     default_value: Union[Any, EmptyClass]
     type_: Union[Type, EmptyClass]
@@ -22,13 +21,15 @@ class FuncArgMetaData():
         self.type_ = type_
 
     def has_default_value(self) -> bool:
-        return not inspect.isclass(self.default_value) or not issubclass(self.default_value, EmptyClass)
+        return not inspect.isclass(self.default_value) or not issubclass(
+            self.default_value, EmptyClass
+        )
 
     def has_type(self) -> bool:
         return not issubclass(self.type_, EmptyClass)
 
 
-class FuncArgsMetaData():
+class FuncArgsMetaData:
     """Class to manipulate fun args metadata
 
     :return: [description]
@@ -53,25 +54,24 @@ class FuncArgsMetaData():
         """
         args: Dict[str, FuncArgMetaData] = {}
         for key, arg in self.args.items():
-            if key not in ['self', 'cls', 'args', 'kwargs']:
+            if key not in ["self", "cls", "args", "kwargs"]:
                 args[key] = arg
         return args
 
     def all_args_have_default(self) -> bool:
         for arg_name, arg in self.args.items():
-            if arg_name == 'self' or arg_name == 'cls':
+            if arg_name == "self" or arg_name == "cls":
                 continue
             if not arg.has_default_value():
                 return False
         return True
 
     def is_method(self) -> bool:
-        return 'self' in self.args
+        return "self" in self.args
 
     def is_class_method(self) -> bool:
-        return 'cls' in self.args
+        return "cls" in self.args
 
     def contain_args(self) -> bool:
-        """return true if the function container args or kwargs argument
-        """
-        return 'args' in self.args or 'kwargs' in self.args
+        """return true if the function container args or kwargs argument"""
+        return "args" in self.args or "kwargs" in self.args

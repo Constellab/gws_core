@@ -73,7 +73,7 @@ class CommunityCreateAgentDTO(BaseModelDTO):
 
 class CommunityGetAgentsBody(BaseModelDTO):
     spacesFilter: List[str] = []
-    titleFilter: str = ''
+    titleFilter: str = ""
     personalOnly: bool = False
 
 
@@ -103,7 +103,7 @@ class CommunityTagKeyDTO(BaseModelDTO):
 
 class CommunityGetTagKeysBody(BaseModelDTO):
     spacesFilter: List[str] = []
-    labelFilter: str = ''
+    labelFilter: str = ""
     personalOnly: bool = False
 
 

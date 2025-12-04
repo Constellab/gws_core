@@ -1,5 +1,3 @@
-
-
 import inspect
 from typing import Any, Dict, List, Optional
 
@@ -9,13 +7,12 @@ from ..core.utils.settings import Settings
 from .brick_dto import BrickInfo, BrickVersion
 
 
-class BrickHelper():
-
-    GWS_CORE = 'gws_core'
+class BrickHelper:
+    GWS_CORE = "gws_core"
 
     @classmethod
     def get_all_bricks(cls) -> Dict[str, BrickInfo]:
-        """ Returns the info of all the bricks used by the Application """
+        """Returns the info of all the bricks used by the Application"""
         return Settings.get_instance().get_bricks()
 
     @classmethod
@@ -29,7 +26,7 @@ class BrickHelper():
         module = inspect.getmodule(obj)
         if module is None:
             raise Exception(f"Can't find python module of object {obj}")
-        modules: List[str] = module.__name__.split('.')
+        modules: List[str] = module.__name__.split(".")
         return modules[0]
 
     @classmethod
@@ -56,11 +53,11 @@ class BrickHelper():
             # secific case for the test mode when brick name is test filename
             if Settings.get_instance().is_test:
                 return BrickInfo(
-                    path='',
+                    path="",
                     name=brick_name,
-                    version='0.0.0',
-                    repo_type='git',
-                    repo_commit='',
+                    version="0.0.0",
+                    repo_type="git",
+                    repo_commit="",
                     parent_name=None,
                     error=None,
                 )
@@ -84,16 +81,15 @@ class BrickHelper():
         brick_info = cls.get_brick_info(obj)
 
         if brick_info is None:
-            raise Exception(
-                f"Can't find the brick information of object '{obj}'")
+            raise Exception(f"Can't find the brick information of object '{obj}'")
 
         return brick_info
 
     @classmethod
     def get_brick_version(cls, obj: Any) -> Version:
         """Methode to return a brick version of any object
-           If object, retrieve the brick of the object
-           If string, retrieve the brick from the provided name
+        If object, retrieve the brick of the object
+        If string, retrieve the brick from the provided name
         """
 
         brick_info = cls.get_brick_info_and_check(obj)
@@ -106,13 +102,15 @@ class BrickHelper():
 
         for brick in bricks.values():
             # ignore app brick
-            if brick.repo_type == 'app':
+            if brick.repo_type == "app":
                 continue
 
-            brick_versions.append(BrickVersion(
-                name=brick.name,
-                version=brick.version,
-            ))
+            brick_versions.append(
+                BrickVersion(
+                    name=brick.name,
+                    version=brick.version,
+                )
+            )
         return brick_versions
 
     @classmethod

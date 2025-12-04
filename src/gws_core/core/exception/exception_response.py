@@ -1,4 +1,3 @@
-
 import json
 from typing import Dict, Literal
 
@@ -14,8 +13,15 @@ class ExceptionResponse(JSONResponse):
     Class to format the exception when an error is return
     """
 
-    def __init__(self, status_code: int, code: str, detail: str, instance_id: str,
-                 show_as: ExceptionShowMode = 'error', headers: Dict = None):
+    def __init__(
+        self,
+        status_code: int,
+        code: str,
+        detail: str,
+        instance_id: str,
+        show_as: ExceptionShowMode = "error",
+        headers: Dict = None,
+    ):
         """
 
         Arguments:
@@ -26,9 +32,17 @@ class ExceptionResponse(JSONResponse):
 
         """
 
-        super().__init__(status_code=status_code, content={
-            "code": code, "status": status_code, "detail": detail, "instanceId": instance_id, "show_as": show_as},
-            headers=headers)
+        super().__init__(
+            status_code=status_code,
+            content={
+                "code": code,
+                "status": status_code,
+                "detail": detail,
+                "instanceId": instance_id,
+                "show_as": show_as,
+            },
+            headers=headers,
+        )
 
     def get_json_body(self) -> dict:
-        return json.loads(self.body.decode('utf8').replace("'", '"'))
+        return json.loads(self.body.decode("utf8").replace("'", '"'))

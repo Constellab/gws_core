@@ -1,4 +1,3 @@
-
 from datetime import datetime
 
 from fastapi import Depends
@@ -14,8 +13,7 @@ from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
 
 
-@core_app.get("/apps/status", tags=["App"],
-              summary="Get apps status")
+@core_app.get("/apps/status", tags=["App"], summary="Get apps status")
 def get_all_apps_status(_=Depends(AuthorizationService.check_user_access_token)) -> AppsStatusDTO:
     """
     Get app apps status
@@ -24,8 +22,7 @@ def get_all_apps_status(_=Depends(AuthorizationService.check_user_access_token))
     return AppsManager.get_status_dto()
 
 
-@core_app.post("/apps/stop", tags=["App"],
-               summary="Stop all apps")
+@core_app.post("/apps/stop", tags=["App"], summary="Stop all apps")
 def stop_all_processes(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Stop all apps
@@ -34,10 +31,8 @@ def stop_all_processes(_=Depends(AuthorizationService.check_user_access_token)) 
     return AppsManager.stop_all_processes()
 
 
-@core_app.post("/apps/stop/{id_}", tags=["App"],
-               summary="Stop main app")
-def stop_process(id_: str,
-                 _=Depends(AuthorizationService.check_user_access_token)) -> None:
+@core_app.post("/apps/stop/{id_}", tags=["App"], summary="Stop main app")
+def stop_process(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Stop the app
     """
@@ -45,8 +40,7 @@ def stop_process(id_: str,
     return AppsManager.stop_process(id_)
 
 
-@core_app.get("/apps/process/{token}/status", tags=["App"],
-              summary="Get app status by ID")
+@core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
 def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
     """
     Get the status of a specific app by its ID
@@ -60,11 +54,14 @@ def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
     return app_process.get_status_dto()
 
 
-@core_app.get("/apps/{app_id}/logs", tags=["App"],
-              summary="Get the log of an app", response_model=None)
-def get_app_logs(app_id: str,
-                 from_page_date: datetime = None,
-                 _=Depends(AuthorizationService.check_user_access_token)) -> LogsBetweenDatesDTO:
+@core_app.get(
+    "/apps/{app_id}/logs", tags=["App"], summary="Get the log of an app", response_model=None
+)
+def get_app_logs(
+    app_id: str,
+    from_page_date: datetime = None,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> LogsBetweenDatesDTO:
     """
     Get the logs of a specific app by its ID
     """
@@ -72,10 +69,15 @@ def get_app_logs(app_id: str,
     return AppsManager.get_logs_of_app(app_id, from_page_date).to_dto()
 
 
-@core_app.get("/apps/{app_id}/logs/download", tags=["App"],
-              summary="Download the log of an app", response_model=None)
-def download_app_logs(app_id: str,
-                      _=Depends(AuthorizationService.check_user_access_token)) -> StreamingResponse:
+@core_app.get(
+    "/apps/{app_id}/logs/download",
+    tags=["App"],
+    summary="Download the log of an app",
+    response_model=None,
+)
+def download_app_logs(
+    app_id: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> StreamingResponse:
     """
     Download the logs of a specific app by its ID
     """

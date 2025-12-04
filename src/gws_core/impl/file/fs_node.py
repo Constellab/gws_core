@@ -1,5 +1,3 @@
-
-
 import os
 from pathlib import PosixPath
 
@@ -12,8 +10,11 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 
 
-@resource_decorator(unique_name="FSNode", hide=True,
-                    style=TypingStyle.material_icon("folder", background_color="#7b9dd2"))
+@resource_decorator(
+    unique_name="FSNode",
+    hide=True,
+    style=TypingStyle.material_icon("folder", background_color="#7b9dd2"),
+)
 class FSNode(Resource):
     r"""
     Node class to manage resources that are stored in the server (as file or folder)
@@ -34,7 +35,7 @@ class FSNode(Resource):
     is_symbolic_link: bool = BoolRField(default_value=False, storage=RFieldStorage.NONE)
 
     def __init__(self, path: str = ""):
-        """ Create a new FSNode
+        """Create a new FSNode
 
         :param path: absolute path to the file, defaults to ""
         :type path: str, optional

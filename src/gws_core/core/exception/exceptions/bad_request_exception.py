@@ -1,5 +1,3 @@
-
-
 from typing import Dict
 
 from fastapi import status
@@ -14,9 +12,15 @@ class BadRequestException(BaseHTTPException):
     Generic exception to throw a 400 error useful for any kind of error
     """
 
-    def __init__(self, detail: str, unique_code: str = None,
-                 detail_args: Dict = None, headers: Dict = None, instance_id: str = None,
-                 show_as: ExceptionShowMode = 'error') -> None:
+    def __init__(
+        self,
+        detail: str,
+        unique_code: str = None,
+        detail_args: Dict = None,
+        headers: Dict = None,
+        instance_id: str = None,
+        show_as: ExceptionShowMode = "error",
+    ) -> None:
         """Throw a generic exception
 
         :param http_status_code: HTTP error code
@@ -46,4 +50,5 @@ class BadRequestException(BaseHTTPException):
             detail_args=detail_args,
             headers=headers,
             instance_id=instance_id,
-            show_as=show_as)
+            show_as=show_as,
+        )

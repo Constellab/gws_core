@@ -1,11 +1,10 @@
-
 from typing import Literal
 
 from typing_extensions import TypedDict
 
-SupportedDbEngine = Literal['mysql', 'mariadb']
+SupportedDbEngine = Literal["mysql", "mariadb"]
 
-DbMode = Literal['prod', 'dev', 'test']
+DbMode = Literal["prod", "dev", "test"]
 
 
 class DbConfig(TypedDict):

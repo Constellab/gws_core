@@ -1,12 +1,8 @@
-
-
 from typing import Any, Dict, Optional
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import (ParamSpecType,
-                                                        param_spec_decorator)
-from gws_core.config.param.param_types import (ParamSpecDTO, ParamSpecTypeStr,
-                                               ParamSpecVisibilty)
+from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 

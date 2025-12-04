@@ -1,5 +1,3 @@
-
-
 import os
 from typing import Type
 from unittest import TestCase
@@ -18,7 +16,6 @@ from pandas import DataFrame, read_csv
 
 # test_env_agent
 class TestEnvAgent(TestCase):
-
     def test_pip_env_agent(self):
         self._test_default_config(PyPipenvAgent)
 
@@ -35,21 +32,16 @@ class TestEnvAgent(TestCase):
         self._test_default_config(RMambaAgent)
 
     def _test_default_config(self, task_type: Type[Task]):
-        """Test the default env agent config template to be sure it is valid
-        """
+        """Test the default env agent config template to be sure it is valid"""
 
         # create a csv file
-        data = DataFrame({'col1': [0, 1], 'col2': [0, 2]}, index=['a', 'b'])
+        data = DataFrame({"col1": [0, 1], "col2": [0, 2]}, index=["a", "b"])
         temp_dir = Settings.make_temp_dir()
         source = os.path.join(temp_dir, "source.csv")
         data.to_csv(source, index=True)
 
         tester = TaskRunner(
-            task_type=task_type,
-            inputs={"source": File(source)},
-            params={
-                'params': {}
-            }
+            task_type=task_type, inputs={"source": File(source)}, params={"params": {}}
         )
 
         outputs = tester.run()
@@ -57,7 +49,7 @@ class TestEnvAgent(TestCase):
         target: File = outputs["target"]
 
         self.assertTrue(isinstance(target, File))
-        target_data: DataFrame = read_csv(target.path, header=0, index_col=0, sep=',')
+        target_data: DataFrame = read_csv(target.path, header=0, index_col=0, sep=",")
 
         self.assertTrue(target_data.T.equals(data))
 
@@ -71,7 +63,7 @@ class TestEnvAgent(TestCase):
 raise Exception('This is not working')
 """,
             },
-            task_type=PyPipenvAgent
+            task_type=PyPipenvAgent,
         )
 
         logger = tester.add_log_observer()
@@ -82,8 +74,9 @@ raise Exception('This is not working')
         except Exception:
             error = True
             # check that the error of the snippet is the same as the one raised
-            self.assertTrue(logger.has_message_containing('This is not working',
-                                                          level=MessageLevel.ERROR))
+            self.assertTrue(
+                logger.has_message_containing("This is not working", level=MessageLevel.ERROR)
+            )
 
         self.assertTrue(error)
         tester.run_after_task()

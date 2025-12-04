@@ -1,5 +1,3 @@
-
-
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING
@@ -28,10 +26,10 @@ class BaseEvent:
             triggered_by: User | None = None
     """
 
-    type: str = ''
+    type: str = ""
     """The type of event (e.g., 'user', 'experiment', 'project', 'system')"""
 
-    action: str = ''
+    action: str = ""
     """The action that occurred (e.g., 'created', 'updated', 'deleted')"""
 
     data: any = None
@@ -40,7 +38,7 @@ class BaseEvent:
     timestamp: datetime = field(default_factory=datetime.now)
     """When the event occurred"""
 
-    triggered_by: 'User | None' = None
+    triggered_by: "User | None" = None
     """The user who triggered this action (None for system actions)"""
 
     def get_event_name(self) -> str:
@@ -53,8 +51,10 @@ class BaseEvent:
 
     def __repr__(self) -> str:
         triggered_by_str = self.triggered_by.email if self.triggered_by else "system"
-        return (f"{self.__class__.__name__}("
-                f"type='{self.type}', "
-                f"action='{self.action}', "
-                f"triggered_by='{triggered_by_str}', "
-                f"timestamp={self.timestamp})")
+        return (
+            f"{self.__class__.__name__}("
+            f"type='{self.type}', "
+            f"action='{self.action}', "
+            f"triggered_by='{triggered_by_str}', "
+            f"timestamp={self.timestamp})"
+        )

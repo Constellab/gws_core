@@ -1,5 +1,3 @@
-
-
 from gws_core.resource.view.view_types import ViewType
 
 from .scatterplot_2d_view import ScatterPlot2DView

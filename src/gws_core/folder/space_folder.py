@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.core.model.model import Model
@@ -9,9 +7,11 @@ from peewee import CharField, ForeignKeyField, ModelSelect
 
 class SpaceFolder(Model):
     name: str = CharField(null=False, max_length=100)
-    parent: 'SpaceFolder' = ForeignKeyField('self', null=True, backref='children', on_delete='CASCADE')
+    parent: "SpaceFolder" = ForeignKeyField(
+        "self", null=True, backref="children", on_delete="CASCADE"
+    )
 
-    children: List['SpaceFolder']
+    children: List["SpaceFolder"]
 
     def to_dto(self) -> SpaceFolderDTO:
         return SpaceFolderDTO(
@@ -27,12 +27,9 @@ class SpaceFolder(Model):
         # sort children by title
         children.sort(key=lambda x: x.name)
 
-        return SpaceFolderTreeDTO(
-            **self.to_dto().to_json_dict(),
-            children=children
-        )
+        return SpaceFolderTreeDTO(**self.to_dto().to_json_dict(), children=children)
 
-    def get_root(self) -> 'SpaceFolder':
+    def get_root(self) -> "SpaceFolder":
         """
         Get the root folder of the current folder.
         """
@@ -50,7 +47,7 @@ class SpaceFolder(Model):
 
         return cls.select().where(cls.parent.is_null()).order_by(cls.name)
 
-    def get_with_children_as_list(self) -> List['SpaceFolder']:
+    def get_with_children_as_list(self) -> List["SpaceFolder"]:
         """
         Get current folder and children as a list.
         """
@@ -81,6 +78,5 @@ class SpaceFolder(Model):
         pass
 
     class Meta:
-        table_name = 'gws_folder'
+        table_name = "gws_folder"
         is_table = True
-

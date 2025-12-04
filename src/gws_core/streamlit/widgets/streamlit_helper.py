@@ -7,10 +7,9 @@ import streamlit as st
 from gws_core.core.utils.settings import Settings
 
 
-class StreamlitHelper():
-
-    CSS_PREFIX = 'st-key-'
-    SIDEBAR_STATE_KEY = '__gws_sidebar_state__'
+class StreamlitHelper:
+    CSS_PREFIX = "st-key-"
+    SIDEBAR_STATE_KEY = "__gws_sidebar_state__"
 
     @classmethod
     def get_element_css_class(cls, key: str) -> str:
@@ -25,7 +24,7 @@ class StreamlitHelper():
         :rtype: str
         """
         # Replace invalid characters with underscores
-        sanitized_key = re.sub(r'[^a-zA-Z0-9_-]', '-', str(key))
+        sanitized_key = re.sub(r"[^a-zA-Z0-9_-]", "-", str(key))
 
         return cls.CSS_PREFIX + sanitized_key
 
@@ -51,14 +50,13 @@ class StreamlitHelper():
         """
         temp_dir = Settings.make_temp_dir()
         temp_file_path = os.path.join(temp_dir, uploaded_file.name)
-        with open(temp_file_path, 'wb') as f:
+        with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         return temp_file_path
 
     @classmethod
     def hide_sidebar_toggle(cls) -> None:
-        """ Hide the sidebar toggle button, the sidebar will be always expanded
-        """
+        """Hide the sidebar toggle button, the sidebar will be always expanded"""
         st.markdown(
             """
 <style>
@@ -84,24 +82,24 @@ class StreamlitHelper():
 }
 </style>
 """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
     @classmethod
     def hide_sidebar(cls) -> None:
-        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != 'collapsed':
-            st.session_state[cls.SIDEBAR_STATE_KEY] = 'collapsed'
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != "collapsed":
+            st.session_state[cls.SIDEBAR_STATE_KEY] = "collapsed"
             st.rerun()
 
     @classmethod
     def show_sidebar(cls) -> None:
-        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != 'expanded':
-            st.session_state[cls.SIDEBAR_STATE_KEY] = 'expanded'
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) != "expanded":
+            st.session_state[cls.SIDEBAR_STATE_KEY] = "expanded"
             st.rerun()
 
     @classmethod
     def toggle_sidebar(cls) -> None:
-        if st.session_state.get(cls.SIDEBAR_STATE_KEY) == 'collapsed':
+        if st.session_state.get(cls.SIDEBAR_STATE_KEY) == "collapsed":
             cls.show_sidebar()
         else:
             cls.hide_sidebar()

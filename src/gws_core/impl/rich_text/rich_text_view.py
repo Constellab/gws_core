@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
@@ -19,6 +17,7 @@ class RichTextView(View):
     }
     ```
     """
+
     _type: ViewType = ViewType.RICH_TEXT
     _title: str
     object_type: RichTextObjectType
@@ -26,9 +25,9 @@ class RichTextView(View):
 
     _rich_text: RichText
 
-    def __init__(self, title: str, rich_text: RichText,
-                 object_type: RichTextObjectType,
-                 object_id: str):
+    def __init__(
+        self, title: str, rich_text: RichText, object_type: RichTextObjectType, object_id: str
+    ):
         super().__init__()
         self._title = title
         self._rich_text = rich_text
@@ -37,8 +36,8 @@ class RichTextView(View):
 
     def data_to_dict(self, params: ConfigParams = None) -> dict:
         return {
-            'title': self._title,
-            'content': self._rich_text.to_dto_json_dict(),
-            'object_type': self.object_type,
-            'object_id': self.object_id
+            "title": self._title,
+            "content": self._rich_text.to_dto_json_dict(),
+            "object_type": self.object_type,
+            "object_id": self.object_id,
         }

@@ -1,17 +1,15 @@
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.model.typing_dto import TypingObjectType
 
 if TYPE_CHECKING:
     from gws_core.core.model.model import Model
 
 
-class TypingNameObj():
+class TypingNameObj:
     object_type: TypingObjectType
     brick_name: str
     unique_name: str
@@ -31,17 +29,18 @@ class TypingNameObj():
         from gws_core.protocol.protocol_model import ProtocolModel
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.task.task_model import TaskModel
-        if self.object_type == 'TASK':
+
+        if self.object_type == "TASK":
             return TaskModel
-        elif self.object_type == 'PROTOCOL':
+        elif self.object_type == "PROTOCOL":
             return ProtocolModel
-        elif self.object_type == 'RESOURCE':
+        elif self.object_type == "RESOURCE":
             return ResourceModel
         else:
             raise BadRequestException(f"No model for type '{self.object_type}'")
 
     @staticmethod
-    def from_typing_name(typing_name: str) -> 'TypingNameObj':
+    def from_typing_name(typing_name: str) -> "TypingNameObj":
         try:
             parts: List[str] = typing_name.split(TypingNameObj.SEPARATOR)
             return TypingNameObj(object_type=parts[0], brick_name=parts[1], unique_name=parts[2])

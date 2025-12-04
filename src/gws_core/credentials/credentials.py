@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, Optional, Type, final
 
 from gws_core.core.classes.enum_field import EnumField
@@ -8,15 +6,19 @@ from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_type import CredentialsDTO
 from peewee import CharField, ModelSelect, TextField
 
-from .credentials_type import (CredentialsDataBase, CredentialsDataBasic,
-                               CredentialsDataLab, CredentialsDataOther,
-                               CredentialsDataS3, CredentialsDataS3LabServer,
-                               CredentialsType)
+from .credentials_type import (
+    CredentialsDataBase,
+    CredentialsDataBasic,
+    CredentialsDataLab,
+    CredentialsDataOther,
+    CredentialsDataS3,
+    CredentialsDataS3LabServer,
+    CredentialsType,
+)
 
 
 @final
 class Credentials(ModelWithUser):
-
     name = CharField(max_length=255, null=False, unique=True)
     type: CredentialsType = EnumField(choices=CredentialsType)
 
@@ -49,18 +51,21 @@ class Credentials(ModelWithUser):
         return data_type.build_from_json(self.data, self.to_dto())
 
     @classmethod
-    def find_by_name(cls, name: str) -> Optional['Credentials']:
+    def find_by_name(cls, name: str) -> Optional["Credentials"]:
         return cls.select().where(Credentials.name == name).first()
 
     @classmethod
-    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> 'Credentials':
+    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> "Credentials":
         credentials = cls.find_by_name(name)
         if not credentials:
-            raise Exception(f"Credentials '{name}' not found, does it exist or was it renamed or deleted?")
+            raise Exception(
+                f"Credentials '{name}' not found, does it exist or was it renamed or deleted?"
+            )
 
         if type_ is not None and credentials.type != type_:
             raise Exception(
-                f"Credentials {name} does ont have the correct type. Expected type : '{type_}', found type : '{credentials.type}'. Was the credentials '{name}' updated?")
+                f"Credentials {name} does ont have the correct type. Expected type : '{type_}', found type : '{credentials.type}'. Was the credentials '{name}' updated?"
+            )
         return credentials
 
     @classmethod

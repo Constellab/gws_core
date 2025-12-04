@@ -1,5 +1,3 @@
-
-
 import os
 from copy import deepcopy
 from typing import Dict, Optional, TypeVar, cast, final
@@ -7,8 +5,7 @@ from typing import Dict, Optional, TypeVar, cast, final
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.impl.file.file_r_field import FileRField
 from gws_core.model.typing_manager import TypingManager
-from gws_core.model.typing_style import (TypingIconColor, TypingIconType,
-                                         TypingStyle)
+from gws_core.model.typing_style import TypingIconColor, TypingIconType, TypingStyle
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
@@ -17,8 +14,7 @@ from gws_core.tag.tag_list_field import TagListField
 from regex import T
 
 from ..config.config_params import ConfigParams
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.json.json_view import JSONView
 from ..model.typing_register_decorator import typing_registrator
@@ -30,13 +26,13 @@ from .view.view_decorator import view
 # Typing names generated for the class resource
 CONST_RESOURCE_TYPING_NAME = "RESOURCE.gws_core.Resource"
 
-ResourceType = TypeVar('ResourceType', bound='Resource')
+ResourceType = TypeVar("ResourceType", bound="Resource")
 
 
-@typing_registrator(unique_name="Resource", object_type="RESOURCE",
-                    style=TypingStyle.default_resource())
+@typing_registrator(
+    unique_name="Resource", object_type="RESOURCE", style=TypingStyle.default_resource()
+)
 class Resource(BaseTyping):
-
     uid: str = UUIDRField(storage=RFieldStorage.DATABASE)
     name: str | None
     technical_info = cast(TechnicalInfoDict, SerializableRField(TechnicalInfoDict))
@@ -69,14 +65,17 @@ class Resource(BaseTyping):
         # check that the class level property typing_name is set
         if self.get_typing_name() == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
             raise BadRequestException(
-                f"The resource {self.full_classname()} is not decorated with @resource_decorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator")
+                f"The resource {self.full_classname()} is not decorated with @resource_decorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator"
+            )
 
         # init the default name
         self.name = None
         self.style = None
         self.flagged = False
         # Init default values of BaseRField
-        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
+            type(self), BaseRField
+        )
         for key, r_field in properties.items():
             setattr(self, key, r_field.get_default_value())
 
@@ -87,12 +86,19 @@ class Resource(BaseTyping):
         The values of RFields are set when this method is called.
         """
 
-    @view(view_type=JSONView, human_name="View resource", short_description="View the complete resource as json", default_view=True)
+    @view(
+        view_type=JSONView,
+        human_name="View resource",
+        short_description="View the complete resource as json",
+        default_view=True,
+    )
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
-        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(type(self), BaseRField)
+        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
+            type(self), BaseRField
+        )
 
         json_ = {}
         for key, r_field in properties.items():
@@ -254,10 +260,13 @@ class Resource(BaseTyping):
     ############################################### CLASS METHODS ####################################################
 
     @classmethod
-    def copy_style(cls, icon_technical_name: str | None = None,
-                   icon_type: TypingIconType | None = None,
-                   background_color: str | None = None,
-                   icon_color: TypingIconColor | None = None) -> TypingStyle:
+    def copy_style(
+        cls,
+        icon_technical_name: str | None = None,
+        icon_type: TypingIconType | None = None,
+        background_color: str | None = None,
+        icon_color: TypingIconColor | None = None,
+    ) -> TypingStyle:
         """Copy the style of the resource with the possibility to override some properties.
         Useful when settings the style for a task based on the resource style.
 
@@ -273,7 +282,9 @@ class Resource(BaseTyping):
         :rtype: TypingStyle
         """
         style = TypingManager.get_typing_from_name_and_check(cls.get_typing_name()).style
-        return style.clone_with_overrides(icon_technical_name, icon_type, background_color, icon_color)
+        return style.clone_with_overrides(
+            icon_technical_name, icon_type, background_color, icon_color
+        )
 
     ############################################### SYSTEM METHODS ####################################################
 
@@ -301,7 +312,7 @@ class Resource(BaseTyping):
 
     @final
     def __set_origin__(self, origin: ResourceOrigin) -> None:
-        """ Override the origin of the resource, this is used to set a special origin to the resource.
+        """Override the origin of the resource, this is used to set a special origin to the resource.
         Use only when you know what you are doing.
 
         :param origin: origin

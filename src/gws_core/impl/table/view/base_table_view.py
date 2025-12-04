@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
@@ -12,8 +10,7 @@ from gws_core.config.param.param_spec import StrParam
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewType
 
-from ....core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ....core.exception.exceptions.bad_request_exception import BadRequestException
 from ....resource.view.view import View
 from .table_selection import CellRange, Serie1dList, TableSelection
 
@@ -31,10 +28,12 @@ class BaseTableView(View):
     _table: Table
 
     # Spec to define the name of the x and y axis
-    _2d_axis_labels_specs = ConfigSpecs({
-        "x_axis_label": StrParam(optional=True),
-        "y_axis_label": StrParam(optional=True),
-    })
+    _2d_axis_labels_specs = ConfigSpecs(
+        {
+            "x_axis_label": StrParam(optional=True),
+            "y_axis_label": StrParam(optional=True),
+        }
+    )
 
     def __init__(self, table: Table):
         super().__init__()
@@ -59,19 +58,17 @@ class BaseTableView(View):
                 raise BadRequestException(f"The column name '{name}' is not valid")
 
     def get_values_from_columns(self, column_names: List[str]) -> List[Any]:
-        """Get all the values of multiple column flattened
-        """
+        """Get all the values of multiple column flattened"""
         dataframe = self.get_dataframe_from_columns(column_names)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
     def get_dataframe_from_columns(self, column_names: List[str]) -> DataFrame:
-        """Extract a new dataframe
-        """
+        """Extract a new dataframe"""
         self.check_column_names(column_names)
         return self._table.get_data()[column_names]
 
     def get_values_from_coords(self, ranges: List[CellRange]) -> List[Any]:
-        """ Get flattened values from a list of ranges"""
+        """Get flattened values from a list of ranges"""
 
         values: List[Any] = []
 
@@ -83,15 +80,16 @@ class BaseTableView(View):
         return values
 
     def get_dataframe_from_coords(self, range: CellRange) -> DataFrame:
-        """ Get a dataframe from a single range"""
+        """Get a dataframe from a single range"""
         df = self._table.get_data()
 
-        return df.iloc[range.get_from().row: range.get_to().row + 1,
-                       range.get_from().column: range.get_to().column + 1]
+        return df.iloc[
+            range.get_from().row : range.get_to().row + 1,
+            range.get_from().column : range.get_to().column + 1,
+        ]
 
     def get_values_from_selection_range(self, selection_range: TableSelection) -> List[Any]:
-        """Get table flattened value form a SelectionRange
-        """
+        """Get table flattened value form a SelectionRange"""
 
         if selection_range.is_range_selection():
             return self.get_values_from_coords(selection_range.selection)
@@ -99,8 +97,9 @@ class BaseTableView(View):
             # columns selection
             return self.get_values_from_columns(selection_range.selection)
 
-    def get_row_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:
-
+    def get_row_tags_from_selection_range(
+        self, selection_range: TableSelection
+    ) -> List[Dict[str, str]]:
         if selection_range.is_range_selection():
             return self.get_row_tags_from_coords(selection_range.selection)
         else:
@@ -111,7 +110,9 @@ class BaseTableView(View):
         tags: List[Dict[str, str]] = []
 
         for coord in ranges:
-            tags += self._table.get_row_tags(from_index=coord.get_from().row, to_index=coord.get_to().row)
+            tags += self._table.get_row_tags(
+                from_index=coord.get_from().row, to_index=coord.get_to().row
+            )
 
         # if all dict are empty, return None to lighten the json
         if all(len(t) == 0 for t in tags):
@@ -153,7 +154,9 @@ class BaseTableView(View):
     #     table = self._table.select_by_column_names(column_names)
     #     return table.get_column_tags(none_if_empty=False)
 
-    def get_single_column_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:
+    def get_single_column_tags_from_selection_range(
+        self, selection_range: TableSelection
+    ) -> List[Dict[str, str]]:
         if selection_range.is_single_column():
             column_index: int
             if selection_range.is_column_selection():
@@ -184,8 +187,9 @@ class BaseTableView(View):
                 x_tick_labels = []
                 # retrieve all the row names based on the row selection
                 for cell in cell_range:
-                    x_tick_labels += self.get_table().get_row_names(cell.get_from().row,
-                                                                    cell.get_to().row + 1)
+                    x_tick_labels += self.get_table().get_row_names(
+                        cell.get_from().row, cell.get_to().row + 1
+                    )
 
                 return x_tick_labels
 

@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
@@ -17,6 +15,7 @@ class MarkdownView(View):
     }
     ```
     """
+
     _type: ViewType = ViewType.MARKDOWN
     _markdown: str
 
@@ -25,4 +24,4 @@ class MarkdownView(View):
         self._markdown = markdown
 
     def data_to_dict(self, params: ConfigParams = None) -> dict:
-        return {'markdown': self._markdown}
+        return {"markdown": self._markdown}

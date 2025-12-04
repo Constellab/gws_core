@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
@@ -9,7 +7,7 @@ from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.user.user_dto import UserDTO
 
-ShareTagMode = Literal['PUBLIC', 'SPACE']
+ShareTagMode = Literal["PUBLIC", "SPACE"]
 
 # Origin of the tag (who created the tag)
 # If USER, the origin_id is the user id
@@ -23,14 +21,14 @@ ShareTagMode = Literal['PUBLIC', 'SPACE']
 
 
 class TagOriginType(Enum):
-    USER = 'USER'
-    S3 = 'S3'
-    TASK = 'TASK'
-    TASK_PROPAGATED = 'TASK_PROPAGATED'
-    SCENARIO_PROPAGATED = 'SCENARIO_PROPAGATED'
-    RESOURCE_PROPAGATED = 'RESOURCE_PROPAGATED'
-    VIEW_PROPAGATED = 'VIEW_PROPAGATED'
-    SYSTEM = 'SYSTEM'
+    USER = "USER"
+    S3 = "S3"
+    TASK = "TASK"
+    TASK_PROPAGATED = "TASK_PROPAGATED"
+    SCENARIO_PROPAGATED = "SCENARIO_PROPAGATED"
+    RESOURCE_PROPAGATED = "RESOURCE_PROPAGATED"
+    VIEW_PROPAGATED = "VIEW_PROPAGATED"
+    SYSTEM = "SYSTEM"
 
 
 class TagValueFormat(Enum):
@@ -97,6 +95,7 @@ class TagPropagationImpactDTO(BaseModelDTO):
     :param TypedDict: _description_
     :type TypedDict: _type_
     """
+
     tags: List[TagDTO]
     impacted_entities: List[EntityNavGroupDTO]
 
@@ -135,6 +134,7 @@ class TagKeyNotSynchronizedFields(Enum):
     """Enum to define the fields that are not synchronized with the tag service.
     This is used to avoid sending these fields to the tag service when saving a tag.
     """
+
     LABEL = "label_modified"
     DESCRIPTION = "description_modified"
     DEPRECATED = "deprecated"
@@ -145,6 +145,7 @@ class TagValueNotSynchronizedFields(Enum):
     """Enum to define the fields that are not synchronized with the tag service.
     This is used to avoid sending these fields to the tag service when saving a tag.
     """
+
     VALUE_CREATED = "value_created"
     SHORT_DESCRIPTION = "short_description_modified"
     ADDITIONAL_INFOS = "additional_info_modified"
@@ -168,6 +169,7 @@ class TagsNotSynchronizedDTO(BaseModelDTO):
     """DTO to define the tags that are not synchronized with the tag service.
     This is used to avoid sending these tags to the tag service when saving a tag.
     """
+
     tag_keys_not_synchronized: List[TagNotSynchronizedDTO] = []
 
 

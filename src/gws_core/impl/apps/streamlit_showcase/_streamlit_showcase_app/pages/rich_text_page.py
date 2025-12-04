@@ -14,19 +14,20 @@ def render_rich_text_page():
     page_layout(
         title="Rich Text Editor",
         description="This page contains a showcase for the rich text editor component.",
-        content_function=page_content
+        content_function=page_content,
     )
 
 
 def _render_rich_text_editor():
     def example_demo():
-        with StreamlitContainers.container_centered('container-center'):
+        with StreamlitContainers.container_centered("container-center"):
             rich_text = RichText()
-            rich_text.add_paragraph('This is a paragraph')
-            result = rich_text_editor('Rich text editor', initial_value=rich_text,
-                                      disabled=False, key='rich-text-editor')
+            rich_text.add_paragraph("This is a paragraph")
+            result = rich_text_editor(
+                "Rich text editor", initial_value=rich_text, disabled=False, key="rich-text-editor"
+            )
 
-            st.write('Result:')
+            st.write("Result:")
             st.write(result.to_dto_json_dict())
 
     code = """import streamlit as st

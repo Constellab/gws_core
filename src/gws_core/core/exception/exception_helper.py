@@ -1,16 +1,12 @@
-
-
 from traceback import FrameSummary, extract_tb, format_exc, format_list
 from types import ModuleType, TracebackType
 from typing import List
 
 
-class ExceptionHelper():
-
+class ExceptionHelper:
     @staticmethod
     def filter_traceback(traceback: TracebackType, module_type: ModuleType) -> List[FrameSummary]:
-        """Method to filter the traceback only keep frame after the last frame of module_type
-        """
+        """Method to filter the traceback only keep frame after the last frame of module_type"""
         tb_frames = extract_tb(traceback)
         tb_frames.reverse()
 
@@ -30,7 +26,9 @@ class ExceptionHelper():
         """Method convert a sub section of the stack trace to a string
         This is not working correctly when the exception is catched and rethrowed
         """
-        filtered_stack_trace = ExceptionHelper.filter_traceback(exception.__traceback__, module_type)
+        filtered_stack_trace = ExceptionHelper.filter_traceback(
+            exception.__traceback__, module_type
+        )
 
         # if no stack trace, return the complete stack trace
         if len(filtered_stack_trace) == 0:

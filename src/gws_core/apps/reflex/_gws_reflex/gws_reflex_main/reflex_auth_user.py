@@ -4,7 +4,6 @@ from gws_core.user.user import User
 
 
 class ReflexAuthUser:
-
     auth_context: AuthContextApp
     was_already_authenticated: bool = False
 
@@ -12,7 +11,6 @@ class ReflexAuthUser:
         self.auth_context = auth_context
 
     def __enter__(self) -> User:
-
         CurrentUserService.set_reflex_context()
 
         if CurrentUserService.get_current_user() is None:

@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict
 
 from gws_core.config.config_params import ConfigParamsDict
@@ -18,9 +16,12 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("PyAgent", human_name="Python agent",
-                short_description="Agent to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
-                style=TypingStyle.material_icon("agent"))
+@task_decorator(
+    "PyAgent",
+    human_name="Python agent",
+    short_description="Agent to run Python snippets directly in the global environment. The input data and parameters are passed in memory to the snippet.",
+    style=TypingStyle.material_icon("agent"),
+)
 class PyAgent(Task):
     """
     Python agents allow to execute any Python code snippets on the fly.
@@ -36,29 +37,37 @@ class PyAgent(Task):
 
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
-    config_specs = ConfigSpecs({
-        'params': EnvAgent.get_dynamic_param_config(),
-        'code':
-        PythonCodeParam(
-            default_value=AgentCodeHelper.get_python_code_template(),
-            human_name="Python code snippet",
-            short_description="Python code snippet to run"), })
+    config_specs = ConfigSpecs(
+        {
+            "params": EnvAgent.get_dynamic_param_config(),
+            "code": PythonCodeParam(
+                default_value=AgentCodeHelper.get_python_code_template(),
+                human_name="Python code snippet",
+                short_description="Python code snippet to run",
+            ),
+        }
+    )
 
-    CONFIG_PARAMS_NAME = 'params'
-    CONFIG_CODE_NAME = 'code'
+    CONFIG_PARAMS_NAME = "params"
+    CONFIG_CODE_NAME = "code"
 
     __is_agent__: bool = True
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        code: str = params.get_value('code')
+        code: str = params.get_value("code")
 
         working_dir = self.create_tmp_dir()
 
-        resource_list: ResourceList = inputs.get('source')
+        resource_list: ResourceList = inputs.get("source")
 
         # execute the live code
-        init_globals = {'self': self, 'sources': resource_list.get_resources(), 'params': params.get_value('params'),
-                        "working_dir": working_dir, **globals()}
+        init_globals = {
+            "self": self,
+            "sources": resource_list.get_resources(),
+            "params": params.get_value("params"),
+            "working_dir": working_dir,
+            **globals(),
+        }
 
         result = AgentCodeHelper.run_python_code(code, init_globals)
 
@@ -67,8 +76,8 @@ class PyAgent(Task):
         if targets is None:
             targets = []
 
-        return {'target': ResourceList(targets)}
+        return {"target": ResourceList(targets)}
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
-        return {'code': code, "params": params}
+        return {"code": code, "params": params}

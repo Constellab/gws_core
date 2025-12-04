@@ -1,17 +1,13 @@
-
-
 from enum import Enum
 from typing import Any, Callable, List, Optional, Type
 
-from peewee import (Expression, Field, FloatField, IntegerField, ModelSelect,
-                    Ordering)
+from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
 from typing_extensions import TypeVar
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
 
 from ..model.model import Model
@@ -72,6 +68,7 @@ class SearchParams(BaseModelDTO):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     filtersCriteria: List[SearchFilterCriteria] = []
     sortsCriteria: Optional[List[SearchSortCriteria]] = []
 
@@ -108,7 +105,7 @@ class SearchParams(BaseModelDTO):
         self.filtersCriteria = filters
 
 
-SearchBuilderType = TypeVar('SearchBuilderType', bound='SearchBuilder')
+SearchBuilderType = TypeVar("SearchBuilderType", bound="SearchBuilder")
 
 
 class SearchBuilder:
@@ -151,7 +148,9 @@ class SearchBuilder:
         filter_expression = self._query_builder.build()
 
         # retrieve the order expression
-        orders: List[Ordering] = self._orderings if len(self._orderings) > 0 else self._default_orders
+        orders: List[Ordering] = (
+            self._orderings if len(self._orderings) > 0 else self._default_orders
+        )
 
         model_select: ModelSelect = self._model_type.select()
 
@@ -199,7 +198,9 @@ class SearchBuilder:
         self._orderings = orders
         return self
 
-    def add_join(self: SearchBuilderType, table: Type[Model], on: Expression = None) -> SearchBuilderType:
+    def add_join(
+        self: SearchBuilderType, table: Type[Model], on: Expression = None
+    ) -> SearchBuilderType:
         self._joins.append(SearchJoin(table_type=table, on=on))
         return self
 
@@ -240,8 +241,7 @@ class SearchBuilder:
             return field.asc(nulls=null_option.value)
 
     def _get_model_field(self, key: str) -> Field:
-        """Retrieve the peewee field of the model base on field name
-        """
+        """Retrieve the peewee field of the model base on field name"""
         if not hasattr(self._model_type, key):
             raise BadRequestException(f"The model does not have a attribute named '{key}'")
 
@@ -253,8 +253,7 @@ class SearchBuilder:
         return field
 
     def convert_value(self, field: Field, value: Any) -> Any:
-        """Method to convert the search value (or values) to type of field
-        """
+        """Method to convert the search value (or values) to type of field"""
         converter: Callable = self._get_converter(field)
 
         # if there is no converter, return the value without touching it
@@ -269,8 +268,7 @@ class SearchBuilder:
             return converter(value)
 
     def _get_converter(self, field: Field) -> Callable:
-        """Method that return a convert method to convert the search value to type of field
-        """
+        """Method that return a convert method to convert the search value to type of field"""
         # Convert the string to enum
         if isinstance(field, EnumField):
             return field.python_value
@@ -309,6 +307,6 @@ class SearchBuilder:
         elif operator == SearchOperator.NOT_NULL:
             return field.is_null(False)
         elif operator == SearchOperator.MATCH:
-            return Match((field), value, modifier='IN BOOLEAN MODE')
+            return Match((field), value, modifier="IN BOOLEAN MODE")
         elif operator == SearchOperator.BETWEEN:
             return field.between(value[0], value[1])

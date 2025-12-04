@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from queue import Empty, Queue
@@ -37,7 +35,7 @@ class EventDispatcher:
         dispatcher.unregister(listener)
     """
 
-    _instance: 'EventDispatcher' = None
+    _instance: "EventDispatcher" = None
     _lock: Lock = Lock()
     _listeners: List[EventListener] = []
     _listeners_lock: Lock = Lock()
@@ -57,7 +55,7 @@ class EventDispatcher:
         Logger.debug("EventDispatcher worker thread started")
 
     @classmethod
-    def get_instance(cls) -> 'EventDispatcher':
+    def get_instance(cls) -> "EventDispatcher":
         """Get the singleton instance of the EventDispatcher.
 
         :return: The EventDispatcher instance
@@ -187,7 +185,7 @@ class EventDispatcher:
                 Logger.error(
                     f"Error in event listener {listener.__class__.__name__} "
                     f"for event {event_name}: {e}",
-                    exception=e
+                    exception=e,
                 )
 
     def get_registered_listeners(self) -> List[EventListener]:

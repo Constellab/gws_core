@@ -1,23 +1,20 @@
-
-
 from datetime import date, datetime, timedelta
 from json import loads
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import (LogContext, LogFileLine, Logger,
-                                        MessageType)
-from gws_core.lab.log.log_dto import (LogCompleteInfoDTO, LogDTO, LogInfo,
-                                      LogsBetweenDatesDTO)
+from gws_core.core.utils.logger import LogContext, LogFileLine, Logger, MessageType
+from gws_core.lab.log.log_dto import LogCompleteInfoDTO, LogDTO, LogInfo, LogsBetweenDatesDTO
 
 
 class OldLogFileLine(BaseModelDTO):
-    """ Type that represent a  the old format of a log line
+    """Type that represent a  the old format of a log line
 
     :param BaseModelDTO: _description_
     :type BaseModelDTO: _type_
     """
+
     level: MessageType
     timestamp: str
     message: str
@@ -25,7 +22,7 @@ class OldLogFileLine(BaseModelDTO):
     scenario_id: Optional[str] = None
 
 
-class LogLine():
+class LogLine:
     """Object that represent a line of a log file like
     INFO - 2022-12-08 09:50:05.558872 - START APPLICATION : gws_core version 0.4.0
 
@@ -59,7 +56,7 @@ class LogLine():
         self.date_time = None
         self.message = None
 
-        if line_str[0] == '{':
+        if line_str[0] == "{":
             self._init_new(line_str)
         else:
             self._init_old(line_str)
@@ -71,7 +68,7 @@ class LogLine():
         try:
             dict_ = loads(line_str)
 
-            if 'context' in dict_:
+            if "context" in dict_:
                 line_json = LogFileLine.from_json(dict_)
                 self.level = line_json.level
                 self.init_new_date(line_json.timestamp)
@@ -126,24 +123,26 @@ class LogLine():
             pass
 
     def is_valid(self) -> bool:
-        return self.level is not None and \
-            self.date_time is not None and \
-            self.message is not None
+        return self.level is not None and self.date_time is not None and self.message is not None
 
     def get_datetime_without_microseconds(self) -> datetime:
         return self.date_time.replace(microsecond=self.date_time.microsecond // 1000 * 1000)
 
     def to_dto(self) -> LogDTO:
-        return LogDTO(level=self.level, date_time=self.date_time,
-                      message=self.message, context=self.context,
-                      context_id=self.context_id, stack_trace=self.stack_trace)
+        return LogDTO(
+            level=self.level,
+            date_time=self.date_time,
+            message=self.message,
+            context=self.context,
+            context_id=self.context_id,
+            stack_trace=self.stack_trace,
+        )
 
     def to_str(self) -> str:
         return f"{self.date_time} - {self.level} - {self.message}"
 
 
-class LogCompleteInfo():
-
+class LogCompleteInfo:
     log_info: LogInfo
     content: str
 
@@ -155,9 +154,14 @@ class LogCompleteInfo():
         name = self.log_info.name
         return Logger.file_name_to_date(name).date()
 
-    def get_log_lines_by_time(self, start_time: datetime, end_time: datetime,
-                              context: LogContext = None, context_id: str = None,
-                              nb_of_lines: int = None) -> List[LogLine]:
+    def get_log_lines_by_time(
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        context: LogContext = None,
+        context_id: str = None,
+        nb_of_lines: int = None,
+    ) -> List[LogLine]:
         """Filter the log lines by time and context
 
         :param start_time: start time of the filter
@@ -235,8 +239,7 @@ class LogCompleteInfo():
         return LogCompleteInfoDTO(log_info=self.log_info, content=self.get_content_as_dto())
 
 
-class LogsBetweenDates():
-
+class LogsBetweenDates:
     logs: List[LogLine]
     from_date: datetime
     to_date: datetime
@@ -244,8 +247,15 @@ class LogsBetweenDates():
     context_id: str
     is_last_page: bool
 
-    def __init__(self, logs: List[LogLine], from_date: datetime, to_date: datetime,
-                 context: LogContext = None, context_id: str = None, is_last_page: bool = False) -> None:
+    def __init__(
+        self,
+        logs: List[LogLine],
+        from_date: datetime,
+        to_date: datetime,
+        context: LogContext = None,
+        context_id: str = None,
+        is_last_page: bool = False,
+    ) -> None:
         self.logs = logs
         self.from_date = from_date
         self.to_date = to_date
@@ -260,7 +270,7 @@ class LogsBetweenDates():
             to_date=self.to_date,
             context=self.context,
             context_id=self.context_id,
-            is_last_page=self.is_last_page
+            is_last_page=self.is_last_page,
         )
 
     def get_next_page_date(self) -> datetime:

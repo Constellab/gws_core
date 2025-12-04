@@ -1,4 +1,3 @@
-
 from typing import List, Literal
 
 import reflex as rx
@@ -12,10 +11,12 @@ def profile_picture_url(photo: str) -> str:
     :param photo: Base URL of the user's photo
     :return: URL with size parameter appended
     """
-    return Settings.get_space_api_url() + f'/users/photo-v2/{photo}'
+    return Settings.get_space_api_url() + f"/users/photo-v2/{photo}"
 
 
-def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
+def user_profile_picture(
+    user: UserDTO, size: Literal["small", "normal"] = "normal"
+) -> rx.Component:
     """User profile picture component that displays a round photo or initials.
 
     This component displays a user's photo in a circular frame. If no photo is
@@ -60,7 +61,9 @@ def user_profile_picture(user: UserDTO, size: Literal["small", "normal"] = "norm
     )
 
 
-def user_inline_component(user: UserDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
+def user_inline_component(
+    user: UserDTO, size: Literal["small", "normal"] = "normal"
+) -> rx.Component:
     """User inline component that displays user photo and name horizontally.
 
     This component displays a user's photo (or initials if no photo) alongside
@@ -86,12 +89,14 @@ def user_inline_component(user: UserDTO, size: Literal["small", "normal"] = "nor
     )
 
 
-def user_select(users: List[UserDTO],
-                placeholder: str = "Select a user",
-                name: str = None,
-                disabled: bool = False,
-                width: str = None,
-                **kwargs) -> rx.Component:
+def user_select(
+    users: List[UserDTO],
+    placeholder: str = "Select a user",
+    name: str = None,
+    disabled: bool = False,
+    width: str = None,
+    **kwargs,
+) -> rx.Component:
     """User select component that allows selecting users from a list.
 
     This component displays a dropdown select with user profile pictures/initials

@@ -1,5 +1,3 @@
-
-
 import json
 from io import StringIO
 from typing import Any
@@ -10,11 +8,11 @@ from fastapi.responses import Response, StreamingResponse
 from gws_core.core.utils.xml_helper import XMLHelper
 
 
-class ResponseHelper():
-
+class ResponseHelper:
     @staticmethod
-    def create_file_response_from_json(json_: dict, file_name: str = 'file.json',
-                                       media_type: str = 'application/json') -> StreamingResponse:
+    def create_file_response_from_json(
+        json_: dict, file_name: str = "file.json", media_type: str = "application/json"
+    ) -> StreamingResponse:
         """
         Create a StreamingResponse from a json
 
@@ -28,8 +26,9 @@ class ResponseHelper():
         return ResponseHelper.create_file_response_from_str(str_json, file_name, media_type)
 
     @staticmethod
-    def create_file_response_from_object(obj: Any, file_name: str = 'file.json',
-                                         media_type: str = 'application/json') -> StreamingResponse:
+    def create_file_response_from_object(
+        obj: Any, file_name: str = "file.json", media_type: str = "application/json"
+    ) -> StreamingResponse:
         """
         Create a StreamingResponse from an object
 
@@ -43,8 +42,9 @@ class ResponseHelper():
         return ResponseHelper.create_file_response_from_json(str_json, file_name, media_type)
 
     @staticmethod
-    def create_file_response_from_str(text: str, file_name: str = 'file.txt',
-                                      media_type: str = 'text/plain') -> StreamingResponse:
+    def create_file_response_from_str(
+        text: str, file_name: str = "file.txt", media_type: str = "text/plain"
+    ) -> StreamingResponse:
         """
         Create a StreamingResponse from a string
 
@@ -66,14 +66,15 @@ class ResponseHelper():
 
     @staticmethod
     def create_xml_response(xml_text: str, status_code: int = 200) -> Response:
-        return Response(content=xml_text, media_type='application/xml',
-                        status_code=status_code)
+        return Response(content=xml_text, media_type="application/xml", status_code=status_code)
 
     @staticmethod
     def create_xml_response_from_json(json_: Any) -> Response:
         return ResponseHelper.create_xml_response(XMLHelper.dict_to_xml(json_))
         # return ResponseHelper.create_xml_response(
         #     '<?xml version="1.0" encoding="utf-8"?>\n<Tagging><VersionId>null</VersionId><TagSet><Key>key</Key><Value>c4daa057-1b06-4b05-9409-bb0ed7a012bf_1726063810413.csv</Value></TagSet></Tagging>')
+
+
 #         return ResponseHelper.create_xml_response("""
 # <Tagging xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
 #     <TagSet>
@@ -87,4 +88,4 @@ class ResponseHelper():
 #         </Tag>
 #     </TagSet>
 # </Tagging>"""
-        #   )
+#   )

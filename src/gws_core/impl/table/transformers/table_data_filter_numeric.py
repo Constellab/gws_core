@@ -1,11 +1,8 @@
-
-
 from pandas import DataFrame
 
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import FloatParam, StrParam
-from gws_core.impl.table.helper.dataframe_data_filter_helper import \
-    DataframeDataFilterHelper
+from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDataFilterHelper
 
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
@@ -42,31 +39,37 @@ class TableColumnDataNumericFilter(Transformer):
     If you need to apply filters on text values, you can use the ```Table column data numeric filter``` task.
     """
 
-    config_specs = ConfigSpecs({
-        "numeric_filter": ParamSet(ConfigSpecs(
-            {
-                "row_name_regex": StrParam(
-                    human_name="Row name (pattern)",
-                    short_description="The name of the rows along which the filter is applied (regexp pattern); Use '*' for all the rows",
-                    optional=True,
+    config_specs = ConfigSpecs(
+        {
+            "numeric_filter": ParamSet(
+                ConfigSpecs(
+                    {
+                        "row_name_regex": StrParam(
+                            human_name="Row name (pattern)",
+                            short_description="The name of the rows along which the filter is applied (regexp pattern); Use '*' for all the rows",
+                            optional=True,
+                        ),
+                        "comparator": comparator_param,
+                        "value": value_param,
+                    }
                 ),
-                "comparator": comparator_param,
-                "value": value_param,
-            }),
-            visibility="public",
-            human_name="Numeric data filters",
-            max_number_of_occurrences=9
-        ),
-    })
+                visibility="public",
+                human_name="Numeric data filters",
+                max_number_of_occurrences=9,
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):
             data = DataframeDataFilterHelper.filter_columns_numeric(
-                data=data, row_name_regex=numeric_params["row_name_regex"],
+                data=data,
+                row_name_regex=numeric_params["row_name_regex"],
                 comp=numeric_params["comparator"],
-                value=numeric_params["value"])
+                value=numeric_params["value"],
+            )
 
         return source.create_sub_table_filtered_by_columns(data)
 
@@ -89,30 +92,36 @@ class TableRowDataNumericFilter(Transformer):
     If you need to apply filters on text values, you can use the ```Table row data text filter``` task.
     """
 
-    config_specs = ConfigSpecs({
-        "numeric_filter": ParamSet(ConfigSpecs(
-            {
-                "column_name_regex": StrParam(
-                    human_name="Column name (pattern)",
-                    short_description="The name of the columns along which the filter is applied (regexp pattern); Use '*' for all the columns",
-                    optional=True,
+    config_specs = ConfigSpecs(
+        {
+            "numeric_filter": ParamSet(
+                ConfigSpecs(
+                    {
+                        "column_name_regex": StrParam(
+                            human_name="Column name (pattern)",
+                            short_description="The name of the columns along which the filter is applied (regexp pattern); Use '*' for all the columns",
+                            optional=True,
+                        ),
+                        "comparator": comparator_param,
+                        "value": value_param,
+                    }
                 ),
-                "comparator": comparator_param,
-                "value": value_param,
-            }),
-            visibility="public",
-            human_name="Numeric data filters",
-            max_number_of_occurrences=9
-        ),
-    })
+                visibility="public",
+                human_name="Numeric data filters",
+                max_number_of_occurrences=9,
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for numeric_params in params.get("numeric_filter"):
             data = DataframeDataFilterHelper.filter_rows_numeric(
-                data=data, column_name_regex=numeric_params["column_name_regex"],
+                data=data,
+                column_name_regex=numeric_params["column_name_regex"],
                 comp=numeric_params["comparator"],
-                value=numeric_params["value"])
+                value=numeric_params["value"],
+            )
 
         return source.create_sub_table_filtered_by_rows(data)

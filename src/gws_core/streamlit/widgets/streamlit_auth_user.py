@@ -1,5 +1,3 @@
-
-
 from gws_core.streamlit.widgets.streamlit_state import StreamlitState
 from gws_core.user.auth_context import AuthContextApp
 from gws_core.user.current_user_service import CurrentUserService

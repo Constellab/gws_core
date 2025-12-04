@@ -1,9 +1,9 @@
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockQuote(RichTextBlockDataBase):
     """Object representing a quote block in a rich text"""
+
     text: str
     caption: str = None
 

@@ -1,5 +1,3 @@
-
-
 import os
 from json import load
 from typing import Dict, List, Type
@@ -22,8 +20,8 @@ from gws_core.tag.tag_helper import TagHelper
 from .resource_zipper import ResourceZipper, ZipResource, ZipResourceInfo
 
 
-class ResourceLoader():
-    """ Class to load a resource from a folder"""
+class ResourceLoader:
+    """Class to load a resource from a folder"""
 
     info_json: ZipResourceInfo
 
@@ -42,8 +40,7 @@ class ResourceLoader():
         self.mode = mode
 
     def is_resource_zip(self) -> bool:
-        """Return true if the zip file is a resource zip file
-        """
+        """Return true if the zip file is a resource zip file"""
         try:
             self._load_info_json()
             return True
@@ -51,7 +48,6 @@ class ResourceLoader():
             return False
 
     def load_resource(self) -> Resource:
-
         if not self.is_resource_zip():
             return self.load_fs_node_resource()
 
@@ -61,7 +57,6 @@ class ResourceLoader():
         self._resource = self._load_resource(main_resource)
 
         if isinstance(self._resource, ResourceListBase):
-
             # load all the children resources
             for zip_resource in self._get_children_zip_resources():
                 resource: Resource = self._load_resource(zip_resource)
@@ -74,8 +69,7 @@ class ResourceLoader():
 
     def _check_compatibility(self) -> None:
         if self.info_json.zip_version != 1:
-            raise Exception(
-                f'Zip version {self.info_json.zip_version} is not supported.')
+            raise Exception(f"Zip version {self.info_json.zip_version} is not supported.")
 
         for zip_resource in self._get_all_zip_resources():
             TypingManager.check_typing_name_compatibility(zip_resource.resource_typing_name)
@@ -86,12 +80,14 @@ class ResourceLoader():
         if zip_resource.kvstore_dir_name is not None:
             # build the path to the kvstore file
             kvstore_path = os.path.join(
-                self._resource_folder, zip_resource.kvstore_dir_name, KVStore.FILE_NAME)
+                self._resource_folder, zip_resource.kvstore_dir_name, KVStore.FILE_NAME
+            )
 
             kv_store = KVStore(kvstore_path)
 
         resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
-            zip_resource.resource_typing_name)
+            zip_resource.resource_typing_name
+        )
 
         tags_dict = zip_resource.tags or []
         tags = TagHelper.tags_dto_to_list(tags_dict)
@@ -105,8 +101,14 @@ class ResourceLoader():
             resource_model_id = zip_resource.id
 
         resource = ResourceFactory.create_resource(
-            resource_type, kv_store=kv_store, data=zip_resource.data, name=zip_resource.name, tags=tags,
-            resource_model_id=resource_model_id, style=zip_resource.style)
+            resource_type,
+            kv_store=kv_store,
+            data=zip_resource.data,
+            name=zip_resource.name,
+            tags=tags,
+            resource_model_id=resource_model_id,
+            style=zip_resource.style,
+        )
 
         if self.mode == ShareEntityCreateMode.NEW_ID:
             # generate a new uid for the resource
@@ -115,11 +117,10 @@ class ResourceLoader():
         # if the resource is an fs_node_name
         if zip_resource.fs_node_name is not None:
             if not isinstance(resource, FSNode):
-                raise Exception('Resource type is not a FSNode')
+                raise Exception("Resource type is not a FSNode")
 
             # set the path of the resource node
-            resource.path = os.path.join(
-                self._resource_folder, zip_resource.fs_node_name)
+            resource.path = os.path.join(self._resource_folder, zip_resource.fs_node_name)
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -130,31 +131,30 @@ class ResourceLoader():
         if self.info_json is not None:
             return self.info_json
 
-        info_json_path = os.path.join(
-            self._resource_folder, ResourceZipper.INFO_JSON_FILE_NAME)
+        info_json_path = os.path.join(self._resource_folder, ResourceZipper.INFO_JSON_FILE_NAME)
 
         if not FileHelper.exists_on_os(info_json_path):
-            raise Exception(
-                f'File {info_json_path} not found in the zip file.')
+            raise Exception(f"File {info_json_path} not found in the zip file.")
 
         info_json: dict = None
-        with open(info_json_path, 'r', encoding='UTF-8') as file:
+        with open(info_json_path, "r", encoding="UTF-8") as file:
             info_json = load(file)
 
         if info_json is None:
-            raise Exception(f'File {info_json_path} is empty.')
+            raise Exception(f"File {info_json_path} is empty.")
 
-        if not isinstance(info_json.get('zip_version'), int):
+        if not isinstance(info_json.get("zip_version"), int):
             raise Exception(
-                f"The zip_version value '{info_json.get('zip_version')}' in {info_json_path} file is invalid, must be an int")
+                f"The zip_version value '{info_json.get('zip_version')}' in {info_json_path} file is invalid, must be an int"
+            )
 
-        if info_json.get('resource') is None:
-            raise Exception(
-                f"The resource in {info_json_path} is missing")
+        if info_json.get("resource") is None:
+            raise Exception(f"The resource in {info_json_path} is missing")
 
-        if not isinstance(info_json.get('children_resources'), list):
+        if not isinstance(info_json.get("children_resources"), list):
             raise Exception(
-                f"The children_resources value in {info_json_path} file is invalid, must be a list")
+                f"The children_resources value in {info_json_path} file is invalid, must be a list"
+            )
 
         self.info_json = ZipResourceInfo.from_json(info_json)
 
@@ -170,8 +170,7 @@ class ResourceLoader():
         count = len(os.listdir(self._resource_folder))
 
         if count == 0:
-            raise Exception(
-                "The zipped file does not contains any resource.")
+            raise Exception("The zipped file does not contains any resource.")
 
         if count == 1:
             node_name = os.listdir(self._resource_folder)[0]
@@ -209,9 +208,10 @@ class ResourceLoader():
         FileHelper.delete_dir(self._resource_folder)
 
     @classmethod
-    def from_compress_file(cls, compress_file_path: str, mode: ShareEntityCreateMode) -> 'ResourceLoader':
-        """Uncompress a file and create a ResourceLoader
-        """
+    def from_compress_file(
+        cls, compress_file_path: str, mode: ShareEntityCreateMode
+    ) -> "ResourceLoader":
+        """Uncompress a file and create a ResourceLoader"""
         temp_dir = Settings.get_instance().make_temp_dir()
         Compress.smart_decompress(compress_file_path, temp_dir)
         return ResourceLoader(temp_dir, mode)

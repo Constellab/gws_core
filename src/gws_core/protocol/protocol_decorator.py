@@ -1,5 +1,3 @@
-
-
 from typing import Callable, Type
 
 from gws_core.model.typing_deprecated import TypingDeprecated
@@ -11,14 +9,16 @@ from ..model.typing_register_decorator import register_gws_typing_class
 from ..protocol.protocol import Protocol
 
 
-def protocol_decorator(unique_name: str,
-                       human_name: str = "",
-                       short_description: str = "",
-                       hide: bool = False,
-                       style: TypingStyle = None,
-                       deprecated_since: str = None,
-                       deprecated_message: str = None,
-                       deprecated: TypingDeprecated = None) -> Callable:
+def protocol_decorator(
+    unique_name: str,
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle = None,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
 
@@ -48,20 +48,24 @@ def protocol_decorator(unique_name: str,
         if not Utils.issubclass(protocol_class, Protocol):
             BrickService.log_brick_error(
                 protocol_class,
-                f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol")
+                f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol",
+            )
             return protocol_class
 
-        register_gws_typing_class(object_class=protocol_class,
-                                  object_type="PROTOCOL",
-                                  unique_name=unique_name,
-                                  object_sub_type='PROTOCOL',
-                                  human_name=human_name,
-                                  short_description=short_description,
-                                  hide=hide,
-                                  style=style,
-                                  deprecated_since=deprecated_since,
-                                  deprecated_message=deprecated_message,
-                                  deprecated=deprecated)
+        register_gws_typing_class(
+            object_class=protocol_class,
+            object_type="PROTOCOL",
+            unique_name=unique_name,
+            object_sub_type="PROTOCOL",
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            deprecated_since=deprecated_since,
+            deprecated_message=deprecated_message,
+            deprecated=deprecated,
+        )
 
         return protocol_class
+
     return decorator

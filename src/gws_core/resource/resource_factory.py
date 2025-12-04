@@ -1,5 +1,3 @@
-
-
 import copy
 from typing import Any, Dict, List, Type, cast
 
@@ -17,7 +15,7 @@ from pandas import DataFrame
 from plotly.graph_objs import Figure
 
 
-class ResourceFactory():
+class ResourceFactory:
     """Factory to create a resource from type and data.
 
     This factory handles the creation and initialization of Resource objects,
@@ -25,14 +23,18 @@ class ResourceFactory():
     """
 
     @classmethod
-    def create_resource(cls, resource_type: Type[Resource],
-                        kv_store: KVStore, data: Dict[str, Any],
-                        resource_model_id: str | None = None,
-                        name: str | None = None,
-                        tags: List[Tag] | None = None,
-                        flagged: bool = False,
-                        style: TypingStyle | None = None,
-                        additional_data: Dict[str, Any] | None = None) -> Resource:
+    def create_resource(
+        cls,
+        resource_type: Type[Resource],
+        kv_store: KVStore,
+        data: Dict[str, Any],
+        resource_model_id: str | None = None,
+        name: str | None = None,
+        tags: List[Tag] | None = None,
+        flagged: bool = False,
+        style: TypingStyle | None = None,
+        additional_data: Dict[str, Any] | None = None,
+    ) -> Resource:
         """Creates and initializes a Resource instance with data from various storage backends.
 
         :param resource_type: The class type of the resource to create
@@ -73,15 +75,21 @@ class ResourceFactory():
 
         resource.flagged = flagged
 
-        cls._send_fields_to_resource(resource, kv_store=kv_store, data=data, additional_data=additional_data)
+        cls._send_fields_to_resource(
+            resource, kv_store=kv_store, data=data, additional_data=additional_data
+        )
 
         resource.init()
         return resource
 
     @classmethod
-    def _send_fields_to_resource(cls, resource: Resource,
-                                 kv_store: KVStore, data: Dict[str, Any],
-                                 additional_data: Dict[str, Any] | None = None) -> None:
+    def _send_fields_to_resource(
+        cls,
+        resource: Resource,
+        kv_store: KVStore,
+        data: Dict[str, Any],
+        additional_data: Dict[str, Any] | None = None,
+    ) -> None:
         """Populates resource RFields from appropriate storage backends based on their RFieldStorage setting.
 
         This method iterates through all RFields of the resource and loads their values from the
@@ -108,8 +116,7 @@ class ResourceFactory():
         for key, r_field in properties.items():
             # If the storage is DATABASE, the value is stored in the DB
             if r_field.storage == RFieldStorage.DATABASE:
-                loaded_value = copy.deepcopy(
-                    r_field.deserialize(data.get(key)))
+                loaded_value = copy.deepcopy(r_field.deserialize(data.get(key)))
                 setattr(resource, key, loaded_value)
 
             # If the storage is KV_STORE, lazy load it from the kv store
@@ -120,8 +127,7 @@ class ResourceFactory():
             # If the storage is NONE, get the value from additional_data
             elif r_field.storage == RFieldStorage.NONE:
                 if additional_data and key in additional_data:
-                    loaded_value = copy.deepcopy(
-                        r_field.deserialize(additional_data.get(key)))
+                    loaded_value = copy.deepcopy(r_field.deserialize(additional_data.get(key)))
                     setattr(resource, key, loaded_value)
                 # Otherwise keep the default value (do nothing)
 
@@ -148,7 +154,9 @@ class ResourceFactory():
         if isinstance(resource, dict):
             return JSONDict(resource)
         if isinstance(resource, list):
-            resources_list = cast(List[Resource], [cls.create_from_object(r) for r in resource if r is not None])
+            resources_list = cast(
+                List[Resource], [cls.create_from_object(r) for r in resource if r is not None]
+            )
             return ResourceList(resources_list)
         if isinstance(resource, DataFrame):
             return Table(resource)

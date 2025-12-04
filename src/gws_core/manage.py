@@ -1,5 +1,3 @@
-
-
 import os
 import unittest
 from copy import Error
@@ -25,51 +23,60 @@ from .core.utils.settings import Settings
 
 
 class AppManager:
-
     gws_env_initialized: bool = False
 
     @classmethod
-    def init_gws_env_and_db(cls, main_setting_file_path: str,
-                            log_level: str,
-                            log_context: LogContext = LogContext.MAIN,
-                            log_context_id: str | None = None,
-                            show_sql: bool = False,
-                            is_test: bool = False) -> Settings:
-        settings = cls.init_gws_env(main_setting_file_path=main_setting_file_path,
-                                    log_level=log_level,
-                                    log_context=log_context,
-                                    log_context_id=log_context_id,
-                                    show_sql=show_sql,
-                                    is_test=is_test)
+    def init_gws_env_and_db(
+        cls,
+        main_setting_file_path: str,
+        log_level: str,
+        log_context: LogContext = LogContext.MAIN,
+        log_context_id: str | None = None,
+        show_sql: bool = False,
+        is_test: bool = False,
+    ) -> Settings:
+        settings = cls.init_gws_env(
+            main_setting_file_path=main_setting_file_path,
+            log_level=log_level,
+            log_context=log_context,
+            log_context_id=log_context_id,
+            show_sql=show_sql,
+            is_test=is_test,
+        )
         # Init the db
         DbManagerService.init_all_db(full_init=False)
         return settings
 
     @classmethod
-    def init_gws_env(cls, main_setting_file_path: str,
-                     log_level: str,
-                     log_context: LogContext = LogContext.MAIN,
-                     log_context_id: str | None = None,
-                     show_sql: bool = False,
-                     is_test: bool = False) -> Settings:
-
+    def init_gws_env(
+        cls,
+        main_setting_file_path: str,
+        log_level: str,
+        log_context: LogContext = LogContext.MAIN,
+        log_context_id: str | None = None,
+        show_sql: bool = False,
+        is_test: bool = False,
+    ) -> Settings:
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
-        logger = Logger.build_main_logger(log_dir=log_dir, level=logger_level, context=log_context,
-                                          context_id=log_context_id)
+        logger = Logger.build_main_logger(
+            log_dir=log_dir, level=logger_level, context=log_context, context_id=log_context_id
+        )
         if log_context == LogContext.MAIN:
             Logger.info(f"Logger configured with log level: {logger.level}")
         else:
             Logger.info(
-                f"Logger configured for context {log_context} with object {log_context_id} with log level: {logger.level}")
+                f"Logger configured for context {log_context} with object {log_context_id} with log level: {logger.level}"
+            )
 
         if show_sql:
             Logger.print_sql_queries()
 
         # Load all brick settings and load bricks
-        settings_loader = SettingsLoader(main_settings_file_path=main_setting_file_path,
-                                         is_test=is_test)
+        settings_loader = SettingsLoader(
+            main_settings_file_path=main_setting_file_path, is_test=is_test
+        )
         settings_loader.load_settings()
 
         # Init the typings
@@ -84,13 +91,19 @@ class AppManager:
         return settings_loader.settings
 
     @classmethod
-    def start_app(cls, main_setting_file_path: str,
-                  port: str, log_level: str, show_sql: bool) -> None:
-        cls.init_gws_env(main_setting_file_path=main_setting_file_path,
-                         log_level=log_level, show_sql=show_sql, log_context=LogContext.MAIN)
+    def start_app(
+        cls, main_setting_file_path: str, port: str, log_level: str, show_sql: bool
+    ) -> None:
+        cls.init_gws_env(
+            main_setting_file_path=main_setting_file_path,
+            log_level=log_level,
+            show_sql=show_sql,
+            log_context=LogContext.MAIN,
+        )
 
         Logger.info(
-            f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env.")
+            f"Starting server in {('prod' if Settings.is_prod_mode() else 'dev')} mode with {Settings.get_lab_environment()} lab env."
+        )
 
         # start app
         App.start(port=int(port))
@@ -98,8 +111,7 @@ class AppManager:
     @classmethod
     def run_test(cls, brick_dir: str, tests: List[str], log_level: str, show_sql: bool) -> None:
         if App.is_running:
-            raise BadRequestException(
-                "Cannot run tests while the Application is running.")
+            raise BadRequestException("Cannot run tests while the Application is running.")
 
         if not tests:
             raise BadRequestException("Please provide a test to run.")
@@ -109,11 +121,13 @@ class AppManager:
         if not os.path.exists(settings_file):
             raise BadRequestException(f"'settings.json' file not found in the brick '{brick_dir}'.")
 
-        cls.init_gws_env_and_db(main_setting_file_path=settings_file,
-                                log_level=log_level,
-                                show_sql=show_sql,
-                                is_test=True,
-                                log_context=LogContext.MAIN)
+        cls.init_gws_env_and_db(
+            main_setting_file_path=settings_file,
+            log_level=log_level,
+            show_sql=show_sql,
+            is_test=True,
+            log_context=LogContext.MAIN,
+        )
 
         if len(tests) == 1 and tests[0] in ["*", "all"]:
             tests = ["test*"]
@@ -139,25 +153,30 @@ class AppManager:
         # check if there are any tests discovered
         if test_suite.countTestCases() == 0:
             raise Error(
-                f"No tests discovered for input '{tests}' in brick '{brick_dir}'. Please verify that you provided the name of the tests file (not the path). The test file must start with 'test'.")
+                f"No tests discovered for input '{tests}' in brick '{brick_dir}'. Please verify that you provided the name of the tests file (not the path). The test file must start with 'test'."
+            )
 
         test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
 
     @classmethod
-    def run_scenario(cls,
-                     main_setting_file_path: str,
-                     scenario_id: str,
-                     user_id: str,
-                     log_level: str,
-                     show_sql: bool,
-                     is_test: bool) -> None:
-        cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
-                                log_level=log_level,
-                                show_sql=show_sql,
-                                is_test=is_test,
-                                log_context=LogContext.SCENARIO,
-                                log_context_id=scenario_id)
+    def run_scenario(
+        cls,
+        main_setting_file_path: str,
+        scenario_id: str,
+        user_id: str,
+        log_level: str,
+        show_sql: bool,
+        is_test: bool,
+    ) -> None:
+        cls.init_gws_env_and_db(
+            main_setting_file_path=main_setting_file_path,
+            log_level=log_level,
+            show_sql=show_sql,
+            is_test=is_test,
+            log_context=LogContext.SCENARIO,
+            log_context_id=scenario_id,
+        )
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
@@ -165,26 +184,32 @@ class AppManager:
             ScenarioRunService.run_scenario_in_cli(scenario_id)
 
     @classmethod
-    def run_process(cls,
-                    main_setting_file_path: str,
-                    scenario_id: str,
-                    protocol_model_id: str,
-                    process_instance_name: str,
-                    user_id: str,
-                    log_level: str,
-                    show_sql: bool,
-                    is_test: bool) -> None:
-        cls.init_gws_env_and_db(main_setting_file_path=main_setting_file_path,
-                                log_level=log_level,
-                                show_sql=show_sql,
-                                is_test=is_test,
-                                log_context=LogContext.SCENARIO,
-                                log_context_id=scenario_id)
+    def run_process(
+        cls,
+        main_setting_file_path: str,
+        scenario_id: str,
+        protocol_model_id: str,
+        process_instance_name: str,
+        user_id: str,
+        log_level: str,
+        show_sql: bool,
+        is_test: bool,
+    ) -> None:
+        cls.init_gws_env_and_db(
+            main_setting_file_path=main_setting_file_path,
+            log_level=log_level,
+            show_sql=show_sql,
+            is_test=is_test,
+            log_context=LogContext.SCENARIO,
+            log_context_id=scenario_id,
+        )
 
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         with AuthenticateUser(user):
-            ScenarioRunService.run_scenario_process_in_cli(scenario_id, protocol_model_id, process_instance_name)
+            ScenarioRunService.run_scenario_process_in_cli(
+                scenario_id, protocol_model_id, process_instance_name
+            )
 
     @classmethod
     def run_notebook(cls, main_settings_path: str, log_level: str) -> None:
@@ -198,5 +223,7 @@ class AppManager:
         SystemService.reset_dev_envionment(check_user=False)
 
 
-def start_notebook(main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = 'INFO') -> None:
+def start_notebook(
+    main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = "INFO"
+) -> None:
     AppManager.run_notebook(main_settings_path=main_settings_path, log_level=log_level)

@@ -1,5 +1,3 @@
-
-
 import os
 from typing import List
 
@@ -22,8 +20,11 @@ from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="CreateFolderFromFile", human_name="Create folder from files",
-                short_description="Create a folder from a list of files or folders.")
+@task_decorator(
+    unique_name="CreateFolderFromFile",
+    human_name="Create folder from files",
+    short_description="Create a folder from a list of files or folders.",
+)
 class CreateFolderFromFiles(Task):
     """
     Create a folder from a list of files or folders.
@@ -41,30 +42,47 @@ class CreateFolderFromFiles(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder"))
-    output_specs = OutputSpecs({'folder': OutputSpec(Folder, human_name='Folder')})
+        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder")
+    )
+    output_specs = OutputSpecs({"folder": OutputSpec(Folder, human_name="Folder")})
 
-    config_specs = ConfigSpecs({
-        'folder_name': StrParam(human_name="Output folder name", short_description="Name of the folder to create", optional=True),
-        'filenames': ParamSet(ConfigSpecs({'filename': StrParam(
-            human_name="Filename", short_description="Overide the file or folder name at this index", optional=True)}), optional=True)})
+    config_specs = ConfigSpecs(
+        {
+            "folder_name": StrParam(
+                human_name="Output folder name",
+                short_description="Name of the folder to create",
+                optional=True,
+            ),
+            "filenames": ParamSet(
+                ConfigSpecs(
+                    {
+                        "filename": StrParam(
+                            human_name="Filename",
+                            short_description="Overide the file or folder name at this index",
+                            optional=True,
+                        )
+                    }
+                ),
+                optional=True,
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
         temp_dir: str = None
 
         # get the folder name from the config or generate a temp folder
-        folder_name = params.get_value('folder_name')
+        folder_name = params.get_value("folder_name")
         if folder_name:
             temp_dir = os.path.join(Settings.get_root_temp_dir(), folder_name)
             FileHelper.create_dir_if_not_exist(temp_dir)
         else:
             temp_dir = Settings.get_root_temp_dir()
 
-        configs: List[dict] = params.get_value('filenames')
+        configs: List[dict] = params.get_value("filenames")
 
         i = 0
-        resource_list: ResourceList = inputs['source']
+        resource_list: ResourceList = inputs["source"]
         for resource in resource_list.get_resources():
             if not isinstance(resource, FSNode):
                 self.log_error_message(f"Resource {i} is not a file nor a folder")
@@ -72,12 +90,12 @@ class CreateFolderFromFiles(Task):
 
             # retrive the node name from config or use the base name
             node_name: str = None
-            if len(configs) > i and configs[i] and configs[i]['filename']:
-                node_name = configs[i]['filename']
+            if len(configs) > i and configs[i] and configs[i]["filename"]:
+                node_name = configs[i]["filename"]
             else:
                 node_name = resource.get_base_name()
 
             FileHelper.copy_node(resource.path, os.path.join(temp_dir, node_name))
             i += 1
 
-        return {'folder': Folder(temp_dir)}
+        return {"folder": Folder(temp_dir)}

@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 
 from gws_core.core.model.base_typing import BaseTyping
@@ -7,7 +5,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
 
 class Process(BaseTyping):
-
     # Provided at the Class level automatically by the Decorator
     # //!\\ Do not modify theses values
     # For specific tasks, the process is automatically run when added or reset
@@ -24,9 +21,9 @@ class Process(BaseTyping):
     @classmethod
     @abstractmethod
     def get_input_specs(cls) -> InputSpecs:
-        """ Returns the input specs of the process """
+        """Returns the input specs of the process"""
 
     @classmethod
     @abstractmethod
     def get_output_specs(cls) -> OutputSpecs:
-        """ Returns the input specs of the process """
+        """Returns the input specs of the process"""

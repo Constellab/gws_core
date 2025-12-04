@@ -1,5 +1,3 @@
-
-
 import os
 
 from gws_core.brick.technical_doc_service import TechnicalDocService
@@ -27,47 +25,58 @@ class GenerateTechnicalDocMarkdown(Task):
     That markdown file can be use to train an AI model to learn about the brick functionalities.
     """
 
-    output_specs: OutputSpecs = OutputSpecs({
-        'markdown': OutputSpec(
-            File,
-            human_name='Markdown',
-            short_description='The technical documentation of the brick in markdown format',
-        )
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "markdown": OutputSpec(
+                File,
+                human_name="Markdown",
+                short_description="The technical documentation of the brick in markdown format",
+            )
+        }
+    )
 
-    config_specs = ConfigSpecs({
-        'brick_name': StrParam(human_name='Brick name',
-                               short_description='The name of the brick to generate the technical documentation'),
-        'object_type': StrParam(human_name='Object type',
-                                short_description='The object type to generate the technical documentation',
-                                allowed_values=['Resource', 'Task', 'Protocol']),
-        'separator': StrParam(human_name='Separator',
-                              short_description='The separator to use between two object in the markdown file',
-                              default_value='[---]\\n')
-    })
+    config_specs = ConfigSpecs(
+        {
+            "brick_name": StrParam(
+                human_name="Brick name",
+                short_description="The name of the brick to generate the technical documentation",
+            ),
+            "object_type": StrParam(
+                human_name="Object type",
+                short_description="The object type to generate the technical documentation",
+                allowed_values=["Resource", "Task", "Protocol"],
+            ),
+            "separator": StrParam(
+                human_name="Separator",
+                short_description="The separator to use between two object in the markdown file",
+                default_value="[---]\\n",
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
         result: str = None
-        brick_name: str = params['brick_name']
-        object_type: str = params['object_type']
-        separator: str = params['separator']
+        brick_name: str = params["brick_name"]
+        object_type: str = params["object_type"]
+        separator: str = params["separator"]
 
-        if object_type == 'Task':
+        if object_type == "Task":
             result = TechnicalDocService.generate_tasks_technical_doc_as_md(brick_name, separator)
-        elif object_type == 'Protocol':
-            result = TechnicalDocService.generate_protocols_technical_doc_as_md(brick_name, separator)
-        elif object_type == 'Resource':
-            result = TechnicalDocService.generate_resources_technical_doc_as_md(brick_name, separator)
+        elif object_type == "Protocol":
+            result = TechnicalDocService.generate_protocols_technical_doc_as_md(
+                brick_name, separator
+            )
+        elif object_type == "Resource":
+            result = TechnicalDocService.generate_resources_technical_doc_as_md(
+                brick_name, separator
+            )
 
-        file_name = f'{brick_name}_{object_type}_technical_doc.md'
+        file_name = f"{brick_name}_{object_type}_technical_doc.md"
 
         tmp_dir = self.create_tmp_dir()
 
         file_path = os.path.join(tmp_dir, file_name)
-        with open(file_path, 'w', encoding='utf-8') as f:
+        with open(file_path, "w", encoding="utf-8") as f:
             f.write(result)
 
-        return {
-            'markdown': File(file_path)
-        }
+        return {"markdown": File(file_path)}

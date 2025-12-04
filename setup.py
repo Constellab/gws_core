@@ -1,5 +1,3 @@
-
-
 import json
 import os
 import sys
@@ -68,8 +66,8 @@ setuptools.setup(
     packages=setuptools.find_packages(where="src"),
     python_requires=">=3.10",
     cmdclass={
-        'install': InstallHook,
+        "install": InstallHook,
     },
-    data_files=[('settings', ['settings.json'])],
-    include_package_data=True
+    data_files=[("settings", ["settings.json"])],
+    include_package_data=True,
 )

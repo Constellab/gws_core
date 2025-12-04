@@ -1,4 +1,3 @@
-
 import uuid
 from typing import Dict
 
@@ -21,9 +20,16 @@ class BaseHTTPException(HTTPException):
     instance_id: str
     show_as: ExceptionShowMode
 
-    def __init__(self, http_status_code: int, detail: str, unique_code: str = None,
-                 detail_args: Dict = None, headers: Dict = None, instance_id: str = None,
-                 show_as: ExceptionShowMode = 'error') -> None:
+    def __init__(
+        self,
+        http_status_code: int,
+        detail: str,
+        unique_code: str = None,
+        detail_args: Dict = None,
+        headers: Dict = None,
+        instance_id: str = None,
+        show_as: ExceptionShowMode = "error",
+    ) -> None:
         """Throw a generic exception
 
         :param http_status_code: HTTP error code
@@ -69,7 +75,8 @@ class BaseHTTPException(HTTPException):
         if self.detail_args:
             for key in self.detail_args:
                 replaced_detail = replaced_detail.replace(
-                    "{{" + key + "}}", str(self.detail_args[key]))
+                    "{{" + key + "}}", str(self.detail_args[key])
+                )
 
         return replaced_detail
 

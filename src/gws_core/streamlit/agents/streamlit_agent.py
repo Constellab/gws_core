@@ -1,4 +1,3 @@
-
 from typing import Any, Dict
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
@@ -17,10 +16,14 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("StreamlitAgent", human_name="Streamlit agent",
-                short_description="Agent to generate a streamlit app dashboard",
-                style=StreamlitResource.copy_style(
-                    icon_technical_name='agent', icon_type=TypingIconType.MATERIAL_ICON))
+@task_decorator(
+    "StreamlitAgent",
+    human_name="Streamlit agent",
+    short_description="Agent to generate a streamlit app dashboard",
+    style=StreamlitResource.copy_style(
+        icon_technical_name="agent", icon_type=TypingIconType.MATERIAL_ICON
+    ),
+)
 class StreamlitAgent(Task):
     """
     Agent to generate a streamlit app dashboard.
@@ -40,29 +43,32 @@ class StreamlitAgent(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(Resource, human_name="Resource", optional=True))
-    output_specs: OutputSpecs = OutputSpecs({
-        'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
-    })
-    config_specs = ConfigSpecs({
-        'params': EnvAgent.get_dynamic_param_config(),
-        'code': AgentCodeHelper.get_streamlit_code_param(),
-        'requires_authentication': AgentCodeHelper.get_streamlit_requires_auth_param()
-    })
+        additionnal_port_spec=InputSpec(Resource, human_name="Resource", optional=True)
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {"streamlit_app": OutputSpec(StreamlitResource, human_name="Streamlit app")}
+    )
+    config_specs = ConfigSpecs(
+        {
+            "params": EnvAgent.get_dynamic_param_config(),
+            "code": AgentCodeHelper.get_streamlit_code_param(),
+            "requires_authentication": AgentCodeHelper.get_streamlit_requires_auth_param(),
+        }
+    )
 
     __is_agent__: bool = True
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # build the streamlit resource with the code and the resources
         streamlit_resource = StreamlitResource()
-        streamlit_resource.set_streamlit_code(params.get_value('code'))
-        streamlit_resource.set_params(params.get_value('params'))
-        resource_list: ResourceList = inputs.get('source')
+        streamlit_resource.set_streamlit_code(params.get_value("code"))
+        streamlit_resource.set_params(params.get_value("params"))
+        resource_list: ResourceList = inputs.get("source")
         streamlit_resource.add_multiple_resources(resource_list.to_list(), self.message_dispatcher)
-        streamlit_resource.set_requires_authentication(params.get_value('requires_authentication'))
+        streamlit_resource.set_requires_authentication(params.get_value("requires_authentication"))
 
-        return {'streamlit_app': streamlit_resource}
+        return {"streamlit_app": streamlit_resource}
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
-        return {'code': code, "params": params}
+        return {"code": code, "params": params}

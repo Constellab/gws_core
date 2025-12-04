@@ -2,8 +2,7 @@ from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -51,23 +50,32 @@ class StopDockerComposeTask(Task):
 
     input_specs: InputSpecs = InputSpecs({})
 
-    output_specs: OutputSpecs = OutputSpecs({
-        'response': OutputSpec(JSONDict, human_name='Docker Compose Stop Response',
-                               short_description='Response from Docker Compose stop operation')
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "response": OutputSpec(
+                JSONDict,
+                human_name="Docker Compose Stop Response",
+                short_description="Response from Docker Compose stop operation",
+            )
+        }
+    )
 
-    config_specs = ConfigSpecs({
-        'brick_name': StrParam(human_name='Brick Name',
-                               short_description='Name of the brick',
-                               optional=False),
-        'unique_name': StrParam(human_name='Unique Name',
-                                short_description='Unique name for the compose instance to stop',
-                                optional=False)
-    })
+    config_specs = ConfigSpecs(
+        {
+            "brick_name": StrParam(
+                human_name="Brick Name", short_description="Name of the brick", optional=False
+            ),
+            "unique_name": StrParam(
+                human_name="Unique Name",
+                short_description="Unique name for the compose instance to stop",
+                optional=False,
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        brick_name: str = params.get_value('brick_name')
-        unique_name: str = params.get_value('unique_name')
+        brick_name: str = params.get_value("brick_name")
+        unique_name: str = params.get_value("unique_name")
 
         # Check that the brick exists
         brick_model = BrickService.get_brick_model(brick_name)
@@ -76,20 +84,15 @@ class StopDockerComposeTask(Task):
 
         # Stop the Docker Compose
         docker_service = DockerService()
-        response = docker_service.unregister_compose(
-            brick_name=brick_name,
-            unique_name=unique_name
-        )
+        response = docker_service.unregister_compose(brick_name=brick_name, unique_name=unique_name)
 
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'status': response.composeStatus.status.value,
-            'info': response.composeStatus.info,
-            'brick_name': brick_name,
-            'unique_name': unique_name
+            "status": response.composeStatus.status.value,
+            "info": response.composeStatus.info,
+            "brick_name": brick_name,
+            "unique_name": unique_name,
         }
 
-        return {
-            'response': json_dict
-        }
+        return {"response": json_dict}

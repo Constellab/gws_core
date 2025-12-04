@@ -3,16 +3,16 @@ from typing import Any, Literal, Optional
 from bs4 import BeautifulSoup
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextVariableData(BaseModelDTO):
     """Object representing a variable in a rich text"""
+
     name: str
     description: Optional[str] = None
     value: Optional[Any] = None
-    type: Literal['string']
+    type: Literal["string"]
 
     def to_markdown(self) -> str:
         """Convert the variable to markdown
@@ -30,14 +30,14 @@ class ReplaceWithBlockResultDTO(BaseModelDTO):
 
 
 class RichTextBlockParagraph(RichTextBlockDataBase):
-    """Class to manipulate the rich text paragraph text (including variables)
-    """
+    """Class to manipulate the rich text paragraph text (including variables)"""
 
     # Instance attribute
     text: str
 
-    def replace_parameter_with_text(self, parameter_name: str, value: str,
-                                    replace_block: bool = False) -> None:
+    def replace_parameter_with_text(
+        self, parameter_name: str, value: str, replace_block: bool = False
+    ) -> None:
         """Replace the variable in the rich text content text
 
         :param variable_name: the name of the variable to replace
@@ -52,7 +52,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         variable_applied = False
         soup: BeautifulSoup
         if self.get_variable_tag_name() in self.text:
-            soup = BeautifulSoup(self.text, 'html.parser')
+            soup = BeautifulSoup(self.text, "html.parser")
             for tag in soup.find_all(self.get_variable_tag_name()):
                 if self.get_variable_json_attribute() not in tag.attrs:
                     continue
@@ -87,7 +87,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         """
         soup: BeautifulSoup
         if self.get_variable_tag_name() in self.text:
-            soup = BeautifulSoup(self.text, 'html.parser')
+            soup = BeautifulSoup(self.text, "html.parser")
             for tag in soup.find_all(self.get_variable_tag_name()):
                 if self.get_variable_json_attribute() not in tag.attrs:
                     continue
@@ -96,16 +96,17 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
                 variable_data: RichTextVariableData = RichTextVariableData.from_json_str(json_data)
 
                 if variable_data.name.strip() == variable_name.strip():
-
                     before = self.get_elements_before_as_str(tag)
                     after = self.get_elements_after_as_str(tag)
 
-                    return ReplaceWithBlockResultDTO(before=before, after=after, variable_data=variable_data)
+                    return ReplaceWithBlockResultDTO(
+                        before=before, after=after, variable_data=variable_data
+                    )
 
         return None
 
     def get_elements_before_as_str(self, target_element: BeautifulSoup) -> str:
-        result: str = ''
+        result: str = ""
         current_element = target_element.previous_sibling
         while current_element is not None:
             result = str(current_element) + result
@@ -113,7 +114,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         return result
 
     def get_elements_after_as_str(self, target_element: BeautifulSoup) -> str:
-        result: str = ''
+        result: str = ""
         current_element = target_element.next_sibling
         while current_element is not None:
             result = result + str(current_element)
@@ -163,7 +164,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         :return: the variable tag name
         :rtype: str
         """
-        return 'te-variable-inline'
+        return "te-variable-inline"
 
     @classmethod
     def get_variable_json_attribute(cls) -> str:
@@ -172,4 +173,4 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         :return: the variable json attribute
         :rtype: str
         """
-        return 'data-jsondata'
+        return "data-jsondata"

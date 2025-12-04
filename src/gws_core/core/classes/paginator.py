@@ -1,5 +1,3 @@
-
-
 from typing import Any, Callable, Dict, Generic, List, TypeVar
 
 from numpy.core.numeric import Infinity
@@ -9,13 +7,14 @@ from gws_core.core.model.model_dto import PageDTO
 
 from ..model.model import Model
 
-PaginatorType = TypeVar('PaginatorType', bound=Model)
+PaginatorType = TypeVar("PaginatorType", bound=Model)
 
 
-class PageInfo():
+class PageInfo:
     """Simple class ot provide page information based on page, number_of_items_per_page, total_number_of_items
-      It calculate all page information
+    It calculate all page information
     """
+
     page: int
     prev_page: int
     next_page: int
@@ -29,14 +28,21 @@ class PageInfo():
     # Only set to true when the page is filter manually after the request so the total count can be inexact
     total_is_approximate: bool = False
 
-    def __init__(self, page: int, number_of_items_per_page: int, total_number_of_items: int,
-                 nb_max_of_items_per_page: int = Infinity, first_page: int = 0) -> None:
+    def __init__(
+        self,
+        page: int,
+        number_of_items_per_page: int,
+        total_number_of_items: int,
+        nb_max_of_items_per_page: int = Infinity,
+        first_page: int = 0,
+    ) -> None:
         self.page = page
         self.number_of_items_per_page = min(nb_max_of_items_per_page, int(number_of_items_per_page))
         self.total_number_of_items = total_number_of_items
 
-        self.total_number_of_pages = int(self.total_number_of_items/self.number_of_items_per_page) + int(
-            bool(self.total_number_of_items % self.number_of_items_per_page))
+        self.total_number_of_pages = int(
+            self.total_number_of_items / self.number_of_items_per_page
+        ) + int(bool(self.total_number_of_items % self.number_of_items_per_page))
         self.first_page = first_page
         self.last_page = max(first_page + self.total_number_of_pages - 1, self.first_page)
         self.next_page = min(self.page + 1, self.last_page)
@@ -69,11 +75,13 @@ class Paginator(Generic[PaginatorType]):
     _nb_of_items_per_page: int
     _nb_max_of_items_per_page: int
 
-    def __init__(self, query: ModelSelect,
-                 page: int = 0,
-                 nb_of_items_per_page: int = 20,
-                 nb_max_of_items_per_page: int = 100):
-
+    def __init__(
+        self,
+        query: ModelSelect,
+        page: int = 0,
+        nb_of_items_per_page: int = 20,
+        nb_max_of_items_per_page: int = 100,
+    ):
         self._query = query
         self._nb_of_items_per_page = nb_of_items_per_page
         self._nb_max_of_items_per_page = nb_max_of_items_per_page
@@ -84,8 +92,10 @@ class Paginator(Generic[PaginatorType]):
         self.results = list(self._query.paginate(page + 1, self._nb_of_items_per_page))
         self.page_info = PageInfo(
             int(page),
-            self._nb_of_items_per_page, self._query.count(),
-            self._nb_max_of_items_per_page)
+            self._nb_of_items_per_page,
+            self._query.count(),
+            self._nb_max_of_items_per_page,
+        )
 
     def filter(self, filter_: Callable[[PaginatorType], Any], min_nb_of_result: int = 0) -> None:
         """
@@ -130,5 +140,5 @@ class Paginator(Generic[PaginatorType]):
             is_first_page=self.page_info.is_first_page,
             is_last_page=self.page_info.is_last_page,
             total_is_approximate=self.page_info.total_is_approximate,
-            objects=[x.to_dto() for x in self.results]
+            objects=[x.to_dto() for x in self.results],
         )

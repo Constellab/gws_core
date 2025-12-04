@@ -1,5 +1,3 @@
-
-
 from base64 import b64encode
 
 from gws_core.config.config_params import ConfigParams
@@ -32,13 +30,10 @@ class ImageView(View):
         self._mime_type = _mime_type
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        return {
-            "base_64_img": self._base_64_img,
-            "mime_type": self._mime_type
-        }
+        return {"base_64_img": self._base_64_img, "mime_type": self._mime_type}
 
     @staticmethod
-    def from_local_file(file_path: str) -> 'ImageView':
+    def from_local_file(file_path: str) -> "ImageView":
         """Create an ImageView from a local file path
 
         :param file_path: The path of the file

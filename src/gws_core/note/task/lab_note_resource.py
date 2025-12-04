@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
@@ -15,10 +13,13 @@ from gws_core.resource.view.view_decorator import view
 from gws_core.resource.view.view_result import CallViewResult
 
 
-@resource_decorator("LabNoteResource", human_name="Lab note resource", short_description="Lab note resource",
-                    style=TypingStyle.material_icon("note", background_color="#735f32"))
+@resource_decorator(
+    "LabNoteResource",
+    human_name="Lab note resource",
+    short_description="Lab note resource",
+    style=TypingStyle.material_icon("note", background_color="#735f32"),
+)
 class LabNoteResource(Resource):
-
     note_id: str = StrRField()
 
     _note: Note = None
@@ -38,24 +39,35 @@ class LabNoteResource(Resource):
             self._note = Note.get_by_id_and_check(self.note_id)
         return self._note
 
-    def replace_variable(self, parameter_name: str, value: str,
-                         replace_block: bool = False) -> None:
+    def replace_variable(
+        self, parameter_name: str, value: str, replace_block: bool = False
+    ) -> None:
         rich_text: RichText = self.get_content()
         rich_text.set_parameter(parameter_name, value, replace_block)
         self._content = rich_text
 
     def add_paragraph(self, paragraph: str) -> None:
         rich_text: RichText = self.get_content()
-        rich_text. add_paragraph(paragraph)
+        rich_text.add_paragraph(paragraph)
         self._content = rich_text
 
-    def add_view(self, resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None,
-                 title: str = None, caption: str = None, variable_name: str = None) -> None:
+    def add_view(
+        self,
+        resource: Resource,
+        view_method_name: str,
+        config_values: ConfigParamsDict = None,
+        title: str = None,
+        caption: str = None,
+        variable_name: str = None,
+    ) -> None:
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource.get_model_id(), view_method_name, config_values, True)
+            resource.get_model_id(), view_method_name, config_values, True
+        )
 
         rich_text: RichText = self.get_content()
-        rich_text.add_resource_view(view_result.view_config.to_rich_text_resource_view(title, caption), variable_name)
+        rich_text.add_resource_view(
+            view_result.view_config.to_rich_text_resource_view(title, caption), variable_name
+        )
         self._content = rich_text
 
     def update_title(self, title: str) -> None:
@@ -68,9 +80,16 @@ class LabNoteResource(Resource):
     def to_markdown(self) -> str:
         return self.get_content().to_markdown()
 
-    @view(view_type=RichTextView, human_name="View note", short_description="View note content", default_view=True)
+    @view(
+        view_type=RichTextView,
+        human_name="View note",
+        short_description="View note content",
+        default_view=True,
+    )
     def view_note(self, config: ConfigParamsDict = None) -> RichTextView:
-        return RichTextView(self.get_note().title,
-                            self.get_content(),
-                            object_type=RichTextObjectType.NOTE,
-                            object_id=self.note_id)
+        return RichTextView(
+            self.get_note().title,
+            self.get_content(),
+            object_type=RichTextObjectType.NOTE,
+            object_id=self.note_id,
+        )

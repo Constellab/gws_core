@@ -1,11 +1,16 @@
-
 import importlib
 
-from _streamlit_showcase_app.pages import (ai_chat_page, containers_page,
-                                           dataframes_page, menu_button_page,
-                                           processes_page, resources_page,
-                                           rich_text_page, tree_menu_page,
-                                           utils_page)
+from _streamlit_showcase_app.pages import (
+    ai_chat_page,
+    containers_page,
+    dataframes_page,
+    menu_button_page,
+    processes_page,
+    resources_page,
+    rich_text_page,
+    tree_menu_page,
+    utils_page,
+)
 
 from gws_core.streamlit import StreamlitHelper, StreamlitRouter
 
@@ -61,13 +66,18 @@ def _render_utils_page():
     utils_page.render_utils_page()
 
 
-router.add_page(_render_containers_page, title='Containers', url_path='containers', icon='📦')
-router.add_page(_render_resources_page, title='Resources', url_path='resources', icon='📁')
-router.add_page(_render_process_page, title='Processes', url_path='processes', icon='🔄')
-router.add_page(_render_dataframes_page, title='Dataframes', url_path='dataframes', icon='📊')
-router.add_page(_render_rich_text_page, title='Rich Text', url_path='rich_text', icon='📝')
-router.add_page(_render_ai_chat_page, title='AI Chat', url_path='ai_chat', icon='✨')
-router.add_page(_render_menu_button_page, title='Menu Button', url_path='menu_button', icon=':material/more_vert:')
-router.add_page(_render_tree_menu_page, title='Tree Menu', url_path='tree_menu', icon='🌳')
-router.add_page(_render_utils_page, title='Utils', url_path='utils', icon='🛠️')
+router.add_page(_render_containers_page, title="Containers", url_path="containers", icon="📦")
+router.add_page(_render_resources_page, title="Resources", url_path="resources", icon="📁")
+router.add_page(_render_process_page, title="Processes", url_path="processes", icon="🔄")
+router.add_page(_render_dataframes_page, title="Dataframes", url_path="dataframes", icon="📊")
+router.add_page(_render_rich_text_page, title="Rich Text", url_path="rich_text", icon="📝")
+router.add_page(_render_ai_chat_page, title="AI Chat", url_path="ai_chat", icon="✨")
+router.add_page(
+    _render_menu_button_page,
+    title="Menu Button",
+    url_path="menu_button",
+    icon=":material/more_vert:",
+)
+router.add_page(_render_tree_menu_page, title="Tree Menu", url_path="tree_menu", icon="🌳")
+router.add_page(_render_utils_page, title="Utils", url_path="utils", icon="🛠️")
 router.run()

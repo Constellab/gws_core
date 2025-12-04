@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.brick.brick_dto import BrickVersion

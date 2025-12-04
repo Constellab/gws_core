@@ -1,7 +1,6 @@
 from typing import Optional
 
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockFigure(RichTextBlockDataBase):
@@ -10,6 +9,7 @@ class RichTextBlockFigure(RichTextBlockDataBase):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     filename: str
     title: Optional[str] = None
     caption: Optional[str] = None
@@ -31,7 +31,7 @@ class RichTextBlockFigure(RichTextBlockDataBase):
         #     markdown += f"\n*{self.caption}*"
 
         # return markdown
-        return ''
+        return ""
 
     def get_type(self) -> RichTextBlockType:
         return RichTextBlockType.FIGURE

@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from collections.abc import Iterable as IterableClass
 from typing import Iterable, List, Optional, Tuple, Type, Union
@@ -25,22 +24,23 @@ class IOSpecDTO(BaseModelDTO):
     constant: Optional[bool] = None
 
     def to_markdown(self) -> str:
-
-        text = f'- `{self.human_name}` ('
+        text = f"- `{self.human_name}` ("
 
         if len(self.resource_types) > 1:
-            type_human_names = [f"`{resource_type.human_name}`" for resource_type in self.resource_types]
+            type_human_names = [
+                f"`{resource_type.human_name}`" for resource_type in self.resource_types
+            ]
             text += f"[{', '.join(type_human_names)}]"
         else:
             text += f"`{self.resource_types[0].human_name}`"
 
         if self.optional:
-            text += ', optional'
+            text += ", optional"
 
-        text += ')'
+        text += ")"
 
         if self.short_description:
-            text += f' : {self.short_description}.'
+            text += f" : {self.short_description}."
 
         return text
 
@@ -59,14 +59,17 @@ class IOSpec:
     # not activated yet
     validators: List[IOValidator] = []
 
-    _name: str = "IOSpec"   # unique name to distinguish the types, do not modify
+    _name: str = "IOSpec"  # unique name to distinguish the types, do not modify
 
-
-    def __init__(self, resource_types: ResourceTypes,
-                 optional: bool = False,
-                 is_optional: bool = False, human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
-        """ Initialize the IOSpec with resource types and optional parameters.
+    def __init__(
+        self,
+        resource_types: ResourceTypes,
+        optional: bool = False,
+        is_optional: bool = False,
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+    ) -> None:
+        """Initialize the IOSpec with resource types and optional parameters.
 
         :param resource_types: _description_
         :type resource_types: ResourceTypes
@@ -82,7 +85,6 @@ class IOSpec:
         :type short_description: Optional[str], optional
         """
 
-
         self.resource_types = []
         if not isinstance(resource_types, IterableClass):
             self.resource_types.append(resource_types)
@@ -91,7 +93,9 @@ class IOSpec:
                 self.resource_types.append(r_type)
 
         if is_optional:
-            Logger.warning(f"[IOSpec] 'is_optional' parameter is deprecated, please use 'optional' instead")
+            Logger.warning(
+                f"[IOSpec] 'is_optional' parameter is deprecated, please use 'optional' instead"
+            )
             optional = is_optional
         self.optional = optional
 
@@ -114,31 +118,40 @@ class IOSpec:
     def check_resource_types(self):
         for resource_type in self.resource_types:
             if resource_type is None:
-                raise Exception("Resource type can't be None, please set optional parameter to True instead")
+                raise Exception(
+                    "Resource type can't be None, please set optional parameter to True instead"
+                )
 
             if not Utils.issubclass(resource_type, Resource):
                 raise Exception(
-                    f"Invalid port specs. The type '{resource_type}' used inside the type '{type(self).__name__}' is not a resource")
+                    f"Invalid port specs. The type '{resource_type}' used inside the type '{type(self).__name__}' is not a resource"
+                )
 
-    def is_compatible_with_in_spec(self, in_spec: 'IOSpec') -> bool:
+    def is_compatible_with_in_spec(self, in_spec: "IOSpec") -> bool:
         # Handle the generic SubClasss
         if self.subclass_out():
             # check if type inside the SubClass is compatible with expected type
             # if not check if one of the expected type is compatible with SubClass
             return self._resource_types_are_compatible(
-                resource_types=self.resource_types, expected_types=in_spec.resource_types) or self._resource_types_are_compatible(
-                resource_types=in_spec.resource_types, expected_types=self.resource_types)
+                resource_types=self.resource_types, expected_types=in_spec.resource_types
+            ) or self._resource_types_are_compatible(
+                resource_types=in_spec.resource_types, expected_types=self.resource_types
+            )
 
         return self._resource_types_are_compatible(
-            resource_types=self.resource_types, expected_types=in_spec.resource_types)
+            resource_types=self.resource_types, expected_types=in_spec.resource_types
+        )
 
     def is_compatible_with_resource_type(self, resource_type: Type[Resource]) -> bool:
-        return self._resource_types_are_compatible(resource_types=[resource_type], expected_types=self.resource_types)
+        return self._resource_types_are_compatible(
+            resource_types=[resource_type], expected_types=self.resource_types
+        )
 
     def is_compatible_with_resource_types(self, resource_types: Iterable[Type[Resource]]) -> bool:
-        """return True if one of the resource_types is compatible with the this spec
-        """
-        return self._resource_types_are_compatible(resource_types=resource_types, expected_types=self.resource_types)
+        """return True if one of the resource_types is compatible with the this spec"""
+        return self._resource_types_are_compatible(
+            resource_types=resource_types, expected_types=self.resource_types
+        )
 
     @abstractmethod
     def constant_out(self) -> bool:
@@ -149,25 +162,25 @@ class IOSpec:
         pass
 
     def get_default_resource_type(self) -> Type[Resource]:
-        """return the first default type
-        """
+        """return the first default type"""
         return self.resource_types[0]
 
     def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
         return tuple(self.resource_types)
 
     def get_resources_human_names(self) -> str:
-        list_str = [(resource_type.get_human_name() if resource_type else 'None')
-                    for resource_type in self.resource_types]
+        list_str = [
+            (resource_type.get_human_name() if resource_type else "None")
+            for resource_type in self.resource_types
+        ]
 
         if len(list_str) == 1:
             return list_str[0]
         else:
-            return ', '.join(list_str)
+            return ", ".join(list_str)
 
     def validate_resource(self, resource: Resource) -> None:
-        """Validate a resource with the validators
-        """
+        """Validate a resource with the validators"""
         if resource is None:
             return
         for validator in self.validators:
@@ -175,20 +188,21 @@ class IOSpec:
             validator.validate(resource)
 
     @classmethod
-    def _resource_types_are_compatible(cls, resource_types: Iterable[Type[Resource]],
-                                       expected_types: Iterable[Type[Resource]]) -> bool:
-
+    def _resource_types_are_compatible(
+        cls, resource_types: Iterable[Type[Resource]], expected_types: Iterable[Type[Resource]]
+    ) -> bool:
         for resource_type in resource_types:
             if cls._resource_types_is_compatible(
-                    resource_type=resource_type, expected_types=expected_types):
+                resource_type=resource_type, expected_types=expected_types
+            ):
                 return True
 
         return False
 
     @classmethod
-    def _resource_types_is_compatible(cls, resource_type: Type[Resource],
-                                      expected_types: Iterable[Type[Resource]]) -> bool:
-
+    def _resource_types_is_compatible(
+        cls, resource_type: Type[Resource], expected_types: Iterable[Type[Resource]]
+    ) -> bool:
         # check that the resource type is a subclass of one of the port resources types
         for expected_type in expected_types:
             if issubclass(resource_type, expected_type):
@@ -197,8 +211,9 @@ class IOSpec:
         return False
 
     @classmethod
-    def _resource_types_is_type(cls, resource_type: Type[Resource],
-                                expected_types: Iterable[Type[Resource]]) -> bool:
+    def _resource_types_is_type(
+        cls, resource_type: Type[Resource], expected_types: Iterable[Type[Resource]]
+    ) -> bool:
         return resource_type in expected_types
 
     def to_dto(self) -> IOSpecDTO:
@@ -210,36 +225,35 @@ class IOSpec:
         )
 
         for resource_type in self.resource_types:
-            typing = TypingManager.get_typing_from_name_and_check(
-                resource_type.get_typing_name())
+            typing = TypingManager.get_typing_from_name_and_check(resource_type.get_typing_name())
 
             spec_dto.resource_types.append(typing.to_ref_dto())
         return spec_dto
 
     @classmethod
-    def from_dto(cls, dto: IOSpecDTO) -> 'IOSpec':
-
+    def from_dto(cls, dto: IOSpecDTO) -> "IOSpec":
         resource_types: List[ResourceType] = []
 
         # retrieve all the resource type from the json specs
         for spec_dto in dto.resource_types:
-            resource_type: ResourceType = TypingManager.get_type_from_name(
-                spec_dto.typing_name)
+            resource_type: ResourceType = TypingManager.get_type_from_name(spec_dto.typing_name)
 
             if resource_type is None:
-                raise Exception(
-                    f"[IOSpec] Invalid resource type '{spec_dto.typing_name}'")
+                raise Exception(f"[IOSpec] Invalid resource type '{spec_dto.typing_name}'")
             resource_types.append(resource_type)
 
-        io_spec: IOSpec = cls(resource_types=resource_types, optional=dto.optional,
-                              human_name=dto.human_name,
-                              short_description=dto.short_description,)
+        io_spec: IOSpec = cls(
+            resource_types=resource_types,
+            optional=dto.optional,
+            human_name=dto.human_name,
+            short_description=dto.short_description,
+        )
         return io_spec
 
 
 class InputSpec(IOSpec):
-    """ Spec for an input task port
-    """
+    """Spec for an input task port"""
+
     _name: str = "InputSpec"
 
     def constant_out(self) -> bool:
@@ -250,21 +264,24 @@ class InputSpec(IOSpec):
 
 
 class OutputSpec(IOSpec):
-    """ Spec for an output task port
-    """
+    """Spec for an output task port"""
+
     _name: str = "OutputSpec"
 
     _sub_class: bool
     _is_constant: bool
 
-    def __init__(self, resource_types: ResourceTypes,
-                 optional: bool = False,
-                 is_optional: bool = False,
-                 sub_class: bool = False,
-                 constant: bool = False,
-                 is_constant: bool = False,
-                 human_name: Optional[str] = None,
-                 short_description: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        resource_types: ResourceTypes,
+        optional: bool = False,
+        is_optional: bool = False,
+        sub_class: bool = False,
+        constant: bool = False,
+        is_constant: bool = False,
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+    ) -> None:
         """_summary_
 
         :param resource_types: _description_
@@ -286,14 +303,19 @@ class OutputSpec(IOSpec):
         :type short_description: Optional[str], optional
         """
 
-        super().__init__(resource_types=resource_types,
-                         optional=optional,
-                         is_optional=is_optional,
-                         human_name=human_name, short_description=short_description)
+        super().__init__(
+            resource_types=resource_types,
+            optional=optional,
+            is_optional=is_optional,
+            human_name=human_name,
+            short_description=short_description,
+        )
         self._sub_class = sub_class
 
         if is_constant:
-            Logger.warning(f"[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead")
+            Logger.warning(
+                f"[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead"
+            )
             constant = is_constant
         self._is_constant = constant
 
@@ -312,7 +334,7 @@ class OutputSpec(IOSpec):
         return spec_dto
 
     @classmethod
-    def from_dto(cls, dto: IOSpecDTO) -> 'OutputSpec':
+    def from_dto(cls, dto: IOSpecDTO) -> "OutputSpec":
         output_spec: OutputSpec = super().from_dto(dto)
 
         output_spec._sub_class = dto.sub_class or False

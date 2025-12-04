@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from pandas import DataFrame
@@ -9,16 +7,17 @@ from gws_core import Table
 
 # test_table_transposer
 class TestTableTransposer(TestCase):
-
     def test(self):
-        initial_df = DataFrame({'A': range(1, 5), 'B': [10, 0, 6, 4]}, index=['0', '1', '2', '3'])
+        initial_df = DataFrame({"A": range(1, 5), "B": [10, 0, 6, 4]}, index=["0", "1", "2", "3"])
 
         table = Table(data=initial_df)
-        row_tags = [{'gender': 'M', 'age': '10'},
-                    {'gender': 'F', 'age': '10'},
-                    {'gender': 'F', 'age': '10'},
-                    {'gender': 'M', 'age': '20'}]
-        column_tags = [{'test': 'ok'}, {'test': 'nok'}]
+        row_tags = [
+            {"gender": "M", "age": "10"},
+            {"gender": "F", "age": "10"},
+            {"gender": "F", "age": "10"},
+            {"gender": "M", "age": "20"},
+        ]
+        column_tags = [{"test": "ok"}, {"test": "nok"}]
         table.set_all_row_tags(row_tags)
         table.set_all_column_tags(column_tags)
 

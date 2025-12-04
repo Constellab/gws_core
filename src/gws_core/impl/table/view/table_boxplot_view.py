@@ -1,12 +1,9 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import ListParam
@@ -63,16 +60,17 @@ class TableBoxPlotView(BaseTableView):
 
     _type: ViewType = ViewType.BOX_PLOT
     _table: Table
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-
         series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
-            raise BadRequestException('There must be at least one serie')
+            raise BadRequestException("There must be at least one serie")
 
         box_view = BoxPlotView()
         box_view.x_label = params.get_value("x_axis_label")
@@ -81,10 +79,6 @@ class TableBoxPlotView(BaseTableView):
         for serie in series:
             data = self.get_values_from_selection_range(serie.y)
             tags = self.get_single_column_tags_from_selection_range(serie.y)
-            box_view.add_data(
-                data=data,
-                name=serie.name,
-                tags=tags
-            )
+            box_view.add_data(data=data, name=serie.name, tags=tags)
 
         return box_view.data_to_dict(params)

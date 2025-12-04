@@ -1,5 +1,3 @@
-
-
 from typing import final
 
 from gws_core.brick.brick_helper import BrickHelper
@@ -10,7 +8,6 @@ from gws_core.model.typing_style import TypingStyle
 
 
 class BaseTyping(Base):
-
     # Provided at the Class level automatically by the Decorator
     # //!\\ Do not modify theses values
     __typing_name__: str = None

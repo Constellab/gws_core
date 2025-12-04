@@ -1,26 +1,24 @@
-
-
 import inspect
 from typing import Callable, Dict, List, Tuple, Type
 
 from gws_core.core.utils.utils import Utils
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from ...core.utils.reflector_helper import ReflectorHelper
 from ..resource import Resource
 from .view_decorator import VIEW_META_DATA_ATTRIBUTE
 from .view_meta_data import ResourceViewMetaData
 
 
-class ViewHelper():
-
-    DEFAULT_VIEW_NAME = 'default-view'
+class ViewHelper:
+    DEFAULT_VIEW_NAME = "default-view"
 
     @classmethod
-    def get_and_check_view_meta(cls, resource_type: Type[Resource], view_name: str) -> ResourceViewMetaData:
+    def get_and_check_view_meta(
+        cls, resource_type: Type[Resource], view_name: str
+    ) -> ResourceViewMetaData:
         if not Utils.issubclass(resource_type, Resource):
-            raise BadRequestException('The provided type is not a Resource type')
+            raise BadRequestException("The provided type is not a Resource type")
 
         # specific case for the default view, we retrieve the view name
         if view_name == cls.DEFAULT_VIEW_NAME:
@@ -30,13 +28,17 @@ class ViewHelper():
         if not hasattr(resource_type, view_name):
             raise BadRequestException(f"The resource does not have a view named '{view_name}'")
 
-        view_metadata: ResourceViewMetaData = cls._get_view_function_metadata(getattr(resource_type, view_name))
+        view_metadata: ResourceViewMetaData = cls._get_view_function_metadata(
+            getattr(resource_type, view_name)
+        )
         if view_metadata is None:
             raise BadRequestException(f"The resource does not have a view named '{view_name}'")
         return view_metadata
 
     @classmethod
-    def get_views_of_resource_type(cls, resource_type: Type[Resource]) -> List[ResourceViewMetaData]:
+    def get_views_of_resource_type(
+        cls, resource_type: Type[Resource]
+    ) -> List[ResourceViewMetaData]:
         """return all the visible view meta (with method as key name) orderer from the parent class to the child classes
 
         :param resource_type: [description]
@@ -74,8 +76,10 @@ class ViewHelper():
         return list(view_meta_data.values())
 
     @classmethod
-    def get_default_view_of_resource_type(cls, resource_type: Type[Resource]) -> ResourceViewMetaData:
-        """ Method to get the default view of a resource type. It iterates from the parent class to the children and returns
+    def get_default_view_of_resource_type(
+        cls, resource_type: Type[Resource]
+    ) -> ResourceViewMetaData:
+        """Method to get the default view of a resource type. It iterates from the parent class to the children and returns
         the last view found
 
         This method will not work on very werid case when the default view is set on a method, then deactivate by children then reset
@@ -116,19 +120,20 @@ class ViewHelper():
 
     @classmethod
     def _get_class_view_functions(cls, class_: Callable) -> List[Tuple[str, Callable]]:
-        """return all the function that have a view meta data information
-        """
+        """return all the function that have a view meta data information"""
         return inspect.getmembers(
-            class_, predicate=lambda func: inspect.isfunction(func) and cls._get_view_function_metadata(func) is
-            not None)
+            class_,
+            predicate=lambda func: inspect.isfunction(func)
+            and cls._get_view_function_metadata(func) is not None,
+        )
 
     @classmethod
     def _get_view_function_metadata(cls, func: Callable) -> ResourceViewMetaData:
-        """return the view method metadat if the func is a view, otherwise returns None
-        """
+        """return the view method metadat if the func is a view, otherwise returns None"""
         # Check if the method is annotated with view
         view_meta: ResourceViewMetaData = ReflectorHelper.get_and_check_object_metadata(
-            func, VIEW_META_DATA_ATTRIBUTE, ResourceViewMetaData)
+            func, VIEW_META_DATA_ATTRIBUTE, ResourceViewMetaData
+        )
 
         if view_meta:
             return view_meta.clone()

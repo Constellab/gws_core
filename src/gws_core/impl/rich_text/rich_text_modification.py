@@ -9,10 +9,11 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 class RichTextModificationType(Enum):
     """List the possible modification type in a rich text"""
-    CREATED = 'CREATED'
-    UPDATED = 'UPDATED'
-    DELETED = 'DELETED'
-    MOVED = 'MOVED'
+
+    CREATED = "CREATED"
+    UPDATED = "UPDATED"
+    DELETED = "DELETED"
+    MOVED = "MOVED"
 
 
 class RichTextModificationDifferenceDTO(BaseModelDTO):
@@ -25,6 +26,7 @@ class RichTextModificationDifferenceDTO(BaseModelDTO):
 
 class RichTextBlockModificationDTO(BaseModelDTO):
     """Object representing a modification of a block in a rich text"""
+
     id: str
     time: datetime
     blockId: str
@@ -52,6 +54,7 @@ class RichTextModificationsDTO(BaseModelDTO):
     version: int = 1
     modifications: List[RichTextBlockModificationDTO] = []
 
+
 # export interface TeNewFullRichTextDTO {
 #   version: number;
 #   richText: TeRichTextDTO;
@@ -68,13 +71,14 @@ class RichTextAggregateDTO(BaseModelDTO):
     :return: _description_
     :rtype: _type_
     """
+
     version: int
     richText: RichTextDTO
     modifications: Optional[Any] = None
 
     @classmethod
     def json_is_rich_text_aggregate(cls, dict_: dict) -> bool:
-        if 'version' not in dict_ or 'richText' not in dict_:
+        if "version" not in dict_ or "richText" not in dict_:
             return False
 
         try:

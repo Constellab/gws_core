@@ -4,8 +4,7 @@ import subprocess
 from typing import Dict, List, Optional
 
 from gws_core.apps.app_nginx_service import AppNginxServiceInfo
-from gws_core.core.classes.observer.message_observer import \
-    LoggerMessageObserver
+from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -13,15 +12,15 @@ from gws_core.impl.shell.shell_proxy import ShellProxy
 
 
 class AppNginxManager:
-    """ Singleton to manage the nginx service to run apps.
+    """Singleton to manage the nginx service to run apps.
     It handles the registration of services, generation of nginx configuration,
     and starting/stopping the nginx server.
     """
 
-    _instance: Optional['AppNginxManager'] = None
+    _instance: Optional["AppNginxManager"] = None
     _services: Dict[str, AppNginxServiceInfo] = None
 
-    _NGINX_CONF_FILENAME = 'nginx.conf'
+    _NGINX_CONF_FILENAME = "nginx.conf"
 
     NGINX_TEMPLATE = """
 # Nginx configuration template for apps
@@ -74,7 +73,7 @@ http {
         self._services = {}
 
     @classmethod
-    def get_instance(cls) -> 'AppNginxManager':
+    def get_instance(cls) -> "AppNginxManager":
         """Get the global nginx manager instance"""
         if not cls._instance:
             cls._instance = cls()
@@ -92,7 +91,9 @@ http {
         """Register a service and update nginx configuration"""
         for service in services:
             self._services[service.service_id] = service
-            Logger.debug(f"Registered service: {service.service_id}, server name {service.server_name}")
+            Logger.debug(
+                f"Registered service: {service.service_id}, server name {service.server_name}"
+            )
 
         self.start_or_reload()
 
@@ -139,7 +140,7 @@ http {
         if not force and not self.nginx_is_running():
             return
 
-        result = self._run_nginx_command(['-s', 'stop'])
+        result = self._run_nginx_command(["-s", "stop"])
         if result == 0:
             Logger.info("Nginx stopped successfully")
         else:
@@ -148,10 +149,10 @@ http {
     def nginx_is_running(self) -> bool:
         """Check if nginx is running"""
         try:
-            result = subprocess.run(['ps', 'aux'], check=False, capture_output=True, text=True)
+            result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)
             # Look for nginx processes
             for line in result.stdout.splitlines():
-                if 'nginx' in line and 'master process' in line:
+                if "nginx" in line and "master process" in line:
                     # Check if our config file is in the command line
                     if self.get_nginx_config_file_path() in line:
                         return True
@@ -172,7 +173,7 @@ http {
         config_path = self.get_nginx_config_file_path()
 
         try:
-            with open(config_path, 'w', encoding='utf-8') as f:
+            with open(config_path, "w", encoding="utf-8") as f:
                 f.write(config_content)
             Logger.info(f"Generated nginx config: {config_path}")
 
@@ -182,7 +183,7 @@ http {
     def _reload_nginx(self):
         """Reload nginx configuration"""
         # nginx is running, reload it
-        result = self._run_nginx_command(['-s', 'reload'])
+        result = self._run_nginx_command(["-s", "reload"])
         if result == 0:
             Logger.debug("Nginx configuration reloaded successfully")
         else:
@@ -191,7 +192,7 @@ http {
     def _start_nginx(self):
         """Start nginx daemon"""
         # Test configuration first
-        test_result = self._run_nginx_command(['-t'])
+        test_result = self._run_nginx_command(["-t"])
         if test_result != 0:
             raise Exception("Nginx configuration test failed")
 
@@ -226,7 +227,9 @@ http {
         FileHelper.create_dir_if_not_exist(nginx_tmp_folder)
 
         nginx_config = self.NGINX_TEMPLATE.replace("[SERVERS]", indented_server)
-        return nginx_config.replace("[NGINX_CONFIG_DIR]", nginx_config_folder).replace("[TMP_DIR]", nginx_tmp_folder)
+        return nginx_config.replace("[NGINX_CONFIG_DIR]", nginx_config_folder).replace(
+            "[TMP_DIR]", nginx_tmp_folder
+        )
 
     def get_nginx_config_file_path(self) -> str:
         """Get the path to the generated nginx config file"""
@@ -248,13 +251,13 @@ http {
             Exit code from the command
         """
         shell_proxy = self._get_shell_proxy()
-        command = ['nginx', '-c', self.get_nginx_config_file_path()] + args
+        command = ["nginx", "-c", self.get_nginx_config_file_path()] + args
         return shell_proxy.run(command)
 
     def get_nginx_config_dir(self) -> str:
         """Get the nginx config directory"""
-        return os.path.join(Settings.get_system_folder(), 'nginx')
+        return os.path.join(Settings.get_system_folder(), "nginx")
 
     def get_nginx_tmp_dir(self) -> str:
         """Get the nginx temp directory"""
-        return os.path.join('/tmp', 'nginx')
+        return os.path.join("/tmp", "nginx")

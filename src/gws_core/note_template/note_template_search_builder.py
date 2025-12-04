@@ -1,5 +1,3 @@
-
-
 from gws_core.core.classes.search_builder import SearchBuilder
 from gws_core.note_template.note_template import NoteTemplate
 

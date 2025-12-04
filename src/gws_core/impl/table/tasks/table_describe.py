@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -14,7 +12,11 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
 
-@task_decorator("describe", human_name='TableDescribe', short_description="Generate short descriptive statistics")
+@task_decorator(
+    "describe",
+    human_name="TableDescribe",
+    short_description="Generate short descriptive statistics",
+)
 class TableDescribe(Task):
     """
     Descriptive statistics include those that summarize the central tendency, dispersion and shape of a dataset’s distribution, excluding `NaN` values.
@@ -31,36 +33,51 @@ class TableDescribe(Task):
 
     The include and exclude parameters can be used to limit which columns in a DataFrame are analyzed for the output. The parameters are ignored when analyzing a Series."""
 
-    input_specs = InputSpecs({'input_table': InputSpec(Table, human_name="input_table")})
-    output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="output_table")})
+    input_specs = InputSpecs({"input_table": InputSpec(Table, human_name="input_table")})
+    output_specs = OutputSpecs({"output_table": OutputSpec(Table, human_name="output_table")})
 
-    config_specs = ConfigSpecs({
-        "percentiles": StrParam(
-            default_value="quartiles",
-            optional=True,
-            human_name="percentiles",
-            allowed_values=['quartiles', 'percentiles'],
-            short_description="The percentiles to include in the output. should be between 0 and 1. default= [.25, .5, .75]"
-        ),
-        "include_NaN": BoolParam(
-            default_value=False,
-            human_name="include_non_numeric",
-            optional=True,
-            short_description="""
+    config_specs = ConfigSpecs(
+        {
+            "percentiles": StrParam(
+                default_value="quartiles",
+                optional=True,
+                human_name="percentiles",
+                allowed_values=["quartiles", "percentiles"],
+                short_description="The percentiles to include in the output. should be between 0 and 1. default= [.25, .5, .75]",
+            ),
+            "include_NaN": BoolParam(
+                default_value=False,
+                human_name="include_non_numeric",
+                optional=True,
+                short_description="""
             Include non numeric data
-            """
-        )
-    })
+            """,
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        dataframe = pd.DataFrame(inputs['input_table'].get_data())
+        dataframe = pd.DataFrame(inputs["input_table"].get_data())
 
-        tiles = {'quartiles': [.25, .5, .75],
-                 'percentiles': [.1, .2, .3, .4, .5, .6, .7, .8, .9, ]}
+        tiles = {
+            "quartiles": [0.25, 0.5, 0.75],
+            "percentiles": [
+                0.1,
+                0.2,
+                0.3,
+                0.4,
+                0.5,
+                0.6,
+                0.7,
+                0.8,
+                0.9,
+            ],
+        }
         if params["include_NaN"]:
-            result = dataframe.describe(percentiles=tiles[params['percentiles']],
-                                        include="all")
+            result = dataframe.describe(percentiles=tiles[params["percentiles"]], include="all")
         else:
-            result = dataframe.describe(percentiles=tiles[params['percentiles']],)
+            result = dataframe.describe(
+                percentiles=tiles[params["percentiles"]],
+            )
 
         return {"output_table": Table(result)}

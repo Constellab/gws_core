@@ -20,15 +20,15 @@ class DocAssistantState:
 
     @staticmethod
     def get_instance():
-        if 'doc_assistant_state' not in st.session_state:
+        if "doc_assistant_state" not in st.session_state:
             st.session_state.doc_assistant_state = DocAssistantState()
         return st.session_state.doc_assistant_state
 
     def __init__(self):
         # Initialize separate chat histories for product and technical documentation
         self.chat_histories: Dict[str, ChatHistory] = {
-            'product': ChatHistory(),
-            'technical': ChatHistory(),
+            "product": ChatHistory(),
+            "technical": ChatHistory(),
         }
 
     def add_message(self, chat_type: str, role: str, content: str):

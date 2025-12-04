@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Optional
 
 from openai import OpenAI
@@ -10,8 +8,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.open_ai_types import OpenAiChatMessage
 
 
-class OpenAiHelper():
-
+class OpenAiHelper:
     generate_code_rules = "Don't prompt the method signature. Write comments for the code. Generate only 1 block of code between ``` characters."
 
     whiper_max_file_size = 10 * 1024 * 1024  # 10MB
@@ -27,10 +24,7 @@ class OpenAiHelper():
         """
         client = OpenAI(api_key=Settings.get_open_ai_api_key())
 
-        response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=chat_messages
-        )
+        response = client.chat.completions.create(model="gpt-4o", messages=chat_messages)
 
         return response.choices[0].message.content
 
@@ -43,8 +37,7 @@ class OpenAiHelper():
         :return: the context
         :rtype: str
         """
-        packages_context = OpenAiHelper.get_package_version_context(
-            pip_package_names)
+        packages_context = OpenAiHelper.get_package_version_context(pip_package_names)
         return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
 
     @classmethod
@@ -70,10 +63,9 @@ class OpenAiHelper():
     def describe_inputs_for_context(cls, inputs: dict) -> str:
         inputs_texts: List[str] = []
         for key, value in inputs.items():
-            inputs_texts.append(
-                f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
+            inputs_texts.append(f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
 
-        return cls.describe_inputs_text_for_context(str({', '.join(inputs_texts)}))
+        return cls.describe_inputs_text_for_context(str({", ".join(inputs_texts)}))
 
     @classmethod
     def describe_inputs_text_for_context(cls, input_description: str) -> str:
@@ -83,14 +75,15 @@ class OpenAiHelper():
     def describe_outputs_for_context(cls, outputs_specs: Dict[str, type]) -> str:
         outputs_texts: List[str] = []
         for key, value in outputs_specs.items():
-            outputs_texts.append(
-                f"'{key}' (type '{Utils.stringify_type(value, True)}')")
+            outputs_texts.append(f"'{key}' (type '{Utils.stringify_type(value, True)}')")
 
-        return cls.describe_outputs_text_for_context(str({', '.join(outputs_texts)}))
+        return cls.describe_outputs_text_for_context(str({", ".join(outputs_texts)}))
 
     @classmethod
     def describe_outputs_text_for_context(cls, output_description: str) -> str:
-        return f"You must assigne the result to the following output variables : {output_description}."
+        return (
+            f"You must assigne the result to the following output variables : {output_description}."
+        )
 
     @classmethod
     def call_whisper(cls, audio_file_path: str, prompt: Optional[str] = None) -> str:
@@ -105,7 +98,9 @@ class OpenAiHelper():
             raise FileNotFoundError(f"The file '{audio_file_path}' does not exist.")
 
         if FileHelper.get_size(audio_file_path) > cls.whiper_max_file_size:
-            raise Exception(f"The file '{audio_file_path}' is too large. The maximum file size is 10MB.")
+            raise Exception(
+                f"The file '{audio_file_path}' is too large. The maximum file size is 10MB."
+            )
 
         client = OpenAI(api_key=Settings.get_open_ai_api_key())
 

@@ -64,11 +64,7 @@ def render_method_doc(
                 descriptions.append(description_text)
 
             # Display using st.table with dictionary format
-            table_data = {
-                "Parameter": parameter_names,
-                "Type": types,
-                "Description": descriptions
-            }
+            table_data = {"Parameter": parameter_names, "Type": types, "Description": descriptions}
             st.table(table_data)
         else:
             if show_parameters:
@@ -115,5 +111,5 @@ def method_doc_component(
         title=title,
         show_description=show_description,
         show_parameters=show_parameters,
-        show_return_type=show_return_type
+        show_return_type=show_return_type,
     )

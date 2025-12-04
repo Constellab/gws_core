@@ -1,11 +1,9 @@
-
 from typing import Callable, List, Literal, Optional, TypedDict
 
 import streamlit as st
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.streamlit.components.streamlit_component_loader import \
-    StreamlitComponentLoader
+from gws_core.streamlit.components.streamlit_component_loader import StreamlitComponentLoader
 
 
 class StreamlitMenuButtonItemDTO(BaseModelDTO):
@@ -13,27 +11,34 @@ class StreamlitMenuButtonItemDTO(BaseModelDTO):
     label: str
     material_icon: Optional[str] = None
     disabled: Optional[bool] = False
-    children: Optional[List['StreamlitMenuButtonItemDTO']] = None
+    children: Optional[List["StreamlitMenuButtonItemDTO"]] = None
     divider: Optional[bool] = False
-    color: Optional[Literal['primary', 'accent', 'warn']] = None
+    color: Optional[Literal["primary", "accent", "warn"]] = None
     has_handler: bool
 
 
-class StreamlitMenuButtonItem():
+class StreamlitMenuButtonItem:
     key: str
     label: str
     material_icon: Optional[str] = None
     disabled: Optional[bool] = False
-    children: Optional[List['StreamlitMenuButtonItem']] = None
+    children: Optional[List["StreamlitMenuButtonItem"]] = None
     on_click: Optional[Callable] = None
     divider: Optional[bool] = False
-    color: Optional[Literal['primary', 'accent', 'warn']] = None
+    color: Optional[Literal["primary", "accent", "warn"]] = None
 
-    def __init__(self, label: str, key: str = None, material_icon: str = None, disabled: bool = False,
-                 children: List['StreamlitMenuButtonItem'] = None,
-                 on_click: Callable = None, divider: bool = False,
-                 color: Literal['primary', 'accent', 'warn'] = None):
-        """ Create a menu button item
+    def __init__(
+        self,
+        label: str,
+        key: str = None,
+        material_icon: str = None,
+        disabled: bool = False,
+        children: List["StreamlitMenuButtonItem"] = None,
+        on_click: Callable = None,
+        divider: bool = False,
+        color: Literal["primary", "accent", "warn"] = None,
+    ):
+        """Create a menu button item
 
         :param label: Label of the item
         :type label: str
@@ -65,8 +70,8 @@ class StreamlitMenuButtonItem():
         self.divider = divider
         self.color = color
 
-    def add_child(self, child: 'StreamlitMenuButtonItem') -> None:
-        """ Add a child to the item
+    def add_child(self, child: "StreamlitMenuButtonItem") -> None:
+        """Add a child to the item
 
         :param child: Child item to add
         :type child: StreamlitMenuButtonItem
@@ -77,8 +82,8 @@ class StreamlitMenuButtonItem():
             self.children = []
         self.children.append(child)
 
-    def add_children(self, children: List['StreamlitMenuButtonItem']) -> None:
-        """ Add a list of children to the item
+    def add_children(self, children: List["StreamlitMenuButtonItem"]) -> None:
+        """Add a list of children to the item
 
         :param children: List of child items to add
         :type children: List[StreamlitMenuButtonItem]
@@ -87,8 +92,8 @@ class StreamlitMenuButtonItem():
             self.children = []
         self.children.extend(children)
 
-    def insert_child(self, index: int, child: 'StreamlitMenuButtonItem') -> None:
-        """ Insert a child to the item
+    def insert_child(self, index: int, child: "StreamlitMenuButtonItem") -> None:
+        """Insert a child to the item
 
         :param index: Index of the child to insert
         :type index: int
@@ -102,8 +107,8 @@ class StreamlitMenuButtonItem():
 
         self.children.insert(index, child)
 
-    def update_child(self, index: int, child: 'StreamlitMenuButtonItem') -> None:
-        """ Update a child in the item
+    def update_child(self, index: int, child: "StreamlitMenuButtonItem") -> None:
+        """Update a child in the item
 
         :param index: Index of the child to update
         :type index: int
@@ -117,7 +122,7 @@ class StreamlitMenuButtonItem():
         self.children[index] = child
 
     def remove_child_at(self, index: int) -> None:
-        """ Remove a child from the item
+        """Remove a child from the item
 
         :param index: Index of the child to remove
         :type index: int
@@ -128,7 +133,7 @@ class StreamlitMenuButtonItem():
             raise Exception(f"[StreamlitMenuButton] Child index {index} out of range")
         self.children.pop(index)
 
-    def find_by_key(self, key: str) -> Optional['StreamlitMenuButtonItem']:
+    def find_by_key(self, key: str) -> Optional["StreamlitMenuButtonItem"]:
         if self.key == key:
             return self
 
@@ -141,17 +146,21 @@ class StreamlitMenuButtonItem():
         return None
 
     def to_dto(self) -> StreamlitMenuButtonItemDTO:
-        """ Convert the item to a DTO
+        """Convert the item to a DTO
 
         :return: DTO of the item
         :rtype: StreamlitMenuButtonItemDTO
         """
         return StreamlitMenuButtonItemDTO(
             key=self.key,
-            label=self.label, material_icon=self.material_icon, disabled=self.disabled,
-            children=[child.to_dto() for child in self.children] if self.children else None, divider=self.divider,
+            label=self.label,
+            material_icon=self.material_icon,
+            disabled=self.disabled,
+            children=[child.to_dto() for child in self.children] if self.children else None,
+            divider=self.divider,
             color=self.color,
-            has_handler=self.on_click is not None)
+            has_handler=self.on_click is not None,
+        )
 
 
 class StreamlitMenuButtonValue(TypedDict):
@@ -173,7 +182,7 @@ class StreamlitMenuButton:
 
     _buttons: List[StreamlitMenuButtonItem] = None
 
-    def __init__(self, key='streamlit-menu'):
+    def __init__(self, key="streamlit-menu"):
         self.key = key
         self._buttons = []
 
@@ -208,7 +217,7 @@ class StreamlitMenuButton:
 
         return None
 
-    def render(self, icon: str = 'more_vert', disabled: bool = False) -> StreamlitMenuButtonItem:
+    def render(self, icon: str = "more_vert", disabled: bool = False) -> StreamlitMenuButtonItem:
         """Render the menu button and return the button clicked.
 
         :param icon: Icon to show on the button, defaults to 'more_vert'
@@ -221,13 +230,14 @@ class StreamlitMenuButton:
         """
 
         data = {
-            'icon': icon,
+            "icon": icon,
             "disabled": disabled,
             "menu_items": [button.to_dto() for button in self._buttons],
         }
 
         component_value: StreamlitMenuButtonValue = self._streamlit_component_loader.call_component(
-            data, key=self.key)
+            data, key=self.key
+        )
 
         if not component_value:
             return None
@@ -236,20 +246,23 @@ class StreamlitMenuButton:
         # with the previous click value to avoid double click
         # if the timestamp has changed, it means a click was really triggered
         # if the timestamp is the same, it means the component was just reloaded but no click was triggered
-        previous_click_key = '__' + self.key + '_previous_click__'
+        previous_click_key = "__" + self.key + "_previous_click__"
         previous_click: StreamlitMenuButtonValue = st.session_state.get(previous_click_key)
 
         # if the button was clicked
-        if previous_click is None or previous_click.get('timestamp') != component_value.get('timestamp'):
-
-            button_key = component_value.get('button_key')
+        if previous_click is None or previous_click.get("timestamp") != component_value.get(
+            "timestamp"
+        ):
+            button_key = component_value.get("button_key")
 
             button = self.find_button_item_by_key(button_key)
             if button is None:
                 raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' not found")
 
             if button.on_click is None:
-                raise Exception(f"[StreamlitMenuButton] Button with key '{button_key}' has no on_click handler")
+                raise Exception(
+                    f"[StreamlitMenuButton] Button with key '{button_key}' has no on_click handler"
+                )
 
             button.on_click()
 

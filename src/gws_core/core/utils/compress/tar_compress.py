@@ -1,4 +1,3 @@
-
 from tarfile import TarFile
 from tarfile import open as tar_open
 
@@ -14,7 +13,7 @@ class TarCompress(Compress):
 
     tar_file: TarFile
 
-    compress_option: str = ''
+    compress_option: str = ""
 
     def __init__(self, destination_file_path: str):
         super().__init__(destination_file_path)
@@ -47,15 +46,13 @@ class TarCompress(Compress):
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
-        """Return true if the file can be uncompressed by this class
-        """
-        return file_path.endswith('.tar')
+        """Return true if the file can be uncompressed by this class"""
+        return file_path.endswith(".tar")
 
     @classmethod
     def get_supported_extensions(cls) -> set:
-        """Return the list of supported extensions
-        """
-        return {'tar'}
+        """Return the list of supported extensions"""
+        return {"tar"}
 
 
 class TarGzCompress(TarCompress):
@@ -67,16 +64,14 @@ class TarGzCompress(TarCompress):
 
     tar_file: TarFile
 
-    compress_option: str = ':gz'
+    compress_option: str = ":gz"
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
-        """Return true if the file can be uncompressed by this class
-        """
-        return file_path.endswith('.tar.gz')
+        """Return true if the file can be uncompressed by this class"""
+        return file_path.endswith(".tar.gz")
 
     @classmethod
     def get_supported_extensions(cls) -> set:
-        """Return the list of supported extensions
-        """
-        return {'tar.gz'}
+        """Return the list of supported extensions"""
+        return {"tar.gz"}

@@ -1,5 +1,3 @@
-
-
 from ..scenario.queue_service import QueueService
 from .base_test_case_light import BaseTestCaseLight
 from .test_helper import TestHelper

@@ -1,5 +1,3 @@
-
-
 import json
 import math
 import re
@@ -169,7 +167,6 @@ class NumericValidator(Validator):
         include_max=False,
         allowed_values: list = None,
     ):
-
         if min_value is None:
             self._min_value = -math.inf
         else:
@@ -206,16 +203,12 @@ class NumericValidator(Validator):
 
         value = super()._validate(value)
 
-        if value < self._min_value or (
-            value == self._min_value and not self._include_min
-        ):
+        if value < self._min_value or (value == self._min_value and not self._include_min):
             raise BadRequestException(
                 f"The value must be greater than {self._min_value}. The actual value is {value}"
             )
 
-        if value > self._max_value or (
-            value == self._max_value and not self._include_max
-        ):
+        if value > self._max_value or (value == self._max_value and not self._include_max):
             raise BadRequestException(
                 f"The value must be less than {self._max_value}. The actual value is {value}"
             )
@@ -226,9 +219,7 @@ class NumericValidator(Validator):
         value = super()._from_str(str_value)
 
         if isinstance(value, bool) or not isinstance(value, (int, float)):
-            raise BadRequestException(
-                f"Expected a numeric value but got a '{type(value)}'"
-            )
+            raise BadRequestException(f"Expected a numeric value but got a '{type(value)}'")
 
         is_valid = math.isnan(value) or (self._type(value) == value)
         if not is_valid:
@@ -331,8 +322,13 @@ class StrValidator(Validator):
     _min_length = -1
     _max_length = math.inf
 
-    def __init__(self, allowed_values: List[str] = None, min_length: int = None, max_length: int = None):
-        super().__init__(type_=str, allowed_values=allowed_values, )
+    def __init__(
+        self, allowed_values: List[str] = None, min_length: int = None, max_length: int = None
+    ):
+        super().__init__(
+            type_=str,
+            allowed_values=allowed_values,
+        )
 
         if min_length is not None:
             if isinstance(min_length, str):
@@ -352,7 +348,8 @@ class StrValidator(Validator):
 
         if self._min_length > self._max_length:
             raise BadRequestException(
-                f"The min length ({self._min_length}) must be grater than the max length ({self._max_length})")
+                f"The min length ({self._min_length}) must be grater than the max length ({self._max_length})"
+            )
 
     def _from_str(self, str_value: str) -> str:
         return str_value
@@ -361,10 +358,12 @@ class StrValidator(Validator):
         value: str = super()._validate(value)
         if len(value) < self._min_length:
             raise BadRequestException(
-                f"The string length is {len(value)}. It is less than the min length of {self._min_length}")
+                f"The string length is {len(value)}. It is less than the min length of {self._min_length}"
+            )
         if len(value) > self._max_length:
             raise BadRequestException(
-                f"The string length is {len(value)}. It exceeds the max length of {self._min_length}")
+                f"The string length is {len(value)}. It exceeds the max length of {self._min_length}"
+            )
         return value
 
 
@@ -391,8 +390,11 @@ class ListValidator(Validator):
     max_number_of_occurrences: int = True
 
     def __init__(
-            self, min_number_of_occurrences: int = -1, max_number_of_occurrences: int = -1,
-            allowed_values: list = None):
+        self,
+        min_number_of_occurrences: int = -1,
+        max_number_of_occurrences: int = -1,
+        allowed_values: list = None,
+    ):
         super().__init__(type_=list, allowed_values=allowed_values)
         self.min_number_of_occurrences = min_number_of_occurrences
         self.max_number_of_occurrences = max_number_of_occurrences
@@ -406,11 +408,13 @@ class ListValidator(Validator):
 
         if self.min_number_of_occurrences >= 0 and len(value) < self.min_number_of_occurrences:
             raise BadRequestException(
-                f"The list contains {len(value)} elements but the minimum number of elements is {self.min_number_of_occurrences}.")
+                f"The list contains {len(value)} elements but the minimum number of elements is {self.min_number_of_occurrences}."
+            )
 
         if self.max_number_of_occurrences >= 0 and len(value) > self.max_number_of_occurrences:
             raise BadRequestException(
-                f"The list contains {len(value)} elements but the maximum number of elements is {self.max_number_of_occurrences}.")
+                f"The list contains {len(value)} elements but the maximum number of elements is {self.max_number_of_occurrences}."
+            )
 
         return value
 

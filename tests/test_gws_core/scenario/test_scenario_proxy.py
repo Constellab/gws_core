@@ -1,6 +1,13 @@
 from typing import cast
 
-from gws_core import BaseTestCase, ProcessProxy, ProtocolModel, ProtocolProxy, ScenarioProxy, TaskProxy
+from gws_core import (
+    BaseTestCase,
+    ProcessProxy,
+    ProtocolModel,
+    ProtocolProxy,
+    ScenarioProxy,
+    TaskProxy,
+)
 from gws_core.impl.robot.robot_protocol import RobotSuperTravelProto, RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -86,8 +93,12 @@ class TestScenarioProxy(BaseTestCase):
 
         # Try to remove the interface of sub travel, it should raise an exception
         # because the input of sub_travel is connected
-        self.assertRaises(IOFaceConnectedToTheParentDeleteException, sub_travel.delete_interface, "travel_int")
-        self.assertRaises(IOFaceConnectedToTheParentDeleteException, sub_travel.delete_outerface, "travel_out")
+        self.assertRaises(
+            IOFaceConnectedToTheParentDeleteException, sub_travel.delete_interface, "travel_int"
+        )
+        self.assertRaises(
+            IOFaceConnectedToTheParentDeleteException, sub_travel.delete_outerface, "travel_out"
+        )
 
         # Remove interface
         super_travel.delete_interface("super_travel_int")

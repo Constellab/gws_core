@@ -1,5 +1,3 @@
-
-
 import os
 from unittest import TestCase
 
@@ -12,19 +10,20 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 
 # test_file_store
 class TestLocalFileStore(TestCase):
-
     def test_file(self):
         file_store: FileStore = LocalFileStore()
 
         temp_dir = Settings.make_temp_dir()
-        tmp_path = str(FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, 'test_file.txt')))
+        tmp_path = str(
+            FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "test_file.txt"))
+        )
 
         # Add a file from a path
         file: File = file_store.add_file_from_path(tmp_path)
         self.assertTrue(file_store.node_name_exists(file.get_default_name()))
         self.assertTrue(file_store.node_exists(file))
         self.assertTrue(file_store.node_path_exists(file.path))
-        self.assertTrue(file.get_default_name(), 'test_file.txt')
+        self.assertTrue(file.get_default_name(), "test_file.txt")
         # check that the file was moved
         self.assertTrue(FileHelper.exists_on_os(file.path))
         self.assertFalse(FileHelper.exists_on_os(tmp_path))
@@ -34,11 +33,13 @@ class TestLocalFileStore(TestCase):
             file_store.add_file_from_path(file.path)
 
         # Add a file with the same name
-        tmp_path_2 = str(FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, 'test_file.txt')))
+        tmp_path_2 = str(
+            FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "test_file.txt"))
+        )
 
-        file_2 = file_store.add_file_from_path(tmp_path_2, 'test_file.txt')
+        file_2 = file_store.add_file_from_path(tmp_path_2, "test_file.txt")
         self.assertTrue(file_store.node_exists(file_2))
-        self.assertEqual(file_2.get_default_name(), 'test_file_1.txt')
+        self.assertEqual(file_2.get_default_name(), "test_file_1.txt")
 
         file_store.delete_node(file)
         self.assertFalse(file_store.node_exists(file))
@@ -62,7 +63,9 @@ class TestLocalFileStore(TestCase):
         file_store: FileStore = LocalFileStore()
 
         temp_dir = Settings.make_temp_dir()
-        tmp_path = str(FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, 'test_file.txt')))
+        tmp_path = str(
+            FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "test_file.txt"))
+        )
         # Add a file from a path
         file: File = file_store.add_file_from_path(tmp_path, dangerous_file_name)
 

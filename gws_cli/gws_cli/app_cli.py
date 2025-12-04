@@ -56,7 +56,9 @@ class AppCli:
                 typer.echo(f"Error parsing config file '{config_file_path}': {e}", err=True)
                 raise typer.Abort()
             except Exception as e:
-                typer.echo(f"Unexpected error reading config file '{config_file_path}': {e}", err=True)
+                typer.echo(
+                    f"Unexpected error reading config file '{config_file_path}': {e}", err=True
+                )
                 raise typer.Abort()
 
     def _load_env(self) -> None:
@@ -66,7 +68,10 @@ class AppCli:
             env_type = "NONE"
 
         if not Utils.value_is_in_literal(env_type, EnvType):
-            typer.echo(f"Invalid app type '{env_type}', supported values {Utils.get_literal_values(EnvType)}", err=True)
+            typer.echo(
+                f"Invalid app type '{env_type}', supported values {Utils.get_literal_values(EnvType)}",
+                err=True,
+            )
             raise typer.Abort()
 
         env_file_path = self._config.env_file_path
@@ -115,7 +120,9 @@ class AppCli:
     def start_app(self, app_: AppInstance, ctx: typer.Context) -> None:
         settings_file_path = CLIUtils.get_current_brick_settings_file_path()
 
-        AppManager.init_gws_env_and_db(settings_file_path, log_level=CLIUtils.get_global_option_log_level(ctx))
+        AppManager.init_gws_env_and_db(
+            settings_file_path, log_level=CLIUtils.get_global_option_log_level(ctx)
+        )
 
         AppsManager.init()
 
@@ -128,7 +135,9 @@ class AppCli:
         url = AppsManager.create_or_get_app(app_).get_url()
         is_localhost = Settings.is_local_or_desktop_env()
         additional_message = (
-            f"\nPlease make sure the port {Settings.get_app_external_port()} is open." if is_localhost else ""
+            f"\nPlease make sure the port {Settings.get_app_external_port()} is open."
+            if is_localhost
+            else ""
         )
         print(
             "-------------------------------------------------------------------------------------------------------------------------------------"
@@ -161,12 +170,17 @@ class AppCli:
     def _check_resource_ids(self) -> None:
         resource_ids = self._config.source_ids
         if not isinstance(resource_ids, list):
-            typer.echo(f"'source_ids' in config file '{self._config_file_path}' must be a list.", err=True)
+            typer.echo(
+                f"'source_ids' in config file '{self._config_file_path}' must be a list.", err=True
+            )
             raise typer.Abort()
 
         for resource_id in resource_ids:
             if not isinstance(resource_id, str):
-                typer.echo(f"Each resource in 'source_ids' must be a string. Found: {resource_id}", err=True)
+                typer.echo(
+                    f"Each resource in 'source_ids' must be a string. Found: {resource_id}",
+                    err=True,
+                )
                 raise typer.Abort()
 
     def is_reflex_enterprise(self) -> bool:

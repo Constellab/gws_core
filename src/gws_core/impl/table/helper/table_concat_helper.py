@@ -1,5 +1,3 @@
-
-
 from typing import Any, List, Literal
 
 from numpy import NaN
@@ -14,17 +12,19 @@ from gws_core.impl.table.table import Table
 #     - keep second: only the tags of the second table are keept
 #     - merge from first: tags of the first and second table are merged (the first table tags override the second table tags)
 #     - merge from second: tags of the first and second table are merged (the second table tags override the first table tags)
-TableConcatOppositeTagOption = Literal['ignore', 'keep first', 'merge from first table']
+TableConcatOppositeTagOption = Literal["ignore", "keep first", "merge from first table"]
 
 
 class TableConcatHelper:
-
     OPPOSITE_TAG_OPTIONS = Utils.get_literal_values(TableConcatOppositeTagOption)
 
     @classmethod
-    def concat_table_rows(cls, tables: List[Table],
-                          column_tags_option: TableConcatOppositeTagOption = 'ignore',
-                          fill_nan: Any = NaN) -> Table:
+    def concat_table_rows(
+        cls,
+        tables: List[Table],
+        column_tags_option: TableConcatOppositeTagOption = "ignore",
+        fill_nan: Any = NaN,
+    ) -> Table:
         """Concatenate two tables along the rows.
         The total number of rows will be the sum of the two tables. The total number of columns will depend if the two table
         have common columns (based on name).
@@ -54,20 +54,23 @@ class TableConcatHelper:
                 concat_df = table.get_data()
                 row_tags = table.get_row_tags()
 
-                if column_tags_option == 'merge from first table' or column_tags_option == 'keep first':
+                if (
+                    column_tags_option == "merge from first table"
+                    or column_tags_option == "keep first"
+                ):
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
                 temp_df = concat([concat_df, table.get_data()])
                 row_tags = row_tags + table.get_row_tags()
 
-                if column_tags_option == 'merge from first table':
+                if column_tags_option == "merge from first table":
                     current_table = Table(concat_df, column_tags=column_tags)
                     column_tags = cls._merge_column_tags(temp_df, current_table, table)
 
                 concat_df = temp_df
 
         # add empty tag for each new column
-        if column_tags_option == 'keep first':
+        if column_tags_option == "keep first":
             tag_count = len(column_tags)
             dataframe_column_count = len(concat_df.columns)
             while tag_count < dataframe_column_count:
@@ -86,9 +89,12 @@ class TableConcatHelper:
         return Table(concat_df, row_tags=row_tags, column_tags=column_tags)
 
     @classmethod
-    def concat_table_columns(cls, tables: List[Table],
-                             row_tags_option: TableConcatOppositeTagOption = 'ignore',
-                             fill_nan: Any = NaN) -> Table:
+    def concat_table_columns(
+        cls,
+        tables: List[Table],
+        row_tags_option: TableConcatOppositeTagOption = "ignore",
+        fill_nan: Any = NaN,
+    ) -> Table:
         """Concatenate two tables along the columns.
         The total number of columns will be the sum of the two tables. The total number of rows will depend if the two table
         have common rows (based on name).
@@ -126,7 +132,9 @@ class TableConcatHelper:
         return tag_list
 
     @classmethod
-    def _merge_column_tags(cls, concat_df: DataFrame, main_table: Table, second_table: Table) -> List[dict]:
+    def _merge_column_tags(
+        cls, concat_df: DataFrame, main_table: Table, second_table: Table
+    ) -> List[dict]:
         """
         For each concat_df columns merge the tags from the main_table and second_table (with same column name),
         tags from main_table are preferred

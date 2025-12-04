@@ -8,7 +8,13 @@ from typing import Any, cast
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.system_dto import BrickMigrationLog, LabEnvironment, ModuleInfo, PipPackage, SettingsDTO
+from gws_core.lab.system_dto import (
+    BrickMigrationLog,
+    LabEnvironment,
+    ModuleInfo,
+    PipPackage,
+    SettingsDTO,
+)
 from gws_core.user.user_dto import SpaceDict
 
 from .date_helper import DateHelper
@@ -555,7 +561,9 @@ class Settings:
         brick_migrations = self.get_brick_migrations_logs()
         return brick_migrations.get(brick_name)
 
-    def update_brick_migration_log(self, brick_name: str, version: str, db_manager_unique_name: str) -> None:
+    def update_brick_migration_log(
+        self, brick_name: str, version: str, db_manager_unique_name: str
+    ) -> None:
         """Add a new brick migration log and update last migration version
 
         :param brick_name: Name of the brick
@@ -700,7 +708,9 @@ class Settings:
             if not pip_package or "==" not in pip_package:
                 continue
 
-            pip_packages.append(PipPackage(name=pip_package.split("==")[0], version=pip_package.split("==")[1]))
+            pip_packages.append(
+                PipPackage(name=pip_package.split("==")[0], version=pip_package.split("==")[1])
+            )
 
         return pip_packages
 

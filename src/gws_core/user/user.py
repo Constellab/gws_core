@@ -1,5 +1,3 @@
-
-
 from typing import Optional, final
 
 from peewee import BooleanField, CharField, ModelSelect
@@ -16,32 +14,31 @@ class User(Model):
     email: str = CharField(default=False, index=True)
     first_name: str = CharField(default=False)
     last_name: str = CharField(default=False)
-    group: UserGroup = EnumField(choices=UserGroup,
-                                 default=UserGroup.USER)
+    group: UserGroup = EnumField(choices=UserGroup, default=UserGroup.USER)
     is_active = BooleanField(default=True)
-    theme: UserTheme = EnumField(choices=UserTheme,
-                                 default=UserTheme.LIGHT_THEME)
+    theme: UserTheme = EnumField(choices=UserTheme, default=UserTheme.LIGHT_THEME)
 
-    lang: UserLanguage = EnumField(choices=UserLanguage,
-                                   default=UserLanguage.EN)
+    lang: UserLanguage = EnumField(choices=UserLanguage, default=UserLanguage.EN)
 
     photo: str = CharField(null=True)
 
     @classmethod
-    def get_and_check_sysuser(cls) -> 'User':
+    def get_and_check_sysuser(cls) -> "User":
         sys_user = User.get_or_none(User.group == UserGroup.SYSUSER)
 
         if sys_user is None:
-            raise Exception("System user not found, please restart your lab. If the error continues, contact the support.")
+            raise Exception(
+                "System user not found, please restart your lab. If the error continues, contact the support."
+            )
 
         return sys_user
 
     @classmethod
-    def get_by_email(cls, email: str) -> Optional['User']:
+    def get_by_email(cls, email: str) -> Optional["User"]:
         return User.get(User.email == email)
 
     @classmethod
-    def get_by_email_and_check(cls, email: str) -> 'User':
+    def get_by_email_and_check(cls, email: str) -> "User":
         user = User.get_or_none(User.email == email)
 
         if user is None:
@@ -51,18 +48,28 @@ class User(Model):
 
     @classmethod
     def search_by_firstname_or_lastname(cls, search: str) -> ModelSelect:
-        return User.select().where(
-            (User.group != UserGroup.SYSUSER) &
-            ((User.first_name.contains(search)) | (User.last_name.contains(search)))
-        ).order_by(User.first_name, User.last_name)
+        return (
+            User.select()
+            .where(
+                (User.group != UserGroup.SYSUSER)
+                & ((User.first_name.contains(search)) | (User.last_name.contains(search)))
+            )
+            .order_by(User.first_name, User.last_name)
+        )
 
     @classmethod
     def search_by_firstname_and_lastname(cls, name1: str, name2: str) -> ModelSelect:
-        return User.select().where(
-            (User.group != UserGroup.SYSUSER) &
-            (((User.first_name.contains(name1)) & (User.last_name.contains(name2))) |
-             ((User.first_name.contains(name2)) & (User.last_name.contains(name1))))
-        ).order_by(User.first_name, User.last_name)
+        return (
+            User.select()
+            .where(
+                (User.group != UserGroup.SYSUSER)
+                & (
+                    ((User.first_name.contains(name1)) & (User.last_name.contains(name2)))
+                    | ((User.first_name.contains(name2)) & (User.last_name.contains(name1)))
+                )
+            )
+            .order_by(User.first_name, User.last_name)
+        )
 
     @property
     def full_name(self):
@@ -77,14 +84,13 @@ class User(Model):
         return self.group == UserGroup.SYSUSER
 
     def has_access(self, group: UserGroup) -> bool:
-        """return true if the user group is equal or higher than the group
-        """
+        """return true if the user group is equal or higher than the group"""
         return self.group <= group
 
     def has_dark_theme(self) -> bool:
         return self.theme == UserTheme.DARK_THEME
 
-    def save(self, *arg, **kwargs) -> 'User':
+    def save(self, *arg, **kwargs) -> "User":
         if not UserGroup.has_value(self.group):
             raise BadRequestException("Invalid user group")
         return super().save(*arg, **kwargs)
@@ -95,7 +101,7 @@ class User(Model):
             email=self.email,
             first_name=self.first_name,
             last_name=self.last_name,
-            photo=self.photo
+            photo=self.photo,
         )
 
     def to_full_dto(self) -> UserFullDTO:
@@ -108,7 +114,7 @@ class User(Model):
             is_active=self.is_active,
             theme=self.theme,
             lang=self.lang,
-            photo=self.photo
+            photo=self.photo,
         )
 
     def from_full_dto(self, data: UserFullDTO) -> None:
@@ -122,5 +128,5 @@ class User(Model):
         self.photo = data.photo
 
     class Meta:
-        table_name = 'gws_user'
+        table_name = "gws_user"
         is_table = True

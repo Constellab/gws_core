@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Optional
 
 from typing_extensions import TypedDict

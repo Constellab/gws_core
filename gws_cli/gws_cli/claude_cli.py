@@ -28,8 +28,10 @@ def update():
 
 @app.command("commands", help="Manage Claude Code commands")
 def commands(
-    pull: bool = typer.Option(False, "--pull", help="Pull GWS commands to global Claude commands folder"),
-    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands")
+    pull: bool = typer.Option(
+        False, "--pull", help="Pull GWS commands to global Claude commands folder"
+    ),
+    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands"),
 ):
     """Manage Claude Code commands
 

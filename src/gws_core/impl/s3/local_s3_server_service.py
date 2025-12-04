@@ -7,8 +7,7 @@ from os import path
 from typing import Any, ByteString, Dict, List
 
 from fastapi.responses import FileResponse
-from mypy_boto3_s3.type_defs import (CommonPrefixTypeDef,
-                                     ListObjectsV2OutputTypeDef, ObjectTypeDef)
+from mypy_boto3_s3.type_defs import CommonPrefixTypeDef, ListObjectsV2OutputTypeDef, ObjectTypeDef
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.impl.file.file_helper import FileHelper
@@ -18,9 +17,7 @@ from gws_core.impl.s3.s3_server_exception import S3ServerNoSuchKey
 
 
 class LocalS3ServerService(AbstractS3Service):
-    """Local S3 service that stores files in a local directory
-
-    """
+    """Local S3 service that stores files in a local directory"""
 
     bucket_path: str
 
@@ -36,14 +33,14 @@ class LocalS3ServerService(AbstractS3Service):
     @property
     def _multipart_state_file(self) -> str:
         """Path to multipart upload state file"""
-        return path.join(self.bucket_path, '.multipart', 'state.json')
+        return path.join(self.bucket_path, ".multipart", "state.json")
 
     def _load_multipart_state(self) -> Dict[str, Any]:
         """Load multipart upload state from disk"""
         if not path.exists(self._multipart_state_file):
             return {}
         try:
-            with open(self._multipart_state_file, 'r') as f:
+            with open(self._multipart_state_file, "r") as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
@@ -55,7 +52,7 @@ class LocalS3ServerService(AbstractS3Service):
         if state:
             # Save state if not empty
             os.makedirs(multipart_dir, exist_ok=True)
-            with open(self._multipart_state_file, 'w') as f:
+            with open(self._multipart_state_file, "w") as f:
                 json.dump(state, f)
         else:
             # Clean up when state is empty
@@ -73,29 +70,35 @@ class LocalS3ServerService(AbstractS3Service):
                     # Directory not empty or other error, leave it
                     pass
 
-    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None,
-                     continuation_token: str = None, start_after: str = None) -> ListObjectsV2OutputTypeDef:
+    def list_objects(
+        self,
+        prefix: str = None,
+        max_keys: int = 1000,
+        delimiter: str = None,
+        continuation_token: str = None,
+        start_after: str = None,
+    ) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
         if not path.exists(self.bucket_path):
             return {
-                'Name': self.bucket_name,
-                'Prefix': prefix or '',
-                'MaxKeys': max_keys,
-                'IsTruncated': False,
-                'Contents': [],
-                'KeyCount': 0,
-                'ContinuationToken': '',
-                'NextContinuationToken': '',
-                'StartAfter': '',
-                'Delimiter': delimiter or '',
-                'EncodingType': 'url',
-                'RequestCharged': 'requester',
-                'CommonPrefixes': [],
-                'ResponseMetadata': {
-                    'RequestId': '',
-                    'HTTPStatusCode': 200,
-                    'HTTPHeaders': {},
-                    'RetryAttempts': 0
+                "Name": self.bucket_name,
+                "Prefix": prefix or "",
+                "MaxKeys": max_keys,
+                "IsTruncated": False,
+                "Contents": [],
+                "KeyCount": 0,
+                "ContinuationToken": "",
+                "NextContinuationToken": "",
+                "StartAfter": "",
+                "Delimiter": delimiter or "",
+                "EncodingType": "url",
+                "RequestCharged": "requester",
+                "CommonPrefixes": [],
+                "ResponseMetadata": {
+                    "RequestId": "",
+                    "HTTPStatusCode": 200,
+                    "HTTPHeaders": {},
+                    "RetryAttempts": 0,
                 },
             }
 
@@ -108,7 +111,7 @@ class LocalS3ServerService(AbstractS3Service):
             for file in files:
                 file_path = path.join(root, file)
                 relative_path = path.relpath(file_path, self.bucket_path)
-                key = relative_path.replace(os.sep, '/')
+                key = relative_path.replace(os.sep, "/")
                 all_keys.append((key, file_path))
 
         # Filter by prefix if provided
@@ -136,60 +139,60 @@ class LocalS3ServerService(AbstractS3Service):
 
                 if delimiter_pos != -1:
                     # This is in a subdirectory, add to common prefixes
-                    common_prefix = key[:delimiter_pos + 1]
+                    common_prefix = key[: delimiter_pos + 1]
                     common_prefixes.add(common_prefix)
                     continue
 
             # Add as regular object
             stat = os.stat(file_path)
             last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
-            processed_objects.append({
-                'Key': key,
-                'LastModified': DateHelper.to_iso_str(last_modified),
-                'ETag': '',
-                'Size': stat.st_size,
-                'Owner': {
-                    'ID': '',
-                    'DisplayName': 'lab'
-                },
-                'StorageClass': 'STANDARD'
-            })
+            processed_objects.append(
+                {
+                    "Key": key,
+                    "LastModified": DateHelper.to_iso_str(last_modified),
+                    "ETag": "",
+                    "Size": stat.st_size,
+                    "Owner": {"ID": "", "DisplayName": "lab"},
+                    "StorageClass": "STANDARD",
+                }
+            )
 
         # Apply pagination to processed objects
         is_truncated = len(processed_objects) > max_keys
         objects = processed_objects[:max_keys]
-        next_continuation_token = ''
+        next_continuation_token = ""
 
         if is_truncated and objects:
-            next_continuation_token = objects[-1]['Key']
+            next_continuation_token = objects[-1]["Key"]
 
         # Convert common prefixes to the expected format
-        common_prefixes_list: List[Any] = [{'Prefix': cp} for cp in sorted(common_prefixes)]
+        common_prefixes_list: List[Any] = [{"Prefix": cp} for cp in sorted(common_prefixes)]
 
         return {
-            'Name': self.bucket_name,
-            'Prefix': prefix or '',
-            'MaxKeys': max_keys,
-            'IsTruncated': is_truncated,
-            'Contents': objects,
-            'KeyCount': len(objects),
-            'ContinuationToken': continuation_token or '',
-            'NextContinuationToken': next_continuation_token,
-            'StartAfter': start_after or '',
-            'Delimiter': delimiter or '',
-            'EncodingType': 'url',
-            'RequestCharged': 'requester',
-            'CommonPrefixes': common_prefixes_list,
-            'ResponseMetadata': {
-                'RequestId': '',
-                'HTTPStatusCode': 200,
-                'HTTPHeaders': {},
-                'RetryAttempts': 0
+            "Name": self.bucket_name,
+            "Prefix": prefix or "",
+            "MaxKeys": max_keys,
+            "IsTruncated": is_truncated,
+            "Contents": objects,
+            "KeyCount": len(objects),
+            "ContinuationToken": continuation_token or "",
+            "NextContinuationToken": next_continuation_token,
+            "StartAfter": start_after or "",
+            "Delimiter": delimiter or "",
+            "EncodingType": "url",
+            "RequestCharged": "requester",
+            "CommonPrefixes": common_prefixes_list,
+            "ResponseMetadata": {
+                "RequestId": "",
+                "HTTPStatusCode": 200,
+                "HTTPHeaders": {},
+                "RetryAttempts": 0,
             },
         }
 
-    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
-                      last_modified: float = None) -> dict:
+    def upload_object(
+        self, key: str, data: ByteString, tags: Dict[str, str] = None, last_modified: float = None
+    ) -> dict:
         """Upload an object to the bucket"""
         del tags  # Unused parameter
         self.create_bucket()
@@ -197,7 +200,7 @@ class LocalS3ServerService(AbstractS3Service):
         file_path = path.join(self.bucket_path, key)
         os.makedirs(path.dirname(file_path), exist_ok=True)
 
-        with open(file_path, 'wb') as f:
+        with open(file_path, "wb") as f:
             f.write(data)
 
         if last_modified:
@@ -205,7 +208,7 @@ class LocalS3ServerService(AbstractS3Service):
             os.utime(file_path, (last_modified, last_modified))
 
         return {
-            'ETag': '',
+            "ETag": "",
         }
 
     def get_object(self, key: str) -> FileResponse:
@@ -243,10 +246,10 @@ class LocalS3ServerService(AbstractS3Service):
         last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
 
         return {
-            'Content-Length': '0' if FileHelper.is_dir(file_path) else str(stat.st_size),
-            'Content-Type': FileHelper.get_mime(file_path),
-            'Last-Modified': DateHelper.to_rfc7231_str(last_modified),
-            'x-amz-meta-mtime': str(stat.st_mtime),  # rclone compatibility
+            "Content-Length": "0" if FileHelper.is_dir(file_path) else str(stat.st_size),
+            "Content-Type": FileHelper.get_mime(file_path),
+            "Last-Modified": DateHelper.to_rfc7231_str(last_modified),
+            "x-amz-meta-mtime": str(stat.st_mtime),  # rclone compatibility
         }
 
     def get_object_tags(self, key: str) -> S3GetTagResponse:
@@ -272,17 +275,17 @@ class LocalS3ServerService(AbstractS3Service):
         upload_id = str(uuid.uuid4())
 
         # Create temp directory for parts
-        temp_dir = path.join(self.bucket_path, '.multipart', upload_id)
+        temp_dir = path.join(self.bucket_path, ".multipart", upload_id)
         os.makedirs(temp_dir, exist_ok=True)
 
         # Load current state and add new upload
         state = self._load_multipart_state()
         state[upload_id] = {
-            'key': key,
-            'parts': {},
-            'temp_dir': temp_dir,
-            'last_modified': last_modified,
-            'created_at': time.time()
+            "key": key,
+            "parts": {},
+            "temp_dir": temp_dir,
+            "last_modified": last_modified,
+            "created_at": time.time(),
         }
         self._save_multipart_state(state)
 
@@ -295,20 +298,16 @@ class LocalS3ServerService(AbstractS3Service):
             raise ValueError(f"Upload ID {upload_id} not found")
 
         upload_info = state[upload_id]
-        if upload_info['key'] != key:
+        if upload_info["key"] != key:
             raise ValueError(f"Key mismatch for upload ID {upload_id}")
 
         # Save part to temp file
-        part_file = path.join(upload_info['temp_dir'], f'part_{part_number:05d}')
-        with open(part_file, 'wb') as f:
+        part_file = path.join(upload_info["temp_dir"], f"part_{part_number:05d}")
+        with open(part_file, "wb") as f:
             f.write(data)
 
         # Store part info
-        upload_info['parts'][str(part_number)] = {
-            'etag': '',
-            'file': part_file,
-            'size': len(data)
-        }
+        upload_info["parts"][str(part_number)] = {"etag": "", "file": part_file, "size": len(data)}
 
         # Save updated state
         self._save_multipart_state(state)
@@ -320,11 +319,11 @@ class LocalS3ServerService(AbstractS3Service):
             raise ValueError(f"Upload ID {upload_id} not found")
 
         upload_info = state[upload_id]
-        if upload_info['key'] != key:
+        if upload_info["key"] != key:
             raise ValueError(f"Key mismatch for upload ID {upload_id}")
 
         # Sort parts by part number
-        sorted_parts = sorted(parts, key=lambda p: int(p['PartNumber']))
+        sorted_parts = sorted(parts, key=lambda p: int(p["PartNumber"]))
 
         # Create final file
         self.create_bucket()
@@ -332,14 +331,14 @@ class LocalS3ServerService(AbstractS3Service):
         os.makedirs(path.dirname(file_path), exist_ok=True)
 
         # Combine all parts and calculate MD5 hash incrementally
-        with open(file_path, 'wb') as final_file:
+        with open(file_path, "wb") as final_file:
             for part in sorted_parts:
-                part_number = str(part['PartNumber'])
-                if part_number not in upload_info['parts']:
+                part_number = str(part["PartNumber"])
+                if part_number not in upload_info["parts"]:
                     raise ValueError(f"Part {part_number} not found")
 
-                part_file = upload_info['parts'][part_number]['file']
-                with open(part_file, 'rb') as pf:
+                part_file = upload_info["parts"][part_number]["file"]
+                with open(part_file, "rb") as pf:
                     # Read and write in chunks to avoid memory issues
                     while True:
                         chunk = pf.read(8192)  # 8KB chunks
@@ -348,9 +347,9 @@ class LocalS3ServerService(AbstractS3Service):
                         final_file.write(chunk)
 
         # Apply modification time if provided
-        if upload_info.get('last_modified'):
+        if upload_info.get("last_modified"):
             # Set the modification time if provided
-            os.utime(file_path, (upload_info['last_modified'], upload_info['last_modified']))
+            os.utime(file_path, (upload_info["last_modified"], upload_info["last_modified"]))
 
         # Clean up temp files using helper method
         self._cleanup_upload_files(upload_info)
@@ -370,7 +369,7 @@ class LocalS3ServerService(AbstractS3Service):
 
             for upload_id, upload_info in state.items():
                 # Check if temp directory exists and get its age
-                temp_dir = upload_info.get('temp_dir')
+                temp_dir = upload_info.get("temp_dir")
                 if temp_dir and path.exists(temp_dir):
                     dir_age = current_time - path.getctime(temp_dir)
                     if dir_age > max_age_seconds:
@@ -396,13 +395,13 @@ class LocalS3ServerService(AbstractS3Service):
         """Clean up files for a specific upload"""
         try:
             # Clean up individual part files
-            for part_info in upload_info.get('parts', {}).values():
-                part_file = part_info.get('file')
+            for part_info in upload_info.get("parts", {}).values():
+                part_file = part_info.get("file")
                 if part_file and path.exists(part_file):
                     os.remove(part_file)
 
             # Remove temp directory if empty
-            temp_dir = upload_info.get('temp_dir')
+            temp_dir = upload_info.get("temp_dir")
             if temp_dir and path.exists(temp_dir):
                 try:
                     os.rmdir(temp_dir)
@@ -420,7 +419,7 @@ class LocalS3ServerService(AbstractS3Service):
             raise ValueError(f"Upload ID {upload_id} not found")
 
         upload_info = state[upload_id]
-        if upload_info['key'] != key:
+        if upload_info["key"] != key:
             raise ValueError(f"Key mismatch for upload ID {upload_id}")
 
         # Clean up temp files

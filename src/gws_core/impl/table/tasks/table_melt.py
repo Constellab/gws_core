@@ -1,5 +1,3 @@
-
-
 import pandas as pd
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -14,8 +12,11 @@ from ....task.task_io import TaskInputs, TaskOutputs
 from ..table import Table
 
 
-@task_decorator("Melt", human_name="Table melt",
-                short_description="Unpivot a DataFrame from wide to long format, optionally leaving identifiers set (pandas.melt).")
+@task_decorator(
+    "Melt",
+    human_name="Table melt",
+    short_description="Unpivot a DataFrame from wide to long format, optionally leaving identifiers set (pandas.melt).",
+)
 class TableMelt(Task):
     """
     Call the pandas melt function
@@ -28,59 +29,64 @@ class TableMelt(Task):
     axis, leaving just two non-identifier columns, 'variable' and 'value'.
     Do not handle multi-index columns.
     """
-    input_specs = InputSpecs({'input_table': InputSpec(Table, human_name="input_table")})
-    output_specs = OutputSpecs({'output_table': OutputSpec(Table, human_name="output_table")})
 
-    config_specs = ConfigSpecs({
-        "id_vars": ListParam(
-            default_value=None,
-            optional=True,
-            human_name="id_vars",
-            short_description="Column(s) to use as identifier variables."
-        ),
-        "value_vars": ListParam(
-            default_value=None,
-            human_name="value_vars",
-            optional=True,
-            short_description="Column(s) to unpivot. If not specified, uses all columns that are not set as *id_vars*."
-        ),
-        "var_name": StrParam(
-            default_value=None,
-            human_name="var_name",
-            optional=True,
-            short_description="Name to use for the 'variable' column. If None it uses `frame.columns.name` or 'variable'."
-        ),
-        "value_name": StrParam(
-            default_value='value',
-            human_name='value_name',
-            optional=True,
-            short_description="Name to use for the 'value' column."
-        ),
-        "col_level": StrParam(
-            default_value=None,
-            human_name="col_level",
-            optional=True,
-            short_description="If columns are a MultiIndex then use this level to melt."
-        ),
-        "ignore_index": BoolParam(
-            default_value=True,
-            human_name="ignore_index",
-            optional=True,
-            short_description="If True, original index is ignored. If False, the original index is retained. Index labels will be repeated as necessary."
-        )
-    })
+    input_specs = InputSpecs({"input_table": InputSpec(Table, human_name="input_table")})
+    output_specs = OutputSpecs({"output_table": OutputSpec(Table, human_name="output_table")})
+
+    config_specs = ConfigSpecs(
+        {
+            "id_vars": ListParam(
+                default_value=None,
+                optional=True,
+                human_name="id_vars",
+                short_description="Column(s) to use as identifier variables.",
+            ),
+            "value_vars": ListParam(
+                default_value=None,
+                human_name="value_vars",
+                optional=True,
+                short_description="Column(s) to unpivot. If not specified, uses all columns that are not set as *id_vars*.",
+            ),
+            "var_name": StrParam(
+                default_value=None,
+                human_name="var_name",
+                optional=True,
+                short_description="Name to use for the 'variable' column. If None it uses `frame.columns.name` or 'variable'.",
+            ),
+            "value_name": StrParam(
+                default_value="value",
+                human_name="value_name",
+                optional=True,
+                short_description="Name to use for the 'value' column.",
+            ),
+            "col_level": StrParam(
+                default_value=None,
+                human_name="col_level",
+                optional=True,
+                short_description="If columns are a MultiIndex then use this level to melt.",
+            ),
+            "ignore_index": BoolParam(
+                default_value=True,
+                human_name="ignore_index",
+                optional=True,
+                short_description="If True, original index is ignored. If False, the original index is retained. Index labels will be repeated as necessary.",
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        dataframe = pd.DataFrame(inputs['input_table'].get_data())
+        dataframe = pd.DataFrame(inputs["input_table"].get_data())
         for key, i in params.items():
             if i == "":
                 params[key] = None
-        result = pd.melt(dataframe,
-                         id_vars=params['id_vars'],
-                         value_vars=params["value_vars"],
-                         var_name=params["var_name"],
-                         value_name=params["value_name"],
-                         col_level=params["col_level"],
-                         ignore_index=params["ignore_index"])
+        result = pd.melt(
+            dataframe,
+            id_vars=params["id_vars"],
+            value_vars=params["value_vars"],
+            var_name=params["var_name"],
+            value_name=params["value_name"],
+            col_level=params["col_level"],
+            ignore_index=params["ignore_index"],
+        )
 
-        return {'output_table': Table(result)}
+        return {"output_table": Table(result)}

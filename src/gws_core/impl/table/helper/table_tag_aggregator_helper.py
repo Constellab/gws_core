@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Literal
 
 from pandas import DataFrame, concat
@@ -9,14 +7,16 @@ from ....core.utils.utils import Utils
 from ..table import Table
 from ..table_types import AxisType, is_row_axis
 
-TableGroupFunction = Literal['mean', 'median', 'sort', 'sum']
+TableGroupFunction = Literal["mean", "median", "sort", "sum"]
 
 
 class TableTagAggregatorHelper:
     """Helper to aggregate table rows or columns base on table tags"""
 
     @classmethod
-    def aggregate_by_row_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
+    def aggregate_by_row_tags(
+        cls, table: Table, keys: List[str], func: TableGroupFunction = "mean"
+    ) -> Table:
         """
         Aggregtor data along a list of row tag keys
 
@@ -32,7 +32,9 @@ class TableTagAggregatorHelper:
         :rtype: DataFrame
         """
         if not Utils.value_is_in_literal(func, TableGroupFunction):
-            raise BadRequestException(f"The grouping function must in {Utils.get_literal_values(TableGroupFunction)}")
+            raise BadRequestException(
+                f"The grouping function must in {Utils.get_literal_values(TableGroupFunction)}"
+            )
 
         if func == "sort":
             return cls.sort_by_row_tags(table, keys)
@@ -48,11 +50,12 @@ class TableTagAggregatorHelper:
         row_positions = DataFrame(
             range(0, tag_dataframe.shape[0]),
             index=table.get_data().index,
-            columns=["row_positions"]
+            columns=["row_positions"],
         )
 
-        df = concat([row_positions, tag_dataframe, table.get_data()],
-                    axis=1)  # add ne columns for multi-row sort
+        df = concat(
+            [row_positions, tag_dataframe, table.get_data()], axis=1
+        )  # add ne columns for multi-row sort
 
         df.sort_values(by=keys, inplace=True)
         new_row_position = df["row_positions"]
@@ -67,7 +70,9 @@ class TableTagAggregatorHelper:
     ############################################## COLUMNS ######################################################
 
     @classmethod
-    def aggregate_by_column_tags(cls, table: Table, keys: List[str], func: TableGroupFunction = "mean") -> Table:
+    def aggregate_by_column_tags(
+        cls, table: Table, keys: List[str], func: TableGroupFunction = "mean"
+    ) -> Table:
         """
         Group data along a list of column tag keys
 
@@ -83,7 +88,9 @@ class TableTagAggregatorHelper:
         :rtype: DataFrame
         """
         if not Utils.value_is_in_literal(func, TableGroupFunction):
-            raise BadRequestException(f"The grouping function must in {Utils.get_literal_values(TableGroupFunction)}")
+            raise BadRequestException(
+                f"The grouping function must in {Utils.get_literal_values(TableGroupFunction)}"
+            )
 
         if func == "sort":
             return cls.sort_by_column_tags(table, keys)
@@ -100,11 +107,12 @@ class TableTagAggregatorHelper:
         column_positions = DataFrame(
             range(0, tag_dataframe.shape[1]),
             columns=table.get_data().columns,
-            index=["column_positions"]
+            index=["column_positions"],
         )
 
-        df = concat([column_positions, tag_dataframe, table.get_data()],
-                    axis=0)  # add new rows for multi-column sort
+        df = concat(
+            [column_positions, tag_dataframe, table.get_data()], axis=0
+        )  # add new rows for multi-column sort
 
         df.sort_values(by=keys, inplace=True, axis=1)
         new_column_position = df["column_positions"]
@@ -119,14 +127,18 @@ class TableTagAggregatorHelper:
     ############################################## BOTH ######################################################
 
     @classmethod
-    def _aggregate_by_tags(cls, table: Table, keys: List[str],
-                           func: Literal['mean', 'median', 'sum'], axis: AxisType) -> Table:
+    def _aggregate_by_tags(
+        cls, table: Table, keys: List[str], func: Literal["mean", "median", "sum"], axis: AxisType
+    ) -> Table:
         if len(keys) > 1:
             raise BadRequestException("Multiple tags are only supported for 'sort' function")
         key = keys[0]
 
-        all_tags: Dict[str, List[str]] = table.get_available_row_tags() \
-            if is_row_axis(axis) else table.get_available_column_tags()
+        all_tags: Dict[str, List[str]] = (
+            table.get_available_row_tags()
+            if is_row_axis(axis)
+            else table.get_available_column_tags()
+        )
 
         if key not in all_tags:
             raise BadRequestException(f"The tag key '{key}' does not exist")

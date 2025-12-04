@@ -1,11 +1,11 @@
 from typing import List
 
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockTable(RichTextBlockDataBase):
     """Object representing a table block in a rich text"""
+
     content: List[List[str]]
     withHeadings: bool = False
     stretched: bool = False

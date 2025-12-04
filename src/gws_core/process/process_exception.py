@@ -1,11 +1,8 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.gws_exceptions import GWSException
 
@@ -25,21 +22,24 @@ class ProcessRunException(BadRequestException):
     process_model: ProcessModel
     error_prefix: str
 
-    def __init__(self, process_model: ProcessModel, exception_detail: str,
-                 unique_code: str, error_prefix: str,
-                 exception: Exception) -> None:
-        super().__init__(
-            detail=exception_detail,
-            unique_code=unique_code)
+    def __init__(
+        self,
+        process_model: ProcessModel,
+        exception_detail: str,
+        unique_code: str,
+        error_prefix: str,
+        exception: Exception,
+    ) -> None:
+        super().__init__(detail=exception_detail, unique_code=unique_code)
 
         self.error_prefix = error_prefix
         self.original_exception = exception
         self.process_model = process_model
 
     @staticmethod
-    def from_exception(process_model: ProcessModel, exception: Exception,
-                       error_prefix: str = 'Error during task') -> ProcessRunException:
-
+    def from_exception(
+        process_model: ProcessModel, exception: Exception, error_prefix: str = "Error during task"
+    ) -> ProcessRunException:
         unique_code: str
 
         # create from a know exception
@@ -50,8 +50,12 @@ class ProcessRunException(BadRequestException):
             unique_code = None
 
         return ProcessRunException(
-            process_model=process_model, exception_detail=str(exception),
-            unique_code=unique_code, error_prefix=error_prefix, exception=exception)
+            process_model=process_model,
+            exception_detail=str(exception),
+            unique_code=unique_code,
+            error_prefix=error_prefix,
+            exception=exception,
+        )
 
     def get_error_message(self, context: str = None) -> str:
         error = ""
@@ -73,6 +77,8 @@ class CheckBeforeTaskStopException(BadRequestException):
     """
 
     def __init__(self, message: str) -> None:
-        super().__init__(detail=GWSException.TASK_CHECK_BEFORE_STOP.value,
-                         unique_code=GWSException.TASK_CHECK_BEFORE_STOP.name,
-                         detail_args={"message": message})
+        super().__init__(
+            detail=GWSException.TASK_CHECK_BEFORE_STOP.value,
+            unique_code=GWSException.TASK_CHECK_BEFORE_STOP.name,
+            detail_args={"message": message},
+        )

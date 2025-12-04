@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, List
 
 from gws_core.tag.tag_helper import TagHelper
@@ -10,11 +8,13 @@ from ..table import Table
 
 
 class TableUnfolderHelper:
-
     @classmethod
     def unfold_rows_by_tags(
-            cls, table: Table, keys: List[str],
-            tag_key_column_original_name: str = 'column_original_name') -> Table:
+        cls,
+        table: Table,
+        keys: List[str],
+        tag_key_column_original_name: str = "column_original_name",
+    ) -> Table:
         """Create new column for each column and tags combinaison
         Then it tags the column with the original column name
 
@@ -35,8 +35,8 @@ class TableUnfolderHelper:
 
     @classmethod
     def unfold_columns_by_tags(
-            cls, table: Table, keys: List[str],
-            tag_key_row_original_name: str = 'row_original_name') -> Table:
+        cls, table: Table, keys: List[str], tag_key_row_original_name: str = "row_original_name"
+    ) -> Table:
         """Create new row for each row and tags combinaison
         Then it tags the row with the original row name
 
@@ -69,7 +69,7 @@ class TableUnfolderHelper:
             if df.empty:
                 continue
 
-            tag_values = '_'.join(tags.values())
+            tag_values = "_".join(tags.values())
 
             row_index = 0
             complete_tags: List[dict] = []
@@ -90,7 +90,11 @@ class TableUnfolderHelper:
                 # create the tags for the new row
                 # get the row tags before the unfolder,
                 # append tags that are used to unfold and append the row name as tag
-                complete_tag = {**sub_table_row_tags[row_index], **tags, tag_key_row_original_name: row.name}
+                complete_tag = {
+                    **sub_table_row_tags[row_index],
+                    **tags,
+                    tag_key_row_original_name: row.name,
+                }
                 complete_tags.append(complete_tag)
                 row_index += 1
 
@@ -103,8 +107,8 @@ class TableUnfolderHelper:
     ############################################### USING ROW AND COLUMNS ######################################################
 
     def unfold_by_rows(
-            self, table: Table, rows: List[str],
-            tag_key_row_original_name: str = 'row_original_name') -> Table:
+        self, table: Table, rows: List[str], tag_key_row_original_name: str = "row_original_name"
+    ) -> Table:
         """Create new column for each column and rows combinaison
         Then it tags the column with the original column name
 
@@ -126,8 +130,11 @@ class TableUnfolderHelper:
         return self.unfold_columns_by_tags(table, rows, tag_key_row_original_name)
 
     def unfold_by_columns(
-            self, table: Table, columns: List[str],
-            tag_key_column_original_name: str = 'column_original_name') -> Table:
+        self,
+        table: Table,
+        columns: List[str],
+        tag_key_column_original_name: str = "column_original_name",
+    ) -> Table:
         """Create new row for each row and columns combinaison
         Then it tags the row with the original row name
 

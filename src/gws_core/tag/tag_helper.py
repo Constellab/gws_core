@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from typing import Dict, List
 
@@ -11,8 +9,7 @@ from gws_core.tag.tag_dto import TagDTO, TagValueFormat
 from .tag import Tag, TagValueType
 
 
-class TagHelper():
-
+class TagHelper:
     @classmethod
     def tags_to_json(cls, tags: List[Tag]) -> List[dict]:
         if not tags:
@@ -43,8 +40,7 @@ class TagHelper():
 
     @classmethod
     def get_distinct_values(cls, tags: List[Dict[str, str]]) -> Dict[str, List[str]]:
-        """Return a dictionary of tags key with the list of values for each key from a list of tags
-        """
+        """Return a dictionary of tags key with the list of values for each key from a list of tags"""
         all_tags: Dict[str, List[str]] = {}
         for tag in tags:
             for k, v in tag.items():
@@ -57,15 +53,13 @@ class TagHelper():
 
     @classmethod
     def get_distinct_values_for_key(cls, tags: List[Dict[str, str]], key: str) -> List[str]:
-        """Return a list of distinct values for a key from a list of tags
-        """
+        """Return a list of distinct values for a key from a list of tags"""
         distinct_tags = cls.get_distinct_values(tags)
         return distinct_tags.get(key, [])
 
     @classmethod
     def get_all_tags_combinasons(cls, distinct_tags: Dict[str, List[str]]) -> List[Dict[str, str]]:
-        """Return a list of all possible combinations of tags
-        """
+        """Return a list of all possible combinations of tags"""
         tag_values = [v for v in distinct_tags.values()]
 
         # 2D array where each element in a array representing a combination
@@ -88,7 +82,9 @@ class TagHelper():
     ################################ Tag value check ################################
 
     @classmethod
-    def check_and_convert_value(cls, value: TagValueType, value_format: TagValueFormat) -> TagValueType:
+    def check_and_convert_value(
+        cls, value: TagValueType, value_format: TagValueFormat
+    ) -> TagValueType:
         if value is None:
             raise Exception("The tag value cannot be None")
         try:

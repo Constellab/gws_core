@@ -1,4 +1,3 @@
-
 from typing import Any, List, Type
 
 from gws_core.core.model.base_model import BaseModel
@@ -8,8 +7,7 @@ from playhouse.migrate import MySQLMigrator
 
 
 class SqlMigrator:
-    """This object is to call sql migration script using peewee
-    """
+    """This object is to call sql migration script using peewee"""
 
     migrator: MySQLMigrator
 
@@ -22,14 +20,17 @@ class SqlMigrator:
     def add_migration(self, operation) -> None:
         self._operations.append(operation)
 
-    def add_column_if_not_exists(self, model_type: Type[BaseModel], field: Field,
-                                 column_name: str = None) -> bool:
+    def add_column_if_not_exists(
+        self, model_type: Type[BaseModel], field: Field, column_name: str = None
+    ) -> bool:
         new_column_name = column_name or field.column_name
         if not new_column_name:
             raise Exception("Column name must be provided")
         if model_type.column_exists(new_column_name):
             return False
-        self._operations.append(self.migrator.add_column(model_type.get_table_name(), new_column_name, field))
+        self._operations.append(
+            self.migrator.add_column(model_type.get_table_name(), new_column_name, field)
+        )
         return True
 
     def drop_column_if_exists(self, model_type: Type[BaseModel], column_name: str) -> bool:
@@ -39,12 +40,18 @@ class SqlMigrator:
         return True
 
     def alter_column_type(self, model_type: Type[BaseModel], field_name: str, field: Field) -> None:
-        self._operations.append(self.migrator.alter_column_type(model_type.get_table_name(), field_name, field))
+        self._operations.append(
+            self.migrator.alter_column_type(model_type.get_table_name(), field_name, field)
+        )
 
-    def rename_column_if_exists(self, model_type: Type[BaseModel], old_name: str, new_name: str) -> bool:
+    def rename_column_if_exists(
+        self, model_type: Type[BaseModel], old_name: str, new_name: str
+    ) -> bool:
         if not model_type.column_exists(old_name):
             return False
-        self._operations.append(self.migrator.rename_column(model_type.get_table_name(), old_name, new_name))
+        self._operations.append(
+            self.migrator.rename_column(model_type.get_table_name(), old_name, new_name)
+        )
         return True
 
     def drop_index_if_exists(self, model_type: Type[BaseModel], index_name: str) -> bool:
@@ -54,11 +61,13 @@ class SqlMigrator:
         return True
 
     def add_index_if_not_exists(
-            self, model_type: Type[BaseModel], index_name: str, columns: List[str],
-            unique: bool = False) -> bool:
+        self, model_type: Type[BaseModel], index_name: str, columns: List[str], unique: bool = False
+    ) -> bool:
         if model_type.index_exists(index_name):
             return False
-        self._operations.append(self.migrator.add_index(model_type.get_table_name(), columns, unique))
+        self._operations.append(
+            self.migrator.add_index(model_type.get_table_name(), columns, unique)
+        )
         return True
 
     def rename_table_if_exists(self, model_type: Type[BaseModel], old_name: str) -> bool:
@@ -82,26 +91,38 @@ class SqlMigrator:
         return True
 
     @classmethod
-    def rename_resource_typing_name(cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str) -> None:
+    def rename_resource_typing_name(
+        cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str
+    ) -> None:
         db.execute_sql(
-            f"UPDATE gws_resource SET resource_typing_name = '{new_typing_name}' where resource_typing_name = '{old_typing_name}'")
-        db.execute_sql(f"UPDATE gws_task SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+            f"UPDATE gws_resource SET resource_typing_name = '{new_typing_name}' where resource_typing_name = '{old_typing_name}'"
+        )
         db.execute_sql(
-            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+            f"UPDATE gws_task SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')"
+        )
+        db.execute_sql(
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')"
+        )
 
     @classmethod
-    def rename_process_typing_name(cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str) -> None:
+    def rename_process_typing_name(
+        cls, db: DatabaseProxy, old_typing_name: str, new_typing_name: str
+    ) -> None:
         db.execute_sql(
-            f"UPDATE gws_task SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")
+            f"UPDATE gws_task SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'"
+        )
         db.execute_sql(
-            f"UPDATE gws_protocol SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'")
+            f"UPDATE gws_protocol SET process_typing_name = '{new_typing_name}' where process_typing_name = '{old_typing_name}'"
+        )
 
         db.execute_sql(
-            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')")
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '{old_typing_name}', '{new_typing_name}')"
+        )
 
     @classmethod
     def rename_r_field_of_resource_type(
-            cls, resource_typing_name: str, old_field_name: str, new_field_name: str) -> None:
+        cls, resource_typing_name: str, old_field_name: str, new_field_name: str
+    ) -> None:
         """
         Rename a field in the resource model for all resources of a given typing name.
 
@@ -121,7 +142,8 @@ class SqlMigrator:
 
     @classmethod
     def rename_resource_model_r_field(
-            cls, resource_model: ResourceModel, old_field_name: str, new_field_name: str) -> None:
+        cls, resource_model: ResourceModel, old_field_name: str, new_field_name: str
+    ) -> None:
         """
         Rename a field in the resource model for a specific resource model.
 
@@ -147,7 +169,8 @@ class SqlMigrator:
 
     @classmethod
     def set_r_field_of_resource_type(
-            cls, resource_typing_name: str, field_name: str, value: Any) -> None:
+        cls, resource_typing_name: str, field_name: str, value: Any
+    ) -> None:
         """
         Set the value of an R field for all resources of a given typing name.
 
@@ -158,16 +181,19 @@ class SqlMigrator:
         :param value: The value to set for the field
         :type value: Any
         """
-        resource_models: List[ResourceModel] = list(ResourceModel.select().where(
-            (ResourceModel.resource_typing_name == resource_typing_name)
-        ))
+        resource_models: List[ResourceModel] = list(
+            ResourceModel.select().where(
+                (ResourceModel.resource_typing_name == resource_typing_name)
+            )
+        )
 
         for resource_model in resource_models:
             cls.set_resource_model_r_field(resource_model, field_name, value)
 
     @classmethod
     def set_resource_model_r_field(
-            cls, resource_model: ResourceModel, field_name: str, value: Any) -> None:
+        cls, resource_model: ResourceModel, field_name: str, value: Any
+    ) -> None:
         """
         Set the value of an R field for a resource model.
 

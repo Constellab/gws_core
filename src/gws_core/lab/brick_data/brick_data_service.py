@@ -1,19 +1,15 @@
-
-
 import os
 from typing import List, Literal
 
 from typing_extensions import TypedDict
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.brick_data.brick_data_dto import BrickDataDTO
 
 
-class BrickDataService():
-
+class BrickDataService:
     @classmethod
     def get_brick_data_list(cls) -> List[BrickDataDTO]:
         """
@@ -37,13 +33,15 @@ class BrickDataService():
             for node_name in os.listdir(brick_data_path):
                 sub_node_path = os.path.join(brick_data_path, node_name)
 
-                brick_data_list.append(BrickDataDTO(
-                    brick_name=brick_name,
-                    fs_node_name=node_name,
-                    fs_node_size=FileHelper.get_size(sub_node_path),
-                    fs_node_path=sub_node_path,
-                    fs_node_type='file' if FileHelper.is_file(sub_node_path) else 'folder',
-                ))
+                brick_data_list.append(
+                    BrickDataDTO(
+                        brick_name=brick_name,
+                        fs_node_name=node_name,
+                        fs_node_size=FileHelper.get_size(sub_node_path),
+                        fs_node_path=sub_node_path,
+                        fs_node_type="file" if FileHelper.is_file(sub_node_path) else "folder",
+                    )
+                )
 
         return brick_data_list
 
@@ -54,7 +52,7 @@ class BrickDataService():
         """
         main_dir = Settings.get_instance().get_brick_data_main_dir()
         if not fs_node_path.startswith(main_dir):
-            raise BadRequestException(f'Path {fs_node_path} is not a brick data path.')
+            raise BadRequestException(f"Path {fs_node_path} is not a brick data path.")
         FileHelper.delete_node(fs_node_path)
 
     @classmethod

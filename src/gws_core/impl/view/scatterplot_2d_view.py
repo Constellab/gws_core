@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -59,8 +57,15 @@ class ScatterPlot2DView(View):
     _type: ViewType = ViewType.SCATTER_PLOT_2D
     _title: str = "2D-Scatter Plot"
 
-    def add_series(self, x: List[float], y: List[float], name: str = None,
-                   x_name: str = None, y_name: str = None, tags: List[Dict[str, str]] = None):
+    def add_series(
+        self,
+        x: List[float],
+        y: List[float],
+        name: str = None,
+        x_name: str = None,
+        y_name: str = None,
+        tags: List[Dict[str, str]] = None,
+    ):
         """
         Add a series of points to plot
 
@@ -94,18 +99,18 @@ class ScatterPlot2DView(View):
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
-                raise BadRequestException("The tags must be a list of length equal to the length of x")
+                raise BadRequestException(
+                    "The tags must be a list of length equal to the length of x"
+                )
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
-        self._series.append({
-            "data": {
-                "x": x,
-                "y": y,
-                "tags": tags
-            },
-            "name": name,
-            "x_name": x_name,
-            "y_name": y_name,
-        })
+        self._series.append(
+            {
+                "data": {"x": x, "y": y, "tags": tags},
+                "name": name,
+                "x_name": x_name,
+                "y_name": y_name,
+            }
+        )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         return {

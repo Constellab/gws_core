@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import List, Literal
 
@@ -25,16 +23,21 @@ class ResourceDownloaderBase(Task):
     Abstract class to aggregate common methods for resource downloader tasks
 
     """
-    OUTPUT_NAME = 'resource'
+
+    OUTPUT_NAME = "resource"
 
     input_specs: InputSpecs = InputSpecs({})
-    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        Resource, human_name='Imported resource', sub_class=True)})
+    output_specs: OutputSpecs = OutputSpecs(
+        {"resource": OutputSpec(Resource, human_name="Imported resource", sub_class=True)}
+    )
     config_specs = ConfigSpecs({})
 
-    uncompressConfig = StrParam(human_name="Uncompress file", allowed_values=['auto', 'yes', 'no'],
-                                default_value='auto',
-                                short_description="Option to uncompress the file if it is compresses.")
+    uncompressConfig = StrParam(
+        human_name="Uncompress file",
+        allowed_values=["auto", "yes", "no"],
+        default_value="auto",
+        short_description="Option to uncompress the file if it is compresses.",
+    )
 
     resource_loader: ResourceLoader = None
 
@@ -43,32 +46,38 @@ class ResourceDownloaderBase(Task):
         pass
 
     def create_resource_from_file(
-            self, resource_file: str, uncompress_option: Literal['auto', 'yes', 'no'],
-            resource_loader_mode: ShareEntityCreateMode) -> Resource:
-        """Methode to create the resource from a file (once downloaded) and return it as a task output
-        """
+        self,
+        resource_file: str,
+        uncompress_option: Literal["auto", "yes", "no"],
+        resource_loader_mode: ShareEntityCreateMode,
+    ) -> Resource:
+        """Methode to create the resource from a file (once downloaded) and return it as a task output"""
 
         # case of a file that is not a zip, we directly save it as a resource
         if not Compress.is_compressed_file(resource_file):
-            if uncompress_option == 'yes':
+            if uncompress_option == "yes":
                 raise Exception("The file is not a compress file. Please disbale compress option.")
             self.log_info_message("Saving file as a resource")
             return File(resource_file)
 
-        if uncompress_option == 'no':
+        if uncompress_option == "no":
             self.log_info_message("Saving compressed file")
             return File(resource_file)
 
         # Convert the zip file to a resource
         try:
             self.log_info_message("Uncompressing the file")
-            self.resource_loader = ResourceLoader.from_compress_file(resource_file, resource_loader_mode)
+            self.resource_loader = ResourceLoader.from_compress_file(
+                resource_file, resource_loader_mode
+            )
         except Exception as err:
-            if uncompress_option == 'yes':
+            if uncompress_option == "yes":
                 raise Exception("Error while unzipping the file. Error: {err}.")
 
             # skip if the option is auto
-            self.log_error_message(f"Error while unzipping the file. Saving the file without decompress. Error: {err}.")
+            self.log_error_message(
+                f"Error while unzipping the file. Saving the file without decompress. Error: {err}."
+            )
             return File(resource_file)
 
         self.log_info_message("Loading the resource")
@@ -80,8 +89,7 @@ class ResourceDownloaderBase(Task):
         return resource
 
     def run_after_task(self) -> None:
-        """Save share info, clean temp files, etc
-        """
+        """Save share info, clean temp files, etc"""
         if not self.resource_loader:
             return
 
@@ -96,6 +104,9 @@ class ResourceDownloaderBase(Task):
         self.log_info_message("Storing the resource origin info")
         resources: List[Resource] = self.resource_loader.get_all_generated_resources()
         for resource in resources:
-            SharedResource.create_from_lab_info(resource.get_model_id(), SharedEntityMode.RECEIVED,
-                                                self.resource_loader.get_origin_info(),
-                                                CurrentUserService.get_and_check_current_user())
+            SharedResource.create_from_lab_info(
+                resource.get_model_id(),
+                SharedEntityMode.RECEIVED,
+                self.resource_loader.get_origin_info(),
+                CurrentUserService.get_and_check_current_user(),
+            )

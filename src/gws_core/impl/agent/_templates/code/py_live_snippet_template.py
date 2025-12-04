@@ -12,7 +12,7 @@
 from gws_core import Table
 
 # access task method to log a messages
-self.log_info_message('Transposing table')
+self.log_info_message("Transposing table")
 # Transpose the input table
 table: Table = sources[0].transpose()
 

@@ -4,8 +4,7 @@ import os
 import streamlit as st
 
 from gws_core import FileHelper, OpenAiHelper
-from gws_core.streamlit import (StreamlitContainers, StreamlitHelper,
-                                StreamlitOpenAiChat)
+from gws_core.streamlit import StreamlitContainers, StreamlitHelper, StreamlitOpenAiChat
 
 
 def load_prompts(prompts_json_path: str) -> dict:
@@ -15,7 +14,7 @@ def load_prompts(prompts_json_path: str) -> dict:
         return {}
 
     try:
-        with open(prompts_json_path, 'r') as f:
+        with open(prompts_json_path, "r") as f:
             return json.load(f)
     except Exception as e:
         st.error(f"Error loading prompts file: {str(e)}")
@@ -25,8 +24,7 @@ def load_prompts(prompts_json_path: str) -> dict:
 def render_chat_page(prompts_json_path: str):
     """Render the chat page with prompt selection"""
 
-    with StreamlitContainers.container_centered('chat'):
-
+    with StreamlitContainers.container_centered("chat"):
         st.title("Documentation AI Assistant")
 
         # Load prompts
@@ -41,14 +39,16 @@ def render_chat_page(prompts_json_path: str):
         prompt_names = list(prompts.keys())
 
         # Initialize selected prompt in session state if not exists
-        if 'selected_prompt_name' not in st.session_state:
+        if "selected_prompt_name" not in st.session_state:
             st.session_state.selected_prompt_name = prompt_names[0]
 
         selected_prompt_name = st.selectbox(
             "Choose a prompt:",
             options=prompt_names,
-            index=prompt_names.index(st.session_state.selected_prompt_name) if st.session_state.selected_prompt_name in prompt_names else 0,
-            key='prompt_selector'
+            index=prompt_names.index(st.session_state.selected_prompt_name)
+            if st.session_state.selected_prompt_name in prompt_names
+            else 0,
+            key="prompt_selector",
         )
 
         # Update session state
@@ -64,15 +64,15 @@ def render_chat_page(prompts_json_path: str):
         st.divider()
 
         # Load chat history for this specific prompt
-        chat_key = f'chat_{selected_prompt_name.replace(" ", "_").lower()}'
+        chat_key = f"chat_{selected_prompt_name.replace(' ', '_').lower()}"
         streamlit_ai_chat = StreamlitOpenAiChat.load_from_session(chat_key, selected_prompt)
 
         # Display header with clear chat button
-        col1, col2 = StreamlitContainers.columns_with_fit_content('chat-header', [1, 'fit-content'])
+        col1, col2 = StreamlitContainers.columns_with_fit_content("chat-header", [1, "fit-content"])
         with col1:
             st.info(f"Chat with: {selected_prompt_name}")
         with col2:
-            if st.button("New chat", key='new_chat'):
+            if st.button("New chat", key="new_chat"):
                 streamlit_ai_chat.reset()
                 st.rerun()
 
@@ -81,13 +81,13 @@ def render_chat_page(prompts_json_path: str):
         st.divider()
 
         # Generate from audio file
-        st.subheader('Generate from audio file')
-        file = st.file_uploader("Upload an audio file",
-                                type=['mp3', 'wav', 'flac'],
-                                key='audio_file')
+        st.subheader("Generate from audio file")
+        file = st.file_uploader(
+            "Upload an audio file", type=["mp3", "wav", "flac"], key="audio_file"
+        )
 
         no_file = file is None
-        if st.button('Generate documentation from audio', disabled=no_file):
+        if st.button("Generate documentation from audio", disabled=no_file):
             text = _transcribe_audio_file(file)
             if text:
                 _generate_doc_from_text(streamlit_ai_chat, text)
@@ -95,9 +95,9 @@ def render_chat_page(prompts_json_path: str):
         st.divider()
 
         # Generate from text
-        st.subheader('Generate from text')
+        st.subheader("Generate from text")
 
-        text = st.chat_input('Paste the text to generate the documentation')
+        text = st.chat_input("Paste the text to generate the documentation")
 
         if text:
             _generate_doc_from_text(streamlit_ai_chat, text)
@@ -108,13 +108,15 @@ def _transcribe_audio_file(file):
     file_path = StreamlitHelper.store_uploaded_file_in_tmp_dir(file)
 
     text: str = None
-    with st.spinner('Transcribing the audio file...'):
+    with st.spinner("Transcribing the audio file..."):
         # Call whisper
-        text = OpenAiHelper.call_whisper(file_path, prompt='Transcribe the audio file in corresponding language')
+        text = OpenAiHelper.call_whisper(
+            file_path, prompt="Transcribe the audio file in corresponding language"
+        )
         FileHelper.delete_dir(file_path)
 
     if not text:
-        st.error('Failed to transcribe the audio file. Please try again.')
+        st.error("Failed to transcribe the audio file. Please try again.")
 
     return text
 
@@ -124,7 +126,7 @@ def _generate_doc_from_text(streamlit_ai_chat: StreamlitOpenAiChat, text: str):
     streamlit_ai_chat.add_user_message(text)
 
     response: str = None
-    with st.spinner('Generating documentation...'):
+    with st.spinner("Generating documentation..."):
         response = streamlit_ai_chat.chat.call_gpt()
 
     if response:

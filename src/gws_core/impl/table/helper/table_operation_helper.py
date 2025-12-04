@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from re import split, sub
 from typing import List
@@ -18,33 +16,33 @@ class TableOperationUnknownColumnOption(Enum):
     """Options for unknown column in operation"""
 
     # Throw an error if the column is unknown
-    ERROR = 'Error'
+    ERROR = "Error"
     # Set the result to NaN if 1 column is unknown
-    SET_RESULT_TO_NAN = 'Set result to NaN'
+    SET_RESULT_TO_NAN = "Set result to NaN"
     # Replace the unknown columns with 0
-    REPLACE_WITH_0 = 'Replace unknown columns with 0'
+    REPLACE_WITH_0 = "Replace unknown columns with 0"
 
 
-class TableOperationHelper():
-
+class TableOperationHelper:
     # custom str to set NaN on eval, the string is then replace with real NaN
-    _NaN_str = '__NaN__'
+    _NaN_str = "__NaN__"
 
-    OPERATION_SEPARATOR: str = '\n'
+    OPERATION_SEPARATOR: str = "\n"
 
     @staticmethod
-    def column_operations(source: Table, operations: List[str], keep_original_columns: bool) -> Table:
-
+    def column_operations(
+        source: Table, operations: List[str], keep_original_columns: bool
+    ) -> Table:
         if not isinstance(operations, list):
-            raise Exception('The operations must be a list')
+            raise Exception("The operations must be a list")
 
         clean_operations: List[str] = []
         column_names = source.column_names
         for operation in operations:
-            if '=' in operation:
+            if "=" in operation:
                 clean_operations.append(operation)
             else:
-                column_name = Utils.generate_unique_str_for_list(column_names, 'Result')
+                column_name = Utils.generate_unique_str_for_list(column_names, "Result")
                 clean_operations.append(f"{column_name} = {operation}")
                 # append the new column name to the list of column names to avoid duplicates 'Result' columns
                 column_names.append(column_name)
@@ -54,7 +52,7 @@ class TableOperationHelper():
 
         dataframe = source.get_data()
 
-        eval_dataframe: DataFrame = dataframe.eval(str_operation, engine='python')
+        eval_dataframe: DataFrame = dataframe.eval(str_operation, engine="python")
         eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN)
         result_table: Table
 
@@ -84,15 +82,20 @@ class TableOperationHelper():
     @staticmethod
     def row_operation(source: Table, operations: List[str], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
-        result_transposed = TableOperationHelper.column_operations(t_table, operations, keep_original_rows)
+        result_transposed = TableOperationHelper.column_operations(
+            t_table, operations, keep_original_rows
+        )
         return result_transposed.transpose(infer_objects=True)
 
     @staticmethod
     def column_mass_operations(
-            table: Table, operation_df: DataFrame, operation_name_column: str = None,
-            operation_calculations_column: str = None,
-            replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
-            keep_original_columns: bool = False) -> Table:
+        table: Table,
+        operation_df: DataFrame,
+        operation_name_column: str = None,
+        operation_calculations_column: str = None,
+        replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
+        keep_original_columns: bool = False,
+    ) -> Table:
         """Call multiple operations on table, the operations must be stored in a DataFrame.
 
         :param table: _description_
@@ -114,8 +117,7 @@ class TableOperationHelper():
         operations: List[str] = []
 
         if operation_df.shape[1] < 2:
-            raise Exception(
-                "The operation table must have at least 2 columns")
+            raise Exception("The operation table must have at least 2 columns")
 
         # check operation_name_column
         if not operation_name_column:
@@ -123,7 +125,8 @@ class TableOperationHelper():
         else:
             if operation_name_column not in operation_df.columns:
                 raise Exception(
-                    f"The operation name column '{operation_name_column}' does not exist in the operation table, please check your configuration")
+                    f"The operation name column '{operation_name_column}' does not exist in the operation table, please check your configuration"
+                )
 
         # check operation_column
         if not operation_calculations_column:
@@ -131,7 +134,8 @@ class TableOperationHelper():
         else:
             if operation_calculations_column not in operation_df.columns:
                 raise Exception(
-                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration")
+                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration"
+                )
 
         for _, row in operation_df.iterrows():
             operation: str = str(row.iloc[operation_calculations_column])
@@ -146,7 +150,9 @@ class TableOperationHelper():
                     clean_operation = operation
             else:
                 # remove the unknown columns
-                clean_operation = TableOperationHelper._clean_operation_unknown_columns(operation, table)
+                clean_operation = TableOperationHelper._clean_operation_unknown_columns(
+                    operation, table
+                )
 
             # create the operation
             operations.append(f"{row.iloc[operation_name_column]} = {clean_operation}")
@@ -155,16 +161,15 @@ class TableOperationHelper():
 
     @staticmethod
     def _operation_contains_unknown_column(operation: str, table: Table) -> bool:
-        """ Replace the unknown column name with '0' in the operation"""
+        """Replace the unknown column name with '0' in the operation"""
         clean_operation = StringHelper.remove_whitespaces(operation)
 
         # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
-        column_names = split(r'\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
+        column_names = split(r"\+|-|/|\*|\(|\)|\%|\^|>|<|=", clean_operation)
         column_names = [x for x in column_names if x]
 
         # check if the column name is in the table or a float
         for column_name in column_names:
-
             # if the element is a number, skip it
             column_int = NumericHelper.to_float(column_name)
             if column_int is not None:
@@ -178,16 +183,15 @@ class TableOperationHelper():
 
     @staticmethod
     def _clean_operation_unknown_columns(operation: str, table: Table) -> str:
-        """ Replace the unknown column name with '0' in the operation"""
+        """Replace the unknown column name with '0' in the operation"""
         clean_operation = StringHelper.remove_whitespaces(operation)
 
         # split by all basic operator : +,-,*,/,^,(,),>,<,= to check column name
-        column_names = split(r'\+|-|/|\*|\(|\)|\%|\^|>|<|=', clean_operation)
+        column_names = split(r"\+|-|/|\*|\(|\)|\%|\^|>|<|=", clean_operation)
         column_names = [x for x in column_names if x]
 
         # check if the column name is in the table or a float
         for column_name in column_names:
-
             # if the element is a number, skip it
             column_int = NumericHelper.to_float(column_name)
             if column_int is not None:
@@ -196,8 +200,8 @@ class TableOperationHelper():
             # check if the column name exist and if not, replace it with '0'
             if column_name not in table.column_names:
                 # replace the column name with '0' using \b to word delimiter
-                clean_operation = sub(rf'\b{column_name}\b', '0', clean_operation)
+                clean_operation = sub(rf"\b{column_name}\b", "0", clean_operation)
 
         # replace +0 and -0 with empty string to lighten the operation
-        clean_operation = sub(r'\+0|\-0', '', clean_operation)
+        clean_operation = sub(r"\+0|\-0", "", clean_operation)
         return clean_operation

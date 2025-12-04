@@ -1,5 +1,3 @@
-
-
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.primitive_r_field import StrRField
 from gws_core.resource.r_field.r_field import RFieldStorage
@@ -12,8 +10,12 @@ from ...resource.view.view_decorator import view
 from .text_view import TextView
 
 
-@resource_decorator("Text", human_name="Text", short_description="Resource that holds a text",
-                    style=TypingStyle.material_icon("text_snippet", background_color="#e4debe"))
+@resource_decorator(
+    "Text",
+    human_name="Text",
+    short_description="Resource that holds a text",
+    style=TypingStyle.material_icon("text_snippet", background_color="#e4debe"),
+)
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
     _data: str = StrRField(storage=RFieldStorage.KV_STORE)
@@ -27,15 +29,15 @@ class Text(Resource):
             data = ""
 
         if not isinstance(data, str):
-            raise BadRequestException(
-                "The data must be a string")
+            raise BadRequestException("The data must be a string")
         self._data = data
 
     def get_data(self) -> str:
         return self._data
 
-    @view(view_type=TextView, human_name='Text', short_description='View as text',
-          default_view=True)
+    @view(
+        view_type=TextView, human_name="Text", short_description="View as text", default_view=True
+    )
     def view_as_text(self, params: ConfigParams) -> TextView:
         """
         View as table

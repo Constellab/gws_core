@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -14,11 +12,10 @@ from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 
 from .monitor import Monitor
-from .monitor_dto import (CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO,
-                          MonitorFreeDiskDTO)
+from .monitor_dto import CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO, MonitorFreeDiskDTO
 
 
-class MonitorService():
+class MonitorService:
     _is_initialized: bool = False
 
     # Define the percentage of free disk space to keep
@@ -84,24 +81,17 @@ class MonitorService():
         )
 
     @classmethod
-    def get_monitor_graphics_between_dates_str(cls,
-                                               from_date_str: str,
-                                               to_date_str: str,
-                                               utc_num: float = 0.0) -> MonitorBetweenDateGraphicsDTO:
+    def get_monitor_graphics_between_dates_str(
+        cls, from_date_str: str, to_date_str: str, utc_num: float = 0.0
+    ) -> MonitorBetweenDateGraphicsDTO:
         return cls.get_monitor_data_graphics_between_dates(
-            DateHelper.from_iso_str(from_date_str),
-            DateHelper.from_iso_str(to_date_str),
-            utc_num,
-            0
+            DateHelper.from_iso_str(from_date_str), DateHelper.from_iso_str(to_date_str), utc_num, 0
         )
 
     @classmethod
-    def get_plotly_figure_dict(cls,
-                               dataframe: DataFrame,
-                               x: str,
-                               y: list,
-                               y_labs: dict = None) -> dict:
-
+    def get_plotly_figure_dict(
+        cls, dataframe: DataFrame, x: str, y: list, y_labs: dict = None
+    ) -> dict:
         # Create the plotly figure from the dataframe
 
         figure = px.line(dataframe, x=x, y=y, markers=True)
@@ -111,32 +101,35 @@ class MonitorService():
             lambda t: t.update(
                 name=y_labs[t.name],
                 legendgroup=y_labs[t.name],
-                hovertemplate=t.hovertemplate.replace(t.name, y_labs[t.name])
+                hovertemplate=t.hovertemplate.replace(t.name, y_labs[t.name]),
             )
         )
 
         figure.update_layout(
             {
-                'title': '',
-                'xaxis_title': '',
-                'yaxis_title': '',
-                'legend_title': '',
+                "title": "",
+                "xaxis_title": "",
+                "yaxis_title": "",
+                "legend_title": "",
             }
         )
 
         # set the background color
-        figure.update_layout(PlotlyResource.get_current_user_layout_colors(use_secondary_background=True))
+        figure.update_layout(
+            PlotlyResource.get_current_user_layout_colors(use_secondary_background=True)
+        )
 
         # Convert the figure to a dict
         return PlotlyRField.figure_to_dict(figure)
 
     @classmethod
-    def get_monitor_data_graphics_between_dates(cls,
-                                                from_date: datetime,
-                                                to_date: datetime,
-                                                utc_number: float = 0,
-                                                seconds_margin: int = None) -> MonitorBetweenDateGraphicsDTO:
-
+    def get_monitor_data_graphics_between_dates(
+        cls,
+        from_date: datetime,
+        to_date: datetime,
+        utc_number: float = 0,
+        seconds_margin: int = None,
+    ) -> MonitorBetweenDateGraphicsDTO:
         # add tick interval to be sure to have at least one tick
         if seconds_margin is None:
             seconds_margin = Settings.get_monitor_tick_interval_log()
@@ -144,9 +137,11 @@ class MonitorService():
         from_date = from_date - timedelta(seconds=seconds_margin)
         to_date = to_date + timedelta(seconds=seconds_margin)
 
-        monitors = list(Monitor.select().where(
-            Monitor.created_at >= from_date,
-            Monitor.created_at <= to_date).order_by(Monitor.created_at))
+        monitors = list(
+            Monitor.select()
+            .where(Monitor.created_at >= from_date, Monitor.created_at <= to_date)
+            .order_by(Monitor.created_at)
+        )
 
         if len(monitors) == 0:
             raise Exception("No monitor data found between the given dates")
@@ -162,49 +157,55 @@ class MonitorService():
                 cpu_figure={},
                 network_figure={},
                 gpu_figure={},
-                gpu_enabled=Settings.gpu_is_available()
+                gpu_enabled=Settings.gpu_is_available(),
             )
 
         # Add the utc number to the date if needed for plotly to display the correct date
-        df['created_at'] = to_datetime(df['created_at'], utc=True)
+        df["created_at"] = to_datetime(df["created_at"], utc=True)
         if utc_number != 0:
-            df['created_at'] = df['created_at'] + Timedelta(hours=utc_number)
+            df["created_at"] = df["created_at"] + Timedelta(hours=utc_number)
 
         # Create the main figure
         y_labels = {
-            'cpu_percent': 'CPU',
-            'disk_usage_percent': 'Disk Usage',
-            'ram_usage_percent': 'RAM Usage',
-            'swap_memory_percent': 'Swap Memory'
+            "cpu_percent": "CPU",
+            "disk_usage_percent": "Disk Usage",
+            "ram_usage_percent": "RAM Usage",
+            "swap_memory_percent": "Swap Memory",
         }
         main_figure = cls.get_plotly_figure_dict(
-            df, 'created_at',
-            ['cpu_percent', 'disk_usage_percent', 'ram_usage_percent',
-             'swap_memory_percent'],
-            y_labels)
+            df,
+            "created_at",
+            ["cpu_percent", "disk_usage_percent", "ram_usage_percent", "swap_memory_percent"],
+            y_labels,
+        )
 
         # Create the cpu figure
-        df_cpu = df['data'].apply(lambda x: Series(x['all_cpu_percent']))
-        df_cpu_columns = [f'CPU {i} (%)' for i in range(len(df_cpu.columns))]
+        df_cpu = df["data"].apply(lambda x: Series(x["all_cpu_percent"]))
+        df_cpu_columns = [f"CPU {i} (%)" for i in range(len(df_cpu.columns))]
         df_cpu.columns = df_cpu_columns
-        df_cpu = concat([df['created_at'], df_cpu], axis=1)
+        df_cpu = concat([df["created_at"], df_cpu], axis=1)
 
-        cpu_figure = cls.get_plotly_figure_dict(df_cpu, 'created_at', df_cpu_columns)
+        cpu_figure = cls.get_plotly_figure_dict(df_cpu, "created_at", df_cpu_columns)
 
         # Create the network figure
         df_network = concat(
-            [df['created_at'],
-             df['net_io_bytes_recv'] / (1024 * 1024),
-             df['net_io_bytes_sent'] / (1024 * 1024)],
-            axis=1)
-        df_network_columns = ['created_at', 'In (Mb)', 'Out (Mb)']
+            [
+                df["created_at"],
+                df["net_io_bytes_recv"] / (1024 * 1024),
+                df["net_io_bytes_sent"] / (1024 * 1024),
+            ],
+            axis=1,
+        )
+        df_network_columns = ["created_at", "In (Mb)", "Out (Mb)"]
         df_network.columns = df_network_columns
-        network_figure = cls.get_plotly_figure_dict(df_network, 'created_at', ['In (Mb)', 'Out (Mb)'])
+        network_figure = cls.get_plotly_figure_dict(
+            df_network, "created_at", ["In (Mb)", "Out (Mb)"]
+        )
 
         # Create the gpu figure
-        df_gpu = concat([df['created_at'], df['gpu_temperature']], axis=1)
-        df_gpu.columns = ['created_at', 'GPU Temperature']
-        gpu_figure = cls.get_plotly_figure_dict(df_gpu, 'created_at', ['GPU Temperature'])
+        df_gpu = concat([df["created_at"], df["gpu_temperature"]], axis=1)
+        df_gpu.columns = ["created_at", "GPU Temperature"]
+        gpu_figure = cls.get_plotly_figure_dict(df_gpu, "created_at", ["GPU Temperature"])
 
         return MonitorBetweenDateGraphicsDTO(
             from_date=from_date,
@@ -213,16 +214,18 @@ class MonitorService():
             cpu_figure=cpu_figure,
             network_figure=network_figure,
             gpu_figure=gpu_figure,
-            gpu_enabled=Settings.gpu_is_available()
+            gpu_enabled=Settings.gpu_is_available(),
         )
 
     @classmethod
     def cleanup_old_monitor_data(cls):
-
         # Keep only last x records
-        monitor: Monitor = Monitor.select().order_by(
-            Monitor.created_at.desc()).offset(
-            Settings.get_monitor_log_max_lines()).first()
+        monitor: Monitor = (
+            Monitor.select()
+            .order_by(Monitor.created_at.desc())
+            .offset(Settings.get_monitor_log_max_lines())
+            .first()
+        )
 
         if monitor is None:
             return
@@ -231,8 +234,7 @@ class MonitorService():
 
     @classmethod
     def get_free_disk_info(cls) -> MonitorFreeDiskDTO:
-        """Get information about the free disk space.
-        """
+        """Get information about the free disk space."""
         disk_usage = Monitor.get_current_disk_usage()
 
         required_free_disk = Settings.get_monitor_required_free_disk_space()
@@ -242,12 +244,12 @@ class MonitorService():
             required_free_tmp = disk_usage.total * cls.DEFAULT_PERCENTAGE_FREE_DISK_SPACE / 100
             required_free_disk = max(
                 min(required_free_tmp, cls.DEFAULT_MAX_FREE_DISK_SPACE),
-                cls.DEFAULT_MIN_FREE_DISK_SPACE)
+                cls.DEFAULT_MIN_FREE_DISK_SPACE,
+            )
 
         # Ensure required_free_disk is not negative
         required_free_disk = max(required_free_disk, 0)
 
         return MonitorFreeDiskDTO(
-            required_disk_free_space=required_free_disk,
-            disk_usage_free=disk_usage.free
+            required_disk_free_space=required_free_disk, disk_usage_free=disk_usage.free
         )

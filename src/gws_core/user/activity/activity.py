@@ -1,12 +1,8 @@
-
-
 from datetime import datetime, timedelta
 from typing import Optional, final
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.user.activity.activity_dto import (ActivityDTO,
-                                                 ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityDTO, ActivityObjectType, ActivityType
 from peewee import CharField, ForeignKeyField
 
 from ...core.model.model import Model
@@ -30,15 +26,17 @@ class Activity(Model):
     ACTIVITY_MERGE_MAX_TIME = 60 * 5
 
     @classmethod
-    def add(cls, activity_type: ActivityType, object_type: ActivityObjectType,
-            object_id: str, user: User = None) -> "Activity":
+    def add(
+        cls,
+        activity_type: ActivityType,
+        object_type: ActivityObjectType,
+        object_id: str,
+        user: User = None,
+    ) -> "Activity":
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
         activity = Activity(
-            user=user,
-            activity_type=activity_type,
-            object_type=object_type,
-            object_id=object_id
+            user=user, activity_type=activity_type, object_type=object_type, object_id=object_id
         )
         return activity.save()
 
@@ -47,10 +45,13 @@ class Activity(Model):
         return Activity.select().order_by(Activity.last_modified_at.desc()).first()
 
     @classmethod
-    def add_or_update(cls, activity_type: ActivityType,
-                      object_type: ActivityObjectType, object_id: str,
-                      user: User = None) -> "Activity":
-
+    def add_or_update(
+        cls,
+        activity_type: ActivityType,
+        object_type: ActivityObjectType,
+        object_id: str,
+        user: User = None,
+    ) -> "Activity":
         max_date = datetime.now() - timedelta(seconds=Activity.ACTIVITY_MERGE_MAX_TIME)
 
         same_activity = Activity.get_last_of_type(
@@ -58,7 +59,7 @@ class Activity(Model):
             object_type=object_type,
             object_id=object_id,
             max_date=max_date,
-            user=user
+            user=user,
         )
 
         if same_activity is not None:
@@ -68,9 +69,14 @@ class Activity(Model):
             return cls.add(activity_type, object_type, object_id, user)
 
     @classmethod
-    def get_last_of_type(cls, activity_type: ActivityType,
-                         object_type: ActivityObjectType, object_id: str,
-                         max_date: datetime, user: User = None) -> Optional["Activity"]:
+    def get_last_of_type(
+        cls,
+        activity_type: ActivityType,
+        object_type: ActivityObjectType,
+        object_id: str,
+        max_date: datetime,
+        user: User = None,
+    ) -> Optional["Activity"]:
         """Method to check if an activity exists for a given type and object
         and is more recent than a given date
 
@@ -79,13 +85,18 @@ class Activity(Model):
         """
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
-        return Activity.select().where(
-            (Activity.activity_type == activity_type) &
-            (Activity.user == user) &
-            (Activity.object_type == object_type) &
-            (Activity.object_id == object_id) &
-            (Activity.last_modified_at > max_date)
-        ).order_by(Activity.created_at.desc()).first()
+        return (
+            Activity.select()
+            .where(
+                (Activity.activity_type == activity_type)
+                & (Activity.user == user)
+                & (Activity.object_type == object_type)
+                & (Activity.object_id == object_id)
+                & (Activity.last_modified_at > max_date)
+            )
+            .order_by(Activity.created_at.desc())
+            .first()
+        )
 
     def to_dto(self) -> ActivityDTO:
         return ActivityDTO(
@@ -99,5 +110,5 @@ class Activity(Model):
         )
 
     class Meta:
-        table_name = 'gws_user_activity'
+        table_name = "gws_user_activity"
         is_table = True

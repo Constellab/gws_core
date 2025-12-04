@@ -51,7 +51,12 @@ class AppPluginDownloader:
     message_dispatcher: MessageDispatcher
     destination_folder: str
 
-    def __init__(self, package_name: str, destination_folder: str = None, message_dispatcher: MessageDispatcher = None):
+    def __init__(
+        self,
+        package_name: str,
+        destination_folder: str = None,
+        message_dispatcher: MessageDispatcher = None,
+    ):
         """Initialize the ComponentPackageDownloader.
 
         :param package_name: Name of the package to manage (iframe-message or streamlit-components)
@@ -61,9 +66,15 @@ class AppPluginDownloader:
         :param message_dispatcher: Optional message dispatcher for logging, defaults to None
         :type message_dispatcher: MessageDispatcher, optional
         """
-        available_packages = [self.STREAMLIT_IFRAME_MESSAGE, self.STREAMLIT_COMPONENTS, self.REFLEX_COMPONENTS]
+        available_packages = [
+            self.STREAMLIT_IFRAME_MESSAGE,
+            self.STREAMLIT_COMPONENTS,
+            self.REFLEX_COMPONENTS,
+        ]
         if package_name not in available_packages:
-            raise ValueError(f"Invalid package name: {package_name}. Must be either {', '.join(available_packages)}.")
+            raise ValueError(
+                f"Invalid package name: {package_name}. Must be either {', '.join(available_packages)}."
+            )
 
         if message_dispatcher is None:
             message_dispatcher = MessageDispatcher()
@@ -76,7 +87,9 @@ class AppPluginDownloader:
             self.destination_folder = destination_folder
         else:
             settings = Settings.get_instance()
-            self.destination_folder = os.path.join(settings.get_brick_data_dir(BrickHelper.GWS_CORE), package_name)
+            self.destination_folder = os.path.join(
+                settings.get_brick_data_dir(BrickHelper.GWS_CORE), package_name
+            )
 
     def get_version_folder_path(self) -> str:
         """Get the path to the version folder (e.g., dc_2.0.0).
@@ -109,7 +122,9 @@ class AppPluginDownloader:
         if not force_download:
             existing_version = self.get_installed_version()
             if existing_version == self.DASHBOARD_COMPONENTS_VERSION:
-                Logger.debug(f"Package {self.package_name} version {existing_version} is already installed.")
+                Logger.debug(
+                    f"Package {self.package_name} version {existing_version} is already installed."
+                )
                 return self.destination_folder
 
         # Uninstall existing package if it exists
@@ -131,7 +146,9 @@ class AppPluginDownloader:
         FileHelper.create_dir_if_not_exist(parent_dir)
 
         # Download and extract the package
-        Logger.info(f"Downloading package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}")
+        Logger.info(
+            f"Downloading package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}"
+        )
 
         file_downloader = FileDownloader(parent_dir, message_dispatcher=self.message_dispatcher)
         download_url = self._get_package_download_url(self.package_name)
@@ -156,7 +173,9 @@ class AppPluginDownloader:
                 f"Installed version is '{installed_version}'."
             )
 
-        Logger.info(f"Successfully installed package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}")
+        Logger.info(
+            f"Successfully installed package {self.package_name} version {self.DASHBOARD_COMPONENTS_VERSION}"
+        )
 
     def _install_from_local_folder(self) -> None:
         """Move the gws_plugin from the local folder to the destination.
@@ -166,7 +185,9 @@ class AppPluginDownloader:
         If the source folder doesn't exist, this method does nothing (no error is raised).
         Version checking is skipped in this mode.
         """
-        Logger.info(f"Installing package {self.package_name} from local folder: {self.LOCAL_PLUGIN_PATH}")
+        Logger.info(
+            f"Installing package {self.package_name} from local folder: {self.LOCAL_PLUGIN_PATH}"
+        )
         if not os.path.exists(self.LOCAL_PLUGIN_PATH):
             Logger.info(
                 f"Local plugin path does not exist: {self.LOCAL_PLUGIN_PATH}. Skipping installation from local folder."

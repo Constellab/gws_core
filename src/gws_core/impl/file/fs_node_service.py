@@ -1,5 +1,3 @@
-
-
 import os
 import shutil
 from pathlib import Path
@@ -20,8 +18,7 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
 from typing_extensions import Buffer
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
 from ...model.typing_manager import TypingManager
 from ...resource.resource_model import ResourceModel
@@ -34,21 +31,18 @@ from .fs_node import FSNode
 from .local_file_store import LocalFileStore
 
 
-class FsNodeService():
-
+class FsNodeService:
     @classmethod
     def download_file(cls, fs_node_id: str) -> File:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(fs_node_id)
         resource = resource_model.get_resource()
 
         if not isinstance(resource, File):
-            raise BadRequestException(
-                "Can't download resource because it is not an File")
+            raise BadRequestException("Can't download resource because it is not an File")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.node_path_exists(resource.path):
-            raise NotFoundException(
-                "The file does not exists on the server. It has been deleted")
+            raise NotFoundException("The file does not exists on the server. It has been deleted")
 
         return resource
 
@@ -58,13 +52,11 @@ class FsNodeService():
         resource = resource_model.get_resource()
 
         if not isinstance(resource, File):
-            raise BadRequestException(
-                "Can't preview resource because it is not an File")
+            raise BadRequestException("Can't preview resource because it is not an File")
 
         file_store: FileStore = LocalFileStore.get_default_instance()
         if not file_store.node_path_exists(resource.path):
-            raise NotFoundException(
-                "The file does not exists on the server. It has been deleted")
+            raise NotFoundException("The file does not exists on the server. It has been deleted")
 
         # check if the filename and resource uid are valid
         if resource.get_name() != file_name or resource.uid != resource_uid:
@@ -77,18 +69,18 @@ class FsNodeService():
     @classmethod
     @GwsCoreDbManager.transaction()
     def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
-        """Upload a file to the store and create the resource.
-        """
+        """Upload a file to the store and create the resource."""
         file_type: Type[File] = TypingManager.get_and_check_type_from_name(typing_name)
 
         temp_dir = Settings.make_temp_dir()
         # create the file in the temp dir
-        file_path = cls.create_tmp_file(upload_file.file, os.path.join(temp_dir, upload_file.filename))
+        file_path = cls.create_tmp_file(
+            upload_file.file, os.path.join(temp_dir, upload_file.filename)
+        )
 
         file: File = file_type(file_path)
 
         try:
-
             # Call the check resource on file
             try:
                 error = file.check_resource()
@@ -96,8 +88,11 @@ class FsNodeService():
                 error = str(err)
                 Logger.log_exception_stack_trace(err)
             if error is not None and len(error):
-                raise BadRequestException(GWSException.INVALID_FILE_ON_UPLOAD.value,
-                                          GWSException.INVALID_FILE_ON_UPLOAD.name, {'error': error})
+                raise BadRequestException(
+                    GWSException.INVALID_FILE_ON_UPLOAD.value,
+                    GWSException.INVALID_FILE_ON_UPLOAD.name,
+                    {"error": error},
+                )
 
             return cls.create_fs_node_model(file)
         finally:
@@ -113,27 +108,26 @@ class FsNodeService():
 
         return file_path
 
-############################# FS NODE  ###########################
+    ############################# FS NODE  ###########################
 
     @classmethod
     def create_fs_node_model(cls, fs_node: FSNode) -> ResourceModel:
         return ResourceModel.save_from_resource(fs_node, origin=ResourceOrigin.UPLOADED)
 
-
-############################# FOLDER ###########################
-
+    ############################# FOLDER ###########################
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def upload_folder(cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)) -> ResourceModel:
+    def upload_folder(
+        cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)
+    ) -> ResourceModel:
         if len(files) == 0:
-            raise BadRequestException('The folder is empty')
+            raise BadRequestException("The folder is empty")
 
-        folder_type: Type[Folder] = TypingManager.get_and_check_type_from_name(
-            folder_typing_name)
+        folder_type: Type[Folder] = TypingManager.get_and_check_type_from_name(folder_typing_name)
 
         if not Utils.issubclass(folder_type, Folder):
-            raise BadRequestException('The type is not a sub class of Folder')
+            raise BadRequestException("The type is not a sub class of Folder")
 
         temp_dir = Settings.make_temp_dir()
 
@@ -154,8 +148,11 @@ class FsNodeService():
                 error = str(err)
                 Logger.log_exception_stack_trace(err)
             if error is not None and len(error):
-                raise BadRequestException(GWSException.INVALID_FOLDER_ON_UPLOAD.value,
-                                          GWSException.INVALID_FOLDER_ON_UPLOAD.name, {'error': error})
+                raise BadRequestException(
+                    GWSException.INVALID_FOLDER_ON_UPLOAD.value,
+                    GWSException.INVALID_FOLDER_ON_UPLOAD.name,
+                    {"error": error},
+                )
 
             return cls.create_fs_node_model(folder)
         finally:
@@ -163,33 +160,36 @@ class FsNodeService():
 
     @classmethod
     def call_folder_sub_file_view(cls, resource_id: str, sub_file_path: str) -> CallViewResult:
-        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
-            resource_id)
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(resource_id)
 
         view_name = Folder.view_sub_file.__name__
 
         return ResourceService.call_view_on_resource_model(
-            resource_model=resource_model, view_name=view_name, config_values={
-                'sub_file_path': sub_file_path}, save_view_config=True)
+            resource_model=resource_model,
+            view_name=view_name,
+            config_values={"sub_file_path": sub_file_path},
+            save_view_config=True,
+        )
 
     @classmethod
     def download_folder_sub_node(cls, resource_id: str, sub_file_path: str) -> FileResponse:
-        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
-            resource_id)
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(resource_id)
         resource: Folder = resource_model.get_resource()
 
         if not isinstance(resource, Folder):
-            raise BadRequestException(
-                "Can't download resource because it is not an Folder")
+            raise BadRequestException("Can't download resource because it is not an Folder")
 
         sub_path_full = resource.get_sub_path(sub_file_path)
 
         # for now, the direct download for a folder is not allowed
         if FileHelper.is_dir(sub_path_full):
             raise BadRequestException(
-                "The direct download of sub folder is not yet supported. Please call 'Extract folder' on the sub folder, then download the extracted folder")
+                "The direct download of sub folder is not yet supported. Please call 'Extract folder' on the sub folder, then download the extracted folder"
+            )
 
-        return FileHelper.create_file_response(sub_path_full, filename=FileHelper.get_name(sub_file_path))
+        return FileHelper.create_file_response(
+            sub_path_full, filename=FileHelper.get_name(sub_file_path)
+        )
 
     @classmethod
     def rename_folder_sub_node(cls, resource_id: str, sub_file_path: str, new_name: str) -> None:
@@ -205,22 +205,20 @@ class FsNodeService():
 
     @classmethod
     def _get_and_check_folder_before_modification(cls, resource_id: str) -> Folder:
-        resource_model: ResourceModel = ResourceService.get_by_id_and_check(
-            resource_id)
+        resource_model: ResourceModel = ResourceService.get_by_id_and_check(resource_id)
         resource = resource_model.get_resource()
 
         if not isinstance(resource, Folder):
-            raise BadRequestException(
-                "The resource is not a folder")
+            raise BadRequestException("The resource is not a folder")
 
         resource_navigation = EntityNavigatorResource(resource_model)
 
         if resource_navigation.has_next_entities([NavigableEntityType.SCENARIO]):
-            raise BadRequestException(
-                "The folder is used in a scenario, it can't be modified")
+            raise BadRequestException("The folder is used in a scenario, it can't be modified")
 
         return resource
-############################# FILE TYPE ###########################
+
+    ############################# FILE TYPE ###########################
 
     @classmethod
     def get_file_types(cls) -> List[FileTyping]:

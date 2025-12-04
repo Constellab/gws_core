@@ -1,5 +1,3 @@
-
-
 from typing import Literal, Type, final
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -30,9 +28,9 @@ class ProtocolTyping(Typing):
         return cls.get_by_object_type(cls._object_type)
 
     @classmethod
-    def new_manual_protocol(cls, graph: dict,
-                            human_name: str, short_description: str = None) -> 'ProtocolTyping':
-
+    def new_manual_protocol(
+        cls, graph: dict, human_name: str, short_description: str = None
+    ) -> "ProtocolTyping":
         # retrieve the protocol typing to copy info from it
         protocol_typing: Typing = Typing.get_by_object_type(Protocol)
 
@@ -48,7 +46,7 @@ class ProtocolTyping(Typing):
             object_sub_type="MANUAL_PROTOCOL",
         )
 
-        typing.data['graph'] = graph
+        typing.data["graph"] = graph
         return typing
 
     def to_full_dto(self) -> ProtocolTypingFullDTO:
@@ -72,4 +70,4 @@ class ProtocolTyping(Typing):
     # Disable table creation
     class Meta:
         is_table = False
-        table_name = 'gws_typing'
+        table_name = "gws_typing"

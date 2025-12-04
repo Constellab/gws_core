@@ -1,7 +1,5 @@
-
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockFile(RichTextBlockDataBase):

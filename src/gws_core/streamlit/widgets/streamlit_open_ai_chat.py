@@ -1,5 +1,3 @@
-
-
 from typing import Literal
 
 import streamlit as st
@@ -8,8 +6,7 @@ from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_types import AiChatMessage
 
 
-class StreamlitOpenAiChat():
-
+class StreamlitOpenAiChat:
     chat: OpenAiChat = None
     key: str = None
 
@@ -28,7 +25,7 @@ class StreamlitOpenAiChat():
         self.key = key
 
     @staticmethod
-    def load_from_session(key: str, system_prompt: str = None) -> 'StreamlitOpenAiChat':
+    def load_from_session(key: str, system_prompt: str = None) -> "StreamlitOpenAiChat":
         """Load or create a StreamlitOpenAiChat from session state.
 
         :param key: Unique key for storing the chat in session state
@@ -52,10 +49,10 @@ class StreamlitOpenAiChat():
         messages = self.chat.get_messages()
 
         for message in messages:
-            if message.role == 'system':
+            if message.role == "system":
                 self._show_system_message(message.content)
             else:
-                message_type: Literal['human', 'ai'] = 'human' if message.role == 'user' else 'ai'
+                message_type: Literal["human", "ai"] = "human" if message.role == "user" else "ai"
 
                 self._show_message(message, message_type)
 
@@ -121,18 +118,17 @@ class StreamlitOpenAiChat():
         self.save()
 
     def _show_system_message(self, text: str) -> None:
-        with st.chat_message('assistant'):
+        with st.chat_message("assistant"):
             with st.expander("See system prompt"):
                 st.markdown(text)
 
-    def _show_message(self, message: AiChatMessage, type_: Literal['human', 'ai']) -> None:
+    def _show_message(self, message: AiChatMessage, type_: Literal["human", "ai"]) -> None:
         with st.chat_message(type_):
-
             # write dataframes
             dataframes = message.get_dataframes()
             if dataframes:
                 for dataframe in dataframes:
-                    st.dataframe(dataframe, width='stretch')
+                    st.dataframe(dataframe, width="stretch")
 
             # write plots
             plots = message.get_plots()

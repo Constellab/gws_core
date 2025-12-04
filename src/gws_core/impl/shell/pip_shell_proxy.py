@@ -1,4 +1,3 @@
-
 import os
 from typing import Union
 
@@ -12,7 +11,6 @@ from .base_env_shell import BaseEnvShell
 
 @typing_registrator(unique_name="PipShellProxy", object_type="MODEL", hide=True)
 class PipShellProxy(BaseEnvShell):
-
     CONFIG_FILE_NAME = "Pipfile"
     LOCK_FILE_NAME = "Pipfile.lock"
 
@@ -23,37 +21,32 @@ class PipShellProxy(BaseEnvShell):
         """
 
         pipfile_path = self.get_pip_file_path()
-        cmd = [
-            f"cp {self.env_file_path} {pipfile_path}", "&&",
-            "pipenv install"
-        ]
+        cmd = [f"cp {self.env_file_path} {pipfile_path}", "&&", "pipenv install"]
 
         env = os.environ.copy()
         env["PIPENV_VENV_IN_PROJECT"] = "enabled"
 
         self._message_dispatcher.notify_info_message(
-            f"Installing pipenv env with command: {' '.join(cmd)}.")
+            f"Installing pipenv env with command: {' '.join(cmd)}."
+        )
 
         self._execute_env_install_command(" ".join(cmd), env)
 
         return True
 
     def _uninstall_env(self) -> bool:
-        """ Uninstall the environment.
+        """Uninstall the environment.
         Return true if the env was uninstalled, False if it was already uninstalled.
         """
 
-        cmd = [
-            "pipenv uninstall --all", "&&",
-            "cd ..", "&&",
-            f"rm -rf {self.get_env_dir_path()}"
-        ]
+        cmd = ["pipenv uninstall --all", "&&", "cd ..", "&&", f"rm -rf {self.get_env_dir_path()}"]
 
         env = os.environ.copy()
         env["PIPENV_VENV_IN_PROJECT"] = "enabled"
 
         self._message_dispatcher.notify_info_message(
-            f"Uninstalling pipenv env with command: {' '.join(cmd)}.")
+            f"Uninstalling pipenv env with command: {' '.join(cmd)}."
+        )
 
         self._execute_uninstall_command(" ".join(cmd), env)
 
@@ -74,7 +67,6 @@ class PipShellProxy(BaseEnvShell):
             return f"pipenv run {user_cmd}"
 
     def get_default_env_variables(self) -> dict:
-
         return {
             "PIPENV_PIPFILE": self.get_pip_file_path(),
             "PIPENV_VENV_IN_PROJECT": "enabled",
@@ -94,11 +86,13 @@ class PipShellProxy(BaseEnvShell):
         pipfile_lock_path = os.path.join(folder_path, cls.LOCK_FILE_NAME)
         sub_venv_path = os.path.join(folder_path, cls.VENV_DIR_NAME)
 
-        return super().folder_is_env(folder_path) and \
-            FileHelper.exists_on_os(pipfile_path) and \
-            FileHelper.exists_on_os(pipfile_lock_path) and \
-            FileHelper.exists_on_os(sub_venv_path)
+        return (
+            super().folder_is_env(folder_path)
+            and FileHelper.exists_on_os(pipfile_path)
+            and FileHelper.exists_on_os(pipfile_lock_path)
+            and FileHelper.exists_on_os(sub_venv_path)
+        )
 
     @classmethod
-    def get_env_type(cls) -> Literal['conda', 'mamba', 'pip']:
-        return 'pip'
+    def get_env_type(cls) -> Literal["conda", "mamba", "pip"]:
+        return "pip"

@@ -1,32 +1,35 @@
-
 from typing import List, Optional
 
 import streamlit as st
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.streamlit.components.streamlit_component_loader import \
-    StreamlitComponentLoader
+from gws_core.streamlit.components.streamlit_component_loader import StreamlitComponentLoader
 
 
 class StreamlitTreeMenuItemDTO(BaseModelDTO):
     id: str
     label: str
     material_icon: Optional[str] = None
-    children: Optional[List['StreamlitTreeMenuItemDTO']] = None
+    children: Optional[List["StreamlitTreeMenuItemDTO"]] = None
     disabled: Optional[bool] = False
 
 
-class StreamlitTreeMenuItem():
+class StreamlitTreeMenuItem:
     key: str
     label: str
     material_icon: Optional[str] = None
-    children: Optional[List['StreamlitTreeMenuItem']] = None
+    children: Optional[List["StreamlitTreeMenuItem"]] = None
     disabled: Optional[bool] = False
 
-    def __init__(self, label: str, key: str = None, material_icon: str = None,
-                 children: List['StreamlitTreeMenuItem'] = None,
-                 disabled: bool = False):
-        """ Create a menu button item
+    def __init__(
+        self,
+        label: str,
+        key: str = None,
+        material_icon: str = None,
+        children: List["StreamlitTreeMenuItem"] = None,
+        disabled: bool = False,
+    ):
+        """Create a menu button item
 
         :param label: Label of the item
         :type label: str
@@ -49,8 +52,8 @@ class StreamlitTreeMenuItem():
         self.children = children
         self.disabled = disabled
 
-    def add_child(self, child: 'StreamlitTreeMenuItem') -> None:
-        """ Add a child to the item
+    def add_child(self, child: "StreamlitTreeMenuItem") -> None:
+        """Add a child to the item
 
         :param child: Child item to add
         :type child: StreamlitTreeMenuItemItem
@@ -61,8 +64,8 @@ class StreamlitTreeMenuItem():
             self.children = []
         self.children.append(child)
 
-    def add_children(self, children: List['StreamlitTreeMenuItem']) -> None:
-        """ Add a list of children to the item
+    def add_children(self, children: List["StreamlitTreeMenuItem"]) -> None:
+        """Add a list of children to the item
 
         :param children: List of child items to add
         :type children: List[StreamlitTreeMenuItemItem]
@@ -71,8 +74,8 @@ class StreamlitTreeMenuItem():
             self.children = []
         self.children.extend(children)
 
-    def insert_child(self, index: int, child: 'StreamlitTreeMenuItem') -> None:
-        """ Insert a child to the item
+    def insert_child(self, index: int, child: "StreamlitTreeMenuItem") -> None:
+        """Insert a child to the item
 
         :param index: Index of the child to insert
         :type index: int
@@ -86,8 +89,8 @@ class StreamlitTreeMenuItem():
 
         self.children.insert(index, child)
 
-    def update_child(self, index: int, child: 'StreamlitTreeMenuItem') -> None:
-        """ Update a child in the item
+    def update_child(self, index: int, child: "StreamlitTreeMenuItem") -> None:
+        """Update a child in the item
 
         :param index: Index of the child to update
         :type index: int
@@ -101,7 +104,7 @@ class StreamlitTreeMenuItem():
         self.children[index] = child
 
     def remove_child_at(self, index: int) -> None:
-        """ Remove a child from the item
+        """Remove a child from the item
 
         :param index: Index of the child to remove
         :type index: int
@@ -112,7 +115,7 @@ class StreamlitTreeMenuItem():
             raise Exception(f"[StreamlitTreeMenuItem] Child index {index} out of range")
         self.children.pop(index)
 
-    def find_by_key(self, key: str) -> Optional['StreamlitTreeMenuItem']:
+    def find_by_key(self, key: str) -> Optional["StreamlitTreeMenuItem"]:
         if self.key == key:
             return self
 
@@ -125,16 +128,17 @@ class StreamlitTreeMenuItem():
         return None
 
     def to_dto(self) -> StreamlitTreeMenuItemDTO:
-        """ Convert the item to a DTO
+        """Convert the item to a DTO
 
         :return: DTO of the item
         :rtype: StreamlitTreeMenuItemItemDTO
         """
         return StreamlitTreeMenuItemDTO(
             id=self.key,
-            label=self.label, material_icon=self.material_icon,
+            label=self.label,
+            material_icon=self.material_icon,
             children=[child.to_dto() for child in self.children] if self.children else None,
-            disabled=self.disabled
+            disabled=self.disabled,
         )
 
 
@@ -149,12 +153,12 @@ class StreamlitTreeMenu:
 
     _items: List[StreamlitTreeMenuItem] = None
 
-    def __init__(self, key='tree-menu'):
+    def __init__(self, key="tree-menu"):
         self.key = key
         self._items = []
         # init component state in session state
         if key not in st.session_state:
-            st.session_state[self.key] = {'item_key': None}  # for backward compatibility
+            st.session_state[self.key] = {"item_key": None}  # for backward compatibility
 
     def add_item(self, item: StreamlitTreeMenuItem) -> None:
         """Add an item to the tree menu.
@@ -185,7 +189,7 @@ class StreamlitTreeMenu:
 
         # update the inner state of the component, update the sub dict value
         # directly to avoid streamlit error
-        st.session_state[self.key]['item_key'] = item.key  # for backward compatibility
+        st.session_state[self.key]["item_key"] = item.key  # for backward compatibility
 
     def set_default_selected_item(self, item_key: str) -> None:
         """Set the default selected item in the tree menu.
@@ -206,7 +210,7 @@ class StreamlitTreeMenu:
         :rtype: Optional[StreamlitTreeMenuItem]
         """
         # item_key = st.session_state.get(self._get_state_key(), None)
-        item_key = st.session_state[self.key].get('item_key')
+        item_key = st.session_state[self.key].get("item_key")
         if item_key is None:
             return None
 
@@ -241,7 +245,6 @@ class StreamlitTreeMenu:
             "selected_item": selected_item.key if selected_item else None,
         }
 
-        self._streamlit_component_loader.call_component(
-            data, key=self.key)
+        self._streamlit_component_loader.call_component(data, key=self.key)
 
         return self.get_selected_item()

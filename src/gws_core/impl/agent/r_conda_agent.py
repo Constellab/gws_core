@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.config.param.code_param.r_code_param import RCodeParam
@@ -14,9 +12,11 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "RCondaAgent", human_name="R conda env agent",
+    "RCondaAgent",
+    human_name="R conda env agent",
     short_description="Agent to run R snippets in conda a shell environment.",
-    style=TypingStyle.material_icon("agent"))
+    style=TypingStyle.material_icon("agent"),
+)
 class RCondaAgent(EnvAgent):
     """
     Conda-based R agents allow to execute R snippets on the fly in isolated conda environments.
@@ -35,31 +35,38 @@ class RCondaAgent(EnvAgent):
 
     SNIPPET_FILE_EXTENSION: str = "R"
 
-    config_specs = ConfigSpecs({
-        'params': EnvAgent.get_dynamic_param_config(),
-        'env': YamlCodeParam(
-            default_value=AgentCodeHelper.get_r_conda_env_file_template(),
-            human_name="Conda environment (YAML)", short_description="YAML configuration of the R conda environment"
-        ),
-        'code': RCodeParam(
-            default_value=AgentCodeHelper.get_r_code_template(),
-            human_name="R code snippet", short_description="The R code snippet to execute using shell command"
-        ),
-        'log_stdout': EnvAgent.get_log_stdout_param()
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": EnvAgent.get_dynamic_param_config(),
+            "env": YamlCodeParam(
+                default_value=AgentCodeHelper.get_r_conda_env_file_template(),
+                human_name="Conda environment (YAML)",
+                short_description="YAML configuration of the R conda environment",
+            ),
+            "code": RCodeParam(
+                default_value=AgentCodeHelper.get_r_code_template(),
+                human_name="R code snippet",
+                short_description="The R code snippet to execute using shell command",
+            ),
+            "log_stdout": EnvAgent.get_log_stdout_param(),
+        }
+    )
 
     def _format_command(self, code_file_path: str) -> list:
         return ["Rscript", code_file_path]
 
-    def _get_init_code(self, source_paths_var_name: str,
-                       source_paths: List[str], target_paths_var_name: str) -> str:
-        source_value = [f"\'{p}\'" for p in source_paths]
-        source_value_str = f'c({",".join(source_value)})'
+    def _get_init_code(
+        self, source_paths_var_name: str, source_paths: List[str], target_paths_var_name: str
+    ) -> str:
+        source_value = [f"'{p}'" for p in source_paths]
+        source_value_str = f"c({','.join(source_value)})"
         # using python and json package, write the target paths to a file
         return f"""{source_paths_var_name} <- {source_value_str}
 {target_paths_var_name} <- list()"""
 
-    def _get_write_target_paths_code(self, target_paths_var_name: str, target_paths_filename: str) -> str:
+    def _get_write_target_paths_code(
+        self, target_paths_var_name: str, target_paths_filename: str
+    ) -> str:
         # convert the above to R code
         return f"""# convert the target paths to a json string
 json_data <- paste0("[", paste0('"', {target_paths_var_name}, '"', collapse = ","), "]")

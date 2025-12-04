@@ -1,4 +1,3 @@
-
 from gws_core.config.config import Config
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.test.base_test_case import BaseTestCase
@@ -6,7 +5,6 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_transaction.py
 class TestTransaction(BaseTestCase):
-
     def test_transaction(self):
         # test the transaction worked
         config = Config()

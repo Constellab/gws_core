@@ -5,7 +5,6 @@ from datetime import datetime
 
 
 class LocalLogger:
-
     @classmethod
     def info(cls, msg: str):
         cls._log(msg, "INFO")
@@ -20,9 +19,9 @@ class LocalLogger:
         print(f"{type_} - {datetime.now().isoformat()} - {msg}")
 
 
-gws_core_package = 'gws_core'
-user_bricks_folder = os.path.join('/lab', 'user', 'bricks')
-sys_bricks_folder = os.path.join('/lab', '.sys', 'bricks')
+gws_core_package = "gws_core"
+user_bricks_folder = os.path.join("/lab", "user", "bricks")
+sys_bricks_folder = os.path.join("/lab", ".sys", "bricks")
 
 
 def load_gws_core():
@@ -40,9 +39,9 @@ def load_gws_core():
 
     # try to install it from the bricks folder
     else:
-        core_lib_path = os.path.join(user_bricks_folder, 'gws_core', 'src')
+        core_lib_path = os.path.join(user_bricks_folder, "gws_core", "src")
         if not os.path.exists(core_lib_path):
-            core_lib_path = os.path.join(sys_bricks_folder, 'gws_core', 'src')
+            core_lib_path = os.path.join(sys_bricks_folder, "gws_core", "src")
             if not os.path.exists(core_lib_path):
                 raise Exception("Cannot find gws_core brick")
         sys.path.insert(0, core_lib_path)

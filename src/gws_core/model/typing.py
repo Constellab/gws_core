@@ -1,5 +1,3 @@
-
-
 import inspect
 from typing import Any, Dict, List, Optional, Type
 
@@ -7,9 +5,14 @@ from peewee import BooleanField, CharField, ModelSelect
 
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.reflector_helper import ReflectorHelper
-from gws_core.model.typing_dto import (SimpleTypingDTO, TypingDTO,
-                                       TypingFullDTO, TypingObjectType,
-                                       TypingRefDTO, TypingStatus)
+from gws_core.model.typing_dto import (
+    SimpleTypingDTO,
+    TypingDTO,
+    TypingFullDTO,
+    TypingObjectType,
+    TypingRefDTO,
+    TypingStatus,
+)
 from gws_core.model.typing_name import TypingNameObj
 from gws_core.model.typing_style import TypingStyle
 
@@ -84,8 +87,7 @@ class Typing(Model):
         return Utils.get_model_type(self.model_type)
 
     def type_exists(self) -> bool:
-        """Check if the type exists in the system.
-        """
+        """Check if the type exists in the system."""
         return self.get_type() is not None
 
     @property
@@ -114,7 +116,7 @@ class Typing(Model):
             additional_data=None,
             status=self.get_type_status(),
             hide=self.hide,
-            style=self.style
+            style=self.style,
         )
 
     def to_simple_dto(self) -> SimpleTypingDTO:
@@ -129,7 +131,7 @@ class Typing(Model):
             brick_version=self.brick_version,
             human_name=self.human_name,
             style=self.style,
-            short_description=self.short_description
+            short_description=self.short_description,
         )
 
     def to_full_dto(self) -> TypingFullDTO:
@@ -150,7 +152,7 @@ class Typing(Model):
 
         return full_dto
 
-    def get_parent_typing(self) -> Optional['Typing']:
+    def get_parent_typing(self) -> Optional["Typing"]:
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()
 
@@ -166,8 +168,7 @@ class Typing(Model):
         return None
 
     def get_model_type_doc(self) -> str:
-        """Return the python documentation of the model type
-        """
+        """Return the python documentation of the model type"""
 
         # retrieve the task python type
         model_t: Type[Base] = self.get_type()
@@ -180,47 +181,57 @@ class Typing(Model):
     ############################################# CLASS METHODS #########################################
 
     @classmethod
-    def get_by_brick_and_unique_name(cls, object_type: TypingObjectType, brick: str, unique_name: str) -> ModelSelect:
+    def get_by_brick_and_unique_name(
+        cls, object_type: TypingObjectType, brick: str, unique_name: str
+    ) -> ModelSelect:
         return cls.select().where(
-            cls.object_type == object_type, cls.brick == brick, cls.unique_name == unique_name)
+            cls.object_type == object_type, cls.brick == brick, cls.unique_name == unique_name
+        )
 
     @classmethod
-    def get_by_typing_name(cls, typing_name: str) -> 'Typing':
+    def get_by_typing_name(cls, typing_name: str) -> "Typing":
         typing_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
         return cls.get_by_brick_and_unique_name(
-            typing_obj.object_type, typing_obj.brick_name, typing_obj.unique_name).first()
+            typing_obj.object_type, typing_obj.brick_name, typing_obj.unique_name
+        ).first()
 
     @classmethod
     def get_by_object_type(cls, object_type: TypingObjectType) -> ModelSelect:
-        """ Return all the visible typing name of a type.
-        """
-        return cls.select()\
-            .where((cls.object_type == object_type) & (cls.hide == False))\
+        """Return all the visible typing name of a type."""
+        return (
+            cls.select()
+            .where((cls.object_type == object_type) & (cls.hide == False))
             .order_by(cls.human_name)
+        )
 
     @classmethod
     def get_by_object_type_and_name(cls, object_type: TypingObjectType, name: str) -> ModelSelect:
-        """ Return all the visible typing name of a type searched by name.
-        """
-        return cls.select()\
-            .where((cls.object_type == object_type) & (cls.hide == False) &
-                   (cls.unique_name.contains(name) | cls.human_name.contains(name)))\
+        """Return all the visible typing name of a type searched by name."""
+        return (
+            cls.select()
+            .where(
+                (cls.object_type == object_type)
+                & (cls.hide == False)
+                & (cls.unique_name.contains(name) | cls.human_name.contains(name))
+            )
             .order_by(cls.human_name)
+        )
 
     @classmethod
     def get_by_type_and_brick(cls, object_type: TypingObjectType, brick_name: str) -> ModelSelect:
-        """ Return all the visible typing name of a type.
-        """
-        return cls.select()\
-            .where((cls.object_type == object_type) & (cls.brick == brick_name))\
+        """Return all the visible typing name of a type."""
+        return (
+            cls.select()
+            .where((cls.object_type == object_type) & (cls.brick == brick_name))
             .order_by(cls.human_name)
+        )
 
     @classmethod
-    def get_by_object_sub_type(cls, sub_type: str) -> List['Typing']:
+    def get_by_object_sub_type(cls, sub_type: str) -> List["Typing"]:
         return list(cls.select().where(cls.object_sub_type == sub_type).order_by(cls.human_name))
 
     @classmethod
-    def get_by_model_type(cls, model_type: Type[Base]) -> 'Typing':
+    def get_by_model_type(cls, model_type: Type[Base]) -> "Typing":
         return cls._get_by_model_type(model_type).first()
 
     @classmethod
@@ -232,22 +243,26 @@ class Typing(Model):
         return cls.select().where((cls.model_type == model_type.full_classname()))
 
     @classmethod
-    def get_by_brick_and_object_type(cls, brick_name: str) -> List['Typing']:
+    def get_by_brick_and_object_type(cls, brick_name: str) -> List["Typing"]:
         return cls.get_by_type_and_brick(cls._object_type, brick_name)
 
     @classmethod
-    def get_children_typings(cls, typing_type: TypingObjectType,  base_type: Type[Base]) -> List['Typing']:
-        """Retunr the list of typings that are a child class of the provided model_type
-        """
+    def get_children_typings(
+        cls, typing_type: TypingObjectType, base_type: Type[Base]
+    ) -> List["Typing"]:
+        """Retunr the list of typings that are a child class of the provided model_type"""
         all_typings: List[Typing] = list(cls.get_by_object_type(typing_type))
 
-        typings = list(filter(lambda typing: Utils.issubclass(typing.get_type(), base_type), all_typings))
+        typings = list(
+            filter(lambda typing: Utils.issubclass(typing.get_type(), base_type), all_typings)
+        )
         return typings
 
     @classmethod
     def after_table_creation(cls) -> None:
         super().after_table_creation()
-        cls.create_full_text_index(['human_name', 'short_description', 'model_name'], 'I_F_TYP_TXT')
+        cls.create_full_text_index(["human_name", "short_description", "model_name"], "I_F_TYP_TXT")
+
     ############################################# STATIC METHODS #########################################
 
     @staticmethod
@@ -256,8 +271,6 @@ class Typing(Model):
 
     class Meta:
         # Unique constrains on brick, model_name and object_type
-        table_name = 'gws_typing'
+        table_name = "gws_typing"
         is_table = True
-        indexes = (
-            (('brick', 'model_name', 'object_type'), True),
-        )
+        indexes = ((("brick", "model_name", "object_type"), True),)

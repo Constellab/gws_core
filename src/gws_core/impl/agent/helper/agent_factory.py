@@ -1,11 +1,8 @@
-
-
 from typing import Any, Dict
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
-from gws_core.community.community_dto import (CommunityAgentFileDTO,
-                                              CommunityAgentFileParams)
+from gws_core.community.community_dto import CommunityAgentFileDTO, CommunityAgentFileParams
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.impl.agent.py_agent import PyAgent
@@ -13,20 +10,19 @@ from gws_core.task.task_model import TaskModel
 
 
 class AgentFactory:
-
     current_json_version = 3
 
     AGENT_DICT = {
-        'TASK.gws_core.PyAgent': 'PYTHON',
-        'TASK.gws_core.PyCondaAgent': 'CONDA_PYTHON',
-        'TASK.gws_core.PyMambaAgent': 'MAMBA_PYTHON',
-        'TASK.gws_core.PyPipenvAgent': 'PIP_PYTHON',
-        'TASK.gws_core.RCondaAgent': 'CONDA_R',
-        'TASK.gws_core.RMambaAgent': 'MAMBA_R',
-        'TASK.gws_core.StreamlitAgent': 'STREAMLIT',
-        'TASK.gws_core.StreamlitCondaAgent': 'STREAMLIT',
-        'TASK.gws_core.StreamlitMambaAgent': 'STREAMLIT',
-        'TASK.gws_core.StreamlitPipenvAgent': 'STREAMLIT',
+        "TASK.gws_core.PyAgent": "PYTHON",
+        "TASK.gws_core.PyCondaAgent": "CONDA_PYTHON",
+        "TASK.gws_core.PyMambaAgent": "MAMBA_PYTHON",
+        "TASK.gws_core.PyPipenvAgent": "PIP_PYTHON",
+        "TASK.gws_core.RCondaAgent": "CONDA_R",
+        "TASK.gws_core.RMambaAgent": "MAMBA_R",
+        "TASK.gws_core.StreamlitAgent": "STREAMLIT",
+        "TASK.gws_core.StreamlitCondaAgent": "STREAMLIT",
+        "TASK.gws_core.StreamlitMambaAgent": "STREAMLIT",
+        "TASK.gws_core.StreamlitPipenvAgent": "STREAMLIT",
     }
 
     @classmethod
@@ -44,13 +40,13 @@ class AgentFactory:
 
         code: str = task.config.get_value(PyAgent.CONFIG_CODE_NAME)
 
-        cleaned_code: str = ''
+        cleaned_code: str = ""
         for code_line in code.splitlines():
             # if the line is an import
-            if code_line.startswith('import') or code_line.startswith('from'):
+            if code_line.startswith("import") or code_line.startswith("from"):
                 task_generator.add_import(code_line)
             else:
-                cleaned_code = cleaned_code + code_line + '\n'
+                cleaned_code = cleaned_code + code_line + "\n"
 
         task_generator.set_run_method_content(cleaned_code)
 
@@ -79,21 +75,24 @@ class AgentFactory:
         return task_generator.generate_code()
 
     @classmethod
-    def generate_agent_file_from_agent_id(cls, task_id: str, with_value: bool = False) -> CommunityAgentFileDTO:
+    def generate_agent_file_from_agent_id(
+        cls, task_id: str, with_value: bool = False
+    ) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
         values = task.config.get_values()
         code = task.config.get_value("code")
         params = None
         if values.get("params") is not None:
-            specs = task.config.get_spec('params').to_simple_dto().to_json_dict()['additional_info']['specs']
+            specs = (
+                task.config.get_spec("params")
+                .to_simple_dto()
+                .to_json_dict()["additional_info"]["specs"]
+            )
             params_values = task.config.get_value("params")
             if not with_value:
                 for key in params_values.keys():
                     params_values[key] = None
-            params = {
-                "specs": specs,
-                "values":  params_values
-            }
+            params = {"specs": specs, "values": params_values}
         env = ""
         if values.get("env") is not None:
             env = task.config.get_value("env")
@@ -105,23 +104,24 @@ class AgentFactory:
 
         for brick_version in brick_versions:
             if brick_version.name in code:
-                bricks.append({
-                    "name": brick_version.name,
-                    "version": brick_version.version
-                })
+                bricks.append({"name": brick_version.name, "version": brick_version.version})
 
-        return CommunityAgentFileDTO.from_json({
-            "json_version": cls.current_json_version,
-            "params": params if params is not None else CommunityAgentFileParams(specs={}, values={}).to_json_dict(),
-            "code": code,
-            "environment": env,
-            "input_specs": inputs,
-            "output_specs": outputs,
-            "config_specs": {},
-            "bricks": bricks,
-            "task_type": cls.AGENT_DICT[task.process_typing_name],
-            "style": task.to_dto().style
-        })
+        return CommunityAgentFileDTO.from_json(
+            {
+                "json_version": cls.current_json_version,
+                "params": params
+                if params is not None
+                else CommunityAgentFileParams(specs={}, values={}).to_json_dict(),
+                "code": code,
+                "environment": env,
+                "input_specs": inputs,
+                "output_specs": outputs,
+                "config_specs": {},
+                "bricks": bricks,
+                "task_type": cls.AGENT_DICT[task.process_typing_name],
+                "style": task.to_dto().style,
+            }
+        )
 
     @classmethod
     def is_agent(cls, typing_name: str) -> bool:

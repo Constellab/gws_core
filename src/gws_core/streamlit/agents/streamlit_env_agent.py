@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from typing import Any, Dict
 
@@ -16,11 +15,15 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator("StreamlitEnvAgent", human_name="Streamlit env agent",
-                short_description="Agent to generate a streamlit app dashboard in a virtual environment",
-                style=StreamlitResource.copy_style(
-                    icon_technical_name='agent', icon_type=TypingIconType.MATERIAL_ICON),
-                hide=True)
+@task_decorator(
+    "StreamlitEnvAgent",
+    human_name="Streamlit env agent",
+    short_description="Agent to generate a streamlit app dashboard in a virtual environment",
+    style=StreamlitResource.copy_style(
+        icon_technical_name="agent", icon_type=TypingIconType.MATERIAL_ICON
+    ),
+    hide=True,
+)
 class StreamlitEnvAgent(Task):
     """
     Agent to generate a streamlit app dashboard.
@@ -38,10 +41,11 @@ class StreamlitEnvAgent(Task):
     """
 
     input_specs: InputSpecs = DynamicInputs(
-        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", optional=True))
-    output_specs: OutputSpecs = OutputSpecs({
-        'streamlit_app': OutputSpec(StreamlitResource, human_name="Streamlit app")
-    })
+        additionnal_port_spec=InputSpec(FSNode, human_name="File or folder", optional=True)
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {"streamlit_app": OutputSpec(StreamlitResource, human_name="Streamlit app")}
+    )
 
     __is_agent__: bool = True
 
@@ -49,13 +53,16 @@ class StreamlitEnvAgent(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         pass
 
-    def run_agent(self, resources: ResourceList, params: Dict[str, Any],
-                  code: str,
-                  requires_authentication: bool,
-                  env_code: str = None,
-                  env_shell_proxy: BaseEnvShell = None) -> StreamlitResource:
-
-        if env_code is not None and 'streamlit' not in env_code:
+    def run_agent(
+        self,
+        resources: ResourceList,
+        params: Dict[str, Any],
+        code: str,
+        requires_authentication: bool,
+        env_code: str = None,
+        env_shell_proxy: BaseEnvShell = None,
+    ) -> StreamlitResource:
+        if env_code is not None and "streamlit" not in env_code:
             raise Exception("The env code must contain the 'streamlit' package")
 
         # build the streamlit resource with the code and the resources
@@ -74,4 +81,4 @@ class StreamlitEnvAgent(Task):
 
     @classmethod
     def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
-        return {'code': code, "params": params}
+        return {"code": code, "params": params}

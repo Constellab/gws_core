@@ -1,5 +1,3 @@
-
-
 from typing import List, Optional
 
 from fastapi.param_functions import Depends
@@ -15,43 +13,50 @@ from gws_core.user.authorization_service import AuthorizationService
 from ...core_controller import core_app
 
 
-@core_app.get("/view-config/{id_}", tags=["View config"],
-              summary="Get view config")
-def get_by_id(id_: str,
-              _=Depends(AuthorizationService.check_user_access_token)) -> ViewConfigDTO:
+@core_app.get("/view-config/{id_}", tags=["View config"], summary="Get view config")
+def get_by_id(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> ViewConfigDTO:
     return ViewConfigService.get_by_id(id_).to_dto()
 
 
-@core_app.post("/view-config/{id_}/call", tags=["View config"],
-               summary="Call a view from a config")
-def call_view_config(id_: str,
-                     _=Depends(AuthorizationService.check_user_access_token)) -> CallViewResultDTO:
+@core_app.post("/view-config/{id_}/call", tags=["View config"], summary="Call a view from a config")
+def call_view_config(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> CallViewResultDTO:
     return ResourceService.call_view_from_view_config(id_).to_dto()
 
 
-@core_app.put("/view-config/{id_}/title", tags=["View config"],
-              summary="Update the title of a view config")
-def update_title(id_: str,
-                 body: dict,
-                 _=Depends(AuthorizationService.check_user_access_token)) -> ViewConfigDTO:
+@core_app.put(
+    "/view-config/{id_}/title", tags=["View config"], summary="Update the title of a view config"
+)
+def update_title(
+    id_: str, body: dict, _=Depends(AuthorizationService.check_user_access_token)
+) -> ViewConfigDTO:
     return ViewConfigService.update_title(id_, body["title"]).to_dto()
 
 
-@core_app.put("/view-config/{id_}/favorite", tags=["View config"],
-              summary="Update the favorite of a view config")
-def update_favorite(id_: str,
-                    body: dict,
-                    _=Depends(AuthorizationService.check_user_access_token)) -> ViewConfigDTO:
+@core_app.put(
+    "/view-config/{id_}/favorite",
+    tags=["View config"],
+    summary="Update the favorite of a view config",
+)
+def update_favorite(
+    id_: str, body: dict, _=Depends(AuthorizationService.check_user_access_token)
+) -> ViewConfigDTO:
     return ViewConfigService.update_favorite(id_, body["is_favorite"]).to_dto()
 
 
-@core_app.get("/view-config/resource/{resource_id}/favorite/{favorite}", tags=["View config"],
-              summary="Get the list of view config by resource")
-def get_by_resource(resource_id: str,
-                    favorite: bool,
-                    page: Optional[int] = 1,
-                    number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
+@core_app.get(
+    "/view-config/resource/{resource_id}/favorite/{favorite}",
+    tags=["View config"],
+    summary="Get the list of view config by resource",
+)
+def get_by_resource(
+    resource_id: str,
+    favorite: bool,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.get_by_resource(
         resource_id=resource_id,
         favorite=favorite,
@@ -61,30 +66,36 @@ def get_by_resource(resource_id: str,
 
 
 ###################################### SEARCH #######################################
-@core_app.post("/view-config/search", tags=["View config"],
-               summary="Search available view config")
-def search(search_dict: SearchParams,
-           page: Optional[int] = 1,
-           number_of_items_per_page: Optional[int] = 20,
-           _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
-    return ViewConfigService.search(search_dict,
-                                    page, number_of_items_per_page).to_dto()
+@core_app.post("/view-config/search", tags=["View config"], summary="Search available view config")
+def search(
+    search_dict: SearchParams,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[ViewConfigDTO]:
+    return ViewConfigService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
-@core_app.post("/view-config/search/note/{note_id}", tags=["View config"],
-               summary="Search available view config for a note")
-def search_for_note(note_id: str,
-                    search_dict: SearchParams,
-                    page: Optional[int] = 1,
-                    number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ViewConfigDTO]:
-    return ViewConfigService.search_by_note(note_id, search_dict,
-                                            page, number_of_items_per_page).to_dto()
+@core_app.post(
+    "/view-config/search/note/{note_id}",
+    tags=["View config"],
+    summary="Search available view config for a note",
+)
+def search_for_note(
+    note_id: str,
+    search_dict: SearchParams,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[ViewConfigDTO]:
+    return ViewConfigService.search_by_note(
+        note_id, search_dict, page, number_of_items_per_page
+    ).to_dto()
+
 
 ############################# VIEW TYPE  ###########################
 
 
-@core_app.get("/view-config/types/list", tags=["View type"],
-              summary="Get all the view types")
+@core_app.get("/view-config/types/list", tags=["View type"], summary="Get all the view types")
 def get_view_types(_=Depends(AuthorizationService.check_user_access_token)) -> List[ViewTypeDTO]:
     return ViewConfigService.get_all_view_types()

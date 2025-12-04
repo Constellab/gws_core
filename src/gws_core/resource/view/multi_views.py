@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from typing_extensions import TypedDict
@@ -52,11 +50,13 @@ class MultiViews(View):
         :type nb_of_columns: int
         """
         super().__init__()
-        self._check_number(nb_of_columns, 'Number of columns')
+        self._check_number(nb_of_columns, "Number of columns")
         self._sub_views = []
         self._nb_of_columns = nb_of_columns
 
-    def add_view(self, view: View, params: ConfigParamsDict = None, colspan: int = 1, rowspan: int = 1) -> None:
+    def add_view(
+        self, view: View, params: ConfigParamsDict = None, colspan: int = 1, rowspan: int = 1
+    ) -> None:
         """Add a view to the multi view
 
         :param view: view
@@ -71,18 +71,20 @@ class MultiViews(View):
         """
 
         if not isinstance(view, View):
-            raise Exception('[MultiViews] the view input is not a View')
+            raise Exception("[MultiViews] the view input is not a View")
 
         if isinstance(view, MultiViews):
-            raise Exception('[MultiViews] cannot create nested MultiViews')
+            raise Exception("[MultiViews] cannot create nested MultiViews")
 
         config_params: ConfigParamsDict = view._specs.get_and_check_values(params)
 
-        self._check_number(colspan, 'Colums span')
-        self._check_number(rowspan, 'Rows span')
+        self._check_number(colspan, "Colums span")
+        self._check_number(rowspan, "Rows span")
 
         if colspan > self._nb_of_columns:
-            raise Exception('[MultiViews] the colums span must not be bigger than the number of columns')
+            raise Exception(
+                "[MultiViews] the colums span must not be bigger than the number of columns"
+            )
 
         self._sub_views.append(
             {
@@ -96,10 +98,10 @@ class MultiViews(View):
     def add_empty_block(self, colspan: int = 1, rowspan: int = 1) -> None:
         """Add en empty block in the grid
 
-          :param colspan: Nb of columns taken by the empty block, defaults to 1
-          :type colspan: int, optional
-          :param rowspan: Nb of rows taken by the empty block, defaults to 1
-          :type rowspan: int, optional
+        :param colspan: Nb of columns taken by the empty block, defaults to 1
+        :type colspan: int, optional
+        :param rowspan: Nb of rows taken by the empty block, defaults to 1
+        :type rowspan: int, optional
         """
         self._sub_views.append(
             {
@@ -113,17 +115,18 @@ class MultiViews(View):
     def data_to_dict(self, params: ConfigParams) -> dict:
         views_dict: List[dict] = []
         for sub_view in self._sub_views:
-            view_dict = sub_view["view"].to_dto(ConfigParams(sub_view["config_params"])).to_json_dict()
-            views_dict.append({
-                "view": view_dict,
-                "colspan": sub_view["colspan"],
-                "rowspan": sub_view["rowspan"],
-            })
+            view_dict = (
+                sub_view["view"].to_dto(ConfigParams(sub_view["config_params"])).to_json_dict()
+            )
+            views_dict.append(
+                {
+                    "view": view_dict,
+                    "colspan": sub_view["colspan"],
+                    "rowspan": sub_view["rowspan"],
+                }
+            )
 
-        return {
-            "nb_of_columns": self._nb_of_columns,
-            "views": views_dict
-        }
+        return {"nb_of_columns": self._nb_of_columns, "views": views_dict}
 
     def _check_number(self, nb: int, name: str) -> None:
         if not isinstance(nb, int) or nb <= 0:

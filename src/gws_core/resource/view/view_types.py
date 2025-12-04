@@ -1,13 +1,11 @@
-
-
 from enum import Enum
 
 from gws_core.model.typing_style import TypingStyle
 
 
 class ViewType(Enum):
-    """List of supported view type
-    """
+    """List of supported view type"""
+
     VIEW = "view"
     JSON = "json-view"
     TEXT = "text-view"
@@ -37,8 +35,7 @@ class ViewType(Enum):
     IFRAME = "iframe-view"
 
     def get_typing_style(self) -> TypingStyle:
-        """Return the default typing style for the view type
-        """
+        """Return the default typing style for the view type"""
 
         style: TypingStyle
         if self == ViewType.VIEW:
@@ -86,7 +83,7 @@ class ViewType(Enum):
         elif self == ViewType.RICH_TEXT:
             style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
         elif self == ViewType.APP:
-            style = TypingStyle.material_icon("dashboard", background_color='#ff4b4b')
+            style = TypingStyle.material_icon("dashboard", background_color="#ff4b4b")
         elif self == ViewType.AUDIO:
             style = TypingStyle.material_icon("volume_up", background_color="#f6995c")
         else:
@@ -96,8 +93,7 @@ class ViewType(Enum):
         return style
 
     def get_human_name(self) -> str:
-        """Return the name of the view type
-        """
+        """Return the name of the view type"""
         if self == ViewType.VIEW:
             return "View"
         elif self == ViewType.JSON:
@@ -156,5 +152,10 @@ class ViewType(Enum):
 
 # List of view type that cannot be used in a note
 exluded_views_in_note = [
-    ViewType.VIEW, ViewType.FOLDER, ViewType.RESOURCES_LIST_VIEW, ViewType.EMPTY,
-    ViewType.RICH_TEXT, ViewType.APP]
+    ViewType.VIEW,
+    ViewType.FOLDER,
+    ViewType.RESOURCES_LIST_VIEW,
+    ViewType.EMPTY,
+    ViewType.RICH_TEXT,
+    ViewType.APP,
+]

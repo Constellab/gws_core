@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -17,14 +15,14 @@ class AdditionalInfo(BaseModelDTO):
 
 
 class DynamicInputs(InputSpecs):
-
     # name of the spec passed to the task
-    SPEC_NAME = 'source'
+    SPEC_NAME = "source"
 
     additionnal_port_spec: InputSpec = None
 
-    def __init__(self, default_specs: Dict[str, InputSpec] = None,
-                 additionnal_port_spec: InputSpec = None) -> None:
+    def __init__(
+        self, default_specs: Dict[str, InputSpec] = None, additionnal_port_spec: InputSpec = None
+    ) -> None:
         """
         :param default_specs: default specs used when creating the inputs, defaults to None
         :type default_specs: Dict[str, InputSpec], optional
@@ -38,11 +36,13 @@ class DynamicInputs(InputSpecs):
         super().__init__(default_specs)
 
     def get_type(self) -> IOSpecsType:
-        return 'dynamic'
+        return "dynamic"
 
     def get_additional_info(self) -> dict:
         return AdditionalInfo(
-            additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
+            additionnal_port_spec=self.additionnal_port_spec.to_dto()
+            if self.additionnal_port_spec
+            else None
         ).to_json_dict()
 
     def set_additional_info(self, additional_info: dict) -> None:
@@ -52,7 +52,9 @@ class DynamicInputs(InputSpecs):
         additional_info_dto = AdditionalInfo.from_json(additional_info)
 
         if additional_info_dto.additionnal_port_spec:
-            self.additionnal_port_spec = InputSpec.from_dto(additional_info_dto.additionnal_port_spec)
+            self.additionnal_port_spec = InputSpec.from_dto(
+                additional_info_dto.additionnal_port_spec
+            )
 
     def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
         """
@@ -71,21 +73,21 @@ class DynamicInputs(InputSpecs):
         return InputSpec(Resource, optional=True)
 
     @classmethod
-    def from_dto(cls, io_specs: Dict[str, InputSpec], additional_info: dict) -> 'DynamicInputs':
+    def from_dto(cls, io_specs: Dict[str, InputSpec], additional_info: dict) -> "DynamicInputs":
         dynamic_inputs = cls(io_specs)
         dynamic_inputs.set_additional_info(additional_info)
         return dynamic_inputs
 
 
 class DynamicOutputs(OutputSpecs):
-
     # name of the spec passed to the task
-    SPEC_NAME = 'target'
+    SPEC_NAME = "target"
 
     additionnal_port_spec: OutputSpec = None
 
-    def __init__(self, default_specs: Dict[str, OutputSpec] = None,
-                 additionnal_port_spec: OutputSpec = None) -> None:
+    def __init__(
+        self, default_specs: Dict[str, OutputSpec] = None, additionnal_port_spec: OutputSpec = None
+    ) -> None:
         """
         :param default_specs: default specs used when creating the outputs, defaults to None
         :type default_specs: Dict[str, OutputSpec], optional
@@ -101,11 +103,13 @@ class DynamicOutputs(OutputSpecs):
         self.additionnal_port_spec = additionnal_port_spec
 
     def get_type(self) -> IOSpecsType:
-        return 'dynamic'
+        return "dynamic"
 
     def get_additional_info(self) -> dict:
         return AdditionalInfo(
-            additionnal_port_spec=self.additionnal_port_spec.to_dto() if self.additionnal_port_spec else None
+            additionnal_port_spec=self.additionnal_port_spec.to_dto()
+            if self.additionnal_port_spec
+            else None
         ).to_json_dict()
 
     def set_additional_info(self, additional_info: dict) -> None:
@@ -115,10 +119,12 @@ class DynamicOutputs(OutputSpecs):
         additional_info_dto = AdditionalInfo.from_json(additional_info)
 
         if additional_info_dto.additionnal_port_spec:
-            self.additionnal_port_spec = OutputSpec.from_dto(additional_info_dto.additionnal_port_spec)
+            self.additionnal_port_spec = OutputSpec.from_dto(
+                additional_info_dto.additionnal_port_spec
+            )
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
-        """ Method to convert the task output to be saved in the outputs.
+        """Method to convert the task output to be saved in the outputs.
 
         If task output is dynamic, it converts the ResourceList to a basic task output dict with the port
         name as key and the resource as value based on the index of the resource in the ResourceList
@@ -126,11 +132,13 @@ class DynamicOutputs(OutputSpecs):
         if self.SPEC_NAME not in task_outputs:
             raise Exception(f"Output {self.SPEC_NAME} not found in task outputs")
 
-        target = task_outputs['target']
+        target = task_outputs["target"]
 
         # check if target is a iterable
-        if not hasattr(target, '__iter__'):
-            raise Exception(f"Output {self.SPEC_NAME} must be an iterable of resources, got {type(target)}")
+        if not hasattr(target, "__iter__"):
+            raise Exception(
+                f"Output {self.SPEC_NAME} must be an iterable of resources, got {type(target)}"
+            )
 
         resource_list: List[Resource] = list(target)
 
@@ -140,7 +148,8 @@ class DynamicOutputs(OutputSpecs):
 
         if len(resource_list) > len(port_keys):
             raise Exception(
-                f"Too many resources in output {self.SPEC_NAME}, expected {len(port_keys)} got {len(resource_list)}")
+                f"Too many resources in output {self.SPEC_NAME}, expected {len(port_keys)} got {len(resource_list)}"
+            )
         if resource_list:
             count = 0
             for resource in resource_list:
@@ -150,8 +159,7 @@ class DynamicOutputs(OutputSpecs):
         return output_resources
 
     def _get_spec_key_pretty_name(self, key: str) -> str:
-        """Get the pretty name of the spec key. As the key are UUID, we return the index of the spec key
-        """
+        """Get the pretty name of the spec key. As the key are UUID, we return the index of the spec key"""
         # retrieve the index of the spec key
         index = list(self._specs.keys()).index(key)
         return f"n°{index + 1}"
@@ -163,7 +171,7 @@ class DynamicOutputs(OutputSpecs):
         return OutputSpec(Resource, sub_class=True)
 
     @classmethod
-    def from_dto(cls, io_specs: Dict[str, OutputSpec], additional_info: dict) -> 'DynamicOutputs':
+    def from_dto(cls, io_specs: Dict[str, OutputSpec], additional_info: dict) -> "DynamicOutputs":
         dynamic_outputs = cls(io_specs)
         dynamic_outputs.set_additional_info(additional_info)
         return dynamic_outputs

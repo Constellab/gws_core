@@ -1,5 +1,3 @@
-
-
 """
 SerializableRField module for Resource fields with custom serialization logic.
 
@@ -13,12 +11,11 @@ from typing import Any, Dict, List, Type, Union
 
 from gws_core.core.utils.utils import Utils
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .r_field import BaseRField
 
 
-class SerializableObjectJson():
+class SerializableObjectJson:
     """Base class for objects that can be serialized to and from JSON.
 
     SerializableObjectJson defines the interface for custom objects that need to be
@@ -78,7 +75,7 @@ class SerializableObjectJson():
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, data: Union[Dict, List, str, bool, float]) -> 'SerializableObjectJson':
+    def deserialize(cls, data: Union[Dict, List, str, bool, float]) -> "SerializableObjectJson":
         """Deserialize a JSON-compatible representation back to an object instance.
 
         This class method is called when the Resource is loaded from storage.
@@ -164,7 +161,9 @@ class SerializableRField(BaseRField):
 
     object_type: Type[SerializableObjectJson]
 
-    def __init__(self, object_type: Type[SerializableObjectJson], include_in_dict_view: bool = False) -> None:
+    def __init__(
+        self, object_type: Type[SerializableObjectJson], include_in_dict_view: bool = False
+    ) -> None:
         """Initialize a SerializableRField for storing custom serializable objects.
 
         :param object_type: The SerializableObjectJson subclass that this field will store.
@@ -188,7 +187,9 @@ class SerializableRField(BaseRField):
             ```
         """
         if not Utils.issubclass(object_type, SerializableObjectJson):
-            raise BadRequestException("The object type must be a subclass of SerializableObjectJson")
+            raise BadRequestException(
+                "The object type must be a subclass of SerializableObjectJson"
+            )
         super().__init__(default_value=object_type, include_in_dict_view=include_in_dict_view)
         self.object_type = object_type
 

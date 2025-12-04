@@ -1,9 +1,6 @@
-
-
 import time
 
-from gws_core import (BaseTestCase, Queue, QueueService, Scenario,
-                      ScenarioService, ScenarioStatus)
+from gws_core import BaseTestCase, Queue, QueueService, Scenario, ScenarioService, ScenarioStatus
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_service import RobotService
 from gws_core.test.test_helper import TestHelper
@@ -11,16 +8,15 @@ from gws_core.test.test_helper import TestHelper
 
 # test_queue
 class TestQueue(BaseTestCase):
-
     def test_queue(self):
-
         queue: Queue = Queue().save()
         self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
         self.assertEqual(queue.length(), 0)
 
         proto1 = RobotService.create_robot_world_travel()
         scenario1: Scenario = ScenarioService.create_scenario_from_protocol_model(
-            protocol_model=proto1)
+            protocol_model=proto1
+        )
         Queue.add_job(user=TestHelper.user, scenario=scenario1)
 
         scenario1 = scenario1.refresh()
@@ -43,11 +39,9 @@ class TestQueue(BaseTestCase):
         # init the ticking, tick each second
         QueueService.init(tick_interval=3)
 
-        scenario2: Scenario = ScenarioService.create_scenario_from_protocol_type(
-            RobotSimpleTravel)
+        scenario2: Scenario = ScenarioService.create_scenario_from_protocol_type(RobotSimpleTravel)
 
-        scenario3: Scenario = ScenarioService.create_scenario_from_protocol_type(
-            RobotSimpleTravel)
+        scenario3: Scenario = ScenarioService.create_scenario_from_protocol_type(RobotSimpleTravel)
 
         QueueService._add_job(user=TestHelper.user, scenario=scenario2)
         QueueService._add_job(user=TestHelper.user, scenario=scenario3)
@@ -62,7 +56,6 @@ class TestQueue(BaseTestCase):
         self.assertEqual(scenario3.status, ScenarioStatus.SUCCESS)
 
     def _wait_for_scenarios(self) -> None:
-
         wait_count = 0
         # Wait until the queue is clear and there is not scenario that is running
         while Queue.length() > 0 or Scenario.count_running_or_queued_scenarios() > 0:

@@ -2,9 +2,13 @@ import os
 
 import streamlit as st
 
-from gws_core.streamlit import (StreamlitHelper, StreamlitRouter,
-                                StreamlitState, StreamlitTranslateLang,
-                                StreamlitTranslateService)
+from gws_core.streamlit import (
+    StreamlitHelper,
+    StreamlitRouter,
+    StreamlitState,
+    StreamlitTranslateLang,
+    StreamlitTranslateService,
+)
 
 from ..components.example_tabs_component import example_tabs
 from ..components.page_layout_component import page_layout
@@ -22,12 +26,11 @@ def render_utils_page():
     page_layout(
         title="Utils",
         description="This page contains a showcase for streamlit utilities.",
-        content_function=page_content
+        content_function=page_content,
     )
 
 
 def _render_authenticate_user():
-
     code = """import streamlit as st
 import gws_core.streamlit as StreamlitAuthenticateUser
 
@@ -78,7 +81,6 @@ else:
 
 
 def _render_hide_sidebar_toggle():
-
     code = """from gws_core.streamlit import StreamlitHelper
 
 StreamlitHelper.hide_toolbar()"""
@@ -92,14 +94,13 @@ StreamlitHelper.hide_toolbar()"""
 
 def _render_toggle_sidebar():
     def example_demo():
-
-        if st.button('Toggle Sidebar'):
+        if st.button("Toggle Sidebar"):
             StreamlitHelper.toggle_sidebar()
 
-        if st.button('Show sidebar'):
+        if st.button("Show sidebar"):
             StreamlitHelper.show_sidebar()
 
-        if st.button('Hide sidebar'):
+        if st.button("Hide sidebar"):
             StreamlitHelper.hide_sidebar()
 
     code = """import streamlit as st
@@ -125,11 +126,10 @@ if st.button('Hide sidebar'):
 
 def _render_router():
     def example_demo():
-
         router = StreamlitRouter.load_from_session()
 
-        if st.button('Navigate to Containers'):
-            router.navigate('containers')
+        if st.button("Navigate to Containers"):
+            router.navigate("containers")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitRouter
@@ -160,8 +160,9 @@ if st.button('Navigate to Containers'):
 
 def _render_translation():
     def example_demo():
-
-        lang_translation_folder_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), os.pardir, 'lang')
+        lang_translation_folder_path = os.path.join(
+            os.path.abspath(os.path.dirname(__file__)), os.pardir, "lang"
+        )
         translate_service = StreamlitTranslateService(lang_translation_folder_path)
 
         current_lang = translate_service.get_lang()

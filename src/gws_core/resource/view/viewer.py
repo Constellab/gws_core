@@ -1,4 +1,3 @@
-
 from typing import Type
 
 from gws_core.config.config_params import ConfigParams
@@ -16,43 +15,43 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator('Viewer', human_name="Viewer", short_description="Show a configured view",
-                style=TypingStyle.material_icon("visibility"), hide=True)
+@task_decorator(
+    "Viewer",
+    human_name="Viewer",
+    short_description="Show a configured view",
+    style=TypingStyle.material_icon("visibility"),
+    hide=True,
+)
 class Viewer(Task):
-    """Special task to configure and show a view in a protocol
-    """
+    """Special task to configure and show a view in a protocol"""
 
-    input_name: str = 'resource'
-    resource_config_name: str = 'resource_typing_name'
-    view_config_name: str = 'view_config'
+    input_name: str = "resource"
+    resource_config_name: str = "resource_typing_name"
+    view_config_name: str = "view_config"
 
-    input_specs: InputSpecs = InputSpecs({
-        "resource": InputSpec(Resource)
-    })
+    input_specs: InputSpecs = InputSpecs({"resource": InputSpec(Resource)})
 
-    config_specs = ConfigSpecs({
-        "resource_typing_name": StrParam(),
-        "view_config": DictParam()
-    })
+    config_specs = ConfigSpecs({"resource_typing_name": StrParam(), "view_config": DictParam()})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         from gws_core.resource.resource_service import ResourceService
-        from gws_core.resource.view_config.view_config_service import \
-            ViewConfigService
+        from gws_core.resource.view_config.view_config_service import ViewConfigService
 
-        resource: Resource = inputs.get('resource')
+        resource: Resource = inputs.get("resource")
 
         config_resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
-            params.get('resource_typing_name'))
+            params.get("resource_typing_name")
+        )
         if not Utils.issubclass(type(resource), config_resource_type):
             raise Exception(
-                f"The input resource type '{resource.get_human_name()}' is not compatible with the type provided in the config: '{config_resource_type.get_human_name()}'")
+                f"The input resource type '{resource.get_human_name()}' is not compatible with the type provided in the config: '{config_resource_type.get_human_name()}'"
+            )
 
         resource_model = ResourceService.get_by_id_and_check(resource.get_model_id())
 
-        view_config = params.get('view_config')
-        view_method_name = view_config['view_method_name']
-        config_values = view_config['config_values']
+        view_config = params.get("view_config")
+        view_method_name = view_config["view_method_name"]
+        config_values = view_config["config_values"]
 
         view_runner: ViewRunner = ViewRunner(resource, view_method_name, config_values)
         view = view_runner.generate_view()
@@ -64,7 +63,7 @@ class Viewer(Task):
             view_name=view_method_name,
             config=view_runner.get_config(),
             is_favorite=True,
-            view_style=view.get_style() or view_runner.get_metadata_style()
+            view_style=view.get_style() or view_runner.get_metadata_style(),
         )
 
         return {}

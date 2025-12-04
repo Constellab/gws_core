@@ -164,8 +164,7 @@ def confirm_dialog() -> rx.Component:
     return rx.alert_dialog.root(
         rx.alert_dialog.content(
             rx.alert_dialog.title(ConfirmDialogState.title),
-            rx.alert_dialog.description(
-                ConfirmDialogState.content, margin_bottom="1rem"),
+            rx.alert_dialog.description(ConfirmDialogState.content, margin_bottom="1rem"),
             rx.flex(
                 rx.alert_dialog.cancel(
                     rx.button(

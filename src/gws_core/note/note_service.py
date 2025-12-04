@@ -1,5 +1,3 @@
-
-
 from typing import Callable, List
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -8,17 +6,16 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.folder.space_folder import SpaceFolder
-from gws_core.impl.rich_text.block.rich_text_block_header import \
-    RichTextBlockHeaderLevel
-from gws_core.impl.rich_text.block.rich_text_block_view import \
-    RichTextBlockResourceView
+from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
+from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_modification import (
-    RichTextBlockModificationWithUserDTO, RichTextModificationType,
-    RichTextModificationUserDTO)
-from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
-                                                     RichTextObjectType)
+    RichTextBlockModificationWithUserDTO,
+    RichTextModificationType,
+    RichTextModificationUserDTO,
+)
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO, RichTextObjectType
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.note_template.note_template import NoteTemplate
@@ -33,16 +30,14 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.task_input_model import TaskInputModel
-from gws_core.user.activity.activity_dto import (ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user_service import UserService
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..scenario.scenario import Scenario
 from ..space.space_service import SpaceService
@@ -51,43 +46,45 @@ from .note_dto import NoteInsertTemplateDTO, NoteSaveDTO
 from .note_search_builder import NoteSearchBuilder
 
 
-class NoteService():
-
+class NoteService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def create(cls, note_dto: NoteSaveDTO, scenario_ids: List[str] = None) -> Note:
         note = Note()
         note.title = note_dto.title
-        note.folder = SpaceFolder.get_by_id_and_check(note_dto.folder_id) if note_dto.folder_id else None
+        note.folder = (
+            SpaceFolder.get_by_id_and_check(note_dto.folder_id) if note_dto.folder_id else None
+        )
 
         if note_dto.template_id:
             template: NoteTemplate = NoteTemplate.get_by_id_and_check(note_dto.template_id)
             note.content = template.content
 
             # copy the storage of the note template to the note
-            RichTextFileService.copy_object_dir(RichTextObjectType.NOTE_TEMPLATE,
-                                                template.id,
-                                                RichTextObjectType.NOTE,
-                                                note.id)
+            RichTextFileService.copy_object_dir(
+                RichTextObjectType.NOTE_TEMPLATE, template.id, RichTextObjectType.NOTE, note.id
+            )
 
         else:
             # Set default content for note
             note.content = RichText.create_rich_text_dto(
-                [RichText.create_header("0", "Introduction", RichTextBlockHeaderLevel.HEADER_1),
-                 RichText.create_paragraph("1", ""),
-                 RichText.create_paragraph("2", ""),
-                 RichText.create_header("3", "Methods", RichTextBlockHeaderLevel.HEADER_1),
-                 RichText.create_paragraph("4", ""),
-                 RichText.create_paragraph("5", ""),
-                 RichText.create_header("6", "Results", RichTextBlockHeaderLevel.HEADER_1),
-                 RichText.create_paragraph("7", ""),
-                 RichText.create_paragraph("8", ""),
-                 RichText.create_header("9", "Conclusion", RichTextBlockHeaderLevel.HEADER_1),
-                 RichText.create_paragraph("10", ""),
-                 RichText.create_paragraph("11", ""),
-                 RichText.create_header("12", "References", RichTextBlockHeaderLevel.HEADER_1),
-                 RichText.create_paragraph("13", "")
-                 ])
+                [
+                    RichText.create_header("0", "Introduction", RichTextBlockHeaderLevel.HEADER_1),
+                    RichText.create_paragraph("1", ""),
+                    RichText.create_paragraph("2", ""),
+                    RichText.create_header("3", "Methods", RichTextBlockHeaderLevel.HEADER_1),
+                    RichText.create_paragraph("4", ""),
+                    RichText.create_paragraph("5", ""),
+                    RichText.create_header("6", "Results", RichTextBlockHeaderLevel.HEADER_1),
+                    RichText.create_paragraph("7", ""),
+                    RichText.create_paragraph("8", ""),
+                    RichText.create_header("9", "Conclusion", RichTextBlockHeaderLevel.HEADER_1),
+                    RichText.create_paragraph("10", ""),
+                    RichText.create_paragraph("11", ""),
+                    RichText.create_header("12", "References", RichTextBlockHeaderLevel.HEADER_1),
+                    RichText.create_paragraph("13", ""),
+                ]
+            )
 
         note.save()
 
@@ -96,9 +93,9 @@ class NoteService():
             for scenario_id in scenario_ids:
                 cls.add_scenario(note.id, scenario_id)
 
-        ActivityService.add(ActivityType.CREATE,
-                            object_type=ActivityObjectType.NOTE,
-                            object_id=note.id)
+        ActivityService.add(
+            ActivityType.CREATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 
@@ -112,9 +109,9 @@ class NoteService():
 
         note = note.save()
 
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.NOTE,
-                                            object_id=note.id)
+        ActivityService.add_or_update_async(
+            ActivityType.UPDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 
@@ -126,9 +123,9 @@ class NoteService():
 
         note = note.save()
 
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.NOTE,
-                                            object_id=note.id)
+        ActivityService.add_or_update_async(
+            ActivityType.UPDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 
@@ -140,16 +137,15 @@ class NoteService():
 
         note = note.save()
 
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.NOTE,
-                                            object_id=note.id)
+        ActivityService.add_or_update_async(
+            ActivityType.UPDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 
     @classmethod
     @GwsCoreDbManager.transaction()
     def _update_note_folder(cls, note: Note, new_folder_id: str) -> Note:
-
         # update folder
         if new_folder_id:
             new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
@@ -159,13 +155,15 @@ class NoteService():
             if note.last_sync_at is not None and new_folder != note.folder:
                 if note.folder.get_root().id != new_folder.get_root().id:
                     raise BadRequestException(
-                        "The note is synchronized with the space, you can't move it to another root folder. Please unsync it first by removing it from the folder.")
-                SpaceService.get_instance().update_note_folder(note.folder.id, note.id, new_folder.id)
+                        "The note is synchronized with the space, you can't move it to another root folder. Please unsync it first by removing it from the folder."
+                    )
+                SpaceService.get_instance().update_note_folder(
+                    note.folder.id, note.id, new_folder.id
+                )
             note.folder = new_folder
 
         # if the folder was removed
         if new_folder_id is None and note.folder is not None:
-
             if note.last_sync_at is not None:
                 cls._unsynchronize_with_space(note, note.folder.id)
             note.folder = None
@@ -175,8 +173,7 @@ class NoteService():
 
         for scenario in scenarios:
             if scenario.folder is None:
-                ScenarioService.update_scenario_folder(scenario.id,
-                                                       new_folder_id, check_note=False)
+                ScenarioService.update_scenario_folder(scenario.id, new_folder_id, check_note=False)
 
         return note
 
@@ -186,16 +183,18 @@ class NoteService():
         note: Note = cls._get_and_check_before_update(note_id)
 
         if not Settings.get_instance().is_test and not Settings.get_instance().is_local_env():
-            note.modifications = SpaceService.get_instance().get_modifications(note.content, note_content, note.modifications)
+            note.modifications = SpaceService.get_instance().get_modifications(
+                note.content, note_content, note.modifications
+            )
         note.content = note_content
 
         # refresh NoteResource table
         cls._refresh_note_views_and_tags(note)
 
         note = note.save()
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.NOTE,
-                                            object_id=note.id)
+        ActivityService.add_or_update_async(
+            ActivityType.UPDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 
@@ -218,10 +217,9 @@ class NoteService():
 
         # copy the storage of the note template to the note
         # copy after to avoid copy if error during update_content
-        RichTextFileService.copy_object_dir(RichTextObjectType.NOTE_TEMPLATE,
-                                            template.id,
-                                            RichTextObjectType.NOTE,
-                                            note.id)
+        RichTextFileService.copy_object_dir(
+            RichTextObjectType.NOTE_TEMPLATE, template.id, RichTextObjectType.NOTE, note.id
+        )
         return note
 
     @classmethod
@@ -262,9 +260,9 @@ class NoteService():
         if note.last_sync_at is not None and note.folder is not None:
             SpaceService.get_instance().delete_note(note.folder.id, note.id)
 
-        ActivityService.add(ActivityType.DELETE,
-                            object_type=ActivityObjectType.NOTE,
-                            object_id=note_id)
+        ActivityService.add(
+            ActivityType.DELETE, object_type=ActivityObjectType.NOTE, object_id=note_id
+        )
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -273,7 +271,7 @@ class NoteService():
 
         rich_text = note.get_content_as_rich_text()
         if rich_text.is_empty():
-            raise BadRequestException('The note is empty')
+            raise BadRequestException("The note is empty")
 
         # set the folder if it is provided
         if folder_id is not None:
@@ -284,7 +282,8 @@ class NoteService():
 
         if note.folder.children.count() > 0:
             raise BadRequestException(
-                "The scenario must be associated with a leaf folder (folder with no children)")
+                "The scenario must be associated with a leaf folder (folder with no children)"
+            )
 
         # refresh the associated views and scenario (for precaution)
         cls._refresh_note_views_and_tags(note)
@@ -293,8 +292,11 @@ class NoteService():
         scenarios: List[Scenario] = cls.get_scenarios_by_note(note_id)
         for scenario in scenarios:
             if scenario.folder and scenario.folder.id != note.folder.id:
-                raise BadRequestException(GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.value,
-                                          GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.name, {'title': scenario.title})
+                raise BadRequestException(
+                    GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.value,
+                    GWSException.NOTE_VALIDATION_EXP_OTHER_FOLDER.name,
+                    {"title": scenario.title},
+                )
 
         # check that all resource views are from resource that
         # were generated by scenarios that are linked to the note
@@ -308,14 +310,18 @@ class NoteService():
             if not resource.is_manually_generated():
                 if not resource.scenario.id in scenario_ids:
                     # get the best name for the error
-                    raise BadRequestException(GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.value,
-                                              GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.name,
-                                              {'view_name': view_name, 'exp_title': resource.scenario.title})
+                    raise BadRequestException(
+                        GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.value,
+                        GWSException.NOTE_VALIDATION_RESOURCE_GENERATED_VIEW_OTHER_EXP.name,
+                        {"view_name": view_name, "exp_title": resource.scenario.title},
+                    )
             else:
                 if not TaskInputModel.resource_is_used_by_scenario(resource.id, scenario_ids):
-                    raise BadRequestException(GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.value,
-                                              GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.name,
-                                              {'view_name': view_name, 'resource_name': resource.name})
+                    raise BadRequestException(
+                        GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.value,
+                        GWSException.NOTE_VALIDATION_RESOURCE_UPLOADED_VIEW_OTHER_EXP.name,
+                        {"view_name": view_name, "resource_name": resource.name},
+                    )
 
         # validate scenario that were not validated
         for scenario in scenarios:
@@ -325,9 +331,9 @@ class NoteService():
 
         note.validate()
 
-        ActivityService.add(ActivityType.VALIDATE,
-                            object_type=ActivityObjectType.NOTE,
-                            object_id=note.id)
+        ActivityService.add(
+            ActivityType.VALIDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note.save()
 
@@ -362,7 +368,9 @@ class NoteService():
         #     return note
 
         if note.folder is None:
-            raise BadRequestException("The scenario must be linked to a folder before validating it")
+            raise BadRequestException(
+                "The scenario must be linked to a folder before validating it"
+            )
 
         note.last_sync_at = DateHelper.now_utc()
         note.last_sync_by = CurrentUserService.get_and_check_current_user()
@@ -384,35 +392,36 @@ class NoteService():
         form_data = FormData()
 
         for figure in rich_text.get_figures_data():
-            file_path = RichTextFileService.get_figure_file_path(RichTextObjectType.NOTE, note.id,
-                                                                 figure.filename)
-            form_data.add_file_from_path('files', file_path)
+            file_path = RichTextFileService.get_figure_file_path(
+                RichTextObjectType.NOTE, note.id, figure.filename
+            )
+            form_data.add_file_from_path("files", file_path)
 
         for file in rich_text.get_files_data():
-            file_path = RichTextFileService.get_uploaded_file_path(RichTextObjectType.NOTE, note.id,
-                                                                   file.name)
-            form_data.add_file_from_path('files', file_path)
+            file_path = RichTextFileService.get_uploaded_file_path(
+                RichTextObjectType.NOTE, note.id, file.name
+            )
+            form_data.add_file_from_path("files", file_path)
 
         # create temporary files for resource views
         for resource_view in rich_text.get_resource_views_data():
             view_result = ResourceService.get_and_call_view_on_resource_model(
-                resource_view.resource_id,
-                resource_view.view_method_name,
-                resource_view.view_config)
+                resource_view.resource_id, resource_view.view_method_name, resource_view.view_config
+            )
 
-            form_data.add_file_from_json(view_result.to_dto().to_json_dict(),
-                                         'files',
-                                         resource_view.id + '.json')
+            form_data.add_file_from_json(
+                view_result.to_dto().to_json_dict(), "files", resource_view.id + ".json"
+            )
 
         # create temporary files for file views
         for file_view_block in rich_text.get_file_views_data():
             # retrieve the file view
-            view_result_dto = RichTextFileService.get_file_view(RichTextObjectType.NOTE,
-                                                                note.id,
-                                                                file_view_block.filename)
-            form_data.add_file_from_json(view_result_dto.to_json_dict(),
-                                         'files',
-                                         file_view_block.id + '.json')
+            view_result_dto = RichTextFileService.get_file_view(
+                RichTextObjectType.NOTE, note.id, file_view_block.filename
+            )
+            form_data.add_file_from_json(
+                view_result_dto.to_json_dict(), "files", file_view_block.id + ".json"
+            )
 
         # Save the scenario in space
         SpaceService.get_instance().save_note(note.folder.id, save_note_dto, form_data)
@@ -440,8 +449,10 @@ class NoteService():
 
         # If the scenario was already added to the note
         if note_exp is not None:
-            raise BadRequestException(GWSException.NOTE_EXP_ALREADY_LINKED.value,
-                                      GWSException.NOTE_EXP_ALREADY_LINKED.name)
+            raise BadRequestException(
+                GWSException.NOTE_EXP_ALREADY_LINKED.value,
+                GWSException.NOTE_EXP_ALREADY_LINKED.name,
+            )
 
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
@@ -453,15 +464,22 @@ class NoteService():
                 note.save()
         else:
             # check if the note root folder is the same as the scenario root folder
-            if scenario.folder is not None and note.folder.get_root().id != scenario.folder.get_root().id:
-                raise BadRequestException(GWSException.NOTE_ADD_EXP_OTHER_FOLDER.value,
-                                          GWSException.NOTE_ADD_EXP_OTHER_FOLDER.name)
+            if (
+                scenario.folder is not None
+                and note.folder.get_root().id != scenario.folder.get_root().id
+            ):
+                raise BadRequestException(
+                    GWSException.NOTE_ADD_EXP_OTHER_FOLDER.value,
+                    GWSException.NOTE_ADD_EXP_OTHER_FOLDER.name,
+                )
 
         NoteScenario.create_obj(scenario, note).save()
 
         # add the scenario tags to the note
         scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario.id)
-        propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario.id)
+        propagated_tags = scenario_tags.build_tags_propagated(
+            TagOriginType.SCENARIO_PROPAGATED, scenario.id
+        )
         note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
         note_tags.add_tags(propagated_tags)
 
@@ -477,14 +495,18 @@ class NoteService():
         # if any of the view is from the scenario, raise an error
         for note_view in note_views:
             if note_view.scenario_id == scenario_id:
-                raise BadRequestException(GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.value,
-                                          GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.name)
+                raise BadRequestException(
+                    GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.value,
+                    GWSException.NOTE_HAS_A_VIEW_FROM_SCENARIO.name,
+                )
 
         NoteScenario.delete_obj(scenario_id, note_id)
 
         # remove the scenario tags from the note
         scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario_id)
-        propagated_tags = scenario_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, scenario_id)
+        propagated_tags = scenario_tags.build_tags_propagated(
+            TagOriginType.SCENARIO_PROPAGATED, scenario_id
+        )
         note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note_id)
         note_tags.delete_tags(propagated_tags)
 
@@ -512,44 +534,47 @@ class NoteService():
 
     @classmethod
     def get_by_scenario(cls, scenario_id: str) -> List[Note]:
-        return list(Note.select().join(NoteScenario).where(
-            NoteScenario.scenario == scenario_id).order_by(
-            Note.last_modified_at.desc()))
+        return list(
+            Note.select()
+            .join(NoteScenario)
+            .where(NoteScenario.scenario == scenario_id)
+            .order_by(Note.last_modified_at.desc())
+        )
 
     @classmethod
     def get_scenarios_by_note(cls, note_id: str) -> List[Scenario]:
-        return list(Scenario.select().join(NoteScenario).where(
-            NoteScenario.note == note_id).order_by(
-            Scenario.last_modified_at.desc()))
+        return list(
+            Scenario.select()
+            .join(NoteScenario)
+            .where(NoteScenario.note == note_id)
+            .order_by(Scenario.last_modified_at.desc())
+        )
 
     @classmethod
-    def search(cls,
-               search: SearchParams,
-               page: int = 0,
-               number_of_items_per_page: int = 20) -> Paginator[Note]:
-
+    def search(
+        cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[Note]:
         search_builder: SearchBuilder = NoteSearchBuilder()
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
     @classmethod
-    def search_by_name(cls, name: str,
-                       page: int = 0,
-                       number_of_items_per_page: int = 20) -> Paginator[Note]:
+    def search_by_name(
+        cls, name: str, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[Note]:
         model_select = Note.select().where(Note.title.contains(name))
 
-        return Paginator(
-            model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+        return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_by_resource(cls, resource_id: str,
-                        page: int = 0,
-                        number_of_items_per_page: int = 20) -> Paginator[Note]:
-
+    def get_by_resource(
+        cls, resource_id: str, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[Note]:
         query = NoteViewModel.get_by_resource(resource_id)
 
         paginator: Paginator[NoteViewModel] = Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page)
+            query, page=page, nb_of_items_per_page=number_of_items_per_page
+        )
 
         map_function: Callable[[NoteViewModel], Note] = lambda x: x.note
         paginator.map_result(map_function)
@@ -566,8 +591,10 @@ class NoteService():
         scenarios = NoteService.get_scenarios_by_note(note_id)
 
         if len(scenarios) == 0:
-            raise BadRequestException(GWSException.NOTE_NO_LINKED_SCENARIO.value,
-                                      GWSException.NOTE_NO_LINKED_SCENARIO.name)
+            raise BadRequestException(
+                GWSException.NOTE_NO_LINKED_SCENARIO.value,
+                GWSException.NOTE_NO_LINKED_SCENARIO.name,
+            )
 
         scenario_ids = [scenario.id for scenario in scenarios]
 
@@ -586,13 +613,17 @@ class NoteService():
         note_views: List[NoteViewModel] = NoteViewModel.get_by_note(note.id)
 
         # extract the views id from the rich text
-        rich_text_views: List[RichTextBlockResourceView] = note.get_content_as_rich_text().get_resource_views_data()
+        rich_text_views: List[RichTextBlockResourceView] = (
+            note.get_content_as_rich_text().get_resource_views_data()
+        )
 
         note_tags: EntityTagList = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
 
         rich_text_view_ids = {
-            rich_text_view.view_config_id for rich_text_view in rich_text_views
-            if rich_text_view.view_config_id is not None}
+            rich_text_view.view_config_id
+            for rich_text_view in rich_text_views
+            if rich_text_view.view_config_id is not None
+        }
 
         # detect which views were removed and unassociate resource
         for note_view in note_views:
@@ -600,7 +631,9 @@ class NoteService():
                 note_view.delete_instance()
                 # remove the tags of the view from the note
                 view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, note_view.view.id)
-                propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, note_view.view.id)
+                propagated_tags = view_tags.build_tags_propagated(
+                    TagOriginType.VIEW_PROPAGATED, note_view.view.id
+                )
                 note_tags.delete_tags(propagated_tags)
 
         # detect which views were added
@@ -616,7 +649,9 @@ class NoteService():
                     NoteViewModel(note=note, view=view_config).save()
                     # add the tags of the view to the note
                     view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_config.id)
-                    propagated_tags = view_tags.build_tags_propagated(TagOriginType.VIEW_PROPAGATED, view_config.id)
+                    propagated_tags = view_tags.build_tags_propagated(
+                        TagOriginType.VIEW_PROPAGATED, view_config.id
+                    )
                     note_tags.add_tags(propagated_tags)
                     note_view_ids.add(view_config.id)
 
@@ -638,12 +673,10 @@ class NoteService():
         note: Note = Note.get_by_id_and_check(note_id)
 
         if note.is_archived:
-            raise BadRequestException('The note is already archived')
+            raise BadRequestException("The note is already archived")
 
         ActivityService.add(
-            ActivityType.ARCHIVE,
-            object_type=ActivityObjectType.NOTE,
-            object_id=note_id
+            ActivityType.ARCHIVE, object_type=ActivityObjectType.NOTE, object_id=note_id
         )
         return note.archive(True)
 
@@ -653,12 +686,10 @@ class NoteService():
         note: Note = Note.get_by_id_and_check(note_id)
 
         if not note.is_archived:
-            raise BadRequestException('The note is not archived')
+            raise BadRequestException("The note is not archived")
 
         ActivityService.add(
-            ActivityType.UNARCHIVE,
-            object_type=ActivityObjectType.NOTE,
-            object_id=note_id
+            ActivityType.UNARCHIVE, object_type=ActivityObjectType.NOTE, object_id=note_id
         )
         return note.archive(False)
 
@@ -675,24 +706,26 @@ class NoteService():
 
         for modif in note.modifications.modifications:
             user = UserService.get_by_id_and_check(modif.userId)
-            modifications.append(RichTextBlockModificationWithUserDTO(
-                user=RichTextModificationUserDTO(
-                    id=user.id,
-                    firstname=user.first_name,
-                    lastname=user.last_name,
-                    photo=user.photo
-                ),
-                userId=modif.userId,
-                blockId=modif.blockId,
-                blockType=modif.blockType,
-                blockValue=modif.blockValue,
-                differences=modif.differences,
-                id=modif.id,
-                type=modif.type,
-                index=modif.index,
-                oldIndex=modif.oldIndex,
-                time=modif.time
-            ))
+            modifications.append(
+                RichTextBlockModificationWithUserDTO(
+                    user=RichTextModificationUserDTO(
+                        id=user.id,
+                        firstname=user.first_name,
+                        lastname=user.last_name,
+                        photo=user.photo,
+                    ),
+                    userId=modif.userId,
+                    blockId=modif.blockId,
+                    blockType=modif.blockType,
+                    blockValue=modif.blockValue,
+                    differences=modif.differences,
+                    id=modif.id,
+                    type=modif.type,
+                    index=modif.index,
+                    oldIndex=modif.oldIndex,
+                    time=modif.time,
+                )
+            )
 
         return modifications
 
@@ -700,7 +733,9 @@ class NoteService():
     def get_undo_content(cls, note_id: str, modification_id: str) -> RichTextDTO:
         note: Note = Note.get_by_id_and_check(note_id)
 
-        return SpaceService.get_instance().get_undo_content(note.content, note.modifications, modification_id)
+        return SpaceService.get_instance().get_undo_content(
+            note.content, note.modifications, modification_id
+        )
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -708,16 +743,27 @@ class NoteService():
         note: Note = Note.get_by_id_and_check(note_id)
 
         if note.is_archived:
-            raise BadRequestException('You cannot rollback an archived note')
+            raise BadRequestException("You cannot rollback an archived note")
 
         rollbacked_content = cls.get_undo_content(note_id, modification_id)
 
         modification_index = note.modifications.modifications.index(
-            next((modif for modif in note.modifications.modifications if modif.id == modification_id), None))
+            next(
+                (
+                    modif
+                    for modif in note.modifications.modifications
+                    if modif.id == modification_id
+                ),
+                None,
+            )
+        )
 
         modif_type = note.modifications.modifications[modification_index].type
 
-        if not modif_type == RichTextModificationType.DELETED and not modif_type == RichTextModificationType.MOVED:
+        if (
+            not modif_type == RichTextModificationType.DELETED
+            and not modif_type == RichTextModificationType.MOVED
+        ):
             modification_index = modification_index + 1
 
         note.modifications.modifications = note.modifications.modifications[:modification_index]
@@ -726,9 +772,9 @@ class NoteService():
         cls._refresh_note_views_and_tags(note)
 
         note = note.save()
-        ActivityService.add_or_update_async(ActivityType.UPDATE,
-                                            object_type=ActivityObjectType.NOTE,
-                                            object_id=note.id)
+        ActivityService.add_or_update_async(
+            ActivityType.UPDATE, object_type=ActivityObjectType.NOTE, object_id=note.id
+        )
 
         return note
 

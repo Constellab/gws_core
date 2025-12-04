@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
@@ -12,11 +10,12 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_scenario_tasks
 class TestScenarioTasks(BaseTestCase):
-
     def test_scenario_params(self):
         scenario = ScenarioService.create_scenario(title="test")
 
-        config_params = ConfigSpecs({"scenario": ScenarioParam()}).build_config_params({"scenario": scenario.id})
+        config_params = ConfigSpecs({"scenario": ScenarioParam()}).build_config_params(
+            {"scenario": scenario.id}
+        )
 
         data: Scenario = config_params["scenario"]
         self.assertIsInstance(data, Scenario)
@@ -29,7 +28,7 @@ class TestScenarioTasks(BaseTestCase):
         task_runner = TaskRunner(SelectScenario, params={"scenario": scenario.id})
         result = task_runner.run()
 
-        scenario_resource: ScenarioResource = result['scenario']
+        scenario_resource: ScenarioResource = result["scenario"]
         self.assertIsInstance(scenario_resource, ScenarioResource)
         self.assertEqual(scenario_resource.scenario_id, scenario.id)
-        self.assertEqual(scenario_resource.get_scenario().title, 'test 2')
+        self.assertEqual(scenario_resource.get_scenario().title, "test 2")

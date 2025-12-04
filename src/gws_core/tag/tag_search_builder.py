@@ -1,4 +1,3 @@
-
 from gws_core.core.classes.search_builder import SearchBuilder
 from gws_core.tag.tag_key_model import TagKeyModel
 

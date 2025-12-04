@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -11,10 +10,9 @@ from gws_core.user.user import User
 
 
 class AuthContextBase:
+    context_type: Literal["user", "app", "share-link"]
 
-    context_type: Literal['user', 'app', 'share-link']
-
-    def __init__(self, context_type: Literal['user', 'app', 'share-link']) -> None:
+    def __init__(self, context_type: Literal["user", "app", "share-link"]) -> None:
         self.context_type = context_type
 
     @abstractmethod
@@ -23,12 +21,11 @@ class AuthContextBase:
 
 
 class AuthContextUser(AuthContextBase):
-
-    context_type: Literal['user'] = 'user'
+    context_type: Literal["user"] = "user"
     user: User
 
     def __init__(self, user: User) -> None:
-        super().__init__('user')
+        super().__init__("user")
         self.user = user
 
     def get_user(self) -> User:
@@ -36,14 +33,12 @@ class AuthContextUser(AuthContextBase):
 
 
 class AuthContextApp(AuthContextBase):
-
-    context_type: Literal['app'] = 'app'
+    context_type: Literal["app"] = "app"
     app_id: str
     user: User
 
-    def __init__(self,
-                 app_id: str, user: User) -> None:
-        super().__init__('app')
+    def __init__(self, app_id: str, user: User) -> None:
+        super().__init__("app")
         self.app_id = app_id
         self.user = user
 
@@ -55,14 +50,12 @@ class AuthContextApp(AuthContextBase):
 
 
 class AuthContextShareLink(AuthContextBase):
-
-    context_type: Literal['share-link'] = 'share-link'
+    context_type: Literal["share-link"] = "share-link"
     share_link: ShareLink
     user: User
 
-    def __init__(self,
-                 share_link: ShareLink, user: User) -> None:
-        super().__init__('share-link')
+    def __init__(self, share_link: ShareLink, user: User) -> None:
+        super().__init__("share-link")
         self.share_link = share_link
         self.user = user
 

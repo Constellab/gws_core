@@ -1,4 +1,3 @@
-
 from typing import Any, List
 
 from numpy import NaN
@@ -38,15 +37,32 @@ class TableReplace(Transformer):
 
     """
 
-    config_specs = ConfigSpecs({
-        "replace_values": ParamSet(ConfigSpecs(
-            {"search_value": StrParam(human_name="Value to search for", short_description="Use 'NaN' or 'None' for NaN/None or leave empty for empty string", default_value=""),
-             "replace_value": StrParam(human_name="Replace value", short_description="Use 'NaN' for NaN, 'None' for None or leave empty for empty string", default_value=""), "is_regex": BoolParam(
-                default_value=False, human_name="Is regex", short_description="If true, the search value is interpreted as a regex"),
-             }),
-            human_name="Replace values"
-        ),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "replace_values": ParamSet(
+                ConfigSpecs(
+                    {
+                        "search_value": StrParam(
+                            human_name="Value to search for",
+                            short_description="Use 'NaN' or 'None' for NaN/None or leave empty for empty string",
+                            default_value="",
+                        ),
+                        "replace_value": StrParam(
+                            human_name="Replace value",
+                            short_description="Use 'NaN' for NaN, 'None' for None or leave empty for empty string",
+                            default_value="",
+                        ),
+                        "is_regex": BoolParam(
+                            default_value=False,
+                            human_name="Is regex",
+                            short_description="If true, the search value is interpreted as a regex",
+                        ),
+                    }
+                ),
+                human_name="Replace values",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()
@@ -65,24 +81,24 @@ class TableReplace(Transformer):
 
             dataframe.replace(search_value, replace_value, regex=is_regex, inplace=True)
 
-        new_table = Table(dataframe, row_tags=source.get_row_tags(), column_tags=source.get_column_tags())
+        new_table = Table(
+            dataframe, row_tags=source.get_row_tags(), column_tags=source.get_column_tags()
+        )
         return new_table
 
     def convert_replace_value(self, param_value: str) -> Any:
-        """Handle specific values like NaN and None, and tries to convert to float
-      """
-        if param_value == 'NaN':
+        """Handle specific values like NaN and None, and tries to convert to float"""
+        if param_value == "NaN":
             return NaN
-        elif param_value == 'None':
+        elif param_value == "None":
             return None
         else:
             # try to convert to float
             return NumericHelper.to_float(param_value, param_value)
 
     def convert_search_value(self, param_value: str) -> Any:
-        """Handle specific values like NaN and None, and tries to convert to float
-      """
-        if param_value == 'NaN' or param_value == 'None':
+        """Handle specific values like NaN and None, and tries to convert to float"""
+        if param_value == "NaN" or param_value == "None":
             return NaN
         else:
             # try to convert to float

@@ -1,12 +1,9 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.utils import Utils
 
 from ....config.config_params import ConfigParams
@@ -57,12 +54,24 @@ class TableHistogramView(BaseTableView):
 
     _table: Table
 
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-        "nbins": IntParam(default_value=10, min_value=0, optional=True, human_name="Nbins", short_description="The number of bins. Set zero (0) for auto."),
-        "mode": StrParam(default_value="FREQUENCY", optional=True, human_name="Mode",
-                         allowed_values=Utils.get_literal_values(HistogramMode)),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+            "nbins": IntParam(
+                default_value=10,
+                min_value=0,
+                optional=True,
+                human_name="Nbins",
+                short_description="The number of bins. Set zero (0) for auto.",
+            ),
+            "mode": StrParam(
+                default_value="FREQUENCY",
+                optional=True,
+                human_name="Mode",
+                allowed_values=Utils.get_literal_values(HistogramMode),
+            ),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     _type: ViewType = ViewType.HISTOGRAM
 
@@ -70,7 +79,7 @@ class TableHistogramView(BaseTableView):
         series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) == 0:
-            raise BadRequestException('There must be at least one serie')
+            raise BadRequestException("There must be at least one serie")
 
         # create view
         view = HistogramView(nbins=params.get_value("nbins"), mode=params.get_value("mode"))
@@ -78,8 +87,6 @@ class TableHistogramView(BaseTableView):
         view.y_label = params.get_value("y_axis_label")
 
         for serie in series:
-            view.add_data(
-                data=self.get_values_from_selection_range(serie.y),
-                name=serie.name)
+            view.add_data(data=self.get_values_from_selection_range(serie.y), name=serie.name)
 
         return view.data_to_dict(params)

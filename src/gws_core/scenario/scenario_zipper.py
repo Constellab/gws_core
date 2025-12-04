@@ -1,4 +1,3 @@
-
 from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -21,7 +20,8 @@ class ZipScenario(BaseModelDTO):
 
 
 class ZipScenarioInfo(BaseModelDTO):
-    """ Content of the info.json file in the zip file when a resource is zipped"""
+    """Content of the info.json file in the zip file when a resource is zipped"""
+
     zip_version: int
     scenario: ZipScenario
     protocol: ScenarioProtocolDTO

@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Dict, Generic, List, Type, TypeVar, final
 
@@ -9,15 +7,14 @@ from gws_core.io.io_spec import IOSpec
 from gws_core.io.io_specs import InputSpecs, IOSpecs, IOSpecsType, OutputSpecs
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.model.base import Base
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .io_exception import ResourceNotCompatibleException
 from .port import InPort, OutPort, PortType
 
-IOType = TypeVar('IOType', bound='IO')
+IOType = TypeVar("IOType", bound="IO")
 
 
 class IO(Base, Generic[PortType]):
@@ -30,7 +27,7 @@ class IO(Base, Generic[PortType]):
     _type: IOSpecsType = None
     _additional_info: dict = None
 
-    def __init__(self, type_: IOSpecsType = 'normal', additional_info: dict = None) -> None:
+    def __init__(self, type_: IOSpecsType = "normal", additional_info: dict = None) -> None:
         self._ports = dict()
         self._type = type_
         if additional_info is None:
@@ -54,7 +51,7 @@ class IO(Base, Generic[PortType]):
 
     @property
     def is_dynamic(self) -> bool:
-        return self._type == 'dynamic'
+        return self._type == "dynamic"
 
     def reset(self) -> None:
         for port in self._ports.values():
@@ -103,8 +100,7 @@ class IO(Base, Generic[PortType]):
 
     def add_port(self, name: str, port: PortType) -> None:
         if not isinstance(name, str):
-            raise BadRequestException(
-                "Invalid port specs. The port name must be a string")
+            raise BadRequestException("Invalid port specs. The port name must be a string")
         self._ports[name] = port
 
     @abstractmethod
@@ -143,14 +139,11 @@ class IO(Base, Generic[PortType]):
         del self._ports[port_name]
 
     def _check_port_name(self, name) -> None:
-
         if not isinstance(name, str):
-            raise BadRequestException(
-                f"The port name must be a string. Actual value: '{name}'")
+            raise BadRequestException(f"The port name must be a string. Actual value: '{name}'")
 
         if not self.port_exists(name):
-            raise BadRequestException(
-                f"{self.classname()} port '{name}' not found")
+            raise BadRequestException(f"{self.classname()} port '{name}' not found")
 
     ################################################### RESOURCE ########################################
     def get_resources(self, new_instance: bool = False) -> Dict[str, Resource]:
@@ -165,20 +158,19 @@ class IO(Base, Generic[PortType]):
         return resources
 
     def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
-        """Set the resource_model of a port
-        """
+        """Set the resource_model of a port"""
         port: PortType = self.get_port(port_name)
 
         resource_type: Type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
-            raise ResourceNotCompatibleException(port_name=port_name, resource_type=resource_type,
-                                                 spec=port.resource_spec)
+            raise ResourceNotCompatibleException(
+                port_name=port_name, resource_type=resource_type, spec=port.resource_spec
+            )
 
         port.set_resource_model(resource_model)
 
     def get_resource_models(self) -> Dict[str, ResourceModel]:
-        """Get the resource_model of a port
-        """
+        """Get the resource_model of a port"""
         resource_models: Dict[str, ResourceModel] = {}
         for port_name, port in self._ports.items():
             if port.get_resource_model():
@@ -186,12 +178,13 @@ class IO(Base, Generic[PortType]):
         return resource_models
 
     def get_resource_model(self, port_name: str) -> ResourceModel:
-        """Get the resource_model of a port
-        """
+        """Get the resource_model of a port"""
         port: PortType = self.get_port(port_name)
         return port.get_resource_model()
 
-    def has_resource_model(self, resource_model_id: str, include_sub_resouces: bool = False) -> bool:
+    def has_resource_model(
+        self, resource_model_id: str, include_sub_resouces: bool = False
+    ) -> bool:
         """_summary_
         return true if one of the ports contain the resource model
 
@@ -209,7 +202,9 @@ class IO(Base, Generic[PortType]):
 
                 if include_sub_resouces:
                     resource = port.get_resource(new_instance=False)
-                    if isinstance(resource, ResourceListBase) and resource.has_resource_model(resource_model_id):
+                    if isinstance(resource, ResourceListBase) and resource.has_resource_model(
+                        resource_model_id
+                    ):
                         return True
 
         return False
@@ -227,7 +222,6 @@ class IO(Base, Generic[PortType]):
         # To create an InPort or OutPort
         port_type: Type[PortType] = io._get_port_type()
         for key, port_dto in io_dto.ports.items():
-
             port: PortType = port_type.load_from_dto(port_dto, key)
 
             io.add_port(key, port)
@@ -240,7 +234,7 @@ class IO(Base, Generic[PortType]):
 
         # create the input ports from the Task input specs
         for key, value in specs.get_specs().items():
-            io.create_port(key,  value)
+            io.create_port(key, value)
 
         return io
 
@@ -251,7 +245,7 @@ class IO(Base, Generic[PortType]):
         io_dto = IODTO(
             ports={key: port.to_dto() for key, port in self._ports.items()},
             type=self._type,
-            additional_info=self._additional_info
+            additional_info=self._additional_info,
         )
 
         return io_dto

@@ -1,5 +1,3 @@
-
-
 import contextvars
 from enum import Enum
 
@@ -7,24 +5,22 @@ from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.user.auth_context import AuthContextBase, AuthContextUser
 from starlette_context import context
 
-from ..core.exception.exceptions import (BadRequestException,
-                                         UnauthorizedException)
+from ..core.exception.exceptions import BadRequestException, UnauthorizedException
 from ..core.utils.http_helper import HTTPHelper
 from .user import User
 
 # Context variable for Reflex apps (thread-safe, async-safe)
 _reflex_auth_context: contextvars.ContextVar[AuthContextBase | None] = contextvars.ContextVar(
-    'reflex_auth_context',
-    default=None
+    "reflex_auth_context", default=None
 )
 
 
 class CurrentUserContext(Enum):
-    NORMAL = 'NORMAL'
+    NORMAL = "NORMAL"
     # set to app context when the code is executed in app
-    APP = 'APP'
+    APP = "APP"
     # set to reflex context when the code is executed in reflex app
-    REFLEX = 'REFLEX'
+    REFLEX = "REFLEX"
 
 
 class CurrentUserService:
@@ -48,9 +44,10 @@ class CurrentUserService:
         if user is None:
             if cls._run_context == CurrentUserContext.APP:
                 raise UnauthorizedException(
-                    "User not authenticated in app context. " +
-                    "If this action was trigger in a `on_click`, `on_change`, in a st.dialog or similar, " +
-                    "please use the `StreamlitAuthenticateUser` class in streamlit app to authenticate the user")
+                    "User not authenticated in app context. "
+                    + "If this action was trigger in a `on_click`, `on_change`, in a st.dialog or similar, "
+                    + "please use the `StreamlitAuthenticateUser` class in streamlit app to authenticate the user"
+                )
             else:
                 raise UnauthorizedException("User not authenticated")
 
@@ -143,7 +140,7 @@ class CurrentUserService:
             # is http contexts
             raise BadRequestException("Cannot set share user in non http context")
         system_user = User.get_and_check_sysuser()
-        context.data["auth_context"] = AuthContextBase('share', system_user)
+        context.data["auth_context"] = AuthContextBase("share", system_user)
 
     @classmethod
     def check_is_sysuser(cls):
@@ -171,7 +168,11 @@ class CurrentUserService:
         if user is None:
             return FrontService.get_light_theme()
 
-        return FrontService.get_dark_theme() if user.has_dark_theme() else FrontService.get_light_theme()
+        return (
+            FrontService.get_dark_theme()
+            if user.has_dark_theme()
+            else FrontService.get_light_theme()
+        )
 
     @classmethod
     def set_app_context(cls):
@@ -193,8 +194,7 @@ class CurrentUserService:
 
 
 class AuthenticateUser:
-    """ Class to authenticate a user in a context.
-    """
+    """Class to authenticate a user in a context."""
 
     user: User
 
@@ -220,7 +220,6 @@ class AuthenticateUser:
             raise exc_value
 
     @staticmethod
-    def system_user() -> 'AuthenticateUser':
-        """ Authenticate the system user in a context.
-        """
+    def system_user() -> "AuthenticateUser":
+        """Authenticate the system user in a context."""
         return AuthenticateUser(User.get_and_check_sysuser())

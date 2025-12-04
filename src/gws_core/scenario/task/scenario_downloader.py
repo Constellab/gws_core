@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Literal, Optional, Set, Tuple
 
 import requests
@@ -10,8 +8,7 @@ from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
-from gws_core.external_lab.external_lab_api_service import \
-    ExternalLabApiService
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.io.port import Port
@@ -30,9 +27,12 @@ from gws_core.scenario.scenario_loader import ScenarioLoader
 from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import (SharedEntityMode, ShareEntityCreateMode,
-                                       ShareLinkEntityType,
-                                       ShareScenarioInfoReponseDTO)
+from gws_core.share.shared_dto import (
+    SharedEntityMode,
+    ShareEntityCreateMode,
+    ShareLinkEntityType,
+    ShareScenarioInfoReponseDTO,
+)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -45,12 +45,13 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 
-ScenarioDownloaderResourceMode = Literal['Inputs and outputs', 'Inputs only', 'Outputs only', 'All', 'None']
-ScenarioDownloaderCreateOption = Literal['Skip if exists', 'Force new scenario']
+ScenarioDownloaderResourceMode = Literal[
+    "Inputs and outputs", "Inputs only", "Outputs only", "All", "None"
+]
+ScenarioDownloaderCreateOption = Literal["Skip if exists", "Force new scenario"]
 
 
-class ImportedResource():
-
+class ImportedResource:
     old_id: str
     resource: Resource
     children: Dict[str, Resource]
@@ -61,9 +62,12 @@ class ImportedResource():
         self.children = children
 
 
-@task_decorator(unique_name="ScenarioDownloader", human_name="Download a scenario",
-                short_description="Download a scenario from another lab using a link",
-                style=TypingStyle.material_icon("scenario"))
+@task_decorator(
+    unique_name="ScenarioDownloader",
+    human_name="Download a scenario",
+    short_description="Download a scenario from another lab using a link",
+    style=TypingStyle.material_icon("scenario"),
+)
 class ScenarioDownloader(Task):
     """
     Task to download a scenario from another lab using a share link.
@@ -71,19 +75,26 @@ class ScenarioDownloader(Task):
     This can be used between a dev and a prod environment of a lab.
     """
 
-    output_specs = OutputSpecs({
-        'scenario': OutputSpec(ScenarioResource, human_name='Scenario')
-    })
+    output_specs = OutputSpecs({"scenario": OutputSpec(ScenarioResource, human_name="Scenario")})
 
-    config_specs = ConfigSpecs({
-        'link': StrParam(human_name='Scenario link', short_description='Link to download the scenario'),
-        'resource_mode': StrParam(human_name='Resource mode', short_description='Mode for downloading resource of the scenario',
-                                  allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode)),
-        'create_option': StrParam(human_name='Create option',
-                                  short_description='This applies for the scenario and the resources',
-                                  allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
-                                  default_value='Skip if exists')
-    })
+    config_specs = ConfigSpecs(
+        {
+            "link": StrParam(
+                human_name="Scenario link", short_description="Link to download the scenario"
+            ),
+            "resource_mode": StrParam(
+                human_name="Resource mode",
+                short_description="Mode for downloading resource of the scenario",
+                allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode),
+            ),
+            "create_option": StrParam(
+                human_name="Create option",
+                short_description="This applies for the scenario and the resources",
+                allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
+                default_value="Skip if exists",
+            ),
+        }
+    )
 
     share_entity: ShareScenarioInfoReponseDTO
     resource_loaders: List[ResourceLoader]
@@ -96,49 +107,60 @@ class ScenarioDownloader(Task):
     DOWNLOAD_RESOURCE_PERCENT = 80
     BUILD_EXP_PERCENT = 10
 
-    OUTPUT_NAME = 'scenario'
+    OUTPUT_NAME = "scenario"
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        link = params['link']
+        link = params["link"]
 
         if not ShareLink.is_lab_share_scenario_link(link):
-            raise Exception("Invalid link, are you sure this a link of a share scenario from a lab ?")
+            raise Exception(
+                "Invalid link, are you sure this a link of a share scenario from a lab ?"
+            )
 
         self.share_entity = self.get_scenario_info(link)
 
-        create_option = params['create_option']
-        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.NEW_ID if create_option == 'Force new scenario' else ShareEntityCreateMode.KEEP_ID
+        create_option = params["create_option"]
+        create_mode: ShareEntityCreateMode = (
+            ShareEntityCreateMode.NEW_ID
+            if create_option == "Force new scenario"
+            else ShareEntityCreateMode.KEEP_ID
+        )
 
         # if we keep the scenario id, we check if the scenario already exists in the current lab
         if create_mode == ShareEntityCreateMode.KEEP_ID:
             scenario_model = Scenario.get_by_id(self.share_entity.entity_id)
             if scenario_model:
                 raise Exception(
-                    "The scenario already exists in the current lab." +
-                    f' <a href="{FrontService.get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.')
+                    "The scenario already exists in the current lab."
+                    + f' <a href="{FrontService.get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.'
+                )
 
-        self.update_progress_value(self.INIT_EXP_PERCENT, 'Scenario information retrieved')
+        self.update_progress_value(self.INIT_EXP_PERCENT, "Scenario information retrieved")
 
         exp_info = self.share_entity.entity_object
-        resource_ids = self.get_resource_to_download(exp_info.protocol.data.graph, params['resource_mode'])
+        resource_ids = self.get_resource_to_download(
+            exp_info.protocol.data.graph, params["resource_mode"]
+        )
 
         self.download_resources(resource_ids, self.share_entity, create_mode)
 
-        self.update_progress_value(self.INIT_EXP_PERCENT + self.DOWNLOAD_RESOURCE_PERCENT, 'Resources downloaded')
+        self.update_progress_value(
+            self.INIT_EXP_PERCENT + self.DOWNLOAD_RESOURCE_PERCENT, "Resources downloaded"
+        )
 
         scenario_loader = self.load_scenario(exp_info, create_mode)
 
         scenario = self.build_scenario(scenario_loader)
 
-        return {'scenario': ScenarioResource(scenario.id)}
+        return {"scenario": ScenarioResource(scenario.id)}
 
     def get_scenario_info(self, url: str) -> ShareScenarioInfoReponseDTO:
         """If the link is a share link from a lab, check the compatibility of the resource with the current lab,
         then zip the resource and return the download url
         """
         self.log_info_message(
-            "Downloading the resource from a share link of another lab. Checking compatibility of the resource with the current lab")
+            "Downloading the resource from a share link of another lab. Checking compatibility of the resource with the current lab"
+        )
 
         response = requests.get(url, timeout=60)
 
@@ -146,37 +168,41 @@ class ScenarioDownloader(Task):
             raise Exception("Error while getting information of the resource: " + response.text)
         return ShareScenarioInfoReponseDTO.from_json(response.json())
 
-    def load_scenario(self, scenario_info: ZipScenarioInfo, create_mode: ShareEntityCreateMode) -> ScenarioLoader:
-
+    def load_scenario(
+        self, scenario_info: ZipScenarioInfo, create_mode: ShareEntityCreateMode
+    ) -> ScenarioLoader:
         self.log_info_message("Loading the scenario")
-        scenario_loader = ScenarioLoader(scenario_info, create_mode,  self.message_dispatcher)
+        scenario_loader = ScenarioLoader(scenario_info, create_mode, self.message_dispatcher)
 
         scenario_loader.load_scenario()
 
         return scenario_loader
 
     def get_resource_to_download(
-            self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode) -> Set[str]:
-
+        self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode
+    ) -> Set[str]:
         self.log_info_message(f"Getting the resources to download with option '{mode}'")
 
-        if mode == 'None':
+        if mode == "None":
             return set()
 
         protocol_graph = ProtocolGraph(protocol_graph_dto)
 
-        if mode == 'All':
+        if mode == "All":
             return protocol_graph.get_all_resource_ids()
-        elif mode == 'Inputs only':
+        elif mode == "Inputs only":
             return protocol_graph.get_input_resource_ids()
-        elif mode == 'Outputs only':
+        elif mode == "Outputs only":
             return protocol_graph.get_output_resource_ids()
         else:
             return protocol_graph.get_input_and_output_resource_ids()
 
-    def download_resources(self, resource_ids: Set[str],
-                           share_entity: ShareScenarioInfoReponseDTO,
-                           create_mode: ShareEntityCreateMode) -> None:
+    def download_resources(
+        self,
+        resource_ids: Set[str],
+        share_entity: ShareScenarioInfoReponseDTO,
+        create_mode: ShareEntityCreateMode,
+    ) -> None:
         self.resource_loaders = []
         self.resource_models = {}
         self.downloaded_resources = {}
@@ -187,7 +213,9 @@ class ScenarioDownloader(Task):
         i = 1
         for resource_id in resource_ids:
             # create a sub dispatcher to define a prefix
-            sub_dispatcher = self.message_dispatcher.create_sub_dispatcher(prefix=f"[Resource n°{i}]")
+            sub_dispatcher = self.message_dispatcher.create_sub_dispatcher(
+                prefix=f"[Resource n°{i}]"
+            )
 
             # if the KEEP_ID mode is activated, and the resource exists in the current lab, skip the download
             if create_mode == ShareEntityCreateMode.KEEP_ID:
@@ -195,25 +223,34 @@ class ScenarioDownloader(Task):
                 if resource_model:
                     # don't add the resource to the downloaded resources because we don't want to save it
                     sub_dispatcher.notify_info_message(
-                        f"Resource with id '{resource_id}' already exists in the current lab, skipping the download")
+                        f"Resource with id '{resource_id}' already exists in the current lab, skipping the download"
+                    )
                     self.resource_models[resource_id] = resource_model
 
             # if the resource is not already in the current lab, download it
             if resource_id not in self.resource_models:
-                current_percent = self.INIT_EXP_PERCENT + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
-                sub_dispatcher.notify_progress_value(current_percent,  "Downloading the resource.")
+                current_percent = (
+                    self.INIT_EXP_PERCENT
+                    + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+                )
+                sub_dispatcher.notify_progress_value(current_percent, "Downloading the resource.")
 
                 url = share_entity.get_resource_route(resource_id)
                 self.download_resource(url, sub_dispatcher, create_mode)
 
-            current_percent = self.INIT_EXP_PERCENT + ((i) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+            current_percent = (
+                self.INIT_EXP_PERCENT + ((i) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+            )
             sub_dispatcher.notify_progress_value(current_percent, "Resource loaded")
 
             i += 1
 
-    def download_resource(self, download_url: str, message_dispatcher: MessageDispatcher,
-                          create_mode: ShareEntityCreateMode) -> Resource:
-
+    def download_resource(
+        self,
+        download_url: str,
+        message_dispatcher: MessageDispatcher,
+        create_mode: ShareEntityCreateMode,
+    ) -> Resource:
         resource_downloader = ResourceDownloader(message_dispatcher)
 
         # download the resource file
@@ -231,14 +268,15 @@ class ScenarioDownloader(Task):
 
         imported_resource = ImportedResource(
             resource_loader.get_main_resource_origin_id(),
-            resource, resource_loader.get_generated_children_resources())
+            resource,
+            resource_loader.get_generated_children_resources(),
+        )
         self.downloaded_resources[imported_resource.old_id] = imported_resource
 
         return resource
 
     @GwsCoreDbManager.transaction()
     def build_scenario(self, scenario_load: ScenarioLoader) -> Scenario:
-
         self.log_info_message("Building the scenario")
 
         scenario = scenario_load.get_scenario()
@@ -265,7 +303,9 @@ class ScenarioDownloader(Task):
             # for Input process, update the config with new resource id
             if process_model.is_input_task():
                 # save input resources and update the config with the new resource id
-                resource_model_id = process_model.out_port(InputTask.output_name).get_resource_model_id()
+                resource_model_id = process_model.out_port(
+                    InputTask.output_name
+                ).get_resource_model_id()
 
                 resource_model = self.save_resource_and_children(resource_model_id, flagged=True)
 
@@ -278,7 +318,8 @@ class ScenarioDownloader(Task):
                     old_resource_id = out_port.get_resource_model_id()
 
                     self.save_resource_and_children(
-                        old_resource_id, process_model, scenario, port_name)
+                        old_resource_id, process_model, scenario, port_name
+                    )
 
             # update the resources in the ports
             self.update_ports_resources(process_model.inputs.ports)
@@ -299,16 +340,23 @@ class ScenarioDownloader(Task):
 
         # Create the shared entity info
         self.log_info_message("Storing the scenario origin info")
-        SharedScenario.create_from_lab_info(scenario.id, SharedEntityMode.RECEIVED,
-                                            self.share_entity.origin,
-                                            CurrentUserService.get_and_check_current_user())
+        SharedScenario.create_from_lab_info(
+            scenario.id,
+            SharedEntityMode.RECEIVED,
+            self.share_entity.origin,
+            CurrentUserService.get_and_check_current_user(),
+        )
 
         return scenario
 
-    def save_resource_and_children(self, old_resource_id: str,
-                                   task_model: TaskModel = None, scenario: Scenario = None, task_port_name: str = None,
-                                   flagged: bool = False) -> Optional[ResourceModel]:
-
+    def save_resource_and_children(
+        self,
+        old_resource_id: str,
+        task_model: TaskModel = None,
+        scenario: Scenario = None,
+        task_port_name: str = None,
+        flagged: bool = False,
+    ) -> Optional[ResourceModel]:
         if not old_resource_id:
             return None
 
@@ -322,19 +370,28 @@ class ScenarioDownloader(Task):
 
         # first save the children resources
         children_resource_models: List[ResourceModel] = []
-        if len(downloaded_resource.children) > 0 and isinstance(downloaded_resource.resource, ResourceListBase):
-
+        if len(downloaded_resource.children) > 0 and isinstance(
+            downloaded_resource.resource, ResourceListBase
+        ):
             # map where key is the resource uid and value is the resource model id
             # use to set the r_field of the resource list
             ids_map = {}
             for child_old_id, child_resource in downloaded_resource.children.items():
-                child_model = self.save_resource(child_old_id, child_resource, task_model, scenario, task_port_name)
+                child_model = self.save_resource(
+                    child_old_id, child_resource, task_model, scenario, task_port_name
+                )
                 ids_map[child_resource.uid] = child_model.id
                 children_resource_models.append(child_model)
             downloaded_resource.resource.__set_r_field__(ids_map)
 
         resource_model = self.save_resource(
-            old_resource_id, downloaded_resource.resource, task_model, scenario, task_port_name, flagged)
+            old_resource_id,
+            downloaded_resource.resource,
+            task_model,
+            scenario,
+            task_port_name,
+            flagged,
+        )
         self.resource_models[old_resource_id] = resource_model
 
         # set the parent id of the children resources
@@ -343,32 +400,48 @@ class ScenarioDownloader(Task):
 
         return resource_model
 
-    def save_resource(self, old_resource_id: str,
-                      resource: Resource,
-                      task_model: TaskModel = None, scenario: Scenario = None, task_port_name: str = None,
-                      flagged: bool = False) -> ResourceModel:
-
+    def save_resource(
+        self,
+        old_resource_id: str,
+        resource: Resource,
+        task_model: TaskModel = None,
+        scenario: Scenario = None,
+        task_port_name: str = None,
+        flagged: bool = False,
+    ) -> ResourceModel:
         if old_resource_id in self.resource_models:
             return self.resource_models[old_resource_id]
 
         resource_model = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.IMPORTED_FROM_LAB, scenario=scenario,
-            task_model=task_model, port_name=task_port_name, flagged=flagged)
+            resource,
+            origin=ResourceOrigin.IMPORTED_FROM_LAB,
+            scenario=scenario,
+            task_model=task_model,
+            port_name=task_port_name,
+            flagged=flagged,
+        )
 
         # save the origin for the input resource
-        SharedResource.create_from_lab_info(resource_model.id, SharedEntityMode.RECEIVED,
-                                            self.share_entity.origin,
-                                            CurrentUserService.get_and_check_current_user())
+        SharedResource.create_from_lab_info(
+            resource_model.id,
+            SharedEntityMode.RECEIVED,
+            self.share_entity.origin,
+            CurrentUserService.get_and_check_current_user(),
+        )
 
         self.resource_models[old_resource_id] = resource_model
         return resource_model
 
-    def get_out_port_generator(self, protocol_model: ProtocolModel, old_resource_id: str) -> Tuple[TaskModel, str]:
-        """retrieve the task and port name that generated the resource
-        """
+    def get_out_port_generator(
+        self, protocol_model: ProtocolModel, old_resource_id: str
+    ) -> Tuple[TaskModel, str]:
+        """retrieve the task and port name that generated the resource"""
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             for port_name, out_port in process_model.outputs.ports.items():
-                if not out_port.constant_out and out_port.get_resource_model_id() == old_resource_id:
+                if (
+                    not out_port.constant_out
+                    and out_port.get_resource_model_id() == old_resource_id
+                ):
                     return process_model, port_name
 
         return None, None
@@ -390,26 +463,30 @@ class ScenarioDownloader(Task):
                 resource_loader.delete_resource_folder()
 
         if self.share_entity:
-            self.log_info_message(
-                "Marking the resource as received in the origin lab")
+            self.log_info_message("Marking the resource as received in the origin lab")
             # call the origin lab to mark the scenario as received
             current_lab_info = ExternalLabApiService.get_current_lab_info(
-                CurrentUserService.get_and_check_current_user())
+                CurrentUserService.get_and_check_current_user()
+            )
 
             # retrieve the token which is the last part of the link
             response: requests.Response = ExternalLabApiService.mark_shared_object_as_received(
                 self.share_entity.origin.lab_api_url,
-                ShareLinkEntityType.SCENARIO, self.share_entity.token, current_lab_info)
+                ShareLinkEntityType.SCENARIO,
+                self.share_entity.token,
+                current_lab_info,
+            )
 
             if response.status_code != 200:
                 self.log_error_message(
-                    "Error while marking the resource as received: " + response.text)
+                    "Error while marking the resource as received: " + response.text
+                )
 
     @classmethod
-    def build_config(cls, link: str, mode: ScenarioDownloaderResourceMode,
-                     create_option: ScenarioDownloaderCreateOption) -> ConfigParamsDict:
-        return {
-            'link': link,
-            'resource_mode': mode,
-            'create_option': create_option
-        }
+    def build_config(
+        cls,
+        link: str,
+        mode: ScenarioDownloaderResourceMode,
+        create_option: ScenarioDownloaderCreateOption,
+    ) -> ConfigParamsDict:
+        return {"link": link, "resource_mode": mode, "create_option": create_option}

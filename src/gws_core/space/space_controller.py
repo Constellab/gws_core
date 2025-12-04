@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
@@ -7,8 +5,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.folder.space_folder_dto import (ExternalSpaceFolder,
-                                              ExternalSpaceFolders)
+from gws_core.folder.space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
@@ -33,6 +30,7 @@ space_app = FastAPI(docs_url="/docs")
 @space_app.exception_handler(HTTPException)
 async def all_http_exception_handler(request, exc):
     return ExceptionHandler.handle_exception(request, exc)
+
 
 # Catch RequestValidationError (422 Unprocessable Entity)
 
@@ -61,6 +59,8 @@ def health_check() -> bool:
     """
 
     return True
+
+
 ##################################################### USER #####################################################
 
 
@@ -74,13 +74,14 @@ class UserIdData(BaseModelDTO):
 
 
 @space_app.post("/user/generate-temp-access", tags=["User management"])
-def generate_user_temp_access(user_login_info: UserLoginInfo,
-                              _=Depends(AuthSpace.check_space_api_key_and_user)) -> dict:
+def generate_user_temp_access(
+    user_login_info: UserLoginInfo, _=Depends(AuthSpace.check_space_api_key_and_user)
+) -> dict:
     """
     Generate a temporary link for the user to login in the lab
     """
 
-    return {"temp_token":  AuthenticationService.generate_user_temp_access(user_login_info)}
+    return {"temp_token": AuthenticationService.generate_user_temp_access(user_login_info)}
 
 
 @space_app.put("/user/{id_}/activate", tags=["User management"])
@@ -154,7 +155,9 @@ def delete_folder(id_: str, _=Depends(AuthSpace.check_space_api_key)) -> None:
 
 
 @space_app.post("/folder/sync", tags=["Folder"])
-def sync_all_folders(folders: ExternalSpaceFolders, _=Depends(AuthSpace.check_space_api_key)) -> None:
+def sync_all_folders(
+    folders: ExternalSpaceFolders, _=Depends(AuthSpace.check_space_api_key)
+) -> None:
     """
     Sync all the folders from the space to the lab
     """
@@ -169,6 +172,7 @@ def move_folder(id_: str, parent_id: str, _=Depends(AuthSpace.check_space_api_ke
     """
 
     SpaceFolderService.move_folder(id_, parent_id)
+
 
 ############################################### SCENARIO #####################################################
 
@@ -186,38 +190,38 @@ def lab_activity(_=Depends(AuthSpace.check_space_api_key)) -> LabActivityReponse
         running_scenarios=ScenarioService.count_running_or_queued_scenarios(),
         queued_scenarios=ScenarioService.count_queued_scenarios(),
         last_activity=last_activity.to_dto() if last_activity is not None else None,
-        dev_env_running=DevEnvService.dev_env_is_running()
+        dev_env_running=DevEnvService.dev_env_is_running(),
     )
 
 
 @space_app.put("/scenario/sync", tags=["Scenario"])
-def sync_scenarios(scenario: SpaceSyncObjectDTO,
-                   _=Depends(AuthSpace.check_space_api_key)) -> None:
+def sync_scenarios(scenario: SpaceSyncObjectDTO, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Sync all the scenarios from the space to the lab
     """
 
     SpaceObjectService.sync_scenario_from_space(scenario)
 
+
 ############################################### NOTE #####################################################
 
 
 @space_app.put("/note/sync", tags=["Note"])
-def sync_notes(note: SpaceSyncObjectDTO,
-               _=Depends(AuthSpace.check_space_api_key)) -> None:
+def sync_notes(note: SpaceSyncObjectDTO, _=Depends(AuthSpace.check_space_api_key)) -> None:
     """
     Sync all the notes from the space to the lab
     """
 
     SpaceObjectService.sync_note_from_space(note)
 
+
 ############################################### SHARE #####################################################
 
 
 @space_app.post("/share/{token}/generate-user-access-token", tags=["Share"])
-def generate_user_access_token(token: str,
-                               user: UserFullDTO,
-                               _=Depends(AuthSpace.check_space_api_key)) -> GenerateUserAccessTokenForSpaceResponse:
+def generate_user_access_token(
+    token: str, user: UserFullDTO, _=Depends(AuthSpace.check_space_api_key)
+) -> GenerateUserAccessTokenForSpaceResponse:
     """
     Route to generate a user access token for a space share link.
     This token usure that the user is connected and has access to the share link.

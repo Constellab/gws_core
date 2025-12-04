@@ -1,5 +1,3 @@
-
-
 import ast
 import os
 import subprocess
@@ -27,8 +25,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
-from gws_core.impl.rich_text.rich_text_types import (RichTextDTO,
-                                                     RichTextObjectType)
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO, RichTextObjectType
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor import Monitor
@@ -51,8 +48,7 @@ from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.scenario.queue import Job
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
-from gws_core.scenario_template.scenario_template_factory import \
-    ScenarioTemplateFactory
+from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.streamlit.streamlit_resource import StreamlitResource
@@ -65,8 +61,7 @@ from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.activity.activity import Activity
-from gws_core.user.activity.activity_dto import (ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.user import User
 
 from ....utils.logger import Logger
@@ -75,81 +70,61 @@ from ..brick_migration_decorator import brick_migration
 from ..brick_migrator import BrickMigration
 
 
-@brick_migration('0.2.2', short_description='Adding deprecated columns to Typing')
+@brick_migration("0.2.2", short_description="Adding deprecated columns to Typing")
 class Migration022(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(Typing, Typing.deprecated_since)
         sql_migrator.add_column_if_not_exists(Typing, Typing.deprecated_message)
         sql_migrator.migrate()
 
 
-@brick_migration('0.2.3', short_description='Create LabConfigModel table and add lab_config_id to scenario')
+@brick_migration(
+    "0.2.3", short_description="Create LabConfigModel table and add lab_config_id to scenario"
+)
 class Migration023(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         LabConfigModel.create_table()
 
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.lab_config)
         sql_migrator.migrate()
 
 
-@brick_migration('0.3.3', short_description='Create symbolic link in FsNodeModel and convert size to BigInt')
+@brick_migration(
+    "0.3.3", short_description="Create symbolic link in FsNodeModel and convert size to BigInt"
+)
 class Migration033(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        sql_migrator.add_column_if_not_exists(
-            FSNodeModel, FSNodeModel.is_symbolic_link)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(FSNodeModel, FSNodeModel.is_symbolic_link)
         sql_migrator.alter_column_type(
-            FSNodeModel, FSNodeModel.size.column_name, BigIntegerField(null=True))
+            FSNodeModel, FSNodeModel.size.column_name, BigIntegerField(null=True)
+        )
         sql_migrator.migrate()
 
 
-@brick_migration('0.3.8', short_description='Create lab config column in note table')
+@brick_migration("0.3.8", short_description="Create lab config column in note table")
 class Migration038(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(Note, Note.lab_config)
         sql_migrator.migrate()
 
 
-@brick_migration('0.3.9', short_description='Refactor io specs, add brick_version to process')
+@brick_migration("0.3.9", short_description="Refactor io specs, add brick_version to process")
 class Migration039(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(Typing, Typing.brick_version)
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_create)
-        sql_migrator.add_column_if_not_exists(
-            ProtocolModel, ProtocolModel.brick_version_on_create)
+        sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_create)
         sql_migrator.migrate()
 
-        process_model_list: List[ProcessModel] = list(
-            TaskModel.select()) + list(ProtocolModel.select())
+        process_model_list: List[ProcessModel] = list(TaskModel.select()) + list(
+            ProtocolModel.select()
+        )
         for process_model in process_model_list:
-
             try:
                 output_resources: Dict[str, ResourceModel] = {}
                 for port_name, port in process_model.outputs.ports.items():
@@ -177,37 +152,33 @@ class Migration039(BrickMigration):
 
                 # set brick version
                 typing = TypingManager.get_typing_from_name_and_check(
-                    process_model.process_typing_name)
-                process_model.brick_version_on_create = BrickHelper.get_brick_version(
-                    typing.brick)
+                    process_model.process_typing_name
+                )
+                process_model.brick_version_on_create = BrickHelper.get_brick_version(typing.brick)
                 process_model.save()
             except Exception as err:
-                Logger.error(
-                    f'Error while migrating process {process_model.id} : {err}')
+                Logger.error(f"Error while migrating process {process_model.id} : {err}")
                 Logger.log_exception_stack_trace(err)
 
 
-@brick_migration('0.3.10', short_description='Add source config in TaskModel - Add order to TagModel - Update tags columns content')
+@brick_migration(
+    "0.3.10",
+    short_description="Add source config in TaskModel - Add order to TagModel - Update tags columns content",
+)
 class Migration0310(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.add_column_if_not_exists(
-            TaskModel, TaskModel.source_config_id)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.source_config_id)
         sql_migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.order)
         sql_migrator.migrate()
 
-        task_models: List[TaskModel] = list(TaskModel.select().where(
-            TaskModel.process_typing_name == InputTask.get_typing_name()))
+        task_models: List[TaskModel] = list(
+            TaskModel.select().where(TaskModel.process_typing_name == InputTask.get_typing_name())
+        )
 
         # Update source config in task models
         for task_model in task_models:
-            resource_id = InputTask.get_resource_id_from_config(
-                task_model.config.get_values())
+            resource_id = InputTask.get_resource_id_from_config(task_model.config.get_values())
 
             if resource_id is not None:
                 resource: ResourceModel = ResourceModel.get_by_id(resource_id)
@@ -218,7 +189,7 @@ class Migration0310(BrickMigration):
         tag_models: List[TagKeyModel] = list(TagKeyModel.select())
 
         order = 0
-        raise Exception('This migration is not supported anymore')
+        raise Exception("This migration is not supported anymore")
         # for tag_model in tag_models:
         #     tag_model.order = order
         #     order += 1
@@ -234,24 +205,20 @@ class Migration0310(BrickMigration):
         #         tag_model.save()
 
 
-@brick_migration('0.3.12', short_description='Add parent resource to resource model')
+@brick_migration("0.3.12", short_description="Add parent resource to resource model")
 class Migration0312(BrickMigration):
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        sql_migrator.add_column_if_not_exists(
-            ResourceModel, ResourceModel.parent_resource_id)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.parent_resource_id)
         sql_migrator.migrate()
 
         # Set the parent id for resource inside ResourceSet
 
         # retrieve all resource of type  ResourceListBase or children
         resource_models: List[ResourceModel] = list(
-            ResourceModel.select_by_type_and_sub_types(ResourceListBase))
+            ResourceModel.select_by_type_and_sub_types(ResourceListBase)
+        )
         for resource_model in resource_models:
-
             try:
                 resource_set: ResourceSet = resource_model.get_resource()
 
@@ -263,23 +230,19 @@ class Migration0312(BrickMigration):
                         child_resource_model.parent_resource_id = resource_model
                         child_resource_model.save()
             except Exception as err:
-                Logger.error(
-                    f'Error while migrating resource {resource_model.id} : {err}')
+                Logger.error(f"Error while migrating resource {resource_model.id} : {err}")
                 Logger.log_exception_stack_trace(err)
 
 
-@brick_migration('0.3.13', short_description='Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to scenario and note')
+@brick_migration(
+    "0.3.13",
+    short_description="Update orgin values of resources, add show_in_databox and generated_by_port_name columns. Add validated info to scenario and note",
+)
 class Migration0313(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.flagged)
-        sql_migrator.add_column_if_not_exists(
-            ResourceModel, ResourceModel.generated_by_port_name)
+        sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.generated_by_port_name)
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.validated_at)
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.validated_by)
         sql_migrator.add_column_if_not_exists(Note, Note.validated_at)
@@ -289,7 +252,6 @@ class Migration0313(BrickMigration):
         # retrieve all resource of type  ResourceListBase or children
         resource_models: List[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
-
             try:
                 # update orgin values
                 # if resource_model.scenario is not None:
@@ -300,27 +262,37 @@ class Migration0313(BrickMigration):
 
                 # set show_in_databox
                 task_input_model: TaskInputModel = TaskInputModel.get_by_resource_model(
-                    resource_model.id).first()
+                    resource_model.id
+                ).first()
                 # if the resource is an output or the resource was uploaded
-                if (task_input_model is not None and task_input_model.task_model.process_typing_name == OutputTask.get_typing_name()) or \
-                        resource_model.origin == ResourceOrigin.UPLOADED:
+                if (
+                    task_input_model is not None
+                    and task_input_model.task_model.process_typing_name
+                    == OutputTask.get_typing_name()
+                ) or resource_model.origin == ResourceOrigin.UPLOADED:
                     resource_model.flagged = True
 
                 # set generated by port name
                 if resource_model.task_model is not None:
                     # If this is a child resource, take the parent id as generated by port name
-                    resource_model_id = resource_model.id if resource_model.parent_resource_id is None else resource_model.parent_resource_id
+                    resource_model_id = (
+                        resource_model.id
+                        if resource_model.parent_resource_id is None
+                        else resource_model.parent_resource_id
+                    )
                     # loop thourgh task output and check if the resource correspond to the resource in the port
                     for port_name, port in resource_model.task_model.outputs.ports.items():
-                        if port.get_resource_model() and port.get_resource_model_id() == resource_model_id:
+                        if (
+                            port.get_resource_model()
+                            and port.get_resource_model_id() == resource_model_id
+                        ):
                             resource_model.generated_by_port_name = port_name
                             break
 
                 resource_model.save()
 
             except Exception as err:
-                Logger.error(
-                    f'Error while migrating resource {resource_model.id} : {err}')
+                Logger.error(f"Error while migrating resource {resource_model.id} : {err}")
                 Logger.log_exception_stack_trace(err)
 
         # update validated info to scenario and note
@@ -339,84 +311,65 @@ class Migration0313(BrickMigration):
                 note_model.save()
 
 
-@brick_migration('0.3.14', short_description='Update table meta (tags)')
+@brick_migration("0.3.14", short_description="Update table meta (tags)")
 class Migration0314(BrickMigration):
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         pass
         # migration deprecated, tags are now stored in the resource model
 
 
-@brick_migration('0.3.15', short_description='Add last_sync info to Scenario and Note')
+@brick_migration("0.3.15", short_description="Add last_sync info to Scenario and Note")
 class Migration0315(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.last_sync_at)
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.last_sync_by)
         sql_migrator.add_column_if_not_exists(Note, Note.last_sync_at)
         sql_migrator.add_column_if_not_exists(Note, Note.last_sync_by)
         sql_migrator.migrate()
 
-        scenarios: List[Scenario] = list(
-            Scenario.select().where(Scenario.is_validated == True))
+        scenarios: List[Scenario] = list(Scenario.select().where(Scenario.is_validated == True))
         for scenario in scenarios:
             scenario.last_sync_at = scenario.last_modified_at
             scenario.last_sync_by = scenario.last_modified_by
             scenario.save()
 
-        notes: List[Note] = list(
-            Note.select().where(Note.is_validated == True))
+        notes: List[Note] = list(Note.select().where(Note.is_validated == True))
         for note in notes:
             note.last_sync_at = note.last_modified_at
             note.last_sync_by = note.last_modified_by
             note.save()
 
 
-@brick_migration('0.3.16', short_description='Add tag to ViewConfig. Set tag length to varchar 255')
+@brick_migration("0.3.16", short_description="Add tag to ViewConfig. Set tag length to varchar 255")
 class Migration0316(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(ViewConfig, ViewConfig.tags)
         sql_migrator.add_column_if_not_exists(ViewConfig, ViewConfig.is_favorite)
-        sql_migrator.rename_column_if_exists(
-            ResourceModel, 'show_in_databox', 'flagged')
+        sql_migrator.rename_column_if_exists(ResourceModel, "show_in_databox", "flagged")
         sql_migrator.alter_column_type(
-            Scenario, Scenario.tags.column_name, CharField(null=True, max_length=255))
+            Scenario, Scenario.tags.column_name, CharField(null=True, max_length=255)
+        )
         sql_migrator.alter_column_type(
-            ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255))
+            ResourceModel, ResourceModel.tags.column_name, CharField(null=True, max_length=255)
+        )
         sql_migrator.migrate()
 
 
-@brick_migration('0.4.1', short_description='Add started_at and finished_at to ProcessModel, refactor progress bar')
+@brick_migration(
+    "0.4.1",
+    short_description="Add started_at and finished_at to ProcessModel, refactor progress bar",
+)
 class Migration041(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.add_column_if_not_exists(
-            ProtocolModel, ProtocolModel.started_at)
-        sql_migrator.add_column_if_not_exists(
-            ProtocolModel, ProtocolModel.ended_at)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.started_at)
+        sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.ended_at)
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.started_at)
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.ended_at)
-        sql_migrator.add_column_if_not_exists(
-            ProgressBar, ProgressBar.current_value)
+        sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.current_value)
         sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.started_at)
         sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.ended_at)
         sql_migrator.migrate()
@@ -426,43 +379,35 @@ class Migration041(BrickMigration):
         for progress_bar in progress_bars:
             progress_bar_data: dict = progress_bar.data
 
-            if 'messages' not in progress_bar_data or 'value' not in progress_bar_data:
+            if "messages" not in progress_bar_data or "value" not in progress_bar_data:
                 continue
 
-            progress_bar.current_value = progress_bar_data['value']
+            progress_bar.current_value = progress_bar_data["value"]
 
-            messages: List[dict] = progress_bar_data['messages']
+            messages: List[dict] = progress_bar_data["messages"]
 
             if len(messages) > 0:
-                started_at: str = messages[0]['datetime']
-                progress_bar.started_at = DateHelper.from_str(
-                    started_at,  "%Y-%m-%dT%H:%M:%S.%f")
+                started_at: str = messages[0]["datetime"]
+                progress_bar.started_at = DateHelper.from_str(started_at, "%Y-%m-%dT%H:%M:%S.%f")
 
-                ended_at: str = messages[-1]['datetime']
-                progress_bar.ended_at = DateHelper.from_str(
-                    ended_at,  "%Y-%m-%dT%H:%M:%S.%f")
+                ended_at: str = messages[-1]["datetime"]
+                progress_bar.ended_at = DateHelper.from_str(ended_at, "%Y-%m-%dT%H:%M:%S.%f")
 
             # keep only messages
-            progress_bar.data = {'messages': progress_bar_data['messages']}
+            progress_bar.data = {"messages": progress_bar_data["messages"]}
             progress_bar.save()
 
-        process_models: List[ProcessModel] = list(
-            TaskModel.select()) + list(ProtocolModel.select())
+        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             process_model.started_at = process_model.progress_bar.started_at
             process_model.ended_at = process_model.progress_bar.ended_at
             process_model.save()
 
 
-@brick_migration('0.4.2', short_description='Add ram to monitor')
+@brick_migration("0.4.2", short_description="Add ram to monitor")
 class Migration042(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_total)
         sql_migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_used)
         sql_migrator.add_column_if_not_exists(Monitor, Monitor.ram_usage_percent)
@@ -470,31 +415,26 @@ class Migration042(BrickMigration):
         sql_migrator.migrate()
 
 
-@brick_migration('0.4.3', short_description='Add shared info and brick_version to ResourceModel. Update FileRField')
+@brick_migration(
+    "0.4.3",
+    short_description="Add shared info and brick_version to ResourceModel. Update FileRField",
+)
 class Migration043(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.add_column_if_not_exists(
-            ResourceModel, ResourceModel.brick_version)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.brick_version)
         sql_migrator.migrate()
 
         # set brick_version
         resource_models: List[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             try:
-                if resource_model.brick_version == '':
-                    resource_model.set_resource_typing_name(
-                        resource_model.resource_typing_name)
+                if resource_model.brick_version == "":
+                    resource_model.set_resource_typing_name(resource_model.resource_typing_name)
 
                 # update all the FileRField to store only the name of the file instead of the full path
                 resource: Resource = resource_model.get_resource()
-                properties: Dict[str,
-                                 BaseRField] = resource.__get_resource_r_fields__()
+                properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
                 for key, r_field in properties.items():
                     if isinstance(r_field, FileRField):
@@ -503,43 +443,38 @@ class Migration043(BrickMigration):
                         if FileHelper.exists_on_os(value):
                             # unlock the kv_store to update it directly
                             resource.__kv_store__._lock = False
-                            resource.__kv_store__[key] = FileHelper.get_name(
-                                value)
+                            resource.__kv_store__[key] = FileHelper.get_name(value)
                             resource.__kv_store__._lock = True
 
                 resource_model.save()
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')
+                    f"Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}"
+                )
 
 
-@brick_migration('0.4.4', short_description='Update config spec json')
+@brick_migration("0.4.4", short_description="Update config spec json")
 class Migration044(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # update config json
         configs: List[Config] = list(Config.select())
         for config in configs:
-            specs = config.data['specs']
+            specs = config.data["specs"]
 
             changed = False
             new_specs = {}
 
             for key, spec in specs.items():
                 # if the spec was already updated
-                if 'additional_info' in spec:
+                if "additional_info" in spec:
                     continue
 
                 new_specs[key] = cls.update_config_spec_json(spec)
                 changed = True
 
             if changed:
-                config.data['specs'] = new_specs
+                config.data["specs"] = new_specs
                 config.save()
 
     @classmethod
@@ -549,126 +484,110 @@ class Migration044(BrickMigration):
         specs = {}
 
         # copy all basic fields
-        for key in ['type', 'optional', 'visibility', 'default_value',
-                    'human_name', 'short_description', 'unit', 'allowed_values']:
+        for key in [
+            "type",
+            "optional",
+            "visibility",
+            "default_value",
+            "human_name",
+            "short_description",
+            "unit",
+            "allowed_values",
+        ]:
             if key in copy:
                 specs[key] = copy.get(key)
                 del copy[key]
 
         # handle param set recursively
-        if 'param_set' in copy:
+        if "param_set" in copy:
             param_set = {}
-            for key, spec in copy['param_set'].items():
+            for key, spec in copy["param_set"].items():
                 param_set[key] = cls.update_config_spec_json(spec)
 
             # replace the param set in the copy
-            copy['param_set'] = param_set
+            copy["param_set"] = param_set
 
         # add the rest json to additional_info
-        specs['additional_info'] = copy
+        specs["additional_info"] = copy
 
         return specs
 
 
-@brick_migration('0.4.5', short_description='Clean progress bar messages and set process id to not null')
+@brick_migration(
+    "0.4.5", short_description="Clean progress bar messages and set process id to not null"
+)
 class Migration045(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # clean progress bar messages
         ProgressBar.delete().where(ProgressBar.process_id is None).execute()
-        ProgressBar.delete().where(ProgressBar.process_id == '').execute()
+        ProgressBar.delete().where(ProgressBar.process_id == "").execute()
 
         # set process_id and process_typing_name to not null
-        sql_migrator.alter_column_type(
-            ProgressBar, 'process_id', CharField(null=False, index=True))
-        sql_migrator.alter_column_type(
-            ProgressBar, 'process_typing_name', CharField(null=False))
+        sql_migrator.alter_column_type(ProgressBar, "process_id", CharField(null=False, index=True))
+        sql_migrator.alter_column_type(ProgressBar, "process_typing_name", CharField(null=False))
         # remove old index
-        sql_migrator.drop_index_if_exists(
-            ProgressBar, 'progressbar_process_id_process_typing_name')
+        sql_migrator.drop_index_if_exists(ProgressBar, "progressbar_process_id_process_typing_name")
         # create a unique index on process_id
         sql_migrator.add_index_if_not_exists(
-            ProgressBar, 'gws_process_progress_bar_process_id', ['process_id'], True)
+            ProgressBar, "gws_process_progress_bar_process_id", ["process_id"], True
+        )
         sql_migrator.migrate()
 
 
-@brick_migration('0.5.0-beta.2', short_description='Update FsNode Rfield values')
+@brick_migration("0.5.0-beta.2", short_description="Update FsNode Rfield values")
 class Migration050Beta1(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         resource_models: List[ResourceModel] = list(
-            ResourceModel.get_by_types_and_sub([FSNode.get_typing_name()]))
+            ResourceModel.get_by_types_and_sub([FSNode.get_typing_name()])
+        )
 
         for resource_model in resource_models:
             try:
-                resource_model.data['path'] = resource_model.fs_node_model.path
-                resource_model.data['file_store_id'] = resource_model.fs_node_model.file_store_id
+                resource_model.data["path"] = resource_model.fs_node_model.path
+                resource_model.data["file_store_id"] = resource_model.fs_node_model.file_store_id
                 resource_model.save()
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}')
+                    f"Error while setting brick_version for {resource_model.resource_typing_name}, resource id {resource_model.id} : {exception}"
+                )
 
 
-@brick_migration('0.5.0-beta.5', short_description='Add photo to user', authenticate_sys_user=False)
+@brick_migration("0.5.0-beta.5", short_description="Add photo to user", authenticate_sys_user=False)
 class Migration050Beta5(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(User, User.photo)
         sql_migrator.migrate()
 
 
-@brick_migration('0.5.0', short_description='Add project to resource')
+@brick_migration("0.5.0", short_description="Add project to resource")
 class Migration050(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.folder)
         sql_migrator.migrate()
 
         resource_models: List[ResourceModel] = list(ResourceModel.select())
 
         for resource_model in resource_models:
-
             try:
                 if resource_model.scenario and resource_model.scenario.folder:
                     resource_model.folder = resource_model.scenario.folder
                     resource_model.save()
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting project for resource id {resource_model.id} : {exception}')
+                    f"Error while setting project for resource id {resource_model.id} : {exception}"
+                )
 
 
-@brick_migration('0.5.2', short_description='Add elapsed time and second start to progress bar')
+@brick_migration("0.5.2", short_description="Add elapsed time and second start to progress bar")
 class Migration052(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.add_column_if_not_exists(
-            ProgressBar, ProgressBar.elapsed_time)
-        sql_migrator.add_column_if_not_exists(
-            ProgressBar, ProgressBar.second_start)
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.elapsed_time)
+        sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.second_start)
         sql_migrator.migrate()
 
         progress_bars: List[ProgressBar] = list(ProgressBar.select())
@@ -679,18 +598,16 @@ class Migration052(BrickMigration):
                     progress_bar.save()
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting elapsed time for progress bar id {progress_bar.id} : {exception}')
+                    f"Error while setting elapsed time for progress bar id {progress_bar.id} : {exception}"
+                )
 
 
-@brick_migration('0.5.5', short_description='Remove transformer from view config, add GPU to monitor')
+@brick_migration(
+    "0.5.5", short_description="Remove transformer from view config, add GPU to monitor"
+)
 class Migration055(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.drop_column_if_exists(ViewConfig, "transformers")
         sql_migrator.add_column_if_not_exists(Monitor, Monitor.gpu_percent)
         sql_migrator.add_column_if_not_exists(Monitor, Monitor.gpu_temperature)
@@ -701,39 +618,41 @@ class Migration055(BrickMigration):
         sql_migrator.migrate()
 
 
-@brick_migration('0.5.7', short_description='Clean activity table, refactor io_specs')
+@brick_migration("0.5.7", short_description="Clean activity table, refactor io_specs")
 class Migration057(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # remove all activities related to protocol model
         Activity.delete().where(
-            (Activity.object_type == "gws_core.protocol.protocol_model.ProtocolModel") &
-            (Activity.activity_type == "CREATE")).execute()
+            (Activity.object_type == "gws_core.protocol.protocol_model.ProtocolModel")
+            & (Activity.activity_type == "CREATE")
+        ).execute()
 
         Activity.update(object_type=ActivityObjectType.SCENARIO.value).where(
-            Activity.object_type == "gws_core.scenario.scenario.Scenario").execute()
+            Activity.object_type == "gws_core.scenario.scenario.Scenario"
+        ).execute()
 
         Activity.update(object_type=ActivityType.VALIDATE.value).where(
-            Activity.activity_type == "VALIDATE_SCENARIO").execute()
+            Activity.activity_type == "VALIDATE_SCENARIO"
+        ).execute()
 
         Activity.update(activity_type=ActivityType.RUN_SCENARIO.value).where(
-            Activity.activity_type == "START").execute()
+            Activity.activity_type == "START"
+        ).execute()
 
         Activity.update(object_type=ActivityObjectType.USER.value).where(
-            Activity.object_type.is_null()).execute()
+            Activity.object_type.is_null()
+        ).execute()
 
         sql_migrator.drop_index_if_exists(Activity, "activity_activity_type")
         sql_migrator.drop_index_if_exists(Activity, "activity_object_type")
         sql_migrator.drop_index_if_exists(Activity, "activity_object_id")
-        sql_migrator.alter_column_type(Activity, Activity.object_type.column_name,
-                                       EnumField(choices=ActivityType, null=False))
         sql_migrator.alter_column_type(
-            Activity, Activity.object_id.column_name, CharField(null=False, max_length=36))
+            Activity, Activity.object_type.column_name, EnumField(choices=ActivityType, null=False)
+        )
+        sql_migrator.alter_column_type(
+            Activity, Activity.object_id.column_name, CharField(null=False, max_length=36)
+        )
         sql_migrator.migrate()
 
         # refactor io specs
@@ -742,21 +661,15 @@ class Migration057(BrickMigration):
             try:
                 modified: bool = False
                 inputs = process_model.data["inputs"]
-                if not 'is_dynamic' in inputs and not 'ports' in inputs:
+                if not "is_dynamic" in inputs and not "ports" in inputs:
                     # wrap the current inputs in ports
-                    process_model.data["inputs"] = {
-                        "is_dynamic": False,
-                        "ports": inputs
-                    }
+                    process_model.data["inputs"] = {"is_dynamic": False, "ports": inputs}
                     modified = True
 
                 outputs = process_model.data["outputs"]
-                if not 'is_dynamic' in outputs and not 'ports' in outputs:
+                if not "is_dynamic" in outputs and not "ports" in outputs:
                     # wrap the current outputs in ports
-                    process_model.data["outputs"] = {
-                        "is_dynamic": False,
-                        "ports": outputs
-                    }
+                    process_model.data["outputs"] = {"is_dynamic": False, "ports": outputs}
                     modified = True
 
                 if modified:
@@ -764,21 +677,22 @@ class Migration057(BrickMigration):
 
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting process type for process id {process_model.id} : {exception}')
+                    f"Error while setting process type for process id {process_model.id} : {exception}"
+                )
 
 
-@brick_migration('0.7.3', short_description='Rename view config flagged to favorite and add run_brick_version to process_model. Simplify resource origin')
+@brick_migration(
+    "0.7.3",
+    short_description="Rename view config flagged to favorite and add run_brick_version to process_model. Simplify resource origin",
+)
 class Migration073(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.rename_column_if_exists(ViewConfig, 'flagged', 'is_favorite')
-        sql_migrator.rename_column_if_exists(TaskModel, 'brick_version', 'brick_version_on_create')
-        sql_migrator.rename_column_if_exists(ProtocolModel, 'brick_version', 'brick_version_on_create')
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.rename_column_if_exists(ViewConfig, "flagged", "is_favorite")
+        sql_migrator.rename_column_if_exists(TaskModel, "brick_version", "brick_version_on_create")
+        sql_migrator.rename_column_if_exists(
+            ProtocolModel, "brick_version", "brick_version_on_create"
+        )
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.brick_version_on_run)
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_run)
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.creation_type)
@@ -791,24 +705,27 @@ class Migration073(BrickMigration):
                 process_model.save(skip_hook=True)
 
         ResourceModel.update(origin=ResourceOrigin.GENERATED).where(
-            ResourceModel.origin.in_(["IMPORTED", "EXPORTED", "TRANSFORMED", "ACTIONS"])).execute()
+            ResourceModel.origin.in_(["IMPORTED", "EXPORTED", "TRANSFORMED", "ACTIONS"])
+        ).execute()
 
-        if Scenario.column_exists('type'):
-            Scenario.get_db().execute_sql('UPDATE gws_scenario SET creation_type = "MANUAL" WHERE type = "SCENARIO"')
-            Scenario.get_db().execute_sql('UPDATE gws_scenario SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")')
-            sql_migrator.drop_column_if_exists(Scenario, 'type')
+        if Scenario.column_exists("type"):
+            Scenario.get_db().execute_sql(
+                'UPDATE gws_scenario SET creation_type = "MANUAL" WHERE type = "SCENARIO"'
+            )
+            Scenario.get_db().execute_sql(
+                'UPDATE gws_scenario SET creation_type = "AUTO" WHERE type in ("TRANSFORMER", "IMPORTER", "EXPORTER", "FS_NODE_EXTRACTOR", "RESOURCE_DOWNLOADER", "ACTIONS")'
+            )
+            sql_migrator.drop_column_if_exists(Scenario, "type")
             sql_migrator.migrate()
 
 
-@brick_migration('0.7.5', short_description='Add name to process model. Migrate protocol IOFaces. Add community agent version id column to Task model')
+@brick_migration(
+    "0.7.5",
+    short_description="Add name to process model. Migrate protocol IOFaces. Add community agent version id column to Task model",
+)
 class Migration075(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.name)
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_id)
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
@@ -838,7 +755,8 @@ class Migration075(BrickMigration):
 
         # fix old activity type
         Activity.update(activity_type=ActivityType.STOP_SCENARIO.value).where(
-            Activity.activity_type == "STOP").execute()
+            Activity.activity_type == "STOP"
+        ).execute()
 
     @classmethod
     def migrate_scenario_template_recur(cls, protocol_graph: dict) -> None:
@@ -849,7 +767,7 @@ class Migration075(BrickMigration):
             if "process_type" not in process_dto:
                 process_dto["process_type"] = {
                     "human_name": process_dto["human_name"],
-                    "short_description": process_dto["short_description"]
+                    "short_description": process_dto["short_description"],
                 }
 
             if "human_name" in process_dto:
@@ -857,7 +775,7 @@ class Migration075(BrickMigration):
             if "short_description" in process_dto:
                 del process_dto["short_description"]
 
-            if process_dto.get('graph') is not None and "nodes" in process_dto["graph"]:
+            if process_dto.get("graph") is not None and "nodes" in process_dto["graph"]:
                 cls.migrate_scenario_template_recur(process_dto["graph"])
         cls.migrate_protocol_iofaces(protocol_graph)
 
@@ -880,16 +798,11 @@ class Migration075(BrickMigration):
                 del outerface["to"]
 
 
-@brick_migration('0.8.0-beta.1', short_description='Remove old rich text. Add style to entities.')
+@brick_migration("0.8.0-beta.1", short_description="Remove old rich text. Add style to entities.")
 class Migration080Beta1(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.drop_column_if_exists(Note, 'old_content')
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.drop_column_if_exists(Note, "old_content")
         sql_migrator.drop_column_if_exists(NoteTemplate, "old_content")
         sql_migrator.drop_column_if_exists(Scenario, "old_description")
         sql_migrator.drop_column_if_exists(ScenarioTemplate, "old_description")
@@ -913,33 +826,33 @@ class Migration080Beta1(BrickMigration):
             if "style" not in node:
                 node["style"] = TypingStyle.default_task().to_json_dict()
 
-            if node.get('graph'):
+            if node.get("graph"):
                 cls.migrate_template_data(node["graph"])
 
 
-@brick_migration('0.8.0', short_description='Delete virtual environments for new format. Remove external disk usage from monitor. Remove old tags columns.')
+@brick_migration(
+    "0.8.0",
+    short_description="Delete virtual environments for new format. Remove external disk usage from monitor. Remove old tags columns.",
+)
 class Migration080(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.drop_column_if_exists(Scenario, "score")
 
-        sql_migrator.drop_column_if_exists(Scenario, 'score')
+        sql_migrator.drop_column_if_exists(Monitor, "external_disk_total")
+        sql_migrator.drop_column_if_exists(Monitor, "external_disk_usage_used")
+        sql_migrator.drop_column_if_exists(Monitor, "external_disk_usage_percent")
+        sql_migrator.drop_column_if_exists(Monitor, "external_disk_usage_free")
 
-        sql_migrator.drop_column_if_exists(Monitor, 'external_disk_total')
-        sql_migrator.drop_column_if_exists(Monitor, 'external_disk_usage_used')
-        sql_migrator.drop_column_if_exists(Monitor, 'external_disk_usage_percent')
-        sql_migrator.drop_column_if_exists(Monitor, 'external_disk_usage_free')
-
-        sql_migrator.drop_column_if_exists(Scenario, 'tags')
-        sql_migrator.drop_column_if_exists(ScenarioTemplate, 'tags')
-        sql_migrator.drop_column_if_exists(ResourceModel, 'tags')
-        sql_migrator.drop_column_if_exists(ViewConfig, 'tags')
+        sql_migrator.drop_column_if_exists(Scenario, "tags")
+        sql_migrator.drop_column_if_exists(ScenarioTemplate, "tags")
+        sql_migrator.drop_column_if_exists(ResourceModel, "tags")
+        sql_migrator.drop_column_if_exists(ViewConfig, "tags")
 
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.content_is_deleted)
-        sql_migrator.alter_column_type(SpaceFolder, SpaceFolder.name.column_name, CharField(null=False, max_length=100))
+        sql_migrator.alter_column_type(
+            SpaceFolder, SpaceFolder.name.column_name, CharField(null=False, max_length=100)
+        )
 
         sql_migrator.migrate()
 
@@ -947,23 +860,24 @@ class Migration080(BrickMigration):
         VEnvService.delete_all_venvs()
 
 
-@brick_migration('0.8.4', short_description='Rename note template to document table. Migrate template protocol. Migrate note image')
+@brick_migration(
+    "0.8.4",
+    short_description="Rename note template to document table. Migrate template protocol. Migrate note image",
+)
 class Migration084(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.rename_table_if_exists(NoteTemplate, "gws_note_template")
         sql_migrator.migrate()
 
         scenario_templates: List[ScenarioTemplate] = list(
-            ScenarioTemplate.select().where(ScenarioTemplate.version == 1))
+            ScenarioTemplate.select().where(ScenarioTemplate.version == 1)
+        )
 
         for scenario_template in scenario_templates:
-            scenario_template.data = ScenarioTemplateFactory.migrate_data_from_1_to_3(scenario_template.data)
+            scenario_template.data = ScenarioTemplateFactory.migrate_data_from_1_to_3(
+                scenario_template.data
+            )
             scenario_template.version = 3
             scenario_template.save(skip_hook=True)
 
@@ -975,195 +889,228 @@ class Migration084(BrickMigration):
         # migrate document images
         note_templates: List[NoteTemplate] = list(NoteTemplate.select())
         for note_template in note_templates:
-            cls._migrate_rich_text_image(note_template.content,
-                                         RichTextObjectType.NOTE_TEMPLATE, note_template.id)
+            cls._migrate_rich_text_image(
+                note_template.content, RichTextObjectType.NOTE_TEMPLATE, note_template.id
+            )
 
     @classmethod
     def _migrate_rich_text_image(
-            cls, rich_text_dto: RichTextDTO, object_type: RichTextObjectType, object_id: str) -> None:
-
+        cls, rich_text_dto: RichTextDTO, object_type: RichTextObjectType, object_id: str
+    ) -> None:
         rich_text = RichText(rich_text_dto)
         for figure in rich_text.get_figures_data():
             new_dir = RichTextFileService.get_object_dir_path(object_type, object_id)
 
             FileHelper.create_dir_if_not_exist(new_dir)
-            new_path = os.path.join(new_dir, figure['filename'])
-            old_path = os.path.join(RichTextFileService._get_dir_path(), figure['filename'])
+            new_path = os.path.join(new_dir, figure["filename"])
+            old_path = os.path.join(RichTextFileService._get_dir_path(), figure["filename"])
 
             if FileHelper.exists_on_os(old_path) and not FileHelper.exists_on_os(new_path):
                 FileHelper.copy_file(old_path, new_path)
 
 
-@brick_migration('0.10.0', short_description='Rename project to folder.')
+@brick_migration("0.10.0", short_description="Rename project to folder.")
 class Migration0100(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.rename_table_if_exists(SpaceFolder, 'gws_project')
-        sql_migrator.rename_table_if_exists(Note, 'gws_report')
-        sql_migrator.rename_table_if_exists(NoteScenario, 'gws_report_experiment')
-        sql_migrator.rename_table_if_exists(NoteViewModel, 'gws_report_view')
-        sql_migrator.rename_table_if_exists(Scenario, 'gws_experiment')
-        sql_migrator.rename_table_if_exists(SharedScenario, 'gws_shared_experiment')
-        sql_migrator.rename_table_if_exists(NoteTemplate, 'gws_document_template')
-        sql_migrator.rename_table_if_exists(ScenarioTemplate, 'gws_protocol_template')
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.rename_table_if_exists(SpaceFolder, "gws_project")
+        sql_migrator.rename_table_if_exists(Note, "gws_report")
+        sql_migrator.rename_table_if_exists(NoteScenario, "gws_report_experiment")
+        sql_migrator.rename_table_if_exists(NoteViewModel, "gws_report_view")
+        sql_migrator.rename_table_if_exists(Scenario, "gws_experiment")
+        sql_migrator.rename_table_if_exists(SharedScenario, "gws_shared_experiment")
+        sql_migrator.rename_table_if_exists(NoteTemplate, "gws_document_template")
+        sql_migrator.rename_table_if_exists(ScenarioTemplate, "gws_protocol_template")
         sql_migrator.migrate()
 
-        sql_migrator.drop_column_if_exists(SpaceFolder, 'level_status')
-        sql_migrator.drop_column_if_exists(SpaceFolder, 'code')
+        sql_migrator.drop_column_if_exists(SpaceFolder, "level_status")
+        sql_migrator.drop_column_if_exists(SpaceFolder, "code")
         # rename all project id
-        sql_migrator.rename_column_if_exists(Note, 'project_id', 'folder_id')
-        sql_migrator.rename_column_if_exists(Scenario, 'project_id', 'folder_id')
-        sql_migrator.rename_column_if_exists(ResourceModel, 'project_id', 'folder_id')
+        sql_migrator.rename_column_if_exists(Note, "project_id", "folder_id")
+        sql_migrator.rename_column_if_exists(Scenario, "project_id", "folder_id")
+        sql_migrator.rename_column_if_exists(ResourceModel, "project_id", "folder_id")
         # rename all scenario_id
-        sql_migrator.rename_column_if_exists(ProtocolModel, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(TaskModel, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(Job, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(ResourceModel, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(TaskInputModel, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(ViewConfig, 'experiment_id', 'scenario_id')
-        sql_migrator.rename_column_if_exists(TaskModel, 'community_live_task_version_id', 'community_agent_version_id')
+        sql_migrator.rename_column_if_exists(ProtocolModel, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(TaskModel, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(Job, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(ResourceModel, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(TaskInputModel, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(ViewConfig, "experiment_id", "scenario_id")
+        sql_migrator.rename_column_if_exists(
+            TaskModel, "community_live_task_version_id", "community_agent_version_id"
+        )
         sql_migrator.migrate()
 
         # use manual query, rename column doesn't work for primary key
-        if NoteScenario.column_exists('report_id'):
-            NoteScenario.get_db().execute_sql('ALTER TABLE gws_note_scenario CHANGE report_id note_id VARCHAR(36) NOT NULL')
+        if NoteScenario.column_exists("report_id"):
+            NoteScenario.get_db().execute_sql(
+                "ALTER TABLE gws_note_scenario CHANGE report_id note_id VARCHAR(36) NOT NULL"
+            )
 
-        if NoteViewModel.column_exists('report_id'):
-            NoteViewModel.get_db().execute_sql('ALTER TABLE gws_note_view CHANGE report_id note_id VARCHAR(36) NOT NULL')
+        if NoteViewModel.column_exists("report_id"):
+            NoteViewModel.get_db().execute_sql(
+                "ALTER TABLE gws_note_view CHANGE report_id note_id VARCHAR(36) NOT NULL"
+            )
 
-        if NoteScenario.column_exists('experiment_id'):
-            NoteScenario.get_db().execute_sql('ALTER TABLE gws_note_scenario CHANGE experiment_id scenario_id VARCHAR(36) NOT NULL')
+        if NoteScenario.column_exists("experiment_id"):
+            NoteScenario.get_db().execute_sql(
+                "ALTER TABLE gws_note_scenario CHANGE experiment_id scenario_id VARCHAR(36) NOT NULL"
+            )
 
         ResourceModel.update(origin=ResourceOrigin.S3_FOLDER_STORAGE).where(
-            ResourceModel.origin == "S3_PROJECT_STORAGE").execute()
+            ResourceModel.origin == "S3_PROJECT_STORAGE"
+        ).execute()
 
-        TagValueModel.update(tag_value='data-hub-storage').where(
-            TagValueModel.tag_value == "projects-storage").execute()
+        TagValueModel.update(tag_value="data-hub-storage").where(
+            TagValueModel.tag_value == "projects-storage"
+        ).execute()
 
         Activity.update(object_type=ActivityObjectType.NOTE.value).where(
-            Activity.object_type == "NOTE").execute()
+            Activity.object_type == "NOTE"
+        ).execute()
 
         # rename document_template_param to note_template_param
-        Config.get_db().execute_sql("UPDATE gws_config SET data = REPLACE(data, 'document_template_param', 'note_template_param')")
-        Config.get_db().execute_sql("UPDATE gws_task SET data = REPLACE(data, 'DocumentTemplateResource', 'NoteTemplateResource')")
+        Config.get_db().execute_sql(
+            "UPDATE gws_config SET data = REPLACE(data, 'document_template_param', 'note_template_param')"
+        )
+        Config.get_db().execute_sql(
+            "UPDATE gws_task SET data = REPLACE(data, 'DocumentTemplateResource', 'NoteTemplateResource')"
+        )
 
         # rename report to note in objects
-        Config.get_db().execute_sql("UPDATE gws_config SET data = REPLACE(data, 'report_param', 'note_param')")
+        Config.get_db().execute_sql(
+            "UPDATE gws_config SET data = REPLACE(data, 'report_param', 'note_param')"
+        )
 
         resource_renames = {
-            'RESOURCE.gws_core.ReportResource': 'RESOURCE.gws_core.NoteResource',
-            'RESOURCE.gws_core.ENoteResource': 'RESOURCE.gws_core.NoteResource',
-            'RESOURCE.gws_core.DocumentTemplateResource': 'RESOURCE.gws_core.NoteTemplateResource',
+            "RESOURCE.gws_core.ReportResource": "RESOURCE.gws_core.NoteResource",
+            "RESOURCE.gws_core.ENoteResource": "RESOURCE.gws_core.NoteResource",
+            "RESOURCE.gws_core.DocumentTemplateResource": "RESOURCE.gws_core.NoteTemplateResource",
         }
 
         for old_typing_name, new_typing_name in resource_renames.items():
-            SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+            SqlMigrator.rename_resource_typing_name(
+                ResourceModel.get_db(), old_typing_name, new_typing_name
+            )
 
         # rename live tasks to agents
         agent_renames = {
-            'TASK.gws_core.PyLiveTask': 'TASK.gws_core.PyAgent',
-            'TASK.gws_core.PyCondaLiveTask': 'TASK.gws_core.PyCondaAgent',
-            'TASK.gws_core.PyMambaLiveTask': 'TASK.gws_core.PyMambaAgent',
-            'TASK.gws_core.PyPipenvLiveTask': 'TASK.gws_core.PyPipenvAgent',
-            'TASK.gws_core.RCondaLiveTask': 'TASK.gws_core.RCondaAgent',
-            'TASK.gws_core.RMambaLiveTask': 'TASK.gws_core.RMambaAgent',
-            'TASK.gws_core.StreamlitLiveTask': 'TASK.gws_core.StreamlitAgent',
+            "TASK.gws_core.PyLiveTask": "TASK.gws_core.PyAgent",
+            "TASK.gws_core.PyCondaLiveTask": "TASK.gws_core.PyCondaAgent",
+            "TASK.gws_core.PyMambaLiveTask": "TASK.gws_core.PyMambaAgent",
+            "TASK.gws_core.PyPipenvLiveTask": "TASK.gws_core.PyPipenvAgent",
+            "TASK.gws_core.RCondaLiveTask": "TASK.gws_core.RCondaAgent",
+            "TASK.gws_core.RMambaLiveTask": "TASK.gws_core.RMambaAgent",
+            "TASK.gws_core.StreamlitLiveTask": "TASK.gws_core.StreamlitAgent",
         }
 
         for old_typing_name, new_typing_name in agent_renames.items():
-            SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+            SqlMigrator.rename_process_typing_name(
+                ResourceModel.get_db(), old_typing_name, new_typing_name
+            )
 
 
-@brick_migration('0.10.1', short_description='Migrate tags and user activity')
+@brick_migration("0.10.1", short_description="Migrate tags and user activity")
 class Migration0101(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")
-        EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET entity_type = 'NOTE' WHERE entity_type = 'REPORT'")
-        EntityTag.get_db().execute_sql("UPDATE gws_entity_tag SET origins = REPLACE(origins, 'EXPERIMENT_PROPAGATED', 'SCENARIO_PROPAGATED')")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'RUN_SCENARIO' where activity_type = 'RUN_EXPERIMENT'")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'DELETE_SCENARIO_INTERMEDIATE_RESOURCES' where activity_type = 'DELETE_EXPERIMENT_INTERMEDIATE_RESOURCES'")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET activity_type = 'STOP_SCENARIO' where activity_type = 'STOP_EXPERIMENT'")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'SCENARIO' where object_type = 'EXPERIMENT'")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'")
-        Activity.get_db().execute_sql("UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'")
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        EntityTag.get_db().execute_sql(
+            "UPDATE gws_entity_tag SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'"
+        )
+        EntityTag.get_db().execute_sql(
+            "UPDATE gws_entity_tag SET entity_type = 'NOTE' WHERE entity_type = 'REPORT'"
+        )
+        EntityTag.get_db().execute_sql(
+            "UPDATE gws_entity_tag SET origins = REPLACE(origins, 'EXPERIMENT_PROPAGATED', 'SCENARIO_PROPAGATED')"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET activity_type = 'RUN_SCENARIO' where activity_type = 'RUN_EXPERIMENT'"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET activity_type = 'DELETE_SCENARIO_INTERMEDIATE_RESOURCES' where activity_type = 'DELETE_EXPERIMENT_INTERMEDIATE_RESOURCES'"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET activity_type = 'STOP_SCENARIO' where activity_type = 'STOP_EXPERIMENT'"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET object_type = 'SCENARIO' where object_type = 'EXPERIMENT'"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET object_type = 'NOTE_TEMPLATE' where object_type = 'DOCUMENT_TEMPLATE'"
+        )
+        Activity.get_db().execute_sql(
+            "UPDATE gws_user_activity SET object_type = 'NOTE' where object_type = 'REPORT'"
+        )
 
 
-@brick_migration('0.10.2', short_description='Migrate share link')
+@brick_migration("0.10.2", short_description="Migrate share link")
 class Migration0102(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        EntityTag.get_db().execute_sql("UPDATE gws_share_link SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'")
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        EntityTag.get_db().execute_sql(
+            "UPDATE gws_share_link SET entity_type = 'SCENARIO' WHERE entity_type = 'EXPERIMENT'"
+        )
 
         # rename resource and agent in scenario template
         resource_renames = {
-            'RESOURCE.gws_core.ReportResource': 'RESOURCE.gws_core.NoteResource',
-            'RESOURCE.gws_core.ENoteResource': 'RESOURCE.gws_core.NoteResource',
-            'RESOURCE.gws_core.DocumentTemplateResource': 'RESOURCE.gws_core.NoteTemplateResource',
+            "RESOURCE.gws_core.ReportResource": "RESOURCE.gws_core.NoteResource",
+            "RESOURCE.gws_core.ENoteResource": "RESOURCE.gws_core.NoteResource",
+            "RESOURCE.gws_core.DocumentTemplateResource": "RESOURCE.gws_core.NoteTemplateResource",
         }
 
         for old_typing_name, new_typing_name in resource_renames.items():
-            SqlMigrator.rename_resource_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+            SqlMigrator.rename_resource_typing_name(
+                ResourceModel.get_db(), old_typing_name, new_typing_name
+            )
 
         agent_renames = {
-            'TASK.gws_core.PyLiveTask': 'TASK.gws_core.PyAgent',
-            'TASK.gws_core.PyCondaLiveTask': 'TASK.gws_core.PyCondaAgent',
-            'TASK.gws_core.PyMambaLiveTask': 'TASK.gws_core.PyMambaAgent',
-            'TASK.gws_core.PyPipenvLiveTask': 'TASK.gws_core.PyPipenvAgent',
-            'TASK.gws_core.RCondaLiveTask': 'TASK.gws_core.RCondaAgent',
-            'TASK.gws_core.RMambaLiveTask': 'TASK.gws_core.RMambaAgent',
-            'TASK.gws_core.StreamlitLiveTask': 'TASK.gws_core.StreamlitAgent',
+            "TASK.gws_core.PyLiveTask": "TASK.gws_core.PyAgent",
+            "TASK.gws_core.PyCondaLiveTask": "TASK.gws_core.PyCondaAgent",
+            "TASK.gws_core.PyMambaLiveTask": "TASK.gws_core.PyMambaAgent",
+            "TASK.gws_core.PyPipenvLiveTask": "TASK.gws_core.PyPipenvAgent",
+            "TASK.gws_core.RCondaLiveTask": "TASK.gws_core.RCondaAgent",
+            "TASK.gws_core.RMambaLiveTask": "TASK.gws_core.RMambaAgent",
+            "TASK.gws_core.StreamlitLiveTask": "TASK.gws_core.StreamlitAgent",
         }
 
         for old_typing_name, new_typing_name in agent_renames.items():
-            SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+            SqlMigrator.rename_process_typing_name(
+                ResourceModel.get_db(), old_typing_name, new_typing_name
+            )
 
 
-@brick_migration('0.10.3', short_description='Migrate note and note template images')
+@brick_migration("0.10.3", short_description="Migrate note and note template images")
 class Migration0103(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        FileHelper.create_dir_if_not_exist('/data/note')
-        FileHelper.create_dir_if_not_exist('/data/note/note')
-        FileHelper.create_dir_if_not_exist('/data/note/note_template')
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        FileHelper.create_dir_if_not_exist("/data/note")
+        FileHelper.create_dir_if_not_exist("/data/note/note")
+        FileHelper.create_dir_if_not_exist("/data/note/note_template")
 
-        if FileHelper.exists_on_os('/data/report/report'):
-            FileHelper.copy_dir_content_to_dir('/data/report/report', '/data/note/note')
-            FileHelper.delete_dir('/data/report/report')
+        if FileHelper.exists_on_os("/data/report/report"):
+            FileHelper.copy_dir_content_to_dir("/data/report/report", "/data/note/note")
+            FileHelper.delete_dir("/data/report/report")
 
-        if FileHelper.exists_on_os('/data/report/document_template'):
-            FileHelper.copy_dir_content_to_dir('/data/report/document_template', '/data/note/note_template')
-            FileHelper.delete_dir('/data/report/document_template')
+        if FileHelper.exists_on_os("/data/report/document_template"):
+            FileHelper.copy_dir_content_to_dir(
+                "/data/report/document_template", "/data/note/note_template"
+            )
+            FileHelper.delete_dir("/data/report/document_template")
 
-        FileHelper.delete_dir('/data/report')
+        FileHelper.delete_dir("/data/report")
 
         task_rename = {
-            'TASK.gws_core.CreateENote': 'TASK.gws_core.CreateNoteResource',
-            'TASK.gws_core.GenerateReportFromENote': 'TASK.gws_core.GenerateLabNote',
-            'TASK.gws_core.FileUncompressTask': 'TASK.gws_core.FileDecompressTask',
-            'TASK.gws_core.Source': InputTask.get_typing_name(),
-            'TASK.gws_core.Sink': OutputTask.get_typing_name(),
+            "TASK.gws_core.CreateENote": "TASK.gws_core.CreateNoteResource",
+            "TASK.gws_core.GenerateReportFromENote": "TASK.gws_core.GenerateLabNote",
+            "TASK.gws_core.FileUncompressTask": "TASK.gws_core.FileDecompressTask",
+            "TASK.gws_core.Source": InputTask.get_typing_name(),
+            "TASK.gws_core.Sink": OutputTask.get_typing_name(),
         }
 
         for old_typing_name, new_typing_name in task_rename.items():
-            SqlMigrator.rename_process_typing_name(ResourceModel.get_db(), old_typing_name, new_typing_name)
+            SqlMigrator.rename_process_typing_name(
+                ResourceModel.get_db(), old_typing_name, new_typing_name
+            )
 
         sql_migrator.add_column_if_not_exists(Note, Note.modifications)
 
@@ -1173,62 +1120,70 @@ class Migration0103(BrickMigration):
         FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] ADD path_2 varchar(1024) NULL")
         FSNodeModel.execute_sql("UPDATE [TABLE_NAME] set path_2 = path")
         FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] DROP COLUMN path")
-        FSNodeModel.execute_sql("ALTER TABLE [TABLE_NAME] CHANGE path_2 path varchar(1024) NOT NULL")
+        FSNodeModel.execute_sql(
+            "ALTER TABLE [TABLE_NAME] CHANGE path_2 path varchar(1024) NOT NULL"
+        )
         Scenario.execute_sql(
-            "update [TABLE_NAME] set description = null where description = 'null' or description = ''")
+            "update [TABLE_NAME] set description = null where description = 'null' or description = ''"
+        )
         ScenarioTemplate.execute_sql(
-            "update [TABLE_NAME] set description = null where description = 'null' or description = ''")
-        Note.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
-        NoteTemplate.execute_sql("update [TABLE_NAME] set content = null where content = 'null' or content = ''")
+            "update [TABLE_NAME] set description = null where description = 'null' or description = ''"
+        )
+        Note.execute_sql(
+            "update [TABLE_NAME] set content = null where content = 'null' or content = ''"
+        )
+        NoteTemplate.execute_sql(
+            "update [TABLE_NAME] set content = null where content = 'null' or content = ''"
+        )
 
 
-@brick_migration('0.10.4', short_description='Delete scenario full text indexe')
+@brick_migration("0.10.4", short_description="Delete scenario full text indexe")
 class Migration0104(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator: SqlMigrator = SqlMigrator(Note.get_db())
 
-        sql_migrator.drop_index_if_exists(Scenario, 'I_F_EXP_TIDESC')
+        sql_migrator.drop_index_if_exists(Scenario, "I_F_EXP_TIDESC")
         sql_migrator.migrate()
 
 
-@brick_migration('0.11.0', short_description='Migrate agents params. Set style by default. Update process start and end date to datetime with milliseconds')
+@brick_migration(
+    "0.11.0",
+    short_description="Migrate agents params. Set style by default. Update process start and end date to datetime with milliseconds",
+)
 class Migration0105(BrickMigration):
-
     @classmethod
     def get_var_type(cls, var) -> str:
         if isinstance(var, bool):
-            return 'bool'
+            return "bool"
         if isinstance(var, int):
-            return 'int'
+            return "int"
         if isinstance(var, float):
-            return 'float'
+            return "float"
         if isinstance(var, str):
-            return 'str'
+            return "str"
         if isinstance(var, list):
-            return 'list'
+            return "list"
         if isinstance(var, dict):
-            return 'dict'
-        raise ValueError(f'Unknown type {type(var)}')
+            return "dict"
+        raise ValueError(f"Unknown type {type(var)}")
 
     @classmethod
     def migrate_agent(cls, agent: ProcessModel) -> None:
-        if agent.config.param_exists('params') and isinstance(agent.config.get_spec('params'), ListParam):
-            params = agent.config.get_value('params')
+        if agent.config.param_exists("params") and isinstance(
+            agent.config.get_spec("params"), ListParam
+        ):
+            params = agent.config.get_value("params")
 
             new_params = {}
             if params:
                 for param in params:
                     if not param:
                         continue
-                    key, val = param.split('=')
+                    key, val = param.split("=")
 
-                    if ',' in val and '[' not in val and '{' not in val:
-                        val = f'[{val}]'
+                    if "," in val and "[" not in val and "{" not in val:
+                        val = f"[{val}]"
 
                     new_params[key] = ast.literal_eval(val)
 
@@ -1239,50 +1194,59 @@ class Migration0105(BrickMigration):
                 param_spec_dto = DynamicParam.get_param_spec_from_type(type_).to_dto()
                 dynamic_param.add_spec(key, param_spec_dto)
 
-            agent.config.update_spec('params', dynamic_param)
+            agent.config.update_spec("params", dynamic_param)
 
-            agent.config.set_value('params', new_params)
+            agent.config.set_value("params", new_params)
             agent.config.save(skip_hook=True)
 
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if process_model.process_typing_name in [
-                'TASK.gws_core.PyAgent', 'TASK.gws_core.PyCondaAgent', 'TASK.gws_core.PyMambaAgent',
-                'TASK.gws_core.PyPipenvAgent', 'TASK.gws_core.RCondaAgent', 'TASK.gws_core.RMambaAgent',
-                    'TASK.gws_core.StreamlitAgent']:
+                "TASK.gws_core.PyAgent",
+                "TASK.gws_core.PyCondaAgent",
+                "TASK.gws_core.PyMambaAgent",
+                "TASK.gws_core.PyPipenvAgent",
+                "TASK.gws_core.RCondaAgent",
+                "TASK.gws_core.RMambaAgent",
+                "TASK.gws_core.StreamlitAgent",
+            ]:
                 try:
                     cls.migrate_agent(process_model)
                 except Exception as exception:
-                    Logger.error(
-                        f'Error while migrating agent {process_model.id} : {exception}')
+                    Logger.error(f"Error while migrating agent {process_model.id} : {exception}")
 
         configs: List[Config] = list(Config.select())
 
         for config in configs:
-            for key in config.data['specs']:
-                spec_json = config.data['specs'][key]
+            for key in config.data["specs"]:
+                spec_json = config.data["specs"][key]
 
-                if 'allowed_values' in spec_json and 'additional_info' in spec_json and spec_json['allowed_values'] is not None:
-                    spec_json['additional_info']['allowed_values'] = spec_json['allowed_values']
-                    del spec_json['allowed_values']
+                if (
+                    "allowed_values" in spec_json
+                    and "additional_info" in spec_json
+                    and spec_json["allowed_values"] is not None
+                ):
+                    spec_json["additional_info"]["allowed_values"] = spec_json["allowed_values"]
+                    del spec_json["allowed_values"]
 
-                if 'type' in spec_json and spec_json['type'] == 'dynamic':
-                    specs = spec_json['additional_info']['specs']
+                if "type" in spec_json and spec_json["type"] == "dynamic":
+                    specs = spec_json["additional_info"]["specs"]
                     for spec_key in specs:
                         spec = specs[spec_key]
-                        if 'allowed_values' in spec and 'additional_info' in spec and spec['type'] in ['str', 'int',
-                                                                                                       'float'] and 'allowed_values' not in spec['additional_info']:
-                            spec['additional_info']['allowed_values'] = spec['allowed_values']
-                            del spec['allowed_values']
+                        if (
+                            "allowed_values" in spec
+                            and "additional_info" in spec
+                            and spec["type"] in ["str", "int", "float"]
+                            and "allowed_values" not in spec["additional_info"]
+                        ):
+                            spec["additional_info"]["allowed_values"] = spec["allowed_values"]
+                            del spec["allowed_values"]
 
-                        spec_json['additional_info']['specs'][spec_key] = spec
+                        spec_json["additional_info"]["specs"][spec_key] = spec
 
-                config.data['specs'][key] = spec_json
+                config.data["specs"][key] = spec_json
 
             config.save(skip_hook=True)
 
@@ -1290,7 +1254,6 @@ class Migration0105(BrickMigration):
         process_models = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if not process_model.style:
-
                 process_typing: Typing = process_model.get_process_typing()
                 if process_typing:
                     process_model.style = process_typing.style
@@ -1301,7 +1264,6 @@ class Migration0105(BrickMigration):
         resource_models: List[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             if not resource_model.style:
-
                 try:
                     resource = resource_model.get_resource()
                     resource_model.style = resource.get_default_style()
@@ -1318,93 +1280,103 @@ class Migration0105(BrickMigration):
 
         sql_migrator = SqlMigrator(ResourceModel.get_db())
         sql_migrator.alter_column_type(
-            ResourceModel, ResourceModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            ResourceModel, ResourceModel.style.column_name, BaseDTOField(TypingStyle, null=False)
+        )
         sql_migrator.alter_column_type(
-            TaskModel, TaskModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            TaskModel, TaskModel.style.column_name, BaseDTOField(TypingStyle, null=False)
+        )
         sql_migrator.alter_column_type(
-            ProtocolModel, ProtocolModel.style.column_name, BaseDTOField(TypingStyle, null=False))
+            ProtocolModel, ProtocolModel.style.column_name, BaseDTOField(TypingStyle, null=False)
+        )
 
         # Update start and end date of process to datetime with milliseconds
         sql_migrator.alter_column_type(
-            TaskModel, TaskModel.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            TaskModel,
+            TaskModel.started_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
         sql_migrator.alter_column_type(
-            TaskModel, TaskModel.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            TaskModel,
+            TaskModel.ended_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
         sql_migrator.alter_column_type(
-            ProtocolModel, ProtocolModel.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            ProtocolModel,
+            ProtocolModel.started_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
         sql_migrator.alter_column_type(
-            ProtocolModel, ProtocolModel.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            ProtocolModel,
+            ProtocolModel.ended_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
 
         # uppate start and end data of progress bar to datetime with milliseconds
         sql_migrator.alter_column_type(
-            ProgressBar, ProgressBar.started_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            ProgressBar,
+            ProgressBar.started_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
         sql_migrator.alter_column_type(
-            ProgressBar, ProgressBar.ended_at.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            ProgressBar,
+            ProgressBar.ended_at.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
         sql_migrator.alter_column_type(
-            ProgressBar, ProgressBar.second_start.column_name, DateTimeUTC(null=True, with_milliseconds=True))
+            ProgressBar,
+            ProgressBar.second_start.column_name,
+            DateTimeUTC(null=True, with_milliseconds=True),
+        )
 
         sql_migrator.alter_column_type(
-            ShareLink, ShareLink.valid_until.column_name, DateTimeUTC(null=True))
+            ShareLink, ShareLink.valid_until.column_name, DateTimeUTC(null=True)
+        )
 
         sql_migrator.migrate()
 
 
-@brick_migration('0.11.2', short_description='Convert other credentials data format')
+@brick_migration("0.11.2", short_description="Convert other credentials data format")
 class Migration0112(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-        credentials: List[Credentials] = list(Credentials.select().where(
-            Credentials.type == CredentialsType.OTHER))
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        credentials: List[Credentials] = list(
+            Credentials.select().where(Credentials.type == CredentialsType.OTHER)
+        )
 
         for credential in credentials:
-            if 'data' not in credential.data:
+            if "data" not in credential.data:
                 data_list = []
                 for key, val in credential.data.items():
-                    data_list.append({'key': key, 'value': val})
+                    data_list.append({"key": key, "value": val})
 
-                credential.data = {'data': data_list}
+                credential.data = {"data": data_list}
                 credential.save(skip_hook=True)
 
 
-@brick_migration('0.12.0', short_description='Add community agent version modified to task model')
+@brick_migration("0.12.0", short_description="Add community agent version modified to task model")
 class Migration0120(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(TaskModel, TaskModel.community_agent_version_modified)
 
         sql_migrator.migrate()
 
 
-@brick_migration('0.12.2', short_description='Replace forbidden characters in tags')
+@brick_migration("0.12.2", short_description="Replace forbidden characters in tags")
 class Migration0122(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
 
         for tag_key in tag_keys:
             new_key = Tag.parse_tag(tag_key.key)
 
             try:
-
                 if new_key != tag_key.key:
                     tag_key.key = new_key
                     tag_key.save(skip_hook=True)
             except Exception as exception:
-                Logger.error(
-                    f'Error while setting tag key for {tag_key.key} : {exception}')
+                Logger.error(f"Error while setting tag key for {tag_key.key} : {exception}")
 
         tag_values: List[TagValueModel] = list(TagValueModel.select())
 
@@ -1417,28 +1389,25 @@ class Migration0122(BrickMigration):
                     tag_value.save(skip_hook=True)
             except Exception as exception:
                 Logger.error(
-                    f'Error while setting tag value for {tag_value.tag_value} : {exception}')
+                    f"Error while setting tag value for {tag_value.tag_value} : {exception}"
+                )
 
 
-@brick_migration('0.13.0', short_description='Rename folder title to name')
+@brick_migration("0.13.0", short_description="Rename folder title to name")
 class Migration0130(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
-        sql_migrator.rename_column_if_exists(SpaceFolder, 'title', 'name')
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.rename_column_if_exists(SpaceFolder, "title", "name")
         sql_migrator.migrate()
 
-        if not ShareLink.index_exists('sharelink_entity_id_entity_type_link_type'):
+        if not ShareLink.index_exists("sharelink_entity_id_entity_type_link_type"):
             # Create unique key sharelink_entity_id_entity_type_link_type
             ShareLink.execute_sql(
-                "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)")
+                "CREATE UNIQUE INDEX sharelink_entity_id_entity_type_link_type ON gws_share_link (entity_id, entity_type, link_type)"
+            )
 
 
-@brick_migration('0.15.0', short_description='Migrate tag to add Community tag')
+@brick_migration("0.15.0", short_description="Migrate tag to add Community tag")
 class Migration0150(BrickMigration):
     """
     This migration also include renaming
@@ -1450,11 +1419,7 @@ class Migration0150(BrickMigration):
     """
 
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.is_community_tag)
         sql_migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.label)
         sql_migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.description)
@@ -1464,87 +1429,101 @@ class Migration0150(BrickMigration):
         sql_migrator.add_column_if_not_exists(TagValueModel, TagValueModel.short_description)
         sql_migrator.add_column_if_not_exists(TagValueModel, TagValueModel.additional_infos)
         sql_migrator.add_column_if_not_exists(TagValueModel, TagValueModel.deprecated)
-        sql_migrator.drop_column_if_exists(TagKeyModel, 'is_propagable')
+        sql_migrator.drop_column_if_exists(TagKeyModel, "is_propagable")
         sql_migrator.migrate()
 
         # Migrate label based on the key
-        tag_keys: List[TagKeyModel] = list(TagKeyModel.select().where(
-            (TagKeyModel.label == None) | (TagKeyModel.label == '')))
+        tag_keys: List[TagKeyModel] = list(
+            TagKeyModel.select().where((TagKeyModel.label == None) | (TagKeyModel.label == ""))
+        )
         for tag_key in tag_keys:
-            tag_key.label = tag_key.key.replace('_', ' ').capitalize()
+            tag_key.label = tag_key.key.replace("_", " ").capitalize()
             tag_key.save(skip_hook=True)
 
-        EntityTag.get_db().execute_sql("ALTER TABLE gws_entity_tag DROP FOREIGN KEY entity_tag_foreign_key_value;")
-        EntityTag.get_db().execute_sql("ALTER TABLE gws_entity_tag MODIFY COLUMN tag_value VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;")
+        EntityTag.get_db().execute_sql(
+            "ALTER TABLE gws_entity_tag DROP FOREIGN KEY entity_tag_foreign_key_value;"
+        )
+        EntityTag.get_db().execute_sql(
+            "ALTER TABLE gws_entity_tag MODIFY COLUMN tag_value VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+        )
         TagValueModel.get_db().execute_sql(
-            "ALTER TABLE gws_tag_value MODIFY COLUMN tag_value VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;")
+            "ALTER TABLE gws_tag_value MODIFY COLUMN tag_value VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;"
+        )
         EntityTag.after_all_tables_init()
 
         StreamlitResource.migrate_streamlit_resources()
 
         ViewConfig.execute_sql(
-            "UPDATE [TABLE_NAME] SET view_type = 'app-view' where view_type = 'streamlit-view'")
+            "UPDATE [TABLE_NAME] SET view_type = 'app-view' where view_type = 'streamlit-view'"
+        )
 
 
-@brick_migration('0.15.2', short_description='Add run by in process model')
+@brick_migration("0.15.2", short_description="Add run by in process model")
 class Migration0152(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator = SqlMigrator(ProtocolModel.get_db())
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProcessModel.run_by)
         sql_migrator.add_column_if_not_exists(TaskModel, ProcessModel.run_by)
-        sql_migrator.alter_column_type(TaskModel, 'brick_version_on_create', CharField(null=False, max_length=50))
-        sql_migrator.alter_column_type(TaskModel, 'brick_version_on_run', CharField(null=True, max_length=50))
-        sql_migrator.alter_column_type(ProtocolModel, 'brick_version_on_create', CharField(null=False, max_length=50))
-        sql_migrator.alter_column_type(ProtocolModel, 'brick_version_on_run', CharField(null=True, max_length=50))
+        sql_migrator.alter_column_type(
+            TaskModel, "brick_version_on_create", CharField(null=False, max_length=50)
+        )
+        sql_migrator.alter_column_type(
+            TaskModel, "brick_version_on_run", CharField(null=True, max_length=50)
+        )
+        sql_migrator.alter_column_type(
+            ProtocolModel, "brick_version_on_create", CharField(null=False, max_length=50)
+        )
+        sql_migrator.alter_column_type(
+            ProtocolModel, "brick_version_on_run", CharField(null=True, max_length=50)
+        )
         sql_migrator.migrate()
 
         ProtocolModel.execute_sql(
-            "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")
+            "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'"
+        )
         TaskModel.execute_sql(
-            "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'")
+            "UPDATE [TABLE_NAME] SET run_by_id = last_modified_by_id WHERE run_by_id IS NULL and status != 'DRAFT'"
+        )
 
 
-@brick_migration('0.16.0', short_description='Fix access write in filestore')
+@brick_migration("0.16.0", short_description="Fix access write in filestore")
 class Migration0160(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # Set chmod to 755 for filestore directory and all sub directories/file recursively
-        subprocess.run(['chmod', '-R', '755', '/data/filestore'], check=True)
+        subprocess.run(["chmod", "-R", "755", "/data/filestore"], check=True)
 
 
-@brick_migration('0.17.0', short_description='Migrate is_optional and is_constant in IOSpec. Remove nodes from protocol graph')
+@brick_migration(
+    "0.17.0",
+    short_description="Migrate is_optional and is_constant in IOSpec. Remove nodes from protocol graph",
+)
 class Migration0170(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # Migrate is_optional to optional and is_constant to constant in TaskModel, ProtocolModel and ScenarioTemplate
         # replace string "is_optional": with "optional":
         TaskModel.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_optional\":', '\"optional\":') WHERE data LIKE '%%\"is_optional\":%%'"
+        )
         ProtocolModel.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_optional\":', '\"optional\":') WHERE data LIKE '%%\"is_optional\":%%'"
+        )
         ScenarioTemplate.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_optional":\', \'"optional":\') WHERE data LIKE \'%%"is_optional":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_optional\":', '\"optional\":') WHERE data LIKE '%%\"is_optional\":%%'"
+        )
 
         # replace string "is_constant": with "constant":
         TaskModel.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_constant\":', '\"constant\":') WHERE data LIKE '%%\"is_constant\":%%'"
+        )
         ProtocolModel.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_constant\":', '\"constant\":') WHERE data LIKE '%%\"is_constant\":%%'"
+        )
         ScenarioTemplate.execute_sql(
-            'UPDATE [TABLE_NAME] SET data = REPLACE(data, \'"is_constant":\', \'"constant":\') WHERE data LIKE \'%%"is_constant":%%\'')
+            "UPDATE [TABLE_NAME] SET data = REPLACE(data, '\"is_constant\":', '\"constant\":') WHERE data LIKE '%%\"is_constant\":%%'"
+        )
 
         # Remove nodes from protocol graph
         protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
@@ -1553,18 +1532,16 @@ class Migration0170(BrickMigration):
                 protocol_model.refresh_graph_from_dump()
                 protocol_model.save(skip_hook=True)
             except Exception as exception:
-                Logger.error(f'Error while migrating protocol {protocol_model.id} : {exception}')
+                Logger.error(f"Error while migrating protocol {protocol_model.id} : {exception}")
 
 
-@brick_migration('0.18.0', short_description='Delete local_file_store table and migrate all files to local filestore')
+@brick_migration(
+    "0.18.0",
+    short_description="Delete local_file_store table and migrate all files to local filestore",
+)
 class Migration0180(BrickMigration):
-
     @classmethod
-    def migrate(cls,
-                sql_migrator: SqlMigrator,
-                from_version: Version,
-                to_version: Version) -> None:
-
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # Get the database connection
         db = sql_migrator.migrator.database
 
@@ -1586,11 +1563,12 @@ class Migration0180(BrickMigration):
 
             # loop thourgh all files and folders in source_dir and move them to dest_dir
             for item in os.listdir(source_dir):
-
                 try:
                     source_path = os.path.join(source_dir, item)
                     # Find the fsnode model object by path
-                    fsnode: FSNode = FSNodeModel.select().where(FSNodeModel.path == source_path).first()
+                    fsnode: FSNode = (
+                        FSNodeModel.select().where(FSNodeModel.path == source_path).first()
+                    )
 
                     if fsnode:
                         result = local_file_store.add_node_from_path(source_path, item)
@@ -1600,20 +1578,23 @@ class Migration0180(BrickMigration):
                             fsnode.save(skip_hook=True)
 
                             # update the path of all other fsnodes that are children of this fsnode
-                            child_fsnodes: List[FSNodeModel] = list(FSNodeModel.select().where(
-                                FSNodeModel.path.startswith(source_path + os.sep)))
+                            child_fsnodes: List[FSNodeModel] = list(
+                                FSNodeModel.select().where(
+                                    FSNodeModel.path.startswith(source_path + os.sep)
+                                )
+                            )
 
                             for child_fsnode in child_fsnodes:
-                                relative_path = os.path.relpath(
-                                    child_fsnode.path, source_path)
-                                new_child_path = os.path.join(
-                                    result.path, relative_path)
+                                relative_path = os.path.relpath(child_fsnode.path, source_path)
+                                new_child_path = os.path.join(result.path, relative_path)
                                 child_fsnode.path = new_child_path
                                 child_fsnode.file_store_id = local_file_store.id
                                 child_fsnode.save(skip_hook=True)
                 except Exception as exception:
                     has_error = True
-                    Logger.error(f'Error while migrating file {source_path} to local filestore: {exception}')
+                    Logger.error(
+                        f"Error while migrating file {source_path} to local filestore: {exception}"
+                    )
 
             # if no error, delete the source dir
             if not has_error:
@@ -1621,11 +1602,13 @@ class Migration0180(BrickMigration):
 
         # Set all fsnode with null filestore to local filestore
         FSNodeModel.execute_sql(
-            f"UPDATE [TABLE_NAME] SET file_store_id = '{local_file_store.id}' WHERE file_store_id IS NULL")
+            f"UPDATE [TABLE_NAME] SET file_store_id = '{local_file_store.id}' WHERE file_store_id IS NULL"
+        )
 
         # Set the file_store_id column to not null
         sql_migrator.alter_column_type(
-            FSNodeModel, FSNodeModel.file_store_id.column_name, CharField(null=False))
+            FSNodeModel, FSNodeModel.file_store_id.column_name, CharField(null=False)
+        )
         sql_migrator.migrate()
 
         # create foreign key if not exist

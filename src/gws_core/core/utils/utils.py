@@ -1,4 +1,3 @@
-
 import inspect
 import os
 import re
@@ -12,14 +11,15 @@ from numpy import double
 
 
 class Utils:
-
     @staticmethod
     def sort_dict_by_key(json_dict):
         if not json_dict:
             return json_dict
 
-        return {k: Utils.sort_dict_by_key(v) if isinstance(v, json_dict) else v
-                for k, v in sorted(json_dict.items())}
+        return {
+            k: Utils.sort_dict_by_key(v) if isinstance(v, json_dict) else v
+            for k, v in sorted(json_dict.items())
+        }
 
     @staticmethod
     def walk_dir(path) -> Tuple[List[str], List[str]]:
@@ -90,27 +90,26 @@ class Utils:
         """
         tab = type_str.split(".")
         length = len(tab)
-        module_name = ".".join(tab[0:length-1])
-        function_name = tab[length-1]
+        module_name = ".".join(tab[0 : length - 1])
+        function_name = tab[length - 1]
 
         return module_name, function_name
 
     @staticmethod
-    def issubclass(__cls: type, __class_or_tuple:  Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]) -> bool:
-        """issubclass safe that check the input is a class and avoid exception
-        """
+    def issubclass(
+        __cls: type, __class_or_tuple: Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]
+    ) -> bool:
+        """issubclass safe that check the input is a class and avoid exception"""
         return inspect.isclass(__cls) and issubclass(__cls, __class_or_tuple)
 
     @staticmethod
     def value_is_in_literal(value: Any, literal_type: Any) -> bool:
-        """Check wheter a value in in a listeral list
-        """
+        """Check wheter a value in in a listeral list"""
         return value in Utils.get_literal_values(literal_type)
 
     @staticmethod
     def get_literal_values(literal_type: Any) -> List[Any]:
-        """Return the list of literal values
-        """
+        """Return the list of literal values"""
         return list(get_args(literal_type))
 
     @staticmethod
@@ -124,7 +123,8 @@ class Utils:
         """
 
         return set(class_.__subclasses__()).union(
-            [s for c in class_.__subclasses__() for s in Utils.get_all_subclasses(c)])
+            [s for c in class_.__subclasses__() for s in Utils.get_all_subclasses(c)]
+        )
 
     @staticmethod
     def get_parent_classes(class_: Type, max_parent: Type = None) -> List[Type]:
@@ -145,14 +145,12 @@ class Utils:
 
     @staticmethod
     def json_are_equals(json1: Any, json2: Any) -> bool:
-        """Check if two json are equals
-        """
+        """Check if two json are equals"""
         return dumps(json1, sort_keys=True) == dumps(json2, sort_keys=True)
 
     @staticmethod
     def rename_duplicate_in_str_list(list_: List[str]) -> List[str]:
-        """Rename all duplicated element in a list of str with _1, _2... at the end
-        """
+        """Rename all duplicated element in a list of str with _1, _2... at the end"""
 
         seen: Dict[str, int] = {}
         result: List[str] = []
@@ -168,7 +166,7 @@ class Utils:
 
             if item in seen:
                 seen[item] += 1
-                new_item = f'{item}_{seen[item]}'
+                new_item = f"{item}_{seen[item]}"
                 result.append(new_item)
                 new_items[new_item] = item
             else:
@@ -192,8 +190,7 @@ class Utils:
 
     @staticmethod
     def is_primitive(obj: Any) -> bool:
-        """Check if an object is a primitive type
-        """
+        """Check if an object is a primitive type"""
         return obj is None or type(obj) in (int, float, str, bool, double)
 
     @staticmethod
@@ -219,15 +216,17 @@ class Utils:
         return False
 
     @staticmethod
-    def json_equals(json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> bool:
-        """Assert a json with possibility to ignore key
-        """
+    def json_equals(
+        json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+    ) -> bool:
+        """Assert a json with possibility to ignore key"""
         return Utils._json_equals_recur(json_1, json_2, ignore_keys, "") is None
 
     @staticmethod
-    def assert_json_equals(json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None):
-        """Assert a json with possibility to ignore key
-        """
+    def assert_json_equals(
+        json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+    ):
+        """Assert a json with possibility to ignore key"""
         result = Utils._json_equals_recur(json_1, json_2, ignore_keys, "")
 
         if result is None:
@@ -237,11 +236,11 @@ class Utils:
 
     @staticmethod
     def _json_equals_recur(
-            json_1: Union[dict, list],
-            json_2: Union[dict, list],
-            ignore_keys: List[str] = None,
-            cumulated_key: str = "") -> Optional[str]:
-
+        json_1: Union[dict, list],
+        json_2: Union[dict, list],
+        ignore_keys: List[str] = None,
+        cumulated_key: str = "",
+    ) -> Optional[str]:
         # handle list
         if isinstance(json_1, list):
             if not isinstance(json_2, list):
@@ -252,7 +251,8 @@ class Utils:
 
             for index, value in enumerate(json_1):
                 result = Utils._json_equals_recur(
-                    value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]")
+                    value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]"
+                )
 
                 if result is not None:
                     return result
@@ -275,7 +275,8 @@ class Utils:
                     return f"Key '{cumulated_key}' missing in second json."
 
                 result = Utils._json_equals_recur(
-                    value, json_2[key], ignore_keys, f"{cumulated_key}.{key}")
+                    value, json_2[key], ignore_keys, f"{cumulated_key}.{key}"
+                )
                 if result is not None:
                     return result
 

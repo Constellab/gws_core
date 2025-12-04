@@ -1,19 +1,20 @@
-
 import inspect
 from typing import Any, Callable, Dict, List, Optional, Tuple, cast
 
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.reflector_types import (ClassicClassDocDTO,
-                                                 MethodArgDoc, MethodDoc,
-                                                 MethodDocType)
+from gws_core.core.utils.reflector_types import (
+    ClassicClassDocDTO,
+    MethodArgDoc,
+    MethodDoc,
+    MethodDocType,
+)
 
 from ..classes.func_meta_data import FuncArgMetaData, FuncArgsMetaData
 from ..utils.utils import Utils
 
 
-class ReflectorHelper():
-    """Class to manage reflection and simplify meta data on objects
-    """
+class ReflectorHelper:
+    """Class to manage reflection and simplify meta data on objects"""
 
     @classmethod
     def get_property_names_of_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
@@ -41,11 +42,12 @@ class ReflectorHelper():
 
         for member in member_list:
             member_value = member[1]
-            if not inspect.isfunction(member_value) and \
-                not inspect.ismethod(member_value) and \
-                not inspect.isclass(member_value) and \
-                    isinstance(member_value, type_):
-
+            if (
+                not inspect.isfunction(member_value)
+                and not inspect.ismethod(member_value)
+                and not inspect.isclass(member_value)
+                and isinstance(member_value, type_)
+            ):
                 properties[member[0]] = member[1]
 
         return properties
@@ -73,8 +75,12 @@ class ReflectorHelper():
         arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
 
         for arg_name, parameter in parameters.items():
-            arguments.add_arg(arg_name, FuncArgMetaData(arg_name=arg_name,
-                                                        default_value=parameter._default, type_=parameter._annotation))
+            arguments.add_arg(
+                arg_name,
+                FuncArgMetaData(
+                    arg_name=arg_name, default_value=parameter._default, type_=parameter._annotation
+                ),
+            )
 
         return arguments
 
@@ -103,7 +109,9 @@ class ReflectorHelper():
         return func_args.all_args_have_default()
 
     @classmethod
-    def object_has_metadata(cls, object_: Any, meta_data_name: str, meta_obj_type: type = None) -> bool:
+    def object_has_metadata(
+        cls, object_: Any, meta_data_name: str, meta_obj_type: type = None
+    ) -> bool:
         """Check if an object has a specific metadata attribute.
 
         Verifies whether an object has an attribute with the given name, and optionally
@@ -131,10 +139,13 @@ class ReflectorHelper():
         """
         # Check if the method is annotated with view
         return hasattr(object_, meta_data_name) and (
-            meta_obj_type is None or isinstance(getattr(object_, meta_data_name), meta_obj_type))
+            meta_obj_type is None or isinstance(getattr(object_, meta_data_name), meta_obj_type)
+        )
 
     @classmethod
-    def get_and_check_object_metadata(cls, object_: Any, meta_data_name: str, meta_obj_type: type = None) -> Any:
+    def get_and_check_object_metadata(
+        cls, object_: Any, meta_data_name: str, meta_obj_type: type = None
+    ) -> Any:
         """Retrieve metadata from an object with optional type validation.
 
         Gets the value of a metadata attribute if it exists on the object, with optional
@@ -211,34 +222,36 @@ class ReflectorHelper():
 
             arg_default_value: Any = None
             if arg[1].has_default_value():
-                arg_default_value = arg[1].default_value if arg[1].default_value is not None else None
+                arg_default_value = (
+                    arg[1].default_value if arg[1].default_value is not None else None
+                )
 
             arg_type = Utils.stringify_type(arg_type)
-            if arg_type == '_empty':
+            if arg_type == "_empty":
                 if arg_default_value is not None:
                     arg_type = Utils.stringify_type(type(arg_default_value))
                 else:
-                    arg_type = 'Any'
+                    arg_type = "Any"
 
             if isinstance(arg_default_value, str) and len(arg_default_value) == 0:
                 arg_default_value = "''"
             if not isinstance(arg_default_value, str):
                 if arg_default_value is None:
-                    arg_default_value = ''
+                    arg_default_value = ""
                 else:
                     arg_default_value = str(arg_default_value)
 
-            arguments_json.append(MethodArgDoc(
-                arg_name=arg_name,
-                arg_type=arg_type,
-                arg_default_value=arg_default_value
-            ))
+            arguments_json.append(
+                MethodArgDoc(
+                    arg_name=arg_name, arg_type=arg_type, arg_default_value=arg_default_value
+                )
+            )
         return arguments_json
 
     @classmethod
     def get_func_doc(
-            cls, func: Callable[..., Any],
-            type_: Optional[type] = None, func_name: Optional[str] = None) -> Optional[MethodDoc]:
+        cls, func: Callable[..., Any], type_: Optional[type] = None, func_name: Optional[str] = None
+    ) -> Optional[MethodDoc]:
         """Get documentation for a single function.
 
         :param func: The function to document
@@ -268,14 +281,24 @@ class ReflectorHelper():
 
             signature: inspect.Signature = inspect.signature(func)
             arguments = cls.get_method_named_args_json(func)
-            return_type = Utils.stringify_type(
-                signature.return_annotation) if signature.return_annotation != inspect.Signature.empty else None
+            return_type = (
+                Utils.stringify_type(signature.return_annotation)
+                if signature.return_annotation != inspect.Signature.empty
+                else None
+            )
 
             doc = cls.get_cleaned_doc_string(func)
-            return MethodDoc(name=func_name, doc=doc,
-                             args=arguments, return_type=return_type, method_type=method_type)
+            return MethodDoc(
+                name=func_name,
+                doc=doc,
+                args=arguments,
+                return_type=return_type,
+                method_type=method_type,
+            )
         except Exception:
-            Logger.error(f"Error while getting method doc of {func_name if func_name else 'unknown'}")
+            Logger.error(
+                f"Error while getting method doc of {func_name if func_name else 'unknown'}"
+            )
             return None
 
     @classmethod
@@ -340,17 +363,19 @@ class ReflectorHelper():
             - Returns sorted keys alphabetically
             - Handles both named types (__name__) and complex type hints (converted to string)
         """
-        arr_variables = [d for (t, d) in inspect.getmembers(class_) if t == '__annotations__']
+        arr_variables = [d for (t, d) in inspect.getmembers(class_) if t == "__annotations__"]
 
         if len(arr_variables) == 0:
             return {}
 
         variables = cast(dict, arr_variables[0])
         try:
-            vars_keys = sorted([i for i in variables.keys() if i[0] != '_'])  # get the sorted keys of public variables
+            vars_keys = sorted(
+                [i for i in variables.keys() if i[0] != "_"]
+            )  # get the sorted keys of public variables
             res: Dict[str, str] = {}
             for k in vars_keys:
-                if hasattr(variables[k], '__name__'):
+                if hasattr(variables[k], "__name__"):
                     res.update({k: variables[k].__name__})
                 else:
                     res.update({k: str(variables[k])})
@@ -370,16 +395,19 @@ class ReflectorHelper():
         if not inspect.isclass(type_):
             return []
 
-        methods: Any = inspect.getmembers(
-            type_, predicate=inspect.isfunction) + inspect.getmembers(type_, predicate=inspect.ismethod)
+        methods: Any = inspect.getmembers(type_, predicate=inspect.isfunction) + inspect.getmembers(
+            type_, predicate=inspect.ismethod
+        )
 
         if include_init:
-            return [m[0] for m in methods if not m[0].startswith('_') or m[0] == '__init__']
+            return [m[0] for m in methods if not m[0].startswith("_") or m[0] == "__init__"]
         else:
-            return [m[0] for m in methods if not m[0].startswith('_')]
+            return [m[0] for m in methods if not m[0].startswith("_")]
 
     @classmethod
-    def get_class_public_methods_doc(cls, type_: type, include_init: bool = False) -> List[MethodDoc]:
+    def get_class_public_methods_doc(
+        cls, type_: type, include_init: bool = False
+    ) -> List[MethodDoc]:
         """Get documentation for all public methods of a class.
 
         :param type_: The class type to inspect
@@ -417,7 +445,7 @@ class ReflectorHelper():
         methods = cls.get_class_public_methods_doc(type_, include_init=True)
 
         name: str = None
-        if not hasattr(type_, '__name__'):
+        if not hasattr(type_, "__name__"):
             name = str(type_)
         else:
             name = type_.__name__
@@ -436,6 +464,6 @@ class ReflectorHelper():
         if doc is None:
             return None
 
-        doc = doc.replace('\n# ', '\n## ')
+        doc = doc.replace("\n# ", "\n## ")
 
         return doc

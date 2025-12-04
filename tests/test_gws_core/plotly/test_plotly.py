@@ -1,5 +1,3 @@
-
-
 from json import loads
 from unittest import TestCase
 
@@ -15,9 +13,8 @@ from gws_core.impl.plotly.plotly_view import PlotlyView
 
 # test_plotly
 class TestPlotly(TestCase):
-
     def test_plotly_r_field(self):
-        dataframe = DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        dataframe = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
 
         figure = px.scatter(dataframe, x="A", y="B")
 
@@ -32,7 +29,7 @@ class TestPlotly(TestCase):
         Utils.assert_json_equals(loads(figure.to_json()), loads(deserialized_figure.to_json()))
 
     def test_plotly_view(self):
-        dataframe = DataFrame({'A': [1, 2, 3], 'B': [4, 5, 6]})
+        dataframe = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})
 
         figure = px.scatter(dataframe, x="A", y="B")
 

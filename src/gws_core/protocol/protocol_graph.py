@@ -1,10 +1,7 @@
-
-
 from typing import Optional, Set
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.protocol.protocol_dto import (ProcessConfigDTO,
-                                            ProtocolGraphConfigDTO)
+from gws_core.protocol.protocol_dto import ProcessConfigDTO, ProtocolGraphConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
@@ -14,8 +11,7 @@ class ResourceTaskOrigin(BaseModelDTO):
     port_name: str
 
 
-class ProtocolGraph():
-
+class ProtocolGraph:
     graph: ProtocolGraphConfigDTO
 
     def __init__(self, graph: ProtocolGraphConfigDTO) -> None:
@@ -52,8 +48,9 @@ class ProtocolGraph():
         # we add the input ids to the set of all resource ids
         return all_resource_ids.union(self.get_input_resource_ids())
 
-    def _get_all_resource_ids_recursive(self, resource_ids: Set[str], graph: ProtocolGraphConfigDTO) -> Set[str]:
-
+    def _get_all_resource_ids_recursive(
+        self, resource_ids: Set[str], graph: ProtocolGraphConfigDTO
+    ) -> Set[str]:
         for node in graph.nodes.values():
             for port in node.outputs.ports.values():
                 if port.resource_id:
@@ -68,9 +65,9 @@ class ProtocolGraph():
         return self._get_process_by_instance_path_recursive(instance_path, self.graph)
 
     def _get_process_by_instance_path_recursive(
-            self, instance_path: str, graph: ProtocolGraphConfigDTO) -> Optional[ProcessConfigDTO]:
-
-        instance_names = instance_path.split('.')
+        self, instance_path: str, graph: ProtocolGraphConfigDTO
+    ) -> Optional[ProcessConfigDTO]:
+        instance_names = instance_path.split(".")
 
         process = graph.nodes[instance_names[0]]
 
@@ -81,4 +78,6 @@ class ProtocolGraph():
         if process.graph is None:
             raise Exception(f"Process '{process.instance_name}' is not a protocol")
 
-        return self._get_process_by_instance_path_recursive('.'.join(instance_names[1:]), process.graph)
+        return self._get_process_by_instance_path_recursive(
+            ".".join(instance_names[1:]), process.graph
+        )

@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -10,16 +8,14 @@ from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (
-    NavigableEntity, NavigableEntityType)
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
-from gws_core.scenario.scenario_dto import (ScenarioDTO, ScenarioProgressDTO,
-                                            ScenarioSimpleDTO)
+from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO, ScenarioSimpleDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
@@ -32,8 +28,7 @@ from ..core.model.model_with_user import ModelWithUser
 from ..folder.space_folder import SpaceFolder
 from ..resource.resource_model import ResourceModel
 from ..user.user import User
-from .scenario_enums import (ScenarioCreationType, ScenarioProcessStatus,
-                             ScenarioStatus)
+from .scenario_enums import ScenarioCreationType, ScenarioProcessStatus, ScenarioStatus
 
 if TYPE_CHECKING:
     from ..protocol.protocol_model import ProtocolModel
@@ -42,15 +37,13 @@ if TYPE_CHECKING:
 
 @final
 class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
-
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
-    status: ScenarioStatus = EnumField(choices=ScenarioStatus,
-                                       default=ScenarioStatus.DRAFT)
+    status: ScenarioStatus = EnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
     error_info = JSONField(null=True)
-    creation_type: ScenarioCreationType = EnumField(choices=ScenarioCreationType,
-                                                    default=ScenarioCreationType.MANUAL,
-                                                    max_length=20)
+    creation_type: ScenarioCreationType = EnumField(
+        choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
+    )
 
     title = CharField(max_length=50)
     description: RichTextDTO = RichTextDbField(null=True)
@@ -58,11 +51,11 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     is_validated: bool = BooleanField(default=False)
     validated_at: datetime = DateTimeUTC(null=True)
-    validated_by = ForeignKeyField(User, null=True, backref='+')
+    validated_by = ForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
     last_sync_at = DateTimeUTC(null=True)
-    last_sync_by = ForeignKeyField(User, null=True, backref='+')
+    last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
     data: Dict[str, Any] = JSONField(null=True)
@@ -93,8 +86,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         from ..protocol.protocol_model import ProtocolModel
 
         if self._protocol is None:
-            self._protocol = ProtocolModel.get((ProtocolModel.scenario == self)
-                                               & (ProtocolModel.parent_protocol_id.is_null()))
+            self._protocol = ProtocolModel.get(
+                (ProtocolModel.scenario == self) & (ProtocolModel.parent_protocol_id.is_null())
+            )
 
         return self._protocol
 
@@ -104,11 +98,11 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         Returns child process models.
         """
         from ..task.task_model import TaskModel
+
         if not self.is_saved():
             return []
 
-        return list(TaskModel.select().where(
-            TaskModel.scenario == self))
+        return list(TaskModel.select().where(TaskModel.scenario == self))
 
     @property
     def resources(self) -> List[ResourceModel]:
@@ -131,9 +125,17 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def get_running_tasks(self) -> List[TaskModel]:
         from ..task.task_model import TaskModel
-        return list(TaskModel.select().where(
-            (TaskModel.scenario == self) &
-            (TaskModel.status.in_([ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]))))
+
+        return list(
+            TaskModel.select().where(
+                (TaskModel.scenario == self)
+                & (
+                    TaskModel.status.in_(
+                        [ProcessStatus.RUNNING, ProcessStatus.WAITING_FOR_CLI_PROCESS]
+                    )
+                )
+            )
+        )
 
     def get_current_progress(self) -> ScenarioProgressDTO:
         return self.protocol_model.get_current_progress()
@@ -153,7 +155,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     ########################################## MODEL METHODS ######################################
 
     @GwsCoreDbManager.transaction()
-    def archive(self, archive: bool) -> 'Scenario':
+    def archive(self, archive: bool) -> "Scenario":
         """
         Archive the scenario
         """
@@ -181,21 +183,29 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :rtype: `int`
         """
 
-        return Scenario.select().where((Scenario.status == ScenarioStatus.RUNNING) |
-                                       (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS))
+        return Scenario.select().where(
+            (Scenario.status == ScenarioStatus.RUNNING)
+            | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+        )
 
     @classmethod
     def count_running_or_queued_scenarios(cls) -> int:
-        return Scenario.select().where((Scenario.status == ScenarioStatus.RUNNING) |
-                                       (Scenario.status == ScenarioStatus.IN_QUEUE) |
-                                       (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)).count()
+        return (
+            Scenario.select()
+            .where(
+                (Scenario.status == ScenarioStatus.RUNNING)
+                | (Scenario.status == ScenarioStatus.IN_QUEUE)
+                | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+            )
+            .count()
+        )
 
     @classmethod
     def count_queued_scenarios(cls) -> int:
         return Scenario.select().where((Scenario.status == ScenarioStatus.IN_QUEUE)).count()
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> 'Scenario':
+    def reset(self) -> "Scenario":
         """
         Reset the scenario.
 
@@ -225,16 +235,20 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.is_validated:
             return
         if self.is_running:
-            raise BadRequestException(GWSException.SCENARIO_VALIDATE_RUNNING.value,
-                                      unique_code=GWSException.SCENARIO_VALIDATE_RUNNING.name)
+            raise BadRequestException(
+                GWSException.SCENARIO_VALIDATE_RUNNING.value,
+                unique_code=GWSException.SCENARIO_VALIDATE_RUNNING.name,
+            )
 
         if self.folder is None:
             raise BadRequestException(
-                "The scenario must be linked to a folder before validating it")
+                "The scenario must be linked to a folder before validating it"
+            )
 
         if self.folder.children.count() > 0:
             raise BadRequestException(
-                "The scenario must be associated with a leaf folder (folder with no children)")
+                "The scenario must be associated with a leaf folder (folder with no children)"
+            )
 
         self.is_validated = True
         self.validated_at = DateHelper.now_utc()
@@ -251,7 +265,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         EntityTagList.delete_by_entity(TagEntityType.SCENARIO, self.id)
 
     @classmethod
-    def get_synced_objects(cls) -> List['Scenario']:
+    def get_synced_objects(cls) -> List["Scenario"]:
         """Get all scenarios that are synced with space
 
         :return: [description]
@@ -261,7 +275,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def clear_folder(cls, folders: List[SpaceFolder]) -> None:
-        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(cls.folder.in_(folders)).execute()
+        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(
+            cls.folder.in_(folders)
+        ).execute()
 
     ########################### STATUS MANAGEMENT ##################################
 
@@ -271,26 +287,25 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @property
     def is_finished(self) -> bool:
-        """Consider finished if the Scenario status is SUCCESS or ERROR
-        """
+        """Consider finished if the Scenario status is SUCCESS or ERROR"""
         return self.is_success or self.is_error
 
     @property
     def is_running(self) -> bool:
-        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
-        """
-        return self.status == ScenarioStatus.RUNNING or self.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
+        return (
+            self.status == ScenarioStatus.RUNNING
+            or self.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS
+        )
 
     @property
     def is_running_or_waiting(self) -> bool:
-        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
-        """
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
         return self.is_running or self.status == ScenarioStatus.IN_QUEUE
 
     @property
     def is_error(self) -> bool:
-        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS
-        """
+        """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
         return self.status == ScenarioStatus.ERROR
 
     @property
@@ -357,8 +372,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.error_info = error_info.to_json_dict() if error_info else None
 
     def check_is_runnable(self) -> None:
-        """Throw an error if the scenario is not runnable
-        """
+        """Throw an error if the scenario is not runnable"""
 
         # check scenario status
         if self.is_archived:
@@ -371,25 +385,22 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException("The scenario is already finished")
 
     def check_is_stopable(self) -> None:
-        """Throw an error if the scenario is not stopable
-        """
+        """Throw an error if the scenario is not stopable"""
 
         # check scenario status
         if not self.is_running:
-            raise BadRequestException(
-                detail=f"Scenario '{self.id}' is not running")
+            raise BadRequestException(detail=f"Scenario '{self.id}' is not running")
 
     def check_is_updatable(self) -> None:
-        """Throw an error if the scenario is not updatable
-        """
+        """Throw an error if the scenario is not updatable"""
 
         # check scenario status
         if self.is_validated:
-            raise BadRequestException(
-                detail="The scenario is validated, you can't update it")
+            raise BadRequestException(detail="The scenario is validated, you can't update it")
         if self.is_archived:
             raise BadRequestException(
-                detail="The scenario is archived, please unachived it to update it")
+                detail="The scenario is archived, please unachived it to update it"
+            )
 
     def get_process_status(self) -> ScenarioProcessStatus:
         if self.pid == None or not self.is_running:
@@ -415,9 +426,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             title=self.title,
             description=self.description,
             creation_type=self.creation_type,
-            protocol={
-                "id": self.protocol_model.id
-            },
+            protocol={"id": self.protocol_model.id},
             status=self.status,
             is_validated=self.is_validated,
             validated_by=self.validated_by.to_dto() if self.validated_by else None,
@@ -426,21 +435,18 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_at=self.last_sync_at,
             is_archived=self.is_archived,
             folder=self.folder.to_dto() if self.folder else None,
-            pid_status=self.get_process_status()
+            pid_status=self.get_process_status(),
         )
 
     def to_simple_dto(self) -> ScenarioSimpleDTO:
-        return ScenarioSimpleDTO(
-            id=self.id,
-            title=self.title
-        )
+        return ScenarioSimpleDTO(id=self.id, title=self.title)
 
     def export_protocol(self) -> ScenarioProtocolDTO:
         return ScenarioProtocolDTO(
             version=3,  # version of the protocol json format
-            data=self.protocol_model.to_config_dto()
+            data=self.protocol_model.to_config_dto(),
         )
 
     class Meta:
-        table_name = 'gws_scenario'
+        table_name = "gws_scenario"
         is_table = True

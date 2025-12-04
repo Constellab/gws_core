@@ -1,10 +1,7 @@
-
-
 from typing import Any, Dict, List, Optional
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec_decorator import (ParamSpecType,
-                                                        param_spec_decorator)
+from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
@@ -14,7 +11,7 @@ from .param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 
 @param_spec_decorator(type_=ParamSpecType.NESTED)
 class ParamSet(ParamSpec):
-    """ ParamSet. Use to define a group of parameters that can be added multiple times. This will
+    """ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
 
     """
@@ -29,7 +26,7 @@ class ParamSet(ParamSpec):
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
         short_description: Optional[str] = None,
-        max_number_of_occurrences: int = -1
+        max_number_of_occurrences: int = -1,
     ):
         """
         :param optional: It true, the param_set can have 0 occurence, the value will then be an empty array [].
@@ -95,7 +92,7 @@ class ParamSet(ParamSpec):
         # convert the additional info to json
         json_.additional_info = {
             "max_number_of_occurrences": self.max_number_of_occurrences,
-            "param_set": self.param_set.to_dto()
+            "param_set": self.param_set.to_dto(),
         }
 
         return json_
@@ -107,10 +104,13 @@ class ParamSet(ParamSpec):
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSet":
         from .param_spec_helper import ParamSpecHelper
+
         param_set: ParamSet = super().load_from_dto(spec_dto)
 
         # load info from additional info
-        param_set.max_number_of_occurrences = spec_dto.additional_info.get("max_number_of_occurrences")
+        param_set.max_number_of_occurrences = spec_dto.additional_info.get(
+            "max_number_of_occurrences"
+        )
 
         specs = ConfigSpecs()
 

@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from typing import Dict, Optional
 
@@ -58,7 +56,6 @@ class CurrentMonitorDTO(BaseModelDTO):
 
 
 class MonitorBetweenDateGraphicsDTO(BaseModelDTO):
-
     from_date: datetime
     to_date: datetime
     main_figure: Dict

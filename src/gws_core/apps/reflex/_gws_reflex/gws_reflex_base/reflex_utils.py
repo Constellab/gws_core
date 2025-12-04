@@ -1,12 +1,10 @@
-
-
 from typing import Any, Dict
 
 
 class ReflexUtils:
     @staticmethod
     def multiline_ellipsis_css(lines: int, max_width: str = "100%") -> Dict[str, Any]:
-        """ Utility function to generate CSS styles for multiline text ellipsis.
+        """Utility function to generate CSS styles for multiline text ellipsis.
 
 
         Args:

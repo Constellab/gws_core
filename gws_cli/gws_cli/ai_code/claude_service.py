@@ -14,9 +14,7 @@ class ClaudeService(AICodeService):
 
     def __init__(self):
         """Initialize ClaudeService"""
-        super().__init__(
-            ai_tool_name="Claude Code"
-        )
+        super().__init__(ai_tool_name="Claude Code")
 
     def format_frontmatter(self, frontmatter: CommandFrontmatter) -> str:
         """Format frontmatter for Claude Code
@@ -59,7 +57,7 @@ argument-hint: [{frontmatter.argument_hint}]
         Returns:
             Glob pattern for Claude Code command files
         """
-        return 'gws-*.md'
+        return "gws-*.md"
 
     def get_install_command(self) -> str:
         """Get the command to install/pull commands for Claude Code
@@ -67,7 +65,7 @@ argument-hint: [{frontmatter.argument_hint}]
         Returns:
             Command string to initialize Claude Code
         """
-        return 'gws claude update'
+        return "gws claude update"
 
     def get_main_instructions_path(self) -> Path:
         """Get the path where main instructions file should be generated
@@ -172,7 +170,7 @@ argument-hint: [{frontmatter.argument_hint}]
             # Read existing settings or create empty dict
             settings = {}
             if settings_file.exists():
-                with open(settings_file, 'r') as f:
+                with open(settings_file, "r") as f:
                     settings = json.load(f)
             else:
                 print(f"Creating new settings file at {settings_file}")
@@ -185,7 +183,7 @@ argument-hint: [{frontmatter.argument_hint}]
             settings["env"]["GWS_CORE_SRC"] = str(gws_core_path)
 
             # Write settings back
-            with open(settings_file, 'w') as f:
+            with open(settings_file, "w") as f:
                 json.dump(settings, f, indent=2)
 
             return 0
@@ -309,6 +307,8 @@ argument-hint: [{frontmatter.argument_hint}]
         print("How to use GWS commands in Claude Code:")
         print("=" * 70)
         print("\n1. Open Claude Code in your terminal or editor")
-        print("\n2. Use the / symbol to invoke GWS slash commands followed by your task description.")
+        print(
+            "\n2. Use the / symbol to invoke GWS slash commands followed by your task description."
+        )
         print("   Example: /gws-streamlit-app-developer Create a data visualization dashboard")
         print("\n" + "=" * 70)

@@ -1,8 +1,6 @@
+class GwsCorePackages:
+    """List of pip packages used by GWS Core"""
 
-
-class GwsCorePackages():
-    """List of pip packages used by GWS Core
-    """
     OPENPYXL = "openpyxl"
     AWESOME_SLUGIFY = "awesome-slugify"
     FASTAPI = "fastapi"

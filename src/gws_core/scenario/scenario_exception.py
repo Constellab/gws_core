@@ -1,13 +1,10 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict
 
 from gws_core.core.service.front_service import FrontService
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..process.process_exception import ProcessRunException
 
@@ -26,8 +23,14 @@ class ScenarioRunException(BadRequestException):
     original_exception: Exception
     scenario: Scenario
 
-    def __init__(self, scenario: Scenario, exception_detail: str,
-                 unique_code: str, instance_id: str, exception: Exception) -> None:
+    def __init__(
+        self,
+        scenario: Scenario,
+        exception_detail: str,
+        unique_code: str,
+        instance_id: str,
+        exception: Exception,
+    ) -> None:
         self.original_exception = exception
         self.scenario = scenario
 
@@ -36,11 +39,11 @@ class ScenarioRunException(BadRequestException):
             GWSException.SCENARIO_RUN_EXCEPTION.value,
             unique_code=unique_code,
             detail_args=detail_arg,
-            instance_id=instance_id)
+            instance_id=instance_id,
+        )
 
     @staticmethod
     def from_exception(scenario: Scenario, exception: Exception) -> ScenarioRunException:
-
         unique_code: str
         instance_id: str
 
@@ -53,13 +56,18 @@ class ScenarioRunException(BadRequestException):
             instance_id = None
 
         return ScenarioRunException(
-            scenario=scenario, exception_detail=str(exception),
-            unique_code=unique_code, instance_id=instance_id, exception=exception)
+            scenario=scenario,
+            exception_detail=str(exception),
+            unique_code=unique_code,
+            instance_id=instance_id,
+            exception=exception,
+        )
 
 
 class ResourceUsedInAnotherScenarioException(BadRequestException):
-    def __init__(self, resource_model_name: str, resource_id: str,
-                 scenario_name: str, scenario_id: str) -> None:
+    def __init__(
+        self, resource_model_name: str, resource_id: str, scenario_name: str, scenario_id: str
+    ) -> None:
         super().__init__(
             GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_SCENARIO.value,
             unique_code=GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_SCENARIO.name,
@@ -67,8 +75,9 @@ class ResourceUsedInAnotherScenarioException(BadRequestException):
                 "resource_model_name": resource_model_name,
                 "resource_url": FrontService.get_resource_url(resource_id),
                 "scenario": scenario_name,
-                "scenario_url": FrontService.get_scenario_url(scenario_id)
-            })
+                "scenario_url": FrontService.get_scenario_url(scenario_id),
+            },
+        )
 
 
 class ResourceUnknownUsedInAnotherScenarioException(BadRequestException):
@@ -78,8 +87,9 @@ class ResourceUnknownUsedInAnotherScenarioException(BadRequestException):
             unique_code=GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.name,
             detail_args={
                 "scenario": scenario_name,
-                "scenario_url": FrontService.get_scenario_url(scenario_id)
-            })
+                "scenario_url": FrontService.get_scenario_url(scenario_id),
+            },
+        )
 
 
 class ResourceUnknownUsedInNoteException(BadRequestException):
@@ -87,7 +97,5 @@ class ResourceUnknownUsedInNoteException(BadRequestException):
         super().__init__(
             GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.value,
             unique_code=GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.name,
-            detail_args={
-                "scenario": note_name,
-                "scenario_url": FrontService.get_note_url(note_id)
-            })
+            detail_args={"scenario": note_name, "scenario_url": FrontService.get_note_url(note_id)},
+        )

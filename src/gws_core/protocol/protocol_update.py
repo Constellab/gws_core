@@ -1,5 +1,3 @@
-
-
 from typing import Optional, Set
 
 from gws_core.io.connector import Connector
@@ -9,7 +7,7 @@ from gws_core.protocol.protocol_dto import ProtocolUpdateDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 
 
-class ProtocolUpdate():
+class ProtocolUpdate:
     """Result object for a protocol update
 
     If a process is provided, it means that the process has been updated
@@ -27,12 +25,15 @@ class ProtocolUpdate():
 
     protocol_updated: bool
 
-    def __init__(self, protocol: ProtocolModel,
-                 protocol_updated: bool = False,
-                 process: Optional[ProcessModel] = None,
-                 connector: Optional[Connector] = None,
-                 ioface: Optional[IOface] = None,
-                 sub_protocols: Optional[Set[ProtocolModel]] = None) -> None:
+    def __init__(
+        self,
+        protocol: ProtocolModel,
+        protocol_updated: bool = False,
+        process: Optional[ProcessModel] = None,
+        connector: Optional[Connector] = None,
+        ioface: Optional[IOface] = None,
+        sub_protocols: Optional[Set[ProtocolModel]] = None,
+    ) -> None:
         self.process = process
         self.connector = connector
         self.ioface = ioface
@@ -47,12 +48,11 @@ class ProtocolUpdate():
             ioface=self.ioface.to_dto() if self.ioface else None,
             protocol_updated=self.protocol_updated,
             protocol=self.protocol.to_protocol_dto() if self.protocol_updated else None,
-            sub_protocols=[p.to_protocol_dto() for p in self.sub_protocols]
+            sub_protocols=[p.to_protocol_dto() for p in self.sub_protocols],
         )
 
-    def merge(self, protocol_update: 'ProtocolUpdate') -> 'ProtocolUpdate':
-        """Merge the current protocol update with another one
-        """
+    def merge(self, protocol_update: "ProtocolUpdate") -> "ProtocolUpdate":
+        """Merge the current protocol update with another one"""
         self.process = self.process or protocol_update.process
         self.connector = self.connector or protocol_update.connector
         self.ioface = self.ioface or protocol_update.ioface

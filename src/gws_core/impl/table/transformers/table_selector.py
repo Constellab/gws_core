@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from ....config.config_params import ConfigParams
@@ -27,12 +25,12 @@ class TableRowSelector(Transformer):
     It also supports regexp.
     """
 
-    config_specs = ConfigSpecs({
-        "filters": DataframeFilterHelper.get_filter_param_set('row', 'Row filters')
-    })
+    config_specs = ConfigSpecs(
+        {"filters": DataframeFilterHelper.get_filter_param_set("row", "Row filters")}
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_row_names(params.get('filters'))
+        return source.select_by_row_names(params.get("filters"))
 
 
 @transformer_decorator(
@@ -47,12 +45,13 @@ class TableColumnSelector(Transformer):
     It also supports regexp.
     """
 
-    config_specs = ConfigSpecs({
-        "filters": DataframeFilterHelper.get_filter_param_set('column', 'Column filters')
-    })
+    config_specs = ConfigSpecs(
+        {"filters": DataframeFilterHelper.get_filter_param_set("column", "Column filters")}
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_column_names(params.get('filters'))
+        return source.select_by_column_names(params.get("filters"))
+
 
 # ####################################################################
 #
@@ -84,12 +83,10 @@ class TableRowTagsSelector(Transformer):
     If you want to delete rows by tags instead of selcting them, use the **TableRowTagsDeleter**.
     """
 
-    config_specs = ConfigSpecs({
-        'tags': DataframeFilterHelper.get_tags_param_set('row')
-    })
+    config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("row")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
+        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
         return source.select_by_row_tags(tags)
 
 
@@ -116,11 +113,8 @@ class TableColumnTagsSelector(Transformer):
     If you want to delete columns by tags instead of selcting them, use the **TableColumnTagsDeleter**.
     """
 
-    config_specs = ConfigSpecs({
-        'tags': DataframeFilterHelper.get_tags_param_set('column')
-    })
+    config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("column")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-
-        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get('tags'))
+        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
         return source.select_by_column_tags(tags)

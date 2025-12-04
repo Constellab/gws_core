@@ -30,12 +30,14 @@ class RichTextComponent(rx.Component):
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
 
 
-def rich_text_component(placeholder: Optional[str] = None,
-                        value: Optional[RichTextDTO] = None,
-                        disabled: Optional[bool] = None,
-                        change_event_debounce_time: Optional[int] = None,
-                        output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]] = None,
-                        custom_style: Optional[dict] = None):
+def rich_text_component(
+    placeholder: Optional[str] = None,
+    value: Optional[RichTextDTO] = None,
+    disabled: Optional[bool] = None,
+    change_event_debounce_time: Optional[int] = None,
+    output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]] = None,
+    custom_style: Optional[dict] = None,
+):
     """Create a RichTextComponent instance.
 
     :param placeholder:² Placeholder text for the editor, defaults to None
@@ -60,5 +62,5 @@ def rich_text_component(placeholder: Optional[str] = None,
         disabled=disabled,
         change_event_debounce_time=change_event_debounce_time,
         output_event=output_event,
-        custom_style=custom_style
+        custom_style=custom_style,
     )

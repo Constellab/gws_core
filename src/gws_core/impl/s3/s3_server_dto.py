@@ -5,8 +5,8 @@ from typing_extensions import TypedDict
 
 
 class S3TagSet(TypedDict):
-    """Type corresponding to the S3 TagSet used in XML
-    """
+    """Type corresponding to the S3 TagSet used in XML"""
+
     Tag: List[TagTypeDef]
 
 

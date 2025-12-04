@@ -1,5 +1,3 @@
-
-
 import inspect
 import re
 from typing import List, Type
@@ -13,7 +11,9 @@ class Base:
     """
 
     @classmethod
-    def classname(cls, slugify: bool = False, snakefy: bool = False, replace_uppercase: bool = False) -> str:
+    def classname(
+        cls, slugify: bool = False, snakefy: bool = False, replace_uppercase: bool = False
+    ) -> str:
         """
         Returns the name of the class
 
@@ -29,7 +29,7 @@ class Base:
 
         name = cls.__name__
         if replace_uppercase:
-            name = re.sub('([A-Z]{1})', r'-\1', name)
+            name = re.sub("([A-Z]{1})", r"-\1", name)
             name = name.strip("-")
 
         if slugify:
@@ -63,7 +63,8 @@ class Base:
         return full_name
 
     @classmethod
-    def inheritors(cls) -> List[Type['Base']]:
-        """ Get all the classes that inherit this class """
+    def inheritors(cls) -> List[Type["Base"]]:
+        """Get all the classes that inherit this class"""
         return set(cls.__subclasses__()).union(
-            [s for c in cls.__subclasses__() for s in c.inheritors()])
+            [s for c in cls.__subclasses__() for s in c.inheritors()]
+        )

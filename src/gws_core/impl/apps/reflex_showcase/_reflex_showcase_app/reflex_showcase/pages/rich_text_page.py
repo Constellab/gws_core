@@ -11,9 +11,13 @@ from ..components import example_tabs, page_layout
 
 default_rich_text = RichText()
 default_rich_text.add_paragraph("This is a paragraph of sample text.")
-default_rich_text.add_paragraph("You can edit this text and add formatting like bold, italic, and more.")
+default_rich_text.add_paragraph(
+    "You can edit this text and add formatting like bold, italic, and more."
+)
 default_rich_text.add_formula("E = mc^2")
-default_rich_text.add_paragraph("The rich text editor supports formulas, lists, and various formatting options.")
+default_rich_text.add_paragraph(
+    "The rich text editor supports formulas, lists, and various formatting options."
+)
 
 
 class RichTextPageState(ReflexMainState):
@@ -70,9 +74,7 @@ def rich_text_page() -> rx.Component:
             ),
             rx.text("The rich text is currently empty.", color="gray", margin_top="1em"),
         ),
-        rx.button("Reset Content",
-                  on_click=RichTextPageState.reset_rich_text,
-                  margin_top="1em"),
+        rx.button("Reset Content", on_click=RichTextPageState.reset_rich_text, margin_top="1em"),
     )
 
     # Code example

@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -15,19 +13,19 @@ class ResourceTypingMethodDTO(BaseModelDTO):
     def to_markdown(self, resource_class_name: str) -> str:
         markdown = ""
 
-        markdown += '\n\n### Methods\n'
+        markdown += "\n\n### Methods\n"
         if self.funcs:
             for func in self.funcs:
                 markdown += func.to_markdown(resource_class_name) + "\n"
         else:
-            markdown += 'No method.'
+            markdown += "No method."
 
-        markdown += '\n\n### Views\n'
+        markdown += "\n\n### Views\n"
         if self.views:
             for view in self.views:
                 markdown += view.to_markdown(resource_class_name) + "\n"
         else:
-            markdown += 'No view.'
+            markdown += "No view."
         return markdown
 
 
@@ -45,11 +43,11 @@ class ResourceTypingDTO(TypingFullDTO):
         markdown = super().to_markdown()
 
         if self.variables:
-            markdown += '\n\n**Attributes:**\n'
+            markdown += "\n\n**Attributes:**\n"
             for key, value in self.variables.items():
                 markdown += f"- {key} : `{value}`\n"
         else:
-            markdown += '\n\nNo attribute.'
+            markdown += "\n\nNo attribute."
 
         markdown += self.methods.to_markdown(self.human_name)
 

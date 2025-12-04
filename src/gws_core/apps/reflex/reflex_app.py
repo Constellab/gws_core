@@ -1,4 +1,3 @@
-
 import os
 from typing import Optional
 
@@ -43,11 +42,7 @@ class ReflexApp(AppInstance):
 
     INDEX_FILE_NAME = "index.html"
 
-    CACHE_FOLDER_NAMES = [
-        ".states",
-        ".web",
-        os.path.join("assets", "external")
-    ]
+    CACHE_FOLDER_NAMES = [".states", ".web", os.path.join("assets", "external")]
 
     def set_app_config(self, app_config: AppConfig, front_app_build_folder: Folder) -> None:
         """Set the app config for this app instance.
@@ -122,23 +117,27 @@ class ReflexApp(AppInstance):
 
         Logger.info(
             f"Updating front build info for app {self.resource_model_id} with brick name {app_config.get_brick_name()} "
-            + f"and version {app_config.get_brick_version()}")
+            + f"and version {app_config.get_brick_version()}"
+        )
 
         resource_list = EntityTagList.find_by_entity(TagEntityType.RESOURCE, self.resource_model_id)
 
-        resource_list.replace_tags([
-            # Tag containing the brick name of the front build
-            Tag(
-                key=ReflexApp.FRONT_BUILD_TAG_KEY_NAME,
-                value=app_config.get_brick_name(),
-                origins=TagOrigins.system_origins()
-            ),
-            # Tag containing the brick version of the front build
-            Tag(
-                key=ReflexApp.FRONT_BUILD_TAG_KEY_VERSION,
-                value=str(app_config.get_brick_version()),
-                origins=TagOrigins.system_origins()
-            )])
+        resource_list.replace_tags(
+            [
+                # Tag containing the brick name of the front build
+                Tag(
+                    key=ReflexApp.FRONT_BUILD_TAG_KEY_NAME,
+                    value=app_config.get_brick_name(),
+                    origins=TagOrigins.system_origins(),
+                ),
+                # Tag containing the brick version of the front build
+                Tag(
+                    key=ReflexApp.FRONT_BUILD_TAG_KEY_VERSION,
+                    value=str(app_config.get_brick_version()),
+                    origins=TagOrigins.system_origins(),
+                ),
+            ]
+        )
 
     def _get_front_built_brick_version(self) -> Optional[str]:
         """Get the front build brick version.
@@ -165,15 +164,19 @@ class ReflexApp(AppInstance):
         build_folder = self._front_app_build_folder
         if not build_folder:
             raise Exception(
-                "The front build folder is not set. Please call `set_app_config` or `set_app_static_folder` before generating the app.")
+                "The front build folder is not set. Please call `set_app_config` or `set_app_static_folder` before generating the app."
+            )
 
         if not FileHelper.exists_on_os(build_folder.path):
-            raise Exception(f"Front build folder {build_folder.path} does not exist. Please re-generate the app.")
+            raise Exception(
+                f"Front build folder {build_folder.path} does not exist. Please re-generate the app."
+            )
 
         index_path = os.path.join(build_folder.path, ReflexApp.INDEX_FILE_NAME)
         if not FileHelper.exists_on_os(index_path):
             Logger.error(
-                f"Front build folder {build_folder.path} does not contain the index file. Rebuilding frontend.")
+                f"Front build folder {build_folder.path} does not contain the index file. Rebuilding frontend."
+            )
             FileHelper.delete_dir_content(build_folder.path)
             return None
 
@@ -189,14 +192,15 @@ class ReflexApp(AppInstance):
         build_brick_version = self._get_front_built_brick_version()
         if current_brick_version.to_string() != build_brick_version:
             Logger.info(
-                f"Frontend build version {build_brick_version} does not match current version {current_brick_version} for app {self.resource_model_id}. Cleaning old build.")
+                f"Frontend build version {build_brick_version} does not match current version {current_brick_version} for app {self.resource_model_id}. Cleaning old build."
+            )
             build_folder.empty_folder()
             return None
 
         return build_folder.path
 
     def get_front_build_path_from_app(self, app_path: str) -> str:
-        return os.path.join(app_path, '.web', 'build', 'client')
+        return os.path.join(app_path, ".web", "build", "client")
 
     def set_is_enterprise(self, is_enterprise: bool) -> None:
         self._is_enterprise = is_enterprise
@@ -216,7 +220,8 @@ class ReflexApp(AppInstance):
             return
 
         cache_folders = [
-            os.path.join(app_src_folder_path, folder_name) for folder_name in self.CACHE_FOLDER_NAMES
+            os.path.join(app_src_folder_path, folder_name)
+            for folder_name in self.CACHE_FOLDER_NAMES
         ]
 
         for folder_path in cache_folders:

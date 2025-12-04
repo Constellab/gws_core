@@ -1,11 +1,8 @@
-
-
 from typing import List, Type
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from peewee import (ColumnMetadata, DatabaseProxy, ForeignKeyField,
-                    ForeignKeyMetadata, Metadata)
+from peewee import ColumnMetadata, DatabaseProxy, ForeignKeyField, ForeignKeyMetadata, Metadata
 from peewee import Model as PeeweeModel
 from peewee import ModelSelect
 
@@ -18,9 +15,9 @@ class ModelMetadata(Metadata):
     # If False, the model does not represent a table in the database
     is_table: bool
 
+
 class BaseModel(Base, PeeweeModel):
-    """ BaseModel that contains no column but management for Tables (create, delete, foreign key...)
-    """
+    """BaseModel that contains no column but management for Tables (create, delete, foreign key...)"""
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -67,11 +64,14 @@ class BaseModel(Base, PeeweeModel):
         if not cls.get_db_manager().is_mysql_engine():
             return
         cls.execute_sql(
-            f"CREATE FULLTEXT INDEX {index_name} ON {cls.get_table_name()}({','.join(columns)})")
+            f"CREATE FULLTEXT INDEX {index_name} ON {cls.get_table_name()}({','.join(columns)})"
+        )
 
     @classmethod
     def foreign_key_exists(cls, column_name: str) -> bool:
-        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(cls.get_table_name())
+        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(
+            cls.get_table_name()
+        )
         return len([x for x in foreign_keys if x.column == column_name]) > 0
 
     @classmethod
@@ -178,9 +178,11 @@ class BaseModel(Base, PeeweeModel):
     def is_mysql_engine(cls):
         return cls.get_db_manager().is_mysql_engine()
 
-    def save(self, *args, **kwargs) -> 'BaseModel':
+    def save(self, *args, **kwargs) -> "BaseModel":
         if not self.is_table():
-            raise Exception(f"The class '{type(self).__name__}' is not a table, cannot save it. Set is_table to True in the Meta class to make it a table.")
+            raise Exception(
+                f"The class '{type(self).__name__}' is not a table, cannot save it. Set is_table to True in the Meta class to make it a table."
+            )
 
         super().save(*args, **kwargs)
 

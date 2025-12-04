@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from gws_core import ConfigParams, MultiViews, TextView, ViewType
@@ -7,11 +5,10 @@ from gws_core import ConfigParams, MultiViews, TextView, ViewType
 
 # test_multi_views
 class TestMultiViews(TestCase):
-
     def test_multi_view(self):
-        view = TextView(data='Hello')
+        view = TextView(data="Hello")
 
-        text_view = TextView('Hello test super view')
+        text_view = TextView("Hello test super view")
 
         multi_view: MultiViews = MultiViews(4)
         multi_view.add_view(view, {}, 2, 1)

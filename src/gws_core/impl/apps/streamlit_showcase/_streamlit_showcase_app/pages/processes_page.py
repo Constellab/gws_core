@@ -2,8 +2,7 @@ import os
 
 import streamlit as st
 
-from gws_core import (File, FileHelper, Settings, Table, TableImporter,
-                      TaskOutputs)
+from gws_core import File, FileHelper, Settings, Table, TableImporter, TaskOutputs
 from gws_core.streamlit import StreamlitTaskRunner
 
 from ..components.example_tabs_component import example_tabs
@@ -19,7 +18,7 @@ def render_processes_page():
     page_layout(
         title="Processes",
         description="This page contains a showcase for streamlit component to interact with tasks and protocols.",
-        content_function=page_content
+        content_function=page_content,
     )
 
 
@@ -30,9 +29,12 @@ def _render_task_config_form():
 
         form_config = StreamlitTaskRunner(TableImporter)
         form_config.generate_config_form_without_run(
-            session_state_key="config_data", default_config_values=TableImporter.config_specs.get_default_values(),
+            session_state_key="config_data",
+            default_config_values=TableImporter.config_specs.get_default_values(),
             is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(
-                TableImporter.config_specs.get_default_values()))
+                TableImporter.config_specs.get_default_values()
+            ),
+        )
 
         st.write(f"Task config : {st.session_state['config_data']}")
 
@@ -73,8 +75,10 @@ def _render_task_config_form_in_dialog():
                 session_state_key="config_data_dialog",
                 default_config_values=TableImporter.config_specs.get_default_values(),
                 is_default_config_valid=TableImporter.config_specs.mandatory_values_are_set(
-                    TableImporter.config_specs.get_default_values()),
-                key="config-task-form-dialog")
+                    TableImporter.config_specs.get_default_values()
+                ),
+                key="config-task-form-dialog",
+            )
 
             if st.button("Save"):
                 st.rerun()
@@ -125,9 +129,12 @@ st.write(f"Task config : {st.session_state['config_data_dialog']}")"""
 def _render_task_runner():
     def example_demo():
         key = "import_file_uploader"
-        st.file_uploader("Upload a CSV or excel file",
-                         type=Table.ALLOWED_FILE_FORMATS,
-                         key=key, on_change=lambda: _import_file_to_table(key))
+        st.file_uploader(
+            "Upload a CSV or excel file",
+            type=Table.ALLOWED_FILE_FORMATS,
+            key=key,
+            on_change=lambda: _import_file_to_table(key),
+        )
 
         imported_table: Table = st.session_state.get("imported_table")
         if imported_table is None:
@@ -192,7 +199,7 @@ def _import_file_to_table(key: str) -> None:
         temp_dir = Settings.make_temp_dir()
 
         temp_file_path = os.path.join(temp_dir, uploaded_file.name)
-        with open(temp_file_path, 'wb') as f:
+        with open(temp_file_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
 
         # convert the file to table
@@ -201,8 +208,9 @@ def _import_file_to_table(key: str) -> None:
         file = File(temp_file_path)
         task_config.generate_form_dialog(
             inputs={TableImporter.input_name: file},
-            on_run_success=lambda result: _on_import_success(result, temp_dir)
+            on_run_success=lambda result: _on_import_success(result, temp_dir),
         )
+
 
 # method called once the dialog is closed and the task is successfully run
 

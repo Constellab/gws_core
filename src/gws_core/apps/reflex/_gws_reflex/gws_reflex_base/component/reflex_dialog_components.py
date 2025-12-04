@@ -21,8 +21,7 @@ def dialog_header(title: str, close: Callable | None = None) -> rx.Component:
     return rx.hstack(
         rx.dialog.title(title, flex="1", margin_bottom="0"),
         rx.dialog.close(
-            rx.button(rx.icon("x"), variant="ghost",
-                      color_scheme="gray", on_click=close),
+            rx.button(rx.icon("x"), variant="ghost", color_scheme="gray", on_click=close),
             flex_shrink="0",
         ),
         width="100%",

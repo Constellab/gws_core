@@ -1,15 +1,10 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import ListParam, StrParam
-from gws_core.impl.table.helper.dataframe_filter_helper import \
-    DataframeFilterHelper
-from gws_core.impl.table.helper.table_unfolder_helper import \
-    TableUnfolderHelper
+from gws_core.impl.table.helper.dataframe_filter_helper import DataframeFilterHelper
+from gws_core.impl.table.helper.table_unfolder_helper import TableUnfolderHelper
 from gws_core.impl.table.table import Table
-from gws_core.task.transformer.transformer import (Transformer,
-                                                   transformer_decorator)
+from gws_core.task.transformer.transformer import Transformer, transformer_decorator
 
 
 @transformer_decorator(
@@ -66,23 +61,29 @@ class TableRowTagUnfolder(Transformer):
 
     """
 
-    config_specs = ConfigSpecs({
-        "tag_keys": ListParam(
-            human_name="Row tag keys",
-            short_description="Row tag keys to use for data unfolding",
-        ),
-        "filters": DataframeFilterHelper.get_filter_param_set('column',
-                                                              param_set_human_name="Column filters", optional=True),
-        "tag_key_column_name": StrParam(default_value='column_original_name', visibility="protected", human_name='Tag key column name',
-                                        short_description='Name for the column tag key that receives the column name as value'),
-
-    })
+    config_specs = ConfigSpecs(
+        {
+            "tag_keys": ListParam(
+                human_name="Row tag keys",
+                short_description="Row tag keys to use for data unfolding",
+            ),
+            "filters": DataframeFilterHelper.get_filter_param_set(
+                "column", param_set_human_name="Column filters", optional=True
+            ),
+            "tag_key_column_name": StrParam(
+                default_value="column_original_name",
+                visibility="protected",
+                human_name="Tag key column name",
+                short_description="Name for the column tag key that receives the column name as value",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get('filters'):
-            table = table.select_by_column_names(params.get('filters'))
+        if params.get("filters"):
+            table = table.select_by_column_names(params.get("filters"))
 
         keys = params["tag_keys"]
         tag_key_column_name = params["tag_key_column_name"]
@@ -110,24 +111,30 @@ class TableColumnTagUnfolder(Transformer):
     ## Examples
     See Table Row Tag Unfolder for examples.
     """
-    config_specs = ConfigSpecs({
-        "tag_keys": ListParam(
-            human_name="Column tag keys",
-            short_description="Column tags keys to use for data unfolding",
-        ),
-        "filters": DataframeFilterHelper.get_filter_param_set('row',
-                                                              param_set_human_name="Row filters", optional=True),
 
-        "tag_key_row_name": StrParam(default_value='row_original_name', visibility="protected", human_name='Tag key rown name',
-                                     short_description='Name for the row tag key that receives the row name as value'),
-
-    })
+    config_specs = ConfigSpecs(
+        {
+            "tag_keys": ListParam(
+                human_name="Column tag keys",
+                short_description="Column tags keys to use for data unfolding",
+            ),
+            "filters": DataframeFilterHelper.get_filter_param_set(
+                "row", param_set_human_name="Row filters", optional=True
+            ),
+            "tag_key_row_name": StrParam(
+                default_value="row_original_name",
+                visibility="protected",
+                human_name="Tag key rown name",
+                short_description="Name for the row tag key that receives the row name as value",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get('filters'):
-            table = table.select_by_row_names(params.get('filters'))
+        if params.get("filters"):
+            table = table.select_by_row_names(params.get("filters"))
 
         keys = params["tag_keys"]
         tag_key_row_name = params["tag_key_row_name"]
@@ -153,23 +160,29 @@ class TableRowUnfolder(Transformer):
     This task copies the original column tags to the result columns.
     """
 
-    config_specs = ConfigSpecs({
-        "rows": ListParam(
-            human_name="Row names",
-            short_description="Row names to use for data unfolding",
-        ),
-        "filters": DataframeFilterHelper.get_filter_param_set('column',
-                                                              param_set_human_name="Column filters", optional=True),
-        "tag_key_column_name": StrParam(default_value='column_original_name', visibility="protected", human_name='Tag key column name',
-                                        short_description='Name for the column tag key that receives the column name as value'),
-
-    })
+    config_specs = ConfigSpecs(
+        {
+            "rows": ListParam(
+                human_name="Row names",
+                short_description="Row names to use for data unfolding",
+            ),
+            "filters": DataframeFilterHelper.get_filter_param_set(
+                "column", param_set_human_name="Column filters", optional=True
+            ),
+            "tag_key_column_name": StrParam(
+                default_value="column_original_name",
+                visibility="protected",
+                human_name="Tag key column name",
+                short_description="Name for the column tag key that receives the column name as value",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get('filters'):
-            table = table.select_by_column_names(params.get('filters'))
+        if params.get("filters"):
+            table = table.select_by_column_names(params.get("filters"))
 
         rows = params["rows"]
         tag_key_column_name = params["tag_key_column_name"]
@@ -196,23 +209,29 @@ class TableColumnUnfolder(Transformer):
     This task copies the original row tags to the result rows.
     """
 
-    config_specs = ConfigSpecs({
-        "columns": ListParam(
-            human_name="Column names",
-            short_description="Column names to use for data unfolding",
-        ),
-        "filters": DataframeFilterHelper.get_filter_param_set('row',
-                                                              param_set_human_name="Row filters", optional=True),
-        "tag_key_row_name": StrParam(default_value='row_original_name', visibility="protected", human_name='Tag key row name',
-                                     short_description='Name for the row tag key that receives the row name as value'),
-
-    })
+    config_specs = ConfigSpecs(
+        {
+            "columns": ListParam(
+                human_name="Column names",
+                short_description="Column names to use for data unfolding",
+            ),
+            "filters": DataframeFilterHelper.get_filter_param_set(
+                "row", param_set_human_name="Row filters", optional=True
+            ),
+            "tag_key_row_name": StrParam(
+                default_value="row_original_name",
+                visibility="protected",
+                human_name="Tag key row name",
+                short_description="Name for the row tag key that receives the row name as value",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get('filters'):
-            table = table.select_by_row_names(params.get('filters'))
+        if params.get("filters"):
+            table = table.select_by_row_names(params.get("filters"))
 
         columns = params["columns"]
         tag_key_row_name = params["tag_key_row_name"]

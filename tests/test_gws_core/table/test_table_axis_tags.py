@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from gws_core.impl.table.table_axis_tags import TableAxisTags
@@ -7,7 +5,6 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestTableAxisTags(TestCase):
-
     def test_table_axis_tags(self):
         tags = TableAxisTags()
 
@@ -23,7 +20,7 @@ class TestTableAxisTags(TestCase):
         tags.add_tag_at(0, "new", "tag")
         self.assertEqual(tags.get_all_tags(), [{"a": "b", "new": "tag"}, {"a": "d"}, {}])
 
-        self.assertEqual(tags.get_tags_between(0, 1), [{"a": "b", "new": "tag"},  {"a": "d"}])
+        self.assertEqual(tags.get_tags_between(0, 1), [{"a": "b", "new": "tag"}, {"a": "d"}])
         self.assertEqual(tags.get_tags_at(1), {"a": "d"})
         self.assertEqual(tags.get_tags_at_indexes([0, 1]), [{"a": "b", "new": "tag"}, {"a": "d"}])
 

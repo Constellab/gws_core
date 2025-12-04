@@ -1,10 +1,7 @@
-
-
 from starlette_context import context
 
 
 class HTTPHelper:
-
     @classmethod
     def is_http_context(cls):
         try:

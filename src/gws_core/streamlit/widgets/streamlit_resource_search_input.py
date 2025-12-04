@@ -10,8 +10,7 @@ from peewee import Expression, Ordering
 from streamlit_searchbox import st_searchbox
 
 
-class ResourceSearchInput():
-
+class ResourceSearchInput:
     search_builder: ResourceSearchBuilder
 
     _default_options: List[ResourceModel] = None
@@ -19,11 +18,14 @@ class ResourceSearchInput():
     def __init__(self):
         self.search_builder = ResourceSearchBuilder()
 
-    def select(self, placeholder: str = 'Search for resource',
-               key: str = "searchbox",
-               debounce: int = 300,
-               label: str = None) -> Optional[ResourceModel]:
-        """ Create a search box to select a resource
+    def select(
+        self,
+        placeholder: str = "Search for resource",
+        key: str = "searchbox",
+        debounce: int = 300,
+        label: str = None,
+    ) -> Optional[ResourceModel]:
+        """Create a search box to select a resource
 
         :param placeholder: Placeholder for empty searches shown within the component, defaults to 'Search for resource'
         :type placeholder: str, optional
@@ -132,86 +134,84 @@ class ResourceSearchInput():
         return self
 
     def add_resource_type_filter(self, resource_type: Type[Resource]) -> "ResourceSearchInput":
-        """Filter the search query by a specific resource type
-        """
+        """Filter the search query by a specific resource type"""
         self.search_builder.add_resource_type_filter(resource_type)
         return self
 
-    def add_resource_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchInput":
-        """Filter the search query by a specific resource type
-        """
+    def add_resource_types_filter(
+        self, resource_types: List[Type[Resource]]
+    ) -> "ResourceSearchInput":
+        """Filter the search query by a specific resource type"""
         self.search_builder.add_resource_types_filter(resource_types)
         return self
 
     def add_resource_typing_name_filter(self, resource_typing_name: str) -> "ResourceSearchInput":
-        """Filter the search query by a specific resource typing name
-        """
+        """Filter the search query by a specific resource typing name"""
         self.search_builder.add_resource_typing_name_filter(resource_typing_name)
         return self
 
-    def add_resource_type_and_sub_types_filter(self, resource_type: Type[Resource]) -> "ResourceSearchInput":
-        """Filter the search query by a specific resource type and its subtypes
-        """
+    def add_resource_type_and_sub_types_filter(
+        self, resource_type: Type[Resource]
+    ) -> "ResourceSearchInput":
+        """Filter the search query by a specific resource type and its subtypes"""
         self.search_builder.add_resource_type_and_sub_types_filter(resource_type)
         return self
 
-    def add_resource_types_and_sub_types_filter(self, resource_types: List[Type[Resource]]) -> "ResourceSearchInput":
-        """Filter the search query by resource types and its subtypes
-        """
+    def add_resource_types_and_sub_types_filter(
+        self, resource_types: List[Type[Resource]]
+    ) -> "ResourceSearchInput":
+        """Filter the search query by resource types and its subtypes"""
         self.search_builder.add_resource_types_and_sub_types_filter(resource_types)
         return self
 
-    def add_resource_typing_names_and_sub_types_filter(self, resource_typing_names: List[str]) -> "ResourceSearchInput":
-        """Filter the search query by resource typing names and its subtypes
-        """
-        self.search_builder.add_expression(ResourceModel.resource_typing_name.in_(resource_typing_names))
+    def add_resource_typing_names_and_sub_types_filter(
+        self, resource_typing_names: List[str]
+    ) -> "ResourceSearchInput":
+        """Filter the search query by resource typing names and its subtypes"""
+        self.search_builder.add_expression(
+            ResourceModel.resource_typing_name.in_(resource_typing_names)
+        )
         return self
 
-    def add_tag_filter(self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ) -> "ResourceSearchInput":
-        """Filter the search query by a specific tag
-        """
+    def add_tag_filter(
+        self, tag: Tag, value_operator: SearchOperator = SearchOperator.EQ
+    ) -> "ResourceSearchInput":
+        """Filter the search query by a specific tag"""
         self.search_builder.add_tag_filter(tag, value_operator=value_operator)
         return self
 
     def add_origin_filter(self, origin: ResourceOrigin) -> "ResourceSearchInput":
-        """Filter the search query by a specific origin
-        """
+        """Filter the search query by a specific origin"""
         self.search_builder.add_origin_filter(origin)
         return self
 
     def add_folder_filter(self, folder_id: str) -> "ResourceSearchInput":
-        """Filter the search query by a specific folder
-        """
+        """Filter the search query by a specific folder"""
         self.search_builder.add_folder_filter(folder_id)
         return self
 
     def add_flagged_filter(self, flagged: bool) -> "ResourceSearchInput":
-        """Filter the search query by a specific flag
-        """
+        """Filter the search query by a specific flag"""
         self.search_builder.add_flagged_filter(flagged)
         return self
 
     def add_parent_filter(self, parent_id: str) -> "ResourceSearchInput":
-        """Filter the search query by a specific parent
-        """
+        """Filter the search query by a specific parent"""
         self.search_builder.add_parent_filter(parent_id)
         return self
 
     def add_is_archived_filter(self, is_archived: bool) -> "ResourceSearchInput":
-        """Filter the search query by a specific archived status
-        """
+        """Filter the search query by a specific archived status"""
         self.search_builder.add_is_archived_filter(is_archived)
         return self
 
     def add_fs_node_extension_filter(self, extension: str) -> "ResourceSearchInput":
-        """Filter the search query by a specific extension, it will only resturn FsNode resources
-        """
+        """Filter the search query by a specific extension, it will only resturn FsNode resources"""
         self.search_builder.add_fs_node_extension_filter(extension)
         return self
 
     def add_expression(self, expression: Expression) -> "ResourceSearchInput":
-        """Add a peewee expression to the search query
-        """
+        """Add a peewee expression to the search query"""
         self.search_builder.add_expression(expression)
         return self
 

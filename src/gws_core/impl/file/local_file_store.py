@@ -1,4 +1,3 @@
-
 import os
 import shutil
 from inspect import isclass
@@ -31,7 +30,9 @@ class LocalFileStore(FileStore):
         if not self.path:
             self.data["path"] = os.path.join(self.get_base_dir(), self.id)
 
-    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None) -> FSNode:
+    def add_node_from_path(
+        self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None
+    ) -> FSNode:
         """
         Add a file from an external repository to a local store.
 
@@ -56,8 +57,11 @@ class LocalFileStore(FileStore):
         return self.get_node_by_path(node_path=destination_path, node_type=node_type)
 
     def add_from_temp_file(
-            self, source_file: Union[IOBase, SpooledTemporaryFile],
-            dest_file_name: str = None, file_type: Type[File] = File) -> File:
+        self,
+        source_file: Union[IOBase, SpooledTemporaryFile],
+        dest_file_name: str = None,
+        file_type: Type[File] = File,
+    ) -> File:
         """
         Add a file from an external repository to a local store.
 
@@ -80,7 +84,7 @@ class LocalFileStore(FileStore):
 
     @classmethod
     def check_disk_has_enough_space(cls, file_size: float) -> None:
-        """ Check if the disk has enough space to store a file of the given size.
+        """Check if the disk has enough space to store a file of the given size.
         The system will try to keep a percentage of free space on the disk.
         Raise a BadRequestException if there is not enough space.
 
@@ -91,10 +95,11 @@ class LocalFileStore(FileStore):
 
         if not free_disk_info.has_enough_space_for_file(file_size):
             raise Exception(
-                "Not enough space on disk to store the file. " +
-                f"Required free space: {FileHelper.get_file_size_pretty_text(free_disk_info.required_disk_free_space)}, " +
-                f"file size: {FileHelper.get_file_size_pretty_text(file_size)}, " +
-                f"remaining space after file: {FileHelper.get_file_size_pretty_text(free_disk_info.get_remaining_space_after_file(file_size))}")
+                "Not enough space on disk to store the file. "
+                + f"Required free space: {FileHelper.get_file_size_pretty_text(free_disk_info.required_disk_free_space)}, "
+                + f"file size: {FileHelper.get_file_size_pretty_text(file_size)}, "
+                + f"remaining space after file: {FileHelper.get_file_size_pretty_text(free_disk_info.get_remaining_space_after_file(file_size))}"
+            )
 
     def _move_node(self, source: str, destination: str) -> None:
         """Copy a node from a path to another path
@@ -109,8 +114,7 @@ class LocalFileStore(FileStore):
         FileHelper.move_file_or_dir(source, destination)
 
     def _init_dir(self, dir_: str) -> None:
-        """Create the directory if it doesn't exist
-        """
+        """Create the directory if it doesn't exist"""
         # copy disk file
         if not os.path.exists(dir_):
             os.makedirs(dir_)
@@ -118,7 +122,6 @@ class LocalFileStore(FileStore):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
     def get_node_by_path(self, node_path: str = None, node_type: Type[FSNode] = None) -> FSNode:
-
         if node_type is None:
             if FileHelper.is_file(node_path):
                 node_type = File
@@ -143,7 +146,7 @@ class LocalFileStore(FileStore):
         """
         # if there is no file dest, generate a name
         if dest_node_name is None or len(dest_node_name) == 0:
-            time_file_name: str = str(time()).replace('.', '')
+            time_file_name: str = str(time()).replace(".", "")
             return os.path.join(self.path, time_file_name)
 
         # sanitize the node name
@@ -181,7 +184,7 @@ class LocalFileStore(FileStore):
         super().drop_table(*args, **kwargs)
 
     @classmethod
-    def get_default_instance(cls) -> 'LocalFileStore':
+    def get_default_instance(cls) -> "LocalFileStore":
         file_store: FileStore = cls.select().order_by(cls.created_at).first()
         if file_store is None:
             file_store = cls()
@@ -245,4 +248,4 @@ class LocalFileStore(FileStore):
 
     class Meta:
         is_table = True
-        table_name = 'gws_file_store'
+        table_name = "gws_file_store"

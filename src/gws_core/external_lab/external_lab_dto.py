@@ -1,4 +1,3 @@
-
 from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -8,6 +7,7 @@ from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO
 
 class ExternalLabWithUserInfo(BaseModelDTO):
     """Class that contains information a lab when 2 labs communicate with each other"""
+
     lab_id: str
     lab_name: str
     lab_api_url: str

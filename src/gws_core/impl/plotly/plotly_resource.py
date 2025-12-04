@@ -1,5 +1,3 @@
-
-
 import json
 
 import plotly.graph_objs as go
@@ -16,9 +14,12 @@ from .plotly_r_field import PlotlyRField
 from .plotly_view import PlotlyView
 
 
-@resource_decorator("PlotlyResource", human_name="Plotly resource",
-                    short_description="Plotly resource",
-                    style=TypingStyle.material_icon("analytics", background_color="#496989"))
+@resource_decorator(
+    "PlotlyResource",
+    human_name="Plotly resource",
+    short_description="Plotly resource",
+    style=TypingStyle.material_icon("analytics", background_color="#496989"),
+)
 class PlotlyResource(Resource):
     """
     Resource that contains a plotly figure.
@@ -40,14 +41,18 @@ class PlotlyResource(Resource):
 
     def export_to_path(self, path: str):
         dict_ = self.export_to_dict()
-        with open(path, 'w', encoding='utf-8') as file:
+        with open(path, "w", encoding="utf-8") as file:
             json.dump(dict_, file)
 
     def export_to_dict(self) -> dict:
         return PlotlyRField.figure_to_dict(self.figure)
 
-    @view(view_type=PlotlyView, human_name="View plot", short_description="View interactive plotly figure",
-          default_view=True)
+    @view(
+        view_type=PlotlyView,
+        human_name="View plot",
+        short_description="View interactive plotly figure",
+        default_view=True,
+    )
     def default_view(self, _: ConfigParams) -> PlotlyView:
         # If the json, is a json of a view
         view_ = PlotlyView(self.figure)
@@ -59,8 +64,8 @@ class PlotlyResource(Resource):
             return False
 
         return Utils.json_are_equals(
-            PlotlyRField.figure_to_dict(self.figure),
-            PlotlyRField.figure_to_dict(other.figure))
+            PlotlyRField.figure_to_dict(self.figure), PlotlyRField.figure_to_dict(other.figure)
+        )
 
     @classmethod
     def get_current_user_layout_colors(cls, use_secondary_background: bool = False) -> dict:
@@ -74,35 +79,35 @@ class PlotlyResource(Resource):
         """
         theme = CurrentUserService.get_current_user_theme()
 
-        background_color = theme.secondary_background_color if use_secondary_background else theme.background_color
+        background_color = (
+            theme.secondary_background_color if use_secondary_background else theme.background_color
+        )
         return {
-            'plot_bgcolor': background_color,
-            'paper_bgcolor': background_color,
-            'font': {
-                'color': theme.text_color
+            "plot_bgcolor": background_color,
+            "paper_bgcolor": background_color,
+            "font": {"color": theme.text_color},
+            "xaxis": {
+                "gridcolor": theme.outline_color,
+                "zerolinecolor": theme.outline_color,
+                "linecolor": theme.outline_color,
             },
-            'xaxis': {
-                'gridcolor': theme.outline_color,
-                'zerolinecolor': theme.outline_color,
-                'linecolor': theme.outline_color
+            "yaxis": {
+                "gridcolor": theme.outline_color,
+                "zerolinecolor": theme.outline_color,
+                "linecolor": theme.outline_color,
             },
-            'yaxis': {
-                'gridcolor': theme.outline_color,
-                'zerolinecolor': theme.outline_color,
-                'linecolor': theme.outline_color
-            }
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'PlotlyResource':
+    def from_dict(cls, data: dict) -> "PlotlyResource":
         return PlotlyResource(PlotlyRField.figure_from_dict(data))
 
     @classmethod
-    def from_json_file(cls, path: str) -> 'PlotlyResource':
+    def from_json_file(cls, path: str) -> "PlotlyResource":
         dict_: dict = None
 
         try:
-            with open(path, 'r', encoding='utf-8') as file:
+            with open(path, "r", encoding="utf-8") as file:
                 dict_ = json.load(file)
         except Exception as e:
             raise Exception(f"Error while reading the json file {path}. {str(e)}")

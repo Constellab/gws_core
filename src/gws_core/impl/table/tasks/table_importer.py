@@ -1,5 +1,3 @@
-
-
 from typing import Dict, Optional, Type
 
 from pandas import DataFrame, ExcelFile, read_excel, read_table
@@ -11,68 +9,158 @@ from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import BoolParam, IntParam, StrParam
-from ....core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ....core.exception.exceptions.bad_request_exception import BadRequestException
 from ....impl.file.file import File
 from ....task.converter.importer import ResourceImporter, importer_decorator
 from ..helper.dataframe_helper import DataframeHelper
 from ..table import Table
 
 
-@importer_decorator(unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS)
+@importer_decorator(
+    unique_name="TableImporter", target_type=Table, supported_extensions=Table.ALLOWED_FILE_FORMATS
+)
 class TableImporter(ResourceImporter):
-    config_specs = ConfigSpecs({
-        'file_format': StrParam(allowed_values=['auto', *Table.ALLOWED_FILE_FORMATS], default_value='auto', human_name="File format", short_description="File format"),
-        'delimiter': StrParam(allowed_values=Table.ALLOWED_DELIMITER, default_value=Table.DEFAULT_DELIMITER, human_name="Delimiter", short_description="Delimiter character. Only for parsing CSV files"),
-        'header': IntParam(default_value=0, min_value=-1, human_name="Header", short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names."),
-        'format_header_names': BoolParam(default_value=False, optional=True, human_name="Format header names", short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed)."),
-        'index_column': IntParam(default_value=-1, min_value=-1, optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Index column", short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1)."),
-        'decimal': StrParam(default_value=".", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Decimal character", short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data)."),
-        'nrows': IntParam(default_value=None, optional=True, min_value=0, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Number of rows", short_description="Number of rows to import. Useful to read piece of data."),
-        'comment': StrParam(default_value="#", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="Comment character", short_description="Character used to comment lines. Set empty to disable comment lines."),
-        'encoding': StrParam(default_value="auto", optional=True, visibility=IntParam.PROTECTED_VISIBILITY, human_name="File encoding", short_description="Encoding of the file, 'auto' for automatic detection."),
-        'sheet_name': StrParam(default_value=None, optional=True, human_name="Sheet name", short_description="Name of the Excel sheet to import. If not provided, imports the first sheet."),
-        "metadata_columns": ParamSet(ConfigSpecs({
-            'column': StrParam(default_value=None, optional=True, visibility=StrParam.PROTECTED_VISIBILITY, human_name="Column", short_description="Metadata column to use to tag rows"),
-            'keep_in_table': BoolParam(default_value=True, optional=True, visibility=BoolParam.PROTECTED_VISIBILITY, human_name="Keep in table", short_description="Set True to keep the column in the final table; False otherwise"),
-        }), optional=True, visibility=ParamSet.PROTECTED_VISIBILITY, human_name="Metadata columns", short_description="Columns data to use to tag the rows of the table"),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "file_format": StrParam(
+                allowed_values=["auto", *Table.ALLOWED_FILE_FORMATS],
+                default_value="auto",
+                human_name="File format",
+                short_description="File format",
+            ),
+            "delimiter": StrParam(
+                allowed_values=Table.ALLOWED_DELIMITER,
+                default_value=Table.DEFAULT_DELIMITER,
+                human_name="Delimiter",
+                short_description="Delimiter character. Only for parsing CSV files",
+            ),
+            "header": IntParam(
+                default_value=0,
+                min_value=-1,
+                human_name="Header",
+                short_description="Row to use as the column names. By default the first row is used (i.e. header=0). Set header=-1 to not read column names.",
+            ),
+            "format_header_names": BoolParam(
+                default_value=False,
+                optional=True,
+                human_name="Format header names",
+                short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed).",
+            ),
+            "index_column": IntParam(
+                default_value=-1,
+                min_value=-1,
+                optional=True,
+                visibility=IntParam.PROTECTED_VISIBILITY,
+                human_name="Index column",
+                short_description="Column to use as the row names. By default no index is used (i.e. index_column=-1).",
+            ),
+            "decimal": StrParam(
+                default_value=".",
+                optional=True,
+                visibility=IntParam.PROTECTED_VISIBILITY,
+                human_name="Decimal character",
+                short_description="Character to recognize as decimal point (e.g. use ‘,’ for European/French data).",
+            ),
+            "nrows": IntParam(
+                default_value=None,
+                optional=True,
+                min_value=0,
+                visibility=IntParam.PROTECTED_VISIBILITY,
+                human_name="Number of rows",
+                short_description="Number of rows to import. Useful to read piece of data.",
+            ),
+            "comment": StrParam(
+                default_value="#",
+                optional=True,
+                visibility=IntParam.PROTECTED_VISIBILITY,
+                human_name="Comment character",
+                short_description="Character used to comment lines. Set empty to disable comment lines.",
+            ),
+            "encoding": StrParam(
+                default_value="auto",
+                optional=True,
+                visibility=IntParam.PROTECTED_VISIBILITY,
+                human_name="File encoding",
+                short_description="Encoding of the file, 'auto' for automatic detection.",
+            ),
+            "sheet_name": StrParam(
+                default_value=None,
+                optional=True,
+                human_name="Sheet name",
+                short_description="Name of the Excel sheet to import. If not provided, imports the first sheet.",
+            ),
+            "metadata_columns": ParamSet(
+                ConfigSpecs(
+                    {
+                        "column": StrParam(
+                            default_value=None,
+                            optional=True,
+                            visibility=StrParam.PROTECTED_VISIBILITY,
+                            human_name="Column",
+                            short_description="Metadata column to use to tag rows",
+                        ),
+                        "keep_in_table": BoolParam(
+                            default_value=True,
+                            optional=True,
+                            visibility=BoolParam.PROTECTED_VISIBILITY,
+                            human_name="Keep in table",
+                            short_description="Set True to keep the column in the final table; False otherwise",
+                        ),
+                    }
+                ),
+                optional=True,
+                visibility=ParamSet.PROTECTED_VISIBILITY,
+                human_name="Metadata columns",
+                short_description="Columns data to use to tag the rows of the table",
+            ),
+        }
+    )
 
-    def import_from_path(self, source: File, params: ConfigParams, target_type: Type[Table]) -> Table:
+    def import_from_path(
+        self, source: File, params: ConfigParams, target_type: Type[Table]
+    ) -> Table:
         if source.is_empty():
-            raise BadRequestException(GWSException.EMPTY_FILE.value, unique_code=GWSException.EMPTY_FILE.name,
-                                      detail_args={'filename': source.path})
+            raise BadRequestException(
+                GWSException.EMPTY_FILE.value,
+                unique_code=GWSException.EMPTY_FILE.name,
+                detail_args={"filename": source.path},
+            )
 
-        file_format: str = self.get_file_format(source, params.get_value('file_format'))
+        file_format: str = self.get_file_format(source, params.get_value("file_format"))
 
-        encoding = params.get('encoding')
-        if encoding == 'auto' or encoding is None or len(encoding) == 0:
+        encoding = params.get("encoding")
+        if encoding == "auto" or encoding is None or len(encoding) == 0:
             encoding = FileHelper.detect_file_encoding(source.path)
             self.log_info_message(f"Detected encoding: {encoding}")
 
         # the empty string meanse no comment
-        comment_char = params.get_value('comment')
+        comment_char = params.get_value("comment")
         if comment_char == "":
             comment_char = None
 
         dataframe: DataFrame = None
         # import the dataframe
-        if source.extension in Table.ALLOWED_XLS_FILE_FORMATS or file_format in Table.ALLOWED_XLS_FILE_FORMATS:
-            dataframe = self._import_excel(source, params.get_value('sheet_name'))
-        elif source.extension in Table.ALLOWED_TXT_FILE_FORMATS or file_format in Table.ALLOWED_TXT_FILE_FORMATS:
-            dataframe = self._import_csv(
-                source, params, comment_char, encoding)
+        if (
+            source.extension in Table.ALLOWED_XLS_FILE_FORMATS
+            or file_format in Table.ALLOWED_XLS_FILE_FORMATS
+        ):
+            dataframe = self._import_excel(source, params.get_value("sheet_name"))
+        elif (
+            source.extension in Table.ALLOWED_TXT_FILE_FORMATS
+            or file_format in Table.ALLOWED_TXT_FILE_FORMATS
+        ):
+            dataframe = self._import_csv(source, params, comment_char, encoding)
         else:
-            raise BadRequestException(
-                f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
+            raise BadRequestException(f"Valid file formats are {Table.ALLOWED_FILE_FORMATS}.")
 
-        table: Table = target_type(data=dataframe, strict_format_header_names=params.get(
-            'format_header_names', False))
+        table: Table = target_type(
+            data=dataframe, strict_format_header_names=params.get("format_header_names", False)
+        )
 
         # Extract the columns as tags
-        for metadata_column in params.get_value('metadata_columns', []):
-            column = metadata_column['column']
-            delete_column = not metadata_column['keep_in_table']
+        for metadata_column in params.get_value("metadata_columns", []):
+            column = metadata_column["column"]
+            delete_column = not metadata_column["keep_in_table"]
             table.extract_column_values_to_row_tags(column, delete_column=delete_column)
 
         table.set_comments(self._read_comments(source, comment_char, encoding))
@@ -92,7 +180,6 @@ class TableImporter(ResourceImporter):
         return clean_file_format
 
     def _import_excel(self, source: File, sheet_name: Optional[str] = None) -> DataFrame:
-
         if sheet_name is not None:
             # Validate that the sheet exists
             excel_file = ExcelFile(source.path)
@@ -100,33 +187,34 @@ class TableImporter(ResourceImporter):
 
             if sheet_name not in available_sheets:
                 raise BadRequestException(
-                    f"Sheet '{sheet_name}' not found in Excel file. Available sheets: {', '.join(available_sheets)}")
+                    f"Sheet '{sheet_name}' not found in Excel file. Available sheets: {', '.join(available_sheets)}"
+                )
 
             return read_excel(source.path, sheet_name=sheet_name)
         else:
             # Default behavior: import first sheet
             return read_excel(source.path)
 
-    def _import_csv(self, source: File, params: ConfigParams, comment_char: str, encoding: str) -> DataFrame:
+    def _import_csv(
+        self, source: File, params: ConfigParams, comment_char: str, encoding: str
+    ) -> DataFrame:
+        header = params.get_value("header")
+        header = None if header == -1 else header
 
-        header = params.get_value('header')
-        header = (None if header == -1 else header)
+        index_column = params.get_value("index_column")
+        index_column = None if index_column == -1 else index_column
 
-        index_column = params.get_value('index_column')
-        index_column = (None if index_column == -1 else index_column)
+        decimal = params.get_value("decimal")
 
-        decimal = params.get_value('decimal')
+        nrows = params.get_value("nrows")
 
-        nrows = params.get_value('nrows')
-
-        sep = params.get_value('delimiter')
+        sep = params.get_value("delimiter")
         if sep == "tab":
             sep = "\t"
         elif sep == "space":
             sep = " "
         elif sep == "auto":
-            sep = DataframeHelper.detect_csv_delimiter(
-                source.read(size=10000))
+            sep = DataframeHelper.detect_csv_delimiter(source.read(size=10000))
 
         return read_table(
             source.path,
@@ -146,7 +234,7 @@ class TableImporter(ResourceImporter):
         comments = ""
 
         if comment_char:
-            with open(source.path, 'r', encoding=encoding) as fp:
+            with open(source.path, "r", encoding=encoding) as fp:
                 for line in fp:
                     if line.startswith(comment_char):
                         comments += line
@@ -179,7 +267,7 @@ class TableImporter(ResourceImporter):
         for sheet_name in sheet_names:
             # Set the sheet_name parameter for this specific sheet
             sheet_params = params.copy()
-            sheet_params['sheet_name'] = sheet_name
+            sheet_params["sheet_name"] = sheet_name
 
             # Use TableImporter.call to import the table for this sheet
             table = TableImporter.call(file, sheet_params)

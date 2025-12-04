@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import List, Literal, Optional, Type, final
 
@@ -15,8 +13,7 @@ from gws_core.model.typing_style import TypingStyle
 
 from ..config.config_params import ConfigParams
 from ..config.config_specs import ConfigSpecs
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..process.process import Process
 from ..resource.resource import Resource
@@ -36,10 +33,10 @@ class CheckBeforeTaskResult(TypedDict, total=False):
     message: Optional[str]
 
 
-@typing_registrator(unique_name="Task", object_type="TASK", hide=True,
-                    style=TypingStyle.default_task())
+@typing_registrator(
+    unique_name="Task", object_type="TASK", hide=True, style=TypingStyle.default_task()
+)
 class Task(Process):
-
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs({})
     config_specs: ConfigSpecs = ConfigSpecs({})
@@ -52,7 +49,7 @@ class Task(Process):
     style: TypingStyle
 
     # Current status of the task, do not update
-    __status__: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']
+    __status__: Literal["CHECK_BEFORE_RUN", "RUN", "RUN_AFTER_TASK"]
 
     # list of temporary directories created by the task to be deleted after the task is run
     __temp_dirs__: List[str]
@@ -73,7 +70,8 @@ class Task(Process):
         # check that the class level property typing_name is set
         if self.get_typing_name() is None:
             raise BadRequestException(
-                f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator")
+                f"The task {self.full_classname()} is not decorated with @task_decorator, it can't be instantiate. Please decorate the task class with @task_decorator"
+            )
         self.__status__ = None
         self.message_dispatcher = None
         self.style = None
@@ -125,8 +123,7 @@ class Task(Process):
             return None
 
         if not self.output_specs.has_spec(spec_name):
-            raise BadRequestException(
-                f"The output spec does not have a spec named '{spec_name}'")
+            raise BadRequestException(f"The output spec does not have a spec named '{spec_name}'")
 
         return self.output_specs.get_spec(spec_name).get_default_resource_type()
 
@@ -139,12 +136,10 @@ class Task(Process):
         :param message: if provided a message is stored on the progress
         :type message: str
         """
-        if self.__status__ != 'RUN':
-            raise BadRequestException(
-                "The progress value can only be updated in run method")
+        if self.__status__ != "RUN":
+            raise BadRequestException("The progress value can only be updated in run method")
 
-        self.message_dispatcher.notify_progress_value(
-            progress=value, message=message)
+        self.message_dispatcher.notify_progress_value(progress=value, message=message)
 
     @final
     def log_message(self, message: str, type_: MessageLevel) -> None:
@@ -222,7 +217,7 @@ class Task(Process):
     ############################################### SYSTEM METHODS ####################################################
 
     @final
-    def __set_status__(self, status: Literal['CHECK_BEFORE_RUN', 'RUN', 'RUN_AFTER_TASK']) -> None:
+    def __set_status__(self, status: Literal["CHECK_BEFORE_RUN", "RUN", "RUN_AFTER_TASK"]) -> None:
         """Set the model id of the resource
         This method is called by the system when the resource is created,
         you should not call this method yourself

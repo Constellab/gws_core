@@ -1,5 +1,3 @@
-
-
 from dataclasses import dataclass
 from typing import Dict, List, Type
 
@@ -10,7 +8,7 @@ from .base_model import BaseModel
 
 
 @dataclass
-class DbWithModels():
+class DbWithModels:
     db_manager: AbstractDbManager
     models: List[Type[BaseModel]]
 
@@ -31,7 +29,7 @@ class BaseModelService:
         :return: [description]
         :rtype: List[Type[BaseModel]]
         """
-        if not getattr(cls, '__model_types', None):
+        if not getattr(cls, "__model_types", None):
             cls.__model_types: List[Type[BaseModel]] = BaseModel.inheritors()
 
         return cls.__model_types
@@ -101,9 +99,7 @@ class BaseModelService:
 
         all_db_with_models = cls._get_all_db_and_model_types()
         for db_with_models in all_db_with_models.values():
-
-            models: List[Type[BaseModel]] = [
-                t for t in db_with_models.models if t.table_exists()]
+            models: List[Type[BaseModel]] = [t for t in db_with_models.models if t.table_exists()]
 
             if len(models) == 0:
                 Logger.debug("No table to drop")
@@ -129,19 +125,24 @@ class BaseModelService:
             db_manager = model.get_db_manager()
 
             if db_manager is None:
-                raise Exception(f"The model '{model.__name__}' has no db manager. Please set the db_manager in the Meta class of the model.")
+                raise Exception(
+                    f"The model '{model.__name__}' has no db manager. Please set the db_manager in the Meta class of the model."
+                )
 
             if not isinstance(db_manager, AbstractDbManager):
-                raise Exception(f"The model '{model.__name__}' has a db manager that is not an instance of AbstractDbManager. Please check the db_manager in the Meta class of the model.")
+                raise Exception(
+                    f"The model '{model.__name__}' has a db manager that is not an instance of AbstractDbManager. Please check the db_manager in the Meta class of the model."
+                )
 
             # Check that the database and db_manager match
             if db_manager.get_db() != model.get_metadata().database:
-                raise Exception(f"The model '{model.__name__}' has a db manager that does not match its database. Please check the db_manager and database in the Meta class of the model.")
+                raise Exception(
+                    f"The model '{model.__name__}' has a db manager that does not match its database. Please check the db_manager and database in the Meta class of the model."
+                )
 
             if db_manager.get_unique_name() not in db_with_models:
                 db_with_models[db_manager.get_unique_name()] = DbWithModels(
-                    db_manager=db_manager,
-                    models=[]
+                    db_manager=db_manager, models=[]
                 )
 
             db_with_model = db_with_models[db_manager.get_unique_name()]

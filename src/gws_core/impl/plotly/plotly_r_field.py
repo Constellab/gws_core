@@ -1,5 +1,3 @@
-
-
 from json import loads
 from typing import Any
 
@@ -9,8 +7,7 @@ from gws_core.resource.r_field.r_field import BaseRField
 
 
 class PlotlyRField(BaseRField):
-    """R field to serialize and deserialize plotly figures
-    """
+    """R field to serialize and deserialize plotly figures"""
 
     def __init__(self):
         super().__init__()

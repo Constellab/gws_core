@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict
 
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -11,6 +9,7 @@ class ConfigDTO(ModelWithUserDTO):
     """
     ConfigDTO class.
     """
+
     specs: Dict[str, ParamSpecDTO]
     values: Dict[str, Any]
 
@@ -19,5 +18,6 @@ class ConfigSimpleDTO(BaseModelDTO):
     """
     ConfigDTO class.
     """
+
     specs: Dict[str, ParamSpecDTO]
     values: Dict[str, Any]

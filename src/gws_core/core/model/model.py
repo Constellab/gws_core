@@ -1,5 +1,3 @@
-
-
 import uuid
 from typing import List, Type, TypeVar
 
@@ -14,7 +12,7 @@ from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
 from .db_field import DateTimeUTC
 
-ModelType = TypeVar('ModelType', bound='BaseModel')
+ModelType = TypeVar("ModelType", bound="BaseModel")
 
 
 class Model(BaseModel, PeeweeModel):
@@ -45,7 +43,7 @@ class Model(BaseModel, PeeweeModel):
 
         # If the id is not set and the __no_default__ is set, we consider that this is a new model object (not created from peewee)
         # We must use the __no_default__ because peewee does'nt always set the id directly in the __init__ (like when there are joins)
-        if self.id is None and '__no_default__' not in kwargs:
+        if self.id is None and "__no_default__" not in kwargs:
             self.id = str(uuid.uuid4())
             # self.id = str(uuid.uuid4())
             self._is_saved = False
@@ -97,9 +95,11 @@ class Model(BaseModel, PeeweeModel):
         try:
             return cls.get(cls.id == id)
         except DoesNotExist:
-            raise NotFoundException(detail=GWSException.OBJECT_ID_NOT_FOUND.value,
-                                    unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
-                                    detail_args={"objectName": cls.classname(), "id": id})
+            raise NotFoundException(
+                detail=GWSException.OBJECT_ID_NOT_FOUND.value,
+                unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
+                detail_args={"objectName": cls.classname(), "id": id},
+            )
 
     def is_saved(self) -> bool:
         """
@@ -127,29 +127,30 @@ class Model(BaseModel, PeeweeModel):
         # set the force insert value
         # if define in params, use the value
         # otherwise true if the object was not created
-        force_insert: bool = kwargs.get('force_insert') if kwargs.get(
-            'force_insert') is not None else not self.is_saved()
+        force_insert: bool = (
+            kwargs.get("force_insert")
+            if kwargs.get("force_insert") is not None
+            else not self.is_saved()
+        )
 
         # if skip_hook is set to true, do not call the before insert or update
-        if not kwargs.pop('skip_hook', False):
+        if not kwargs.pop("skip_hook", False):
             if force_insert:
                 self._before_insert()
             else:
                 self._before_update()
 
-        kwargs['force_insert'] = force_insert
+        kwargs["force_insert"] = force_insert
         super().save(*args, **kwargs)
         self._is_saved = True
 
         return self
 
     def _before_insert(self) -> None:
-        """Method to override to trigger action before the entity is inserted
-        """
+        """Method to override to trigger action before the entity is inserted"""
 
     def _before_update(self) -> None:
-        """Method to override to trigger action before the entity is updated (not called on insert)
-        """
+        """Method to override to trigger action before the entity is updated (not called on insert)"""
         self.last_modified_at = DateHelper.now_utc()
 
     @classmethod

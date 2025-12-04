@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from typing import Literal, Optional
 
@@ -8,8 +6,8 @@ from gws_core.model.typing_style import TypingStyle
 
 
 class TypingStatus(Enum):
-    OK = 'OK'
-    UNAVAILABLE = 'UNAVAILABLE'
+    OK = "OK"
+    UNAVAILABLE = "UNAVAILABLE"
 
 
 # different object typed store in the typing table
@@ -46,26 +44,28 @@ class TypingFullDTO(TypingDTO):
     doc: Optional[str] = None
 
     def to_markdown(self) -> str:
-        markdown = f'## {self.human_name}\n\n'
+        markdown = f"## {self.human_name}\n\n"
 
-        markdown += f'Typing name: {self.typing_name}.'
+        markdown += f"Typing name: {self.typing_name}."
 
         if self.short_description:
-            markdown += f' Short description: {self.short_description}.'
+            markdown += f" Short description: {self.short_description}."
 
         if self.deprecated_since and self.deprecated_message:
-            markdown += f' Deprecated since: {self.deprecated_since}. Reason: {self.deprecated_message}.'
+            markdown += (
+                f" Deprecated since: {self.deprecated_since}. Reason: {self.deprecated_message}."
+            )
 
         if self.hide:
-            markdown += ' This task is hidden from playground.'
+            markdown += " This task is hidden from playground."
 
         if self.parent:
-            markdown += f' Parent class: {self.parent.typing_name}.'
+            markdown += f" Parent class: {self.parent.typing_name}."
 
         if self.doc:
             # replace titles
-            doc = self.doc.replace('\n# ', '\n### ').replace('\n## ', '\n### ')
-            markdown += f'{doc}'
+            doc = self.doc.replace("\n# ", "\n### ").replace("\n## ", "\n### ")
+            markdown += f"{doc}"
 
         return markdown
 

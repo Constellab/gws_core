@@ -1,5 +1,3 @@
-
-
 import json
 from abc import abstractmethod
 from datetime import datetime
@@ -42,7 +40,12 @@ class DateTimeUTC(DateTimeField):
 
     with_milliseconds = False
 
-    def __init__(self, *args, with_milliseconds=False, **kwargs, ):
+    def __init__(
+        self,
+        *args,
+        with_milliseconds=False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.with_milliseconds = with_milliseconds
 
@@ -91,7 +94,7 @@ class BaseDTOField(TextField):
         return None
 
 
-class SerializableObject():
+class SerializableObject:
     """
     Object that can be serialized and deserialized
     """
@@ -102,7 +105,7 @@ class SerializableObject():
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, value: str) -> 'SerializableObject':
+    def deserialize(cls, value: str) -> "SerializableObject":
         pass
 
 

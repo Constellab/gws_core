@@ -1,5 +1,3 @@
-
-
 import os
 from typing import TYPE_CHECKING, Any, List, Union
 
@@ -14,22 +12,22 @@ if TYPE_CHECKING:
 
 class LocalFolderView(View):
     """
-     Class json view.
+    Class json view.
 
-     The view model is:
-     ```
-     {
-         "type": "folder-view"
-         "data": {
-           "path": strn
-           "content": {
-             "name": str,
-             "children": [...]
-           }
-         }
-     }
-     ```
-     """
+    The view model is:
+    ```
+    {
+        "type": "folder-view"
+        "data": {
+          "path": strn
+          "content": {
+            "name": str,
+            "children": [...]
+          }
+        }
+    }
+    ```
+    """
 
     _path: str
     _type: ViewType = ViewType.FOLDER
@@ -40,34 +38,30 @@ class LocalFolderView(View):
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         from gws_core.impl.file.fs_node_model import FSNodeModel
+
         nodes_models = FSNodeModel.path_start_with(self._path)
 
-        return {
-            "path": self._path,
-            "content": self._get_content(self._path, nodes_models)
-        }
+        return {"path": self._path, "content": self._get_content(self._path, nodes_models)}
 
-    def _get_content(self, path: str, node_models: List['FSNodeModel']) -> Union[dict, list]:
-
+    def _get_content(self, path: str, node_models: List["FSNodeModel"]) -> Union[dict, list]:
         _json = {}
         if FileHelper.is_file(path):
-            _json['name'] = FileHelper.get_name_with_extension(path)
+            _json["name"] = FileHelper.get_name_with_extension(path)
         else:
-            _json['name'] = FileHelper.get_dir_name(path)
+            _json["name"] = FileHelper.get_dir_name(path)
 
         # check if a symbolic resource was already created for this path
         node_model = [x for x in node_models if x.path == path]
         if node_model:
-            _json['resource_model_id'] = node_model[0].get_resource_model().id
+            _json["resource_model_id"] = node_model[0].get_resource_model().id
 
         # recursive call on folder content
         if FileHelper.is_dir(path):
             children: List[str] = os.listdir(path)
             children.sort()
-            _json['children'] = []
+            _json["children"] = []
 
             for child in children:
-                _json['children'].append(self._get_content(
-                    os.path.join(path, child), node_models))
+                _json["children"].append(self._get_content(os.path.join(path, child), node_models))
 
         return _json

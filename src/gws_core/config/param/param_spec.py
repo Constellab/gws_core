@@ -1,20 +1,28 @@
-
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional
 
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from typing_extensions import TypedDict
 
-from ...core.classes.validator import (BoolValidator, DictValidator,
-                                       FloatValidator, IntValidator,
-                                       ListValidator, StrValidator)
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
-from .param_types import (ParamSpecDTO, ParamSpecInfoSpecs, ParamSpecSimpleDTO,
-                          ParamSpecTypeStr, ParamSpecVisibilty)
+from ...core.classes.validator import (
+    BoolValidator,
+    DictValidator,
+    FloatValidator,
+    IntValidator,
+    ListValidator,
+    StrValidator,
+)
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
+from .param_types import (
+    ParamSpecDTO,
+    ParamSpecInfoSpecs,
+    ParamSpecSimpleDTO,
+    ParamSpecTypeStr,
+    ParamSpecVisibilty,
+)
 
 
-class ParamSpec():
+class ParamSpec:
     """Main abstract class for the spec of config params"""
 
     # Default value, if None, and optional is false, the config is mandatory
@@ -45,7 +53,7 @@ class ParamSpec():
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
-        short_description: Optional[str] = None
+        short_description: Optional[str] = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -65,7 +73,7 @@ class ParamSpec():
         self.human_name = human_name
         self.short_description = short_description
 
-        if not hasattr(self, 'additional_info'):
+        if not hasattr(self, "additional_info"):
             self.additional_info = {}
 
         # the param is optional if the default value is set or optional is set to True
@@ -85,7 +93,7 @@ class ParamSpec():
             additional_info=self.additional_info or {},
             default_value=self.get_default_value(),
             human_name=self.human_name,
-            short_description=self.short_description
+            short_description=self.short_description,
         )
 
     def to_simple_dto(self) -> ParamSpecSimpleDTO:
@@ -165,20 +173,18 @@ class ParamSpec():
     def to_param_spec_info_specs(cls) -> ParamSpecInfoSpecs:
         default_value_param = cls.get_default_value_param_spec()
         default_value_param.optional = True
-        default_value_param.human_name = 'Default Value'
+        default_value_param.human_name = "Default Value"
 
         infos: ParamSpecInfoSpecs = ParamSpecInfoSpecs(
-            optional=BoolParam(False, False, human_name='Optional').to_dto(),
-            name=StrParam(
-                optional=False, human_name='Name').to_dto(),
+            optional=BoolParam(False, False, human_name="Optional").to_dto(),
+            name=StrParam(optional=False, human_name="Name").to_dto(),
             # comment visibility because not supported yet in dynamic param sub specs
             # visibility=StrParam(
             #     default_value='public', human_name='Visibility',
             #     allowed_values=['public', 'protected', 'private']).to_dto(),
-            short_description=StrParam(optional=True, human_name='Short description').to_dto(),
-            human_name=StrParam(
-                optional=True, human_name='Human name').to_dto(),
-            default_value=default_value_param.to_dto()
+            short_description=StrParam(optional=True, human_name="Short description").to_dto(),
+            human_name=StrParam(optional=True, human_name="Human name").to_dto(),
+            default_value=default_value_param.to_dto(),
         )
 
         additional_info = cls.get_additional_infos()
@@ -232,7 +238,7 @@ class StrParam(ParamSpec):
         self.additional_info = {
             "min_length": min_length,
             "max_length": max_length,
-            "allowed_values": allowed_values
+            "allowed_values": allowed_values,
         }
         super().__init__(
             default_value=default_value,
@@ -264,24 +270,23 @@ class StrParam(ParamSpec):
     @classmethod
     def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
         return {
-            'min_length': IntParam(optional=True, human_name='Min length').to_dto(),
-            'max_length': IntParam(optional=True, human_name='Max length').to_dto(),
-            'allowed_values': ListParam(optional=True, human_name='Allowed values').to_dto()
+            "min_length": IntParam(optional=True, human_name="Min length").to_dto(),
+            "max_length": IntParam(optional=True, human_name="Max length").to_dto(),
+            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
         }
 
     def _check_allowed_values(self, allowed_values: Optional[List[str]]) -> None:
         if allowed_values is not None:
-
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in 'str' param, it must be an list or a tuple")
+                    f"Invalid allowed values '{allowed_values}' in 'str' param, it must be an list or a tuple"
+                )
 
-            if self.additional_info is not None and self.additional_info['allowed_values'] is None:
-                raise BadRequestException(
-                    "Allowed values are not allowed in the 'str' param")
-            self.additional_info['allowed_values'] = allowed_values
+            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
+                raise BadRequestException("Allowed values are not allowed in the 'str' param")
+            self.additional_info["allowed_values"] = allowed_values
         else:
-            self.additional_info['allowed_values'] = None
+            self.additional_info["allowed_values"] = None
 
 
 @param_spec_decorator()
@@ -372,7 +377,7 @@ class BoolParam(ParamSpec):
             optional=optional,
             visibility=visibility,
             human_name=human_name,
-            short_description=short_description
+            short_description=short_description,
         )
 
     def validate(self, value: Any) -> bool:
@@ -405,7 +410,7 @@ class DictParam(ParamSpec):
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
-        short_description: Optional[str] = None
+        short_description: Optional[str] = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -426,7 +431,7 @@ class DictParam(ParamSpec):
             optional=optional,
             visibility=visibility,
             human_name=human_name,
-            short_description=short_description
+            short_description=short_description,
         )
 
     def validate(self, value: Any) -> dict:
@@ -459,7 +464,7 @@ class ListParam(ParamSpec):
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: Optional[str] = None,
-        short_description: Optional[str] = None
+        short_description: Optional[str] = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -480,7 +485,7 @@ class ListParam(ParamSpec):
             optional=optional,
             visibility=visibility,
             human_name=human_name,
-            short_description=short_description
+            short_description=short_description,
         )
 
     def validate(self, value: Any) -> list:
@@ -530,7 +535,7 @@ class NumericParam(ParamSpec):
         short_description: Optional[str] = None,
         allowed_values: Optional[List[Any]] = None,
         min_value: Optional[Any] = None,
-        max_value: Optional[Any] = None
+        max_value: Optional[Any] = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -554,14 +559,14 @@ class NumericParam(ParamSpec):
         self.additional_info = {
             "min_value": min_value,
             "max_value": max_value,
-            "allowed_values": allowed_values
+            "allowed_values": allowed_values,
         }
         super().__init__(
             default_value=default_value,
             optional=optional,
             visibility=visibility,
             human_name=human_name,
-            short_description=short_description
+            short_description=short_description,
         )
 
     @classmethod
@@ -571,17 +576,18 @@ class NumericParam(ParamSpec):
 
     def _check_allowed_values(self, allowed_values: Optional[List[Any]]) -> None:
         if allowed_values is not None:
-
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple")
+                    f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple"
+                )
 
-            if self.additional_info is not None and self.additional_info['allowed_values'] is None:
+            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
                 raise BadRequestException(
-                    f"Allowed values are not allowed in the '{self.get_str_type()}' param")
-            self.additional_info['allowed_values'] = allowed_values
+                    f"Allowed values are not allowed in the '{self.get_str_type()}' param"
+                )
+            self.additional_info["allowed_values"] = allowed_values
         else:
-            self.additional_info['allowed_values'] = None
+            self.additional_info["allowed_values"] = None
 
 
 @param_spec_decorator()
@@ -610,9 +616,9 @@ class IntParam(NumericParam):
     @classmethod
     def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
         return {
-            'min_value': IntParam(optional=True, human_name='Min value').to_dto(),
-            'max_value': IntParam(optional=True, human_name='Max value').to_dto(),
-            'allowed_values': ListParam(optional=True, human_name='Allowed values').to_dto()
+            "min_value": IntParam(optional=True, human_name="Min value").to_dto(),
+            "max_value": IntParam(optional=True, human_name="Max value").to_dto(),
+            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
         }
 
 
@@ -642,7 +648,7 @@ class FloatParam(NumericParam):
     @classmethod
     def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
         return {
-            'min_value': FloatParam(optional=True, human_name='Min value').to_dto(),
-            'max_value': FloatParam(optional=True, human_name='Max value').to_dto(),
-            'allowed_values': ListParam(optional=True, human_name='Allowed values').to_dto()
+            "min_value": FloatParam(optional=True, human_name="Min value").to_dto(),
+            "max_value": FloatParam(optional=True, human_name="Max value").to_dto(),
+            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
         }

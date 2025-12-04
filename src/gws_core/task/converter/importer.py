@@ -1,5 +1,3 @@
-
-
 import traceback
 from abc import abstractmethod
 from typing import Callable, List, Type, final
@@ -22,18 +20,19 @@ from .converter import Converter, decorate_converter
 
 
 def importer_decorator(
-        unique_name: str,
-        target_type: Type[Resource],
-        supported_extensions: List[str],
-        source_type: Type[FSNode] = File,
-        human_name: str = None,
-        short_description: str = None,
-        hide: bool = False,
-        style: TypingStyle = None,
-        output_sub_class: bool = False,
-        deprecated_since: str = None,
-        deprecated_message: str = None,
-        deprecated: TypingDeprecated = None) -> Callable:
+    unique_name: str,
+    target_type: Type[Resource],
+    supported_extensions: List[str],
+    source_type: Type[FSNode] = File,
+    human_name: str = None,
+    short_description: str = None,
+    hide: bool = False,
+    style: TypingStyle = None,
+    output_sub_class: bool = False,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
     to resource_type
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -64,29 +63,34 @@ def importer_decorator(
     :return: [description]
     :rtype: Callable
     """
+
     def decorator(task_class: Type[ResourceImporter]):
         try:
             if not Utils.issubclass(task_class, ResourceImporter):
                 BrickService.log_brick_error(
                     task_class,
-                    f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter")
+                    f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter",
+                )
                 return task_class
 
             if not Utils.issubclass(source_type, FSNode):
                 BrickService.log_brick_error(
                     task_class,
-                    f"Error in the importer_decorator of class {task_class.__name__}. The source_type must be an FsNode or child class")
+                    f"Error in the importer_decorator of class {task_class.__name__}. The source_type must be an FsNode or child class",
+                )
                 return task_class
 
             task_class.__supported_extensions__ = supported_extensions
-            human_name_computed = human_name or target_type.get_human_name() + ' importer'
-            short_description_computed = short_description or f"Import file to {target_type.get_human_name()}"
+            human_name_computed = human_name or target_type.get_human_name() + " importer"
+            short_description_computed = (
+                short_description or f"Import file to {target_type.get_human_name()}"
+            )
 
             # register the task
             decorate_converter(
                 task_class=task_class,
                 unique_name=unique_name,
-                task_type='IMPORTER',
+                task_type="IMPORTER",
                 source_type=source_type,
                 target_type=target_type,
                 related_resource=source_type,
@@ -97,12 +101,14 @@ def importer_decorator(
                 output_sub_class=output_sub_class,
                 deprecated_since=deprecated_since,
                 deprecated_message=deprecated_message,
-                deprecated=deprecated)
+                deprecated=deprecated,
+            )
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))
 
         return task_class
+
     return decorator
 
 
@@ -115,7 +121,7 @@ class ResourceImporter(Converter):
 
     # //!\\ The input specs can be overrided, BUT the RessourceImporter task must
     # have 1 input called source that extend FsNode (like File or Folder)
-    input_specs = InputSpecs({'source': InputSpec(FSNode)})
+    input_specs = InputSpecs({"source": InputSpec(FSNode)})
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
     output_specs = OutputSpecs({"target": OutputSpec(Resource)})
@@ -126,19 +132,23 @@ class ResourceImporter(Converter):
     __supported_extensions__: List[str] = []
 
     @final
-    def convert(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
-
+    def convert(
+        self, source: FSNode, params: ConfigParams, target_type: Type[Resource]
+    ) -> Resource:
         if not source.path:
             raise Exception("Cannot import the file because the path is not defined.")
 
         if not source.exists():
-            raise Exception(f"Cannot import file '{source.name or source.path}' because it doesn't exists. It seems to have been deleted. Please check the file resource to check its status.")
+            raise Exception(
+                f"Cannot import file '{source.name or source.path}' because it doesn't exists. It seems to have been deleted. Please check the file resource to check its status."
+            )
 
         try:
             target: Resource = self.import_from_path(source, params, target_type)
         except Exception as err:
             raise Exception(
-                f"Cannot import file '{source.path}' using importer : '{self.get_typing_name()}' because of the following error: {err}")
+                f"Cannot import file '{source.path}' using importer : '{self.get_typing_name()}' because of the following error: {err}"
+            )
 
         if target.name is None:
             # set the target name = FsNode name without extension
@@ -146,7 +156,9 @@ class ResourceImporter(Converter):
         return target
 
     @abstractmethod
-    def import_from_path(self, source: FSNode, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+    def import_from_path(
+        self, source: FSNode, params: ConfigParams, target_type: Type[Resource]
+    ) -> Resource:
         """Override the import form path method to create the destination resource from the file
 
         :param fs_node: file resource to import

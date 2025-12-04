@@ -1,5 +1,3 @@
-
-
 """
 DictRField module for Resource fields that store JSON-like dictionaries.
 
@@ -13,8 +11,7 @@ from typing import Any, Dict
 from gws_core.core.classes.validator import DictValidator
 from gws_core.core.utils.json_helper import JSONHelper
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .primitive_r_field import PrimitiveRField
 
 
@@ -67,7 +64,9 @@ class DictRField(PrimitiveRField):
         - Nested structures must also be JSON-compatible
     """
 
-    def __init__(self, default_value: Dict | None = None, include_in_dict_view: bool = False) -> None:
+    def __init__(
+        self, default_value: Dict | None = None, include_in_dict_view: bool = False
+    ) -> None:
         """Initialize a DictRField for storing JSON-like dictionaries.
 
         :param default_value: Default value for the field when not set. Can be:
@@ -97,8 +96,11 @@ class DictRField(PrimitiveRField):
             field4 = DictRField(include_in_dict_view=True)
             ```
         """
-        super().__init__(validator=DictValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view)
+        super().__init__(
+            validator=DictValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+        )
 
     def get_default_value(self) -> Any:
         """Get the default value for this field.
@@ -116,7 +118,8 @@ class DictRField(PrimitiveRField):
             return JSONHelper.convert_dict_to_json(self._default_value)
         except:
             raise BadRequestException(
-                "Incorrect default value for DictRField. The default value must be a json like dictionary")
+                "Incorrect default value for DictRField. The default value must be a json like dictionary"
+            )
 
     def serialize(self, r_field_value: Any) -> Any:
         """Serialize the dictionary value for storage.

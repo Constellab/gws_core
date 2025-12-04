@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -64,7 +62,7 @@ class NetworkMetaboliteDTO(BaseModelDTO):
     chebi_id: Optional[str]
     kegg_id: Optional[str]
     layout: Optional[CompoundLayoutDTO]
-    type: Literal['default', 'cofactor', 'residue']
+    type: Literal["default", "cofactor", "residue"]
 
     alt_chebi_ids: Optional[list]
     monoisotopic_mass: Optional[float]

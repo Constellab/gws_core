@@ -1,5 +1,3 @@
-
-
 import re
 from json import dumps, loads
 from typing import Any, Dict
@@ -77,7 +75,7 @@ class JsonCodeParam(ParamSpec):
             try:
                 # Remove only standalone single-line comments
                 # This regex matches lines that only contain whitespace and a comment
-                value = re.sub(r'^\s*//.*$', '', value, flags=re.MULTILINE)
+                value = re.sub(r"^\s*//.*$", "", value, flags=re.MULTILINE)
 
                 return loads(value)
             except Exception as e:

@@ -1,5 +1,3 @@
-
-
 import plotly.graph_objs as go
 
 from gws_core.config.config_params import ConfigParams

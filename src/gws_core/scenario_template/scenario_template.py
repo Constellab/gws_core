@@ -1,4 +1,3 @@
-
 from typing import Any, Dict
 
 from peewee import CharField, IntegerField
@@ -6,17 +5,18 @@ from peewee import CharField, IntegerField
 from gws_core.core.model.db_field import JSONField
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
-from gws_core.protocol.protocol_graph_factory import \
-    ProtocolGraphFactoryFromType
+from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactoryFromType
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario_template.scenario_template_dto import (
-    ScenarioTemplateDTO, ScenarioTemplateExportDTO)
+    ScenarioTemplateDTO,
+    ScenarioTemplateExportDTO,
+)
 
 from ..core.model.model_with_user import ModelWithUser
 
 
 class ScenarioTemplate(ModelWithUser):
-    """ Entity to store template of protocol
+    """Entity to store template of protocol
 
     :param ModelWithUser: _description_
     :type ModelWithUser: _type_
@@ -53,7 +53,7 @@ class ScenarioTemplate(ModelWithUser):
             last_modified_by=self.last_modified_by.to_dto(),
             name=self.name,
             version=self.version,
-            description=self.description
+            description=self.description,
         )
 
     def to_export_dto(self) -> ScenarioTemplateExportDTO:
@@ -63,7 +63,7 @@ class ScenarioTemplate(ModelWithUser):
             name=self.name,
             version=self.version,
             data=self.get_protocol_config_dto(),
-            description=self.description
+            description=self.description,
         )
 
     def get_protocol_config_dto(self) -> ProtocolGraphConfigDTO:
@@ -79,5 +79,5 @@ class ScenarioTemplate(ModelWithUser):
         return protocol_model
 
     class Meta:
-        table_name = 'gws_scenario_template'
+        table_name = "gws_scenario_template"
         is_table = True

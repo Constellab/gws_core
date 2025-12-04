@@ -13,9 +13,8 @@ class StreamlitAppInfo(TypedDict):
     params: Dict[str, Any]
 
 
-class StreamlitAppInfoState():
-
-    APP_INFO_KEY = '__gws_app_info__'
+class StreamlitAppInfoState:
+    APP_INFO_KEY = "__gws_app_info__"
 
     @classmethod
     def is_initialized(cls) -> bool:
@@ -24,7 +23,7 @@ class StreamlitAppInfoState():
     @classmethod
     def get_app_info(cls) -> StreamlitAppInfo:
         if not cls.is_initialized():
-            raise Exception('App info not initialized')
+            raise Exception("App info not initialized")
         return st.session_state.get(cls.APP_INFO_KEY)
 
     @classmethod

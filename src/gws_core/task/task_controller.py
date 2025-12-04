@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from fastapi import Depends
@@ -15,8 +13,7 @@ from .task_service import TaskService
 
 
 @core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
-def get_a_task(id: str,
-               _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
+def get_a_task(id: str, _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     """
     Retrieve a task
 
@@ -29,8 +26,7 @@ def get_a_task(id: str,
 
 # TODO CHECK WHAT TO DO WITH THIS
 @core_app.post("/task/{id}/fix", tags=["Task"], summary="Fix a task")
-def fix_a_task(id: str,
-               _=Depends(AuthorizationService.check_user_access_token)) -> None:
+def fix_a_task(id: str, _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Fix a task
 
@@ -44,7 +40,7 @@ def fix_a_task(id: str,
 
 @core_app.post("/task/fix", tags=["Task"], summary="Run a task")
 def fix_all_protocol(_=Depends(AuthorizationService.check_user_access_token)):
-    Logger.info('Start fixing all protocols')
+    Logger.info("Start fixing all protocols")
     protocol_models = list(ProtocolModel.select())
     for protocol in protocol_models:
         try:
@@ -53,25 +49,25 @@ def fix_all_protocol(_=Depends(AuthorizationService.check_user_access_token)):
             Logger.error(f"Error while fixing protocol {protocol.id} : {e}")
             Logger.log_exception_stack_trace(e)
             continue
-    Logger.info('End fixing all protocols')
+    Logger.info("End fixing all protocols")
 
 
 def fix_protocol(protocol: ProtocolModel):
     for process in protocol.processes.values():
-        task_input_model: List[TaskInputModel] = list(
-            TaskInputModel.get_by_task_model(process.id))
+        task_input_model: List[TaskInputModel] = list(TaskInputModel.get_by_task_model(process.id))
 
         for task_input in task_input_model:
-
             if not process.inputs.port_exists(task_input.port_name):
                 Logger.error(
-                    f"Port {task_input.port_name} does not exist in {process.id}, in protocol {protocol.id}")
+                    f"Port {task_input.port_name} does not exist in {process.id}, in protocol {protocol.id}"
+                )
                 continue
 
             port = process.in_port(task_input.port_name)
             if port is None:
                 Logger.error(
-                    f"Port {task_input.port_name} not found in process {process.id}, in protocol {protocol.id}")
+                    f"Port {task_input.port_name} not found in process {process.id}, in protocol {protocol.id}"
+                )
                 continue
 
             # set the input of the process
@@ -80,15 +76,16 @@ def fix_protocol(protocol: ProtocolModel):
 
             # set the output of the previous process
             connector = protocol.get_connector_from_right(
-                process.instance_name, task_input.port_name)
+                process.instance_name, task_input.port_name
+            )
 
             if connector is None:
                 Logger.error(
-                    f"No connector found for {process.instance_name}:{task_input.port_name}, in protocol {protocol.id}")
+                    f"No connector found for {process.instance_name}:{task_input.port_name}, in protocol {protocol.id}"
+                )
                 continue
 
             connector.left_port.set_resource_model(task_input.resource_model)
-            connector.left_process.data["outputs"] = connector.left_process.outputs.to_json(
-            )
+            connector.left_process.data["outputs"] = connector.left_process.outputs.to_json()
 
     protocol.save_full()

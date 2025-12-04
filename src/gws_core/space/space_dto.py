@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from enum import Enum
 from typing import Any, List, Literal, Optional, Union
@@ -34,21 +32,21 @@ class SaveNoteToSpaceDTO(BaseModelDTO):
 
 class SpaceSendMailToUsersDTO(BaseModelDTO):
     receiver_ids: List[str]
-    mail_template: Literal['scenario-finished', 'generic']
+    mail_template: Literal["scenario-finished", "generic"]
     data: Optional[Any]
     subject: Optional[str]  # if provided, it override the template subject
 
 
 class SpaceSendMailToMailsDTO(BaseModelDTO):
     receiver_mails: List[str]
-    mail_template: Literal['scenario-finished', 'generic']
+    mail_template: Literal["scenario-finished", "generic"]
     data: Optional[Any]
     subject: Optional[str]  # if provided, it override the template subject
 
 
 class SpaceSendNotificationDTO(BaseModelDTO):
-    """DTO to send a notification to users in a space
-    """
+    """DTO to send a notification to users in a space"""
+
     # List of user IDs to receive the notification
     # The user must be in the space of the current lab
     receiver_ids: List[str]
@@ -61,8 +59,8 @@ class SpaceSendNotificationDTO(BaseModelDTO):
 
 
 class SendScenarioFinishMailData(BaseModelDTO):
-    """Scenario info when send finish mail
-    """
+    """Scenario info when send finish mail"""
+
     title: str
     status: str
     scenario_link: str
@@ -76,7 +74,8 @@ class LabActivityReponseDTO(BaseModelDTO):
 
 
 class SpaceNoteRichTextFileViewData(TypedDict):
-    """Object representing a file view in a rich text for a note transfered to space """
+    """Object representing a file view in a rich text for a note transfered to space"""
+
     id: str
     title: Optional[str]
     caption: Optional[str]
@@ -93,8 +92,8 @@ class ShareResourceWithSpaceDTO(BaseModelDTO):
 
 
 class SpaceSyncObjectDTO(BaseModelDTO):
-    """Object representing a space sync object
-    """
+    """Object representing a space sync object"""
+
     id: str
     folder_id: str
     last_sync_at: datetime
@@ -102,32 +101,26 @@ class SpaceSyncObjectDTO(BaseModelDTO):
 
 
 class SpaceDocumentDTO(BaseModelDTO):
-    """Object representing a space document
-    """
+    """Object representing a space document"""
+
     id: str
     name: str
     size: int
     mimeType: str
-    type: Literal['UPLOADED_DOCUMENT', 'CONSTELLAB_DOCUMENT']
+    type: Literal["UPLOADED_DOCUMENT", "CONSTELLAB_DOCUMENT"]
 
 
 SpaceHierarchyObjectType = Union[
     Literal[
-        'FOLDER',
-        'DOCUMENT',
-        'CONSTELLAB_DOCUMENT',
-        'NOTE',
-        'SCENARIO',
-        'RESOURCE',
-        'APPLICATION'
+        "FOLDER", "DOCUMENT", "CONSTELLAB_DOCUMENT", "NOTE", "SCENARIO", "RESOURCE", "APPLICATION"
     ],
-    str  # Allow any string value,if a new type is added in space
+    str,  # Allow any string value,if a new type is added in space
 ]
 
 
 class SpaceHierarchyObjectDTO(BaseModelDTO):
-    """Object representing a space hierarchy object
-    """
+    """Object representing a space hierarchy object"""
+
     id: str
     name: str
     objectType: SpaceHierarchyObjectType
@@ -145,7 +138,7 @@ class SpaceGroupDTO(BaseModelDTO):
     type: SpaceGroupType
     user: Optional[UserDTO] = None
 
-    @field_validator('user', mode='before')
+    @field_validator("user", mode="before")
     @classmethod
     def convert_user(cls, v):
         return UserDTO.from_user_space(v)
@@ -156,9 +149,9 @@ class SpaceGroupListDTO(BaseModelDTO):
 
 
 class DocumentUploadOverrideMode(str, Enum):
-    """Enum representing how to handle existing files with the same name when uploading documents
-    """
-    IGNORE = 'IGNORE'  # ignore the new document if it already exists
-    ERROR = 'ERROR'  # throw an error if the document already exists
-    REPLACE = 'REPLACE'  # replace the existing document with the new one
-    RENAME = 'RENAME'  # rename the new document with '_1' if it already exists
+    """Enum representing how to handle existing files with the same name when uploading documents"""
+
+    IGNORE = "IGNORE"  # ignore the new document if it already exists
+    ERROR = "ERROR"  # throw an error if the document already exists
+    REPLACE = "REPLACE"  # replace the existing document with the new one
+    RENAME = "RENAME"  # rename the new document with '_1' if it already exists

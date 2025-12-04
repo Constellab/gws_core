@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
@@ -17,6 +15,7 @@ class HTMLView(View):
     }
     ```
     """
+
     _type: ViewType = ViewType.HTML
     _html: str
 
@@ -25,4 +24,4 @@ class HTMLView(View):
         self._html = html
 
     def data_to_dict(self, params: ConfigParams = None) -> dict:
-        return {'html': self._html}
+        return {"html": self._html}

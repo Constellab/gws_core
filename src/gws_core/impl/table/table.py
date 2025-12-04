@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
@@ -10,12 +8,10 @@ from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.plotly_view import PlotlyView
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
-from gws_core.impl.table.view.table_vulcano_plot_view import \
-    TableVulcanoPlotView
+from gws_core.impl.table.view.table_vulcano_plot_view import TableVulcanoPlotView
 from gws_core.model.typing_style import TypingStyle
 from pandas import DataFrame, Series
-from pandas.api.types import (is_bool_dtype, is_float_dtype, is_integer_dtype,
-                              is_string_dtype)
+from pandas.api.types import is_bool_dtype, is_float_dtype, is_integer_dtype, is_string_dtype
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -25,10 +21,8 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
 from .data_frame_r_field import DataFrameRField
-from .helper.dataframe_filter_helper import (DataframeFilterHelper,
-                                             DataframeFilterName)
-from .table_types import (AxisType, TableColumnInfo, TableColumnType,
-                          TableHeaderInfo, is_row_axis)
+from .helper.dataframe_filter_helper import DataframeFilterHelper, DataframeFilterName
+from .table_types import AxisType, TableColumnInfo, TableColumnType, TableHeaderInfo, is_row_axis
 from .view.table_barplot_view import TableBarPlotView
 from .view.table_boxplot_view import TableBoxPlotView
 from .view.table_heatmap_view import TableHeatmapView
@@ -39,13 +33,17 @@ from .view.table_stacked_barplot_view import TableStackedBarPlotView
 from .view.table_venn_diagram_view import TableVennDiagramView
 from .view.table_view import TableView
 
-ALLOWED_XLS_FILE_FORMATS = ['xlsx', 'xls']
-ALLOWED_TXT_FILE_FORMATS = ['csv', 'tsv', 'tab', 'txt']
+ALLOWED_XLS_FILE_FORMATS = ["xlsx", "xls"]
+ALLOWED_TXT_FILE_FORMATS = ["csv", "tsv", "tab", "txt"]
 ALLOWED_FILE_FORMATS = [*ALLOWED_XLS_FILE_FORMATS, *ALLOWED_TXT_FILE_FORMATS]
 
 
-@resource_decorator("Table", human_name="Table", short_description="2d excel like table",
-                    style=TypingStyle.material_icon("table_chart", background_color="#79ac78"))
+@resource_decorator(
+    "Table",
+    human_name="Table",
+    short_description="2d excel like table",
+    style=TypingStyle.material_icon("table_chart", background_color="#79ac78"),
+)
 class Table(Resource):
     """
     Main 2d table with named columns and rows. It is a wrapper of the pandas Dataframe, to access it use the get_data() method.
@@ -70,7 +68,7 @@ class Table(Resource):
     ALLOWED_TXT_FILE_FORMATS = ALLOWED_TXT_FILE_FORMATS
     ALLOWED_FILE_FORMATS = ALLOWED_FILE_FORMATS
 
-    COMMENT_CHAR = '#'
+    COMMENT_CHAR = "#"
 
     _data: DataFrame = DataFrameRField()
 
@@ -78,10 +76,15 @@ class Table(Resource):
     _column_tags: TableAxisTags = SerializableRField(TableAxisTags)
     comments: str = StrRField()
 
-    def __init__(self, data: Union[DataFrame, np.ndarray, list] = None,
-                 row_names: List[str] = None, column_names: List[str] = None,
-                 row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                 strict_format_header_names: bool = False):
+    def __init__(
+        self,
+        data: Union[DataFrame, np.ndarray, list] = None,
+        row_names: List[str] = None,
+        column_names: List[str] = None,
+        row_tags: List[Dict[str, str]] = None,
+        column_tags: List[Dict[str, str]] = None,
+        strict_format_header_names: bool = False,
+    ):
         """Create a new Table
 
         :param data: data use to initilialize the table, defaults to None
@@ -105,14 +108,24 @@ class Table(Resource):
         :type strict_format_header_names: bool, optional
         """
         super().__init__()
-        self._set_data(data, row_names=row_names, column_names=column_names,
-                       row_tags=row_tags, column_tags=column_tags,
-                       strict_format_header_names=strict_format_header_names)
+        self._set_data(
+            data,
+            row_names=row_names,
+            column_names=column_names,
+            row_tags=row_tags,
+            column_tags=column_tags,
+            strict_format_header_names=strict_format_header_names,
+        )
 
-    def _set_data(self, data: Union[DataFrame, np.ndarray] = None,
-                  row_names=None, column_names=None,
-                  row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None,
-                  strict_format_header_names: bool = False) -> 'Table':
+    def _set_data(
+        self,
+        data: Union[DataFrame, np.ndarray] = None,
+        row_names=None,
+        column_names=None,
+        row_tags: List[Dict[str, str]] = None,
+        column_tags: List[Dict[str, str]] = None,
+        strict_format_header_names: bool = False,
+    ) -> "Table":
         if data is None:
             data = DataFrame()
         else:
@@ -125,14 +138,13 @@ class Table(Resource):
                 data = DataFrame(data)
             else:
                 raise BadRequestException(
-                    "The data must be an instance of DataFrame or Numpy array")
+                    "The data must be an instance of DataFrame or Numpy array"
+                )
 
             if (column_names is not None) and not isinstance(column_names, list):
-                raise BadRequestException(
-                    "The column_names must be an instance of list")
+                raise BadRequestException("The column_names must be an instance of list")
             if (row_names is not None) and not isinstance(row_names, list):
-                raise BadRequestException(
-                    "The row_names must be an instance of list")
+                raise BadRequestException("The row_names must be an instance of list")
 
             if column_names:
                 data.columns = column_names
@@ -143,7 +155,8 @@ class Table(Resource):
         # format the row and column names
         # prevent having duplicate column and row names
         self._data = DataframeHelper.format_column_and_row_names(
-            data, strict=strict_format_header_names)
+            data, strict=strict_format_header_names
+        )
 
         self._set_tags(row_tags=row_tags, column_tags=column_tags)
 
@@ -247,8 +260,7 @@ class Table(Resource):
         if isinstance(data, Series):
             data = data.tolist()
         if not isinstance(data, list):
-            raise BadRequestException(
-                "The column data must be a list or a Series")
+            raise BadRequestException("The column data must be a list or a Series")
 
         name = DataframeHelper.format_header_name(name)
 
@@ -261,10 +273,10 @@ class Table(Resource):
 
         if len(data) != self.nb_rows:
             raise BadRequestException(
-                "The length of column data must be equal to the number of rows")
+                "The length of column data must be equal to the number of rows"
+            )
         if self.column_exists(name):
-            raise BadRequestException(
-                f"The column name `{name}` already exists")
+            raise BadRequestException(f"The column name `{name}` already exists")
 
         # insert columns
         if index is None:
@@ -275,8 +287,7 @@ class Table(Resource):
         self._column_tags.insert_new_empty_tags(index)
 
         # clean the index name if new rows were created
-        self._data.index = DataframeHelper.format_header_names(
-            self._data.index)
+        self._data.index = DataframeHelper.format_header_names(self._data.index)
 
     def remove_column(self, column_name: str) -> None:
         """
@@ -305,8 +316,7 @@ class Table(Resource):
         self.check_column_exists(current_name)
 
         if self.column_exists(new_name):
-            raise BadRequestException(
-                f"The column name `{new_name}` already exists")
+            raise BadRequestException(f"The column name `{new_name}` already exists")
 
         self._data.rename(columns={current_name: new_name}, inplace=True)
 
@@ -320,7 +330,8 @@ class Table(Resource):
 
         if len(column_names) != self.nb_columns:
             raise BadRequestException(
-                f"The length of column names must be equal to the number of columns. Nb columns: {self.nb_columns}, nb names: {len(column_names)}")
+                f"The length of column names must be equal to the number of columns. Nb columns: {self.nb_columns}, nb names: {len(column_names)}"
+            )
 
         self._data.columns = column_names
 
@@ -429,7 +440,9 @@ class Table(Resource):
         :return: The new column name
         :rtype: str
         """
-        return Utils.generate_unique_str_for_list(self.column_names, DataframeHelper.format_header_name(name))
+        return Utils.generate_unique_str_for_list(
+            self.column_names, DataframeHelper.format_header_name(name)
+        )
 
     ############################################# ROWS #############################################
 
@@ -502,8 +515,7 @@ class Table(Resource):
         if isinstance(data, Series):
             data = data.tolist()
         if not isinstance(data, list):
-            raise BadRequestException(
-                "The row data must be a list or a Series")
+            raise BadRequestException("The row data must be a list or a Series")
 
         name = DataframeHelper.format_header_name(name)
 
@@ -512,18 +524,17 @@ class Table(Resource):
             self._column_tags.insert_new_empty_tags(count=len(data))
 
             # generate column names
-            columns_names = DataframeHelper.format_header_names(
-                list(range(len(data))))
+            columns_names = DataframeHelper.format_header_names(list(range(len(data))))
 
-            self._set_data([data], row_names=[name],
-                           column_names=columns_names)
+            self._set_data([data], row_names=[name], column_names=columns_names)
             return
 
         if self.row_exists(name):
             raise BadRequestException(f"The row name `{name}` already exists")
         if len(data) != self.nb_columns:
             raise BadRequestException(
-                f"The length of row data must be equal to the number of columns. Nb columns: {self.nb_columns}, nb data: {len(data)}")
+                f"The length of row data must be equal to the number of columns. Nb columns: {self.nb_columns}, nb data: {len(data)}"
+            )
 
         # insert the row
         if index is None:
@@ -559,8 +570,7 @@ class Table(Resource):
         self.check_row_exists(current_name)
 
         if self.row_exists(new_name):
-            raise BadRequestException(
-                f"The row name `{new_name}` already exists")
+            raise BadRequestException(f"The row name `{new_name}` already exists")
 
         self._data.rename(index={current_name: new_name}, inplace=True)
 
@@ -573,8 +583,7 @@ class Table(Resource):
         """
 
         if len(row_names) != self.nb_rows:
-            raise BadRequestException(
-                "The length of row names must be equal to the number of rows")
+            raise BadRequestException("The length of row names must be equal to the number of rows")
 
         self._data.index = row_names
 
@@ -671,7 +680,9 @@ class Table(Resource):
         return self._data.iat[row_index, column_index]
 
     ######################################## TAGS ########################################
-    def _set_tags(self, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None):
+    def _set_tags(
+        self, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None
+    ):
         if row_tags:
             self.set_all_row_tags(row_tags)
         else:
@@ -695,7 +706,7 @@ class Table(Resource):
         return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
 
     def _get_indexes_by_tags(self, axis: AxisType, tags: List[dict]) -> List[int]:
-        """ Return the indexes of the tags in the axis """
+        """Return the indexes of the tags in the axis"""
         if not isinstance(tags, list):
             raise BadRequestException("A list of tags is required")
 
@@ -705,11 +716,9 @@ class Table(Resource):
             index_instersect: List[int] = []
             for key, value in tag.items():
                 if not index_instersect:
-                    index_instersect = [i for i, t in enumerate(
-                        header_tags) if t.get(key) == value]
+                    index_instersect = [i for i, t in enumerate(header_tags) if t.get(key) == value]
                 else:
-                    pos = [i for i, t in enumerate(
-                        header_tags) if t.get(key) == value]
+                    pos = [i for i, t in enumerate(header_tags) if t.get(key) == value]
                     index_instersect = list(set(pos) & set(index_instersect))
 
                 if len(index_instersect) == 0:
@@ -805,13 +814,13 @@ class Table(Resource):
         """
 
         if len(tags) != self.nb_columns:
-            raise Exception(
-                "The length of tags must be equal to the number of columns")
+            raise Exception("The length of tags must be equal to the number of columns")
 
         self._column_tags = TableAxisTags(tags)
 
-    def get_column_tags(self, from_index: int = None, to_index: int = None,
-                        none_if_empty: bool = False) -> List[Dict[str, str]]:
+    def get_column_tags(
+        self, from_index: int = None, to_index: int = None, none_if_empty: bool = False
+    ) -> List[Dict[str, str]]:
         """
         Get the tags of multiple columns by index
 
@@ -836,7 +845,9 @@ class Table(Resource):
         """
         return self._column_tags.get_available_tags()
 
-    def get_columns_info(self, from_index: int = None, to_index: int = None) -> List[TableColumnInfo]:
+    def get_columns_info(
+        self, from_index: int = None, to_index: int = None
+    ) -> List[TableColumnInfo]:
         """
         Get the info of multiple columns by index
 
@@ -875,10 +886,12 @@ class Table(Resource):
         return {
             "name": column_name,
             "type": self.get_column_type(column_name),
-            "tags": self._column_tags.get_tags_at(column_index)
+            "tags": self._column_tags.get_tags_at(column_index),
         }
 
-    def copy_column_tags_by_index(self, source_table: 'Table', from_index: int = None, to_index: int = None) -> None:
+    def copy_column_tags_by_index(
+        self, source_table: "Table", from_index: int = None, to_index: int = None
+    ) -> None:
         """
         Copy column tags from source_table to self matching by index.
 
@@ -889,10 +902,11 @@ class Table(Resource):
         :param to_index: end index of the columns to copy, defaults to None
         :type to_index: int, optional
         """
-        self.set_all_column_tags(source_table.get_column_tags(
-            from_index=from_index, to_index=to_index))
+        self.set_all_column_tags(
+            source_table.get_column_tags(from_index=from_index, to_index=to_index)
+        )
 
-    def copy_column_tags_by_name(self, source_table: 'Table') -> None:
+    def copy_column_tags_by_name(self, source_table: "Table") -> None:
         """
         Copy column tags from source_table to self matching by name.
 
@@ -902,10 +916,10 @@ class Table(Resource):
         for column_name in self.column_names:
             if source_table.column_exists(column_name):
                 self.set_column_tags_by_name(
-                    column_name, source_table.get_column_tags_by_name(column_name))
+                    column_name, source_table.get_column_tags_by_name(column_name)
+                )
 
-    def extract_column_tags_to_new_row(self, tag_key: str,
-                                       new_row_name: str = None) -> None:
+    def extract_column_tags_to_new_row(self, tag_key: str, new_row_name: str = None) -> None:
         """
         Create a new row and fill it with the values of the tag of each column.
 
@@ -926,8 +940,9 @@ class Table(Resource):
         tags_values = [tag.get(tag_key) for tag in tags]
         self.add_row(new_row_name, tags_values)
 
-    def extract_row_values_to_column_tags(self, row_name: str, new_tag_key: str = None,
-                                          delete_row: bool = False) -> None:
+    def extract_row_values_to_column_tags(
+        self, row_name: str, new_tag_key: str = None, delete_row: bool = False
+    ) -> None:
         """
         Create a new tag for each column and fill it with the values of the row.
 
@@ -1037,12 +1052,17 @@ class Table(Resource):
         """
         if len(tags) != self.nb_rows:
             raise Exception(
-                f"The length of tags must be equal to the number of rows, nb of rows={self.nb_rows}, nb of tags={len(tags)}")
+                f"The length of tags must be equal to the number of rows, nb of rows={self.nb_rows}, nb of tags={len(tags)}"
+            )
 
         self._row_tags = TableAxisTags(tags)
 
-    def get_row_tags(self, from_index: int = None, to_index: int = None,
-                     none_if_empty: bool = False,) -> List[Dict[str, str]]:
+    def get_row_tags(
+        self,
+        from_index: int = None,
+        to_index: int = None,
+        none_if_empty: bool = False,
+    ) -> List[Dict[str, str]]:
         """
         Get the tags of multiple rows by index
 
@@ -1102,12 +1122,11 @@ class Table(Resource):
         """
 
         row_index = self.get_row_index_by_name(row_name)
-        return {
-            "name": row_name,
-            "tags": self._row_tags.get_tags_at(row_index)
-        }
+        return {"name": row_name, "tags": self._row_tags.get_tags_at(row_index)}
 
-    def copy_row_tags_by_index(self, source_table: 'Table', from_index: int = None, to_index: int = None) -> None:
+    def copy_row_tags_by_index(
+        self, source_table: "Table", from_index: int = None, to_index: int = None
+    ) -> None:
         """
         Copy row tag from source_table to self matching by index
 
@@ -1118,10 +1137,9 @@ class Table(Resource):
         :param to_index: end index of the rows to copy, defaults to None
         :type to_index: int, optional
         """
-        self.set_all_row_tags(source_table.get_row_tags(
-            from_index=from_index, to_index=to_index))
+        self.set_all_row_tags(source_table.get_row_tags(from_index=from_index, to_index=to_index))
 
-    def copy_row_tags_by_name(self, source_table: 'Table') -> None:
+    def copy_row_tags_by_name(self, source_table: "Table") -> None:
         """
         Copy row tag from source_table to self matching by name
 
@@ -1130,11 +1148,9 @@ class Table(Resource):
         """
         for row_name in self.row_names:
             if source_table.row_exists(row_name):
-                self.set_row_tags_by_name(
-                    row_name, source_table.get_row_tag_by_name(row_name))
+                self.set_row_tags_by_name(row_name, source_table.get_row_tag_by_name(row_name))
 
-    def extract_row_tags_to_new_column(self, tag_key: str,
-                                       new_column_name: str = None) -> None:
+    def extract_row_tags_to_new_column(self, tag_key: str, new_column_name: str = None) -> None:
         """
         Create a new columns and fill it with the values of the tag of each row
 
@@ -1155,8 +1171,9 @@ class Table(Resource):
         tags_values = [tag.get(tag_key) for tag in tags]
         self.add_column(new_column_name, tags_values)
 
-    def extract_column_values_to_row_tags(self, column_name: str, new_tag_key: str = None,
-                                          delete_column: bool = False) -> None:
+    def extract_column_values_to_row_tags(
+        self, column_name: str, new_tag_key: str = None, delete_column: bool = False
+    ) -> None:
         """
         Create a new tag for each row and fill it with the values of the provided column
 
@@ -1182,7 +1199,7 @@ class Table(Resource):
 
     #################################### FILTERING ####################################
 
-    def select_by_row_indexes(self, indexes: List[int]) -> 'Table':
+    def select_by_row_indexes(self, indexes: List[int]) -> "Table":
         """
         Select table rows matching a list of indexes, return a new table
 
@@ -1195,7 +1212,7 @@ class Table(Resource):
         row_names = self.get_row_names_by_indexes(indexes)
         return self.select_by_row_names([{"name": row_names}])
 
-    def select_by_column_indexes(self, indexes: List[int]) -> 'Table':
+    def select_by_column_indexes(self, indexes: List[int]) -> "Table":
         """
         Select table columns matching a list of indexes, return a new table
 
@@ -1207,7 +1224,7 @@ class Table(Resource):
         column_names = self.get_column_names_by_indexes(indexes)
         return self.select_by_column_names([{"name": column_names}])
 
-    def select_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
+    def select_by_row_names(self, filters: List[DataframeFilterName]) -> "Table":
         """
         Select table rows matching a list of names, return a new table
 
@@ -1216,12 +1233,11 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_by_axis_names(
-            self._data, 'row', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(self._data, "row", filters)
 
         return self.create_sub_table_filtered_by_rows(data)
 
-    def select_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
+    def select_by_column_names(self, filters: List[DataframeFilterName]) -> "Table":
         """
         Select table columns matching a list of names, return a new table
 
@@ -1231,12 +1247,13 @@ class Table(Resource):
         :rtype: Table
         """
 
-        data = DataframeFilterHelper.filter_by_axis_names(
-            self._data, 'column', filters)
+        data = DataframeFilterHelper.filter_by_axis_names(self._data, "column", filters)
 
         return self.create_sub_table_filtered_by_columns(data)
 
-    def select_by_coords(self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int) -> 'Table':
+    def select_by_coords(
+        self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int
+    ) -> "Table":
         """
         Create a new table from coords. It does not includes the to_row_id and to_column_id
 
@@ -1249,14 +1266,18 @@ class Table(Resource):
         :param to_column_id: end column index
         :type to_column_id: int
         """
-        data: DataFrame = self._data.iloc[from_row_id: to_row_id + 1,
-                                          from_column_id: to_column_id + 1]
+        data: DataFrame = self._data.iloc[
+            from_row_id : to_row_id + 1, from_column_id : to_column_id + 1
+        ]
 
         # create a new table
-        return self.create_sub_table(data, self.get_row_tags(from_index=from_row_id, to_index=to_row_id),
-                                     self.get_column_tags(from_index=from_column_id, to_index=to_column_id))
+        return self.create_sub_table(
+            data,
+            self.get_row_tags(from_index=from_row_id, to_index=to_row_id),
+            self.get_column_tags(from_index=from_column_id, to_index=to_column_id),
+        )
 
-    def select_by_row_tags(self, tags: List[dict]) -> 'Table':
+    def select_by_row_tags(self, tags: List[dict]) -> "Table":
         """
         Select table rows matching a list of tags
 
@@ -1276,7 +1297,7 @@ class Table(Resource):
 
         return self.select_by_tags("index", tags)
 
-    def select_by_column_tags(self, tags: List[dict]) -> 'Table':
+    def select_by_column_tags(self, tags: List[dict]) -> "Table":
         """
         Select table columns matching a list of tags
 
@@ -1295,7 +1316,7 @@ class Table(Resource):
         """
         return self.select_by_tags("columns", tags)
 
-    def select_by_tags(self, axis: AxisType, tags: List[dict]) -> 'Table':
+    def select_by_tags(self, axis: AxisType, tags: List[dict]) -> "Table":
         """
         Select table rows or columns matching a list of tags and return a new table
 
@@ -1316,10 +1337,13 @@ class Table(Resource):
         """
         indexes = self._get_indexes_by_tags(axis, tags)
 
-        return self.select_by_row_indexes(indexes) if is_row_axis(axis) else self.select_by_column_indexes(
-            indexes)
+        return (
+            self.select_by_row_indexes(indexes)
+            if is_row_axis(axis)
+            else self.select_by_column_indexes(indexes)
+        )
 
-    def filter_out_by_tags(self, axis: AxisType, tags: List[dict]) -> 'Table':
+    def filter_out_by_tags(self, axis: AxisType, tags: List[dict]) -> "Table":
         """
         Filter out table rows or columns matching a list of tags and return a new table. The row or column that matches the tags are removed.
 
@@ -1342,17 +1366,20 @@ class Table(Resource):
         indexes = self._get_indexes_by_tags(axis, tags)
 
         # get all the existing indexes
-        all_indexes = list(range(self.nb_rows)) if is_row_axis(
-            axis) else list(range(self.nb_columns))
+        all_indexes = (
+            list(range(self.nb_rows)) if is_row_axis(axis) else list(range(self.nb_columns))
+        )
 
         # get the indexes to keep by removing the selected ones from all index
-        indexes_to_keep = [
-            index for index in all_indexes if index not in indexes]
+        indexes_to_keep = [index for index in all_indexes if index not in indexes]
 
-        return self.select_by_row_indexes(indexes_to_keep) if is_row_axis(axis) else self.select_by_column_indexes(
-            indexes_to_keep)
+        return (
+            self.select_by_row_indexes(indexes_to_keep)
+            if is_row_axis(axis)
+            else self.select_by_column_indexes(indexes_to_keep)
+        )
 
-    def select_numeric_columns(self, drop_na: Literal['all', 'any'] = 'all') -> 'Table':
+    def select_numeric_columns(self, drop_na: Literal["all", "any"] = "all") -> "Table":
         """
         Select only numeric columns, return a new table
 
@@ -1370,14 +1397,15 @@ class Table(Resource):
             return self
 
         column_tags = self.get_column_tags()
-        selected_col_tags = [column_tags[i] for i, name in enumerate(
-            self.column_names) if name in data.columns]
+        selected_col_tags = [
+            column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns
+        ]
 
         return self.create_sub_table(data, self.get_row_tags(), selected_col_tags)
 
     # Selection by exclusion
 
-    def filter_out_by_row_names(self, filters: List[DataframeFilterName]) -> 'Table':
+    def filter_out_by_row_names(self, filters: List[DataframeFilterName]) -> "Table":
         """
         Filter out table rows matching a list of names, return a new table
 
@@ -1386,12 +1414,11 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_out_by_axis_names(
-            self._data, 'row', filters)
+        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, "row", filters)
 
         return self.create_sub_table_filtered_by_rows(data)
 
-    def filter_out_by_column_names(self, filters: List[DataframeFilterName]) -> 'Table':
+    def filter_out_by_column_names(self, filters: List[DataframeFilterName]) -> "Table":
         """
         Filter out table columns matching a list of names, return a new table
 
@@ -1400,14 +1427,13 @@ class Table(Resource):
         :return: The selected new table
         :rtype: Table
         """
-        data = DataframeFilterHelper.filter_out_by_axis_names(
-            self._data, 'column', filters)
+        data = DataframeFilterHelper.filter_out_by_axis_names(self._data, "column", filters)
 
         return self.create_sub_table_filtered_by_columns(data)
 
     ######################################## CREATE SUB TABLE ########################################
 
-    def create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> 'Table':
+    def create_sub_table_filtered_by_rows(self, filtered_df: DataFrame) -> "Table":
         """
         Create a sub Table based on a subset Dataframe of this original table filtered by rows.
         It copies the tags of this table into the new table based on row names that matched between
@@ -1419,8 +1445,7 @@ class Table(Resource):
         :rtype: Table
         """
 
-        indexes = [self._data.index.get_loc(
-            k) for k in filtered_df.index if k in self._data.index]
+        indexes = [self._data.index.get_loc(k) for k in filtered_df.index if k in self._data.index]
 
         # get the row tags for the filtered rows
         row_tags = self._row_tags.get_tags_at_indexes(indexes)
@@ -1428,7 +1453,7 @@ class Table(Resource):
         # create a new table
         return self.create_sub_table(filtered_df, row_tags, self.get_column_tags())
 
-    def create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> 'Table':
+    def create_sub_table_filtered_by_columns(self, filtered_df: DataFrame) -> "Table":
         """
         Create a sub Table based on a subset Dataframe of this original table filtered by columns
         It copies the tags of this table into the new table based on column names that matched between
@@ -1440,8 +1465,9 @@ class Table(Resource):
         :rtype: Table
         """
 
-        indexes = [self._data.columns.get_loc(
-            k) for k in filtered_df.columns if k in self._data.columns]
+        indexes = [
+            self._data.columns.get_loc(k) for k in filtered_df.columns if k in self._data.columns
+        ]
 
         # get the column tags for the filtered columns
         column_tags = self._column_tags.get_tags_at_indexes(indexes)
@@ -1449,8 +1475,12 @@ class Table(Resource):
         # create a new table
         return self.create_sub_table(filtered_df, self.get_row_tags(), column_tags)
 
-    def create_sub_table(self, dataframe: DataFrame,
-                         row_tags: List[Dict[str, str]], column_tags: List[Dict[str, str]]) -> 'Table':
+    def create_sub_table(
+        self,
+        dataframe: DataFrame,
+        row_tags: List[Dict[str, str]],
+        column_tags: List[Dict[str, str]],
+    ) -> "Table":
         """
         Create a new table from a dataframe and a meta
 
@@ -1506,9 +1536,7 @@ class Table(Resource):
         return self._data.shape
 
     def __str__(self):
-        return super().__str__() + "\n" + \
-            "Table:\n" + \
-            self._data.__str__()
+        return super().__str__() + "\n" + "Table:\n" + self._data.__str__()
 
     def equals(self, o: object) -> bool:
         """
@@ -1522,10 +1550,13 @@ class Table(Resource):
         if not isinstance(o, Table):
             return False
 
-        return self._data.equals(o._data) and self._row_tags.equals(o._row_tags) and self._column_tags.equals(
-            o._column_tags)
+        return (
+            self._data.equals(o._data)
+            and self._row_tags.equals(o._row_tags)
+            and self._column_tags.equals(o._column_tags)
+        )
 
-    def transpose(self, infer_objects: bool = False) -> 'Table':
+    def transpose(self, infer_objects: bool = False) -> "Table":
         """
         Transpose the table, it returnes a new Table, the original table is not modified.
 
@@ -1539,10 +1570,10 @@ class Table(Resource):
             row_names=self.column_names,
             column_names=self.row_names,
             row_tags=self.get_column_tags(),
-            column_tags=self.get_row_tags()
+            column_tags=self.get_row_tags(),
         )
 
-    def infer_objects(self) -> 'Table':
+    def infer_objects(self) -> "Table":
         """Call infer_objects on the underlying dataframe, it modifies the table dataframe.
 
         :return: _description_
@@ -1612,12 +1643,17 @@ class Table(Resource):
             column_info.append(f"{col}: {dtype}")
 
         return f"""Table Information:
-- Columns ({self.nb_columns}): {', '.join(column_info)}
+- Columns ({self.nb_columns}): {", ".join(column_info)}
 - Number of rows: {self.nb_rows}"""
 
     ################################################# TABLE VIEW #################################################
 
-    @view(view_type=TableView, default_view=True, human_name='Tabular', short_description='View as a table')
+    @view(
+        view_type=TableView,
+        default_view=True,
+        human_name="Tabular",
+        short_description="View as a table",
+    )
     def view_as_table(self, params: ConfigParams) -> TableView:
         """
         View as table
@@ -1628,7 +1664,12 @@ class Table(Resource):
     ################################################# PLOT VIEW #################################################
     # Plot view are hidden because they are manually called by the ResourceTableService
 
-    @view(view_type=TableLinePlot2DView, human_name='Line plot', short_description='View columns as line plots', hide=True)
+    @view(
+        view_type=TableLinePlot2DView,
+        human_name="Line plot",
+        short_description="View columns as line plots",
+        hide=True,
+    )
     def view_as_line_plot_2d(self, params: ConfigParams) -> TableLinePlot2DView:
         """
         View columns as 2D-line plots
@@ -1636,8 +1677,12 @@ class Table(Resource):
 
         return TableLinePlot2DView(self)
 
-    @view(view_type=TableScatterPlot2DView, human_name='Scatter plot',
-          short_description='View columns as scatter plots', hide=True)
+    @view(
+        view_type=TableScatterPlot2DView,
+        human_name="Scatter plot",
+        short_description="View columns as scatter plots",
+        hide=True,
+    )
     def view_as_scatter_plot_2d(self, params: ConfigParams) -> TableScatterPlot2DView:
         """
         View one or several columns as 2D-line plots
@@ -1645,12 +1690,21 @@ class Table(Resource):
 
         return TableScatterPlot2DView(self)
 
-    @view(view_type=TableVulcanoPlotView, human_name='Vulcano plot',
-          short_description='View columns vulcano plot', hide=True)
+    @view(
+        view_type=TableVulcanoPlotView,
+        human_name="Vulcano plot",
+        short_description="View columns vulcano plot",
+        hide=True,
+    )
     def view_as_vulcano_plot(self, params: ConfigParams) -> TableVulcanoPlotView:
         return TableVulcanoPlotView(self)
 
-    @view(view_type=TableBarPlotView, human_name='Bar plot', short_description='View columns as bar plots', hide=True)
+    @view(
+        view_type=TableBarPlotView,
+        human_name="Bar plot",
+        short_description="View columns as bar plots",
+        hide=True,
+    )
     def view_as_bar_plot(self, params: ConfigParams) -> TableBarPlotView:
         """
         View one or several columns as bar plots
@@ -1658,8 +1712,12 @@ class Table(Resource):
 
         return TableBarPlotView(self)
 
-    @view(view_type=TableStackedBarPlotView, human_name='Stacked bar plot',
-          short_description='View columns as stacked bar plots', hide=True)
+    @view(
+        view_type=TableStackedBarPlotView,
+        human_name="Stacked bar plot",
+        short_description="View columns as stacked bar plots",
+        hide=True,
+    )
     def view_as_stacked_bar_plot(self, params: ConfigParams) -> TableStackedBarPlotView:
         """
         View one or several columns as 2D-stacked bar plots
@@ -1667,7 +1725,12 @@ class Table(Resource):
 
         return TableStackedBarPlotView(self)
 
-    @view(view_type=TableHistogramView, human_name='Histogram', short_description='View columns as line plots', hide=True)
+    @view(
+        view_type=TableHistogramView,
+        human_name="Histogram",
+        short_description="View columns as line plots",
+        hide=True,
+    )
     def view_as_histogram(self, params: ConfigParams) -> TableHistogramView:
         """
         View columns as 2D-line plots
@@ -1675,7 +1738,12 @@ class Table(Resource):
 
         return TableHistogramView(self)
 
-    @view(view_type=TableBoxPlotView, human_name='Box plot', short_description='View columns as box plots', hide=True)
+    @view(
+        view_type=TableBoxPlotView,
+        human_name="Box plot",
+        short_description="View columns as box plots",
+        hide=True,
+    )
     def view_as_box_plot(self, params: ConfigParams) -> TableBoxPlotView:
         """
         View one or several columns as box plots
@@ -1683,7 +1751,12 @@ class Table(Resource):
 
         return TableBoxPlotView(self)
 
-    @view(view_type=TableHeatmapView, human_name='Heatmap', short_description='View table as heatmap', hide=True)
+    @view(
+        view_type=TableHeatmapView,
+        human_name="Heatmap",
+        short_description="View table as heatmap",
+        hide=True,
+    )
     def view_as_heatmap(self, params: ConfigParams) -> TableHeatmapView:
         """
         View the table as heatmap
@@ -1691,7 +1764,12 @@ class Table(Resource):
 
         return TableHeatmapView(self)
 
-    @view(view_type=TableVennDiagramView, human_name='VennDiagram', short_description='View table as Venn diagram', hide=True)
+    @view(
+        view_type=TableVennDiagramView,
+        human_name="VennDiagram",
+        short_description="View table as Venn diagram",
+        hide=True,
+    )
     def view_as_venn_diagram(self, params: ConfigParams) -> TableVennDiagramView:
         """
         View the table as Venn diagram
@@ -1699,23 +1777,24 @@ class Table(Resource):
 
         return TableVennDiagramView(self)
 
-    @view(view_type=PlotlyView, specs=ConfigSpecs({'prompt': OpenAiChatParam()}),
-          human_name="Smart interactive plot", short_description="Generate an interactive plot using an AI (OpenAI).")
+    @view(
+        view_type=PlotlyView,
+        specs=ConfigSpecs({"prompt": OpenAiChatParam()}),
+        human_name="Smart interactive plot",
+        short_description="Generate an interactive plot using an AI (OpenAI).",
+    )
     def smart_view(self, params: ConfigParams) -> PlotlyView:
         """
         View one or several columns as 2D-line plots
         TODO to improve
         """
-        from gws_core.impl.table.smart_tasks.table_smart_plotly import \
-            SmartPlotly
+        from gws_core.impl.table.smart_tasks.table_smart_plotly import SmartPlotly
         from gws_core.task.task_runner import TaskRunner
 
-        task_runner = TaskRunner(SmartPlotly,
-                                 inputs={'source': self},
-                                 params=params)
+        task_runner = TaskRunner(SmartPlotly, inputs={"source": self}, params=params)
 
         output = task_runner.run()
-        plotly_resource: PlotlyResource = output['target']
+        plotly_resource: PlotlyResource = output["target"]
         return plotly_resource.default_view(ConfigParams())
 
     # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots')
@@ -1737,7 +1816,7 @@ class Table(Resource):
     ############################## CLASS METHODS ###########################
 
     @classmethod
-    def from_dict(cls, data: dict, orient='index', dtype=None, columns=None) -> 'Table':
+    def from_dict(cls, data: dict, orient="index", dtype=None, columns=None) -> "Table":
         dataframe = DataFrame.from_dict(data, orient, dtype, columns)
         res = cls(data=dataframe)
         return res

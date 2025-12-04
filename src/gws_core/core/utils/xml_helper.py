@@ -2,7 +2,6 @@ from xmltodict import parse, unparse
 
 
 class XMLHelper:
-
     @staticmethod
     def xml_to_dict(xml_text: str) -> dict:
         return parse(xml_text)

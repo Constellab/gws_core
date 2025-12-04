@@ -62,7 +62,6 @@ doc_component(func=my_function)"""
         "This page demonstrates the documentation component that automatically "
         "generates documentation for functions and components."
         "This is the component used in this app to display function documentation.",
-
         # Example 1
         example_tabs(
             example_component=example1_component,

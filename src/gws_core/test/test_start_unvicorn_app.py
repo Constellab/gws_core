@@ -1,5 +1,3 @@
-
-
 from multiprocessing import Process
 from time import sleep
 
@@ -9,8 +7,8 @@ from gws_core.app import App
 from gws_core.core.utils.settings import Settings
 
 
-class TestStartUvicornApp():
-    """ Context to support with statement start the uvicorn api server in tests.
+class TestStartUvicornApp:
+    """Context to support with statement start the uvicorn api server in tests.
     It automatically starts the server when entering the context and stops it when exiting.
     """
 
@@ -27,7 +25,9 @@ class TestStartUvicornApp():
         self.process = Process(target=App.start_uvicorn_app)
         self.process.start()
 
-        health_check_route = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/health-check"
+        health_check_route = (
+            f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/health-check"
+        )
 
         # Wait for the server to start
         i = 0

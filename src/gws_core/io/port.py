@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Optional, Type, TypeVar, final
 
@@ -11,7 +9,7 @@ from ..resource.resource_model import ResourceModel
 from .io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 
 # For generic Port type
-PortType = TypeVar('PortType', bound='Port')
+PortType = TypeVar("PortType", bound="Port")
 
 
 class Port(Base):
@@ -110,7 +108,8 @@ class Port(Base):
                 self._resource_spec = spec_type.from_dto(self._spec)
             except Exception as e:
                 raise ValueError(
-                    f"{self._get_type_name()} port '{self.get_human_name()}' ({self.name}) has invalid resource spec. {e}")
+                    f"{self._get_type_name()} port '{self.get_human_name()}' ({self.name}) has invalid resource spec. {e}"
+                )
 
         return self._resource_spec
 
@@ -161,10 +160,7 @@ class Port(Base):
         return self._spec.human_name or self.name
 
     def to_dto(self) -> PortDTO:
-        return PortDTO(
-            resource_id=self._resource_id,
-            specs=self._spec
-        )
+        return PortDTO(resource_id=self._resource_id, specs=self._spec)
 
     @classmethod
     def load_from_dto(cls: Type[PortType], dto: PortDTO, name: str) -> PortType:
@@ -198,7 +194,7 @@ class InPort(Port):
 
     @classmethod
     def _get_type_name(cls) -> str:
-        return 'Input'
+        return "Input"
 
 
 @final
@@ -213,4 +209,4 @@ class OutPort(Port):
 
     @classmethod
     def _get_type_name(cls) -> str:
-        return 'Output'
+        return "Output"

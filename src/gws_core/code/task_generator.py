@@ -1,5 +1,3 @@
-
-
 import inspect
 from typing import Dict, List, Set, Type
 
@@ -17,8 +15,7 @@ from gws_core.task.task_io import TaskInputs
 
 
 class TaskGenerator:
-    """Class use to generate code for a task
-    """
+    """Class use to generate code for a task"""
 
     class_name: str = ""
 
@@ -30,11 +27,11 @@ class TaskGenerator:
     custom_imports: List[str] = None
     gws_core_additional_imports: Set[str] = None
 
-    _TASK_OUTPUTS_TYPE = 'TaskOutputs'
+    _TASK_OUTPUTS_TYPE = "TaskOutputs"
 
-    _INPUT_SPECS_NAME = 'input_specs'
-    _OUTPUT_SPECS_NAME = 'output_specs'
-    _CONFIG_SPECS_NAME = 'config_specs'
+    _INPUT_SPECS_NAME = "input_specs"
+    _OUTPUT_SPECS_NAME = "output_specs"
+    _CONFIG_SPECS_NAME = "config_specs"
 
     def __init__(self, class_name: str) -> None:
         self.class_name = StringHelper.to_pascal_case(class_name)
@@ -72,7 +69,8 @@ class TaskGenerator:
         """
         if not Utils.issubclass(resource_type, Resource):
             raise Exception(
-                f"The resource type {resource_type.__name__} is not a subclass of Resource")
+                f"The resource type {resource_type.__name__} is not a subclass of Resource"
+            )
         self.inputs_specs[key] = resource_type
 
         # add required imports, by default the type is Resource
@@ -89,7 +87,8 @@ class TaskGenerator:
         """
         if not Utils.issubclass(resource_type, Resource):
             raise Exception(
-                f"The resource type {resource_type.__name__} is not a subclass of Resource")
+                f"The resource type {resource_type.__name__} is not a subclass of Resource"
+            )
         self.outputs_specs[key] = resource_type
 
         # add required imports, by default the type is Resource
@@ -106,8 +105,7 @@ class TaskGenerator:
         """
 
         if not isinstance(param_spec, ParamSpec):
-            raise Exception(
-                f"The param spec {param_spec.__name__} is not a instance of ParamSpec")
+            raise Exception(f"The param spec {param_spec.__name__} is not a instance of ParamSpec")
         self.config_specs.add_spec(key, param_spec)
 
         # add required imports,
@@ -144,8 +142,16 @@ class TaskGenerator:
 {self._build_custom_imports()}"""
 
     def _build_gws_core_import(self) -> str:
-        required_imports = [Task.__name__, InputSpecs.__name__, OutputSpecs.__name__, ConfigSpecs.__name__,
-                            ConfigParams.__name__, TaskInputs.__name__, self._TASK_OUTPUTS_TYPE, task_decorator.__name__]
+        required_imports = [
+            Task.__name__,
+            InputSpecs.__name__,
+            OutputSpecs.__name__,
+            ConfigSpecs.__name__,
+            ConfigParams.__name__,
+            TaskInputs.__name__,
+            self._TASK_OUTPUTS_TYPE,
+            task_decorator.__name__,
+        ]
 
         required_imports.extend(self.gws_core_additional_imports)
         required_imports.sort()
@@ -153,7 +159,7 @@ class TaskGenerator:
         return f"from gws_core import ({', '.join(required_imports)})"
 
     def _build_custom_imports(self) -> str:
-        return '\n'.join(self.custom_imports)
+        return "\n".join(self.custom_imports)
 
     def _build_class_name(self) -> str:
         return f"""@{task_decorator.__name__}(unique_name="{self.class_name}")
@@ -162,7 +168,6 @@ class {self.class_name}(Task):"""
     ########################################### IO ###########################################
 
     def _build_input_specs(self) -> str:
-
         return f"""\t{self._INPUT_SPECS_NAME}: {InputSpecs.__name__} = {InputSpecs.__name__}({self._build_io_spec_dict(self.inputs_specs, InputSpec.__name__)})"""
 
     def _build_output_specs(self) -> str:
@@ -184,15 +189,15 @@ class {self.class_name}(Task):"""
         return f"""\t{self._CONFIG_SPECS_NAME} : {ConfigSpecs.__name__} = {ConfigSpecs.__name__}({self._build_config_specs_dict()})"""
 
     def _build_config_specs_dict(self) -> str:
-
         if len(self.config_specs) == 0:
             return "{}"
 
         params: list = []
         for key, value in self.config_specs.specs.items():
             default_value = value.get_default_value()
-            str_default_value = f"'{default_value}'" if isinstance(
-                default_value, str) else f"{default_value}"
+            str_default_value = (
+                f"'{default_value}'" if isinstance(default_value, str) else f"{default_value}"
+            )
             params.append(f"'{key}': {value.__class__.__name__}(default_value={str_default_value})")
 
         return self._build_list_to_json(params)
@@ -208,11 +213,13 @@ class {self.class_name}(Task):"""
 
         params = ""
         for param in task_run_signature.parameters.values():
-            if param.name == 'self':
-                params = 'self'
+            if param.name == "self":
+                params = "self"
             else:
                 params += f", {param.name}: {param.annotation.__name__}"
-        task_run_signature_string = f"def {Task.run.__name__}({params}) -> {self._TASK_OUTPUTS_TYPE}:"
+        task_run_signature_string = (
+            f"def {Task.run.__name__}({params}) -> {self._TASK_OUTPUTS_TYPE}:"
+        )
 
         method_content = self.run_method_content if self.run_method_content else "pass"
 

@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -55,9 +53,11 @@ class TableBarPlotView(BaseTableView):
     """
 
     _table: Table
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     _type: ViewType = ViewType.BAR_PLOT
 
@@ -68,7 +68,7 @@ class TableBarPlotView(BaseTableView):
         serie_list: Serie1dList = Serie1dList.from_list(params.get_value("series"))
 
         if len(serie_list) == 0:
-            raise BadRequestException('There must be at least one serie')
+            raise BadRequestException("There must be at least one serie")
 
         # create view
         view = self._get_view(params)
@@ -81,9 +81,7 @@ class TableBarPlotView(BaseTableView):
             y_data = self.get_values_from_selection_range(serie.y)
 
             view.add_series(
-                y=y_data,
-                name=serie.name,
-                tags=self.get_row_tags_from_selection_range(serie.y)
+                y=y_data, name=serie.name, tags=self.get_row_tags_from_selection_range(serie.y)
             )
 
         return view.data_to_dict(params)

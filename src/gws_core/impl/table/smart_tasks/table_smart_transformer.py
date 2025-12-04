@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, List
 
 from pandas import DataFrame
@@ -8,8 +6,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
-from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
-                                                 AIPromptCodeContext)
+from gws_core.impl.openai.ai_prompt_code import AIPromptCode, AIPromptCodeContext
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.table.table import Table
@@ -32,9 +29,14 @@ class AITableTransformer(AIPromptCode):
     keep_columns_tags: bool
     keep_rows_tags: bool
 
-    def __init__(self, table: Table, chat: OpenAiChat,
-                 keep_columns_tags: bool = False, keep_rows_tags: bool = False,
-                 message_dispatcher=None):
+    def __init__(
+        self,
+        table: Table,
+        chat: OpenAiChat,
+        keep_columns_tags: bool = False,
+        keep_rows_tags: bool = False,
+        message_dispatcher=None,
+    ):
         super().__init__(chat, message_dispatcher)
         self.table = table
         self.keep_columns_tags = keep_columns_tags
@@ -107,9 +109,12 @@ table_target = Table(target)
         return agent_code
 
 
-@task_decorator("SmartTableTransformer", human_name="Smart table transformer",
-                short_description="Table transformer that uses AI (OpenAI).",
-                style=TypingStyle.material_icon("auto_awesome"))
+@task_decorator(
+    "SmartTableTransformer",
+    human_name="Smart table transformer",
+    short_description="Table transformer that uses AI (OpenAI).",
+    style=TypingStyle.material_icon("auto_awesome"),
+)
 class TableSmartTransformer(Task):
     """
     This task uses AI to tranform a table.
@@ -124,38 +129,52 @@ class TableSmartTransformer(Task):
     ⚠️ This task does not support table tags. ⚠️
     """
 
-    input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(Table),
-    })
-    output_specs: OutputSpecs = OutputSpecs({
-        'target': OutputSpec(Table),
-        'generated_code': AITableTransformer.generate_agent_code_task_output_config()
-    })
-    config_specs = ConfigSpecs({
-        # get the openAI config specs
-        'prompt': OpenAiChatParam(),
-        # add custom config specs
-        "keep_columns_tags": BoolParam(default_value=False, human_name="Keep columns tags",
-                                       short_description="If true, the columns tags are kept in the output table for columns that have the same names."),
-        "keep_rows_tags": BoolParam(default_value=False, human_name="Keep rows tags",
-                                    short_description="If true, the rows tags are kept in the output table for rows that have the same names."),
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "source": InputSpec(Table),
+        }
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "target": OutputSpec(Table),
+            "generated_code": AITableTransformer.generate_agent_code_task_output_config(),
+        }
+    )
+    config_specs = ConfigSpecs(
+        {
+            # get the openAI config specs
+            "prompt": OpenAiChatParam(),
+            # add custom config specs
+            "keep_columns_tags": BoolParam(
+                default_value=False,
+                human_name="Keep columns tags",
+                short_description="If true, the columns tags are kept in the output table for columns that have the same names.",
+            ),
+            "keep_rows_tags": BoolParam(
+                default_value=False,
+                human_name="Keep rows tags",
+                short_description="If true, the rows tags are kept in the output table for rows that have the same names.",
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        chat: OpenAiChat = params.get_value("prompt")
 
-        chat: OpenAiChat = params.get_value('prompt')
-
-        ai_transformer = AITableTransformer(inputs["source"], chat,
-                                            params.get_value("keep_columns_tags"),
-                                            params.get_value("keep_rows_tags"),
-                                            self.message_dispatcher)
+        ai_transformer = AITableTransformer(
+            inputs["source"],
+            chat,
+            params.get_value("keep_columns_tags"),
+            params.get_value("keep_rows_tags"),
+            self.message_dispatcher,
+        )
         table: Table = ai_transformer.run()
 
         # save the new config with the new prompt
-        params.set_value('prompt', ai_transformer.chat)
+        params.set_value("prompt", ai_transformer.chat)
         params.save_params()
 
         generated_text = Text(ai_transformer.generate_agent_code())
         generated_text.name = "Table transformation code"
 
-        return {'target': table, 'generated_code': generated_text}
+        return {"target": table, "generated_code": generated_text}

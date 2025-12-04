@@ -11,10 +11,8 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
-from gws_core.impl.rich_text.block.rich_text_block_header import \
-    RichTextBlockHeaderLevel
-from gws_core.impl.rich_text.block.rich_text_block_list import \
-    RichTextBlockList
+from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
+from gws_core.impl.rich_text.block.rich_text_block_list import RichTextBlockList
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextBlock
 
@@ -25,8 +23,7 @@ class TranscriptionOutput(BaseModelDTO):
 
 
 class RichTextTranscriptionService:
-    """Service to transcribe an audio file to a rich text
-    """
+    """Service to transcribe an audio file to a rich text"""
 
     prompt = """
 
@@ -52,126 +49,99 @@ The generated JSON must validate this schema.
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "array",
         "items": {
-                "oneOf": [
-                    {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": ["paragraph"]
-                            },
-                            "command": {
-                                "type": "string",
-                                "enum": ["No command, default"]
-                            },
-                            "data": {
-                                "type": "object",
-                                "properties": {
-                                    "text": {
-                                        "type": "string",
-                                        "description": "The text of the paragraph. Capitalize the first letter of the first word."
-                                    }
+            "oneOf": [
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["paragraph"]},
+                        "command": {"type": "string", "enum": ["No command, default"]},
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "text": {
+                                    "type": "string",
+                                    "description": "The text of the paragraph. Capitalize the first letter of the first word.",
                                 }
                             },
                         },
-                        "required": ["type", "command", "data"]
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": ["title"]
-                            },
-                            "command": {
-                                "type": "string",
-                                "enum": ["title", "header"]
-                            },
-                            "data": {
-                                "type": "object",
-                                "properties": {
-                                    "level": {
-                                        "type": "integer",
-                                        "enum": [1, 2, 3],
-                                        "description": "The level of the title. 1 is the highest level."
-                                    },
-                                    "text": {
-                                        "type": "string",
-                                        "description": "The text of the title. Capitalize the first letter of the first word."
-                                    }
+                    "required": ["type", "command", "data"],
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["title"]},
+                        "command": {"type": "string", "enum": ["title", "header"]},
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "level": {
+                                    "type": "integer",
+                                    "enum": [1, 2, 3],
+                                    "description": "The level of the title. 1 is the highest level.",
                                 },
-                                "required": ["level", "text"]
-                            }
+                                "text": {
+                                    "type": "string",
+                                    "description": "The text of the title. Capitalize the first letter of the first word.",
+                                },
+                            },
+                            "required": ["level", "text"],
                         },
-                        "required": ["type", "command", "data"]
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": ["list"]
-                            },
-                            "command": {
-                                "type": "string",
-                                "enum": ["list"]
-                            },
-                            "data": {
-                                "type": "object",
-                                "properties": {
+                    "required": ["type", "command", "data"],
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["list"]},
+                        "command": {"type": "string", "enum": ["list"]},
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "description": "An array of dict representing the items of the list. Can be recursive.",
                                     "items": {
-                                        "type": "array",
-                                        "description": "An array of dict representing the items of the list. Can be recursive.",
-                                        "items": {
-                                            "type": "object",
-                                            "properties": {
-                                                "content": {
-                                                    "type": "string",
-                                                    "description": "The content of the item. Do not capitalize the first letter of the first word."
-                                                },
-                                                "items": {
-                                                    "type": "array",
-                                                    "description": "An array of dict representing the sub-items of the item. Can be recursive.",
-                                                }
+                                        "type": "object",
+                                        "properties": {
+                                            "content": {
+                                                "type": "string",
+                                                "description": "The content of the item. Do not capitalize the first letter of the first word.",
                                             },
-                                            "required": ["content", "items"]
-                                        }
+                                            "items": {
+                                                "type": "array",
+                                                "description": "An array of dict representing the sub-items of the item. Can be recursive.",
+                                            },
+                                        },
+                                        "required": ["content", "items"],
                                     },
-                                    "style": {
-                                        "type": "string",
-                                        "enum": ["ordered", "unordered"]
-                                    }
                                 },
-                                "required": ["items", "style"]
-                            }
+                                "style": {"type": "string", "enum": ["ordered", "unordered"]},
+                            },
+                            "required": ["items", "style"],
                         },
-                        "required": ["type", "command", "data"]
                     },
-                    {
-                        "type": "object",
-                        "properties": {
-                            "type": {
-                                "type": "string",
-                                "enum": ["formula"]
-                            },
-                            "command": {
-                                "type": "string",
-                                "enum": ["math formula"]
-                            },
-                            "data": {
-                                "type": "object",
-                                "properties": {
-                                    "formula": {
-                                        "type": "string",
-                                        "description": "The mathemathical formula using KaTeX syntax."
-                                    }
+                    "required": ["type", "command", "data"],
+                },
+                {
+                    "type": "object",
+                    "properties": {
+                        "type": {"type": "string", "enum": ["formula"]},
+                        "command": {"type": "string", "enum": ["math formula"]},
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "formula": {
+                                    "type": "string",
+                                    "description": "The mathemathical formula using KaTeX syntax.",
                                 }
                             },
                         },
-                        "required": ["type", "command", "data"]
                     },
-                ]
-        }
+                    "required": ["type", "command", "data"],
+                },
+            ]
+        },
     }
 
     @classmethod
@@ -186,7 +156,7 @@ The generated JSON must validate this schema.
 
         # write the audio file to a temporary directory
         tmp_dir = Settings.get_instance().make_temp_dir()
-        filename = 'audio.wav'
+        filename = "audio.wav"
         # filename = 'audio' + FileHelper.get_extension_from_content_type(file.content_type)
         audio_file_path = os.path.join(tmp_dir, filename)
 
@@ -202,7 +172,6 @@ The generated JSON must validate this schema.
 
     @classmethod
     def transcribe_audio_file_to_rich_text(cls, file_path: str) -> RichText:
-
         # transcribe the audio file
         transcription_text = OpenAiHelper.call_whisper(file_path)
 
@@ -224,7 +193,9 @@ The generated JSON must validate this schema.
 
         Logger.debug(f"[RichTextTranscriptionService] Transcription dict: {transcription_dict}")
 
-        transcriptions: List[TranscriptionOutput] = TranscriptionOutput.from_json_list(transcription_dict)
+        transcriptions: List[TranscriptionOutput] = TranscriptionOutput.from_json_list(
+            transcription_dict
+        )
 
         # convert the transcription to a rich text
         return cls._convert_transcriptions_to_rich_text(transcriptions)
@@ -239,7 +210,7 @@ The generated JSON must validate this schema.
         :rtype: str
         """
 
-        prompt = cls.prompt.replace('{{SCHEMA}}', str(cls.json_schema))
+        prompt = cls.prompt.replace("{{SCHEMA}}", str(cls.json_schema))
         chat = OpenAiChat(system_prompt=prompt)
         chat.add_user_message(transcription_text)
 
@@ -248,7 +219,9 @@ The generated JSON must validate this schema.
         return loads(response)
 
     @classmethod
-    def _convert_transcriptions_to_rich_text(cls, transcriptions: List[TranscriptionOutput]) -> RichText:
+    def _convert_transcriptions_to_rich_text(
+        cls, transcriptions: List[TranscriptionOutput]
+    ) -> RichText:
         """Convert a text to a rich text block
 
         :param text: text
@@ -264,8 +237,9 @@ The generated JSON must validate this schema.
         return rich_text
 
     @classmethod
-    def _append_transcription_to_rich_text(cls, rich_text: RichText,
-                                           transcription: TranscriptionOutput) -> RichTextBlock:
+    def _append_transcription_to_rich_text(
+        cls, rich_text: RichText, transcription: TranscriptionOutput
+    ) -> RichTextBlock:
         """Convert a text to a rich text block
 
         :param text: text
@@ -274,15 +248,16 @@ The generated JSON must validate this schema.
         :rtype: dict
         """
 
-        if transcription.type == 'paragraph':
-            return rich_text.add_paragraph(transcription.data.get('text'))
-        elif transcription.type == 'title':
+        if transcription.type == "paragraph":
+            return rich_text.add_paragraph(transcription.data.get("text"))
+        elif transcription.type == "title":
             return rich_text.add_header(
-                transcription.data.get('text'),
-                RichTextBlockHeaderLevel.from_int(transcription.data.get('level', 1)))
-        elif transcription.type == 'list':
+                transcription.data.get("text"),
+                RichTextBlockHeaderLevel.from_int(transcription.data.get("level", 1)),
+            )
+        elif transcription.type == "list":
             return rich_text.add_list(RichTextBlockList.from_json(transcription.data))
-        elif transcription.type == 'formula':
-            return rich_text.add_formula(transcription.data.get('formula'))
+        elif transcription.type == "formula":
+            return rich_text.add_formula(transcription.data.get("formula"))
         else:
             return None

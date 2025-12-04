@@ -1,5 +1,3 @@
-
-
 from peewee import Expression
 
 
@@ -19,7 +17,7 @@ class ExpressionBuilder:
         if self._expression is not None:
             self._expression = self._expression & (expression)
         else:
-            self._expression = (expression)
+            self._expression = expression
 
     def build(self) -> Expression:
         return self._expression

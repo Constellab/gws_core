@@ -1,5 +1,3 @@
-
-
 from gws_core import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.json.json_dict import JSONDict
@@ -15,7 +13,6 @@ from gws_core.test.base_test_case import BaseTestCase
 
 # test_exporter
 class TestExporter(BaseTestCase):
-
     def test_get_resource_exporter(self):
         task_typing: TaskTyping = ConverterService.get_resource_exporter(Table)
 
@@ -24,10 +21,13 @@ class TestExporter(BaseTestCase):
     def test_call_exporter(self):
         json_: JSONDict = JSONDict({"hello": "nice"})
 
-        resource_model: ResourceModel = ResourceModel.save_from_resource(json_, origin=ResourceOrigin.UPLOADED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            json_, origin=ResourceOrigin.UPLOADED
+        )
 
         file_model: ResourceModel = ConverterService.call_exporter(
-            resource_model.id, JSONExporter.get_typing_name(), {})
+            resource_model.id, JSONExporter.get_typing_name(), {}
+        )
 
         file: File = file_model.get_resource()
         self.assertTrue(FileHelper.exists_on_os(file.path))

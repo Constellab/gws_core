@@ -13,16 +13,15 @@ def import_streamlit_helper():
     Then module can be imported like this:
     from gws_streamlit_helper import StreamlitEnvLoader
     """
-    if 'gws_streamlit_helper' not in sys.modules:
+    if "gws_streamlit_helper" not in sys.modules:
         streamlit_helper_folder = os.path.join(
-            os.path.abspath(os.path.dirname(__file__)),
-            "streamlit_helper"
+            os.path.abspath(os.path.dirname(__file__)), "streamlit_helper"
         )
         sys.path.insert(0, streamlit_helper_folder)
 
 
 @st.cache_data
-def load_sources(source_ids: List[str]) -> List['Resource']:
+def load_sources(source_ids: List[str]) -> List["Resource"]:
     """
     Cached method to load the sources from the source ids.
 
@@ -30,6 +29,7 @@ def load_sources(source_ids: List[str]) -> List['Resource']:
     :rtype: _type_
     """
     from gws_core import ResourceModel
+
     sources_ = []
     for source_path in source_ids:
         resource_model = ResourceModel.get_by_id_and_check(source_path)
@@ -42,28 +42,28 @@ def start_app(streamlit_app: StreamlitMainAppRunner) -> None:
 
     # Load gws environment and log the user
 
-    with StreamlitEnvLoader(streamlit_app.get_app_id(),
-                            streamlit_app.dev_mode,
-                            streamlit_app.load_user()):
-
+    with StreamlitEnvLoader(
+        streamlit_app.get_app_id(), streamlit_app.dev_mode, streamlit_app.load_user()
+    ):
         from gws_core.streamlit import StreamlitContainers
 
         if not StreamlitAppInfoState.is_initialized():
-
             config = streamlit_app.config
 
             # load resources
-            sources = load_sources(config['source_ids'])
+            sources = load_sources(config["source_ids"])
 
-            StreamlitAppInfoState.set_app_info({
-                'app_id': streamlit_app.get_app_id(),
-                'user_access_token': streamlit_app.get_user_access_token(),
-                'requires_authentication': streamlit_app.authentication_is_required(),
-                'user_id': streamlit_app.load_user(),
-                'sources': sources,
-                'source_paths': None,
-                'params': config['params'],
-            })
+            StreamlitAppInfoState.set_app_info(
+                {
+                    "app_id": streamlit_app.get_app_id(),
+                    "user_access_token": streamlit_app.get_user_access_token(),
+                    "requires_authentication": streamlit_app.authentication_is_required(),
+                    "user_id": streamlit_app.load_user(),
+                    "sources": sources,
+                    "source_paths": None,
+                    "params": config["params"],
+                }
+            )
 
             # Force a rerun on first load to fix flickering
             # With tabs, if a user make the first action on a second tab, it swtich to the first tab
@@ -73,17 +73,18 @@ def start_app(streamlit_app: StreamlitMainAppRunner) -> None:
 
         app_info: StreamlitAppInfo = StreamlitAppInfoState.get_app_info()
 
-        streamlit_app.set_variable('sources', app_info['sources'])
-        streamlit_app.set_variable('params', app_info['params'])
+        streamlit_app.set_variable("sources", app_info["sources"])
+        streamlit_app.set_variable("params", app_info["params"])
 
         try:
             streamlit_app.start_app()
         except Exception as e:
             from gws_core import Logger
+
             Logger.log_exception_stack_trace(e)
-            StreamlitContainers.exception_container(key='main-exception-handler',
-                                                    error_text=f"Unexpected error: {str(e)}",
-                                                    exception=e)
+            StreamlitContainers.exception_container(
+                key="main-exception-handler", error_text=f"Unexpected error: {str(e)}", exception=e
+            )
 
 
 streamlit_main_app = StreamlitMainAppRunner()

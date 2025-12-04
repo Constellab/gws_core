@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -16,8 +14,7 @@ from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
-from gws_core.process_run_stat.process_run_stat_model import \
-    ProcessRunStatModel
+from gws_core.process_run_stat.process_run_stat_model import ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
@@ -52,22 +49,21 @@ class ProcessModel(ModelWithUser):
     :type Viewable: [type]
     """
 
-    parent_protocol_id: str = DeferredForeignKey('ProtocolModel', null=True, index=True, lazy_load=False)
+    parent_protocol_id: str = DeferredForeignKey(
+        "ProtocolModel", null=True, index=True, lazy_load=False
+    )
 
-    scenario: Scenario = ForeignKeyField(
-        Scenario, null=True, index=True, backref="+")
+    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, backref="+")
     instance_name = CharField(null=True)
-    config: Config = ForeignKeyField(Config, null=False, backref='+')
-    progress_bar: ProgressBar = ForeignKeyField(
-        ProgressBar, null=True, backref='+')
+    config: Config = ForeignKeyField(Config, null=False, backref="+")
+    progress_bar: ProgressBar = ForeignKeyField(ProgressBar, null=True, backref="+")
     process_typing_name = CharField(null=False)
     # version of the brick when the process was created
     brick_version_on_create = CharField(null=False, max_length=50)
     # version of the brick when the process was run
     brick_version_on_run = CharField(null=True, max_length=50)
-    run_by = ForeignKeyField(User, null=True, backref='+')
-    status: ProcessStatus = EnumField(choices=ProcessStatus,
-                                      default=ProcessStatus.DRAFT)
+    run_by = ForeignKeyField(User, null=True, backref="+")
+    status: ProcessStatus = EnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
 
     started_at = DateTimeUTC(null=True, with_milliseconds=True)
@@ -130,16 +126,15 @@ class ProcessModel(ModelWithUser):
 
     @property
     def parent_protocol(self) -> ProtocolModel:
-
         if not self._parent_protocol and self.parent_protocol_id:
             from ..protocol.protocol_model import ProtocolModel
-            self._parent_protocol = ProtocolModel.get_by_id(
-                self.parent_protocol_id)
+
+            self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
 
         return self._parent_protocol
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> 'ProcessModel':
+    def reset(self) -> "ProcessModel":
         """
         Reset the process
         """
@@ -154,9 +149,8 @@ class ProcessModel(ModelWithUser):
         self.data["inputs"] = self.inputs.to_json()
         self.data["outputs"] = self.outputs.to_json()
 
-    def save(self, *args, **kwargs) -> 'ProcessModel':
-        """Override save to save the inputs and outputs
-        """
+    def save(self, *args, **kwargs) -> "ProcessModel":
+        """Override save to save the inputs and outputs"""
 
         # if inputs were loaded, save them
         if self._inputs:
@@ -167,9 +161,8 @@ class ProcessModel(ModelWithUser):
             self.data["outputs"] = self.outputs.to_json()
         return super().save(*args, **kwargs)
 
-    def save_full(self) -> 'ProcessModel':
-        """Function to run overrided by the sub classes
-        """
+    def save_full(self) -> "ProcessModel":
+        """Function to run overrided by the sub classes"""
         pass
 
     def set_parent_protocol(self, parent_protocol: ProtocolModel) -> None:
@@ -190,23 +183,20 @@ class ProcessModel(ModelWithUser):
         self.style = process_type.get_style()
 
     def set_inputs_from_specs(self, inputs_specs: IOSpecs) -> None:
-        """Set the inputs from specs
-        """
+        """Set the inputs from specs"""
         self._inputs = Inputs.load_from_specs(inputs_specs)
 
         # Set the data inputs dict
         self.data["inputs"] = self.inputs.to_json()
 
     def set_outputs_from_specs(self, outputs_specs: IOSpecs) -> None:
-        """Set the outputs from specs
-        """
+        """Set the outputs from specs"""
         self._outputs = Outputs.load_from_specs(outputs_specs)
         # Set the data inputs dict
         self.data["outputs"] = self.outputs.to_json()
 
     def set_inputs_from_dto(self, inputs_dto: IODTO, reset: bool = False) -> None:
-        """Set the inputs from a DTO
-        """
+        """Set the inputs from a DTO"""
         self._inputs = Inputs.load_from_dto(inputs_dto)
 
         if reset:
@@ -215,8 +205,7 @@ class ProcessModel(ModelWithUser):
         self.data["inputs"] = self.inputs.to_json()
 
     def set_outputs_from_dto(self, outputs_dto: IODTO, reset: bool = False) -> None:
-        """Set the outputs from a DTO
-        """
+        """Set the outputs from a DTO"""
         self._outputs = Outputs.load_from_dto(outputs_dto)
         if reset:
             self._outputs.reset()
@@ -253,7 +242,7 @@ class ProcessModel(ModelWithUser):
 
     def _init_inputs_from_data(self) -> None:
         """Init the inputs object from the inputs in the data
-            Init the resource if they exists
+        Init the resource if they exists
         """
         if "inputs" not in self.data:
             self.data["inputs"] = {}
@@ -286,7 +275,7 @@ class ProcessModel(ModelWithUser):
 
     def _init_outputs_from_data(self) -> None:
         """Init the ouput object from the outputs in the data
-            Init the resource if they exists
+        Init the resource if they exists
         """
         if "outputs" not in self.data:
             self.data["outputs"] = {}
@@ -324,15 +313,13 @@ class ProcessModel(ModelWithUser):
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             # Create a new processRunException with correct info
-            exception: ProcessRunException = ProcessRunException.from_exception(
-                self, err)
+            exception: ProcessRunException = ProcessRunException.from_exception(self, err)
             self.mark_as_error_and_parent(exception)
             raise exception
 
     @abstractmethod
     def _run(self) -> None:
-        """Function to run overrided by the sub classes
-        """
+        """Function to run overrided by the sub classes"""
 
     def _run_before_task(self) -> None:
         self.mark_as_started()
@@ -399,8 +386,7 @@ class ProcessModel(ModelWithUser):
         pass
 
     def get_instance_name_context(self) -> str:
-        """ return the instance name in the context
-        """
+        """return the instance name in the context"""
 
         # specific case for the main protocol (without parent)
         if self.parent_protocol_id is None:
@@ -409,8 +395,7 @@ class ProcessModel(ModelWithUser):
         return self.get_name()
 
     def get_instance_path(self) -> str:
-        """Return the instance path
-        """
+        """Return the instance path"""
         if self.parent_protocol_id:
             parent_path = self.parent_protocol.get_instance_path()
             if len(parent_path) > 0:
@@ -420,8 +405,7 @@ class ProcessModel(ModelWithUser):
         return ""
 
     def get_name(self) -> str:
-        """Return the name of the process
-        """
+        """Return the name of the process"""
         return self.name
 
     def get_process_type(self) -> Type[Process]:
@@ -440,44 +424,43 @@ class ProcessModel(ModelWithUser):
         return typing is not None and typing.type_exists()
 
     def is_input_task(self) -> bool:
-        """return true if the process is of type InputTask
-        """
+        """return true if the process is of type InputTask"""
         return self.process_typing_name == InputTask.get_typing_name()
 
     def is_output_task(self) -> bool:
-        """return true if the process is of type OutputTask
-        """
+        """return true if the process is of type OutputTask"""
         return self.process_typing_name == OutputTask.get_typing_name()
 
     def is_auto_run(self) -> bool:
-        """Return true if the process is automatically run when added to a protocol
-        """
+        """Return true if the process is automatically run when added to a protocol"""
         return self.get_process_type().__auto_run__
 
     def can_be_auto_run(self) -> bool:
-        """ Return true if the process can be auto run now.
+        """Return true if the process can be auto run now.
 
         :return: _description_
         :rtype: bool
         """
-        return self.process_type_exists() and self.is_auto_run() and self.is_runnable and self.config.mandatory_values_are_set()
+        return (
+            self.process_type_exists()
+            and self.is_auto_run()
+            and self.is_runnable
+            and self.config.mandatory_values_are_set()
+        )
 
     def is_enable_in_sub_protocol(self) -> bool:
-        """Return true if the process is enable in sub protocol
-        """
+        """Return true if the process is enable in sub protocol"""
         return self.get_process_type().__enable_in_sub_protocol__
 
     def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
-        """Return the last message of the process
-        """
+        """Return the last message of the process"""
         if self.progress_bar is None:
             return None
 
         return self.progress_bar.get_last_message()
 
     def get_progress_value(self) -> float:
-        """Return the last message of the process
-        """
+        """Return the last message of the process"""
         if self.progress_bar is None:
             return 0
 
@@ -496,7 +479,6 @@ class ProcessModel(ModelWithUser):
         )
 
     def to_dto(self) -> ProcessDTO:
-
         process_typing: Typing = self.get_process_typing()
         process_type_dto: SimpleTypingDTO = None
         type_status: TypingStatus = TypingStatus.OK
@@ -537,7 +519,7 @@ class ProcessModel(ModelWithUser):
             process_type=process_type_dto,
             name=self.name,
             style=self.style,
-            is_agent=is_agent
+            is_agent=is_agent,
         )
 
     def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:
@@ -552,8 +534,7 @@ class ProcessModel(ModelWithUser):
         process_typing: Typing = self.get_process_typing()
 
         if process_typing is None:
-            raise Exception(
-                f"Could not find the process typing {self.process_typing_name}")
+            raise Exception(f"Could not find the process typing {self.process_typing_name}")
 
         ignore_config_values = ignore_input_task_config and self.is_input_task()
 
@@ -589,8 +570,11 @@ class ProcessModel(ModelWithUser):
 
     @property
     def is_runnable(self) -> bool:
-        return (self.is_draft or self.is_partially_run or
-                self.status == ProcessStatus.WAITING_FOR_CLI_PROCESS) and self.inputs.is_ready
+        return (
+            self.is_draft
+            or self.is_partially_run
+            or self.status == ProcessStatus.WAITING_FOR_CLI_PROCESS
+        ) and self.inputs.is_ready
 
     @property
     def is_finished(self) -> bool:
@@ -602,12 +586,16 @@ class ProcessModel(ModelWithUser):
 
     def check_is_updatable(self, error_if_finished: bool = True) -> None:
         if self.is_running:
-            raise BadRequestException(GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
-                                      GWSException.PROCESS_UPDATE_RUNNING_ERROR.name)
+            raise BadRequestException(
+                GWSException.PROCESS_UPDATE_RUNNING_ERROR.value,
+                GWSException.PROCESS_UPDATE_RUNNING_ERROR.name,
+            )
 
         if error_if_finished and self.is_finished and not self.is_auto_run():
-            raise BadRequestException(GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
-                                      GWSException.PROCESS_UPDATE_FISHINED_ERROR.name)
+            raise BadRequestException(
+                GWSException.PROCESS_UPDATE_FISHINED_ERROR.value,
+                GWSException.PROCESS_UPDATE_FISHINED_ERROR.name,
+            )
 
     @property
     def is_error(self) -> bool:
@@ -629,8 +617,8 @@ class ProcessModel(ModelWithUser):
         if self.is_success:
             return
         self.progress_bar.stop_success(
-            f"End of process '{self.get_instance_name_context()}'",
-            self.get_execution_time())
+            f"End of process '{self.get_instance_name_context()}'", self.get_execution_time()
+        )
         self.status = ProcessStatus.SUCCESS
         self.ended_at = DateHelper.now_utc()
         self.save()
@@ -642,14 +630,16 @@ class ProcessModel(ModelWithUser):
 
         pre_status = self.status
 
-        self.progress_bar.stop_error(error_info.detail,
-                                     self.get_execution_time())
+        self.progress_bar.stop_error(error_info.detail, self.get_execution_time())
         self.status = ProcessStatus.ERROR
         self.set_error_info(error_info)
         self.ended_at = DateHelper.now_utc()
         self.save()
 
-        if pre_status == ProcessStatus.RUNNING and error_info.unique_code != 'TASK_CHECK_BEFORE_STOP':
+        if (
+            pre_status == ProcessStatus.RUNNING
+            and error_info.unique_code != "TASK_CHECK_BEFORE_STOP"
+        ):
             self.save_process_run_stat()
 
     def mark_as_draft(self):
@@ -665,12 +655,14 @@ class ProcessModel(ModelWithUser):
         self.progress_bar.reset()
 
     def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
-        self.mark_as_error(ProcessErrorInfo(
-            detail=process_error.get_error_message(context),
-            unique_code=process_error.unique_code,
-            context=context,
-            instance_id=process_error.instance_id
-        ))
+        self.mark_as_error(
+            ProcessErrorInfo(
+                detail=process_error.get_error_message(context),
+                unique_code=process_error.unique_code,
+                context=context,
+                instance_id=process_error.instance_id,
+            )
+        )
 
         new_context: str = f"{self.get_instance_name_context()}"
         if context:
@@ -680,12 +672,14 @@ class ProcessModel(ModelWithUser):
             self.parent_protocol.mark_as_error_and_parent(process_error, new_context)
         # once we reach the main protocol, we mark the scenario as error
         elif self.scenario:
-            self.scenario.mark_as_error(ProcessErrorInfo(
-                detail=process_error.get_error_message(new_context),
-                unique_code=process_error.unique_code,
-                context=new_context,
-                instance_id=process_error.instance_id
-            ))
+            self.scenario.mark_as_error(
+                ProcessErrorInfo(
+                    detail=process_error.get_error_message(new_context),
+                    unique_code=process_error.unique_code,
+                    context=new_context,
+                    instance_id=process_error.instance_id,
+                )
+            )
 
     def mark_as_waiting_for_cli_process(self):
         self.status = ProcessStatus.WAITING_FOR_CLI_PROCESS
@@ -702,7 +696,11 @@ class ProcessModel(ModelWithUser):
         """
 
         try:
-            if self.is_auto_run() or self.process_typing_name == 'PROTOCOL.gws_core.Protocol' or self.get_community_agent_version_modified() is True:
+            if (
+                self.is_auto_run()
+                or self.process_typing_name == "PROTOCOL.gws_core.Protocol"
+                or self.get_community_agent_version_modified() is True
+            ):
                 return
 
             ProcessRunStatModel.create_stat(
@@ -714,18 +712,17 @@ class ProcessModel(ModelWithUser):
                 brick_version_on_run=self.brick_version_on_run,
                 brick_version_on_create=self.brick_version_on_create,
                 config_value=self.config.get_values(),
-                lab_env='DEV' if Settings.get_instance().is_dev_mode() else 'PROD',
+                lab_env="DEV" if Settings.get_instance().is_dev_mode() else "PROD",
                 executed_by=CurrentUserService().get_and_check_current_user().id,
                 error_info=self.get_error_info().to_json_dict() if self.get_error_info() else None,
-                community_agent_version_id=self.get_community_agent_version_id()
+                community_agent_version_id=self.get_community_agent_version_id(),
             )
         except Exception:
-            Logger.error(
-                f"Error: cannot save the run stat of the process '{self.instance_name}'")
+            Logger.error(f"Error: cannot save the run stat of the process '{self.instance_name}'")
 
     ######################################## CLASS METHODS ########################################
     @classmethod
-    def get_by_parent_protocol_id(cls, parent_protocol_id: str) -> List['ProcessModel']:
+    def get_by_parent_protocol_id(cls, parent_protocol_id: str) -> List["ProcessModel"]:
         """Get all the processes by parent protocol id
 
         :param parent_protocol_id: The parent protocol id

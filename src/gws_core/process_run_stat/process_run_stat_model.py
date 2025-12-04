@@ -4,12 +4,14 @@ from typing import Dict, Optional
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model import Model
 from gws_core.process_run_stat.process_run_stat_dto import (
-    ProcessRunStatDTO, ProcessRunStatLabEnv, ProcessRunStatStatus)
+    ProcessRunStatDTO,
+    ProcessRunStatLabEnv,
+    ProcessRunStatStatus,
+)
 from peewee import BooleanField, CharField, FloatField
 
 
 class ProcessRunStatModel(Model):
-
     process_typing_name: str = CharField()
     community_agent_version_id: str = CharField(null=True)
     status: ProcessRunStatStatus = CharField()
@@ -25,21 +27,21 @@ class ProcessRunStatModel(Model):
     sync_with_community: bool = BooleanField()
 
     @classmethod
-    def create_stat(cls,
-                    process_typing_name: str,
-                    status: ProcessRunStatStatus,
-                    started_at: datetime,
-                    ended_at: datetime,
-                    elapsed_time: float,
-                    brick_version_on_run: str,
-                    brick_version_on_create: str,
-                    config_value: Dict,
-                    lab_env: ProcessRunStatLabEnv,
-                    executed_by: str,
-                    error_info: Optional[Dict] = None,
-                    community_agent_version_id: Optional[str] = None
-                    ) -> None:
-
+    def create_stat(
+        cls,
+        process_typing_name: str,
+        status: ProcessRunStatStatus,
+        started_at: datetime,
+        ended_at: datetime,
+        elapsed_time: float,
+        brick_version_on_run: str,
+        brick_version_on_create: str,
+        config_value: Dict,
+        lab_env: ProcessRunStatLabEnv,
+        executed_by: str,
+        error_info: Optional[Dict] = None,
+        community_agent_version_id: Optional[str] = None,
+    ) -> None:
         stat: ProcessRunStatModel = ProcessRunStatModel()
         stat.process_typing_name = process_typing_name
         stat.community_agent_version_id = community_agent_version_id
@@ -73,9 +75,9 @@ class ProcessRunStatModel(Model):
             config_value=self.config_value,
             lab_env=self.lab_env,
             executed_by=self.executed_by,
-            sync_with_community=self.sync_with_community
+            sync_with_community=self.sync_with_community,
         )
 
     class Meta:
-        table_name = 'gws_process_run_stat'
+        table_name = "gws_process_run_stat"
         is_table = True

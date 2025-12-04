@@ -1,4 +1,3 @@
-
 """
 RField module for defining resource fields with different storage backends.
 
@@ -10,8 +9,7 @@ from enum import Enum
 from inspect import isclass, isfunction
 from typing import Any, Callable, Type, Union
 
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 
 
 class RFieldStorage(Enum):
@@ -50,12 +48,13 @@ class RFieldStorage(Enum):
             is_processed = BoolRField(storage=RFieldStorage.NONE)
         ```
     """
+
     DATABASE = "database"
     KV_STORE = "kv_store"
     NONE = "none"
 
 
-class BaseRField():
+class BaseRField:
     """Base class for all Resource fields with automatic persistence.
 
     BaseRField provides the foundation for defining fields on Resource objects that are
@@ -83,9 +82,12 @@ class BaseRField():
     include_in_dict_view: bool
     _default_value: Any
 
-    def __init__(self, default_value: Union[Type, Callable[[], Any], int, float, str, bool] = None,
-                 include_in_dict_view: bool = False,
-                 storage: RFieldStorage = RFieldStorage.KV_STORE) -> None:
+    def __init__(
+        self,
+        default_value: Union[Type, Callable[[], Any], int, float, str, bool] = None,
+        include_in_dict_view: bool = False,
+        storage: RFieldStorage = RFieldStorage.KV_STORE,
+    ) -> None:
         """Initialize a BaseRField with storage and default value configuration.
 
         :param default_value: Default value for the field when not set. Can be:
@@ -189,7 +191,8 @@ class BaseRField():
         if not isinstance(self._default_value, (int, bool, str, float)):
             raise BadRequestException(
                 f"Invalid default value '{str(self._default_value)}' for the RField. "
-                f"Only primitive values (int, float, bool, str), types, or functions are supported.")
+                f"Only primitive values (int, float, bool, str), types, or functions are supported."
+            )
 
         return self._default_value
 
@@ -243,11 +246,14 @@ class RField(BaseRField):
     _deserializer: Callable[[Any], Any] | None
     _serializer: Callable[[Any], Any] | None
 
-    def __init__(self, deserializer: Callable[[Any], Any] | None = None,
-                 serializer: Callable[[Any], Any] | None = None,
-                 default_value: Union[type, Callable[[], Any], int, float, str, bool, None] = None,
-                 include_in_dict_view: bool = False,
-                 storage: RFieldStorage = RFieldStorage.KV_STORE) -> None:
+    def __init__(
+        self,
+        deserializer: Callable[[Any], Any] | None = None,
+        serializer: Callable[[Any], Any] | None = None,
+        default_value: Union[type, Callable[[], Any], int, float, str, bool, None] = None,
+        include_in_dict_view: bool = False,
+        storage: RFieldStorage = RFieldStorage.KV_STORE,
+    ) -> None:
         """Initialize an RField with optional custom serialization logic.
 
         :param deserializer: Function to deserialize stored values (storage -> runtime).
@@ -268,7 +274,9 @@ class RField(BaseRField):
                         Defaults to KV_STORE for efficient storage of larger values
         :type storage: RFieldStorage, optional
         """
-        super().__init__(default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage
+        )
         self._deserializer = deserializer
         self._serializer = serializer
 

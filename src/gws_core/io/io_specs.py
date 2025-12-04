@@ -1,21 +1,19 @@
-
 from typing import Dict, List, Literal, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
-from gws_core.io.io_exception import (InvalidInputsException,
-                                      MissingInputResourcesException)
+from gws_core.io.io_exception import InvalidInputsException, MissingInputResourcesException
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
-IOSpecsType = Literal['normal', 'dynamic']
+IOSpecsType = Literal["normal", "dynamic"]
 
 
 class IOSpecsDTO(BaseModelDTO):
-    """IOSpecsDTO type
-    """
+    """IOSpecsDTO type"""
+
     specs: Dict[str, IOSpecDTO]
     type: IOSpecsType
     additional_info: dict
@@ -28,8 +26,8 @@ class IOSpecsDTO(BaseModelDTO):
 
 
 class OutputsCheckResult(BaseModelDTO):
-    """OutputCheckResult type
-    """
+    """OutputCheckResult type"""
+
     error: Optional[str]
     outputs: Optional[TaskOutputs]
     auto_convert_messages: List[str]
@@ -39,8 +37,8 @@ class OutputsCheckResult(BaseModelDTO):
 
 
 class OutputCheckResult(BaseModelDTO):
-    """OutputCheckResult type
-    """
+    """OutputCheckResult type"""
+
     error: Optional[str]
     resource: Optional[Resource]
     auto_convert_message: Optional[str]
@@ -49,8 +47,7 @@ class OutputCheckResult(BaseModelDTO):
         arbitrary_types_allowed = True
 
 
-class IOSpecs():
-
+class IOSpecs:
     _specs: Dict[str, IOSpec] = {}
 
     def __init__(self, specs: Dict[str, IOSpec] = None) -> None:
@@ -70,7 +67,7 @@ class IOSpecs():
         return name in self._specs
 
     def get_type(self) -> IOSpecsType:
-        return 'normal'
+        return "normal"
 
     def get_additional_info(self) -> dict:
         return {}
@@ -85,9 +82,7 @@ class IOSpecs():
 
     def to_dto(self) -> IOSpecsDTO:
         spec_dto = IOSpecsDTO(
-            specs={},
-            type=self.get_type(),
-            additional_info=self.get_additional_info()
+            specs={}, type=self.get_type(), additional_info=self.get_additional_info()
         )
 
         for key, spec in self.get_specs().items():
@@ -97,7 +92,6 @@ class IOSpecs():
 
 
 class InputSpecs(IOSpecs):
-
     _specs: Dict[str, InputSpec] = {}
 
     def __init__(self, input_specs: Dict[str, InputSpec] = None) -> None:
@@ -108,7 +102,7 @@ class InputSpecs(IOSpecs):
         :rtype: TaskInputs
         """
         missing_resource: List[str] = []
-        invalid_input_text: str = ''
+        invalid_input_text: str = ""
 
         input_dict: Dict[str, Resource] = {}
 
@@ -124,8 +118,10 @@ class InputSpecs(IOSpecs):
 
             resource: Resource = inputs[key]
             if not spec.is_compatible_with_resource_type(type(resource)):
-                invalid_input_text = invalid_input_text + \
-                    f"The input '{spec.human_name}' expected a '{spec.get_resources_human_names()}' but the provided resource is a '{resource.get_human_name()}'. Please provide a valid resource."
+                invalid_input_text = (
+                    invalid_input_text
+                    + f"The input '{spec.human_name}' expected a '{spec.get_resources_human_names()}' but the provided resource is a '{resource.get_human_name()}'. Please provide a valid resource."
+                )
 
             # validate the resource through the spec
             spec.validate_resource(resource)
@@ -149,7 +145,6 @@ class InputSpecs(IOSpecs):
 
 
 class OutputSpecs(IOSpecs):
-
     _specs: Dict[str, OutputSpec] = {}
 
     def __init__(self, output_specs: Dict[str, OutputSpec] = None) -> None:
@@ -167,30 +162,32 @@ class OutputSpecs(IOSpecs):
             task_outputs = {}
 
         if not isinstance(task_outputs, dict):
-            raise Exception('The task output is not a dictionary')
+            raise Exception("The task output is not a dictionary")
 
         task_outputs = self._transform_output_resources(task_outputs)
 
-        error_text: str = ''
+        error_text: str = ""
         auto_convert_messages: List[str] = []
 
         verified_outputs: TaskOutputs = {}
 
         for key, spec in self._specs.items():
-
             # handle the case where the output is None
             if key not in task_outputs or task_outputs[key] is None:
                 if not spec.optional:
                     text = "was not provided" if key not in task_outputs else "is None"
-                    error_text = error_text + \
-                        f"The output '{self._get_spec_key_pretty_name(key)}' {text}."
+                    error_text = (
+                        error_text + f"The output '{self._get_spec_key_pretty_name(key)}' {text}."
+                    )
                 continue
 
             # If the resource for the output port was provided
             if key in task_outputs:
                 resource: Resource = task_outputs[key]
 
-                check_result = self._check_output(resource, spec, self._get_spec_key_pretty_name(key))
+                check_result = self._check_output(
+                    resource, spec, self._get_spec_key_pretty_name(key)
+                )
 
                 # add the auto convert message
                 if check_result.auto_convert_message is not None:
@@ -206,14 +203,13 @@ class OutputSpecs(IOSpecs):
                     verified_outputs[key] = check_result.resource
 
         return OutputsCheckResult(
-            error=error_text,
-            outputs=verified_outputs,
-            auto_convert_messages=auto_convert_messages
+            error=error_text, outputs=verified_outputs, auto_convert_messages=auto_convert_messages
         )
 
-    def _check_output(self, output_resource: Resource, spec: OutputSpec, pretty_key_name: str) -> OutputCheckResult:
-        """Method to check a output resource, return str if there is an error with the resource
-        """
+    def _check_output(
+        self, output_resource: Resource, spec: OutputSpec, pretty_key_name: str
+    ) -> OutputCheckResult:
+        """Method to check a output resource, return str if there is an error with the resource"""
 
         auto_convert_message: str = None
         # if the resource is not a Resource, try to convert it
@@ -222,7 +218,7 @@ class OutputSpecs(IOSpecs):
             if converted_resource is None:
                 return OutputCheckResult(
                     error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
-                    resource=None
+                    resource=None,
                 )
 
             auto_convert_message = f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' was automatically converted to '{type(converted_resource).get_human_name()}'."
@@ -232,36 +228,37 @@ class OutputSpecs(IOSpecs):
         if not spec.is_compatible_with_resource_type(type(output_resource)):
             return OutputCheckResult(
                 error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a compatble with the corresponding output spec.",
-                resource=None, auto_convert_message=auto_convert_message)
+                resource=None,
+                auto_convert_message=auto_convert_message,
+            )
 
         # Check that the resource is well formed
         try:
             error = output_resource.check_resource()
 
             if error is not None and len(error) > 0:
-                return OutputCheckResult(error=error, resource=None, auto_convert_message=auto_convert_message)
+                return OutputCheckResult(
+                    error=error, resource=None, auto_convert_message=auto_convert_message
+                )
 
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             return OutputCheckResult(
                 error=f"Error during the key of the output resource '{pretty_key_name}'. Error : {str(err)}",
                 resource=None,
-                auto_convert_message=auto_convert_message
+                auto_convert_message=auto_convert_message,
             )
 
         return OutputCheckResult(
-            resource=output_resource,
-            error=None,
-            auto_convert_message=auto_convert_message
+            resource=output_resource, error=None, auto_convert_message=auto_convert_message
         )
 
     def _transform_output_resources(self, task_outputs: TaskOutputs) -> TaskOutputs:
-        """ Method to convert the task output to be saved in the outputs.
+        """Method to convert the task output to be saved in the outputs.
         If the output is not dynamic, it returns the task_outputs as it is.
         """
         return task_outputs
 
     def _get_spec_key_pretty_name(self, key: str) -> str:
-        """Get the pretty name of the spec key
-        """
+        """Get the pretty name of the spec key"""
         return key

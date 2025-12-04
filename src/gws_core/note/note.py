@@ -1,22 +1,16 @@
-
-
 from typing import Any, List, final
 
-from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
-                    ModelSelect)
+from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.entity_navigator.entity_navigator_type import (
-    NavigableEntity, NavigableEntityType)
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
-from gws_core.impl.rich_text.rich_text_modification import \
-    RichTextModificationsDTO
+from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -44,11 +38,11 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     is_validated: bool = BooleanField(default=False)
     validated_at = DateTimeUTC(null=True)
-    validated_by = ForeignKeyField(User, null=True, backref='+')
+    validated_by = ForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
     last_sync_at = DateTimeUTC(null=True)
-    last_sync_by = ForeignKeyField(User, null=True, backref='+')
+    last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
 
@@ -61,14 +55,16 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.content = rich_text.to_dto()
 
     def check_is_updatable(self) -> None:
-        """Throw an error if the note is not updatable
-        """
+        """Throw an error if the note is not updatable"""
         # check scenario status
         if self.is_validated:
-            raise BadRequestException(GWSException.NOTE_VALIDATED.value, GWSException.NOTE_VALIDATED.name)
+            raise BadRequestException(
+                GWSException.NOTE_VALIDATED.value, GWSException.NOTE_VALIDATED.name
+            )
         if self.is_archived:
             raise BadRequestException(
-                detail="The note is archived, please unachived it to update it")
+                detail="The note is archived, please unachived it to update it"
+            )
 
     def to_dto(self) -> NoteDTO:
         return NoteDTO(
@@ -84,7 +80,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
             validated_by=self.validated_by.to_dto() if self.validated_by else None,
             last_sync_at=self.last_sync_at,
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
-            is_archived=self.is_archived
+            is_archived=self.is_archived,
         )
 
     def to_full_dto(self) -> NoteFullDTO:
@@ -103,7 +99,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             is_archived=self.is_archived,
             content=self.content,
-            modifications=self.modifications
+            modifications=self.modifications,
         )
 
     def validate(self) -> None:
@@ -112,8 +108,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.validated_by = CurrentUserService.get_and_check_current_user()
         self.lab_config = LabConfigModel.get_current_config()
 
-    def archive(self, archive: bool) -> 'Note':
-
+    def archive(self, archive: bool) -> "Note":
         if self.is_archived == archive:
             return self
         self.is_archived = archive
@@ -135,7 +130,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         return result
 
     @classmethod
-    def get_synced_objects(cls) -> List['Note']:
+    def get_synced_objects(cls) -> List["Note"]:
         """Get all notes that are synced with space
 
         :return: [description]
@@ -145,10 +140,12 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def clear_folder(cls, folders: List[SpaceFolder]) -> None:
-        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(cls.folder.in_(folders)).execute()
+        cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(
+            cls.folder.in_(folders)
+        ).execute()
 
     class Meta:
-        table_name = 'gws_note'
+        table_name = "gws_note"
         is_table = True
 
 
@@ -161,14 +158,14 @@ class NoteScenario(BaseModel):
     :rtype: [type]
     """
 
-    scenario = ForeignKeyField(Scenario, on_delete='CASCADE')
-    note = ForeignKeyField(Note, on_delete='CASCADE')
+    scenario = ForeignKeyField(Scenario, on_delete="CASCADE")
+    note = ForeignKeyField(Note, on_delete="CASCADE")
 
     ############################################# CLASS METHODS ########################################
 
     @classmethod
-    def create_obj(cls, scenario: Scenario, note: Note) -> 'NoteScenario':
-        note_exp: 'NoteScenario' = NoteScenario()
+    def create_obj(cls, scenario: Scenario, note: Note) -> "NoteScenario":
+        note_exp: "NoteScenario" = NoteScenario()
         note_exp.scenario = scenario
         note_exp.note = note
         return note_exp
@@ -189,8 +186,9 @@ class NoteScenario(BaseModel):
 
     @classmethod
     def find_synced_notes_by_scenario(cls, scenario_id: str) -> List[Note]:
-        list_: List[NoteScenario] = list(cls.select().where(
-            (cls.scenario == scenario_id) & (cls.note.last_sync_at.is_null(False)))
+        list_: List[NoteScenario] = list(
+            cls.select()
+            .where((cls.scenario == scenario_id) & (cls.note.last_sync_at.is_null(False)))
             .join(Note)
         )
 
@@ -202,7 +200,7 @@ class NoteScenario(BaseModel):
 
         return [x.scenario for x in list_]
 
-    def save(self, *args, **kwargs) -> 'BaseModel':
+    def save(self, *args, **kwargs) -> "BaseModel":
         """Use force insert because it is a composite key
         https://stackoverflow.com/questions/30038185/python-peewee-save-doesnt-work-as-expected
 
@@ -212,6 +210,6 @@ class NoteScenario(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
-        table_name = 'gws_note_scenario'
+        table_name = "gws_note_scenario"
         is_table = True
         primary_key = CompositeKey("scenario", "note")

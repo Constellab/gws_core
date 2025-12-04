@@ -1,4 +1,3 @@
-
 from typing import List, Optional
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -11,9 +10,8 @@ from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 
 
-class EntityTagList():
-    """Aggregate to manage tags of an entity
-    """
+class EntityTagList:
+    """Aggregate to manage tags of an entity"""
 
     _entity_id: str
     _entity_type: TagEntityType
@@ -22,9 +20,13 @@ class EntityTagList():
 
     _default_origin: TagOrigin = None
 
-    def __init__(self, entity_type: TagEntityType, entity_id: str,
-                 tags: List[EntityTag] = None,
-                 default_origin: TagOrigin = None) -> None:
+    def __init__(
+        self,
+        entity_type: TagEntityType,
+        entity_id: str,
+        tags: List[EntityTag] = None,
+        default_origin: TagOrigin = None,
+    ) -> None:
         self._entity_type = entity_type
         self._entity_id = entity_id
 
@@ -34,15 +36,16 @@ class EntityTagList():
         self._default_origin = default_origin
 
     def has_tag(self, tag: Tag) -> bool:
-        """return true if the tag key and value already exist in the model
-        """
+        """return true if the tag key and value already exist in the model"""
         return self.get_tag(tag) is not None
 
     def get_tag(self, tag: Tag) -> Optional[EntityTag]:
-        """return the tag if it exists
-        """
-        tags = [entity_tag for entity_tag in self._tags if entity_tag.tag_key ==
-                tag.key and entity_tag.get_tag_value() == tag.value]
+        """return the tag if it exists"""
+        tags = [
+            entity_tag
+            for entity_tag in self._tags
+            if entity_tag.tag_key == tag.key and entity_tag.get_tag_value() == tag.value
+        ]
 
         if len(tags) > 0:
             return tags[0]
@@ -50,13 +53,11 @@ class EntityTagList():
         return None
 
     def get_tags_by_key(self, tag_key: str) -> List[EntityTag]:
-        """return the tags with the given key
-        """
+        """return the tags with the given key"""
         return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
 
     def get_first_tag_by_key(self, tag_key: str) -> Optional[EntityTag]:
-        """return the first tag with the given key or None if it does not exist
-        """
+        """return the first tag with the given key or None if it does not exist"""
         tags = self.get_tags_by_key(tag_key)
 
         if len(tags) > 0:
@@ -65,8 +66,7 @@ class EntityTagList():
         return None
 
     def has_tag_key(self, tag_key: str) -> bool:
-        """return true if the tag key already exist in the model
-        """
+        """return true if the tag key already exist in the model"""
         return len(self.get_tags_by_key(tag_key)) > 0
 
     def get_tags(self) -> List[EntityTag]:
@@ -79,8 +79,7 @@ class EntityTagList():
         return [tag for tag in self._tags if tag.is_propagable]
 
     def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> List[Tag]:
-        """Propagate the tags to the entity
-        """
+        """Propagate the tags to the entity"""
         return [tag.propagate_tag(origin_type, origin_id) for tag in self.get_propagable_tags()]
 
     def is_empty(self) -> bool:
@@ -113,22 +112,28 @@ class EntityTagList():
                 key=tag.key,
                 label=StringHelper.snake_case_to_sentence(tag.key),
                 value_format=tag.get_value_format(),
-                is_community_tag=tag.is_community_tag_key)
+                is_community_tag=tag.is_community_tag_key,
+            )
 
         if tag_value_model is None:
-            tag_value_model = TagValueModel.create_tag_value(tag_key_model=tag_key_model, tag_value=tag.value,
-                                                             additional_info=tag.additional_info,
-                                                             is_community_tag_value=tag.is_community_tag_value)
+            tag_value_model = TagValueModel.create_tag_value(
+                tag_key_model=tag_key_model,
+                tag_value=tag.value,
+                additional_info=tag.additional_info,
+                is_community_tag_value=tag.is_community_tag_value,
+            )
 
-        new_tag = EntityTag.create_entity_tag(key=tag_key_model.key,
-                                              value=tag_value_model.tag_value,
-                                              is_propagable=tag.is_propagable,
-                                              origins=tag.origins,
-                                              value_format=tag_key_model.value_format,
-                                              entity_id=self._entity_id,
-                                              entity_type=self._entity_type,
-                                              label=tag_key_model.label,
-                                              is_community_tag=tag.is_community_tag_key)
+        new_tag = EntityTag.create_entity_tag(
+            key=tag_key_model.key,
+            value=tag_value_model.tag_value,
+            is_propagable=tag.is_propagable,
+            origins=tag.origins,
+            value_format=tag_key_model.value_format,
+            entity_id=self._entity_id,
+            entity_type=self._entity_type,
+            label=tag_key_model.label,
+            is_community_tag=tag.is_community_tag_key,
+        )
         self._tags.append(new_tag)
         return new_tag
 
@@ -142,7 +147,6 @@ class EntityTagList():
 
         new_tags: List[EntityTag] = []
         for tag in tags:
-
             # add tag to entity
             new_tags.append(self.add_tag(tag))
 
@@ -150,22 +154,19 @@ class EntityTagList():
 
     @GwsCoreDbManager.transaction()
     def replace_tags(self, tags: List[Tag]) -> None:
-        """Remove the tag with the same key and add the new tags
-        """
+        """Remove the tag with the same key and add the new tags"""
         for tag in tags:
             self.replace_tag(tag)
 
     @GwsCoreDbManager.transaction()
     def replace_tag(self, tag: Tag) -> None:
-        """Remove the tag with the same key and add the new tag
-        """
+        """Remove the tag with the same key and add the new tag"""
         self.delete_tag_by_key(tag.key)
         self.add_tag(tag)
 
     @GwsCoreDbManager.transaction()
     def delete_tags(self, tags: List[Tag]) -> None:
-        """Delete a tag from the entity tags. Check if the tag is still used by other entities
-        """
+        """Delete a tag from the entity tags. Check if the tag is still used by other entities"""
         for tag in tags:
             self.delete_tag(tag)
 
@@ -183,16 +184,14 @@ class EntityTagList():
 
     @GwsCoreDbManager.transaction()
     def delete_tag_by_key(self, tag_key: str) -> None:
-        """Delete a tag from the entity tags by key
-        """
+        """Delete a tag from the entity tags by key"""
         tags = self.get_tags_by_key(tag_key)
         for tag in tags:
             self._delete_tag(tag.to_simple_tag())
 
     @GwsCoreDbManager.transaction()
     def _delete_tag_origin(self, tag: Tag) -> None:
-        """Delete a tag origin from the list, if there is no more origins, delete the tag
-        """
+        """Delete a tag origin from the list, if there is no more origins, delete the tag"""
         existing_tag = self.get_tag(tag)
         if existing_tag is None:
             return
@@ -211,8 +210,7 @@ class EntityTagList():
 
     @GwsCoreDbManager.transaction()
     def _delete_tag(self, tag: Tag) -> None:
-        """Delete a tag from the entity tags. Check if the tag is still used by other entities
-        """
+        """Delete a tag from the entity tags. Check if the tag is still used by other entities"""
         existing_tag = self.get_tag(tag)
         if existing_tag is None:
             return
@@ -232,18 +230,18 @@ class EntityTagList():
         return [tag.to_dto() for tag in self._tags]
 
     def support_multiple_origins(self) -> bool:
-        """Return true if the entity support multiple origins for a tag
-        """
+        """Return true if the entity support multiple origins for a tag"""
         return self._entity_type in [TagEntityType.NOTE]
 
     #################################### CLASS METHODS ####################################
 
     @classmethod
-    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str,
-                       default_origin: TagOrigin = None) -> 'EntityTagList':
-        return EntityTagList(entity_type, entity_id,
-                             EntityTag.find_by_entity(entity_type, entity_id),
-                             default_origin)
+    def find_by_entity(
+        cls, entity_type: TagEntityType, entity_id: str, default_origin: TagOrigin = None
+    ) -> "EntityTagList":
+        return EntityTagList(
+            entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id), default_origin
+        )
 
     @classmethod
     def delete_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> None:

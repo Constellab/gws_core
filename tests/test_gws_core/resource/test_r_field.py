@@ -1,12 +1,21 @@
-
-
 from numpy import NaN
 from pandas.core.frame import DataFrame
 
-from gws_core import (BaseTestCase, BoolRField, DataFrameRField, DictRField,
-                      FloatRField, IntRField, KVStore, ListRField,
-                      ResourceModel, ResourceRField, SerializableObjectJson,
-                      SerializableRField, StrRField)
+from gws_core import (
+    BaseTestCase,
+    BoolRField,
+    DataFrameRField,
+    DictRField,
+    FloatRField,
+    IntRField,
+    KVStore,
+    ListRField,
+    ResourceModel,
+    ResourceRField,
+    SerializableObjectJson,
+    SerializableRField,
+    StrRField,
+)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
 
@@ -27,7 +36,6 @@ class TestJsonableObject(SerializableObjectJson):
 
 # test_r_field
 class TestRField(BaseTestCase):
-
     def test_int_r_field(self):
         r_field = IntRField(-1)
 
@@ -125,7 +133,7 @@ class TestRField(BaseTestCase):
         # Test default value
         self.assertIsInstance(r_field.get_default_value(), DataFrame)
 
-        kv_store: KVStore = KVStore.from_filename('test_dataframe_r_field')
+        kv_store: KVStore = KVStore.from_filename("test_dataframe_r_field")
         path = str(kv_store.generate_new_file())
 
         # Test dumping and reload dataframe on file
@@ -136,7 +144,9 @@ class TestRField(BaseTestCase):
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
 
     def test_resource_r_field(self):
-        resource_model = ResourceModel.save_from_resource(Robot.empty(), origin=ResourceOrigin.UPLOADED)
+        resource_model = ResourceModel.save_from_resource(
+            Robot.empty(), origin=ResourceOrigin.UPLOADED
+        )
         robot: Robot = resource_model.get_resource()
 
         r_field = ResourceRField()
@@ -149,7 +159,6 @@ class TestRField(BaseTestCase):
         self.assertEqual(robot.weight, resource_deserilized.weight)
 
     def test_jsonable_object_r_field(self):
-
         r_field = SerializableRField(TestJsonableObject)
         value = TestJsonableObject("test")
         serialized = r_field.serialize(value)

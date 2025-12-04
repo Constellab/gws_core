@@ -1,5 +1,3 @@
-
-
 from multiprocessing import Process
 from typing import Any, Callable, Set, Type
 
@@ -33,8 +31,16 @@ class ProcessDb(Process):
     :type Process: type
     """
 
-    def __init__(self, group=None, target: Callable = None, name: str = None,
-                 args: tuple = (), kwargs: dict = None, *, daemon: bool = None):
+    def __init__(
+        self,
+        group=None,
+        target: Callable = None,
+        name: str = None,
+        args: tuple = (),
+        kwargs: dict = None,
+        *,
+        daemon: bool = None,
+    ):
         """
         Initialize the ProcessDb
 
@@ -52,7 +58,9 @@ class ProcessDb(Process):
         """
         if kwargs is None:
             kwargs = {}
-        super().__init__(group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon)
+        super().__init__(
+            group=group, target=target, name=name, args=args, kwargs=kwargs, daemon=daemon
+        )
 
     def run(self):
         """

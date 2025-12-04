@@ -1,8 +1,16 @@
-
-
-from gws_core import (ConfigParams, DynamicInputs, DynamicOutputs, InputSpec,
-                      OutputSpec, ResourceModel, Table, Task, TaskInputs,
-                      TaskOutputs, task_decorator)
+from gws_core import (
+    ConfigParams,
+    DynamicInputs,
+    DynamicOutputs,
+    InputSpec,
+    OutputSpec,
+    ResourceModel,
+    Table,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing import Typing
@@ -18,39 +26,46 @@ from gws_core.test.base_test_case import BaseTestCase
 
 @task_decorator("TestDynamicIO")
 class TestDynamicIO(Task):
+    input_specs = DynamicInputs(
+        {
+            "table": InputSpec(Table),
+        },
+        additionnal_port_spec=InputSpec(Table),
+    )
 
-    input_specs = DynamicInputs({
-        'table': InputSpec(Table),
-    }, additionnal_port_spec=InputSpec(Table))
-
-    output_specs = DynamicOutputs({
-        'resource': OutputSpec(Resource),
-    }, additionnal_port_spec=OutputSpec(Resource))
+    output_specs = DynamicOutputs(
+        {
+            "resource": OutputSpec(Resource),
+        },
+        additionnal_port_spec=OutputSpec(Resource),
+    )
 
 
 def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-    return {'target': inputs['source']}
+    return {"target": inputs["source"]}
 
 
 # test_dynamic_ports
 class TestDynamicPorts(BaseTestCase):
-
     def test_dynamic_ports(self):
-        """ Test add dynamic input and output ports to a process.
+        """Test add dynamic input and output ports to a process.
         Test update the type of a dynamic port.
         Test delete a dynamic port.
         """
         protocol: ProtocolModel = ScenarioService.create_scenario().protocol_model
         # add a process with a dynamic port
-        process_model: ProcessModel = ProtocolService.add_process_to_protocol(protocol, TestDynamicIO, 'p1').process
+        process_model: ProcessModel = ProtocolService.add_process_to_protocol(
+            protocol, TestDynamicIO, "p1"
+        ).process
 
         # Check that it has 1 input and 1 output
         self.assertEqual(len(process_model.inputs.ports.values()), 1)
         self.assertEqual(len(process_model.outputs.ports.values()), 1)
 
         # Add a dynamic port to the process
-        process_model = ProtocolService.add_dynamic_input_port_to_process(protocol.id,
-                                                                          process_model.instance_name).process
+        process_model = ProtocolService.add_dynamic_input_port_to_process(
+            protocol.id, process_model.instance_name
+        ).process
 
         # Check that it has 2 inputs
         self.assertEqual(len(process_model.inputs.ports.values()), 2)
@@ -67,10 +82,9 @@ class TestDynamicPorts(BaseTestCase):
             resource_types=[typing.to_ref_dto()],
             optional=False,
         )
-        process_model = ProtocolService.update_dynamic_input_port_of_process(protocol.id,
-                                                                             process_model.instance_name,
-                                                                             port_name,
-                                                                             io_spec).process
+        process_model = ProtocolService.update_dynamic_input_port_of_process(
+            protocol.id, process_model.instance_name, port_name, io_spec
+        ).process
 
         # Check that the port type was updated
         port = process_model.inputs.get_port(port_name)
@@ -78,24 +92,29 @@ class TestDynamicPorts(BaseTestCase):
 
         # connect source to the new port
         # add a source to the input
-        resource_model: ResourceModel = ResourceModel.save_from_resource(Robot.empty(), ResourceOrigin.UPLOADED)
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            Robot.empty(), ResourceOrigin.UPLOADED
+        )
         ProtocolService.add_input_resource_to_process_input(
-            protocol.id, resource_model.id, process_model.instance_name, port_name).process
+            protocol.id, resource_model.id, process_model.instance_name, port_name
+        ).process
 
         protocol = protocol.refresh()
         self.assertEqual(len(protocol.connectors), 1)
 
         # Delete port and check that the connector was deleted
         process_model = ProtocolService.delete_dynamic_input_port_of_process(
-            protocol.id, process_model.instance_name, port_name).process
+            protocol.id, process_model.instance_name, port_name
+        ).process
 
         self.assertEqual(len(process_model.inputs.ports.values()), 1)
         protocol = protocol.refresh()
         self.assertEqual(len(protocol.connectors), 0)
 
         # Add a dynamic output port to the process
-        process_model = ProtocolService.add_dynamic_output_port_to_process(protocol.id,
-                                                                           process_model.instance_name).process
+        process_model = ProtocolService.add_dynamic_output_port_to_process(
+            protocol.id, process_model.instance_name
+        ).process
 
         # Check that it has 2 outputs
         self.assertEqual(len(process_model.outputs.ports.values()), 2)
@@ -106,7 +125,8 @@ class TestDynamicPorts(BaseTestCase):
         port_name = list(process_model.outputs.ports.keys())[1]
 
         # Delete the output port
-        process_model = ProtocolService.delete_dynamic_output_port_of_process(protocol.id, process_model.instance_name,
-                                                                              port_name).process
+        process_model = ProtocolService.delete_dynamic_output_port_of_process(
+            protocol.id, process_model.instance_name, port_name
+        ).process
         process_model = process_model.refresh()
         protocol = protocol.refresh()

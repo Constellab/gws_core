@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -12,7 +10,7 @@ class ImpactResultDTO(BaseModelDTO):
     impacted_entities: List[EntityNavGroupDTO]
 
 
-class ImpactResult():
+class ImpactResult:
     impacted_entities: NavigableEntitySet
 
     def __init__(self, impacted_entities: NavigableEntitySet):
@@ -24,4 +22,5 @@ class ImpactResult():
     def to_dto(self) -> ImpactResultDTO:
         return ImpactResultDTO(
             has_entities=self.has_entities(),
-            impacted_entities=self.impacted_entities.get_entity_dict_nav_group())
+            impacted_entities=self.impacted_entities.get_entity_dict_nav_group(),
+        )

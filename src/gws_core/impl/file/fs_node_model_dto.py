@@ -1,5 +1,3 @@
-
-
 from gws_core.core.model.model_dto import BaseModelDTO
 
 

@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Type
 
@@ -65,8 +63,13 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
         markdown += f": {self.short_description}"
 
         # write the default value (only for basic types)
-        basic_types = [ParamSpecTypeStr.STRING, ParamSpecTypeStr.TEXT, ParamSpecTypeStr.BOOL, ParamSpecTypeStr.INT,
-                       ParamSpecTypeStr.FLOAT]
+        basic_types = [
+            ParamSpecTypeStr.STRING,
+            ParamSpecTypeStr.TEXT,
+            ParamSpecTypeStr.BOOL,
+            ParamSpecTypeStr.INT,
+            ParamSpecTypeStr.FLOAT,
+        ]
         if self.type in [basic_types] and self.default_value:
             markdown += f", default to '{self.default_value}'"
 

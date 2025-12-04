@@ -1,11 +1,11 @@
 from typing import Any, Dict, Optional
 
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockResourceView(RichTextBlockDataBase):
     """Object representing a resource view in a rich text"""
+
     id: str
     view_config_id: str
     resource_id: str
@@ -33,6 +33,7 @@ class RichTextBlockResourceView(RichTextBlockDataBase):
 
 class RichTextBlockNoteResourceView(RichTextBlockDataBase):
     """Object representing a resource view in an note rich text"""
+
     id: str
     # key in the note of the sub resource to call view on
     sub_resource_key: str
@@ -59,6 +60,7 @@ class RichTextBlockNoteResourceView(RichTextBlockDataBase):
 
 class RichTextBlockViewFile(RichTextBlockDataBase):
     """Object representing a independant view in a rich text, the view is not associated with a resource"""
+
     id: str
     filename: str
     title: Optional[str] = None

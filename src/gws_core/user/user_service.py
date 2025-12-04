@@ -1,13 +1,10 @@
-
-
 from typing import List, Union
 
 from gws_core.core.utils.logger import Logger
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserFullDTO
-from gws_core.user.user_events import (UserActivatedEvent, UserCreatedEvent,
-                                       UserUpdatedEvent)
+from gws_core.user.user_events import UserActivatedEvent, UserCreatedEvent, UserUpdatedEvent
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
@@ -15,14 +12,15 @@ from .user import User
 from .user_group import UserGroup
 
 
-class UserService():
-
+class UserService:
     @classmethod
     def activate_user(cls, id_: str, triggered_by: User | None = None) -> User:
         return cls.set_user_active(id_, True, triggered_by)
 
     @classmethod
-    def create_or_update_user_dto(cls, user_dto: UserFullDTO, triggered_by: User | None = None) -> User:
+    def create_or_update_user_dto(
+        cls, user_dto: UserFullDTO, triggered_by: User | None = None
+    ) -> User:
         db_user: User | None = cls.get_user_by_id(user_dto.id)
         if db_user is not None:
             db_user.from_full_dto(user_dto)
@@ -85,7 +83,12 @@ class UserService():
                 raise BadRequestException("Cannot deactivate the system user")
             if user.is_admin:
                 # check if this is the last admin
-                if User.select().where((User.group == UserGroup.ADMIN) & (User.is_active == True)).count() == 1:
+                if (
+                    User.select()
+                    .where((User.group == UserGroup.ADMIN) & (User.is_active == True))
+                    .count()
+                    == 1
+                ):
                     raise BadRequestException("Cannot deactivate the last admin")
 
         user.is_active = is_active
@@ -104,13 +107,16 @@ class UserService():
 
     @classmethod
     def get_all_real_users(cls) -> List[User]:
-        return list(User.select().where(User.group != UserGroup.SYSUSER)
-                    .order_by(User.first_name, User.last_name))
+        return list(
+            User.select()
+            .where(User.group != UserGroup.SYSUSER)
+            .order_by(User.first_name, User.last_name)
+        )
 
     # Create the admin
     @classmethod
     def create_sysuser(cls):
-        """ Create the system user """
+        """Create the system user"""
         try:
             UserService.get_sysuser()
         except:
@@ -120,7 +126,7 @@ class UserService():
                 last_name="User",
                 data={},
                 is_active=True,
-                group=UserGroup.SYSUSER
+                group=UserGroup.SYSUSER,
             )
             user.save()
 
@@ -153,8 +159,9 @@ class UserService():
             raise err
 
     @classmethod
-    def smart_search_by_name(cls, name: str, page: int = 0,
-                             number_of_items_per_page: int = 20) -> Paginator[User]:
+    def smart_search_by_name(
+        cls, name: str, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator[User]:
         name_parts = name.split(" ")
         # if name does not contain space, search by first name or last name
         if len(name_parts) == 1:
@@ -166,7 +173,9 @@ class UserService():
         elif len(name_parts) == 2:
             model_select = User.search_by_firstname_and_lastname(name_parts[0], name_parts[1])
 
-            paginator = Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
+            paginator = Paginator(
+                model_select, page=page, nb_of_items_per_page=number_of_items_per_page
+            )
 
             # if nothing is found, search by lastname or firstname
             if paginator.page_info.total_number_of_items > 0:
@@ -177,7 +186,7 @@ class UserService():
 
     @classmethod
     def get_or_import_user_info(cls, user_id: str) -> User:
-        """ Get the user info from the database.
+        """Get the user info from the database.
          If he doesn"t exist, get it from the space (this might import a user that is not active in the lab)
 
         :param user_id: _description_

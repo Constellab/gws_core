@@ -11,8 +11,8 @@ class StreamlitPage(BaseModelDTO):
     hidden: bool
 
 
-class StreamlitRouter():
-    """ A class to manage the routing of pages in a Streamlit app.
+class StreamlitRouter:
+    """A class to manage the routing of pages in a Streamlit app.
     This class allows you to add pages and navigate between them navigate between them.
 
     :return: _description_
@@ -21,17 +21,20 @@ class StreamlitRouter():
 
     pages: Dict[str, StreamlitPage] = None
 
-    SESSION_KEY = '__gws_streamlit_router__'
+    SESSION_KEY = "__gws_streamlit_router__"
 
     def __init__(self):
         self.pages = {}
 
-    def add_page(self, page_function: Callable[[], None],
-                 title: str | None = None,
-                 icon: str | None = None,
-                 url_path: str | None = None,
-                 default: bool = False,
-                 hide_from_sidebar: bool = False) -> StreamlitPage:
+    def add_page(
+        self,
+        page_function: Callable[[], None],
+        title: str | None = None,
+        icon: str | None = None,
+        url_path: str | None = None,
+        default: bool = False,
+        hide_from_sidebar: bool = False,
+    ) -> StreamlitPage:
         """
         Add a page to the router.
         :param page_function: The function that renders the page
@@ -51,9 +54,7 @@ class StreamlitRouter():
         """
 
         page_ = st.Page(page_function, title=title, icon=icon, url_path=url_path, default=default)
-        streamlit_page = StreamlitPage(page=page_,
-                                       url_path=url_path,
-                                       hidden=hide_from_sidebar)
+        streamlit_page = StreamlitPage(page=page_, url_path=url_path, hidden=hide_from_sidebar)
         self.pages[page_.url_path] = streamlit_page
 
         # save the page in the session state
@@ -86,7 +87,7 @@ class StreamlitRouter():
         for page in pages_to_hide:
             # Create a selector that targets the specific page in the navigation
             hide_pages_css += f"""
-            [data-testid="stSidebarNav"] ul li a[href*="/{page.lower().replace(' ', '_')}"] {{
+            [data-testid="stSidebarNav"] ul li a[href*="/{page.lower().replace(" ", "_")}"] {{
                 display: none !important;
             }}
             """
@@ -118,7 +119,7 @@ class StreamlitRouter():
         st.session_state[self.SESSION_KEY] = self
 
     @staticmethod
-    def load_from_session() -> 'StreamlitRouter':
+    def load_from_session() -> "StreamlitRouter":
         """Load the router from the session state."""
         if StreamlitRouter.SESSION_KEY not in st.session_state:
             st.session_state[StreamlitRouter.SESSION_KEY] = StreamlitRouter()

@@ -1,5 +1,3 @@
-
-
 import os
 import traceback
 from abc import abstractmethod
@@ -25,7 +23,7 @@ from ...resource.resource import Resource
 from ...task.task_decorator import task_decorator
 from .converter import Converter, decorate_converter
 
-EXPORT_TO_PATH_META_DATA_ATTRIBUTE = '_import_from_path_meta_data'
+EXPORT_TO_PATH_META_DATA_ATTRIBUTE = "_import_from_path_meta_data"
 
 
 class ExportToPathMetaData(TypedDict):
@@ -35,16 +33,17 @@ class ExportToPathMetaData(TypedDict):
 
 
 def exporter_decorator(
-        unique_name: str,
-        source_type: Type[Resource],
-        target_type: Type[File] = File,
-        human_name: str = None,
-        short_description: str = None,
-        hide: bool = False,
-        style: TypingStyle = None,
-        deprecated_since: str = None,
-        deprecated_message: str = None,
-        deprecated: TypingDeprecated = None) -> Callable:
+    unique_name: str,
+    source_type: Type[Resource],
+    target_type: Type[File] = File,
+    human_name: str = None,
+    short_description: str = None,
+    hide: bool = False,
+    style: TypingStyle = None,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
     a File (file or folder)
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -72,23 +71,27 @@ def exporter_decorator(
     :return: [description]
     :rtype: Callable
     """
-    def decorator(task_class: Type[ResourceExporter]):
 
+    def decorator(task_class: Type[ResourceExporter]):
         try:
             if not Utils.issubclass(task_class, ResourceExporter):
                 BrickService.log_brick_error(
                     task_class,
-                    f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter")
+                    f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter",
+                )
                 return task_class
 
             if not Utils.issubclass(target_type, File):
                 BrickService.log_brick_error(
                     task_class,
-                    f"Error in the exporter_decorator of class {task_class.__name__}. The target_type must be an File or child class")
+                    f"Error in the exporter_decorator of class {task_class.__name__}. The target_type must be an File or child class",
+                )
                 return task_class
 
-            human_name_computed = human_name or source_type.get_human_name() + ' exporter'
-            short_description_computed = short_description or f"Export {source_type.get_human_name()} to a file"
+            human_name_computed = human_name or source_type.get_human_name() + " exporter"
+            short_description_computed = (
+                short_description or f"Export {source_type.get_human_name()} to a file"
+            )
 
             # mark the resource as exportable
             source_type.__set_is_exportable__(True)
@@ -97,7 +100,7 @@ def exporter_decorator(
             decorate_converter(
                 task_class=task_class,
                 unique_name=unique_name,
-                task_type='EXPORTER',
+                task_type="EXPORTER",
                 source_type=source_type,
                 target_type=target_type,
                 related_resource=source_type,
@@ -107,12 +110,14 @@ def exporter_decorator(
                 style=style,
                 deprecated_since=deprecated_since,
                 deprecated_message=deprecated_message,
-                deprecated=deprecated)
+                deprecated=deprecated,
+            )
         except Exception as err:
             traceback.print_stack()
             BrickService.log_brick_error(task_class, str(err))
 
         return task_class
+
     return decorator
 
 
@@ -120,7 +125,7 @@ def exporter_decorator(
 class ResourceExporter(Converter):
     """Generic task that take a file as input and return a resource
 
-        Override the export_to_path method to export the resource into a File
+    Override the export_to_path method to export the resource into a File
     """
 
     # The output spec can't be overrided, it will be automatically define with the correct resource type
@@ -143,28 +148,32 @@ class ResourceExporter(Converter):
             result = self.export_to_path(source, temp_dir, params, target_type)
         except Exception as err:
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, error : {err}")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, error : {err}"
+            )
 
         if not isinstance(result, FSNode):
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a FSNode")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a FSNode"
+            )
 
         # if the result is a folder, zip it
         if isinstance(result, Folder):
             self.log_info_message(f"Zip the folder {result.path}")
             tmp_dir = Settings.make_temp_dir()
-            zip_file = os.path.join(tmp_dir, FileHelper.get_dir_name(result.path) + '.zip')
+            zip_file = os.path.join(tmp_dir, FileHelper.get_dir_name(result.path) + ".zip")
             ZipCompress.compress_dir(result.path, zip_file)
             return File(zip_file)
         elif isinstance(result, File):
             return result
         else:
             raise Exception(
-                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a File nor a Folder")
+                f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, the result is not a File nor a Folder"
+            )
 
     @abstractmethod
     def export_to_path(
-            self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]) -> FSNode:
+        self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]
+    ) -> FSNode:
         """Override this method to generate a fs_node (File or Folder) from the resource. If the result is a folder,
         it will be automatically zipped.
 

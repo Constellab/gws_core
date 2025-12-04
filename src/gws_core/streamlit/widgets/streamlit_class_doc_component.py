@@ -74,5 +74,5 @@ def class_doc_component(
                     title=None,  # No title since we're inside an expander with the method name
                     show_description=True,
                     show_parameters=True,
-                    show_return_type=True
+                    show_return_type=True,
                 )

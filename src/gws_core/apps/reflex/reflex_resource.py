@@ -1,5 +1,3 @@
-
-
 from typing import cast
 
 from gws_core.apps.app_instance import AppInstance
@@ -11,8 +9,7 @@ from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
 from gws_core.resource.resource_decorator import resource_decorator
 
 
-@resource_decorator("ReflexResource", human_name="Reflex app",
-                    short_description="Reflex app")
+@resource_decorator("ReflexResource", human_name="Reflex app", short_description="Reflex app")
 class ReflexResource(AppResource):
     """
     Resource representing a Reflex app instance. https://reflex.dev/.
@@ -86,7 +83,7 @@ class ReflexResource(AppResource):
             return
 
         folder = Folder.new_temp_folder()
-        folder.name = 'App build folder'
+        folder.name = "App build folder"
         # create an empty folder sub resource to store the front build
         self.add_resource(folder, create_new_resource=True)
         self._front_build_sub_resource_uid = folder.uid
@@ -104,9 +101,11 @@ class ReflexResource(AppResource):
                     return cast(Folder, resource)
                 else:
                     raise Exception(
-                        f"The front build sub resource {self._front_build_sub_resource_uid} is not a folder")
+                        f"The front build sub resource {self._front_build_sub_resource_uid} is not a folder"
+                    )
         raise Exception(
-            f"The front build sub resource {self._front_build_sub_resource_uid} was not found in the resources of the app")
+            f"The front build sub resource {self._front_build_sub_resource_uid} was not found in the resources of the app"
+        )
 
     def get_main_app_file_name(self) -> str:
         """
@@ -117,11 +116,14 @@ class ReflexResource(AppResource):
         """
         return ReflexApp.MAIN_FILE_NAME
 
-    def init_app_instance(self, shell_proxy: ShellProxy, resource_model_id: str, app_name: str,
-                          requires_authentification: bool = True) -> AppInstance:
-
-        reflex_app = ReflexApp(resource_model_id, app_name, shell_proxy,
-                               requires_authentification)
+    def init_app_instance(
+        self,
+        shell_proxy: ShellProxy,
+        resource_model_id: str,
+        app_name: str,
+        requires_authentification: bool = True,
+    ) -> AppInstance:
+        reflex_app = ReflexApp(resource_model_id, app_name, shell_proxy, requires_authentification)
 
         if self.is_enterprise_app():
             reflex_app.set_is_enterprise(True)
@@ -130,10 +132,17 @@ class ReflexResource(AppResource):
         app_config = self._get_app_config()
         if app_config:
             reflex_app.set_app_config(app_config, front_build_folder)
-        elif self._code_folder_sub_resource_name is not None and len(self._code_folder_sub_resource_name) > 0:
-            folder: Folder = cast(Folder, self.get_resource_by_name(self._code_folder_sub_resource_name))
+        elif (
+            self._code_folder_sub_resource_name is not None
+            and len(self._code_folder_sub_resource_name) > 0
+        ):
+            folder: Folder = cast(
+                Folder, self.get_resource_by_name(self._code_folder_sub_resource_name)
+            )
             reflex_app.set_app_static_folder(folder.path, front_build_folder)
         else:
-            raise Exception("The app config or the code folder name must be set to generate the app.")
+            raise Exception(
+                "The app config or the code folder name must be set to generate the app."
+            )
 
         return reflex_app

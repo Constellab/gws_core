@@ -1,5 +1,3 @@
-
-
 from ....resource.view.view_types import ViewType
 from ...view.lineplot_2d_view import LinePlot2DView
 from .table_scatterplot_2d_view import TableScatterPlot2DView

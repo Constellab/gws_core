@@ -4,11 +4,10 @@ import streamlit as st
 
 from .streamlit_helper import StreamlitHelper
 
-FlexAlignItems = Literal['start', 'center', 'end', 'baseline', 'stretch']
+FlexAlignItems = Literal["start", "center", "end", "baseline", "stretch"]
 
 
-class StreamlitGridCell():
-
+class StreamlitGridCell:
     col_span: int
     row_span: int
     style: str
@@ -30,10 +29,9 @@ class StreamlitGridCell():
         self.style = style
 
 
-class StreamlitContainers():
-
+class StreamlitContainers:
     @classmethod
-    def container_centered(cls, key: str, max_width: str = '48em', additional_style: str = None):
+    def container_centered(cls, key: str, max_width: str = "48em", additional_style: str = None):
         """Define a centered container with max width. Useful to center content like an article.
 
         :param key: key
@@ -57,10 +55,14 @@ class StreamlitContainers():
         return container.columns(1)[0]
 
     @classmethod
-    def row_container(cls, key: str, flow: Literal['row', 'row wrap'] = 'row wrap',
-                      vertical_align_items: FlexAlignItems = 'start',
-                      gap: str = None,
-                      additional_style: str = None):
+    def row_container(
+        cls,
+        key: str,
+        flow: Literal["row", "row wrap"] = "row wrap",
+        vertical_align_items: FlexAlignItems = "start",
+        gap: str = None,
+        additional_style: str = None,
+    ):
         """Define a row container, element inside a in a row (like buttons, text...)
 
         :param key: key
@@ -93,9 +95,13 @@ class StreamlitContainers():
         return cls.container_with_style(key, style)
 
     @classmethod
-    def columns_with_fit_content(cls, key: str, cols: List[int | Literal['fit-content']],
-                                 vertical_align_items: FlexAlignItems = 'start',
-                                 additional_style: str = None):
+    def columns_with_fit_content(
+        cls,
+        key: str,
+        cols: List[int | Literal["fit-content"]],
+        vertical_align_items: FlexAlignItems = "start",
+        additional_style: str = None,
+    ):
         """Define columns that also support fit content width.
 
         :param key: key
@@ -117,7 +123,7 @@ class StreamlitContainers():
 
         int_cols = []
         for i, col in enumerate(cols):
-            if col == 'fit-content':
+            if col == "fit-content":
                 style += f"""
         [CLASS_NAME] .stColumn:nth-of-type({i + 1}) {{
             width: fit-content !important;
@@ -197,22 +203,27 @@ class StreamlitContainers():
         """
         css_class = StreamlitHelper.get_element_css_class(key)
 
-        style = style.replace('[CLASS_NAME]', '.' + css_class)
+        style = style.replace("[CLASS_NAME]", "." + css_class)
         st.markdown(
             f"""
             <style>
                 {style}
             </style>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html=True,
         )
 
         return st.container(key=key)
 
     @classmethod
-    def grid_container(cls, nb_columns: int, cells: List[StreamlitGridCell],
-                       key: str, row_height: str = 'auto',
-                       gap: str = None):
+    def grid_container(
+        cls,
+        nb_columns: int,
+        cells: List[StreamlitGridCell],
+        key: str,
+        row_height: str = "auto",
+        gap: str = None,
+    ):
         """
         Define a grid container with cells. All columns have the same width.
 
@@ -250,7 +261,7 @@ class StreamlitContainers():
 """
         i = 1
         for cell in cells:
-            child_class = StreamlitHelper.get_element_css_class(f'{key}_{i}')
+            child_class = StreamlitHelper.get_element_css_class(f"{key}_{i}")
 
             style += f"""
 [CLASS_NAME] [data-testid="stLayoutWrapper"]:has(.{child_class}) {{
@@ -264,17 +275,17 @@ class StreamlitContainers():
         with cls.container_with_style(key, style):
             i = 1
             for cell in cells:
-                child_key = f'{key}_{i}'
+                child_key = f"{key}_{i}"
                 children.append(cls.container_with_style(child_key, cell.style))
                 i += 1
 
         return tuple(children)
 
     @classmethod
-    def exception_container(cls, key: str,
-                            error_text: str = "An error occurred",
-                            exception: BaseException = None):
-        """ Define a container that display an error message and an exception if provided.
+    def exception_container(
+        cls, key: str, error_text: str = "An error occurred", exception: BaseException = None
+    ):
+        """Define a container that display an error message and an exception if provided.
         The exception detail can be displayed in a popover.
 
         :param key: key
@@ -284,15 +295,15 @@ class StreamlitContainers():
         :param exception: if provided, the user can view the detail, defaults to None
         :type exception: BaseException, optional
         """
-        with cls.row_container(key, flow='row', vertical_align_items='center'):
+        with cls.row_container(key, flow="row", vertical_align_items="center"):
             st.error(error_text)
             if exception:
-                with st.popover('View details'):
+                with st.popover("View details"):
                     st.exception(exception)
 
     @classmethod
     def fragment(cls, key: str):
-        """ Decorator that works like st.fragment but catch exception and display
+        """Decorator that works like st.fragment but catch exception and display
         them in an exception container.
 
         Use like this:
@@ -312,9 +323,10 @@ class StreamlitContainers():
                 try:
                     return func(*args, **kwargs)
                 except Exception as e:
-                    cls.exception_container(key,
-                                            error_text=f"An error occurred: {str(e)}",
-                                            exception=e)
+                    cls.exception_container(
+                        key, error_text=f"An error occurred: {str(e)}", exception=e
+                    )
+
             return wrapper
 
         return decorator

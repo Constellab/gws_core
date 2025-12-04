@@ -1,5 +1,3 @@
-
-
 import os
 import shutil
 from pathlib import Path
@@ -27,7 +25,8 @@ class KVStore(Dict[str, Any]):
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.
     """
-    FILE_NAME = 'store'
+
+    FILE_NAME = "store"
 
     # When true the KVStore can't be update (but read), it a modification happens, it
     # copies the file before updating the data
@@ -73,14 +72,13 @@ class KVStore(Dict[str, Any]):
         :rtype: str
         """
 
-        return self._full_file_path + '.db'
+        return self._full_file_path + ".db"
 
     def get_full_path_without_extension(self) -> str:
         return self._full_file_path
 
     def generate_new_file(self) -> Path:
-        """Generate a new eloty file in the directory of the kvstore
-        """
+        """Generate a new eloty file in the directory of the kvstore"""
         self._create_dir()
         file_path: str = os.path.join(self.full_file_dir, StringHelper.generate_uuid())
         return FileHelper.create_empty_file_if_not_exist(file_path)
@@ -95,7 +93,7 @@ class KVStore(Dict[str, Any]):
         self[key] = FileHelper.get_name(file_path)
 
     def get_key_file_path(self, key: str) -> str:
-        """ Get the file path of a specific key in the kv store
+        """Get the file path of a specific key in the kv store
         Use when the generate_new_file was used to store a file
 
         :param key: The key to get the file path
@@ -201,8 +199,7 @@ class KVStore(Dict[str, Any]):
             self._unlock()
 
     def _unlock(self) -> None:
-        """Remove lock and update file path,
-        """
+        """Remove lock and update file path,"""
         self._lock = False
         self._full_file_path = self._lock_copy_full_file_path
         self._lock_copy_full_file_path = None
@@ -217,7 +214,7 @@ class KVStore(Dict[str, Any]):
         return FileHelper.exists_on_os(self.full_file_path)
 
     def lock(self, _lock_copy_file_path: str) -> None:
-        """ Lock the kv store, it can no longer be modified. If a modification happens, it
+        """Lock the kv store, it can no longer be modified. If a modification happens, it
             copies the file before updating the data, To copy the file is uses the _lock_copy_name
 
         :return: [description]
@@ -228,8 +225,7 @@ class KVStore(Dict[str, Any]):
 
     def _check_key(self, key: str) -> None:
         if not isinstance(key, str):
-            raise BadRequestException(
-                f"The key must be a string. The actual value is {key}")
+            raise BadRequestException(f"The key must be a string. The actual value is {key}")
 
     ################################# Class methods ################################
 
@@ -245,20 +241,20 @@ class KVStore(Dict[str, Any]):
     def get_full_file_path(cls, file_name: str, with_extension: bool = True) -> str:
         full_path: str = os.path.join(cls.get_base_dir(), file_name, cls.FILE_NAME)
         if with_extension:
-            full_path += '.db'
+            full_path += ".db"
 
         return full_path
 
     @classmethod
-    def from_filename(cls, file_name: str) -> 'KVStore':
+    def from_filename(cls, file_name: str) -> "KVStore":
         return KVStore(cls.get_full_file_path(file_name=file_name, with_extension=False))
 
     @classmethod
-    def empty(cls) -> 'KVStore':
+    def empty(cls) -> "KVStore":
         """Create an new kv store and generate the file name automatically
 
         :return: [description]
         :rtype: [type]
         """
-        generated_file_name: str = str(time()).replace('.', '')
+        generated_file_name: str = str(time()).replace(".", "")
         return KVStore(cls.get_full_file_path(file_name=generated_file_name, with_extension=False))

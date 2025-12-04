@@ -1,4 +1,3 @@
-
 import json
 import os
 from typing import Any, AnyStr, List, Optional
@@ -24,8 +23,7 @@ from ..text.text_view import SimpleTextView, TextView, TextViewData
 from .fs_node import FSNode
 
 
-@resource_decorator("File", human_name="File",
-                    style=TypingStyle.material_icon("description"))
+@resource_decorator("File", human_name="File", style=TypingStyle.material_icon("description"))
 class File(FSNode):
     r"""
     Resource that represents a file in the system.
@@ -43,10 +41,10 @@ class File(FSNode):
     """
 
     TEXT_VIEW_NB_LINES = 100
-    PAGE_PARAM_NAME = 'line_number'
+    PAGE_PARAM_NAME = "line_number"
 
     def __init__(self, path: str = ""):
-        """ Create a new File
+        """Create a new File
 
         :param path: absolute path to the file, defaults to ""
         :type path: str, optional
@@ -71,7 +69,7 @@ class File(FSNode):
         return FileHelper.is_csv(self.path)
 
     def is_csv_or_excel(self):
-        return FileHelper.is_csv(self.path) or self.extension in ['xls', 'xlsx']
+        return FileHelper.is_csv(self.path) or self.extension in ["xls", "xlsx"]
 
     def is_txt(self):
         return FileHelper.is_txt(self.path)
@@ -90,7 +88,19 @@ class File(FSNode):
 
     def is_readable(self) -> bool:
         return self.extension not in [
-            "exe", "dll", "so", "pyc", "pyo", "xlsx", "xls", "doc", "docx", "pdf", "zip", "gz"]
+            "exe",
+            "dll",
+            "so",
+            "pyc",
+            "pyo",
+            "xlsx",
+            "xls",
+            "doc",
+            "docx",
+            "pdf",
+            "zip",
+            "gz",
+        ]
 
     def is_audio(self):
         return FileHelper.is_audio(self.path)
@@ -140,13 +150,12 @@ class File(FSNode):
             if not os.path.exists(self.dir):
                 os.makedirs(self.dir)
                 if not os.path.exists(self.dir):
-                    raise BadRequestException(
-                        f"Cannot create directory {self.dir}")
+                    raise BadRequestException(f"Cannot create directory {self.dir}")
             return open(self.path, mode="w+", encoding=encoding)
 
-    def read_part(self, from_line: int = 0, to_line: int = 10,
-                  encoding: str = None,
-                  mode: str = 'r+t') -> str:
+    def read_part(
+        self, from_line: int = 0, to_line: int = 10, encoding: str = None, mode: str = "r+t"
+    ) -> str:
         """
         Read a part of the file
 
@@ -170,8 +179,7 @@ class File(FSNode):
                     break
         return text
 
-    def read(self, size: int = -1, encoding: str = None,
-             mode: str = 'r+t') -> AnyStr:
+    def read(self, size: int = -1, encoding: str = None, mode: str = "r+t") -> AnyStr:
         """
         Read the file
 
@@ -189,8 +197,7 @@ class File(FSNode):
             data = file.read(size)
         return data
 
-    def write(self, data: str, encoding: str = None,
-              mode: str = 'a+t'):
+    def write(self, data: str, encoding: str = None, mode: str = "a+t"):
         """
         Write data to the file
 
@@ -204,7 +211,7 @@ class File(FSNode):
         with self.open(mode, encoding=encoding) as fp:
             fp.write(data)
 
-    def detect_file_encoding(self, default_encoding: str = 'utf-8') -> str:
+    def detect_file_encoding(self, default_encoding: str = "utf-8") -> str:
         """
         Detect the encoding of the file using charset-normalizer
 
@@ -215,7 +222,11 @@ class File(FSNode):
         """
         return FileHelper.detect_file_encoding(self.path, default_encoding)
 
-    @view(view_type=JSONView, human_name="View as JSON", short_description="View the complete resource as json")
+    @view(
+        view_type=JSONView,
+        human_name="View as JSON",
+        short_description="View the complete resource as json",
+    )
     def view_as_json(self, params: ConfigParams) -> JSONView:
         self.check_if_exists()
         # if the file is not readable,don't open the file and return the main view
@@ -232,17 +243,30 @@ class File(FSNode):
         # rollback to string view if not convertible to json
         return self.view_content_as_str(params)
 
-    @view(view_type=SimpleTextView, human_name="View file content", short_description="View the file content as string",
-          specs=ConfigSpecs({"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}))
+    @view(
+        view_type=SimpleTextView,
+        human_name="View file content",
+        short_description="View the file content as string",
+        specs=ConfigSpecs(
+            {"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}
+        ),
+    )
     def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
         self.check_if_exists()
-        return self.get_view_by_lines(params.get('line_number'))
+        return self.get_view_by_lines(params.get("line_number"))
 
-    @view(view_type=View, human_name="Default view", short_description="View the file with automatic view",
-          default_view=True, specs=ConfigSpecs({"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}))
+    @view(
+        view_type=View,
+        human_name="Default view",
+        short_description="View the file with automatic view",
+        default_view=True,
+        specs=ConfigSpecs(
+            {"line_number": IntParam(default_value=1, min_value=1, human_name="From line")}
+        ),
+    )
     def default_view(self, params: ConfigParams) -> View:
         self.check_if_exists()
-        return self.get_default_view(params.get('line_number'))
+        return self.get_default_view(params.get("line_number"))
 
     def get_default_view(self, page: int = 1) -> View:
         """
@@ -260,13 +284,13 @@ class File(FSNode):
             return ImageView.from_local_file(self.path)
         if self.is_audio():
             return AudioView.from_local_file(self.path)
-        if self.extension == 'html':
+        if self.extension == "html":
             return HTMLView(self.read())
-        if self.extension == 'pdf':
+        if self.extension == "pdf":
             return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
         if self.is_video():
             return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
-        if self.extension == 'md':
+        if self.extension == "md":
             return MarkdownView(self.read())
 
         # if the file is not readable, don't open the file and return the main view
@@ -294,19 +318,20 @@ class File(FSNode):
         end_line = start_line + self.TEXT_VIEW_NB_LINES - 1
         text = self.read_part(start_line - 1, end_line)
         lines_count = len(text.splitlines())
-        return SimpleTextView(TextViewData(
-            text=text,
-            is_first_page=start_line <= 1,
-            is_last_page=lines_count < self.TEXT_VIEW_NB_LINES,
-            next_page=start_line + self.TEXT_VIEW_NB_LINES,
-            previous_page=max(start_line - self.TEXT_VIEW_NB_LINES, 1),
-            page_param_name=self.PAGE_PARAM_NAME
-        ))
+        return SimpleTextView(
+            TextViewData(
+                text=text,
+                is_first_page=start_line <= 1,
+                is_last_page=lines_count < self.TEXT_VIEW_NB_LINES,
+                next_page=start_line + self.TEXT_VIEW_NB_LINES,
+                previous_page=max(start_line - self.TEXT_VIEW_NB_LINES, 1),
+                page_param_name=self.PAGE_PARAM_NAME,
+            )
+        )
 
     def check_if_exists(self):
         if not self.exists():
-            raise BadRequestException(
-                f"File {self.name or self.get_base_name()} does not exist")
+            raise BadRequestException(f"File {self.name or self.get_base_name()} does not exist")
 
     def get_default_style(self) -> TypingStyle:
         icon = self.get_icon_from_extension()
@@ -323,25 +348,25 @@ class File(FSNode):
 
         extension = extension.lower()
 
-        if extension in ['csv', 'xls', 'xlsx']:
-            return 'csv_file_icon'
-        if extension in ['jpeg', 'jpg', 'png', 'gif', 'svg']:
-            return 'image'
-        if extension in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'aiff', 'alac']:
-            return 'audiotrack'
-        if extension == 'txt':
-            return 'txt_file_icon'
-        if extension == 'pdf':
-            return 'pdf_file_icon'
-        if extension in ['doc', 'docx']:
-            return 'docx_file_icon'
-        if extension == 'json':
-            return 'json_file_icon'
-        if extension in ['ppt', 'pptx']:
-            return 'pptx_file_icon'
-        if extension == 'zip':
-            return 'zip_file_icon'
-        if extension == 'py':
-            return 'py_file_icon'
+        if extension in ["csv", "xls", "xlsx"]:
+            return "csv_file_icon"
+        if extension in ["jpeg", "jpg", "png", "gif", "svg"]:
+            return "image"
+        if extension in ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a", "aiff", "alac"]:
+            return "audiotrack"
+        if extension == "txt":
+            return "txt_file_icon"
+        if extension == "pdf":
+            return "pdf_file_icon"
+        if extension in ["doc", "docx"]:
+            return "docx_file_icon"
+        if extension == "json":
+            return "json_file_icon"
+        if extension in ["ppt", "pptx"]:
+            return "pptx_file_icon"
+        if extension == "zip":
+            return "zip_file_icon"
+        if extension == "py":
+            return "py_file_icon"
 
         return None

@@ -1,4 +1,3 @@
-
 from typing import Optional
 
 from fastapi import Depends
@@ -13,10 +12,12 @@ from .activity_service import ActivityService
 
 
 @core_app.post("/activity/search", tags=["Activity"], summary="Search for activities")
-def advanced_search(search_dict: SearchParams,
-                    page: Optional[int] = 1,
-                    number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ActivityDTO]:
+def advanced_search(
+    search_dict: SearchParams,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[ActivityDTO]:
     """
     Advanced search on scenario
     """

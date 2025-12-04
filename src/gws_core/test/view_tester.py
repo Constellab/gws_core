@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.resource.view.view_dto import ViewDTO
 
@@ -7,8 +5,9 @@ from ..config.config_params import ConfigParams
 from ..resource.view.view import View
 
 
-class ViewTester():
-    """ ViewTester """
+class ViewTester:
+    """ViewTester"""
+
     _view: View
 
     def __init__(self, view: View):

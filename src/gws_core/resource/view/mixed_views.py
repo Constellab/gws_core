@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.resource.view.multi_views import MultiViews
@@ -28,8 +26,7 @@ class MixedViews(View):
     _allowed_view_types = []
 
     def __init__(self):
-        """[summary]
-        """
+        """[summary]"""
         super().__init__()
         self._sub_views = []
 
@@ -44,16 +41,24 @@ class MixedViews(View):
         """
 
         if not isinstance(view, View):
-            raise Exception('[MixedViews] the view input is not a View')
+            raise Exception("[MixedViews] the view input is not a View")
 
-        if isinstance(view, (MultiViews, MixedViews,)):
-            raise Exception('[MixedViews] cannot mix MixedViews or MultiViews')
+        if isinstance(
+            view,
+            (
+                MultiViews,
+                MixedViews,
+            ),
+        ):
+            raise Exception("[MixedViews] cannot mix MixedViews or MultiViews")
 
         if not self._allowed_view_types:
-            raise Exception('[MixedViews] No view is allowed. Did you specify the allowed_view_types?')
+            raise Exception(
+                "[MixedViews] No view is allowed. Did you specify the allowed_view_types?"
+            )
 
         if not isinstance(view, self._allowed_view_types):
-            raise Exception(f'[MixedViews] can only mix {self._allowed_view_types}')
+            raise Exception(f"[MixedViews] can only mix {self._allowed_view_types}")
 
         config_params: ConfigParams = view._specs.get_and_check_values(params)
 
@@ -70,6 +75,4 @@ class MixedViews(View):
             view_dict = sub_view["view"].to_dict(ConfigParams(sub_view["config_params"]))
             views_dict.append(view_dict)
 
-        return {
-            "views": views_dict
-        }
+        return {"views": views_dict}

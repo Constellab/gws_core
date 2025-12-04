@@ -21,5 +21,5 @@ def loader_section(content: rx.Component, is_loading: bool) -> rx.Component:
             width="100%",
             height="100%",
         ),
-        content
+        content,
     )

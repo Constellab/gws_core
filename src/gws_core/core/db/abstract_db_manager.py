@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Callable, Set, Type
 
@@ -16,6 +14,7 @@ class ReconnectMySQLDatabase(ReconnectMixin, MySQLDatabase):
     MySQLDatabase class.
     Allow to auto-reconnect to the MySQL database.
     """
+
     pass
 
 
@@ -42,7 +41,7 @@ class AbstractDbManager:
 
     @classmethod
     @abstractmethod
-    def get_instance(cls) -> 'AbstractDbManager':
+    def get_instance(cls) -> "AbstractDbManager":
         """Get the singleton instance of this DbManager subclass
 
         Must be called implement in sub concrete classes.
@@ -68,7 +67,7 @@ class AbstractDbManager:
         pass
 
     def get_unique_name(self) -> str:
-        return self.get_brick_name() + '-' + self.get_name()
+        return self.get_brick_name() + "-" + self.get_name()
 
     def is_lazy_init(self) -> bool:
         """
@@ -79,7 +78,7 @@ class AbstractDbManager:
         return True
 
     def init(self, mode: DbMode):
-        """ Initialize the DbManager """
+        """Initialize the DbManager"""
 
         if self.is_initialized():
             return
@@ -87,51 +86,54 @@ class AbstractDbManager:
         db_config = self.get_config(mode)
 
         if db_config is None:
-            raise Exception("The db config is not provided, did you implement the 'get_config' in your DbManager ?")
+            raise Exception(
+                "The db config is not provided, did you implement the 'get_config' in your DbManager ?"
+            )
 
         if not Utils.value_is_in_literal(db_config["engine"], SupportedDbEngine):
-            raise Exception("gws.db.model.DbManager", "init",
-                            f"Db engine '{db_config['engine']}' is not valid")
+            raise Exception(
+                "gws.db.model.DbManager", "init", f"Db engine '{db_config['engine']}' is not valid"
+            )
 
         _db = ReconnectMySQLDatabase(
             db_config["db_name"],
             user=db_config["user"],
             password=db_config["password"],
             host=db_config["host"],
-            port=db_config['port']
+            port=db_config["port"],
         )
         self.db.initialize(_db)
         self._is_initialized = True
 
     def get_db(self) -> DatabaseProxy:
-        """ Get the db object """
+        """Get the db object"""
 
         return self.db
 
     def get_engine(self) -> SupportedDbEngine:
-        """ Get the db object """
+        """Get the db object"""
 
         return self.get_config(self.mode)["engine"]
 
     def is_mysql_engine(self):
-        """ Test if the mysql engine is active """
+        """Test if the mysql engine is active"""
 
         return self.get_engine() in ["mariadb", "mysql"]
 
     def close_db(self):
-        """ Close the db connection """
+        """Close the db connection"""
 
         if not self.db.is_closed():
             self.db.close()
 
     def connect_db(self):
-        """ Open the db connection """
+        """Open the db connection"""
 
         if self.db.is_closed():
             self.db.connect()
 
     def create_tables(self, models: list[Type]) -> None:
-        """ Create the tables for the provided models """
+        """Create the tables for the provided models"""
 
         if not models or len(models) == 0:
             return
@@ -139,7 +141,7 @@ class AbstractDbManager:
         self.db.create_tables(models)
 
     def drop_tables(self, models: list[Type]) -> None:
-        """ Drop the tables for the provided models """
+        """Drop the tables for the provided models"""
 
         if not models or len(models) == 0:
             return
@@ -147,28 +149,28 @@ class AbstractDbManager:
         self.db.drop_tables(models)
 
     def execute_sql(self, sql: str) -> None:
-        """ Execute the provided sql command """
+        """Execute the provided sql command"""
 
         self.db.execute_sql(sql)
 
     def is_initialized(self) -> bool:
-        """ Return if the db manager was initialized """
+        """Return if the db manager was initialized"""
 
         return self._is_initialized
 
     def _increment_transaction(self) -> None:
-        """ Increment the transaction counter """
+        """Increment the transaction counter"""
         self._count_transaction += 1
 
     def _decrement_transaction(self) -> None:
-        """ Decrement the transaction counter """
+        """Decrement the transaction counter"""
         self._count_transaction -= 1
 
         if self._count_transaction < 0:
             self._count_transaction = 0
 
     def has_transaction(self) -> bool:
-        """ Check if there is an active transaction """
+        """Check if there is an active transaction"""
         return self._count_transaction > 0
 
     def register_after_commit_hook(self, hook: Callable) -> None:
@@ -180,8 +182,7 @@ class AbstractDbManager:
         self._after_commit_hooks.append(hook)
 
     def _run_after_commit_hooks(self) -> None:
-        """Run all hooks registered to be called after a transaction is committed
-        """
+        """Run all hooks registered to be called after a transaction is committed"""
         if not self._after_commit_hooks:
             return
         for hook in self._after_commit_hooks:
@@ -211,12 +212,14 @@ class AbstractDbManager:
                 pass
 
         """
+
         def decorator(func: Callable) -> Callable:
             def wrapper(*args, **kwargs):
                 db_manager = cls.get_instance()
                 if db_manager is None:
                     raise Exception(
-                        "The DbManager instance is not available, did you implement the 'get_instance' in your DbManager ?")
+                        "The DbManager instance is not available, did you implement the 'get_instance' in your DbManager ?"
+                    )
                 # If we are in unique transaction mode and a transaction already exists,
                 # don't create a transaction
                 if not nested_transaction and db_manager.has_transaction():
@@ -236,17 +239,23 @@ class AbstractDbManager:
                     db_manager._decrement_transaction()
 
                 return result
+
             return wrapper
 
         return decorator
 
     @classmethod
-    def get_db_managers(cls) -> Set['AbstractDbManager']:
-        """ Get all the classes that inherit this class """
+    def get_db_managers(cls) -> Set["AbstractDbManager"]:
+        """Get all the classes that inherit this class"""
         db_managers = set(cls.__subclasses__()).union(
-            [s for c in cls.__subclasses__() for s in c.get_db_managers()])
+            [s for c in cls.__subclasses__() for s in c.get_db_managers()]
+        )
 
-        return {db_manager.get_instance() for db_manager in db_managers if db_manager.get_instance() is not None}
+        return {
+            db_manager.get_instance()
+            for db_manager in db_managers
+            if db_manager.get_instance() is not None
+        }
 
     @classmethod
     def reconnect_dbs(cls) -> None:

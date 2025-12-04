@@ -57,7 +57,9 @@ class ReflexProcess(AppProcess):
     def _start_process(self, app: AppInstance) -> AppProcessStartResult:
         if not isinstance(app, ReflexApp):
             raise Exception("The app must be a ReflexApp instance")
-        Logger.debug(f"Starting reflex process for front port {self.front_port} and back port {self.back_port}")
+        Logger.debug(
+            f"Starting reflex process for front port {self.front_port} and back port {self.back_port}"
+        )
 
         shell_proxy = self._get_and_check_shell_proxy(app)
         shell_proxy.working_dir = app.get_app_folder()
@@ -67,7 +69,9 @@ class ReflexProcess(AppProcess):
         else:
             return self._start_prod_process(app, shell_proxy)
 
-    def _start_dev_process(self, app: AppInstance, shell_proxy: ShellProxy) -> AppProcessStartResult:
+    def _start_dev_process(
+        self, app: AppInstance, shell_proxy: ShellProxy
+    ) -> AppProcessStartResult:
         """Start reflex in dev mode with standard 'reflex run' command"""
         cmd = [
             "reflex",
@@ -265,7 +269,9 @@ class ReflexProcess(AppProcess):
     def call_health_check(self) -> bool:
         # health check for both front and back
         try:
-            ExternalApiService.get(f"http://localhost:{self.back_port}/ping", raise_exception_if_error=True)
+            ExternalApiService.get(
+                f"http://localhost:{self.back_port}/ping", raise_exception_if_error=True
+            )
         except Exception:
             return False
 

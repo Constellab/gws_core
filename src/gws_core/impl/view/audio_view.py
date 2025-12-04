@@ -1,5 +1,3 @@
-
-
 from base64 import b64encode
 
 from gws_core.config.config_params import ConfigParams
@@ -9,7 +7,6 @@ from gws_core.resource.view.view_types import ViewType
 
 
 class AudioView(View):
-
     _base_64_audio: bytes
     _mime_type: str
 
@@ -22,13 +19,10 @@ class AudioView(View):
         self._mime_type = _mime_type
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        return {
-            "base_64_audio": self._base_64_audio,
-            "mime_type": self._mime_type
-        }
+        return {"base_64_audio": self._base_64_audio, "mime_type": self._mime_type}
 
     @staticmethod
-    def from_local_file(file_path: str) -> 'AudioView':
+    def from_local_file(file_path: str) -> "AudioView":
         """Create an ImageView from a local file path
 
         :param file_path: The path of the file

@@ -1,5 +1,3 @@
-
-
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.agent.helper.agent_code_helper import AgentCodeHelper
@@ -11,9 +9,11 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "PyPipenvAgent", human_name="Pip env agent",
+    "PyPipenvAgent",
+    human_name="Pip env agent",
     short_description="Agent to run Python snippets in a pipenv shell environment.",
-    style=TypingStyle.material_icon("agent"))
+    style=TypingStyle.material_icon("agent"),
+)
 class PyPipenvAgent(EnvAgent):
     """
     Pipenv-based Python agents allow to execute Python snippets on the fly in isolated Pipenv environments.
@@ -32,18 +32,22 @@ class PyPipenvAgent(EnvAgent):
 
     SNIPPET_FILE_EXTENSION: str = "py"
 
-    config_specs = ConfigSpecs({
-        'params': EnvAgent.get_dynamic_param_config(),
-        'env': PythonCodeParam(
-            default_value=AgentCodeHelper.get_pip_env_file_template(),
-            human_name="Pipenv configuration", short_description="Pipenv configuration"
-        ),
-        'code': PythonCodeParam(
-            default_value=AgentCodeHelper.get_python_env_code_template(),
-            human_name="Code snippet", short_description="The code snippet to execute using shell command"
-        ),
-        'log_stdout': EnvAgent.get_log_stdout_param()
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": EnvAgent.get_dynamic_param_config(),
+            "env": PythonCodeParam(
+                default_value=AgentCodeHelper.get_pip_env_file_template(),
+                human_name="Pipenv configuration",
+                short_description="Pipenv configuration",
+            ),
+            "code": PythonCodeParam(
+                default_value=AgentCodeHelper.get_python_env_code_template(),
+                human_name="Code snippet",
+                short_description="The code snippet to execute using shell command",
+            ),
+            "log_stdout": EnvAgent.get_log_stdout_param(),
+        }
+    )
 
     def _format_command(self, code_file_path: str) -> list:
         return ["python", code_file_path]

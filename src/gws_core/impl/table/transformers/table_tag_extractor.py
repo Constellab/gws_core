@@ -1,12 +1,9 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.impl.table.table import Table
-from gws_core.task.transformer.transformer import (Transformer,
-                                                   transformer_decorator)
+from gws_core.task.transformer.transformer import Transformer, transformer_decorator
 
 tag_key_param = StrParam(human_name="Tag key", short_description="Tag key to extract")
 
@@ -42,21 +39,29 @@ class TableRowTagToColumnExtractor(Transformer):
     The ```Gender``` column is created containing the values of the ```Gender``` tag.
     """
 
-    config_specs = ConfigSpecs({
-        "params": ParamSet(ConfigSpecs(
-            {
-                "tag_key": tag_key_param,
-                "new_column_name": StrParam(human_name="New column name",
-                                            short_description="Name of the new column that will contain the tag values. If empty, the tag key will be used",
-                                            optional=True)
-            }),
-            human_name="",
-        ),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": ParamSet(
+                ConfigSpecs(
+                    {
+                        "tag_key": tag_key_param,
+                        "new_column_name": StrParam(
+                            human_name="New column name",
+                            short_description="Name of the new column that will contain the tag values. If empty, the tag key will be used",
+                            optional=True,
+                        ),
+                    }
+                ),
+                human_name="",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         for param_dict in params["params"]:
-            source.extract_row_tags_to_new_column(param_dict["tag_key"], new_column_name=param_dict["new_column_name"])
+            source.extract_row_tags_to_new_column(
+                param_dict["tag_key"], new_column_name=param_dict["new_column_name"]
+            )
 
         return source
 
@@ -95,21 +100,29 @@ class TableColumnTagToRowExtractor(Transformer):
     A new row is created containing the values of the ```Gender``` tag.
     """
 
-    config_specs = ConfigSpecs({
-        "params": ParamSet(ConfigSpecs(
-            {
-                "tag_key": tag_key_param,
-                "new_row_name": StrParam(human_name="New row name",
-                                         short_description="Name of the new row that will contain the tag values. If empty, the tag key will be used",
-                                         optional=True),
-            }),
-            human_name="",
-        ),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": ParamSet(
+                ConfigSpecs(
+                    {
+                        "tag_key": tag_key_param,
+                        "new_row_name": StrParam(
+                            human_name="New row name",
+                            short_description="Name of the new row that will contain the tag values. If empty, the tag key will be used",
+                            optional=True,
+                        ),
+                    }
+                ),
+                human_name="",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         for param_dict in params["params"]:
-            source.extract_column_tags_to_new_row(param_dict["tag_key"], new_row_name=param_dict["new_row_name"])
+            source.extract_column_tags_to_new_row(
+                param_dict["tag_key"], new_row_name=param_dict["new_row_name"]
+            )
 
         return source
 
@@ -144,23 +157,32 @@ class TableColumnValuesToRowTagExtractor(Transformer):
     The rows are tagged with the values of the ```A``` column.
     """
 
-    config_specs = ConfigSpecs({
-        "params": ParamSet(ConfigSpecs(
-            {
-                "column": StrParam(human_name="Column name",
-                                   short_description="Name of the column to extract values from"),
-                "delect_columns": BoolParam(human_name="Delete column",
-                                            short_description="Delete the column after the extraction",
-                                            default_value=False),
-            }),
-            human_name="",
-        ),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": ParamSet(
+                ConfigSpecs(
+                    {
+                        "column": StrParam(
+                            human_name="Column name",
+                            short_description="Name of the column to extract values from",
+                        ),
+                        "delect_columns": BoolParam(
+                            human_name="Delete column",
+                            short_description="Delete the column after the extraction",
+                            default_value=False,
+                        ),
+                    }
+                ),
+                human_name="",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         for param_dict in params["params"]:
-            source.extract_column_values_to_row_tags(param_dict["column"],
-                                                     delete_column=param_dict["delect_columns"])
+            source.extract_column_values_to_row_tags(
+                param_dict["column"], delete_column=param_dict["delect_columns"]
+            )
 
         return source
 
@@ -197,22 +219,31 @@ class TableRowValuesToColumnTagExtractor(Transformer):
     The columns are tagged with the values of the ```0``` row (first row).
     """
 
-    config_specs = ConfigSpecs({
-        "params": ParamSet(ConfigSpecs(
-            {
-                "row": StrParam(human_name="Row name",
-                                short_description="Name of the row to extract values from"),
-                "delete_row": BoolParam(human_name="Delete row",
-                                        short_description="Delete the row after the extraction",
-                                        default_value=False),
-            }),
-            human_name="",
-        ),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "params": ParamSet(
+                ConfigSpecs(
+                    {
+                        "row": StrParam(
+                            human_name="Row name",
+                            short_description="Name of the row to extract values from",
+                        ),
+                        "delete_row": BoolParam(
+                            human_name="Delete row",
+                            short_description="Delete the row after the extraction",
+                            default_value=False,
+                        ),
+                    }
+                ),
+                human_name="",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         for param_dict in params["params"]:
-            source.extract_row_values_to_column_tags(param_dict["row"],
-                                                     delete_row=param_dict["delete_row"])
+            source.extract_row_values_to_column_tags(
+                param_dict["row"], delete_row=param_dict["delete_row"]
+            )
 
         return source

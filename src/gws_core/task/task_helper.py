@@ -1,20 +1,18 @@
-
-
 from typing import List
 
 from gws_core.core.utils.logger import Logger
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from .task import Task
 
 
 class TaskHelper:
-
     _observers: List[Task] = None
 
     def __init__(self):
-        Logger.info('[Deprecated] the task helper is deprecated, please use the MessageDispatcher instead')
+        Logger.info(
+            "[Deprecated] the task helper is deprecated, please use the MessageDispatcher instead"
+        )
         self._observers = []
 
     def attach(self, task: Task):

@@ -1,13 +1,10 @@
-
-
 import os
 from pathlib import Path
 from typing import List
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam, StrParam
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_view import LocalFolderView
@@ -21,8 +18,7 @@ from .file_helper import FileHelper
 from .fs_node import FSNode
 
 
-@resource_decorator("Folder", human_name="Folder",
-                    style=TypingStyle.material_icon("folder"))
+@resource_decorator("Folder", human_name="Folder", style=TypingStyle.material_icon("folder"))
 class Folder(FSNode):
     r"""
     Resource that represents a folder in the system.
@@ -34,7 +30,7 @@ class Folder(FSNode):
     """
 
     def __init__(self, path: str = ""):
-        """ Create a new Folder
+        """Create a new Folder
 
         :param path: absolute path to the folder, defaults to ""
         :type path: str, optional
@@ -94,7 +90,7 @@ class Folder(FSNode):
         :return: List of absolute path files and directories
         :rtype: List[str]
         """
-        return list(map(self.get_sub_path,  self.list_dir()))
+        return list(map(self.get_sub_path, self.list_dir()))
 
     def list_all_file_paths(self) -> List[str]:
         """
@@ -162,8 +158,7 @@ class Folder(FSNode):
 
         FileHelper.move_file_or_dir(sub_node_path, new_sub_node_path)
 
-    def delete_sub_node(self, sub_node_path: str,
-                        ignore_errors: bool = True) -> None:
+    def delete_sub_node(self, sub_node_path: str, ignore_errors: bool = True) -> None:
         """
         Delete the sub node (file or folder) at the given path
 
@@ -184,18 +179,28 @@ class Folder(FSNode):
         """
         FileHelper.delete_dir_content(self.path)
 
-    @view(view_type=LocalFolderView, human_name="View folder content",
-          short_description="View the sub files and folders", default_view=True)
+    @view(
+        view_type=LocalFolderView,
+        human_name="View folder content",
+        short_description="View the sub files and folders",
+        default_view=True,
+    )
     def view_as_json(self, params: ConfigParams) -> LocalFolderView:
         return LocalFolderView(self.path)
 
-    @view(view_type=View, human_name="View folder content",
-          short_description="View the sub files and folders", specs=ConfigSpecs({
-              'sub_file_path': StrParam(),
-              "line_number": IntParam(default_value=1, min_value=1, human_name="From line")
-          }))
+    @view(
+        view_type=View,
+        human_name="View folder content",
+        short_description="View the sub files and folders",
+        specs=ConfigSpecs(
+            {
+                "sub_file_path": StrParam(),
+                "line_number": IntParam(default_value=1, min_value=1, human_name="From line"),
+            }
+        ),
+    )
     def view_sub_file(self, params: ConfigParams) -> View:
-        complete_path = os.path.join(self.path, params['sub_file_path'])
+        complete_path = os.path.join(self.path, params["sub_file_path"])
 
         if not FileHelper.exists_on_os(complete_path):
             raise BadRequestException("The file does not exist")
@@ -204,12 +209,12 @@ class Folder(FSNode):
             raise BadRequestException("The path is not a file")
 
         sub_file = File(complete_path)
-        view_ = sub_file.get_default_view(params.get('line_number', 1))
+        view_ = sub_file.get_default_view(params.get("line_number", 1))
         view_.set_title(sub_file.get_base_name())
         return view_
 
     @staticmethod
-    def new_temp_folder() -> 'Folder':
+    def new_temp_folder() -> "Folder":
         """
         Create a new temporary folder. The folder will be created in the system temporary directory.
         If this resource is then saved, it will be moved to the file store.

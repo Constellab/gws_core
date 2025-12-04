@@ -1,5 +1,3 @@
-
-
 import copy
 from typing import Dict, Union
 
@@ -54,7 +52,7 @@ class VennDiagramView(View):
         for key, data in self._groups.items():
             bag[key] = {
                 "group_names": [key],
-                "data": data  # dropna
+                "data": data,  # dropna
             }
 
         found = True
@@ -80,7 +78,7 @@ class VennDiagramView(View):
                         inter2 = set([str(k) for k in val2["data"]])
                         bag_copy[joined_key] = {
                             "group_names": columns,
-                            "data": inter1.intersection(inter2)
+                            "data": inter1.intersection(inter2),
                         }
                         found = True
             bag = bag_copy
@@ -98,7 +96,13 @@ class VennDiagramView(View):
             self._groups = {}
         if not isinstance(name, str):
             raise BadRequestException("The name is required and must be a string")
-        if not isinstance(data, (set, list,)):
+        if not isinstance(
+            data,
+            (
+                set,
+                list,
+            ),
+        ):
             raise BadRequestException("The data is required and must be a set or a list")
         data = [str(x) for x in data]
         self._groups[name] = set(data)

@@ -1,4 +1,3 @@
-
 from traceback import format_exc
 from typing import Any, Dict, List, Type
 
@@ -17,15 +16,13 @@ from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
-from ..process.process_exception import (CheckBeforeTaskStopException,
-                                         ProcessRunException)
+from ..process.process_exception import CheckBeforeTaskStopException, ProcessRunException
 from ..process.process_model import ProcessModel
 from ..process.process_types import ProcessStatus
 from ..resource.resource import Resource
@@ -50,8 +47,7 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id: str = ForeignKeyField(
-        ResourceModel, null=True, index=True, lazy_load=False)
+    source_config_id: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
 
     community_agent_version_id: str = CharField(null=True, max_length=36, default="")
 
@@ -68,7 +64,8 @@ class TaskModel(ProcessModel):
         """
         if not issubclass(process_type, Task):
             raise Exception(
-                f"Error while setting the task type. The provided type '{process_type}' is not a subclass of Task")
+                f"Error while setting the task type. The provided type '{process_type}' is not a subclass of Task"
+            )
         super().set_process_type(process_type)
 
     def _create_task_instance(self) -> Task:
@@ -76,15 +73,16 @@ class TaskModel(ProcessModel):
 
     def is_protocol(self) -> bool:
         return False
+
     ################################# MODEL METHODS #############################
 
-    def save_full(self) -> 'TaskModel':
+    def save_full(self) -> "TaskModel":
         self.config.save()
         self.progress_bar.save()
         return self.save()
 
     @GwsCoreDbManager.transaction()
-    def archive(self, archive: bool) -> 'TaskModel':
+    def archive(self, archive: bool) -> "TaskModel":
         """
         Archive the process
         """
@@ -99,7 +97,7 @@ class TaskModel(ProcessModel):
         return self.save()
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> 'ProcessModel':
+    def reset(self) -> "ProcessModel":
         """
         Reset the process
         """
@@ -124,14 +122,14 @@ class TaskModel(ProcessModel):
 
     @classmethod
     def get_scenario_input_tasks(cls, scenario_ids: List[str]) -> ModelSelect:
-        """Return all the Input task Model of the scenario
-        """
-        return cls.select().where((cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False)))
+        """Return all the Input task Model of the scenario"""
+        return cls.select().where(
+            (cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False))
+        )
 
     @classmethod
     def after_all_tables_init(cls) -> None:
-        """Create the foreign keys because it was deffered
-        """
+        """Create the foreign keys because it was deffered"""
         cls.create_foreign_key_if_not_exist(TaskModel.parent_protocol_id)
 
     ################################# RUN #############################
@@ -153,7 +151,7 @@ class TaskModel(ProcessModel):
             input_specs=self.inputs.get_specs(),
             output_specs=self.outputs.get_specs(),
             config_specs=self.config.get_specs(),
-            scenario_id=self.scenario.id if self.scenario else None
+            scenario_id=self.scenario.id if self.scenario else None,
         )
         task_runner.set_progress_bar(self.progress_bar)
 
@@ -162,13 +160,13 @@ class TaskModel(ProcessModel):
             check_result = task_runner.check_before_run()
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            raise ProcessRunException.from_exception(process_model=self, exception=err,
-                                                     error_prefix='Error during check before task') from err
+            raise ProcessRunException.from_exception(
+                process_model=self, exception=err, error_prefix="Error during check before task"
+            ) from err
 
         # If the check before task retuned False
-        if isinstance(check_result, dict) and check_result.get('result') is False:
-            raise CheckBeforeTaskStopException(
-                message=check_result.get('message'))
+        if isinstance(check_result, dict) and check_result.get("result") is False:
+            raise CheckBeforeTaskStopException(message=check_result.get("message"))
 
         self._run_before_task()
 
@@ -181,8 +179,9 @@ class TaskModel(ProcessModel):
         except Exception as err:
             if not isinstance(err, ProcessRunException):
                 Logger.log_exception_stack_trace(err)
-            raise ProcessRunException.from_exception(process_model=self, exception=err,
-                                                     error_prefix='Error during check after task') from err
+            raise ProcessRunException.from_exception(
+                process_model=self, exception=err, error_prefix="Error during check after task"
+            ) from err
 
         # save the style of the task if provided
         style_override = task_runner.get_task().style
@@ -201,11 +200,11 @@ class TaskModel(ProcessModel):
 
     def save_input_resources(self) -> None:
         """Method run just before the task run to save the input resource for this task.
-          this will allow to know what resource this task uses as input
+        this will allow to know what resource this task uses as input
         """
         from .task_input_model import TaskInputModel
-        for port_name, port in self.inputs.ports.items():
 
+        for port_name, port in self.inputs.ports.items():
             resource_model: ResourceModel = port.get_resource_model()
 
             if resource_model is None:
@@ -213,7 +212,8 @@ class TaskModel(ProcessModel):
 
             if not resource_model.is_saved():
                 raise Exception(
-                    f"The resource of port '{port_name}' is not saved, it can't be used as input of the task")
+                    f"The resource of port '{port_name}' is not saved, it can't be used as input of the task"
+                )
 
             # Create the Input resource to save the resource use as input
             input_resource: TaskInputModel = TaskInputModel()
@@ -242,7 +242,6 @@ class TaskModel(ProcessModel):
             self._save_outputs(task_runner.get_outputs())
             raise err
         except Exception as err:
-
             # only keep the section inside the task runner to have a clean trace
             # not working when the raised exception is catched and re-raised
             # exception_detail = ExceptionHelper.sub_traceback_to_str(err, inspect.getmodule(TaskRunner))
@@ -255,12 +254,11 @@ class TaskModel(ProcessModel):
         self._save_outputs(task_runner.get_outputs())
 
     def _save_outputs(self, task_outputs: TaskOutputs) -> None:
-
         for key, resource in task_outputs.items():
-
             if not self.outputs.port_exists(key):
                 raise Exception(
-                    f"Error while saving the task output. The port '{key}' does not exists")
+                    f"Error while saving the task output. The port '{key}' does not exists"
+                )
 
             resource_model: ResourceModel
 
@@ -269,8 +267,7 @@ class TaskModel(ProcessModel):
             if port.constant_out:
                 # If the port is mark as is_constant_out, we don't create a new resource
                 # We use the same resource
-                resource_model = ResourceModel.get_by_id_and_check(
-                    resource.get_model_id())
+                resource_model = ResourceModel.get_by_id_and_check(resource.get_model_id())
             else:
                 resource_model = self._save_output_resource(resource, port.name)
 
@@ -278,19 +275,22 @@ class TaskModel(ProcessModel):
             port.set_resource_model(resource_model)
 
     def _save_output_resource(self, resource: Resource, port_name: str) -> ResourceModel:
-        """Save the resource
-        """
+        """Save the resource"""
         self._check_resource_before_save(resource, port_name)
 
         # Handle specific case of ResourceSet, it saves all the sub
         new_children_resources: List[ResourceModel] = []
         if isinstance(resource, ResourceListBase):
-            new_children_resources = self._save_resource_list_children(
-                resource, port_name)
+            new_children_resources = self._save_resource_list_children(resource, port_name)
 
         # create and save the resource model from the resource
         resource_model = ResourceModel.save_from_resource(
-            resource, origin=ResourceOrigin.GENERATED, scenario=self.scenario, task_model=self, port_name=port_name)
+            resource,
+            origin=ResourceOrigin.GENERATED,
+            scenario=self.scenario,
+            task_model=self,
+            port_name=port_name,
+        )
 
         # update the parent of new children resource
         if isinstance(resource, ResourceListBase):
@@ -321,38 +321,44 @@ class TaskModel(ProcessModel):
         resource.tags.add_tags(self._get_input_resource_tags())
         resource.tags.add_tags(self._get_scenario_tags())
 
-    def _save_resource_list_children(self, resource_list: ResourceListBase, port_name: str) -> List[ResourceModel]:
-        """Specific management to save resources of a resource set, return the new created resources
-        """
+    def _save_resource_list_children(
+        self, resource_list: ResourceListBase, port_name: str
+    ) -> List[ResourceModel]:
+        """Specific management to save resources of a resource set, return the new created resources"""
 
         for resource in resource_list.get_resources_as_set():
-
             # for constant resource, only check if it was set as input
             if resource_list.__resource_is_constant__(resource.uid):
-
                 # verify that the resource exists
                 if resource.get_model_id() is None:
                     raise Exception(
-                        f"The resource with '{resource.name or resource.uid}' was added to a ResourceList with create_new_resource set to False but the resource does not exists in the system. It seems it wasn't saved in the database before, is it a new resource ?")
+                        f"The resource with '{resource.name or resource.uid}' was added to a ResourceList with create_new_resource set to False but the resource does not exists in the system. It seems it wasn't saved in the database before, is it a new resource ?"
+                    )
                 # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
                 # Accept the resource if it is a sub resource of a input resource set
-                if not self.inputs.has_resource_model(resource.get_model_id(), include_sub_resouces=True):
-                    raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
-                                              unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
-                                              detail_args={'port_name': port_name})
+                if not self.inputs.has_resource_model(
+                    resource.get_model_id(), include_sub_resouces=True
+                ):
+                    raise BadRequestException(
+                        GWSException.INVALID_LINKED_RESOURCE.value,
+                        unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
+                        detail_args={"port_name": port_name},
+                    )
             else:
                 self._check_resource_before_save(resource, port_name)
 
-        return resource_list.save_new_children_resources(ResourceOrigin.GENERATED, self.scenario, self, port_name)
+        return resource_list.save_new_children_resources(
+            ResourceOrigin.GENERATED, self.scenario, self, port_name
+        )
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):
-        """check all ResourceRField are resource that are input of the task
-        """
+        """check all ResourceRField are resource that are input of the task"""
 
         # get the ResourceRField of the resource
         r_fields: Dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(
-            type(resource), ResourceRField)
+            type(resource), ResourceRField
+        )
 
         for key, r_field in r_fields.items():
             # get the attribute value corresponding to the r_field
@@ -366,20 +372,22 @@ class TaskModel(ProcessModel):
 
             # if the resource r field is not listed in task input, error
             if not self.inputs.has_resource_model(resource_model_id):
-                raise BadRequestException(GWSException.INVALID_LINKED_RESOURCE.value,
-                                          unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
-
-                                          detail_args={'port_name': port_name})
+                raise BadRequestException(
+                    GWSException.INVALID_LINKED_RESOURCE.value,
+                    unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
+                    detail_args={"port_name": port_name},
+                )
 
     def _get_input_resource_tags(self) -> List[Tag]:
-        """Return all the tags of all the input resources
-        """
+        """Return all the tags of all the input resources"""
 
         if self._input_resource_tags is None:
             tags: List[Tag] = []
 
             for input_resource in self.inputs.get_resource_models().values():
-                entity_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, input_resource.id)
+                entity_tags = EntityTagList.find_by_entity(
+                    TagEntityType.RESOURCE, input_resource.id
+                )
                 tags += entity_tags.build_tags_propagated(TagOriginType.TASK_PROPAGATED, self.id)
 
             self._input_resource_tags = tags
@@ -387,10 +395,11 @@ class TaskModel(ProcessModel):
         return self._input_resource_tags
 
     def _get_scenario_tags(self) -> List[Tag]:
-        """Return all the tags of the scenario
-        """
+        """Return all the tags of the scenario"""
         entity_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.scenario.id)
-        return entity_tags.build_tags_propagated(TagOriginType.SCENARIO_PROPAGATED, self.scenario.id)
+        return entity_tags.build_tags_propagated(
+            TagOriginType.SCENARIO_PROPAGATED, self.scenario.id
+        )
 
     ################################# CONFIG #################################
 
@@ -429,8 +438,7 @@ class TaskModel(ProcessModel):
         """
 
         if self.is_input_task():
-            resource_model_id = InputTask.get_resource_id_from_config(
-                self.config.get_values())
+            resource_model_id = InputTask.get_resource_id_from_config(self.config.get_values())
 
             if resource_model_id is not None:
                 resource = ResourceModel.get_by_id(resource_model_id)
@@ -446,8 +454,7 @@ class TaskModel(ProcessModel):
         if self.is_running:
             return
         self.progress_bar.start()
-        self.progress_bar.add_message(
-            f"Start of task '{self.get_instance_name_context()}'")
+        self.progress_bar.add_message(f"Start of task '{self.get_instance_name_context()}'")
         self.status = ProcessStatus.RUNNING
         self.started_at = DateHelper.now_utc()
         self.save()
@@ -471,5 +478,5 @@ class TaskModel(ProcessModel):
         return self.community_agent_version_modified
 
     class Meta:
-        table_name = 'gws_task'
+        table_name = "gws_task"
         is_table = True

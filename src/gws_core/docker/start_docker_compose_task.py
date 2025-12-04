@@ -1,12 +1,10 @@
-
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.json_code_param import JsonCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.config.param.param_spec import BoolParam, StrParam
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.docker.docker_dto import DockerComposeStatus
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_dict import JSONDict
@@ -98,51 +96,75 @@ class StartDockerComposeTask(Task):
     ```
     """
 
-    input_specs: InputSpecs = InputSpecs({
-        'yaml_file': InputSpec(File, human_name='Docker Compose YAML File',
-                               short_description='Optional YAML file for Docker Compose configuration',
-                               optional=True)
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "yaml_file": InputSpec(
+                File,
+                human_name="Docker Compose YAML File",
+                short_description="Optional YAML file for Docker Compose configuration",
+                optional=True,
+            )
+        }
+    )
 
-    output_specs: OutputSpecs = OutputSpecs({
-        'response': OutputSpec(JSONDict, human_name='Docker Compose Response',
-                               short_description='Response from Docker Compose start operation')
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "response": OutputSpec(
+                JSONDict,
+                human_name="Docker Compose Response",
+                short_description="Response from Docker Compose start operation",
+            )
+        }
+    )
 
-    config_specs = ConfigSpecs({
-        'yaml_config': YamlCodeParam(human_name='Docker Compose YAML',
-                                     short_description='YAML configuration for Docker Compose (used if no file input provided)',
-                                     optional=True),
-        'brick_name': StrParam(human_name='Brick Name',
-                               short_description='Name of the brick',
-                               optional=False),
-        'unique_name': StrParam(human_name='Unique Name',
-                                short_description='Unique name for the compose',
-                                optional=False),
-        'description': StrParam(human_name='Description',
-                                short_description='Description of the compose instance',
-                                optional=False),
-        'env': JsonCodeParam(human_name='Environment Variables',
-                             short_description='Optional environment variables for the compose as JSON object. Must be a Dict[str, str]'),
-        'auto_start': BoolParam(human_name='Auto Start',
-                                short_description='Whether to automatically start the compose on lab start',
-                                default_value=False)
-    })
+    config_specs = ConfigSpecs(
+        {
+            "yaml_config": YamlCodeParam(
+                human_name="Docker Compose YAML",
+                short_description="YAML configuration for Docker Compose (used if no file input provided)",
+                optional=True,
+            ),
+            "brick_name": StrParam(
+                human_name="Brick Name", short_description="Name of the brick", optional=False
+            ),
+            "unique_name": StrParam(
+                human_name="Unique Name",
+                short_description="Unique name for the compose",
+                optional=False,
+            ),
+            "description": StrParam(
+                human_name="Description",
+                short_description="Description of the compose instance",
+                optional=False,
+            ),
+            "env": JsonCodeParam(
+                human_name="Environment Variables",
+                short_description="Optional environment variables for the compose as JSON object. Must be a Dict[str, str]",
+            ),
+            "auto_start": BoolParam(
+                human_name="Auto Start",
+                short_description="Whether to automatically start the compose on lab start",
+                default_value=False,
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        brick_name: str = params.get_value('brick_name')
-        unique_name: str = params.get_value('unique_name')
+        brick_name: str = params.get_value("brick_name")
+        unique_name: str = params.get_value("unique_name")
 
         # Get YAML content from file input or config parameter
-        yaml_file: File = inputs.get('yaml_file')
+        yaml_file: File = inputs.get("yaml_file")
         if yaml_file is not None:
             # Use file content
             yaml_config = yaml_file.read()
         else:
             # Use config parameter
-            yaml_config: str = params.get_value('yaml_config')
+            yaml_config: str = params.get_value("yaml_config")
             if not yaml_config:
-                raise BadRequestException("Either 'yaml_file' input or 'yaml_config' parameter must be provided")
+                raise BadRequestException(
+                    "Either 'yaml_file' input or 'yaml_config' parameter must be provided"
+                )
 
         # Check that the brick exists
         brick_model = BrickService.get_brick_model(brick_name)
@@ -150,14 +172,16 @@ class StartDockerComposeTask(Task):
             raise BadRequestException(f"Brick '{brick_name}' does not exist")
 
         # check that env is a dict of str to str if provided
-        env = params.get_value('env')
+        env = params.get_value("env")
         if env is not None:
             if not isinstance(env, dict):
                 raise BadRequestException("Environment variables must be a dictionary")
 
             for k, v in env.items():
                 if not isinstance(k, str) or not isinstance(v, str):
-                    raise BadRequestException("Environment variable keys and values must be strings")
+                    raise BadRequestException(
+                        "Environment variable keys and values must be strings"
+                    )
 
         # Start the Docker Compose
         docker_service = DockerService()
@@ -166,9 +190,9 @@ class StartDockerComposeTask(Task):
             brick_name=brick_name,
             unique_name=unique_name,
             compose_yaml_content=yaml_config,
-            description=params.get_value('description'),
+            description=params.get_value("description"),
             env=env,
-            auto_start=params.get_value('auto_start')
+            auto_start=params.get_value("auto_start"),
         )
 
         self.log_info_message("Docker Compose started, waiting for ready status...")
@@ -176,7 +200,7 @@ class StartDockerComposeTask(Task):
             brick_name=brick_name,
             unique_name=unique_name,
             max_attempts=20,
-            message_dispatcher=self.message_dispatcher
+            message_dispatcher=self.message_dispatcher,
         )
 
         if response.composeStatus.status != DockerComposeStatus.UP:
@@ -188,12 +212,10 @@ class StartDockerComposeTask(Task):
         # Create JSON output
         json_dict = JSONDict()
         json_dict.data = {
-            'status': response.composeStatus.status.value,
-            'info': response.composeStatus.info,
-            'brick_name': brick_name,
-            'unique_name': unique_name
+            "status": response.composeStatus.status.value,
+            "info": response.composeStatus.info,
+            "brick_name": brick_name,
+            "unique_name": unique_name,
         }
 
-        return {
-            'response': json_dict
-        }
+        return {"response": json_dict}

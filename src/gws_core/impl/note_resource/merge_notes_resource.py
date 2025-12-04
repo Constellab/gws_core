@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -24,20 +22,24 @@ class MergeNoteResources(Task):
     Merge multiple note resource into a new note resource.
     """
 
-    input_specs: InputSpecs = DynamicInputs({
-        'source': InputSpec(NoteResource, human_name='Note resource')
-    }, additionnal_port_spec=InputSpec(NoteResource, human_name='Note resource'))
+    input_specs: InputSpecs = DynamicInputs(
+        {"source": InputSpec(NoteResource, human_name="Note resource")},
+        additionnal_port_spec=InputSpec(NoteResource, human_name="Note resource"),
+    )
 
-    output_specs: OutputSpecs = OutputSpecs({
-        'note': OutputSpec(NoteResource, human_name='Note resource')
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {"note": OutputSpec(NoteResource, human_name="Note resource")}
+    )
 
-    config_specs = ConfigSpecs({
-        'title':
-        StrParam(
-            human_name='Title',
-            short_description='Title of the new note resource, if empty the first note resource title is used',
-            default_value='')})
+    config_specs = ConfigSpecs(
+        {
+            "title": StrParam(
+                human_name="Title",
+                short_description="Title of the new note resource, if empty the first note resource title is used",
+                default_value="",
+            )
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # prepare the input
@@ -51,11 +53,9 @@ class MergeNoteResources(Task):
                 raise ValueError(f"Input {index} is not an note resource")
 
             if index == 1:
-                note_resource.title = params['title'] or resource.title
+                note_resource.title = params["title"] or resource.title
 
             note_resource.append_note_resource(resource)
             index += 1
 
-        return {
-            'note': note_resource
-        }
+        return {"note": note_resource}

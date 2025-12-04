@@ -3,8 +3,7 @@ from gws_core.user.authorization_service import AuthorizationService
 
 
 class ShareTokenAuth:
-    """Class to manage authentication with share token for share controller
-    """
+    """Class to manage authentication with share token for share controller"""
 
     @classmethod
     def get_and_check_share_link_token_from_url(cls, token: str) -> AuthContextShareLink:

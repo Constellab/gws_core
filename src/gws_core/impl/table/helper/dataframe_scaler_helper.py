@@ -1,5 +1,3 @@
-
-
 from typing import Literal
 
 import numpy
@@ -15,21 +13,19 @@ DfAxisScaleFunction = Literal["unit", "percent", "standard"]
 
 
 class DataframeScalerHelper:
-
     SCALE_FUNCTIONS = Utils.get_literal_values(DfScaleFunction)
     AXIS_SCALE_FUNCTIONS = Utils.get_literal_values(DfAxisScaleFunction)
 
     @classmethod
-    def scale(
-            cls, data: DataFrame, func: DfScaleFunction) -> DataFrame:
+    def scale(cls, data: DataFrame, func: DfScaleFunction) -> DataFrame:
         cls._check_scale_func(func)
 
         if func == "log10":
-            data = data.map(DataframeScalerHelper._log10, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log10, na_action="ignore")
         elif func == "log2":
-            data = data.map(DataframeScalerHelper._log2, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log2, na_action="ignore")
         elif func == "log":
-            data = data.map(DataframeScalerHelper._log, na_action='ignore')
+            data = data.map(DataframeScalerHelper._log, na_action="ignore")
 
         return data
 
@@ -52,15 +48,45 @@ class DataframeScalerHelper:
 
     @staticmethod
     def _log10(x):
-        return numpy.log10(x) if isinstance(x, (float, int,)) else numpy.NaN
+        return (
+            numpy.log10(x)
+            if isinstance(
+                x,
+                (
+                    float,
+                    int,
+                ),
+            )
+            else numpy.NaN
+        )
 
     @staticmethod
     def _log2(x):
-        return numpy.log2(x) if isinstance(x, (float, int,)) else numpy.NaN
+        return (
+            numpy.log2(x)
+            if isinstance(
+                x,
+                (
+                    float,
+                    int,
+                ),
+            )
+            else numpy.NaN
+        )
 
     @staticmethod
     def _log(x):
-        return numpy.log(x) if isinstance(x, (float, int,)) else numpy.NaN
+        return (
+            numpy.log(x)
+            if isinstance(
+                x,
+                (
+                    float,
+                    int,
+                ),
+            )
+            else numpy.NaN
+        )
 
     @classmethod
     def _check_scale_func(cls, func: DfScaleFunction):

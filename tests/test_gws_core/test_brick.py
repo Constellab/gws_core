@@ -1,4 +1,3 @@
-
 from typing import Dict, List
 
 from gws_core.brick.brick_dto import BrickInfo
@@ -10,21 +9,18 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestBrick(BaseTestCase):
-
     def test_get_all_bricks(self):
-
         bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
 
         self.assertTrue(len(bricks_info) > 0)
-        self.assertTrue('gws_core' in bricks_info)
+        self.assertTrue("gws_core" in bricks_info)
 
     def test_get_obj_brick(self):
-
         brick_name: str = BrickHelper.get_brick_name(Task)
-        self.assertEqual(brick_name, 'gws_core')
+        self.assertEqual(brick_name, "gws_core")
 
         brick_name = BrickHelper.get_brick_name(Task.run)
-        self.assertEqual(brick_name, 'gws_core')
+        self.assertEqual(brick_name, "gws_core")
 
     def test_brick_models(self):
         brick_models: List[BrickModel] = BrickService.get_all_brick_models()
@@ -33,8 +29,8 @@ class TestBrick(BaseTestCase):
         self.assertIsNotNone([brick_model.to_dto() for brick_model in brick_models])
 
     def test_log_brick_message(self):
-        BrickService.log_brick_message_from_obj(Task, 'Test message', 'ERROR')
+        BrickService.log_brick_message_from_obj(Task, "Test message", "ERROR")
 
-        brick_model = BrickService.get_brick_model('gws_core')
-        self.assertEqual(brick_model.status, 'ERROR')
+        brick_model = BrickService.get_brick_model("gws_core")
+        self.assertEqual(brick_model.status, "ERROR")
         self.assertTrue(len(brick_model.get_messages()) > 0)

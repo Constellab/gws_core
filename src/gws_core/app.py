@@ -1,5 +1,3 @@
-
-
 from threading import Thread
 
 import uvicorn
@@ -28,16 +26,17 @@ app = FastAPI(docs_url=None)
 
 @app.on_event("startup")
 def startup():
-    """ Called before the app is started """
+    """Called before the app is started"""
 
     App.init()
 
 
 @app.on_event("shutdown")
 def shutdown():
-    """ Called before the application is stopped """
+    """Called before the application is stopped"""
 
     App.deinit()
+
 
 ####################################################################################
 #
@@ -98,9 +97,7 @@ class App:
     @classmethod
     def start_uvicorn_app(cls, port: int = 3000):
         # configure the context middleware
-        cls.app.add_middleware(
-            ContextMiddleware
-        )
+        cls.app.add_middleware(ContextMiddleware)
 
         # api routes
         cls.app.mount(f"/{Settings.core_api_route_path()}/", core_app)
@@ -108,4 +105,4 @@ class App:
         cls.app.mount(f"/{Settings.external_lab_api_route_path()}/", external_lab_app)
         cls.app.mount(f"/{Settings.s3_server_api_route_path()}/", s3_server_app)
 
-        uvicorn.run(cls.app, host='0.0.0.0', port=int(port))
+        uvicorn.run(cls.app, host="0.0.0.0", port=int(port))

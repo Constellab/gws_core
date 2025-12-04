@@ -59,7 +59,9 @@ class ShareLink(ModelWithUser):
     ) -> Optional["ShareLink"]:
         """Method that find a shared entity link by its entity id and type"""
         return cls.get_or_none(
-            (cls.entity_type == entity_type) & (cls.entity_id == entity_id) & (cls.link_type == link_type)
+            (cls.entity_type == entity_type)
+            & (cls.entity_id == entity_id)
+            & (cls.link_type == link_type)
         )
 
     @classmethod

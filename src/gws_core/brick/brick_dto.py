@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 from typing import List, Literal, Optional
@@ -29,7 +27,7 @@ class BrickInfo(BaseModelDTO):
     path: str
     name: str
     version: Optional[str]
-    repo_type: Optional[Literal['git', 'pip']]
+    repo_type: Optional[Literal["git", "pip"]]
     repo_commit: Optional[str]
     # name of the package that depend on this module
     parent_name: Optional[str]
@@ -42,8 +40,8 @@ class BrickInfo(BaseModelDTO):
         return os.path.dirname(sys.modules[self.name].__path__[0])
 
 
-BrickStatus = Literal['SUCCESS', 'ERROR', 'CRITICAL', 'WARNING']
-BrickMessageStatus = Literal['INFO', 'ERROR', 'CRITICAL', 'WARNING']
+BrickStatus = Literal["SUCCESS", "ERROR", "CRITICAL", "WARNING"]
+BrickMessageStatus = Literal["INFO", "ERROR", "CRITICAL", "WARNING"]
 
 
 class BrickMessageDTO(BaseModelDTO):
@@ -56,7 +54,7 @@ class BrickDTO(ModelDTO):
     name: str
     status: BrickStatus
     version: Optional[str] = None
-    repo_type: Optional[Literal['git', 'pip']] = None
+    repo_type: Optional[Literal["git", "pip"]] = None
     brick_path: Optional[str] = None
     repo_commit: Optional[str] = None
     parent_name: Optional[str] = None
@@ -65,7 +63,8 @@ class BrickDTO(ModelDTO):
 
 class BrickDirectoryDTO(BaseModelDTO):
     """DTO representing a brick directory"""
+
     name: str
     path: str
     # Either the brick is in the system folder or in the user folder
-    folder: Literal['system', 'user']
+    folder: Literal["system", "user"]

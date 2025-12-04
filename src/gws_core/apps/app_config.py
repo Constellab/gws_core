@@ -1,5 +1,3 @@
-
-
 import os
 from abc import abstractmethod
 from typing import Callable, Type
@@ -48,16 +46,12 @@ class AppConfig(BaseTyping):
         :return: _description_
         :rtype: str
         """
-        return os.path.join(
-            os.path.abspath(os.path.dirname(current_file)),
-            app_folder_name
-        )
+        return os.path.join(os.path.abspath(os.path.dirname(current_file)), app_folder_name)
 
 
-def app_decorator(unique_name: str,
-                  app_type: AppType,
-                  human_name: str = "",
-                  short_description: str = "") -> Callable:
+def app_decorator(
+    unique_name: str, app_type: AppType, human_name: str = "", short_description: str = ""
+) -> Callable:
     """ Decorator to declare a app class configuration.
 
     :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
@@ -73,43 +67,50 @@ def app_decorator(unique_name: str,
     :type short_description: str, optional
 
     """
+
     def decorator(task_class: Type[AppConfig]):
-        _decorate_app(task_class,
-                      app_type=app_type,
-                      unique_name=unique_name,
-                      human_name=human_name,
-                      short_description=short_description)
+        _decorate_app(
+            task_class,
+            app_type=app_type,
+            unique_name=unique_name,
+            human_name=human_name,
+            short_description=short_description,
+        )
 
         return task_class
+
     return decorator
 
 
 def _decorate_app(
-        app_class: Type[AppConfig],
-        app_type: AppType,
-        unique_name: str,
-        human_name: str = "",
-        short_description: str = "",):
-    """Method to decorate a task
-    """
+    app_class: Type[AppConfig],
+    app_type: AppType,
+    unique_name: str,
+    human_name: str = "",
+    short_description: str = "",
+):
+    """Method to decorate a task"""
     if not Utils.issubclass(app_class, AppConfig):
         BrickService.log_brick_error(
             app_class,
-            f"The app_decorator is used on the class: {app_class.__name__} and this class is not a sub class of App")
+            f"The app_decorator is used on the class: {app_class.__name__} and this class is not a sub class of App",
+        )
         return
 
     if not isinstance(app_type, AppType):
         BrickService.log_brick_error(
-            app_class,
-            f"The app_type: {app_type} is not a instance of AppType")
+            app_class, f"The app_type: {app_type} is not a instance of AppType"
+        )
         return
 
-    register_gws_typing_class(object_class=app_class,
-                              object_type="APP",
-                              unique_name=unique_name,
-                              object_sub_type=app_type.value,
-                              human_name=human_name,
-                              short_description=short_description,
-                              hide=True,
-                              style=TypingStyle.default_task(),
-                              deprecated=None)
+    register_gws_typing_class(
+        object_class=app_class,
+        object_type="APP",
+        unique_name=unique_name,
+        object_sub_type=app_type.value,
+        human_name=human_name,
+        short_description=short_description,
+        hide=True,
+        style=TypingStyle.default_task(),
+        deprecated=None,
+    )

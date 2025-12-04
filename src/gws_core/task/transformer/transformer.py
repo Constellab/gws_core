@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Type, final
 
@@ -16,15 +14,17 @@ from ..task import Task
 from ..task_decorator import task_decorator
 
 
-def transformer_decorator(unique_name: str,
-                          resource_type: Type[Resource],
-                          human_name: str = "",
-                          short_description: str = "",
-                          hide: bool = False,
-                          style: TypingStyle = None,
-                          deprecated_since: str = None,
-                          deprecated_message: str = None,
-                          deprecated: TypingDeprecated = None):
+def transformer_decorator(
+    unique_name: str,
+    resource_type: Type[Resource],
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle = None,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+):
     """
     Decorator to place on a task instead of task_decorator. This create a specific task to transform the resource.
 
@@ -49,40 +49,44 @@ def transformer_decorator(unique_name: str,
     """
 
     def decorator(task_class: Type[Task]):
-
         if not Utils.issubclass(task_class, Transformer):
             BrickService.log_brick_error(
                 task_class,
-                f"The transformer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Transformer")
+                f"The transformer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Transformer",
+            )
             return task_class
 
         # Force the input and output specs
-        task_class.input_specs = InputSpecs({'resource': resource_type})
-        task_class.output_specs = OutputSpecs({'resource': resource_type})
+        task_class.input_specs = InputSpecs({"resource": resource_type})
+        task_class.output_specs = OutputSpecs({"resource": resource_type})
 
-        decorate_converter(task_class=task_class,
-                           unique_name=unique_name,
-                           task_type='TRANSFORMER',
-                           source_type=resource_type,
-                           target_type=resource_type,
-                           related_resource=resource_type,
-                           human_name=human_name,
-                           short_description=short_description,
-                           hide=hide,
-                           style=style,
-                           deprecated_since=deprecated_since,
-                           deprecated_message=deprecated_message,
-                           deprecated=deprecated)
+        decorate_converter(
+            task_class=task_class,
+            unique_name=unique_name,
+            task_type="TRANSFORMER",
+            source_type=resource_type,
+            target_type=resource_type,
+            related_resource=resource_type,
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            deprecated_since=deprecated_since,
+            deprecated_message=deprecated_message,
+            deprecated=deprecated,
+        )
 
         return task_class
+
     return decorator
 
 
 @task_decorator("Transformer", hide=True)
 class Transformer(Converter):
-
     @final
-    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
+    def convert(
+        self, source: Resource, params: ConfigParams, target_type: Type[Resource]
+    ) -> Resource:
         target: Resource = self.transform(source, params)
 
         # copy the source name if the target name is not set

@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Optional
 
 import plotly.graph_objs as go
@@ -15,7 +13,8 @@ class OpenAiChatMessage(TypedDict):
     :param TypedDict: _description_
     :type TypedDict: _type_
     """
-    role: Literal['system', 'user', 'assistant']
+
+    role: Literal["system", "user", "assistant"]
     content: str
 
 
@@ -25,6 +24,7 @@ class OpenAiChatDict(TypedDict):
     :param TypedDict: _description_
     :type TypedDict: _type_
     """
+
     messages: List[OpenAiChatMessage]
 
 
@@ -40,13 +40,14 @@ class AiChatMessage(BaseModelDTO):
     """Overload of OpenAiChatMessage to add custom info (not sent to OpenAI)
     but stored in the chat object
     """
-    role: Literal['system', 'user', 'assistant']
+
+    role: Literal["system", "user", "assistant"]
     content: str
     user_id: Optional[str] = None
     additional_info: Optional[AiChatMessageAdditionalInfo] = None
 
     def is_user(self) -> bool:
-        return self.role == 'user'
+        return self.role == "user"
 
     def add_plot(self, plot: go.Figure) -> None:
         if self.additional_info is None:

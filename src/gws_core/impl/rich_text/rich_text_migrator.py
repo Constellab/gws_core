@@ -8,12 +8,13 @@ from .rich_text_types import RichTextDTO
 
 class RichTextListItem(TypedDict):
     """Object representing a list item in a rich text"""
+
     content: str
     items: List["RichTextListItem"]
     meta: dict
 
 
-class TeRichTextMigrator():
+class TeRichTextMigrator:
     def migrate_rich_text(self, content: RichTextDTO) -> RichTextDTO:
         for block in content.blocks:
             block.data = self.migrate_block_data(block.type, block.data)
@@ -29,9 +30,9 @@ class TeRichTextMigrator():
         pass
 
     @staticmethod
-    def get_migrators(current_version: int, target_version: int) -> List['TeRichTextMigrator']:
+    def get_migrators(current_version: int, target_version: int) -> List["TeRichTextMigrator"]:
         if current_version > target_version:
-            raise ValueError('Cannot migrate from newer version to older version')
+            raise ValueError("Cannot migrate from newer version to older version")
         migrators: List[TeRichTextMigrator] = []
         all_migrators_sorted = [TeRichTextMigrator1To2()]
 
@@ -58,13 +59,13 @@ class TeRichTextMigrator1To2(TeRichTextMigrator):
     def migrate_list_item(self, list_item: RichTextListItem) -> RichTextListItem:
         if list_item is None:
             return None
-        if 'meta' not in list_item:
-            list_item['meta'] = {}
+        if "meta" not in list_item:
+            list_item["meta"] = {}
 
-        if 'items' not in list_item:
-            list_item['items'] = []
+        if "items" not in list_item:
+            list_item["items"] = []
 
-        for child in list_item['items']:
+        for child in list_item["items"]:
             self.migrate_list_item(child)
         return list_item
 

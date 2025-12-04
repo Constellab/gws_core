@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict
 
 from gws_core.config.param.param_types import ParamValue
@@ -8,8 +6,7 @@ ConfigParamsDict = Dict[str, ParamValue]
 
 
 class ConfigParams(ConfigParamsDict):
-    """Config values send to the task
-    """
+    """Config values send to the task"""
 
     __config_model_id__: str = None
 
@@ -74,11 +71,13 @@ class ConfigParams(ConfigParamsDict):
             return
 
         from .config import Config
+
         config: Config = Config.get_by_id(self.__config_model_id__)
 
         if config is None:
             raise Exception(
-                f"Can't update the config because config with id '{self.__config_model_id__}' was not found")
+                f"Can't update the config because config with id '{self.__config_model_id__}' was not found"
+            )
 
         for key, value in self.items():
             config.set_value(key, value)

@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Optional, cast
 
 from fastapi.param_functions import Depends
@@ -17,38 +15,47 @@ from ..core_controller import core_app
 
 
 @core_app.get("/typing/resource/{typing_name}", tags=["Typing"], summary="Get a resource typing")
-def get_resource_typing(typing_name: str,
-                        _=Depends(AuthorizationService.check_user_access_token_or_app)) -> ResourceTypingDTO:
+def get_resource_typing(
+    typing_name: str, _=Depends(AuthorizationService.check_user_access_token_or_app)
+) -> ResourceTypingDTO:
     return cast(ResourceTypingDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
 
 
 @core_app.get("/typing/task/{typing_name}", tags=["Typing"], summary="Get a task typing")
-def get_task_typing(typing_name: str,
-                    _=Depends(AuthorizationService.check_user_access_token_or_app)) -> TaskTypingDTO:
+def get_task_typing(
+    typing_name: str, _=Depends(AuthorizationService.check_user_access_token_or_app)
+) -> TaskTypingDTO:
     return cast(TaskTypingDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
 
 
 @core_app.get("/typing/protocol/{typing_name}", tags=["Typing"], summary="Get a protocol typing")
-def get_protocol_typing(typing_name: str,
-                        _=Depends(AuthorizationService.check_user_access_token_or_app)) -> ProtocolTypingFullDTO:
-    return cast(ProtocolTypingFullDTO, TypingService.get_and_check_typing(typing_name).to_full_dto())
+def get_protocol_typing(
+    typing_name: str, _=Depends(AuthorizationService.check_user_access_token_or_app)
+) -> ProtocolTypingFullDTO:
+    return cast(
+        ProtocolTypingFullDTO, TypingService.get_and_check_typing(typing_name).to_full_dto()
+    )
 
 
-@core_app.get("/typing/object-type/{object_type}", tags=["Resource"],
-              summary="Get by object type")
-def get_by_object_type(object_type: TypingObjectType,
-                       page: Optional[int] = 1,
-                       number_of_items_per_page: Optional[int] = 20,
-                       _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[TypingDTO]:
-
-    return TypingService.get_typing_by_object_type(object_type, page, number_of_items_per_page).to_dto()
+@core_app.get("/typing/object-type/{object_type}", tags=["Resource"], summary="Get by object type")
+def get_by_object_type(
+    object_type: TypingObjectType,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[TypingDTO]:
+    return TypingService.get_typing_by_object_type(
+        object_type, page, number_of_items_per_page
+    ).to_dto()
 
 
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
-def advanced_search(search_params: SearchParams,
-                    page: Optional[int] = 1,
-                    number_of_items_per_page: Optional[int] = 20,
-                    _=Depends(AuthorizationService.check_user_access_token_or_app)) -> PageDTO[TypingDTO]:
+def advanced_search(
+    search_params: SearchParams,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token_or_app),
+) -> PageDTO[TypingDTO]:
     """
     Advanced search for typing
     """
@@ -61,57 +68,74 @@ class SearchWithResourceTypes(BaseModelDTO):
 
 
 @core_app.post(
-    "/typing/processes/suggestion/{inputs_or_outputs}", tags=["Typing"],
-    summary="Search process with specific input type")
-def process_with_input_search(search: SearchWithResourceTypes,
-                              inputs_or_outputs: Literal['inputs', 'outputs'],
-                              page: Optional[int] = 1,
-                              number_of_items_per_page: Optional[int] = 20,
-                              _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[TypingDTO]:
+    "/typing/processes/suggestion/{inputs_or_outputs}",
+    tags=["Typing"],
+    summary="Search process with specific input type",
+)
+def process_with_input_search(
+    search: SearchWithResourceTypes,
+    inputs_or_outputs: Literal["inputs", "outputs"],
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[TypingDTO]:
     """
     Advanced search for typing
     """
-    return TypingService.suggest_process(search.search_params, search.resource_typing_names, inputs_or_outputs,
-                                         page, number_of_items_per_page).to_dto()
+    return TypingService.suggest_process(
+        search.search_params,
+        search.resource_typing_names,
+        inputs_or_outputs,
+        page,
+        number_of_items_per_page,
+    ).to_dto()
 
 
-@core_app.post("/typing/importers/search/{resource_typing_name}/{extension}",
-               tags=["Typing"], summary="Search typings")
-def importers_advanced_search(search_dict: SearchParams,
-                              resource_typing_name: str,
-                              extension: str,
-                              page: Optional[int] = 1,
-                              number_of_items_per_page: Optional[int] = 20,
-                              _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[TypingDTO]:
+@core_app.post(
+    "/typing/importers/search/{resource_typing_name}/{extension}",
+    tags=["Typing"],
+    summary="Search typings",
+)
+def importers_advanced_search(
+    search_dict: SearchParams,
+    resource_typing_name: str,
+    extension: str,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[TypingDTO]:
     """
     Advanced search for importers typing
     """
-    return TypingService.search_importers(resource_typing_name, extension,
-                                          search_dict, page, number_of_items_per_page).to_dto()
+    return TypingService.search_importers(
+        resource_typing_name, extension, search_dict, page, number_of_items_per_page
+    ).to_dto()
 
 
-@core_app.post("/typing/transformers/search",
-               tags=["Typing"], summary="Search typings")
-def transformers_advanced_search(search: SearchWithResourceTypes,
-                                 page: Optional[int] = 1,
-                                 number_of_items_per_page: Optional[int] = 20,
-                                 _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[TypingDTO]:
+@core_app.post("/typing/transformers/search", tags=["Typing"], summary="Search typings")
+def transformers_advanced_search(
+    search: SearchWithResourceTypes,
+    page: Optional[int] = 1,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[TypingDTO]:
     """
     Advanced search for transformers typing
     """
     return TypingService.search_transformers(
-        search.resource_typing_names, search.search_params, page, number_of_items_per_page).to_dto()
+        search.resource_typing_names, search.search_params, page, number_of_items_per_page
+    ).to_dto()
 
 
-@core_app.delete("/typing/unavailable", tags=["Typing"],
-                 summary="Delete unavailable typings")
+@core_app.delete("/typing/unavailable", tags=["Typing"], summary="Delete unavailable typings")
 def delete_unavailable_typings(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     TypingService.delete_unavailable_typings()
 
 
-@core_app.delete("/typing/unavailable/{brick_name}", tags=["Typing"],
-                 summary="Delete unavailable typings")
+@core_app.delete(
+    "/typing/unavailable/{brick_name}", tags=["Typing"], summary="Delete unavailable typings"
+)
 def delete_unavailable_typings_for_brick(
-        brick_name: str,
-        _=Depends(AuthorizationService.check_user_access_token)) -> None:
+    brick_name: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
     TypingService.delete_unavailable_typings(brick_name)

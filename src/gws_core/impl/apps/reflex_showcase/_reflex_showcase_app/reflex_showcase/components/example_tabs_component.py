@@ -107,17 +107,12 @@ def example_tabs(
     # Build header components (optional)
     header_components = []
     if title is not None:
-        header_components.append(
-            rx.heading(title, size="6", margin_bottom="0.5em")
-        )
+        header_components.append(rx.heading(title, size="6", margin_bottom="0.5em"))
     if description is not None:
-        header_components.append(
-            rx.text(description, margin_bottom="1em", color="gray")
-        )
+        header_components.append(rx.text(description, margin_bottom="1em", color="gray"))
 
     return rx.box(
         *header_components,
-
         rx.tabs.root(
             rx.tabs.list(
                 *tabs_content,
@@ -126,7 +121,6 @@ def example_tabs(
             default_value="example",
             width="100%",
         ),
-
         width="100%",
         margin_bottom="2em",
     )

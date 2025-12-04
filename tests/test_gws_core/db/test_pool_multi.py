@@ -1,5 +1,3 @@
-
-
 from multiprocessing import Pool
 from unittest import TestCase
 
@@ -9,12 +7,11 @@ from peewee import CharField
 
 
 class TestTable(Model):
-
     id = CharField(primary_key=True, max_length=36)
     text = CharField()
 
     class Meta:
-        table_name = 'test_table'
+        table_name = "test_table"
         is_table = True
 
 
@@ -24,7 +21,6 @@ def _simple_select(_):
 
 # test_pool_multi
 class TestPoolMulti(TestCase):
-
     # clean the table and db connection after the test (required if other tests are run after)
     @classmethod
     def tearDownClass(cls):
@@ -32,12 +28,12 @@ class TestPoolMulti(TestCase):
         TestTable.drop_table()
 
     def test_pool_multi(self):
-        """ We test that the pool reset the db so sub the processes can use it
+        """We test that the pool reset the db so sub the processes can use it
         So we open the db before the pool and close it after"""
         TestTable.drop_table()
         TestTable.create_table()
         for i in range(0, 1000):
-            TestTable.create(id=str(i), text=f'text_{i}')
+            TestTable.create(id=str(i), text=f"text_{i}")
 
         # force opening the db before the pool
         list(TestTable.select())

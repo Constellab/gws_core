@@ -58,8 +58,7 @@ class FileRField(BaseRField):
         ```
     """
 
-    def __init__(self,
-                 default_value: Any = None) -> None:
+    def __init__(self, default_value: Any = None) -> None:
         """Initialize a FileRField with automatic file-based persistence.
 
         The field is configured to store file path references in KV_STORE and is
@@ -72,9 +71,9 @@ class FileRField(BaseRField):
                               Defaults to None
         :type default_value: Any, optional
         """
-        super().__init__(default_value=default_value,
-                         include_in_dict_view=False,
-                         storage=RFieldStorage.KV_STORE)
+        super().__init__(
+            default_value=default_value, include_in_dict_view=False, storage=RFieldStorage.KV_STORE
+        )
 
     @final
     def deserialize(self, r_field_value: str) -> Any:

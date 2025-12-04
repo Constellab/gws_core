@@ -1,5 +1,3 @@
-
-
 from enum import Enum
 from typing import Dict, Literal
 
@@ -7,16 +5,16 @@ from typing_extensions import TypedDict
 
 
 class TableColumnType(Enum):
-    INTEGER = 'INTEGER'
-    FLOAT = 'FLOAT'
-    STRING = 'STRING'
-    BOOLEAN = 'BOOLEAN'
-    OBJECT = 'OBJECT'
+    INTEGER = "INTEGER"
+    FLOAT = "FLOAT"
+    STRING = "STRING"
+    BOOLEAN = "BOOLEAN"
+    OBJECT = "OBJECT"
 
 
 class TableHeaderInfo(TypedDict):
-    """Object to represent the information about a table header (row, column)
-    """
+    """Object to represent the information about a table header (row, column)"""
+
     name: str
     tags: Dict[str, str]
 

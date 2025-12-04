@@ -1,5 +1,3 @@
-
-
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
@@ -13,7 +11,6 @@ from gws_core.test.data_provider import DataProvider
 
 # test_excel_file
 class TextExcelFile(BaseTestCaseLight):
-
     def test_view(self):
         file_path = DataProvider.get_test_data_path("small.xlsx")
 
@@ -23,18 +20,19 @@ class TextExcelFile(BaseTestCaseLight):
         self.assertIsNotNone(file.default_view(ConfigParams()))
 
     def test_import(self):
-
         file_path = DataProvider.get_test_data_path("small.xlsx")
 
-        task_runner = TaskRunner(TableImporter, params={}, inputs={
-                                 TableImporter.input_name: File(file_path)})
+        task_runner = TaskRunner(
+            TableImporter, params={}, inputs={TableImporter.input_name: File(file_path)}
+        )
 
         outputs = task_runner.run()
 
         table: Table = outputs[TableImporter.output_name]
 
         self.assertIsNotNone(table)
-        expected_df = DataFrame({'one': [5.1, 4.9], 'two': [
-            'Setosa', 'Setosa'], 'three': ['Setosa', '1.4']})
+        expected_df = DataFrame(
+            {"one": [5.1, 4.9], "two": ["Setosa", "Setosa"], "three": ["Setosa", "1.4"]}
+        )
         expected_table = Table(expected_df)
         self.assertTrue(table.equals(expected_table))

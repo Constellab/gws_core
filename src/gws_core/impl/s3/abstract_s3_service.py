@@ -19,13 +19,20 @@ class AbstractS3Service(ABC):
         """Create a bucket"""
 
     @abstractmethod
-    def list_objects(self, prefix: str = None, max_keys: int = 1000, delimiter: str = None,
-                     continuation_token: str = None, start_after: str = None) -> ListObjectsV2OutputTypeDef:
+    def list_objects(
+        self,
+        prefix: str = None,
+        max_keys: int = 1000,
+        delimiter: str = None,
+        continuation_token: str = None,
+        start_after: str = None,
+    ) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
 
     @abstractmethod
-    def upload_object(self, key: str, data: ByteString, tags: Dict[str, str] = None,
-                      last_modified: float = None) -> dict:
+    def upload_object(
+        self, key: str, data: ByteString, tags: Dict[str, str] = None, last_modified: float = None
+    ) -> dict:
         """Upload an object to the bucket"""
 
     @abstractmethod
@@ -78,4 +85,4 @@ class AbstractS3Service(ABC):
         if not query_param:
             return {}
 
-        return dict([param.split('=') for param in query_param.split('&')])
+        return dict([param.split("=") for param in query_param.split("&")])

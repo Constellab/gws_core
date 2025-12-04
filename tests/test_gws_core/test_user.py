@@ -1,8 +1,5 @@
-
-
 from gws_core import BaseTestCase, User, UserGroup, UserService
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.user_dto import UserFullDTO, UserTheme
@@ -10,7 +7,6 @@ from gws_core.user.user_dto import UserFullDTO, UserTheme
 
 # test_user
 class TestUser(BaseTestCase):
-
     def test_sysuser(self):
         """
         Simple test to check that the sysuser is created
@@ -35,9 +31,9 @@ class TestUser(BaseTestCase):
 
         user_db: User = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
 
-        self.assertEqual(user_db.email, 'test_mail@gencovery.com')
-        self.assertEqual(user_db.first_name, 'Firstname test')
-        self.assertEqual(user_db.last_name, 'Lastname test')
+        self.assertEqual(user_db.email, "test_mail@gencovery.com")
+        self.assertEqual(user_db.first_name, "Firstname test")
+        self.assertEqual(user_db.last_name, "Lastname test")
         self.assertEqual(user_db.group, UserGroup.USER)
 
     def test_authentication(self):

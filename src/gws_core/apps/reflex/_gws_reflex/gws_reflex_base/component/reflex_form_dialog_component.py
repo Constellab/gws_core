@@ -70,6 +70,7 @@ class FormDialogState(rx.State, mixin=True):
         Yields:
             Reflex events (e.g., rx.toast, rx.redirect)
         """
+
     @rx.event(background=True)  # type: ignore
     async def submit_form(self, form_data: dict):
         """Submit the form data (create or update operation).
@@ -118,7 +119,7 @@ def form_dialog_component(
     title: Union[str, rx.Component],
     form_content: rx.Component,
     description: Optional[Union[str, rx.Component]] = None,
-    max_width: str = "500px"
+    max_width: str = "500px",
 ) -> rx.Component:
     """Reusable form dialog component for create/update operations.
 
@@ -231,15 +232,10 @@ def form_dialog_component(
                 rx.dialog.title(title_component),
                 rx.cond(
                     description,
-                    rx.dialog.description(
-                        description,
-                        size="2",
-                        margin_bottom="1rem"
-                    ),
+                    rx.dialog.description(description, size="2", margin_bottom="1rem"),
                 ),
                 rx.form(
                     form_content,
-
                     rx.hstack(
                         rx.button(
                             "Cancel",
@@ -247,21 +243,21 @@ def form_dialog_component(
                             variant="soft",
                             color_scheme="gray",
                             on_click=state.close_dialog,
-                            disabled=state.is_loading
+                            disabled=state.is_loading,
                         ),
                         rx.button(
                             rx.spinner(loading=state.is_loading),
                             "Save",
                             type="submit",
-                            disabled=state.is_loading
+                            disabled=state.is_loading,
                         ),
                         margin_top="1em",
                     ),
                     on_submit=state.submit_form,
                 ),
-                width="100%"
+                width="100%",
             ),
-            max_width=max_width
+            max_width=max_width,
         ),
         open=state.dialog_opened,
     )

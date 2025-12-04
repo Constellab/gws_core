@@ -1,5 +1,3 @@
-
-
 import os
 from unittest import TestCase
 
@@ -11,7 +9,6 @@ from gws_core import Text
 
 # test_package_helper
 class TestPackageHelper(TestCase):
-
     def test_package_load(self):
         self.assertTrue(pkg.module_exists("pandas"))
 

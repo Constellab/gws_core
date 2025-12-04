@@ -2,14 +2,19 @@ from typing import Any, Dict
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import (BoolParam, DictParam, FloatParam,
-                                              IntParam, ListParam, ParamSpec,
-                                              StrParam, TextParam)
-from gws_core.config.param.param_spec_decorator import (ParamSpecType,
-                                                        param_spec_decorator)
+from gws_core.config.param.param_spec import (
+    BoolParam,
+    DictParam,
+    FloatParam,
+    IntParam,
+    ListParam,
+    ParamSpec,
+    StrParam,
+    TextParam,
+)
+from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 from .param_types import ParamSpecDTO, ParamSpecTypeStr
 
@@ -22,14 +27,19 @@ class DynamicParam(ParamSpec):
 
     edition_mode: bool = None
 
-    def __init__(self, specs: ConfigSpecs = None,
-                 human_name: str = 'Dynamic params',
-                 short_description: str = None) -> None:
-        super().__init__(optional=True,
-                         visibility='public',
-                         human_name=human_name,
-                         short_description=short_description,
-                         default_value=None)
+    def __init__(
+        self,
+        specs: ConfigSpecs = None,
+        human_name: str = "Dynamic params",
+        short_description: str = None,
+    ) -> None:
+        super().__init__(
+            optional=True,
+            visibility="public",
+            human_name=human_name,
+            short_description=short_description,
+            default_value=None,
+        )
 
         self.edition_mode = True
 
@@ -45,7 +55,7 @@ class DynamicParam(ParamSpec):
             self.specs = specs
 
         if human_name is None:
-            human_name = 'Dynamic params'
+            human_name = "Dynamic params"
 
         self.specs.check_config_specs()
 
@@ -77,8 +87,8 @@ class DynamicParam(ParamSpec):
         json_.default_value = self.get_default_value()
 
         json_.additional_info = {
-            'specs': self.specs.to_dto(skip_private=False),
-            'edition_mode': self.edition_mode
+            "specs": self.specs.to_dto(skip_private=False),
+            "edition_mode": self.edition_mode,
         }
 
         return json_
@@ -99,7 +109,8 @@ class DynamicParam(ParamSpec):
         for key, spec in spec_dto.additional_info["specs"].items():
             sub_spec_dto = ParamSpecDTO.from_json(spec)
             param_spec: ParamSpec = ParamSpecHelper.get_param_spec_type_from_str(
-                sub_spec_dto.type).load_from_dto(sub_spec_dto)
+                sub_spec_dto.type
+            ).load_from_dto(sub_spec_dto)
             specs.add_spec(key, param_spec)
 
         dynamic_param.edition_mode = spec_dto.additional_info.get("edition_mode", True)
@@ -123,7 +134,9 @@ class DynamicParam(ParamSpec):
 
         self.specs.update_spec(param_name, spec)
 
-    def rename_and_update_spec(self, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO) -> None:
+    def rename_and_update_spec(
+        self, param_name: str, new_param_name: str, spec_dto: ParamSpecDTO
+    ) -> None:
         spec: ParamSpec = self.get_spec_from_dto(spec_dto)
 
         if spec.default_value is not None:
@@ -138,9 +151,12 @@ class DynamicParam(ParamSpec):
     def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
         spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
         # TODO A VERIFIER
-        if 'allowed_values' in spec.additional_info and spec.additional_info['allowed_values'] is not None and len(
-                spec.additional_info['allowed_values']) == 0:
-            spec.additional_info['allowed_values'] = None
+        if (
+            "allowed_values" in spec.additional_info
+            and spec.additional_info["allowed_values"] is not None
+            and len(spec.additional_info["allowed_values"]) == 0
+        ):
+            spec.additional_info["allowed_values"] = None
         return spec
 
     @staticmethod

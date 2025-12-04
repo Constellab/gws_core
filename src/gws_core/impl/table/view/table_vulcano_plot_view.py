@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List
@@ -7,8 +5,7 @@ from typing import TYPE_CHECKING, List
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam, ListParam
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.table.view.base_table_view import BaseTableView
 from gws_core.impl.table.view.table_selection import Serie2d
 from gws_core.impl.view.vulcano_plot_view import VulcanoPlotView
@@ -19,23 +16,23 @@ if TYPE_CHECKING:
 
 
 class TableVulcanoPlotView(BaseTableView):
-
     _table: Table
 
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-        "x_threshold": FloatParam(default_value=0.05),
-        "y_threshold": FloatParam(default_value=0.05),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+            "x_threshold": FloatParam(default_value=0.05),
+            "y_threshold": FloatParam(default_value=0.05),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     _type: ViewType = ViewType.VULCANO_PLOT
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-
         series: List[Serie2d] = Serie2d.from_list(params.get_value("series"))
 
         if len(series) != 1:
-            raise BadRequestException('There must be only one series')
+            raise BadRequestException("There must be only one series")
         serie = series[0]
 
         # create view
@@ -54,7 +51,7 @@ class TableVulcanoPlotView(BaseTableView):
             x=x_data,
             y=y_data,
             name=serie.name,
-            tags=self.get_row_tags_from_selection_range(serie.y)
+            tags=self.get_row_tags_from_selection_range(serie.y),
         )
 
         return view.data_to_dict(params)

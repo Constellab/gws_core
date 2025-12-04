@@ -122,7 +122,9 @@ class ReflexMainStateBase(rx.State):
     def _get_app_config_file_path(self) -> str:
         config_dir = os.environ.get("GWS_REFLEX_APP_CONFIG_DIR_PATH")
         if not config_dir:
-            raise ValueError("GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode")
+            raise ValueError(
+                "GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode"
+            )
 
         app_id: str = self.get_app_id()
 

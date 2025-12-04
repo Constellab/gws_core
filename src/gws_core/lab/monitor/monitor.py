@@ -1,5 +1,3 @@
-
-
 import subprocess
 from typing import Any, Dict, List
 
@@ -85,8 +83,7 @@ class Monitor(Model):
         monitor.cpu_percent = psutil.cpu_percent(interval=None)
 
         # All CPU
-        monitor.data["all_cpu_percent"] = psutil.cpu_percent(
-            interval=None, percpu=True)
+        monitor.data["all_cpu_percent"] = psutil.cpu_percent(interval=None, percpu=True)
 
         # Disk
         disk = cls.get_current_disk_usage()
@@ -136,10 +133,16 @@ class Monitor(Model):
     def get_gpu_info(cls) -> GpuInfo:
         try:
             result = subprocess.run(
-                ['nvidia-smi', '--query-gpu=utilization.gpu,temperature.gpu,memory.total,memory.used,memory.free',
-                 '--format=csv,noheader,nounits'], stdout=subprocess.PIPE, check=True)
+                [
+                    "nvidia-smi",
+                    "--query-gpu=utilization.gpu,temperature.gpu,memory.total,memory.used,memory.free",
+                    "--format=csv,noheader,nounits",
+                ],
+                stdout=subprocess.PIPE,
+                check=True,
+            )
 
-            gpu_info = result.stdout.decode('UTF-8').split('\n')[0].split(', ')
+            gpu_info = result.stdout.decode("UTF-8").split("\n")[0].split(", ")
 
             memory_used = float(gpu_info[3]) * 1024 * 1024 * 1024
             memory_free = float(gpu_info[4]) * 1024 * 1024 * 1024
@@ -150,7 +153,7 @@ class Monitor(Model):
                 memory_total=memory_total,
                 memory_used=memory_used,
                 memory_free=memory_free,
-                memory_percent=memory_used / memory_total * 100
+                memory_percent=memory_used / memory_total * 100,
             )
         except Exception as err:
             Logger.debug(f"Error while getting gpu info from nvidia-smi : {err}")
@@ -188,9 +191,9 @@ class Monitor(Model):
             gpu_memory_used=self.gpu_memory_used,
             gpu_memory_free=self.gpu_memory_free,
             gpu_memory_percent=self.gpu_memory_percent,
-            data=self.data
+            data=self.data,
         )
 
     class Meta:
-        table_name = 'gws_lab_monitor'
+        table_name = "gws_lab_monitor"
         is_table = True

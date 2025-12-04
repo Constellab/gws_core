@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from io import IOBase
 from tempfile import SpooledTemporaryFile
@@ -27,7 +25,9 @@ class FileStore(Model):
             self.data = {}
 
     @abstractmethod
-    def add_node_from_path(self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None) -> FSNode:
+    def add_node_from_path(
+        self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None
+    ) -> FSNode:
         """Copy a node (file or directory) from the path to the store.
 
         :param source_file_path: path of the file or directory to move to file store
@@ -39,10 +39,11 @@ class FileStore(Model):
         :rtype: File
         """
 
-        raise BadRequestException('Not implemented')
+        raise BadRequestException("Not implemented")
 
     def add_file_from_path(
-            self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File) -> File:
+        self, source_file_path: str, dest_file_name: str = None, file_type: Type[File] = File
+    ) -> File:
         """Copy a file (from the path) to the store.
 
         :param source_file_path: path of the file to move to file store
@@ -57,8 +58,11 @@ class FileStore(Model):
 
     @abstractmethod
     def add_from_temp_file(
-            self, source_file: Union[IOBase, SpooledTemporaryFile],
-            dest_file_name: str = None, file_type: Type[File] = File) -> File:
+        self,
+        source_file: Union[IOBase, SpooledTemporaryFile],
+        dest_file_name: str = None,
+        file_type: Type[File] = File,
+    ) -> File:
         """[summary]
 
         :param source_file: [description]
@@ -72,7 +76,7 @@ class FileStore(Model):
         :rtype: File
         """
 
-        raise BadRequestException('Not implemented')
+        raise BadRequestException("Not implemented")
 
     @abstractmethod
     def delete_node_path(self, node_path: str) -> None:
@@ -90,18 +94,18 @@ class FileStore(Model):
 
     @abstractmethod
     def node_path_exists(self, node_path: str) -> bool:
-        """ Return true if the node path exist in the store
+        """Return true if the node path exist in the store
 
         :param file_name: [description]
         :type file_name: str
         :return: [description]
         :rtype: bool
         """
-        raise BadRequestException('Not implemented')
+        raise BadRequestException("Not implemented")
 
     @abstractmethod
     def get_node_by_path(self, node_path: str = None, node_type: Type[FSNode] = None) -> FSNode:
-        """ Get a node by its path
+        """Get a node by its path
 
         :param node_path: _description_, defaults to None
         :type node_path: str, optional
@@ -120,7 +124,7 @@ class FileStore(Model):
         :type file_name: str
         :rtype: str
         """
-        raise BadRequestException('Not implemented')
+        raise BadRequestException("Not implemented")
 
     @property
     def path(self) -> str:
@@ -139,10 +143,11 @@ class FileStore(Model):
         self.data["path"] = path
 
     @classmethod
-    def get_default_instance(cls) -> 'FileStore':
+    def get_default_instance(cls) -> "FileStore":
         from .local_file_store import LocalFileStore
+
         return LocalFileStore.get_default_instance()
 
     class Meta:
-        table_name = 'gws_file_store'
+        table_name = "gws_file_store"
         is_table = True

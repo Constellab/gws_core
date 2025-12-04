@@ -1,4 +1,3 @@
-
 import mimetypes
 import os
 import time
@@ -14,7 +13,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
 
-class FileDownloader():
+class FileDownloader:
     """Class to downloader external files. for now it only supports http(s) protocol.
     If a message dispatcher is provided, it will automatically log the download progress and the time it took to download the file.
     """
@@ -26,9 +25,15 @@ class FileDownloader():
         self.destination_folder = destination_folder
         self.message_dispatcher = message_dispatcher
 
-    def download_file_if_missing(self, url: str, filename: str, headers: Dict[str, str] = None,
-                                 timeout: float = None, decompress_file: bool = False) -> str:
-        """ Download a file from a given url if the file does not already exist. This class is useful for downloading
+    def download_file_if_missing(
+        self,
+        url: str,
+        filename: str,
+        headers: Dict[str, str] = None,
+        timeout: float = None,
+        decompress_file: bool = False,
+    ) -> str:
+        """Download a file from a given url if the file does not already exist. This class is useful for downloading
         a file that is required for a task.
         If used within a task, it automatically logs the download progress and the time it took to download the file.
 
@@ -64,17 +69,28 @@ class FileDownloader():
         if decompress_file:
             temp_dir = Settings.make_temp_dir()
 
-            compress_file = self.download_file(url=url, destination_folder=temp_dir, headers=headers, timeout=timeout)
+            compress_file = self.download_file(
+                url=url, destination_folder=temp_dir, headers=headers, timeout=timeout
+            )
             return self.decompress_file(compress_file, file_path)
         # download file
         else:
             return self.download_file(
-                url, destination_folder=self.destination_folder, filename=filename,
-                headers=headers, timeout=timeout)
+                url,
+                destination_folder=self.destination_folder,
+                filename=filename,
+                headers=headers,
+                timeout=timeout,
+            )
 
     def download_file(
-            self, url: str, filename: str = None, headers: Dict[str, str] = None,
-            timeout: float = None, destination_folder: str = None) -> str:
+        self,
+        url: str,
+        filename: str = None,
+        headers: Dict[str, str] = None,
+        timeout: float = None,
+        destination_folder: str = None,
+    ) -> str:
         """
         Download a file from a given url to a given file path
 
@@ -103,25 +119,30 @@ class FileDownloader():
                 # try to extract filename from response headers
                 if filename is None:
                     filename = self._extract_filename_from_header(
-                        response.headers.get("Content-Disposition"), url, response.headers.get("Content-Type"))
+                        response.headers.get("Content-Disposition"),
+                        url,
+                        response.headers.get("Content-Type"),
+                    )
 
                     if filename is None:
                         raise Exception(
-                            f"Could not extract filename from response headers for url {url}")
+                            f"Could not extract filename from response headers for url {url}"
+                        )
 
                 destination_path = os.path.join(destination_folder, filename)
 
-                with open(destination_path, 'wb') as file:
-
-                    if response.headers.get('content-length') is None:
+                with open(destination_path, "wb") as file:
+                    if response.headers.get("content-length") is None:
                         file.write(response.content)
                     else:
                         # download the file in chunks with a progress bar
-                        total_size = int(response.headers.get('content-length'))
+                        total_size = int(response.headers.get("content-length"))
                         last_progress_logged = 0.0
 
                         # convert a to int and if it fails, use None
-                        for chunk in response.iter_content(chunk_size=max(int(total_size/1000), 1024*1024)):
+                        for chunk in response.iter_content(
+                            chunk_size=max(int(total_size / 1000), 1024 * 1024)
+                        ):
                             file.write(chunk)
 
                             downloaded_size = file.tell()
@@ -130,22 +151,19 @@ class FileDownloader():
                             # if the progress is less than 3% more than the previous log, do not display the progress
                             if progress - last_progress_logged > 0.03:
                                 # calculate remaining time
-                                remaining_time = (
-                                    time.time() - started_at) / (downloaded_size / total_size) - (time.time() - started_at)
+                                remaining_time = (time.time() - started_at) / (
+                                    downloaded_size / total_size
+                                ) - (time.time() - started_at)
 
-                                self._dispatch_progress(
-                                    total_size, downloaded_size, remaining_time)
+                                self._dispatch_progress(total_size, downloaded_size, remaining_time)
                                 last_progress_logged = progress
 
         except Exception as exc:
-            self._dispatch_error(
-                f"Error downloading from {url} : {exc}")
+            self._dispatch_error(f"Error downloading from {url} : {exc}")
             raise exc
 
-        duration = DateHelper.get_duration_pretty_text(
-            time.time() - started_at)
-        self._dispatch_message(
-            f"Downloaded {url} to {destination_path} in {duration}")
+        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
+        self._dispatch_message(f"Downloaded {url} to {destination_path} in {duration}")
 
         return destination_path
 
@@ -159,21 +177,17 @@ class FileDownloader():
         :type unzip_path: `str`
         """
 
-        self._dispatch_message(
-            f"Unzipping {file_path} to {destination_folder}")
+        self._dispatch_message(f"Unzipping {file_path} to {destination_folder}")
         started_at = time.time()
 
         try:
             Compress.smart_decompress(file_path, destination_folder)
         except Exception as exc:
-            self._dispatch_error(
-                f"Error unzipping {file_path} to {destination_folder}: {exc}")
+            self._dispatch_error(f"Error unzipping {file_path} to {destination_folder}: {exc}")
             raise exc
 
-        duration = DateHelper.get_duration_pretty_text(
-            time.time() - started_at)
-        self._dispatch_message(
-            f"Unzipped {file_path} to {destination_folder} in {duration}")
+        duration = DateHelper.get_duration_pretty_text(time.time() - started_at)
+        self._dispatch_message(f"Unzipped {file_path} to {destination_folder} in {duration}")
 
         # delete zip file
         FileHelper.delete_file(file_path)
@@ -205,8 +219,7 @@ class FileDownloader():
             total_str = FileHelper.get_file_size_pretty_text(total)
             percent = round(downloaded / total * 100)
 
-            remaining_time_str = DateHelper.get_duration_pretty_text(
-                remaining_time)
+            remaining_time_str = DateHelper.get_duration_pretty_text(remaining_time)
             self.message_dispatcher.notify_info_message(
                 f"Downloaded {downloaded_str}/{total_str} ({percent}%) - {remaining_time_str} remaining"
             )
@@ -231,7 +244,9 @@ class FileDownloader():
         if self.message_dispatcher is not None:
             self.message_dispatcher.notify_error_message(message)
 
-    def _extract_filename_from_header(self, content_disposition: str, url: str, content_type: str) -> str:
+    def _extract_filename_from_header(
+        self, content_disposition: str, url: str, content_type: str
+    ) -> str:
         """
         Extract the filename from a header
 
@@ -248,7 +263,7 @@ class FileDownloader():
             for param in params.split(";"):
                 key, value = param.strip().split("=", 1)
                 if key.lower() == "filename":
-                    filename = value.strip('\'"')
+                    filename = value.strip("'\"")
                 elif key.lower() == "filename*":
                     _, filename_encoding = value.strip().split("'", 1)
                     filename = decode_header(filename_encoding)[0][0]

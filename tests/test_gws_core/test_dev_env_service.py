@@ -1,5 +1,3 @@
-
-
 from gws_core import BaseTestCase, UserService
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.user.authentication_service import AuthenticationService
@@ -9,9 +7,7 @@ from gws_core.user.user_group import UserGroup
 
 # test_dev_env_service
 class TestDevEnvService(BaseTestCase):
-
     def test_dev_login(self):
-
         user_dto = UserFullDTO(
             id="06866542-f089-46dc-b57f-a11e25a23aa5",
             email="test_mail@gencovery.com",
@@ -21,7 +17,7 @@ class TestDevEnvService(BaseTestCase):
             is_active=True,
             theme=UserTheme.LIGHT_THEME,
             lang=UserLanguage.EN,
-            photo=None
+            photo=None,
         )
 
         user = UserService.create_or_update_user_dto(user_dto)

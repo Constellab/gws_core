@@ -1,4 +1,3 @@
-
 from abc import abstractmethod
 from typing import Any, Dict, Optional, Type
 
@@ -9,15 +8,15 @@ from gws_core.core.model.model import Model
 
 
 class ModelParam(ParamSpec):
-    """ Abstract param spec to select an model from the DB and return it in the task
-    """
+    """Abstract param spec to select an model from the DB and return it in the task"""
 
-    def __init__(self,
-                 optional: bool = False,
-                 visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = "Select object",
-                 short_description: Optional[str] = None,
-                 ):
+    def __init__(
+        self,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = "Select object",
+        short_description: Optional[str] = None,
+    ):
         """
         :param optional: See default value
         :type optional: Optional[str]
@@ -49,7 +48,6 @@ class ModelParam(ParamSpec):
         model_type = self.get_model_type()
         model: Optional[Model] = None
         if value and isinstance(value, str):
-
             # retrieve the note template and return it
             model = model_type.get_by_id(value)
             if model is None:
@@ -62,8 +60,8 @@ class ModelParam(ParamSpec):
         if isinstance(value, model_type):
             return value.id
         # if this is the credentials object, retrieve the name
-        if isinstance(value, dict) and 'id' in value:
-            value = value['id']
+        if isinstance(value, dict) and "id" in value:
+            value = value["id"]
 
         validator = StrValidator()
         return validator.validate(value)

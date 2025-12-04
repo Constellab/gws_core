@@ -1,5 +1,3 @@
-
-
 from gws_core.config.param.param_types import ParamSpecTypeStr
 from gws_core.core.classes.validator import StrValidator, Validator
 

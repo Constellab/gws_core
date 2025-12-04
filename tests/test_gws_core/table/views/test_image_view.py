@@ -1,4 +1,3 @@
-
 import os
 from base64 import b64encode
 from unittest import TestCase
@@ -10,9 +9,7 @@ from gws_core.resource.view.view_types import ViewType
 
 # test_image_view
 class TestImageView(TestCase):
-
     def test_image_view(self):
-
         temp_dir = Settings.get_instance().make_temp_dir()
 
         # Create a file

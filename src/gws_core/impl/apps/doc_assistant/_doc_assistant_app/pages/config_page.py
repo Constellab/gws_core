@@ -13,7 +13,7 @@ def load_prompts(prompts_json_path: str) -> dict:
         return {}
 
     try:
-        with open(prompts_json_path, 'r') as f:
+        with open(prompts_json_path, "r") as f:
             return json.load(f)
     except Exception as e:
         st.error(f"Error loading prompts file: {str(e)}")
@@ -23,7 +23,7 @@ def load_prompts(prompts_json_path: str) -> dict:
 def save_prompts(prompts_json_path: str, prompts: dict) -> bool:
     """Save prompts to JSON file"""
     try:
-        with open(prompts_json_path, 'w') as f:
+        with open(prompts_json_path, "w") as f:
             json.dump(prompts, f, indent=4)
         return True
     except Exception as e:
@@ -34,8 +34,7 @@ def save_prompts(prompts_json_path: str, prompts: dict) -> bool:
 def render_config_page(prompts_json_path: str):
     """Render the config page for managing prompts"""
 
-    with StreamlitContainers.container_centered('config'):
-
+    with StreamlitContainers.container_centered("config"):
         st.title("Prompt Configuration")
 
         # Load prompts
@@ -48,9 +47,7 @@ def render_config_page(prompts_json_path: str):
 
         with col1:
             new_prompt_name = st.text_input(
-                "Prompt Name",
-                key="new_prompt_name",
-                placeholder="e.g., API Documentation"
+                "Prompt Name", key="new_prompt_name", placeholder="e.g., API Documentation"
             )
 
         with col2:
@@ -58,10 +55,7 @@ def render_config_page(prompts_json_path: str):
             st.write("")
 
         new_prompt_text = st.text_area(
-            "Prompt Text",
-            key="new_prompt_text",
-            placeholder="Enter the prompt text...",
-            height=100
+            "Prompt Text", key="new_prompt_text", placeholder="Enter the prompt text...", height=100
         )
 
         if st.button("Create Prompt", type="primary"):
@@ -89,23 +83,17 @@ def render_config_page(prompts_json_path: str):
         # Display prompts in expandable sections
         for prompt_name in list(prompts.keys()):
             with st.expander(f"📝 {prompt_name}", expanded=False):
-
                 # Store the original prompt name for updates
                 prompt_key = f"prompt_{prompt_name.replace(' ', '_').lower()}"
 
                 # Edit prompt name
                 updated_name = st.text_input(
-                    "Prompt Name",
-                    value=prompt_name,
-                    key=f"{prompt_key}_name"
+                    "Prompt Name", value=prompt_name, key=f"{prompt_key}_name"
                 )
 
                 # Edit prompt text
                 updated_text = st.text_area(
-                    "Prompt Text",
-                    value=prompts[prompt_name],
-                    key=f"{prompt_key}_text",
-                    height=150
+                    "Prompt Text", value=prompts[prompt_name], key=f"{prompt_key}_text", height=150
                 )
 
                 col1, col2, col3 = st.columns([1, 1, 4])
@@ -143,7 +131,10 @@ def render_config_page(prompts_json_path: str):
                             st.rerun()
 
                 # Handle deletion confirmation
-                if f"{prompt_key}_confirm_delete" in st.session_state and st.session_state[f"{prompt_key}_confirm_delete"]:
+                if (
+                    f"{prompt_key}_confirm_delete" in st.session_state
+                    and st.session_state[f"{prompt_key}_confirm_delete"]
+                ):
                     st.warning(f"⚠️ Are you sure you want to delete '{prompt_name}'?")
                     col_confirm, col_cancel = st.columns(2)
 

@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.json.json_view import JSONView
@@ -10,9 +8,12 @@ from gws_core.resource.resource_decorator import resource_decorator
 from gws_core.resource.view.view_decorator import view
 
 
-@resource_decorator("SpaceFolderResource", human_name="Space folder resource",
-                    short_description="Resource to reference a space folder", style=TypingStyle.material_icon(
-                        "folder", background_color="#6C4EF6"))
+@resource_decorator(
+    "SpaceFolderResource",
+    human_name="Space folder resource",
+    short_description="Resource to reference a space folder",
+    style=TypingStyle.material_icon("folder", background_color="#6C4EF6"),
+)
 class SpaceFolderResource(Resource):
     """Resource to reference a space folder.
 
@@ -37,7 +38,9 @@ class SpaceFolderResource(Resource):
 
     @view(view_type=JSONView, human_name="View space folder info", default_view=True)
     def view_space_folder(self, config: ConfigParamsDict = None) -> JSONView:
-        return JSONView({
-            'id': self.space_folder_id,
-            'name': self.get_space_folder().name,
-        })
+        return JSONView(
+            {
+                "id": self.space_folder_id,
+                "name": self.get_space_folder().name,
+            }
+        )

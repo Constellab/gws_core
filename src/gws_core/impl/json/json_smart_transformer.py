@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
@@ -7,8 +5,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
 from gws_core.core.utils.json_helper import JSONHelper
 from gws_core.impl.json.json_dict import JSONDict
-from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
-                                                 AIPromptCodeContext)
+from gws_core.impl.openai.ai_prompt_code import AIPromptCode, AIPromptCodeContext
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.text.text import Text
@@ -51,7 +48,7 @@ The 'source' dict has the following schema :
         return {"source": self.json_}
 
     def get_code_expected_output_types(self) -> Dict[str, Type]:
-        return {'target': dict}
+        return {"target": dict}
 
     def get_available_package_names(self) -> List[str]:
         return [GwsCorePackages.NUMPY]
@@ -78,9 +75,12 @@ targets = [JSONDict(target)]
 """
 
 
-@task_decorator("SmartJsonTransformer", human_name="Smart json transformer",
-                short_description="Json transformer that uses AI  (OpenAI).",
-                style=TypingStyle.material_icon("auto_awesome"))
+@task_decorator(
+    "SmartJsonTransformer",
+    human_name="Smart json transformer",
+    short_description="Json transformer that uses AI  (OpenAI).",
+    style=TypingStyle.material_icon("auto_awesome"),
+)
 class JsonSmartTransformer(Task):
     """
     This task uses openAI API to generate python code that transforms a json.
@@ -91,20 +91,21 @@ class JsonSmartTransformer(Task):
     This is useful when you want to transform a json in a way that is not trivial.
     """
 
-    input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(JSONDict),
-    })
-    output_specs: OutputSpecs = OutputSpecs({
-        'target': OutputSpec(JSONDict),
-        'generated_code': AIJsonTransformer.generate_agent_code_task_output_config()
-    })
-    config_specs = ConfigSpecs({
-        'prompt': OpenAiChatParam()
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "source": InputSpec(JSONDict),
+        }
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "target": OutputSpec(JSONDict),
+            "generated_code": AIJsonTransformer.generate_agent_code_task_output_config(),
+        }
+    )
+    config_specs = ConfigSpecs({"prompt": OpenAiChatParam()})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        chat: OpenAiChat = params.get_value('prompt')
+        chat: OpenAiChat = params.get_value("prompt")
 
         json_dict: JSONDict = inputs["source"]
 
@@ -112,10 +113,10 @@ class JsonSmartTransformer(Task):
         result: dict = json_transformer.run()
 
         # save the new config with the new prompt
-        params.set_value('prompt', json_transformer.chat)
+        params.set_value("prompt", json_transformer.chat)
         params.save_params()
 
         generated_text = Text(json_transformer.generate_agent_code())
         generated_text.name = "JSON transformation code"
 
-        return {'target': JSONDict(result), 'generated_code': generated_text}
+        return {"target": JSONDict(result), "generated_code": generated_text}

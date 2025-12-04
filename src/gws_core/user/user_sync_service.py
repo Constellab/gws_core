@@ -64,7 +64,9 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
                 self.sync_user(gws_core_user)
                 synced_count += 1
             except Exception as e:
-                error_msg = f"Error syncing user {gws_core_user.email} (ID: {gws_core_user.id}): {str(e)}"
+                error_msg = (
+                    f"Error syncing user {gws_core_user.email} (ID: {gws_core_user.id}): {str(e)}"
+                )
                 Logger.error(error_msg)
                 errors.append(error_msg)
 

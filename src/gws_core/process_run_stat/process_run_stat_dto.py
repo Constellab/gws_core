@@ -3,8 +3,10 @@ from typing import Dict, Literal, Optional
 
 from gws_core.core.model.model_dto import ModelDTO
 
-ProcessRunStatLabEnv = Literal['PROD', 'DEV']
-ProcessRunStatStatus = Literal['DRAFT', 'RUNNING', 'SUCCESS', 'ERROR', 'PARTIALLY_RUN', 'WAITING_FOR_CLI_PROCESS']
+ProcessRunStatLabEnv = Literal["PROD", "DEV"]
+ProcessRunStatStatus = Literal[
+    "DRAFT", "RUNNING", "SUCCESS", "ERROR", "PARTIALLY_RUN", "WAITING_FOR_CLI_PROCESS"
+]
 
 
 class ProcessRunStatDTO(ModelDTO):

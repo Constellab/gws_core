@@ -1,5 +1,3 @@
-
-
 from abc import abstractmethod
 from typing import Tuple, Type, final
 
@@ -22,39 +20,42 @@ from ...task.task_runner import TaskRunner
 from ...task.task_typing import TaskSubType
 
 
-def decorate_converter(task_class: Type['Converter'],
-                       unique_name: str,
-                       task_type: TaskSubType,
-                       source_type: Type[Resource] = Resource,
-                       target_type: Type[Resource] = Resource,
-                       related_resource: Type[Resource] = None,
-                       human_name: str = "",
-                       short_description: str = "",
-                       hide: bool = False,
-                       style: TypingStyle = None,
-                       output_sub_class: bool = False,
-                       deprecated_since: str = None,
-                       deprecated_message: str = None,
-                       deprecated: TypingDeprecated = None) -> None:
+def decorate_converter(
+    task_class: Type["Converter"],
+    unique_name: str,
+    task_type: TaskSubType,
+    source_type: Type[Resource] = Resource,
+    target_type: Type[Resource] = Resource,
+    related_resource: Type[Resource] = None,
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle = None,
+    output_sub_class: bool = False,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+) -> None:
     if not Utils.issubclass(task_class, Converter):
         BrickService.log_brick_error(
             task_class,
-            f"The decorate_converter is used on the class: {task_class.__name__} and this class is not a sub class of Converter")
+            f"The decorate_converter is used on the class: {task_class.__name__} and this class is not a sub class of Converter",
+        )
         return
 
     if not Utils.issubclass(source_type, Resource):
         BrickService.log_brick_error(
-            task_class,
-            f"The source_type: {source_type.__name__} is not a sub class of Resource")
+            task_class, f"The source_type: {source_type.__name__} is not a sub class of Resource"
+        )
         return
 
     # force the input and output specs
-    task_class.input_specs = InputSpecs(
-        {Converter.input_name: InputSpec(source_type)})
+    task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
     task_class.output_specs = OutputSpecs(
-        {Converter.output_name: OutputSpec(target_type, sub_class=output_sub_class)})
+        {Converter.output_name: OutputSpec(target_type, sub_class=output_sub_class)}
+    )
 
-    main_resource_type = target_type if task_type == 'IMPORTER' else source_type
+    main_resource_type = target_type if task_type == "IMPORTER" else source_type
     if not style:
         # for the importer, takes the destination type
         style = get_converter_default_style(main_resource_type)
@@ -62,22 +63,23 @@ def decorate_converter(task_class: Type['Converter'],
         style.copy_from_style(get_converter_default_style(main_resource_type))
 
     # register the task and set the human_name and short_description dynamically based on resource
-    decorate_task(task_class=task_class,
-                  unique_name=unique_name,
-                  human_name=human_name,
-                  related_resource=related_resource,
-                  task_type=task_type,
-                  short_description=short_description,
-                  hide=hide,
-                  style=style,
-                  deprecated_since=deprecated_since,
-                  deprecated_message=deprecated_message,
-                  deprecated=deprecated)
+    decorate_task(
+        task_class=task_class,
+        unique_name=unique_name,
+        human_name=human_name,
+        related_resource=related_resource,
+        task_type=task_type,
+        short_description=short_description,
+        hide=hide,
+        style=style,
+        deprecated_since=deprecated_since,
+        deprecated_message=deprecated_message,
+        deprecated=deprecated,
+    )
 
 
 def get_converter_default_style(resource_type: Type[Resource]) -> TypingStyle:
-    """Get the default style for a task, use the first input style or the first output style
-    """
+    """Get the default style for a task, use the first input style or the first output style"""
 
     typing = TypingManager.get_typing_from_name(resource_type.get_typing_name())
     if typing and typing.style:
@@ -89,8 +91,8 @@ def get_converter_default_style(resource_type: Type[Resource]) -> TypingStyle:
 @task_decorator("Converter", hide=True)
 class Converter(Task):
     # name of the input and output for converter
-    input_name: str = 'source'
-    output_name: str = 'target'
+    input_name: str = "source"
+    output_name: str = "target"
 
     input_specs = InputSpecs({"source": InputSpec(Resource)})
     output_specs = OutputSpecs({"target": OutputSpec(Resource)})
@@ -104,17 +106,18 @@ class Converter(Task):
         resource: Resource = inputs.get(Converter.input_name)
 
         # call convert method
-        target: Resource = self.convert(
-            resource, params, self.get_target_type())
+        target: Resource = self.convert(resource, params, self.get_target_type())
 
         if target is None:
-            raise Exception('The target resource is None')
+            raise Exception("The target resource is None")
 
         return {Converter.output_name: target}
 
     @abstractmethod
-    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> Resource:
-        """ Override this method to implement convert method
+    def convert(
+        self, source: Resource, params: ConfigParams, target_type: Type[Resource]
+    ) -> Resource:
+        """Override this method to implement convert method
 
         :param resource: [description]
         :type resource: Resource
@@ -128,21 +131,20 @@ class Converter(Task):
 
     @final
     @classmethod
-    def call(cls, source: Resource,
-             params: ConfigParamsDict = None) -> Resource:
+    def call(cls, source: Resource, params: ConfigParamsDict = None) -> Resource:
         """Call the ResourceExporter method manually
 
-          :param resource: resource to export
-          :type resource: Resource
-          :param params: params for the import_from_path_method
-          :type params: ConfigParamsDict
+        :param resource: resource to export
+        :type resource: Resource
+        :param params: params for the import_from_path_method
+        :type params: ConfigParamsDict
         """
         if not isinstance(source, cls.get_source_type()):
             raise Exception(
-                f"The {cls.__name__} task requires a {cls.get_source_type()[0].__name__} resource")
+                f"The {cls.__name__} task requires a {cls.get_source_type()[0].__name__} resource"
+            )
 
-        converter_runner: ConverterRunner = ConverterRunner(
-            cls, params=params, input_=source)
+        converter_runner: ConverterRunner = ConverterRunner(cls, params=params, input_=source)
 
         result = converter_runner.run()
         return result
@@ -168,7 +170,7 @@ class Converter(Task):
         return cls.output_specs.get_spec(Converter.output_name).get_default_resource_type()
 
 
-class ConverterRunner():
+class ConverterRunner:
     """Class to run a converter
 
     :raises Exception: [description]
@@ -178,10 +180,14 @@ class ConverterRunner():
 
     _task_runner: TaskRunner
 
-    def __init__(self, converter_type: Type[Converter], params: ConfigParamsDict = None,
-                 input_: Resource = None) -> None:
+    def __init__(
+        self,
+        converter_type: Type[Converter],
+        params: ConfigParamsDict = None,
+        input_: Resource = None,
+    ) -> None:
         if not Utils.issubclass(converter_type, Converter):
-            raise Exception('The ConverterRunner must have a Converter')
+            raise Exception("The ConverterRunner must have a Converter")
 
         self._task_runner = TaskRunner(converter_type, params)
 

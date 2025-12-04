@@ -1,5 +1,3 @@
-
-
 from typing import List, Optional, Union
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -27,15 +25,15 @@ class Queue(Model):
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
 
-    _current_queue: 'Queue' = None
+    _current_queue: "Queue" = None
 
     @classmethod
-    def get_current_queue(cls) -> Optional['Queue']:
+    def get_current_queue(cls) -> Optional["Queue"]:
         return cls._current_queue
 
     @classmethod
     @GwsCoreDbManager.transaction(nested_transaction=True)  # force new transaction to commit anyway
-    def _get_or_create_instance(cls) -> 'Queue':
+    def _get_or_create_instance(cls) -> "Queue":
         if cls._current_queue is None:
             queue = Queue.select().first()
             if queue is not None:
@@ -46,7 +44,7 @@ class Queue(Model):
         return cls._current_queue
 
     @classmethod
-    def init(cls) -> 'Queue':
+    def init(cls) -> "Queue":
         queue = cls._get_or_create_instance()
         if not queue.is_active:
             queue.is_active = True
@@ -66,9 +64,10 @@ class Queue(Model):
             cls._current_queue = None
 
     @classmethod
-    @GwsCoreDbManager.transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
-    def add_job(cls, user: User, scenario: Scenario) -> 'Queue':
-
+    @GwsCoreDbManager.transaction(
+        nested_transaction=True
+    )  # use nested to prevent transaction block in queue tick (from parent call)
+    def add_job(cls, user: User, scenario: Scenario) -> "Queue":
         if Job.scenario_in_queue(scenario.id):
             raise BadRequestException("The scenario already is in the queue")
 
@@ -83,12 +82,14 @@ class Queue(Model):
         return queue
 
     @classmethod
-    @GwsCoreDbManager.transaction(nested_transaction=True)  # use nested to prevent transaction block in queue tick (from parent call)
+    @GwsCoreDbManager.transaction(
+        nested_transaction=True
+    )  # use nested to prevent transaction block in queue tick (from parent call)
     def remove_scenario(cls, scenario_id: str) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         if scenario.status != scenario.status.IN_QUEUE:
-            raise BadRequestException('The scenario does not have the queued status')
+            raise BadRequestException("The scenario does not have the queued status")
 
         scenario.mark_as_draft()
         Job.remove_scenario_from_queue(scenario_id)
@@ -99,7 +100,7 @@ class Queue(Model):
         return Job.select().count()
 
     @classmethod
-    def pop_first(cls) -> Optional['Job']:
+    def pop_first(cls) -> Optional["Job"]:
         queue = cls.get_current_queue()
 
         if not queue:
@@ -108,7 +109,7 @@ class Queue(Model):
         return Job.pop_first_job(queue.id)
 
     @classmethod
-    def get_jobs(cls) -> List['Job']:
+    def get_jobs(cls) -> List["Job"]:
         queue = cls.get_current_queue()
 
         if not queue:
@@ -117,7 +118,7 @@ class Queue(Model):
         return Job.get_queue_jobs(queue.id)
 
     class Meta:
-        table_name = 'gws_queue'
+        table_name = "gws_queue"
         is_table = True
 
 
@@ -131,12 +132,12 @@ class Job(Model):
     :type scenario: `gws.scenario.Scenario`
     """
 
-    user: User = ForeignKeyField(User, null=False, backref='+')
-    scenario: Scenario = ForeignKeyField(Scenario, null=False, backref='+', unique=True)
-    queue: Queue = ForeignKeyField(Queue, null=False, backref='+')
+    user: User = ForeignKeyField(User, null=False, backref="+")
+    scenario: Scenario = ForeignKeyField(Scenario, null=False, backref="+", unique=True)
+    queue: Queue = ForeignKeyField(Queue, null=False, backref="+")
 
     @classmethod
-    def pop_first_job(cls, queue_id: str) -> Union['Job', None]:
+    def pop_first_job(cls, queue_id: str) -> Union["Job", None]:
         job = cls.get_first_job(queue_id)
 
         if job is not None:
@@ -145,11 +146,11 @@ class Job(Model):
         return job
 
     @classmethod
-    def get_first_job(cls, queue_id: str) -> Union['Job', None]:
+    def get_first_job(cls, queue_id: str) -> Union["Job", None]:
         return cls._get_job_in_orders(queue_id).first()
 
     @classmethod
-    def get_queue_jobs(cls, queue_id: str) -> List['Job']:
+    def get_queue_jobs(cls, queue_id: str) -> List["Job"]:
         return list(cls._get_job_in_orders(queue_id))
 
     @classmethod
@@ -178,5 +179,5 @@ class Job(Model):
         )
 
     class Meta:
-        table_name = 'gws_queue_job'
+        table_name = "gws_queue_job"
         is_table = True

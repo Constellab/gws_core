@@ -54,13 +54,19 @@ class StreamlitProcess(AppProcess):
         ]
 
         if app.is_dev_mode():
-            cmd = ["run", app.get_main_app_file_path()] + options + [f"--dev_mode={app.is_dev_mode()}"]
+            cmd = (
+                ["run", app.get_main_app_file_path()]
+                + options
+                + [f"--dev_mode={app.is_dev_mode()}"]
+            )
 
             if app.enable_debugger:
                 # Run streamlit through python to keep the debugger enable
                 # So streamlit app is debuggable
                 cmd = ["python3", self._get_streamlit_package_path()] + cmd
-                Logger.debug(f"Running streamlit in dev mode with debugger enabled: {' '.join(cmd)}")
+                Logger.debug(
+                    f"Running streamlit in dev mode with debugger enabled: {' '.join(cmd)}"
+                )
                 process = SysProc.popen(cmd)
             else:
                 # when debugger not active (running from CLI) we can use the normal streamlit command
@@ -71,7 +77,11 @@ class StreamlitProcess(AppProcess):
                 process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
         else:
             shell_proxy = self._get_and_check_shell_proxy(app)
-            cmd = ["streamlit", "run", app.get_main_app_file_path()] + options + [f"--gws_token={self._token}"]
+            cmd = (
+                ["streamlit", "run", app.get_main_app_file_path()]
+                + options
+                + [f"--gws_token={self._token}"]
+            )
             process = shell_proxy.run_in_new_thread(cmd, shell_mode=False)
 
         return AppProcessStartResult(
@@ -86,7 +96,9 @@ class StreamlitProcess(AppProcess):
 
     def call_health_check(self) -> bool:
         try:
-            ExternalApiService.get(f"http://localhost:{self.port}/healthz", raise_exception_if_error=True)
+            ExternalApiService.get(
+                f"http://localhost:{self.port}/healthz", raise_exception_if_error=True
+            )
         except Exception:
             return False
 

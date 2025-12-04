@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.network.network_type import NetworkDTO
 from gws_core.resource.view.view import View
@@ -7,7 +5,6 @@ from gws_core.resource.view.view_types import ViewType
 
 
 class NetworkView(View):
-
     _type: ViewType = ViewType.NETWORK
     _data: NetworkDTO
 

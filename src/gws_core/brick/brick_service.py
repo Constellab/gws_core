@@ -1,17 +1,13 @@
-
-
 import importlib
 import os
 import traceback
 from time import time
 from typing import Any, Dict, List, Optional
 
-from gws_core.brick.brick_dto import (BrickDirectoryDTO, BrickInfo,
-                                      BrickMessageStatus)
+from gws_core.brick.brick_dto import BrickDirectoryDTO, BrickInfo, BrickMessageStatus
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_settings import BrickSettings
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing import Typing
@@ -29,27 +25,26 @@ class WaitingMessage(BaseModelDTO):
     timestamp: float
 
 
-class BrickService():
-
+class BrickService:
     SOURCE_FOLDER = "src"
 
     _waiting_messages: List[WaitingMessage] = []
 
     @classmethod
     def log_brick_error(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message_from_obj(obj, message, 'ERROR')
+        cls.log_brick_message_from_obj(obj, message, "ERROR")
 
     @classmethod
     def log_brick_critical(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message_from_obj(obj, message, 'CRITICAL')
+        cls.log_brick_message_from_obj(obj, message, "CRITICAL")
 
     @classmethod
     def log_brick_info(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message_from_obj(obj, message, 'INFO')
+        cls.log_brick_message_from_obj(obj, message, "INFO")
 
     @classmethod
     def log_brick_warning(cls, obj: Any, message: str) -> None:
-        cls.log_brick_message_from_obj(obj, message, 'WARNING')
+        cls.log_brick_message_from_obj(obj, message, "WARNING")
 
     @classmethod
     def log_brick_message_from_obj(cls, obj: Any, message: str, status: BrickMessageStatus) -> None:
@@ -66,15 +61,15 @@ class BrickService():
         try:
             brick_name = BrickHelper.get_brick_name(obj)
         except:
-            brick_name = '__Unknown'
+            brick_name = "__Unknown"
 
-        cls.log_brick_message(brick_name=brick_name,
-                              message=message, status=status)
+        cls.log_brick_message(brick_name=brick_name, message=message, status=status)
 
     @classmethod
     def log_brick_message(cls, brick_name: str, message: str, status: BrickMessageStatus) -> None:
-        brick_message: WaitingMessage = WaitingMessage(brick_name=brick_name,
-                                                       message=message, status=status, timestamp=time())
+        brick_message: WaitingMessage = WaitingMessage(
+            brick_name=brick_name, message=message, status=status, timestamp=time()
+        )
 
         if SystemStatus.app_is_initialized:
             cls._log_brick_message(brick_message)
@@ -86,31 +81,31 @@ class BrickService():
     def _log_brick_message(cls, brick_message: WaitingMessage) -> None:
         cls._log_message(brick_message)
 
-        brick_model: BrickModel = cls._get_brick_model(
-            brick_message.brick_name)
+        brick_model: BrickModel = cls._get_brick_model(brick_message.brick_name)
 
         if not brick_model:
             Logger.error(
-                f"Can't log brick message because brick '{brick_message.brick_name}' was not found")
+                f"Can't log brick message because brick '{brick_message.brick_name}' was not found"
+            )
             return
         brick_model.add_message(
-            brick_message.message, brick_message.status, brick_message.timestamp)
+            brick_message.message, brick_message.status, brick_message.timestamp
+        )
         brick_model.save()
 
     @classmethod
     def _log_message(cls, brick_message: WaitingMessage) -> None:
         message = f"Brick '{brick_message.brick_name}'. {brick_message.message}'"
-        if brick_message.status == 'INFO':
+        if brick_message.status == "INFO":
             Logger.info(message)
-        elif brick_message.status == 'WARNING':
+        elif brick_message.status == "WARNING":
             Logger.warning(message)
         else:
             Logger.error(message)
 
     @classmethod
     def init(cls) -> None:
-        """Clear the BrickModel table and log all the messages that were waiting on start
-        """
+        """Clear the BrickModel table and log all the messages that were waiting on start"""
         BrickModel.clear_all_message()
         bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_info in bricks_info.values():
@@ -129,7 +124,7 @@ class BrickService():
             brick_model = BrickModel()
             brick_model.name = brick_info.name
 
-        brick_model.status = 'SUCCESS'
+        brick_model.status = "SUCCESS"
         brick_model.clear_messages()
         return brick_model.save()
 
@@ -177,7 +172,9 @@ class BrickService():
             for item in os.listdir(user_bricks_folder):
                 item_path = os.path.join(user_bricks_folder, item)
                 if os.path.isdir(item_path) and cls.folder_is_brick(item_path):
-                    brick_directories.append(BrickDirectoryDTO(name=item, path=item_path, folder='user'))
+                    brick_directories.append(
+                        BrickDirectoryDTO(name=item, path=item_path, folder="user")
+                    )
                     if distinct:
                         seen_brick_names.add(item)
 
@@ -189,7 +186,9 @@ class BrickService():
                     # If distinct mode, skip bricks already seen in user folder
                     if distinct and item in seen_brick_names:
                         continue
-                    brick_directories.append(BrickDirectoryDTO(name=item, path=item_path, folder='system'))
+                    brick_directories.append(
+                        BrickDirectoryDTO(name=item, path=item_path, folder="system")
+                    )
 
         # Sort by name for consistent ordering
         brick_directories.sort(key=lambda x: x.name)
@@ -212,12 +211,11 @@ class BrickService():
     def import_all_bricks_in_python(cls) -> None:
         bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
-
             # for brick with error, just log the error and skip brick
             if brick_info.error:
-                cls.log_brick_message(brick_name=brick_name,
-                                      message=brick_info.error,
-                                      status='CRITICAL')
+                cls.log_brick_message(
+                    brick_name=brick_name, message=brick_info.error, status="CRITICAL"
+                )
                 continue
 
             cls.import_brick_in_python(brick_name, brick_info.path)
@@ -247,7 +245,8 @@ class BrickService():
                 cls.log_brick_message(
                     brick_name=brick_name,
                     message=f"Cannot import module {module_name}. Skipping brick load. Error: {err}",
-                    status='CRITICAL')
+                    status="CRITICAL",
+                )
                 traceback.print_exc()
                 # stop the brick load and go to next brick
                 break
@@ -255,15 +254,17 @@ class BrickService():
         cls.log_brick_message(
             brick_name=brick_name,
             message=f"Brick loaded in {round(time() - start_time, 2)}s",
-            status='INFO')
+            status="INFO",
+        )
 
     @classmethod
     def folder_is_brick(cls, path: str) -> bool:
         """return true if the provided folder is a brick.
         If the folder contains a settings.json and a src folder it is a brick
         """
-        return os.path.exists(os.path.join(path, BrickSettings.FILE_NAME)) and \
-            os.path.exists(os.path.join(path, cls.SOURCE_FOLDER))
+        return os.path.exists(os.path.join(path, BrickSettings.FILE_NAME)) and os.path.exists(
+            os.path.join(path, cls.SOURCE_FOLDER)
+        )
 
     @classmethod
     def get_parent_brick_folder(cls, path: str) -> Optional[str]:
@@ -274,7 +275,7 @@ class BrickService():
         :return: the path to the parent brick folder, None if no parent brick folder was found
         :rtype: str
         """
-        while path != '/':
+        while path != "/":
             if cls.folder_is_brick(path):
                 return path
             path = os.path.dirname(path)
@@ -282,8 +283,7 @@ class BrickService():
 
     @classmethod
     def get_brick_src_folder(cls, brick_name: str) -> str:
-        """Get the folder of the brick source code
-        """
+        """Get the folder of the brick source code"""
         spec = importlib.util.find_spec(brick_name)
 
         if spec is not None:
@@ -293,8 +293,7 @@ class BrickService():
 
     @classmethod
     def find_brick_folder(cls, brick_name: str) -> str:
-        """Find the folder of the brick by searching in the user bricks folder and the system bricks folder
-        """
+        """Find the folder of the brick by searching in the user bricks folder and the system bricks folder"""
         user_bricks_folder = Settings.get_user_bricks_folder()
         sys_bricks_folder = Settings.get_sys_bricks_folder()
 
@@ -306,10 +305,13 @@ class BrickService():
             brick_path = os.path.join(sys_bricks_folder, brick_name)
         else:
             raise Exception(
-                f"Cannot find brick {brick_name} in bricks folder : '{user_bricks_folder}' or '{sys_bricks_folder}'")
+                f"Cannot find brick {brick_name} in bricks folder : '{user_bricks_folder}' or '{sys_bricks_folder}'"
+            )
 
         if not cls.folder_is_brick(brick_path):
-            raise Exception(f"The folder '{brick_path}' found for brick '{brick_name}' is not a brick")
+            raise Exception(
+                f"The folder '{brick_path}' found for brick '{brick_name}' is not a brick"
+            )
 
         return brick_path
 
@@ -323,19 +325,25 @@ class BrickService():
         Typing.delete().where(Typing.brick == old_brick_name).execute()
 
         Typing.get_db().execute_sql(
-            f"UPDATE gws_resource SET resource_typing_name = REPLACE(resource_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_resource SET resource_typing_name = REPLACE(resource_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
         Typing.get_db().execute_sql(
-            f"UPDATE gws_task SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_task SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
         Typing.get_db().execute_sql(
-            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
 
         Typing.get_db().execute_sql(
-            f"UPDATE gws_task SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_task SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
         Typing.get_db().execute_sql(
-            f"UPDATE gws_protocol SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_protocol SET process_typing_name = REPLACE(process_typing_name, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
 
         Typing.get_db().execute_sql(
-            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')")
+            f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')"
+        )
 
     ################################ EXTENSIONS ################################
 

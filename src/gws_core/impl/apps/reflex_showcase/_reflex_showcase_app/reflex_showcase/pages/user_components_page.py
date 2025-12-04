@@ -2,8 +2,12 @@
 
 import reflex as rx
 from gws_core.user.user_dto import UserDTO
-from gws_reflex_main import (ReflexMainState, user_inline_component,
-                             user_profile_picture, user_select)
+from gws_reflex_main import (
+    ReflexMainState,
+    user_inline_component,
+    user_profile_picture,
+    user_select,
+)
 
 from ..components import example_tabs, page_layout
 
@@ -168,7 +172,6 @@ user_select(
         "User Components",
         "This page demonstrates user-related components for displaying user avatars, "
         "names, and selection dropdowns.",
-
         # user_profile_picture example
         example_tabs(
             example_component=example1_component,
@@ -177,7 +180,6 @@ user_select(
             description="Displays a user's profile picture or initials in a circular avatar.",
             func=user_profile_picture,
         ),
-
         # user_inline_component example
         example_tabs(
             example_component=example2_component,
@@ -186,7 +188,6 @@ user_select(
             description="Displays a user's avatar with their full name in a horizontal layout.",
             func=user_inline_component,
         ),
-
         # # user_select example
         example_tabs(
             example_component=example3_component,

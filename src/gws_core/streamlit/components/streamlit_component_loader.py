@@ -36,7 +36,9 @@ class StreamlitComponentLoader:
     def __init__(self, component_name: str):
         self.component_name = component_name
 
-    def call_component(self, data: Any, key: str, authentication_info: StreamlitUserAuthInfo = None) -> Any:
+    def call_component(
+        self, data: Any, key: str, authentication_info: StreamlitUserAuthInfo = None
+    ) -> Any:
         """Call the component with the data.
 
         :param data: data to pass to the component

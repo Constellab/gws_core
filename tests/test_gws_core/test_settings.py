@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from gws_core.core.utils.settings import Settings
@@ -8,7 +6,6 @@ from gws_core.lab.system_dto import SettingsDTO
 
 # test_settings
 class TestSettings(TestCase):
-
     def test_var(self):
         self.assertFalse(Settings.is_prod_mode())
         self.assertTrue(Settings.is_dev_mode())

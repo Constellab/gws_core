@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Type
 
 from gws_core.core.utils.logger import Logger
@@ -12,14 +10,13 @@ from gws_core.user.user import User
 
 
 class SpaceObjectService:
-    """Service to manage sync from space to lab
-    """
+    """Service to manage sync from space to lab"""
 
     @classmethod
     def sync_scenarios_from_space(cls) -> None:
         space_scenarios = SpaceService.get_instance().get_synced_scenarios()
 
-        cls._sync_objects_from_space(space_scenarios, Scenario, 'scenario')
+        cls._sync_objects_from_space(space_scenarios, Scenario, "scenario")
 
     @classmethod
     def sync_scenario_from_space(cls, scenario: SpaceSyncObjectDTO) -> None:
@@ -29,16 +26,19 @@ class SpaceObjectService:
     def sync_notes_from_space(cls) -> None:
         space_notes = SpaceService.get_instance().get_synced_notes()
 
-        cls._sync_objects_from_space(space_notes, Note, 'note')
+        cls._sync_objects_from_space(space_notes, Note, "note")
 
     @classmethod
     def sync_note_from_space(cls, note: SpaceSyncObjectDTO) -> None:
         cls._sync_object_from_space(note, Note)
 
     @classmethod
-    def _sync_objects_from_space(cls, space_objects: List[SpaceSyncObjectDTO],
-                                 object_model: Type[Note] | Type[Scenario],
-                                 object_type: Literal['note', 'scenario']) -> None:
+    def _sync_objects_from_space(
+        cls,
+        space_objects: List[SpaceSyncObjectDTO],
+        object_model: Type[Note] | Type[Scenario],
+        object_type: Literal["note", "scenario"],
+    ) -> None:
         Logger.info(f"Syncing {object_type} from space")
 
         for space_object in space_objects:
@@ -57,11 +57,14 @@ class SpaceObjectService:
         Logger.info(f"{len(space_objects)} {object_type} synchronized from space")
 
     @classmethod
-    def _sync_object_from_space(cls, space_object: SpaceSyncObjectDTO,
-                                object_model: Type[Note] | Type[Scenario]) -> None:
+    def _sync_object_from_space(
+        cls, space_object: SpaceSyncObjectDTO, object_model: Type[Note] | Type[Scenario]
+    ) -> None:
         try:
             lab_note = object_model.get_by_id(space_object.id)
-            if lab_note is not None and (lab_note.folder is None or lab_note.folder.id != space_object.folder_id):
+            if lab_note is not None and (
+                lab_note.folder is None or lab_note.folder.id != space_object.folder_id
+            ):
                 folder = SpaceFolder.get_by_id(space_object.folder_id)
 
                 if folder:

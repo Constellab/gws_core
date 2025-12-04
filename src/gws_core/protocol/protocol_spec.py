@@ -1,5 +1,3 @@
-
-
 from typing import Type
 
 from typing_extensions import TypedDict
@@ -16,6 +14,7 @@ class ConnectorPartSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     process_instance_name: str
     port_name: str
 
@@ -26,6 +25,7 @@ class ConnectorSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     from_process: str
     from_port: str
     to_process: str
@@ -38,19 +38,20 @@ class InterfaceSpec(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     process_instance_name: str
     port_name: str
 
 
 class ConfigMapping(TypedDict):
     """Simple spec representing a config at protocol level that is map to a process config"""
+
     protocol_config_name: str
     process_instance_name: str
     process_config_name: str
 
 
-class ProcessSpec():
-
+class ProcessSpec:
     instance_name: str = None
     process_type: Type[Process] = None
 
@@ -61,7 +62,7 @@ class ProcessSpec():
         self.process_type = process_type
         self._config = {}
 
-    def set_params(self, config_params: ConfigParamsDict) -> 'ProcessSpec':
+    def set_params(self, config_params: ConfigParamsDict) -> "ProcessSpec":
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)
@@ -78,7 +79,7 @@ class ProcessSpec():
 
         return self
 
-    def set_param(self, param_name: str, param_value: ParamValue) -> 'ProcessSpec':
+    def set_param(self, param_name: str, param_value: ParamValue) -> "ProcessSpec":
         """Use to preconfigure the process. The config must match the config specs of the process
 
         :param config_name: name of the configuration (the system checks that the config exists)

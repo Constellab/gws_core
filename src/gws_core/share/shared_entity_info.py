@@ -1,10 +1,7 @@
-
-
 from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
@@ -42,18 +39,17 @@ class SharedEntityInfo(Model):
     # current lab user that
     # In SENT mode is the one who created the share link
     # In RECEIVED mode, is the one that imported the entity
-    created_by: User = ForeignKeyField(User, null=True, backref='+')
+    created_by: User = ForeignKeyField(User, null=True, backref="+")
 
     # override on children classes
     entity: Model = None
 
     @classmethod
-    def get_and_check_entity_origin(cls, entity_id: str) -> 'SharedEntityInfo':
-        """Method that check if the entity is shared and return the origin information
-        """
+    def get_and_check_entity_origin(cls, entity_id: str) -> "SharedEntityInfo":
+        """Method that check if the entity is shared and return the origin information"""
         shared_resource = cls.get_or_none(
-            (cls.entity == entity_id) &
-            (cls.share_mode == SharedEntityMode.RECEIVED))
+            (cls.entity == entity_id) & (cls.share_mode == SharedEntityMode.RECEIVED)
+        )
 
         if shared_resource is None:
             raise BadRequestException("Information about lab import does not exist")
@@ -62,25 +58,34 @@ class SharedEntityInfo(Model):
 
     @classmethod
     def already_shared_with_lab(cls, entity_id: str, lab_id: str) -> bool:
-        """Method that check if the entity is already shared with the lab
-        """
-        return cls.get_or_none(
-            (cls.entity == entity_id) &
-            (cls.share_mode == SharedEntityMode.SENT) &
-            (cls.lab_id == lab_id)) is not None
+        """Method that check if the entity is already shared with the lab"""
+        return (
+            cls.get_or_none(
+                (cls.entity == entity_id)
+                & (cls.share_mode == SharedEntityMode.SENT)
+                & (cls.lab_id == lab_id)
+            )
+            is not None
+        )
 
     @classmethod
-    def get_sents(cls, entity_id: str) -> 'SharedEntityInfo':
-        """Method that return the receivers of the entity
-        """
-        return cls.select().where(cls.entity == entity_id, cls.share_mode == SharedEntityMode.SENT).order_by(
-            cls.created_at.desc())
+    def get_sents(cls, entity_id: str) -> "SharedEntityInfo":
+        """Method that return the receivers of the entity"""
+        return (
+            cls.select()
+            .where(cls.entity == entity_id, cls.share_mode == SharedEntityMode.SENT)
+            .order_by(cls.created_at.desc())
+        )
 
     @classmethod
-    def create_from_lab_info(cls, entity_id: str, mode: SharedEntityMode,
-                             lab_info: ExternalLabWithUserInfo, created_by: User) -> None:
-        """Method that log the resource origin for each imported resources
-        """
+    def create_from_lab_info(
+        cls,
+        entity_id: str,
+        mode: SharedEntityMode,
+        lab_info: ExternalLabWithUserInfo,
+        created_by: User,
+    ) -> None:
+        """Method that log the resource origin for each imported resources"""
 
         shared_entity = cls()
         shared_entity.entity = entity_id

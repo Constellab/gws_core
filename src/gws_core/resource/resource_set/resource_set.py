@@ -1,5 +1,3 @@
-
-
 from typing import Dict, Set
 
 from gws_core.resource.r_field.dict_r_field import DictRField
@@ -9,8 +7,9 @@ from ..resource_decorator import resource_decorator
 from .resource_list_base import ResourceListBase
 
 
-@resource_decorator(unique_name="ResourceSet", human_name="Resource set",
-                    short_description="A set of resources")
+@resource_decorator(
+    unique_name="ResourceSet", human_name="Resource set", short_description="A set of resources"
+)
 class ResourceSet(ResourceListBase):
     """Resource to manage a set of resources. By default the sytem create a new
     resource for each resource in the set when saving the set
@@ -60,21 +59,20 @@ class ResourceSet(ResourceListBase):
         return set(self.get_resources().values())
 
     def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
-        """ set _resource_ids with key = resource_name and value = resource_id"""
+        """set _resource_ids with key = resource_name and value = resource_id"""
         resource_ids = {}
         for name, resource in self._resources.items():
             model_id = ids_map.get(resource.uid)
             if not model_id:
-                raise Exception(
-                    f"Resource with name {name} has no model id")
+                raise Exception(f"Resource with name {name} has no model id")
 
             resource_ids[name] = model_id
 
         self._resource_ids = resource_ids
 
-    def add_resource(self, resource: Resource,
-                     unique_name: str = None,
-                     create_new_resource: bool = True) -> None:
+    def add_resource(
+        self, resource: Resource, unique_name: str = None, create_new_resource: bool = True
+    ) -> None:
         """Add a resource to the set
 
         :param resource: resource to add
@@ -95,11 +93,9 @@ class ResourceSet(ResourceListBase):
 
         name = unique_name or resource.name
         if name is None:
-            raise Exception(
-                'The unique name was not provided and the resource name is not set')
+            raise Exception("The unique name was not provided and the resource name is not set")
         if name in self._resources:
-            raise Exception(
-                f"Resource with name '{name}' already exists in the ResourceSet")
+            raise Exception(f"Resource with name '{name}' already exists in the ResourceSet")
 
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
@@ -124,7 +120,7 @@ class ResourceSet(ResourceListBase):
         resources = self.get_resources()
 
         if not resource_name in resources:
-            raise Exception(f'Resource with name {resource_name} not found')
+            raise Exception(f"Resource with name {resource_name} not found")
 
         return resources[resource_name]
 
@@ -175,7 +171,8 @@ class ResourceSet(ResourceListBase):
         for name, resource_model_id in resource_ids.items():
             if resource_model_id not in resources:
                 raise Exception(
-                    f"Resource with id {resource_model_id} not found in the resources to replace")
+                    f"Resource with id {resource_model_id} not found in the resources to replace"
+                )
             self.add_resource(resources[resource_model_id], unique_name=name)
 
     def __len__(self) -> int:

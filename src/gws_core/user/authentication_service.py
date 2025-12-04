@@ -1,8 +1,5 @@
-
-
 from gws_core.lab.system_service import SystemService
-from gws_core.user.activity.activity_dto import (ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from starlette.responses import JSONResponse, Response
 
 from ..core.exception.exceptions import UnauthorizedException
@@ -20,12 +17,10 @@ from .user_service import UserService
 
 
 class AuthenticationService:
-    """ Service for handling user authentication (login, logout)
-    """
+    """Service for handling user authentication (login, logout)"""
 
     @classmethod
     def login(cls, credentials: UserCredentialsDTO) -> Response:
-
         # Check if user exist in the lab
         user: User
 
@@ -39,21 +34,22 @@ class AuthenticationService:
             return cls.log_user(user)
 
         # Check the user credentials
-        check_response: ExternalCheckCredentialResponse = SpaceService.get_instance().check_credentials(credentials)
+        check_response: ExternalCheckCredentialResponse = (
+            SpaceService.get_instance().check_credentials(credentials)
+        )
 
         # if the user is logged
-        if check_response.status == 'OK':
+        if check_response.status == "OK":
             if check_response.user:
                 cls.get_and_refresh_user_from_space(check_response.user)
             return cls.log_user(user)
         else:
             # if the user need to be logged with 2FA
-            content = {"status": '2FA_REQUIRED', "twoFAUrlCode": check_response.twoFAUrlCode}
+            content = {"status": "2FA_REQUIRED", "twoFAUrlCode": check_response.twoFAUrlCode}
             return JSONResponse(content=content)
 
     @classmethod
     def login_with_2fa(cls, credentials: UserCredentials2Fa) -> Response:
-
         # Check if the code is valid
         user_space: UserSpace = SpaceService.get_instance().check_2_fa(credentials)
 
@@ -66,17 +62,26 @@ class AuthenticationService:
     @classmethod
     def log_user(cls, user: User, response: Response = None) -> Response:
         # now save user activity
-        ActivityService.add(ActivityType.HTTP_AUTHENTICATION,
-                            object_type=ActivityObjectType.USER, object_id=user.id, user=user)
+        ActivityService.add(
+            ActivityType.HTTP_AUTHENTICATION,
+            object_type=ActivityObjectType.USER,
+            object_id=user.id,
+            user=user,
+        )
 
         access_token = cls.generate_user_access_token(user.id)
 
         if response is None:
-            content = {"status": "LOGGED_IN", "expiresIn": JWTService.get_token_duration_in_milliseconds()}
+            content = {
+                "status": "LOGGED_IN",
+                "expiresIn": JWTService.get_token_duration_in_milliseconds(),
+            }
             response = JSONResponse(content=content)
 
         # Add the token is the cookies
-        cls.set_token_in_response(access_token, JWTService.get_token_duration_in_seconds(), response)
+        cls.set_token_in_response(
+            access_token, JWTService.get_token_duration_in_seconds(), response
+        )
 
         return response
 
@@ -124,9 +129,14 @@ class AuthenticationService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if user.first_name != user_space.firstname or user.last_name != user_space.lastname or \
-                user.email != user_space.email or user.theme != user_space.theme or \
-                user.lang != user_space.lang or user.photo != user_space.photo:
+        if (
+            user.first_name != user_space.firstname
+            or user.last_name != user_space.lastname
+            or user.email != user_space.email
+            or user.theme != user_space.theme
+            or user.lang != user_space.lang
+            or user.photo != user_space.photo
+        ):
             # update the user info and save it
             user.first_name = user_space.firstname
             user.last_name = user_space.lastname
@@ -141,7 +151,7 @@ class AuthenticationService:
     @classmethod
     def logout(cls) -> JSONResponse:
         response = JSONResponse(content={})
-        cls.set_token_in_response('', 0, response)
+        cls.set_token_in_response("", 0, response)
         return response
 
     @classmethod
@@ -154,5 +164,5 @@ class AuthenticationService:
             max_age=expire_in_seconds,
             expires=expire_in_seconds,
             secure=True,  # work only with https and localhost
-            samesite='strict'
+            samesite="strict",
         )

@@ -1,4 +1,3 @@
-
 from typing import Any, Dict, List
 
 import plotly.graph_objs as go
@@ -6,8 +5,7 @@ import plotly.graph_objs as go
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
-from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
-                                                 AIPromptCodeContext)
+from gws_core.impl.openai.ai_prompt_code import AIPromptCode, AIPromptCodeContext
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.table.table import Table
@@ -76,9 +74,12 @@ source = sources[0].get_data()
 targets = [PlotlyResource(target)]"""
 
 
-@task_decorator("SmartPlotly", human_name="Smart interactive plot generator",
-                short_description="Generate an interactive plot using an AI (OpenAI).",
-                style=TypingStyle.material_icon("insights"))
+@task_decorator(
+    "SmartPlotly",
+    human_name="Smart interactive plot generator",
+    short_description="Generate an interactive plot using an AI (OpenAI).",
+    style=TypingStyle.material_icon("insights"),
+)
 class SmartPlotly(Task):
     """
     This tasks uses AI to generate an interactive plot using Plotly from a table.
@@ -92,30 +93,35 @@ class SmartPlotly(Task):
     ⚠️ This task does not support table tags. ⚠️
     """
 
-    input_specs: InputSpecs = InputSpecs({
-        'source': InputSpec(Table),
-    })
-    output_specs: OutputSpecs = OutputSpecs({
-        'target': OutputSpec(PlotlyResource, human_name='Plot', short_description='Generated plot file by the AI.'),
-        'generated_code': AITableGeneratePlotly.generate_agent_code_task_output_config()
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "source": InputSpec(Table),
+        }
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {
+            "target": OutputSpec(
+                PlotlyResource,
+                human_name="Plot",
+                short_description="Generated plot file by the AI.",
+            ),
+            "generated_code": AITableGeneratePlotly.generate_agent_code_task_output_config(),
+        }
+    )
 
-    config_specs = ConfigSpecs({
-        'prompt': OpenAiChatParam()
-    })
+    config_specs = ConfigSpecs({"prompt": OpenAiChatParam()})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        chat: OpenAiChat = params.get_value('prompt')
+        chat: OpenAiChat = params.get_value("prompt")
 
         smart_plotly = AITableGeneratePlotly(inputs["source"], chat, self.message_dispatcher)
         plotly_resource: PlotlyResource = smart_plotly.run()
 
         # save the new config with the new prompt
-        params.set_value('prompt', smart_plotly.chat)
+        params.set_value("prompt", smart_plotly.chat)
         params.save_params()
 
         generated_text = Text(smart_plotly.generate_agent_code())
         generated_text.name = "Interactive plot code"
 
-        return {'target': plotly_resource, 'generated_code': generated_text}
+        return {"target": plotly_resource, "generated_code": generated_text}

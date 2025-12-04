@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core.brick.brick_service import BrickService
@@ -12,8 +10,7 @@ from gws_core.core.utils.settings import Settings
 from .abstract_db_manager import AbstractDbManager
 
 
-class DbManagerService():
-
+class DbManagerService:
     @classmethod
     def init_all_db(cls, full_init: bool = True) -> None:
         """
@@ -81,28 +78,28 @@ class DbManagerService():
 
     @classmethod
     def _handle_db_init_error(
-            cls, db_manager: AbstractDbManager,
-            err: Exception, error_message: str) -> None:
+        cls, db_manager: AbstractDbManager, err: Exception, error_message: str
+    ) -> None:
         if db_manager.is_lazy_init():
             Logger.log_exception_stack_trace(err)
             BrickService.log_brick_critical(
-                db_manager,
-                f"{error_message}. The db manager is lazy, so skipping initialization.")
+                db_manager, f"{error_message}. The db manager is lazy, so skipping initialization."
+            )
             return
         else:
             raise Exception(error_message)
 
     @classmethod
     def _get_db_manager_classes(cls) -> List[AbstractDbManager]:
-        """ Get all the classes that inherit this class """
+        """Get all the classes that inherit this class"""
         return list(AbstractDbManager.get_db_managers())
 
     @classmethod
     def get_db_mode(cls) -> DbMode:
         settings = Settings.get_instance()
         if settings.is_test:
-            return 'test'
+            return "test"
         elif settings.is_prod_mode():
-            return 'prod'
+            return "prod"
         else:
-            return 'dev'
+            return "dev"

@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import List, Literal, Optional
@@ -48,12 +46,13 @@ class GenerateShareLinkDTO(BaseModelDTO):
     valid_until: Optional[datetime] = None
 
     @staticmethod
-    def get_1_hour_validity(entity_id: str,
-                            entity_type: ShareLinkEntityType) -> 'GenerateShareLinkDTO':
+    def get_1_hour_validity(
+        entity_id: str, entity_type: ShareLinkEntityType
+    ) -> "GenerateShareLinkDTO":
         return GenerateShareLinkDTO(
             entity_id=entity_id,
             entity_type=entity_type,
-            valid_until=DateHelper.now_utc() + timedelta(hours=1)
+            valid_until=DateHelper.now_utc() + timedelta(hours=1),
         )
 
 
@@ -92,7 +91,7 @@ class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
     origin: ExternalLabWithUserInfo
 
     def get_resource_route(self, resource_id: str) -> str:
-        return self.resource_route.replace('[RESOURCE_ID]', resource_id)
+        return self.resource_route.replace("[RESOURCE_ID]", resource_id)
 
 
 class ShareResourceZippedResponseDTO(BaseModelDTO):

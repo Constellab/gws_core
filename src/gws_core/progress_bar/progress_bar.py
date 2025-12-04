@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from typing import Any, Dict, List, Optional, final
 
@@ -8,8 +6,11 @@ from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.progress_bar.progress_bar_dto import (
-    ProgressBarConfigDTO, ProgressBarDTO, ProgressBarMessageDTO,
-    ProgressBarMessageWithTypeDTO)
+    ProgressBarConfigDTO,
+    ProgressBarDTO,
+    ProgressBarMessageDTO,
+    ProgressBarMessageWithTypeDTO,
+)
 from peewee import CharField, FloatField
 
 from ..core.exception.exceptions import BadRequestException
@@ -66,7 +67,7 @@ class ProgressBar(Model):
         self.second_start = None
         self.current_value = self._MIN_VALUE
 
-    def reset(self) -> 'ProgressBar':
+    def reset(self) -> "ProgressBar":
         """
         Reset the progress bar
 
@@ -138,14 +139,11 @@ class ProgressBar(Model):
         self.save()
 
     def add_messages(self, messages: List[ProgressBarMessageWithTypeDTO]) -> None:
-
         for message in messages:
-
             message_content = self._check_message_length(message.message)
 
             if message.type == MessageLevel.PROGRESS:
-                self._update_progress(
-                    value=message.progress, message=message_content)
+                self._update_progress(value=message.progress, message=message_content)
             else:
                 self._add_message(message_content, message.type)
 
@@ -155,19 +153,20 @@ class ProgressBar(Model):
     def _check_message_length(self, message: str) -> str:
         if len(message) > self._MAX_MESSAGE_LENGTH:
             info_message = f"[INFO] Message too long, it is truncated to {self._MAX_MESSAGE_LENGTH} characters. Check the server logs for the full message."
-            return f"{info_message}\n{message[:self._MAX_MESSAGE_LENGTH]}\n{info_message}"
+            return f"{info_message}\n{message[: self._MAX_MESSAGE_LENGTH]}\n{info_message}"
 
         return message
 
-    def _add_message(self, message: str, type_: MessageLevel = MessageLevel.INFO,
-                     progress: Optional[float] = None) -> None:
+    def _add_message(
+        self,
+        message: str,
+        type_: MessageLevel = MessageLevel.INFO,
+        progress: Optional[float] = None,
+    ) -> None:
         dtime = jsonable_encoder(DateHelper.now_utc())
 
         progress_bar_message = ProgressBarMessageDTO(
-            type=type_,
-            text=message,
-            datetime=dtime,
-            progress=progress
+            type=type_, text=message, datetime=dtime, progress=progress
         )
         self.data["messages"].append(progress_bar_message.to_json_dict())
 
@@ -226,7 +225,9 @@ class ProgressBar(Model):
             return None
         return messages[-1]
 
-    def get_messages_paginated(self, nb_of_messages: int, before_date: datetime = None) -> List[ProgressBarMessageDTO]:
+    def get_messages_paginated(
+        self, nb_of_messages: int, before_date: datetime = None
+    ) -> List[ProgressBarMessageDTO]:
         """
         Get the last nb_of_messages messages
         :param nb_of_messages: number of messages to get
@@ -296,7 +297,7 @@ class ProgressBar(Model):
         )
 
     @classmethod
-    def from_config_dto(cls, dto: ProgressBarConfigDTO) -> 'ProgressBar':
+    def from_config_dto(cls, dto: ProgressBarConfigDTO) -> "ProgressBar":
         progress_bar = ProgressBar()
         progress_bar.started_at = dto.started_at
         progress_bar.ended_at = dto.ended_at
@@ -306,5 +307,5 @@ class ProgressBar(Model):
         return progress_bar
 
     class Meta:
-        table_name = 'gws_process_progress_bar'
+        table_name = "gws_process_progress_bar"
         is_table = True

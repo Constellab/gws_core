@@ -1,5 +1,3 @@
-
-
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
@@ -19,8 +17,7 @@ class CodeObject(BaseModelDTO):
     expiration_date: datetime
 
 
-class UniqueCodeService():
-
+class UniqueCodeService:
     # dictionary where key = generated code
     _generated_codes: Dict[str, CodeObject] = {}
 
@@ -44,13 +41,14 @@ class UniqueCodeService():
         uuid = StringHelper.generate_uuid()
 
         expriation_date = datetime.now() + timedelta(seconds=validity_duration)
-        cls._generated_codes[uuid] = CodeObject(user_id=user_id, obj=obj, expiration_date=expriation_date)
+        cls._generated_codes[uuid] = CodeObject(
+            user_id=user_id, obj=obj, expiration_date=expriation_date
+        )
         return uuid
 
     @classmethod
     def check_code(cls, code: str) -> CodeObject:
-        """check if a code is valid, if yes, return the object containing user_id and obj, and unvalidate the code. If not valid, throw an HttpUnauthorized exception
-        """
+        """check if a code is valid, if yes, return the object containing user_id and obj, and unvalidate the code. If not valid, throw an HttpUnauthorized exception"""
 
         if not code in cls._generated_codes:
             raise InvalidUniqueCodeException()
@@ -65,9 +63,9 @@ class UniqueCodeService():
 
 
 class InvalidUniqueCodeException(BaseHTTPException):
-
     def __init__(self) -> None:
         super().__init__(
             http_status_code=status.HTTP_403_FORBIDDEN,
             detail=GWSException.INVALID_UNIQUE_CODE.value,
-            unique_code=GWSException.INVALID_UNIQUE_CODE.name)
+            unique_code=GWSException.INVALID_UNIQUE_CODE.name,
+        )

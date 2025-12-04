@@ -1,5 +1,3 @@
-
-
 import logging
 from datetime import datetime
 from enum import Enum
@@ -16,10 +14,9 @@ LOGGER_NAME = "gws"
 LOGGER_FILE_NAME = "log"
 RESET_COLOR = "\x1b[0m"
 
-MessageType = Literal['ERROR', 'WARNING',
-                      'INFO', 'DEBUG', 'PROGRESS', 'EXCEPTION']
+MessageType = Literal["ERROR", "WARNING", "INFO", "DEBUG", "PROGRESS", "EXCEPTION"]
 
-LoggerLevel = Literal['INFO', 'DEBUG', 'ERROR']
+LoggerLevel = Literal["INFO", "DEBUG", "ERROR"]
 
 
 class LogContext(Enum):
@@ -39,11 +36,12 @@ class LogFileLine(BaseModelDTO):
 
 
 class JSONFormatter(logging.Formatter):
-
     context: LogContext
     context_id: str | None = None
 
-    def __init__(self, context: LogContext = LogContext.MAIN, context_id: str | None = None) -> None:
+    def __init__(
+        self, context: LogContext = LogContext.MAIN, context_id: str | None = None
+    ) -> None:
         super().__init__()
         self.context = context
         self.context_id = context_id
@@ -55,7 +53,7 @@ class JSONFormatter(logging.Formatter):
             message=record.getMessage(),
             context=self.context,
             context_id=self.context_id,
-            stack_trace=record.exc_text if record.exc_text else None
+            stack_trace=record.exc_text if record.exc_text else None,
         )
         return log_data.to_json_str()
 
@@ -79,13 +77,15 @@ class Logger:
 
     # class level
     _waiting_messages: List[dict] = []
-    _logger_instance: Optional['Logger'] = None
+    _logger_instance: Optional["Logger"] = None
 
-    def __init__(self, log_dir: str,
-                 level: LoggerLevel = "INFO",
-                 context: LogContext = LogContext.MAIN,
-                 context_id: str | None = None
-                 ) -> None:
+    def __init__(
+        self,
+        log_dir: str,
+        level: LoggerLevel = "INFO",
+        context: LogContext = LogContext.MAIN,
+        context_id: str | None = None,
+    ) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
         :param log_dir: directory where the logs are stored
@@ -107,7 +107,8 @@ class Logger:
 
         if level not in ["ERROR", "INFO", "DEBUG"]:
             raise Exception(
-                f"The logging level '{level}' is incorrect, please use one of the following [ERROR, INFO, DEBUG]")
+                f"The logging level '{level}' is incorrect, please use one of the following [ERROR, INFO, DEBUG]"
+            )
 
         # Create the logger
         self._logger = logging.getLogger(LOGGER_NAME)
@@ -116,8 +117,7 @@ class Logger:
         self._logger.setLevel(level)
 
         # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
-        formatter = logging.Formatter(
-            "%(levelname)s - %(asctime)s - %(message)s")
+        formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
 
         # Configure the console logger
         console_logger = logging.StreamHandler()
@@ -132,19 +132,20 @@ class Logger:
 
         # define a TimeRotating file to create a new file each day à 00:00
         # this write the log in a file with a json format
-        file_handler = TimedRotatingFileHandler(
-            self._file_path, when="midnight")
-        file_handler.setFormatter(JSONFormatter(
-            context=context, context_id=context_id))
+        file_handler = TimedRotatingFileHandler(self._file_path, when="midnight")
+        file_handler.setFormatter(JSONFormatter(context=context, context_id=context_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
         self._logger.addHandler(file_handler)
 
     @classmethod
-    def build_main_logger(cls, log_dir: str,
-                          level: LoggerLevel = "INFO",
-                          context: LogContext = LogContext.MAIN,
-                          context_id: str | None = None) -> 'Logger':
+    def build_main_logger(
+        cls,
+        log_dir: str,
+        level: LoggerLevel = "INFO",
+        context: LogContext = LogContext.MAIN,
+        context_id: str | None = None,
+    ) -> "Logger":
         cls.clear_logger()
         logger = Logger(log_dir, level, context, context_id)
         cls._logger_instance = logger
@@ -159,7 +160,8 @@ class Logger:
             return "INFO"
         if not Utils.value_is_in_literal(log_level, LoggerLevel):
             raise Exception(
-                f"The logging level '{log_level}' is incorrect, please use one of the following [INFO, DEBUG, ERROR]")
+                f"The logging level '{log_level}' is incorrect, please use one of the following [INFO, DEBUG, ERROR]"
+            )
         return cast(LoggerLevel, log_level)
 
     @classmethod
@@ -168,7 +170,7 @@ class Logger:
 
     @classmethod
     def log_exception_stack_trace(cls, exception: Exception) -> None:
-        cls._log_message('EXCEPTION', exception)
+        cls._log_message("EXCEPTION", exception)
 
     @classmethod
     def warning(cls, message: str) -> None:
@@ -191,7 +193,7 @@ class Logger:
         return cls._file_path
 
     @classmethod
-    def get_instance(cls) -> 'Logger':
+    def get_instance(cls) -> "Logger":
         if cls._logger_instance is None:
             raise Exception("Logger instance is not initialized")
         return cls._logger_instance
@@ -223,15 +225,13 @@ class Logger:
 
         else:
             # add the message in the waiting list to be logged later
-            cls._waiting_messages.append(
-                {"level_name": level_name, "obj": obj})
+            cls._waiting_messages.append({"level_name": level_name, "obj": obj})
 
     @classmethod
     def _log_waiting_message(cls) -> None:
-        """Log all the waiting messages
-        """
+        """Log all the waiting messages"""
         for message in cls._waiting_messages:
-            cls._log_message(message['level_name'], message['obj'])
+            cls._log_message(message["level_name"], message["obj"])
         cls._waiting_messages = []
 
     # Get the current date in Human readable format
@@ -242,9 +242,8 @@ class Logger:
 
     @classmethod
     def print_sql_queries(cls) -> None:
-        """If call the sql queries will be printed in the console
-        """
-        logger = logging.getLogger('peewee')
+        """If call the sql queries will be printed in the console"""
+        logger = logging.getLogger("peewee")
         logger.addHandler(logging.StreamHandler())
         logger.setLevel(logging.DEBUG)
 
@@ -261,9 +260,9 @@ class Logger:
         """
 
         if DateHelper.are_same_day(date, DateHelper.now_utc()):
-            return 'log'
+            return "log"
 
-        return 'log.' + date.strftime(cls.FILE_NAME_DATE_FORMAT)
+        return "log." + date.strftime(cls.FILE_NAME_DATE_FORMAT)
 
     @classmethod
     def file_name_to_date(cls, file_name: str) -> datetime:
@@ -276,15 +275,14 @@ class Logger:
         :return: the date
         :rtype: datetime
         """
-        if file_name == 'log':
+        if file_name == "log":
             return DateHelper.now_utc()
 
         return DateHelper.from_str(file_name.split(".")[1], "%Y-%m-%d")
 
     @classmethod
     def clear_logger(cls) -> None:
-        """Clear the logger
-        """
+        """Clear the logger"""
         if cls._logger_instance:
             cls._logger_instance._clear()
             cls._logger_instance = None

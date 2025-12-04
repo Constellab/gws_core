@@ -1,9 +1,6 @@
-
-
 from typing import List, Type
 
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
 from gws_core.folder.model_with_folder import ModelWithFolder
@@ -16,8 +13,7 @@ from .space_folder import SpaceFolder
 from .space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 
 
-class SpaceFolderService():
-
+class SpaceFolderService:
     entity_with_folders: List[Type[ModelWithFolder]] = [Scenario, Note, ResourceModel]
 
     @classmethod
@@ -51,8 +47,7 @@ class SpaceFolderService():
 
     @classmethod
     def synchronize_all_folders(cls, external_folders: ExternalSpaceFolders) -> None:
-        """Method that synchronize a list of folders from space into the lab
-        """
+        """Method that synchronize a list of folders from space into the lab"""
 
         for space_folder in external_folders.folders:
             # sync the root folder and its children but do not delete the children
@@ -65,7 +60,9 @@ class SpaceFolderService():
             cls._delete_folder_on_sync(root_folder, external_folders)
 
     @classmethod
-    def _delete_folder_on_sync(cls, folder: SpaceFolder, external_folders: ExternalSpaceFolders) -> None:
+    def _delete_folder_on_sync(
+        cls, folder: SpaceFolder, external_folders: ExternalSpaceFolders
+    ) -> None:
         """
         Method that loop through all folder children in DB and
         delete them if they are not in the external folders.
@@ -79,8 +76,7 @@ class SpaceFolderService():
 
     @classmethod
     def synchronize_space_folder(cls, external_folder: ExternalSpaceFolder) -> None:
-        """Method that synchronize a folder from space into the lab
-        """
+        """Method that synchronize a folder from space into the lab"""
 
         cls._synchronize_space_folder(external_folder, None)
 
@@ -91,9 +87,10 @@ class SpaceFolderService():
             cls._delete_folder_on_sync(root_folder, folders)
 
     @classmethod
-    def _synchronize_space_folder(cls, external_folder: ExternalSpaceFolder, parent: ExternalSpaceFolder) -> None:
-        """Method that synchronize a folder from space into the lab
-        """
+    def _synchronize_space_folder(
+        cls, external_folder: ExternalSpaceFolder, parent: ExternalSpaceFolder
+    ) -> None:
+        """Method that synchronize a folder from space into the lab"""
 
         lab_folder = SpaceFolder.get_by_id(external_folder.id)
 
@@ -112,8 +109,7 @@ class SpaceFolderService():
 
     @classmethod
     def delete_folder(cls, folder_id: str) -> None:
-        """Method that delete a folder from the lab
-        """
+        """Method that delete a folder from the lab"""
         folder = SpaceFolder.get_by_id(folder_id)
 
         if folder is None:
@@ -122,14 +118,28 @@ class SpaceFolderService():
         folders = folder.get_with_children_as_list()
 
         # check if one of the sync scenario is attached to the folder
-        if Scenario.select().where((Scenario.folder.in_(folders)) & (Scenario.validated_at.is_null(False))).count() > 0:
-            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_SCENARIOS.value,
-                                      unique_code=GWSException.DELETE_FOLDER_WITH_SCENARIOS.name)
+        if (
+            Scenario.select()
+            .where((Scenario.folder.in_(folders)) & (Scenario.validated_at.is_null(False)))
+            .count()
+            > 0
+        ):
+            raise BadRequestException(
+                detail=GWSException.DELETE_FOLDER_WITH_SCENARIOS.value,
+                unique_code=GWSException.DELETE_FOLDER_WITH_SCENARIOS.name,
+            )
 
         # check if one of the note is attached to the folder
-        if Note.select().where((Note.folder.in_(folders)) & (Note.validated_at.is_null(False))).count() > 0:
-            raise BadRequestException(detail=GWSException.DELETE_FOLDER_WITH_NOTES.value,
-                                      unique_code=GWSException.DELETE_FOLDER_WITH_NOTES.name)
+        if (
+            Note.select()
+            .where((Note.folder.in_(folders)) & (Note.validated_at.is_null(False)))
+            .count()
+            > 0
+        ):
+            raise BadRequestException(
+                detail=GWSException.DELETE_FOLDER_WITH_NOTES.value,
+                unique_code=GWSException.DELETE_FOLDER_WITH_NOTES.name,
+            )
 
         # Clear all objects that are using the folder
         for entity in cls.entity_with_folders:
@@ -139,7 +149,6 @@ class SpaceFolderService():
 
     @classmethod
     def move_folder(cls, folder_id: str, new_parent_id: str) -> None:
-
         if folder_id == new_parent_id:
             raise BadRequestException("Cannot move a folder into itself")
 

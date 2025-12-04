@@ -1,4 +1,3 @@
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
@@ -11,8 +10,9 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 
 
-@task_decorator(unique_name="OutputTask", human_name="Output",
-                style=TypingStyle.material_icon("logout"))
+@task_decorator(
+    unique_name="OutputTask", human_name="Output", style=TypingStyle.material_icon("logout")
+)
 class OutputTask(Task):
     """
     Standard task to define a resource as an output of a scenario.
@@ -22,26 +22,31 @@ class OutputTask(Task):
     output resources can be used when sending a scenario to another lab.
     """
 
-    input_name: str = 'resource'
-    flag_config_name: str = 'flag_resource'
+    input_name: str = "resource"
+    flag_config_name: str = "flag_resource"
 
-    input_specs: InputSpecs = InputSpecs({'resource': InputSpec(Resource)})
-    config_specs = ConfigSpecs({
-        'flag_resource': BoolParam(default_value=True, human_name="Check to flag the resource provided in the output")
-    })
+    input_specs: InputSpecs = InputSpecs({"resource": InputSpec(Resource)})
+    config_specs = ConfigSpecs(
+        {
+            "flag_resource": BoolParam(
+                default_value=True, human_name="Check to flag the resource provided in the output"
+            )
+        }
+    )
 
     __auto_run__: bool = True
 
     __enable_in_sub_protocol__: bool = False
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        if params.get_value('flag_resource', False):
+        if params.get_value("flag_resource", False):
             # mark the resource to show in list as it is an output
             from gws_core.resource.resource_model import ResourceModel
+
             resource: Resource = inputs.get(OutputTask.input_name)
             resource_model: ResourceModel = ResourceModel.get_by_id_and_check(
-                resource.get_model_id())
+                resource.get_model_id()
+            )
             resource_model.flagged = True
             resource_model.save()
 

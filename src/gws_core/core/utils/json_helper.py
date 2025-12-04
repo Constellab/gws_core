@@ -1,12 +1,9 @@
-
-
 from typing import Any
 
 from simplejson import dumps, loads
 
 
-class JSONHelper():
-
+class JSONHelper:
     @staticmethod
     def safe_dumps(dict_data: dict) -> str:
         """
@@ -40,6 +37,6 @@ class JSONHelper():
                 return []
         else:
             if data is None:
-                return 'any'
+                return "any"
             # use the type to string in Utils
             return type(data).__name__

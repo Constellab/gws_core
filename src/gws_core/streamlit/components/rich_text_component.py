@@ -1,17 +1,17 @@
-
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.streamlit.components.streamlit_component_loader import \
-    StreamlitComponentLoader
+from gws_core.streamlit.components.streamlit_component_loader import StreamlitComponentLoader
 
 
-def rich_text_editor(placeholder: str = None,
-                     initial_value: RichText = None,
-                     disabled: bool = False,
-                     key: str = 'rich-text-editor',
-                     min_height: str = '500px',
-                     max_height: str = None) -> RichText:
-    """ Add a rich text editor to the streamlit app
+def rich_text_editor(
+    placeholder: str = None,
+    initial_value: RichText = None,
+    disabled: bool = False,
+    key: str = "rich-text-editor",
+    min_height: str = "500px",
+    max_height: str = None,
+) -> RichText:
+    """Add a rich text editor to the streamlit app
 
     :param placeholder: placeholder, defaults to None
     :type placeholder: str, optional
@@ -38,7 +38,7 @@ def rich_text_editor(placeholder: str = None,
         "initialValue": default_value_json,
         "disabled": disabled,
         "minHeight": min_height,
-        "maxHeight": max_height
+        "maxHeight": max_height,
     }
     component_value = streamlit_component_loader.call_component(data, key=key)
 

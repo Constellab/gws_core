@@ -1,5 +1,3 @@
-
-
 from typing import Literal
 
 from gws_core.core.utils.settings import Settings
@@ -7,8 +5,7 @@ from gws_core.space.space_dto import SpaceHierarchyObjectType
 
 
 class SpaceFrontService:
-    """ Service to get the URL of Space app.
-    """
+    """Service to get the URL of Space app."""
 
     space_base_url: str
 
@@ -51,19 +48,21 @@ class SpaceFrontService:
         """Get the URL of the chat for a specific folder of the Space app."""
         return f"{self.get_app_url()}/chat/folder/{folder_id}"
 
-    def get_hierarchy_object_url(self, object_id: str, object_type: SpaceHierarchyObjectType) -> str:
+    def get_hierarchy_object_url(
+        self, object_id: str, object_type: SpaceHierarchyObjectType
+    ) -> str:
         """Get the URL of a specific hierarchy object of the Space app."""
-        if object_type == 'FOLDER':
+        if object_type == "FOLDER":
             return self.get_folder_url(object_id)
-        elif object_type == 'DOCUMENT':
+        elif object_type == "DOCUMENT":
             return self.get_document_url(object_id)
-        elif object_type == 'CONSTELLAB_DOCUMENT':
+        elif object_type == "CONSTELLAB_DOCUMENT":
             return self.get_note_url(object_id)
-        elif object_type == 'NOTE':
+        elif object_type == "NOTE":
             return self.get_lab_note_url(object_id)
-        elif object_type == 'SCENARIO':
+        elif object_type == "SCENARIO":
             return self.get_scenario_url(object_id)
-        elif object_type == 'RESOURCE' or object_type == 'APPLICATION':
+        elif object_type == "RESOURCE" or object_type == "APPLICATION":
             return self.get_resource_url(object_id)
         else:
             raise ValueError(f"Unsupported object type: {object_type}")
@@ -71,12 +70,16 @@ class SpaceFrontService:
     ################################### LAB ###################################
 
     def get_lab_url(
-            self, lab_id: str, tab: Literal['dashboard', 'config', 'usage', 'backup', 'status-history'] = None) -> str:
+        self,
+        lab_id: str,
+        tab: Literal["dashboard", "config", "usage", "backup", "status-history"] = None,
+    ) -> str:
         """Get the URL of a specific lab of the Space app."""
-        return f"{self.get_app_url()}/labs/{lab_id}" + (f"/{tab}" if tab else '')
+        return f"{self.get_app_url()}/labs/{lab_id}" + (f"/{tab}" if tab else "")
 
     def get_current_lab_url(
-            self, tab: Literal['dashboard', 'config', 'usage', 'backup', 'status-history'] = None) -> str:
+        self, tab: Literal["dashboard", "config", "usage", "backup", "status-history"] = None
+    ) -> str:
         """Get the URL of the current lab of the Space app."""
         lab_id = Settings.get_lab_id()
         return self.get_lab_url(lab_id, tab)
@@ -93,7 +96,7 @@ class SpaceFrontService:
 
     def get_app_url(self) -> str:
         """Get the base URL of the Space front service."""
-        return self.get_url() + '/app'
+        return self.get_url() + "/app"
 
     def get_url(self) -> str:
         """Get the URL of the Space front service."""

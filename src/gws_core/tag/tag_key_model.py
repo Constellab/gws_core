@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, Optional
 
 from peewee import BooleanField, CharField, IntegerField, ModelSelect
@@ -22,7 +20,8 @@ class TagKeyModel(Model):
     order = IntegerField(default=0)
 
     value_format: TagValueFormat = EnumField(
-        choices=TagValueFormat, null=False, default=TagValueFormat.STRING)
+        choices=TagValueFormat, null=False, default=TagValueFormat.STRING
+    )
 
     label = CharField(null=True)
 
@@ -48,21 +47,25 @@ class TagKeyModel(Model):
             label=self.label,
             description=self.description,
             is_community_tag=self.is_community_tag,
-            additional_infos_specs=self.additional_infos_specs
+            additional_infos_specs=self.additional_infos_specs,
         )
 
     ############################################## CLASS METHODS ##############################################
 
     @classmethod
-    def create_tag_key_model(cls, key: str, label: str,
-                             value_format: TagValueFormat = TagValueFormat.STRING,
-                             is_community_tag: bool = False) -> 'TagKeyModel':
+    def create_tag_key_model(
+        cls,
+        key: str,
+        label: str,
+        value_format: TagValueFormat = TagValueFormat.STRING,
+        is_community_tag: bool = False,
+    ) -> "TagKeyModel":
         return cls.create(
             key=key,
             value_format=value_format,
             label=label,
             is_community_tag=is_community_tag,
-            order=cls.get_highest_order() + 1
+            order=cls.get_highest_order() + 1,
         )
 
     @classmethod
@@ -75,7 +78,7 @@ class TagKeyModel(Model):
         tag_model.delete_instance()
 
     @classmethod
-    def find_by_key(cls, key: str) -> Optional['TagKeyModel']:
+    def find_by_key(cls, key: str) -> Optional["TagKeyModel"]:
         try:
             return cls.get(cls.key == key)
         except:
@@ -84,7 +87,9 @@ class TagKeyModel(Model):
     @classmethod
     def search_by_key(cls, key: str) -> ModelSelect:
         if key:
-            return TagKeyModel.select().where(TagKeyModel.key.contains(key)).order_by(TagKeyModel.key)
+            return (
+                TagKeyModel.select().where(TagKeyModel.key.contains(key)).order_by(TagKeyModel.key)
+            )
         else:
             return TagKeyModel.select().order_by(TagKeyModel.key)
 
@@ -98,9 +103,9 @@ class TagKeyModel(Model):
 
     @classmethod
     def from_community_tag_key(
-            cls, community_tag_key: CommunityTagKeyDTO, new_only: bool = False) -> Optional['TagKeyModel']:
-        """Create a tag key model from a community tag key
-        """
+        cls, community_tag_key: CommunityTagKeyDTO, new_only: bool = False
+    ) -> Optional["TagKeyModel"]:
+        """Create a tag key model from a community tag key"""
         if not community_tag_key:
             return None
 

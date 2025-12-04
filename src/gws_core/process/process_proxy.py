@@ -131,7 +131,9 @@ class ProcessProxy:
         Access input port information of a process to create connectors in protocol
         """
         if not self._process_model.inputs.port_exists(port_name):
-            raise Exception(f"The process '{self.instance_name}' does not have an input port named '{port_name}'")
+            raise Exception(
+                f"The process '{self.instance_name}' does not have an input port named '{port_name}'"
+            )
 
         return ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
 
@@ -144,7 +146,9 @@ class ProcessProxy:
         """
         ports = []
         for port_name in self._process_model.inputs.ports:
-            ports.append(ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name))
+            ports.append(
+                ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
+            )
         return ports
 
     def add_dynamic_input_port(self, port_spec_dto: IOSpecDTO | None = None) -> ProcessWithPort:
@@ -180,7 +184,9 @@ class ProcessProxy:
         Access output port information of a process to create connectors in protocol
         """
         if not self._process_model.outputs.port_exists(port_name):
-            raise Exception(f"The process '{self.instance_name}' does not have an output port named '{port_name}'")
+            raise Exception(
+                f"The process '{self.instance_name}' does not have an output port named '{port_name}'"
+            )
 
         return ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
 
@@ -193,7 +199,9 @@ class ProcessProxy:
         """
         ports = []
         for port_name in self._process_model.outputs.ports:
-            ports.append(ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name))
+            ports.append(
+                ProcessWithPort(process_instance_name=self.instance_name, port_name=port_name)
+            )
         return ports
 
     def __rshift__(self, port_name: str) -> ProcessWithPort:
@@ -216,7 +224,9 @@ class ProcessProxy:
 
         out_port = list(self._process_model.outputs.ports.values())[0]
 
-        return ProcessWithPort(process_instance_name=self._process_model.instance_name, port_name=out_port.name)
+        return ProcessWithPort(
+            process_instance_name=self._process_model.instance_name, port_name=out_port.name
+        )
 
     def is_input_task(self) -> bool:
         return self._process_model.is_input_task()

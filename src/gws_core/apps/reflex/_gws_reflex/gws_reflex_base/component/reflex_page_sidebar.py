@@ -49,8 +49,8 @@ def _create_desktop_sidebar(
         z_index="5",
         display=rx.breakpoints(
             initial="none",  # Mobile: hidden
-            sm="none",       # Tablet: hidden
-            md="flex",       # Desktop: visible
+            sm="none",  # Tablet: hidden
+            md="flex",  # Desktop: visible
         ),
     )
 
@@ -77,8 +77,8 @@ def _create_mobile_header(
         background="var(--color-background)",
         display=rx.breakpoints(
             initial="flex",  # Mobile: visible
-            sm="flex",       # Tablet: visible
-            md="none",       # Desktop: hidden
+            sm="flex",  # Tablet: visible
+            md="none",  # Desktop: hidden
         ),
     )
 
@@ -101,8 +101,8 @@ def _create_content_wrapper(
                 padding_bottom="1rem",
                 display=rx.breakpoints(
                     initial="none",  # Mobile: hidden
-                    sm="none",       # Tablet: hidden
-                    md="block",      # Desktop: visible
+                    sm="none",  # Tablet: hidden
+                    md="block",  # Desktop: visible
                 ),
             ),
             rx.fragment(),
@@ -111,19 +111,19 @@ def _create_content_wrapper(
         content,
         # Responsive styling
         width=rx.breakpoints(
-            initial="100%",                        # Mobile: full width
-            sm="100%",                             # Tablet: full width
-            md=f"calc(100% - {sidebar_width})",   # Desktop: account for sidebar
+            initial="100%",  # Mobile: full width
+            sm="100%",  # Tablet: full width
+            md=f"calc(100% - {sidebar_width})",  # Desktop: account for sidebar
         ),
         margin_left=rx.breakpoints(
-            initial="0",         # Mobile: no margin
-            sm="0",              # Tablet: no margin
-            md=sidebar_width,    # Desktop: offset by sidebar width
+            initial="0",  # Mobile: no margin
+            sm="0",  # Tablet: no margin
+            md=sidebar_width,  # Desktop: offset by sidebar width
         ),
         padding=rx.breakpoints(
             initial=f"{padding_top_mobile} 1rem 2rem 1rem",  # Mobile: top, right, bottom, left
-            sm=f"{padding_top_mobile} 1rem 2rem 1rem",       # Tablet: same as mobile
-            md="2rem",                                        # Desktop: uniform padding
+            sm=f"{padding_top_mobile} 1rem 2rem 1rem",  # Tablet: same as mobile
+            md="2rem",  # Desktop: uniform padding
         ),
         height="100vh",
         overflow_y="auto",

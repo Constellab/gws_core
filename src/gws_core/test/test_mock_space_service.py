@@ -52,7 +52,9 @@ class TestMockSpaceService(SpaceService):
 
     def set_space_folder_users_mock(self, users: list[UserDTO]):
         """Set mock space folder users"""
-        self._space_folder_users = [SpaceFolderUser(role=SpaceRootFolderUserRole.USER, user=user) for user in users]
+        self._space_folder_users = [
+            SpaceFolderUser(role=SpaceRootFolderUserRole.USER, user=user) for user in users
+        ]
 
     def check_api_key(self, api_key: str) -> bool:
         """Mock check_api_key - always returns True"""
@@ -91,7 +93,9 @@ class TestMockSpaceService(SpaceService):
 
     # ==================== SCENARIO ====================
 
-    def save_scenario(self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> SpaceHierarchyObjectDTO:
+    def save_scenario(
+        self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO
+    ) -> SpaceHierarchyObjectDTO:
         """Mock save_scenario"""
         return SpaceHierarchyObjectDTO(
             id=save_scenario_dto.scenario.id,
@@ -104,7 +108,9 @@ class TestMockSpaceService(SpaceService):
         """Mock delete_scenario"""
         pass
 
-    def update_scenario_folder(self, current_folder_id: str, scenario_id: str, new_folder_id: str) -> None:
+    def update_scenario_folder(
+        self, current_folder_id: str, scenario_id: str, new_folder_id: str
+    ) -> None:
         """Mock update_scenario_folder"""
         pass
 
@@ -114,9 +120,13 @@ class TestMockSpaceService(SpaceService):
 
     # ==================== NOTE ====================
 
-    def save_note(self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData) -> SpaceHierarchyObjectDTO:
+    def save_note(
+        self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData
+    ) -> SpaceHierarchyObjectDTO:
         """Mock save_note"""
-        return SpaceHierarchyObjectDTO(id=note.note.id, name=note.note.title, objectType="NOTE", parentId=folder_id)
+        return SpaceHierarchyObjectDTO(
+            id=note.note.id, name=note.note.title, objectType="NOTE", parentId=folder_id
+        )
 
     def delete_note(self, folder_id: str, note_id: str) -> None:
         """Mock delete_note"""
@@ -127,7 +137,10 @@ class TestMockSpaceService(SpaceService):
         pass
 
     def get_modifications(
-        self, old_content: RichTextDTO, new_content: RichTextDTO, old_modifications: RichTextModificationsDTO = None
+        self,
+        old_content: RichTextDTO,
+        new_content: RichTextDTO,
+        old_modifications: RichTextModificationsDTO = None,
     ) -> RichTextModificationsDTO:
         """Mock get_modifications"""
         return RichTextModificationsDTO(version=1, modifications=[])
@@ -144,10 +157,15 @@ class TestMockSpaceService(SpaceService):
 
     # ==================== RESOURCE ====================
 
-    def share_resource(self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO) -> SpaceHierarchyObjectDTO:
+    def share_resource(
+        self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO
+    ) -> SpaceHierarchyObjectDTO:
         """Mock share_resource"""
         return SpaceHierarchyObjectDTO(
-            id=resource_dto.resource_id, name=resource_dto.name, objectType="RESOURCE", parentId=folder_id
+            id=resource_dto.resource_id,
+            name=resource_dto.name,
+            objectType="RESOURCE",
+            parentId=folder_id,
         )
 
     # ==================== FOLDER ====================
@@ -172,16 +190,23 @@ class TestMockSpaceService(SpaceService):
         """Mock create_root_folder that returns a fake folder"""
         return ExternalSpaceFolder(id=StringHelper.generate_uuid(), name=folder.name, children=[])
 
-    def create_child_folder(self, parent_id: str, folder: ExternalSpaceCreateFolder) -> ExternalSpaceFolder:
+    def create_child_folder(
+        self, parent_id: str, folder: ExternalSpaceCreateFolder
+    ) -> ExternalSpaceFolder:
         """Mock create_child_folder"""
         return ExternalSpaceFolder(id=StringHelper.generate_uuid(), name=folder.name, children=[])
 
-    def update_folder(self, folder_id: str, folder: ExternalSpaceCreateFolder) -> ExternalSpaceFolder:
+    def update_folder(
+        self, folder_id: str, folder: ExternalSpaceCreateFolder
+    ) -> ExternalSpaceFolder:
         """Mock update_folder that returns a fake updated folder"""
         return ExternalSpaceFolder(id=folder_id, name=folder.name, children=[])
 
     def share_root_folder(
-        self, root_folder_id: str, group_id: str, role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER
+        self,
+        root_folder_id: str,
+        group_id: str,
+        role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER,
     ) -> list[SpaceFolderUser]:
         """Mock share_root_folder"""
         return self._space_folder_users
@@ -194,7 +219,9 @@ class TestMockSpaceService(SpaceService):
         """Mock unshare_folder"""
         pass
 
-    def update_share_folder(self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole) -> None:
+    def update_share_folder(
+        self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole
+    ) -> None:
         """Mock update_share_folder"""
         pass
 

@@ -1,12 +1,9 @@
-
-
 from typing import Callable
 
 from .utils import Utils
 
 
-class DecoratorHelper():
-
+class DecoratorHelper:
     @staticmethod
     def check_method_decorator(func: Callable) -> None:
         """Method to check that the func is valid for a method decorator.
@@ -16,6 +13,8 @@ class DecoratorHelper():
         :type func: Callable
         """
         # check that the decorator is place after the @classmethod or @staticmethod decorator otherwise it does not work
-        if hasattr(func, '__class__') and (
-                Utils.issubclass(func.__class__, classmethod) or Utils.issubclass(func.__class__, staticmethod)):
+        if hasattr(func, "__class__") and (
+            Utils.issubclass(func.__class__, classmethod)
+            or Utils.issubclass(func.__class__, staticmethod)
+        ):
             raise Exception("The decorator must be placed after the @classmethod decorator")

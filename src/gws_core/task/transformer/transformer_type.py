@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict
 
 from typing_extensions import TypedDict
@@ -11,5 +9,6 @@ class TransformerDict(TypedDict):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     typing_name: str
     config_values: Dict[str, Any]

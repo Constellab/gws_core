@@ -28,8 +28,10 @@ def _manage_instructions(pull: bool, list_commands: bool):
 
 @app.command("instructions", help="Manage GitHub Copilot instructions")
 def instructions(
-    pull: bool = typer.Option(False, "--pull", help="Pull GWS instructions to global Copilot instructions folder"),
-    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands")
+    pull: bool = typer.Option(
+        False, "--pull", help="Pull GWS instructions to global Copilot instructions folder"
+    ),
+    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands"),
 ):
     """Manage GitHub Copilot instructions
 
@@ -53,8 +55,10 @@ def update():
 
 @app.command("commands", help="Manage GitHub Copilot commands (alias for instructions)")
 def commands(
-    pull: bool = typer.Option(False, "--pull", help="Pull GWS commands to global Copilot instructions folder"),
-    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands")
+    pull: bool = typer.Option(
+        False, "--pull", help="Pull GWS commands to global Copilot instructions folder"
+    ),
+    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands"),
 ):
     """Manage GitHub Copilot commands (alias for instructions)
 

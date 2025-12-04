@@ -1,5 +1,3 @@
-
-
 from requests.models import Response
 
 from gws_core.core.service.external_api_service import ExternalApiService
@@ -7,39 +5,52 @@ from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_type import CredentialsDataLab
 from gws_core.external_lab.external_lab_auth import ExternalLabAuth
 from gws_core.external_lab.external_lab_dto import (
-    ExternalLabImportRequestDTO, ExternalLabImportResourceResponseDTO,
-    ExternalLabImportScenarioResponseDTO, ExternalLabWithUserInfo)
+    ExternalLabImportRequestDTO,
+    ExternalLabImportResourceResponseDTO,
+    ExternalLabImportScenarioResponseDTO,
+    ExternalLabWithUserInfo,
+)
 from gws_core.share.shared_dto import ShareLinkEntityType
 from gws_core.user.user import User
 
 
-class ExternalLabApiService():
+class ExternalLabApiService:
     """Class that contains method to communicate with external lab API"""
 
     @classmethod
-    def mark_shared_object_as_received(cls, lab_api_url: str, entity_type: ShareLinkEntityType,
-                                       token: str, current_lab_info: ExternalLabWithUserInfo) -> Response:
+    def mark_shared_object_as_received(
+        cls,
+        lab_api_url: str,
+        entity_type: ShareLinkEntityType,
+        token: str,
+        current_lab_info: ExternalLabWithUserInfo,
+    ) -> Response:
         """Method that mark a shared object as received"""
         return ExternalApiService.post(
             f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",
-            current_lab_info.to_json_dict())
+            current_lab_info.to_json_dict(),
+        )
 
     @classmethod
-    def send_resource_to_lab(cls, request_dto: ExternalLabImportRequestDTO,
-                             credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportScenarioResponseDTO:
+    def send_resource_to_lab(
+        cls, request_dto: ExternalLabImportRequestDTO, credentials: CredentialsDataLab, user_id: str
+    ) -> ExternalLabImportScenarioResponseDTO:
         """Send a resource to the lab"""
 
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
         url = cls.get_full_route(credentials, "resource/import")
 
-        response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
-                                           raise_exception_if_error=True)
+        response = ExternalApiService.post(
+            url, body=request_dto.to_json_dict(), headers=headers, raise_exception_if_error=True
+        )
 
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
 
     @classmethod
-    def get_imported_resource_from_scenario(cls, scenario_id: str, credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportResourceResponseDTO:
+    def get_imported_resource_from_scenario(
+        cls, scenario_id: str, credentials: CredentialsDataLab, user_id: str
+    ) -> ExternalLabImportResourceResponseDTO:
         """Get the imported resource from the import scenario"""
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
@@ -50,21 +61,25 @@ class ExternalLabApiService():
         return ExternalLabImportResourceResponseDTO.from_json(response.json())
 
     @classmethod
-    def send_scenario_to_lab(cls, request_dto: ExternalLabImportRequestDTO,
-                             credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportScenarioResponseDTO:
+    def send_scenario_to_lab(
+        cls, request_dto: ExternalLabImportRequestDTO, credentials: CredentialsDataLab, user_id: str
+    ) -> ExternalLabImportScenarioResponseDTO:
         """Send a scenario to the lab"""
 
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
         url = cls.get_full_route(credentials, "scenario/import")
 
-        response = ExternalApiService.post(url, body=request_dto.to_json_dict(), headers=headers,
-                                           raise_exception_if_error=True)
+        response = ExternalApiService.post(
+            url, body=request_dto.to_json_dict(), headers=headers, raise_exception_if_error=True
+        )
 
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
 
     @classmethod
-    def get_scenario(cls, id_: str, credentials: CredentialsDataLab, user_id: str) -> ExternalLabImportScenarioResponseDTO:
+    def get_scenario(
+        cls, id_: str, credentials: CredentialsDataLab, user_id: str
+    ) -> ExternalLabImportScenarioResponseDTO:
         """Get the scenario that is currently being imported"""
         headers = ExternalLabApiService._get_external_lab_auth(credentials.api_key, user_id)
 
@@ -95,8 +110,8 @@ class ExternalLabApiService():
             user_id=user.id,
             user_firstname=user.first_name,
             user_lastname=user.last_name,
-            space_id=space['id'] if space is not None else None,
-            space_name=space['name'] if space is not None else None
+            space_id=space["id"] if space is not None else None,
+            space_name=space["name"] if space is not None else None,
         )
 
     @classmethod
@@ -107,4 +122,6 @@ class ExternalLabApiService():
     @classmethod
     def get_current_lab_route(cls, route: str) -> str:
         """Get the current lab route"""
-        return f"{Settings.get_instance().get_lab_api_url()}/{Settings.core_api_route_path()}/{route}"
+        return (
+            f"{Settings.get_instance().get_lab_api_url()}/{Settings.core_api_route_path()}/{route}"
+        )

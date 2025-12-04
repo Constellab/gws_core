@@ -1,4 +1,3 @@
-
 from typing import List
 from unittest import TestCase
 
@@ -10,7 +9,9 @@ from gws_core.impl.table.view.table_selection import Serie1d
 
 
 class TestTableHistogramView(TestCase):
-    def test_histogram_view(self,):
+    def test_histogram_view(
+        self,
+    ):
         pass
 
     # def test_histogram_view(self,):

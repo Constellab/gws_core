@@ -1,4 +1,3 @@
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -18,12 +17,25 @@ class Switch2(Task):
     The Switch2 proccess sends to the output port the resource corresponding to the parameter `index`
     """
 
-    input_specs: InputSpecs = InputSpecs({'resource_1': InputSpec(Resource, optional=True),
-                                          'resource_2': InputSpec(Resource, optional=True)})
-    output_specs: OutputSpecs = OutputSpecs({'resource': OutputSpec(
-        resource_types=Resource, sub_class=True, constant=True)})
-    config_specs = ConfigSpecs({"index": IntParam(default_value=1, min_value=1, max_value=2,
-                               short_description="The index of the input resource to switch on. Defaults to 1.")})
+    input_specs: InputSpecs = InputSpecs(
+        {
+            "resource_1": InputSpec(Resource, optional=True),
+            "resource_2": InputSpec(Resource, optional=True),
+        }
+    )
+    output_specs: OutputSpecs = OutputSpecs(
+        {"resource": OutputSpec(resource_types=Resource, sub_class=True, constant=True)}
+    )
+    config_specs = ConfigSpecs(
+        {
+            "index": IntParam(
+                default_value=1,
+                min_value=1,
+                max_value=2,
+                short_description="The index of the input resource to switch on. Defaults to 1.",
+            )
+        }
+    )
 
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         index = params.get_value("index")

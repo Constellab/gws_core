@@ -1,5 +1,3 @@
-
-
 from typing import Dict
 
 from fastapi import status
@@ -12,8 +10,14 @@ class UnauthorizedException(BaseHTTPException):
     Generic unauthorized exception to throw a 401 error
     """
 
-    def __init__(self, detail: str, unique_code: str = None,
-                 detail_args: Dict = None, headers: Dict = None, instance_id: str = None) -> None:
+    def __init__(
+        self,
+        detail: str,
+        unique_code: str = None,
+        detail_args: Dict = None,
+        headers: Dict = None,
+        instance_id: str = None,
+    ) -> None:
         """Throw a generic exception
 
         :param http_status_code: HTTP error code
@@ -39,4 +43,5 @@ class UnauthorizedException(BaseHTTPException):
             unique_code=unique_code,
             detail_args=detail_args,
             headers=headers,
-            instance_id=instance_id)
+            instance_id=instance_id,
+        )

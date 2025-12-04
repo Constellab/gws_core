@@ -1,5 +1,3 @@
-
-
 import inspect
 import os
 import uuid
@@ -17,12 +15,11 @@ from ..utils.logger import Logger
 from .exception_response import ExceptionResponse
 from .exceptions.base_http_exception import BaseHTTPException
 
-CODE_SEPARATOR = '.'
+CODE_SEPARATOR = "."
 
 
-class ExceptionHandler():
-    """Class to handle exceptions and return a formatted object to the front
-    """
+class ExceptionHandler:
+    """Class to handle exceptions and return a formatted object to the front"""
 
     @classmethod
     def handle_request_validation_error(cls, exc: RequestValidationError):
@@ -36,9 +33,12 @@ class ExceptionHandler():
 
         # retrieve the error
         Logger.log_exception_stack_trace(exc)
-        return ExceptionResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, code='unprocessable_entity_error',
-                                 detail=str(exc),
-                                 instance_id=cls.generate_instance_id())
+        return ExceptionResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            code="unprocessable_entity_error",
+            detail=str(exc),
+            instance_id=cls.generate_instance_id(),
+        )
 
     @classmethod
     def handle_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:
@@ -52,7 +52,9 @@ class ExceptionHandler():
             return cls._handle_unexcepted_exception(request, exception)
 
     @classmethod
-    def _handle_expected_exception(cls, request: Request, exception: BaseHTTPException) -> ExceptionResponse:
+    def _handle_expected_exception(
+        cls, request: Request, exception: BaseHTTPException
+    ) -> ExceptionResponse:
         """Handle the expected exception raised by the developper
 
         :param exception:
@@ -74,16 +76,24 @@ class ExceptionHandler():
         route_info: str = f" - Route: {request.url}" if request is not None else ""
 
         Logger.info(
-            f"Handle exception - {unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}")
+            f"Handle exception - {unique_code}{route_info} - {detail} - Instance id : {exception.instance_id}"
+        )
         if Logger.is_debug_level():
             Logger.log_exception_stack_trace(exception)
 
         return ExceptionResponse(
-            status_code=exception.status_code, code=unique_code, detail=detail, instance_id=exception.instance_id,
-            show_as=exception.show_as, headers=exception.headers)
+            status_code=exception.status_code,
+            code=unique_code,
+            detail=detail,
+            instance_id=exception.instance_id,
+            show_as=exception.show_as,
+            headers=exception.headers,
+        )
 
     @classmethod
-    def _handle_http_exception(cls, request: Request, exception: HTTPException) -> ExceptionResponse:
+    def _handle_http_exception(
+        cls, request: Request, exception: HTTPException
+    ) -> ExceptionResponse:
         """Handle the HTTP scarlett exceptions
 
         :param exception: scarlett exception
@@ -96,14 +106,20 @@ class ExceptionHandler():
 
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.info(
-            f"Handle HTTP exception - {code}{route_info} - {exception.detail} - Instance id : {instance_id}")
+            f"Handle HTTP exception - {code}{route_info} - {exception.detail} - Instance id : {instance_id}"
+        )
 
-        return ExceptionResponse(status_code=exception.status_code, code=code,
-                                 detail=exception.detail,
-                                 instance_id=instance_id)
+        return ExceptionResponse(
+            status_code=exception.status_code,
+            code=code,
+            detail=exception.detail,
+            instance_id=instance_id,
+        )
 
     @classmethod
-    def _handle_validation_exception(cls, request: Request, exception: ValidationError) -> ExceptionResponse:
+    def _handle_validation_exception(
+        cls, request: Request, exception: ValidationError
+    ) -> ExceptionResponse:
         """Handle the validation exception (error 422) it logs the stack trace and return a formated object
 
         Arguments:
@@ -122,24 +138,31 @@ class ExceptionHandler():
         # Log short information with instance id (the stack trace is automatically printed)
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
-            f"Validation exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
+            f"Validation exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}"
+        )
 
         # return only the first error
         errors = exception.errors()
         detail = "Validation error : "
         if errors:
             first_error = errors[0]
-            detail += f"{first_error['msg']} - Field : {'.'.join([str(x) for x in first_error['loc']])}"
+            detail += (
+                f"{first_error['msg']} - Field : {'.'.join([str(x) for x in first_error['loc']])}"
+            )
         else:
             detail += str(exception)
 
-        return ExceptionResponse(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                                 code=code,
-                                 detail=detail,
-                                 instance_id=instance_id)
+        return ExceptionResponse(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            code=code,
+            detail=detail,
+            instance_id=instance_id,
+        )
 
     @classmethod
-    def _handle_unexcepted_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:
+    def _handle_unexcepted_exception(
+        cls, request: Request, exception: Exception
+    ) -> ExceptionResponse:
         """Handle the unexcepted exception (error 500) it logs the stack trace and return a formated object
 
         Arguments:
@@ -158,15 +181,17 @@ class ExceptionHandler():
         # Log short information with instance id (the stack trace is automatically printed)
         route_info: str = f" - Route: {request.url}" if request is not None else ""
         Logger.error(
-            f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}")
+            f"Unexcepted exception - {code}{route_info} - {str(exception)} - Instance id : {instance_id}"
+        )
 
-        response: ExceptionResponse = ExceptionResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                                                        code=code,
-                                                        detail=str(exception),
-                                                        instance_id=instance_id)
+        response: ExceptionResponse = ExceptionResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            code=code,
+            detail=str(exception),
+            instance_id=instance_id,
+        )
 
         if request is not None:
-
             # Since the CORSMiddleware is not executed when an unhandled server exception
             # occurs, we need to manually set the CORS headers ourselves if we want the FE
             # to receive a proper JSON 500, opposed to a CORS error.
@@ -195,8 +220,7 @@ class ExceptionHandler():
         if frame_info is None:
             return ""
 
-        code = os.path.split(
-            frame_info.filename)[-1] + CODE_SEPARATOR + frame_info.function
+        code = os.path.split(frame_info.filename)[-1] + CODE_SEPARATOR + frame_info.function
 
         return cls.get_unique_code_for_brick(code)
 
@@ -228,7 +252,7 @@ class ExceptionHandler():
         try:
             return BrickHelper.get_brick_name(frame_info[0])
         except Exception as err:
-            Logger.error('Error when getting the brick of the exception raiser')
+            Logger.error("Error when getting the brick of the exception raiser")
             Logger.log_exception_stack_trace(err)
             return ""
 

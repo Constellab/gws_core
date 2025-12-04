@@ -1,5 +1,3 @@
-
-
 import hashlib
 import os
 import subprocess
@@ -20,11 +18,10 @@ from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 
 from .shell_proxy import ShellProxy, ShellProxyDTO, ShellProxyEnvVariableMode
 
-BaseEnvShellType = TypeVar('BaseEnvShellType', bound='BaseEnvShell')
+BaseEnvShellType = TypeVar("BaseEnvShellType", bound="BaseEnvShell")
 
 
 class BaseEnvShell(ShellProxy):
-
     env_name: str = None
     env_hash: str = None
     env_file_path: str = None
@@ -35,8 +32,13 @@ class BaseEnvShell(ShellProxy):
     # overrided by subclasses. Use to define the default env file name
     CONFIG_FILE_NAME: str = None
 
-    def __init__(self, env_file_path: Union[Path, str], env_name: str = None,
-                 working_dir: str = None, message_dispatcher: MessageDispatcher = None):
+    def __init__(
+        self,
+        env_file_path: Union[Path, str],
+        env_name: str = None,
+        working_dir: str = None,
+        message_dispatcher: MessageDispatcher = None,
+    ):
         """_summary_
 
         :param env_name: Name of the environment. This name will be shown in the env list. If not provided, a name is generated
@@ -60,8 +62,7 @@ class BaseEnvShell(ShellProxy):
         if not isinstance(env_file_path, (str, Path)):
             raise Exception("Invalid env file path")
         if not FileHelper.exists_on_os(env_file_path):
-            raise Exception(
-                f"The environment file '{env_file_path}' does not exist")
+            raise Exception(f"The environment file '{env_file_path}' does not exist")
         self.env_file_path = str(env_file_path)
         self.env_hash = self._generate_env_hash()
 
@@ -76,19 +77,22 @@ class BaseEnvShell(ShellProxy):
         """
 
         try:
-            with open(self.env_file_path, 'r', encoding='utf-8') as file:
+            with open(self.env_file_path, "r", encoding="utf-8") as file:
                 env_str = file.read()
 
             return self.hash_env_str(env_str)
         except Exception as err:
             raise Exception(f"Error while reading the env file. Error {err}") from err
 
-    def run(self, cmd: Union[list, str],
-            env: dict = None,
-            env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-            shell_mode: bool = False,
-            dispatch_stdout: bool = False,
-            dispatch_stderr: bool = True) -> int:
+    def run(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+        dispatch_stdout: bool = False,
+        dispatch_stderr: bool = True,
+    ) -> int:
         """
         Run a command in a shell.
         The logs of the command will be dispatched to the message dispatcher during the execution.
@@ -115,12 +119,17 @@ class BaseEnvShell(ShellProxy):
         # install env if not installed
         self.install_env()
 
-        return super().run(formatted_cmd, env, env_mode, shell_mode, dispatch_stdout, dispatch_stderr)
+        return super().run(
+            formatted_cmd, env, env_mode, shell_mode, dispatch_stdout, dispatch_stderr
+        )
 
-    def run_in_new_thread(self, cmd: Union[list, str],
-                          env: dict = None,
-                          env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-                          shell_mode: bool = False) -> SysProc:
+    def run_in_new_thread(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+    ) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
         There logs of the command are ignored.
@@ -144,10 +153,14 @@ class BaseEnvShell(ShellProxy):
         return super().run_in_new_thread(formatted_cmd, env, env_mode, shell_mode)
 
     @final
-    def check_output(self, cmd: Union[list, str],
-                     env: dict = None,
-                     env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-                     shell_mode: bool = False, text: bool = True) -> Any:
+    def check_output(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+        text: bool = True,
+    ) -> Any:
         """
         Run a command in a shell and return the output.
         There logs of the command are ignored.
@@ -183,13 +196,15 @@ class BaseEnvShell(ShellProxy):
         if self.env_is_installed():
             # environment already installed and ok
             self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_name}' already installed, skipping installation.")
+                f"Virtual environment '{self.env_name}' already installed, skipping installation."
+            )
             return False
 
         self.create_env_dir()
 
         self._message_dispatcher.notify_info_message(
-            f"Installing the virtual environment '{self.env_name}' from file '{self.env_file_path}' into folder {self.get_env_dir_path()}'. This might take few minutes.")
+            f"Installing the virtual environment '{self.env_name}' from file '{self.env_file_path}' into folder {self.get_env_dir_path()}'. This might take few minutes."
+        )
 
         is_install: bool = False
         try:
@@ -199,13 +214,13 @@ class BaseEnvShell(ShellProxy):
             FileHelper.delete_dir(self.get_env_dir_path())
 
             Logger.log_exception_stack_trace(err)
-            raise Exception(
-                f"Cannot install the virtual environment. Error {err}") from err
+            raise Exception(f"Cannot install the virtual environment. Error {err}") from err
 
         if is_install:
             self._create_env_creation_file()
             self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_name}' installed!")
+                f"Virtual environment '{self.env_name}' installed!"
+            )
 
         return is_install
 
@@ -220,14 +235,13 @@ class BaseEnvShell(ShellProxy):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             shell=True,
-            check=False
+            check=False,
         )
 
         if res.returncode != 0:
-            error_message = res.stderr.decode('utf-8') or res.stdout.decode('utf-8')
+            error_message = res.stderr.decode("utf-8") or res.stdout.decode("utf-8")
             self._message_dispatcher.notify_error_message(error_message)
-            raise Exception(
-                f"Cannot install the virtual environment. Error: {error_message}")
+            raise Exception(f"Cannot install the virtual environment. Error: {error_message}")
 
     @abstractmethod
     def _install_env(self) -> bool:
@@ -244,18 +258,19 @@ class BaseEnvShell(ShellProxy):
             return False
 
         self._message_dispatcher.notify_info_message(
-            f"Uninstalling the virtual environment '{self.env_name}'")
+            f"Uninstalling the virtual environment '{self.env_name}'"
+        )
         is_uninstall: bool = False
         try:
             is_uninstall = self._uninstall_env()
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            raise Exception(
-                f"Cannot uninstall the virtual environment. Error {err}") from err
+            raise Exception(f"Cannot uninstall the virtual environment. Error {err}") from err
 
         if is_uninstall:
             self._message_dispatcher.notify_info_message(
-                f"Virtual environment '{self.env_name}' uninstalled!")
+                f"Virtual environment '{self.env_name}' uninstalled!"
+            )
 
         return is_uninstall
 
@@ -273,7 +288,7 @@ class BaseEnvShell(ShellProxy):
             stderr=subprocess.PIPE,
             stdout=subprocess.PIPE,
             shell=True,
-            check=False
+            check=False,
         )
         if res.returncode != 0:
             try:
@@ -281,10 +296,9 @@ class BaseEnvShell(ShellProxy):
                     FileHelper.delete_dir(self.get_env_dir_path())
 
             except Exception as err:
-                error_message = res.stderr.decode('utf-8') or res.stdout.decode('utf-8')
+                error_message = res.stderr.decode("utf-8") or res.stdout.decode("utf-8")
                 self._message_dispatcher.notify_error_message(error_message)
-                raise Exception(
-                    f"Cannot remove the virtual environment. {error_message}") from err
+                raise Exception(f"Cannot remove the virtual environment. {error_message}") from err
 
     @abstractmethod
     def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
@@ -317,7 +331,7 @@ class BaseEnvShell(ShellProxy):
             hash=self.env_hash,
             created_at=DateHelper.now_utc().isoformat(),
             origin_env_config_file_path=self.env_file_path,
-            env_type=self.get_env_type()
+            env_type=self.get_env_type(),
         )
 
         with open(self._get_json_info_file_path(), "w", encoding="UTF-8") as outfile:
@@ -366,7 +380,7 @@ class BaseEnvShell(ShellProxy):
         Read the env file and return its content.
         """
 
-        with open(self.env_file_path, 'r', encoding='utf-8') as file:
+        with open(self.env_file_path, "r", encoding="utf-8") as file:
             return file.read()
 
     @classmethod
@@ -382,13 +396,15 @@ class BaseEnvShell(ShellProxy):
         if not FileHelper.exists_on_os(folder_path):
             raise Exception("The virtual environment is not installed")
 
-        with open(os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8") as json_file:
+        with open(
+            os.path.join(folder_path, cls.CREATION_INFO_FILE_NAME), encoding="UTF-8"
+        ) as json_file:
             return VEnvCreationInfo.from_json(load(json_file))
 
     @classmethod
     def from_env_str(
-            cls: Type[BaseEnvShellType],
-            env_str: str, message_dispatcher: MessageDispatcher = None) -> BaseEnvShellType:
+        cls: Type[BaseEnvShellType], env_str: str, message_dispatcher: MessageDispatcher = None
+    ) -> BaseEnvShellType:
         """
         Create the virtual environment from a string containing the environment definition.
 
@@ -399,11 +415,12 @@ class BaseEnvShell(ShellProxy):
         env_hash = cls.hash_env_str(env_str)
         temp_dir = Settings.make_temp_dir()
         env_file_path = os.path.join(temp_dir, cls.CONFIG_FILE_NAME)
-        with open(env_file_path, 'w', encoding="utf-8") as file_path:
+        with open(env_file_path, "w", encoding="utf-8") as file_path:
             file_path.write(env_str)
 
-        return cls(env_name=env_hash,
-                   env_file_path=env_file_path, message_dispatcher=message_dispatcher)
+        return cls(
+            env_name=env_hash, env_file_path=env_file_path, message_dispatcher=message_dispatcher
+        )
 
     @classmethod
     def hash_env_str(cls, env_str: str) -> str:
@@ -413,11 +430,11 @@ class BaseEnvShell(ShellProxy):
 
         # remove all the white spaces and new lines
         env_to_hash = env_str.replace(" ", "").replace("\n", "")
-        return hashlib.md5(env_to_hash.encode('utf-8')).hexdigest()
+        return hashlib.md5(env_to_hash.encode("utf-8")).hexdigest()
 
     @classmethod
     @abstractmethod
-    def get_env_type(cls) -> Literal['conda', 'mamba', 'pip']:
+    def get_env_type(cls) -> Literal["conda", "mamba", "pip"]:
         """
         Returns the type of the env
         """

@@ -1,5 +1,3 @@
-
-
 """
 ListRField module for Resource fields that store JSON-like lists.
 
@@ -13,8 +11,7 @@ from typing import Any, List
 from gws_core.core.utils.json_helper import JSONHelper
 
 from ...core.classes.validator import ListValidator
-from ...core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .primitive_r_field import PrimitiveRField
 
 
@@ -69,7 +66,9 @@ class ListRField(PrimitiveRField):
         - Lists can contain mixed types as long as they're JSON-compatible
     """
 
-    def __init__(self, default_value: List | None = None, include_in_dict_view: bool = False) -> None:
+    def __init__(
+        self, default_value: List | None = None, include_in_dict_view: bool = False
+    ) -> None:
         """Initialize a ListRField for storing JSON-like lists.
 
         :param default_value: Default value for the field when not set. Can be:
@@ -99,8 +98,11 @@ class ListRField(PrimitiveRField):
             field4 = ListRField(include_in_dict_view=True)
             ```
         """
-        super().__init__(validator=ListValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view)
+        super().__init__(
+            validator=ListValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+        )
 
     def get_default_value(self) -> Any:
         """Get the default value for this field.
@@ -119,7 +121,8 @@ class ListRField(PrimitiveRField):
             return JSONHelper.convert_dict_to_json(self._default_value)
         except:
             raise BadRequestException(
-                "Incorrect default value for ListRField. The default value must be a json like list")
+                "Incorrect default value for ListRField. The default value must be a json like list"
+            )
 
     def serialize(self, r_field_value: Any) -> Any:
         """Serialize the list value for storage.

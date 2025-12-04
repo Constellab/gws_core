@@ -41,7 +41,10 @@ class ProtocolProxy(ProcessProxy):
     ####################################### PROCESS #########################################
 
     def add_process(
-        self, process_type: type[Process], instance_name: str | None = None, config_params: ConfigParamsDict = None
+        self,
+        process_type: type[Process],
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict = None,
     ) -> ProcessProxy:
         """Add a process (task or protocol) to this protocol. This process is automatically saved in the database"""
 
@@ -58,7 +61,10 @@ class ProtocolProxy(ProcessProxy):
         return i_process
 
     def add_task(
-        self, task_type: type[Task], instance_name: str | None = None, config_params: ConfigParamsDict = None
+        self,
+        task_type: type[Task],
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict = None,
     ) -> TaskProxy:
         """Add a task to this"""
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
@@ -78,7 +84,10 @@ class ProtocolProxy(ProcessProxy):
         return ProtocolProxy(protocol_update.process)
 
     def add_protocol(
-        self, protocol_type: type[Protocol], instance_name: str | None = None, config_params: ConfigParamsDict = None
+        self,
+        protocol_type: type[Protocol],
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict = None,
     ) -> "ProtocolProxy":
         """Add a protocol from a protocol type"""
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
@@ -195,7 +204,10 @@ class ProtocolProxy(ProcessProxy):
         protocol.add_connector(create >> 'robot', sub_proto << 'robot_i')
         """
         self.add_connector_by_names(
-            out_port.process_instance_name, out_port.port_name, in_port.process_instance_name, in_port.port_name
+            out_port.process_instance_name,
+            out_port.port_name,
+            in_port.process_instance_name,
+            in_port.port_name,
         )
 
     def add_connector_by_names(
@@ -236,7 +248,9 @@ class ProtocolProxy(ProcessProxy):
 
         Exemple : protocol.delete_connector('sub_proto','robot_i')
         """
-        ProtocolService.delete_connector_of_protocol(self._process_model, to_process_name, to_port_name)
+        ProtocolService.delete_connector_of_protocol(
+            self._process_model, to_process_name, to_port_name
+        )
 
         ####################################### INTERFACE & OUTERFACE #########################################
 
@@ -250,7 +264,9 @@ class ProtocolProxy(ProcessProxy):
         :param process_input_name: name of the process input to plug
         :type process_input_name: str
         """
-        ProtocolService.add_interface_to_protocol(self._process_model, name, from_process_name, process_input_name)
+        ProtocolService.add_interface_to_protocol(
+            self._process_model, name, from_process_name, process_input_name
+        )
 
     def add_outerface(self, name: str, to_process_name: str, process_ouput_name: str) -> None:
         """Add an outerface to link the output of one of the protocol's process to the output of the protocol
@@ -262,7 +278,9 @@ class ProtocolProxy(ProcessProxy):
         :param process_ouput_name: name of the process output to plug
         :type process_ouput_name: str
         """
-        ProtocolService.add_outerface_to_protocol(self._process_model, name, to_process_name, process_ouput_name)
+        ProtocolService.add_outerface_to_protocol(
+            self._process_model, name, to_process_name, process_ouput_name
+        )
 
     def delete_interface(self, name: str) -> None:
         """Delete an interface of the protocol"""
@@ -286,7 +304,10 @@ class ProtocolProxy(ProcessProxy):
         process = self.get_process(port.process_instance_name)
         port = process.get_input_port(port.port_name)
 
-        return self._process_model.get_connector_from_right(port.process_instance_name, port.port_name) is not None
+        return (
+            self._process_model.get_connector_from_right(port.process_instance_name, port.port_name)
+            is not None
+        )
 
     def is_process_output_port_connected(self, port: ProcessWithPort) -> bool:
         """Check if an output port is connected.
@@ -300,7 +321,14 @@ class ProtocolProxy(ProcessProxy):
         process = self.get_process(port.process_instance_name)
         port = process.get_output_port(port.port_name)
 
-        return len(self._process_model.get_connectors_from_left(port.process_instance_name, port.port_name)) > 0
+        return (
+            len(
+                self._process_model.get_connectors_from_left(
+                    port.process_instance_name, port.port_name
+                )
+            )
+            > 0
+        )
 
     def add_process_dynamic_input_port(
         self, process_instance_name: str, port_spec_dto: IOSpecDTO | None = None
@@ -380,7 +408,9 @@ class ProtocolProxy(ProcessProxy):
         process = self.get_process(process_instance_name)
 
         if not process.has_dynamic_inputs():
-            raise BadRequestException(f"The process '{process_instance_name}' is not using dynamic inputs")
+            raise BadRequestException(
+                f"The process '{process_instance_name}' is not using dynamic inputs"
+            )
 
         task_proxies: list[TaskProxy] = []
 
@@ -411,7 +441,9 @@ class ProtocolProxy(ProcessProxy):
 
         return task_proxies
 
-    def add_source(self, instance_name: str | None, resource_model_id: str, in_port: ProcessWithPort) -> TaskProxy:
+    def add_source(
+        self, instance_name: str | None, resource_model_id: str, in_port: ProcessWithPort
+    ) -> TaskProxy:
         """Add a Source task to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
         :type instance_name: str
@@ -425,7 +457,9 @@ class ProtocolProxy(ProcessProxy):
         Logger.warning("The add_source method is deprecated, please use add_resource instead")
         return self.add_resource(instance_name, resource_model_id, in_port)
 
-    def add_output(self, instance_name: str | None, out_port: ProcessWithPort, flag_resource: bool = True) -> TaskProxy:
+    def add_output(
+        self, instance_name: str | None, out_port: ProcessWithPort, flag_resource: bool = True
+    ) -> TaskProxy:
         """Add an output task to the protocol that receive the out_port resource
 
         :param instance_name: instance name of the task
@@ -437,7 +471,9 @@ class ProtocolProxy(ProcessProxy):
         :return: [description]
         :rtype: ITask
         """
-        output_task = self.add_process(OutputTask, instance_name, {OutputTask.flag_config_name: flag_resource})
+        output_task = self.add_process(
+            OutputTask, instance_name, {OutputTask.flag_config_name: flag_resource}
+        )
         self.add_connector(out_port, output_task << OutputTask.input_name)
         return output_task
 
@@ -505,7 +541,9 @@ class ProtocolProxy(ProcessProxy):
         """
         existing_process = self.get_process(existing_process_instance_name)
         if not existing_process.is_output_task():
-            raise BadRequestException(f"The process '{existing_process_instance_name}' is not an output task")
+            raise BadRequestException(
+                f"The process '{existing_process_instance_name}' is not an output task"
+            )
 
         previous_process_name: str | None = None
         previous_process_port_name: str | None = None
@@ -517,7 +555,9 @@ class ProtocolProxy(ProcessProxy):
             )
 
             if not connector:
-                raise BadRequestException(f"The output task '{existing_process.instance_name}' is not connected")
+                raise BadRequestException(
+                    f"The output task '{existing_process.instance_name}' is not connected"
+                )
 
             previous_process_name = connector.left_process.instance_name
             previous_process_port_name = connector.left_port_name

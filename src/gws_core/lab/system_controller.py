@@ -1,8 +1,7 @@
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.lab.system_dto import (LabInfoDTO, LabStatusDTO, LabSystemConfig,
-                                     SettingsDTO)
+from gws_core.lab.system_dto import LabInfoDTO, LabStatusDTO, LabSystemConfig, SettingsDTO
 
 from ..core.service.settings_service import SettingsService
 from ..core_controller import core_app
@@ -34,7 +33,7 @@ def kill_process(_=Depends(AuthorizationService.check_user_access_token)) -> Non
     SystemService.kill_dev_environment()
 
 
-@core_app.post("/system/garbage-collector",  tags=["System"], summary="Trigger garbage collector")
+@core_app.post("/system/garbage-collector", tags=["System"], summary="Trigger garbage collector")
 def garbage_collector(_=Depends(AuthorizationService.check_user_access_token)) -> None:
     SystemService.garbage_collector()
 
@@ -46,20 +45,23 @@ class SynchronizeDTO(BaseModelDTO):
     sync_scenarios: bool
 
 
-@core_app.post("/system/synchronize",  tags=["System"], summary="Synchronise info with space")
-def synchronize(sync_dto: SynchronizeDTO,
-                _=Depends(AuthorizationService.check_user_access_token)) -> None:
-    SystemService.synchronize_with_space(sync_users=sync_dto.sync_users,
-                                         sync_folders=sync_dto.sync_folders,
-                                         sync_notes=sync_dto.sync_notes,
-                                         sync_scenarios=sync_dto.sync_scenarios)
+@core_app.post("/system/synchronize", tags=["System"], summary="Synchronise info with space")
+def synchronize(
+    sync_dto: SynchronizeDTO, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
+    SystemService.synchronize_with_space(
+        sync_users=sync_dto.sync_users,
+        sync_folders=sync_dto.sync_folders,
+        sync_notes=sync_dto.sync_notes,
+        sync_scenarios=sync_dto.sync_scenarios,
+    )
 
 
-@core_app.get("/system/settings",  tags=["System"], summary="Get settings")
+@core_app.get("/system/settings", tags=["System"], summary="Get settings")
 def get_settings(_=Depends(AuthorizationService.check_user_access_token)) -> SettingsDTO:
     return SettingsService.get_settings().to_dto()
 
 
-@core_app.get("/system/config",  tags=["System"], summary="Get system config")
+@core_app.get("/system/config", tags=["System"], summary="Get system config")
 def get_pip_packages(_=Depends(AuthorizationService.check_user_access_token)) -> LabSystemConfig:
     return SystemService.get_system_config()

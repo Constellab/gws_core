@@ -34,7 +34,9 @@ class ReflexPlugin(AppPluginDownloader):
         # Auto-detect index.html path if not provided
         index_html_path = self._get_index_html_path()
         if not os.path.exists(index_html_path):
-            raise Exception(f"Index.html file not found at {index_html_path}, skipping main.js creation")
+            raise Exception(
+                f"Index.html file not found at {index_html_path}, skipping main.js creation"
+            )
 
         # Create main.js file with imports from index.html
         self._create_main_js()
@@ -46,7 +48,7 @@ class ReflexPlugin(AppPluginDownloader):
         """
         # Read and parse the index.html file
         index_html_path = self._get_index_html_path()
-        with open(index_html_path, 'r', encoding='utf-8') as file:
+        with open(index_html_path, "r", encoding="utf-8") as file:
             html_content = file.read()
 
         # Use HtmlParser to extract all components with './' prefix for relative imports
@@ -59,7 +61,7 @@ class ReflexPlugin(AppPluginDownloader):
 
         # Add modulepreload links from body
         for link in parsed_html.body.links:
-            if link.rel == 'modulepreload':
+            if link.rel == "modulepreload":
                 all_imports.append(link.href)
 
         # Add external scripts from body
@@ -75,15 +77,17 @@ class ReflexPlugin(AppPluginDownloader):
             return
 
         # Create the main.js content with import statements
-        main_js_content = "// Auto-generated file that imports all JS modules and CSS from index.html\n\n"
+        main_js_content = (
+            "// Auto-generated file that imports all JS modules and CSS from index.html\n\n"
+        )
         for import_file in all_imports:
             main_js_content += f"import '{import_file}';\n"
 
         # Write the main.js file in the same directory as index.html
         index_html_dir = os.path.dirname(index_html_path)
-        main_js_path = os.path.join(index_html_dir, 'main.js')
+        main_js_path = os.path.join(index_html_dir, "main.js")
 
-        with open(main_js_path, 'w', encoding='utf-8') as file:
+        with open(main_js_path, "w", encoding="utf-8") as file:
             file.write(main_js_content)
 
         Logger.info(f"Created main.js file at {main_js_path} with {len(all_imports)} imports")

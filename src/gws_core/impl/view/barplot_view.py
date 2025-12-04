@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -59,8 +57,16 @@ class BarPlotView(View):
     _type: ViewType = ViewType.BAR_PLOT
     _title: str = "Bar Plot"
 
-    def add_series(self, x: Union[List[float], List[str], ] = None, y: List[float] = None, name: str = None,
-                   tags: List[Dict[str, str]] = None):
+    def add_series(
+        self,
+        x: Union[
+            List[float],
+            List[str],
+        ] = None,
+        y: List[float] = None,
+        name: str = None,
+        tags: List[Dict[str, str]] = None,
+    ):
         """
         Add a series of bars to plot
 
@@ -91,14 +97,12 @@ class BarPlotView(View):
             if not isinstance(tags, list) or len(tags) != len(x):
                 raise BadRequestException("The tags must a list of length equal to the length of x")
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
-        self._series.append({
-            "data": {
-                "x": x,
-                "y": y,
-                "tags": tags
-            },
-            "name": name,
-        })
+        self._series.append(
+            {
+                "data": {"x": x, "y": y, "tags": tags},
+                "name": name,
+            }
+        )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         return {

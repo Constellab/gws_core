@@ -1,5 +1,3 @@
-
-
 from json import loads
 from typing import Dict, Optional
 
@@ -19,8 +17,7 @@ class ProtocolLayoutDTO(BaseModelDTO):
 
 
 class ProtocolLayout(SerializableObject):
-    """object to store the layout (position) of a protocol's processes
-    """
+    """object to store the layout (position) of a protocol's processes"""
 
     # layout of the processes, key = process instance name
     process_layouts: Dict[str, ProcessLayoutDTO]
@@ -46,7 +43,7 @@ class ProtocolLayout(SerializableObject):
         return ProtocolLayoutDTO(
             process_layouts=self.process_layouts,
             interface_layouts=self.interface_layouts,
-            outerface_layouts=self.outerface_layouts
+            outerface_layouts=self.outerface_layouts,
         )
 
     def set_process(self, instance_name: str, layout: ProcessLayoutDTO) -> None:
@@ -56,14 +53,14 @@ class ProtocolLayout(SerializableObject):
         if instance_name in self.process_layouts:
             del self.process_layouts[instance_name]
 
-    def set_interface(self, interface_name: str,  layout: ProcessLayoutDTO) -> None:
+    def set_interface(self, interface_name: str, layout: ProcessLayoutDTO) -> None:
         self.interface_layouts[interface_name] = layout
 
     def remove_interface(self, interface_name: str) -> None:
         if interface_name in self.interface_layouts:
             del self.interface_layouts[interface_name]
 
-    def set_outerface(self, outerface_name: str,  layout: ProcessLayoutDTO) -> None:
+    def set_outerface(self, outerface_name: str, layout: ProcessLayoutDTO) -> None:
         self.outerface_layouts[outerface_name] = layout
 
     def remove_outerface(self, outerface_name: str) -> None:
@@ -76,7 +73,7 @@ class ProtocolLayout(SerializableObject):
         return self.process_layouts.get(instance_name)
 
     @classmethod
-    def deserialize(cls, value: str) -> 'ProtocolLayout':
+    def deserialize(cls, value: str) -> "ProtocolLayout":
         if not value:
             return ProtocolLayout()
         else:

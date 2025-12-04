@@ -39,7 +39,9 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
     def get_nginx_service_config(self) -> str:
         """Generate nginx configuration block for this service"""
 
-        host_header = f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
+        host_header = (
+            f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
+        )
         return f"""
 server {{
     listen {self.source_port};

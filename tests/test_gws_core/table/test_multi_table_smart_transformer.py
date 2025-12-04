@@ -1,12 +1,9 @@
-
-
 from unittest import TestCase
 
 from pandas import DataFrame
 
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
-from gws_core.impl.table.smart_tasks.table_smart_multi_transformer import \
-    MultiTableSmartTransformer
+from gws_core.impl.table.smart_tasks.table_smart_multi_transformer import MultiTableSmartTransformer
 from gws_core.impl.table.table import Table
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -16,22 +13,22 @@ from gws_core.task.task_runner import TaskRunner
 
 # test_multi_table_smart_transformer
 class TestMultiTableSmartTransformer(TestCase):
-
     def test_multi_table_smart_transformer(self):
-        first_table = Table(DataFrame({'A': [1, 2, 3, 4]}))
-        second_table = Table(DataFrame({'B': [8, 6, 4, 9]}))
+        first_table = Table(DataFrame({"A": [1, 2, 3, 4]}))
+        second_table = Table(DataFrame({"B": [8, 6, 4, 9]}))
 
         resource_list = ResourceList([first_table, second_table])
 
         # Simulate a real chat with openAI, this expects a response from the assistant
         prompt: OpenAiChatDict = {
-            "messages":  [{
-                "role": "user",
-                "content": "Remove column where average value is lower than 5",
-            },
+            "messages": [
                 {
-                "role": "assistant",
-                "content": """Here is the result :
+                    "role": "user",
+                    "content": "Remove column where average value is lower than 5",
+                },
+                {
+                    "role": "assistant",
+                    "content": """Here is the result :
 ```
 target = []
 
@@ -41,8 +38,9 @@ for df in source:
     transposed_df = df.T
 
     # Appending the transposed dataframe to the target list
-    target.append(transposed_df)```"""
-            }]
+    target.append(transposed_df)```""",
+                },
+            ]
         }
         tester = TaskRunner(
             task_type=MultiTableSmartTransformer,
@@ -50,15 +48,19 @@ for df in source:
                 "source": resource_list,
             },
             params={
-                'prompt': prompt,
+                "prompt": prompt,
             },
             # need to override this to make dynamic io work
-            input_specs=InputSpecs({
-                "source": InputSpec(ResourceList),
-            }),
-            output_specs=OutputSpecs({
-                "target": OutputSpec(ResourceList),
-            })
+            input_specs=InputSpecs(
+                {
+                    "source": InputSpec(ResourceList),
+                }
+            ),
+            output_specs=OutputSpecs(
+                {
+                    "target": OutputSpec(ResourceList),
+                }
+            ),
         )
 
         outputs = tester.run()

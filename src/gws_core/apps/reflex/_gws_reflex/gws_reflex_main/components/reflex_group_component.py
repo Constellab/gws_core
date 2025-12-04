@@ -1,4 +1,3 @@
-
 from typing import List, Literal
 
 import reflex as rx
@@ -7,7 +6,9 @@ from gws_core.space.space_dto import SpaceGroupDTO
 from .reflex_user_components import user_inline_component
 
 
-def group_inline_component(group: SpaceGroupDTO, size: Literal["small", "normal"] = "normal") -> rx.Component:
+def group_inline_component(
+    group: SpaceGroupDTO, size: Literal["small", "normal"] = "normal"
+) -> rx.Component:
     """Group inline component that displays group icon/user and label horizontally.
 
     This component displays a group's representation alongside its label in a

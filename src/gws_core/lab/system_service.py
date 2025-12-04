@@ -1,5 +1,3 @@
-
-
 import os
 import sys
 from threading import Thread
@@ -7,8 +5,7 @@ from typing import List
 
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.db.db_manager_service import DbManagerService
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.folder.space_folder_service import SpaceFolderService
@@ -27,14 +24,12 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
-from gws_core.user.activity.activity_dto import (ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.user_dto import Space
 
 from ..brick.brick_service import BrickService
-from ..core.exception.exceptions.unauthorized_exception import \
-    UnauthorizedException
+from ..core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from ..core.model.base_model_service import BaseModelService
 from ..core.utils.settings import Settings
 from ..impl.file.file_helper import FileHelper
@@ -48,7 +43,6 @@ from .system_status import SystemStatus
 
 
 class SystemService:
-
     @classmethod
     def init(cls):
         """
@@ -77,13 +71,15 @@ class SystemService:
         # Init AppsManager
         AppsManager.init()
 
-
-
     @classmethod
     def register_start_activity(cls):
         sys_user = User.get_and_check_sysuser()
-        ActivityService.add_with_catch(activity_type=ActivityType.LAB_START, object_type=ActivityObjectType.USER,
-                                       object_id=sys_user.id, user=sys_user)
+        ActivityService.add_with_catch(
+            activity_type=ActivityType.LAB_START,
+            object_type=ActivityObjectType.USER,
+            object_id=sys_user.id,
+            user=sys_user,
+        )
 
     @classmethod
     def init_data_folder(cls):
@@ -110,21 +106,31 @@ class SystemService:
 
                 for scenario in scenarios:
                     if scenario.get_process_status() != ScenarioStatus.RUNNING:
-                        Logger.info(f"Marking scenario {scenario.id} as stopped because the process is not running")
+                        Logger.info(
+                            f"Marking scenario {scenario.id} as stopped because the process is not running"
+                        )
                         running_process = scenario.protocol_model.get_running_task()
 
                         error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
                         if running_process is not None:
-                            running_process.mark_as_error_and_parent(ProcessRunException.from_exception(
-                                process_model=running_process, exception=Exception(error_text),
-                                error_prefix="Lab init"))
+                            running_process.mark_as_error_and_parent(
+                                ProcessRunException.from_exception(
+                                    process_model=running_process,
+                                    exception=Exception(error_text),
+                                    error_prefix="Lab init",
+                                )
+                            )
                         else:
-                            scenario.mark_as_error(ProcessErrorInfo(
-                                detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
-                                unique_code="LAB_STOPPED_WHILE_RUNNING", context=None, instance_id=None))
+                            scenario.mark_as_error(
+                                ProcessErrorInfo(
+                                    detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
+                                    unique_code="LAB_STOPPED_WHILE_RUNNING",
+                                    context=None,
+                                    instance_id=None,
+                                )
+                            )
             except Exception as err:
-                Logger.error(
-                    f'[SystemService] Error while checking running scenarios: {err}')
+                Logger.error(f"[SystemService] Error while checking running scenarios: {err}")
                 Logger.log_exception_stack_trace(err)
 
     @classmethod
@@ -138,7 +144,7 @@ class SystemService:
         Drops tables
         """
         if Settings.is_prod_mode():
-            raise Exception('Cannot drop all table in prod env')
+            raise Exception("Cannot drop all table in prod env")
 
         BaseModelService.drop_tables()
 
@@ -150,21 +156,18 @@ class SystemService:
         settings: Settings = Settings.get_instance()
 
         if settings.is_prod_mode():
-            raise Exception(
-                'Cannot delete the temp folder in prod environment')
+            raise Exception("Cannot delete the temp folder in prod environment")
         FileHelper.delete_dir(settings.get_root_temp_dir())
 
     @classmethod
     def reset_dev_envionment(cls, check_user=True) -> None:
-
         if not Settings.is_dev_mode():
-            raise UnauthorizedException(
-                'The reset method can only be called in dev environment')
+            raise UnauthorizedException("The reset method can only be called in dev environment")
 
         if check_user:
             user: User = CurrentUserService.get_and_check_current_user()
 
-        Logger.info('Resetting the dev environment')
+        Logger.info("Resetting the dev environment")
 
         try:
             if Scenario.table_exists():
@@ -172,7 +175,8 @@ class SystemService:
                 ScenarioRunService.stop_all_running_scenario()
         except Exception as err:
             Logger.error(
-                f"[SystemService] Error while stopping all running scenarios: {err}, continue...")
+                f"[SystemService] Error while stopping all running scenarios: {err}, continue..."
+            )
             Logger.log_exception_stack_trace(err)
 
         cls.deinit_queue_and_monitor()
@@ -188,15 +192,14 @@ class SystemService:
         if check_user:
             UserService.create_or_update_user_dto(user.to_full_dto())
 
-        Logger.info('Dev environment resetted')
+        Logger.info("Dev environment resetted")
 
     @classmethod
     def kill_dev_environment(cls) -> None:
         if not Settings.is_dev_mode():
-            raise UnauthorizedException(
-                'The kill method can only be called in dev environment')
+            raise UnauthorizedException("The kill method can only be called in dev environment")
 
-        Logger.info('Killing the dev environment')
+        Logger.info("Killing the dev environment")
 
         # kill current process and all its children
         sys_proc = SysProc.from_pid(os.getpid())
@@ -204,22 +207,22 @@ class SystemService:
 
     @classmethod
     def register_lab_start(cls) -> None:
-        """Method to call space after start to mark the lab as started in space
-        """
+        """Method to call space after start to mark the lab as started in space"""
 
         if Settings.is_dev_mode():
             return
 
         try:
-            Logger.info('Registering lab start on space')
+            Logger.info("Registering lab start on space")
 
             result = SpaceService.get_instance().register_lab_start(
-                LabConfigModel.get_current_config().to_dto())
+                LabConfigModel.get_current_config().to_dto()
+            )
 
             if result:
-                Logger.info('Lab start successfully registered on space')
+                Logger.info("Lab start successfully registered on space")
             else:
-                Logger.error('Error during lab start registration with space')
+                Logger.error("Error during lab start registration with space")
 
             cls.synchronize_with_space()
         except Exception as err:
@@ -238,9 +241,7 @@ class SystemService:
 
     @classmethod
     def get_system_status(cls) -> LabStatusDTO:
-        return LabStatusDTO(
-            free_disk=MonitorService.get_free_disk_info()
-        )
+        return LabStatusDTO(free_disk=MonitorService.get_free_disk_info())
 
     @classmethod
     def save_space_async(cls, space: Space) -> None:
@@ -250,21 +251,26 @@ class SystemService:
     @classmethod
     def _save_space(cls, space: Space) -> None:
         try:
-
             settings = Settings.get_instance()
             db_space_dict = settings.get_space()
 
             # if no space were saved or one of its value was changed
             # update the space
-            if db_space_dict is None or db_space_dict['id'] != space.id or \
-                    db_space_dict['name'] != space.name or db_space_dict['domain'] != space.domain or \
-                    db_space_dict['photo'] != space.photo:
-                settings.set_space({
-                    "id": space.id,
-                    'name': space.name,
-                    'domain': space.domain,
-                    'photo': space.photo,
-                })
+            if (
+                db_space_dict is None
+                or db_space_dict["id"] != space.id
+                or db_space_dict["name"] != space.name
+                or db_space_dict["domain"] != space.domain
+                or db_space_dict["photo"] != space.photo
+            ):
+                settings.set_space(
+                    {
+                        "id": space.id,
+                        "name": space.name,
+                        "domain": space.domain,
+                        "photo": space.photo,
+                    }
+                )
                 settings.save()
 
         except Exception as err:
@@ -276,9 +282,10 @@ class SystemService:
     def garbage_collector(cls, skip_test_folder: bool = False) -> None:
         if len(ScenarioRunService.get_all_running_scenarios()) > 0:
             raise BadRequestException(
-                'Cannot run the lab cleaning while there are running or waiting scenarios')
+                "Cannot run the lab cleaning while there are running or waiting scenarios"
+            )
 
-        Logger.info('Starting the garbage collector')
+        Logger.info("Starting the garbage collector")
 
         # delete test folder
         if not skip_test_folder:
@@ -287,42 +294,48 @@ class SystemService:
 
         temp_root_dir = Settings.get_instance().get_root_temp_dir()
         if FileHelper.exists_on_os(temp_root_dir):
-            Logger.info('Deleting all the temp files')
+            Logger.info("Deleting all the temp files")
             FileHelper.delete_dir_content(temp_root_dir)
 
         # loop through all the kv store files and folder
         kv_store_dir = KVStore.get_base_dir()
         if FileHelper.exists_on_os(kv_store_dir):
-            Logger.info('Deleting all usunused resource kv stores')
+            Logger.info("Deleting all usunused resource kv stores")
             for file_name in os.listdir(kv_store_dir):
-                file_store_file_path = KVStore.get_full_file_path(
-                    file_name, with_extension=False)
+                file_store_file_path = KVStore.get_full_file_path(file_name, with_extension=False)
                 # if filename correspond to a ressource, don't delete it
                 # check if filename is the resource id or is contained in the kv store path
                 # (use contains for security to avoid deleting everything)
-                if ResourceModel.get_or_none(
-                    (ResourceModel.kv_store_path.contains(file_name)) |
-                        (ResourceModel.id == file_name)) is None:
+                if (
+                    ResourceModel.get_or_none(
+                        (ResourceModel.kv_store_path.contains(file_name))
+                        | (ResourceModel.id == file_name)
+                    )
+                    is None
+                ):
                     file_path = os.path.join(kv_store_dir, file_name)
-                    Logger.info(f'Deleting KVStore {file_path}')
+                    Logger.info(f"Deleting KVStore {file_path}")
                     FileHelper.delete_node(file_path)
 
         file_store: LocalFileStore = FileStore.get_default_instance()
         if FileHelper.exists_on_os(file_store.path):
-            Logger.info('Deleting all usunused resource files')
+            Logger.info("Deleting all usunused resource files")
             for file_name in os.listdir(file_store.path):
                 file_store_file_path = os.path.join(file_store.path, file_name)
                 if FSNodeModel.get_or_none(FSNodeModel.path == file_store_file_path) is None:
-                    Logger.info(f'Deleting file {file_store_file_path}')
+                    Logger.info(f"Deleting file {file_store_file_path}")
                     FileHelper.delete_node(file_store_file_path)
 
-        Logger.info('Ending the garbage collector')
+        Logger.info("Ending the garbage collector")
 
     @classmethod
-    def synchronize_with_space(cls, sync_users: bool = True,
-                               sync_folders: bool = True,
-                               sync_notes: bool = True,
-                               sync_scenarios: bool = True) -> None:
+    def synchronize_with_space(
+        cls,
+        sync_users: bool = True,
+        sync_folders: bool = True,
+        sync_notes: bool = True,
+        sync_scenarios: bool = True,
+    ) -> None:
         if sync_users:
             UserService.synchronize_all_space_users()
 
@@ -334,11 +347,10 @@ class SystemService:
 
         if sync_notes:
             SpaceObjectService.sync_notes_from_space()
-        Logger.info('Synchronization with space done')
+        Logger.info("Synchronization with space done")
 
     @classmethod
     def get_system_config(cls) -> LabSystemConfig:
         return LabSystemConfig(
-            python_version=sys.version,
-            pip_packages=Settings.get_instance().get_all_pip_packages()
+            python_version=sys.version, pip_packages=Settings.get_instance().get_all_pip_packages()
         )

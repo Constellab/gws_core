@@ -1,5 +1,3 @@
-
-
 from typing import Callable, Type
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -16,14 +14,16 @@ from .task import Task
 from .task_typing import TaskSubType
 
 
-def task_decorator(unique_name: str,
-                   human_name: str = "",
-                   short_description: str = "",
-                   hide: bool = False,
-                   style: TypingStyle = None,
-                   deprecated_since: str = None,
-                   deprecated_message: str = None,
-                   deprecated: TypingDeprecated = None) -> Callable:
+def task_decorator(
+    unique_name: str,
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle = None,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
 
@@ -46,73 +46,82 @@ def task_decorator(unique_name: str,
     :type deprecated: TypingDeprecated, optional
 
     """
+
     def decorator(task_class: Type[Task]):
-        decorate_task(task_class,
-                      unique_name=unique_name,
-                      task_type='TASK',
-                      human_name=human_name,
-                      short_description=short_description,
-                      hide=hide,
-                      style=style,
-                      deprecated_since=deprecated_since,
-                      deprecated_message=deprecated_message,
-                      deprecated=deprecated)
+        decorate_task(
+            task_class,
+            unique_name=unique_name,
+            task_type="TASK",
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            deprecated_since=deprecated_since,
+            deprecated_message=deprecated_message,
+            deprecated=deprecated,
+        )
 
         return task_class
+
     return decorator
 
 
 def decorate_task(
-        task_class: Type[Task],
-        unique_name: str,
-        task_type: TaskSubType,
-        related_resource: Type[Resource] = None,
-        human_name: str = "",
-        short_description: str = "",
-        hide: bool = False,
-        style: TypingStyle = None,
-        deprecated_since: str = None,
-        deprecated_message: str = None,
-        deprecated: TypingDeprecated = None):
-    """Method to decorate a task
-    """
+    task_class: Type[Task],
+    unique_name: str,
+    task_type: TaskSubType,
+    related_resource: Type[Resource] = None,
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle = None,
+    deprecated_since: str = None,
+    deprecated_message: str = None,
+    deprecated: TypingDeprecated = None,
+):
+    """Method to decorate a task"""
     if not Utils.issubclass(task_class, Task):
         BrickService.log_brick_error(
             task_class,
-            f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task")
+            f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task",
+        )
         return
 
     if related_resource and not Utils.issubclass(related_resource, Resource):
         BrickService.log_brick_error(
-            task_class,
-            f"The task {unique_name} has a related object which is not a resource.")
+            task_class, f"The task {unique_name} has a related object which is not a resource."
+        )
         return
 
     if not Utils.value_is_in_literal(task_type, TaskSubType):
         BrickService.log_brick_error(
             task_class,
-            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}")
+            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}",
+        )
         return
 
     # Check the input, output and config specs
     try:
-
         task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
-        task_class.output_specs = IOSpecsHelper.check_output_specs(task_class.output_specs, task_class)
+        task_class.output_specs = IOSpecsHelper.check_output_specs(
+            task_class.output_specs, task_class
+        )
 
         # check the config specs
         if isinstance(task_class.config_specs, dict):
             # TODO for now this is just a warning
             BrickService.log_brick_warning(
                 task_class,
-                f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future")
+                f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
+            )
 
             task_class.config_specs = ConfigSpecs(task_class.config_specs)
         task_class.config_specs.check_config_specs()
 
     except Exception as err:
         BrickService.log_brick_error(
-            task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}")
+            task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}"
+        )
         return
 
     # Set the default style if not defined
@@ -123,23 +132,24 @@ def decorate_task(
 
     related_resource_typing_name = related_resource.get_typing_name() if related_resource else None
 
-    register_gws_typing_class(object_class=task_class,
-                              object_type="TASK",
-                              unique_name=unique_name,
-                              object_sub_type=task_type,
-                              human_name=human_name,
-                              short_description=short_description,
-                              hide=hide,
-                              style=style,
-                              related_model_typing_name=related_resource_typing_name,
-                              deprecated_since=deprecated_since,
-                              deprecated_message=deprecated_message,
-                              deprecated=deprecated)
+    register_gws_typing_class(
+        object_class=task_class,
+        object_type="TASK",
+        unique_name=unique_name,
+        object_sub_type=task_type,
+        human_name=human_name,
+        short_description=short_description,
+        hide=hide,
+        style=style,
+        related_model_typing_name=related_resource_typing_name,
+        deprecated_since=deprecated_since,
+        deprecated_message=deprecated_message,
+        deprecated=deprecated,
+    )
 
 
 def get_task_default_style(task_class: Type[Task]) -> TypingStyle:
-    """Get the default style for a task, use the first input style or the first output style
-    """
+    """Get the default style for a task, use the first input style or the first output style"""
     default_typing_name = None
     first_input = task_class.input_specs.get_first_spec()
     if first_input:

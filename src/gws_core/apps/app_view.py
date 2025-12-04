@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from gws_core.apps.app_dto import CreateAppAsyncResultDTO
@@ -12,6 +11,7 @@ class AppView(View):
     View an App instance.
     It return the app url which is used in an iframe to display the app.
     """
+
     _type: ViewType = ViewType.APP
 
     data: CreateAppAsyncResultDTO = None

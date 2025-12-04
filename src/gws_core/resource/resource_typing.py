@@ -1,13 +1,10 @@
-
-
 import inspect
 from typing import List, Literal, Type
 
 from gws_core.core.utils.reflector_types import MethodDoc
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dto import TypingDTO
-from gws_core.resource.resource_typing_dto import (ResourceTypingDTO,
-                                                   ResourceTypingMethodDTO)
+from gws_core.resource.resource_typing_dto import ResourceTypingDTO, ResourceTypingMethodDTO
 
 from ..core.utils.reflector_helper import ReflectorHelper
 from ..impl.file.file import File
@@ -30,8 +27,7 @@ class ResourceTyping(Typing):
     _object_type: TypingObjectType = "RESOURCE"
 
     @classmethod
-    def get_folder_types(cls) -> List['ResourceTyping']:
-
+    def get_folder_types(cls) -> List["ResourceTyping"]:
         return cls.get_children_typings(cls._object_type, Folder)
 
     def to_full_dto(self) -> ResourceTypingDTO:
@@ -40,17 +36,18 @@ class ResourceTyping(Typing):
         return ResourceTypingDTO(
             **typing_dto.to_json_dict(),
             variables=ReflectorHelper.get_all_public_args(self.get_type()),
-            methods=self.get_class_methods_docs()
+            methods=self.get_class_methods_docs(),
         )
 
     def get_class_methods_docs(self) -> ResourceTypingMethodDTO:
-
         type_: Type = self.get_type()
         if not inspect.isclass(type_):
             return None
 
         # Get all public methods including __init__
-        all_methods: List[MethodDoc] = ReflectorHelper.get_class_public_methods_doc(type_, include_init=True)
+        all_methods: List[MethodDoc] = ReflectorHelper.get_class_public_methods_doc(
+            type_, include_init=True
+        )
 
         # Get view methods to exclude them from funcs
         views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
@@ -62,19 +59,17 @@ class ResourceTyping(Typing):
 
         return ResourceTypingMethodDTO(
             funcs=funcs if len(funcs) > 0 else None,
-            views=views_methods_dto if len(views_methods_dto) > 0 else None
+            views=views_methods_dto if len(views_methods_dto) > 0 else None,
         )
 
     class Meta:
         is_table = False
-        table_name = 'gws_typing'
+        table_name = "gws_typing"
 
 
 class FileTyping(ResourceTyping):
-
     @classmethod
-    def get_typings(cls) -> List['ResourceTyping']:
-
+    def get_typings(cls) -> List["ResourceTyping"]:
         return cls.get_children_typings(cls._object_type, File)
 
     def to_dto(self) -> TypingDTO:
@@ -84,10 +79,12 @@ class FileTyping(ResourceTyping):
         model_t: Type[File] = self.get_type()
 
         if model_t and Utils.issubclass(model_t, File):
-            typing_dto.additional_data = {"default_extensions": model_t.__default_extensions__ or []}
+            typing_dto.additional_data = {
+                "default_extensions": model_t.__default_extensions__ or []
+            }
 
         return typing_dto
 
     class Meta:
         is_table = False
-        table_name = 'gws_typing'
+        table_name = "gws_typing"

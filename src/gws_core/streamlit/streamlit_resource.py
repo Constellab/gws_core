@@ -1,5 +1,3 @@
-
-
 from typing import List, cast
 
 from gws_core.apps.app_instance import AppInstance
@@ -15,8 +13,9 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.streamlit.streamlit_app import StreamlitApp
 
 
-@resource_decorator("StreamlitResource", human_name="Streamlit app",
-                    short_description="Streamlit app")
+@resource_decorator(
+    "StreamlitResource", human_name="Streamlit app", short_description="Streamlit app"
+)
 class StreamlitResource(AppResource):
     """
     Resource that contains a streamlit app. https://streamlit.io/.
@@ -84,16 +83,19 @@ class StreamlitResource(AppResource):
             raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
 
         # read the streamlit code from the file
-        with open(streamlit_app_code_path, 'r', encoding="utf-8") as file_path:
+        with open(streamlit_app_code_path, "r", encoding="utf-8") as file_path:
             self._streamlit_app_code = file_path.read()
 
-    def init_app_instance(self, shell_proxy: ShellProxy, resource_model_id: str, app_name: str,
-                          requires_authentification: bool = True) -> AppInstance:
-        streamlit_app = StreamlitApp(resource_model_id,
-                                     app_name,
-
-                                     shell_proxy,
-                                     requires_authentification)
+    def init_app_instance(
+        self,
+        shell_proxy: ShellProxy,
+        resource_model_id: str,
+        app_name: str,
+        requires_authentification: bool = True,
+    ) -> AppInstance:
+        streamlit_app = StreamlitApp(
+            resource_model_id, app_name, shell_proxy, requires_authentification
+        )
 
         app_config = self._get_app_config()
 
@@ -101,18 +103,25 @@ class StreamlitResource(AppResource):
         if app_config:
             folder_path = self._get_app_config_folder()
             streamlit_app.set_streamlit_folder(folder_path)
-        elif self._code_folder_sub_resource_name is not None and len(self._code_folder_sub_resource_name) > 0:
-            folder: Folder = cast(Folder, self.get_resource_by_name(self._code_folder_sub_resource_name))
+        elif (
+            self._code_folder_sub_resource_name is not None
+            and len(self._code_folder_sub_resource_name) > 0
+        ):
+            folder: Folder = cast(
+                Folder, self.get_resource_by_name(self._code_folder_sub_resource_name)
+            )
             streamlit_app.set_streamlit_folder(folder.path)
         elif self.get_streamlit_app_code() is not None and len(self.get_streamlit_app_code()) > 0:
             streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
         else:
-            raise Exception("The app config, code folder of streamlit code must be set to generate the app.")
+            raise Exception(
+                "The app config, code folder of streamlit code must be set to generate the app."
+            )
 
         return streamlit_app
 
     @staticmethod
-    def from_code_path(streamlit_app_code_path: str) -> 'StreamlitResource':
+    def from_code_path(streamlit_app_code_path: str) -> "StreamlitResource":
         """
         Create a StreamlitResource from a file path.
         The file will be read and the content will be set as the streamlit code.
@@ -129,9 +138,7 @@ class StreamlitResource(AppResource):
 
     @classmethod
     def migrate_streamlit_resources(cls) -> None:
-        """method to migrate streamlit resources to use the app config class
-
-        """
+        """method to migrate streamlit resources to use the app config class"""
         resource_models: List[ResourceModel] = ResourceModel.select().where(
             (ResourceModel.resource_typing_name == cls.get_typing_name())
         )
@@ -139,17 +146,26 @@ class StreamlitResource(AppResource):
         for resource_model in resource_models:
             try:
                 SqlMigrator.rename_resource_model_r_field(
-                    resource_model, '_streamlit_dashboard_typing_name', '_app_config_typing_name')
+                    resource_model, "_streamlit_dashboard_typing_name", "_app_config_typing_name"
+                )
 
                 SqlMigrator.rename_resource_model_r_field(
-                    resource_model, '_streamlit_sub_resource_folder_name', '_code_folder_sub_resource_name')
+                    resource_model,
+                    "_streamlit_sub_resource_folder_name",
+                    "_code_folder_sub_resource_name",
+                )
 
                 resource = cast(StreamlitResource, resource_model.get_resource())
-                if resource._app_config_typing_name is not None and 'DASHBOARD' in resource._app_config_typing_name:
+                if (
+                    resource._app_config_typing_name is not None
+                    and "DASHBOARD" in resource._app_config_typing_name
+                ):
                     # If the app config is a dashboard, we set the resource model r field to None
                     # to avoid confusion with the StreamlitResource
-                    new_typing_name = resource._app_config_typing_name.replace('DASHBOARD', 'APP')
-                    SqlMigrator.set_resource_model_r_field(resource_model, '_app_config_typing_name', new_typing_name)
+                    new_typing_name = resource._app_config_typing_name.replace("DASHBOARD", "APP")
+                    SqlMigrator.set_resource_model_r_field(
+                        resource_model, "_app_config_typing_name", new_typing_name
+                    )
             except Exception as e:
                 Logger.error(f"Error migrating resource {resource_model.id}: {e}")
                 continue

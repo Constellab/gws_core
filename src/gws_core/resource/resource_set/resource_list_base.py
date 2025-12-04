@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -21,9 +20,13 @@ if TYPE_CHECKING:
     from ..resource_model import ResourceModel
 
 
-@resource_decorator(unique_name="ResourceListBase", human_name="Resource list base",
-                    short_description="Abstract class for resource list", hide=True,
-                    style=TypingStyle.material_icon("format_list_bulleted", background_color="#FEC7B4"))
+@resource_decorator(
+    unique_name="ResourceListBase",
+    human_name="Resource list base",
+    short_description="Abstract class for resource list",
+    hide=True,
+    style=TypingStyle.material_icon("format_list_bulleted", background_color="#FEC7B4"),
+)
 class ResourceListBase(Resource):
     """Abstract class for resource list, to use only if you want you're doing.
     By default the sytem create a new
@@ -84,13 +87,17 @@ class ResourceListBase(Resource):
         """return true if the resource is constant and was create before
         a task that generated this resource set
         """
-        return self.__constant_resource_uids__ is not None and resource_uid in self.__constant_resource_uids__
+        return (
+            self.__constant_resource_uids__ is not None
+            and resource_uid in self.__constant_resource_uids__
+        )
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
         if not resource_model_id in self.get_resource_model_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
 
         from ..resource_model import ResourceModel
+
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
@@ -106,16 +113,18 @@ class ResourceListBase(Resource):
 
     @final
     def save_new_children_resources(
-            self, resource_origin: ResourceOrigin,
-            scenario: Scenario = None,
-            task_model: TaskModel = None,
-            port_name: str = None) -> List[ResourceModel]:
+        self,
+        resource_origin: ResourceOrigin,
+        scenario: Scenario = None,
+        task_model: TaskModel = None,
+        port_name: str = None,
+    ) -> List[ResourceModel]:
         from ..resource_model import ResourceModel
+
         new_children_resources: List[ResourceModel] = []
 
         ids_map = {}
         for resource in self.get_resources_as_set():
-
             # if this is a new resource
 
             if self.__resource_is_constant__(resource.uid):
@@ -123,11 +132,14 @@ class ResourceListBase(Resource):
                 # from the resource and add it to the map
                 ids_map[resource.uid] = resource.get_model_id()
             else:
-
                 # create and save the resource model from the resource
-                resource_model = ResourceModel.save_from_resource(resource, origin=resource_origin,
-                                                                  scenario=scenario, task_model=task_model,
-                                                                  port_name=port_name)
+                resource_model = ResourceModel.save_from_resource(
+                    resource,
+                    origin=resource_origin,
+                    scenario=scenario,
+                    task_model=task_model,
+                    port_name=port_name,
+                )
                 ids_map[resource.uid] = resource_model.id
                 new_children_resources.append(resource_model)
         self.__set_r_field__(ids_map)
@@ -149,32 +161,44 @@ class ResourceListBase(Resource):
         :rtype: List[ResourceModel]
         """
         from ..resource_model import ResourceModel
+
         resource_ids = list(self.get_resource_model_ids())
 
         if not resource_ids:
             return list()
 
-        return list(ResourceModel.select().where(ResourceModel.id.in_(resource_ids))
-                    .order_by(ResourceModel.name))
+        return list(
+            ResourceModel.select()
+            .where(ResourceModel.id.in_(resource_ids))
+            .order_by(ResourceModel.name)
+        )
 
-    def _check_resource_before_add(self, resource: Resource, create_new_resource: bool = True) -> None:
+    def _check_resource_before_add(
+        self, resource: Resource, create_new_resource: bool = True
+    ) -> None:
         if not isinstance(resource, Resource):
-            raise Exception('The resource_set accepts only Resource')
+            raise Exception("The resource_set accepts only Resource")
 
         if isinstance(resource, ResourceListBase):
-            raise Exception('ResourceSet does not support nested')
+            raise Exception("ResourceSet does not support nested")
 
         if not create_new_resource and resource.get_model_id() is None:
             raise Exception(
-                "The create_new_resource option was set to False but the resource is not saved in the database")
+                "The create_new_resource option was set to False but the resource is not saved in the database"
+            )
 
-    @view(view_type=ResourcesListView, human_name='Resources list',
-          short_description='List the resources', default_view=True)
+    @view(
+        view_type=ResourcesListView,
+        human_name="Resources list",
+        short_description="List the resources",
+        default_view=True,
+    )
     def view_resources_list(self, params: ConfigParams) -> ResourcesListView:
         view_ = ResourcesListView()
         view_.add_resources(self.get_resource_models())
-        view_.add_technical_info(TechnicalInfo('Number of resources',
-                                               len(self.get_resources_as_set())))
+        view_.add_technical_info(
+            TechnicalInfo("Number of resources", len(self.get_resources_as_set()))
+        )
         return view_
 
     def __len__(self) -> int:

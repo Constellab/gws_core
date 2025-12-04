@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 from gws_core.streamlit import StreamlitContainers, StreamlitGridCell
@@ -20,7 +19,7 @@ def render_containers_page():
     page_layout(
         title="Containers",
         description="This page contains a showcase for custom streamlit containers.",
-        content_function=page_content
+        content_function=page_content,
     )
 
 
@@ -32,8 +31,10 @@ def _render_center_container():
     padding: 1em;
 }
 """
-        with StreamlitContainers.container_centered('container-center', max_width='48em', additional_style=style):
-            st.write('This is a centered container')
+        with StreamlitContainers.container_centered(
+            "container-center", max_width="48em", additional_style=style
+        ):
+            st.write("This is a centered container")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers
@@ -66,14 +67,17 @@ def _render_row_container():
     padding: 1em;
 }
 """
-        with StreamlitContainers.row_container('container-row', flow='row wrap',
-                                               vertical_align_items='center',
-                                               gap='50px',
-                                               additional_style=style):
-            st.write('This is a row container')
-            st.button('Button 1')
-            st.button('Button 2')
-            st.button('Button 3')
+        with StreamlitContainers.row_container(
+            "container-row",
+            flow="row wrap",
+            vertical_align_items="center",
+            gap="50px",
+            additional_style=style,
+        ):
+            st.write("This is a row container")
+            st.button("Button 1")
+            st.button("Button 2")
+            st.button("Button 3")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers
@@ -111,14 +115,16 @@ def _render_column_with_fit_content():
 }
 """
         title_col, button_col = StreamlitContainers.columns_with_fit_content(
-            'container-column', cols=[1, 'fit-content'],
-            vertical_align_items='center',
-            additional_style=style)
+            "container-column",
+            cols=[1, "fit-content"],
+            vertical_align_items="center",
+            additional_style=style,
+        )
         with title_col:
-            st.write('This column takes max space')
+            st.write("This column takes max space")
 
         with button_col:
-            st.button('Column size is fit to content')
+            st.button("Column size is fit to content")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers
@@ -154,8 +160,10 @@ def _render_full_min_height_container():
     box-sizing: content-box;
 }
 """
-        with StreamlitContainers.container_full_min_height('container-full-min-height', additional_style=style):
-            st.info('This allows the container to take at minimum the full height of the page.')
+        with StreamlitContainers.container_full_min_height(
+            "container-full-min-height", additional_style=style
+        ):
+            st.info("This allows the container to take at minimum the full height of the page.")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers
@@ -185,8 +193,10 @@ def _render_container_with_style():
     border: 3px dashed lightblue;
 }
 """
-        with StreamlitContainers.container_with_style('container-with-style', style):
-            st.info('Render a component with style (using css). Use [CLASS_NAME] to target the container.')
+        with StreamlitContainers.container_with_style("container-with-style", style):
+            st.info(
+                "Render a component with style (using css). Use [CLASS_NAME] to target the container."
+            )
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers
@@ -211,52 +221,77 @@ with StreamlitContainers.container_with_style('container-with-style', style):
 def _render_grid():
     def example_demo():
         grid_cells = [
-            StreamlitGridCell(col_span=3, row_span=1, style="""
+            StreamlitGridCell(
+                col_span=3,
+                row_span=1,
+                style="""
     [CLASS_NAME] {
         border: solid black;
     }
-    """),
-            StreamlitGridCell(col_span=1, row_span=2, style="""
+    """,
+            ),
+            StreamlitGridCell(
+                col_span=1,
+                row_span=2,
+                style="""
     [CLASS_NAME] {
         border: dotted blue;
     }
-    """),
-            StreamlitGridCell(col_span=1, row_span=2, style="""
+    """,
+            ),
+            StreamlitGridCell(
+                col_span=1,
+                row_span=2,
+                style="""
     [CLASS_NAME] {
         border: dashed red;
     }
-    """),
-            StreamlitGridCell(col_span=1, row_span=1, style="""
+    """,
+            ),
+            StreamlitGridCell(
+                col_span=1,
+                row_span=1,
+                style="""
     [CLASS_NAME] {
         border: thick solid yellow;
     }
-    """),
-            StreamlitGridCell(col_span=1, row_span=2, style="""
+    """,
+            ),
+            StreamlitGridCell(
+                col_span=1,
+                row_span=2,
+                style="""
     [CLASS_NAME] {
         border: 3px solid purple;
     }
-    """),
-            StreamlitGridCell(col_span=2, row_span=1, style="""
+    """,
+            ),
+            StreamlitGridCell(
+                col_span=2,
+                row_span=1,
+                style="""
     [CLASS_NAME] {
         border: medium dashed cyan;
     }
-    """),
+    """,
+            ),
         ]
         cell1, cell2, cell3, cell4, cell5, cell6 = StreamlitContainers.grid_container(
-            nb_columns=3, cells=grid_cells, key='custom-grid', row_height='100px', gap='10px')
+            nb_columns=3, cells=grid_cells, key="custom-grid", row_height="100px", gap="10px"
+        )
 
         with cell1:
-            st.write('First cell. Col span 3. Row span 1')
+            st.write("First cell. Col span 3. Row span 1")
         with cell2:
-            st.write('Second cell. Col span 1. Row span 2')
+            st.write("Second cell. Col span 1. Row span 2")
         with cell3:
-            st.write('Third cell. Col span 1. Row span 2')
+            st.write("Third cell. Col span 1. Row span 2")
         with cell4:
-            st.write('Fourth cell. Col span 1. Row span 1')
+            st.write("Fourth cell. Col span 1. Row span 1")
         with cell5:
-            st.write('Fifth cell. Col span 1. Row span 2')
+            st.write("Fifth cell. Col span 1. Row span 2")
         with cell6:
-            st.write('Sixth cell. Col span 2. Row span 1')
+            st.write("Sixth cell. Col span 2. Row span 1")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers, StreamlitGridCell
@@ -318,7 +353,7 @@ with cell6:
     )
 
 
-@StreamlitContainers.fragment(key='exception-container-fragment')
+@StreamlitContainers.fragment(key="exception-container-fragment")
 def _render_exception_container():
     def example_demo():
         style = """
@@ -327,23 +362,25 @@ def _render_exception_container():
     padding: 1em;
 }
 """
-        with StreamlitContainers.container_with_style('exception', style):
+        with StreamlitContainers.container_with_style("exception", style):
             try:
-                raise Exception('An exception occurred')
+                raise Exception("An exception occurred")
             except Exception as e:
-                StreamlitContainers.exception_container(key='exception-container',
-                                                        error_text='Custom message',
-                                                        exception=e)
+                StreamlitContainers.exception_container(
+                    key="exception-container", error_text="Custom message", exception=e
+                )
 
-        st.warning('When using the default `st.fragment()`, the exception is not caught automatically and the app will crash. ' +
-                   'Use `StreamlitContainers.fragment()` to catch the exception and display it in a container.')
+        st.warning(
+            "When using the default `st.fragment()`, the exception is not caught automatically and the app will crash. "
+            + "Use `StreamlitContainers.fragment()` to catch the exception and display it in a container."
+        )
 
-        st.code('''from gws_core.streamlit import StreamlitContainers
+        st.code("""from gws_core.streamlit import StreamlitContainers
 
 @StreamlitContainers.fragment(key='exception-container-fragment')
 def method_that_can_raise_exception():
     raise Exception('An exception occurred')
-''')
+""")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitContainers

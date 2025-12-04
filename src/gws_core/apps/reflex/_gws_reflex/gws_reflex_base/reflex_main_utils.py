@@ -1,5 +1,3 @@
-
-
 import os
 
 import reflex as rx
@@ -9,7 +7,7 @@ from .reflex_main_state_base import UNAUTHORIZED_ROUTE, ReflexMainStateBase
 
 
 def main_component(*contents: rx.Component) -> rx.Component:
-    """ Wrapper to wait for the app to be initialized before showing the content.
+    """Wrapper to wait for the app to be initialized before showing the content.
 
     :param contents: The content components of the app.
     :type contents: rx.Component
@@ -20,7 +18,6 @@ def main_component(*contents: rx.Component) -> rx.Component:
         rx.cond(
             ReflexMainStateBase.main_component_initialized,
             rx.fragment(*contents),
-
             rx.center(
                 rx.spinner(size="3"),
                 height="100vh",
@@ -46,6 +43,6 @@ def add_unauthorized_page(app: rx.App):
 def get_theme():
     """Get the theme of the app."""
     return rx.theme(
-        accent_color='teal',
+        accent_color="teal",
         appearance=os.environ.get("GWS_THEME", "light"),
     )

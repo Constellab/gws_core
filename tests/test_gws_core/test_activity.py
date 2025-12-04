@@ -1,25 +1,22 @@
-
-
 from time import sleep
 
 from gws_core.test.base_test_case import BaseTestCase
-from gws_core.user.activity.activity_dto import (ActivityObjectType,
-                                                 ActivityType)
+from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 
 
 # test_activity
 class TestActivity(BaseTestCase):
-
     def test_activity(self):
-
         ActivityService.add(
-            ActivityType.CREATE, object_type=ActivityObjectType.SCENARIO, object_id="test")
+            ActivityType.CREATE, object_type=ActivityObjectType.SCENARIO, object_id="test"
+        )
 
         sleep(1.5)
 
         ActivityService.add(
-            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test"
+        )
 
         last_activity = ActivityService.get_last_activity()
 
@@ -33,7 +30,8 @@ class TestActivity(BaseTestCase):
         sleep(1.5)
         # test add_or_update
         activity = ActivityService.add_or_update(
-            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test"
+        )
 
         # this should have been updated
         self.assertEqual(activity.id, last_activity.id)
@@ -41,7 +39,8 @@ class TestActivity(BaseTestCase):
 
         # test add_or_update with other object_id
         activity = ActivityService.add_or_update(
-            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test2")
+            ActivityType.DELETE, object_type=ActivityObjectType.SCENARIO, object_id="test2"
+        )
 
         # this should have been created
         self.assertNotEqual(activity.id, last_activity.id)

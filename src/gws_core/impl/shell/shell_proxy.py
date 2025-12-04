@@ -21,7 +21,7 @@ class ShellProxyDTO(BaseModelDTO):
     env_code: Optional[str] = None
 
 
-class ShellIO():
+class ShellIO:
     io: IO
     dispatch: Callable
 
@@ -42,6 +42,7 @@ class ShellProxyEnvVariableMode(Enum):
     """
     Enum for the shell proxy environmentvariable mode.
     """
+
     MERGE = "merge"  # merge the provided environment variables with the current environment
     REPLACE = "replace"  # replace the current environment with the provided environment variables
 
@@ -81,12 +82,15 @@ class ShellProxy(BaseTyping):
         else:
             self._message_dispatcher = MessageDispatcher()
 
-    def run(self, cmd: Union[list, str],
-            env: dict = None,
-            env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-            shell_mode: bool = False,
-            dispatch_stdout: bool = False,
-            dispatch_stderr: bool = True) -> int:
+    def run(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+        dispatch_stdout: bool = False,
+        dispatch_stderr: bool = True,
+    ) -> int:
         """
         Run a command in a shell.
         The logs of the command will be dispatched to the message dispatcher during the execution.
@@ -114,8 +118,7 @@ class ShellProxy(BaseTyping):
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
-        self._message_dispatcher.notify_info_message(
-            f"[ShellProxy] Running command: {cmd}")
+        self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command: {cmd}")
         try:
             proc = subprocess.Popen(
                 cmd,
@@ -123,11 +126,12 @@ class ShellProxy(BaseTyping):
                 env=env,
                 shell=shell_mode,
                 stdout=subprocess.PIPE if dispatch_stdout else subprocess.DEVNULL,
-                stderr=subprocess.PIPE if dispatch_stderr else subprocess.DEVNULL
+                stderr=subprocess.PIPE if dispatch_stderr else subprocess.DEVNULL,
             )
 
             self._message_dispatcher.notify_info_message(
-                f"[ShellProxy] Running command in process : {proc.pid}")
+                f"[ShellProxy] Running command in process : {proc.pid}"
+            )
 
             # get the file descriptors of the stdout and stderr
             shell_io: List[ShellIO] = []
@@ -145,11 +149,13 @@ class ShellProxy(BaseTyping):
                 outs, errs = proc.communicate()
                 if outs:
                     self._message_dispatcher.notify_error_message(
-                        "[ShellProxy] The communicate method has returned an stdout output. This is not expected.")
+                        "[ShellProxy] The communicate method has returned an stdout output. This is not expected."
+                    )
                     self._self_dispatch_stdout(outs)
                 if errs:
                     self._message_dispatcher.notify_error_message(
-                        "[ShellProxy] The communicate method has returned an stderr output. This is not expected.")
+                        "[ShellProxy] The communicate method has returned an stderr output. This is not expected."
+                    )
                     self._self_dispatch_stderr(errs)
 
             # retrieve the return code of the process and dispatch the message to the observers
@@ -157,10 +163,10 @@ class ShellProxy(BaseTyping):
             return_core = proc.poll()
             if return_core == 0:
                 self._message_dispatcher.notify_info_message(
-                    "[ShellProxy] Command executed successfully")
+                    "[ShellProxy] Command executed successfully"
+                )
             else:
-                self._message_dispatcher.notify_error_message(
-                    "[ShellProxy] Command failed")
+                self._message_dispatcher.notify_error_message("[ShellProxy] Command failed")
 
             self.dispatch_waiting_messages()
 
@@ -182,7 +188,6 @@ class ShellProxy(BaseTyping):
             has_read: bool = False
 
             for file_no in ret[0]:
-
                 # log stdout or stderr
                 for logger in loggers:
                     if file_no == logger.fileno():
@@ -198,11 +203,13 @@ class ShellProxy(BaseTyping):
             if poll is not None and not has_read:
                 break
 
-    def run_in_new_thread(self, cmd: Union[list, str],
-                          env: dict = None,
-                          env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-                          shell_mode: bool = False,
-                          ) -> SysProc:
+    def run_in_new_thread(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+    ) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
         The logs of the command are ignored.
@@ -224,15 +231,18 @@ class ShellProxy(BaseTyping):
 
         FileHelper.create_dir_if_not_exist(self.working_dir)
 
-        self._message_dispatcher.notify_info_message(
-            f"[ShellProxy] Running command: {cmd}")
+        self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command: {cmd}")
 
         return SysProc.popen(cmd, cwd=self.working_dir, env=env, shell=shell_mode)
 
-    def check_output(self, cmd: Union[list, str],
-                     env: dict = None,
-                     env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
-                     shell_mode: bool = False, text: bool = True) -> Any:
+    def check_output(
+        self,
+        cmd: Union[list, str],
+        env: dict = None,
+        env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
+        shell_mode: bool = False,
+        text: bool = True,
+    ) -> Any:
         """
         Run a command in a shell and return the output.
         The logs of the command are ignored.
@@ -257,29 +267,25 @@ class ShellProxy(BaseTyping):
 
         try:
             output = subprocess.check_output(
-                cmd,
-                cwd=self.working_dir,
-                text=text,
-                env=env,
-                shell=shell_mode
+                cmd, cwd=self.working_dir, text=text, env=env, shell=shell_mode
             )
             return output
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
 
-    def _check_before_run(self, cmd: Union[list, str],
-                          shell_mode: bool = False) -> None:
-        """Check if the command can be run before running it.
-        """
+    def _check_before_run(self, cmd: Union[list, str], shell_mode: bool = False) -> None:
+        """Check if the command can be run before running it."""
         if shell_mode:
             if isinstance(cmd, list):
                 raise ValueError(
-                    "The command must be a string and not a list if the shell mode is activated")
+                    "The command must be a string and not a list if the shell mode is activated"
+                )
         else:
             if not isinstance(cmd, list):
                 raise ValueError(
-                    "The command must be a list and not a string if the shell mode is not activated")
+                    "The command must be a list and not a string if the shell mode is not activated"
+                )
 
     def _prepare_env(self, env: dict, mode: ShellProxyEnvVariableMode) -> dict | None:
         """Prepare the environment variables to be used in the shell command.
@@ -298,8 +304,7 @@ class ShellProxy(BaseTyping):
             env = {}
 
         if env is not None and not isinstance(env, dict):
-            raise ValueError(
-                "'env' must return a dictionnary")
+            raise ValueError("'env' must return a dictionnary")
 
         default_env.update(env)
 
@@ -322,42 +327,39 @@ class ShellProxy(BaseTyping):
         return {}
 
     def _self_dispatch_stdout(self, message: bytes) -> None:
-        self._message_dispatcher.notify_message_with_format(
-            message.decode().strip())
+        self._message_dispatcher.notify_message_with_format(message.decode().strip())
 
     def _self_dispatch_stderr(self, message: bytes) -> None:
-        self._message_dispatcher.notify_error_message(
-            message.decode().strip())
+        self._message_dispatcher.notify_error_message(message.decode().strip())
 
     def clean_working_dir(self):
         FileHelper.delete_dir(self.working_dir)
 
     def attach_progress_bar(self, progress_bar: ProgressBar) -> None:
-        """Attach a progress_bar to the shell proxy. The logs of the proxy will be dispatch to the progress_bar logs
-        """
+        """Attach a progress_bar to the shell proxy. The logs of the proxy will be dispatch to the progress_bar logs"""
         self._message_dispatcher.attach_progress_bar(progress_bar)
 
     def attach_observer(self, observer: MessageObserver) -> None:
-        """ Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""
+        """Attach a custom observer to the shell proxy. The logs of the proxy will be dispatch to the observer"""
         self._message_dispatcher.attach(observer)
 
     def dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()
 
     def get_message_dispatcher(self) -> MessageDispatcher:
-        """ Get the message dispatcher """
+        """Get the message dispatcher"""
         return self._message_dispatcher
 
     def log_info_message(self, message: str):
-        """ Log an info message using the dispatcher """
+        """Log an info message using the dispatcher"""
         self._message_dispatcher.notify_message_with_format(message)
 
     def log_error_message(self, message: str):
-        """ Log an error message using the dispatcher """
+        """Log an error message using the dispatcher"""
         self._message_dispatcher.notify_error_message(message)
 
     def log_warning_message(self, message: str):
-        """ Log a warining message using the dispatcher """
+        """Log a warining message using the dispatcher"""
         self._message_dispatcher.notify_warning_message(message)
 
     def __enter__(self):

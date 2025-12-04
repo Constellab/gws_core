@@ -1,4 +1,3 @@
-
 from datetime import datetime
 from enum import Enum
 from typing import Dict, List, Optional
@@ -59,6 +58,7 @@ class RegisterSQLDBComposeResponseDTO(BaseModelDTO):
 
 class SubComposeProcessStatus(str, Enum):
     """Status for sub compose registration/unregistration processes"""
+
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
@@ -66,12 +66,14 @@ class SubComposeProcessStatus(str, Enum):
 
 class SubComposeProcessType(str, Enum):
     """Type of process being performed on a sub compose"""
+
     REGISTERING = "registering"
     UNREGISTERING = "unregistering"
 
 
 class SubComposeProcessInfoDTO(BaseModelDTO):
     """Information about a running/finished process on a sub compose"""
+
     processType: SubComposeProcessType
     status: SubComposeProcessStatus
     message: str
@@ -86,11 +88,15 @@ class SubComposeProcessInfoDTO(BaseModelDTO):
 
 class SubComposeStatusDTO(BaseModelDTO):
     """Overall status of a sub compose, including any running process and the docker-compose status"""
+
     subComposeProcess: Optional[SubComposeProcessInfoDTO] = None
     composeStatus: DockerComposeStatusInfoDTO
 
     def is_in_progress_status(self) -> bool:
-        return self.subComposeProcess is not None and self.subComposeProcess.status == SubComposeProcessStatus.RUNNING
+        return (
+            self.subComposeProcess is not None
+            and self.subComposeProcess.status == SubComposeProcessStatus.RUNNING
+        )
 
     def get_process_message(self) -> Optional[str]:
         if self.subComposeProcess:

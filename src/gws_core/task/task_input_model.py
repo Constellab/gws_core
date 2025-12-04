@@ -1,9 +1,6 @@
-
-
 from typing import List
 
-from peewee import (BooleanField, CharField, CompositeKey, ForeignKeyField,
-                    ModelSelect)
+from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
 
 from ..core.model.base_model import BaseModel
 from ..protocol.protocol_model import ProtocolModel
@@ -21,14 +18,14 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    scenario: Scenario = ForeignKeyField(
-        Scenario, null=True, index=True, on_delete='CASCADE')
-    task_model: TaskModel = ForeignKeyField(
-        TaskModel, null=True, index=True, on_delete='CASCADE')
+    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
+    task_model: TaskModel = ForeignKeyField(TaskModel, null=True, index=True, on_delete="CASCADE")
     protocol_model: ProtocolModel = ForeignKeyField(
-        ProtocolModel, null=True, index=True, on_delete='CASCADE')
+        ProtocolModel, null=True, index=True, on_delete="CASCADE"
+    )
     resource_model: ResourceModel = ForeignKeyField(
-        ResourceModel, null=True, index=True, on_delete='CASCADE')
+        ResourceModel, null=True, index=True, on_delete="CASCADE"
+    )
 
     port_name: str = CharField()
     is_interface: bool = BooleanField()
@@ -38,21 +35,31 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.resource_model == resource_model_id)
 
     @classmethod
-    def get_by_resource_model_and_task_type(cls, resource_model_id: str, task_typing_name: str) -> ModelSelect:
-        return TaskInputModel.select().join(TaskModel).where(
-            (TaskInputModel.resource_model == resource_model_id) &
-            (TaskInputModel.task_model.process_typing_name == task_typing_name))
+    def get_by_resource_model_and_task_type(
+        cls, resource_model_id: str, task_typing_name: str
+    ) -> ModelSelect:
+        return (
+            TaskInputModel.select()
+            .join(TaskModel)
+            .where(
+                (TaskInputModel.resource_model == resource_model_id)
+                & (TaskInputModel.task_model.process_typing_name == task_typing_name)
+            )
+        )
 
     @classmethod
     def get_by_resource_models(cls, resource_model_ids: List[str]) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.resource_model.in_(resource_model_ids))
 
     @classmethod
-    def get_other_scenarios(cls, resource_model_ids: List[str], exclude_scenario_id: str) -> ModelSelect:
-        """Method to see if a resource_model is used as input in another scenario
-        """
-        return TaskInputModel.select().where((TaskInputModel.resource_model.in_(resource_model_ids)) &
-                                             (TaskInputModel.scenario != exclude_scenario_id))
+    def get_other_scenarios(
+        cls, resource_model_ids: List[str], exclude_scenario_id: str
+    ) -> ModelSelect:
+        """Method to see if a resource_model is used as input in another scenario"""
+        return TaskInputModel.select().where(
+            (TaskInputModel.resource_model.in_(resource_model_ids))
+            & (TaskInputModel.scenario != exclude_scenario_id)
+        )
 
     @classmethod
     def get_by_task_model(cls, task_model_id: str) -> ModelSelect:
@@ -76,11 +83,14 @@ class TaskInputModel(BaseModel):
 
     @classmethod
     def resource_is_used_by_scenario(cls, resource_model_id: str, scenario_ids: List[str]) -> bool:
-        """Method to see if a resource_model is used as input in one of the scenarios """
-        return cls.get_by_resource_model(resource_model_id).where(
-            TaskInputModel.scenario.in_(scenario_ids)).exists()
+        """Method to see if a resource_model is used as input in one of the scenarios"""
+        return (
+            cls.get_by_resource_model(resource_model_id)
+            .where(TaskInputModel.scenario.in_(scenario_ids))
+            .exists()
+        )
 
-    def save(self, *args, **kwargs) -> 'BaseModel':
+    def save(self, *args, **kwargs) -> "BaseModel":
         """Use force insert because it is a composite key
         https://stackoverflow.com/questions/30038185/python-peewee-save-doesnt-work-as-expected
 
@@ -90,6 +100,6 @@ class TaskInputModel(BaseModel):
         return super().save(*args, force_insert=True, **kwargs)
 
     class Meta:
-        table_name = 'gws_task_inputs'
+        table_name = "gws_task_inputs"
         is_table = True
         primary_key = CompositeKey("task_model", "port_name")

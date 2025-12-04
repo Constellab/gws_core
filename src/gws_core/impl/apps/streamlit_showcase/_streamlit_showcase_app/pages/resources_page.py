@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 from gws_core.streamlit import StreamlitResourceSelect
@@ -14,7 +13,7 @@ def render_resources_page():
     page_layout(
         title="Resources",
         description="This page contains a showcase for streamlit component to interact with resources.",
-        content_function=page_content
+        content_function=page_content,
     )
 
 
@@ -22,12 +21,13 @@ def _render_resource_select():
     def example_demo():
         resource_select = StreamlitResourceSelect()
         selected_resource = resource_select.select_resource(
-            placeholder='Search for resource', key="resource-selector", defaut_resource=None)
+            placeholder="Search for resource", key="resource-selector", defaut_resource=None
+        )
 
         if selected_resource:
-            st.write(f'Selected resource: {selected_resource.name}')
+            st.write(f"Selected resource: {selected_resource.name}")
         else:
-            st.write('No resource selected')
+            st.write("No resource selected")
 
     code = """import streamlit as st
 from gws_core.streamlit import StreamlitResourceSelect

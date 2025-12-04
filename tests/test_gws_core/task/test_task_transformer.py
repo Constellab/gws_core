@@ -1,5 +1,3 @@
-
-
 from typing import List
 
 from gws_core import ConfigParams, transformer_decorator
@@ -14,20 +12,17 @@ from gws_core.task.transformer.transformer_type import TransformerDict
 from gws_core.test.base_test_case import BaseTestCase
 
 
-@transformer_decorator('RobotTransform', resource_type=Robot)
+@transformer_decorator("RobotTransform", resource_type=Robot)
 class RobotTransform(Transformer):
-
-    config_specs = ConfigSpecs({'age': IntParam()})
+    config_specs = ConfigSpecs({"age": IntParam()})
 
     def transform(self, source: Robot, params: ConfigParams) -> Robot:
-        source.age = params['age']
+        source.age = params["age"]
         return source
 
 
 class TestTaskTransformer(BaseTestCase):
-
     def test_create_transformer_scenario(self):
-
         age_config = 99
 
         # create a robot resource
@@ -37,9 +32,11 @@ class TestTaskTransformer(BaseTestCase):
 
         # create and run
         transformers: List[TransformerDict] = [
-            {'typing_name': RobotTransform.get_typing_name(), 'config_values': {'age': age_config}}]
+            {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": age_config}}
+        ]
         resource_model: ResourceModel = TransformerService.create_and_run_transformer_scenario(
-            transformers, robot_model.id)
+            transformers, robot_model.id
+        )
 
         self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)
 
@@ -48,17 +45,12 @@ class TestTaskTransformer(BaseTestCase):
         self.assertEqual(robot.age, age_config)
 
     def test_call_transformers(self):
-
         age_config = 99
 
-        transformers: List[TransformerDict] = [{
-            'typing_name': RobotTransform.get_typing_name(),
-            'config_values': {'age': 5}
-        },
-            {
-            'typing_name': RobotTransform.get_typing_name(),
-            'config_values': {'age': age_config}
-        }]
+        transformers: List[TransformerDict] = [
+            {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": 5}},
+            {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": age_config}},
+        ]
 
         # create a robot resource
         robot = Robot.empty()

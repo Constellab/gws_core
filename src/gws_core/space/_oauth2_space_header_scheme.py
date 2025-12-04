@@ -10,12 +10,9 @@ from ..core.exception.exceptions import BadRequestException
 
 
 class SpaceApiKeyHeader(OAuth2):
-
     async def __call__(self, request: Request) -> Optional[str]:
         header_authorization: str = request.headers.get(SpaceService.AUTH_HEADER_KEY)
-        header_scheme, header_param = get_authorization_scheme_param(
-            header_authorization
-        )
+        header_scheme, header_param = get_authorization_scheme_param(header_authorization)
 
         if header_scheme.lower() == SpaceService.AUTH_API_KEY_HEADER_PREFIX:
             authorization = True
@@ -36,7 +33,6 @@ space_api_key_header = SpaceApiKeyHeader()
 
 
 class SpaceAPIUserHeader(OAuth2):
-
     async def __call__(self, request: Request) -> Optional[str]:
         return request.headers.get(SpaceService.USER_ID_HEADER_KEY)
 

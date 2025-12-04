@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Type
@@ -57,21 +55,25 @@ class TableScatterPlot2DView(BaseTableView):
 
     _table: Table
 
-    _specs = ConfigSpecs({
-        "series": ListParam(default_value=[]),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "series": ListParam(default_value=[]),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     _view_helper: Type = ScatterPlot2DView
     _type: ViewType = ViewType.SCATTER_PLOT_2D
 
     def data_to_dict(self, params: ConfigParams) -> dict:
         if not issubclass(self._view_helper, ScatterPlot2DView):
-            raise BadRequestException("Invalid view helper. An subclass of ScatterPlot2DView is expected")
+            raise BadRequestException(
+                "Invalid view helper. An subclass of ScatterPlot2DView is expected"
+            )
 
         series: List[Serie2d] = Serie2d.from_list(params.get_value("series"))
 
         if len(series) == 0:
-            raise BadRequestException('There must be at least one serie')
+            raise BadRequestException("There must be at least one serie")
 
         # create view
         view = self._view_helper()
@@ -89,7 +91,7 @@ class TableScatterPlot2DView(BaseTableView):
                 x=x_data,
                 y=y_data,
                 name=serie.name,
-                tags=self.get_row_tags_from_selection_range(serie.y)
+                tags=self.get_row_tags_from_selection_range(serie.y),
             )
 
         return view.data_to_dict(params)

@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
@@ -7,27 +5,31 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
-from gws_core.entity_navigator.entity_navigator_type import (
-    NavigableEntity, NavigableEntityType)
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
-from gws_core.resource.resource_dto import (ResourceModelDTO, ResourceOrigin,
-                                            ResourceSimpleDTO)
+from gws_core.resource.resource_dto import ResourceModelDTO, ResourceOrigin, ResourceSimpleDTO
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.technical_info import TechnicalInfoDict
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
-from peewee import (BooleanField, CharField, DeferredForeignKey, Expression,
-                    ForeignKeyField, ModelDelete, ModelSelect)
+from peewee import (
+    BooleanField,
+    CharField,
+    DeferredForeignKey,
+    Expression,
+    ForeignKeyField,
+    ModelDelete,
+    ModelSelect,
+)
 
 from ..core.classes.enum_field import EnumField
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
@@ -48,7 +50,6 @@ if TYPE_CHECKING:
 
 
 class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
-
     """
     ResourceModel class.
     """
@@ -59,24 +60,19 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     # Path to the kv store if the kv exists for this resource model
     kv_store_path = CharField(null=True)
 
-    origin: ResourceOrigin = EnumField(
-        choices=ResourceOrigin, default=ResourceOrigin.GENERATED)
+    origin: ResourceOrigin = EnumField(choices=ResourceOrigin, default=ResourceOrigin.GENERATED)
 
-    scenario: Scenario = DeferredForeignKey(
-        'Scenario', null=True, index=True)
+    scenario: Scenario = DeferredForeignKey("Scenario", null=True, index=True)
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True, index=True)
-    task_model: TaskModel = DeferredForeignKey(
-        'TaskModel', null=True, index=True)
+    task_model: TaskModel = DeferredForeignKey("TaskModel", null=True, index=True)
 
     # for children resource (usually resource inside ResourceSet), it stores the parent resource id
     # lazy_load = False to avoir loading the resource, and it only contains the id
-    parent_resource_id: str = ForeignKeyField(
-        'self', null=True, index=True, lazy_load=False)
+    parent_resource_id: str = ForeignKeyField("self", null=True, index=True, lazy_load=False)
 
     name: str = CharField(null=False)
 
-    fs_node_model: FSNodeModel = ForeignKeyField(
-        FSNodeModel, null=True, index=True, backref="+")
+    fs_node_model: FSNodeModel = ForeignKeyField(FSNodeModel, null=True, index=True, backref="+")
 
     # true when the resource is UPLOADED or is a scenario output
     flagged: bool = BooleanField(default=False)
@@ -117,7 +113,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return result
 
     @GwsCoreDbManager.transaction()
-    def delete_resource_content(self) -> 'ResourceModel':
+    def delete_resource_content(self) -> "ResourceModel":
         """
         Delete the content of the resource, the data, the kv store and the fs node
         """
@@ -134,7 +130,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self
 
     @GwsCoreDbManager.transaction()
-    def archive(self, archive: bool) -> 'ResourceModel':
+    def archive(self, archive: bool) -> "ResourceModel":
         """
         Archive the process
         """
@@ -149,14 +145,15 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def delete_multiple_resources(cls, resources: List[ResourceModel]):
         # sort the resources to have children resources before their parents to prevent error with
         # foreign key constraint
-        resources.sort(
-            key=lambda x: 'b' if x.parent_resource_id is None else 'a')
+        resources.sort(key=lambda x: "b" if x.parent_resource_id is None else "a")
         for output_resource in resources:
             output_resource.delete_instance()
 
     @classmethod
     def delete_resource_by_task_model(cls, task_model_id: str) -> None:
-        task_resources: List[ResourceModel] = list(ResourceModel.get_by_task_model(task_model_id).execute())
+        task_resources: List[ResourceModel] = list(
+            ResourceModel.get_by_task_model(task_model_id).execute()
+        )
 
         cls.delete_multiple_resources(task_resources)
 
@@ -184,10 +181,12 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if not Utils.issubclass(type_, Resource):
             raise Exception(f"{type_} is not a subclass of Resource")
 
-        return ResourceModel.select().where(cls.get_by_types_and_sub_expression([type_.get_typing_name()]))
+        return ResourceModel.select().where(
+            cls.get_by_types_and_sub_expression([type_.get_typing_name()])
+        )
 
     @GwsCoreDbManager.transaction()
-    def save_full(self) -> 'ResourceModel':
+    def save_full(self) -> "ResourceModel":
         """Save the resource and the fs_node if exists
 
         :return: [description]
@@ -202,12 +201,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     @classmethod
     def after_table_creation(cls) -> None:
         super().after_table_creation()
-        cls.create_full_text_index(['data'], 'I_F_RES_DATA')
+        cls.create_full_text_index(["data"], "I_F_RES_DATA")
 
     @classmethod
     def after_all_tables_init(cls) -> None:
-        """Create the foreign keys because it was deffered
-        """
+        """Create the foreign keys because it was deffered"""
         cls.create_foreign_key_if_not_exist(ResourceModel.scenario)
         cls.create_foreign_key_if_not_exist(ResourceModel.task_model)
 
@@ -228,7 +226,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.select().where(ResourceModel.task_model.in_(task_model_ids))
 
     @classmethod
-    def find_by_fs_node_id(cls, fs_node_id: str) -> Optional['ResourceModel']:
+    def find_by_fs_node_id(cls, fs_node_id: str) -> Optional["ResourceModel"]:
         return cls.select().where(cls.fs_node_model == fs_node_id).first()
 
     @classmethod
@@ -247,8 +245,9 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             return None
 
         # Retrieve all type of typing_names
-        resource_types: List[Type] = [TypingManager.get_type_from_name(
-            typing_name) for typing_name in typing_names]
+        resource_types: List[Type] = [
+            TypingManager.get_type_from_name(typing_name) for typing_name in typing_names
+        ]
 
         # Get all type of class and subclasses
         all_types: Set[Type[Resource]] = set()
@@ -258,7 +257,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         # Get the typing names
         all_typing_names: List[str] = [
-            resource_type.get_typing_name() for resource_type in all_types]
+            resource_type.get_typing_name() for resource_type in all_types
+        ]
 
         return ResourceModel.resource_typing_name.in_(all_typing_names)
 
@@ -268,8 +268,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def get_resource_by_scenario_and_flag(cls, scenario_id: str, flagged: bool) -> ModelSelect:
-        return ResourceModel.select().where(ResourceModel.scenario == scenario_id,
-                                            ResourceModel.flagged == flagged)
+        return ResourceModel.select().where(
+            ResourceModel.scenario == scenario_id, ResourceModel.flagged == flagged
+        )
+
     ########################################## RESOURCE ######################################
 
     @final
@@ -280,7 +282,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
         if self.content_is_deleted:
             raise BadRequestException(
-                f"Intermediate resource '{self.name}' was deleted, can't get the resource data")
+                f"Intermediate resource '{self.name}' was deleted, can't get the resource data"
+            )
 
         if new_instance:
             return self._instantiate_resource()
@@ -300,20 +303,30 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if kv_store is None:
             raise Exception("Cannot create resource because its kv store is missing")
 
-        additional_data = self.fs_node_model.get_resource_addional_data() if self.fs_node_model else {}
+        additional_data = (
+            self.fs_node_model.get_resource_addional_data() if self.fs_node_model else {}
+        )
 
-        return ResourceFactory.create_resource(self.get_and_check_resource_type(),
-                                               kv_store=kv_store,
-                                               data=self.data,
-                                               resource_model_id=self.id,
-                                               name=self.name,
-                                               style=self.style,
-                                               additional_data=additional_data)
+        return ResourceFactory.create_resource(
+            self.get_and_check_resource_type(),
+            kv_store=kv_store,
+            data=self.data,
+            resource_model_id=self.id,
+            name=self.name,
+            style=self.style,
+            additional_data=additional_data,
+        )
 
     @classmethod
-    def from_resource(cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED,
-                      scenario: Optional[Scenario] = None, task_model: Optional[TaskModel] = None,
-                      port_name: str | None = None, flagged: bool | None = None) -> ResourceModel:
+    def from_resource(
+        cls,
+        resource: Resource,
+        origin: ResourceOrigin = ResourceOrigin.GENERATED,
+        scenario: Optional[Scenario] = None,
+        task_model: Optional[TaskModel] = None,
+        port_name: str | None = None,
+        flagged: bool | None = None,
+    ) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
         Don't set the resource here so it is regenerate on next get ( avoid using same instance)
@@ -327,13 +340,21 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         # If the origin is not uploaded, then the scenario and the task must be provided
         if resource_model.origin not in [
-                ResourceOrigin.UPLOADED, ResourceOrigin.S3_FOLDER_STORAGE, ResourceOrigin.IMPORTED_FROM_LAB]:
+            ResourceOrigin.UPLOADED,
+            ResourceOrigin.S3_FOLDER_STORAGE,
+            ResourceOrigin.IMPORTED_FROM_LAB,
+        ]:
             if scenario is None or task_model is None:
-                raise Exception(f"To create a {origin} resource, you must provide the scenario and the task")
+                raise Exception(
+                    f"To create a {origin} resource, you must provide the scenario and the task"
+                )
 
         # if the resource is imported and its id is define, use it
         # with this resources imported from another can keep their id
-        if resource_model.origin == ResourceOrigin.IMPORTED_FROM_LAB and resource.get_model_id() is not None:
+        if (
+            resource_model.origin == ResourceOrigin.IMPORTED_FROM_LAB
+            and resource.get_model_id() is not None
+        ):
             resource_model.id = resource.get_model_id()
 
         resource_model.set_resource_typing_name(resource.get_typing_name())
@@ -361,7 +382,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             resource_model.name = resource.get_name() or resource.get_human_name()
         except Exception as err:
             Logger.error(
-                f'Error while getting the name of the resource {type(resource)}. Err : {str(err)}')
+                f"Error while getting the name of the resource {type(resource)}. Err : {str(err)}"
+            )
             Logger.log_exception_stack_trace(err)
             resource_model.name = resource.get_human_name()
 
@@ -383,20 +405,21 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return resource_model
 
     def init_fs_node_model(self, resource: FSNode) -> FSNode:
-
         local_file_store = LocalFileStore.get_default_instance()
 
         # for symbolic link, the file must be in the file store
         if resource.is_symbolic_link:
             if not local_file_store.node_exists(resource):
                 raise Exception(
-                    f"Attempting to save a new symbolic link resource with path '{resource.path}' that does not exist in the file store. Please check that the path of the symbolic link is correct and that the target file or folder exists.")
+                    f"Attempting to save a new symbolic link resource with path '{resource.path}' that does not exist in the file store. Please check that the path of the symbolic link is correct and that the target file or folder exists."
+                )
 
         else:
             # For normal node, the file must not be in the file store
             if local_file_store.node_exists(resource):
                 raise Exception(
-                    f"Attempting to save a new File or Folder resource with path '{resource.path}' that already exists in the file store. Please do not create file directly in file store. And the path of the output File or Folder must not be the same as the path of an input File or Folder, if this is required, please set 'is_symbolic_link' to True on File or Folder.")
+                    f"Attempting to save a new File or Folder resource with path '{resource.path}' that already exists in the file store. Please do not create file directly in file store. And the path of the output File or Folder must not be the same as the path of an input File or Folder, if this is required, please set 'is_symbolic_link' to True on File or Folder."
+                )
 
             new_node_path = local_file_store.generate_new_node_path(resource.get_base_name())
             new_node_name = FileHelper.get_name_with_extension(new_node_path)
@@ -412,15 +435,15 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
                 # mark the content of the resource as deleted
                 if resource_model_to_delete is not None:
                     Logger.info(
-                        f"Detecting that the fs node of the resource '{resource_model_to_delete.id}' was deleted. Marking the content as deleted.")
+                        f"Detecting that the fs node of the resource '{resource_model_to_delete.id}' was deleted. Marking the content as deleted."
+                    )
                     resource_model_to_delete.delete_resource_content()
                 # this should not happen, but if it does, we delete the node
                 else:
                     existing_node.delete_instance()
 
             # Move the node to the LocalFileStore using the new generated name
-            new_node: FSNode = local_file_store.add_node_from_path(
-                resource.path, new_node_name)
+            new_node: FSNode = local_file_store.add_node_from_path(resource.path, new_node_name)
 
             # update the resource path and file store
             resource.path = new_node.path
@@ -437,27 +460,37 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def save_from_resource(
-            cls, resource: Resource, origin: ResourceOrigin = ResourceOrigin.GENERATED, scenario: Scenario = None,
-            task_model: TaskModel = None, port_name: str = None, flagged: bool = None) -> ResourceModel:
-        """Create the ResourceModel from the Resource and save it
-        """
+        cls,
+        resource: Resource,
+        origin: ResourceOrigin = ResourceOrigin.GENERATED,
+        scenario: Scenario = None,
+        task_model: TaskModel = None,
+        port_name: str = None,
+        flagged: bool = None,
+    ) -> ResourceModel:
+        """Create the ResourceModel from the Resource and save it"""
         # FIX is flagged and export ResourceOrigin
         resource_model = cls.from_resource(
-            resource, origin=origin, scenario=scenario, task_model=task_model, port_name=port_name,
-            flagged=flagged).save_full()
+            resource,
+            origin=origin,
+            scenario=scenario,
+            task_model=task_model,
+            port_name=port_name,
+            flagged=flagged,
+        ).save_full()
 
         if resource.tags and isinstance(resource.tags, TagList):
             # Add tags, use current user origin as default origin
             user_origin = TagOrigin.current_user_origin()
-            entity_tags: EntityTagList = EntityTagList(TagEntityType.RESOURCE, resource_model.id,
-                                                       default_origin=user_origin)
+            entity_tags: EntityTagList = EntityTagList(
+                TagEntityType.RESOURCE, resource_model.id, default_origin=user_origin
+            )
 
             entity_tags.add_tags(resource.tags.get_tags())
         return resource_model
 
     def set_resource_typing_name(self, typing_name: str) -> None:
-        typing: Typing = TypingManager.get_typing_from_name_and_check(
-            typing_name)
+        typing: Typing = TypingManager.get_typing_from_name_and_check(typing_name)
         self.resource_typing_name = typing_name
         self.brick_version = typing.brick_version
 
@@ -504,7 +537,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def get_and_check_resource_type(self) -> Type[Resource]:
         return TypingManager.get_and_check_type_from_name(self.resource_typing_name)
 
-    def set_parent_and_save(self, parent_resource_id: str) -> 'ResourceModel':
+    def set_parent_and_save(self, parent_resource_id: str) -> "ResourceModel":
         self.parent_resource_id = parent_resource_id
         return self.save()
 
@@ -519,13 +552,12 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         kv_store: KVStore = KVStore(str(self.kv_store_path))
 
         if self.fs_node_model:
-            kv_store['path'] = self.fs_node_model.path
-            kv_store['file_store_id'] = self.fs_node_model.file_store_id
-            kv_store['is_symbolic_link'] = self.fs_node_model.is_symbolic_link
+            kv_store["path"] = self.fs_node_model.path
+            kv_store["file_store_id"] = self.fs_node_model.file_store_id
+            kv_store["is_symbolic_link"] = self.fs_node_model.is_symbolic_link
 
         # Lock the kvstore so the file can't be updated
-        kv_store.lock(KVStore.get_full_file_path(
-            file_name=self.id, with_extension=False))
+        kv_store.lock(KVStore.get_full_file_path(file_name=self.id, with_extension=False))
         return kv_store
 
     def _get_or_create_kv_store(self) -> KVStore:
@@ -547,14 +579,14 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     ########################################## JSON ######################################
 
     def to_dto(self) -> ResourceModelDTO:
-
         resource_type_ref: TypingRefDTO | None = None
         is_downloadable: Optional[bool] = False
         type_status: TypingStatus = TypingStatus.OK
         has_children: bool = False
 
         resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
-            self.resource_typing_name)
+            self.resource_typing_name
+        )
         if resource_typing:
             resource_type_ref = resource_typing.to_ref_dto()
             is_downloadable = self.is_downloadable
@@ -585,7 +617,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             flagged=self.flagged,
             scenario=self.scenario.to_simple_dto() if self.scenario else None,
             folder=self.folder.to_dto() if self.folder else None,
-            style=self.style
+            style=self.style,
         )
 
     def to_simple_dto(self) -> ResourceSimpleDTO:
@@ -596,27 +628,32 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def export_config(self) -> dict:
         return {
-            'id': self.id,
-            'name': self.name,
-            'resource_typing_name': self.resource_typing_name,
+            "id": self.id,
+            "name": self.name,
+            "resource_typing_name": self.resource_typing_name,
         }
 
     ########################################## OTHER ######################################
 
     def get_technical_info(self) -> TechnicalInfoDict:
         kv_store = self.get_kv_store()
-        if 'technical_info' in kv_store:
-            return TechnicalInfoDict.deserialize(kv_store.get('technical_info'))
+        if "technical_info" in kv_store:
+            return TechnicalInfoDict.deserialize(kv_store.get("technical_info"))
         return TechnicalInfoDict()
 
     @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
         resource_type: Type[Resource] = self.get_resource_type()
-        return self.fs_node_model is not None or (resource_type is not None and resource_type.__is_exportable__)
+        return self.fs_node_model is not None or (
+            resource_type is not None and resource_type.__is_exportable__
+        )
 
     def is_manually_generated(self) -> bool:
-        return self.origin == ResourceOrigin.UPLOADED or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
+        return (
+            self.origin == ResourceOrigin.UPLOADED
+            or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
+        )
 
     def get_navigable_entity_name(self) -> str:
         return self.name
@@ -636,5 +673,5 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.name
 
     class Meta:
-        table_name = 'gws_resource'
+        table_name = "gws_resource"
         is_table = True

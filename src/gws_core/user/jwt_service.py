@@ -15,12 +15,11 @@ class JWTData(TypedDict):
 
 
 class JWTService:
-    """Service to manage the JWT, (check, create)
-    """
+    """Service to manage the JWT, (check, create)"""
 
     AUTH_SCHEME = "Bearer "
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2        # 2 days
+    ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2  # 2 days
 
     _secret: str = None
 
@@ -46,9 +45,8 @@ class JWTService:
         if not token or not token.startswith(cls.AUTH_SCHEME):
             raise InvalidTokenException()
 
-        token = token[len(cls.AUTH_SCHEME):]
-        payload: JWTData = decode(token, cls._get_secret(),
-                                  algorithms=[cls.ALGORITHM])
+        token = token[len(cls.AUTH_SCHEME) :]
+        payload: JWTData = decode(token, cls._get_secret(), algorithms=[cls.ALGORITHM])
         id_: str = payload.get("sub")
         if id_ is None:
             raise InvalidTokenException()

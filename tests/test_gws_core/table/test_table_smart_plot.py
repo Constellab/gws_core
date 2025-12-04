@@ -1,5 +1,3 @@
-
-
 from unittest import TestCase
 
 from pandas import DataFrame
@@ -15,19 +13,20 @@ from gws_core.task.task_runner import TaskRunner
 
 # test_table_smart_plot
 class TestSmartPlot(TestCase):
-
     def test_table_smart_transformer(self):
-        initial_df = DataFrame({'A': [1, 2, 3, 4], 'B': [8, 6, 4, 9]})
+        initial_df = DataFrame({"A": [1, 2, 3, 4], "B": [8, 6, 4, 9]})
         table: Table = Table(initial_df)
 
         # Simulate a chat with openAI
         prompt: OpenAiChatDict = {
-            "messages":  [{
-                "role": "user",
-                "content": "Generate a box plot, one bar per column",
-            }, {
-                "role": "assistant",
-                "content": """Here is the result : ```import matplotlib.pyplot as plt
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "Generate a box plot, one bar per column",
+                },
+                {
+                    "role": "assistant",
+                    "content": """Here is the result : ```import matplotlib.pyplot as plt
 
 fig, axs = plt.subplots(ncols=7, figsize=(20,5))
 
@@ -36,8 +35,9 @@ for i, col in enumerate(source.columns):
         axs[i].boxplot(source[col])
         axs[i].set_title(col)
 
-plt.savefig(output_path)```"""
-            }]
+plt.savefig(output_path)```""",
+                },
+            ]
         }
         tester = TaskRunner(
             task_type=SmartPlot,
@@ -45,8 +45,8 @@ plt.savefig(output_path)```"""
                 "source": table,
             },
             params={
-                'prompt': prompt,
-            }
+                "prompt": prompt,
+            },
         )
 
         outputs = tester.run()
@@ -63,12 +63,9 @@ plt.savefig(output_path)```"""
         tester = TaskRunner(
             task_type=PyAgent,
             inputs={
-                'source': table,
+                "source": table,
             },
-            params={
-                'code': code.get_data(),
-                'params': {}
-            }
+            params={"code": code.get_data(), "params": {}},
         )
         outputs = tester.run()
 

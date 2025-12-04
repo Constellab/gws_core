@@ -10,9 +10,7 @@ class CopilotService(AICodeService):
 
     def __init__(self):
         """Initialize CopilotService"""
-        super().__init__(
-            ai_tool_name="GitHub Copilot"
-        )
+        super().__init__(ai_tool_name="GitHub Copilot")
 
     def format_frontmatter(self, frontmatter: CommandFrontmatter) -> str:
         """Format frontmatter for GitHub Copilot
@@ -49,7 +47,7 @@ argument-hint: {frontmatter.argument_hint}
             Filename with .prompt.md extension (e.g., 'streamlit-app-developer.prompt.md')
         """
         # Remove .md extension and add .prompt.md
-        if base_filename.endswith('.md'):
+        if base_filename.endswith(".md"):
             base_name = base_filename[:-3]  # Remove '.md'
             return f"{base_name}.prompt.md"
         return f"{base_filename}.prompt"
@@ -60,7 +58,7 @@ argument-hint: {frontmatter.argument_hint}
         Returns:
             Glob pattern for GitHub Copilot prompt files
         """
-        return 'gws-*.prompt.md'
+        return "gws-*.prompt.md"
 
     def get_install_command(self) -> str:
         """Get the command to install/pull commands for GitHub Copilot
@@ -68,7 +66,7 @@ argument-hint: {frontmatter.argument_hint}
         Returns:
             Command string to pull Copilot commands
         """
-        return 'gws copilot pull'
+        return "gws copilot pull"
 
     def get_main_instructions_path(self) -> Path:
         """Get the path where main instructions file should be generated

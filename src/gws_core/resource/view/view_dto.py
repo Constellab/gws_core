@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, List, Optional
 
 from gws_core.config.param.param_types import ParamSpecDTO

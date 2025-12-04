@@ -1,5 +1,3 @@
-
-
 from typing import final
 
 from peewee import CharField
@@ -34,5 +32,5 @@ class NoteTemplate(ModelWithUser):
         )
 
     class Meta:
-        table_name = 'gws_note_template'
+        table_name = "gws_note_template"
         is_table = True

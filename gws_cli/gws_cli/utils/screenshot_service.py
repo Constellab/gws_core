@@ -20,6 +20,7 @@ class ScreenshotService:
         """
         try:
             import playwright
+
             print("Playwright is already installed.")
         except ImportError:
             print("Playwright not found. Installing playwright...")
@@ -54,13 +55,11 @@ class ScreenshotService:
                 "libgbm1",
                 "libcairo2",
                 "libpango-1.0-0",
-                "libasound2"
+                "libasound2",
             ]
 
             result = subprocess.run(
-                ["sudo", "apt-get", "install", "-y"] + apt_packages,
-                capture_output=True,
-                text=True
+                ["sudo", "apt-get", "install", "-y"] + apt_packages, capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -85,7 +84,7 @@ class ScreenshotService:
         route: str = "/",
         output_path: str = None,
         save_console_logs: bool = True,
-        headless: bool = True
+        headless: bool = True,
     ) -> int:
         """
         Take a screenshot of a web application.
@@ -134,7 +133,7 @@ class ScreenshotService:
                 if output_path is None:
                     output_path = os.path.join(
                         ScreenshotService.DEFAULT_OUTPUT_DIR,
-                        ScreenshotService.DEFAULT_SCREENSHOT_FILENAME
+                        ScreenshotService.DEFAULT_SCREENSHOT_FILENAME,
                     )
                 else:
                     # Ensure the output path is absolute
@@ -158,8 +157,7 @@ class ScreenshotService:
                 # Save console logs to a file
                 if save_console_logs and console_logs:
                     log_path = os.path.join(
-                        os.path.dirname(output_path),
-                        ScreenshotService.DEFAULT_CONSOLE_LOG_FILENAME
+                        os.path.dirname(output_path), ScreenshotService.DEFAULT_CONSOLE_LOG_FILENAME
                     )
                     with open(log_path, "w") as f:
                         f.write("\n".join(console_logs))

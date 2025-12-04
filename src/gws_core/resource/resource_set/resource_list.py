@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Set
 
 from gws_core.resource.r_field.list_r_field import ListRField
@@ -9,8 +7,12 @@ from ..resource_decorator import resource_decorator
 from .resource_list_base import ResourceListBase
 
 
-@resource_decorator(unique_name="ResourceList", human_name="Resource list",
-                    short_description="A list of resources", hide=True)
+@resource_decorator(
+    unique_name="ResourceList",
+    human_name="Resource list",
+    short_description="A list of resources",
+    hide=True,
+)
 class ResourceList(ResourceListBase):
     """Resource to manage a list of resources. By default the sytem create a new
     resource for each resource in the set when saving the set
@@ -77,7 +79,7 @@ class ResourceList(ResourceListBase):
         return None
 
     def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
-        """ set _resource_ids with key = resource_name and value = resource_id"""
+        """set _resource_ids with key = resource_name and value = resource_id"""
         resource_ids = []
         for resource in self._resources:
             model_id = ids_map.get(resource.uid)
@@ -87,8 +89,7 @@ class ResourceList(ResourceListBase):
 
         self._resource_ids = resource_ids
 
-    def add_resource(self, resource: Resource,
-                     create_new_resource: bool = True) -> None:
+    def add_resource(self, resource: Resource, create_new_resource: bool = True) -> None:
         """Add a resource to the list
 
         :param resource: resource to add
@@ -146,7 +147,9 @@ class ResourceList(ResourceListBase):
 
         for resource_model_id in original_order:
             if resource_model_id not in resources:
-                raise Exception(f"Resource with id {resource_model_id} not found in the resources to replace")
+                raise Exception(
+                    f"Resource with id {resource_model_id} not found in the resources to replace"
+                )
             self.add_resource(resources[resource_model_id])
 
     # add methods to act like a list

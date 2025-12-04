@@ -1,5 +1,3 @@
-
-
 from typing import Optional
 
 from fastapi import Depends
@@ -12,8 +10,9 @@ from .model_service import ModelService
 
 
 @core_app.get("/model/{typing_name}/count", tags=["Models"], summary="Count the number of models")
-def count_the_number_of_models(typing_name: str,
-                               _=Depends(AuthorizationService.check_user_access_token)) -> int:
+def count_the_number_of_models(
+    typing_name: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> int:
     """
     Get the count of objects of a given model type
 
@@ -28,11 +27,13 @@ class SearchBody(BaseModelDTO):
 
 
 @core_app.post("/model/{typing_name}/search", tags=["Models"], summary="Search")
-def search(typing_name: str,
-           search: SearchBody,
-           page: Optional[int] = 0,
-           number_of_items_per_page: Optional[int] = 20,
-           _=Depends(AuthorizationService.check_user_access_token)) -> PageDTO[ModelDTO]:
+def search(
+    typing_name: str,
+    search: SearchBody,
+    page: Optional[int] = 0,
+    number_of_items_per_page: Optional[int] = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> PageDTO[ModelDTO]:
     """
     Call search in a model
 

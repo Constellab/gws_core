@@ -1,4 +1,3 @@
-
 from typing import Callable
 
 from fastapi import Request, Response
@@ -36,7 +35,9 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # Only add HSTS in production/cloud environments with HTTPS
         lab_env: LabEnvironment = Settings.get_lab_environment()
         if lab_env == "ON_CLOUD":
-            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+            response.headers["Strict-Transport-Security"] = (
+                "max-age=31536000; includeSubDomains; preload"
+            )
 
         # X-Content-Type-Options - Prevent MIME type sniffing
         response.headers["X-Content-Type-Options"] = "nosniff"

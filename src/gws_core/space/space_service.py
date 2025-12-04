@@ -75,7 +75,10 @@ class SpaceService(SpaceServiceBase):
         route = "check-credentials" if for_login else "check-credentials-simple"
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/{route}")
         response = ExternalApiService.post(
-            space_api_url, credentials, headers=self._get_request_header(), raise_exception_if_error=True
+            space_api_url,
+            credentials,
+            headers=self._get_request_header(),
+            raise_exception_if_error=True,
         )
 
         return ExternalCheckCredentialResponse.from_json(response.json())
@@ -86,7 +89,9 @@ class SpaceService(SpaceServiceBase):
         and return true if ok
         """
         space_api_url: str = self._get_space_api_url("auth/external/check-2fa")
-        response = ExternalApiService.post(space_api_url, credentials, raise_exception_if_error=True)
+        response = ExternalApiService.post(
+            space_api_url, credentials, raise_exception_if_error=True
+        )
 
         return UserSpace.from_json(response.json())
 
@@ -99,21 +104,32 @@ class SpaceService(SpaceServiceBase):
         body = LabStartDTO(lab_config=lab_config)
 
         try:
-            ExternalApiService.put(space_api_url, body, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.put(
+                space_api_url, body, self._get_request_header(), raise_exception_if_error=True
+            )
 
         except BaseHTTPException as err:
-            BrickService.log_brick_error(SpaceService, f"Can't register lab start on space. Error : {err.detail}")
+            BrickService.log_brick_error(
+                SpaceService, f"Can't register lab start on space. Error : {err.detail}"
+            )
             return False
         return True
 
     #################################### SCENARIO ####################################
 
-    def save_scenario(self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO) -> SpaceHierarchyObjectDTO:
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/scenario")
+    def save_scenario(
+        self, folder_id: str, save_scenario_dto: SaveScenarioToSpaceDTO
+    ) -> SpaceHierarchyObjectDTO:
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/scenario"
+        )
 
         try:
             response = ExternalApiService.put(
-                space_api_url, save_scenario_dto, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                save_scenario_dto,
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return SpaceHierarchyObjectDTO.from_json(response.json())
         except Exception as err:
@@ -125,18 +141,24 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            ExternalApiService.delete(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.delete(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
 
         except Exception as err:
             self.handle_error(err, "delete the scenario in space")
 
-    def update_scenario_folder(self, current_folder_id: str, scenario_id: str, new_folder_id: str) -> None:
+    def update_scenario_folder(
+        self, current_folder_id: str, scenario_id: str, new_folder_id: str
+    ) -> None:
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{current_folder_id}/scenario/{scenario_id}/folder/{new_folder_id}"
         )
 
         try:
-            ExternalApiService.put(space_api_url, None, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.put(
+                space_api_url, None, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "update the scenario folder in space")
 
@@ -145,15 +167,21 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/scenario/sync")
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return SpaceSyncObjectDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "get scenario sync")
 
     #################################### NOTE ####################################
 
-    def save_note(self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData) -> SpaceHierarchyObjectDTO:
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2")
+    def save_note(
+        self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData
+    ) -> SpaceHierarchyObjectDTO:
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/v2"
+        )
 
         try:
             body = {"body": json.dumps(jsonable_encoder(note))}
@@ -169,9 +197,13 @@ class SpaceService(SpaceServiceBase):
             self.handle_error(err, "save the note in space")
 
     def delete_note(self, folder_id: str, note_id: str) -> None:
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/{note_id}")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/{note_id}"
+        )
         try:
-            ExternalApiService.delete(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.delete(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "delete the note in space")
 
@@ -181,7 +213,9 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            ExternalApiService.put(space_api_url, None, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.put(
+                space_api_url, None, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "update the note folder in space")
 
@@ -191,14 +225,18 @@ class SpaceService(SpaceServiceBase):
         new_content: RichTextDTO,
         old_modifications: RichTextModificationsDTO | None = None,
     ) -> RichTextModificationsDTO:
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/rich-text/compare")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/rich-text/compare"
+        )
         try:
             response = ExternalApiService.post(
                 space_api_url,
                 {
                     "oldContent": old_content.to_json_dict(),
                     "newContent": new_content.to_json_dict(),
-                    "oldModifications": old_modifications.to_json_dict() if old_modifications else None,
+                    "oldModifications": old_modifications.to_json_dict()
+                    if old_modifications
+                    else None,
                     "userId": CurrentUserService.get_current_user().id,
                 },
                 self._get_request_header(),
@@ -211,7 +249,9 @@ class SpaceService(SpaceServiceBase):
     def get_undo_content(
         self, content: RichTextDTO, modifications: RichTextModificationsDTO, modification_id: str
     ) -> RichTextDTO:
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/rich-text/previous-version")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/rich-text/previous-version"
+        )
         try:
             response = ExternalApiService.post(
                 space_api_url,
@@ -232,7 +272,9 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/note/sync")
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return SpaceSyncObjectDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "get note sync")
@@ -240,7 +282,11 @@ class SpaceService(SpaceServiceBase):
     #################################### DOCUMENT ####################################
 
     def upload_document(
-        self, parent_folder_id: str, file_path: str, override_mode: DocumentUploadOverrideMode, filename: str = None
+        self,
+        parent_folder_id: str,
+        file_path: str,
+        override_mode: DocumentUploadOverrideMode,
+        filename: str = None,
     ) -> SpaceHierarchyObjectDTO:
         """Upload a document to a folder in space
 
@@ -264,7 +310,10 @@ class SpaceService(SpaceServiceBase):
             form_data.add_file_from_path("file", file_path, filename)
 
             response = ExternalApiService.put_form_data(
-                space_api_url, form_data=form_data, headers=self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                form_data=form_data,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return SpaceHierarchyObjectDTO.from_json(response.json())
         except Exception as err:
@@ -287,7 +336,9 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
 
             return response.content
         except Exception as err:
@@ -303,11 +354,16 @@ class SpaceService(SpaceServiceBase):
         :return: the renamed document
         :rtype: SpaceDocumentDTO
         """
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}/rename")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}/rename"
+        )
 
         try:
             ExternalApiService.put(
-                space_api_url, {"name": name}, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                {"name": name},
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
         except Exception as err:
             self.handle_error(err, "rename document in space")
@@ -320,7 +376,9 @@ class SpaceService(SpaceServiceBase):
         :return: the deleted document hierarchy object
         :rtype: SpaceHierarchyObjectDTO
         """
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/document/{document_id}"
+        )
 
         try:
             response = ExternalApiService.delete(
@@ -332,7 +390,9 @@ class SpaceService(SpaceServiceBase):
 
     #################################### RESOURCE ####################################
 
-    def share_resource(self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO) -> SpaceHierarchyObjectDTO:
+    def share_resource(
+        self, folder_id: str, resource_dto: ShareResourceWithSpaceDTO
+    ) -> SpaceHierarchyObjectDTO:
         """Share a resource in a folder in space. Only the resource link is shared, not the resource itself.
         After this, the resource is available in the space folder if this lab is up and running.
 
@@ -345,11 +405,16 @@ class SpaceService(SpaceServiceBase):
         :rtype: _type_
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/resource")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/resource"
+        )
 
         try:
             response = ExternalApiService.put(
-                space_api_url, resource_dto, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                resource_dto,
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return SpaceHierarchyObjectDTO.from_json(response.json())
         except Exception as err:
@@ -364,10 +429,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: ExternalSpaceFolders
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/all-trees")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/all-trees"
+        )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
 
             # get response and parse it to a list of spaceFolder
             root_folders = ExternalSpaceFolder.from_json_list(response.json())
@@ -386,10 +455,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: ExternalSpaceFolder
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{id_}/root-tree")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{id_}/root-tree"
+        )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             # get response and parse it to a list of spaceFolder
             return ExternalSpaceFolder.from_json(response.json())
         except Exception as err:
@@ -409,13 +482,18 @@ class SpaceService(SpaceServiceBase):
 
         try:
             response = ExternalApiService.post(
-                space_api_url, folder.to_dto(), self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                folder.to_dto(),
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return ExternalSpaceFolder.from_json(response.json())
         except Exception as err:
             self.handle_error(err, "create root folder")
 
-    def create_child_folder(self, parent_id: str, folder: ExternalSpaceCreateFolder) -> ExternalSpaceFolder:
+    def create_child_folder(
+        self, parent_id: str, folder: ExternalSpaceCreateFolder
+    ) -> ExternalSpaceFolder:
         """Create a child folder in the lab space.
 
         :param parent_id: id of the parent folder
@@ -426,17 +504,24 @@ class SpaceService(SpaceServiceBase):
         :rtype: ExternalSpaceFolder
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{parent_id}")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{parent_id}"
+        )
 
         try:
             response = ExternalApiService.post(
-                space_api_url, folder.to_dto(), self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                folder.to_dto(),
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return ExternalSpaceFolder.from_json(response.json())
         except Exception as err:
             self.handle_error(err, "create child folder")
 
-    def update_folder(self, folder_id: str, folder: ExternalSpaceCreateFolder) -> ExternalSpaceFolder:
+    def update_folder(
+        self, folder_id: str, folder: ExternalSpaceCreateFolder
+    ) -> ExternalSpaceFolder:
         """Update a folder in the lab space.
 
         :param folder_id: id of the folder
@@ -447,18 +532,26 @@ class SpaceService(SpaceServiceBase):
         :rtype: ExternalSpaceFolder
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}"
+        )
 
         try:
             response = ExternalApiService.put(
-                space_api_url, folder.to_dto(), self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                folder.to_dto(),
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return ExternalSpaceFolder.from_json(response.json())
         except Exception as err:
             self.handle_error(err, "update folder")
 
     def share_root_folder(
-        self, root_folder_id: str, group_or_user_id: str, role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER
+        self,
+        root_folder_id: str,
+        group_or_user_id: str,
+        role: SpaceRootFolderUserRole = SpaceRootFolderUserRole.USER,
     ) -> list[SpaceFolderUser]:
         """Share a root folder with a group or a user
 
@@ -506,11 +599,15 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            ExternalApiService.delete(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.delete(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "unshare folder")
 
-    def update_share_folder(self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole) -> None:
+    def update_share_folder(
+        self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole
+    ) -> None:
         """Update the role of a user for a shared folder
 
         :param folder_id: id of the folder
@@ -526,11 +623,15 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            ExternalApiService.put(space_api_url, None, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.put(
+                space_api_url, None, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "update share folder role")
 
-    def update_folder_user_role(self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole) -> None:
+    def update_folder_user_role(
+        self, folder_id: str, user_id: str, role: SpaceRootFolderUserRole
+    ) -> None:
         """Update the role of a user for a folder. This is an alias for update_share_folder.
 
         :param folder_id: id of the folder
@@ -546,7 +647,9 @@ class SpaceService(SpaceServiceBase):
         )
 
         try:
-            ExternalApiService.put(space_api_url, None, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.put(
+                space_api_url, None, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "update folder user role")
 
@@ -559,7 +662,9 @@ class SpaceService(SpaceServiceBase):
         :rtype: ExternalSpaceFolder
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/lab/current")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{root_folder_id}/lab/current"
+        )
 
         try:
             response = ExternalApiService.put(
@@ -578,10 +683,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: List[UserSpace]
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/users")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/users"
+        )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return UserSpace.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "retrieve folder users")
@@ -593,10 +702,14 @@ class SpaceService(SpaceServiceBase):
         :type folder_id: str
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}"
+        )
 
         try:
-            ExternalApiService.delete(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            ExternalApiService.delete(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
         except Exception as err:
             self.handle_error(err, "delete folder")
 
@@ -607,10 +720,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: List[SpaceHierarchyObjectDTO]
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/folder/user/current")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/user/current"
+        )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return SpaceHierarchyObjectDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "retrieve folders for the lab")
@@ -640,7 +757,10 @@ class SpaceService(SpaceServiceBase):
             url_with_params = f"{space_api_url}?page={page}&size={size}"
 
             response = ExternalApiService.post(
-                url_with_params, search_params, self._get_request_header(), raise_exception_if_error=True
+                url_with_params,
+                search_params,
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
 
             # Parse the response using the base service helper method
@@ -670,7 +790,10 @@ class SpaceService(SpaceServiceBase):
         try:
             tags_dto = [tag.to_dto() for tag in tags]
             response = ExternalApiService.post(
-                space_api_url, {"tags": tags_dto}, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                {"tags": tags_dto},
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return TagHelper.tags_dict_to_list(response.json())
         except Exception as err:
@@ -695,7 +818,10 @@ class SpaceService(SpaceServiceBase):
         try:
             tags_dto = [tag.to_dto() for tag in tags]
             response = ExternalApiService.post(
-                space_api_url, {"tags": tags_dto}, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                {"tags": tags_dto},
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
             return TagHelper.tags_dict_to_list(response.json())
         except Exception as err:
@@ -717,7 +843,10 @@ class SpaceService(SpaceServiceBase):
         try:
             tags_dto = [tag.to_dto() for tag in tags]
             ExternalApiService.post(
-                space_api_url, {"tags": tags_dto}, self._get_request_header(), raise_exception_if_error=True
+                space_api_url,
+                {"tags": tags_dto},
+                self._get_request_header(),
+                raise_exception_if_error=True,
             )
         except Exception as err:
             self.handle_error(err, "delete tags on object")
@@ -734,7 +863,9 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/user")
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return UserFullDTO.from_json_list(response.json())
         except Exception as err:
             self.handle_error(err, "retrieve users for the lab")
@@ -751,7 +882,9 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/user/{user_id}")
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return UserFullDTO.from_json(response.json())
         except Exception as err:
             self.handle_error(err, "retrieve user info")
@@ -783,9 +916,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: Response
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-mails")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-mails"
+        )
         return ExternalApiService.post(
-            space_api_url, send_mail_to_mails_dto, self._get_request_header(), raise_exception_if_error=True
+            space_api_url,
+            send_mail_to_mails_dto,
+            self._get_request_header(),
+            raise_exception_if_error=True,
         )
 
     def send_notification(self, send_notification_dto: SpaceSendNotificationDTO) -> Response:
@@ -797,9 +935,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: Response
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/send-notification")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/send-notification"
+        )
         return ExternalApiService.post(
-            space_api_url, send_notification_dto, self._get_request_header(), raise_exception_if_error=True
+            space_api_url,
+            send_notification_dto,
+            self._get_request_header(),
+            raise_exception_if_error=True,
         )
 
     #################################### GROUPS ####################################
@@ -814,7 +957,9 @@ class SpaceService(SpaceServiceBase):
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/groups/all")
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             group_list = SpaceGroupDTO.from_json_list(response.json())
             return group_list
         except Exception as err:
@@ -829,10 +974,14 @@ class SpaceService(SpaceServiceBase):
         :rtype: str
         """
 
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/reflex-access-token")
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/reflex-access-token"
+        )
 
         try:
-            response = ExternalApiService.get(space_api_url, self._get_request_header(), raise_exception_if_error=True)
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
             return response.json().get("reflexAccessToken")
 
         except Exception as err:

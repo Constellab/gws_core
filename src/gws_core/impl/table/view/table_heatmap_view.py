@@ -1,5 +1,3 @@
-
-
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -51,19 +49,20 @@ class TableHeatmapView(BaseTableView):
     ```
     """
 
-    _specs = ConfigSpecs({
-        "serie": DictParam(default_value={}),
-    }).merge_specs(BaseTableView._2d_axis_labels_specs)
+    _specs = ConfigSpecs(
+        {
+            "serie": DictParam(default_value={}),
+        }
+    ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
     _type: ViewType = ViewType.HEATMAP
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        serie: Serie1d = Serie1d.from_dict(params.get('serie'))
+        serie: Serie1d = Serie1d.from_dict(params.get("serie"))
 
         table: Table
 
-        if serie.y.type == 'range':
-
+        if serie.y.type == "range":
             cell_range: CellRange = serie.y.selection[0]
             # extract a dataframe from the first selection of the range, ignore the rest
             table = self._table.select_by_coords(
@@ -85,5 +84,6 @@ class TableHeatmapView(BaseTableView):
         view.set_data(
             data=table.get_data(),
             rows_info=table.get_rows_info(),
-            columns_info=table.get_columns_info())
+            columns_info=table.get_columns_info(),
+        )
         return view.data_to_dict(params)

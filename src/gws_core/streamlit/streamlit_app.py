@@ -1,5 +1,3 @@
-
-
 import os
 
 from gws_core.apps.app_dto import AppType
@@ -22,9 +20,11 @@ class StreamlitApp(AppInstance):
 
     enable_debugger: bool = False
 
-    MAIN_FILE = 'main.py'
+    MAIN_FILE = "main.py"
 
-    MAIN_APP_FILE_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_streamlit_main_app')
+    MAIN_APP_FILE_FOLDER = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)), "_streamlit_main_app"
+    )
     NORMAL_APP_MAIN_FILE = "main_streamlit_app.py"
     ENV_APP_MAIN_FILE = "main_streamlit_app_env.py"
 
@@ -39,7 +39,7 @@ class StreamlitApp(AppInstance):
             raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
 
         # read the streamlit code from the file
-        with open(streamlit_app_code_path, 'r', encoding="utf-8") as file_path:
+        with open(streamlit_app_code_path, "r", encoding="utf-8") as file_path:
             self.streamlit_code = file_path.read()
 
     def generate_app(self, working_dir: str) -> None:
@@ -52,7 +52,9 @@ class StreamlitApp(AppInstance):
             self._generate_config_dev_mode()
         else:
             if self.app_folder_path is None and self.streamlit_code is None:
-                raise Exception("streamlit_code or streamlit_folder must be set before starting the app")
+                raise Exception(
+                    "streamlit_code or streamlit_folder must be set before starting the app"
+                )
 
             app_dir: str = None
             if self.app_folder_path is not None:
@@ -61,7 +63,7 @@ class StreamlitApp(AppInstance):
                 # write the main app code into the config dir
                 main_app_path = os.path.join(app_config_dir, self.MAIN_FILE)
                 Logger.debug("Writing streamlit app to " + main_app_path)
-                with open(main_app_path, 'w', encoding="utf-8") as file_path:
+                with open(main_app_path, "w", encoding="utf-8") as file_path:
                     file_path.write(self.streamlit_code)
 
                 app_dir = app_config_dir
@@ -76,9 +78,9 @@ class StreamlitApp(AppInstance):
 
     def get_app_process_hash(self) -> str:
         if isinstance(self._shell_proxy, BaseEnvShell):
-            return 'STREAMLIT_' + self._shell_proxy.env_hash
+            return "STREAMLIT_" + self._shell_proxy.env_hash
         # all non-virtual env streamlit apps share the same process hash
-        return 'STREAMLIT_NORMAL'
+        return "STREAMLIT_NORMAL"
 
     def get_app_type(self) -> AppType:
         """Get the type of the app."""

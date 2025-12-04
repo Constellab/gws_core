@@ -8,11 +8,9 @@ import reflex as rx
 from gws_reflex_base import ReflexMainStateBase
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from gws_reflex_base import get_theme
-from reflex.app import (default_backend_exception_handler,
-                        default_frontend_exception_handler)
+from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
 
-from gws_core.core.exception.exceptions.base_http_exception import \
-    BaseHTTPException
+from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.utils.logger import Logger
 
 
@@ -36,28 +34,23 @@ def default_gws_backend_handler(
     :rtype: Optional[rx.event.EventSpec]
     """
     if isinstance(exception, BaseHTTPException):
-        return rx.toast.error(
-            exception.get_detail_with_args(),
-            position="top-center"
-        )
+        return rx.toast.error(exception.get_detail_with_args(), position="top-center")
 
     Logger.log_exception_stack_trace(exception)
 
     if ReflexMainStateBase.is_dev_mode():
         # In dev mode, show the full error message
         return rx.toast.error(
-            f"An unexpected error occurred: {str(exception)}",
-            position="top-center"
+            f"An unexpected error occurred: {str(exception)}", position="top-center"
         )
 
     # In production mode, show a generic error message
-    return rx.toast.error(
-        "An unexpected error occurred.",
-        position="top-center"
-    )
+    return rx.toast.error("An unexpected error occurred.", position="top-center")
 
 
-def register_gws_reflex_app(app: Optional[rx.App] = None, add_unauthorized_page: bool = True) -> rx.App:
+def register_gws_reflex_app(
+    app: Optional[rx.App] = None, add_unauthorized_page: bool = True
+) -> rx.App:
     """
     Apply GWS standard configuration to a Reflex app.
 
@@ -110,10 +103,16 @@ def register_gws_reflex_app(app: Optional[rx.App] = None, add_unauthorized_page:
 
     # Check if using default exception handlers (compare functions, not instances)
 
-    if not app.frontend_exception_handler or app.frontend_exception_handler == default_frontend_exception_handler:
+    if (
+        not app.frontend_exception_handler
+        or app.frontend_exception_handler == default_frontend_exception_handler
+    ):
         app.frontend_exception_handler = default_gws_frontend_handler
 
-    if not app.backend_exception_handler or app.backend_exception_handler == default_backend_exception_handler:
+    if (
+        not app.backend_exception_handler
+        or app.backend_exception_handler == default_backend_exception_handler
+    ):
         app.backend_exception_handler = default_gws_backend_handler
 
     # Add unauthorized page if requested

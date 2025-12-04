@@ -10,7 +10,9 @@ from gws_core.manage import AppManager
 from gws_core.user.authorization_service import AuthorizationService
 from typing_extensions import Annotated
 
-app = typer.Typer(help="Manage server operations - run server, execute tests, run scenarios and processes")
+app = typer.Typer(
+    help="Manage server operations - run server, execute tests, run scenarios and processes"
+)
 
 
 class LogLevel(str, Enum):
@@ -18,41 +20,66 @@ class LogLevel(str, Enum):
     DEBUG = "DEBUG"
     ERROR = "ERROR"
 
-MainSettingFilePathAnnotation = Annotated[str, typer.Option('--settings-path', help="Path to the main settings file.")]
-ShowSqlAnnotation = Annotated[bool, typer.Option("--show-sql", help="Log sql queries in the console.", is_flag=True)]
+
+MainSettingFilePathAnnotation = Annotated[
+    str, typer.Option("--settings-path", help="Path to the main settings file.")
+]
+ShowSqlAnnotation = Annotated[
+    bool, typer.Option("--show-sql", help="Log sql queries in the console.", is_flag=True)
+]
 IsTestAnnotation = Annotated[bool, typer.Option("--test", help="Run in test mode.", is_flag=True)]
 
 
 @app.command("run", help="Start the server")
 def run(
-        ctx: typer.Context,
-        port: Annotated[str, typer.Option(help="Server port.")] = "3000",
-        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
-        show_sql: ShowSqlAnnotation = False,
-        allow_dev_app_connections: Annotated[bool, typer.Option("--allow-dev-app-connections",
-                                                                help="Allow connections to the api from the apps running in dev mode.", is_flag=True)] = False):
-
+    ctx: typer.Context,
+    port: Annotated[str, typer.Option(help="Server port.")] = "3000",
+    main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
+    show_sql: ShowSqlAnnotation = False,
+    allow_dev_app_connections: Annotated[
+        bool,
+        typer.Option(
+            "--allow-dev-app-connections",
+            help="Allow connections to the api from the apps running in dev mode.",
+            is_flag=True,
+        ),
+    ] = False,
+):
     if allow_dev_app_connections:
         if Settings.is_prod_mode():
             print("Error: --allow-dev-app-connections cannot be used in production mode.")
             raise typer.Exit(code=1)
-        Logger.warning(f"Dev mode app connections are allowed. Only use if you are working on apps.")
+        Logger.warning(
+            f"Dev mode app connections are allowed. Only use if you are working on apps."
+        )
         AuthorizationService.allow_dev_app_connections = True
 
     AppManager.start_app(
         main_setting_file_path=main_setting_file_path,
         port=port,
         log_level=CLIUtils.get_global_option_log_level(ctx),
-        show_sql=show_sql)
+        show_sql=show_sql,
+    )
 
 
 @app.command("test", help="Run tests for a specific brick or all bricks")
 def test(
-        ctx: typer.Context,
-        test_name: Annotated[List[str], typer.Argument(help="The name test file to launch (regular expression). Enter 'all' to launch all the tests.")],
-        brick_name: Annotated[str, typer.Option("--brick-name", help="Name of the brick to test. If not provided, use brick of current folder.")] = None,
-        show_sql: ShowSqlAnnotation = False):
-
+    ctx: typer.Context,
+    test_name: Annotated[
+        List[str],
+        typer.Argument(
+            help="The name test file to launch (regular expression). Enter 'all' to launch all the tests."
+        ),
+    ],
+    brick_name: Annotated[
+        str,
+        typer.Option(
+            "--brick-name",
+            help="Name of the brick to test. If not provided, use brick of current folder.",
+        ),
+    ] = None,
+    show_sql: ShowSqlAnnotation = False,
+):
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)
@@ -65,36 +92,46 @@ def test(
         brick_dir=brick_dir,
         tests=test_name,
         log_level=CLIUtils.get_global_option_log_level(ctx),
-        show_sql=show_sql)
+        show_sql=show_sql,
+    )
 
 
 @app.command("run-scenario", help="Execute a specific scenario by ID")
 def run_scenario(
-        ctx: typer.Context,
-        scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
-        user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the scenario.")],
-        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
-        show_sql: ShowSqlAnnotation = False,
-        is_test: IsTestAnnotation = False):
+    ctx: typer.Context,
+    scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
+    user_id: Annotated[
+        str, typer.Option("--user-id", help="Id of the user that run the scenario.")
+    ],
+    main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
+    show_sql: ShowSqlAnnotation = False,
+    is_test: IsTestAnnotation = False,
+):
     AppManager.run_scenario(
         main_setting_file_path=main_setting_file_path,
         scenario_id=scenario_id,
         user_id=user_id,
         log_level=CLIUtils.get_global_option_log_level(ctx),
         show_sql=show_sql,
-        is_test=is_test)
+        is_test=is_test,
+    )
 
 
 @app.command("run-process", help="Execute a specific process within a scenario")
 def run_process(
-        ctx: typer.Context,
-        scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
-        protocol_model_id: Annotated[str, typer.Option("--protocol-model-id", help="Id of the protocol model.")],
-        process_instance_name: Annotated[str, typer.Option("--process-instance-name", help="Name of the process instance.")],
-        user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the process.")],
-        main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
-        show_sql: ShowSqlAnnotation = False,
-        is_test: IsTestAnnotation = False):
+    ctx: typer.Context,
+    scenario_id: Annotated[str, typer.Option("--scenario-id", help="Id of the scenario to run.")],
+    protocol_model_id: Annotated[
+        str, typer.Option("--protocol-model-id", help="Id of the protocol model.")
+    ],
+    process_instance_name: Annotated[
+        str, typer.Option("--process-instance-name", help="Name of the process instance.")
+    ],
+    user_id: Annotated[str, typer.Option("--user-id", help="Id of the user that run the process.")],
+    main_setting_file_path: MainSettingFilePathAnnotation = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
+    show_sql: ShowSqlAnnotation = False,
+    is_test: IsTestAnnotation = False,
+):
     AppManager.run_process(
         main_setting_file_path=main_setting_file_path,
         scenario_id=scenario_id,
@@ -103,4 +140,5 @@ def run_process(
         user_id=user_id,
         log_level=CLIUtils.get_global_option_log_level(ctx),
         show_sql=show_sql,
-        is_test=is_test)
+        is_test=is_test,
+    )

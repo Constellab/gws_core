@@ -1,4 +1,3 @@
-
 from typing import List, Optional
 
 import botocore.auth
@@ -6,13 +5,11 @@ import botocore.credentials
 from botocore.awsrequest import AWSRequest
 from fastapi.requests import Request
 
-from gws_core.core.exception.exceptions.forbidden_exception import \
-    ForbiddenException
+from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.credentials.credentials_service import CredentialsService
-from gws_core.credentials.credentials_type import (CredentialsDataS3,
-                                                   CredentialsDataS3LabServer)
+from gws_core.credentials.credentials_type import CredentialsDataS3, CredentialsDataS3LabServer
 from gws_core.impl.s3.abstract_s3_service import AbstractS3Service
 from gws_core.impl.s3.datahub_s3_server_service import DataHubS3ServerService
 from gws_core.impl.s3.local_s3_server_service import LocalS3ServerService
@@ -28,8 +25,7 @@ class S3AuthHeader(BaseModelDTO):
 
 
 class S3ServerAuth:
-    """Class to manage auth for s3 server requests
-    """
+    """Class to manage auth for s3 server requests"""
 
     @classmethod
     def check_s3_server_auth(cls, request: Request, bucket: str) -> AbstractS3Service:
@@ -37,7 +33,7 @@ class S3ServerAuth:
         base on AWS Signature Version 4
         """
 
-        authorization_header = request.headers.get('Authorization')
+        authorization_header = request.headers.get("Authorization")
 
         if not authorization_header:
             raise ForbiddenException("Authorization header is missing")
@@ -53,14 +49,17 @@ class S3ServerAuth:
             raise ForbiddenException("Access key id is missing")
 
         s3_credentials = CredentialsService.get_s3_credentials_data_by_access_key(
-            s3_header.access_key_id)
+            s3_header.access_key_id
+        )
 
         if not s3_credentials:
             raise ForbiddenException("Access denied")
 
         expected_signature: str
         try:
-            expected_signature = cls._build_signature(request, s3_header, s3_credentials.secret_access_key)
+            expected_signature = cls._build_signature(
+                request, s3_header, s3_credentials.secret_access_key
+            )
         except Exception as err:
             Logger.error(f"Error while building signature: {err}")
             raise ForbiddenException("Signature is invalid")
@@ -97,13 +96,12 @@ class S3ServerAuth:
             region_name=region,
             service_name=service,
             signature=signature,
-            sign_headers=sign_headers
+            sign_headers=sign_headers,
         )
 
     @classmethod
     def _build_signature(cls, request: Request, header: S3AuthHeader, secret_key: str) -> str:
-        """Build the signature for the request to check if it is valid
-        """
+        """Build the signature for the request to check if it is valid"""
         # Create a botocore.auth.HmacV1 instance
         # Create SigV4Auth instance
         credentials = botocore.credentials.Credentials(header.access_key_id, secret_key)
@@ -116,9 +114,13 @@ class S3ServerAuth:
                 simulated_headers[header_key] = request.headers.get(header_key)
 
         # simulate a request to generate the signature
-        simulated_request = AWSRequest(method=request.method, url=str(request.url), headers=simulated_headers, data=b'')
-        simulated_request.context["payload_signing_enabled"] = True  # payload signing is not supported
-        simulated_request.context["timestamp"] = request.headers.get('x-amz-date')
+        simulated_request = AWSRequest(
+            method=request.method, url=str(request.url), headers=simulated_headers, data=b""
+        )
+        simulated_request.context["payload_signing_enabled"] = (
+            True  # payload signing is not supported
+        )
+        simulated_request.context["timestamp"] = request.headers.get("x-amz-date")
 
         # Generate the canonical request
         canonical_request = auth.canonical_request(simulated_request)

@@ -1,5 +1,3 @@
-
-
 from typing import Optional
 
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO

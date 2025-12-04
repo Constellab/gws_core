@@ -1,17 +1,15 @@
-
-
 from typing import Any, List, Optional
 
 from numpy import inf, isnan
 
 
-class NumericHelper():
-    """Helper to manipulate numerics
-    """
+class NumericHelper:
+    """Helper to manipulate numerics"""
 
     @staticmethod
-    def list_2d_to_float(list_2d: List[List[Any]],
-                         remove_none: bool = False, default_value: Any = None) -> List[List[Optional[float]]]:
+    def list_2d_to_float(
+        list_2d: List[List[Any]], remove_none: bool = False, default_value: Any = None
+    ) -> List[List[Optional[float]]]:
         """Convert a list of list of any to list of list of float. Replace infinity by default_value
 
         :param list_2d: _description_
@@ -25,7 +23,9 @@ class NumericHelper():
         return [NumericHelper.list_to_float(val, remove_none, default_value) for val in list_2d]
 
     @staticmethod
-    def list_to_float(list_: List[Any], remove_none: bool = False, default_value: Any = None) -> List[Optional[float]]:
+    def list_to_float(
+        list_: List[Any], remove_none: bool = False, default_value: Any = None
+    ) -> List[Optional[float]]:
         """Convert a list of any to list of float. Replace infinity by default_value
 
         :param list_: _description_
@@ -44,8 +44,7 @@ class NumericHelper():
 
     @staticmethod
     def to_float(value: Any, default_value: Any = None) -> Optional[float]:
-        """Convert any to float. If NaN, inf or not convertible to float, returns default_value
-        """
+        """Convert any to float. If NaN, inf or not convertible to float, returns default_value"""
 
         if value == inf or value == -inf:
             return default_value
@@ -77,8 +76,7 @@ class NumericHelper():
 
     @staticmethod
     def to_int(value: Any, default_value: Any = None) -> Optional[int]:
-        """Convert any to int. If not convertible to int or NaN, returns None
-        """
+        """Convert any to int. If not convertible to int or NaN, returns None"""
 
         try:
             result = int(value)
@@ -90,8 +88,7 @@ class NumericHelper():
 
     @staticmethod
     def is_int(value: Any) -> bool:
-        """Check if value is int
-        """
+        """Check if value is int"""
         try:
             int(value)
             return True
@@ -100,8 +97,7 @@ class NumericHelper():
 
     @staticmethod
     def is_float(value: Any) -> bool:
-        """Check if value is float
-        """
+        """Check if value is float"""
         try:
             float(value)
             return True

@@ -1,10 +1,17 @@
-
-
 import os
 
-from gws_core import (BaseTestCase, ConfigParams, File, FsNodeService,
-                      OutputSpec, OutputSpecs, Task, TaskInputs, TaskOutputs,
-                      task_decorator)
+from gws_core import (
+    BaseTestCase,
+    ConfigParams,
+    File,
+    FsNodeService,
+    OutputSpec,
+    OutputSpecs,
+    Task,
+    TaskInputs,
+    TaskOutputs,
+    task_decorator,
+)
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -17,24 +24,25 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 
 @task_decorator("CreateFileTest")
 class CreateFileTest(Task):
-    """ Simple process that create a file anywhere on the server
-    """
-    output_specs = OutputSpecs({'file': OutputSpec(File)})
+    """Simple process that create a file anywhere on the server"""
+
+    output_specs = OutputSpecs({"file": OutputSpec(File)})
     config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         file = File()
-        file.path = os.path.join(Settings.get_instance().get_data_dir(), 'test_file.txt')
-        file.write('Hello')
-        return {'file': file}
+        file.path = os.path.join(Settings.get_instance().get_data_dir(), "test_file.txt")
+        file.write("Hello")
+        return {"file": file}
 
 
 # test_file
 class TestFile(BaseTestCase):
-
     def test_file_attr(self):
         tmp_dir = Settings.make_temp_dir()
-        temp_file = FileHelper.create_empty_file_if_not_exist(os.path.join(tmp_dir, 'test_attr.txt'))
+        temp_file = FileHelper.create_empty_file_if_not_exist(
+            os.path.join(tmp_dir, "test_attr.txt")
+        )
         file: File = File(temp_file)
         self.assertEqual(file.get_default_name(), "test_attr.txt")
         self.assertEqual(file.get_base_name(), "test_attr.txt")
@@ -43,8 +51,8 @@ class TestFile(BaseTestCase):
 
     def test_file(self):
         temp_dir = Settings.make_temp_dir()
-        file_path = os.path.join(temp_dir, 'test_file.txt')
-        open(file_path, 'a', encoding='utf-8').close()
+        file_path = os.path.join(temp_dir, "test_file.txt")
+        open(file_path, "a", encoding="utf-8").close()
 
         file_1: File = File(file_path)
         file_model: ResourceModel = FsNodeService.create_fs_node_model(fs_node=file_1)
@@ -67,22 +75,21 @@ class TestFile(BaseTestCase):
         self.assertEqual(text, "Hi.\nMy name is John")
 
     def test_process_file(self):
-        """Test that a generated file of a task is moved to file store and check content
-        """
+        """Test that a generated file of a task is moved to file store and check content"""
         scenario: ScenarioProxy = ScenarioProxy()
-        scenario.get_protocol().add_process(CreateFileTest, 'create_file')
+        scenario.get_protocol().add_process(CreateFileTest, "create_file")
 
         scenario.run()
 
-        process: ProcessProxy = scenario.get_protocol().get_process('create_file')
-        file: File = process.get_output('file')
+        process: ProcessProxy = scenario.get_protocol().get_process("create_file")
+        file: File = process.get_output("file")
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         self.assertTrue(file_store.node_exists(file))
-        self.assertEqual(file.read(), 'Hello')
+        self.assertEqual(file.read(), "Hello")
 
         # Check that the file model is saved and correct
-        file_model: ResourceModel = process._process_model.out_port('file').get_resource_model()
+        file_model: ResourceModel = process._process_model.out_port("file").get_resource_model()
         self.assertTrue(file_model.is_saved())
         self.assertEqual(file.path, file_model.fs_node_model.path)
 
@@ -98,8 +105,10 @@ class TestFile(BaseTestCase):
 
         # create a file in the store
         temp_dir = Settings.make_temp_dir()
-        file_name = 'to_delete.txt'
-        file_path = str(FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, file_name)))
+        file_name = "to_delete.txt"
+        file_path = str(
+            FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, file_name))
+        )
         resource_to_delete = FsNodeService.create_fs_node_model(File(file_path))
 
         file_store: FileStore = LocalFileStore.get_default_instance()

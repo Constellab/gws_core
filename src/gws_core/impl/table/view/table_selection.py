@@ -1,9 +1,7 @@
-
-
 from typing import Any, Dict, List, Literal, Optional, Union
 
 
-class CellCoord():
+class CellCoord:
     row: int
     column: int
 
@@ -12,11 +10,11 @@ class CellCoord():
         self.column = column
 
     @staticmethod
-    def from_dict(d: Dict[str, Any]) -> 'CellCoord':
-        return CellCoord(d['row'], d['column'])
+    def from_dict(d: Dict[str, Any]) -> "CellCoord":
+        return CellCoord(d["row"], d["column"])
 
 
-class CellRange():
+class CellRange:
     _from: CellCoord
     _to: CellCoord
 
@@ -33,41 +31,43 @@ class CellRange():
     def is_single_column(self) -> bool:
         return self._from.column == self._to.column
 
-    def is_same_rows(self, other: 'CellRange') -> bool:
-        """Check that two cell ranges have the same rows
-        """
+    def is_same_rows(self, other: "CellRange") -> bool:
+        """Check that two cell ranges have the same rows"""
         return self._from.row == other._from.row and self._to.row == other._to.row
 
     @staticmethod
-    def from_dict(dict_: Dict[str, Any]) -> 'CellRange':
-        return CellRange(CellCoord.from_dict(dict_['from']), CellCoord.from_dict(dict_['to']))
+    def from_dict(dict_: Dict[str, Any]) -> "CellRange":
+        return CellRange(CellCoord.from_dict(dict_["from"]), CellCoord.from_dict(dict_["to"]))
 
     @staticmethod
-    def from_list(list_: List[Dict[str, Any]]) -> List['CellRange']:
+    def from_list(list_: List[Dict[str, Any]]) -> List["CellRange"]:
         return [CellRange.from_dict(s) for s in list_]
 
 
-class TableSelection():
+class TableSelection:
     """object that represent a TableSelection that can be a range or columns selection
 
     :param TypedDict: _description_
     :type TypedDict: _type_
     """
-    type: Literal['range', 'columns']
+
+    type: Literal["range", "columns"]
     selection: Union[List[CellRange], List[str]]
 
-    def __init__(self, type_: Literal['range', 'columns'], selection: Union[List[CellRange], List[str]]) -> None:
+    def __init__(
+        self, type_: Literal["range", "columns"], selection: Union[List[CellRange], List[str]]
+    ) -> None:
         self.type = type_
         self.selection = selection
 
     def is_range_selection(self) -> bool:
-        return self.type == 'range'
+        return self.type == "range"
 
     def is_column_selection(self) -> bool:
-        return self.type == 'columns'
+        return self.type == "columns"
 
     def is_single_column(self) -> bool:
-        if self.type == 'columns':
+        if self.type == "columns":
             return len(self.selection) == 1
         else:
             ranges: List[CellRange] = self.selection
@@ -86,8 +86,8 @@ class TableSelection():
                         return False
             return True
 
-    def is_same_row_selection(self, other: 'TableSelection') -> bool:
-        """Method to check if the selection has the same row selections as another selection """
+    def is_same_row_selection(self, other: "TableSelection") -> bool:
+        """Method to check if the selection has the same row selections as another selection"""
         if self.type != other.type:
             return False
 
@@ -115,20 +115,20 @@ class TableSelection():
         :return: _description_
         :rtype: Optional[str]
         """
-        if self.type == 'columns':
-            return ' '.join(self.selection)
+        if self.type == "columns":
+            return " ".join(self.selection)
         else:
             return None
 
     @staticmethod
-    def from_dict(d: Dict[str, Any]) -> 'TableSelection':
-        if d['type'] == 'range':
-            return TableSelection('range', CellRange.from_list(d['selection']))
+    def from_dict(d: Dict[str, Any]) -> "TableSelection":
+        if d["type"] == "range":
+            return TableSelection("range", CellRange.from_list(d["selection"]))
         else:
-            return TableSelection('columns', d['selection'])
+            return TableSelection("columns", d["selection"])
 
 
-class Serie1d():
+class Serie1d:
     name: str
     y: TableSelection
 
@@ -146,11 +146,11 @@ class Serie1d():
         return self.y.get_name()
 
     @staticmethod
-    def from_dict(dict_: Dict[str, Any]) -> 'Serie1d':
-        return Serie1d(dict_['name'], TableSelection.from_dict(dict_['y']))
+    def from_dict(dict_: Dict[str, Any]) -> "Serie1d":
+        return Serie1d(dict_["name"], TableSelection.from_dict(dict_["y"]))
 
     @staticmethod
-    def from_list(list_: List[Dict[str, Any]]) -> List['Serie1d']:
+    def from_list(list_: List[Dict[str, Any]]) -> List["Serie1d"]:
         return [Serie1d.from_dict(d) for d in list_]
 
 
@@ -165,19 +165,20 @@ class Serie2d(Serie1d):
         return self.x.get_name() if self.x else None
 
     @staticmethod
-    def from_dict(dict_: Dict[str, Any]) -> 'Serie2d':
+    def from_dict(dict_: Dict[str, Any]) -> "Serie2d":
         x: TableSelection = None
-        if 'x' in dict_ and dict_['x'] is not None:
-            x = TableSelection.from_dict(dict_['x'])
-        return Serie2d(dict_['name'], TableSelection.from_dict(dict_['y']), x)
+        if "x" in dict_ and dict_["x"] is not None:
+            x = TableSelection.from_dict(dict_["x"])
+        return Serie2d(dict_["name"], TableSelection.from_dict(dict_["y"]), x)
 
     @staticmethod
-    def from_list(list_: List[Dict[str, Any]]) -> List['Serie2d']:
+    def from_list(list_: List[Dict[str, Any]]) -> List["Serie2d"]:
         return [Serie2d.from_dict(d) for d in list_]
 
 
-class Serie1dList():
+class Serie1dList:
     """object that represent a list of Serie1d"""
+
     series: List[Serie1d]
 
     def __init__(self, series: List[Serie1d]) -> None:
@@ -202,5 +203,5 @@ class Serie1dList():
         return len(self.series)
 
     @staticmethod
-    def from_list(list_: List[Dict[str, Any]]) -> 'Serie1dList':
+    def from_list(list_: List[Dict[str, Any]]) -> "Serie1dList":
         return Serie1dList(Serie1d.from_list(list_))

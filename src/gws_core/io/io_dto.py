@@ -1,5 +1,3 @@
-
-
 from typing import Dict, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -14,5 +12,5 @@ class PortDTO(BaseModelDTO):
 
 class IODTO(BaseModelDTO):
     ports: Dict[str, PortDTO] = {}
-    type: IOSpecsType = 'normal'
+    type: IOSpecsType = "normal"
     additional_info: Optional[dict] = None

@@ -1,15 +1,11 @@
-
-
 from typing import Any, Dict, List
 
-from gws_core.space.space_dto import (SendScenarioFinishMailData,
-                                      SpaceSendMailToUsersDTO)
+from gws_core.space.space_dto import SendScenarioFinishMailData, SpaceSendMailToUsersDTO
 from gws_core.space.space_service import SpaceService
 from gws_core.user.current_user_service import CurrentUserService
 
 
 class MailService:
-
     @classmethod
     def send_mail_to_current_user(cls, mail_content: str, subject: str) -> bool:
         """Send a email to the current connected user (or user that is running the scenario)
@@ -21,17 +17,14 @@ class MailService:
         :return: _description_
         :rtype: bool
         """
-        data = {
-            'content': mail_content
-        }
+        data = {"content": mail_content}
 
         user_id = CurrentUserService.get_and_check_current_user().id
 
         return cls._send_mail([user_id], subject, "generic", data)
 
     @classmethod
-    def send_mail(cls, receivers_ids: List[str],
-                  mail_content: str, subject: str = None) -> bool:
+    def send_mail(cls, receivers_ids: List[str], mail_content: str, subject: str = None) -> bool:
         """Send a email to 1 or multiple users
 
         :param mail_content: content of the mail (supports HTML)
@@ -41,9 +34,7 @@ class MailService:
         :return: _description_
         :rtype: bool
         """
-        data = {
-            'content': mail_content
-        }
+        data = {"content": mail_content}
 
         subject = f"Constellab - {subject}"
 
@@ -51,8 +42,12 @@ class MailService:
 
     @classmethod
     def _send_mail(
-            cls, receivers_ids: List[str],
-            mail_template: str, subject: str = None, data: Dict[str, Any] = None) -> bool:
+        cls,
+        receivers_ids: List[str],
+        mail_template: str,
+        subject: str = None,
+        data: Dict[str, Any] = None,
+    ) -> bool:
         """Send an email using Space API. If success, return True, else raise an exception
 
         :param receivers_ids: list of user ids to send the email to
@@ -67,10 +62,7 @@ class MailService:
         :rtype: bool
         """
         mail_dto = SpaceSendMailToUsersDTO(
-            receiver_ids=receivers_ids,
-            mail_template=mail_template,
-            data=data,
-            subject=subject
+            receiver_ids=receivers_ids, mail_template=mail_template, data=data, subject=subject
         )
 
         SpaceService.get_instance().send_mail(mail_dto)
@@ -78,7 +70,9 @@ class MailService:
         return True
 
     @classmethod
-    def send_scenario_finished_mail(cls, user_id: str, scenario: SendScenarioFinishMailData) -> bool:
-        return cls._send_mail(receivers_ids=[user_id], mail_template="scenario-finished", data={
-            "scenario": scenario
-        })
+    def send_scenario_finished_mail(
+        cls, user_id: str, scenario: SendScenarioFinishMailData
+    ) -> bool:
+        return cls._send_mail(
+            receivers_ids=[user_id], mail_template="scenario-finished", data={"scenario": scenario}
+        )

@@ -1,37 +1,35 @@
-
-
 from unittest import TestCase
 
 from pandas import DataFrame
 
 from gws_core import Table, TableScalerHelper
-from gws_core.impl.table.helper.dataframe_scaler_helper import \
-    DataframeScalerHelper
+from gws_core.impl.table.helper.dataframe_scaler_helper import DataframeScalerHelper
 
 
 # test_table_scaler
 class TestTableScaler(TestCase):
-
     def test_df_scale(self):
         # Test log 2
         df = DataFrame({"A": [1, 2], "B": [32, 16]})
         expected_df = DataFrame({"A": [0.0, 1.0], "B": [5.0, 4.0]})
 
-        result = DataframeScalerHelper.scale(df, 'log2')
+        result = DataframeScalerHelper.scale(df, "log2")
         self.assertTrue(result.equals(expected_df))
 
         # Test log 10
         df = DataFrame({"A": [1, 10], "B": [1000, 100]})
         expected_df = DataFrame({"A": [0.0, 1.0], "B": [3.0, 2.0]})
 
-        result = DataframeScalerHelper.scale(df, 'log10')
+        result = DataframeScalerHelper.scale(df, "log10")
         self.assertTrue(result.equals(expected_df))
 
         # Test log
         df = DataFrame({"A": [1, 10], "B": [1000, 100]})
-        expected_df = DataFrame({"A": [0.0, 2.302585092994046], "B": [6.907755278982137, 4.605170185988092]})
+        expected_df = DataFrame(
+            {"A": [0.0, 2.302585092994046], "B": [6.907755278982137, 4.605170185988092]}
+        )
 
-        result = DataframeScalerHelper.scale(df, 'log')
+        result = DataframeScalerHelper.scale(df, "log")
         self.assertTrue(result.equals(expected_df))
 
     def test_df_scale_by_columns(self):

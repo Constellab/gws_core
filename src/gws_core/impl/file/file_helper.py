@@ -1,5 +1,3 @@
-
-
 import mimetypes
 import os
 import shutil
@@ -13,7 +11,7 @@ from fastapi.responses import FileResponse
 PathType = Union[str, Path]
 
 
-class FileHelper():
+class FileHelper:
     """
     Class containing only classmethod to simplify file management
     """
@@ -68,7 +66,7 @@ class FileHelper():
         """
         extension = cls.clean_extension(cls.get_path(path).suffix)
 
-        if extension == '':
+        if extension == "":
             return None
         return extension
 
@@ -85,7 +83,7 @@ class FileHelper():
         if extension is None:
             return None
 
-        return sub(r'^\.', '', extension)
+        return sub(r"^\.", "", extension)
 
     @classmethod
     def get_name(cls, path: PathType):
@@ -193,18 +191,50 @@ class FileHelper():
 
     @classmethod
     def is_image(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["jpg", "jpeg", "png", "gif", "bmp", "tiff",
-                                           "tif", "svg", "svgz", "heic", "heif", "heics",
-                                           "heifs", "jp2", "j2k", "jpf", "jpx", "jpm", "mj2",
-                                           "jfif", "webp", "avif", "apng", "ico"]
+        return cls.get_extension(path) in [
+            "jpg",
+            "jpeg",
+            "png",
+            "gif",
+            "bmp",
+            "tiff",
+            "tif",
+            "svg",
+            "svgz",
+            "heic",
+            "heif",
+            "heics",
+            "heifs",
+            "jp2",
+            "j2k",
+            "jpf",
+            "jpx",
+            "jpm",
+            "mj2",
+            "jfif",
+            "webp",
+            "avif",
+            "apng",
+            "ico",
+        ]
 
     @classmethod
     def is_audio(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'aiff', 'alac']
+        return cls.get_extension(path) in [
+            "mp3",
+            "wav",
+            "flac",
+            "aac",
+            "ogg",
+            "wma",
+            "m4a",
+            "aiff",
+            "alac",
+        ]
 
     @classmethod
     def is_video(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm']
+        return cls.get_extension(path) in ["mp4", "mkv", "avi", "mov", "wmv", "flv", "webm"]
 
     @classmethod
     def is_file(cls, path: PathType) -> bool:
@@ -220,31 +250,31 @@ class FileHelper():
             return None
 
         if cls.is_dir(path):
-            return 'application/x-directory'
+            return "application/x-directory"
         ext: str = cls.get_extension(path)
         if ext:
             # specific case not handled by mimetypes
             custom_mimes = {
-                'jfif': 'image/jpeg',
+                "jfif": "image/jpeg",
                 # Office documents
-                'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-                'doc': 'application/msword',
-                'xls': 'application/vnd.ms-excel',
-                'ppt': 'application/vnd.ms-powerpoint',
-                'odt': 'application/vnd.oasis.opendocument.text',
-                'ods': 'application/vnd.oasis.opendocument.spreadsheet',
-                'odp': 'application/vnd.oasis.opendocument.presentation',
-                'rtf': 'application/rtf'
+                "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+                "doc": "application/msword",
+                "xls": "application/vnd.ms-excel",
+                "ppt": "application/vnd.ms-powerpoint",
+                "odt": "application/vnd.oasis.opendocument.text",
+                "ods": "application/vnd.oasis.opendocument.spreadsheet",
+                "odp": "application/vnd.oasis.opendocument.presentation",
+                "rtf": "application/rtf",
             }
 
             if ext in custom_mimes:
                 return custom_mimes[ext]
 
-            return mimetypes.types_map.get('.' + ext, 'application/octet-stream')
+            return mimetypes.types_map.get("." + ext, "application/octet-stream")
         else:
-            return 'application/octet-stream'
+            return "application/octet-stream"
 
     @classmethod
     def get_extension_from_content_type(cls, content_type: str) -> str:
@@ -351,8 +381,7 @@ class FileHelper():
             result: List[Any] = []
 
             for child in children:
-                result.append(cls.get_dir_content_as_json(
-                    os.path.join(path, child)))
+                result.append(cls.get_dir_content_as_json(os.path.join(path, child)))
             dir_name: str = cls.get_dir_name(path)
             return {dir_name: result}
 
@@ -373,21 +402,21 @@ class FileHelper():
             return ""
 
         # Remove null bytes and control characters
-        name = ''.join(char for char in name if ord(char) >= 32)
+        name = "".join(char for char in name if ord(char) >= 32)
 
         # Keep only safe characters first - alphanumeric, hyphens, underscores, dots, and forward slashes
-        name = sub(r"[^a-zA-Z0-9-_/.]", '', name)
+        name = sub(r"[^a-zA-Z0-9-_/.]", "", name)
 
         # Prevent path traversal attacks
-        name = name.replace('..', '')
-        name = name.replace('//', '/')
-        name = name.replace('\\', '')
+        name = name.replace("..", "")
+        name = name.replace("//", "/")
+        name = name.replace("\\", "")
 
         # Remove leading/trailing dots and slashes to prevent hidden files and relative paths
-        name = name.strip('./')
+        name = name.strip("./")
 
         # Ensure we don't have empty result or only dots/slashes
-        if not name or name in ('.', '/', '..'):
+        if not name or name in (".", "/", ".."):
             return "sanitized_file"
 
         # Limit length to prevent filesystem issues
@@ -397,7 +426,7 @@ class FileHelper():
         return name
 
     @classmethod
-    def detect_file_encoding(cls, file_path: PathType, default_encoding: str = 'utf-8') -> str:
+    def detect_file_encoding(cls, file_path: PathType, default_encoding: str = "utf-8") -> str:
         """
         Detect the encoding of a file using charset-normalizer.
 
@@ -459,7 +488,9 @@ class FileHelper():
             cls.copy_file(source_path, destination_path)
 
     @classmethod
-    def copy_dir_content_to_dir(cls, source_dir_path: PathType, destination_dir_path: PathType) -> None:
+    def copy_dir_content_to_dir(
+        cls, source_dir_path: PathType, destination_dir_path: PathType
+    ) -> None:
         """
         Copy the content of a directory to another directory
 
@@ -469,8 +500,9 @@ class FileHelper():
         :type destination_dir_path: PathType
         """
         for child in os.listdir(cls.get_path(source_dir_path)):
-            cls.copy_node(os.path.join(source_dir_path, child),
-                          os.path.join(destination_dir_path, child))
+            cls.copy_node(
+                os.path.join(source_dir_path, child), os.path.join(destination_dir_path, child)
+            )
 
     @classmethod
     def move_file_or_dir(cls, source_path: PathType, destination_path: PathType) -> None:
@@ -485,8 +517,13 @@ class FileHelper():
         shutil.move(str(source_path), str(destination_path))
 
     @classmethod
-    def create_file_response(cls, file_path: PathType, filename: str = None, media_type: str = None,
-                             content_disposition_type: Literal['inline', 'attachment'] = 'attachment') -> FileResponse:
+    def create_file_response(
+        cls,
+        file_path: PathType,
+        filename: str = None,
+        media_type: str = None,
+        content_disposition_type: Literal["inline", "attachment"] = "attachment",
+    ) -> FileResponse:
         """
         Create a FastAPI FileResponse from a file path
 
@@ -501,7 +538,7 @@ class FileHelper():
         :rtype: FileResponse
         """
         if not cls.exists_on_os(file_path):
-            raise FileNotFoundError(f'File {file_path} not found')
+            raise FileNotFoundError(f"File {file_path} not found")
 
         if not filename:
             filename = cls.get_name_with_extension(file_path)
@@ -509,8 +546,12 @@ class FileHelper():
         if not media_type:
             media_type = cls.get_mime(file_path)
 
-        return FileResponse(file_path, media_type=media_type, filename=filename,
-                            content_disposition_type=content_disposition_type)
+        return FileResponse(
+            file_path,
+            media_type=media_type,
+            filename=filename,
+            content_disposition_type=content_disposition_type,
+        )
 
     @classmethod
     def get_file_size_pretty_text(cls, size: float) -> str:
@@ -523,13 +564,13 @@ class FileHelper():
         :return: human readable size
         :rtype: str
         """
-        prefix = '-' if size < 0 else ''
+        prefix = "-" if size < 0 else ""
         size = abs(size)
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB', 'PB']:
+        for unit in ["B", "KB", "MB", "GB", "TB", "PB"]:
             if size < 1024.0:
-                return f'{prefix}{size:.1f} {unit}'
+                return f"{prefix}{size:.1f} {unit}"
             size /= 1024.0
-        return f'{prefix}{size:.1f} EB'
+        return f"{prefix}{size:.1f} EB"
 
     @staticmethod
     def generate_unique_fs_node_for_dir(fs_node_name: str, dir_path: str) -> str:
@@ -566,9 +607,17 @@ class FileHelper():
             return fs_node_name
 
         i = 1
-        name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+        name = (
+            f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}"
+            if "." in fs_node_name
+            else f"{FileHelper.get_name(fs_node_name)}_{i}"
+        )
         while name in list_fs_node_names:
             i += 1
-            name = f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}" if '.' in fs_node_name else f"{FileHelper.get_name(fs_node_name)}_{i}"
+            name = (
+                f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}"
+                if "." in fs_node_name
+                else f"{FileHelper.get_name(fs_node_name)}_{i}"
+            )
 
         return name

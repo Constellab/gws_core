@@ -1,11 +1,8 @@
-
 from typing import Any, Dict, Optional, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import (ParamSpecType,
-                                                        param_spec_decorator)
-from gws_core.config.param.param_types import (ParamSpecDTO, ParamSpecTypeStr,
-                                               ParamSpecVisibilty)
+from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
 from .credentials import Credentials
@@ -20,7 +17,7 @@ class CredentialsParamAdditionalInfo(TypedDict):
 
 @param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
 class CredentialsParam(ParamSpec):
-    """ Credentials params spec. When used, the end user will be able to select a credentials
+    """Credentials params spec. When used, the end user will be able to select a credentials
     from the list of credentials available in the lab. The config stores only the credentials name
     but not the credentials data (key, password).
     The credentials data is retrieved from the credentials service just before the execution of the task or view.
@@ -32,13 +29,14 @@ class CredentialsParam(ParamSpec):
 
     additional_info: Optional[CredentialsParamAdditionalInfo]
 
-    def __init__(self,
-                 credentials_type: CredentialsType = None,
-                 optional: bool = False,
-                 visibility: ParamSpecVisibilty = "public",
-                 human_name: Optional[str] = None,
-                 short_description: Optional[str] = None,
-                 ):
+    def __init__(
+        self,
+        credentials_type: CredentialsType = None,
+        optional: bool = False,
+        visibility: ParamSpecVisibilty = "public",
+        human_name: Optional[str] = None,
+        short_description: Optional[str] = None,
+    ):
         """
         :param credentials_type: Type of credentials to use for this param (if empty, any credentials can be used)
         :type credentials_type: CredentialsType
@@ -83,7 +81,6 @@ class CredentialsParam(ParamSpec):
         return credentials.get_data_object()
 
     def validate(self, value: Any) -> str:
-
         if isinstance(value, Credentials):
             return value.name
 
@@ -92,8 +89,8 @@ class CredentialsParam(ParamSpec):
 
         # if this is the credentials object, retrieve the name
         # used when the credentials of a task are saved
-        if isinstance(value, dict) and 'name' in value:
-            value = value['name']
+        if isinstance(value, dict) and "name" in value:
+            value = value["name"]
 
         validator = StrValidator()
         return validator.validate(value)

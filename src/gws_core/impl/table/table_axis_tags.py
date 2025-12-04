@@ -1,16 +1,12 @@
-
-
 from copy import deepcopy
 from typing import Dict, List
 
 from gws_core.core.utils.utils import Utils
-from gws_core.resource.r_field.serializable_r_field import \
-    SerializableObjectJson
+from gws_core.resource.r_field.serializable_r_field import SerializableObjectJson
 from gws_core.tag.tag_helper import TagHelper
 
 
 class TableAxisTags(SerializableObjectJson):
-
     _tags: List[Dict[str, str]] = None
 
     def __init__(self, tags: List[Dict[str, str]] = None):
@@ -40,7 +36,7 @@ class TableAxisTags(SerializableObjectJson):
         self._tags[index][key] = value
 
     def set_tags_at(self, index: int, tags: Dict[str, str]) -> None:
-        """ Set the tags at the given index (override previous tags)"""
+        """Set the tags at the given index (override previous tags)"""
         self._check_tag_index(index)
         self._check_tags(tags)
 
@@ -59,16 +55,17 @@ class TableAxisTags(SerializableObjectJson):
         self._check_tag_index(index)
         del self._tags[index]
 
-    def get_tags_between(self, from_index: int = None, to_index: int = None,
-                         none_if_empty: bool = False) -> List[Dict[str, str]]:
-        """Get the tags between the given indexes. It includes the to_index """
+    def get_tags_between(
+        self, from_index: int = None, to_index: int = None, none_if_empty: bool = False
+    ) -> List[Dict[str, str]]:
+        """Get the tags between the given indexes. It includes the to_index"""
         if none_if_empty and self.all_tag_are_empty():
             return None
 
         if from_index is not None and to_index is not None:
             self._check_tag_index(from_index)
             self._check_tag_index(to_index)
-            return deepcopy(self._tags[from_index:to_index + 1])
+            return deepcopy(self._tags[from_index : to_index + 1])
 
         return self.get_all_tags()
 
@@ -90,8 +87,7 @@ class TableAxisTags(SerializableObjectJson):
         return len(self._tags)
 
     def get_available_tags(self) -> Dict[str, List[str]]:
-        """Get the complete list of tags with list of values for each
-        """
+        """Get the complete list of tags with list of values for each"""
         return TagHelper.get_distinct_values(self._tags)
 
     def _check_tag_index(self, index: int) -> None:
@@ -117,7 +113,7 @@ class TableAxisTags(SerializableObjectJson):
         return {"tags": self._tags}
 
     @classmethod
-    def deserialize(cls, data: Dict) -> 'TableAxisTags':
+    def deserialize(cls, data: Dict) -> "TableAxisTags":
         if data is None or data.get("tags") is None:
             return TableAxisTags([])
 

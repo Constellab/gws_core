@@ -1,11 +1,8 @@
-
-
 import os
 
 from pandas import DataFrame
 
-from gws_core import (BaseTestCase, File, FileHelper, KVStore, ResourceModel,
-                      Settings, Table)
+from gws_core import BaseTestCase, File, FileHelper, KVStore, ResourceModel, Settings, Table
 from gws_core.impl.file.fs_node_service import FsNodeService
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.system_service import SystemService
@@ -14,7 +11,6 @@ from gws_core.resource.resource_dto import ResourceOrigin
 
 # test_system_service
 class TestSystemService(BaseTestCase):
-
     def test_garbage_collector(self):
         temp_dir = Settings.get_instance().make_temp_dir()
 
@@ -37,7 +33,9 @@ class TestSystemService(BaseTestCase):
         self.assertTrue(FileHelper.exists_on_os(kv_store.full_file_path))
 
         # create a file resource
-        test_file_path = FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "test_file_1.txt"))
+        test_file_path = FileHelper.create_empty_file_if_not_exist(
+            os.path.join(temp_dir, "test_file_1.txt")
+        )
         new_file: File = File(test_file_path)
         file_model = FsNodeService.create_fs_node_model(new_file)
         self.assertTrue(FileHelper.exists_on_os(file_model.fs_node_model.path))

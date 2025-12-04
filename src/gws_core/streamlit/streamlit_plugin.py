@@ -21,21 +21,21 @@ class StreamlitPlugin(AppPluginDownloader):
 
     # HTML comment used to identify the start and end of injected code in index.html
     # This is used to remove previously injected code before adding new code
-    START_COMMENT = '[GWS_AUTO_ADD_START]'
-    END_COMMENT = '[GWS_AUTO_ADD_END]'
+    START_COMMENT = "[GWS_AUTO_ADD_START]"
+    END_COMMENT = "[GWS_AUTO_ADD_END]"
     # This is used to identify the plugin version in the index.html file
-    VERSION_COMMENT = '[GWS_PLUGIN_VERSION]'
+    VERSION_COMMENT = "[GWS_PLUGIN_VERSION]"
 
     # Path of the index.html folder in the streamlit package
-    INDEX_HTML_FOLDER = 'static'
-    INDEX_HTML = 'index.html'
-    INDEX_HTML_STATIC_FOLDER = 'static'
+    INDEX_HTML_FOLDER = "static"
+    INDEX_HTML = "index.html"
+    INDEX_HTML_STATIC_FOLDER = "static"
 
     # Path of the injected code relative to index.html
-    PLUGIN_FOLDER_NAME = 'gws_plugin'
-    PLUGIN_ENVIRONMENT_FOLDER = 'assets'
-    PLUGIN_ENVIRONMENT_JSON = 'environment.json'
-    PLUGIN_VERSION_FILE = 'version.json'
+    PLUGIN_FOLDER_NAME = "gws_plugin"
+    PLUGIN_ENVIRONMENT_FOLDER = "assets"
+    PLUGIN_ENVIRONMENT_JSON = "environment.json"
+    PLUGIN_VERSION_FILE = "version.json"
 
     def __init__(self):
         """Initialize the StreamlitPlugin.
@@ -72,8 +72,7 @@ class StreamlitPlugin(AppPluginDownloader):
         """
         Get the path to the plugin folder.
         """
-        return os.path.join(
-            self.get_streamlit_html_folder_path(), self.get_plugin_relative_path())
+        return os.path.join(self.get_streamlit_html_folder_path(), self.get_plugin_relative_path())
 
     def get_streamlit_html_folder_path(self) -> str:
         return os.path.join(self.get_streamlit_path(), self.INDEX_HTML_FOLDER)
@@ -113,9 +112,11 @@ class StreamlitPlugin(AppPluginDownloader):
 
         index_version = self.get_version_from_index_html()
         if index_version != plugin_js_version:
-            Logger.warning(f"Version mismatch: index.html version '{index_version}' "
-                           f"does not match installed plugin version '{plugin_js_version}'. "
-                           f"Using index.html version.")
+            Logger.warning(
+                f"Version mismatch: index.html version '{index_version}' "
+                f"does not match installed plugin version '{plugin_js_version}'. "
+                f"Using index.html version."
+            )
             return None
 
         return plugin_js_version
@@ -129,11 +130,16 @@ class StreamlitPlugin(AppPluginDownloader):
         if not os.path.exists(index_html_path):
             return None
 
-        with open(index_html_path, 'r', encoding='utf-8') as file:
+        with open(index_html_path, "r", encoding="utf-8") as file:
             content = file.read()
             # Use regex to find the version comment
             version_pattern = re.compile(
-                r'<!--\s*' + re.escape(self.VERSION_COMMENT) + r'(\S+)\s*' + re.escape(self.VERSION_COMMENT) + r'-->')
+                r"<!--\s*"
+                + re.escape(self.VERSION_COMMENT)
+                + r"(\S+)\s*"
+                + re.escape(self.VERSION_COMMENT)
+                + r"-->"
+            )
             match = version_pattern.search(content)
             if match:
                 return match.group(1)
@@ -157,16 +163,16 @@ class StreamlitPlugin(AppPluginDownloader):
         json_file_path = os.path.join(json_dir, self.PLUGIN_ENVIRONMENT_JSON)
 
         # Write the dictionary to the JSON file
-        with open(json_file_path, 'w', encoding='utf-8') as json_file:
+        with open(json_file_path, "w", encoding="utf-8") as json_file:
             json.dump(dict_, json_file, indent=4)
 
     def modifiy_streamlit_index_html(self):
         """Modify the Streamlit index.html file to inject the plugin."""
         # Read the HTML files
-        with open(self.get_plugin_html_file_path(), 'r', encoding='utf-8') as file:
+        with open(self.get_plugin_html_file_path(), "r", encoding="utf-8") as file:
             source_html = file.read()
 
-        with open(self.get_streamlit_html_file_path(), 'r', encoding='utf-8') as file:
+        with open(self.get_streamlit_html_file_path(), "r", encoding="utf-8") as file:
             destination_html = file.read()
 
         # Parse source HTML using HtmlParser
@@ -174,7 +180,7 @@ class StreamlitPlugin(AppPluginDownloader):
         parsed_html = html_parser.parse(source_html)
 
         # Parse destination HTML with BeautifulSoup
-        destination_soup = BeautifulSoup(destination_html, 'html.parser')
+        destination_soup = BeautifulSoup(destination_html, "html.parser")
 
         # Add version comment to the head of destination_soup
         self._add_version_comment(destination_soup)
@@ -191,14 +197,16 @@ class StreamlitPlugin(AppPluginDownloader):
         """Reset the Streamlit index.html file by removing plugin-related content."""
         Logger.info("Resetting streamlit index.html file")
 
-        with open(self.get_streamlit_html_file_path(), 'r', encoding='utf-8') as file:
+        with open(self.get_streamlit_html_file_path(), "r", encoding="utf-8") as file:
             streamlit_index_content = file.read()
-        streamlit_index = BeautifulSoup(streamlit_index_content, 'html.parser')
+        streamlit_index = BeautifulSoup(streamlit_index_content, "html.parser")
 
         # Remove existing auto-added content from head
         self._remove_existing_content(streamlit_index.head, self.START_COMMENT, self.END_COMMENT)
         # Remove existing version comment from head
-        self._remove_existing_content(streamlit_index.head, self.VERSION_COMMENT, self.VERSION_COMMENT)
+        self._remove_existing_content(
+            streamlit_index.head, self.VERSION_COMMENT, self.VERSION_COMMENT
+        )
 
         # Remove existing auto-added content from body
         self._remove_existing_content(streamlit_index.body, self.START_COMMENT, self.END_COMMENT)
@@ -206,9 +214,12 @@ class StreamlitPlugin(AppPluginDownloader):
         # Write the modified HTML back to the destination file
         self._write_streamlit_html_file(streamlit_index)
 
-    def _remove_existing_content(self, container: BeautifulSoup, start_comment: str, end_comment: str):
+    def _remove_existing_content(
+        self, container: BeautifulSoup, start_comment: str, end_comment: str
+    ):
         start_comments = container.find_all(
-            string=lambda text: isinstance(text, Comment) and start_comment in text)
+            string=lambda text: isinstance(text, Comment) and start_comment in text
+        )
         for start_comment in start_comments:
             current = start_comment
             elements_to_remove = []
@@ -227,7 +238,7 @@ class StreamlitPlugin(AppPluginDownloader):
 
     def _write_streamlit_html_file(self, destination_soup: BeautifulSoup):
         index_path = self.get_streamlit_html_file_path()
-        with open(index_path, 'w', encoding='utf-8') as file:
+        with open(index_path, "w", encoding="utf-8") as file:
             file.write(str(destination_soup.prettify()))
 
     def _add_parsed_styles_to_head(self, styles, destination_soup: BeautifulSoup):
@@ -240,8 +251,8 @@ class StreamlitPlugin(AppPluginDownloader):
             destination_soup.head.append(comment)
 
             # Create <link> tag for external stylesheet
-            link_tag = destination_soup.new_tag('link', rel='stylesheet')
-            link_tag['href'] = style_obj.href
+            link_tag = destination_soup.new_tag("link", rel="stylesheet")
+            link_tag["href"] = style_obj.href
 
             # Add any additional attributes
             for attr_name, attr_value in style_obj.attributes.items():
@@ -258,7 +269,8 @@ class StreamlitPlugin(AppPluginDownloader):
         Add a version comment to the head of the destination soup.
         """
         version_comment = Comment(
-            f"{self.VERSION_COMMENT}{self.DASHBOARD_COMPONENTS_VERSION}{self.VERSION_COMMENT}")
+            f"{self.VERSION_COMMENT}{self.DASHBOARD_COMPONENTS_VERSION}{self.VERSION_COMMENT}"
+        )
         destination_soup.head.append(version_comment)
 
     def _add_parsed_body_to_destination(self, body_obj, destination_soup: BeautifulSoup):
@@ -271,18 +283,18 @@ class StreamlitPlugin(AppPluginDownloader):
 
         # 1. Add HTML content first
         if body_obj.content:
-            body_content_soup = BeautifulSoup(body_obj.content, 'html.parser')
+            body_content_soup = BeautifulSoup(body_obj.content, "html.parser")
             for element in body_content_soup.children:
                 # Skip empty or whitespace-only text nodes
-                if hasattr(element, 'name') and element.name is None and not str(element).strip():
+                if hasattr(element, "name") and element.name is None and not str(element).strip():
                     continue
                 destination_soup.body.append(element)
 
         # 2. Add links (modulepreload, etc.)
         for link_obj in body_obj.links:
-            link_tag = destination_soup.new_tag('link')
-            link_tag['href'] = link_obj.href
-            link_tag['rel'] = link_obj.rel
+            link_tag = destination_soup.new_tag("link")
+            link_tag["href"] = link_obj.href
+            link_tag["rel"] = link_obj.rel
 
             # Add any additional attributes
             for attr_name, attr_value in link_obj.attributes.items():
@@ -293,8 +305,8 @@ class StreamlitPlugin(AppPluginDownloader):
         # 3. Add external scripts
         for script_obj in body_obj.scripts:
             # Create <script> tag with src
-            script_tag = destination_soup.new_tag('script')
-            script_tag['src'] = script_obj.src
+            script_tag = destination_soup.new_tag("script")
+            script_tag["src"] = script_obj.src
 
             # Add any additional attributes
             for attr_name, attr_value in script_obj.attributes.items():

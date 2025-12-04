@@ -6,11 +6,12 @@ import streamlit as st
 
 class StreamlitTranslateLang(Enum):
     """Enum to define supported languages for translation."""
+
     FR = "fr"  # French
     EN = "en"  # English
 
 
-class StreamlitTranslateService():
+class StreamlitTranslateService:
     """
     Service class to handle translations in Streamlit applications.
 
@@ -24,7 +25,11 @@ class StreamlitTranslateService():
     translation_dict: dict
     translation_files_folder_path: str
 
-    def __init__(self, translation_files_folder_path: str, lang_: StreamlitTranslateLang = StreamlitTranslateLang.EN):
+    def __init__(
+        self,
+        translation_files_folder_path: str,
+        lang_: StreamlitTranslateLang = StreamlitTranslateLang.EN,
+    ):
         """
         Initialize the translation service.
 
@@ -47,7 +52,9 @@ class StreamlitTranslateService():
         Raises:
             FileNotFoundError: If the translation file for the specified language is not found.
         """
-        with open(f"{self.translation_files_folder_path}/{self.lang.value}.json", encoding='utf-8') as json_file:
+        with open(
+            f"{self.translation_files_folder_path}/{self.lang.value}.json", encoding="utf-8"
+        ) as json_file:
             self.translation_dict = json.load(json_file)
             json_file.close()
 
@@ -62,7 +69,7 @@ class StreamlitTranslateService():
         self._set_translation_dict()
         self.lang = lang_
         st.session_state.selected_lang = lang_
-        st.rerun(scope='app')
+        st.rerun(scope="app")
 
     def get_lang(self) -> StreamlitTranslateLang:
         """

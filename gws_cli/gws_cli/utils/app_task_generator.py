@@ -1,4 +1,3 @@
-
 import os
 import shutil
 from typing import Literal
@@ -6,23 +5,24 @@ from typing import Literal
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_core import StringHelper
 
-NAME_VAR = 'name'
-DASHBOARD_CLASS_VAR = 'appClass'
-GENERATE_CLASS_VAR = 'generateClass'
-FOLDER_APP_NAME_VAR = 'folderAppName'
-APP_TYPE_RESOURCE = 'appTypeResource'
-APP_TYPE_VAR = 'appTypeVar'
-APP_TYPE = 'appType'
+NAME_VAR = "name"
+DASHBOARD_CLASS_VAR = "appClass"
+GENERATE_CLASS_VAR = "generateClass"
+FOLDER_APP_NAME_VAR = "folderAppName"
+APP_TYPE_RESOURCE = "appTypeResource"
+APP_TYPE_VAR = "appTypeVar"
+APP_TYPE = "appType"
 
 
-TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), '_template')
-TEMPLATE_APP_FOLDER_NAME = '_template_app'
-TEMPLATE_GENERATE_APP_NAME = 'generate_app_template.txt'
+TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), "_template")
+TEMPLATE_APP_FOLDER_NAME = "_template_app"
+TEMPLATE_GENERATE_APP_NAME = "generate_app_template.txt"
 
 
-def generate_app_task(snake_case_name: str, app_folder_path: str,
-                      app_type: Literal['streamlit', 'reflex']) -> None:
-    """ Method to create the generate app task file.
+def generate_app_task(
+    snake_case_name: str, app_folder_path: str, app_type: Literal["streamlit", "reflex"]
+) -> None:
+    """Method to create the generate app task file.
 
     :param name: _description_
     :type name: str
@@ -38,9 +38,10 @@ def generate_app_task(snake_case_name: str, app_folder_path: str,
     replace_vars_in_file(snake_case_name, generate_app_new_path, app_type)
 
 
-def replace_vars_in_file(snake_case_name: str, file_path: str,
-                         app_type: Literal['streamlit', 'reflex']) -> None:
-    """ Method to replace variables in app file ."""
+def replace_vars_in_file(
+    snake_case_name: str, file_path: str, app_type: Literal["streamlit", "reflex"]
+) -> None:
+    """Method to replace variables in app file ."""
     # Rename the generate task
     app_pascal_name = StringHelper.to_pascal_case(snake_case_name)
 
@@ -49,9 +50,9 @@ def replace_vars_in_file(snake_case_name: str, file_path: str,
         NAME_VAR: app_pascal_name,
         DASHBOARD_CLASS_VAR: f"{app_pascal_name}AppConfig",
         GENERATE_CLASS_VAR: f"Generate{app_pascal_name}",
-        FOLDER_APP_NAME_VAR: '_' + snake_case_name,
-        APP_TYPE_RESOURCE: app_type.capitalize() + 'Resource',
-        APP_TYPE_VAR: app_type + '_app',
-        APP_TYPE: app_type.upper()
+        FOLDER_APP_NAME_VAR: "_" + snake_case_name,
+        APP_TYPE_RESOURCE: app_type.capitalize() + "Resource",
+        APP_TYPE_VAR: app_type + "_app",
+        APP_TYPE: app_type.upper(),
     }
     CLIUtils.replace_vars_in_file(file_path, replace_variables)

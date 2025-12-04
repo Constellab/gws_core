@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from enum import Enum
@@ -24,8 +23,8 @@ class ParamSpecType(Enum):
 
 
 def param_spec_decorator(type_: ParamSpecType = ParamSpecType.SIMPLE) -> Callable:
-    """Decorator of ParamSpec class to add it to the list of param spec types
-    """
+    """Decorator of ParamSpec class to add it to the list of param spec types"""
+
     def decorator(param_class: Type[ParamSpec]):
         from gws_core.config.param.param_spec import ParamSpec
 
@@ -39,4 +38,5 @@ def param_spec_decorator(type_: ParamSpecType = ParamSpecType.SIMPLE) -> Callabl
         elif type_ == ParamSpecType.LAB_SPECIFIC:
             LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST.append(param_class)
         return param_class
+
     return decorator

@@ -26,11 +26,9 @@ class RichTextDbField(TextField):
 
             # if this is the old version of rich text
             # convert it manually to the new version
-            if 'time' in json_value:
+            if "time" in json_value:
                 return RichTextDTO(
-                    version=1,
-                    blocks=json_value['blocks'],
-                    editorVersion=json_value['version']
+                    version=1, blocks=json_value["blocks"], editorVersion=json_value["version"]
                 )
 
             return RichTextDTO.from_json(json_value)

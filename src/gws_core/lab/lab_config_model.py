@@ -1,5 +1,3 @@
-
-
 import hashlib
 from json import dumps
 from typing import List, Optional
@@ -30,9 +28,9 @@ class LabConfigModel(BaseModel):
     brick_versions = JSONField(null=False)
     hash = CharField(null=False)
 
-    _current_config: 'LabConfigModel' = None
+    _current_config: "LabConfigModel" = None
 
-    def is_compatible_with(self, other: 'LabConfigModel') -> bool:
+    def is_compatible_with(self, other: "LabConfigModel") -> bool:
         """Check if the current config is compatible with the other config
 
         :param other: _description_
@@ -46,15 +44,12 @@ class LabConfigModel(BaseModel):
         return BrickVersion.from_json_list(self.brick_versions)
 
     def to_dto(self) -> LabConfigModelDTO:
-        return LabConfigModelDTO(
-            version=self.version,
-            brick_versions=self.get_brick_versions()
-        )
+        return LabConfigModelDTO(version=self.version, brick_versions=self.get_brick_versions())
 
     ########################################### CLASS METHODS ###########################################
 
     @classmethod
-    def save_current_config(cls) -> 'LabConfigModel':
+    def save_current_config(cls) -> "LabConfigModel":
         """Save the current config of the lab
 
         :return: _description_
@@ -66,13 +61,13 @@ class LabConfigModel(BaseModel):
         return cls._current_config
 
     @classmethod
-    def get_current_config(cls) -> 'LabConfigModel':
+    def get_current_config(cls) -> "LabConfigModel":
         if cls._current_config is None:
             cls.save_current_config()
         return cls._current_config
 
     @classmethod
-    def create_config_if_not_exits(cls, brick_versions: List[BrickVersion]) -> 'LabConfigModel':
+    def create_config_if_not_exits(cls, brick_versions: List[BrickVersion]) -> "LabConfigModel":
         hash = cls._hash_versions(brick_versions)
         lab_config = cls._find_by_hash(hash)
 
@@ -82,18 +77,22 @@ class LabConfigModel(BaseModel):
         return cls._create(hash, brick_versions)
 
     @classmethod
-    def _create(cls, hash: str, brick_versions: List[BrickVersion]) -> 'LabConfigModel':
+    def _create(cls, hash: str, brick_versions: List[BrickVersion]) -> "LabConfigModel":
         lab_config = LabConfigModel()
         lab_config.id = StringHelper.generate_uuid()
         lab_config.hash = hash
-        lab_config.brick_versions = [brick_version.to_json_dict() for brick_version in brick_versions]
+        lab_config.brick_versions = [
+            brick_version.to_json_dict() for brick_version in brick_versions
+        ]
         lab_config.version = cls.LAB_CONFIG_VERSION
 
         return lab_config.save(force_insert=True)
 
     @classmethod
-    def _find_by_hash(cls, hash: str) -> Optional['LabConfigModel']:
-        return cls.select().where((cls.hash == hash) & (cls.version == cls.LAB_CONFIG_VERSION)).first()
+    def _find_by_hash(cls, hash: str) -> Optional["LabConfigModel"]:
+        return (
+            cls.select().where((cls.hash == hash) & (cls.version == cls.LAB_CONFIG_VERSION)).first()
+        )
 
     @classmethod
     def _hash_versions(cls, brick_versions: List[BrickVersion]) -> str:
@@ -106,5 +105,5 @@ class LabConfigModel(BaseModel):
         return hash_obj.hexdigest()
 
     class Meta:
-        table_name = 'gws_lab_config'
+        table_name = "gws_lab_config"
         is_table = True

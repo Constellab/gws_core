@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -12,12 +11,16 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
 
-from ..core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..model.typing_register_decorator import typing_registrator
 from ..process.process import Process
-from .protocol_spec import (ConfigMapping, ConnectorPartSpec, ConnectorSpec,
-                            InterfaceSpec, ProcessSpec)
+from .protocol_spec import (
+    ConfigMapping,
+    ConnectorPartSpec,
+    ConnectorSpec,
+    InterfaceSpec,
+    ProcessSpec,
+)
 
 
 class ProtocolCreateConfig(TypedDict):
@@ -29,10 +32,10 @@ class ProtocolCreateConfig(TypedDict):
     outerfaces: Dict[str, InterfaceSpec]
 
 
-@typing_registrator(unique_name="Protocol", object_type="PROTOCOL", hide=True,
-                    style=TypingStyle.default_protocol())
+@typing_registrator(
+    unique_name="Protocol", object_type="PROTOCOL", hide=True, style=TypingStyle.default_protocol()
+)
 class Protocol(Process):
-
     _process_specs: Dict[str, ProcessSpec]
     _connectors: List[ConnectorSpec]
     _interfaces: Dict[str, InterfaceSpec]
@@ -92,8 +95,12 @@ class Protocol(Process):
         """
 
     @final
-    def add_process(self, process_type: Type[Process], instance_name: str,
-                    config_params: ConfigParamsDict = None) -> ProcessSpec:
+    def add_process(
+        self,
+        process_type: Type[Process],
+        instance_name: str,
+        config_params: ConfigParamsDict = None,
+    ) -> ProcessSpec:
         """Add a process to this protocol. The process_type can be a task or a protocol
 
         :param process_type: [description]
@@ -111,11 +118,13 @@ class Protocol(Process):
         if instance_name in self._process_specs:
             spec: ProcessSpec = self._process_specs[instance_name]
             raise BadRequestException(
-                f"Can't add the process {process_type.classname()} to the protocol. A process ({spec.process_type.classname()}) already exist with the same instance name '{instance_name}'.")
+                f"Can't add the process {process_type.classname()} to the protocol. A process ({spec.process_type.classname()}) already exist with the same instance name '{instance_name}'."
+            )
 
         # Create the process type wrapper
         process_spec: ProcessSpec = ProcessSpec(
-            instance_name=instance_name, process_type=process_type)
+            instance_name=instance_name, process_type=process_type
+        )
 
         # Set configuration if defined
         if config_params:
@@ -128,7 +137,9 @@ class Protocol(Process):
         return self._process_specs[instance_name]
 
     @final
-    def add_connectors(self, connections: List[Tuple[ConnectorPartSpec,  ConnectorPartSpec]]) -> None:
+    def add_connectors(
+        self, connections: List[Tuple[ConnectorPartSpec, ConnectorPartSpec]]
+    ) -> None:
         """
         Add the connexion between processes of the protocol
         self.add_connectors([
@@ -144,7 +155,7 @@ class Protocol(Process):
 
     @final
     def add_connector(self, from_part: ConnectorPartSpec, to_part: ConnectorPartSpec) -> None:
-        """ Add the connexion between 2 processes of the protocol
+        """Add the connexion between 2 processes of the protocol
         self.add_connector(create >> 'robot', move << 'robot')
 
         :param from_part: [description]
@@ -152,12 +163,14 @@ class Protocol(Process):
         :param to_part: [description]
         :type to_part: ConnectorPartSpec
         """
-        self._connectors.append({
-            "from_process": from_part["process_instance_name"],
-            "from_port": from_part["port_name"],
-            "to_process": to_part["process_instance_name"],
-            "to_port": to_part["port_name"]
-        })
+        self._connectors.append(
+            {
+                "from_process": from_part["process_instance_name"],
+                "from_port": from_part["port_name"],
+                "to_process": to_part["process_instance_name"],
+                "to_port": to_part["port_name"],
+            }
+        )
 
     @final
     def add_interface(self, name: str, from_process: ProcessSpec, process_input_name: str) -> None:
@@ -173,12 +186,11 @@ class Protocol(Process):
 
         # Check if the interface was already set
         if name in self._interfaces:
-            raise BadRequestException(
-                f"The interface with name '{name}' was already set.")
+            raise BadRequestException(f"The interface with name '{name}' was already set.")
 
         self._interfaces[name] = {
             "process_instance_name": from_process.instance_name,
-            "port_name": process_input_name
+            "port_name": process_input_name,
         }
 
     @final
@@ -195,12 +207,11 @@ class Protocol(Process):
 
         # Check if the interface was already set
         if name in self._outerfaces:
-            raise BadRequestException(
-                f"The outerface with name '{name}' was already set.")
+            raise BadRequestException(f"The outerface with name '{name}' was already set.")
 
         self._outerfaces[name] = {
             "process_instance_name": to_process.instance_name,
-            "port_name": process_output_name
+            "port_name": process_output_name,
         }
 
     # @final
@@ -233,11 +244,10 @@ class Protocol(Process):
 
     @final
     def get_process_spec(self, instance_name: str) -> ProcessSpec:
-        """Get the process spec of the process with the given instance name """
+        """Get the process spec of the process with the given instance name"""
 
         if instance_name not in self._process_specs:
-            raise Exception(
-                f"The process with instance name '{instance_name}' doesn't exist.")
+            raise Exception(f"The process with instance name '{instance_name}' doesn't exist.")
         return self._process_specs[instance_name]
 
     @classmethod
@@ -252,14 +262,14 @@ class Protocol(Process):
     @classmethod
     @final
     def get_input_specs(cls) -> InputSpecs:
-        """Get the input specs of the protocol """
+        """Get the input specs of the protocol"""
         protocol: Protocol = cls.instantiate_protocol()
         return protocol.get_input_specs_self()
 
     @classmethod
     @final
     def get_output_specs(cls) -> OutputSpec:
-        """Get the input specs of the protocol """
+        """Get the input specs of the protocol"""
         protocol: Protocol = cls.instantiate_protocol()
         return protocol.get_output_specs_self()
 
@@ -269,11 +279,12 @@ class Protocol(Process):
 
         for name, interface in self._interfaces.items():
             # retreive the process spec
-            process_spec = self.get_process_spec(
-                interface["process_instance_name"])
+            process_spec = self.get_process_spec(interface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            input_specs[name] = process_spec.process_type.get_input_specs().get_spec(interface["port_name"])
+            input_specs[name] = process_spec.process_type.get_input_specs().get_spec(
+                interface["port_name"]
+            )
 
         return InputSpecs(input_specs)
 
@@ -283,10 +294,11 @@ class Protocol(Process):
 
         for name, outerface in self._outerfaces.items():
             # retreive the process spec
-            process_spec = self.get_process_spec(
-                outerface["process_instance_name"])
+            process_spec = self.get_process_spec(outerface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            output_specs[name] = process_spec.process_type.get_output_specs().get_spec(outerface["port_name"])
+            output_specs[name] = process_spec.process_type.get_output_specs().get_spec(
+                outerface["port_name"]
+            )
 
         return OutputSpecs(output_specs)

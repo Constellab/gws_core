@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -19,9 +17,12 @@ from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 
-@task_decorator("ResourceZipper", human_name="Zip resource",
-                short_description="Zip a resource object to be downloaded by another lab",
-                style=File.copy_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
+@task_decorator(
+    "ResourceZipper",
+    human_name="Zip resource",
+    short_description="Zip a resource object to be downloaded by another lab",
+    style=File.copy_style(icon_technical_name="folder_zip", icon_type=TypingIconType.MATERIAL_ICON),
+)
 class ResourceZipperTask(Task):
     """
     Task to zip a resource object to be downloaded by another lab.
@@ -33,25 +34,27 @@ class ResourceZipperTask(Task):
     If you want to zip a folder, you might want to use the FolderExporter task instead.
     """
 
-    input_name = 'source'
-    output_name = 'target'
+    input_name = "source"
+    output_name = "target"
 
-    input_specs: InputSpecs = InputSpecs({
-        "source": InputSpec(Resource, human_name="Resource to zip")
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {"source": InputSpec(Resource, human_name="Resource to zip")}
+    )
 
-    output_specs: OutputSpecs = OutputSpecs({
-        "target": OutputSpec(File, human_name="Zip file")
-    })
+    output_specs: OutputSpecs = OutputSpecs({"target": OutputSpec(File, human_name="Zip file")})
 
-    config_specs = ConfigSpecs({
-        # this config is only set when calling this automatically
-        "shared_by_id": StrParam(optional=True, human_name="Id of the user that shared the resource",
-                                 visibility=StrParam.PRIVATE_VISIBILITY),
-    })
+    config_specs = ConfigSpecs(
+        {
+            # this config is only set when calling this automatically
+            "shared_by_id": StrParam(
+                optional=True,
+                human_name="Id of the user that shared the resource",
+                visibility=StrParam.PRIVATE_VISIBILITY,
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
         shared_by_id = params.get_value("shared_by_id")
 
         shared_by: User = None
@@ -63,7 +66,7 @@ class ResourceZipperTask(Task):
         else:
             shared_by = CurrentUserService.get_and_check_current_user()
 
-        origin_entity_id = inputs['source'].get_model_id()
+        origin_entity_id = inputs["source"].get_model_id()
         resource_zipper = ResourceZipper(shared_by)
         resource_zipper.add_resource_model(origin_entity_id)
         resource_zipper.close_zip()
@@ -72,15 +75,18 @@ class ResourceZipperTask(Task):
 
         file = File(file_path)
         # store information about the entity that generated the zip file
-        file.add_technical_info(TechnicalInfo("origin_entity_type", 'RESOURCE'))
+        file.add_technical_info(TechnicalInfo("origin_entity_type", "RESOURCE"))
         file.add_technical_info(TechnicalInfo("origin_entity_id", origin_entity_id))
 
         return {"target": file}
 
 
-@task_decorator("ResourceUnzipper", human_name="Unzip and load resource",
-                short_description="Unzip a resource zip and load it as a new resource.",
-                style=File.copy_style(icon_technical_name='folder_zip', icon_type=TypingIconType.MATERIAL_ICON))
+@task_decorator(
+    "ResourceUnzipper",
+    human_name="Unzip and load resource",
+    short_description="Unzip a resource zip and load it as a new resource.",
+    style=File.copy_style(icon_technical_name="folder_zip", icon_type=TypingIconType.MATERIAL_ICON),
+)
 class ResourceUnZipper(Task):
     """
     Task to unzip a resource zip and load it as a new resource.
@@ -91,27 +97,26 @@ class ResourceUnZipper(Task):
     Otherwise the zip will be unzipped and a Folder resource will be created.
     """
 
-    input_name = 'source'
-    output_name = 'target'
+    input_name = "source"
+    output_name = "target"
 
-    input_specs: InputSpecs = InputSpecs({
-        "source": InputSpec(File, human_name="Resource to unzip")
-    })
+    input_specs: InputSpecs = InputSpecs(
+        {"source": InputSpec(File, human_name="Resource to unzip")}
+    )
 
-    output_specs: OutputSpecs = OutputSpecs({
-        "target": OutputSpec(Resource, human_name="Resource")
-    })
+    output_specs: OutputSpecs = OutputSpecs({"target": OutputSpec(Resource, human_name="Resource")})
 
     config_specs = ConfigSpecs({})
 
     resource_loader: ResourceLoader = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        source: File = inputs['source']
+        source: File = inputs["source"]
 
         self.log_info_message("Uncompressing the file")
-        self.resource_loader = ResourceLoader.from_compress_file(source.path, ShareEntityCreateMode.NEW_ID)
+        self.resource_loader = ResourceLoader.from_compress_file(
+            source.path, ShareEntityCreateMode.NEW_ID
+        )
 
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()

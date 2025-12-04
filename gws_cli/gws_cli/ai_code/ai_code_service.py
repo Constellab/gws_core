@@ -7,6 +7,7 @@ from typing import List, Optional
 @dataclass
 class CommandFrontmatter:
     """Configuration for command file frontmatter"""
+
     filename: str
     description: str
     argument_hint: str
@@ -15,6 +16,7 @@ class CommandFrontmatter:
 @dataclass
 class CommandInfo:
     """Information about an installed command"""
+
     name: str
     description: Optional[str]
     file_path: Path
@@ -29,23 +31,23 @@ class AICodeService(ABC):
         CommandFrontmatter(
             filename="reflex-app-developer.md",
             description="Create, develop, modify, or debug a Reflex web application",
-            argument_hint="description of what to build"
+            argument_hint="description of what to build",
         ),
         CommandFrontmatter(
             filename="streamlit-app-developer.md",
             description="Create, develop, modify, or debug a Streamlit web application",
-            argument_hint="description of what to build"
+            argument_hint="description of what to build",
         ),
         CommandFrontmatter(
             filename="task-expert.md",
             description="Create or modify a Constellab Task that processes data resources",
-            argument_hint="task description or modification request"
+            argument_hint="task description or modification request",
         ),
         CommandFrontmatter(
             filename="agent-expert.md",
             description="Create or modify a Constellab Agent that processes data resources",
-            argument_hint="agent description or modification request"
-        )
+            argument_hint="agent description or modification request",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):
@@ -142,7 +144,7 @@ class AICodeService(ABC):
 
             # Remove existing GWS files (files starting with 'gws-')
             if target_dir.exists():
-                gws_files = list(target_dir.glob('gws-*'))
+                gws_files = list(target_dir.glob("gws-*"))
                 if gws_files:
                     for gws_file in gws_files:
                         if gws_file.is_file():
@@ -163,19 +165,20 @@ class AICodeService(ABC):
                 target_file = target_dir / target_filename
 
                 # Read the source file
-                content = source_file.read_text(encoding='utf-8')
+                content = source_file.read_text(encoding="utf-8")
 
                 # Check if frontmatter already exists
-                if not content.startswith('---'):
+                if not content.startswith("---"):
                     # Add frontmatter using the abstract method
                     frontmatter = self.format_frontmatter(frontmatter_config)
                     content = frontmatter + content
 
                 # Write to target file
-                target_file.write_text(content, encoding='utf-8')
+                target_file.write_text(content, encoding="utf-8")
 
             print(
-                f"GWS commands successfully pulled to global {self.ai_tool_name} commands folder! Location: {target_dir}.")
+                f"GWS commands successfully pulled to global {self.ai_tool_name} commands folder! Location: {target_dir}."
+            )
             return 0
 
         except (OSError, IOError) as e:
@@ -202,32 +205,30 @@ class AICodeService(ABC):
             for gws_file in gws_files:
                 # Extract command name (remove 'gws-' prefix and any extension)
                 command_name = gws_file.name
-                if command_name.endswith('.prompt.md'):
-                    command_name = command_name.replace('.prompt.md', '')
-                elif command_name.endswith('.md'):
-                    command_name = command_name.replace('.md', '')
+                if command_name.endswith(".prompt.md"):
+                    command_name = command_name.replace(".prompt.md", "")
+                elif command_name.endswith(".md"):
+                    command_name = command_name.replace(".md", "")
 
                 # Try to read description from frontmatter
                 description = None
                 try:
-                    content = gws_file.read_text(encoding='utf-8')
-                    if content.startswith('---'):
+                    content = gws_file.read_text(encoding="utf-8")
+                    if content.startswith("---"):
                         # Extract frontmatter
-                        end_frontmatter = content.find('---', 3)
+                        end_frontmatter = content.find("---", 3)
                         if end_frontmatter > 0:
                             frontmatter = content[3:end_frontmatter].strip()
-                            for line in frontmatter.split('\n'):
-                                if line.startswith('description:'):
-                                    description = line.split(':', 1)[1].strip()
+                            for line in frontmatter.split("\n"):
+                                if line.startswith("description:"):
+                                    description = line.split(":", 1)[1].strip()
                                     break
                 except Exception:
                     pass
 
-                commands.append(CommandInfo(
-                    name=command_name,
-                    description=description,
-                    file_path=gws_file
-                ))
+                commands.append(
+                    CommandInfo(name=command_name, description=description, file_path=gws_file)
+                )
 
         except Exception:
             pass
@@ -248,13 +249,17 @@ class AICodeService(ABC):
             print("=" * 70)
 
             if not target_dir.exists():
-                print(f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands.")
+                print(
+                    f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands."
+                )
                 return 0
 
             commands = self.get_commands_list()
 
             if not commands:
-                print(f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands.")
+                print(
+                    f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands."
+                )
                 return 0
 
             print(f"\nLocation: {target_dir}\n")
@@ -296,7 +301,7 @@ class AICodeService(ABC):
                 print(f"Error: Template file not found at {template_path}")
                 return 1
 
-            template_content = template_path.read_text(encoding='utf-8')
+            template_content = template_path.read_text(encoding="utf-8")
 
             # Prepare the generated content with markers
             generated_content = f"{start_marker}\n{template_content}\n{end_marker}"
@@ -310,7 +315,7 @@ class AICodeService(ABC):
             # Check if file exists
             if target_path.exists():
                 # Read existing content
-                existing_content = target_path.read_text(encoding='utf-8')
+                existing_content = target_path.read_text(encoding="utf-8")
 
                 # Check if markers exist
                 if start_marker in existing_content and end_marker in existing_content:
@@ -320,9 +325,9 @@ class AICodeService(ABC):
 
                     # Replace only the generated section
                     new_content = (
-                        existing_content[:start_pos] +
-                        generated_content +
-                        existing_content[end_pos:]
+                        existing_content[:start_pos]
+                        + generated_content
+                        + existing_content[end_pos:]
                     )
                 else:
                     # No markers found, prepend generated content at the top
@@ -332,7 +337,7 @@ class AICodeService(ABC):
                 new_content = generated_content + "\n"
 
             # Write the file
-            target_path.write_text(new_content, encoding='utf-8')
+            target_path.write_text(new_content, encoding="utf-8")
 
             print(f"Main instructions generated successfully at: {target_path}")
             return 0

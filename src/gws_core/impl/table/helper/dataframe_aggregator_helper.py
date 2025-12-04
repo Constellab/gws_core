@@ -1,5 +1,3 @@
-
-
 from typing import Literal
 
 from pandas import DataFrame
@@ -34,9 +32,13 @@ class DataframeAggregatorHelper:
             )
 
     @classmethod
-    def aggregate(cls, data: DataFrame, direction: DfAggregationDirections,
-                  func: DfAggregationFunctions,
-                  skip_nan: bool = True) -> DataFrame:
+    def aggregate(
+        cls,
+        data: DataFrame,
+        direction: DfAggregationDirections,
+        func: DfAggregationFunctions,
+        skip_nan: bool = True,
+    ) -> DataFrame:
         if (direction is None) or (func is None):
             return data
         cls._check_direction(direction)
@@ -47,29 +49,17 @@ class DataframeAggregatorHelper:
 
         aggregated_data: DataFrame
         if func == "mean":
-            aggregated_data = data.mean(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.mean(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "std":
-            aggregated_data = data.std(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.std(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "var":
-            aggregated_data = data.var(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.var(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "max":
-            aggregated_data = data.max(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.max(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "min":
-            aggregated_data = data.min(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.min(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "median":
-            aggregated_data = data.median(
-                axis=axis_num, numeric_only=True, skipna=skip_nan
-            )
+            aggregated_data = data.median(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "sum":
             aggregated_data = numeric_dataframe.sum(
                 axis=axis_num, numeric_only=True, skipna=skip_nan

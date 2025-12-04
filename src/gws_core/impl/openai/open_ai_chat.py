@@ -1,13 +1,10 @@
-
-
 from typing import List, Literal, Optional, cast
 
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
-from gws_core.impl.openai.open_ai_types import (AiChatMessage, OpenAiChatDict,
-                                                OpenAiChatMessage)
+from gws_core.impl.openai.open_ai_types import AiChatMessage, OpenAiChatDict, OpenAiChatMessage
 
 
-class OpenAiChat():
+class OpenAiChat:
     """Class to manage communication with OpenAI chat api
 
     :return: _description_
@@ -31,18 +28,18 @@ class OpenAiChat():
 
         return response
 
-    def _add_message(self, role: Literal['system', 'user', 'assistant'], content: str):
+    def _add_message(self, role: Literal["system", "user", "assistant"], content: str):
         self._messages.append(AiChatMessage(role=role, content=content))
 
     def add_assistant_message(self, content: str) -> None:
-        self._add_message('assistant', content)
+        self._add_message("assistant", content)
 
     def add_user_message(self, content: str) -> None:
-        self._add_message('user', content)
+        self._add_message("user", content)
 
     def get_last_assistant_message(self, extract_code: bool) -> Optional[str]:
         for message in reversed(self._messages):
-            if message.role == 'assistant':
+            if message.role == "assistant":
                 response = message.content
                 if extract_code:
                     return self.extract_code_from_gpt_response(response)
@@ -53,7 +50,7 @@ class OpenAiChat():
 
     def export_gpt_messages(self) -> List[OpenAiChatMessage]:
         # return messages in the format expected by GPT
-        return [{'role': message.role, 'content': message.content} for message in self._messages]
+        return [{"role": message.role, "content": message.content} for message in self._messages]
 
     def get_last_message(self) -> Optional[AiChatMessage]:
         if len(self._messages) == 0:
@@ -74,10 +71,10 @@ class OpenAiChat():
         if self.has_system_prompt():
             self._messages[0].content = system_prompt
         else:
-            self._messages.insert(0, AiChatMessage(role='system', content=system_prompt))
+            self._messages.insert(0, AiChatMessage(role="system", content=system_prompt))
 
     def has_system_prompt(self) -> bool:
-        return len(self._messages) > 0 and self._messages[0].role == 'system'
+        return len(self._messages) > 0 and self._messages[0].role == "system"
 
     def get_system_prompt(self) -> Optional[str]:
         if self.has_system_prompt():
@@ -89,7 +86,9 @@ class OpenAiChat():
 
     def to_json(self) -> OpenAiChatDict:
         return {
-            'messages': [cast(OpenAiChatMessage, message.to_json_dict()) for message in self._messages]
+            "messages": [
+                cast(OpenAiChatMessage, message.to_json_dict()) for message in self._messages
+            ]
         }
 
     def reset(self):
@@ -99,8 +98,10 @@ class OpenAiChat():
             self.set_system_prompt(system_prompt)
 
     @classmethod
-    def from_json(cls, json: OpenAiChatDict, system_prompt: str = None) -> 'OpenAiChat':
-        return cls(messages=AiChatMessage.from_json_list(json['messages']), system_prompt=system_prompt)
+    def from_json(cls, json: OpenAiChatDict, system_prompt: str = None) -> "OpenAiChat":
+        return cls(
+            messages=AiChatMessage.from_json_list(json["messages"]), system_prompt=system_prompt
+        )
 
     @classmethod
     def extract_code_from_gpt_response(cls, gpt_response: str) -> str:
@@ -111,11 +112,12 @@ class OpenAiChat():
         :return: _description_
         :rtype: str
         """
-        generated_prompt = gpt_response \
-            .replace("```python", "```") \
-            .replace("``` python", "```") \
-            .replace("```R", "") \
+        generated_prompt = (
+            gpt_response.replace("```python", "```")
+            .replace("``` python", "```")
+            .replace("```R", "")
             .replace("``` R", "")
+        )
 
         if "```" not in generated_prompt:
             raise ValueError("No code block found in the AI response")

@@ -1,5 +1,3 @@
-
-
 import os
 from typing import Dict
 
@@ -9,9 +7,7 @@ from gws_core.settings_loader import SettingsLoader
 
 
 class CLIUtils:
-
     MAIN_SETTINGS_FILE_DEFAULT_PATH = "/lab/.sys/app/settings.json"
-
 
     @staticmethod
     def get_global_option_log_level(ctx: typer.Context) -> str:
@@ -22,7 +18,7 @@ class CLIUtils:
         :return: Log level
         :rtype: str
         """
-        return ctx.obj['log_level']
+        return ctx.obj["log_level"]
 
     @staticmethod
     def replace_vars_in_file(file_path: str, variables: Dict[str, str]):
@@ -34,19 +30,19 @@ class CLIUtils:
         :param vars: dictionary of variables to replace
         :type vars: Dict[str, str]
         """
-        with open(file_path, 'r', encoding='UTF-8') as f:
+        with open(file_path, "r", encoding="UTF-8") as f:
             text = f.read()
 
             for key, value in variables.items():
                 text = CLIUtils.replace_variable(text, key, value)
 
-        with open(file_path, 'w', encoding='UTF-8') as f:
+        with open(file_path, "w", encoding="UTF-8") as f:
             f.write(text)
 
     @staticmethod
     def replace_variable(text: str, var_name: str, value: str) -> str:
         # variable are formatted as {{var_name}}
-        text = text.replace('{{' + var_name + '}}', value)
+        text = text.replace("{{" + var_name + "}}", value)
         return text
 
     @staticmethod
@@ -58,7 +54,6 @@ class CLIUtils:
         """
         return BrickService.get_parent_brick_folder(os.getcwd())
 
-
     @staticmethod
     def get_and_check_current_brick_dir() -> str:
         """Get the current brick dir, if the current dir is not inside a brick, return None.
@@ -68,10 +63,10 @@ class CLIUtils:
         """
         brick_dir = CLIUtils.get_current_brick_dir()
         if not brick_dir:
-
             typer.echo(
                 "The current folder is not inside a brick, please run the command inside a brick folder or provide the brick name.",
-                err=True)
+                err=True,
+            )
             raise typer.Abort()
 
         return brick_dir
@@ -87,10 +82,14 @@ class CLIUtils:
 
         if not brick_dir:
             Logger.info(
-                f"Command not run inside a brick folder, using the default main settings file path: '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}'")
+                f"Command not run inside a brick folder, using the default main settings file path: '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}'"
+            )
 
             if not os.path.exists(CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH):
-                typer.echo(f"Default main settings file '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}' does not exist.", err=True)
+                typer.echo(
+                    f"Default main settings file '{CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH}' does not exist.",
+                    err=True,
+                )
                 raise typer.Abort()
 
             return CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH

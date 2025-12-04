@@ -1,25 +1,25 @@
-
-
 from enum import Enum
 
 from fastapi import Request
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.apps_manager import AppsManager
-from gws_core.core.exception.exceptions.forbidden_exception import \
-    ForbiddenException
+from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.utils.settings import Settings
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_link_space_access import ShareLinkSpaceAccessService
 from gws_core.share.shared_dto import ShareLinkType
-from gws_core.user.auth_context import (AuthContext, AuthContextApp,
-                                        AuthContextShareLink, AuthContextUser)
+from gws_core.user.auth_context import (
+    AuthContext,
+    AuthContextApp,
+    AuthContextShareLink,
+    AuthContextUser,
+)
 
 from ..core.exception.exceptions import UnauthorizedException
 from ..core.exception.gws_exceptions import GWSException
 from .current_user_service import CurrentUserService
 from .jwt_service import JWTService
-from .unique_code_service import (CodeObject, InvalidUniqueCodeException,
-                                  UniqueCodeService)
+from .unique_code_service import CodeObject, InvalidUniqueCodeException, UniqueCodeService
 from .user import User
 from .user_exception import InvalidTokenException
 
@@ -30,9 +30,8 @@ class AuthorizationMode(Enum):
     SHARE_LINK = "SHARE_LINK"
 
 
-class AuthorizationService():
-    """Service for handling user authorization when accessing resources
-    """
+class AuthorizationService:
+    """Service for handling user authorization when accessing resources"""
 
     SHARE_LINK_AUTH_SCHEME = "ShareToken "
     # Flag to allow connections from dev mode apps
@@ -66,7 +65,9 @@ class AuthorizationService():
         even if there is a normal token
         """
 
-        return cls.check_authorization(request, [AuthorizationMode.SHARE_LINK, AuthorizationMode.USER])
+        return cls.check_authorization(
+            request, [AuthorizationMode.SHARE_LINK, AuthorizationMode.USER]
+        )
 
     @classmethod
     def check_authorization(cls, request: Request, modes: list[AuthorizationMode]) -> AuthContext:
@@ -88,7 +89,7 @@ class AuthorizationService():
         if AuthorizationMode.USER in modes:
             return cls.check_user_access_token(request)
 
-        raise UnauthorizedException('No valid authentication method found')
+        raise UnauthorizedException("No valid authentication method found")
 
     @classmethod
     def check_share_link(cls, request: Request) -> AuthContextShareLink:
@@ -113,7 +114,10 @@ class AuthorizationService():
 
         user: User = None
 
-        if app_id == AppInstance.DEV_MODE_APP_ID and user_access_token == AppInstance.DEV_MODE_USER_ACCESS_TOKEN_KEY:
+        if (
+            app_id == AppInstance.DEV_MODE_APP_ID
+            and user_access_token == AppInstance.DEV_MODE_USER_ACCESS_TOKEN_KEY
+        ):
             if Settings.is_prod_mode():
                 raise UnauthorizedException(
                     detail="Dev mode app cannot be used in production",
@@ -150,15 +154,15 @@ class AuthorizationService():
         if not token or not token.startswith(cls.SHARE_LINK_AUTH_SCHEME):
             raise InvalidTokenException()
 
-        share_link_token = token[len(cls.SHARE_LINK_AUTH_SCHEME):]
+        share_link_token = token[len(cls.SHARE_LINK_AUTH_SCHEME) :]
 
         user_access_token = request.headers.get("gws_user_access_token")
         return cls.auth_share_link_from_token(share_link_token, user_access_token)
 
     @classmethod
     def auth_share_link_from_token(
-            cls, share_link_token: str, user_access_token: str | None = None) -> AuthContextShareLink:
-
+        cls, share_link_token: str, user_access_token: str | None = None
+    ) -> AuthContextShareLink:
         share_link = ShareLinkService.find_by_token_and_check_validity(share_link_token)
 
         user: User
@@ -167,7 +171,8 @@ class AuthorizationService():
             if not user_access_token:
                 raise ForbiddenException("This link requires authentication")
             space_access_info = ShareLinkSpaceAccessService.find_by_token_and_check_validity(
-                user_access_token, share_link.id)
+                user_access_token, share_link.id
+            )
 
             user = cls._get_and_check_user(space_access_info.user_id, allow_inactive=True)
         else:
@@ -179,8 +184,7 @@ class AuthorizationService():
 
     @classmethod
     def check_unique_code(cls, unique_code: str) -> AuthContextUser:
-        """Use link the the token to check access for a unique code generated. return the object associated with the code
-        """
+        """Use link the the token to check access for a unique code generated. return the object associated with the code"""
         try:
             code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
 

@@ -1,5 +1,3 @@
-
-
 from typing import Any, Dict, List, Type
 
 from pandas import DataFrame
@@ -7,8 +5,7 @@ from pandas import DataFrame
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.gws_core_packages import GwsCorePackages
-from gws_core.impl.openai.ai_prompt_code import (AIPromptCode,
-                                                 AIPromptCodeContext)
+from gws_core.impl.openai.ai_prompt_code import AIPromptCode, AIPromptCodeContext
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
@@ -95,9 +92,12 @@ source = [s.get_data() for s in sources]
 targets = [Table(t) for t in target]"""
 
 
-@task_decorator("MultiTableSmartTransformer", human_name="Smart multi tables transformer",
-                short_description="Multi tables transformer that uses AI (OpenAI).",
-                style=TypingStyle.material_icon("auto_awesome"))
+@task_decorator(
+    "MultiTableSmartTransformer",
+    human_name="Smart multi tables transformer",
+    short_description="Multi tables transformer that uses AI (OpenAI).",
+    style=TypingStyle.material_icon("auto_awesome"),
+)
 class MultiTableSmartTransformer(Task):
     """
     This tasks uses AI to transform multiple tables. It supports multiple tables as input and output.
@@ -113,27 +113,30 @@ class MultiTableSmartTransformer(Task):
     ⚠️ This task does not support table tags. ⚠️
     """
 
-    input_specs: InputSpecs = DynamicInputs({
-        'source': InputSpec(Table),
-    }, additionnal_port_spec=InputSpec(Table))
+    input_specs: InputSpecs = DynamicInputs(
+        {
+            "source": InputSpec(Table),
+        },
+        additionnal_port_spec=InputSpec(Table),
+    )
 
-    output_specs: OutputSpecs = DynamicOutputs({
-        'target': OutputSpec(Table),
-    }, additionnal_port_spec=OutputSpec(Table))
+    output_specs: OutputSpecs = DynamicOutputs(
+        {
+            "target": OutputSpec(Table),
+        },
+        additionnal_port_spec=OutputSpec(Table),
+    )
 
-    config_specs = ConfigSpecs({
-        'prompt': OpenAiChatParam()
-    })
+    config_specs = ConfigSpecs({"prompt": OpenAiChatParam()})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-
-        chat: OpenAiChat = params.get_value('prompt')
+        chat: OpenAiChat = params.get_value("prompt")
 
         ai_tables = AIMultiTableTransformer(inputs["source"], chat, self.message_dispatcher)
         result: List[Table] = ai_tables.run()
 
         # save the new config with the new prompt
-        params.set_value('prompt', ai_tables.chat)
+        params.set_value("prompt", ai_tables.chat)
         params.save_params()
 
         # only log the code that is generated
@@ -141,4 +144,4 @@ class MultiTableSmartTransformer(Task):
 {ai_tables.generate_agent_code()}
 ##################### AGENT CODE ###################""")
 
-        return {'target': ResourceList(result)}
+        return {"target": ResourceList(result)}

@@ -1,5 +1,3 @@
-
-
 """
 PrimitiveRField module for Resource fields that store primitive values.
 
@@ -11,8 +9,13 @@ building blocks for Resource data fields.
 import uuid
 from typing import Any
 
-from ...core.classes.validator import (BoolValidator, FloatValidator,
-                                       IntValidator, StrValidator, Validator)
+from ...core.classes.validator import (
+    BoolValidator,
+    FloatValidator,
+    IntValidator,
+    StrValidator,
+    Validator,
+)
 from .r_field import BaseRField, RFieldStorage
 
 
@@ -42,10 +45,13 @@ class PrimitiveRField(BaseRField):
 
     validator: Validator
 
-    def __init__(self, validator: Validator,
-                 default_value: Any = None,
-                 include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.KV_STORE) -> None:
+    def __init__(
+        self,
+        validator: Validator,
+        default_value: Any = None,
+        include_in_dict_view: bool = True,
+        storage: RFieldStorage = RFieldStorage.KV_STORE,
+    ) -> None:
         """Initialize a PrimitiveRField with validation and storage configuration.
 
         :param validator: Validator used to verify the field value type during serialization
@@ -66,7 +72,9 @@ class PrimitiveRField(BaseRField):
         """
         # check that the default value is correct
         default_value = validator.validate(default_value)
-        super().__init__(default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage
+        )
         self.validator = validator
 
     def deserialize(self, r_field_value: Any) -> Any:
@@ -131,8 +139,12 @@ class IntRField(PrimitiveRField):
         ```
     """
 
-    def __init__(self, default_value: int | None = None, include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.DATABASE) -> None:
+    def __init__(
+        self,
+        default_value: int | None = None,
+        include_in_dict_view: bool = True,
+        storage: RFieldStorage = RFieldStorage.DATABASE,
+    ) -> None:
         """Initialize an IntRField for storing integer values.
 
         :param default_value: Default integer value. Can be:
@@ -148,8 +160,12 @@ class IntRField(PrimitiveRField):
                         NONE for transient). Defaults to DATABASE for integers
         :type storage: RFieldStorage, optional
         """
-        super().__init__(validator=IntValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            validator=IntValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+            storage=storage,
+        )
 
 
 class FloatRField(PrimitiveRField):
@@ -187,8 +203,12 @@ class FloatRField(PrimitiveRField):
         ```
     """
 
-    def __init__(self, default_value: float | None = None, include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.DATABASE) -> None:
+    def __init__(
+        self,
+        default_value: float | None = None,
+        include_in_dict_view: bool = True,
+        storage: RFieldStorage = RFieldStorage.DATABASE,
+    ) -> None:
         """Initialize a FloatRField for storing floating-point values.
 
         :param default_value: Default float value. Can be:
@@ -204,8 +224,12 @@ class FloatRField(PrimitiveRField):
                         NONE for transient). Defaults to DATABASE for floats
         :type storage: RFieldStorage, optional
         """
-        super().__init__(validator=FloatValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            validator=FloatValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+            storage=storage,
+        )
 
 
 class BoolRField(PrimitiveRField):
@@ -243,8 +267,12 @@ class BoolRField(PrimitiveRField):
         ```
     """
 
-    def __init__(self, default_value: bool | None = None, include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.DATABASE) -> None:
+    def __init__(
+        self,
+        default_value: bool | None = None,
+        include_in_dict_view: bool = True,
+        storage: RFieldStorage = RFieldStorage.DATABASE,
+    ) -> None:
         """Initialize a BoolRField for storing boolean values.
 
         :param default_value: Default boolean value. Can be:
@@ -260,8 +288,12 @@ class BoolRField(PrimitiveRField):
                         NONE for transient). Defaults to DATABASE for booleans
         :type storage: RFieldStorage, optional
         """
-        super().__init__(validator=BoolValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            validator=BoolValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+            storage=storage,
+        )
 
 
 class StrRField(PrimitiveRField):
@@ -300,8 +332,12 @@ class StrRField(PrimitiveRField):
         ```
     """
 
-    def __init__(self, default_value: str | None = None, include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.KV_STORE) -> None:
+    def __init__(
+        self,
+        default_value: str | None = None,
+        include_in_dict_view: bool = True,
+        storage: RFieldStorage = RFieldStorage.KV_STORE,
+    ) -> None:
         """Initialize a StrRField for storing string values.
 
         :param default_value: Default string value. Can be:
@@ -318,8 +354,12 @@ class StrRField(PrimitiveRField):
                         Defaults to KV_STORE for strings
         :type storage: RFieldStorage, optional
         """
-        super().__init__(validator=StrValidator(),
-                         default_value=default_value, include_in_dict_view=include_in_dict_view, storage=storage)
+        super().__init__(
+            validator=StrValidator(),
+            default_value=default_value,
+            include_in_dict_view=include_in_dict_view,
+            storage=storage,
+        )
 
 
 class UUIDRField(StrRField):
@@ -363,8 +403,9 @@ class UUIDRField(StrRField):
         - Cannot specify a default_value (always uses uuid.uuid4())
     """
 
-    def __init__(self, include_in_dict_view: bool = True,
-                 storage: RFieldStorage = RFieldStorage.KV_STORE) -> None:
+    def __init__(
+        self, include_in_dict_view: bool = True, storage: RFieldStorage = RFieldStorage.KV_STORE
+    ) -> None:
         """Initialize a UUIDRField that automatically generates unique identifiers.
 
         Note: Unlike other fields, UUIDRField does not accept a default_value parameter

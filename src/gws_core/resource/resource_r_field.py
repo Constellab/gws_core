@@ -1,5 +1,3 @@
-
-
 import warnings
 from typing import final
 
@@ -30,9 +28,11 @@ class ResourceRField(BaseRField):
             "ResourceRField is deprecated and will be removed in a future version. "
             "Please dfine a sub class of ResourceSet instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
-        super().__init__(default_value=None, include_in_dict_view=False, storage=RFieldStorage.DATABASE)
+        super().__init__(
+            default_value=None, include_in_dict_view=False, storage=RFieldStorage.DATABASE
+        )
 
     def deserialize(self, r_field_value: str) -> Resource:
         if r_field_value is None:
@@ -47,10 +47,12 @@ class ResourceRField(BaseRField):
             return None
         if not isinstance(r_field_value, Resource):
             raise Exception(
-                f"The value passed to the ResourceRField is not a ressource but a '{str(type(r_field_value))}'")
+                f"The value passed to the ResourceRField is not a ressource but a '{str(type(r_field_value))}'"
+            )
 
         if r_field_value.get_model_id() is None:
             raise Exception(
-                "Only a resource previously saved can be passed to a ResourceRField. It must have been the output of a previous task")
+                "Only a resource previously saved can be passed to a ResourceRField. It must have been the output of a previous task"
+            )
 
         return r_field_value.get_model_id()

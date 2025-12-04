@@ -1,5 +1,3 @@
-
-
 from typing import Any
 
 from fastapi.applications import FastAPI
@@ -12,9 +10,8 @@ from gws_core.lab.system_dto import LabEnvironment
 from ..utils.settings import Settings
 
 
-class CorsConfig():
-
-    _ALLOW_ANY_ORIGIN = '*'
+class CorsConfig:
+    _ALLOW_ANY_ORIGIN = "*"
     _ALLOW_CREDENTIALS = True
     _ALLOW_METHODS = ["*"]
     _ALLOW_HEADERS = ["*"]
@@ -38,11 +35,11 @@ class CorsConfig():
     @classmethod
     def configure_response_cors(cls, request: Request, response: Response) -> Response:
         """Manually configure the response with cors information, this use the actual cors config
-        
+
         Note: Security headers are automatically added by SecurityHeadersMiddleware
         """
 
-        origin = request.headers.get('origin')
+        origin = request.headers.get("origin")
 
         if origin:
             # Have the middleware do the heavy lifting for us to parse
@@ -76,7 +73,6 @@ class CorsConfig():
             allow_credentials=cls._ALLOW_CREDENTIALS,
             allow_methods=cls._ALLOW_METHODS,
             allow_headers=cls._ALLOW_HEADERS,
-
         )
 
     @classmethod
@@ -92,7 +88,8 @@ class CorsConfig():
 
         if virtual_host is None:
             raise Exception(
-                "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing")
+                "Can't configure the lab, the environment variable 'VIRTUAL_HOST' is missing"
+            )
 
         # allow all request from sub domain or virtual host
-        return r"https://.*\." + virtual_host.replace('.', r'\.')  # escape the . in virtual host
+        return r"https://.*\." + virtual_host.replace(".", r"\.")  # escape the . in virtual host

@@ -1,16 +1,13 @@
-
-
 from typing import Any, Dict, List, Optional
 
 import streamlit as st
 
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.streamlit.components.streamlit_component_loader import \
-    StreamlitComponentLoader
+from gws_core.streamlit.components.streamlit_component_loader import StreamlitComponentLoader
 from gws_core.streamlit.widgets.streamlit_state import StreamlitState
 
 
-class StreamlitResourceSelect():
+class StreamlitResourceSelect:
     """Streamlit component to select a resource.
 
     This component is a wrapper around the GWS resource search component.
@@ -34,10 +31,10 @@ class StreamlitResourceSelect():
         :param value: Optional tag value to filter by, defaults to None
         :type value: Any, optional
         """
-        if 'tags' not in self.filters:
-            self.filters['tags'] = []
-        tag = {'key': key, 'value': value} if value is not None else {'key': key}
-        self.filters['tags'].append(tag)
+        if "tags" not in self.filters:
+            self.filters["tags"] = []
+        tag = {"key": key, "value": value} if value is not None else {"key": key}
+        self.filters["tags"].append(tag)
 
     def add_column_tag_filter_key(self, key: str) -> None:
         """Add a column tag filter key to the resource search.
@@ -49,11 +46,14 @@ class StreamlitResourceSelect():
 
     def include_not_flagged_resources(self) -> None:
         """Add a filter to include not flagged resources."""
-        self.filters['includeNotFlagged'] = True
+        self.filters["includeNotFlagged"] = True
 
-    def select_resource(self, placeholder: str = 'Search for resource',
-                        key='resource-select',
-                        defaut_resource: ResourceModel = None) -> Optional[ResourceModel]:
+    def select_resource(
+        self,
+        placeholder: str = "Search for resource",
+        key="resource-select",
+        defaut_resource: ResourceModel = None,
+    ) -> Optional[ResourceModel]:
         """Create a search box to select a resource.
 
         :param placeholder: Placeholder text shown within the component for empty searches, defaults to 'Search for resource'
@@ -74,16 +74,17 @@ class StreamlitResourceSelect():
         }
 
         component_value = self._streamlit_component_loader.call_component(
-            data, key=key, authentication_info=StreamlitState.get_user_auth_info())
+            data, key=key, authentication_info=StreamlitState.get_user_auth_info()
+        )
 
-        key = f'__{key}_gws_resource_model__'
+        key = f"__{key}_gws_resource_model__"
 
         if component_value is None:
             st.session_state[key] = None
             return None
 
-        if 'resourceId' in component_value:
-            resource_id = component_value['resourceId']
+        if "resourceId" in component_value:
+            resource_id = component_value["resourceId"]
             if resource_id is None:
                 st.session_state[key] = None
                 return None

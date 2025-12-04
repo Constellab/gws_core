@@ -1,5 +1,3 @@
-
-
 from typing import List, Union
 from unittest import TestCase
 
@@ -10,9 +8,9 @@ from .test_helper import TestHelper
 
 class BaseTestCaseLight(TestCase):
     """Base class for test, contain method to ease testing and automatically init env and clear it after
-   Extend this class if your tests does not need database. If you are only using the TaskRunner, you can use this class.
-   This will not init the database which is way faster.
-   If you need the database (for testing a protocol for example), use BaseTestCase
+    Extend this class if your tests does not need database. If you are only using the TaskRunner, you can use this class.
+    This will not init the database which is way faster.
+    If you need the database (for testing a protocol for example), use BaseTestCase
     """
 
     # default value of ignore keys when comparing json
@@ -30,7 +28,9 @@ class BaseTestCaseLight(TestCase):
     def setUpClass(cls):
         if cls._class_setted_up:
             return
-        print(f"************** Running test file '{cls.__module__}', class '{cls.__name__}' **************")
+        print(
+            f"************** Running test file '{cls.__module__}', class '{cls.__name__}' **************"
+        )
         if not cls.init_before_each_test:
             cls.init_before_test()
         cls._class_setted_up = True
@@ -41,7 +41,9 @@ class BaseTestCaseLight(TestCase):
             return
         if not cls.init_before_each_test:
             cls.clear_after_test()
-        print(f"************** End of test file '{cls.__module__}', class '{cls.__name__}' **************")
+        print(
+            f"************** End of test file '{cls.__module__}', class '{cls.__name__}' **************"
+        )
         cls._class_teared_down = True
 
     def setUp(self) -> None:
@@ -69,7 +71,8 @@ class BaseTestCaseLight(TestCase):
         print(f"---- Test: {text} ----")
 
     @classmethod
-    def assert_json(cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None) -> None:
-        """Assert a json with possibility to ignore key
-        """
+    def assert_json(
+        cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+    ) -> None:
+        """Assert a json with possibility to ignore key"""
         Utils.assert_json_equals(json_1, json_2, ignore_keys)

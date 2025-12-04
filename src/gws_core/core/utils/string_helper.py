@@ -1,5 +1,3 @@
-
-
 import random
 import re
 import string
@@ -10,13 +8,14 @@ from slugify import slugify as _slugify
 from unidecode import unidecode
 
 
-class StringHelper():
-    """Helper to manipulate strings
-    """
+class StringHelper:
+    """Helper to manipulate strings"""
 
     @staticmethod
-    def generate_random_chars(size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits) -> str:
-        return ''.join(random.choice(chars) for _ in range(size))
+    def generate_random_chars(
+        size=6, chars=string.ascii_uppercase + string.ascii_lowercase + string.digits
+    ) -> str:
+        return "".join(random.choice(chars) for _ in range(size))
 
     @classmethod
     def generate_uuid(cls) -> str:
@@ -40,7 +39,7 @@ class StringHelper():
         if snakefy:
             text = _slugify(text, lowercase=to_lower, separator="_")
         else:
-            text = _slugify(text, lowercase=to_lower, separator='-')
+            text = _slugify(text, lowercase=to_lower, separator="-")
 
         return text
 
@@ -56,9 +55,9 @@ class StringHelper():
         """
         if name is None:
             return None
-        name = name.replace(' ', '')
-        name = re.sub('(.)([A-Z][a-z]+)', r'\1 \2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1 \2', name).capitalize()
+        name = name.replace(" ", "")
+        name = re.sub("(.)([A-Z][a-z]+)", r"\1 \2", name)
+        return re.sub("([a-z0-9])([A-Z])", r"\1 \2", name).capitalize()
 
     @staticmethod
     def snake_case_to_sentence(name: str) -> str:
@@ -67,7 +66,7 @@ class StringHelper():
         """
         if name is None:
             return None
-        name = name.lower().replace(' ', '').replace('_', ' ')
+        name = name.lower().replace(" ", "").replace("_", " ")
         return name.capitalize()
 
     @staticmethod
@@ -78,10 +77,10 @@ class StringHelper():
         if text is None:
             return None
         # Split the input string into words based on spaces or underscores
-        words = re.split(r'[ _]', text)
+        words = re.split(r"[ _]", text)
 
         # Capitalize the first letter of each word and join them
-        pascal_case_string = ''.join(word.capitalize() for word in words if word)
+        pascal_case_string = "".join(word.capitalize() for word in words if word)
 
         return pascal_case_string
 
@@ -94,29 +93,27 @@ class StringHelper():
             return None
 
         # Replace spaces or hyphens with underscores
-        text = re.sub(r'[\s\-]+', '_', text)
+        text = re.sub(r"[\s\-]+", "_", text)
 
         # Insert underscores before uppercase letters (except the first one)
-        text = re.sub(r'(?<!^)(?=[A-Z])', '_', text)
+        text = re.sub(r"(?<!^)(?=[A-Z])", "_", text)
 
         # Convert the entire string to lowercase
         text = text.lower()
 
         # Remove double (or more) underscores
-        text = re.sub(r'_{2,}', '_', text)
+        text = re.sub(r"_{2,}", "_", text)
 
         return text
 
     @staticmethod
     def to_enum(enum_class: Type, str_value: str) -> Any:
-        """Convert a string to an enum value
-        """
+        """Convert a string to an enum value"""
         return enum_class(str_value)
 
     @staticmethod
     def get_enum_values(enum_class: Type) -> list:
-        """Get all the values of an enum
-        """
+        """Get all the values of an enum"""
         return [e.value for e in enum_class]
 
     @staticmethod
@@ -133,8 +130,8 @@ class StringHelper():
         if str_ is None:
             return None
 
-        pattern = re.compile(r'\s+')
-        return re.sub(pattern, '', str_)
+        pattern = re.compile(r"\s+")
+        return re.sub(pattern, "", str_)
 
     @staticmethod
     def replace_accent_with_letter(str_: str) -> str:

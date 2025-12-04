@@ -1,8 +1,7 @@
 from typing import List, Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.block.rich_text_block import (
-    RichTextBlockDataBase, RichTextBlockType)
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockListItem(BaseModelDTO):
@@ -11,6 +10,7 @@ class RichTextBlockListItem(BaseModelDTO):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
+
     content: str
     items: List["RichTextBlockListItem"] = []
 
@@ -39,7 +39,8 @@ class RichTextBlockList(RichTextBlockDataBase):
     :param TypedDict: [description]
     :type TypedDict: [type]
     """
-    style: Literal['ordered', 'unordered', 'checklist']
+
+    style: Literal["ordered", "unordered", "checklist"]
     items: List[RichTextBlockListItem]
 
     def to_markdown(self) -> str:
@@ -50,9 +51,9 @@ class RichTextBlockList(RichTextBlockDataBase):
         """
         result = []
         for index, item in enumerate(self.items):
-            if self.style == 'ordered':
+            if self.style == "ordered":
                 prefix = f"{index + 1}. "
-            elif self.style == 'checklist':
+            elif self.style == "checklist":
                 # Markdown checkbox syntax
                 prefix = "- [ ] "
             else:

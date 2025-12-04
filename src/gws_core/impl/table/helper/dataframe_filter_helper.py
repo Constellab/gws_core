@@ -1,5 +1,3 @@
-
-
 from typing import List, Literal, Union
 
 from pandas import DataFrame, Index, api
@@ -13,7 +11,7 @@ from gws_core.core.utils.utils import Utils
 
 from ....core.exception.exceptions import BadRequestException
 
-AxisName = Literal['row', 'column']
+AxisName = Literal["row", "column"]
 
 
 class DataframeFilterName(TypedDict):
@@ -22,6 +20,7 @@ class DataframeFilterName(TypedDict):
     If the name is a list of string, the dataframe will be filtered by the rows/columns that have one of the name.
     If the name is a string, the dataframe will be filtered by the rows/columns that have the name. The name can be a regular expression.
     """
+
     name: Union[List[str], str]
     is_regex: NotRequired[bool]
 
@@ -37,13 +36,17 @@ class DataframeFilterHelper:
             )
 
     @classmethod
-    def filter_by_axis_names(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
+    def filter_by_axis_names(
+        cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]
+    ):
         dataframe: DataFrame = None
         if not isinstance(filters, list):
             raise BadRequestException("The filters must be a list of dictionnary")
 
         for filter_ in filters:
-            new_df = cls._filter_by_axis_names(data, axis, filter_["name"], filter_.get("is_regex", False))
+            new_df = cls._filter_by_axis_names(
+                data, axis, filter_["name"], filter_.get("is_regex", False)
+            )
             if dataframe is None:
                 dataframe = new_df
             else:
@@ -52,7 +55,9 @@ class DataframeFilterHelper:
         return dataframe
 
     @classmethod
-    def filter_out_by_axis_names(cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]):
+    def filter_out_by_axis_names(
+        cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]
+    ):
         filtered_dataframe = cls.filter_by_axis_names(data, axis, filters)
 
         ax_index: Index = filtered_dataframe.index if axis == "row" else filtered_dataframe.columns
@@ -61,7 +66,9 @@ class DataframeFilterHelper:
         return data.drop(labels=ax_index, axis=0 if axis == "row" else 1)
 
     @classmethod
-    def _filter_by_axis_names(cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False):
+    def _filter_by_axis_names(
+        cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False
+    ):
         if (not axis) or (value is None):
             return data
         cls._check_axis_name(axis)
@@ -69,7 +76,9 @@ class DataframeFilterHelper:
         if not isinstance(value, list):
             value = [value]
 
-        if not all(isinstance(x, str) for x in value) and not all(isinstance(x, int) for x in value):
+        if not all(isinstance(x, str) for x in value) and not all(
+            isinstance(x, int) for x in value
+        ):
             raise BadRequestException("The names must be a list of strings or indexes")
 
         ax = 0 if axis == "row" else 1
@@ -87,49 +96,57 @@ class DataframeFilterHelper:
             return data.filter(items=value, axis=ax)
 
     @classmethod
-    def get_filter_param_set(cls, axis_name: AxisName,
-                             param_set_human_name: str = None,
-                             param_set_short_description: str = None,
-                             optional: bool = False) -> ParamSet:
-        """Get a param set that is of type DataframeFilterName
-        """
+    def get_filter_param_set(
+        cls,
+        axis_name: AxisName,
+        param_set_human_name: str = None,
+        param_set_short_description: str = None,
+        optional: bool = False,
+    ) -> ParamSet:
+        """Get a param set that is of type DataframeFilterName"""
 
         human_name = "Row name" if axis_name == "row" else "Column name"
-        return ParamSet(ConfigSpecs({
-            "name": StrParam(
-                human_name=human_name,
-                short_description="Searched text or pattern (i.e. regular expression)",
+        return ParamSet(
+            ConfigSpecs(
+                {
+                    "name": StrParam(
+                        human_name=human_name,
+                        short_description="Searched text or pattern (i.e. regular expression)",
+                    ),
+                    "is_regex": BoolParam(
+                        default_value=False,
+                        human_name="Use regular expression",
+                        short_description="True to use regular expression, False otherwise",
+                    ),
+                }
             ),
-            "is_regex": BoolParam(
-                default_value=False,
-                human_name="Use regular expression",
-                short_description="True to use regular expression, False otherwise",
-            )
-        }),
             human_name=param_set_human_name,
             short_description=param_set_short_description,
-            optional=optional)
+            optional=optional,
+        )
 
     @classmethod
     def get_tags_param_set(cls, axis_name: AxisName) -> ParamSet:
-        """Get a param set for filtering a Table by tags
-        """
+        """Get a param set for filtering a Table by tags"""
 
         human_name = "Row tags" if axis_name == "row" else "Column tags"
-        return ParamSet(ConfigSpecs({
-            "tags": TagsParam(
-                human_name=human_name,
-                short_description="If multiple tags provided, the data must have all of them (AND condition)",
-            )
-        }),
+        return ParamSet(
+            ConfigSpecs(
+                {
+                    "tags": TagsParam(
+                        human_name=human_name,
+                        short_description="If multiple tags provided, the data must have all of them (AND condition)",
+                    )
+                }
+            ),
             human_name=human_name,
-            short_description="The different tag inputs are combined with an OR condition")
+            short_description="The different tag inputs are combined with an OR condition",
+        )
 
     @classmethod
     def convert_tags_params_to_tag_list(cls, tags: Union[dict, List[dict]]) -> List[dict]:
-        """Convert a tag params from the get_tags_param_set to a list of tags
-        """
+        """Convert a tag params from the get_tags_param_set to a list of tags"""
         if isinstance(tags, str):
             tags = [tags]
 
-        return [tag['tags'] for tag in tags]
+        return [tag["tags"] for tag in tags]

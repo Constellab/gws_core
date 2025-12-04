@@ -1,5 +1,3 @@
-
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -32,30 +30,32 @@ class CreateLabNote(Task):
 
     input_specs: InputSpecs = InputSpecs()
 
-    output_specs: OutputSpecs = OutputSpecs({
-        'note': OutputSpec(LabNoteResource, human_name='Note', short_description='Note created')
-    })
+    output_specs: OutputSpecs = OutputSpecs(
+        {"note": OutputSpec(LabNoteResource, human_name="Note", short_description="Note created")}
+    )
 
-    config_specs = ConfigSpecs({
-        'template': NoteTemplateParam(optional=True),
-        'title': StrParam(human_name='Title', short_description='Title of the note', optional=True),
-    })
+    config_specs = ConfigSpecs(
+        {
+            "template": NoteTemplateParam(optional=True),
+            "title": StrParam(
+                human_name="Title", short_description="Title of the note", optional=True
+            ),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        template: NoteTemplate = params['template']
-        title: str = params['title']
+        template: NoteTemplate = params["template"]
+        title: str = params["title"]
 
         if not title:
             if template:
                 title = template.title
             else:
-                title = 'New generated note'
+                title = "New generated note"
         note_dto = NoteSaveDTO(title=title, template_id=template.id if template else None)
 
         note = NoteService.create(note_dto)
 
         self.log_info_message(f"Note '{note.title}' created")
 
-        return {
-            'note': LabNoteResource(note.id)
-        }
+        return {"note": LabNoteResource(note.id)}

@@ -1,5 +1,3 @@
-
-
 from typing import Dict, List, Optional, Union
 
 from .r_field.serializable_r_field import SerializableObjectJson
@@ -10,24 +8,23 @@ class TechnicalInfo:
     value: Union[str, float, int, bool]
     short_description: Optional[str]
 
-    def __init__(self, key: str, value: Union[str, float, int, bool], short_description: str = None) -> None:
+    def __init__(
+        self, key: str, value: Union[str, float, int, bool], short_description: str = None
+    ) -> None:
         self.key = key
         self.value = value
         self.short_description = short_description
 
     def to_json(self) -> Dict[str, str]:
-        return {
-            "key": self.key,
-            "value": self.value,
-            "short_description": self.short_description
-        }
+        return {"key": self.key, "value": self.value, "short_description": self.short_description}
 
     @classmethod
-    def from_json(cls, json_data: Dict[str, str]) -> 'TechnicalInfo':
+    def from_json(cls, json_data: Dict[str, str]) -> "TechnicalInfo":
         return TechnicalInfo(
             key=json_data["key"],
             value=json_data["value"],
-            short_description=json_data.get("short_description"))
+            short_description=json_data.get("short_description"),
+        )
 
 
 class TechnicalInfoDict(SerializableObjectJson):
@@ -54,7 +51,7 @@ class TechnicalInfoDict(SerializableObjectJson):
         return len(self._technical_info) == 0
 
     @classmethod
-    def deserialize(cls, json_data: List[Dict[str, str]]) -> 'TechnicalInfoDict':
+    def deserialize(cls, json_data: List[Dict[str, str]]) -> "TechnicalInfoDict":
         technical_info_dict = TechnicalInfoDict()
         for technical_info_json in json_data:
             technical_info_dict.add(TechnicalInfo.from_json(technical_info_json))

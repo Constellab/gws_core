@@ -1,24 +1,19 @@
-
-
 from typing import Dict, List, Type
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
-from gws_core.core.db.migration.brick_migrator import (BrickMigrator,
-                                                       MigrationObject)
+from gws_core.core.db.migration.brick_migrator import BrickMigrator, MigrationObject
 from gws_core.core.db.version import Version
-from gws_core.core.exception.exceptions.bad_request_exception import \
-    BadRequestException
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.system_dto import BrickMigrationLog
 
 
 class DbMigrationService:
-    """Service to register all brick migrations and call them
-    """
+    """Service to register all brick migrations and call them"""
 
     # store the different migration object, where key is brick_name
     _brick_migrators: Dict[str, BrickMigrator] = {}
@@ -46,18 +41,19 @@ class DbMigrationService:
                     settings.update_brick_migration_log(
                         migrator.brick_name,
                         str(migrator.current_brick_version),
-                        db_manager.get_unique_name())
+                        db_manager.get_unique_name(),
+                    )
 
         # save all the brick current version as last migration
         bricks = BrickHelper.get_all_bricks()
         for brick in bricks.values():
-            settings.update_brick_migration_log(brick.name, brick.version, db_manager.get_unique_name())
+            settings.update_brick_migration_log(
+                brick.name, brick.version, db_manager.get_unique_name()
+            )
 
     @classmethod
     def _get_brick_migrators(cls) -> Dict[str, BrickMigrator]:
-        """ Retrieve all brick migrators for the specified db_manager
-
-        """
+        """Retrieve all brick migrators for the specified db_manager"""
         if cls._brick_migrators:
             return cls._brick_migrators
 
@@ -70,7 +66,8 @@ class DbMigrationService:
                 brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
             except:
                 Logger.error(
-                    f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'")
+                    f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'"
+                )
                 continue
 
             brick_name = brick_info.name
@@ -82,13 +79,15 @@ class DbMigrationService:
                 BrickService.log_brick_message(
                     brick_name=brick_name,
                     message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' is higher than the brick version '{str(current_brick_version)}'. Skipping migration.",
-                    status="ERROR")
+                    status="ERROR",
+                )
                 continue
 
             if brick_name not in brick_migrators:
                 # Retrieve previous brick version
-                previous_brick_model: BrickMigrationLog = Settings.get_instance().get_brick_migration_log(
-                    brick_name)
+                previous_brick_model: BrickMigrationLog = (
+                    Settings.get_instance().get_brick_migration_log(brick_name)
+                )
 
                 if not previous_brick_model:
                     continue
@@ -100,11 +99,14 @@ class DbMigrationService:
             brick_migrator: BrickMigrator = brick_migrators[brick_name]
 
             # Check that the migration version was not already registered
-            if brick_migrator.has_migration_version(migration_version, migration_obj.get_db_unique_name()):
+            if brick_migrator.has_migration_version(
+                migration_version, migration_obj.get_db_unique_name()
+            ):
                 BrickService.log_brick_message(
                     brick_name=brick_name,
                     message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' was already registered. Skipping migration.",
-                    status="ERROR")
+                    status="ERROR",
+                )
                 continue
 
             brick_migrator.append_migration(migration_obj)
@@ -117,15 +119,17 @@ class DbMigrationService:
         cls._migration_objects.append(migration_object)
 
     @classmethod
-    def call_migration_manually(cls, brick_name: str,
-                                version_str: str,
-                                db_unique_name: str) -> None:
+    def call_migration_manually(
+        cls, brick_name: str, version_str: str, db_unique_name: str
+    ) -> None:
         version = Version(version_str)
 
         brick_migrators = cls._get_brick_migrators()
         brick_migrator = brick_migrators.get(brick_name)
         if brick_migrator is None:
-            raise BadRequestException(f"The brick '{brick_name}' does not have migration objects registered")
+            raise BadRequestException(
+                f"The brick '{brick_name}' does not have migration objects registered"
+            )
 
         brick_migrator.call_migration_manually(version, db_unique_name)
 

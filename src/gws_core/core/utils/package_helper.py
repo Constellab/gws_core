@@ -1,5 +1,3 @@
-
-
 import importlib
 import pathlib
 import sys
@@ -10,7 +8,6 @@ from .string_helper import StringHelper
 
 
 class PackageHelper:
-
     # @staticmethod
     # def is_installed(package) -> bool:
     #     output = subprocess.check_output([sys.executable, "-m", "pip", "list"])
@@ -22,13 +19,13 @@ class PackageHelper:
 
     @staticmethod
     def install(package):
-        """ Install a package using pip """
+        """Install a package using pip"""
         proxy = ShellProxy()
         proxy.run([sys.executable, "-m", "pip", "install", package])
 
     @staticmethod
     def uninstall(package):
-        """ Uninstall a package using pip """
+        """Uninstall a package using pip"""
         proxy = ShellProxy()
         proxy.run([sys.executable, "-m", "pip", "uninstall", "-y", package])
 

@@ -1,5 +1,3 @@
-
-
 from datetime import datetime
 from json import dumps
 from typing import Dict, Generic, List, Type, TypeVar
@@ -7,7 +5,7 @@ from typing import Dict, Generic, List, Type, TypeVar
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 
-BaseModelDTOType = TypeVar('BaseModelDTOType', bound='BaseModelDTO')
+BaseModelDTOType = TypeVar("BaseModelDTOType", bound="BaseModelDTO")
 
 
 class BaseModelDTO(BaseModel):
@@ -28,7 +26,9 @@ class BaseModelDTO(BaseModel):
         return dumps(self.to_json_dict())
 
     @classmethod
-    def to_json_list(cls: Type[BaseModelDTOType], model_dto_list: List[BaseModelDTOType]) -> List[dict]:
+    def to_json_list(
+        cls: Type[BaseModelDTOType], model_dto_list: List[BaseModelDTOType]
+    ) -> List[dict]:
         """
         Convert a list of ModelDTO to a list of json dictionaries.
         """
@@ -67,6 +67,7 @@ class ModelDTO(BaseModelDTO):
     """
     ModelDTO class.
     """
+
     id: str
     created_at: datetime
     last_modified_at: datetime
@@ -86,7 +87,7 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
     objects: List[BaseModelDTOType]
 
     @classmethod
-    def empty_page(cls: Type['PageDTO']) -> 'PageDTO':
+    def empty_page(cls: Type["PageDTO"]) -> "PageDTO":
         """
         Create an empty PageDTO.
         """
@@ -101,5 +102,5 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
             is_first_page=True,
             is_last_page=True,
             total_is_approximate=False,
-            objects=[]
+            objects=[],
         )

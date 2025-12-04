@@ -1,5 +1,3 @@
-
-
 from gws_core import BaseTestCase, Config, FloatParam, ProcessFactory
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_params import ConfigParams
@@ -9,11 +7,8 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 
 # test_config
 class TestConfig(BaseTestCase):
-
     def test_config(self):
-        specs = ConfigSpecs({
-            'moving_step':  FloatParam(default_value=0.1)
-        })
+        specs = ConfigSpecs({"moving_step": FloatParam(default_value=0.1)})
 
         config = Config()
         config.set_specs(specs)
@@ -22,21 +17,19 @@ class TestConfig(BaseTestCase):
         self.assertIsInstance(config_params, ConfigParams)
         self.assertEqual(config_params["moving_step"], 0.1)
 
-        config.set_value('moving_step', 4.5)
-        self.assertEqual(config.get_and_check_values(), {'moving_step': 4.5})
-        self.assertEqual(config.get_value('moving_step'), 4.5)
+        config.set_value("moving_step", 4.5)
+        self.assertEqual(config.get_and_check_values(), {"moving_step": 4.5})
+        self.assertEqual(config.get_value("moving_step"), 4.5)
 
         config.save()
         config2: Config = Config.get_by_id(config.id)
         self.assertEqual(config2.data, config.data)
-        self.assertIsNotNone(config2.get_specs().get_spec('moving_step'))
-        self.assertIsInstance(config2.get_specs().get_spec('moving_step'), FloatParam)
-        self.assertEqual(config2.get_values().get('moving_step'), 4.5)
+        self.assertIsNotNone(config2.get_specs().get_spec("moving_step"))
+        self.assertIsInstance(config2.get_specs().get_spec("moving_step"), FloatParam)
+        self.assertEqual(config2.get_values().get("moving_step"), 4.5)
 
     def test_task_config(self):
-
-        robot_move = ProcessFactory.create_task_model_from_type(
-            RobotMove)
+        robot_move = ProcessFactory.create_task_model_from_type(RobotMove)
         self.assertEqual(robot_move.config.get_value("moving_step"), 0.1)
         robot_move.config.set_value("moving_step", 0.3)
         robot_move.save_full()
@@ -45,10 +38,12 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_value("moving_step"), 0.3)
 
     def test_optional(self):
-        specs = ConfigSpecs({
-            'moving_step': FloatParam(),
-            'optional': FloatParam(default_value=0.1),
-        })
+        specs = ConfigSpecs(
+            {
+                "moving_step": FloatParam(),
+                "optional": FloatParam(default_value=0.1),
+            }
+        )
 
         # Check an optional config
         config = Config()
@@ -72,9 +67,9 @@ class TestConfig(BaseTestCase):
 
         # Test that the config private are not returned in json
         config = Config()
-        config.set_specs(ConfigSpecs({'float_1': float_1, 'float_2': float_2}))
+        config.set_specs(ConfigSpecs({"float_1": float_1, "float_2": float_2}))
         config.save()
 
         json_specs = config.to_dto().specs
-        self.assertTrue('float_1' in json_specs)
-        self.assertFalse('float_2' in json_specs)
+        self.assertTrue("float_1" in json_specs)
+        self.assertFalse("float_2" in json_specs)

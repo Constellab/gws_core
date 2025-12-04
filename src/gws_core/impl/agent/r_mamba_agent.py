@@ -1,5 +1,3 @@
-
-
 from gws_core.impl.agent.r_conda_agent import RCondaAgent
 from gws_core.impl.shell.mamba_shell_proxy import MambaShellProxy
 from gws_core.model.typing_style import TypingStyle
@@ -8,9 +6,11 @@ from ...task.task_decorator import task_decorator
 
 
 @task_decorator(
-    "RMambaAgent", human_name="R mamba env agent",
+    "RMambaAgent",
+    human_name="R mamba env agent",
     short_description="Agent to run R snippets in mamba a shell environment.",
-    style=TypingStyle.material_icon("agent"))
+    style=TypingStyle.material_icon("agent"),
+)
 class RMambaAgent(RCondaAgent):
     """
     Mamba-based R agents allow to execute R snippets on the fly in isolated mamba environments.

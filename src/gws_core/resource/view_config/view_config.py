@@ -1,4 +1,3 @@
-
 from typing import Any, List, Optional
 
 from gws_core.config.config import Config
@@ -10,10 +9,8 @@ from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
-from gws_core.entity_navigator.entity_navigator_type import (
-    NavigableEntity, NavigableEntityType)
-from gws_core.impl.rich_text.block.rich_text_block_view import \
-    RichTextBlockResourceView
+from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
+from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
@@ -26,14 +23,15 @@ from ..resource_model import ResourceModel
 
 
 class ViewConfig(ModelWithUser, NavigableEntity):
-
     title = CharField()
     view_type: ViewType = EnumField(choices=ViewType)
     view_name = CharField()
-    config: Config = ForeignKeyField(Config, null=True, backref='+')
+    config: Config = ForeignKeyField(Config, null=True, backref="+")
 
-    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete='CASCADE')
-    resource_model: ResourceModel = ForeignKeyField(ResourceModel, null=False, index=True, on_delete='CASCADE')
+    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
+    resource_model: ResourceModel = ForeignKeyField(
+        ResourceModel, null=False, index=True, on_delete="CASCADE"
+    )
 
     is_favorite = BooleanField(default=False)
 
@@ -53,7 +51,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
             config_values=self.get_config_values(),
             scenario=self.scenario.to_simple_dto() if self.scenario else None,
             resource=self.resource_model.to_simple_dto() if self.resource_model else None,
-            style=self.style if self.style else self.view_type.get_typing_style()
+            style=self.style if self.style else self.view_type.get_typing_style(),
         )
 
     def get_config_values(self) -> ConfigParamsDict:
@@ -78,7 +76,9 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)
         return result
 
-    def to_rich_text_resource_view(self, title: str = None, caption: str = None) -> RichTextBlockResourceView:
+    def to_rich_text_resource_view(
+        self, title: str = None, caption: str = None
+    ) -> RichTextBlockResourceView:
         return RichTextBlockResourceView(
             id=self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id
             view_config_id=self.id,
@@ -91,21 +91,25 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         )
 
     @classmethod
-    def get_same_view_config(cls, view_config: 'ViewConfig') -> Optional['ViewConfig']:
+    def get_same_view_config(cls, view_config: "ViewConfig") -> Optional["ViewConfig"]:
         """return a view config that has same parameters
 
         :return: _description_
         :rtype: _type_
         """
 
-        view_configs_db: List[ViewConfig] = list(ViewConfig.select().where(
-            (ViewConfig.resource_model == view_config.resource_model) &
-            (ViewConfig.view_name == view_config.view_name) &
-            (ViewConfig.view_type == view_config.view_type)
-        ))
+        view_configs_db: List[ViewConfig] = list(
+            ViewConfig.select().where(
+                (ViewConfig.resource_model == view_config.resource_model)
+                & (ViewConfig.view_name == view_config.view_name)
+                & (ViewConfig.view_type == view_config.view_type)
+            )
+        )
 
         for view_config_db in view_configs_db:
-            if Utils.json_equals(view_config_db.config.get_values(), view_config.config.get_values()):
+            if Utils.json_equals(
+                view_config_db.config.get_values(), view_config.config.get_values()
+            ):
                 return view_config_db
 
         return None
@@ -120,7 +124,9 @@ class ViewConfig(ModelWithUser, NavigableEntity):
 
     @classmethod
     def get_by_resource_and_favorite(cls, resource_model_id: str) -> ModelSelect:
-        return ViewConfig.select().where((ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True))
+        return ViewConfig.select().where(
+            (ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True)
+        )
 
     @classmethod
     def delete_by_resource(cls, resource_model_id: str) -> None:
@@ -129,5 +135,5 @@ class ViewConfig(ModelWithUser, NavigableEntity):
             view_config.delete_instance()
 
     class Meta:
-        table_name = 'gws_view_config'
+        table_name = "gws_view_config"
         is_table = True

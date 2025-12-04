@@ -1,11 +1,8 @@
-
-
 from pandas import DataFrame
 
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
-from gws_core.impl.table.helper.dataframe_data_filter_helper import \
-    DataframeDataFilterHelper
+from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDataFilterHelper
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
 from ....config.config_params import ConfigParams
@@ -33,40 +30,47 @@ value_param = StrParam(
 )
 class TableColumnDataTextFilter(Transformer):
     """
-    For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
+        For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
 
-    The ```Row name``` supports pattern. This means that multiple rows can be used in the filter. In this
-    case all the values in the provided rows must validate the condition. You can set the value ```*``` in the ```Row name``` which mean that all the values in the column must validate the condition.
+        The ```Row name``` supports pattern. This means that multiple rows can be used in the filter. In this
+        case all the values in the provided rows must validate the condition. You can set the value ```*``` in the ```Row name``` which mean that all the values in the column must validate the condition.
 
-    Supported operators : ```=```, ```!=```, ```contains```, ```contains not```, ```startwith``` and ```endswith```.
+        Supported operators : ```=```, ```!=```, ```contains```, ```contains not```, ```startwith``` and ```endswith```.
 
-If you need to apply filters on text values, you can use the ```Table column data text filter``` task.
+    If you need to apply filters on text values, you can use the ```Table column data text filter``` task.
     """
-    config_specs = ConfigSpecs({
-        "text_filter": ParamSet(ConfigSpecs(
-            {
-                "row_name_regex": StrParam(
-                    human_name="Row name (pattern)",
-                    short_description="The name of the rows along which the filter is applied (regexp pattern); Use '*' for all the rows",
-                    optional=True,
+
+    config_specs = ConfigSpecs(
+        {
+            "text_filter": ParamSet(
+                ConfigSpecs(
+                    {
+                        "row_name_regex": StrParam(
+                            human_name="Row name (pattern)",
+                            short_description="The name of the rows along which the filter is applied (regexp pattern); Use '*' for all the rows",
+                            optional=True,
+                        ),
+                        "comparator": comparator_param,
+                        "value": value_param,
+                    }
                 ),
-                "comparator": comparator_param,
-                "value": value_param,
-            }),
-            visibility="public",
-            human_name="Text data filters",
-            max_number_of_occurrences=9
-        ),
-    })
+                visibility="public",
+                human_name="Text data filters",
+                max_number_of_occurrences=9,
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
         for text_params in params.get("text_filter"):
             data = DataframeDataFilterHelper.filter_columns_text(
-                data=data, row_name_regex=text_params["row_name_regex"],
+                data=data,
+                row_name_regex=text_params["row_name_regex"],
                 comp=text_params["comparator"],
-                value=text_params["value"])
+                value=text_params["value"],
+            )
 
         return source.create_sub_table_filtered_by_columns(data)
 
@@ -88,25 +92,32 @@ class TableRowDataTextFilter(Transformer):
 
     If you need to apply filters on text values, you can use the ```Table row data numeric filter``` task.
     """
-    config_specs = ConfigSpecs({
-        "text_filter": ParamSet(ConfigSpecs(
-            {
-                "column_name_regex": StrParam(
-                    human_name="Column name (pattern)",
-                    short_description="The name of the columns along which the filter is applied (regexp pattern); Use '*' for all the columns",
-                    optional=True,
+
+    config_specs = ConfigSpecs(
+        {
+            "text_filter": ParamSet(
+                ConfigSpecs(
+                    {
+                        "column_name_regex": StrParam(
+                            human_name="Column name (pattern)",
+                            short_description="The name of the columns along which the filter is applied (regexp pattern); Use '*' for all the columns",
+                            optional=True,
+                        ),
+                        "comparator": comparator_param,
+                        "value": value_param,
+                    }
                 ),
-                "comparator": comparator_param,
-                "value": value_param,
-            }),
-            visibility="public",
-            human_name="Text data filters",
-            max_number_of_occurrences=9
-        ),
-        "stringify_table": BoolParam(default_value=False,
-                                     human_name="Convert values to text",
-                                     short_description="If true convert all the value (including numeric) to text. Otherwise none text value are ignored.")
-    })
+                visibility="public",
+                human_name="Text data filters",
+                max_number_of_occurrences=9,
+            ),
+            "stringify_table": BoolParam(
+                default_value=False,
+                human_name="Convert values to text",
+                short_description="If true convert all the value (including numeric) to text. Otherwise none text value are ignored.",
+            ),
+        }
+    )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
@@ -116,8 +127,10 @@ class TableRowDataTextFilter(Transformer):
 
         for text_params in params.get("text_filter"):
             data = DataframeDataFilterHelper.filter_rows_text(
-                data=data, column_name_regex=text_params["column_name_regex"],
+                data=data,
+                column_name_regex=text_params["column_name_regex"],
                 comp=text_params["comparator"],
-                value=text_params["value"])
+                value=text_params["value"],
+            )
 
         return source.create_sub_table_filtered_by_rows(data)

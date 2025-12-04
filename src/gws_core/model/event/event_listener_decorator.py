@@ -1,5 +1,3 @@
-
-
 from typing import Type, TypeVar
 
 from gws_core.core.utils.logger import Logger
@@ -7,7 +5,7 @@ from gws_core.core.utils.logger import Logger
 from .event_dispatcher import EventDispatcher
 from .event_listener import EventListener
 
-T = TypeVar('T', bound=EventListener)
+T = TypeVar("T", bound=EventListener)
 
 
 def event_listener(cls: Type[T]) -> Type[T]:
@@ -48,10 +46,7 @@ def event_listener(cls: Type[T]) -> Type[T]:
         # Register it with the dispatcher
         EventDispatcher.get_instance().register(listener_instance)
     except Exception as e:
-        Logger.error(
-            f"Failed to auto-register event listener {cls.__name__}: {e}",
-            exception=e
-        )
+        Logger.error(f"Failed to auto-register event listener {cls.__name__}: {e}", exception=e)
         raise
 
     # Return the class unmodified
