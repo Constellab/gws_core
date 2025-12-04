@@ -1,7 +1,6 @@
-import atexit
+import contextlib
 import os
-import subprocess
-from typing import Dict, List, Optional
+from typing import Optional
 
 from gws_core.apps.app_nginx_service import AppNginxServiceInfo
 from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
@@ -18,7 +17,7 @@ class AppNginxManager:
     """
 
     _instance: Optional["AppNginxManager"] = None
-    _services: Dict[str, AppNginxServiceInfo] = None
+    _services: dict[str, AppNginxServiceInfo] = None
 
     _NGINX_CONF_FILENAME = "nginx.conf"
 
@@ -31,7 +30,7 @@ events {
 }
 
 # PID file in a location writable by non-root user
-pid [TMP_DIR]/nginx.pid;
+pid [NGINX_CONFIG_DIR]/nginx.pid;
 
 # Error log
 error_log [NGINX_CONFIG_DIR]/error.log;
@@ -58,7 +57,7 @@ http {
 
     # Default server block to handle unmatched requests
     server {
-		listen 8510 default_server;
+		listen [APP_EXTERNAL_PORT] default_server;
 		server_name _;
 		return 444;  # Close connection without response
 	}
@@ -87,7 +86,7 @@ http {
             Logger.info("Nginx is running, stopping it.")
             nginx_manager.stop()
 
-    def register_services(self, services: List[AppNginxServiceInfo]) -> None:
+    def register_services(self, services: list[AppNginxServiceInfo]) -> None:
         """Register a service and update nginx configuration"""
         for service in services:
             self._services[service.service_id] = service
@@ -97,7 +96,7 @@ http {
 
         self.start_or_reload()
 
-    def unregister_services(self, service_ids: List[str]) -> None:
+    def unregister_services(self, service_ids: list[str]) -> None:
         """Unregister a service and update nginx configuration"""
         for service_id in service_ids:
             if service_id in self._services:
@@ -110,11 +109,11 @@ http {
             # if no services left, stop nginx
             self.stop()
 
-    def get_services(self) -> List[AppNginxServiceInfo]:
+    def get_services(self) -> list[AppNginxServiceInfo]:
         """Get all registered services"""
         return list(self._services.values())
 
-    def get_service(self, name: str) -> Optional[AppNginxServiceInfo]:
+    def get_service(self, name: str) -> AppNginxServiceInfo | None:
         """Get a specific service by name"""
         return self._services.get(name)
 
@@ -148,24 +147,40 @@ http {
 
     def nginx_is_running(self) -> bool:
         """Check if nginx is running"""
+        pid_file = os.path.join(self.get_nginx_config_dir(), "nginx.pid")
+
+        # Check if PID file exists
+        if not os.path.exists(pid_file):
+            return False
+
         try:
-            result = subprocess.run(["ps", "aux"], check=False, capture_output=True, text=True)
-            # Look for nginx processes
-            for line in result.stdout.splitlines():
-                if "nginx" in line and "master process" in line:
-                    # Check if our config file is in the command line
-                    if self.get_nginx_config_file_path() in line:
+            # Read PID from file
+            with open(pid_file) as f:
+                pid = int(f.read().strip())
+
+            # Check if process with this PID exists
+            os.kill(pid, 0)  # Signal 0 doesn't kill, just checks existence
+
+            # Verify it's actually our nginx by checking the config in cmdline
+            cmdline_file = f"/proc/{pid}/cmdline"
+            if os.path.exists(cmdline_file):
+                with open(cmdline_file, "rb") as f:
+                    cmdline = f.read().decode("utf-8", errors="ignore")
+                    if self.get_nginx_config_file_path() in cmdline:
                         return True
                     else:
-                        Logger.info("Nginx is running but not using the correct config file")
+                        Logger.info("Nginx PID exists but not using correct config")
                         self.stop(force=True)
                         return False
 
-        except subprocess.TimeoutExpired:
+            return True
+
+        except (FileNotFoundError, ValueError, ProcessLookupError, PermissionError, OSError):
+            # PID file exists but process doesn't - clean up stale PID file
+            if os.path.exists(pid_file):
+                with contextlib.suppress(OSError):
+                    os.remove(pid_file)
             return False
-        except FileNotFoundError:
-            return False
-        return False
 
     def _generate_nginx_config(self):
         """Generate nginx configuration for all services"""
@@ -227,9 +242,12 @@ http {
         FileHelper.create_dir_if_not_exist(nginx_tmp_folder)
 
         nginx_config = self.NGINX_TEMPLATE.replace("[SERVERS]", indented_server)
-        return nginx_config.replace("[NGINX_CONFIG_DIR]", nginx_config_folder).replace(
-            "[TMP_DIR]", nginx_tmp_folder
+        nginx_config = nginx_config.replace("[NGINX_CONFIG_DIR]", nginx_config_folder)
+        nginx_config = nginx_config.replace("[TMP_DIR]", nginx_tmp_folder)
+        nginx_config = nginx_config.replace(
+            "[APP_EXTERNAL_PORT]", str(Settings.get_app_external_port())
         )
+        return nginx_config
 
     def get_nginx_config_file_path(self) -> str:
         """Get the path to the generated nginx config file"""
@@ -241,7 +259,7 @@ http {
         shell_proxy.attach_observer(LoggerMessageObserver())
         return shell_proxy
 
-    def _run_nginx_command(self, args: List[str]) -> int:
+    def _run_nginx_command(self, args: list[str]) -> int:
         """Run nginx command with -c option always set
 
         Args:
