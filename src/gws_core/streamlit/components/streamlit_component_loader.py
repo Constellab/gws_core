@@ -86,7 +86,7 @@ class StreamlitComponentLoader:
 
         # Download the iframe-message package using ComponentPackageDownloader
         with st.spinner("Installing the component..."):
-            downloader = AppPluginDownloader(AppPluginDownloader.IFRAME_MESSAGE)
+            downloader = AppPluginDownloader(AppPluginDownloader.STREAMLIT_IFRAME_MESSAGE)
             folder_path = downloader.install_package()
 
         return components.declare_component(

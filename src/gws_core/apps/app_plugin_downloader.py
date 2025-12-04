@@ -40,10 +40,10 @@ class AppPluginDownloader:
     RELEASE_BASE_URL = "https://github.com/Constellab/dashboard-components/releases/download/"
 
     # Main version that contains both packages
-    DASHBOARD_COMPONENTS_VERSION = "dc_1.0.0"
+    DASHBOARD_COMPONENTS_VERSION = "dc_1.0.1"
 
     # Package names
-    IFRAME_MESSAGE = "iframe-message"
+    STREAMLIT_IFRAME_MESSAGE = "streamlit-iframe-message"
     STREAMLIT_COMPONENTS = "streamlit-components"
     REFLEX_COMPONENTS = "reflex-components"
 
@@ -61,7 +61,7 @@ class AppPluginDownloader:
         :param message_dispatcher: Optional message dispatcher for logging, defaults to None
         :type message_dispatcher: MessageDispatcher, optional
         """
-        available_packages = [self.IFRAME_MESSAGE, self.STREAMLIT_COMPONENTS, self.REFLEX_COMPONENTS]
+        available_packages = [self.STREAMLIT_IFRAME_MESSAGE, self.STREAMLIT_COMPONENTS, self.REFLEX_COMPONENTS]
         if package_name not in available_packages:
             raise ValueError(f"Invalid package name: {package_name}. Must be either {', '.join(available_packages)}.")
 

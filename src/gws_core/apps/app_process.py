@@ -281,6 +281,8 @@ class AppProcess:
 
     def get_host_url(self, suffix: str = "") -> str:
         if Settings.is_local_or_desktop_env():
+            # In local we use a subdomain with localhost and the external port
+            # like http://appid.localhost:8501. This allows to have multiple apps
             return f"http://{self.get_host_name(suffix)}:{Settings.get_app_external_port()}"
         else:
             return f"https://{self.get_host_name(suffix)}"
