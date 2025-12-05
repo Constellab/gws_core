@@ -261,6 +261,9 @@ class ReflexProcess(AppProcess):
             source_port=self.get_service_source_port(),
             server_name=self.get_host_name("-back"),
             destination_port=self.back_port,
+            # on localhost, add CORS header to allow requests from front
+            # otherwise the file upload will fail due to CORS policy
+            allow_access_origin=Settings.is_local_or_desktop_env(),
         )
 
     def get_back_host_url(self) -> str:

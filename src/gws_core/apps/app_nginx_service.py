@@ -23,6 +23,7 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
 
     destination_port: int
     use_localhost_host_header: bool
+    allow_wildcard_access_origin: bool
 
     def __init__(
         self,
@@ -31,10 +32,12 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         server_name: str,
         destination_port: int,
         use_localhost_host_header: bool = False,
+        allow_access_origin: bool = False,
     ):
         super().__init__(service_id, source_port, server_name)
         self.destination_port = destination_port
         self.use_localhost_host_header = use_localhost_host_header
+        self.allow_wildcard_access_origin = allow_access_origin
 
     def get_nginx_service_config(self) -> str:
         """Generate nginx configuration block for this service"""
@@ -42,6 +45,26 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         host_header = (
             f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
         )
+        cors_config = ""
+        if self.allow_wildcard_access_origin:
+            cors_config = """# CORS headers (permissive for local development)
+        add_header 'Access-Control-Allow-Origin' $http_origin always;
+        add_header 'Access-Control-Allow-Methods' '*' always;
+        add_header 'Access-Control-Allow-Headers' '*' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+
+        # Handle preflight OPTIONS requests
+        if ($request_method = 'OPTIONS') {
+            add_header 'Access-Control-Allow-Origin' $http_origin always;
+            add_header 'Access-Control-Allow-Methods' '*' always;
+            add_header 'Access-Control-Allow-Headers' '*' always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
+            add_header 'Access-Control-Max-Age' 1728000;
+            add_header 'Content-Type' 'text/plain; charset=utf-8';
+            add_header 'Content-Length' 0;
+            return 204;
+        }
+"""
         return f"""
 server {{
     listen {self.source_port};
@@ -49,8 +72,6 @@ server {{
 
     location / {{
         proxy_pass http://localhost:{self.destination_port};
-        # Use localhost as new host to avoid error on frontend apps when
-        # running in dev mode
         proxy_set_header Host {host_header};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -67,6 +88,8 @@ server {{
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 300s;
+
+        {cors_config}
     }}
 }}
 """
