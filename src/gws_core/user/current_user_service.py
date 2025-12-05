@@ -1,9 +1,10 @@
 import contextvars
 from enum import Enum
 
+from starlette_context import context
+
 from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.user.auth_context import AuthContextBase, AuthContextUser
-from starlette_context import context
 
 from ..core.exception.exceptions import BadRequestException, UnauthorizedException
 from ..core.utils.http_helper import HTTPHelper

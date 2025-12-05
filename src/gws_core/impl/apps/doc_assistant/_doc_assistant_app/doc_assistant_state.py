@@ -1,5 +1,4 @@
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 import streamlit as st
 
@@ -12,7 +11,7 @@ class ChatMessage:
 
 @dataclass
 class ChatHistory:
-    messages: List[ChatMessage] = field(default_factory=list)
+    messages: list[ChatMessage] = field(default_factory=list)
 
 
 class DocAssistantState:
@@ -26,7 +25,7 @@ class DocAssistantState:
 
     def __init__(self):
         # Initialize separate chat histories for product and technical documentation
-        self.chat_histories: Dict[str, ChatHistory] = {
+        self.chat_histories: dict[str, ChatHistory] = {
             "product": ChatHistory(),
             "technical": ChatHistory(),
         }
@@ -38,7 +37,7 @@ class DocAssistantState:
 
         self.chat_histories[chat_type].messages.append(ChatMessage(role=role, content=content))
 
-    def get_messages(self, chat_type: str) -> List[ChatMessage]:
+    def get_messages(self, chat_type: str) -> list[ChatMessage]:
         """Get all messages for the specified chat type"""
         if chat_type not in self.chat_histories:
             self.chat_histories[chat_type] = ChatHistory()

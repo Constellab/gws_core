@@ -2,7 +2,7 @@ import random
 import re
 import string
 import uuid
-from typing import Any, Type
+from typing import Any
 
 from slugify import slugify as _slugify
 from unidecode import unidecode
@@ -107,12 +107,12 @@ class StringHelper:
         return text
 
     @staticmethod
-    def to_enum(enum_class: Type, str_value: str) -> Any:
+    def to_enum(enum_class: type, str_value: str) -> Any:
         """Convert a string to an enum value"""
         return enum_class(str_value)
 
     @staticmethod
-    def get_enum_values(enum_class: Type) -> list:
+    def get_enum_values(enum_class: type) -> list:
         """Get all the values of an enum"""
         return [e.value for e in enum_class]
 

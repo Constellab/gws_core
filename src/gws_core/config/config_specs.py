@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from gws_core.config.config_exceptions import MissingConfigsException, UnkownParamException
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
@@ -9,9 +9,9 @@ from .param.param_types import ParamSpecDTO
 
 
 class ConfigSpecs:
-    specs: Dict[str, ParamSpec] = None
+    specs: dict[str, ParamSpec] = None
 
-    def __init__(self, specs: Dict[str, ParamSpec] = None) -> None:
+    def __init__(self, specs: dict[str, ParamSpec] = None) -> None:
         """Define the spec of a task or a view
         Example:
         ConfigSpecs({
@@ -63,9 +63,9 @@ class ConfigSpecs:
             self.add_or_update_spec(key, spec)
         return self
 
-    def to_dto(self, skip_private: bool = True) -> Dict[str, ParamSpecDTO]:
+    def to_dto(self, skip_private: bool = True) -> dict[str, ParamSpecDTO]:
         """convert the config specs to json"""
-        json_: Dict[str, Any] = {}
+        json_: dict[str, Any] = {}
         for key, spec in self.specs.items():
             # skip private params
             if skip_private and spec.visibility == "private":
@@ -74,7 +74,7 @@ class ConfigSpecs:
 
         return json_
 
-    def to_json_dict(self, skip_private: bool = True) -> Dict[str, Any]:
+    def to_json_dict(self, skip_private: bool = True) -> dict[str, Any]:
         """convert the config specs to json"""
         dto = self.to_dto(skip_private)
         return {key: value.to_json_dict() for key, value in dto.items()}
@@ -159,11 +159,11 @@ class ConfigSpecs:
             param_values = {}
 
         full_values: ConfigParamsDict = {}
-        missing_params: List[str] = []
+        missing_params: list[str] = []
 
         for key, spec in self.specs.items():
             # if the config was not set
-            if not key in param_values or param_values[key] is None:
+            if key not in param_values or param_values[key] is None:
                 if spec.optional:
                     full_values[key] = spec.get_default_value()
                 else:
@@ -188,17 +188,17 @@ class ConfigSpecs:
         return len(self.specs)
 
     @classmethod
-    def from_json(cls, dict_: Dict[str, Any]) -> "ConfigSpecs":
+    def from_json(cls, dict_: dict[str, Any]) -> "ConfigSpecs":
         """Create a config specs from a json"""
-        config_specs: Dict[str, ParamSpec] = {}
+        config_specs: dict[str, ParamSpec] = {}
         for key, value in dict_.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_json(value)
         return cls(config_specs)
 
     @classmethod
-    def from_dto(cls, dict_: Dict[str, ParamSpecDTO]) -> "ConfigSpecs":
+    def from_dto(cls, dict_: dict[str, ParamSpecDTO]) -> "ConfigSpecs":
         """Create a config specs from a dto"""
-        config_specs: Dict[str, ParamSpec] = {}
+        config_specs: dict[str, ParamSpec] = {}
         for key, value in dict_.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_dto(value)
         return cls(config_specs)

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Literal, Optional, Type, final
+from typing import Literal, final
 
 from typing_extensions import TypedDict
 
@@ -30,7 +30,7 @@ class CheckBeforeTaskResult(TypedDict, total=False):
     result: bool
 
     # If False a message can be provided to log the error message if the task will not be called
-    message: Optional[str]
+    message: str | None
 
 
 @typing_registrator(
@@ -52,7 +52,7 @@ class Task(Process):
     __status__: Literal["CHECK_BEFORE_RUN", "RUN", "RUN_AFTER_TASK"]
 
     # list of temporary directories created by the task to be deleted after the task is run
-    __temp_dirs__: List[str]
+    __temp_dirs__: list[str]
 
     # The scenario id and task id that run the task, do not update
     # This is only provided when the task is run by a scenario
@@ -118,7 +118,7 @@ class Task(Process):
             FileHelper.delete_dir(tmp_dir)
 
     @final
-    def get_default_output_spec_type(self, spec_name: str) -> Type[Resource]:
+    def get_default_output_spec_type(self, spec_name: str) -> type[Resource]:
         if not self.output_specs:
             return None
 

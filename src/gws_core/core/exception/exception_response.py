@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Literal
+from typing import Literal
 
 from fastapi.responses import JSONResponse
 
@@ -20,7 +20,7 @@ class ExceptionResponse(JSONResponse):
         detail: str,
         instance_id: str,
         show_as: ExceptionShowMode = "error",
-        headers: Dict = None,
+        headers: dict = None,
     ):
         """
 

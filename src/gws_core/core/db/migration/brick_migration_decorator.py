@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
@@ -33,7 +33,7 @@ def brick_migration(
     if not db_manager:
         db_manager = GwsCoreDbManager.get_instance()
 
-    def decorator(class_: Type[BrickMigration]):
+    def decorator(class_: type[BrickMigration]):
         if not Utils.issubclass(class_, BrickMigration):
             BrickService.log_brick_error(
                 class_,

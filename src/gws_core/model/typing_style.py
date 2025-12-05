@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
@@ -23,17 +22,16 @@ TYPING_DEFAULT_ICON_COLOR = TypingIconColor.BLACK
 class TypingStyle(BaseModelDTO):
     icon_technical_name: str = None
     icon_type: TypingIconType = None
-    background_color: Optional[str] = None
-    icon_color: Optional[TypingIconColor] = None
+    background_color: str | None = None
+    icon_color: TypingIconColor | None = None
 
     def fill_empty_values(self) -> None:
         """Method to fill the background color and icon color if they are not set."""
         if self.icon_type == TypingIconType.COMMUNITY_IMAGE:
             if self.background_color is None:
                 self.background_color = "#FFFFFF"
-        else:
-            if self.background_color is None:
-                self.background_color = TYPING_DEFAULT_BACKGROUND_COLOR
+        elif self.background_color is None:
+            self.background_color = TYPING_DEFAULT_BACKGROUND_COLOR
         if self.icon_color is None:
             self.icon_color = self.get_contrast_color(self.background_color)
 
@@ -92,7 +90,7 @@ class TypingStyle(BaseModelDTO):
     def material_icon(
         material_icon_name: str,
         background_color: str = None,
-        icon_color: Optional[TypingIconColor] = None,
+        icon_color: TypingIconColor | None = None,
     ) -> "TypingStyle":
         """Use an icon from the material icon library. List of available icons are here :
         https://fonts.google.com/icons?icon.set=Material+Icons
@@ -118,7 +116,7 @@ class TypingStyle(BaseModelDTO):
     def community_icon(
         icon_technical_name: str,
         background_color: str = None,
-        icon_color: Optional[TypingIconColor] = None,
+        icon_color: TypingIconColor | None = None,
     ) -> "TypingStyle":
         """Use an icon from the community icon library. List of available icons are here :
         https://constellab.community/icons

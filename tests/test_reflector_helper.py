@@ -4,12 +4,10 @@ Tests one method per test function, with multiple docstring formats tested for e
 """
 
 import unittest
-from typing import Any, Dict, List, Optional
 
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.core.utils.reflector_types import (
     ClassicClassDocDTO,
-    MethodArgDoc,
     MethodDoc,
     MethodDocType,
 )
@@ -69,7 +67,7 @@ class GoogleStyleClass:
 
     another_var: bool
 
-    def google_method(self, items: List[str], count: int = 5) -> Dict[str, int]:
+    def google_method(self, items: list[str], count: int = 5) -> dict[str, int]:
         """Process items with Google style documentation.
 
         This method demonstrates Google style docstrings with detailed descriptions.
@@ -81,7 +79,7 @@ class GoogleStyleClass:
         Returns:
             Dict[str, int]: A mapping of items to their counts
         """
-        return {item: count for item in items}
+        return dict.fromkeys(items, count)
 
 
 class NumpyStyleClass:
@@ -92,7 +90,7 @@ class NumpyStyleClass:
 
     numeric_var: float
 
-    def numpy_method(self, matrix: List[List[float]], scale: float = 1.0) -> List[List[float]]:
+    def numpy_method(self, matrix: list[list[float]], scale: float = 1.0) -> list[list[float]]:
         """Process matrix with NumPy style documentation.
 
         This method demonstrates NumPy style docstrings.
@@ -163,7 +161,7 @@ class TestReflectorHelper(unittest.TestCase):
     def test_get_function_arguments(self):
         """Test get_function_arguments method."""
 
-        def sample_func(a: str, b: int = 5, c: Optional[bool] = None):
+        def sample_func(a: str, b: int = 5, c: bool | None = None):
             pass
 
         args_metadata = ReflectorHelper.get_function_arguments(sample_func)

@@ -1,4 +1,3 @@
-from typing import Dict, List, Set
 
 from gws_core.resource.r_field.list_r_field import ListRField
 
@@ -20,16 +19,16 @@ class ResourceList(ResourceListBase):
     """
 
     # list of resource ids stored
-    _resource_ids: List[str] = ListRField()
+    _resource_ids: list[str] = ListRField()
 
     # dict provided before the resources are saved
-    _resources: List[Resource] = None
+    _resources: list[Resource] = None
 
-    def __init__(self, resources: List[Resource] = None):
+    def __init__(self, resources: list[Resource] = None):
         super().__init__()
         self._resources = resources
 
-    def get_resources(self) -> List[Resource]:
+    def get_resources(self) -> list[Resource]:
         """
         Return the sub resources as a list
 
@@ -46,7 +45,7 @@ class ResourceList(ResourceListBase):
 
         return self._resources
 
-    def get_resource_model_ids(self) -> Set[str]:
+    def get_resource_model_ids(self) -> set[str]:
         """
         Return the resource model ids of the sub resources
 
@@ -55,7 +54,7 @@ class ResourceList(ResourceListBase):
         """
         return set(self._resource_ids)
 
-    def get_resources_as_set(self) -> Set[Resource]:
+    def get_resources_as_set(self) -> set[Resource]:
         """
         Return the sub resources as a set
 
@@ -78,7 +77,7 @@ class ResourceList(ResourceListBase):
                 return resource
         return None
 
-    def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
+    def __set_r_field__(self, ids_map: dict[str, str]) -> None:
         """set _resource_ids with key = resource_name and value = resource_id"""
         resource_ids = []
         for resource in self._resources:
@@ -114,7 +113,7 @@ class ResourceList(ResourceListBase):
         self._resources = []
         self._resource_ids = []
 
-    def to_list(self) -> List[Resource]:
+    def to_list(self) -> list[Resource]:
         """
         Return the resources as a list
 
@@ -132,7 +131,7 @@ class ResourceList(ResourceListBase):
         """
         return len(self.get_resources()) == 0
 
-    def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+    def replace_resources_by_model_id(self, resources: dict[str, Resource]) -> None:
         """
         Replace current resources by the resources in the dict
 

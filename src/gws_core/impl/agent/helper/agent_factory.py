@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
@@ -62,7 +62,7 @@ class AgentFactory:
             task_generator.add_output_spec(key, spec.get_default_resource_type())
             count = count + 1
 
-        params: Dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
+        params: dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
         params_spec: DynamicParam = task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
         for param_name in params:
             param_value = params[param_name]

@@ -6,7 +6,7 @@ The field automatically handles serialization and ensures data integrity through
 validation and JSON conversion.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.core.classes.validator import DictValidator
 from gws_core.core.utils.json_helper import JSONHelper
@@ -65,7 +65,7 @@ class DictRField(PrimitiveRField):
     """
 
     def __init__(
-        self, default_value: Dict | None = None, include_in_dict_view: bool = False
+        self, default_value: dict | None = None, include_in_dict_view: bool = False
     ) -> None:
         """Initialize a DictRField for storing JSON-like dictionaries.
 

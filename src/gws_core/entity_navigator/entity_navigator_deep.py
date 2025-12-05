@@ -1,4 +1,4 @@
-from typing import Iterable, List, Set, Union
+from collections.abc import Iterable
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.entity_navigator.entity_navigator_type import (
@@ -30,11 +30,11 @@ class NavigableEntityDeep(BaseModelDTO):
 class NavigableEntitySet:
     """Store a set of entities with their deep level in the navigation tree"""
 
-    _entities: Set[NavigableEntityDeep]
+    _entities: set[NavigableEntityDeep]
 
     def __init__(
         self,
-        entities: Union[NavigableEntity, Iterable[NavigableEntity]] = None,
+        entities: NavigableEntity | Iterable[NavigableEntity] = None,
         deep_level: int = 0,
     ):
         self._entities = set()
@@ -44,11 +44,11 @@ class NavigableEntitySet:
         else:
             self.add(entities, deep_level)
 
-    def get_entity_navs(self) -> List[BaseModelDTO]:
+    def get_entity_navs(self) -> list[BaseModelDTO]:
         return [entity.to_entity_dto() for entity in self._entities]
 
-    def get_entity_dict_nav_group(self) -> List[EntityNavGroupDTO]:
-        entity_nav_group: List[EntityNavGroupDTO] = []
+    def get_entity_dict_nav_group(self) -> list[EntityNavGroupDTO]:
+        entity_nav_group: list[EntityNavGroupDTO] = []
         for entity_type in NavigableEntityType:
             group_dto = EntityNavGroupDTO(
                 type=entity_type,
@@ -61,16 +61,16 @@ class NavigableEntitySet:
             entity_nav_group.append(group_dto)
         return entity_nav_group
 
-    def get_entity_ids(self) -> List[str]:
+    def get_entity_ids(self) -> list[str]:
         return [entity.entity.id for entity in self._entities]
 
-    def get_as_set(self) -> Set[NavigableEntityDeep]:
+    def get_as_set(self) -> set[NavigableEntityDeep]:
         return set(self._entities)
 
-    def get_entities(self) -> Set[NavigableEntity]:
+    def get_entities(self) -> set[NavigableEntity]:
         return set([entity.entity for entity in self._entities])
 
-    def get_as_list(self) -> List[NavigableEntityDeep]:
+    def get_as_list(self) -> list[NavigableEntityDeep]:
         return list(self._entities)
 
     def has_entity(self, entity_id: str) -> bool:
@@ -81,10 +81,10 @@ class NavigableEntitySet:
 
     def get_entity_deep_by_type(
         self, entity_type: NavigableEntityType
-    ) -> List[NavigableEntityDeep]:
+    ) -> list[NavigableEntityDeep]:
         return [entity for entity in self._entities if entity.get_entity_type() == entity_type]
 
-    def get_entity_by_type(self, entity_type: NavigableEntityType) -> List[NavigableEntity]:
+    def get_entity_by_type(self, entity_type: NavigableEntityType) -> list[NavigableEntity]:
         return [
             entity.entity for entity in self._entities if entity.get_entity_type() == entity_type
         ]
@@ -106,7 +106,7 @@ class NavigableEntitySet:
 
     def get_entities_from_deepest_level(
         self, entity_type: NavigableEntityType
-    ) -> List[NavigableEntity]:
+    ) -> list[NavigableEntity]:
         """Return the entities order from the highest deep level to the lowest"""
         entities_deep = sorted(
             self.get_entity_deep_by_type(entity_type), key=lambda x: x.deep_level, reverse=True

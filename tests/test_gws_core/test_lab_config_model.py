@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.lab.lab_config_model import LabConfigModel

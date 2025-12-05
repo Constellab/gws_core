@@ -1,4 +1,3 @@
-from typing import Dict
 
 from fastapi import status
 
@@ -14,8 +13,8 @@ class NotFoundException(BaseHTTPException):
         self,
         detail: str,
         unique_code: str = None,
-        detail_args: Dict = None,
-        headers: Dict = None,
+        detail_args: dict = None,
+        headers: dict = None,
         instance_id: str = None,
     ) -> None:
         """Throw a generic exception

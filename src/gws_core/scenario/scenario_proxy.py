@@ -1,6 +1,5 @@
 from inspect import isclass
 from time import sleep
-from typing import List, Type
 
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
@@ -33,7 +32,7 @@ class ScenarioProxy:
 
     def __init__(
         self,
-        protocol_type: Type[Protocol] = None,
+        protocol_type: type[Protocol] = None,
         folder: SpaceFolder = None,
         title: str = "",
         creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
@@ -169,7 +168,7 @@ class ScenarioProxy:
     def add_tag(self, tag: Tag) -> None:
         TagService.add_tag_to_entity(TagEntityType.SCENARIO, self._scenario.id, tag)
 
-    def add_tags(self, tags: List[Tag]) -> None:
+    def add_tags(self, tags: list[Tag]) -> None:
         TagService.add_tags_to_entity(TagEntityType.SCENARIO, self._scenario.id, tags)
 
     def refresh(self) -> "ScenarioProxy":

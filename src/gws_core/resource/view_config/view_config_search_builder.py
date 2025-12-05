@@ -1,4 +1,3 @@
-from typing import List
 
 from peewee import Expression
 
@@ -28,7 +27,7 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
             return None
         elif filter_.key == "folder":
             # Handle the folder filters, get all scenario of this folder and filter by scenario
-            scenarios: List[Scenario] = list(
+            scenarios: list[Scenario] = list(
                 Scenario.select().where(Scenario.folder.in_(filter_.value))
             )
             return ViewConfig.scenario.in_(scenarios)

@@ -1,8 +1,6 @@
 import math
 import unittest
 
-from numpy import NaN
-
 from gws_core import Validator
 from gws_core.core.classes.validator import (
     BoolValidator,

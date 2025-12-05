@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Dict, List, Type, final
+from typing import final
 
 from peewee import Tuple
 from typing_extensions import TypedDict
@@ -24,23 +24,23 @@ from .protocol_spec import (
 
 
 class ProtocolCreateConfig(TypedDict):
-    process_specs: Dict[str, ProcessSpec]
+    process_specs: dict[str, ProcessSpec]
 
-    connectors: List[ConnectorSpec]
+    connectors: list[ConnectorSpec]
 
-    interfaces: Dict[str, InterfaceSpec]
-    outerfaces: Dict[str, InterfaceSpec]
+    interfaces: dict[str, InterfaceSpec]
+    outerfaces: dict[str, InterfaceSpec]
 
 
 @typing_registrator(
     unique_name="Protocol", object_type="PROTOCOL", hide=True, style=TypingStyle.default_protocol()
 )
 class Protocol(Process):
-    _process_specs: Dict[str, ProcessSpec]
-    _connectors: List[ConnectorSpec]
-    _interfaces: Dict[str, InterfaceSpec]
-    _outerfaces: Dict[str, InterfaceSpec]
-    _config_mappings: Dict[str, ConfigMapping]
+    _process_specs: dict[str, ProcessSpec]
+    _connectors: list[ConnectorSpec]
+    _interfaces: dict[str, InterfaceSpec]
+    _outerfaces: dict[str, InterfaceSpec]
+    _config_mappings: dict[str, ConfigMapping]
 
     @final
     def __init__(self) -> None:
@@ -97,7 +97,7 @@ class Protocol(Process):
     @final
     def add_process(
         self,
-        process_type: Type[Process],
+        process_type: type[Process],
         instance_name: str,
         config_params: ConfigParamsDict = None,
     ) -> ProcessSpec:
@@ -138,7 +138,7 @@ class Protocol(Process):
 
     @final
     def add_connectors(
-        self, connections: List[Tuple[ConnectorPartSpec, ConnectorPartSpec]]
+        self, connections: list[Tuple[ConnectorPartSpec, ConnectorPartSpec]]
     ) -> None:
         """
         Add the connexion between processes of the protocol
@@ -275,7 +275,7 @@ class Protocol(Process):
 
     @final
     def get_input_specs_self(self) -> InputSpecs:
-        input_specs: Dict[str, InputSpec] = {}
+        input_specs: dict[str, InputSpec] = {}
 
         for name, interface in self._interfaces.items():
             # retreive the process spec
@@ -290,7 +290,7 @@ class Protocol(Process):
 
     @final
     def get_output_specs_self(self) -> OutputSpecs:
-        output_specs: Dict[str, OutputSpec] = {}
+        output_specs: dict[str, OutputSpec] = {}
 
         for name, outerface in self._outerfaces.items():
             # retreive the process spec

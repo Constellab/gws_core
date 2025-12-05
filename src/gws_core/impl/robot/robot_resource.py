@@ -1,7 +1,4 @@
 import json
-from typing import Dict, List
-
-from pandas import DataFrame
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_style import TypingStyle
@@ -14,7 +11,6 @@ from ...resource.resource import Resource
 from ...resource.resource_decorator import resource_decorator
 from ...resource.view.view_decorator import view
 from ..json.json_view import JSONView
-from ..table.view.table_view import TableView
 from ..text.text_view import TextView
 
 
@@ -26,7 +22,7 @@ from ..text.text_view import TextView
 )
 class Robot(Resource):
     age: int = IntRField()
-    position: List[float] = ListRField()
+    position: list[float] = ListRField()
     weight: float = FloatRField()
 
     @classmethod
@@ -69,7 +65,7 @@ class Robot(Resource):
         str_ = json.dumps(self.to_dict())
         return TextView(str_)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {"age": self.age, "position": self.position, "weight": self.weight}
 
 

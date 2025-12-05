@@ -1,4 +1,3 @@
-from typing import Dict
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -49,7 +48,7 @@ class ScenarioTransfertService:
         return scenario
 
     @classmethod
-    def get_import_scenario_config_specs(cls) -> Dict[str, ParamSpecDTO]:
+    def get_import_scenario_config_specs(cls) -> dict[str, ParamSpecDTO]:
         return ScenarioDownloader.config_specs.to_dto()
 
     @classmethod
@@ -97,5 +96,5 @@ class ScenarioTransfertService:
         return scenario
 
     @classmethod
-    def get_export_scenario_to_lab_config_specs(cls) -> Dict[str, ParamSpecDTO]:
+    def get_export_scenario_to_lab_config_specs(cls) -> dict[str, ParamSpecDTO]:
         return SendScenarioToLab.config_specs.to_dto()

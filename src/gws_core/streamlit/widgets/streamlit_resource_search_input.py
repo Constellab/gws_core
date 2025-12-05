@@ -1,4 +1,6 @@
-from typing import List, Optional, Type
+
+from peewee import Expression, Ordering
+from streamlit_searchbox import st_searchbox
 
 from gws_core.core.classes.search_builder import SearchOperator
 from gws_core.resource.resource import Resource
@@ -6,14 +8,12 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_search_builder import ResourceSearchBuilder
 from gws_core.tag.tag import Tag
-from peewee import Expression, Ordering
-from streamlit_searchbox import st_searchbox
 
 
 class ResourceSearchInput:
     search_builder: ResourceSearchBuilder
 
-    _default_options: List[ResourceModel] = None
+    _default_options: list[ResourceModel] = None
 
     def __init__(self):
         self.search_builder = ResourceSearchBuilder()
@@ -24,7 +24,7 @@ class ResourceSearchInput:
         key: str = "searchbox",
         debounce: int = 300,
         label: str = None,
-    ) -> Optional[ResourceModel]:
+    ) -> ResourceModel | None:
         """Create a search box to select a resource
 
         :param placeholder: Placeholder for empty searches shown within the component, defaults to 'Search for resource'
@@ -114,7 +114,7 @@ class ResourceSearchInput:
 
     #     return component_value
 
-    def set_default_options(self, default_options: List[ResourceModel]) -> "ResourceSearchInput":
+    def set_default_options(self, default_options: list[ResourceModel]) -> "ResourceSearchInput":
         """Set the default options for the search box, set empty list to disable
         By default, it call a search based on the current filters
         """
@@ -133,13 +133,13 @@ class ResourceSearchInput:
         self.search_builder.add_ordering(order)
         return self
 
-    def add_resource_type_filter(self, resource_type: Type[Resource]) -> "ResourceSearchInput":
+    def add_resource_type_filter(self, resource_type: type[Resource]) -> "ResourceSearchInput":
         """Filter the search query by a specific resource type"""
         self.search_builder.add_resource_type_filter(resource_type)
         return self
 
     def add_resource_types_filter(
-        self, resource_types: List[Type[Resource]]
+        self, resource_types: list[type[Resource]]
     ) -> "ResourceSearchInput":
         """Filter the search query by a specific resource type"""
         self.search_builder.add_resource_types_filter(resource_types)
@@ -151,21 +151,21 @@ class ResourceSearchInput:
         return self
 
     def add_resource_type_and_sub_types_filter(
-        self, resource_type: Type[Resource]
+        self, resource_type: type[Resource]
     ) -> "ResourceSearchInput":
         """Filter the search query by a specific resource type and its subtypes"""
         self.search_builder.add_resource_type_and_sub_types_filter(resource_type)
         return self
 
     def add_resource_types_and_sub_types_filter(
-        self, resource_types: List[Type[Resource]]
+        self, resource_types: list[type[Resource]]
     ) -> "ResourceSearchInput":
         """Filter the search query by resource types and its subtypes"""
         self.search_builder.add_resource_types_and_sub_types_filter(resource_types)
         return self
 
     def add_resource_typing_names_and_sub_types_filter(
-        self, resource_typing_names: List[str]
+        self, resource_typing_names: list[str]
     ) -> "ResourceSearchInput":
         """Filter the search query by resource typing names and its subtypes"""
         self.search_builder.add_expression(
@@ -216,5 +216,5 @@ class ResourceSearchInput:
         return self
 
     # function with list of labels
-    def _search_resources(self, searchterm: str) -> List[ResourceModel]:
+    def _search_resources(self, searchterm: str) -> list[ResourceModel]:
         return self.search_builder.add_name_filter(searchterm).search_all()

@@ -1,8 +1,6 @@
-from typing import List
 
-from fastapi import Depends
+from fastapi import Depends, UploadFile
 from fastapi import File as FastAPIFile
-from fastapi import UploadFile
 from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -20,7 +18,7 @@ from .fs_node_service import FsNodeService
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
 def upload_file(
     file: UploadFile = FastAPIFile(...),
-    typing_name: List[str] = None,
+    typing_name: list[str] = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ResourceModelDTO:
     """Upload a file
@@ -39,7 +37,7 @@ def upload_file(
 )
 def upload_folder(
     folder_typing_name: str,
-    files: List[UploadFile] = FastAPIFile(...),
+    files: list[UploadFile] = FastAPIFile(...),
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ResourceModelDTO:
     """Upload a folder
@@ -176,7 +174,7 @@ def delete_folder_sub_file(
 
 
 @core_app.get("/fs-node/file-type", tags=["Files"], summary="Get the list of file types")
-def get_file_types_list(_=Depends(AuthorizationService.check_user_access_token)) -> List[TypingDTO]:
+def get_file_types_list(_=Depends(AuthorizationService.check_user_access_token)) -> list[TypingDTO]:
     """
     Get the list of file types
     """
@@ -187,7 +185,7 @@ def get_file_types_list(_=Depends(AuthorizationService.check_user_access_token))
 @core_app.get("/fs-node/folder-type", tags=["Files"], summary="Get the list of folder types")
 def get_folder_types_list(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> List[TypingDTO]:
+) -> list[TypingDTO]:
     """
     Get the list of folder types
     """

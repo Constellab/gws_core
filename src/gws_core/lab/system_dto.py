@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal
 
 from typing_extensions import TypedDict
 
@@ -13,7 +13,7 @@ class LabInfoDTO(BaseModelDTO):
     id: str
     lab_name: str
     front_version: str
-    space: Optional[SpaceDict]
+    space: SpaceDict | None
 
 
 class LabStatusDTO(BaseModelDTO):
@@ -23,7 +23,7 @@ class LabStatusDTO(BaseModelDTO):
 class SettingsDTO(BaseModelDTO):
     lab_id: str
     lab_name: str
-    space_api_url: Optional[str]
+    space_api_url: str | None
     lab_prod_api_url: str
     lab_dev_api_url: str
     lab_environment: str
@@ -40,7 +40,7 @@ class ModuleInfo(TypedDict):
     path: str
     name: str
     source: str
-    error: Optional[str]
+    error: str | None
 
 
 class BrickMigrationLogHistory(TypedDict):
@@ -52,7 +52,7 @@ class BrickMigrationLog(TypedDict):
     brick_name: str
     version: str
     last_date_check: str
-    history: List[BrickMigrationLogHistory]
+    history: list[BrickMigrationLogHistory]
     db_manager_unique_name: str
 
 
@@ -63,4 +63,4 @@ class PipPackage(BaseModelDTO):
 
 class LabSystemConfig(BaseModelDTO):
     python_version: str
-    pip_packages: List[PipPackage]
+    pip_packages: list[PipPackage]

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Type, final
+from typing import final
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
@@ -16,7 +16,7 @@ from ..task_decorator import task_decorator
 
 def transformer_decorator(
     unique_name: str,
-    resource_type: Type[Resource],
+    resource_type: type[Resource],
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
@@ -48,7 +48,7 @@ def transformer_decorator(
     :type deprecated: TypingDeprecated, optional
     """
 
-    def decorator(task_class: Type[Task]):
+    def decorator(task_class: type[Task]):
         if not Utils.issubclass(task_class, Transformer):
             BrickService.log_brick_error(
                 task_class,
@@ -85,7 +85,7 @@ def transformer_decorator(
 class Transformer(Converter):
     @final
     def convert(
-        self, source: Resource, params: ConfigParams, target_type: Type[Resource]
+        self, source: Resource, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
         target: Resource = self.transform(source, params)
 

@@ -1,4 +1,3 @@
-from typing import List, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.impl.file.file_helper import FileHelper
@@ -27,9 +26,9 @@ class ConverterService:
     ) -> ResourceModel:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
-        resource_type: Type[File] = resource_model.get_and_check_resource_type()
+        resource_type: type[File] = resource_model.get_and_check_resource_type()
 
-        importer_type: Type[ResourceImporter] = TypingManager.get_and_check_type_from_name(
+        importer_type: type[ResourceImporter] = TypingManager.get_and_check_type_from_name(
             importer_typing_name
         )
 
@@ -62,12 +61,12 @@ class ConverterService:
         """return the Task exporter typing for the resource type.
         The one that is closest to class in herarchy
         """
-        resource_type: Type[File] = TypingManager.get_and_check_type_from_name(resource_typing_name)
+        resource_type: type[File] = TypingManager.get_and_check_type_from_name(resource_typing_name)
 
         return cls.get_resource_exporter(resource_type)
 
     @classmethod
-    def get_resource_exporter(cls, resource_type: Type[Resource]) -> TaskTyping:
+    def get_resource_exporter(cls, resource_type: type[Resource]) -> TaskTyping:
         """return the Task exporter typing for the resource type.
         The one that is closest to class in herarchy
         """
@@ -76,7 +75,7 @@ class ConverterService:
                 "The resource must be an exportable resource. This means that an exporter task must exist on for this resource"
             )
 
-        task_typings: List[TaskTyping] = TaskTyping.get_by_related_resource(
+        task_typings: list[TaskTyping] = TaskTyping.get_by_related_resource(
             resource_type, "EXPORTER"
         )
 
@@ -102,7 +101,7 @@ class ConverterService:
         protocol: ProtocolProxy = scenario.get_protocol()
 
         # Add the importer and the connector
-        exporter_type: Type[ResourceExporter] = TypingManager.get_and_check_type_from_name(
+        exporter_type: type[ResourceExporter] = TypingManager.get_and_check_type_from_name(
             exporter_typing_name
         )
         extractor: ProcessProxy = protocol.add_process(exporter_type, "exporter", params)

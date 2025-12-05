@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Literal
+from typing import Literal
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -102,7 +102,7 @@ class ResourceDownloaderBase(Task):
 
         # Create the shared entity info
         self.log_info_message("Storing the resource origin info")
-        resources: List[Resource] = self.resource_loader.get_all_generated_resources()
+        resources: list[Resource] = self.resource_loader.get_all_generated_resources()
         for resource in resources:
             SharedResource.create_from_lab_info(
                 resource.get_model_id(),

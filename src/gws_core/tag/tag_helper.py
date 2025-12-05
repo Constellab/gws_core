@@ -1,9 +1,7 @@
 from datetime import datetime
-from typing import Dict, List
 
 from numpy import array, meshgrid
 
-from gws_core.core.utils.date_helper import DateHelper
 from gws_core.tag.tag_dto import TagDTO, TagValueFormat
 
 from .tag import Tag, TagValueType
@@ -11,37 +9,37 @@ from .tag import Tag, TagValueType
 
 class TagHelper:
     @classmethod
-    def tags_to_json(cls, tags: List[Tag]) -> List[dict]:
+    def tags_to_json(cls, tags: list[Tag]) -> list[dict]:
         if not tags:
             return []
         return [tag.to_dto().to_json_dict() for tag in tags]
 
     @classmethod
-    def tags_dict_to_list(cls, tags_dict: List[dict]) -> List[Tag]:
+    def tags_dict_to_list(cls, tags_dict: list[dict]) -> list[Tag]:
         if not tags_dict:
             return []
 
-        tags_list: List[Tag] = []
+        tags_list: list[Tag] = []
 
         for tag_dict in tags_dict:
             tags_list.append(Tag.from_dto(TagDTO.from_json(tag_dict)))
         return tags_list
 
     @classmethod
-    def tags_dto_to_list(cls, tags_dict: List[TagDTO]) -> List[Tag]:
+    def tags_dto_to_list(cls, tags_dict: list[TagDTO]) -> list[Tag]:
         if not tags_dict:
             return []
 
-        tags_list: List[Tag] = []
+        tags_list: list[Tag] = []
 
         for tag_dict in tags_dict:
             tags_list.append(Tag.from_dto(tag_dict))
         return tags_list
 
     @classmethod
-    def get_distinct_values(cls, tags: List[Dict[str, str]]) -> Dict[str, List[str]]:
+    def get_distinct_values(cls, tags: list[dict[str, str]]) -> dict[str, list[str]]:
         """Return a dictionary of tags key with the list of values for each key from a list of tags"""
-        all_tags: Dict[str, List[str]] = {}
+        all_tags: dict[str, list[str]] = {}
         for tag in tags:
             for k, v in tag.items():
                 if k not in all_tags:
@@ -52,13 +50,13 @@ class TagHelper:
         return all_tags
 
     @classmethod
-    def get_distinct_values_for_key(cls, tags: List[Dict[str, str]], key: str) -> List[str]:
+    def get_distinct_values_for_key(cls, tags: list[dict[str, str]], key: str) -> list[str]:
         """Return a list of distinct values for a key from a list of tags"""
         distinct_tags = cls.get_distinct_values(tags)
         return distinct_tags.get(key, [])
 
     @classmethod
-    def get_all_tags_combinasons(cls, distinct_tags: Dict[str, List[str]]) -> List[Dict[str, str]]:
+    def get_all_tags_combinasons(cls, distinct_tags: dict[str, list[str]]) -> list[dict[str, str]]:
         """Return a list of all possible combinations of tags"""
         tag_values = [v for v in distinct_tags.values()]
 

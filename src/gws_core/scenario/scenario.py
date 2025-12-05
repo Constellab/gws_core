@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, final
+from typing import TYPE_CHECKING, Any, final
 
 from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
@@ -58,7 +58,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     # cache of the _protocol
     _protocol: ProtocolModel = None
@@ -93,7 +93,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self._protocol
 
     @property
-    def task_models(self) -> List[TaskModel]:
+    def task_models(self) -> list[TaskModel]:
         """
         Returns child process models.
         """
@@ -105,7 +105,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return list(TaskModel.select().where(TaskModel.scenario == self))
 
     @property
-    def resources(self) -> List[ResourceModel]:
+    def resources(self) -> list[ResourceModel]:
         """
         Returns child resources.
         """
@@ -123,7 +123,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
         return self.title
 
-    def get_running_tasks(self) -> List[TaskModel]:
+    def get_running_tasks(self) -> list[TaskModel]:
         from ..task.task_model import TaskModel
 
         return list(
@@ -155,7 +155,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     ########################################## MODEL METHODS ######################################
 
     @GwsCoreDbManager.transaction()
-    def archive(self, archive: bool) -> "Scenario":
+    def archive(self, archive: bool) -> Scenario:
         """
         Archive the scenario
         """
@@ -202,10 +202,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def count_queued_scenarios(cls) -> int:
-        return Scenario.select().where((Scenario.status == ScenarioStatus.IN_QUEUE)).count()
+        return Scenario.select().where(Scenario.status == ScenarioStatus.IN_QUEUE).count()
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> "Scenario":
+    def reset(self) -> Scenario:
         """
         Reset the scenario.
 
@@ -265,7 +265,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         EntityTagList.delete_by_entity(TagEntityType.SCENARIO, self.id)
 
     @classmethod
-    def get_synced_objects(cls) -> List["Scenario"]:
+    def get_synced_objects(cls) -> list[Scenario]:
         """Get all scenarios that are synced with space
 
         :return: [description]
@@ -274,7 +274,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return list(cls.select().where(cls.last_sync_at.is_null(False)))
 
     @classmethod
-    def clear_folder(cls, folders: List[SpaceFolder]) -> None:
+    def clear_folder(cls, folders: list[SpaceFolder]) -> None:
         cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(
             cls.folder.in_(folders)
         ).execute()
@@ -365,7 +365,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.set_error_info(None)
         self.save()
 
-    def get_error_info(self) -> Optional[ProcessErrorInfo]:
+    def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
 
     def set_error_info(self, error_info: ProcessErrorInfo) -> None:

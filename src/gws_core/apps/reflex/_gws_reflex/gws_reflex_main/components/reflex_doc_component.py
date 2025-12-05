@@ -1,6 +1,6 @@
 """Reflex component to display function documentation extracted via ReflectorHelper."""
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import reflex as rx
 
@@ -10,7 +10,7 @@ from gws_core.core.utils.reflector_types import MethodDoc
 
 def doc_component(
     func: Callable,
-    title: Optional[str] = None,
+    title: str | None = None,
     show_description: bool = True,
     show_parameters: bool = True,
     show_return_type: bool = False,
@@ -30,7 +30,7 @@ def doc_component(
     :return: A Reflex component displaying the function documentation
     """
     # Extract documentation using ReflectorHelper
-    func_doc: Optional[MethodDoc] = ReflectorHelper.get_func_doc(func)
+    func_doc: MethodDoc | None = ReflectorHelper.get_func_doc(func)
 
     if func_doc is None:
         return rx.card(

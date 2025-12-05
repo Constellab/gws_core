@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
@@ -24,8 +24,8 @@ class ParamSet(ParamSpec):
         param_set: ConfigSpecs = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
         max_number_of_occurrences: int = -1,
     ):
         """
@@ -59,7 +59,7 @@ class ParamSet(ParamSpec):
             short_description=short_description,
         )
 
-    def get_default_value(self) -> List:
+    def get_default_value(self) -> list:
         if self.optional:
             return []
 
@@ -67,14 +67,14 @@ class ParamSet(ParamSpec):
         # default value of each param_spec
         return [self.param_set.get_default_values()]
 
-    def validate(self, value: List[Dict[str, Any]]) -> Any:
+    def validate(self, value: list[dict[str, Any]]) -> Any:
         if value is None:
             return []
         list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
         dict_validator = DictValidator()
 
         # global validation of the list
-        list_: List[Dict[str, Any]] = list_validator.validate(value)
+        list_: list[dict[str, Any]] = list_validator.validate(value)
 
         result_list = []
         for dict_ in list_:
@@ -126,5 +126,5 @@ class ParamSet(ParamSpec):
         return ParamSet()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

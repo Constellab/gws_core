@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type
+from typing import TYPE_CHECKING
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.model.typing_dto import TypingObjectType
@@ -24,7 +24,7 @@ class TypingNameObj:
     def __str__(self) -> str:
         return TypingNameObj.typing_obj_to_str(self.object_type, self.brick_name, self.unique_name)
 
-    def get_model_type(self) -> Type[Model]:
+    def get_model_type(self) -> type[Model]:
         # set import here to avoid circular import
         from gws_core.protocol.protocol_model import ProtocolModel
         from gws_core.resource.resource_model import ResourceModel
@@ -40,9 +40,9 @@ class TypingNameObj:
             raise BadRequestException(f"No model for type '{self.object_type}'")
 
     @staticmethod
-    def from_typing_name(typing_name: str) -> "TypingNameObj":
+    def from_typing_name(typing_name: str) -> TypingNameObj:
         try:
-            parts: List[str] = typing_name.split(TypingNameObj.SEPARATOR)
+            parts: list[str] = typing_name.split(TypingNameObj.SEPARATOR)
             return TypingNameObj(object_type=parts[0], brick_name=parts[1], unique_name=parts[2])
         except:
             raise BadRequestException(f"The typing name '{typing_name}' is invalid")

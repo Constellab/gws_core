@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
@@ -6,7 +5,7 @@ from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase,
 class RichTextBlockTable(RichTextBlockDataBase):
     """Object representing a table block in a rich text"""
 
-    content: List[List[str]]
+    content: list[list[str]]
     withHeadings: bool = False
     stretched: bool = False
 

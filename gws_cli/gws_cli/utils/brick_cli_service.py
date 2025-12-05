@@ -1,6 +1,5 @@
 """Service for managing brick operations in the CLI"""
 
-from typing import List
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.brick.brick_settings import BrickSettings
@@ -21,7 +20,7 @@ class BrickCliService:
     """Service for brick CLI operations"""
 
     @classmethod
-    def list_installed_bricks_with_versions(cls) -> List[BrickDirectoryWithVersionDTO]:
+    def list_installed_bricks_with_versions(cls) -> list[BrickDirectoryWithVersionDTO]:
         """List all installed brick directories with their versions.
 
         Returns a list of bricks sorted with gws_core first, then alphabetically.
@@ -33,7 +32,7 @@ class BrickCliService:
         user_bricks_folder = Settings.get_user_bricks_folder()
 
         brick_dirs = BrickService.list_brick_directories()
-        bricks_with_versions: List[BrickDirectoryWithVersionDTO] = []
+        bricks_with_versions: list[BrickDirectoryWithVersionDTO] = []
 
         for brick_dir in brick_dirs:
             settings = BrickService.read_brick_settings(brick_dir.path)

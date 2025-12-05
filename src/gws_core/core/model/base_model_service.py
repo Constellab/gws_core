@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Dict, List, Type
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 
@@ -10,7 +9,7 @@ from .base_model import BaseModel
 @dataclass
 class DbWithModels:
     db_manager: AbstractDbManager
-    models: List[Type[BaseModel]]
+    models: list[type[BaseModel]]
 
 
 class BaseModelService:
@@ -20,17 +19,17 @@ class BaseModelService:
     :rtype: [type]
     """
 
-    __model_types: List[Type[BaseModel]] = None
+    __model_types: list[type[BaseModel]] = None
 
     @classmethod
-    def get_base_model_types(cls) -> List[Type[BaseModel]]:
+    def get_base_model_types(cls) -> list[type[BaseModel]]:
         """Return all the sub classes of BaseModel
 
         :return: [description]
         :rtype: List[Type[BaseModel]]
         """
         if not getattr(cls, "__model_types", None):
-            cls.__model_types: List[Type[BaseModel]] = BaseModel.inheritors()
+            cls.__model_types: list[type[BaseModel]] = BaseModel.inheritors()
 
         return cls.__model_types
 
@@ -99,7 +98,7 @@ class BaseModelService:
 
         all_db_with_models = cls._get_all_db_and_model_types()
         for db_with_models in all_db_with_models.values():
-            models: List[Type[BaseModel]] = [t for t in db_with_models.models if t.table_exists()]
+            models: list[type[BaseModel]] = [t for t in db_with_models.models if t.table_exists()]
 
             if len(models) == 0:
                 Logger.debug("No table to drop")
@@ -115,8 +114,8 @@ class BaseModelService:
                 db_with_models.db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
-    def _get_all_db_and_model_types(cls) -> Dict[str, DbWithModels]:
-        db_with_models: Dict[str, DbWithModels] = {}
+    def _get_all_db_and_model_types(cls) -> dict[str, DbWithModels]:
+        db_with_models: dict[str, DbWithModels] = {}
         models = cls.get_base_model_types()
 
         for model in models:

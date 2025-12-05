@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table, TableScalerHelper
 from gws_core.impl.table.helper.dataframe_scaler_helper import DataframeScalerHelper
+from pandas import DataFrame
 
 
 # test_table_scaler

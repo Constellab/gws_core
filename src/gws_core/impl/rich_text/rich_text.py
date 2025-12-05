@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional, Set, cast
+from typing import cast
 
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
@@ -36,10 +36,10 @@ class RichText(SerializableObjectJson):
     version: int
     editor_version: str
 
-    blocks: List[RichTextBlock]
+    blocks: list[RichTextBlock]
 
     def __init__(
-        self, rich_text_dto: Optional[RichTextDTO] = None, target_version: int = None
+        self, rich_text_dto: RichTextDTO | None = None, target_version: int = None
     ) -> None:
         if target_version is None:
             target_version = RichText.CURRENT_VERION
@@ -60,10 +60,10 @@ class RichText(SerializableObjectJson):
 
     ##################################### BLOCK #########################################
 
-    def get_blocks(self) -> List[RichTextBlock]:
+    def get_blocks(self) -> list[RichTextBlock]:
         return self.blocks
 
-    def get_blocks_by_type(self, block_type: RichTextBlockType) -> List[RichTextBlock]:
+    def get_blocks_by_type(self, block_type: RichTextBlockType) -> list[RichTextBlock]:
         """Get the blocks of the given type"""
         return [block for block in self.get_blocks() if block.type == block_type]
 
@@ -124,7 +124,7 @@ class RichText(SerializableObjectJson):
                 return index
         return -1
 
-    def get_block_by_id(self, block_id: str) -> Optional[RichTextBlock]:
+    def get_block_by_id(self, block_id: str) -> RichTextBlock | None:
         """Get the block by its id
 
         :param block_id: id of the block
@@ -139,7 +139,7 @@ class RichText(SerializableObjectJson):
     ##################################### PARAMETER  #########################################
 
     def _append_or_insert_block_at_parameter(
-        self, view_block: RichTextBlock, parameter_name: Optional[str] = None
+        self, view_block: RichTextBlock, parameter_name: str | None = None
     ) -> None:
         """
         Append the block to the rich text content or insert it at the given parameter name
@@ -235,7 +235,7 @@ class RichText(SerializableObjectJson):
         return f"${parameter_name}$"
 
     ##################################### FIGURE #########################################
-    def get_figures_data(self) -> List[RichTextBlockFigure]:
+    def get_figures_data(self) -> list[RichTextBlockFigure]:
         return [
             cast(RichTextBlockFigure, block.get_data())
             for block in self.get_blocks_by_type(RichTextBlockType.FIGURE)
@@ -243,13 +243,13 @@ class RichText(SerializableObjectJson):
 
     ##################################### RESOURCE VIEW #########################################
 
-    def get_resource_views_data(self) -> List[RichTextBlockResourceView]:
+    def get_resource_views_data(self) -> list[RichTextBlockResourceView]:
         return [
             cast(RichTextBlockResourceView, block.get_data())
             for block in self.get_blocks_by_type(RichTextBlockType.RESOURCE_VIEW)
         ]
 
-    def get_file_views_data(self) -> List[RichTextBlockViewFile]:
+    def get_file_views_data(self) -> list[RichTextBlockViewFile]:
         return [
             cast(RichTextBlockViewFile, block.get_data())
             for block in self.get_blocks_by_type(RichTextBlockType.FILE_VIEW)
@@ -257,11 +257,11 @@ class RichText(SerializableObjectJson):
 
     def has_view_config(self, view_config_id: str) -> bool:
         """Check if the rich text contains a resource view with the given view_config_id"""
-        resource_views: List[RichTextBlockResourceView] = self.get_resource_views_data()
+        resource_views: list[RichTextBlockResourceView] = self.get_resource_views_data()
         return any(rv.view_config_id == view_config_id for rv in resource_views)
 
-    def get_associated_resources(self) -> Set[str]:
-        resource_views: List[RichTextBlockResourceView] = self.get_resource_views_data()
+    def get_associated_resources(self) -> set[str]:
+        resource_views: list[RichTextBlockResourceView] = self.get_resource_views_data()
         return {rv.resource_id for rv in resource_views}
 
     def add_resource_view(
@@ -345,7 +345,7 @@ class RichText(SerializableObjectJson):
 
     ##################################### FILE #########################################
 
-    def get_files_data(self) -> List[RichTextBlockFile]:
+    def get_files_data(self) -> list[RichTextBlockFile]:
         return [
             cast(RichTextBlockFile, block.get_data())
             for block in self.get_blocks_by_type(RichTextBlockType.FILE)
@@ -547,7 +547,7 @@ class RichText(SerializableObjectJson):
         )
 
     @classmethod
-    def create_rich_text_dto(cls, blocks: List[RichTextBlock]) -> RichTextDTO:
+    def create_rich_text_dto(cls, blocks: list[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
             version=RichText.CURRENT_VERION,
@@ -577,6 +577,6 @@ class RichText(SerializableObjectJson):
 
     @classmethod
     def from_json_file(cls, file_path: str) -> "RichText":
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             rich_text_dto = RichTextDTO.from_json_str(file.read())
             return RichText(rich_text_dto)

@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.db.db_config import DbMode
@@ -90,7 +89,7 @@ class DbManagerService:
             raise Exception(error_message)
 
     @classmethod
-    def _get_db_manager_classes(cls) -> List[AbstractDbManager]:
+    def _get_db_manager_classes(cls) -> list[AbstractDbManager]:
         """Get all the classes that inherit this class"""
         return list(AbstractDbManager.get_db_managers())
 

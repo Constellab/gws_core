@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Optional
 
 
 @dataclass
@@ -18,7 +17,7 @@ class CommandInfo:
     """Information about an installed command"""
 
     name: str
-    description: Optional[str]
+    description: str | None
     file_path: Path
 
 
@@ -27,7 +26,7 @@ class AICodeService(ABC):
 
     SOURCE_COMMANDS_DIR = Path(__file__).parent / "commands"
     # Frontmatter configuration for each command file
-    COMMAND_FRONTMATTER: List[CommandFrontmatter] = [
+    COMMAND_FRONTMATTER: list[CommandFrontmatter] = [
         CommandFrontmatter(
             filename="reflex-app-developer.md",
             description="Create, develop, modify, or debug a Reflex web application",
@@ -181,11 +180,11 @@ class AICodeService(ABC):
             )
             return 0
 
-        except (OSError, IOError) as e:
+        except OSError as e:
             print(f"Error pulling commands: {e}")
             return 1
 
-    def get_commands_list(self) -> List[CommandInfo]:
+    def get_commands_list(self) -> list[CommandInfo]:
         """Get a structured list of all available GWS commands for the AI tool
 
         Returns:

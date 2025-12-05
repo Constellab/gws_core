@@ -1,8 +1,9 @@
 import os
 import select
 import subprocess
+from collections.abc import Callable
 from enum import Enum
-from typing import IO, Any, Callable, List, Optional, Union
+from typing import IO, Any
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
@@ -18,7 +19,7 @@ from gws_core.progress_bar.progress_bar import ProgressBar
 
 class ShellProxyDTO(BaseModelDTO):
     typing_name: str
-    env_code: Optional[str] = None
+    env_code: str | None = None
 
 
 class ShellIO:
@@ -84,7 +85,7 @@ class ShellProxy(BaseTyping):
 
     def run(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -134,7 +135,7 @@ class ShellProxy(BaseTyping):
             )
 
             # get the file descriptors of the stdout and stderr
-            shell_io: List[ShellIO] = []
+            shell_io: list[ShellIO] = []
             if dispatch_stdout:
                 shell_io.append(ShellIO(io=proc.stdout, dispatch=self._self_dispatch_stdout))
 
@@ -176,7 +177,7 @@ class ShellProxy(BaseTyping):
             self._message_dispatcher.notify_error_message(str(err))
             raise Exception(f"The shell process has failed. Error {err}.")
 
-    def _manage_run_output(self, proc: subprocess.Popen, loggers: List[ShellIO]) -> None:
+    def _manage_run_output(self, proc: subprocess.Popen, loggers: list[ShellIO]) -> None:
         # use to read the stdout and stderr of the process
         # https://stackoverflow.com/questions/12270645/can-you-make-a-python-subprocess-output-stdout-and-stderr-as-usual-but-also-cap/12272262#12272262
         reads = [logger.fileno() for logger in loggers]
@@ -205,7 +206,7 @@ class ShellProxy(BaseTyping):
 
     def run_in_new_thread(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -237,7 +238,7 @@ class ShellProxy(BaseTyping):
 
     def check_output(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -274,18 +275,17 @@ class ShellProxy(BaseTyping):
             Logger.log_exception_stack_trace(err)
             raise Exception(f"The shell process has failed. Error {err}.")
 
-    def _check_before_run(self, cmd: Union[list, str], shell_mode: bool = False) -> None:
+    def _check_before_run(self, cmd: list | str, shell_mode: bool = False) -> None:
         """Check if the command can be run before running it."""
         if shell_mode:
             if isinstance(cmd, list):
                 raise ValueError(
                     "The command must be a string and not a list if the shell mode is activated"
                 )
-        else:
-            if not isinstance(cmd, list):
-                raise ValueError(
-                    "The command must be a list and not a string if the shell mode is not activated"
-                )
+        elif not isinstance(cmd, list):
+            raise ValueError(
+                "The command must be a list and not a string if the shell mode is not activated"
+            )
 
     def _prepare_env(self, env: dict, mode: ShellProxyEnvVariableMode) -> dict | None:
         """Prepare the environment variables to be used in the shell command.

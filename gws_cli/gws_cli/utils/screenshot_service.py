@@ -59,7 +59,7 @@ class ScreenshotService:
             ]
 
             result = subprocess.run(
-                ["sudo", "apt-get", "install", "-y"] + apt_packages, capture_output=True, text=True
+                ["sudo", "apt-get", "install", "-y"] + apt_packages, check=False, capture_output=True, text=True
             )
 
             if result.returncode != 0:

@@ -1,4 +1,4 @@
-from typing import List, Optional, cast
+from typing import cast
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -121,10 +121,10 @@ class CredentialsService:
     @classmethod
     def get_s3_credentials_data_by_access_key(
         cls, access_key_id: str
-    ) -> Optional[CredentialsDataS3 | CredentialsDataS3LabServer]:
+    ) -> CredentialsDataS3 | CredentialsDataS3LabServer | None:
         """Return the S3 credentials that match the access key id"""
 
-        s3_credentials: List[Credentials] = Credentials.search_by_types(
+        s3_credentials: list[Credentials] = Credentials.search_by_types(
             [CredentialsType.S3, CredentialsType.S3_LAB_SERVER]
         )
 
@@ -138,10 +138,10 @@ class CredentialsService:
         return None
 
     @classmethod
-    def get_lab_credentials_data_by_api_key(cls, api_key: str) -> Optional[CredentialsDataLab]:
+    def get_lab_credentials_data_by_api_key(cls, api_key: str) -> CredentialsDataLab | None:
         """Return the lab credentials that match the api key"""
 
-        lab_credentials: List[Credentials] = Credentials.search_by_type(CredentialsType.LAB)
+        lab_credentials: list[Credentials] = Credentials.search_by_type(CredentialsType.LAB)
 
         for credentials in lab_credentials:
             data: CredentialsDataLab = cast(CredentialsDataLab, credentials.get_data_object())
@@ -168,9 +168,9 @@ class CredentialsService:
         cls,
         name: str,
         username: str,
-        password: Optional[str] = None,
-        url: Optional[str] = None,
-        description: Optional[str] = None,
+        password: str | None = None,
+        url: str | None = None,
+        description: str | None = None,
     ) -> Credentials:
         """Get or create a BASIC credential. If the credential exists, check that it's BASIC type and return it.
         Otherwise create a new BASIC credential.
@@ -218,7 +218,7 @@ class CredentialsService:
         cls,
         credentials_name: str,
         credentials_data: CredentialsDataBasic,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> Credentials:
         """Update an existing BASIC credential. If the credential does not exist or is not of type BASIC, an exception is raised.
 

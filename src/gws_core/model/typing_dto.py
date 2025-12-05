@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Literal, Optional
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.model.typing_style import TypingStyle
@@ -19,8 +19,8 @@ class TypingRefDTO(BaseModelDTO):
     typing_name: str
     brick_version: str
     human_name: str
-    style: Optional[TypingStyle] = None
-    short_description: Optional[str] = None
+    style: TypingStyle | None = None
+    short_description: str | None = None
 
 
 class TypingDTO(ModelDTO):
@@ -29,19 +29,19 @@ class TypingDTO(ModelDTO):
     typing_name: str
     brick_version: str
     human_name: str
-    short_description: Optional[str]
-    object_sub_type: Optional[str]
-    deprecated_since: Optional[str]
-    deprecated_message: Optional[str]
-    additional_data: Optional[dict]
+    short_description: str | None
+    object_sub_type: str | None
+    deprecated_since: str | None
+    deprecated_message: str | None
+    additional_data: dict | None
     status: TypingStatus
     hide: bool
-    style: Optional[TypingStyle]
+    style: TypingStyle | None
 
 
 class TypingFullDTO(TypingDTO):
-    parent: Optional[TypingRefDTO] = None
-    doc: Optional[str] = None
+    parent: TypingRefDTO | None = None
+    doc: str | None = None
 
     def to_markdown(self) -> str:
         markdown = f"## {self.human_name}\n\n"
@@ -72,4 +72,4 @@ class TypingFullDTO(TypingDTO):
 
 class SimpleTypingDTO(BaseModelDTO):
     human_name: str = None
-    short_description: Optional[str] = None
+    short_description: str | None = None

@@ -1,4 +1,3 @@
-from typing import Dict
 
 from gws_core.protocol.protocol_dto import IOFaceDTO
 
@@ -30,5 +29,5 @@ class IOface:
         )
 
     @classmethod
-    def load_from_dto_dict(cls, iofaces: Dict[str, IOFaceDTO]) -> Dict[str, "IOface"]:
+    def load_from_dto_dict(cls, iofaces: dict[str, IOFaceDTO]) -> dict[str, "IOface"]:
         return {name: cls.load_from_dto(dto) for name, dto in iofaces.items()}

@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal
 
 from ..brick.brick_service import BrickService
 from .io_spec import IOSpec
@@ -9,18 +9,18 @@ class IOSpecsHelper:
     """Class containing only class method to simplify IOSpecs management"""
 
     @classmethod
-    def check_input_specs(cls, input_specs: InputSpecs, task_type: Type) -> InputSpecs:
+    def check_input_specs(cls, input_specs: InputSpecs, task_type: type) -> InputSpecs:
         """Method to verify that input specs are valid"""
         return cls._check_io_spec_param(input_specs, "input", task_type)
 
     @classmethod
-    def check_output_specs(cls, output_specs: OutputSpecs, task_type: Type) -> OutputSpecs:
+    def check_output_specs(cls, output_specs: OutputSpecs, task_type: type) -> OutputSpecs:
         """Method to verify that output specs are valid"""
         return cls._check_io_spec_param(output_specs, "output", task_type)
 
     @classmethod
     def _check_io_spec_param(
-        cls, io_specs: IOSpecs, param_type: Literal["input", "output"], task_type: Type
+        cls, io_specs: IOSpecs, param_type: Literal["input", "output"], task_type: type
     ) -> IOSpecs:
         if not io_specs:
             if param_type == "input":

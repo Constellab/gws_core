@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
@@ -127,7 +126,7 @@ def create_user(user: UserFullDTO, _=Depends(AuthSpace.check_space_api_key)) -> 
 
 
 @space_app.get("/user", tags=["User management"])
-def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> List[UserFullDTO]:
+def get_users(_=Depends(AuthSpace.check_space_api_key_and_user)) -> list[UserFullDTO]:
     """
     Get the all the users. Require space privilege.
     """

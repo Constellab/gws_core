@@ -1,8 +1,8 @@
-from typing import List
+
+from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.model.model import Model
 from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
-from peewee import CharField, ForeignKeyField, ModelSelect
 
 
 class SpaceFolder(Model):
@@ -11,7 +11,7 @@ class SpaceFolder(Model):
         "self", null=True, backref="children", on_delete="CASCADE"
     )
 
-    children: List["SpaceFolder"]
+    children: list["SpaceFolder"]
 
     def to_dto(self) -> SpaceFolderDTO:
         return SpaceFolderDTO(
@@ -47,7 +47,7 @@ class SpaceFolder(Model):
 
         return cls.select().where(cls.parent.is_null()).order_by(cls.name)
 
-    def get_with_children_as_list(self) -> List["SpaceFolder"]:
+    def get_with_children_as_list(self) -> list["SpaceFolder"]:
         """
         Get current folder and children as a list.
         """

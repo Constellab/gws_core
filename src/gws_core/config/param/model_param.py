@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional, Type
+from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecVisibilty
@@ -14,8 +14,8 @@ class ModelParam(ParamSpec):
         self,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = "Select object",
-        short_description: Optional[str] = None,
+        human_name: str | None = "Select object",
+        short_description: str | None = None,
     ):
         """
         :param optional: See default value
@@ -37,16 +37,16 @@ class ModelParam(ParamSpec):
         )
 
     @abstractmethod
-    def get_model_type(self) -> Type[Model]:
+    def get_model_type(self) -> type[Model]:
         """Override this method to return the model type to use
 
         :return: The model type
         :rtype: Type[Model]
         """
 
-    def build(self, value: Any) -> Optional[Model]:
+    def build(self, value: Any) -> Model | None:
         model_type = self.get_model_type()
-        model: Optional[Model] = None
+        model: Model | None = None
         if value and isinstance(value, str):
             # retrieve the note template and return it
             model = model_type.get_by_id(value)
@@ -71,5 +71,5 @@ class ModelParam(ParamSpec):
         return ModelParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

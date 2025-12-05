@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 
@@ -27,12 +26,12 @@ class MonitorDTO(ModelDTO):
     ram_usage_percent: float
 
     gpu_enabled: bool
-    gpu_percent: Optional[float]
-    gpu_temperature: Optional[float]
-    gpu_memory_total: Optional[float]
-    gpu_memory_used: Optional[float]
-    gpu_memory_free: Optional[float]
-    gpu_memory_percent: Optional[float]
+    gpu_percent: float | None
+    gpu_temperature: float | None
+    gpu_memory_total: float | None
+    gpu_memory_used: float | None
+    gpu_memory_free: float | None
+    gpu_memory_percent: float | None
 
     data: dict
 
@@ -58,17 +57,17 @@ class CurrentMonitorDTO(BaseModelDTO):
 class MonitorBetweenDateGraphicsDTO(BaseModelDTO):
     from_date: datetime
     to_date: datetime
-    main_figure: Dict
-    cpu_figure: Dict
-    network_figure: Dict
+    main_figure: dict
+    cpu_figure: dict
+    network_figure: dict
     gpu_enabled: bool
-    gpu_figure: Optional[Dict]
+    gpu_figure: dict | None
 
 
 class GetMonitorTimezoneDTO(BaseModelDTO):
-    timezone_number: Optional[float]
+    timezone_number: float | None
 
 
 class GetMonitorRequestDTO(GetMonitorTimezoneDTO):
-    from_date: Optional[str]
-    to_date: Optional[str]
+    from_date: str | None
+    to_date: str | None

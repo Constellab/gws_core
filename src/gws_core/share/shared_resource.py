@@ -1,5 +1,6 @@
-from gws_core.resource.resource_model import ResourceModel
 from peewee import ForeignKeyField
+
+from gws_core.resource.resource_model import ResourceModel
 
 from .shared_entity_info import SharedEntityInfo
 

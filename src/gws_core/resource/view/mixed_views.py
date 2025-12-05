@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.resource.view.multi_views import MultiViews
 
@@ -21,7 +20,7 @@ class MixedViews(View):
     ```
     """
 
-    _sub_views: List[View]
+    _sub_views: list[View]
     _type = "mixed-view"
     _allowed_view_types = []
 
@@ -70,7 +69,7 @@ class MixedViews(View):
         )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        views_dict: List[dict] = []
+        views_dict: list[dict] = []
         for sub_view in self._sub_views:
             view_dict = sub_view["view"].to_dict(ConfigParams(sub_view["config_params"]))
             views_dict.append(view_dict)

@@ -13,7 +13,7 @@ def load_prompts(prompts_json_path: str) -> dict:
         return {}
 
     try:
-        with open(prompts_json_path, "r") as f:
+        with open(prompts_json_path) as f:
             return json.load(f)
     except Exception as e:
         st.error(f"Error loading prompts file: {str(e)}")

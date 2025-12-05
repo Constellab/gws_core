@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.impl.robot.robot_protocol import CreateSimpleRobot, MoveSimpleRobot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -51,7 +50,7 @@ class TestTaskInputModel(BaseTestCase):
         ################################ CHECK TASK INPUT ################################
         # Check if the Input resource was set
         output: ProcessModel = scenario._scenario.protocol_model.get_process("output")
-        task_inputs: List[TaskInputModel] = list(
+        task_inputs: list[TaskInputModel] = list(
             TaskInputModel.get_by_resource_model(output.inputs.get_resource_model("resource").id)
         )
         self.assertEqual(len(task_inputs), 1)

@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal
+from typing import Literal
 
 from pandas import DataFrame, concat
 
@@ -15,7 +15,7 @@ class TableTagAggregatorHelper:
 
     @classmethod
     def aggregate_by_row_tags(
-        cls, table: Table, keys: List[str], func: TableGroupFunction = "mean"
+        cls, table: Table, keys: list[str], func: TableGroupFunction = "mean"
     ) -> Table:
         """
         Aggregtor data along a list of row tag keys
@@ -42,7 +42,7 @@ class TableTagAggregatorHelper:
             return cls._aggregate_by_tags(table.select_numeric_columns(), keys, func, "index")
 
     @classmethod
-    def sort_by_row_tags(cls, table: Table, keys: List[str]) -> Table:
+    def sort_by_row_tags(cls, table: Table, keys: list[str]) -> Table:
         row_tags = table.get_row_tags()
 
         tag_dataframe = DataFrame(row_tags, index=table.get_data().index)
@@ -71,7 +71,7 @@ class TableTagAggregatorHelper:
 
     @classmethod
     def aggregate_by_column_tags(
-        cls, table: Table, keys: List[str], func: TableGroupFunction = "mean"
+        cls, table: Table, keys: list[str], func: TableGroupFunction = "mean"
     ) -> Table:
         """
         Group data along a list of column tag keys
@@ -98,7 +98,7 @@ class TableTagAggregatorHelper:
             return cls._aggregate_by_tags(table.select_numeric_columns(), keys, func, "columns")
 
     @classmethod
-    def sort_by_column_tags(cls, table: Table, keys: List[str]) -> Table:
+    def sort_by_column_tags(cls, table: Table, keys: list[str]) -> Table:
         column_tags = table.get_column_tags()
 
         tag_dataframe = DataFrame(column_tags, index=table.get_data().columns)
@@ -128,13 +128,13 @@ class TableTagAggregatorHelper:
 
     @classmethod
     def _aggregate_by_tags(
-        cls, table: Table, keys: List[str], func: Literal["mean", "median", "sum"], axis: AxisType
+        cls, table: Table, keys: list[str], func: Literal["mean", "median", "sum"], axis: AxisType
     ) -> Table:
         if len(keys) > 1:
             raise BadRequestException("Multiple tags are only supported for 'sort' function")
         key = keys[0]
 
-        all_tags: Dict[str, List[str]] = (
+        all_tags: dict[str, list[str]] = (
             table.get_available_row_tags()
             if is_row_axis(axis)
             else table.get_available_column_tags()

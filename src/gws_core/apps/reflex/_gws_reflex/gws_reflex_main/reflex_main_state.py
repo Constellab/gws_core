@@ -1,10 +1,10 @@
-from typing import List, Optional
+
+from gws_reflex_base import ReflexMainStateBase
 
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.auth_context import AuthContextApp
 from gws_core.user.user import User
-from gws_reflex_base import ReflexMainStateBase
 
 from .reflex_auth_user import ReflexAuthUser
 
@@ -15,7 +15,7 @@ class ReflexMainState(ReflexMainStateBase):
     It provides methods to access the input resources of the app.
     """
 
-    async def get_resources(self) -> List[Resource]:
+    async def get_resources(self) -> list[Resource]:
         """Return the resources of the app."""
 
         sources_ = []
@@ -24,7 +24,7 @@ class ReflexMainState(ReflexMainStateBase):
             sources_.append(resource_model.get_resource())
         return sources_
 
-    async def get_current_user(self) -> Optional[User]:
+    async def get_current_user(self) -> User | None:
         """Return the current user of the app."""
         # in dev mode we load the system user by default
         # if authentication is enabled

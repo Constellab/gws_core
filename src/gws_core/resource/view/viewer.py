@@ -1,4 +1,3 @@
-from typing import Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -39,7 +38,7 @@ class Viewer(Task):
 
         resource: Resource = inputs.get("resource")
 
-        config_resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
+        config_resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(
             params.get("resource_typing_name")
         )
         if not Utils.issubclass(type(resource), config_resource_type):

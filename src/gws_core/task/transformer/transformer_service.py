@@ -1,4 +1,3 @@
-from typing import List, Type
 
 from gws_core.task.plug.input_task import InputTask as InputTask
 from gws_core.task.plug.output_task import OutputTask as OutputTask
@@ -19,14 +18,14 @@ from .transformer_type import TransformerDict
 class TransformerService:
     @classmethod
     def create_and_run_transformer_scenario(
-        cls, transformers: List[TransformerDict], resource_model_id: str
+        cls, transformers: list[TransformerDict], resource_model_id: str
     ) -> ResourceModel:
         if not transformers or len(transformers) == 0:
             raise BadRequestException("At least 1 transformer mustbe provided")
 
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
-        resource_type: Type[Resource] = resource_model.get_and_check_resource_type()
+        resource_type: type[Resource] = resource_model.get_and_check_resource_type()
 
         # Create a scenario containing 1 source, X transformers task , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
@@ -43,7 +42,7 @@ class TransformerService:
 
         # create all transformer process with connectors
         for transformer in transformers:
-            transformer_type: Type[Task] = TypingManager.get_and_check_type_from_name(
+            transformer_type: type[Task] = TypingManager.get_and_check_type_from_name(
                 transformer["typing_name"]
             )
 
@@ -81,7 +80,7 @@ class TransformerService:
         )
 
     @classmethod
-    def call_transformers(cls, resource: Resource, transformers: List[TransformerDict]) -> Resource:
+    def call_transformers(cls, resource: Resource, transformers: list[TransformerDict]) -> Resource:
         # call all transformers in a raw
         for transformer in transformers:
             resource = cls.call_transformer(resource, transformer)
@@ -91,7 +90,7 @@ class TransformerService:
     @classmethod
     def call_transformer(cls, resource: Resource, transformer: TransformerDict) -> Resource:
         # retrieve transformer type
-        transformer_task: Type[Converter] = TypingManager.get_and_check_type_from_name(
+        transformer_task: type[Converter] = TypingManager.get_and_check_type_from_name(
             transformer["typing_name"]
         )
 

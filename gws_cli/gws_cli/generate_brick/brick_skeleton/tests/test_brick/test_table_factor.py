@@ -1,7 +1,6 @@
 from brick_skeleton.table_factor import TableFactor
-from pandas import DataFrame
-
 from gws_core import BaseTestCase, Table, TaskRunner
+from pandas import DataFrame
 
 
 class TestTableFactor(BaseTestCase):

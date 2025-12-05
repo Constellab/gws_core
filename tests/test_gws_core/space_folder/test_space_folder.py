@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core import BaseTestCase
 from gws_core.core.utils.date_helper import DateHelper
@@ -96,7 +95,7 @@ class TestFolder(BaseTestCase):
         # delete all folders
         SpaceFolder.delete().execute()
 
-        space_folders: List[ExternalSpaceFolder] = [
+        space_folders: list[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json(
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
@@ -132,7 +131,7 @@ class TestFolder(BaseTestCase):
         self.assertEqual(root_1.children[1].id, "caf61803-70e5-4ac3-9adb-53a35f65a2f4")
         self.assertEqual(root_1.children[1].name, "Work package 2")
 
-        new_folders: List[ExternalSpaceFolder] = [
+        new_folders: list[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json(
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",
@@ -179,7 +178,7 @@ class TestFolder(BaseTestCase):
         self.assertIsNotNone(SpaceFolder.get_by_id("caf61803-70e5-4ac3-9adb-53a35f65a2f7"))
 
         # Test move folder
-        new_folders_2: List[ExternalSpaceFolder] = [
+        new_folders_2: list[ExternalSpaceFolder] = [
             ExternalSpaceFolder.from_json(
                 {
                     "id": "caf61803-70e5-4ac3-9adb-53a35f65a2f1",

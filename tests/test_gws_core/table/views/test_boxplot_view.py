@@ -1,4 +1,3 @@
-from typing import List
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
@@ -17,7 +16,7 @@ class TestTableBoxPlotView(TestCase):
 
         # 1 series :
         # first : y = petal_length
-        series: List[Serie1d] = [
+        series: list[Serie1d] = [
             {"name": "first", "y": {"type": "columns", "selection": ["petal_length"]}}
         ]
         view_dto = tester.to_dto({"series": series})

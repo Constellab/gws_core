@@ -4,7 +4,7 @@ from pathlib import Path
 from shelve import DbfilenameShelf
 from shelve import open as shelve_open
 from time import time
-from typing import Any, Dict, cast
+from typing import Any, cast
 
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_r_field import FileRField
@@ -20,7 +20,7 @@ from ..impl.file.file_helper import FileHelper
 # ####################################################################
 
 
-class KVStore(Dict[str, Any]):
+class KVStore(dict[str, Any]):
     """
     KVStore class representing a key-value object storage engine.
     This class allows serializing/deserializing huge objects on store.

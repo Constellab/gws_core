@@ -1,4 +1,5 @@
-from typing import Dict, List, Optional
+
+from peewee import ModelSelect
 
 from gws_core.community.community_dto import CommunityTagKeyDTO, CommunityTagValueDTO
 from gws_core.community.community_service import CommunityService
@@ -40,7 +41,6 @@ from gws_core.tag.tag_value_model import TagValueModel
 from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from .tag import Tag, TagOrigin, TagValueType
@@ -49,7 +49,7 @@ from .tag_key_model import TagKeyModel
 
 class TagService:
     @classmethod
-    def get_all_tags(cls) -> List[TagKeyModel]:
+    def get_all_tags(cls) -> list[TagKeyModel]:
         return list(TagKeyModel.select().order_by(TagKeyModel.order))
 
     @classmethod
@@ -113,7 +113,7 @@ class TagService:
         if not tag_key_model:
             raise BadRequestException(f"The tag key '{key}' does not exists")
 
-        tag_values: List[TagValueModel] = list(
+        tag_values: list[TagValueModel] = list(
             TagValueModel.select().where(TagValueModel.tag_key == tag_key_model)
         )
 
@@ -156,14 +156,14 @@ class TagService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def reorder_tags(cls, tag_keys: List[str]) -> List[TagKeyModel]:
+    def reorder_tags(cls, tag_keys: list[str]) -> list[TagKeyModel]:
         """Update the order of the tags"""
 
-        tag_models: List[TagKeyModel] = cls.get_all_tags()
+        tag_models: list[TagKeyModel] = cls.get_all_tags()
 
-        result: List[TagKeyModel] = []
+        result: list[TagKeyModel] = []
         for i, key in enumerate(tag_keys):
-            tag_model_filtererd: List[TagKeyModel] = [x for x in tag_models if x.key == key]
+            tag_model_filtererd: list[TagKeyModel] = [x for x in tag_models if x.key == key]
 
             if len(tag_model_filtererd) == 0:
                 continue
@@ -273,7 +273,7 @@ class TagService:
     ################################# TAGGABLE MODEL #################################
 
     @classmethod
-    def get_entities_by_tag(cls, entity_type: TagEntityType, tag: Tag) -> List[Model]:
+    def get_entities_by_tag(cls, entity_type: TagEntityType, tag: Tag) -> list[Model]:
         search_builder = EntityWithTagSearchBuilder(
             entity_type.get_entity_model_type(), entity_type
         )
@@ -296,8 +296,8 @@ class TagService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def add_tags_to_entity(
-        cls, entity_type: TagEntityType, entity_id: str, tags: List[Tag]
-    ) -> List[EntityTag]:
+        cls, entity_type: TagEntityType, entity_id: str, tags: list[Tag]
+    ) -> list[EntityTag]:
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
         for tag in tags:
@@ -313,8 +313,8 @@ class TagService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def add_tag_dict_to_entity(
-        cls, entity_type: TagEntityType, entity_id: str, tag_dicts: List[NewTagDTO], propagate: bool
-    ) -> List[EntityTag]:
+        cls, entity_type: TagEntityType, entity_id: str, tag_dicts: list[NewTagDTO], propagate: bool
+    ) -> list[EntityTag]:
         tags = [
             Tag(
                 key=tag_dict.key,
@@ -354,8 +354,8 @@ class TagService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def add_tags_to_entity_and_propagate(
-        cls, entity_type: TagEntityType, entity_id: str, tags: List[Tag]
-    ) -> List[EntityTag]:
+        cls, entity_type: TagEntityType, entity_id: str, tags: list[Tag]
+    ) -> list[EntityTag]:
         entity_tags = cls.add_tags_to_entity(entity_type, entity_id, tags)
 
         # propagate the tag to the next entities
@@ -398,12 +398,12 @@ class TagService:
 
     @classmethod
     def check_propagation_add_tags(
-        cls, entity_type: TagEntityType, entity_id: str, tags: List[NewTagDTO]
+        cls, entity_type: TagEntityType, entity_id: str, tags: list[NewTagDTO]
     ) -> TagPropagationImpactDTO:
         """Check the impact of the propagation of the given tags"""
         entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
 
-        new_tags: List[Tag] = []
+        new_tags: list[Tag] = []
 
         for tag in tags:
             new_tag = Tag(
@@ -451,7 +451,7 @@ class TagService:
 
     @classmethod
     def _check_tag_propagation_impact(
-        cls, entity_type: TagEntityType, entity_id: str, tags: List[Tag]
+        cls, entity_type: TagEntityType, entity_id: str, tags: list[Tag]
     ) -> TagPropagationImpactDTO:
         """Check the impact of the propagation of the given tags"""
         entity_nav = EntityNavigator.from_entity_id(
@@ -473,10 +473,10 @@ class TagService:
         return EntityTag.get_by_id_and_check(entity_tag_id)
 
     @classmethod
-    def get_tag_origins(cls, entity_tag_id: str) -> List[TagOriginDetailDTO]:
+    def get_tag_origins(cls, entity_tag_id: str) -> list[TagOriginDetailDTO]:
         entity_tag = cls.get_and_check_entity_tag(entity_tag_id)
 
-        origins: List[TagOriginDetailDTO] = []
+        origins: list[TagOriginDetailDTO] = []
 
         for origin in entity_tag.get_origins().get_origins():
             origins.append(cls._get_tag_origin_detail(origin))
@@ -520,11 +520,11 @@ class TagService:
     ################################### COMMUNITY TAG #################################
 
     @classmethod
-    def get_community_tag_keys_imported(cls) -> List[TagKeyModel]:
+    def get_community_tag_keys_imported(cls) -> list[TagKeyModel]:
         """Get the community tag keys imported"""
         return list(
             TagKeyModel.select()
-            .where((TagKeyModel.is_community_tag == True))
+            .where(TagKeyModel.is_community_tag == True)
             .order_by(TagKeyModel.order)
         )
 
@@ -540,7 +540,7 @@ class TagService:
 
     @classmethod
     def share_tag_to_community(
-        cls, tag_key: str, publish_mode: ShareTagMode, space_selected: Optional[str] = None
+        cls, tag_key: str, publish_mode: ShareTagMode, space_selected: str | None = None
     ) -> TagKeyModel:
         """Share a tag to the community"""
         tag_key_model: TagKeyModel = cls.get_by_key(tag_key)
@@ -583,7 +583,7 @@ class TagService:
     @GwsCoreDbManager.transaction()
     def get_community_available_tags(
         cls,
-        spaces_filter: List[str],
+        spaces_filter: list[str],
         title_filter: str,
         personal_only: bool,
         page: int,
@@ -638,7 +638,7 @@ class TagService:
                 total_number_of_pages=1,
                 objects=[],
             )
-        objects: List[TagValueModelDTO] = []
+        objects: list[TagValueModelDTO] = []
         for tag_value in community_tags.objects:
             if cls.get_tag_value_by_id(tag_value.id):
                 # If the tag value already exists in the system, we don't create a new one
@@ -673,9 +673,9 @@ class TagService:
         )
 
     @classmethod
-    def get_new_community_tag_values(cls, tag_key: TagKeyModel) -> List[CommunityTagValueDTO]:
+    def get_new_community_tag_values(cls, tag_key: TagKeyModel) -> list[CommunityTagValueDTO]:
         """Get the new community tag values for a tag key"""
-        values: List[TagValueModel] = list(
+        values: list[TagValueModel] = list(
             TagValueModel.select()
             .where(
                 (TagValueModel.tag_key == tag_key) & (TagValueModel.is_community_tag_value == False)
@@ -749,7 +749,7 @@ class TagService:
     ) -> PageDTO[TagKeyModelDTO]:
         """Convert a community tag key page to a tag key model page"""
 
-        objects: List[TagKeyModelDTO] = []
+        objects: list[TagKeyModelDTO] = []
         for tag in community_tag_key_page.objects:
             tag_key_model: TagKeyModel = TagKeyModel.from_community_tag_key(tag)
             if cls.get_by_key(tag_key_model.key):
@@ -775,9 +775,9 @@ class TagService:
     def get_not_synchronized_community_tags(cls) -> TagsNotSynchronizedDTO:
         """Get the tags that are not synchronized with the community"""
 
-        tag_keys_not_synched: List[TagNotSynchronizedDTO] = []
+        tag_keys_not_synched: list[TagNotSynchronizedDTO] = []
 
-        imported_community_tag_keys: List[TagKeyModel] = cls.get_community_tag_keys_imported()
+        imported_community_tag_keys: list[TagKeyModel] = cls.get_community_tag_keys_imported()
 
         for imported_community_tag_key in imported_community_tag_keys:
             current_community_tag_key_dto: CommunityTagKeyDTO = (
@@ -795,7 +795,7 @@ class TagService:
                 )
                 continue
 
-            tag_key_not_sync_fiels: List[TagKeyNotSynchronizedFields] = []
+            tag_key_not_sync_fiels: list[TagKeyNotSynchronizedFields] = []
             if imported_community_tag_key.label != current_community_tag_key.label:
                 tag_key_not_sync_fiels.append(TagKeyNotSynchronizedFields.LABEL.value)
             if imported_community_tag_key.description != current_community_tag_key.description:
@@ -810,7 +810,7 @@ class TagService:
                     TagKeyNotSynchronizedFields.ADDITIONAL_INFOS_SPECS.value
                 )
 
-            not_sync_values: List[TagValueNotSynchronizedFieldsDTO] = []
+            not_sync_values: list[TagValueNotSynchronizedFieldsDTO] = []
 
             current_values = CommunityService.get_all_community_tag_values(
                 imported_community_tag_key.key
@@ -833,7 +833,7 @@ class TagService:
                     )
                     continue
 
-                not_sync_fields: List[TagValueNotSynchronizedFields] = []
+                not_sync_fields: list[TagValueNotSynchronizedFields] = []
                 if saved_value.short_description != current_value.short_description:
                     not_sync_fields.append(TagValueNotSynchronizedFields.SHORT_DESCRIPTION.value)
                 if saved_value.additional_infos != current_value.additional_infos:
@@ -942,7 +942,7 @@ class TagService:
     @classmethod
     def deprecate_tag_values(cls, tag_key_model: TagKeyModel) -> None:
         """Deprecate all tag values for a given tag key"""
-        not_deprecated_tag_values: List[TagValueModel] = list(
+        not_deprecated_tag_values: list[TagValueModel] = list(
             TagValueModel.select().where(
                 (TagValueModel.tag_key == tag_key_model) & (TagValueModel.deprecated == False)
             )
@@ -968,7 +968,7 @@ class TagService:
     @classmethod
     def add_additional_info_spec_to_tag_key(
         cls, key: str, spec_name: str, spec: ParamSpecSimpleDTO
-    ) -> Dict[str, ParamSpecSimpleDTO]:
+    ) -> dict[str, ParamSpecSimpleDTO]:
         """Add an additional info spec to a tag key"""
         tag_key_model: TagKeyModel = cls.get_by_key(key)
 
@@ -999,7 +999,7 @@ class TagService:
     @classmethod
     def update_additional_info_spec_to_tag_key(
         cls, key: str, spec_name: str, spec: ParamSpecSimpleDTO
-    ) -> Dict[str, ParamSpecSimpleDTO]:
+    ) -> dict[str, ParamSpecSimpleDTO]:
         """Update an additional info spec to a tag key"""
         tag_key_model: TagKeyModel = cls.get_by_key(key)
 
@@ -1031,7 +1031,7 @@ class TagService:
     @classmethod
     def rename_and_update_additional_info_spec_to_tag_key(
         cls, key: str, old_spec_name: str, new_spec_name: str, spec: ParamSpecSimpleDTO
-    ) -> Dict[str, ParamSpecSimpleDTO]:
+    ) -> dict[str, ParamSpecSimpleDTO]:
         """Rename and update an additional info spec to a tag key"""
         tag_key_model: TagKeyModel = cls.get_by_key(key)
 
@@ -1064,7 +1064,7 @@ class TagService:
     @classmethod
     def delete_additional_info_spec_to_tag_key(
         cls, key: str, spec_name: str
-    ) -> Dict[str, ParamSpecSimpleDTO]:
+    ) -> dict[str, ParamSpecSimpleDTO]:
         """Delete an additional info spec to a tag key"""
         tag_key_model: TagKeyModel = cls.get_by_key(key)
 

@@ -1,7 +1,6 @@
 import os
 import subprocess
 import traceback
-from typing import List, Optional
 
 from gws_core.core.service.front_service import FrontService
 from gws_core.impl.file.file_helper import FileHelper
@@ -255,7 +254,7 @@ class ScenarioRunService:
 
     @classmethod
     def _create_cli(
-        cls, scenario: Scenario, user: User, process_model: Optional[ProcessModel] = None
+        cls, scenario: Scenario, user: User, process_model: ProcessModel | None = None
     ) -> SysProc:
         if scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS:
             raise BadRequestException(
@@ -272,7 +271,7 @@ class ScenarioRunService:
         settings = Settings.get_instance()
         gws_core_path = settings.get_brick("gws_core").path
 
-        options: List[str] = [
+        options: list[str] = [
             "--scenario-id",
             scenario.id,
             "--user-id",
@@ -360,7 +359,7 @@ class ScenarioRunService:
         scenario.mark_as_error(error)
 
         # mark all the running tasks as error
-        task_models: List[TaskModel] = scenario.get_running_tasks()
+        task_models: list[TaskModel] = scenario.get_running_tasks()
         for task_model in task_models:
             exception = ProcessRunException(
                 task_model, error.detail, error.unique_code, "Task error", None
@@ -407,7 +406,7 @@ class ScenarioRunService:
 
     @classmethod
     def stop_all_running_scenario(cls) -> None:
-        scenarios: List[Scenario] = cls.get_all_running_scenarios()
+        scenarios: list[Scenario] = cls.get_all_running_scenarios()
         for scenario in scenarios:
             try:
                 cls.stop_scenario(scenario.id)
@@ -415,7 +414,7 @@ class ScenarioRunService:
                 Logger.error(f"Could not stop scenario {scenario.id}. {str(err)}")
 
     @classmethod
-    def get_all_running_scenarios(cls) -> List[Scenario]:
+    def get_all_running_scenarios(cls) -> list[Scenario]:
         return list(
             Scenario.select().where(
                 (Scenario.status == ScenarioStatus.RUNNING)

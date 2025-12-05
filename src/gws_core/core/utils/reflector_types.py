@@ -1,6 +1,6 @@
-from typing import Dict, List, Optional
 
 from docstring_parser import parse
+
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
@@ -26,12 +26,12 @@ class MethodArgDoc(BaseModelDTO):
 
 class MethodDoc(BaseModelDTO):
     name: str
-    doc: Optional[str]
-    args: List[MethodArgDoc]
-    return_type: Optional[str]
-    method_type: Optional[str]
+    doc: str | None
+    args: list[MethodArgDoc]
+    return_type: str | None
+    method_type: str | None
 
-    def get_arg_description(self, arg_name: str) -> Optional[str]:
+    def get_arg_description(self, arg_name: str) -> str | None:
         """Method to extract the description of an argument from the docstring of the method
         For this method it will extract 'argument_name' for argument 'arg_name'
 
@@ -53,7 +53,7 @@ class MethodDoc(BaseModelDTO):
             pass
         return None
 
-    def get_return_description(self) -> Optional[str]:
+    def get_return_description(self) -> str | None:
         """Method to extract the description of the return value from the docstring of the method
         For this method it will extract 'description of the return value'
 
@@ -133,6 +133,6 @@ class MethodDoc(BaseModelDTO):
 
 class ClassicClassDocDTO(BaseModelDTO):
     name: str
-    doc: Optional[str]
-    methods: Optional[List[MethodDoc]]
-    variables: Optional[Dict]
+    doc: str | None
+    methods: list[MethodDoc] | None
+    variables: dict | None

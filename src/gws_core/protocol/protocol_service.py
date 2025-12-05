@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional, Set, Type, Union, cast
+from typing import Any, Literal
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -72,7 +72,7 @@ class ProtocolService:
     @classmethod
     def create_protocol_model_from_type(
         cls,
-        protocol_type: Type[Protocol],
+        protocol_type: type[Protocol],
         instance_name: str = None,
         config_params: ConfigParamsDict = None,
     ) -> ProtocolModel:
@@ -179,7 +179,7 @@ class ProtocolService:
     def add_process_to_protocol(
         cls,
         protocol_model: ProtocolModel,
-        process_type: Type[Process],
+        process_type: type[Process],
         instance_name: str = None,
         config_params: ConfigParamsDict = None,
     ) -> ProtocolUpdate:
@@ -227,7 +227,7 @@ class ProtocolService:
 
         existing_process: ProcessModel = protocol_model.get_process(output_process_name)
 
-        new_process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
+        new_process_type: type[Process] = TypingManager.get_and_check_type_from_name(
             process_typing_name
         )
 
@@ -240,7 +240,7 @@ class ProtocolService:
     def _add_process_connected_to_output(
         cls,
         protocol_model: ProtocolModel,
-        new_process_type: Type[Process],
+        new_process_type: type[Process],
         out_process: ProcessModel,
         out_port_name: str,
         config_params: ConfigParamsDict = None,
@@ -290,7 +290,7 @@ class ProtocolService:
         existing_process: ProcessModel = protocol_model.get_process(input_process_name)
         existing_in_port: Port = existing_process.in_port(input_port_name)
 
-        new_process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
+        new_process_type: type[Process] = TypingManager.get_and_check_type_from_name(
             process_typing_name
         )
 
@@ -361,7 +361,7 @@ class ProtocolService:
         process_model: ProcessModel = protocol_model.get_process(process_instance_name)
         process_model.check_is_updatable(error_if_finished=False)
 
-        processes_to_reset: Set[ProcessModel] = protocol_model.get_all_next_processes(
+        processes_to_reset: set[ProcessModel] = protocol_model.get_all_next_processes(
             process_instance_name
         )
         processes_to_reset.add(process_model)
@@ -373,7 +373,7 @@ class ProtocolService:
         protocol_model.refresh_status()
 
         # add all the sub protocols that were resetted
-        sub_resetted_protocols: Set[ProtocolModel] = {
+        sub_resetted_protocols: set[ProtocolModel] = {
             protocol_model
             for protocol_model in processes_to_reset
             if isinstance(protocol_model, ProtocolModel)
@@ -451,7 +451,7 @@ class ProtocolService:
 
     @classmethod
     def add_connectors_to_protocol(
-        cls, protocol_model: ProtocolModel, connectors: List[ConnectorSpec]
+        cls, protocol_model: ProtocolModel, connectors: list[ConnectorSpec]
     ) -> ProtocolUpdate:
         protocol_model.check_is_updatable()
         protocol_model.add_connectors(connectors)
@@ -500,7 +500,7 @@ class ProtocolService:
 
     @classmethod
     def _on_connector_updated(
-        cls, protocol: ProtocolModel, connector: Optional[Connector]
+        cls, protocol: ProtocolModel, connector: Connector | None
     ) -> ProtocolUpdate:
         if connector is None:
             return ProtocolUpdate(protocol=protocol)
@@ -873,16 +873,15 @@ class ProtocolService:
         io: IO = process_model.inputs if port_type == "input" else process_model.outputs
 
         # generate the default spec and add port
-        io_specs: Union[DynamicInputs, DynamicOutputs] = io.get_specs()
+        io_specs: DynamicInputs | DynamicOutputs = io.get_specs()
 
         io_spec: IOSpec = None
         if io_spec_dto is None:
             io_spec = io_specs.get_default_spec()
+        elif port_type == "output":
+            io_spec = OutputSpec.from_dto(io_spec_dto)
         else:
-            if port_type == "output":
-                io_spec = OutputSpec.from_dto(io_spec_dto)
-            else:
-                io_spec = InputSpec.from_dto(io_spec_dto)
+            io_spec = InputSpec.from_dto(io_spec_dto)
         io.create_port(StringHelper.generate_uuid(), io_spec)
 
         process_model.save()
@@ -958,7 +957,7 @@ class ProtocolService:
         io_spec_dto: IOSpecDTO,
         port_type: Literal["input", "output"],
     ) -> ProtocolUpdate:
-        io_spec_class: Type[IOSpec] = InputSpec if port_type == "input" else OutputSpec
+        io_spec_class: type[IOSpec] = InputSpec if port_type == "input" else OutputSpec
         io_spec: IOSpec = io_spec_class.from_dto(io_spec_dto)
 
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
@@ -1064,7 +1063,7 @@ class ProtocolService:
             community_agent_version.type
         )
 
-        agent_type: Type[Process] = process_typing.get_type()
+        agent_type: type[Process] = process_typing.get_type()
 
         params = {}
         if community_agent_version.params:
@@ -1161,7 +1160,7 @@ class ProtocolService:
     @GwsCoreDbManager.transaction()
     def get_community_available_agents(
         cls,
-        spaces_filter: List[str],
+        spaces_filter: list[str],
         title_filter: str,
         personal_only: bool,
         page: int,
@@ -1178,7 +1177,7 @@ class ProtocolService:
     @classmethod
     def get_community_agent_and_check_rights(
         cls, agent_version_id: str
-    ) -> Optional[CommunityAgentDTO]:
+    ) -> CommunityAgentDTO | None:
         return CommunityService.get_community_agent_and_check_rights(agent_version_id)
 
     @classmethod
@@ -1242,7 +1241,7 @@ class ProtocolService:
         process_model: ProcessModel,
         config_spec_name: str,
         dynamic_param_spec: DynamicParam,
-        values: Dict[str, Any] = None,
+        values: dict[str, Any] = None,
     ) -> ProtocolUpdate:
         process_model.config.update_spec(config_spec_name, dynamic_param_spec)
 

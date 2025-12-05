@@ -1,8 +1,6 @@
-from typing import Optional
 
-from fastapi import Depends
+from fastapi import Depends, UploadFile
 from fastapi import File as FastAPIFile
-from fastapi import UploadFile
 from fastapi.responses import StreamingResponse
 
 from gws_core.core.classes.search_builder import SearchParams
@@ -49,8 +47,8 @@ def upload_folder(
 
 
 class UpdateScenarioTemplate(BaseModelDTO):
-    name: Optional[str] = None
-    description: Optional[RichTextDTO] = None
+    name: str | None = None
+    description: RichTextDTO | None = None
 
 
 @core_app.put(
@@ -97,8 +95,8 @@ def delete_by_id(id_: str, _=Depends(AuthorizationService.check_user_access_toke
 )
 def search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioTemplateDTO]:
     """
@@ -114,8 +112,8 @@ def search(
 )
 def search_by_name(
     name: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioTemplateDTO]:
     return ScenarioTemplateService.search_by_name(name, page, number_of_items_per_page).to_dto()

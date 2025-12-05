@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from numpy import NaN
 from pandas import DataFrame
@@ -66,7 +66,7 @@ class TableReplace(Transformer):
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()
-        replace_values: List[dict] = params.get("replace_values")
+        replace_values: list[dict] = params.get("replace_values")
 
         for param in replace_values:
             is_regex: bool = bool(param["is_regex"])

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Dict, Literal
+from typing import Literal
 
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.exceptions.base_http_exception import BaseHTTPException
@@ -31,7 +31,7 @@ class ProtocolBuildException(BadRequestException):
         self.instance_name_chain = self._get_instance_name_chain(
             parent_instance_name=parent_instance_name, instance_name_chain=instance_name
         )
-        detail_arg: Dict = {"error": exception_detail, "instance_name": self.instance_name_chain}
+        detail_arg: dict = {"error": exception_detail, "instance_name": self.instance_name_chain}
         super().__init__(self._get_error_message(), unique_code=unique_code, detail_args=detail_arg)
 
     @staticmethod

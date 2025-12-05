@@ -1,4 +1,4 @@
-from typing import Any, Dict, final
+from typing import Any, final
 
 from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
 from gws_core.core.model.db_field import JSONField
@@ -18,7 +18,7 @@ class Config(ModelWithUser):
     a collection of parameters
     """
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -184,7 +184,7 @@ class Config(ModelWithUser):
         new_config.data = self.data
         return new_config
 
-    def to_specs_dto(self, skip_private: bool = True) -> Dict[str, ParamSpecDTO]:
+    def to_specs_dto(self, skip_private: bool = True) -> dict[str, ParamSpecDTO]:
         return self.get_specs().to_dto(skip_private=skip_private)
 
     class Meta:

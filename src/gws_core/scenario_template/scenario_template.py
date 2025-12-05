@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from peewee import CharField, IntegerField
 
@@ -30,7 +30,7 @@ class ScenarioTemplate(ModelWithUser):
 
     # version number of the scenario template
     version = IntegerField(null=False, default=1)
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

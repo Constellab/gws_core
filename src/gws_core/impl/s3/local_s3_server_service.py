@@ -1,13 +1,13 @@
-import hashlib
 import json
 import os
 import time
 import uuid
+from collections.abc import ByteString
 from os import path
-from typing import Any, ByteString, Dict, List
+from typing import Any
 
 from fastapi.responses import FileResponse
-from mypy_boto3_s3.type_defs import CommonPrefixTypeDef, ListObjectsV2OutputTypeDef, ObjectTypeDef
+from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef
 
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.impl.file.file_helper import FileHelper
@@ -35,17 +35,17 @@ class LocalS3ServerService(AbstractS3Service):
         """Path to multipart upload state file"""
         return path.join(self.bucket_path, ".multipart", "state.json")
 
-    def _load_multipart_state(self) -> Dict[str, Any]:
+    def _load_multipart_state(self) -> dict[str, Any]:
         """Load multipart upload state from disk"""
         if not path.exists(self._multipart_state_file):
             return {}
         try:
-            with open(self._multipart_state_file, "r") as f:
+            with open(self._multipart_state_file) as f:
                 return json.load(f)
         except (json.JSONDecodeError, FileNotFoundError):
             return {}
 
-    def _save_multipart_state(self, state: Dict[str, Any]) -> None:
+    def _save_multipart_state(self, state: dict[str, Any]) -> None:
         """Save multipart upload state to disk"""
         multipart_dir = path.dirname(self._multipart_state_file)
 
@@ -102,7 +102,7 @@ class LocalS3ServerService(AbstractS3Service):
                 },
             }
 
-        objects: List[Any] = []
+        objects: list[Any] = []
         common_prefixes = set()
 
         # Get all files in the bucket
@@ -166,7 +166,7 @@ class LocalS3ServerService(AbstractS3Service):
             next_continuation_token = objects[-1]["Key"]
 
         # Convert common prefixes to the expected format
-        common_prefixes_list: List[Any] = [{"Prefix": cp} for cp in sorted(common_prefixes)]
+        common_prefixes_list: list[Any] = [{"Prefix": cp} for cp in sorted(common_prefixes)]
 
         return {
             "Name": self.bucket_name,
@@ -191,7 +191,7 @@ class LocalS3ServerService(AbstractS3Service):
         }
 
     def upload_object(
-        self, key: str, data: ByteString, tags: Dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
     ) -> dict:
         """Upload an object to the bucket"""
         del tags  # Unused parameter
@@ -227,7 +227,7 @@ class LocalS3ServerService(AbstractS3Service):
         if path.exists(file_path):
             os.remove(file_path)
 
-    def delete_objects(self, keys: List[str]) -> None:
+    def delete_objects(self, keys: list[str]) -> None:
         """Delete multiple objects"""
         for key in keys:
             try:
@@ -262,7 +262,7 @@ class LocalS3ServerService(AbstractS3Service):
         del key, tags  # Unused parameters
         raise NotImplementedError("Tagging is not supported in basic S3 service")
 
-    def update_object_tags_dict(self, key: str, tags: Dict[str, str]) -> None:
+    def update_object_tags_dict(self, key: str, tags: dict[str, str]) -> None:
         """Update the tags of an object with a dictionary"""
         del key, tags  # Unused parameters
         raise NotImplementedError("Tagging is not supported in basic S3 service")
@@ -312,7 +312,7 @@ class LocalS3ServerService(AbstractS3Service):
         # Save updated state
         self._save_multipart_state(state)
 
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> None:
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: list[dict]) -> None:
         """Complete multipart upload and return ETag"""
         state = self._load_multipart_state()
         if upload_id not in state:
@@ -391,7 +391,7 @@ class LocalS3ServerService(AbstractS3Service):
             # Don't let cleanup errors break normal operations
             pass
 
-    def _cleanup_upload_files(self, upload_info: Dict[str, Any]) -> None:
+    def _cleanup_upload_files(self, upload_info: dict[str, Any]) -> None:
         """Clean up files for a specific upload"""
         try:
             # Clean up individual part files

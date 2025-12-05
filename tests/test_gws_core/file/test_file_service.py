@@ -1,9 +1,7 @@
 import os
 from tempfile import SpooledTemporaryFile
-from typing import List
 
 from fastapi import UploadFile
-
 from gws_core import BaseTestCase, File, Folder, FsNodeService, ResourceTyping, resource_decorator
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -18,7 +16,7 @@ class SubFileService(File):
 # test_file_service
 class TestFileService(BaseTestCase):
     def test_get_file_types(self):
-        file_types: List[ResourceTyping] = FsNodeService.get_file_types()
+        file_types: list[ResourceTyping] = FsNodeService.get_file_types()
 
         # Check that there is at least 2 files type, File and SubFileService
         self.assertTrue(len(file_types) >= 2)
@@ -33,7 +31,7 @@ class TestFileService(BaseTestCase):
         self.assertIsInstance(sub_file_type, FileTyping)
 
     def test_get_folder_types(self):
-        file_types: List[ResourceTyping] = FsNodeService.get_folder_types()
+        file_types: list[ResourceTyping] = FsNodeService.get_folder_types()
 
         # Check that there is at least 1 folder type, Folder
         self.assertTrue(len(file_types) >= 1)
@@ -56,14 +54,14 @@ class TestFileService(BaseTestCase):
             file = FsNodeService.download_file(fs_node_id=file_model.id)
 
             # read path
-            with open(file.path, "r", encoding="utf-8") as f:
+            with open(file.path, encoding="utf-8") as f:
                 self.assertEqual(f.read(), "test")
         finally:
             if upload_file:
                 upload_file.file.close()
 
     def test_upload_folder(self):
-        uploaded_files: List[UploadFile] = []
+        uploaded_files: list[UploadFile] = []
 
         try:
             uploaded_files.append(self._create_upload_file("hello/test.txt", "test"))
@@ -82,12 +80,12 @@ class TestFileService(BaseTestCase):
             )
 
             # read file 1
-            with open(os.path.join(folder_model_path, "test.txt"), "r", encoding="utf-8") as file:
+            with open(os.path.join(folder_model_path, "test.txt"), encoding="utf-8") as file:
                 self.assertEqual(file.read(), "test")
 
             # read file 2
             with open(
-                os.path.join(folder_model_path, "subHello", "test2.txt"), "r", encoding="utf-8"
+                os.path.join(folder_model_path, "subHello", "test2.txt"), encoding="utf-8"
             ) as file:
                 self.assertEqual(file.read(), "test2")
         finally:

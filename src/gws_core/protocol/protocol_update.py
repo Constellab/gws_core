@@ -1,4 +1,3 @@
-from typing import Optional, Set
 
 from gws_core.io.connector import Connector
 from gws_core.io.ioface import IOface
@@ -16,12 +15,12 @@ class ProtocolUpdate:
     If protocol_updated is True, it means that the protocol or other processes has been updated
     """
 
-    process: Optional[ProcessModel]
-    connector: Optional[Connector]
-    ioface: Optional[IOface]
+    process: ProcessModel | None
+    connector: Connector | None
+    ioface: IOface | None
     protocol: ProtocolModel
     # set of sub protocols that have been updated
-    sub_protocols: Optional[Set[ProtocolModel]]
+    sub_protocols: set[ProtocolModel] | None
 
     protocol_updated: bool
 
@@ -29,10 +28,10 @@ class ProtocolUpdate:
         self,
         protocol: ProtocolModel,
         protocol_updated: bool = False,
-        process: Optional[ProcessModel] = None,
-        connector: Optional[Connector] = None,
-        ioface: Optional[IOface] = None,
-        sub_protocols: Optional[Set[ProtocolModel]] = None,
+        process: ProcessModel | None = None,
+        connector: Connector | None = None,
+        ioface: IOface | None = None,
+        sub_protocols: set[ProtocolModel] | None = None,
     ) -> None:
         self.process = process
         self.connector = connector

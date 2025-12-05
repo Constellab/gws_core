@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import Depends
 
@@ -54,7 +53,7 @@ def fix_all_protocol(_=Depends(AuthorizationService.check_user_access_token)):
 
 def fix_protocol(protocol: ProtocolModel):
     for process in protocol.processes.values():
-        task_input_model: List[TaskInputModel] = list(TaskInputModel.get_by_task_model(process.id))
+        task_input_model: list[TaskInputModel] = list(TaskInputModel.get_by_task_model(process.id))
 
         for task_input in task_input_model:
             if not process.inputs.port_exists(task_input.port_name):

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.core.utils.json_helper import JSONHelper
 from gws_core.resource.view.view_types import ViewType
@@ -24,11 +24,11 @@ class JSONView(View):
     _type: ViewType = ViewType.JSON
     _json_data: Any
 
-    def __init__(self, data: Dict = None):
+    def __init__(self, data: dict = None):
         super().__init__()
         self.set_data(data)
 
-    def set_data(self, data: Dict):
+    def set_data(self, data: dict):
         if data is None:
             data = {}
         if not isinstance(data, (dict, list, bool, str, int, float)):

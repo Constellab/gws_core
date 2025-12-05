@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from fastapi.param_functions import Depends
 
@@ -99,7 +98,6 @@ def synchronize_community_tags(
     Synchronize community tags
     """
     TagService.apply_sync(tags_not_sync)
-    return
 
 
 #################################### TAG ####################################
@@ -119,8 +117,8 @@ def create_tag_key(
 @core_app.post("/tag/search", tags=["Tag"], summary="Advanced search for tags")
 def advanced_search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TagKeyModelDTO]:
     """
@@ -132,8 +130,8 @@ def advanced_search(
 
 @core_app.get("/tag/search/key", tags=["Tag"], summary="Search tags by key")
 def search_all_keys(
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagKeyModelDTO]:
     """
@@ -145,9 +143,9 @@ def search_all_keys(
 
 @core_app.get("/tag/search/key/{key}", tags=["Tag"], summary="Search tags by key")
 def search_keys(
-    key: Optional[str],
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    key: str | None,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagKeyModelDTO]:
     """
@@ -160,8 +158,8 @@ def search_keys(
 @core_app.get("/tag/search/key/{key}/value", tags=["Tag"], summary="Search tags by value")
 def search_all_values(
     key: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagValueModelDTO]:
     """
@@ -174,9 +172,9 @@ def search_all_values(
 @core_app.get("/tag/search/key/{key}/value/{value}", tags=["Tag"], summary="Search tags by value")
 def search_values(
     key: str,
-    value: Optional[str],
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    value: str | None,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagValueModelDTO]:
     """
@@ -196,7 +194,7 @@ def add_additional_info_spec_to_tag_key(
     spec_name: str,
     spec: ParamSpecSimpleDTO,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecSimpleDTO]:
+) -> dict[str, ParamSpecSimpleDTO]:
     """
     Add additional info spec to tag key.
     """
@@ -224,7 +222,7 @@ def update_additional_info_spec_to_tag_key(
     spec_name: str,
     spec: ParamSpecSimpleDTO,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecSimpleDTO]:
+) -> dict[str, ParamSpecSimpleDTO]:
     """
     Update additional info spec of tag key.
     """
@@ -242,7 +240,7 @@ def rename_and_update_additional_info_spec_to_tag_key(
     new_spec_name: str,
     spec: ParamSpecSimpleDTO,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecSimpleDTO]:
+) -> dict[str, ParamSpecSimpleDTO]:
     """
     Rename additional info spec of tag key.
     """
@@ -258,7 +256,7 @@ def rename_and_update_additional_info_spec_to_tag_key(
 )
 def delete_additional_info_spec_to_tag_key(
     key: str, spec_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> Dict[str, ParamSpecSimpleDTO]:
+) -> dict[str, ParamSpecSimpleDTO]:
     """
     Delete additional info spec of tag key.
     """
@@ -305,8 +303,8 @@ def update_tag_value(
 
 @core_app.put("/tag/reorder", tags=["Tag"], summary="Reoarder tags")
 def reorder_tags(
-    tags_keys: List[str], _=Depends(AuthorizationService.check_user_access_token)
-) -> List[TagKeyModelDTO]:
+    tags_keys: list[str], _=Depends(AuthorizationService.check_user_access_token)
+) -> list[TagKeyModelDTO]:
     tag_keys = TagService.reorder_tags(tags_keys)
     return [tag_key.to_dto() for tag_key in tag_keys]
 
@@ -377,7 +375,7 @@ def get_tag_detail(
 @core_app.get("/tag/entity/{entity_tag_id}/origins", tags=["Tag"], summary="Get origins of a tag")
 def get_tag_origins(
     entity_tag_id: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[TagOriginDetailDTO]:
+) -> list[TagOriginDetailDTO]:
     return TagService.get_tag_origins(entity_tag_id)
 
 
@@ -388,7 +386,7 @@ def get_tags_of_entity(
     entity_type: TagEntityType,
     entity_id: str,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
-) -> List[EntityTagDTO]:
+) -> list[EntityTagDTO]:
     return TagService.find_by_entity_id(entity_type, entity_id).to_dto()
 
 
@@ -399,9 +397,9 @@ def add_tag(
     entity_type: TagEntityType,
     entity_id: str,
     propagate: bool,
-    tags: List[NewTagDTO],
+    tags: list[NewTagDTO],
     _=Depends(AuthorizationService.check_user_access_token),
-) -> List[EntityTagDTO]:
+) -> list[EntityTagDTO]:
     new_tags = TagService.add_tag_dict_to_entity(entity_type, entity_id, tags, propagate)
     return [tag.to_dto() for tag in new_tags]
 
@@ -430,7 +428,7 @@ def delete_tag(
 def check_propagation_add_tags(
     entity_type: TagEntityType,
     entity_id: str,
-    tags: List[NewTagDTO],
+    tags: list[NewTagDTO],
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TagPropagationImpactDTO:
     return TagService.check_propagation_add_tags(entity_type, entity_id, tags)

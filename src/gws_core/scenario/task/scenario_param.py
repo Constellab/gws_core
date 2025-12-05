@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
@@ -21,8 +21,8 @@ class ScenarioParam(ParamSpec):
         self,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = "Select a scenario",
-        short_description: Optional[str] = None,
+        human_name: str | None = "Select a scenario",
+        short_description: str | None = None,
     ):
         """
         :param optional: See default value
@@ -67,5 +67,5 @@ class ScenarioParam(ParamSpec):
         return ScenarioParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

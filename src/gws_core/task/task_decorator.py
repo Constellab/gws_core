@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
@@ -47,7 +47,7 @@ def task_decorator(
 
     """
 
-    def decorator(task_class: Type[Task]):
+    def decorator(task_class: type[Task]):
         decorate_task(
             task_class,
             unique_name=unique_name,
@@ -67,10 +67,10 @@ def task_decorator(
 
 
 def decorate_task(
-    task_class: Type[Task],
+    task_class: type[Task],
     unique_name: str,
     task_type: TaskSubType,
-    related_resource: Type[Resource] = None,
+    related_resource: type[Resource] = None,
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
@@ -148,7 +148,7 @@ def decorate_task(
     )
 
 
-def get_task_default_style(task_class: Type[Task]) -> TypingStyle:
+def get_task_default_style(task_class: type[Task]) -> TypingStyle:
     """Get the default style for a task, use the first input style or the first output style"""
     default_typing_name = None
     first_input = task_class.input_specs.get_first_spec()

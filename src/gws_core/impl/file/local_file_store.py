@@ -5,7 +5,6 @@ from io import IOBase
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from time import time
-from typing import List, Type, Union
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.logger import Logger
@@ -31,7 +30,7 @@ class LocalFileStore(FileStore):
             self.data["path"] = os.path.join(self.get_base_dir(), self.id)
 
     def add_node_from_path(
-        self, source_path: str, dest_name: str = None, node_type: Type[FSNode] = None
+        self, source_path: str, dest_name: str = None, node_type: type[FSNode] = None
     ) -> FSNode:
         """
         Add a file from an external repository to a local store.
@@ -58,9 +57,9 @@ class LocalFileStore(FileStore):
 
     def add_from_temp_file(
         self,
-        source_file: Union[IOBase, SpooledTemporaryFile],
+        source_file: IOBase | SpooledTemporaryFile,
         dest_file_name: str = None,
-        file_type: Type[File] = File,
+        file_type: type[File] = File,
     ) -> File:
         """
         Add a file from an external repository to a local store.
@@ -121,7 +120,7 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir_):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def get_node_by_path(self, node_path: str = None, node_type: Type[FSNode] = None) -> FSNode:
+    def get_node_by_path(self, node_path: str = None, node_type: type[FSNode] = None) -> FSNode:
         if node_type is None:
             if FileHelper.is_file(node_path):
                 node_type = File
@@ -229,7 +228,7 @@ class LocalFileStore(FileStore):
         settings = Settings.get_instance()
         if not settings.is_dev_mode() and not settings.is_test:
             raise BadRequestException("Only allowed in dev and test mode")
-        file_store_list: List[FileStore] = cls.select()
+        file_store_list: list[FileStore] = cls.select()
         for file_store in file_store_list:
             file_store.delete_instance()
 

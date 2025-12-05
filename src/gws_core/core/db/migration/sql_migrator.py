@@ -1,9 +1,10 @@
-from typing import Any, List, Type
+from typing import Any
+
+from peewee import DatabaseProxy, Field
+from playhouse.migrate import MySQLMigrator
 
 from gws_core.core.model.base_model import BaseModel
 from gws_core.resource.resource_model import ResourceModel
-from peewee import DatabaseProxy, Field
-from playhouse.migrate import MySQLMigrator
 
 
 class SqlMigrator:
@@ -11,7 +12,7 @@ class SqlMigrator:
 
     migrator: MySQLMigrator
 
-    _operations: List[Any]
+    _operations: list[Any]
 
     def __init__(self, db: DatabaseProxy) -> None:
         self.migrator = MySQLMigrator(db)
@@ -21,7 +22,7 @@ class SqlMigrator:
         self._operations.append(operation)
 
     def add_column_if_not_exists(
-        self, model_type: Type[BaseModel], field: Field, column_name: str = None
+        self, model_type: type[BaseModel], field: Field, column_name: str = None
     ) -> bool:
         new_column_name = column_name or field.column_name
         if not new_column_name:
@@ -33,19 +34,19 @@ class SqlMigrator:
         )
         return True
 
-    def drop_column_if_exists(self, model_type: Type[BaseModel], column_name: str) -> bool:
+    def drop_column_if_exists(self, model_type: type[BaseModel], column_name: str) -> bool:
         if not model_type.column_exists(column_name):
             return False
         self._operations.append(self.migrator.drop_column(model_type.get_table_name(), column_name))
         return True
 
-    def alter_column_type(self, model_type: Type[BaseModel], field_name: str, field: Field) -> None:
+    def alter_column_type(self, model_type: type[BaseModel], field_name: str, field: Field) -> None:
         self._operations.append(
             self.migrator.alter_column_type(model_type.get_table_name(), field_name, field)
         )
 
     def rename_column_if_exists(
-        self, model_type: Type[BaseModel], old_name: str, new_name: str
+        self, model_type: type[BaseModel], old_name: str, new_name: str
     ) -> bool:
         if not model_type.column_exists(old_name):
             return False
@@ -54,14 +55,14 @@ class SqlMigrator:
         )
         return True
 
-    def drop_index_if_exists(self, model_type: Type[BaseModel], index_name: str) -> bool:
+    def drop_index_if_exists(self, model_type: type[BaseModel], index_name: str) -> bool:
         if not model_type.index_exists(index_name):
             return False
         self._operations.append(self.migrator.drop_index(model_type.get_table_name(), index_name))
         return True
 
     def add_index_if_not_exists(
-        self, model_type: Type[BaseModel], index_name: str, columns: List[str], unique: bool = False
+        self, model_type: type[BaseModel], index_name: str, columns: list[str], unique: bool = False
     ) -> bool:
         if model_type.index_exists(index_name):
             return False
@@ -70,7 +71,7 @@ class SqlMigrator:
         )
         return True
 
-    def rename_table_if_exists(self, model_type: Type[BaseModel], old_name: str) -> bool:
+    def rename_table_if_exists(self, model_type: type[BaseModel], old_name: str) -> bool:
         if model_type.table_exists():
             return False
         self._operations.append(self.migrator.rename_table(old_name, model_type.get_table_name()))
@@ -86,7 +87,7 @@ class SqlMigrator:
     # thoses methods are executed directly, no need to create an instance of the class and call the method
 
     @classmethod
-    def drop_table_if_exists(cls, db: DatabaseProxy, model_type: Type[BaseModel]) -> bool:
+    def drop_table_if_exists(cls, db: DatabaseProxy, model_type: type[BaseModel]) -> bool:
         db.drop_tables([model_type])
         return True
 
@@ -133,8 +134,8 @@ class SqlMigrator:
         :param new_field_name: The new name of the field
         :type new_field_name: str
         """
-        resource_models: List[ResourceModel] = ResourceModel.select().where(
-            (ResourceModel.resource_typing_name == resource_typing_name)
+        resource_models: list[ResourceModel] = ResourceModel.select().where(
+            ResourceModel.resource_typing_name == resource_typing_name
         )
 
         for resource_model in resource_models:
@@ -181,9 +182,9 @@ class SqlMigrator:
         :param value: The value to set for the field
         :type value: Any
         """
-        resource_models: List[ResourceModel] = list(
+        resource_models: list[ResourceModel] = list(
             ResourceModel.select().where(
-                (ResourceModel.resource_typing_name == resource_typing_name)
+                ResourceModel.resource_typing_name == resource_typing_name
             )
         )
 

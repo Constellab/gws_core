@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Type
+from typing import Any
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -15,9 +15,9 @@ class AIPromptCodeContext(BaseModelDTO):
 
     python_code_intro: str
     r_code_intro: str
-    inputs_description: Optional[str]
-    outputs_description: Optional[str]
-    code_rules: Optional[str]
+    inputs_description: str | None
+    outputs_description: str | None
+    code_rules: str | None
 
 
 class AIPromptCode:
@@ -46,7 +46,7 @@ class AIPromptCode:
     chat: OpenAiChat = None
     message_dispatcher: MessageDispatcher = None
 
-    def __init__(self, chat: OpenAiChat, message_dispatcher: Optional[MessageDispatcher] = None):
+    def __init__(self, chat: OpenAiChat, message_dispatcher: MessageDispatcher | None = None):
         self.chat = chat
 
         if message_dispatcher is None:
@@ -87,7 +87,7 @@ class AIPromptCode:
         """
 
     @abstractmethod
-    def get_code_expected_output_types(self) -> Dict[str, Type]:
+    def get_code_expected_output_types(self) -> dict[str, type]:
         """Method to describe the output names (keys) and types (values) expected by the generated code.
         The AI will receive instructions to generate code that returns variables with the specified names and types.
         This is used by build_task_outputs to retrieve the output of the generated code.
@@ -98,7 +98,7 @@ class AIPromptCode:
         return {}
 
     @abstractmethod
-    def get_available_package_names(self) -> List[str]:
+    def get_available_package_names(self) -> list[str]:
         """Method to retrieve the package names that can be used by the AI in the generated the code.
         The package must be installed in the lab.
         This is used by build_code_context to retrieve the version of the package are write a text to describe the packages.
@@ -110,7 +110,7 @@ class AIPromptCode:
         return []
 
     @abstractmethod
-    def build_output(self, code_outputs: Dict[str, Any]) -> Any:
+    def build_output(self, code_outputs: dict[str, Any]) -> Any:
         """Method to build the output based on the generated code outputs.
 
         :param code_outputs: the outputs of the generated code
@@ -129,7 +129,7 @@ class AIPromptCode:
         :rtype: str
         """
 
-    def build_inputs_context(self, code_inputs: Dict[str, Any]) -> str:
+    def build_inputs_context(self, code_inputs: dict[str, Any]) -> str:
         """Method that is automatically called by the task to describe the inputs that are accessible in the generated code.
         This method can be overrided to change the way of describing the inputs, or to add more information
         (like the number of rows for a dataframe, the structure of a json ...)
@@ -155,7 +155,7 @@ class AIPromptCode:
             return ""
         return OpenAiHelper.describe_outputs_for_context(output_specs)
 
-    def build_code_rules_context(self, pip_package_names: List[str] = None) -> str:
+    def build_code_rules_context(self, pip_package_names: list[str] = None) -> str:
         """Method to define the context rules for the code generation, so the generated code is executable.
         This method can be overrided to change the way of describing the code context.
         :param pip_package_names: list of available package that can be used in the generated code. The version of the package will be automatically retrieved, defaults to None
@@ -165,7 +165,7 @@ class AIPromptCode:
         """
         return OpenAiHelper.get_code_context(pip_package_names)
 
-    def build_context(self, code_inputs: Dict[str, Any]) -> str:
+    def build_context(self, code_inputs: dict[str, Any]) -> str:
         """Method that is automatically called by the task to build the context.
         This method can be overided to change the way of describing the context.
 

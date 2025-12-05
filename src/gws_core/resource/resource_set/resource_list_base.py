@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, List, Set, final
+from typing import TYPE_CHECKING, final
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.view.resources_list_view import ResourcesListView
@@ -34,7 +34,7 @@ class ResourceListBase(Resource):
     """
 
     # list the resource uids (not model id) that are constant (the system doesn't create new resources on save)
-    __constant_resource_uids__: Set[str] = None
+    __constant_resource_uids__: set[str] = None
 
     def init(self) -> None:
         # On init, mark the existing resources of the resource list
@@ -45,7 +45,7 @@ class ResourceListBase(Resource):
             self.__constant_resource_uids__.add(resource.uid)
 
     @abstractmethod
-    def get_resource_model_ids(self) -> Set[str]:
+    def get_resource_model_ids(self) -> set[str]:
         """
         Return the resource model ids of the sub resources
 
@@ -55,7 +55,7 @@ class ResourceListBase(Resource):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_resources_as_set(self) -> Set[Resource]:
+    def get_resources_as_set(self) -> set[Resource]:
         """
         Return the sub resources as a set
 
@@ -64,7 +64,7 @@ class ResourceListBase(Resource):
         """
 
     @abstractmethod
-    def replace_resources_by_model_id(self, resources: Dict[str, Resource]) -> None:
+    def replace_resources_by_model_id(self, resources: dict[str, Resource]) -> None:
         """
         Replace current resources by the resources in the dict
 
@@ -93,7 +93,7 @@ class ResourceListBase(Resource):
         )
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
-        if not resource_model_id in self.get_resource_model_ids():
+        if resource_model_id not in self.get_resource_model_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
 
         from ..resource_model import ResourceModel
@@ -101,7 +101,7 @@ class ResourceListBase(Resource):
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
-    def __set_r_field__(self, ids_map: Dict[str, str]) -> None:
+    def __set_r_field__(self, ids_map: dict[str, str]) -> None:
         """This method is called before the save of this resource but after the save of the
         child resources. Set the r_field of this resource with the ids of the child
 
@@ -118,10 +118,10 @@ class ResourceListBase(Resource):
         scenario: Scenario = None,
         task_model: TaskModel = None,
         port_name: str = None,
-    ) -> List[ResourceModel]:
+    ) -> list[ResourceModel]:
         from ..resource_model import ResourceModel
 
-        new_children_resources: List[ResourceModel] = []
+        new_children_resources: list[ResourceModel] = []
 
         ids_map = {}
         for resource in self.get_resources_as_set():
@@ -145,15 +145,15 @@ class ResourceListBase(Resource):
         self.__set_r_field__(ids_map)
         return new_children_resources
 
-    def _load_resources(self) -> Set[Resource]:
-        resource_models: List[ResourceModel] = self.get_resource_models()
+    def _load_resources(self) -> set[Resource]:
+        resource_models: list[ResourceModel] = self.get_resource_models()
 
-        resources: Set[Resource] = set()
+        resources: set[Resource] = set()
         for resource_model in resource_models:
             resources.add(resource_model.get_resource())
         return resources
 
-    def get_resource_models(self) -> List[ResourceModel]:
+    def get_resource_models(self) -> list[ResourceModel]:
         """
         Return the resource models of the sub resources list
 

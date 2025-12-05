@@ -1,6 +1,7 @@
-from typing import Dict, List, Literal, Optional, Set, Tuple
+from typing import Literal
 
 import requests
+
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -54,9 +55,9 @@ ScenarioDownloaderCreateOption = Literal["Skip if exists", "Force new scenario"]
 class ImportedResource:
     old_id: str
     resource: Resource
-    children: Dict[str, Resource]
+    children: dict[str, Resource]
 
-    def __init__(self, old_id: str, resource: Resource, children: Dict[str, Resource]):
+    def __init__(self, old_id: str, resource: Resource, children: dict[str, Resource]):
         self.old_id = old_id
         self.resource = resource
         self.children = children
@@ -97,10 +98,10 @@ class ScenarioDownloader(Task):
     )
 
     share_entity: ShareScenarioInfoReponseDTO
-    resource_loaders: List[ResourceLoader]
-    resource_models: Dict[str, ResourceModel]
+    resource_loaders: list[ResourceLoader]
+    resource_models: dict[str, ResourceModel]
 
-    downloaded_resources: Dict[str, ImportedResource]
+    downloaded_resources: dict[str, ImportedResource]
 
     # define the percentage of the progress bar for each step
     INIT_EXP_PERCENT = 10
@@ -180,7 +181,7 @@ class ScenarioDownloader(Task):
 
     def get_resource_to_download(
         self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode
-    ) -> Set[str]:
+    ) -> set[str]:
         self.log_info_message(f"Getting the resources to download with option '{mode}'")
 
         if mode == "None":
@@ -199,7 +200,7 @@ class ScenarioDownloader(Task):
 
     def download_resources(
         self,
-        resource_ids: Set[str],
+        resource_ids: set[str],
         share_entity: ShareScenarioInfoReponseDTO,
         create_mode: ShareEntityCreateMode,
     ) -> None:
@@ -356,7 +357,7 @@ class ScenarioDownloader(Task):
         scenario: Scenario = None,
         task_port_name: str = None,
         flagged: bool = False,
-    ) -> Optional[ResourceModel]:
+    ) -> ResourceModel | None:
         if not old_resource_id:
             return None
 
@@ -369,7 +370,7 @@ class ScenarioDownloader(Task):
             return None
 
         # first save the children resources
-        children_resource_models: List[ResourceModel] = []
+        children_resource_models: list[ResourceModel] = []
         if len(downloaded_resource.children) > 0 and isinstance(
             downloaded_resource.resource, ResourceListBase
         ):
@@ -434,7 +435,7 @@ class ScenarioDownloader(Task):
 
     def get_out_port_generator(
         self, protocol_model: ProtocolModel, old_resource_id: str
-    ) -> Tuple[TaskModel, str]:
+    ) -> tuple[TaskModel, str]:
         """retrieve the task and port name that generated the resource"""
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             for port_name, out_port in process_model.outputs.ports.items():
@@ -446,7 +447,7 @@ class ScenarioDownloader(Task):
 
         return None, None
 
-    def update_ports_resources(self, ports: Dict[str, Port]) -> None:
+    def update_ports_resources(self, ports: dict[str, Port]) -> None:
         for port in ports.values():
             old_resource_id = port.get_resource_model_id()
 

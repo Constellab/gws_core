@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set, Type, final
+from typing import TYPE_CHECKING, Any, final
+
+from peewee import (
+    BooleanField,
+    CharField,
+    DeferredForeignKey,
+    Expression,
+    ForeignKeyField,
+    ModelDelete,
+    ModelSelect,
+)
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import BaseDTOField, JSONField
@@ -18,15 +28,6 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
-from peewee import (
-    BooleanField,
-    CharField,
-    DeferredForeignKey,
-    Expression,
-    ForeignKeyField,
-    ModelDelete,
-    ModelSelect,
-)
 
 from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
@@ -82,7 +83,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     brick_version = CharField(null=False, max_length=50, default="")
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
 
     # true if the resource content was deleted
@@ -113,7 +114,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return result
 
     @GwsCoreDbManager.transaction()
-    def delete_resource_content(self) -> "ResourceModel":
+    def delete_resource_content(self) -> ResourceModel:
         """
         Delete the content of the resource, the data, the kv store and the fs node
         """
@@ -130,7 +131,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self
 
     @GwsCoreDbManager.transaction()
-    def archive(self, archive: bool) -> "ResourceModel":
+    def archive(self, archive: bool) -> ResourceModel:
         """
         Archive the process
         """
@@ -142,7 +143,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.save()
 
     @classmethod
-    def delete_multiple_resources(cls, resources: List[ResourceModel]):
+    def delete_multiple_resources(cls, resources: list[ResourceModel]):
         # sort the resources to have children resources before their parents to prevent error with
         # foreign key constraint
         resources.sort(key=lambda x: "b" if x.parent_resource_id is None else "a")
@@ -151,7 +152,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @classmethod
     def delete_resource_by_task_model(cls, task_model_id: str) -> None:
-        task_resources: List[ResourceModel] = list(
+        task_resources: list[ResourceModel] = list(
             ResourceModel.get_by_task_model(task_model_id).execute()
         )
 
@@ -161,7 +162,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
         Remove the kv store if it exists
         """
-        kv_store: Optional[KVStore] = self.get_kv_store()
+        kv_store: KVStore | None = self.get_kv_store()
         if kv_store:
             kv_store.remove()
 
@@ -170,7 +171,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return cls.select().where(cls.resource_typing_name == resource_typing_name)
 
     @classmethod
-    def select_by_type_and_sub_types(cls, type_: Type[Resource]) -> ModelSelect:
+    def select_by_type_and_sub_types(cls, type_: type[Resource]) -> ModelSelect:
         """select resource by type of any subclass of this type
 
         :param type_: _description_
@@ -186,7 +187,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         )
 
     @GwsCoreDbManager.transaction()
-    def save_full(self) -> "ResourceModel":
+    def save_full(self) -> ResourceModel:
         """Save the resource and the fs_node if exists
 
         :return: [description]
@@ -214,7 +215,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.select().where(ResourceModel.scenario == scenario_id)
 
     @classmethod
-    def get_by_scenarios(cls, scenario_ids: List[str]) -> ModelSelect:
+    def get_by_scenarios(cls, scenario_ids: list[str]) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.scenario.in_(scenario_ids))
 
     @classmethod
@@ -222,11 +223,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.select().where(ResourceModel.task_model == task_model_id)
 
     @classmethod
-    def get_by_task_models(cls, task_model_ids: List[str]) -> ModelSelect:
+    def get_by_task_models(cls, task_model_ids: list[str]) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.task_model.in_(task_model_ids))
 
     @classmethod
-    def find_by_fs_node_id(cls, fs_node_id: str) -> Optional["ResourceModel"]:
+    def find_by_fs_node_id(cls, fs_node_id: str) -> ResourceModel | None:
         return cls.select().where(cls.fs_node_model == fs_node_id).first()
 
     @classmethod
@@ -234,7 +235,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
     @classmethod
-    def get_by_types_and_sub_expression(cls, typing_names: List[str]) -> Expression:
+    def get_by_types_and_sub_expression(cls, typing_names: list[str]) -> Expression:
         """Return the expression to search resource base on a type and all its subtypes.
 
         If the Resource type is provided, it returns None
@@ -245,25 +246,25 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             return None
 
         # Retrieve all type of typing_names
-        resource_types: List[Type] = [
+        resource_types: list[type] = [
             TypingManager.get_type_from_name(typing_name) for typing_name in typing_names
         ]
 
         # Get all type of class and subclasses
-        all_types: Set[Type[Resource]] = set()
+        all_types: set[type[Resource]] = set()
         for resource_type in resource_types:
             all_types.update(Utils.get_all_subclasses(resource_type))
             all_types.update([resource_type])
 
         # Get the typing names
-        all_typing_names: List[str] = [
+        all_typing_names: list[str] = [
             resource_type.get_typing_name() for resource_type in all_types
         ]
 
         return ResourceModel.resource_typing_name.in_(all_typing_names)
 
     @classmethod
-    def get_by_types_and_sub(cls, typing_names: List[str]) -> ModelSelect:
+    def get_by_types_and_sub(cls, typing_names: list[str]) -> ModelSelect:
         return ResourceModel.select().where(cls.get_by_types_and_sub_expression(typing_names))
 
     @classmethod
@@ -322,8 +323,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         cls,
         resource: Resource,
         origin: ResourceOrigin = ResourceOrigin.GENERATED,
-        scenario: Optional[Scenario] = None,
-        task_model: Optional[TaskModel] = None,
+        scenario: Scenario | None = None,
+        task_model: TaskModel | None = None,
         port_name: str | None = None,
         flagged: bool | None = None,
     ) -> ResourceModel:
@@ -505,7 +506,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         kv_store: KVStore = self._get_or_create_kv_store()
 
         # get the r_fields of the resource
-        r_fields: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
+        r_fields: dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
         for key, r_field in r_fields.items():
             # get the attribute value corresponding to the r_field
@@ -525,26 +526,26 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             elif r_field.storage == RFieldStorage.KV_STORE:
                 kv_store[key] = value
 
-    def _get_resource_r_fields(self, resource_type: Type[Resource]) -> Dict[str, BaseRField]:
+    def _get_resource_r_fields(self, resource_type: type[Resource]) -> dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """
         return ReflectorHelper.get_property_names_of_type(resource_type, BaseRField)
 
-    def get_resource_type(self) -> Optional[Type[Resource]]:
+    def get_resource_type(self) -> type[Resource] | None:
         return TypingManager.get_type_from_name(self.resource_typing_name)
 
-    def get_and_check_resource_type(self) -> Type[Resource]:
+    def get_and_check_resource_type(self) -> type[Resource]:
         return TypingManager.get_and_check_type_from_name(self.resource_typing_name)
 
-    def set_parent_and_save(self, parent_resource_id: str) -> "ResourceModel":
+    def set_parent_and_save(self, parent_resource_id: str) -> ResourceModel:
         self.parent_resource_id = parent_resource_id
         return self.save()
 
     ########################################## KV STORE ######################################
 
     @final
-    def get_kv_store(self) -> Optional[KVStore]:
+    def get_kv_store(self) -> KVStore | None:
         if not self.kv_store_path:
             return None
 
@@ -566,7 +567,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         :return: [description]
         :rtype: KVStore
         """
-        kv_store: Optional[KVStore] = self.get_kv_store()
+        kv_store: KVStore | None = self.get_kv_store()
         if kv_store:
             return kv_store
 
@@ -580,11 +581,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def to_dto(self) -> ResourceModelDTO:
         resource_type_ref: TypingRefDTO | None = None
-        is_downloadable: Optional[bool] = False
+        is_downloadable: bool | None = False
         type_status: TypingStatus = TypingStatus.OK
         has_children: bool = False
 
-        resource_typing: Optional[Typing] = TypingManager.get_typing_from_name(
+        resource_typing: Typing | None = TypingManager.get_typing_from_name(
             self.resource_typing_name
         )
         if resource_typing:
@@ -592,7 +593,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             is_downloadable = self.is_downloadable
             type_status = resource_typing.get_type_status()
 
-            resource_type: Type = resource_typing.get_type()
+            resource_type: type = resource_typing.get_type()
 
             # check if the resource has children resources
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
@@ -644,7 +645,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        resource_type: Type[Resource] = self.get_resource_type()
+        resource_type: type[Resource] = self.get_resource_type()
         return self.fs_node_model is not None or (
             resource_type is not None and resource_type.__is_exportable__
         )
@@ -664,7 +665,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def is_application(self) -> bool:
         from gws_core.apps.app_resource import AppResource
 
-        resource_type: Type[Resource] = self.get_resource_type()
+        resource_type: type[Resource] = self.get_resource_type()
         if resource_type is not None:
             return Utils.issubclass(resource_type, AppResource)
         return False

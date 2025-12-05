@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 from bs4 import BeautifulSoup
 
@@ -32,8 +31,8 @@ class HtmlScript:
 class HtmlBody:
     """Represents the body content with separated components."""
 
-    links: List["HtmlLink"]  # Links in the body (modulepreload, etc.)
-    scripts: List["HtmlScript"]  # External scripts in the body
+    links: list["HtmlLink"]  # Links in the body (modulepreload, etc.)
+    scripts: list["HtmlScript"]  # External scripts in the body
     content: str  # The remaining HTML content (excluding links and scripts)
     attributes: dict = None  # Body tag attributes
 
@@ -59,7 +58,7 @@ class HtmlLink:
 class ParsedHtml:
     """Container for parsed HTML components."""
 
-    head_styles: List[HtmlStyle]  # External stylesheets from <head>
+    head_styles: list[HtmlStyle]  # External stylesheets from <head>
     body: HtmlBody  # Body content with links, scripts, and HTML
 
 
@@ -147,7 +146,7 @@ class AppPluginHtmlParser:
 
         return ParsedHtml(head_styles=head_styles, body=body)
 
-    def _extract_styles(self, soup: BeautifulSoup) -> List[HtmlStyle]:
+    def _extract_styles(self, soup: BeautifulSoup) -> list[HtmlStyle]:
         """
         Extract only external stylesheet links from the HTML.
 

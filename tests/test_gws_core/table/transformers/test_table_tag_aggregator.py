@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table, TableTagAggregatorHelper
 from gws_core.test.base_test_case import BaseTestCase
+from pandas import DataFrame
 
 
 # test_table_tag_aggregator

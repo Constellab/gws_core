@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 import botocore.auth
 import botocore.credentials
@@ -16,11 +15,11 @@ from gws_core.impl.s3.local_s3_server_service import LocalS3ServerService
 
 
 class S3AuthHeader(BaseModelDTO):
-    access_key_id: Optional[str]
+    access_key_id: str | None
     request_date: str
     region_name: str
     service_name: str
-    sign_headers: List[str]  # list of the header keys that are included in the signature
+    sign_headers: list[str]  # list of the header keys that are included in the signature
     signature: str
 
 

@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from fastapi import Depends
 
@@ -29,7 +28,7 @@ from .scenario_service import ScenarioService
 @core_app.get("/scenario/running", tags=["Scenario"], summary="Get the list of running scenarios")
 def get_the_list_of_running_scenarios(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> List[RunningScenarioInfoDTO]:
+) -> list[RunningScenarioInfoDTO]:
     """
     Retrieve a list of running scenarios.
     """
@@ -55,8 +54,8 @@ def get_an_scenario(
 )
 def advanced_search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ScenarioDTO]:
     """
@@ -77,8 +76,8 @@ def count_by_title(
 )
 def search_by_title(
     title: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ScenarioDTO]:
     """
@@ -94,8 +93,8 @@ def search_by_title(
 )
 def get_by_input_resource(
     resource_id: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioDTO]:
     """
@@ -149,7 +148,7 @@ def update_title(
 
 
 class UpdateFolder(BaseModelDTO):
-    folder_id: Optional[str]
+    folder_id: str | None
 
 
 @core_app.put(
@@ -300,7 +299,7 @@ def import_from_lab(
 )
 def get_import_scenario_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecDTO]:
+) -> dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_import_scenario_config_specs()
 
 
@@ -320,5 +319,5 @@ def export_to_lab(
 )
 def get_export_to_lab_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecDTO]:
+) -> dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()

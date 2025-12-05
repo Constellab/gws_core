@@ -1,5 +1,5 @@
 import inspect
-from typing import Callable, Dict, List, Tuple, Type
+from collections.abc import Callable
 
 from gws_core.core.utils.utils import Utils
 
@@ -15,7 +15,7 @@ class ViewHelper:
 
     @classmethod
     def get_and_check_view_meta(
-        cls, resource_type: Type[Resource], view_name: str
+        cls, resource_type: type[Resource], view_name: str
     ) -> ResourceViewMetaData:
         if not Utils.issubclass(resource_type, Resource):
             raise BadRequestException("The provided type is not a Resource type")
@@ -37,8 +37,8 @@ class ViewHelper:
 
     @classmethod
     def get_views_of_resource_type(
-        cls, resource_type: Type[Resource]
-    ) -> List[ResourceViewMetaData]:
+        cls, resource_type: type[Resource]
+    ) -> list[ResourceViewMetaData]:
         """return all the visible view meta (with method as key name) orderer from the parent class to the child classes
 
         :param resource_type: [description]
@@ -47,9 +47,9 @@ class ViewHelper:
         :rtype: Dict[str, ResourceViewMetaData]
         """
 
-        view_meta_data: Dict[str, ResourceViewMetaData] = {}
+        view_meta_data: dict[str, ResourceViewMetaData] = {}
 
-        funcs: List[Tuple[str, Callable]] = cls._get_class_view_functions(resource_type)
+        funcs: list[tuple[str, Callable]] = cls._get_class_view_functions(resource_type)
 
         for func_tuple in funcs:
             func_name: str = func_tuple[0]
@@ -77,7 +77,7 @@ class ViewHelper:
 
     @classmethod
     def get_default_view_of_resource_type(
-        cls, resource_type: Type[Resource]
+        cls, resource_type: type[Resource]
     ) -> ResourceViewMetaData:
         """Method to get the default view of a resource type. It iterates from the parent class to the children and returns
         the last view found
@@ -90,12 +90,12 @@ class ViewHelper:
         :rtype: Optional[ResourceViewMetaData]
         """
 
-        class_hierarchy: List[Type[Resource]] = cls._get_class_hierarchy(resource_type)
+        class_hierarchy: list[type[Resource]] = cls._get_class_hierarchy(resource_type)
         last_default_name: str = None
-        view_meta_data: Dict[str, ResourceViewMetaData] = {}
+        view_meta_data: dict[str, ResourceViewMetaData] = {}
 
         for class_ in class_hierarchy:
-            funcs: List[Tuple[str, Callable]] = cls._get_class_view_functions(class_)
+            funcs: list[tuple[str, Callable]] = cls._get_class_view_functions(class_)
 
             for func_tuple in funcs:
                 func_name: str = func_tuple[0]
@@ -119,7 +119,7 @@ class ViewHelper:
         return view_meta_data[last_default_name]
 
     @classmethod
-    def _get_class_view_functions(cls, class_: Callable) -> List[Tuple[str, Callable]]:
+    def _get_class_view_functions(cls, class_: Callable) -> list[tuple[str, Callable]]:
         """return all the function that have a view meta data information"""
         return inspect.getmembers(
             class_,
@@ -141,8 +141,8 @@ class ViewHelper:
         return None
 
     @classmethod
-    def _get_class_hierarchy(cls, resource_type: Type[Resource]) -> List[Type[Resource]]:
-        parent_types: List[Type[Resource]] = []
+    def _get_class_hierarchy(cls, resource_type: type[Resource]) -> list[type[Resource]]:
+        parent_types: list[type[Resource]] = []
 
         type_ = resource_type
         while issubclass(type_, Resource):

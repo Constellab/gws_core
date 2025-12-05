@@ -1,9 +1,10 @@
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Literal, Type
+from typing import Literal
 
 import schedule
+
 from gws_core.community.community_service import CommunityService
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
@@ -70,11 +71,11 @@ class ProcessService:
     def get_and_check_process_model(
         cls, process_type: ProcessType, process_id: str
     ) -> ProcessModel:
-        process_type: Type[ProcessModel] = cls._get_class_from_type(process_type)
+        process_type: type[ProcessModel] = cls._get_class_from_type(process_type)
         return process_type.get_by_id_and_check(process_id)
 
     @classmethod
-    def _get_class_from_type(cls, process_type: ProcessType) -> Type[ProcessModel]:
+    def _get_class_from_type(cls, process_type: ProcessType) -> type[ProcessModel]:
         if process_type == "TASK":
             return TaskModel
         elif process_type == "PROTOCOL":
@@ -104,7 +105,7 @@ class ProcessService:
                 .order_by(ProcessRunStatModel.created_at.asc())
             )
             if len(stats) > 0:
-                run_stats: List[Dict] = []
+                run_stats: list[dict] = []
                 for stat in stats:
                     run_stats.append(stat.to_dto().to_json_dict())
                 CommunityService.send_process_run_stats(run_stats)

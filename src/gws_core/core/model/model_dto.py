@@ -1,6 +1,6 @@
 from datetime import datetime
 from json import dumps
-from typing import Dict, Generic, List, Type, TypeVar
+from typing import Generic, TypeVar
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
@@ -27,36 +27,36 @@ class BaseModelDTO(BaseModel):
 
     @classmethod
     def to_json_list(
-        cls: Type[BaseModelDTOType], model_dto_list: List[BaseModelDTOType]
-    ) -> List[dict]:
+        cls: type[BaseModelDTOType], model_dto_list: list[BaseModelDTOType]
+    ) -> list[dict]:
         """
         Convert a list of ModelDTO to a list of json dictionaries.
         """
         return [model_dto.to_json_dict() for model_dto in model_dto_list]
 
     @classmethod
-    def from_json(cls: Type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
+    def from_json(cls: type[BaseModelDTOType], json_: dict) -> BaseModelDTOType:
         """
         Create a ModelDTO from a json.
         """
         return cls.model_validate(json_)
 
     @classmethod
-    def from_json_str(cls: Type[BaseModelDTOType], str_json: str) -> BaseModelDTOType:
+    def from_json_str(cls: type[BaseModelDTOType], str_json: str) -> BaseModelDTOType:
         """
         Create a ModelDTO from a string json.
         """
         return cls.model_validate_json(str_json)
 
     @classmethod
-    def from_json_list(cls: Type[BaseModelDTOType], json_list: list) -> List[BaseModelDTOType]:
+    def from_json_list(cls: type[BaseModelDTOType], json_list: list) -> list[BaseModelDTOType]:
         """
         Create a list of ModelDTO from a list of json.
         """
         return [cls.from_json(json_) for json_ in json_list]
 
     @classmethod
-    def from_record(cls: Type[BaseModelDTOType], json_dict: dict) -> Dict[str, BaseModelDTOType]:
+    def from_record(cls: type[BaseModelDTOType], json_dict: dict) -> dict[str, BaseModelDTOType]:
         """
         Create a dict of ModelDTO from a dict of json.
         """
@@ -84,10 +84,10 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
     is_first_page: bool
     is_last_page: bool
     total_is_approximate: bool
-    objects: List[BaseModelDTOType]
+    objects: list[BaseModelDTOType]
 
     @classmethod
-    def empty_page(cls: Type["PageDTO"]) -> "PageDTO":
+    def empty_page(cls: type["PageDTO"]) -> "PageDTO":
         """
         Create an empty PageDTO.
         """

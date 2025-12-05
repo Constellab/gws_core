@@ -2,7 +2,6 @@ import ast
 import os
 import subprocess
 from copy import deepcopy
-from typing import Dict, List
 
 from peewee import BigIntegerField, CharField
 
@@ -121,16 +120,16 @@ class Migration039(BrickMigration):
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.brick_version_on_create)
         sql_migrator.migrate()
 
-        process_model_list: List[ProcessModel] = list(TaskModel.select()) + list(
+        process_model_list: list[ProcessModel] = list(TaskModel.select()) + list(
             ProtocolModel.select()
         )
         for process_model in process_model_list:
             try:
-                output_resources: Dict[str, ResourceModel] = {}
+                output_resources: dict[str, ResourceModel] = {}
                 for port_name, port in process_model.outputs.ports.items():
                     output_resources[port_name] = port.get_resource_model()
 
-                input_resources: Dict[str, ResourceModel] = {}
+                input_resources: dict[str, ResourceModel] = {}
                 for port_name, port in process_model.inputs.ports.items():
                     input_resources[port_name] = port.get_resource_model()
 
@@ -172,7 +171,7 @@ class Migration0310(BrickMigration):
         sql_migrator.add_column_if_not_exists(TagKeyModel, TagKeyModel.order)
         sql_migrator.migrate()
 
-        task_models: List[TaskModel] = list(
+        task_models: list[TaskModel] = list(
             TaskModel.select().where(TaskModel.process_typing_name == InputTask.get_typing_name())
         )
 
@@ -186,7 +185,7 @@ class Migration0310(BrickMigration):
                 task_model.save()
 
         # Update orders in tag models and set lowercase tag names
-        tag_models: List[TagKeyModel] = list(TagKeyModel.select())
+        tag_models: list[TagKeyModel] = list(TagKeyModel.select())
 
         order = 0
         raise Exception("This migration is not supported anymore")
@@ -215,7 +214,7 @@ class Migration0312(BrickMigration):
         # Set the parent id for resource inside ResourceSet
 
         # retrieve all resource of type  ResourceListBase or children
-        resource_models: List[ResourceModel] = list(
+        resource_models: list[ResourceModel] = list(
             ResourceModel.select_by_type_and_sub_types(ResourceListBase)
         )
         for resource_model in resource_models:
@@ -250,7 +249,7 @@ class Migration0313(BrickMigration):
         sql_migrator.migrate()
 
         # retrieve all resource of type  ResourceListBase or children
-        resource_models: List[ResourceModel] = list(ResourceModel.select())
+        resource_models: list[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             try:
                 # update orgin values
@@ -296,14 +295,14 @@ class Migration0313(BrickMigration):
                 Logger.log_exception_stack_trace(err)
 
         # update validated info to scenario and note
-        scenario_models: List[Scenario] = list(Scenario.select())
+        scenario_models: list[Scenario] = list(Scenario.select())
         for scenario_model in scenario_models:
             if scenario_model.is_validated:
                 scenario_model.validated_at = scenario_model.last_modified_at
                 scenario_model.validated_by = scenario_model.last_modified_by
                 scenario_model.save()
 
-        note_models: List[Note] = list(Note.select())
+        note_models: list[Note] = list(Note.select())
         for note_model in note_models:
             if note_model.is_validated:
                 note_model.validated_at = note_model.last_modified_at
@@ -329,13 +328,13 @@ class Migration0315(BrickMigration):
         sql_migrator.add_column_if_not_exists(Note, Note.last_sync_by)
         sql_migrator.migrate()
 
-        scenarios: List[Scenario] = list(Scenario.select().where(Scenario.is_validated == True))
+        scenarios: list[Scenario] = list(Scenario.select().where(Scenario.is_validated == True))
         for scenario in scenarios:
             scenario.last_sync_at = scenario.last_modified_at
             scenario.last_sync_by = scenario.last_modified_by
             scenario.save()
 
-        notes: List[Note] = list(Note.select().where(Note.is_validated == True))
+        notes: list[Note] = list(Note.select().where(Note.is_validated == True))
         for note in notes:
             note.last_sync_at = note.last_modified_at
             note.last_sync_by = note.last_modified_by
@@ -375,7 +374,7 @@ class Migration041(BrickMigration):
         sql_migrator.migrate()
 
         # refactor progress bar
-        progress_bars: List[ProgressBar] = list(ProgressBar.select())
+        progress_bars: list[ProgressBar] = list(ProgressBar.select())
         for progress_bar in progress_bars:
             progress_bar_data: dict = progress_bar.data
 
@@ -384,7 +383,7 @@ class Migration041(BrickMigration):
 
             progress_bar.current_value = progress_bar_data["value"]
 
-            messages: List[dict] = progress_bar_data["messages"]
+            messages: list[dict] = progress_bar_data["messages"]
 
             if len(messages) > 0:
                 started_at: str = messages[0]["datetime"]
@@ -397,7 +396,7 @@ class Migration041(BrickMigration):
             progress_bar.data = {"messages": progress_bar_data["messages"]}
             progress_bar.save()
 
-        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        process_models: list[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             process_model.started_at = process_model.progress_bar.started_at
             process_model.ended_at = process_model.progress_bar.ended_at
@@ -426,7 +425,7 @@ class Migration043(BrickMigration):
         sql_migrator.migrate()
 
         # set brick_version
-        resource_models: List[ResourceModel] = list(ResourceModel.select())
+        resource_models: list[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             try:
                 if resource_model.brick_version == "":
@@ -434,7 +433,7 @@ class Migration043(BrickMigration):
 
                 # update all the FileRField to store only the name of the file instead of the full path
                 resource: Resource = resource_model.get_resource()
-                properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
+                properties: dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
                 for key, r_field in properties.items():
                     if isinstance(r_field, FileRField):
@@ -458,7 +457,7 @@ class Migration044(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         # update config json
-        configs: List[Config] = list(Config.select())
+        configs: list[Config] = list(Config.select())
         for config in configs:
             specs = config.data["specs"]
 
@@ -539,7 +538,7 @@ class Migration045(BrickMigration):
 class Migration050Beta1(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
-        resource_models: List[ResourceModel] = list(
+        resource_models: list[ResourceModel] = list(
             ResourceModel.get_by_types_and_sub([FSNode.get_typing_name()])
         )
 
@@ -569,7 +568,7 @@ class Migration050(BrickMigration):
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.folder)
         sql_migrator.migrate()
 
-        resource_models: List[ResourceModel] = list(ResourceModel.select())
+        resource_models: list[ResourceModel] = list(ResourceModel.select())
 
         for resource_model in resource_models:
             try:
@@ -590,7 +589,7 @@ class Migration052(BrickMigration):
         sql_migrator.add_column_if_not_exists(ProgressBar, ProgressBar.second_start)
         sql_migrator.migrate()
 
-        progress_bars: List[ProgressBar] = list(ProgressBar.select())
+        progress_bars: list[ProgressBar] = list(ProgressBar.select())
         for progress_bar in progress_bars:
             try:
                 if progress_bar.elapsed_time is None:
@@ -656,18 +655,18 @@ class Migration057(BrickMigration):
         sql_migrator.migrate()
 
         # refactor io specs
-        process_models: List[TaskModel] = list(TaskModel.select())
+        process_models: list[TaskModel] = list(TaskModel.select())
         for process_model in process_models:
             try:
                 modified: bool = False
                 inputs = process_model.data["inputs"]
-                if not "is_dynamic" in inputs and not "ports" in inputs:
+                if "is_dynamic" not in inputs and "ports" not in inputs:
                     # wrap the current inputs in ports
                     process_model.data["inputs"] = {"is_dynamic": False, "ports": inputs}
                     modified = True
 
                 outputs = process_model.data["outputs"]
-                if not "is_dynamic" in outputs and not "ports" in outputs:
+                if "is_dynamic" not in outputs and "ports" not in outputs:
                     # wrap the current outputs in ports
                     process_model.data["outputs"] = {"is_dynamic": False, "ports": outputs}
                     modified = True
@@ -698,7 +697,7 @@ class Migration073(BrickMigration):
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.creation_type)
         sql_migrator.migrate()
 
-        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        process_models: list[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if not process_model.brick_version_on_run:
                 process_model.brick_version_on_run = process_model.brick_version_on_create
@@ -731,7 +730,7 @@ class Migration075(BrickMigration):
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProtocolModel.name)
         sql_migrator.migrate()
 
-        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        process_models: list[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if not process_model.name:
                 process_type = TypingManager.get_typing_from_name(process_model.process_typing_name)
@@ -742,13 +741,13 @@ class Migration075(BrickMigration):
                 process_model.save(skip_hook=True)
 
         # migrate scenario template to new name
-        scenario_templates: List[ScenarioTemplate] = list(ScenarioTemplate.select())
+        scenario_templates: list[ScenarioTemplate] = list(ScenarioTemplate.select())
         for scenario_template in scenario_templates:
             cls.migrate_scenario_template_recur(scenario_template.data)
             scenario_template.save(skip_hook=True)
 
         # simplify the json stored for interface and outerface
-        protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
+        protocol_models: list[ProtocolModel] = list(ProtocolModel.select())
         for protocol_model in protocol_models:
             cls.migrate_protocol_iofaces(protocol_model.data["graph"])
             protocol_model.save(skip_hook=True)
@@ -815,7 +814,7 @@ class Migration080Beta1(BrickMigration):
 
         sql_migrator.migrate()
 
-        scenario_templates: List[ScenarioTemplate] = list(ScenarioTemplate.select())
+        scenario_templates: list[ScenarioTemplate] = list(ScenarioTemplate.select())
         for scenario_template in scenario_templates:
             cls.migrate_template_data(scenario_template.data)
             scenario_template.save(skip_hook=True)
@@ -870,7 +869,7 @@ class Migration084(BrickMigration):
         sql_migrator.rename_table_if_exists(NoteTemplate, "gws_note_template")
         sql_migrator.migrate()
 
-        scenario_templates: List[ScenarioTemplate] = list(
+        scenario_templates: list[ScenarioTemplate] = list(
             ScenarioTemplate.select().where(ScenarioTemplate.version == 1)
         )
 
@@ -882,12 +881,12 @@ class Migration084(BrickMigration):
             scenario_template.save(skip_hook=True)
 
         # migrate note images
-        notes: List[Note] = list(Note.select())
+        notes: list[Note] = list(Note.select())
         for note in notes:
             cls._migrate_rich_text_image(note.content, RichTextObjectType.NOTE, note.id)
 
         # migrate document images
-        note_templates: List[NoteTemplate] = list(NoteTemplate.select())
+        note_templates: list[NoteTemplate] = list(NoteTemplate.select())
         for note_template in note_templates:
             cls._migrate_rich_text_image(
                 note_template.content, RichTextObjectType.NOTE_TEMPLATE, note_template.id
@@ -1201,7 +1200,7 @@ class Migration0105(BrickMigration):
 
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
-        process_models: List[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
+        process_models: list[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if process_model.process_typing_name in [
                 "TASK.gws_core.PyAgent",
@@ -1217,7 +1216,7 @@ class Migration0105(BrickMigration):
                 except Exception as exception:
                     Logger.error(f"Error while migrating agent {process_model.id} : {exception}")
 
-        configs: List[Config] = list(Config.select())
+        configs: list[Config] = list(Config.select())
 
         for config in configs:
             for key in config.data["specs"]:
@@ -1261,7 +1260,7 @@ class Migration0105(BrickMigration):
                     process_model.style = TypingStyle.default_task()
                 process_model.save(skip_hook=True)
 
-        resource_models: List[ResourceModel] = list(ResourceModel.select())
+        resource_models: list[ResourceModel] = list(ResourceModel.select())
         for resource_model in resource_models:
             if not resource_model.style:
                 try:
@@ -1339,7 +1338,7 @@ class Migration0105(BrickMigration):
 class Migration0112(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
-        credentials: List[Credentials] = list(
+        credentials: list[Credentials] = list(
             Credentials.select().where(Credentials.type == CredentialsType.OTHER)
         )
 
@@ -1366,7 +1365,7 @@ class Migration0120(BrickMigration):
 class Migration0122(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
-        tag_keys: List[TagKeyModel] = list(TagKeyModel.select())
+        tag_keys: list[TagKeyModel] = list(TagKeyModel.select())
 
         for tag_key in tag_keys:
             new_key = Tag.parse_tag(tag_key.key)
@@ -1378,7 +1377,7 @@ class Migration0122(BrickMigration):
             except Exception as exception:
                 Logger.error(f"Error while setting tag key for {tag_key.key} : {exception}")
 
-        tag_values: List[TagValueModel] = list(TagValueModel.select())
+        tag_values: list[TagValueModel] = list(TagValueModel.select())
 
         for tag_value in tag_values:
             new_value = Tag.parse_tag(tag_value.tag_value)
@@ -1433,7 +1432,7 @@ class Migration0150(BrickMigration):
         sql_migrator.migrate()
 
         # Migrate label based on the key
-        tag_keys: List[TagKeyModel] = list(
+        tag_keys: list[TagKeyModel] = list(
             TagKeyModel.select().where((TagKeyModel.label == None) | (TagKeyModel.label == ""))
         )
         for tag_key in tag_keys:
@@ -1526,7 +1525,7 @@ class Migration0170(BrickMigration):
         )
 
         # Remove nodes from protocol graph
-        protocol_models: List[ProtocolModel] = list(ProtocolModel.select())
+        protocol_models: list[ProtocolModel] = list(ProtocolModel.select())
         for protocol_model in protocol_models:
             try:
                 protocol_model.refresh_graph_from_dump()
@@ -1578,7 +1577,7 @@ class Migration0180(BrickMigration):
                             fsnode.save(skip_hook=True)
 
                             # update the path of all other fsnodes that are children of this fsnode
-                            child_fsnodes: List[FSNodeModel] = list(
+                            child_fsnodes: list[FSNodeModel] = list(
                                 FSNodeModel.select().where(
                                     FSNodeModel.path.startswith(source_path + os.sep)
                                 )

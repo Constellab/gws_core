@@ -1,5 +1,4 @@
 import inspect
-from typing import Dict, List, Set, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -19,13 +18,13 @@ class TaskGenerator:
 
     class_name: str = ""
 
-    inputs_specs: Dict[str, Type[Resource]] = None
-    outputs_specs: Dict[str, Type[Resource]] = None
+    inputs_specs: dict[str, type[Resource]] = None
+    outputs_specs: dict[str, type[Resource]] = None
     config_specs: ConfigSpecs = None
 
     run_method_content: str = None
-    custom_imports: List[str] = None
-    gws_core_additional_imports: Set[str] = None
+    custom_imports: list[str] = None
+    gws_core_additional_imports: set[str] = None
 
     _TASK_OUTPUTS_TYPE = "TaskOutputs"
 
@@ -59,7 +58,7 @@ class TaskGenerator:
         """
         self.custom_imports.append(import_name)
 
-    def add_input_spec(self, key: str, resource_type: Type[Resource]) -> None:
+    def add_input_spec(self, key: str, resource_type: type[Resource]) -> None:
         """Add an input spec
 
         :param key: The key of the input spec
@@ -77,7 +76,7 @@ class TaskGenerator:
         self.gws_core_additional_imports.add(resource_type.__name__)
         self.gws_core_additional_imports.add(InputSpec.__name__)
 
-    def add_output_spec(self, key: str, resource_type: Type[Resource]) -> None:
+    def add_output_spec(self, key: str, resource_type: type[Resource]) -> None:
         """Add an output spec
 
         :param key: The key of the output spec
@@ -173,7 +172,7 @@ class {self.class_name}(Task):"""
     def _build_output_specs(self) -> str:
         return f"""\t{self._OUTPUT_SPECS_NAME}: {OutputSpecs.__name__} = {OutputSpecs.__name__}({self._build_io_spec_dict(self.outputs_specs, OutputSpec.__name__)})"""
 
-    def _build_io_spec_dict(self, dict_: Dict[str, Type[Resource]], type_name: str) -> str:
+    def _build_io_spec_dict(self, dict_: dict[str, type[Resource]], type_name: str) -> str:
         if len(dict_) == 0:
             return "{}"
 
@@ -202,7 +201,7 @@ class {self.class_name}(Task):"""
 
         return self._build_list_to_json(params)
 
-    def _build_list_to_json(self, list_: List[str]) -> str:
+    def _build_list_to_json(self, list_: list[str]) -> str:
         return f"{{{', '.join(list_)}}}"
 
     ######################################### RUN ###########################################

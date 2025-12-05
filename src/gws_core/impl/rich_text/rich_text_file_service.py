@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 from typing import Any
 
 from fastapi import UploadFile
@@ -105,7 +104,7 @@ class RichTextFileService:
     ) -> CallViewResultDTO:
         file_path = cls.get_object_file_path(object_type, object_id, filename)
 
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             return CallViewResultDTO.from_json_str(file.read())
 
     @classmethod

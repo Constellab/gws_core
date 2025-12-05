@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import Literal
 
 from pandas import DataFrame, Index, api
 from typing_extensions import NotRequired, TypedDict
@@ -21,7 +21,7 @@ class DataframeFilterName(TypedDict):
     If the name is a string, the dataframe will be filtered by the rows/columns that have the name. The name can be a regular expression.
     """
 
-    name: Union[List[str], str]
+    name: list[str] | str
     is_regex: NotRequired[bool]
 
 
@@ -37,7 +37,7 @@ class DataframeFilterHelper:
 
     @classmethod
     def filter_by_axis_names(
-        cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]
+        cls, data: DataFrame, axis: AxisName, filters: list[DataframeFilterName]
     ):
         dataframe: DataFrame = None
         if not isinstance(filters, list):
@@ -56,7 +56,7 @@ class DataframeFilterHelper:
 
     @classmethod
     def filter_out_by_axis_names(
-        cls, data: DataFrame, axis: AxisName, filters: List[DataframeFilterName]
+        cls, data: DataFrame, axis: AxisName, filters: list[DataframeFilterName]
     ):
         filtered_dataframe = cls.filter_by_axis_names(data, axis, filters)
 
@@ -67,7 +67,7 @@ class DataframeFilterHelper:
 
     @classmethod
     def _filter_by_axis_names(
-        cls, data: DataFrame, axis: AxisName, value: Union[List[str], str], use_regexp=False
+        cls, data: DataFrame, axis: AxisName, value: list[str] | str, use_regexp=False
     ):
         if (not axis) or (value is None):
             return data
@@ -144,7 +144,7 @@ class DataframeFilterHelper:
         )
 
     @classmethod
-    def convert_tags_params_to_tag_list(cls, tags: Union[dict, List[dict]]) -> List[dict]:
+    def convert_tags_params_to_tag_list(cls, tags: dict | list[dict]) -> list[dict]:
         """Convert a tag params from the get_tags_param_set to a list of tags"""
         if isinstance(tags, str):
             tags = [tags]

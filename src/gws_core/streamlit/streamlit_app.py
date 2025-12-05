@@ -39,7 +39,7 @@ class StreamlitApp(AppInstance):
             raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
 
         # read the streamlit code from the file
-        with open(streamlit_app_code_path, "r", encoding="utf-8") as file_path:
+        with open(streamlit_app_code_path, encoding="utf-8") as file_path:
             self.streamlit_code = file_path.read()
 
     def generate_app(self, working_dir: str) -> None:

@@ -1,7 +1,6 @@
 import streamlit as st
-from pandas import DataFrame
-
 from gws_core.streamlit import StreamlitContainers, dataframe_paginated
+from pandas import DataFrame
 
 from ..components.example_tabs_component import example_tabs
 from ..components.page_layout_component import page_layout

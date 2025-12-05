@@ -1,6 +1,5 @@
 from enum import Enum
 from re import split, sub
-from typing import List
 
 from numpy import NaN
 from pandas import DataFrame
@@ -31,12 +30,12 @@ class TableOperationHelper:
 
     @staticmethod
     def column_operations(
-        source: Table, operations: List[str], keep_original_columns: bool
+        source: Table, operations: list[str], keep_original_columns: bool
     ) -> Table:
         if not isinstance(operations, list):
             raise Exception("The operations must be a list")
 
-        clean_operations: List[str] = []
+        clean_operations: list[str] = []
         column_names = source.column_names
         for operation in operations:
             if "=" in operation:
@@ -70,7 +69,7 @@ class TableOperationHelper:
         else:
             result_table = Table()
             for column in eval_dataframe:
-                if not column in dataframe:
+                if column not in dataframe:
                     result_table.add_column(column, eval_dataframe[column])
 
             # set the row names as the table was created empty
@@ -80,7 +79,7 @@ class TableOperationHelper:
         return result_table
 
     @staticmethod
-    def row_operation(source: Table, operations: List[str], keep_original_rows: bool) -> Table:
+    def row_operation(source: Table, operations: list[str], keep_original_rows: bool) -> Table:
         t_table = source.transpose()
         result_transposed = TableOperationHelper.column_operations(
             t_table, operations, keep_original_rows
@@ -114,7 +113,7 @@ class TableOperationHelper:
         :return: _description_
         :rtype: Table
         """
-        operations: List[str] = []
+        operations: list[str] = []
 
         if operation_df.shape[1] < 2:
             raise Exception("The operation table must have at least 2 columns")
@@ -122,20 +121,18 @@ class TableOperationHelper:
         # check operation_name_column
         if not operation_name_column:
             operation_name_column = 0
-        else:
-            if operation_name_column not in operation_df.columns:
-                raise Exception(
-                    f"The operation name column '{operation_name_column}' does not exist in the operation table, please check your configuration"
-                )
+        elif operation_name_column not in operation_df.columns:
+            raise Exception(
+                f"The operation name column '{operation_name_column}' does not exist in the operation table, please check your configuration"
+            )
 
         # check operation_column
         if not operation_calculations_column:
             operation_calculations_column = 1
-        else:
-            if operation_calculations_column not in operation_df.columns:
-                raise Exception(
-                    f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration"
-                )
+        elif operation_calculations_column not in operation_df.columns:
+            raise Exception(
+                f"The operation operation column '{operation_calculations_column}' does not exist in the operation table, please check your configuration"
+            )
 
         for _, row in operation_df.iterrows():
             operation: str = str(row.iloc[operation_calculations_column])

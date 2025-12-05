@@ -1,6 +1,5 @@
 import os
 import sys
-from typing import List
 
 import streamlit as st
 from main_streamlit_app_runner import StreamlitMainAppRunner
@@ -21,7 +20,7 @@ def import_streamlit_helper():
 
 
 @st.cache_data
-def load_sources(source_ids: List[str]) -> List["Resource"]:
+def load_sources(source_ids: list[str]) -> list["Resource"]:
     """
     Cached method to load the sources from the source ids.
 

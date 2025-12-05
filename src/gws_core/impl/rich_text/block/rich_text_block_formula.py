@@ -1,12 +1,11 @@
-from typing import Optional
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
 
 class RichTextBlockFormula(RichTextBlockDataBase):
     formula: str
-    title: Optional[str] = None
-    caption: Optional[str] = None
+    title: str | None = None
+    caption: str | None = None
 
     def to_markdown(self) -> str:
         """Convert the formula to markdown

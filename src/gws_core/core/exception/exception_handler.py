@@ -1,7 +1,6 @@
 import inspect
 import os
 import uuid
-from typing import List
 
 from fastapi import status
 from fastapi.exceptions import RequestValidationError
@@ -211,7 +210,7 @@ class ExceptionHandler:
         :return: BRICK_NAME.FILE_NAME.METHOD_NAME
         :rtype: str
         """
-        trace: List = inspect.trace()
+        trace: list = inspect.trace()
         if not trace:
             return ""
 
@@ -243,7 +242,7 @@ class ExceptionHandler:
         :return: brick name
         :rtype: str
         """
-        trace: List = inspect.trace()
+        trace: list = inspect.trace()
         if not trace:
             return ""
 

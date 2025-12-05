@@ -1,5 +1,5 @@
+from collections.abc import Callable
 from multiprocessing import Process
-from typing import Any, Callable, Set, Type
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 

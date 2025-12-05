@@ -1,14 +1,14 @@
 from enum import Enum
-from typing import List
+from typing import Annotated
 
 import typer
-from gws_cli.utils.cli_utils import CLIUtils
 from gws_core import BrickService
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.manage import AppManager
 from gws_core.user.authorization_service import AuthorizationService
-from typing_extensions import Annotated
+
+from gws_cli.utils.cli_utils import CLIUtils
 
 app = typer.Typer(
     help="Manage server operations - run server, execute tests, run scenarios and processes"
@@ -50,7 +50,7 @@ def run(
             print("Error: --allow-dev-app-connections cannot be used in production mode.")
             raise typer.Exit(code=1)
         Logger.warning(
-            f"Dev mode app connections are allowed. Only use if you are working on apps."
+            "Dev mode app connections are allowed. Only use if you are working on apps."
         )
         AuthorizationService.allow_dev_app_connections = True
 
@@ -66,7 +66,7 @@ def run(
 def test(
     ctx: typer.Context,
     test_name: Annotated[
-        List[str],
+        list[str],
         typer.Argument(
             help="The name test file to launch (regular expression). Enter 'all' to launch all the tests."
         ),

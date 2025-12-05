@@ -1,8 +1,9 @@
-from typing import List, Optional, Union
+from typing import Optional, Union
+
+from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.scenario.queue_dto import JobDTO
-from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -109,7 +110,7 @@ class Queue(Model):
         return Job.pop_first_job(queue.id)
 
     @classmethod
-    def get_jobs(cls) -> List["Job"]:
+    def get_jobs(cls) -> list["Job"]:
         queue = cls.get_current_queue()
 
         if not queue:
@@ -150,7 +151,7 @@ class Job(Model):
         return cls._get_job_in_orders(queue_id).first()
 
     @classmethod
-    def get_queue_jobs(cls, queue_id: str) -> List["Job"]:
+    def get_queue_jobs(cls, queue_id: str) -> list["Job"]:
         return list(cls._get_job_in_orders(queue_id))
 
     @classmethod

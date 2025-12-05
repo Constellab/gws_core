@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.param.param_spec import DictParam
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
@@ -23,5 +23,5 @@ class RichTextParam(DictParam):
         return RichTextParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

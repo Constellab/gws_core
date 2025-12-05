@@ -1,4 +1,6 @@
-from typing import Any, List, Optional
+from typing import Any, Optional
+
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
@@ -16,7 +18,6 @@ from gws_core.resource.view.view_types import ViewType
 from gws_core.resource.view_config.view_config_dto import ViewConfigDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ...scenario.scenario import Scenario
 from ..resource_model import ResourceModel
@@ -98,7 +99,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         :rtype: _type_
         """
 
-        view_configs_db: List[ViewConfig] = list(
+        view_configs_db: list[ViewConfig] = list(
             ViewConfig.select().where(
                 (ViewConfig.resource_model == view_config.resource_model)
                 & (ViewConfig.view_name == view_config.view_name)
@@ -119,7 +120,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         return ViewConfig.select().where(ViewConfig.resource_model == resource_model_id)
 
     @classmethod
-    def get_by_resources(cls, resource_model_ids: List[str]) -> ModelSelect:
+    def get_by_resources(cls, resource_model_ids: list[str]) -> ModelSelect:
         return ViewConfig.select().where(ViewConfig.resource_model.in_(resource_model_ids))
 
     @classmethod
@@ -130,7 +131,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
 
     @classmethod
     def delete_by_resource(cls, resource_model_id: str) -> None:
-        view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
+        view_configs: list[ViewConfig] = list(ViewConfig.get_by_resource(resource_model_id))
         for view_config in view_configs:
             view_config.delete_instance()
 

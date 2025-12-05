@@ -33,7 +33,7 @@ def generate_brick(name: str):
 def update_settings_file(dest_dir: str, name: str):
     """Update settings.json"""
     settings_file = os.path.join(dest_dir, "settings.json")
-    with open(settings_file, "r", encoding="UTF-8") as f:
+    with open(settings_file, encoding="UTF-8") as f:
         settings = json.load(f)
         settings["name"] = name
     with open(settings_file, "w", encoding="UTF-8") as f:
@@ -43,7 +43,7 @@ def update_settings_file(dest_dir: str, name: str):
 def update_readme(dest_dir: str, name: str):
     """Replace all words 'skeleton' in README.md"""
     file = os.path.join(dest_dir, "./README.md")
-    with open(file, "r", encoding="UTF-8") as f:
+    with open(file, encoding="UTF-8") as f:
         text = f.read()
         text = text.replace("skeleton", name)
         text = text.replace("Skeleton", name.title())
@@ -59,7 +59,7 @@ def update_code(dest_dir: str, name: str):
 
     test_folder = os.path.join(dest_dir, "tests", f"test_{name}")
     file = os.path.join(test_folder, "test_table_factor.py")
-    with open(file, "r", encoding="UTF-8") as f:
+    with open(file, encoding="UTF-8") as f:
         text = f.read()
         text = text.replace(skeleton_name, name)
     with open(file, "w", encoding="UTF-8") as f:

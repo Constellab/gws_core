@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, Optional
 
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model import Model
@@ -15,13 +14,13 @@ class ProcessRunStatModel(Model):
     process_typing_name: str = CharField()
     community_agent_version_id: str = CharField(null=True)
     status: ProcessRunStatStatus = CharField()
-    error_info: Dict = JSONField(null=True)
+    error_info: dict = JSONField(null=True)
     started_at: datetime = DateTimeUTC()
     ended_at: datetime = DateTimeUTC()
     elapsed_time: float = FloatField()
     brick_version_on_run: str = CharField()
     brick_version_on_create: str = CharField()
-    config_value: Dict = JSONField()
+    config_value: dict = JSONField()
     lab_env: ProcessRunStatLabEnv = CharField()
     executed_by: str = CharField()
     sync_with_community: bool = BooleanField()
@@ -36,11 +35,11 @@ class ProcessRunStatModel(Model):
         elapsed_time: float,
         brick_version_on_run: str,
         brick_version_on_create: str,
-        config_value: Dict,
+        config_value: dict,
         lab_env: ProcessRunStatLabEnv,
         executed_by: str,
-        error_info: Optional[Dict] = None,
-        community_agent_version_id: Optional[str] = None,
+        error_info: dict | None = None,
+        community_agent_version_id: str | None = None,
     ) -> None:
         stat: ProcessRunStatModel = ProcessRunStatModel()
         stat.process_typing_name = process_typing_name

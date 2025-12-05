@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_deprecated import TypingDeprecated
@@ -43,7 +43,7 @@ def resource_decorator(
 
     """
 
-    def decorator(resource_class: Type[Resource]):
+    def decorator(resource_class: type[Resource]):
         decorate_resource(
             resource_class,
             unique_name=unique_name,
@@ -62,7 +62,7 @@ def resource_decorator(
 
 
 def decorate_resource(
-    resource_class: Type[Resource],
+    resource_class: type[Resource],
     unique_name: str,
     human_name: str = "",
     short_description: str = "",
@@ -108,10 +108,10 @@ def decorate_resource(
     )
 
 
-def get_resource_default_style(resource_class: Type[Resource]) -> TypingStyle:
+def get_resource_default_style(resource_class: type[Resource]) -> TypingStyle:
     """Get the default style for a resource"""
     # get parent class
-    parent_class: Type[Resource] = resource_class.__bases__[0]
+    parent_class: type[Resource] = resource_class.__bases__[0]
 
     if not parent_class or not issubclass(parent_class, Resource):
         return TypingStyle.default_resource()

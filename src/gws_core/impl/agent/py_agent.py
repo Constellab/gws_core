@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -79,5 +79,5 @@ class PyAgent(Task):
         return {"target": ResourceList(targets)}
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
+    def build_config_params_dict(cls, code: str, params: dict[str, Any]) -> ConfigParamsDict:
         return {"code": code, "params": params}

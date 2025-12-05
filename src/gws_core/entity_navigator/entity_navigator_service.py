@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -121,7 +120,7 @@ class EntityNavigatorService:
 
         # if yes, raise an error, no force reset for this mode
         if reset_result.has_entities():
-            scenarios: List[Scenario] = reset_result.impacted_entities.get_entity_by_type(
+            scenarios: list[Scenario] = reset_result.impacted_entities.get_entity_by_type(
                 NavigableEntityType.SCENARIO
             )
 
@@ -130,7 +129,7 @@ class EntityNavigatorService:
                     scenarios[0].get_short_name(), scenarios[0].id
                 )
 
-            notes: List[Note] = reset_result.impacted_entities.get_entity_by_type(
+            notes: list[Note] = reset_result.impacted_entities.get_entity_by_type(
                 NavigableEntityType.NOTE
             )
             if len(notes) > 0:
@@ -227,7 +226,7 @@ class EntityNavigatorService:
 
     @classmethod
     def _check_validated_entities(
-        cls, entities: NavigableEntitySet, entity_types: List[NavigableEntityType]
+        cls, entities: NavigableEntitySet, entity_types: list[NavigableEntityType]
     ) -> None:
         """Check if there are some validated entities in the set"""
         for entity_type in entity_types:

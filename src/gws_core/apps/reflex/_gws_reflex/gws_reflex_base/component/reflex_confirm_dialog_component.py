@@ -1,5 +1,5 @@
 import traceback
-from typing import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Callable
 
 import reflex as rx
 

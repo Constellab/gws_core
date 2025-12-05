@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_resource import AppResource
@@ -83,7 +83,7 @@ class StreamlitResource(AppResource):
             raise Exception(f"streamlit_app_code_path {streamlit_app_code_path} does not exist")
 
         # read the streamlit code from the file
-        with open(streamlit_app_code_path, "r", encoding="utf-8") as file_path:
+        with open(streamlit_app_code_path, encoding="utf-8") as file_path:
             self._streamlit_app_code = file_path.read()
 
     def init_app_instance(
@@ -139,8 +139,8 @@ class StreamlitResource(AppResource):
     @classmethod
     def migrate_streamlit_resources(cls) -> None:
         """method to migrate streamlit resources to use the app config class"""
-        resource_models: List[ResourceModel] = ResourceModel.select().where(
-            (ResourceModel.resource_typing_name == cls.get_typing_name())
+        resource_models: list[ResourceModel] = ResourceModel.select().where(
+            ResourceModel.resource_typing_name == cls.get_typing_name()
         )
 
         for resource_model in resource_models:

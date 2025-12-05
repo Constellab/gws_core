@@ -7,7 +7,7 @@ formats.
 """
 
 from abc import abstractmethod
-from typing import Any, Dict, List, Type, Union
+from typing import Any
 
 from gws_core.core.utils.utils import Utils
 
@@ -52,7 +52,7 @@ class SerializableObjectJson:
     """
 
     @abstractmethod
-    def serialize(self) -> Union[Dict, List, str, bool, float]:
+    def serialize(self) -> dict | list | str | bool | float:
         """Serialize this object to a JSON-compatible representation.
 
         This method is called when the Resource containing this object is saved.
@@ -75,7 +75,7 @@ class SerializableObjectJson:
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, data: Union[Dict, List, str, bool, float]) -> "SerializableObjectJson":
+    def deserialize(cls, data: dict | list | str | bool | float) -> "SerializableObjectJson":
         """Deserialize a JSON-compatible representation back to an object instance.
 
         This class method is called when the Resource is loaded from storage.
@@ -159,10 +159,10 @@ class SerializableRField(BaseRField):
         - The object_type must have a no-argument constructor
     """
 
-    object_type: Type[SerializableObjectJson]
+    object_type: type[SerializableObjectJson]
 
     def __init__(
-        self, object_type: Type[SerializableObjectJson], include_in_dict_view: bool = False
+        self, object_type: type[SerializableObjectJson], include_in_dict_view: bool = False
     ) -> None:
         """Initialize a SerializableRField for storing custom serializable objects.
 

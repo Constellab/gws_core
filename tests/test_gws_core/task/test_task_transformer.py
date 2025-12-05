@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core import ConfigParams, transformer_decorator
 from gws_core.config.config_specs import ConfigSpecs
@@ -31,7 +30,7 @@ class TestTaskTransformer(BaseTestCase):
         robot_model = ResourceModel.save_from_resource(robot, origin=ResourceOrigin.UPLOADED)
 
         # create and run
-        transformers: List[TransformerDict] = [
+        transformers: list[TransformerDict] = [
             {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": age_config}}
         ]
         resource_model: ResourceModel = TransformerService.create_and_run_transformer_scenario(
@@ -47,7 +46,7 @@ class TestTaskTransformer(BaseTestCase):
     def test_call_transformers(self):
         age_config = 99
 
-        transformers: List[TransformerDict] = [
+        transformers: list[TransformerDict] = [
             {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": 5}},
             {"typing_name": RobotTransform.get_typing_name(), "config_values": {"age": age_config}},
         ]

@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Type
 
 from gws_core.core.model.model import Model
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
@@ -14,7 +13,7 @@ class TagEntityType(Enum):
     NOTE = "NOTE"
     SCENARIO_TEMPLATE = "SCENARIO_TEMPLATE"
 
-    def get_entity_model_type(self) -> Type[Model]:
+    def get_entity_model_type(self) -> type[Model]:
         from gws_core.note.note import Note
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig

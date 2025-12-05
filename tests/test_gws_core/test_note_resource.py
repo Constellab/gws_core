@@ -1,7 +1,5 @@
 from typing import cast
 
-from PIL import Image
-
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.note_resource.create_note_resource import CreateNoteResource
@@ -18,7 +16,6 @@ from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockNote
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import (
     RichTextFileService,
-    RichTextUploadFileResultDTO,
 )
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.impl.robot.robot_resource import Robot
@@ -33,6 +30,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
+from PIL import Image
 
 
 # test_note_resource

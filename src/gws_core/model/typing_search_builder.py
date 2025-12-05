@@ -1,4 +1,3 @@
-from typing import Type
 
 from peewee import Expression
 
@@ -7,9 +6,9 @@ from ..model.typing import Typing
 
 
 class TypingSearchBuilder(SearchBuilder):
-    _model_type: Type[Typing]
+    _model_type: type[Typing]
 
-    def __init__(self, type_: Type[Typing] = Typing) -> None:
+    def __init__(self, type_: type[Typing] = Typing) -> None:
         super().__init__(type_, default_orders=[type_.human_name.asc()])
 
     def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:

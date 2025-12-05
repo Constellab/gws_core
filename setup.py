@@ -6,7 +6,7 @@ from subprocess import check_call
 import setuptools
 from setuptools.command.install import install
 
-with open("settings.json", "r", encoding="utf-8") as fh:
+with open("settings.json", encoding="utf-8") as fh:
     settings = json.load(fh)
     name = settings["name"]
     description = settings["description"]
@@ -14,7 +14,7 @@ with open("settings.json", "r", encoding="utf-8") as fh:
     author = settings.get("author", "")
     author_email = settings.get("author_email", "")
 
-with open("README.md", "r", encoding="utf-8") as fh:
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
 

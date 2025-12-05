@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -39,10 +39,10 @@ The dataframe has {self.table.nb_rows} rows and {self.table.nb_columns} columns.
 The variable named 'output_path' contains the absolute path of the output png file destination. Don't use the show method.
 {context.code_rules}"""
 
-    def get_code_expected_output_types(self) -> Dict[str, Any]:
+    def get_code_expected_output_types(self) -> dict[str, Any]:
         return {}
 
-    def get_available_package_names(self) -> List[str]:
+    def get_available_package_names(self) -> list[str]:
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.MATPLOTLIB]
 
     def build_code_inputs(self) -> dict:
@@ -54,7 +54,7 @@ The variable named 'output_path' contains the absolute path of the output png fi
         return {"source": self.table.get_data(), "output_path": output_path}
 
     def build_output(self, code_outputs: dict) -> File:
-        output_path = code_outputs.get("output_path", None)
+        output_path = code_outputs.get("output_path")
 
         if output_path is None:
             raise Exception("The code did not generate any file")

@@ -1,5 +1,6 @@
-from gws_core.scenario.scenario import Scenario
 from peewee import ForeignKeyField
+
+from gws_core.scenario.scenario import Scenario
 
 from .shared_entity_info import SharedEntityInfo
 

@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, cast
+from typing import Literal, cast
 
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
 from gws_core.impl.openai.open_ai_types import AiChatMessage, OpenAiChatDict, OpenAiChatMessage
@@ -11,9 +11,9 @@ class OpenAiChat:
     :rtype: _type_
     """
 
-    _messages: List[AiChatMessage]
+    _messages: list[AiChatMessage]
 
-    def __init__(self, system_prompt: str = None, messages: List[AiChatMessage] = None):
+    def __init__(self, system_prompt: str = None, messages: list[AiChatMessage] = None):
         self._messages = []
         if messages:
             self._messages.extend(messages)
@@ -37,7 +37,7 @@ class OpenAiChat:
     def add_user_message(self, content: str) -> None:
         self._add_message("user", content)
 
-    def get_last_assistant_message(self, extract_code: bool) -> Optional[str]:
+    def get_last_assistant_message(self, extract_code: bool) -> str | None:
         for message in reversed(self._messages):
             if message.role == "assistant":
                 response = message.content
@@ -48,16 +48,16 @@ class OpenAiChat:
 
         return None
 
-    def export_gpt_messages(self) -> List[OpenAiChatMessage]:
+    def export_gpt_messages(self) -> list[OpenAiChatMessage]:
         # return messages in the format expected by GPT
         return [{"role": message.role, "content": message.content} for message in self._messages]
 
-    def get_last_message(self) -> Optional[AiChatMessage]:
+    def get_last_message(self) -> AiChatMessage | None:
         if len(self._messages) == 0:
             return None
         return self._messages[-1]
 
-    def get_messages(self) -> List[AiChatMessage]:
+    def get_messages(self) -> list[AiChatMessage]:
         return self._messages
 
     def last_message_is_user(self) -> bool:
@@ -76,7 +76,7 @@ class OpenAiChat:
     def has_system_prompt(self) -> bool:
         return len(self._messages) > 0 and self._messages[0].role == "system"
 
-    def get_system_prompt(self) -> Optional[str]:
+    def get_system_prompt(self) -> str | None:
         if self.has_system_prompt():
             return self._messages[0].content
         return None

@@ -1,10 +1,9 @@
-from pandas import DataFrame
-
 from gws_core import BaseTestCase, PyAgent, Table, TaskRunner
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import IntParam
+from pandas import DataFrame
 
 
 # test_py_agent

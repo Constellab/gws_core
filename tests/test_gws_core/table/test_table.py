@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table
 from gws_core.core.utils.utils import Utils
+from pandas import DataFrame
 
 
 # test_table

@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.core.db.version import Version
 
@@ -11,7 +11,7 @@ class BrickHelper:
     GWS_CORE = "gws_core"
 
     @classmethod
-    def get_all_bricks(cls) -> Dict[str, BrickInfo]:
+    def get_all_bricks(cls) -> dict[str, BrickInfo]:
         """Returns the info of all the bricks used by the Application"""
         return Settings.get_instance().get_bricks()
 
@@ -26,11 +26,11 @@ class BrickHelper:
         module = inspect.getmodule(obj)
         if module is None:
             raise Exception(f"Can't find python module of object {obj}")
-        modules: List[str] = module.__name__.split(".")
+        modules: list[str] = module.__name__.split(".")
         return modules[0]
 
     @classmethod
-    def get_brick_info(cls, obj: Any) -> Optional[BrickInfo]:
+    def get_brick_info(cls, obj: Any) -> BrickInfo | None:
         """Methode to return a brick.
         If object, retrieve the brick of the object
         If string, retrieve the brick of name
@@ -96,9 +96,9 @@ class BrickHelper:
         return Version(brick_info.version)
 
     @classmethod
-    def get_all_brick_versions(cls) -> List[BrickVersion]:
+    def get_all_brick_versions(cls) -> list[BrickVersion]:
         bricks = cls.get_all_bricks()
-        brick_versions: List[BrickVersion] = []
+        brick_versions: list[BrickVersion] = []
 
         for brick in bricks.values():
             # ignore app brick

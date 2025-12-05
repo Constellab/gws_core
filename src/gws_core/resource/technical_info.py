@@ -1,25 +1,24 @@
-from typing import Dict, List, Optional, Union
 
 from .r_field.serializable_r_field import SerializableObjectJson
 
 
 class TechnicalInfo:
     key: str
-    value: Union[str, float, int, bool]
-    short_description: Optional[str]
+    value: str | float | int | bool
+    short_description: str | None
 
     def __init__(
-        self, key: str, value: Union[str, float, int, bool], short_description: str = None
+        self, key: str, value: str | float | int | bool, short_description: str = None
     ) -> None:
         self.key = key
         self.value = value
         self.short_description = short_description
 
-    def to_json(self) -> Dict[str, str]:
+    def to_json(self) -> dict[str, str]:
         return {"key": self.key, "value": self.value, "short_description": self.short_description}
 
     @classmethod
-    def from_json(cls, json_data: Dict[str, str]) -> "TechnicalInfo":
+    def from_json(cls, json_data: dict[str, str]) -> "TechnicalInfo":
         return TechnicalInfo(
             key=json_data["key"],
             value=json_data["value"],
@@ -28,7 +27,7 @@ class TechnicalInfo:
 
 
 class TechnicalInfoDict(SerializableObjectJson):
-    _technical_info: Dict[str, TechnicalInfo]
+    _technical_info: dict[str, TechnicalInfo]
 
     def __init__(self):
         self._technical_info = {}
@@ -41,17 +40,17 @@ class TechnicalInfoDict(SerializableObjectJson):
             return None
         return self._technical_info[key]
 
-    def get_all(self) -> Dict[str, TechnicalInfo]:
+    def get_all(self) -> dict[str, TechnicalInfo]:
         return self._technical_info
 
-    def serialize(self) -> List[Dict[str, str]]:
+    def serialize(self) -> list[dict[str, str]]:
         return [technical_info.to_json() for technical_info in self._technical_info.values()]
 
     def is_empty(self) -> bool:
         return len(self._technical_info) == 0
 
     @classmethod
-    def deserialize(cls, json_data: List[Dict[str, str]]) -> "TechnicalInfoDict":
+    def deserialize(cls, json_data: list[dict[str, str]]) -> "TechnicalInfoDict":
         technical_info_dict = TechnicalInfoDict()
         for technical_info_json in json_data:
             technical_info_dict.add(TechnicalInfo.from_json(technical_info_json))

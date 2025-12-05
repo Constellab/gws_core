@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import streamlit as st
 
@@ -15,8 +15,8 @@ class StreamlitResourceSelect:
     """
 
     _streamlit_component_loader = StreamlitComponentLoader("select-resource")
-    filters: Dict[str, Any] = {}
-    column_tags_filter_keys: List[str] = []
+    filters: dict[str, Any] = {}
+    column_tags_filter_keys: list[str] = []
 
     def __init__(self):
         """Initialize the StreamlitResourceSelect component."""
@@ -53,7 +53,7 @@ class StreamlitResourceSelect:
         placeholder: str = "Search for resource",
         key="resource-select",
         defaut_resource: ResourceModel = None,
-    ) -> Optional[ResourceModel]:
+    ) -> ResourceModel | None:
         """Create a search box to select a resource.
 
         :param placeholder: Placeholder text shown within the component for empty searches, defaults to 'Search for resource'

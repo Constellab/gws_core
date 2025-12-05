@@ -1,4 +1,3 @@
-from typing import List
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
@@ -20,7 +19,7 @@ class TestTableStackedBarPlotView(TestCase):
         # first : y = sepal_length
         # second :  y = petal_length
         # third :  y = petal_width
-        series: List[Serie1d] = [
+        series: list[Serie1d] = [
             {"name": "first", "y": {"type": "columns", "selection": ["sepal_length"]}},
             {"name": "second", "y": {"type": "columns", "selection": ["petal_length"]}},
             {"name": "third", "y": {"type": "columns", "selection": ["petal_width"]}},

@@ -1,7 +1,10 @@
 import os
 import traceback
 from abc import abstractmethod
-from typing import Callable, Type, final
+from collections.abc import Callable
+from typing import final
+
+from typing_extensions import TypedDict
 
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
@@ -10,7 +13,6 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
-from typing_extensions import TypedDict
 
 from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
@@ -28,14 +30,14 @@ EXPORT_TO_PATH_META_DATA_ATTRIBUTE = "_import_from_path_meta_data"
 
 class ExportToPathMetaData(TypedDict):
     specs: ConfigSpecs
-    fs_node_type: Type[File]
+    fs_node_type: type[File]
     inherit_specs: bool
 
 
 def exporter_decorator(
     unique_name: str,
-    source_type: Type[Resource],
-    target_type: Type[File] = File,
+    source_type: type[Resource],
+    target_type: type[File] = File,
     human_name: str = None,
     short_description: str = None,
     hide: bool = False,
@@ -72,7 +74,7 @@ def exporter_decorator(
     :rtype: Callable
     """
 
-    def decorator(task_class: Type[ResourceExporter]):
+    def decorator(task_class: type[ResourceExporter]):
         try:
             if not Utils.issubclass(task_class, ResourceExporter):
                 BrickService.log_brick_error(
@@ -139,7 +141,7 @@ class ResourceExporter(Converter):
     config_specs = ConfigSpecs({})
 
     @final
-    def convert(self, source: Resource, params: ConfigParams, target_type: Type[Resource]) -> File:
+    def convert(self, source: Resource, params: ConfigParams, target_type: type[Resource]) -> File:
         # Create a new temp_dir to create the file here
         temp_dir: str = self.create_tmp_dir()
 
@@ -172,7 +174,7 @@ class ResourceExporter(Converter):
 
     @abstractmethod
     def export_to_path(
-        self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]
+        self, source: Resource, dest_dir: str, params: ConfigParams, target_type: type[FSNode]
     ) -> FSNode:
         """Override this method to generate a fs_node (File or Folder) from the resource. If the result is a folder,
         it will be automatically zipped.

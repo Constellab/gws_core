@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from typing_extensions import TypedDict
 
@@ -11,4 +11,4 @@ class TransformerDict(TypedDict):
     """
 
     typing_name: str
-    config_values: Dict[str, Any]
+    config_values: dict[str, Any]

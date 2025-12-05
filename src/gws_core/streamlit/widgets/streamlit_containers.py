@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 import streamlit as st
 
@@ -98,7 +98,7 @@ class StreamlitContainers:
     def columns_with_fit_content(
         cls,
         key: str,
-        cols: List[int | Literal["fit-content"]],
+        cols: list[int | Literal["fit-content"]],
         vertical_align_items: FlexAlignItems = "start",
         additional_style: str = None,
     ):
@@ -219,7 +219,7 @@ class StreamlitContainers:
     def grid_container(
         cls,
         nb_columns: int,
-        cells: List[StreamlitGridCell],
+        cells: list[StreamlitGridCell],
         key: str,
         row_height: str = "auto",
         gap: str = None,

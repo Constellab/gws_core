@@ -1,4 +1,4 @@
-from typing import Any, List, Literal
+from typing import Any, Literal
 
 from numpy import NaN
 from pandas import DataFrame, concat, isna
@@ -21,7 +21,7 @@ class TableConcatHelper:
     @classmethod
     def concat_table_rows(
         cls,
-        tables: List[Table],
+        tables: list[Table],
         column_tags_option: TableConcatOppositeTagOption = "ignore",
         fill_nan: Any = NaN,
     ) -> Table:
@@ -46,8 +46,8 @@ class TableConcatHelper:
         """
 
         concat_df: DataFrame = None
-        row_tags: List[dict] = None
-        column_tags: List[dict] = None
+        row_tags: list[dict] = None
+        column_tags: list[dict] = None
 
         for table in tables:
             if concat_df is None:
@@ -91,7 +91,7 @@ class TableConcatHelper:
     @classmethod
     def concat_table_columns(
         cls,
-        tables: List[Table],
+        tables: list[Table],
         row_tags_option: TableConcatOppositeTagOption = "ignore",
         fill_nan: Any = NaN,
     ) -> Table:
@@ -113,7 +113,7 @@ class TableConcatHelper:
         :rtype: Table
         """
 
-        t_tables: List[Table] = []
+        t_tables: list[Table] = []
         for table in tables:
             t_tables.append(table.transpose())
         result = cls.concat_table_rows(t_tables, row_tags_option, fill_nan)
@@ -121,9 +121,9 @@ class TableConcatHelper:
         return result.transpose(infer_objects=True)
 
     @classmethod
-    def _get_column_tags(cls, concat_df: DataFrame, table: Table) -> List[dict]:
+    def _get_column_tags(cls, concat_df: DataFrame, table: Table) -> list[dict]:
         """For each concat_df columns take the tag from the table with same column name"""
-        tag_list: List[dict] = []
+        tag_list: list[dict] = []
         for column_name in concat_df:
             if table.column_exists(column_name):
                 tag_list.append(table.get_column_tags_by_name(column_name))
@@ -134,13 +134,13 @@ class TableConcatHelper:
     @classmethod
     def _merge_column_tags(
         cls, concat_df: DataFrame, main_table: Table, second_table: Table
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         For each concat_df columns merge the tags from the main_table and second_table (with same column name),
         tags from main_table are preferred
         """
 
-        tag_list: List[dict] = []
+        tag_list: list[dict] = []
         for column_name in concat_df:
             tags = {}
 

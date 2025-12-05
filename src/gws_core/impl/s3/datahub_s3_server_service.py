@@ -1,7 +1,9 @@
+from collections.abc import ByteString
 from os import path
-from typing import ByteString, Dict, List, Optional
 
 from fastapi.responses import FileResponse
+from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef, TagTypeDef
+
 from gws_core.core.classes.search_builder import SearchOperator
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
@@ -25,7 +27,6 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
-from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef, ObjectTypeDef, TagTypeDef
 
 
 class DataHubS3ServerService(AbstractS3Service):
@@ -100,7 +101,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
     @GwsCoreDbManager.transaction()
     def upload_object(
-        self, key: str, data: ByteString, tags: Dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
     ) -> None:
         """Upload an object to the bucket"""
 
@@ -112,7 +113,7 @@ class DataHubS3ServerService(AbstractS3Service):
         else:
             self._create_object(key, data, tags)
 
-    def _create_object(self, key: str, data: ByteString, tags: Dict[str, str] = None) -> None:
+    def _create_object(self, key: str, data: ByteString, tags: dict[str, str] = None) -> None:
         with S3ServerContext(self.bucket_name, key):
             self._get_and_check_folder_bucket(tags.get(self.FOLDER_TAG_NAME) if tags else None)
 
@@ -177,7 +178,7 @@ class DataHubS3ServerService(AbstractS3Service):
                     )
 
     def _update_object(
-        self, key: str, data: ByteString, resource_model: ResourceModel, tags: Dict[str, str] = None
+        self, key: str, data: ByteString, resource_model: ResourceModel, tags: dict[str, str] = None
     ) -> None:
         with S3ServerContext(self.bucket_name, key):
             if not resource_model.fs_node_model:
@@ -226,14 +227,14 @@ class DataHubS3ServerService(AbstractS3Service):
                 resource_id=resource.id, allow_s3_folder_storage=True
             )
 
-    def delete_objects(self, keys: List[str]) -> None:
+    def delete_objects(self, keys: list[str]) -> None:
         """Delete multiple objects, ignore if the object does not exist
 
         :param keys: _description_
         :type keys: List[str]
         """
 
-        resources: List[ResourceModel] = []
+        resources: list[ResourceModel] = []
         for key in keys:
             resource = self._get_object(key)
             if resource is None:
@@ -272,7 +273,7 @@ class DataHubS3ServerService(AbstractS3Service):
             "Last-Modified": DateHelper.to_rfc7231_str(resource.last_modified_at),
         }
 
-    def _get_object(self, key: str) -> Optional[ResourceModel]:
+    def _get_object(self, key: str) -> ResourceModel | None:
         """Get an object from the bucket"""
         search_builder = self._get_s3_expression_builder(key=key)
         return search_builder.build_search().first()
@@ -380,7 +381,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
         tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource.id).get_tags()
 
-        s3_tags: List[TagTypeDef] = []
+        s3_tags: list[TagTypeDef] = []
         for tag in tags:
             s3_tags.append({"Key": tag.tag_key, "Value": tag.tag_value})
 
@@ -413,7 +414,7 @@ class DataHubS3ServerService(AbstractS3Service):
         with S3ServerContext(self.bucket_name, key):
             self.update_object_tags_dict(key, tags_dict)
 
-    def update_object_tags_dict(self, key: str, tags: Dict[str, str]) -> None:
+    def update_object_tags_dict(self, key: str, tags: dict[str, str]) -> None:
         """Update the tags of an object"""
         resource = self._get_object_and_check(key)
         entity_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource.id)
@@ -434,7 +435,7 @@ class DataHubS3ServerService(AbstractS3Service):
         resource.save()
 
     def _update_resource_from_tags(
-        self, resource: ResourceModel, tags: Dict[str, str]
+        self, resource: ResourceModel, tags: dict[str, str]
     ) -> ResourceModel:
         """Update a resource from the tags"""
         if tags and tags.get(self.FOLDER_TAG_NAME):
@@ -446,7 +447,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
         return resource
 
-    def get_additional_tags(self, tags: Dict[str, str]) -> Dict[str, str]:
+    def get_additional_tags(self, tags: dict[str, str]) -> dict[str, str]:
         """Return the additional tags to save on the object, it skips the predefined tags"""
         cleaned_tags = {}
         for key, value in tags.items():
@@ -484,7 +485,7 @@ class DataHubS3ServerService(AbstractS3Service):
         """Upload a part for multipart upload and return ETag"""
         raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
 
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> str:
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: list[dict]) -> str:
         """Complete multipart upload and return ETag"""
         raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
 

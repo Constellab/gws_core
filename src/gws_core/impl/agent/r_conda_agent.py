@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.config.param.code_param.r_code_param import RCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
@@ -56,7 +55,7 @@ class RCondaAgent(EnvAgent):
         return ["Rscript", code_file_path]
 
     def _get_init_code(
-        self, source_paths_var_name: str, source_paths: List[str], target_paths_var_name: str
+        self, source_paths_var_name: str, source_paths: list[str], target_paths_var_name: str
     ) -> str:
         source_value = [f"'{p}'" for p in source_paths]
         source_value_str = f"c({','.join(source_value)})"

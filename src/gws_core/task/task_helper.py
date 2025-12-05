@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.core.utils.logger import Logger
 
@@ -7,7 +6,7 @@ from .task import Task
 
 
 class TaskHelper:
-    _observers: List[Task] = None
+    _observers: list[Task] = None
 
     def __init__(self):
         Logger.info(

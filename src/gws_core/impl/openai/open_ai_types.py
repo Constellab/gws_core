@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import Literal
 
 import plotly.graph_objs as go
 from pandas import DataFrame
@@ -25,12 +25,12 @@ class OpenAiChatDict(TypedDict):
     :type TypedDict: _type_
     """
 
-    messages: List[OpenAiChatMessage]
+    messages: list[OpenAiChatMessage]
 
 
 class AiChatMessageAdditionalInfo(BaseModelDTO):
-    dataframes: Optional[List[DataFrame]] = None
-    plots: Optional[List[go.Figure]] = None
+    dataframes: list[DataFrame] | None = None
+    plots: list[go.Figure] | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -43,8 +43,8 @@ class AiChatMessage(BaseModelDTO):
 
     role: Literal["system", "user", "assistant"]
     content: str
-    user_id: Optional[str] = None
-    additional_info: Optional[AiChatMessageAdditionalInfo] = None
+    user_id: str | None = None
+    additional_info: AiChatMessageAdditionalInfo | None = None
 
     def is_user(self) -> bool:
         return self.role == "user"
@@ -63,12 +63,12 @@ class AiChatMessage(BaseModelDTO):
             self.additional_info.dataframes = []
         self.additional_info.dataframes.append(dataframe)
 
-    def get_plots(self) -> List[go.Figure] | None:
+    def get_plots(self) -> list[go.Figure] | None:
         if self.additional_info is None:
             return None
         return self.additional_info.plots
 
-    def get_dataframes(self) -> List[DataFrame] | None:
+    def get_dataframes(self) -> list[DataFrame] | None:
         if self.additional_info is None:
             return None
         return self.additional_info.dataframes

@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -20,58 +20,58 @@ class NetworkEnzymeDTO(BaseModelDTO):
 
 
 class NetworkReactionLayoutDTO(BaseModelDTO):
-    x: Optional[float]
-    y: Optional[float]
+    x: float | None
+    y: float | None
 
 
 class NetworkReactionDTO(BaseModelDTO):
     id: str
     name: str
     level: Literal[1, 2, 3]
-    metabolites: Dict[str, int]
-    lower_bound: Optional[float]
-    upper_bound: Optional[float]
-    rhea_id: Optional[str]
-    enzymes: List[NetworkEnzymeDTO]
-    data: Optional[dict]
-    layout: Optional[NetworkReactionLayoutDTO]
+    metabolites: dict[str, int]
+    lower_bound: float | None
+    upper_bound: float | None
+    rhea_id: str | None
+    enzymes: list[NetworkEnzymeDTO]
+    data: dict | None
+    layout: NetworkReactionLayoutDTO | None
 
 
 class CompoundLayoutClusterDTO(BaseModelDTO):
     id: str
     name: str
     level: Literal[1, 2, 3]
-    x: Optional[float]
-    y: Optional[float]
-    alt: Optional[str]
-    patwhay: Optional[str]
+    x: float | None
+    y: float | None
+    alt: str | None
+    patwhay: str | None
 
 
 class CompoundLayoutDTO(BaseModelDTO):
-    clusters: Dict[str, CompoundLayoutClusterDTO]
+    clusters: dict[str, CompoundLayoutClusterDTO]
 
 
 class NetworkMetaboliteDTO(BaseModelDTO):
     id: str
     name: str
     level: Literal[1, 2, 3]
-    compartment: Optional[str]
-    charge: Optional[float]
-    mass: Optional[float]
-    formula: Optional[str]
-    chebi_id: Optional[str]
-    kegg_id: Optional[str]
-    layout: Optional[CompoundLayoutDTO]
+    compartment: str | None
+    charge: float | None
+    mass: float | None
+    formula: str | None
+    chebi_id: str | None
+    kegg_id: str | None
+    layout: CompoundLayoutDTO | None
     type: Literal["default", "cofactor", "residue"]
 
-    alt_chebi_ids: Optional[list]
-    monoisotopic_mass: Optional[float]
-    inchi: Optional[str]
-    inchikey: Optional[str]
+    alt_chebi_ids: list | None
+    monoisotopic_mass: float | None
+    inchi: str | None
+    inchikey: str | None
 
 
 class NetworkDTO(BaseModelDTO):
-    name: Optional[str]
-    metabolites: List[NetworkMetaboliteDTO]
-    reactions: List[NetworkReactionDTO]
-    compartments: List[NetworkCompartmentDTO]
+    name: str | None
+    metabolites: list[NetworkMetaboliteDTO]
+    reactions: list[NetworkReactionDTO]
+    compartments: list[NetworkCompartmentDTO]

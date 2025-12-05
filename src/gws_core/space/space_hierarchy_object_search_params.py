@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List
 
 from gws_core.core.classes.search_builder import SearchOperator, SearchParams
 from gws_core.space.space_dto import SpaceHierarchyObjectType
@@ -33,7 +32,7 @@ class SpaceHierarchyObjectSearchParams(SearchParams):
         """Add a filter to search for specific tag"""
         self.add_filter_criteria("tags", operator, {"key": tag.key, "value": tag.value})
 
-    def add_tags_filter(self, operator: SearchOperator, tags: List[Tag]) -> None:
+    def add_tags_filter(self, operator: SearchOperator, tags: list[Tag]) -> None:
         """Add a filter to search for specific tags"""
         self.add_filter_criteria(
             "tags", operator, [{"key": tag.key, "value": tag.value} for tag in tags]

@@ -1,7 +1,6 @@
 import json
 from abc import abstractmethod
 from datetime import datetime
-from typing import Type
 
 from peewee import DateTimeField, TextField
 
@@ -77,9 +76,9 @@ class BaseDTOField(TextField):
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"
     field_type = JSON_FIELD_TEXT_TYPE
 
-    dto_type: Type[BaseModelDTO] = None
+    dto_type: type[BaseModelDTO] = None
 
-    def __init__(self, dto_type: Type[BaseModelDTO], *args, **kwargs):
+    def __init__(self, dto_type: type[BaseModelDTO], *args, **kwargs):
         self.dto_type = dto_type
         super().__init__(*args, **kwargs)
 
@@ -117,9 +116,9 @@ class SerializableDBField(TextField):
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"
     field_type = JSON_FIELD_TEXT_TYPE
 
-    object_type: Type[SerializableObject] = None
+    object_type: type[SerializableObject] = None
 
-    def __init__(self, object_type: Type[SerializableObject], *args, **kwargs):
+    def __init__(self, object_type: type[SerializableObject], *args, **kwargs):
         self.object_type = object_type
         super().__init__(*args, **kwargs)
 

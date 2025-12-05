@@ -1,4 +1,3 @@
-from typing import Set
 
 from gws_core import (
     BaseTestCase,
@@ -146,7 +145,7 @@ class TestProtocol(BaseTestCase):
         self.assertEqual(error_processes[0], p2)
 
     def _check_process_set(
-        self, processes: Set[ProcessModel], expected_processes: Set[str]
+        self, processes: set[ProcessModel], expected_processes: set[str]
     ) -> None:
         self.assertEqual(len(processes), len(expected_processes))
         for process in processes:

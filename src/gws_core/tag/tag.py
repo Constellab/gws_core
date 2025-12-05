@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Union
 
 from fastapi.encoders import jsonable_encoder
 
@@ -19,7 +19,7 @@ class TagOrigin:
     origin_type: TagOriginType
     origin_id: str
     # provided if the origin is an external lab
-    external_lab_origin_id: Optional[str] = None
+    external_lab_origin_id: str | None = None
 
     def __init__(
         self, origin_type: TagOriginType, origin_id: str, external_lab_origin_id: str = None
@@ -72,7 +72,7 @@ class TagOrigins:
     :rtype: _type_
     """
 
-    _origins: List[TagOrigin]
+    _origins: list[TagOrigin]
 
     def __init__(self, origin_type: TagOriginType = None, origin_id: str = None) -> None:
         self._origins = []
@@ -100,7 +100,7 @@ class TagOrigins:
 
         return True
 
-    def add_origins(self, origins: List[TagOrigin]) -> bool:
+    def add_origins(self, origins: list[TagOrigin]) -> bool:
         """Add origins to the tag. Return true if the current origins have been modified"""
 
         origin_modified = False
@@ -123,7 +123,7 @@ class TagOrigins:
             for origin in self._origins
         )
 
-    def get_origins(self) -> List[TagOrigin]:
+    def get_origins(self) -> list[TagOrigin]:
         return self._origins
 
     def count_origins(self) -> int:
@@ -144,10 +144,10 @@ class TagOrigins:
             if origin.external_lab_origin_id is None:
                 origin.external_lab_origin_id = external_lab_origin_id
 
-    def to_json(self) -> List[dict]:
+    def to_json(self) -> list[dict]:
         return jsonable_encoder([origin for origin in self.to_dto()])
 
-    def to_dto(self) -> List[TagOriginDTO]:
+    def to_dto(self) -> list[TagOriginDTO]:
         return [origin.to_dto() for origin in self._origins]
 
     def merge_origins(self, origins: "TagOrigins") -> bool:
@@ -164,7 +164,7 @@ class TagOrigins:
             self.remove_origin(origin.origin_type, origin.origin_id)
 
     @classmethod
-    def from_dto(cls, dto: List[TagOriginDTO]) -> "TagOrigins":
+    def from_dto(cls, dto: list[TagOriginDTO]) -> "TagOrigins":
         tag_origins = TagOrigins()
 
         if dto:
@@ -195,7 +195,7 @@ class Tag:
     is_community_tag_key: bool = None
     is_community_tag_value: bool = None
 
-    additional_info: Optional[dict] = None
+    additional_info: dict | None = None
 
     origins: TagOrigins = None
 
@@ -213,7 +213,7 @@ class Tag:
         auto_parse: bool = False,
         is_community_tag_key: bool = False,
         is_community_tag_value: bool = False,
-        additional_info: Dict = None,
+        additional_info: dict = None,
     ) -> None:
         """Create a new tag
 

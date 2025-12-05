@@ -1,6 +1,3 @@
-from numpy import NaN
-from pandas.core.frame import DataFrame
-
 from gws_core import (
     BaseTestCase,
     BoolRField,
@@ -18,6 +15,8 @@ from gws_core import (
 )
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
+from numpy import NaN
+from pandas.core.frame import DataFrame
 
 
 class TestJsonableObject(SerializableObjectJson):

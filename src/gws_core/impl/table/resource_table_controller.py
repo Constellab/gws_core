@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import Depends
 
@@ -12,9 +12,9 @@ from ...core_controller import core_app
 
 class CallChartTable(BaseModelDTO):
     table_view_name: str
-    table_config_values: Dict[str, Any]
+    table_config_values: dict[str, Any]
     chart_type: TableChart
-    chart_config_values: Dict[str, Any]
+    chart_config_values: dict[str, Any]
 
 
 @core_app.post(

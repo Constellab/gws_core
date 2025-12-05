@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table, TableAnnotatorHelper
 from gws_core.core.utils.utils import Utils
+from pandas import DataFrame
 
 
 # test_table_annotator

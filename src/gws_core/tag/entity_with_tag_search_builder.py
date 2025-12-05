@@ -1,4 +1,3 @@
-from typing import Type
 
 from peewee import Expression, Field
 
@@ -27,7 +26,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     entity_type: TagEntityType = None
 
     def __init__(
-        self, model_type: Type[Model], entity_type: TagEntityType, default_orders=None
+        self, model_type: type[Model], entity_type: TagEntityType, default_orders=None
     ) -> None:
         super().__init__(model_type, default_orders=default_orders)
         self.entity_type = entity_type
@@ -71,7 +70,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
 
             # value_format = tag_model.value_format
 
-        entity_alias: Type[EntityTag] = EntityTag.alias()
+        entity_alias: type[EntityTag] = EntityTag.alias()
         # TODO add support for CAST for Greater than integer for example
         # tag_value_field = self._get_tag_value_column_filter(entity_alias, value_format)
 
@@ -92,7 +91,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
 
     def add_tag_key_filter(self, tag_key: str) -> SearchBuilderType:
         """Add a tag key filter to the search builder"""
-        entity_alias: Type[EntityTag] = EntityTag.alias()
+        entity_alias: type[EntityTag] = EntityTag.alias()
         self.add_join(
             entity_alias,
             on=(
@@ -105,7 +104,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
         return self
 
     def _get_tag_value_column_filter(
-        self, entity_type: Type[EntityTag], value_format: TagValueFormat
+        self, entity_type: type[EntityTag], value_format: TagValueFormat
     ) -> Field:
         # return entity_type.tag_value
         if value_format == TagValueFormat.STRING:

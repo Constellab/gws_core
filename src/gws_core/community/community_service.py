@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import PageDTO
@@ -62,7 +62,7 @@ class CommunityService:
     @classmethod
     def get_community_available_agents(
         cls,
-        spaces_filter: List[str],
+        spaces_filter: list[str],
         title_filter: str,
         personal_only: bool,
         page: int,
@@ -120,7 +120,7 @@ class CommunityService:
     @classmethod
     def get_community_agent_and_check_rights(
         cls, agent_version_id: str
-    ) -> Optional[CommunityAgentDTO]:
+    ) -> CommunityAgentDTO | None:
         """
         Get a community agent by comunity agent version id and check if the user has the right to edit it, if not return None
         """
@@ -207,7 +207,7 @@ class CommunityService:
         return CommunityAgentVersionCreateResDTO.from_json(response.json())
 
     @classmethod
-    def send_process_run_stats(cls, run_stats: List[Dict]) -> None:
+    def send_process_run_stats(cls, run_stats: list[dict]) -> None:
         if cls.community_api_url is None:
             return None
         url = f"{cls.community_api_url}/run-stat-lab/new-stats"
@@ -233,7 +233,7 @@ class CommunityService:
             raise err
 
     @classmethod
-    def get_community_tag_key(cls, key: str) -> Optional[CommunityTagKeyDTO]:
+    def get_community_tag_key(cls, key: str) -> CommunityTagKeyDTO | None:
         """
         Get a community tag key by its technical name
         """
@@ -250,7 +250,7 @@ class CommunityService:
         return CommunityTagKeyDTO.from_json(response.json())
 
     @classmethod
-    def get_community_tag_value(cls, key: str, value_id: str) -> Optional[CommunityTagValueDTO]:
+    def get_community_tag_value(cls, key: str, value_id: str) -> CommunityTagValueDTO | None:
         """
         Get a community tag value by its key and value id
         """
@@ -269,7 +269,7 @@ class CommunityService:
     @classmethod
     def get_available_community_tags(
         cls,
-        spaces_filter: List[str],
+        spaces_filter: list[str],
         key_filter: str,
         label_filter: str,
         personal_only: bool,
@@ -367,7 +367,7 @@ class CommunityService:
         )
 
     @classmethod
-    def get_all_community_tag_values(cls, key: str) -> List[CommunityTagValueDTO]:
+    def get_all_community_tag_values(cls, key: str) -> list[CommunityTagValueDTO]:
         """
         Get all community tag values for a given key
         """
@@ -389,9 +389,9 @@ class CommunityService:
     def share_tag_to_community(
         cls,
         tag_key: CommunityTagKeyDTO,
-        tag_values: List[CommunityTagValueDTO],
+        tag_values: list[CommunityTagValueDTO],
         publish_mode: ShareTagMode,
-        space_selected: Optional[str] = None,
+        space_selected: str | None = None,
     ) -> CommunityTagKeyDTO:
         """
         Share a tag key and its values to the community
@@ -418,7 +418,7 @@ class CommunityService:
         return CommunityTagKeyDTO.from_json(response.json())
 
     @classmethod
-    def _get_request_header(cls) -> Dict[str, str]:
+    def _get_request_header(cls) -> dict[str, str]:
         """
         Return the header for a request to space, with Api key and User if exists
         """

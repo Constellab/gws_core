@@ -1,6 +1,5 @@
 """Home page for the Reflex showcase app."""
 
-from typing import Optional
 
 import reflex as rx
 from gws_reflex_main import ReflexMainState
@@ -24,7 +23,7 @@ class HomePageState(ReflexMainState):
         return resources[0].name if resources else "No resource"
 
     @rx.var
-    async def get_param_name(self) -> Optional[str]:
+    async def get_param_name(self) -> str | None:
         """
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
@@ -32,7 +31,7 @@ class HomePageState(ReflexMainState):
         return await self.get_param("param_name", "default_value")
 
     @rx.var
-    async def get_current_user_name(self) -> Optional[str]:
+    async def get_current_user_name(self) -> str | None:
         """Return the name of the current user, or None if no user is set."""
         user = await self.get_current_user()
         return user.email if user else None

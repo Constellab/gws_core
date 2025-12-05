@@ -1,4 +1,3 @@
-from typing import Type
 
 from pandas import DataFrame
 
@@ -8,7 +7,7 @@ from gws_core.resource.resource import Resource
 
 
 class TableNumberValidator(IOValidator):
-    resource_type: Type[Resource] = Table
+    resource_type: type[Resource] = Table
 
     def validate(self, resource: Table) -> None:
         dataframe: DataFrame = resource.get_data()

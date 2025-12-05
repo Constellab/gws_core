@@ -1,4 +1,3 @@
-from typing import Optional
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -61,5 +60,5 @@ class InputTask(Task):
         return {"resource": resource_model.get_resource()}
 
     @staticmethod
-    def get_resource_id_from_config(config: ConfigParamsDict) -> Optional[str]:
+    def get_resource_id_from_config(config: ConfigParamsDict) -> str | None:
         return config.get(InputTask.config_name, None)

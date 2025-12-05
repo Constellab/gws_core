@@ -1,8 +1,4 @@
 from threading import Thread
-from time import sleep
-from typing import Optional
-
-from peewee import ModelSelect
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -38,7 +34,7 @@ class ActivityService:
         object_type: ActivityObjectType,
         object_id: str,
         user: User = None,
-    ) -> Optional[Activity]:
+    ) -> Activity | None:
         try:
             return cls.add(activity_type, object_type, object_id, user)
         except Exception as err:
@@ -80,7 +76,7 @@ class ActivityService:
         thread.start()
 
     @classmethod
-    def get_last_activity(cls) -> Optional[Activity]:
+    def get_last_activity(cls) -> Activity | None:
         return Activity.get_last_activity()
 
     @classmethod

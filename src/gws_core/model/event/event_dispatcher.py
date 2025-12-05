@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from queue import Empty, Queue
 from threading import Lock, Thread
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from gws_core.core.db.thread_db import ThreadDb
 from gws_core.core.utils.logger import Logger
@@ -35,9 +35,9 @@ class EventDispatcher:
         dispatcher.unregister(listener)
     """
 
-    _instance: "EventDispatcher" = None
+    _instance: EventDispatcher = None
     _lock: Lock = Lock()
-    _listeners: List[EventListener] = []
+    _listeners: list[EventListener] = []
     _listeners_lock: Lock = Lock()
     _event_queue: Queue = None
     _worker_thread: Thread = None
@@ -55,7 +55,7 @@ class EventDispatcher:
         Logger.debug("EventDispatcher worker thread started")
 
     @classmethod
-    def get_instance(cls) -> "EventDispatcher":
+    def get_instance(cls) -> EventDispatcher:
         """Get the singleton instance of the EventDispatcher.
 
         :return: The EventDispatcher instance
@@ -134,7 +134,7 @@ class EventDispatcher:
 
         self._notify_listeners(event, listeners)
 
-    def _get_all_listeners(self) -> List[EventListener]:
+    def _get_all_listeners(self) -> list[EventListener]:
         """Get all registered listeners.
 
         :return: List of all listeners
@@ -165,7 +165,7 @@ class EventDispatcher:
 
         Logger.debug("EventDispatcher worker thread stopped")
 
-    def _notify_listeners(self, event: Event, listeners: List[EventListener]) -> None:
+    def _notify_listeners(self, event: Event, listeners: list[EventListener]) -> None:
         """Notify all listeners of an event.
 
         This method is called in a background thread. Each listener is called and errors are caught and logged.
@@ -188,7 +188,7 @@ class EventDispatcher:
                     exception=e,
                 )
 
-    def get_registered_listeners(self) -> List[EventListener]:
+    def get_registered_listeners(self) -> list[EventListener]:
         """Get all registered listeners.
 
         :return: List of registered listeners

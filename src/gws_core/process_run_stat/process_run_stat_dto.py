@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, Literal, Optional
+from typing import Literal
 
 from gws_core.core.model.model_dto import ModelDTO
 
@@ -11,15 +11,15 @@ ProcessRunStatStatus = Literal[
 
 class ProcessRunStatDTO(ModelDTO):
     process_typing_name: str
-    community_agent_version_id: Optional[str]
+    community_agent_version_id: str | None
     status: ProcessRunStatStatus
-    error_info: Optional[Dict]
+    error_info: dict | None
     started_at: datetime
     ended_at: datetime
     elapsed_time: float
     brick_version_on_run: str
     brick_version_on_create: str
-    config_value: Dict
+    config_value: dict
     lab_env: ProcessRunStatLabEnv
     executed_by: str
     sync_with_community: bool

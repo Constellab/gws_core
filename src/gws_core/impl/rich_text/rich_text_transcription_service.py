@@ -1,7 +1,6 @@
 import os
 import shutil
 from json import loads
-from typing import List
 
 from fastapi import UploadFile
 
@@ -193,7 +192,7 @@ The generated JSON must validate this schema.
 
         Logger.debug(f"[RichTextTranscriptionService] Transcription dict: {transcription_dict}")
 
-        transcriptions: List[TranscriptionOutput] = TranscriptionOutput.from_json_list(
+        transcriptions: list[TranscriptionOutput] = TranscriptionOutput.from_json_list(
             transcription_dict
         )
 
@@ -201,7 +200,7 @@ The generated JSON must validate this schema.
         return cls._convert_transcriptions_to_rich_text(transcriptions)
 
     @classmethod
-    def apply_command_in_transcription(cls, transcription_text: str) -> List[TranscriptionOutput]:
+    def apply_command_in_transcription(cls, transcription_text: str) -> list[TranscriptionOutput]:
         """Convert a text transcription with commands to a rich text
 
         :param text: text transcription
@@ -220,7 +219,7 @@ The generated JSON must validate this schema.
 
     @classmethod
     def _convert_transcriptions_to_rich_text(
-        cls, transcriptions: List[TranscriptionOutput]
+        cls, transcriptions: list[TranscriptionOutput]
     ) -> RichText:
         """Convert a text to a rich text block
 

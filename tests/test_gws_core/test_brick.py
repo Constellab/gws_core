@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
@@ -10,7 +9,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 class TestBrick(BaseTestCase):
     def test_get_all_bricks(self):
-        bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
+        bricks_info: dict[str, BrickInfo] = BrickHelper.get_all_bricks()
 
         self.assertTrue(len(bricks_info) > 0)
         self.assertTrue("gws_core" in bricks_info)
@@ -23,7 +22,7 @@ class TestBrick(BaseTestCase):
         self.assertEqual(brick_name, "gws_core")
 
     def test_brick_models(self):
-        brick_models: List[BrickModel] = BrickService.get_all_brick_models()
+        brick_models: list[BrickModel] = BrickService.get_all_brick_models()
         self.assertTrue(len(brick_models) > 0)
 
         self.assertIsNotNone([brick_model.to_dto() for brick_model in brick_models])

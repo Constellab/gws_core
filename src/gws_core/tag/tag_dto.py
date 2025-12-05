@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
@@ -42,22 +42,22 @@ class TagValueFormat(Enum):
 class TagOriginDTO(BaseModelDTO):
     origin_type: TagOriginType
     origin_id: str
-    external_lab_origin_id: Optional[str] = None
+    external_lab_origin_id: str | None = None
 
 
 class TagDTO(BaseModelDTO):
     key: str
     value: str
-    is_propagable: Optional[bool] = None
-    origins: Optional[List[TagOriginDTO]] = None
-    value_format: Optional[TagValueFormat] = TagValueFormat.STRING
-    is_community_tag_key: Optional[bool] = None
-    is_community_tag_value: Optional[bool] = None
-    additional_info: Optional[Dict] = None
+    is_propagable: bool | None = None
+    origins: list[TagOriginDTO] | None = None
+    value_format: TagValueFormat | None = TagValueFormat.STRING
+    is_community_tag_key: bool | None = None
+    is_community_tag_value: bool | None = None
+    additional_info: dict | None = None
 
 
 class TagOriginDetailDTO(TagOriginDTO):
-    origin_object: Optional[str | UserDTO]
+    origin_object: str | UserDTO | None
 
 
 class EntityTagDTO(BaseModelDTO):
@@ -65,8 +65,8 @@ class EntityTagDTO(BaseModelDTO):
     key: str
     value: Any
     is_user_origin: bool
-    is_community_tag_key: Optional[bool] = None
-    label: Optional[str] = None
+    is_community_tag_key: bool | None = None
+    label: str | None = None
 
 
 class EntityTagFullDTO(EntityTagDTO):
@@ -78,14 +78,14 @@ class EntityTagFullDTO(EntityTagDTO):
 class NewTagDTO(BaseModelDTO):
     key: str
     value: str
-    is_community_tag_key: Optional[bool] = None
-    is_community_tag_value: Optional[bool] = None
-    additional_info: Optional[Dict] = None
+    is_community_tag_key: bool | None = None
+    is_community_tag_value: bool | None = None
+    additional_info: dict | None = None
 
 
 class ShareTagDTO(BaseModelDTO):
     publish_mode: ShareTagMode
-    space_selected: Optional[str] = None
+    space_selected: str | None = None
 
 
 class TagPropagationImpactDTO(BaseModelDTO):
@@ -96,8 +96,8 @@ class TagPropagationImpactDTO(BaseModelDTO):
     :type TypedDict: _type_
     """
 
-    tags: List[TagDTO]
-    impacted_entities: List[EntityNavGroupDTO]
+    tags: list[TagDTO]
+    impacted_entities: list[EntityNavGroupDTO]
 
 
 class TagKeyModelCreateDTO(BaseModelDTO):
@@ -108,21 +108,21 @@ class TagKeyModelCreateDTO(BaseModelDTO):
 class TagKeyModelDTO(ModelDTO):
     key: str
     value_format: TagValueFormat
-    label: Optional[str] = None
-    description: Optional[RichTextDTO] = None
-    deprecated: Optional[bool] = None
-    is_community_tag: Optional[bool] = None
-    additional_infos_specs: Optional[Dict] = None
+    label: str | None = None
+    description: RichTextDTO | None = None
+    deprecated: bool | None = None
+    is_community_tag: bool | None = None
+    additional_infos_specs: dict | None = None
 
 
 class TagValueModelDTO(ModelDTO):
     key: str
     value: Any
     value_format: TagValueFormat
-    is_community_tag_value: Optional[bool] = None
-    deprecated: Optional[bool] = None
-    short_description: Optional[str] = None
-    additional_infos: Optional[Dict] = None
+    is_community_tag_value: bool | None = None
+    deprecated: bool | None = None
+    short_description: str | None = None
+    additional_infos: dict | None = None
 
 
 class SaveTagModelResonseDTO(BaseModelDTO):
@@ -153,16 +153,16 @@ class TagValueNotSynchronizedFields(Enum):
 
 
 class TagValueNotSynchronizedFieldsDTO(BaseModelDTO):
-    old_value: Optional[TagValueModelDTO] = None
+    old_value: TagValueModelDTO | None = None
     new_value: TagValueModelDTO = None
-    not_synchronized_fields: List[TagValueNotSynchronizedFields] = []
+    not_synchronized_fields: list[TagValueNotSynchronizedFields] = []
 
 
 class TagNotSynchronizedDTO(BaseModelDTO):
     old_key: TagKeyModelDTO
-    new_key: Optional[TagKeyModelDTO] = None
-    not_synchronized_fields: Optional[List[TagKeyNotSynchronizedFields]] = []
-    not_synchronized_values: Optional[List[TagValueNotSynchronizedFieldsDTO]] = []
+    new_key: TagKeyModelDTO | None = None
+    not_synchronized_fields: list[TagKeyNotSynchronizedFields] | None = []
+    not_synchronized_values: list[TagValueNotSynchronizedFieldsDTO] | None = []
 
 
 class TagsNotSynchronizedDTO(BaseModelDTO):
@@ -170,12 +170,12 @@ class TagsNotSynchronizedDTO(BaseModelDTO):
     This is used to avoid sending these tags to the tag service when saving a tag.
     """
 
-    tag_keys_not_synchronized: List[TagNotSynchronizedDTO] = []
+    tag_keys_not_synchronized: list[TagNotSynchronizedDTO] = []
 
 
 class TagValueEditDTO(BaseModelDTO):
-    id: Optional[str] = None
+    id: str | None = None
     value: Any
-    short_description: Optional[str] = None
-    additional_infos: Optional[Dict] = None
+    short_description: str | None = None
+    additional_infos: dict | None = None
     tag_key: str

@@ -2,10 +2,8 @@ import inspect
 import os
 import re
 import sys
-from importlib import import_module
-from importlib.util import find_spec
 from json import dumps
-from typing import Any, Dict, List, Optional, Set, Tuple, Type, Union, get_args
+from typing import Any, get_args
 
 from numpy import double
 
@@ -22,13 +20,13 @@ class Utils:
         }
 
     @staticmethod
-    def walk_dir(path) -> Tuple[List[str], List[str]]:
-        dirs: List[str] = []
-        files: List[str] = []
+    def walk_dir(path) -> tuple[list[str], list[str]]:
+        dirs: list[str] = []
+        files: list[str] = []
         reg = re.compile(r"^[a-zA-Z].*\.py$")
 
         def is_valid_dir(d) -> bool:
-            return not d.startswith("_") and not "/_" in d
+            return not d.startswith("_") and "/_" not in d
 
         for root, subdirs, subfiles in os.walk(path):
             subdirs[:] = [d for d in subdirs if is_valid_dir(d)]
@@ -42,7 +40,7 @@ class Utils:
         return dirs, files
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> Optional[Type[Any]]:
+    def get_model_type(cls, type_str: str = None) -> type[Any] | None:
         """
         Get the type of a registered model using its litteral type
 
@@ -79,7 +77,7 @@ class Utils:
         return True
 
     @classmethod
-    def _extract_module_name(cls, type_str: str) -> Tuple[str, str]:
+    def _extract_module_name(cls, type_str: str) -> tuple[str, str]:
         """
         Extract the module name and the function name from a litteral type
 
@@ -97,7 +95,7 @@ class Utils:
 
     @staticmethod
     def issubclass(
-        __cls: type, __class_or_tuple: Union[type, Tuple[Union[type, Tuple[Any, ...]], ...]]
+        __cls: type, __class_or_tuple: type | tuple[type | tuple[Any, ...], ...]
     ) -> bool:
         """issubclass safe that check the input is a class and avoid exception"""
         return inspect.isclass(__cls) and issubclass(__cls, __class_or_tuple)
@@ -108,12 +106,12 @@ class Utils:
         return value in Utils.get_literal_values(literal_type)
 
     @staticmethod
-    def get_literal_values(literal_type: Any) -> List[Any]:
+    def get_literal_values(literal_type: Any) -> list[Any]:
         """Return the list of literal values"""
         return list(get_args(literal_type))
 
     @staticmethod
-    def get_all_subclasses(class_: Type) -> Set[Type]:
+    def get_all_subclasses(class_: type) -> set[type]:
         """Return all the subclasses type of a class, it does not include the main class
 
         :param class_: class to retrieve the subclasses
@@ -127,7 +125,7 @@ class Utils:
         )
 
     @staticmethod
-    def get_parent_classes(class_: Type, max_parent: Type = None) -> List[Type]:
+    def get_parent_classes(class_: type, max_parent: type = None) -> list[type]:
         """Return  a list of parent class of class_ arg (containing class_).
         :param class_: [description]
         :type class_: Type
@@ -136,8 +134,8 @@ class Utils:
         :return: [description]
         :rtype: List[Type]
         """
-        mro: List[Type] = inspect.getmro(class_)
-        parents: List[Type] = []
+        mro: list[type] = inspect.getmro(class_)
+        parents: list[type] = []
         for parent_type in mro:
             if max_parent is None or issubclass(parent_type, max_parent):
                 parents.append(parent_type)
@@ -149,15 +147,15 @@ class Utils:
         return dumps(json1, sort_keys=True) == dumps(json2, sort_keys=True)
 
     @staticmethod
-    def rename_duplicate_in_str_list(list_: List[str]) -> List[str]:
+    def rename_duplicate_in_str_list(list_: list[str]) -> list[str]:
         """Rename all duplicated element in a list of str with _1, _2... at the end"""
 
-        seen: Dict[str, int] = {}
-        result: List[str] = []
+        seen: dict[str, int] = {}
+        result: list[str] = []
 
         # store the transformed item with the original item as value
         # so i we have A, A, A_1, this will store A_1: A and the final result will be A, A_1, A_2
-        new_items: Dict[str, str] = {}
+        new_items: dict[str, str] = {}
 
         for item in list_:
             # if the item is equal to an already transformed item, we use the original item
@@ -175,7 +173,7 @@ class Utils:
         return result
 
     @staticmethod
-    def generate_unique_str_for_list(list_: List[str], str_: str) -> str:
+    def generate_unique_str_for_list(list_: list[str], str_: str) -> str:
         """Generate a unique str for a list of str.
         Append _1, _2... at the end if the str is already in the list
         """
@@ -217,14 +215,14 @@ class Utils:
 
     @staticmethod
     def json_equals(
-        json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
     ) -> bool:
         """Assert a json with possibility to ignore key"""
         return Utils._json_equals_recur(json_1, json_2, ignore_keys, "") is None
 
     @staticmethod
     def assert_json_equals(
-        json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
     ):
         """Assert a json with possibility to ignore key"""
         result = Utils._json_equals_recur(json_1, json_2, ignore_keys, "")
@@ -236,11 +234,11 @@ class Utils:
 
     @staticmethod
     def _json_equals_recur(
-        json_1: Union[dict, list],
-        json_2: Union[dict, list],
-        ignore_keys: List[str] = None,
+        json_1: dict | list,
+        json_2: dict | list,
+        ignore_keys: list[str] = None,
         cumulated_key: str = "",
-    ) -> Optional[str]:
+    ) -> str | None:
         # handle list
         if isinstance(json_1, list):
             if not isinstance(json_2, list):
@@ -289,7 +287,7 @@ class Utils:
         return None
 
     @classmethod
-    def stringify_type(cls, type_: Type, include_module: bool = False):
+    def stringify_type(cls, type_: type, include_module: bool = False):
         if type_ is None:
             return None
         if hasattr(type_, "__name__") and type_ is not None:

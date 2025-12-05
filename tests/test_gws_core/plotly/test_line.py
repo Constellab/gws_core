@@ -2,7 +2,6 @@ from unittest import TestCase
 
 import pandas as pd
 import plotly.express as px
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.tasks.plotly_line import PlotlyLine

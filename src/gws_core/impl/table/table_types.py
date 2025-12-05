@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, Literal
+from typing import Literal
 
 from typing_extensions import TypedDict
 
@@ -16,7 +16,7 @@ class TableHeaderInfo(TypedDict):
     """Object to represent the information about a table header (row, column)"""
 
     name: str
-    tags: Dict[str, str]
+    tags: dict[str, str]
 
 
 class TableColumnInfo(TableHeaderInfo):

@@ -1,11 +1,10 @@
 from unittest import TestCase
 
-from numpy import NaN
-from pandas import NA, DataFrame
-
 from gws_core import DataframeAggregatorHelper, Table, TaskRunner
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.transformers.table_aggregator import TableColumnAggregator
+from numpy import NaN
+from pandas import NA, DataFrame
 
 
 # test_table_aggregator

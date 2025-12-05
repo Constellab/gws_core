@@ -1,7 +1,7 @@
 import json
 import tempfile
 from io import BufferedReader
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import requests
 from fastapi.encoders import jsonable_encoder
@@ -15,10 +15,10 @@ DEFAULT_TIMEOUT = 60
 
 
 class FormData:
-    file_paths: List[Tuple[str, str, str]]
-    json_data: List[Tuple[str, Any]]
+    file_paths: list[tuple[str, str, str]]
+    json_data: list[tuple[str, Any]]
 
-    _opened_files: List[BufferedReader]
+    _opened_files: list[BufferedReader]
 
     def __init__(self):
         self.file_paths = []
@@ -40,8 +40,8 @@ class FormData:
     def add_json_data(self, key: str, data: Any) -> None:
         self.json_data.append((key, data))
 
-    def __enter__(self) -> List:
-        data: List = []
+    def __enter__(self) -> list:
+        data: list = []
         for key, file_path, filename in self.file_paths:
             file_name = filename if filename else FileHelper.get_name_with_extension(file_path)
             content_type = FileHelper.get_mime(file_path)
@@ -74,7 +74,7 @@ class ExternalApiService:
         cls,
         url: str,
         body: Any,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -92,7 +92,7 @@ class ExternalApiService:
         url: str,
         form_data: FormData,
         data: Any = None,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -112,7 +112,7 @@ class ExternalApiService:
         cls,
         url: str,
         body: Any,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         files: Any = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
@@ -133,7 +133,7 @@ class ExternalApiService:
         url: str,
         form_data: FormData,
         data: Any = None,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -153,7 +153,7 @@ class ExternalApiService:
     def get(
         cls,
         url: str,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -169,7 +169,7 @@ class ExternalApiService:
     def delete(
         cls,
         url: str,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:

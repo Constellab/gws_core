@@ -1,5 +1,4 @@
 import os
-from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.compress.zip_compress import ZipCompress
@@ -30,13 +29,13 @@ class ResourceSetExporter(ResourceExporter):
         source: ResourceListBase,
         dest_dir: str,
         params: ConfigParams,
-        target_type: Type[FSNode],
+        target_type: type[FSNode],
     ) -> FSNode:
         # use to store the exported files
-        fs_nodes: List[FSNode] = []
+        fs_nodes: list[FSNode] = []
 
         # use to store the exporter per typing name locally
-        exporters: Dict[str, Type[ResourceExporter]] = {}
+        exporters: dict[str, type[ResourceExporter]] = {}
 
         for resource in source.get_resources_as_set():
             # if the resource is a file, add it to the list directly

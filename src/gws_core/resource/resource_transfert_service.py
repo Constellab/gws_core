@@ -1,4 +1,3 @@
-from typing import Dict
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -72,7 +71,7 @@ class ResourceTransfertService:
         return output_task.get_input_resource_model(OutputTask.input_name)
 
     @classmethod
-    def get_import_from_link_config_specs(cls) -> Dict[str, ParamSpecDTO]:
+    def get_import_from_link_config_specs(cls) -> dict[str, ParamSpecDTO]:
         return ResourceDownloaderHttp.config_specs.to_dto()
 
     @classmethod
@@ -94,7 +93,7 @@ class ResourceTransfertService:
         return scenario.get_model().refresh()
 
     @classmethod
-    def get_export_resource_to_lab_config_specs(cls) -> Dict[str, ParamSpecDTO]:
+    def get_export_resource_to_lab_config_specs(cls) -> dict[str, ParamSpecDTO]:
         return SendResourceToLab.config_specs.to_dto()
 
     @classmethod

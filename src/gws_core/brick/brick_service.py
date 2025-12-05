@@ -2,7 +2,7 @@ import importlib
 import os
 import traceback
 from time import time
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.brick.brick_dto import BrickDirectoryDTO, BrickInfo, BrickMessageStatus
 from gws_core.brick.brick_model import BrickModel
@@ -28,7 +28,7 @@ class WaitingMessage(BaseModelDTO):
 class BrickService:
     SOURCE_FOLDER = "src"
 
-    _waiting_messages: List[WaitingMessage] = []
+    _waiting_messages: list[WaitingMessage] = []
 
     @classmethod
     def log_brick_error(cls, obj: Any, message: str) -> None:
@@ -107,7 +107,7 @@ class BrickService:
     def init(cls) -> None:
         """Clear the BrickModel table and log all the messages that were waiting on start"""
         BrickModel.clear_all_message()
-        bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
+        bricks_info: dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_info in bricks_info.values():
             cls._init_brick_model(brick_info)
 
@@ -133,7 +133,7 @@ class BrickService:
         return BrickModel.find_by_name(brick_name)
 
     @classmethod
-    def get_all_brick_models(cls) -> List[BrickModel]:
+    def get_all_brick_models(cls) -> list[BrickModel]:
         return list(BrickModel.select().order_by(BrickModel.name))
 
     @classmethod
@@ -148,7 +148,7 @@ class BrickService:
         return brick.get_version()
 
     @classmethod
-    def list_brick_directories(cls, distinct: bool = False) -> List[BrickDirectoryDTO]:
+    def list_brick_directories(cls, distinct: bool = False) -> list[BrickDirectoryDTO]:
         """List all brick directories from both user and system brick folders.
 
         Returns a list of BrickDirectoryDTO containing brick name and path.
@@ -160,7 +160,7 @@ class BrickService:
         :return: List of brick directories
         :rtype: List[BrickDirectoryDTO]
         """
-        brick_directories: List[BrickDirectoryDTO] = []
+        brick_directories: list[BrickDirectoryDTO] = []
         seen_brick_names = set()
 
         # Get both user and system brick folders
@@ -196,7 +196,7 @@ class BrickService:
         return brick_directories
 
     @classmethod
-    def read_brick_settings(cls, brick_path: str) -> Optional[BrickSettings]:
+    def read_brick_settings(cls, brick_path: str) -> BrickSettings | None:
         """Read and parse the settings.json file from a brick folder path.
 
         :param brick_path: Path to the brick folder
@@ -209,7 +209,7 @@ class BrickService:
 
     @classmethod
     def import_all_bricks_in_python(cls) -> None:
-        bricks_info: Dict[str, BrickInfo] = BrickHelper.get_all_bricks()
+        bricks_info: dict[str, BrickInfo] = BrickHelper.get_all_bricks()
         for brick_name, brick_info in bricks_info.items():
             # for brick with error, just log the error and skip brick
             if brick_info.error:
@@ -267,7 +267,7 @@ class BrickService:
         )
 
     @classmethod
-    def get_parent_brick_folder(cls, path: str) -> Optional[str]:
+    def get_parent_brick_folder(cls, path: str) -> str | None:
         """Get the parent brick folder of a file or folder path
 
         :param path: path to a file or folder

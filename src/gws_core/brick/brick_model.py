@@ -1,5 +1,7 @@
 from time import time
-from typing import Any, Dict, List
+from typing import Any
+
+from peewee import CharField
 
 from gws_core.brick.brick_dto import (
     BrickDTO,
@@ -10,7 +12,6 @@ from gws_core.brick.brick_dto import (
 )
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.db_field import JSONField
-from peewee import CharField
 
 from ..core.model.model import Model
 
@@ -18,7 +19,7 @@ from ..core.model.model import Model
 class BrickModel(Model):
     name: str = CharField(unique=True)
     status: BrickStatus = CharField()
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,7 +46,7 @@ class BrickModel(Model):
         elif status == "WARNING" and self.status == "SUCCESS":
             self.status = "WARNING"
 
-    def get_messages(self) -> List[BrickMessageDTO]:
+    def get_messages(self) -> list[BrickMessageDTO]:
         return BrickMessageDTO.from_json_list(self.data["messages"])
 
     def clear_messages(self) -> None:

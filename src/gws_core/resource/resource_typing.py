@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Literal, Type
+from typing import Literal
 
 from gws_core.core.utils.reflector_types import MethodDoc
 from gws_core.core.utils.utils import Utils
@@ -27,7 +27,7 @@ class ResourceTyping(Typing):
     _object_type: TypingObjectType = "RESOURCE"
 
     @classmethod
-    def get_folder_types(cls) -> List["ResourceTyping"]:
+    def get_folder_types(cls) -> list["ResourceTyping"]:
         return cls.get_children_typings(cls._object_type, Folder)
 
     def to_full_dto(self) -> ResourceTypingDTO:
@@ -40,22 +40,22 @@ class ResourceTyping(Typing):
         )
 
     def get_class_methods_docs(self) -> ResourceTypingMethodDTO:
-        type_: Type = self.get_type()
+        type_: type = self.get_type()
         if not inspect.isclass(type_):
             return None
 
         # Get all public methods including __init__
-        all_methods: List[MethodDoc] = ReflectorHelper.get_class_public_methods_doc(
+        all_methods: list[MethodDoc] = ReflectorHelper.get_class_public_methods_doc(
             type_, include_init=True
         )
 
         # Get view methods to exclude them from funcs
-        views_methods: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
+        views_methods: list[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
         views_methods_dto = [m.to_dto() for m in views_methods]
         view_method_names = [v.method_name for v in views_methods]
 
         # Filter out view methods from all methods
-        funcs: List[MethodDoc] = [m for m in all_methods if m.name not in view_method_names]
+        funcs: list[MethodDoc] = [m for m in all_methods if m.name not in view_method_names]
 
         return ResourceTypingMethodDTO(
             funcs=funcs if len(funcs) > 0 else None,
@@ -69,14 +69,14 @@ class ResourceTyping(Typing):
 
 class FileTyping(ResourceTyping):
     @classmethod
-    def get_typings(cls) -> List["ResourceTyping"]:
+    def get_typings(cls) -> list["ResourceTyping"]:
         return cls.get_children_typings(cls._object_type, File)
 
     def to_dto(self) -> TypingDTO:
         typing_dto = super().to_dto()
 
         # retrieve the task python type
-        model_t: Type[File] = self.get_type()
+        model_t: type[File] = self.get_type()
 
         if model_t and Utils.issubclass(model_t, File):
             typing_dto.additional_data = {

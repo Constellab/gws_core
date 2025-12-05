@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 import plotly.graph_objs as go
 
@@ -45,14 +45,14 @@ Only build the figure object, do not display the figure using 'show' method.
         # prepare the input
         return {"source": self.table.get_data()}
 
-    def get_code_expected_output_types(self) -> Dict[str, Any]:
+    def get_code_expected_output_types(self) -> dict[str, Any]:
         return {"target": go.Figure}
 
-    def get_available_package_names(self) -> List[str]:
+    def get_available_package_names(self) -> list[str]:
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
 
     def build_output(self, code_outputs: dict) -> PlotlyResource:
-        target = code_outputs.get("target", None)
+        target = code_outputs.get("target")
 
         if target is None:
             raise Exception("The code did not generate any output")

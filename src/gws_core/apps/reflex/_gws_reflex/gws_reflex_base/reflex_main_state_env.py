@@ -1,4 +1,3 @@
-from typing import List
 
 from .reflex_main_state_base import ReflexMainStateBase
 
@@ -9,6 +8,6 @@ class ReflexMainStateEnv(ReflexMainStateBase):
     It provides a method to access the paths of the input resources of the app.
     """
 
-    async def get_source_paths(self) -> List[str]:
+    async def get_source_paths(self) -> list[str]:
         """Return the resources of the app."""
         return await self.get_sources_ids()

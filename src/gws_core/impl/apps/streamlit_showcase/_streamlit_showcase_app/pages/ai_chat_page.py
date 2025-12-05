@@ -1,5 +1,4 @@
 import streamlit as st
-
 from gws_core import PlotlyResource
 from gws_core.impl.table.smart_tasks.table_smart_plotly import AITableGeneratePlotly
 from gws_core.streamlit import StreamlitContainers, StreamlitOpenAiChat

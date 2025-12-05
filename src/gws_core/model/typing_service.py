@@ -1,4 +1,5 @@
-from typing import Callable, List, Literal, Type
+from collections.abc import Callable
+from typing import Literal
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchOperator, SearchParams
@@ -19,13 +20,13 @@ from gws_core.task.task_typing import TaskSubType, TaskTyping
 
 
 def filter_typing_by_specs(
-    typing: Typing, resource_types: List[Type[Resource]], check_io: Literal["inputs", "outputs"]
+    typing: Typing, resource_types: list[type[Resource]], check_io: Literal["inputs", "outputs"]
 ) -> bool:
     """
     Filter a process typing by its specs (inputs or outputs). Return true if the specs contains a resource types
     that is stricly equals to one of the provided resource_types.
     """
-    process_type: Type[Process] = typing.get_type()
+    process_type: type[Process] = typing.get_type()
 
     # if the type does not exist or is not a process, we return false
     if not process_type or not Utils.issubclass(process_type, Process):
@@ -50,7 +51,7 @@ class TypingService:
     def get_and_check_typing(cls, typing_name: str) -> Typing:
         typing_name_obj: TypingNameObj = TypingNameObj.from_typing_name(typing_name)
 
-        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(typing_name_obj.object_type)
+        typing_type: type[Typing] = cls._get_typing_type_from_obj_type(typing_name_obj.object_type)
 
         typing: Typing = typing_type.get_by_typing_name(typing_name)
 
@@ -83,7 +84,7 @@ class TypingService:
     def suggest_process(
         cls,
         search: SearchParams,
-        resource_typing_names: List[str],
+        resource_typing_names: list[str],
         check_io: Literal["inputs", "outputs"],
         page: int = 0,
         number_of_items_per_page: int = 20,
@@ -98,7 +99,7 @@ class TypingService:
         pagination = cls.search(search, page, number_of_items_per_page, search_builder)
 
         # convert resource_typing_names to resource types
-        resource_types: List[Type[Resource]] = [
+        resource_types: list[type[Resource]] = [
             TypingManager.get_type_from_name(x) for x in resource_typing_names
         ]
 
@@ -122,7 +123,7 @@ class TypingService:
         search_builder = TypingSearchBuilder(TaskTyping)
 
         # force to add a filter on related typing name
-        related_model_type: Type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+        related_model_type: type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
         search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_type))
 
         # force to add a filter on sub type
@@ -148,7 +149,7 @@ class TypingService:
     @classmethod
     def search_transformers(
         cls,
-        resource_typing_names: List[str],
+        resource_typing_names: list[str],
         search: SearchParams,
         page: int = 0,
         number_of_items_per_page: int = 20,
@@ -156,7 +157,7 @@ class TypingService:
         search_builder = TypingSearchBuilder(TaskTyping)
 
         # force to add a filter on related typing name
-        related_model_types: List[Type[Resource]] = [
+        related_model_types: list[type[Resource]] = [
             TypingManager.get_type_from_name(x) for x in resource_typing_names
         ]
         search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_types))
@@ -175,14 +176,14 @@ class TypingService:
         Remove typing names that are not available in the database
         """
 
-        typing_names: List[Typing] = None
+        typing_names: list[Typing] = None
 
         if brick_name:
             typing_names = list(Typing.select().where(Typing.brick == brick_name))
         else:
             typing_names = list(Typing.select())
 
-        unavailable_types: List[Typing] = [
+        unavailable_types: list[Typing] = [
             x for x in typing_names if x.get_type_status() == TypingStatus.UNAVAILABLE
         ]
 
@@ -193,7 +194,7 @@ class TypingService:
     def get_typing_by_object_type(
         cls, object_type: TypingObjectType, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Typing]:
-        typing_type: Type[Typing] = cls._get_typing_type_from_obj_type(object_type)
+        typing_type: type[Typing] = cls._get_typing_type_from_obj_type(object_type)
         return Paginator(
             typing_type.get_by_object_type(object_type),
             page=page,
@@ -201,7 +202,7 @@ class TypingService:
         )
 
     @classmethod
-    def _get_typing_type_from_obj_type(cls, object_type: TypingObjectType) -> Type[Typing]:
+    def _get_typing_type_from_obj_type(cls, object_type: TypingObjectType) -> type[Typing]:
         if object_type == "TASK":
             return TaskTyping
         elif object_type == "PROTOCOL":

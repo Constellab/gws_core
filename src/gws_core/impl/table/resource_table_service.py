@@ -51,7 +51,7 @@ class ResourceTableService:
             )
 
         else:
-            raise BadRequestException(f"Resource is not a Table, can't call chart on it.")
+            raise BadRequestException("Resource is not a Table, can't call chart on it.")
 
     @classmethod
     def _get_table_view_method_name(cls, chart: TableChart) -> str:

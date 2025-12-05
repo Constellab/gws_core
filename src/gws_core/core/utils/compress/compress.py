@@ -1,6 +1,5 @@
 import os
 from abc import abstractmethod
-from typing import List, Optional, Set, Type
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -11,7 +10,7 @@ class Compress:
     destination_file_path: str
 
     # list of the fs node name added to the zip
-    _fs_node_names: List[str]
+    _fs_node_names: list[str]
 
     def __init__(self, destination_file_path: str):
         self.destination_file_path = destination_file_path
@@ -54,7 +53,7 @@ class Compress:
         return False
 
     @classmethod
-    def get_supported_extensions(cls) -> Set[str]:
+    def get_supported_extensions(cls) -> set[str]:
         """Return the list of supported extensions for this compress class without '.'"""
         return set()
 
@@ -104,7 +103,7 @@ class Compress:
     @staticmethod
     def smart_decompress(file_path: str, destination_folder: str) -> None:
         """Detect the extension of the compressed file and use the right decompress method."""
-        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_path)
+        compress: type[Compress] = Compress._get_compress_class_from_extension(file_path)
 
         if compress is None:
             raise Exception(f"Unsupported file extension: {FileHelper.get_extension(file_path)}")
@@ -114,14 +113,14 @@ class Compress:
     @staticmethod
     def is_compressed_file(file_path: str) -> bool:
         """Check if the file is a compressed file."""
-        compress: Type[Compress] = Compress._get_compress_class_from_extension(file_path)
+        compress: type[Compress] = Compress._get_compress_class_from_extension(file_path)
         return compress is not None
 
     @staticmethod
-    def get_all_supported_extensions() -> Set[str]:
+    def get_all_supported_extensions() -> set[str]:
         """Return the list of all supported extensions without '.'"""
-        compress: List[Type[Compress]] = Compress._get_child_classes()
-        extensions: Set[str] = set()
+        compress: list[type[Compress]] = Compress._get_child_classes()
+        extensions: set[str] = set()
 
         for compress_class in compress:
             extensions.update(compress_class.get_supported_extensions())
@@ -129,9 +128,9 @@ class Compress:
         return extensions
 
     @staticmethod
-    def _get_compress_class_from_extension(file_path: str) -> Optional[Type["Compress"]]:
+    def _get_compress_class_from_extension(file_path: str) -> type["Compress"] | None:
         """Get the compress class from the file extension."""
-        compress: List[Type[Compress]] = Compress._get_child_classes()
+        compress: list[type[Compress]] = Compress._get_child_classes()
 
         for compress_class in compress:
             if compress_class.can_uncompress_file(file_path):
@@ -140,7 +139,7 @@ class Compress:
         return None
 
     @staticmethod
-    def _get_child_classes() -> List[Type["Compress"]]:
+    def _get_child_classes() -> list[type["Compress"]]:
         """Get the child classes of the compress class."""
         from .gzip_compress import GzipCompress
         from .tar_compress import TarCompress, TarGzCompress

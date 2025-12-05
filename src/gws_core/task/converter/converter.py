@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Tuple, Type, final
+from typing import final
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -21,12 +21,12 @@ from ...task.task_typing import TaskSubType
 
 
 def decorate_converter(
-    task_class: Type["Converter"],
+    task_class: type["Converter"],
     unique_name: str,
     task_type: TaskSubType,
-    source_type: Type[Resource] = Resource,
-    target_type: Type[Resource] = Resource,
-    related_resource: Type[Resource] = None,
+    source_type: type[Resource] = Resource,
+    target_type: type[Resource] = Resource,
+    related_resource: type[Resource] = None,
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
@@ -78,7 +78,7 @@ def decorate_converter(
     )
 
 
-def get_converter_default_style(resource_type: Type[Resource]) -> TypingStyle:
+def get_converter_default_style(resource_type: type[Resource]) -> TypingStyle:
     """Get the default style for a task, use the first input style or the first output style"""
 
     typing = TypingManager.get_typing_from_name(resource_type.get_typing_name())
@@ -115,7 +115,7 @@ class Converter(Task):
 
     @abstractmethod
     def convert(
-        self, source: Resource, params: ConfigParams, target_type: Type[Resource]
+        self, source: Resource, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
         """Override this method to implement convert method
 
@@ -151,7 +151,7 @@ class Converter(Task):
 
     @final
     @classmethod
-    def get_source_type(cls) -> Tuple[Type[Resource]]:
+    def get_source_type(cls) -> tuple[type[Resource]]:
         """Get the type of the input source
 
         :return: [description]
@@ -161,7 +161,7 @@ class Converter(Task):
 
     @final
     @classmethod
-    def get_target_type(cls) -> Type[Resource]:
+    def get_target_type(cls) -> type[Resource]:
         """Get the type of the output target
 
         :return: [description]
@@ -182,7 +182,7 @@ class ConverterRunner:
 
     def __init__(
         self,
-        converter_type: Type[Converter],
+        converter_type: type[Converter],
         params: ConfigParamsDict = None,
         input_: Resource = None,
     ) -> None:

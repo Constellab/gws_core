@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.string_helper import StringHelper
@@ -16,7 +15,7 @@ class EntityTagList:
     _entity_id: str
     _entity_type: TagEntityType
 
-    _tags: List[EntityTag]
+    _tags: list[EntityTag]
 
     _default_origin: TagOrigin = None
 
@@ -24,7 +23,7 @@ class EntityTagList:
         self,
         entity_type: TagEntityType,
         entity_id: str,
-        tags: List[EntityTag] = None,
+        tags: list[EntityTag] = None,
         default_origin: TagOrigin = None,
     ) -> None:
         self._entity_type = entity_type
@@ -39,7 +38,7 @@ class EntityTagList:
         """return true if the tag key and value already exist in the model"""
         return self.get_tag(tag) is not None
 
-    def get_tag(self, tag: Tag) -> Optional[EntityTag]:
+    def get_tag(self, tag: Tag) -> EntityTag | None:
         """return the tag if it exists"""
         tags = [
             entity_tag
@@ -52,11 +51,11 @@ class EntityTagList:
 
         return None
 
-    def get_tags_by_key(self, tag_key: str) -> List[EntityTag]:
+    def get_tags_by_key(self, tag_key: str) -> list[EntityTag]:
         """return the tags with the given key"""
         return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
 
-    def get_first_tag_by_key(self, tag_key: str) -> Optional[EntityTag]:
+    def get_first_tag_by_key(self, tag_key: str) -> EntityTag | None:
         """return the first tag with the given key or None if it does not exist"""
         tags = self.get_tags_by_key(tag_key)
 
@@ -69,16 +68,16 @@ class EntityTagList:
         """return true if the tag key already exist in the model"""
         return len(self.get_tags_by_key(tag_key)) > 0
 
-    def get_tags(self) -> List[EntityTag]:
+    def get_tags(self) -> list[EntityTag]:
         return self._tags
 
     def get_tags_as_dict(self) -> dict:
         return {tag.tag_key: tag.get_tag_value() for tag in self._tags}
 
-    def get_propagable_tags(self) -> List[EntityTag]:
+    def get_propagable_tags(self) -> list[EntityTag]:
         return [tag for tag in self._tags if tag.is_propagable]
 
-    def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> List[Tag]:
+    def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> list[Tag]:
         """Propagate the tags to the entity"""
         return [tag.propagate_tag(origin_type, origin_id) for tag in self.get_propagable_tags()]
 
@@ -138,14 +137,14 @@ class EntityTagList:
         return new_tag
 
     @GwsCoreDbManager.transaction()
-    def add_tags(self, tags: List[Tag]) -> List[EntityTag]:
+    def add_tags(self, tags: list[Tag]) -> list[EntityTag]:
         """Add a list of tags to the list if it does not exist
 
         :param tags: list of tags to add
         :type tags: List[Tag]
         """
 
-        new_tags: List[EntityTag] = []
+        new_tags: list[EntityTag] = []
         for tag in tags:
             # add tag to entity
             new_tags.append(self.add_tag(tag))
@@ -153,7 +152,7 @@ class EntityTagList:
         return new_tags
 
     @GwsCoreDbManager.transaction()
-    def replace_tags(self, tags: List[Tag]) -> None:
+    def replace_tags(self, tags: list[Tag]) -> None:
         """Remove the tag with the same key and add the new tags"""
         for tag in tags:
             self.replace_tag(tag)
@@ -165,7 +164,7 @@ class EntityTagList:
         self.add_tag(tag)
 
     @GwsCoreDbManager.transaction()
-    def delete_tags(self, tags: List[Tag]) -> None:
+    def delete_tags(self, tags: list[Tag]) -> None:
         """Delete a tag from the entity tags. Check if the tag is still used by other entities"""
         for tag in tags:
             self.delete_tag(tag)
@@ -226,7 +225,7 @@ class EntityTagList:
 
         self._tags.remove(existing_tag)
 
-    def to_dto(self) -> List[EntityTagDTO]:
+    def to_dto(self) -> list[EntityTagDTO]:
         return [tag.to_dto() for tag in self._tags]
 
     def support_multiple_origins(self) -> bool:

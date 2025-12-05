@@ -1,7 +1,5 @@
 import os
-from typing import List, Union
-
-from typing_extensions import Literal
+from typing import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
@@ -65,7 +63,7 @@ class CondaShellProxy(BaseEnvShell):
 
         return True
 
-    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
+    def format_command(self, user_cmd: list | str) -> list | str:
         is_list = isinstance(user_cmd, list)
 
         str_cmd: str = None
@@ -104,7 +102,7 @@ class CondaShellProxy(BaseEnvShell):
     def _build_str_conda_command(self, conda_cmd: str, cmd: str) -> str:
         return f'bash -c "{self._build_sub_conda_command(conda_cmd, cmd)}"'
 
-    def _build_list_conda_command(self, conda_cmd: str, cmd: str) -> List[str]:
+    def _build_list_conda_command(self, conda_cmd: str, cmd: str) -> list[str]:
         return ["bash", "-c", self._build_sub_conda_command(conda_cmd, cmd)]
 
     def _build_sub_conda_command(self, conda_cmd: str, cmd: str) -> str:

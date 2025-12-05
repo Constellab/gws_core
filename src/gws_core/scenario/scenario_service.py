@@ -1,4 +1,5 @@
-from typing import List, Optional, Type
+
+from peewee import ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
@@ -16,7 +17,6 @@ from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams
@@ -123,7 +123,7 @@ class ScenarioService:
     @classmethod
     def create_scenario_from_protocol_type(
         cls,
-        protocol_type: Type[Protocol],
+        protocol_type: type[Protocol],
         folder: SpaceFolder = None,
         title: str = "",
         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL,
@@ -153,7 +153,7 @@ class ScenarioService:
 
     @classmethod
     def update_scenario_folder(
-        cls, scenario_id: str, folder_id: Optional[str], check_note: bool = True
+        cls, scenario_id: str, folder_id: str | None, check_note: bool = True
     ) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
@@ -170,7 +170,7 @@ class ScenarioService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def _update_scenario_folder(
-        cls, scenario: Scenario, new_folder_id: Optional[str], check_notes: bool
+        cls, scenario: Scenario, new_folder_id: str | None, check_notes: bool
     ) -> Scenario:
         folder_changed = False
         folder_removed = False
@@ -206,7 +206,7 @@ class ScenarioService:
 
         # update generated resources folder
         if folder_changed or folder_removed:
-            resources: List[ResourceModel] = ResourceModel.get_by_scenario(scenario.id)
+            resources: list[ResourceModel] = ResourceModel.get_by_scenario(scenario.id)
             for resource in resources:
                 resource.folder = scenario.folder
                 resource.save()
@@ -420,8 +420,8 @@ class ScenarioService:
         )
 
     @classmethod
-    def get_running_scenarios(cls) -> List[RunningScenarioInfoDTO]:
-        scenarios: List[Scenario] = list(
+    def get_running_scenarios(cls) -> list[RunningScenarioInfoDTO]:
+        scenarios: list[Scenario] = list(
             Scenario.select()
             .where(
                 # consider the WAITING_FOR_CLI_PROCESS as running
@@ -436,9 +436,9 @@ class ScenarioService:
 
     @classmethod
     def get_running_scenario_info(cls, scenario: Scenario) -> RunningScenarioInfoDTO:
-        tasks: List[TaskModel] = scenario.get_running_tasks()
+        tasks: list[TaskModel] = scenario.get_running_tasks()
 
-        running_tasks: List[RunningProcessInfo] = []
+        running_tasks: list[RunningProcessInfo] = []
         for task in tasks:
             running_task = RunningProcessInfo(
                 id=task.id,
@@ -503,7 +503,7 @@ class ScenarioService:
         :type scenario_id: str
         """
 
-        intermediate_resources: List[ResourceModel] = cls.get_intermediate_results(scenario_id)
+        intermediate_resources: list[ResourceModel] = cls.get_intermediate_results(scenario_id)
 
         if not intermediate_resources:
             raise BadRequestException("No intermediate resources found for the scenario")
@@ -528,7 +528,7 @@ class ScenarioService:
         )
 
     @classmethod
-    def get_intermediate_results(cls, scenario_id: str) -> List[ResourceModel]:
+    def get_intermediate_results(cls, scenario_id: str) -> list[ResourceModel]:
         """Retrieve the list of intermediate resources of a scenario
         A resource is considered as intermediate if it is not used as output and not flagged
 
@@ -537,11 +537,11 @@ class ScenarioService:
         :return: _description_
         :rtype: List[ResourceModel]
         """
-        not_flagged_resources: List[ResourceModel] = list(
+        not_flagged_resources: list[ResourceModel] = list(
             ResourceModel.get_resource_by_scenario_and_flag(scenario_id, False)
         )
 
-        intermediate_resources: List[ResourceModel] = []
+        intermediate_resources: list[ResourceModel] = []
         for resource in not_flagged_resources:
             # check if the resource is used as output
             task_input_model = TaskInputModel.get_by_resource_model_and_task_type(

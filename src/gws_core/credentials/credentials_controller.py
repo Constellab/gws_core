@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi import Depends
 
@@ -61,7 +60,7 @@ def read_credentials(
 @core_app.get("/credentials/name/{name}")
 def get_credentials_by_name(
     name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> Optional[CredentialsDTO]:
+) -> CredentialsDTO | None:
     credentials = CredentialsService.find_by_name(name)
     if credentials:
         return credentials.to_dto()
@@ -72,8 +71,8 @@ def get_credentials_by_name(
 @core_app.post("/credentials/search")
 def advanced_search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[CredentialsDTO]:
     return CredentialsService.search(search_dict, page, number_of_items_per_page).to_dto()

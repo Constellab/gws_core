@@ -1,4 +1,4 @@
-from typing import Any, List, final
+from typing import Any, final
 
 from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
 
@@ -130,7 +130,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         return result
 
     @classmethod
-    def get_synced_objects(cls) -> List["Note"]:
+    def get_synced_objects(cls) -> list["Note"]:
         """Get all notes that are synced with space
 
         :return: [description]
@@ -139,7 +139,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
         return list(cls.select().where(cls.last_sync_at.is_null(False)))
 
     @classmethod
-    def clear_folder(cls, folders: List[SpaceFolder]) -> None:
+    def clear_folder(cls, folders: list[SpaceFolder]) -> None:
         cls.update(folder=None, last_sync_at=None, last_sync_by=None).where(
             cls.folder.in_(folders)
         ).execute()
@@ -165,7 +165,7 @@ class NoteScenario(BaseModel):
 
     @classmethod
     def create_obj(cls, scenario: Scenario, note: Note) -> "NoteScenario":
-        note_exp: "NoteScenario" = NoteScenario()
+        note_exp: NoteScenario = NoteScenario()
         note_exp.scenario = scenario
         note_exp.note = note
         return note_exp
@@ -179,14 +179,14 @@ class NoteScenario(BaseModel):
         return cls.select().where((cls.scenario == scenario_id) & (cls.note == note_id))
 
     @classmethod
-    def find_notes_by_scenarios(cls, scenario_id: List[str]) -> List[Note]:
-        list_: List[NoteScenario] = list(cls.select().where(cls.scenario.in_(scenario_id)))
+    def find_notes_by_scenarios(cls, scenario_id: list[str]) -> list[Note]:
+        list_: list[NoteScenario] = list(cls.select().where(cls.scenario.in_(scenario_id)))
 
         return [x.note for x in list_]
 
     @classmethod
-    def find_synced_notes_by_scenario(cls, scenario_id: str) -> List[Note]:
-        list_: List[NoteScenario] = list(
+    def find_synced_notes_by_scenario(cls, scenario_id: str) -> list[Note]:
+        list_: list[NoteScenario] = list(
             cls.select()
             .where((cls.scenario == scenario_id) & (cls.note.last_sync_at.is_null(False)))
             .join(Note)
@@ -195,8 +195,8 @@ class NoteScenario(BaseModel):
         return [x.note for x in list_]
 
     @classmethod
-    def find_scenarios_by_note(cls, note_id: str) -> List[Scenario]:
-        list_: List[NoteScenario] = list(cls.select().where(cls.note == note_id))
+    def find_scenarios_by_note(cls, note_id: str) -> list[Scenario]:
+        list_: list[NoteScenario] = list(cls.select().where(cls.note == note_id))
 
         return [x.scenario for x in list_]
 

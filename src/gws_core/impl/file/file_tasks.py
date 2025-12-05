@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file_helper import FileHelper
@@ -58,7 +57,7 @@ class FsNodeExtractor(Task):
 
         full_path = os.path.join(folder.path, path)
 
-        _type: Type[FSNode]
+        _type: type[FSNode]
 
         # if the typing name was provided
         if params.get("fs_node_typing_name"):

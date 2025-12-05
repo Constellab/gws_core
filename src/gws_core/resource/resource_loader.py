@@ -1,6 +1,5 @@
 import os
 from json import load
-from typing import Dict, List, Type
 
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.settings import Settings
@@ -29,7 +28,7 @@ class ResourceLoader:
 
     _resource: Resource
     # dict where key is old resource model id and value is the resource
-    _children_resources: Dict[str, Resource]
+    _children_resources: dict[str, Resource]
 
     mode: ShareEntityCreateMode
 
@@ -85,7 +84,7 @@ class ResourceLoader:
 
             kv_store = KVStore(kvstore_path)
 
-        resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
+        resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(
             zip_resource.resource_typing_name
         )
 
@@ -137,7 +136,7 @@ class ResourceLoader:
             raise Exception(f"File {info_json_path} not found in the zip file.")
 
         info_json: dict = None
-        with open(info_json_path, "r", encoding="UTF-8") as file:
+        with open(info_json_path, encoding="UTF-8") as file:
             info_json = load(file)
 
         if info_json is None:
@@ -192,16 +191,16 @@ class ResourceLoader:
     def get_main_resource(self) -> ZipResource:
         return self.info_json.resource
 
-    def _get_children_zip_resources(self) -> List[ZipResource]:
+    def _get_children_zip_resources(self) -> list[ZipResource]:
         return self.info_json.children_resources
 
-    def _get_all_zip_resources(self) -> List[ZipResource]:
+    def _get_all_zip_resources(self) -> list[ZipResource]:
         return [self.get_main_resource()] + self._get_children_zip_resources()
 
-    def get_all_generated_resources(self) -> List[Resource]:
+    def get_all_generated_resources(self) -> list[Resource]:
         return [self._resource] + list(self._children_resources.values())
 
-    def get_generated_children_resources(self) -> Dict[str, Resource]:
+    def get_generated_children_resources(self) -> dict[str, Resource]:
         return self._children_resources
 
     def delete_resource_folder(self) -> None:

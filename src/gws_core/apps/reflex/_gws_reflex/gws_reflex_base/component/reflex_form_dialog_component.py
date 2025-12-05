@@ -1,6 +1,6 @@
 import traceback
 from abc import abstractmethod
-from typing import AsyncGenerator, Optional, Union
+from collections.abc import AsyncGenerator
 
 import reflex as rx
 
@@ -116,9 +116,9 @@ class FormDialogState(rx.State, mixin=True):
 
 def form_dialog_component(
     state: type[FormDialogState],
-    title: Union[str, rx.Component],
+    title: str | rx.Component,
     form_content: rx.Component,
-    description: Optional[Union[str, rx.Component]] = None,
+    description: str | rx.Component | None = None,
     max_width: str = "500px",
 ) -> rx.Component:
     """Reusable form dialog component for create/update operations.

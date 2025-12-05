@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
@@ -18,15 +18,15 @@ class OpenAiChatParam(ParamSpec):
     :type ParamSpec: _type_
     """
 
-    context: Optional[str]
+    context: str | None
 
     def __init__(
         self,
-        context: Optional[str] = None,
+        context: str | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = "Enter your prompt/message",
-        short_description: Optional[str] = None,
+        human_name: str | None = "Enter your prompt/message",
+        short_description: str | None = None,
     ) -> None:
         """
         :param context: Context of the chat, can also be provided during run
@@ -76,5 +76,5 @@ class OpenAiChatParam(ParamSpec):
         return OpenAiChatParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

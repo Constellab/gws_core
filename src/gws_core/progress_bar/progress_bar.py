@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, final
+from typing import Any, final
 
 from fastapi.encoders import jsonable_encoder
+from peewee import CharField, FloatField
+
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.utils.date_helper import DateHelper
@@ -11,7 +13,6 @@ from gws_core.progress_bar.progress_bar_dto import (
     ProgressBarMessageDTO,
     ProgressBarMessageWithTypeDTO,
 )
-from peewee import CharField, FloatField
 
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
@@ -33,7 +34,7 @@ class ProgressBar(Model):
     elapsed_time = FloatField(null=True)
     second_start = DateTimeUTC(null=True, with_milliseconds=True)
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
@@ -138,7 +139,7 @@ class ProgressBar(Model):
 
         self.save()
 
-    def add_messages(self, messages: List[ProgressBarMessageWithTypeDTO]) -> None:
+    def add_messages(self, messages: list[ProgressBarMessageWithTypeDTO]) -> None:
         for message in messages:
             message_content = self._check_message_length(message.message)
 
@@ -161,7 +162,7 @@ class ProgressBar(Model):
         self,
         message: str,
         type_: MessageLevel = MessageLevel.INFO,
-        progress: Optional[float] = None,
+        progress: float | None = None,
     ) -> None:
         dtime = jsonable_encoder(DateHelper.now_utc())
 
@@ -216,10 +217,10 @@ class ProgressBar(Model):
         if message:
             self._add_message(message, MessageLevel.PROGRESS, value)
 
-    def get_messages(self) -> List[ProgressBarMessageDTO]:
+    def get_messages(self) -> list[ProgressBarMessageDTO]:
         return ProgressBarMessageDTO.from_json_list(self.data["messages"])
 
-    def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
+    def get_last_message(self) -> ProgressBarMessageDTO | None:
         messages = self.get_messages()
         if not messages:
             return None
@@ -227,7 +228,7 @@ class ProgressBar(Model):
 
     def get_messages_paginated(
         self, nb_of_messages: int, before_date: datetime = None
-    ) -> List[ProgressBarMessageDTO]:
+    ) -> list[ProgressBarMessageDTO]:
         """
         Get the last nb_of_messages messages
         :param nb_of_messages: number of messages to get
@@ -261,11 +262,9 @@ class ProgressBar(Model):
     ################################################## VALUE #################################################
 
     def _update_progress_value(self, value: float) -> float:
-        if value < self._MIN_VALUE:
-            value = self._MIN_VALUE
+        value = max(value, self._MIN_VALUE)
 
-        if value > self._MAX_VALUE:
-            value = self._MAX_VALUE
+        value = min(value, self._MAX_VALUE)
 
         self.current_value = value
         return value

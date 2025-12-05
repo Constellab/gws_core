@@ -1,11 +1,10 @@
 """Rich text component demo page for the Reflex showcase app."""
 
 import reflex as rx
-from gws_reflex_main import ReflexMainState
-from gws_reflex_main.gws_components import rich_text_component
-
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_reflex_main import ReflexMainState
+from gws_reflex_main.gws_components import rich_text_component
 
 from ..components import example_tabs, page_layout
 

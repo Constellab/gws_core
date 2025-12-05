@@ -1,8 +1,6 @@
 import os
 from datetime import datetime, timedelta
 
-from pandas import DataFrame
-
 from gws_core import (
     BaseTestCase,
     ConfigParams,
@@ -41,6 +39,7 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.test.test_helper import TestHelper
 from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
+from pandas import DataFrame
 
 
 def get_table() -> Table:

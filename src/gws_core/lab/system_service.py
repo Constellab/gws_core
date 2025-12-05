@@ -1,7 +1,6 @@
 import os
 import sys
 from threading import Thread
-from typing import List
 
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.db.db_manager_service import DbManagerService
@@ -102,7 +101,7 @@ class SystemService:
 
         with AuthenticateUser(User.get_and_check_sysuser()):
             try:
-                scenarios: List[Scenario] = list(Scenario.get_running_scenarios())
+                scenarios: list[Scenario] = list(Scenario.get_running_scenarios())
 
                 for scenario in scenarios:
                     if scenario.get_process_status() != ScenarioStatus.RUNNING:

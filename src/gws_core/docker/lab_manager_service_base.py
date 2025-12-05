@@ -1,4 +1,4 @@
-from typing import Dict, Optional, Type, TypeVar
+from typing import TypeVar
 
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
@@ -15,9 +15,9 @@ class LabManagerServiceBase:
 
     ACCESS_TOKEN_HEADER = "access-token"
 
-    _access_token: Optional[str] = None
+    _access_token: str | None = None
 
-    def __init__(self, access_token: Optional[str] = None):
+    def __init__(self, access_token: str | None = None):
         """Constructor of the SpaceService
 
         :param access_token: if access token is provided, it is used to authenticate.
@@ -27,7 +27,7 @@ class LabManagerServiceBase:
         self._access_token = access_token
 
     @classmethod
-    def get_instance(cls: Type[LabManagerServiceBaseType]) -> LabManagerServiceBaseType:
+    def get_instance(cls: type[LabManagerServiceBaseType]) -> LabManagerServiceBaseType:
         """
         Return a new instance of the SpaceService that use the
         current user for authentication
@@ -46,7 +46,7 @@ class LabManagerServiceBase:
         lab_api_url = Settings.get_lab_manager_api_url()
         return lab_api_url + "/" + route
 
-    def _get_request_header(self) -> Dict[str, str]:
+    def _get_request_header(self) -> dict[str, str]:
         """
         Return the header for a request to lab manager, with Api key and User if exists
         """

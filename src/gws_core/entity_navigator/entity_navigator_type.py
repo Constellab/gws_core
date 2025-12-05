@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, List
+from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -71,4 +71,4 @@ class EntityNavGroupDTO(BaseModelDTO):
     """Store the entities nav grouped by type"""
 
     type: NavigableEntityType
-    entities: List[Any]
+    entities: list[Any]

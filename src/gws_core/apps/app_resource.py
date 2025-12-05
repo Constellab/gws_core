@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Any, List
+from typing import Any
 
 from gws_core.apps.app_config import AppConfig
 from gws_core.apps.app_instance import AppInstance
@@ -281,7 +281,7 @@ class AppResource(ResourceList):
         return super().add_resource(resource, create_new_resource)
 
     def add_multiple_resources(
-        self, resources: List[Resource], message_dispatcher: MessageDispatcher = None
+        self, resources: list[Resource], message_dispatcher: MessageDispatcher = None
     ) -> None:
         """
 

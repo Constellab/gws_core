@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi.param_functions import Depends
 
@@ -91,8 +90,8 @@ def get_content(id_: str, _=Depends(AuthorizationService.check_user_access_token
 )
 def search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteTemplateDTO]:
     """
@@ -109,8 +108,8 @@ def search(
 )
 def search_by_name(
     name: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteTemplateDTO]:
     return NoteTemplateService.search_by_name(name, page, number_of_items_per_page).to_dto()

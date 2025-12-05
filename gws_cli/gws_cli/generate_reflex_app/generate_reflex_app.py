@@ -2,11 +2,12 @@ import os
 import shutil
 
 import typer
+from gws_core import FileHelper, ShellProxy, StringHelper
+
 from gws_cli.utils.app_task_generator import generate_app_task
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import create_dev_config_json
 from gws_cli.utils.typer_message_observer import TyperMessageObserver
-from gws_core import FileHelper, ShellProxy, StringHelper
 
 APP_NAME_VAR = "APP_NAME"
 

@@ -4,9 +4,7 @@ import subprocess
 from abc import abstractmethod
 from json import dump, load
 from pathlib import Path
-from typing import Any, Dict, Type, TypeVar, Union, final
-
-from typing_extensions import Literal
+from typing import Any, Literal, TypeVar, final
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.sys_proc import SysProc
@@ -34,7 +32,7 @@ class BaseEnvShell(ShellProxy):
 
     def __init__(
         self,
-        env_file_path: Union[Path, str],
+        env_file_path: Path | str,
         env_name: str = None,
         working_dir: str = None,
         message_dispatcher: MessageDispatcher = None,
@@ -77,7 +75,7 @@ class BaseEnvShell(ShellProxy):
         """
 
         try:
-            with open(self.env_file_path, "r", encoding="utf-8") as file:
+            with open(self.env_file_path, encoding="utf-8") as file:
                 env_str = file.read()
 
             return self.hash_env_str(env_str)
@@ -86,7 +84,7 @@ class BaseEnvShell(ShellProxy):
 
     def run(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -125,7 +123,7 @@ class BaseEnvShell(ShellProxy):
 
     def run_in_new_thread(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -155,7 +153,7 @@ class BaseEnvShell(ShellProxy):
     @final
     def check_output(
         self,
-        cmd: Union[list, str],
+        cmd: list | str,
         env: dict = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool = False,
@@ -224,7 +222,7 @@ class BaseEnvShell(ShellProxy):
 
         return is_install
 
-    def _execute_env_install_command(self, cmd: str, env: Dict[str, str] = None) -> None:
+    def _execute_env_install_command(self, cmd: str, env: dict[str, str] = None) -> None:
         """
         Execute the command to install the virtual env, and log error if any.
         """
@@ -280,7 +278,7 @@ class BaseEnvShell(ShellProxy):
         Uninstall the virtual env.
         """
 
-    def _execute_uninstall_command(self, cmd: str, env: Dict[str, str] = None) -> None:
+    def _execute_uninstall_command(self, cmd: str, env: dict[str, str] = None) -> None:
         res = subprocess.run(
             cmd,
             cwd=self.get_env_dir_path(),
@@ -301,7 +299,7 @@ class BaseEnvShell(ShellProxy):
                 raise Exception(f"Cannot remove the virtual environment. {error_message}") from err
 
     @abstractmethod
-    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
+    def format_command(self, user_cmd: list | str) -> list | str:
         """
         Format the user command. If the command is a list, must return a list.
         """
@@ -380,7 +378,7 @@ class BaseEnvShell(ShellProxy):
         Read the env file and return its content.
         """
 
-        with open(self.env_file_path, "r", encoding="utf-8") as file:
+        with open(self.env_file_path, encoding="utf-8") as file:
             return file.read()
 
     @classmethod
@@ -403,7 +401,7 @@ class BaseEnvShell(ShellProxy):
 
     @classmethod
     def from_env_str(
-        cls: Type[BaseEnvShellType], env_str: str, message_dispatcher: MessageDispatcher = None
+        cls: type[BaseEnvShellType], env_str: str, message_dispatcher: MessageDispatcher = None
     ) -> BaseEnvShellType:
         """
         Create the virtual environment from a string containing the environment definition.

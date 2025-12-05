@@ -1,4 +1,3 @@
-from typing import List, Union
 
 from gws_core.core.utils.logger import Logger
 from gws_core.model.event.event_dispatcher import EventDispatcher
@@ -59,7 +58,7 @@ class UserService:
         return cls.set_user_active(id_, False, triggered_by)
 
     @classmethod
-    def get_by_id_or_none(cls, id_: str) -> Union[User, None]:
+    def get_by_id_or_none(cls, id_: str) -> User | None:
         return User.get_by_id(id_)
 
     @classmethod
@@ -102,11 +101,11 @@ class UserService:
         return user
 
     @classmethod
-    def get_all_users(cls) -> List[User]:
+    def get_all_users(cls) -> list[User]:
         return list(User.select())
 
     @classmethod
-    def get_all_real_users(cls) -> List[User]:
+    def get_all_real_users(cls) -> list[User]:
         return list(
             User.select()
             .where(User.group != UserGroup.SYSUSER)

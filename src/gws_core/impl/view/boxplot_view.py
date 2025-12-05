@@ -1,8 +1,6 @@
 import math
-from typing import Dict, List, Union
 
 import numpy
-import pandas
 from pandas import DataFrame
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
@@ -62,13 +60,13 @@ class BoxPlotView(View):
 
     x_label: str = None
     y_label: str = None
-    x_tick_labels: List[str] = None
-    _series: List = None
+    x_tick_labels: list[str] = None
+    _series: list = None
     _type: ViewType = ViewType.BOX_PLOT
     _title: str = "Box Plot"
 
     def add_data(
-        self, data: List[float] = None, name: str = None, tags: List[Dict[str, str]] = None
+        self, data: list[float] = None, name: str = None, tags: list[dict[str, str]] = None
     ) -> None:
         """
         Add series of raw data.
@@ -86,7 +84,7 @@ class BoxPlotView(View):
         self.add_data_from_dataframe(DataFrame(data), name, tags)
 
     def add_data_from_dataframe(
-        self, data: DataFrame = None, name: str = None, tags: List[Dict[str, str]] = None
+        self, data: DataFrame = None, name: str = None, tags: list[dict[str, str]] = None
     ) -> None:
         if data is None or not isinstance(data, DataFrame):
             raise BadRequestException("The data is required and must be a DataFrame")
@@ -129,16 +127,16 @@ class BoxPlotView(View):
 
     def add_series(
         self,
-        x: List[float] = None,
-        median: List[float] = None,
-        q1: List[float] = None,
-        q3: List[float] = None,
-        min: List[float] = None,
-        max: List[float] = None,
-        lower_whisker: List[float] = None,
-        upper_whisker: List[float] = None,
+        x: list[float] = None,
+        median: list[float] = None,
+        q1: list[float] = None,
+        q3: list[float] = None,
+        min: list[float] = None,
+        max: list[float] = None,
+        lower_whisker: list[float] = None,
+        upper_whisker: list[float] = None,
         name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ) -> None:
         """
         Add series of pre-computed x and y box values.
@@ -211,5 +209,5 @@ class BoxPlotView(View):
             "series": self._series,
         }
 
-    def _clean_nan(self, data: List[float]):
+    def _clean_nan(self, data: list[float]):
         return ["" if math.isnan(x) else float(x) for x in data]

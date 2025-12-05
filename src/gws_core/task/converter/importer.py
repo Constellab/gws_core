@@ -1,6 +1,7 @@
 import traceback
 from abc import abstractmethod
-from typing import Callable, List, Type, final
+from collections.abc import Callable
+from typing import final
 
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -21,9 +22,9 @@ from .converter import Converter, decorate_converter
 
 def importer_decorator(
     unique_name: str,
-    target_type: Type[Resource],
-    supported_extensions: List[str],
-    source_type: Type[FSNode] = File,
+    target_type: type[Resource],
+    supported_extensions: list[str],
+    source_type: type[FSNode] = File,
     human_name: str = None,
     short_description: str = None,
     hide: bool = False,
@@ -64,7 +65,7 @@ def importer_decorator(
     :rtype: Callable
     """
 
-    def decorator(task_class: Type[ResourceImporter]):
+    def decorator(task_class: type[ResourceImporter]):
         try:
             if not Utils.issubclass(task_class, ResourceImporter):
                 BrickService.log_brick_error(
@@ -129,11 +130,11 @@ class ResourceImporter(Converter):
     # Override the config_spec to define custom spec for the importer
     config_specs = ConfigSpecs({})
 
-    __supported_extensions__: List[str] = []
+    __supported_extensions__: list[str] = []
 
     @final
     def convert(
-        self, source: FSNode, params: ConfigParams, target_type: Type[Resource]
+        self, source: FSNode, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
         if not source.path:
             raise Exception("Cannot import the file because the path is not defined.")
@@ -157,7 +158,7 @@ class ResourceImporter(Converter):
 
     @abstractmethod
     def import_from_path(
-        self, source: FSNode, params: ConfigParams, target_type: Type[Resource]
+        self, source: FSNode, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
         """Override the import form path method to create the destination resource from the file
 

@@ -1,4 +1,5 @@
-import importlib
+
+from gws_core.streamlit import StreamlitHelper, StreamlitRouter
 
 from _streamlit_showcase_app.pages import (
     ai_chat_page,
@@ -11,8 +12,6 @@ from _streamlit_showcase_app.pages import (
     tree_menu_page,
     utils_page,
 )
-
-from gws_core.streamlit import StreamlitHelper, StreamlitRouter
 
 sources: list
 

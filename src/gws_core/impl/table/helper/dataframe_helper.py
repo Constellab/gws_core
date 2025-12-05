@@ -1,5 +1,5 @@
 from re import sub
-from typing import Any, List
+from typing import Any
 
 from numpy import NaN, inf
 from numpy.ma import masked
@@ -11,7 +11,7 @@ from gws_core.core.utils.utils import Utils
 
 
 class DataframeHelper:
-    CSV_DELIMITERS: List[str] = ["\t", ",", ";"]
+    CSV_DELIMITERS: list[str] = ["\t", ",", ";"]
     DEFAULT_CSV_DELIMITER = ","
 
     @staticmethod
@@ -39,9 +39,9 @@ class DataframeHelper:
         return max_delimiter
 
     @staticmethod
-    def flatten_dataframe_by_column(dataframe: DataFrame) -> List[Any]:
+    def flatten_dataframe_by_column(dataframe: DataFrame) -> list[Any]:
         """Flatten a 2d data to a list of value. The values are added by column"""
-        values: List[Any] = []
+        values: list[Any] = []
         # flatten columns into values list
         for column in dataframe:
             values += dataframe[column].to_list()
@@ -149,7 +149,7 @@ class DataframeHelper:
         return cls.rename_duplicate_column_and_row_names(data)
 
     @classmethod
-    def format_header_names(cls, names: List[Any], strict: bool = False) -> List[str]:
+    def format_header_names(cls, names: list[Any], strict: bool = False) -> list[str]:
         """Format the names of a row or a column with the following rules:
         - convert to string
 

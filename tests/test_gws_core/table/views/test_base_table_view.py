@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table
 from gws_core.impl.table.view.base_table_view import BaseTableView, CellRange, TableSelection
+from pandas import DataFrame
 
 
 # test_base_table_view

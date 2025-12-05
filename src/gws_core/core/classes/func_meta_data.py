@@ -1,7 +1,7 @@
 import inspect
-from typing import Any, Dict, Type, Union
+from typing import Any
 
-EmptyClass: Type = inspect.Signature.empty
+EmptyClass: type = inspect.Signature.empty
 
 
 class FuncArgMetaData:
@@ -12,10 +12,10 @@ class FuncArgMetaData:
     """
 
     arg_name: str
-    default_value: Union[Any, EmptyClass]
-    type_: Union[Type, EmptyClass]
+    default_value: Any | EmptyClass
+    type_: type | EmptyClass
 
-    def __init__(self, arg_name: str, default_value: Any, type_: Type) -> None:
+    def __init__(self, arg_name: str, default_value: Any, type_: type) -> None:
         self.arg_name = arg_name
         self.default_value = default_value
         self.type_ = type_
@@ -37,7 +37,7 @@ class FuncArgsMetaData:
     """
 
     func_name: str
-    args: Dict[str, FuncArgMetaData]
+    args: dict[str, FuncArgMetaData]
 
     def __init__(self, func_name: str) -> None:
         self.func_name = func_name
@@ -46,13 +46,13 @@ class FuncArgsMetaData:
     def add_arg(self, arg_name: str, meta_data: FuncArgMetaData) -> None:
         self.args[arg_name] = meta_data
 
-    def get_named_args(self) -> Dict[str, FuncArgMetaData]:
+    def get_named_args(self) -> dict[str, FuncArgMetaData]:
         """return all argument except utility ones (['self', 'cls', 'args', 'kwargs'])
 
         :return: [description]
         :rtype: Dict[str, FuncArgMetaData]
         """
-        args: Dict[str, FuncArgMetaData] = {}
+        args: dict[str, FuncArgMetaData] = {}
         for key, arg in self.args.items():
             if key not in ["self", "cls", "args", "kwargs"]:
                 args[key] = arg

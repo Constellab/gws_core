@@ -1,6 +1,6 @@
 """Component to provide consistent page layout across showcase pages."""
 
-from typing import Callable
+from collections.abc import Callable
 
 import streamlit as st
 

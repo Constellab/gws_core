@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -16,21 +16,21 @@ class CommunitySpaceDTO(BaseModelDTO):
 class CommunityAgentDTO(BaseModelDTO):
     id: str
     title: str
-    space: Optional[CommunitySpaceDTO] = None
-    created_at: Optional[str] = None
-    last_modified_at: Optional[str] = None
-    created_by: Optional[object] = None
+    space: CommunitySpaceDTO | None = None
+    created_at: str | None = None
+    last_modified_at: str | None = None
+    created_by: object | None = None
     latest_publish_version: int
-    description: Optional[object] = None
-    latest_style: Optional[TypingStyle] = None
-    agent_co_authors: Optional[List[object]] = None
-    likes: Optional[int] = None
-    comments: Optional[int] = None
+    description: object | None = None
+    latest_style: TypingStyle | None = None
+    agent_co_authors: list[object] | None = None
+    likes: int | None = None
+    comments: int | None = None
 
 
 class CommunityAgentFileParams(BaseModelDTO):
-    specs: Dict[str, ParamSpecDTO]
-    values: Dict[str, Any]
+    specs: dict[str, ParamSpecDTO]
+    values: dict[str, Any]
 
 
 class CommunityAgentFileDTO(BaseModelDTO):
@@ -38,31 +38,31 @@ class CommunityAgentFileDTO(BaseModelDTO):
     params: CommunityAgentFileParams
     code: str
     environment: str
-    input_specs: Dict
-    output_specs: Dict
-    config_specs: Dict
-    bricks: List[Dict]
+    input_specs: dict
+    output_specs: dict
+    config_specs: dict
+    bricks: list[dict]
     task_type: str
     style: TypingStyle
 
 
 class CommunityAgentIOSpecDTO(BaseModelDTO):
     # TODO type to improve, it is not standard
-    specs: Dict[str, IOSpecDTO]
+    specs: dict[str, IOSpecDTO]
 
 
 class CommunityAgentVersionDTO(BaseModelDTO):
     id: str
     version: int
     type: str
-    environment: Optional[str]
-    params: Optional[Dict[str, Any]]
+    environment: str | None
+    params: dict[str, Any] | None
     code: str
-    input_specs: Optional[CommunityAgentIOSpecDTO]
-    output_specs: Optional[CommunityAgentIOSpecDTO]
-    config_specs: Optional[Dict]
+    input_specs: CommunityAgentIOSpecDTO | None
+    output_specs: CommunityAgentIOSpecDTO | None
+    config_specs: dict | None
     agent: CommunityAgentDTO
-    style: Optional[TypingStyle] = None
+    style: TypingStyle | None = None
 
 
 class CommunityCreateAgentDTO(BaseModelDTO):
@@ -72,7 +72,7 @@ class CommunityCreateAgentDTO(BaseModelDTO):
 
 
 class CommunityGetAgentsBody(BaseModelDTO):
-    spacesFilter: List[str] = []
+    spacesFilter: list[str] = []
     titleFilter: str = ""
     personalOnly: bool = False
 
@@ -89,20 +89,20 @@ class CommunityTagKeyDTO(BaseModelDTO):
     label: str
     value_format: TagValueFormat
     deprecated: bool
-    published_at: Optional[str] = None
-    unit: Optional[str] = None
-    description: Optional[RichTextDTO] = None
-    space: Optional[CommunitySpaceDTO] = None
-    tag_co_authors: Optional[List[object]] = None
-    created_at: Optional[str] = None
-    last_modified_at: Optional[str] = None
-    created_by: Optional[object] = None
-    last_modified_by: Optional[object] = None
-    additional_infos_specs: Optional[Dict[str, Any]] = None
+    published_at: str | None = None
+    unit: str | None = None
+    description: RichTextDTO | None = None
+    space: CommunitySpaceDTO | None = None
+    tag_co_authors: list[object] | None = None
+    created_at: str | None = None
+    last_modified_at: str | None = None
+    created_by: object | None = None
+    last_modified_by: object | None = None
+    additional_infos_specs: dict[str, Any] | None = None
 
 
 class CommunityGetTagKeysBody(BaseModelDTO):
-    spacesFilter: List[str] = []
+    spacesFilter: list[str] = []
     labelFilter: str = ""
     personalOnly: bool = False
 
@@ -112,5 +112,5 @@ class CommunityTagValueDTO(BaseModelDTO):
     value: str
     deprecated: bool
     tag_key: CommunityTagKeyDTO
-    short_description: Optional[str] = None
-    additional_infos: Optional[Dict[str, Any]] = None
+    short_description: str | None = None
+    additional_infos: dict[str, Any] | None = None

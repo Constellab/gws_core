@@ -1,5 +1,4 @@
 import threading
-from typing import List
 
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
@@ -147,7 +146,7 @@ class QueueService:
                 cls.init()
 
     @classmethod
-    def get_queue_jobs(cls) -> List[Job]:
+    def get_queue_jobs(cls) -> list[Job]:
         return Queue.get_jobs()
 
     @classmethod

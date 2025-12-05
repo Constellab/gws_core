@@ -1,4 +1,4 @@
-from typing import Type, TypeVar
+from typing import TypeVar
 
 from gws_core.core.utils.logger import Logger
 
@@ -8,7 +8,7 @@ from .event_listener import EventListener
 T = TypeVar("T", bound=EventListener)
 
 
-def event_listener(cls: Type[T]) -> Type[T]:
+def event_listener(cls: type[T]) -> type[T]:
     """Decorator that automatically registers an EventListener class.
 
     This decorator should be applied to classes that inherit from EventListener.

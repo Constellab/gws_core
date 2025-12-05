@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi import Depends
 
@@ -41,8 +40,8 @@ def delete_share_link(id_: str, _=Depends(AuthorizationService.check_user_access
 
 @core_app.get("/share-link", tags=["Share"], summary="Get share links")
 def get_share_links(
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ShareLinkDTO]:
     return ShareLinkService.get_shared_links(page, number_of_items_per_page).to_dto()
@@ -56,7 +55,7 @@ def get_share_entity(
     entity_id: str,
     link_type: ShareLinkType,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Optional[ShareLinkDTO]:
+) -> ShareLinkDTO | None:
     share_link = ShareLinkService.find_by_type_and_entity(entity_type, entity_id, link_type)
     return share_link.to_dto() if share_link else None
 

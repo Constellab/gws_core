@@ -1,4 +1,3 @@
-from typing import Optional
 
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.model.typing_style import TypingStyle
@@ -13,6 +12,6 @@ class ViewConfigDTO(ModelWithUserDTO):
     view_name: str
     is_favorite: bool
     config_values: dict
-    scenario: Optional[ScenarioSimpleDTO]
-    resource: Optional[ResourceSimpleDTO]
+    scenario: ScenarioSimpleDTO | None
+    resource: ResourceSimpleDTO | None
     style: TypingStyle

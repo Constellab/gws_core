@@ -1,6 +1,7 @@
-from typing import List, Literal
+from typing import Literal
 
 import reflex as rx
+
 from gws_core.space.space_dto import SpaceGroupDTO
 
 from .reflex_user_components import user_inline_component
@@ -57,7 +58,7 @@ def group_inline_component(
 
 
 def group_select(
-    groups: List[SpaceGroupDTO],
+    groups: list[SpaceGroupDTO],
     placeholder: str = "Select a group",
     name: str = None,
     disabled: bool = False,

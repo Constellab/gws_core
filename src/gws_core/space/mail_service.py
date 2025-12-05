@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from gws_core.space.space_dto import SendScenarioFinishMailData, SpaceSendMailToUsersDTO
 from gws_core.space.space_service import SpaceService
@@ -24,7 +24,7 @@ class MailService:
         return cls._send_mail([user_id], subject, "generic", data)
 
     @classmethod
-    def send_mail(cls, receivers_ids: List[str], mail_content: str, subject: str = None) -> bool:
+    def send_mail(cls, receivers_ids: list[str], mail_content: str, subject: str = None) -> bool:
         """Send a email to 1 or multiple users
 
         :param mail_content: content of the mail (supports HTML)
@@ -43,10 +43,10 @@ class MailService:
     @classmethod
     def _send_mail(
         cls,
-        receivers_ids: List[str],
+        receivers_ids: list[str],
         mail_template: str,
         subject: str = None,
-        data: Dict[str, Any] = None,
+        data: dict[str, Any] = None,
     ) -> bool:
         """Send an email using Space API. If success, return True, else raise an exception
 

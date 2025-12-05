@@ -1,6 +1,6 @@
 import os
 from abc import abstractmethod
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.apps.app_dto import AppType
 from gws_core.brick.brick_service import BrickService
@@ -68,7 +68,7 @@ def app_decorator(
 
     """
 
-    def decorator(task_class: Type[AppConfig]):
+    def decorator(task_class: type[AppConfig]):
         _decorate_app(
             task_class,
             app_type=app_type,
@@ -83,7 +83,7 @@ def app_decorator(
 
 
 def _decorate_app(
-    app_class: Type[AppConfig],
+    app_class: type[AppConfig],
     app_type: AppType,
     unique_name: str,
     human_name: str = "",

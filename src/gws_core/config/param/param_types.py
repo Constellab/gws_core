@@ -1,10 +1,10 @@
 from enum import Enum
-from typing import Any, Dict, List, Literal, Optional, Type
+from typing import Any, Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
 ParamValue = Any
-ParamValueType = Type[ParamValue]
+ParamValueType = type[ParamValue]
 
 
 # Visibility of a param
@@ -44,14 +44,14 @@ class ParamSpecTypeStr(Enum):
 class ParamSpecSimpleDTO(BaseModelDTO):
     type: ParamSpecTypeStr
     optional: bool
-    visibility: Optional[ParamSpecVisibilty] = "public"
-    default_value: Optional[ParamValue] = None
-    additional_info: Optional[Dict] = {}
+    visibility: ParamSpecVisibilty | None = "public"
+    default_value: ParamValue | None = None
+    additional_info: dict | None = {}
 
 
 class ParamSpecDTO(ParamSpecSimpleDTO):
-    human_name: Optional[str] = None
-    short_description: Optional[str] = None
+    human_name: str | None = None
+    short_description: str | None = None
 
     def to_markdown(self) -> str:
         markdown = f"- {self.human_name} (`{self.type}`"
@@ -81,11 +81,11 @@ class ParamSpecInfoSpecs(BaseModelDTO):
     # visibility: ParamSpecDTO
     name: ParamSpecDTO
     short_description: ParamSpecDTO
-    human_name: Optional[ParamSpecDTO] = None
-    default_value: Optional[ParamSpecDTO] = None
-    additional_info: Optional[Dict[str, ParamSpecDTO]] = None
+    human_name: ParamSpecDTO | None = None
+    default_value: ParamSpecDTO | None = None
+    additional_info: dict[str, ParamSpecDTO] | None = None
 
 
-DynamicParamAllowedSpecsDict = Dict[str, ParamSpecInfoSpecs]
+DynamicParamAllowedSpecsDict = dict[str, ParamSpecInfoSpecs]
 
-CompleteDynamicParamAllowedSpecsDict = Dict[str, DynamicParamAllowedSpecsDict]
+CompleteDynamicParamAllowedSpecsDict = dict[str, DynamicParamAllowedSpecsDict]

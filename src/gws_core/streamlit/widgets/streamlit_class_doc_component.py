@@ -1,6 +1,5 @@
 """Streamlit component to display class documentation extracted via ReflectorHelper."""
 
-from typing import Optional, Type
 
 import streamlit as st
 
@@ -11,8 +10,8 @@ from .streamlit_doc_component import render_method_doc
 
 
 def class_doc_component(
-    class_type: Type,
-    title: Optional[str] = None,
+    class_type: type,
+    title: str | None = None,
     show_description: bool = True,
     show_variables: bool = True,
     show_methods: bool = True,
@@ -30,7 +29,7 @@ def class_doc_component(
     :param show_methods: Whether to show the class methods
     """
     # Extract documentation using ReflectorHelper
-    class_doc: Optional[ClassicClassDocDTO] = ReflectorHelper.get_class_docs(class_type)
+    class_doc: ClassicClassDocDTO | None = ReflectorHelper.get_class_docs(class_type)
 
     if class_doc is None:
         st.error("Unable to extract documentation for this class.")

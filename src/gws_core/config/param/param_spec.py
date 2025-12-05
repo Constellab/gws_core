@@ -1,8 +1,9 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+from typing_extensions import TypedDict
 
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
-from typing_extensions import TypedDict
 
 from ...core.classes.validator import (
     BoolValidator,
@@ -28,20 +29,20 @@ class ParamSpec:
     # Default value, if None, and optional is false, the config is mandatory
     # If a value is provided there is no need to set the optional
     # Setting optional to True, allows default None value
-    default_value: Optional[Any]
+    default_value: Any | None
     optional: bool
 
     # Visibility of the param, see doc on type ParamSpecVisibilty for more info
     visibility: ParamSpecVisibilty
 
     # Human readable name of the param, showed in the interface
-    human_name: Optional[str]
+    human_name: str | None
 
     # Description of the param, showed in the interface
-    short_description: Optional[str]
+    short_description: str | None
 
     # additional info specific for the param
-    additional_info: Optional[dict]
+    additional_info: dict | None
 
     PUBLIC_VISIBILITY: ParamSpecVisibilty = "public"
     PROTECTED_VISIBILITY: ParamSpecVisibilty = "protected"
@@ -49,11 +50,11 @@ class ParamSpec:
 
     def __init__(
         self,
-        default_value: Optional[Any] = None,
+        default_value: Any | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -121,7 +122,7 @@ class ParamSpec:
         return value
 
     def _check_visibility(self, visibility: ParamSpecVisibilty) -> None:
-        allowed_visibility: List[ParamSpecVisibilty] = [
+        allowed_visibility: list[ParamSpecVisibilty] = [
             "public",
             "protected",
             "private",
@@ -166,7 +167,7 @@ class ParamSpec:
 
     @classmethod
     @abstractmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         pass
 
     @classmethod
@@ -197,27 +198,27 @@ class ParamSpec:
 class StrParamAdditionalInfo(TypedDict):
     """Additional info for string param"""
 
-    min_length: Optional[int]
-    max_length: Optional[int]
-    allowed_values: Optional[List[str]]
+    min_length: int | None
+    max_length: int | None
+    allowed_values: list[str] | None
 
 
 @param_spec_decorator()
 class StrParam(ParamSpec):
     """String param"""
 
-    additional_info: Optional[StrParamAdditionalInfo]
+    additional_info: StrParamAdditionalInfo | None
 
     def __init__(
         self,
-        default_value: Optional[str] = None,
-        min_length: Optional[int] = None,
-        max_length: Optional[int] = None,
+        default_value: str | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
-        allowed_values: Optional[List[str]] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
+        allowed_values: list[str] | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -268,14 +269,14 @@ class StrParam(ParamSpec):
         return StrParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return {
             "min_length": IntParam(optional=True, human_name="Min length").to_dto(),
             "max_length": IntParam(optional=True, human_name="Max length").to_dto(),
             "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
         }
 
-    def _check_allowed_values(self, allowed_values: Optional[List[str]]) -> None:
+    def _check_allowed_values(self, allowed_values: list[str] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
@@ -297,11 +298,11 @@ class TextParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Optional[str] = None,
+        default_value: str | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -341,7 +342,7 @@ class TextParam(ParamSpec):
         return TextParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
 
@@ -351,11 +352,11 @@ class BoolParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Optional[Any] = False,
+        default_value: Any | None = False,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -396,7 +397,7 @@ class BoolParam(ParamSpec):
         return BoolParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
 
@@ -406,11 +407,11 @@ class DictParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Optional[Any] = None,
+        default_value: Any | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -450,7 +451,7 @@ class DictParam(ParamSpec):
         return DictParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
 
@@ -460,11 +461,11 @@ class ListParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Optional[Any] = None,
+        default_value: Any | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -504,7 +505,7 @@ class ListParam(ParamSpec):
         return ListParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
 
@@ -512,30 +513,30 @@ class NumericParamAdditionalInfo(TypedDict):
     """Additional info for string param"""
 
     # The minimum value allowed (including)
-    min_value: Optional[float]
+    min_value: float | None
 
     # The maximum value allowed (including)
-    max_value: Optional[float]
+    max_value: float | None
 
     # List of allowed values
-    allowed_values: Optional[List[Any]]
+    allowed_values: list[Any] | None
 
 
 class NumericParam(ParamSpec):
     """Abstract numerci param class (int or float)"""
 
-    additional_info: Optional[NumericParamAdditionalInfo]
+    additional_info: NumericParamAdditionalInfo | None
 
     def __init__(
         self,
-        default_value: Optional[Any] = None,
+        default_value: Any | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
-        allowed_values: Optional[List[Any]] = None,
-        min_value: Optional[Any] = None,
-        max_value: Optional[Any] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
+        allowed_values: list[Any] | None = None,
+        min_value: Any | None = None,
+        max_value: Any | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -574,7 +575,7 @@ class NumericParam(ParamSpec):
     def get_str_type(cls) -> ParamSpecTypeStr:
         pass
 
-    def _check_allowed_values(self, allowed_values: Optional[List[Any]]) -> None:
+    def _check_allowed_values(self, allowed_values: list[Any] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
@@ -614,7 +615,7 @@ class IntParam(NumericParam):
         return IntParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return {
             "min_value": IntParam(optional=True, human_name="Min value").to_dto(),
             "max_value": IntParam(optional=True, human_name="Max value").to_dto(),
@@ -646,7 +647,7 @@ class FloatParam(NumericParam):
         return FloatParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return {
             "min_value": FloatParam(optional=True, human_name="Min value").to_dto(),
             "max_value": FloatParam(optional=True, human_name="Max value").to_dto(),

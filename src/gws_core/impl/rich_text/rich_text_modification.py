@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
@@ -31,11 +31,11 @@ class RichTextBlockModificationDTO(BaseModelDTO):
     time: datetime
     blockId: str
     blockType: RichTextBlockType
-    differences: Optional[List[RichTextModificationDifferenceDTO]] = None
-    blockValue: Optional[Dict[str, Any]] = None
+    differences: list[RichTextModificationDifferenceDTO] | None = None
+    blockValue: dict[str, Any] | None = None
     type: RichTextModificationType
     index: int
-    oldIndex: Optional[int] = None
+    oldIndex: int | None = None
     userId: str
 
 
@@ -43,7 +43,7 @@ class RichTextModificationUserDTO(BaseModelDTO):
     id: str
     firstname: str
     lastname: str
-    photo: Optional[str] = None
+    photo: str | None = None
 
 
 class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
@@ -52,7 +52,7 @@ class RichTextBlockModificationWithUserDTO(RichTextBlockModificationDTO):
 
 class RichTextModificationsDTO(BaseModelDTO):
     version: int = 1
-    modifications: List[RichTextBlockModificationDTO] = []
+    modifications: list[RichTextBlockModificationDTO] = []
 
 
 # export interface TeNewFullRichTextDTO {
@@ -74,7 +74,7 @@ class RichTextAggregateDTO(BaseModelDTO):
 
     version: int
     richText: RichTextDTO
-    modifications: Optional[Any] = None
+    modifications: Any | None = None
 
     @classmethod
     def json_is_rich_text_aggregate(cls, dict_: dict) -> bool:

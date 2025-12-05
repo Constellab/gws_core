@@ -1,4 +1,3 @@
-from typing import List, Type
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -14,10 +13,10 @@ from .space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 
 
 class SpaceFolderService:
-    entity_with_folders: List[Type[ModelWithFolder]] = [Scenario, Note, ResourceModel]
+    entity_with_folders: list[type[ModelWithFolder]] = [Scenario, Note, ResourceModel]
 
     @classmethod
-    def get_folder_trees(cls) -> List[SpaceFolder]:
+    def get_folder_trees(cls) -> list[SpaceFolder]:
         return list(SpaceFolder.get_roots())
 
     @classmethod
@@ -55,7 +54,7 @@ class SpaceFolderService:
             cls._synchronize_space_folder(space_folder, None)
 
         # check the folders to delete
-        current_root_folders: List[SpaceFolder] = list(SpaceFolder.get_roots())
+        current_root_folders: list[SpaceFolder] = list(SpaceFolder.get_roots())
         for root_folder in current_root_folders:
             cls._delete_folder_on_sync(root_folder, external_folders)
 

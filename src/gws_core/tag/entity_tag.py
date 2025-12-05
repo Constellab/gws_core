@@ -1,4 +1,5 @@
-from typing import List
+
+from peewee import BooleanField, CharField, Expression, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
@@ -16,7 +17,6 @@ from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
-from peewee import BooleanField, CharField, Expression, ModelSelect
 
 
 class EntityTag(Model):
@@ -166,7 +166,7 @@ class EntityTag(Model):
 
     ###################################### SELECT ######################################
     @classmethod
-    def get_search_tag_expression(cls, tags: List[Tag]) -> Expression:
+    def get_search_tag_expression(cls, tags: list[Tag]) -> Expression:
         """Get the filter expresion for a search in tags column"""
         query_builder: ExpressionBuilder = ExpressionBuilder()
         for tag in tags:
@@ -205,7 +205,7 @@ class EntityTag(Model):
         )
 
     @classmethod
-    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> List["EntityTag"]:
+    def find_by_entity(cls, entity_type: TagEntityType, entity_id: str) -> list["EntityTag"]:
         return list(
             cls.select().where(
                 (cls.entity_type == entity_type.value) & (cls.entity_id == entity_id)
@@ -218,8 +218,8 @@ class EntityTag(Model):
 
     @classmethod
     def find_by_entities(
-        cls, entity_type: TagEntityType, entity_ids: List[str]
-    ) -> List["EntityTag"]:
+        cls, entity_type: TagEntityType, entity_ids: list[str]
+    ) -> list["EntityTag"]:
         return list(
             cls.select().where(
                 (cls.entity_type == entity_type.value) & (cls.entity_id.in_(entity_ids))

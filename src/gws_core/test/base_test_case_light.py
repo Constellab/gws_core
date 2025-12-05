@@ -1,4 +1,3 @@
-from typing import List, Union
 from unittest import TestCase
 
 from gws_core.core.utils.utils import Utils
@@ -14,7 +13,7 @@ class BaseTestCaseLight(TestCase):
     """
 
     # default value of ignore keys when comparing json
-    json_ignore_keys: List[str] = ["id", "created_at", "last_modified_at"]
+    json_ignore_keys: list[str] = ["id", "created_at", "last_modified_at"]
 
     # If true the init and clear are called for each test,
     # If False they are called before and after all the class tests
@@ -72,7 +71,7 @@ class BaseTestCaseLight(TestCase):
 
     @classmethod
     def assert_json(
-        cls, json_1: Union[dict, list], json_2: Union[dict, list], ignore_keys: List[str] = None
+        cls, json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
     ) -> None:
         """Assert a json with possibility to ignore key"""
         Utils.assert_json_equals(json_1, json_2, ignore_keys)

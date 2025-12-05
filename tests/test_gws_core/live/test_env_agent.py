@@ -1,9 +1,7 @@
 import os
-from typing import Type
 from unittest import TestCase
 
 from gws_core import File, PyCondaAgent, Task, TaskRunner
-from gws_core.config.param.param_spec import IntParam, ListParam
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.agent.py_mamba_agent import PyMambaAgent
@@ -31,7 +29,7 @@ class TestEnvAgent(TestCase):
     def test_r_mamba_env_agent(self):
         self._test_default_config(RMambaAgent)
 
-    def _test_default_config(self, task_type: Type[Task]):
+    def _test_default_config(self, task_type: type[Task]):
         """Test the default env agent config template to be sure it is valid"""
 
         # create a csv file

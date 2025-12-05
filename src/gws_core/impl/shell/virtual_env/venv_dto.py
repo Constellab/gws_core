@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -28,4 +28,4 @@ class VEnvCompleteInfoDTO(BaseModelDTO):
 class VEnsStatusDTO(BaseModelDTO):
     venv_folder: str
 
-    envs: List[VEnvBasicInfoDTO]
+    envs: list[VEnvBasicInfoDTO]

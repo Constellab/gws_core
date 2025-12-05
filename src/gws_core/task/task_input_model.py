@@ -1,4 +1,3 @@
-from typing import List
 
 from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
 
@@ -48,12 +47,12 @@ class TaskInputModel(BaseModel):
         )
 
     @classmethod
-    def get_by_resource_models(cls, resource_model_ids: List[str]) -> ModelSelect:
+    def get_by_resource_models(cls, resource_model_ids: list[str]) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.resource_model.in_(resource_model_ids))
 
     @classmethod
     def get_other_scenarios(
-        cls, resource_model_ids: List[str], exclude_scenario_id: str
+        cls, resource_model_ids: list[str], exclude_scenario_id: str
     ) -> ModelSelect:
         """Method to see if a resource_model is used as input in another scenario"""
         return TaskInputModel.select().where(
@@ -66,7 +65,7 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.task_model == task_model_id)
 
     @classmethod
-    def get_by_task_models(cls, task_model_ids: List[str]) -> ModelSelect:
+    def get_by_task_models(cls, task_model_ids: list[str]) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.task_model.in_(task_model_ids))
 
     @classmethod
@@ -74,7 +73,7 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.select().where(TaskInputModel.scenario == scenario_id)
 
     @classmethod
-    def get_by_scenarios(cls, scenario_ids: List[str]) -> ModelSelect:
+    def get_by_scenarios(cls, scenario_ids: list[str]) -> ModelSelect:
         return TaskInputModel.select().where(TaskInputModel.scenario.in_(scenario_ids))
 
     @classmethod
@@ -82,7 +81,7 @@ class TaskInputModel(BaseModel):
         return TaskInputModel.delete().where(TaskInputModel.task_model == task_id).execute()
 
     @classmethod
-    def resource_is_used_by_scenario(cls, resource_model_id: str, scenario_ids: List[str]) -> bool:
+    def resource_is_used_by_scenario(cls, resource_model_id: str, scenario_ids: list[str]) -> bool:
         """Method to see if a resource_model is used as input in one of the scenarios"""
         return (
             cls.get_by_resource_model(resource_model_id)

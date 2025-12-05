@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -75,7 +75,7 @@ class DynamicParam(ParamSpec):
 
         return self.specs.build_config_params(value)
 
-    def validate(self, value: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, value: dict[str, Any]) -> dict[str, Any]:
         if value is None:
             return value
 
@@ -189,7 +189,7 @@ class DynamicParam(ParamSpec):
         return DynamicParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
 

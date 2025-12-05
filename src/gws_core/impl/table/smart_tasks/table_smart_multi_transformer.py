@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Type
+from typing import Any
 
 from pandas import DataFrame
 
@@ -26,9 +26,9 @@ class AIMultiTableTransformer(AIPromptCode):
     The data of the table is not transferered to OpenAI, only the provided text.
     """
 
-    tables: List[Table]
+    tables: list[Table]
 
-    def __init__(self, tables: List[Table], chat: OpenAiChat, message_dispatcher=None):
+    def __init__(self, tables: list[Table], chat: OpenAiChat, message_dispatcher=None):
         super().__init__(chat, message_dispatcher)
         self.tables = tables
 
@@ -42,7 +42,7 @@ There are {len(self.tables)} dataframes in the list.
 
     def build_code_inputs(self) -> dict:
         # get the table
-        dataframes: List[DataFrame] = []
+        dataframes: list[DataFrame] = []
         i = 0
         for resource in self.tables:
             if isinstance(resource, Table):
@@ -54,20 +54,20 @@ There are {len(self.tables)} dataframes in the list.
         # pass the dataframe as input
         return {"source": dataframes}
 
-    def build_inputs_context(self, code_inputs: Dict[str, Any]) -> str:
+    def build_inputs_context(self, code_inputs: dict[str, Any]) -> str:
         return OpenAiHelper.describe_inputs_text_for_context("'source' (type 'List[DataFrame]')")
 
     def build_outputs_context(self) -> str:
         return OpenAiHelper.describe_outputs_text_for_context("'target' (type 'List[DataFrame]')")
 
-    def get_code_expected_output_types(self) -> Dict[str, Type]:
+    def get_code_expected_output_types(self) -> dict[str, type]:
         pass
 
-    def get_available_package_names(self) -> List[str]:
+    def get_available_package_names(self) -> list[str]:
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
 
-    def build_output(self, code_outputs: dict) -> List[Table]:
-        output: List[DataFrame] = code_outputs.get("target", None)
+    def build_output(self, code_outputs: dict) -> list[Table]:
+        output: list[DataFrame] = code_outputs.get("target")
 
         if output is None:
             raise Exception("The code did not generate any output")
@@ -75,7 +75,7 @@ There are {len(self.tables)} dataframes in the list.
         if not isinstance(output, list):
             raise Exception("The output must be a list of pandas DataFrame")
 
-        results: List[Table] = []
+        results: list[Table] = []
 
         for dataframe in output:
             results.append(Table(dataframe))
@@ -133,7 +133,7 @@ class MultiTableSmartTransformer(Task):
         chat: OpenAiChat = params.get_value("prompt")
 
         ai_tables = AIMultiTableTransformer(inputs["source"], chat, self.message_dispatcher)
-        result: List[Table] = ai_tables.run()
+        result: list[Table] = ai_tables.run()
 
         # save the new config with the new prompt
         params.set_value("prompt", ai_tables.chat)

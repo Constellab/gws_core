@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
@@ -45,7 +45,7 @@ class FileDecompressTask(ResourceImporter):
     resource_to_delete_id: str = None
 
     def import_from_path(
-        self, source: File, params: ConfigParams, target_type: Type[Resource]
+        self, source: File, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
         if params.get_value("delete_compressed_file"):
             self.resource_to_delete_id = source.get_model_id()

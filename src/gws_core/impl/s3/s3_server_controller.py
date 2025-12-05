@@ -1,4 +1,3 @@
-from typing import List, Union
 
 from fastapi import Depends, Request
 from fastapi.params import Query
@@ -55,7 +54,7 @@ async def _delete_object(request: Request, service: AbstractS3Service) -> Respon
     xml_content = await request.body()
     str_xml = xml_content.decode("utf-8")
     dict_ = XMLHelper.xml_to_dict(str_xml)
-    objects: Union[dict, List[dict]] = dict_["Delete"]["Object"]
+    objects: dict | list[dict] = dict_["Delete"]["Object"]
     keys: list[str]
     if not isinstance(objects, list):
         keys = [objects["Key"]]
@@ -240,7 +239,7 @@ async def _upload_part(
     # Upload part for multipart upload
     file_bytes = await request.body()
     service.upload_part(key, upload_id, part_number, file_bytes)
-    return Response(status_code=200, headers={"ETag": f""})
+    return Response(status_code=200, headers={"ETag": ""})
 
 
 async def _update_object_tags(request: Request, key: str, service: AbstractS3Service) -> Response:

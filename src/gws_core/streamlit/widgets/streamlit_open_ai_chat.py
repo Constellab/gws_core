@@ -118,9 +118,8 @@ class StreamlitOpenAiChat:
         self.save()
 
     def _show_system_message(self, text: str) -> None:
-        with st.chat_message("assistant"):
-            with st.expander("See system prompt"):
-                st.markdown(text)
+        with st.chat_message("assistant"), st.expander("See system prompt"):
+            st.markdown(text)
 
     def _show_message(self, message: AiChatMessage, type_: Literal["human", "ai"]) -> None:
         with st.chat_message(type_):

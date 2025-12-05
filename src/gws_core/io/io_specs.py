@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
@@ -14,7 +14,7 @@ IOSpecsType = Literal["normal", "dynamic"]
 class IOSpecsDTO(BaseModelDTO):
     """IOSpecsDTO type"""
 
-    specs: Dict[str, IOSpecDTO]
+    specs: dict[str, IOSpecDTO]
     type: IOSpecsType
     additional_info: dict
 
@@ -28,9 +28,9 @@ class IOSpecsDTO(BaseModelDTO):
 class OutputsCheckResult(BaseModelDTO):
     """OutputCheckResult type"""
 
-    error: Optional[str]
-    outputs: Optional[TaskOutputs]
-    auto_convert_messages: List[str]
+    error: str | None
+    outputs: TaskOutputs | None
+    auto_convert_messages: list[str]
 
     class Config:
         arbitrary_types_allowed = True
@@ -39,25 +39,25 @@ class OutputsCheckResult(BaseModelDTO):
 class OutputCheckResult(BaseModelDTO):
     """OutputCheckResult type"""
 
-    error: Optional[str]
-    resource: Optional[Resource]
-    auto_convert_message: Optional[str]
+    error: str | None
+    resource: Resource | None
+    auto_convert_message: str | None
 
     class Config:
         arbitrary_types_allowed = True
 
 
 class IOSpecs:
-    _specs: Dict[str, IOSpec] = {}
+    _specs: dict[str, IOSpec] = {}
 
-    def __init__(self, specs: Dict[str, IOSpec] = None) -> None:
+    def __init__(self, specs: dict[str, IOSpec] = None) -> None:
         if specs is None:
             specs = {}
         if not isinstance(specs, dict):
             raise Exception("The specs must be a dictionary")
         self._specs = specs
 
-    def get_specs(self) -> Dict[str, IOSpec]:
+    def get_specs(self) -> dict[str, IOSpec]:
         return self._specs
 
     def get_spec(self, name: str) -> IOSpec:
@@ -92,19 +92,19 @@ class IOSpecs:
 
 
 class InputSpecs(IOSpecs):
-    _specs: Dict[str, InputSpec] = {}
+    _specs: dict[str, InputSpec] = {}
 
-    def __init__(self, input_specs: Dict[str, InputSpec] = None) -> None:
+    def __init__(self, input_specs: dict[str, InputSpec] = None) -> None:
         super().__init__(input_specs)
 
-    def check_and_build_inputs(self, inputs: Dict[str, Resource]) -> TaskInputs:
+    def check_and_build_inputs(self, inputs: dict[str, Resource]) -> TaskInputs:
         """Check and convert input to TaskInputs
         :rtype: TaskInputs
         """
-        missing_resource: List[str] = []
+        missing_resource: list[str] = []
         invalid_input_text: str = ""
 
-        input_dict: Dict[str, Resource] = {}
+        input_dict: dict[str, Resource] = {}
 
         for key, spec in self._specs.items():
             # If the resource is None
@@ -136,7 +136,7 @@ class InputSpecs(IOSpecs):
 
         return TaskInputs(self._transform_input_resources(input_dict))
 
-    def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
+    def _transform_input_resources(self, resources: dict[str, Resource]) -> dict[str, Resource]:
         """
         Returns the resources of all the ports to be used for the input of a task.
         """
@@ -145,9 +145,9 @@ class InputSpecs(IOSpecs):
 
 
 class OutputSpecs(IOSpecs):
-    _specs: Dict[str, OutputSpec] = {}
+    _specs: dict[str, OutputSpec] = {}
 
-    def __init__(self, output_specs: Dict[str, OutputSpec] = None) -> None:
+    def __init__(self, output_specs: dict[str, OutputSpec] = None) -> None:
         super().__init__(output_specs)
 
     def check_and_build_outputs(self, task_outputs: TaskOutputs) -> OutputsCheckResult:
@@ -167,7 +167,7 @@ class OutputSpecs(IOSpecs):
         task_outputs = self._transform_output_resources(task_outputs)
 
         error_text: str = ""
-        auto_convert_messages: List[str] = []
+        auto_convert_messages: list[str] = []
 
         verified_outputs: TaskOutputs = {}
 

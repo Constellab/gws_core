@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, List, TypedDict
+from typing import Any, TypedDict
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
 
@@ -10,7 +10,7 @@ class RichTextListItem(TypedDict):
     """Object representing a list item in a rich text"""
 
     content: str
-    items: List["RichTextListItem"]
+    items: list["RichTextListItem"]
     meta: dict
 
 
@@ -30,10 +30,10 @@ class TeRichTextMigrator:
         pass
 
     @staticmethod
-    def get_migrators(current_version: int, target_version: int) -> List["TeRichTextMigrator"]:
+    def get_migrators(current_version: int, target_version: int) -> list["TeRichTextMigrator"]:
         if current_version > target_version:
             raise ValueError("Cannot migrate from newer version to older version")
-        migrators: List[TeRichTextMigrator] = []
+        migrators: list[TeRichTextMigrator] = []
         all_migrators_sorted = [TeRichTextMigrator1To2()]
 
         for migrator in all_migrators_sorted:

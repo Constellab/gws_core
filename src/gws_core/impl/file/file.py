@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, AnyStr, List, Optional
+from typing import Any, AnyStr
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -34,7 +34,7 @@ class File(FSNode):
     provided when creating the resource.
     """
 
-    __default_extensions__: List[str] = []
+    __default_extensions__: list[str] = []
     """
     Override to define the default extensions of the file
     When upoading a file, if the file extension matches this list, this type will be used as default
@@ -112,7 +112,7 @@ class File(FSNode):
     def mime(self):
         return FileHelper.get_mime(self.path)
 
-    def set_name(self, name: Optional[str]) -> None:
+    def set_name(self, name: str | None) -> None:
         """
         Format the name of the file to ensure it has the correct extension
 
@@ -340,7 +340,7 @@ class File(FSNode):
             return TypingStyle.material_icon(icon, background_color=None)
         return super().get_default_style()
 
-    def get_icon_from_extension(self) -> Optional[str]:
+    def get_icon_from_extension(self) -> str | None:
         extension = self.extension
 
         if not extension:

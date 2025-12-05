@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.reflector_types import ClassicClassDocDTO
@@ -11,7 +10,7 @@ class TechnicalDocDTO(BaseModelDTO):
     json_version: int
     brick_name: str
     brick_version: str
-    resources: List[ResourceTypingDTO]
-    tasks: List[TaskTypingDTO]
-    protocols: List[ProtocolTypingFullDTO]
-    other_classes: List[ClassicClassDocDTO]
+    resources: list[ResourceTypingDTO]
+    tasks: list[TaskTypingDTO]
+    protocols: list[ProtocolTypingFullDTO]
+    other_classes: list[ClassicClassDocDTO]

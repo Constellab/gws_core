@@ -1,5 +1,7 @@
 from traceback import format_exc
-from typing import Any, Dict, List, Type
+from typing import Any
+
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
@@ -14,7 +16,6 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
 from gws_core.task.plug.input_task import InputTask
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -54,9 +55,9 @@ class TaskModel(ProcessModel):
     community_agent_version_modified: bool = BooleanField(default=False)
 
     # cache to store the list of tags of all inputs
-    _input_resource_tags: List[Tag] = None
+    _input_resource_tags: list[Tag] = None
 
-    def set_process_type(self, process_type: Type[Process]) -> None:
+    def set_process_type(self, process_type: type[Process]) -> None:
         """Method used when creating a new task model, it init the input and output from task specs
 
         :param typing_name: type of the task
@@ -114,14 +115,14 @@ class TaskModel(ProcessModel):
         return process
 
     @property
-    def resources(self) -> List[ResourceModel]:
+    def resources(self) -> list[ResourceModel]:
         if not self.is_saved():
             return []
 
         return list(ResourceModel.select().where(ResourceModel.task_model == self))
 
     @classmethod
-    def get_scenario_input_tasks(cls, scenario_ids: List[str]) -> ModelSelect:
+    def get_scenario_input_tasks(cls, scenario_ids: list[str]) -> ModelSelect:
         """Return all the Input task Model of the scenario"""
         return cls.select().where(
             (cls.scenario.in_(scenario_ids)) & (cls.source_config_id.is_null(False))
@@ -141,7 +142,7 @@ class TaskModel(ProcessModel):
 
         # build the task tester
         params: ConfigParamsDict = self.config.get_and_check_values()
-        inputs: Dict[str, Resource] = self.inputs.get_resources(new_instance=True)
+        inputs: dict[str, Resource] = self.inputs.get_resources(new_instance=True)
 
         task_runner: TaskRunner = TaskRunner(
             task_type=self.get_process_type(),
@@ -279,7 +280,7 @@ class TaskModel(ProcessModel):
         self._check_resource_before_save(resource, port_name)
 
         # Handle specific case of ResourceSet, it saves all the sub
-        new_children_resources: List[ResourceModel] = []
+        new_children_resources: list[ResourceModel] = []
         if isinstance(resource, ResourceListBase):
             new_children_resources = self._save_resource_list_children(resource, port_name)
 
@@ -323,7 +324,7 @@ class TaskModel(ProcessModel):
 
     def _save_resource_list_children(
         self, resource_list: ResourceListBase, port_name: str
-    ) -> List[ResourceModel]:
+    ) -> list[ResourceModel]:
         """Specific management to save resources of a resource set, return the new created resources"""
 
         for resource in resource_list.get_resources_as_set():
@@ -356,7 +357,7 @@ class TaskModel(ProcessModel):
         """check all ResourceRField are resource that are input of the task"""
 
         # get the ResourceRField of the resource
-        r_fields: Dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(
+        r_fields: dict[str, ResourceRField] = ReflectorHelper.get_property_names_of_type(
             type(resource), ResourceRField
         )
 
@@ -378,11 +379,11 @@ class TaskModel(ProcessModel):
                     detail_args={"port_name": port_name},
                 )
 
-    def _get_input_resource_tags(self) -> List[Tag]:
+    def _get_input_resource_tags(self) -> list[Tag]:
         """Return all the tags of all the input resources"""
 
         if self._input_resource_tags is None:
-            tags: List[Tag] = []
+            tags: list[Tag] = []
 
             for input_resource in self.inputs.get_resource_models().values():
                 entity_tags = EntityTagList.find_by_entity(
@@ -394,7 +395,7 @@ class TaskModel(ProcessModel):
 
         return self._input_resource_tags
 
-    def _get_scenario_tags(self) -> List[Tag]:
+    def _get_scenario_tags(self) -> list[Tag]:
         """Return all the tags of the scenario"""
         entity_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.scenario.id)
         return entity_tags.build_tags_propagated(

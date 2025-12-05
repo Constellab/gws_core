@@ -1,4 +1,3 @@
-from typing import List
 
 from peewee import ForeignKeyField
 from peewee import Model as PeeweeModel
@@ -10,7 +9,7 @@ class ModelWithFolder(PeeweeModel):
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     @classmethod
-    def clear_folder(cls, folders: List[SpaceFolder]) -> None:
+    def clear_folder(cls, folders: list[SpaceFolder]) -> None:
         """
         Clear folders from all the entities that have the folder
         """

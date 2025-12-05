@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from fastapi.param_functions import Depends
 
@@ -110,7 +109,7 @@ def remove_scenario(
 @core_app.put("/note/{note_id}/validate/{folder_id}", tags=["Note"], summary="Validate the note")
 def validate(
     note_id: str,
-    folder_id: Optional[str] = None,
+    folder_id: str | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> NoteDTO:
     return NoteService.validate_and_send_to_space(note_id, folder_id).to_dto()
@@ -143,7 +142,7 @@ def get_content(id_: str, _=Depends(AuthorizationService.check_user_access_token
 @core_app.get("/note/scenario/{scenario_id}", tags=["Note"], summary="Find notes of a scenario")
 def get_by_scenario(
     scenario_id: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[NoteDTO]:
+) -> list[NoteDTO]:
     notes = NoteService.get_by_scenario(scenario_id)
     return [note.to_dto() for note in notes]
 
@@ -151,7 +150,7 @@ def get_by_scenario(
 @core_app.get("/note/{note_id}/scenarios", tags=["Note"], summary="Find scenarios of a note")
 def get_scenario_by_note(
     note_id: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[ScenarioDTO]:
+) -> list[ScenarioDTO]:
     scenarios = NoteService.get_scenarios_by_note(note_id)
     return [scenario.to_dto() for scenario in scenarios]
 
@@ -159,8 +158,8 @@ def get_scenario_by_note(
 @core_app.post("/note/search", tags=["Note"], summary="Advanced search for notes")
 def advanced_search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
     """
@@ -173,8 +172,8 @@ def advanced_search(
 @core_app.get("/note/search-name/{name}", tags=["Note"], summary="Search for note by name")
 def search_by_name(
     name: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
     return NoteService.search_by_name(name, page, number_of_items_per_page).to_dto()
@@ -185,8 +184,8 @@ def search_by_name(
 )
 def get_by_resource(
     resource_id: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
     return NoteService.get_by_resource(
@@ -211,7 +210,7 @@ def unarchive(id_: str, _=Depends(AuthorizationService.check_user_access_token))
 @core_app.get("/note/{note_id}/history", tags=["Note"], summary="Get the history of a note")
 def get_history(
     note_id: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[RichTextBlockModificationWithUserDTO]:
+) -> list[RichTextBlockModificationWithUserDTO]:
     return NoteService.get_note_history(note_id)
 
 

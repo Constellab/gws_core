@@ -1,6 +1,5 @@
 import time
 from abc import abstractmethod
-from typing import Optional
 
 from numpy import Infinity
 
@@ -16,7 +15,7 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 
 class ScenarioWaitInfoDTO(BaseModelDTO):
     scenario: ScenarioDTO
-    progress: Optional[ScenarioProgressDTO] = None
+    progress: ScenarioProgressDTO | None = None
 
 
 class ScenarioWaiter:

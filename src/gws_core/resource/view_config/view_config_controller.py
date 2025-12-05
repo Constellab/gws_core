@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from fastapi.param_functions import Depends
 
@@ -53,8 +52,8 @@ def update_favorite(
 def get_by_resource(
     resource_id: str,
     favorite: bool,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.get_by_resource(
@@ -69,8 +68,8 @@ def get_by_resource(
 @core_app.post("/view-config/search", tags=["View config"], summary="Search available view config")
 def search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.search(search_dict, page, number_of_items_per_page).to_dto()
@@ -84,8 +83,8 @@ def search(
 def search_for_note(
     note_id: str,
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.search_by_note(
@@ -97,5 +96,5 @@ def search_for_note(
 
 
 @core_app.get("/view-config/types/list", tags=["View type"], summary="Get all the view types")
-def get_view_types(_=Depends(AuthorizationService.check_user_access_token)) -> List[ViewTypeDTO]:
+def get_view_types(_=Depends(AuthorizationService.check_user_access_token)) -> list[ViewTypeDTO]:
     return ViewConfigService.get_all_view_types()

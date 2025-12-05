@@ -1,15 +1,14 @@
 from abc import abstractmethod
-from typing import Type
 
 from gws_core.resource.resource import Resource
 
 
-class IOValidator(object):
+class IOValidator:
     """
     IO Validator
     """
 
-    resource_type: Type[Resource] = Resource
+    resource_type: type[Resource] = Resource
 
     def check_type(self, resource: Resource) -> None:
         """

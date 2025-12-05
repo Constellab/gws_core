@@ -1,6 +1,6 @@
 import os
 from runpy import run_path
-from typing import Any, Dict, List, Literal
+from typing import Any, Literal
 
 from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.param_spec import BoolParam
@@ -10,7 +10,7 @@ from gws_core.impl.file.file_helper import FileHelper
 
 class AgentCodeHelper:
     @classmethod
-    def run_python_code(cls, code: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def run_python_code(cls, code: str, params: dict[str, Any]) -> dict[str, Any]:
         temp_folder = Settings.make_temp_dir()
         snippet_filepath = os.path.join(temp_folder, "snippet.py")
         with open(snippet_filepath, "w", encoding="utf-8") as file_path:
@@ -24,7 +24,7 @@ class AgentCodeHelper:
         return global_vars
 
     @classmethod
-    def compute_text_params(cls, params: List[str]) -> Dict[str, Any]:
+    def compute_text_params(cls, params: list[str]) -> dict[str, Any]:
         """Compute text that declare variables to actuals variables.
         Ex : ["a = 1", "b = A"] -> {"a": 1, "b": "A"}
 
@@ -34,7 +34,7 @@ class AgentCodeHelper:
         :return: _description_
         :rtype: Dict[str, Any]
         """
-        result: Dict[str, Any] = {}
+        result: dict[str, Any] = {}
         if params:
             params_str: str = "\n".join(params)
             try:

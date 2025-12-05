@@ -1,5 +1,4 @@
 import os
-from typing import Dict
 
 import typer
 from gws_core import BrickService, Logger
@@ -21,7 +20,7 @@ class CLIUtils:
         return ctx.obj["log_level"]
 
     @staticmethod
-    def replace_vars_in_file(file_path: str, variables: Dict[str, str]):
+    def replace_vars_in_file(file_path: str, variables: dict[str, str]):
         """Method to replace the variables in a file.
         The variables are formatted as {{var_name}} in the file.
 
@@ -30,7 +29,7 @@ class CLIUtils:
         :param vars: dictionary of variables to replace
         :type vars: Dict[str, str]
         """
-        with open(file_path, "r", encoding="UTF-8") as f:
+        with open(file_path, encoding="UTF-8") as f:
             text = f.read()
 
             for key, value in variables.items():

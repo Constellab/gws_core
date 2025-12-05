@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.resource.view.view_types import ViewType
@@ -51,21 +50,18 @@ class BarPlotView(View):
 
     x_label: str = None
     y_label: str = None
-    x_tick_labels: List[str] = None
-    x_tick_tags: List[Dict[str, str]] = None
-    _series: List = None
+    x_tick_labels: list[str] = None
+    x_tick_tags: list[dict[str, str]] = None
+    _series: list = None
     _type: ViewType = ViewType.BAR_PLOT
     _title: str = "Bar Plot"
 
     def add_series(
         self,
-        x: Union[
-            List[float],
-            List[str],
-        ] = None,
-        y: List[float] = None,
+        x: list[float] | list[str] = None,
+        y: list[float] = None,
         name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ):
         """
         Add a series of bars to plot

@@ -1,6 +1,8 @@
-from typing import Callable, Dict, List, NoReturn, Optional, Type, TypeVar
+from collections.abc import Callable
+from typing import NoReturn, TypeVar
 
 import requests
+
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
@@ -21,9 +23,9 @@ class SpaceServiceBase:
 
     ACCESS_TOKEN_HEADER = "access-token"
 
-    _access_token: Optional[str] = None
+    _access_token: str | None = None
 
-    def __init__(self, access_token: Optional[str] = None):
+    def __init__(self, access_token: str | None = None):
         """Constructor of the SpaceService
 
         :param access_token: if access token is provided, it is used to authenticate.
@@ -33,7 +35,7 @@ class SpaceServiceBase:
         self._access_token = access_token
 
     @classmethod
-    def get_instance(cls: Type[SpaceServiceBaseType]) -> SpaceServiceBaseType:
+    def get_instance(cls: type[SpaceServiceBaseType]) -> SpaceServiceBaseType:
         """
         Return a new instance of the SpaceService that use the
         current user for authentication
@@ -49,7 +51,7 @@ class SpaceServiceBase:
 
     # TODO TO REMOVE
     @classmethod
-    def create_with_access_token(cls: Type[SpaceServiceBaseType]) -> SpaceServiceBaseType:
+    def create_with_access_token(cls: type[SpaceServiceBaseType]) -> SpaceServiceBaseType:
         """
         Return a new instance of the SpaceService that use the
         access token for authentication
@@ -73,7 +75,7 @@ class SpaceServiceBase:
         space_api_url = Settings.get_space_api_url()
         return space_api_url + "/" + route
 
-    def _get_request_header(self) -> Dict[str, str]:
+    def _get_request_header(self) -> dict[str, str]:
         """
         Return the header for a request to space, with Api key and User if exists
         """

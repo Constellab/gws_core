@@ -60,7 +60,7 @@ class TestCreateFolderFromFile(BaseTestCaseLight):
         self.assertTrue(FileHelper.exists_on_os(os.path.join(folder_result.path, "test_file.txt")))
 
         # check file content
-        with open(os.path.join(folder_result.path, "test_file.txt"), "r", encoding="UTF-8") as f:
+        with open(os.path.join(folder_result.path, "test_file.txt"), encoding="UTF-8") as f:
             self.assertEqual(f.read(), "Hello")
 
         # check that the folder has been created

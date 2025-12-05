@@ -1,8 +1,7 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import Table
+from pandas import DataFrame
 
 
 # test_table_tag_extractor

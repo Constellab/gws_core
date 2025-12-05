@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import List
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.core.utils.logger import Logger
@@ -11,7 +10,7 @@ from .dispatched_message import DispatchedMessage
 
 class MessageObserver:
     @abstractmethod
-    def update(self, messages: List[DispatchedMessage]) -> None:
+    def update(self, messages: list[DispatchedMessage]) -> None:
         """Method called when a message is dispatched"""
 
 
@@ -28,9 +27,9 @@ class ProgressBarMessageObserver(MessageObserver):
         super().__init__()
         self.progress_bar = progress_bar
 
-    def update(self, messages: List[DispatchedMessage]) -> None:
+    def update(self, messages: list[DispatchedMessage]) -> None:
         # convert message to ProgressBarMessageWithType
-        progress_bar_messages: List[ProgressBarMessageWithTypeDTO] = [
+        progress_bar_messages: list[ProgressBarMessageWithTypeDTO] = [
             ProgressBarMessageWithTypeDTO(
                 message=message.message, type=message.status, progress=message.progress
             )
@@ -43,13 +42,13 @@ class ProgressBarMessageObserver(MessageObserver):
 class BasicMessageObserver(MessageObserver):
     """Observer to log dispatched message to a list"""
 
-    messages: List[DispatchedMessage]
+    messages: list[DispatchedMessage]
 
     def __init__(self) -> None:
         super().__init__()
         self.messages = []
 
-    def update(self, messages: List[DispatchedMessage]) -> None:
+    def update(self, messages: list[DispatchedMessage]) -> None:
         self.messages.extend(messages)
 
     def has_message_containing(self, sub_text: str, level: MessageLevel = None) -> bool:
@@ -72,7 +71,7 @@ class BasicMessageObserver(MessageObserver):
 class LoggerMessageObserver(MessageObserver):
     """Observer to log dispatched message to the logger"""
 
-    def update(self, messages: List[DispatchedMessage]) -> None:
+    def update(self, messages: list[DispatchedMessage]) -> None:
         for message in messages:
             if message.status == MessageLevel.ERROR:
                 Logger.error(message.message)

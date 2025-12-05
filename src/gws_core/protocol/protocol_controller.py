@@ -1,5 +1,5 @@
 import threading
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -159,7 +159,7 @@ def get_community_agent(
 )
 def get_community_agent_and_check_rights(
     agent_version_id: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> Optional[CommunityAgentDTO]:
+) -> CommunityAgentDTO | None:
     return ProtocolService.get_community_agent_and_check_rights(agent_version_id)
 
 
@@ -720,7 +720,7 @@ def update_process_style(
 
 class CreateScenarioTemplate(BaseModelDTO):
     name: str = None
-    description: Optional[RichTextDTO] = None
+    description: RichTextDTO | None = None
 
 
 @core_app.post(

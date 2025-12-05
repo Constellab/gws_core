@@ -1,4 +1,3 @@
-from typing import Optional, Set
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO, ProtocolGraphConfigDTO
@@ -17,8 +16,8 @@ class ProtocolGraph:
     def __init__(self, graph: ProtocolGraphConfigDTO) -> None:
         self.graph = graph
 
-    def get_input_resource_ids(self) -> Set[str]:
-        resource_ids: Set[str] = set()
+    def get_input_resource_ids(self) -> set[str]:
+        resource_ids: set[str] = set()
 
         for node in self.graph.nodes.values():
             if node.process_typing_name == InputTask.get_typing_name():
@@ -28,8 +27,8 @@ class ProtocolGraph:
 
         return resource_ids
 
-    def get_output_resource_ids(self) -> Set[str]:
-        resource_ids: Set[str] = set()
+    def get_output_resource_ids(self) -> set[str]:
+        resource_ids: set[str] = set()
 
         for node in self.graph.nodes.values():
             if node.process_typing_name == OutputTask.get_typing_name():
@@ -39,18 +38,18 @@ class ProtocolGraph:
 
         return resource_ids
 
-    def get_input_and_output_resource_ids(self) -> Set[str]:
+    def get_input_and_output_resource_ids(self) -> set[str]:
         return self.get_input_resource_ids().union(self.get_output_resource_ids())
 
-    def get_all_resource_ids(self) -> Set[str]:
+    def get_all_resource_ids(self) -> set[str]:
         all_resource_ids = self._get_all_resource_ids_recursive(set(), self.graph)
 
         # we add the input ids to the set of all resource ids
         return all_resource_ids.union(self.get_input_resource_ids())
 
     def _get_all_resource_ids_recursive(
-        self, resource_ids: Set[str], graph: ProtocolGraphConfigDTO
-    ) -> Set[str]:
+        self, resource_ids: set[str], graph: ProtocolGraphConfigDTO
+    ) -> set[str]:
         for node in graph.nodes.values():
             for port in node.outputs.ports.values():
                 if port.resource_id:
@@ -61,12 +60,12 @@ class ProtocolGraph:
 
         return resource_ids
 
-    def get_process_by_instance_path(self, instance_path: str) -> Optional[ProcessConfigDTO]:
+    def get_process_by_instance_path(self, instance_path: str) -> ProcessConfigDTO | None:
         return self._get_process_by_instance_path_recursive(instance_path, self.graph)
 
     def _get_process_by_instance_path_recursive(
         self, instance_path: str, graph: ProtocolGraphConfigDTO
-    ) -> Optional[ProcessConfigDTO]:
+    ) -> ProcessConfigDTO | None:
         instance_names = instance_path.split(".")
 
         process = graph.nodes[instance_names[0]]

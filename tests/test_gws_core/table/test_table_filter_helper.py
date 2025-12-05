@@ -1,9 +1,8 @@
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import DataframeFilterHelper
 from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDataFilterHelper
+from pandas import DataFrame
 
 
 # test_table_filter_helper

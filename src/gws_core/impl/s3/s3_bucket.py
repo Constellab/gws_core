@@ -2,11 +2,12 @@ import time
 from typing import TypedDict
 
 import boto3
+from mypy_boto3_s3.client import S3Client
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from mypy_boto3_s3.client import S3Client
 
 
 class S3BucketActionProgress(TypedDict):

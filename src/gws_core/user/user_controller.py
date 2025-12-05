@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import Depends
 from fastapi.responses import RedirectResponse
@@ -122,7 +121,7 @@ def logout() -> JSONResponse:
 
 
 @core_app.get("/user", tags=["User"])
-def get_all_users(_=Depends(AuthorizationService.check_user_access_token)) -> List[UserDTO]:
+def get_all_users(_=Depends(AuthorizationService.check_user_access_token)) -> list[UserDTO]:
     """
     List the users.
     """

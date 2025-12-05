@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -22,9 +21,9 @@ class ProcessStatus(Enum):
 
 class ProcessErrorInfo(BaseModelDTO):
     detail: str
-    unique_code: Optional[str] = None
-    context: Optional[str] = None
-    instance_id: Optional[str] = None
+    unique_code: str | None = None
+    context: str | None = None
+    instance_id: str | None = None
 
 
 class ProcessMinimumDTO(BaseModelDTO):

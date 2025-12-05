@@ -1,7 +1,7 @@
-from typing import List, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
+
 from gws_core.brick.brick_dto import BrickDTO
 from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.db.migration.db_migration_service import DbMigrationService
@@ -16,7 +16,7 @@ from .brick_service import BrickService
 @core_app.get("/brick", tags=["Bricks"], summary="Get all brick with status")
 def get_bricks_status(
     _=Depends(AuthorizationService.check_user_access_token_or_app),
-) -> List[BrickDTO]:
+) -> list[BrickDTO]:
     bricks = BrickService.get_all_brick_models()
     return [brick.to_dto() for brick in bricks]
 
@@ -24,7 +24,7 @@ def get_bricks_status(
 @core_app.get("/brick/{brick_name}", tags=["Bricks"], summary="Get info of a brick")
 def get_brick_info(
     brick_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> Optional[BrickDTO]:
+) -> BrickDTO | None:
     brick = BrickService.get_brick_model(brick_name)
     if brick is None:
         return None
@@ -65,6 +65,6 @@ def call_migration(
 )
 def get_brick_migration_versions(
     brick_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[MigrationDTO]:
+) -> list[MigrationDTO]:
     migrations = DbMigrationService.get_brick_migration_versions(brick_name)
     return [migration.to_dto() for migration in migrations]

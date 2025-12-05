@@ -1,4 +1,3 @@
-from typing import Dict
 
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
@@ -25,5 +24,5 @@ class TagsParam(DictParam):
         return TagsParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

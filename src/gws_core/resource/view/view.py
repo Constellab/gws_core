@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, final
+from typing import Any, final
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -13,7 +13,7 @@ from .view_types import ViewType
 
 class View:
     _type: ViewType = ViewType.VIEW
-    _title: Optional[str] = None
+    _title: str | None = None
     _technical_info: TechnicalInfoDict
     _style: TypingStyle = None
 
@@ -50,7 +50,7 @@ class View:
         """Set title"""
         self._title = title
 
-    def get_title(self) -> Optional[str]:
+    def get_title(self) -> str | None:
         """Get title"""
         return self._title
 
@@ -155,7 +155,7 @@ class View:
         return True
 
     @classmethod
-    def generate_range(cls, length: int) -> List[int]:
+    def generate_range(cls, length: int) -> list[int]:
         """Generate range list like 0,1,2...length"""
         return list(range(0, length))
 

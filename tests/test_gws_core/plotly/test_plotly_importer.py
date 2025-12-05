@@ -1,11 +1,10 @@
 from unittest import TestCase
 
 import plotly.express as px
-from pandas import DataFrame
-
 from gws_core.impl.file.file import File
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 from gws_core.impl.plotly.tasks.plotly_importer import PlotlyExporter, PlotlyImporter
+from pandas import DataFrame
 
 
 # test_plotly_importer

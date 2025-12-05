@@ -1,4 +1,3 @@
-from typing import Type
 
 from typing_extensions import TypedDict
 
@@ -53,11 +52,11 @@ class ConfigMapping(TypedDict):
 
 class ProcessSpec:
     instance_name: str = None
-    process_type: Type[Process] = None
+    process_type: type[Process] = None
 
     _config: ConfigParamsDict
 
-    def __init__(self, instance_name: str, process_type: Type[Process]) -> None:
+    def __init__(self, instance_name: str, process_type: type[Process]) -> None:
         self.instance_name = instance_name
         self.process_type = process_type
         self._config = {}

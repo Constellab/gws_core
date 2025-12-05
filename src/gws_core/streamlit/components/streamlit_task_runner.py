@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Type, Optional
+from collections.abc import Callable
+from typing import Any
 
 import streamlit as st
 
@@ -34,11 +35,11 @@ class StreamlitTaskRunner:
     The task is run in a separate thread, so the streamlit app is not blocked.
     """
 
-    task_type: Type[Task]
+    task_type: type[Task]
 
     _streamlit_component_loader = StreamlitComponentLoader("process-config")
 
-    def __init__(self, task_type: Type[Task]):
+    def __init__(self, task_type: type[Task]):
         if not Utils.issubclass(task_type, Task):
             raise ValueError("task_type must be a subclass of Task")
         self.task_type = task_type
@@ -70,7 +71,7 @@ class StreamlitTaskRunner:
     def generate_form_dialog(
         self,
         default_config_values: ConfigParamsDict = None,
-        inputs: Dict[str, Resource] = None,
+        inputs: dict[str, Resource] = None,
         on_run_success: Callable[[TaskOutputs], None] = None,
         key: str = "task-runner",
     ) -> None:
@@ -90,7 +91,7 @@ class StreamlitTaskRunner:
         self,
         key: str,
         config_values: ConfigParamsDict = None,
-        inputs: Dict[str, Resource] = None,
+        inputs: dict[str, Resource] = None,
         on_run_success: Callable[[TaskOutputs], None] = None,
     ) -> None:
         """Open the dialog, on form submit, the value will be stored in the session state and the page will be rerun.
@@ -107,7 +108,7 @@ class StreamlitTaskRunner:
         self,
         key: str,
         default_config_values: ConfigParamsDict = None,
-        inputs: Dict[str, Resource] = None,
+        inputs: dict[str, Resource] = None,
     ) -> TaskOutputs | None:
         """Generate the form from the values, and run the task"""
         component_value = self._generate_component(key, default_config_values, is_dialog=True)
@@ -123,7 +124,7 @@ class StreamlitTaskRunner:
 
     def _generate_component(
         self, key: str, default_config_values: ConfigParamsDict = None, is_dialog: bool = True
-    ) -> Optional[StreamlitTaskRunnerConfigOutput]:
+    ) -> StreamlitTaskRunnerConfigOutput | None:
         config = Config()
         config.set_specs(self.task_type.config_specs)
 
@@ -158,7 +159,7 @@ class StreamlitTaskRunner:
         res.config = config.get_and_check_values()
         return res
 
-    def _get_task_specs_json(self, config: Config) -> Dict[str, Any]:
+    def _get_task_specs_json(self, config: Config) -> dict[str, Any]:
         specs = config.to_specs_dto()
 
         specs_json: dict = {}
@@ -168,7 +169,7 @@ class StreamlitTaskRunner:
         return specs_json
 
     def _run_task(
-        self, config_values: ConfigParamsDict = None, inputs: Dict[str, Resource] = None
+        self, config_values: ConfigParamsDict = None, inputs: dict[str, Resource] = None
     ) -> TaskOutputs:
         # run the task
         task_runner = TaskRunner(self.task_type, params=config_values, inputs=inputs)

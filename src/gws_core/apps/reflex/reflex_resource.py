@@ -11,7 +11,7 @@ from gws_core.resource.resource_decorator import resource_decorator
 
 @resource_decorator("ReflexResource", human_name="Reflex app", short_description="Reflex app")
 class ReflexResource(AppResource):
-    """
+    r"""
     Resource representing a Reflex app instance. https://reflex.dev/.
 
     This resource is used to generate the reflex app from the app config.

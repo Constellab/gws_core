@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, Generic, List, TypeVar
+from collections.abc import Callable
+from typing import Any, Generic, TypeVar
 
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
@@ -69,7 +70,7 @@ class Paginator(Generic[PaginatorType]):
     """
 
     page_info: PageInfo
-    results: List[PaginatorType]
+    results: list[PaginatorType]
 
     _query: ModelSelect
     _nb_of_items_per_page: int

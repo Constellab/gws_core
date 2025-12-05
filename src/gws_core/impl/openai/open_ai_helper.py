@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from openai import OpenAI
 
@@ -14,7 +13,7 @@ class OpenAiHelper:
     whiper_max_file_size = 10 * 1024 * 1024  # 10MB
 
     @classmethod
-    def call_gpt(cls, chat_messages: List[OpenAiChatMessage]) -> str:
+    def call_gpt(cls, chat_messages: list[OpenAiChatMessage]) -> str:
         """Call gpt chat, and add the response to the chat object as an assistant message
 
         :param chat_messages: list of messages and context to send to the AI
@@ -29,7 +28,7 @@ class OpenAiHelper:
         return response.choices[0].message.content
 
     @classmethod
-    def get_code_context(cls, pip_package_names: List[str] = None) -> str:
+    def get_code_context(cls, pip_package_names: list[str] = None) -> str:
         """Define the context rules for the code generation, so the generated code is executable.
 
         :param pip_package_names: list of available package that can be used in the generated code. The version of the package will be automatically retrieved, defaults to None
@@ -41,7 +40,7 @@ class OpenAiHelper:
         return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
 
     @classmethod
-    def get_package_version_context(cls, pip_package_names: List[str]) -> str:
+    def get_package_version_context(cls, pip_package_names: list[str]) -> str:
         """
         Method to improve the context by giving the version of the provided pip packages
         installed in the lab.
@@ -53,7 +52,7 @@ class OpenAiHelper:
         if len(packages) == 0:
             return ""
 
-        packages_text: List[str] = []
+        packages_text: list[str] = []
         for package in packages:
             packages_text.append(f"{package.name}=={package.version}")
 
@@ -61,7 +60,7 @@ class OpenAiHelper:
 
     @classmethod
     def describe_inputs_for_context(cls, inputs: dict) -> str:
-        inputs_texts: List[str] = []
+        inputs_texts: list[str] = []
         for key, value in inputs.items():
             inputs_texts.append(f"'{key}' (type '{Utils.stringify_type(type(value), True)}')")
 
@@ -72,8 +71,8 @@ class OpenAiHelper:
         return f"You have access to the following input variables : {input_description}. The input variables are already initialized, do not create them."
 
     @classmethod
-    def describe_outputs_for_context(cls, outputs_specs: Dict[str, type]) -> str:
-        outputs_texts: List[str] = []
+    def describe_outputs_for_context(cls, outputs_specs: dict[str, type]) -> str:
+        outputs_texts: list[str] = []
         for key, value in outputs_specs.items():
             outputs_texts.append(f"'{key}' (type '{Utils.stringify_type(value, True)}')")
 
@@ -86,7 +85,7 @@ class OpenAiHelper:
         )
 
     @classmethod
-    def call_whisper(cls, audio_file_path: str, prompt: Optional[str] = None) -> str:
+    def call_whisper(cls, audio_file_path: str, prompt: str | None = None) -> str:
         """Call whisper to transcribe an audio file
 
         :param audio_file_path: path to the audio file

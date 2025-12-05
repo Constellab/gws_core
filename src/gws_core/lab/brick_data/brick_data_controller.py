@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi.param_functions import Depends
 
@@ -13,7 +12,7 @@ from .brick_data_service import BrickDataService
 @core_app.get("/brick-data", tags=["Brick data"], summary="Get brick data info")
 def get_brick_data_list(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> List[BrickDataDTO]:
+) -> list[BrickDataDTO]:
     """
     Reset dev environment
     """

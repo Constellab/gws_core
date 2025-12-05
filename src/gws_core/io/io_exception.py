@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type
+from typing import TYPE_CHECKING
 
 from gws_core.io.io_spec import IOSpec
 
@@ -20,10 +20,10 @@ class ResourceNotCompatibleException(BadRequestException):
     """
 
     port_name: str
-    resource_type: Type[Resource]
+    resource_type: type[Resource]
     spec: IOSpec
 
-    def __init__(self, port_name: str, resource_type: Type[Resource], spec: IOSpec) -> None:
+    def __init__(self, port_name: str, resource_type: type[Resource], spec: IOSpec) -> None:
         self.port_name = port_name
         self.resource_type = resource_type
         self.excepted_types = spec
@@ -45,9 +45,9 @@ class MissingInputResourcesException(BadRequestException):
     :type BadRequestException: [type]
     """
 
-    port_names: List[str]
+    port_names: list[str]
 
-    def __init__(self, port_names: List[str]) -> None:
+    def __init__(self, port_names: list[str]) -> None:
         self.port_names = port_names
         super().__init__(
             detail=GWSException.MISSING_INPUT_RESOURCES.value,

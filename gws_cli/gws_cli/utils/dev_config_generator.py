@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core import BaseModelDTO
 
@@ -11,12 +11,12 @@ class AppDevConfig(BaseModelDTO):
     """Pydantic model representing the structure of dev_config.json"""
 
     app_dir_path: str = ""
-    source_ids: List[str] = []
-    params: Dict[str, Any] = {}
+    source_ids: list[str] = []
+    params: dict[str, Any] = {}
     env_type: str = "NONE"
     env_file_path: str = ""
     is_reflex_enterprise: bool = False
-    dev_user_email: Optional[str] = ""
+    dev_user_email: str | None = ""
 
 
 def create_dev_config_json(app_folder: str, is_reflex_enterprise: bool = False) -> None:

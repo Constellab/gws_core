@@ -1,4 +1,5 @@
 import typer
+
 from gws_cli.utils.node_service import NodeService
 from gws_cli.utils.screenshot_service import ScreenshotService
 

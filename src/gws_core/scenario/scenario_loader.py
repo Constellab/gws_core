@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.folder.space_folder import SpaceFolder
@@ -30,7 +29,7 @@ class ScenarioLoader:
         self,
         scenario_info: ZipScenarioInfo,
         mode: ShareEntityCreateMode,
-        message_dispatcher: Optional[MessageDispatcher] = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ) -> None:
         self.exp_info = scenario_info
 
@@ -93,5 +92,5 @@ class ScenarioLoader:
 
         return self._protocol_model
 
-    def get_tags(self) -> List[Tag]:
+    def get_tags(self) -> list[Tag]:
         return TagHelper.tags_dto_to_list(self.exp_info.scenario.tags)

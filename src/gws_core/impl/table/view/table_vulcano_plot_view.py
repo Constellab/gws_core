@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -29,7 +29,7 @@ class TableVulcanoPlotView(BaseTableView):
     _type: ViewType = ViewType.VULCANO_PLOT
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        series: List[Serie2d] = Serie2d.from_list(params.get_value("series"))
+        series: list[Serie2d] = Serie2d.from_list(params.get_value("series"))
 
         if len(series) != 1:
             raise BadRequestException("There must be only one series")
@@ -43,7 +43,7 @@ class TableVulcanoPlotView(BaseTableView):
 
         y_data = self.get_values_from_selection_range(serie.y)
 
-        x_data: List[float] = None
+        x_data: list[float] = None
         if serie.x is not None:
             x_data = self.get_values_from_selection_range(serie.x)
 

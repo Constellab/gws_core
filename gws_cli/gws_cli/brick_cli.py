@@ -1,10 +1,11 @@
 import subprocess
+from typing import Annotated
 
 import typer
+from gws_core.brick.brick_service import BrickService
+
 from gws_cli.generate_brick.generate_brick import generate_brick
 from gws_cli.utils.brick_cli_service import BrickCliService
-from gws_core.brick.brick_service import BrickService
-from typing_extensions import Annotated
 
 app = typer.Typer(help="Generate and manage bricks - reusable components for data processing")
 

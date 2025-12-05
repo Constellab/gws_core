@@ -3,7 +3,7 @@ import json
 import os
 import subprocess
 import sys
-from typing import Dict, List, Literal, Optional
+from typing import Literal
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_settings import BrickSettings
@@ -96,7 +96,7 @@ class SettingsLoader:
                         f"{Settings.get_user_bricks_folder()} folder should only contain bricks, please remove '{folder}' file or directory."
                     )
 
-    def load_main_brick(self, settings: dict) -> Optional[str]:
+    def load_main_brick(self, settings: dict) -> str | None:
         """Load the main brick is the main settings.json is in a brick folder"""
         main_brick_name: str = None
         settings_dir = os.path.dirname(self.main_settings_file_path)
@@ -216,23 +216,23 @@ class SettingsLoader:
         # Note: brick dependencies are loaded from environment.bricks which is not in BrickSettings yet
         # We need to read the raw settings for this
         settings_file_path = os.path.join(brick_path, "settings.json")
-        with open(settings_file_path, "r", encoding="utf-8") as fp:
+        with open(settings_file_path, encoding="utf-8") as fp:
             settings_data = json.load(fp)
             bricks = settings_data.get("environment", {}).get("bricks", [])
             self._load_brick_dependencies(bricks, parent_name=brick_name)
 
     def _read_settings_file(self, setting_file_path) -> dict:
         file_path = os.path.join(setting_file_path)
-        with open(file_path, "r", encoding="utf-8") as fp:
+        with open(file_path, encoding="utf-8") as fp:
             return json.load(fp)
 
-    def _load_brick_dependencies(self, bricks: List[dict], parent_name: str = None) -> None:
+    def _load_brick_dependencies(self, bricks: list[dict], parent_name: str = None) -> None:
         for brick in bricks:
             brick_name = brick["name"]
 
             self.load_brick(brick_name=brick_name, parent_name=parent_name)
 
-    def _load_git_dependencies(self, git_env: List[dict]) -> None:
+    def _load_git_dependencies(self, git_env: list[dict]) -> None:
         for channel in git_env:
             channel_source = channel["source"]
             for package in channel.get("packages"):
@@ -245,7 +245,7 @@ class SettingsLoader:
                     repo_type="git",
                 )
 
-    def _load_pip_dependencies(self, pip_env: List[dict]) -> None:
+    def _load_pip_dependencies(self, pip_env: list[dict]) -> None:
         for channel in pip_env:
             channel_source = channel["source"]
             for package in channel.get("packages"):
@@ -314,7 +314,7 @@ class SettingsLoader:
             sys.path.insert(0, os.path.abspath(package_path))
         self._save_module(brick_module)
 
-    def _save_brick_variables(self, repo_name: str, cwd: str, variables: Dict[str, str]) -> None:
+    def _save_brick_variables(self, repo_name: str, cwd: str, variables: dict[str, str]) -> None:
         """Save the repo variable in the settings and replace the variables with the correct value."""
         for key, value in variables.items():
             value = value.replace("${LAB_DIR}", self.LAB_WORKSPACE_DIR)
@@ -351,7 +351,7 @@ class SettingsLoader:
         if not os.path.exists(git_install_path):
             return ""
 
-        with open(git_install_path, "r", encoding="utf-8") as fp:
+        with open(git_install_path, encoding="utf-8") as fp:
             try:
                 settings_data: dict = json.load(fp)
                 return settings_data.get("git_hash")

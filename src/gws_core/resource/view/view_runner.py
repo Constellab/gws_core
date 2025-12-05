@@ -1,4 +1,4 @@
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
@@ -92,7 +92,7 @@ class ViewRunner:
 
         return config
 
-    def get_metadata_style(self) -> Optional[TypingStyle]:
+    def get_metadata_style(self) -> TypingStyle | None:
         """Return the style defined in the view metadata (@view decorator)
         it can be null
 

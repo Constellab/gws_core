@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
@@ -44,7 +44,7 @@ def protocol_decorator(
     if style is None:
         style = TypingStyle.default_protocol()
 
-    def decorator(protocol_class: Type[Protocol]):
+    def decorator(protocol_class: type[Protocol]):
         if not Utils.issubclass(protocol_class, Protocol):
             BrickService.log_brick_error(
                 protocol_class,

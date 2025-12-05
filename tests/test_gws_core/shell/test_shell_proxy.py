@@ -15,7 +15,7 @@ class TestShellProxy(TestCase):
 
             # Check that the file was created with the content
             result_file_path = path.join(shell_proxy.working_dir, "echo.txt")
-            with open(result_file_path, "r+t", encoding="utf-8") as fp:
+            with open(result_file_path, 'r+', encoding="utf-8") as fp:
                 data = fp.read()
             self.assertEqual(data.strip(), "John Doe")
 

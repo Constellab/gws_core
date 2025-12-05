@@ -1,11 +1,11 @@
 import os
 import unittest
 from copy import Error
-from typing import List
 from unittest.suite import TestSuite
 
 import plotly.express as px
 from dotenv import load_dotenv
+
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
@@ -109,7 +109,7 @@ class AppManager:
         App.start(port=int(port))
 
     @classmethod
-    def run_test(cls, brick_dir: str, tests: List[str], log_level: str, show_sql: bool) -> None:
+    def run_test(cls, brick_dir: str, tests: list[str], log_level: str, show_sql: bool) -> None:
         if App.is_running:
             raise BadRequestException("Cannot run tests while the Application is running.")
 

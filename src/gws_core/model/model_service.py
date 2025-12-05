@@ -1,4 +1,3 @@
-from typing import List, Type
 
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
@@ -22,12 +21,12 @@ class ModelService:
         Counts models
         """
 
-        model_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
+        model_type: type[Model] = TypingManager.get_type_from_name(typing_name)
 
         return cls.count_model_from_type(model_type)
 
     @classmethod
-    def count_model_from_type(cls, model_type: Type[Model]) -> int:
+    def count_model_from_type(cls, model_type: type[Model]) -> int:
         """
         Counts models
         """
@@ -55,7 +54,7 @@ class ModelService:
     def fetch_list_of_models(
         cls, typing_name: str, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Model]:
-        model_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
+        model_type: type[Model] = TypingManager.get_type_from_name(typing_name)
 
         if not issubclass(model_type, Model):
             raise BadRequestException("The requested type is not a Model")
@@ -69,7 +68,7 @@ class ModelService:
     def search(
         cls, typing_name: str, search_text: str, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Model]:
-        base_type: Type[Model] = TypingManager.get_type_from_name(typing_name)
+        base_type: type[Model] = TypingManager.get_type_from_name(typing_name)
 
         query = base_type.search(search_text)
         return Paginator(
@@ -90,7 +89,7 @@ class ModelService:
     def check_all_typings(cls) -> None:
         """Method to check if all typing registered in BD exists"""
 
-        bricks: List[BrickModel]
+        bricks: list[BrickModel]
 
         try:
             bricks = list(BrickService.get_all_brick_models())

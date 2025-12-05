@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
@@ -7,9 +7,9 @@ from ..core.exception.gws_exceptions import GWSException
 class MissingConfigsException(BadRequestException):
     """Exception raised when one or multiple mandatory config params were not provided"""
 
-    missing_params: List[str]
+    missing_params: list[str]
 
-    def __init__(self, missing_params: List[str]) -> None:
+    def __init__(self, missing_params: list[str]) -> None:
         self.missing_params = missing_params
         detail: str
         unique_code: str

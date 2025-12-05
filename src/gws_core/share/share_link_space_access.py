@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import List
 
 from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -23,7 +22,7 @@ class ShareLinkSpaceAccessService:
     generate a token to access the resource. Then the token is used to access the resource.
     """
 
-    accesses: List[ShareLinkSpaceAccess] = []
+    accesses: list[ShareLinkSpaceAccess] = []
 
     # The duration of the access token
     # 1 hour, (just the time to test)

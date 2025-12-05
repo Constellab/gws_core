@@ -1,4 +1,5 @@
-from typing import Callable, List, Literal, Optional, TypedDict
+from collections.abc import Callable
+from typing import Literal, Optional, TypedDict
 
 import streamlit as st
 
@@ -9,23 +10,23 @@ from gws_core.streamlit.components.streamlit_component_loader import StreamlitCo
 class StreamlitMenuButtonItemDTO(BaseModelDTO):
     key: str
     label: str
-    material_icon: Optional[str] = None
-    disabled: Optional[bool] = False
-    children: Optional[List["StreamlitMenuButtonItemDTO"]] = None
-    divider: Optional[bool] = False
-    color: Optional[Literal["primary", "accent", "warn"]] = None
+    material_icon: str | None = None
+    disabled: bool | None = False
+    children: list["StreamlitMenuButtonItemDTO"] | None = None
+    divider: bool | None = False
+    color: Literal["primary", "accent", "warn"] | None = None
     has_handler: bool
 
 
 class StreamlitMenuButtonItem:
     key: str
     label: str
-    material_icon: Optional[str] = None
-    disabled: Optional[bool] = False
-    children: Optional[List["StreamlitMenuButtonItem"]] = None
-    on_click: Optional[Callable] = None
-    divider: Optional[bool] = False
-    color: Optional[Literal["primary", "accent", "warn"]] = None
+    material_icon: str | None = None
+    disabled: bool | None = False
+    children: list["StreamlitMenuButtonItem"] | None = None
+    on_click: Callable | None = None
+    divider: bool | None = False
+    color: Literal["primary", "accent", "warn"] | None = None
 
     def __init__(
         self,
@@ -33,7 +34,7 @@ class StreamlitMenuButtonItem:
         key: str = None,
         material_icon: str = None,
         disabled: bool = False,
-        children: List["StreamlitMenuButtonItem"] = None,
+        children: list["StreamlitMenuButtonItem"] = None,
         on_click: Callable = None,
         divider: bool = False,
         color: Literal["primary", "accent", "warn"] = None,
@@ -82,7 +83,7 @@ class StreamlitMenuButtonItem:
             self.children = []
         self.children.append(child)
 
-    def add_children(self, children: List["StreamlitMenuButtonItem"]) -> None:
+    def add_children(self, children: list["StreamlitMenuButtonItem"]) -> None:
         """Add a list of children to the item
 
         :param children: List of child items to add
@@ -180,7 +181,7 @@ class StreamlitMenuButton:
 
     _streamlit_component_loader = StreamlitComponentLoader("menu-button")
 
-    _buttons: List[StreamlitMenuButtonItem] = None
+    _buttons: list[StreamlitMenuButtonItem] = None
 
     def __init__(self, key="streamlit-menu"):
         self.key = key
@@ -194,7 +195,7 @@ class StreamlitMenuButton:
         """
         self._buttons.append(button)
 
-    def add_button_items(self, buttons: List[StreamlitMenuButtonItem]) -> None:
+    def add_button_items(self, buttons: list[StreamlitMenuButtonItem]) -> None:
         """Add a list of buttons to the menu button.
 
         :param buttons: List of buttons to add
@@ -202,7 +203,7 @@ class StreamlitMenuButton:
         """
         self._buttons.extend(buttons)
 
-    def find_button_item_by_key(self, key: str) -> Optional[StreamlitMenuButtonItem]:
+    def find_button_item_by_key(self, key: str) -> StreamlitMenuButtonItem | None:
         """Find a button by its key.
 
         :param key: Key of the button to find

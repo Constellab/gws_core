@@ -1,3 +1,4 @@
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
@@ -7,7 +8,6 @@ from gws_core.note_template.note_template import NoteTemplate
 from gws_core.note_template.note_template_search_builder import NoteTemplateSearchBuilder
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
-from peewee import ModelSelect
 
 from ..core.classes.paginator import Paginator
 from ..core.classes.search_builder import SearchBuilder, SearchParams

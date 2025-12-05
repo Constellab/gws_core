@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_specs import ConfigSpecs
 
@@ -57,7 +57,7 @@ class TableVennDiagramView(BaseTableView):
     )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        series: List[Serie1d] = Serie1d.from_list(params.get_value("series"))
+        series: list[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
         if len(series) < 2 or len(series) > 4:
             raise BadRequestException(

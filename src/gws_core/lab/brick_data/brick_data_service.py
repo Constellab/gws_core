@@ -1,7 +1,4 @@
 import os
-from typing import List, Literal
-
-from typing_extensions import TypedDict
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
@@ -11,7 +8,7 @@ from gws_core.lab.brick_data.brick_data_dto import BrickDataDTO
 
 class BrickDataService:
     @classmethod
-    def get_brick_data_list(cls) -> List[BrickDataDTO]:
+    def get_brick_data_list(cls) -> list[BrickDataDTO]:
         """
         Get the list of brick data for a brick.
         """
@@ -20,7 +17,7 @@ class BrickDataService:
 
         FileHelper.create_dir_if_not_exist(data_folder)
 
-        brick_data_list: List[BrickDataDTO] = []
+        brick_data_list: list[BrickDataDTO] = []
 
         for brick_name in os.listdir(data_folder):
             brick_data_path = os.path.join(data_folder, brick_name)

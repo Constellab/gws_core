@@ -1,8 +1,9 @@
-from typing import Any, Dict, List
+from typing import Any
 
-from gws_core.tag.tag_helper import TagHelper
 from numpy import NaN
 from pandas import DataFrame, concat
+
+from gws_core.tag.tag_helper import TagHelper
 
 from ..table import Table
 
@@ -12,7 +13,7 @@ class TableUnfolderHelper:
     def unfold_rows_by_tags(
         cls,
         table: Table,
-        keys: List[str],
+        keys: list[str],
         tag_key_column_original_name: str = "column_original_name",
     ) -> Table:
         """Create new column for each column and tags combinaison
@@ -35,7 +36,7 @@ class TableUnfolderHelper:
 
     @classmethod
     def unfold_columns_by_tags(
-        cls, table: Table, keys: List[str], tag_key_row_original_name: str = "row_original_name"
+        cls, table: Table, keys: list[str], tag_key_row_original_name: str = "row_original_name"
     ) -> Table:
         """Create new row for each row and tags combinaison
         Then it tags the row with the original row name
@@ -49,10 +50,10 @@ class TableUnfolderHelper:
         :param tag_key_row_name: str
         """
 
-        tags: Dict[str, List[str]] = table.get_available_column_tags()
+        tags: dict[str, list[str]] = table.get_available_column_tags()
 
         # filter the tags with the provided keys
-        selected_tags: Dict[str, List[str]] = {}
+        selected_tags: dict[str, list[str]] = {}
         for key in keys:
             if key in tags:
                 selected_tags[key] = tags[key]
@@ -72,13 +73,13 @@ class TableUnfolderHelper:
             tag_values = "_".join(tags.values())
 
             row_index = 0
-            complete_tags: List[dict] = []
-            sub_table_row_tags: List[dict] = sub_table.get_row_tags()
+            complete_tags: list[dict] = []
+            sub_table_row_tags: list[dict] = sub_table.get_row_tags()
             for _, row in df.iterrows():
                 name = f"{row.name}_{tag_values}"
 
                 # if the new row have fewer column than dataframe, append NaN
-                values: List[Any] = row.values.tolist()
+                values: list[Any] = row.values.tolist()
                 column_diff = len(dataframe.columns) - len(values)
                 if column_diff > 0:
                     values.extend([NaN] * column_diff)
@@ -107,7 +108,7 @@ class TableUnfolderHelper:
     ############################################### USING ROW AND COLUMNS ######################################################
 
     def unfold_by_rows(
-        self, table: Table, rows: List[str], tag_key_row_original_name: str = "row_original_name"
+        self, table: Table, rows: list[str], tag_key_row_original_name: str = "row_original_name"
     ) -> Table:
         """Create new column for each column and rows combinaison
         Then it tags the column with the original column name
@@ -132,7 +133,7 @@ class TableUnfolderHelper:
     def unfold_by_columns(
         self,
         table: Table,
-        columns: List[str],
+        columns: list[str],
         tag_key_column_original_name: str = "column_original_name",
     ) -> Table:
         """Create new row for each row and columns combinaison

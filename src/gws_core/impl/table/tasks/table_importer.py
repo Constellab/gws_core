@@ -1,4 +1,3 @@
-from typing import Dict, Optional, Type
 
 from pandas import DataFrame, ExcelFile, read_excel, read_table
 
@@ -117,7 +116,7 @@ class TableImporter(ResourceImporter):
     )
 
     def import_from_path(
-        self, source: File, params: ConfigParams, target_type: Type[Table]
+        self, source: File, params: ConfigParams, target_type: type[Table]
     ) -> Table:
         if source.is_empty():
             raise BadRequestException(
@@ -172,14 +171,14 @@ class TableImporter(ResourceImporter):
         if clean_file_format == "auto":
             extension = source.extension
 
-            if not extension in Table.ALLOWED_FILE_FORMATS:
+            if extension not in Table.ALLOWED_FILE_FORMATS:
                 raise Exception(f"File format {extension} not supported.")
 
             return source.extension
 
         return clean_file_format
 
-    def _import_excel(self, source: File, sheet_name: Optional[str] = None) -> DataFrame:
+    def _import_excel(self, source: File, sheet_name: str | None = None) -> DataFrame:
         if sheet_name is not None:
             # Validate that the sheet exists
             excel_file = ExcelFile(source.path)
@@ -234,7 +233,7 @@ class TableImporter(ResourceImporter):
         comments = ""
 
         if comment_char:
-            with open(source.path, "r", encoding=encoding) as fp:
+            with open(source.path, encoding=encoding) as fp:
                 for line in fp:
                     if line.startswith(comment_char):
                         comments += line
@@ -244,7 +243,7 @@ class TableImporter(ResourceImporter):
         return comments
 
     @staticmethod
-    def import_excel_multiple_sheets(file: File, params: dict = None) -> Dict[str, Table]:
+    def import_excel_multiple_sheets(file: File, params: dict = None) -> dict[str, Table]:
         """
         Import an Excel file with multiple sheets and return a dictionary with sheet names as keys and Table objects as values.
 

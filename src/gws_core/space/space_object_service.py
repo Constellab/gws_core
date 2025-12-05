@@ -1,4 +1,4 @@
-from typing import List, Literal, Type
+from typing import Literal
 
 from gws_core.core.utils.logger import Logger
 from gws_core.folder.space_folder import SpaceFolder
@@ -35,8 +35,8 @@ class SpaceObjectService:
     @classmethod
     def _sync_objects_from_space(
         cls,
-        space_objects: List[SpaceSyncObjectDTO],
-        object_model: Type[Note] | Type[Scenario],
+        space_objects: list[SpaceSyncObjectDTO],
+        object_model: type[Note] | type[Scenario],
         object_type: Literal["note", "scenario"],
     ) -> None:
         Logger.info(f"Syncing {object_type} from space")
@@ -58,7 +58,7 @@ class SpaceObjectService:
 
     @classmethod
     def _sync_object_from_space(
-        cls, space_object: SpaceSyncObjectDTO, object_model: Type[Note] | Type[Scenario]
+        cls, space_object: SpaceSyncObjectDTO, object_model: type[Note] | type[Scenario]
     ) -> None:
         try:
             lab_note = object_model.get_by_id(space_object.id)

@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict
+from collections.abc import Callable
+from typing import Any
 
 import streamlit as st
 
@@ -19,7 +20,7 @@ class StreamlitRouter:
     :rtype: _type_
     """
 
-    pages: Dict[str, StreamlitPage] = None
+    pages: dict[str, StreamlitPage] = None
 
     SESSION_KEY = "__gws_streamlit_router__"
 

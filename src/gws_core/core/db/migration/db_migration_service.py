@@ -1,4 +1,3 @@
-from typing import Dict, List, Type
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
@@ -16,9 +15,9 @@ class DbMigrationService:
     """Service to register all brick migrations and call them"""
 
     # store the different migration object, where key is brick_name
-    _brick_migrators: Dict[str, BrickMigrator] = {}
+    _brick_migrators: dict[str, BrickMigrator] = {}
 
-    _migration_objects: List[MigrationObject] = []
+    _migration_objects: list[MigrationObject] = []
 
     @classmethod
     def migrate(cls, db_manager: AbstractDbManager = None):
@@ -52,12 +51,12 @@ class DbMigrationService:
             )
 
     @classmethod
-    def _get_brick_migrators(cls) -> Dict[str, BrickMigrator]:
+    def _get_brick_migrators(cls) -> dict[str, BrickMigrator]:
         """Retrieve all brick migrators for the specified db_manager"""
         if cls._brick_migrators:
             return cls._brick_migrators
 
-        brick_migrators: Dict[str, BrickMigrator] = {}
+        brick_migrators: dict[str, BrickMigrator] = {}
 
         for migration_obj in cls._migration_objects:
             brick_info: BrickInfo
@@ -134,7 +133,7 @@ class DbMigrationService:
         brick_migrator.call_migration_manually(version, db_unique_name)
 
     @classmethod
-    def get_brick_migration_versions(cls, brick_name: str) -> List[MigrationObject]:
+    def get_brick_migration_versions(cls, brick_name: str) -> list[MigrationObject]:
         brick_migrators = cls._get_brick_migrators()
         if brick_name not in brick_migrators:
             return []

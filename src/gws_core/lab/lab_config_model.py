@@ -1,13 +1,14 @@
 import hashlib
 from json import dumps
-from typing import List, Optional
+from typing import Optional
+
+from peewee import CharField, IntegerField
 
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
-from peewee import CharField, IntegerField
 
 from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.utils.date_helper import DateHelper
@@ -40,7 +41,7 @@ class LabConfigModel(BaseModel):
         """
         return self.hash == other.hash
 
-    def get_brick_versions(self) -> List[BrickVersion]:
+    def get_brick_versions(self) -> list[BrickVersion]:
         return BrickVersion.from_json_list(self.brick_versions)
 
     def to_dto(self) -> LabConfigModelDTO:
@@ -67,7 +68,7 @@ class LabConfigModel(BaseModel):
         return cls._current_config
 
     @classmethod
-    def create_config_if_not_exits(cls, brick_versions: List[BrickVersion]) -> "LabConfigModel":
+    def create_config_if_not_exits(cls, brick_versions: list[BrickVersion]) -> "LabConfigModel":
         hash = cls._hash_versions(brick_versions)
         lab_config = cls._find_by_hash(hash)
 
@@ -77,7 +78,7 @@ class LabConfigModel(BaseModel):
         return cls._create(hash, brick_versions)
 
     @classmethod
-    def _create(cls, hash: str, brick_versions: List[BrickVersion]) -> "LabConfigModel":
+    def _create(cls, hash: str, brick_versions: list[BrickVersion]) -> "LabConfigModel":
         lab_config = LabConfigModel()
         lab_config.id = StringHelper.generate_uuid()
         lab_config.hash = hash
@@ -95,7 +96,7 @@ class LabConfigModel(BaseModel):
         )
 
     @classmethod
-    def _hash_versions(cls, brick_versions: List[BrickVersion]) -> str:
+    def _hash_versions(cls, brick_versions: list[BrickVersion]) -> str:
         # sort brick by name before hasing
         hash_obj = hashlib.blake2b()
         brick_versions = sorted(brick_versions, key=lambda d: d.name)

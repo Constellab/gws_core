@@ -1,12 +1,11 @@
 from unittest import TestCase
 
-from pandas import DataFrame, isna
-
 from gws_core import Table
 from gws_core.impl.table.helper.table_operation_helper import (
     TableOperationHelper,
     TableOperationUnknownColumnOption,
 )
+from pandas import DataFrame, isna
 
 
 # test_table_operations

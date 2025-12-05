@@ -1,4 +1,4 @@
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from bs4 import BeautifulSoup
 
@@ -10,8 +10,8 @@ class RichTextVariableData(BaseModelDTO):
     """Object representing a variable in a rich text"""
 
     name: str
-    description: Optional[str] = None
-    value: Optional[Any] = None
+    description: str | None = None
+    value: Any | None = None
     type: Literal["string"]
 
     def to_markdown(self) -> str:

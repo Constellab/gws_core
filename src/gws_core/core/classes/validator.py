@@ -1,7 +1,7 @@
 import json
 import math
 import re
-from typing import Any, Dict, List, Literal, Type, Union
+from typing import Any, Literal
 
 from gws_core.core.utils.utils import Utils
 
@@ -23,7 +23,7 @@ class Validator:
     :type type: type
     """
 
-    _type: Type = None
+    _type: type = None
     _allowed_values: list = None
 
     _valid_types = ["bool", "int", "float", "str", "list", "dict", "dynamic"]
@@ -31,13 +31,13 @@ class Validator:
     def __init__(self, type_: ValidatorType = None, allowed_values: list = None):
         self.set_type(type_)
 
-        if not allowed_values is None:
+        if allowed_values is not None:
             if isinstance(allowed_values, list):
                 self._allowed_values = allowed_values
             else:
                 raise BadRequestException("The parameter allowed_values must be a list")
 
-    def set_type(self, type_: Union[str, Type]) -> None:
+    def set_type(self, type_: str | type) -> None:
         if type_ == bool or type_ == "bool":
             self._type = bool
         elif type_ == int or type_ == "int":
@@ -48,14 +48,12 @@ class Validator:
             self._type = str
         elif type_ == list or type_ == "list":
             self._type = list
-        elif type_ == dict or type_ == "dict":
-            self._type = dict
-        elif type_ == "dynamic":
+        elif type_ == dict or type_ == "dict" or type_ == "dynamic":
             self._type = dict
         else:
             raise BadRequestException("Invalid type")
 
-    def validate(self, value: Union[bool, int, float, str, list, dict]) -> Any:
+    def validate(self, value: bool | int | float | str | list | dict) -> Any:
         """
         Valitates a value.
 
@@ -251,7 +249,7 @@ class IntValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values: List[int] = None,
+        allowed_values: list[int] = None,
     ):
         super().__init__(
             type_=int,
@@ -292,7 +290,7 @@ class FloatValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values: List[float] = None,
+        allowed_values: list[float] = None,
     ):
         super().__init__(
             type_=float,
@@ -323,7 +321,7 @@ class StrValidator(Validator):
     _max_length = math.inf
 
     def __init__(
-        self, allowed_values: List[str] = None, min_length: int = None, max_length: int = None
+        self, allowed_values: list[str] = None, min_length: int = None, max_length: int = None
     ):
         super().__init__(
             type_=str,
@@ -400,7 +398,7 @@ class ListValidator(Validator):
         self.max_number_of_occurrences = max_number_of_occurrences
 
     def _validate(self, value):
-        value: List = super()._validate(value)
+        value: list = super()._validate(value)
 
         # Check if the value is json
         if not Utils.is_json(value):
@@ -441,7 +439,7 @@ class DictValidator(Validator):
         super().__init__(type_=dict, allowed_values=None)
 
     def _validate(self, value):
-        value: Dict = super()._validate(value)
+        value: dict = super()._validate(value)
 
         # Check if the value is jsonable
         if not Utils.is_json(value):

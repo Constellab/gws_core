@@ -1,8 +1,6 @@
 import json
 import os
 
-from numpy import NaN, inf
-
 from gws_core import JSONDict
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.json_helper import JSONHelper
@@ -11,6 +9,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONExporter, JSONImporter
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 from gws_core.test.data_provider import DataProvider
+from numpy import NaN, inf
 
 
 class ATest:

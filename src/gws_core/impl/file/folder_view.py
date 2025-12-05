@@ -1,5 +1,5 @@
 import os
-from typing import TYPE_CHECKING, Any, List, Union
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.file_helper import FileHelper
@@ -43,7 +43,7 @@ class LocalFolderView(View):
 
         return {"path": self._path, "content": self._get_content(self._path, nodes_models)}
 
-    def _get_content(self, path: str, node_models: List["FSNodeModel"]) -> Union[dict, list]:
+    def _get_content(self, path: str, node_models: list["FSNodeModel"]) -> dict | list:
         _json = {}
         if FileHelper.is_file(path):
             _json["name"] = FileHelper.get_name_with_extension(path)
@@ -57,7 +57,7 @@ class LocalFolderView(View):
 
         # recursive call on folder content
         if FileHelper.is_dir(path):
-            children: List[str] = os.listdir(path)
+            children: list[str] = os.listdir(path)
             children.sort()
             _json["children"] = []
 

@@ -1,5 +1,4 @@
 from json import loads
-from typing import Dict
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
@@ -38,7 +37,7 @@ class ScenarioTemplateFactory:
 
     @classmethod
     def from_export_dto_str(cls, export_str: str) -> ScenarioTemplate:
-        dict_: Dict
+        dict_: dict
         try:
             dict_ = loads(export_str)
 

@@ -48,7 +48,7 @@ class ReflexPlugin(AppPluginDownloader):
         """
         # Read and parse the index.html file
         index_html_path = self._get_index_html_path()
-        with open(index_html_path, "r", encoding="utf-8") as file:
+        with open(index_html_path, encoding="utf-8") as file:
             html_content = file.read()
 
         # Use HtmlParser to extract all components with './' prefix for relative imports

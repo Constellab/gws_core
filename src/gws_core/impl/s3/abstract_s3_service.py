@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import ByteString, Dict, List
+from collections.abc import ByteString
 
 from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef
@@ -31,7 +31,7 @@ class AbstractS3Service(ABC):
 
     @abstractmethod
     def upload_object(
-        self, key: str, data: ByteString, tags: Dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
     ) -> dict:
         """Upload an object to the bucket"""
 
@@ -44,7 +44,7 @@ class AbstractS3Service(ABC):
         """Delete an object from the bucket"""
 
     @abstractmethod
-    def delete_objects(self, keys: List[str]) -> None:
+    def delete_objects(self, keys: list[str]) -> None:
         """Delete multiple objects"""
 
     @abstractmethod
@@ -60,7 +60,7 @@ class AbstractS3Service(ABC):
         """Update the tags of an object"""
 
     @abstractmethod
-    def update_object_tags_dict(self, key: str, tags: Dict[str, str]) -> None:
+    def update_object_tags_dict(self, key: str, tags: dict[str, str]) -> None:
         """Update the tags of an object with a dictionary"""
 
     @abstractmethod
@@ -72,7 +72,7 @@ class AbstractS3Service(ABC):
         """Upload a part for multipart upload and return ETag"""
 
     @abstractmethod
-    def complete_multipart_upload(self, key: str, upload_id: str, parts: List[dict]) -> None:
+    def complete_multipart_upload(self, key: str, upload_id: str, parts: list[dict]) -> None:
         """Complete multipart upload and return ETag"""
 
     @abstractmethod

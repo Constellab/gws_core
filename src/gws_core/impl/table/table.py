@@ -1,6 +1,9 @@
-from typing import Any, Dict, List, Literal, Optional, Tuple, Union
+from typing import Any, Literal
 
 import numpy as np
+from pandas import DataFrame, Series
+from pandas.api.types import is_bool_dtype, is_float_dtype, is_integer_dtype, is_string_dtype
+
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.openai.open_ai_chat_param import OpenAiChatParam
@@ -10,8 +13,6 @@ from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.impl.table.table_axis_tags import TableAxisTags
 from gws_core.impl.table.view.table_vulcano_plot_view import TableVulcanoPlotView
 from gws_core.model.typing_style import TypingStyle
-from pandas import DataFrame, Series
-from pandas.api.types import is_bool_dtype, is_float_dtype, is_integer_dtype, is_string_dtype
 
 from ...config.config_params import ConfigParams
 from ...core.exception.exceptions import BadRequestException
@@ -78,11 +79,11 @@ class Table(Resource):
 
     def __init__(
         self,
-        data: Union[DataFrame, np.ndarray, list] = None,
-        row_names: List[str] = None,
-        column_names: List[str] = None,
-        row_tags: List[Dict[str, str]] = None,
-        column_tags: List[Dict[str, str]] = None,
+        data: DataFrame | np.ndarray | list = None,
+        row_names: list[str] = None,
+        column_names: list[str] = None,
+        row_tags: list[dict[str, str]] = None,
+        column_tags: list[dict[str, str]] = None,
         strict_format_header_names: bool = False,
     ):
         """Create a new Table
@@ -119,11 +120,11 @@ class Table(Resource):
 
     def _set_data(
         self,
-        data: Union[DataFrame, np.ndarray] = None,
+        data: DataFrame | np.ndarray = None,
         row_names=None,
         column_names=None,
-        row_tags: List[Dict[str, str]] = None,
-        column_tags: List[Dict[str, str]] = None,
+        row_tags: list[dict[str, str]] = None,
+        column_tags: list[dict[str, str]] = None,
         strict_format_header_names: bool = False,
     ) -> "Table":
         if data is None:
@@ -205,7 +206,7 @@ class Table(Resource):
         if not self.column_exists(name, case_sensitive):
             raise Exception(f"The column '{name}' doesn't exist")
 
-    def get_column_data(self, column_name: str, skip_nan: bool = False) -> List[Any]:
+    def get_column_data(self, column_name: str, skip_nan: bool = False) -> list[Any]:
         """
         Returns the data of a column with the given name.
 
@@ -241,7 +242,7 @@ class Table(Resource):
             dataframe.dropna(inplace=True)
         return dataframe
 
-    def add_column(self, name: str, data: Union[list, Series] = None, index: int = None):
+    def add_column(self, name: str, data: list | Series = None, index: int = None):
         """
         Add a new column to the Dataframe.
 
@@ -320,7 +321,7 @@ class Table(Resource):
 
         self._data.rename(columns={current_name: new_name}, inplace=True)
 
-    def set_all_column_names(self, column_names: List[str]) -> None:
+    def set_all_column_names(self, column_names: list[str]) -> None:
         """
         Set the names of all columns
 
@@ -347,7 +348,7 @@ class Table(Resource):
         return self._data.shape[1]
 
     @property
-    def column_names(self) -> Optional[List[str]]:
+    def column_names(self) -> list[str] | None:
         """
         Returns the column names of the Datatable.
 
@@ -360,7 +361,7 @@ class Table(Resource):
         except:
             return None
 
-    def get_column_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+    def get_column_names(self, from_index: int = None, to_index: int = None) -> list[str]:
         """
         Get the column names
 
@@ -399,7 +400,7 @@ class Table(Resource):
         else:
             return TableColumnType.OBJECT
 
-    def get_column_names_by_indexes(self, indexes: List[int]) -> List[str]:
+    def get_column_names_by_indexes(self, indexes: list[int]) -> list[str]:
         """
         Function to retrieve the column names based on column indexes
 
@@ -478,7 +479,7 @@ class Table(Resource):
         if not self.row_exists(name, case_sensitive):
             raise BadRequestException(f"The row `{name}` doesn't exist")
 
-    def get_row_data(self, row_name: str, skip_na: bool = False) -> List[Any]:
+    def get_row_data(self, row_name: str, skip_na: bool = False) -> list[Any]:
         """
         Returns the data of a row with the given name.
 
@@ -496,7 +497,7 @@ class Table(Resource):
         else:
             return self._data.loc[row_name].tolist()
 
-    def add_row(self, name: str, data: Union[list, Series] = None, index: int = None) -> None:
+    def add_row(self, name: str, data: list | Series = None, index: int = None) -> None:
         """
         Add a row to the Dataframe.
 
@@ -574,7 +575,7 @@ class Table(Resource):
 
         self._data.rename(index={current_name: new_name}, inplace=True)
 
-    def set_all_row_names(self, row_names: List[str]) -> None:
+    def set_all_row_names(self, row_names: list[str]) -> None:
         """
         Set the names of all rows
 
@@ -587,7 +588,7 @@ class Table(Resource):
 
         self._data.index = row_names
 
-    def get_row_names(self, from_index: int = None, to_index: int = None) -> List[str]:
+    def get_row_names(self, from_index: int = None, to_index: int = None) -> list[str]:
         """
         Get the row names of the table by index
 
@@ -601,7 +602,7 @@ class Table(Resource):
 
         return self._data.index.tolist()[from_index:to_index]
 
-    def get_row_names_by_indexes(self, indexes: List[int]) -> List[str]:
+    def get_row_names_by_indexes(self, indexes: list[int]) -> list[str]:
         """
         Function to retrieve the row names based on row indexes
 
@@ -641,7 +642,7 @@ class Table(Resource):
         return self._data.shape[0]
 
     @property
-    def row_names(self) -> List[str]:
+    def row_names(self) -> list[str]:
         """
         Returns the row names.
 
@@ -681,7 +682,7 @@ class Table(Resource):
 
     ######################################## TAGS ########################################
     def _set_tags(
-        self, row_tags: List[Dict[str, str]] = None, column_tags: List[Dict[str, str]] = None
+        self, row_tags: list[dict[str, str]] = None, column_tags: list[dict[str, str]] = None
     ):
         if row_tags:
             self.set_all_row_tags(row_tags)
@@ -693,7 +694,7 @@ class Table(Resource):
         else:
             self.set_all_column_tags([{}] * self.nb_columns)
 
-    def get_tags(self, axis: AxisType) -> List[Dict[str, str]]:
+    def get_tags(self, axis: AxisType) -> list[dict[str, str]]:
         """
         Get the tags of a given axis
 
@@ -705,15 +706,15 @@ class Table(Resource):
 
         return self.get_row_tags() if is_row_axis(axis) else self.get_column_tags()
 
-    def _get_indexes_by_tags(self, axis: AxisType, tags: List[dict]) -> List[int]:
+    def _get_indexes_by_tags(self, axis: AxisType, tags: list[dict]) -> list[int]:
         """Return the indexes of the tags in the axis"""
         if not isinstance(tags, list):
             raise BadRequestException("A list of tags is required")
 
         header_tags = self.get_tags(axis)
-        index_union: List[int] = []
+        index_union: list[int] = []
         for tag in tags:
-            index_instersect: List[int] = []
+            index_instersect: list[int] = []
             for key, value in tag.items():
                 if not index_instersect:
                     index_instersect = [i for i, t in enumerate(header_tags) if t.get(key) == value]
@@ -759,7 +760,7 @@ class Table(Resource):
         column_index = self.get_column_index_from_name(column_name)
         self.add_column_tag_by_index(column_index, key, value)
 
-    def set_column_tags_by_index(self, column_index: int, tags: Dict[str, str]) -> None:
+    def set_column_tags_by_index(self, column_index: int, tags: dict[str, str]) -> None:
         """
         Set the tags of a column at a given index
 
@@ -770,7 +771,7 @@ class Table(Resource):
         """
         self._column_tags.set_tags_at(column_index, tags)
 
-    def set_column_tags_by_name(self, column_name: str, tags: Dict[str, str]) -> None:
+    def set_column_tags_by_name(self, column_name: str, tags: dict[str, str]) -> None:
         """
         Set the tags of a column by name
 
@@ -782,7 +783,7 @@ class Table(Resource):
         column_index = self.get_column_index_from_name(column_name)
         self.set_column_tags_by_index(column_index, tags)
 
-    def get_column_tags_by_index(self, column_index: int) -> Dict[str, str]:
+    def get_column_tags_by_index(self, column_index: int) -> dict[str, str]:
         """
         Get the tags of a column at a given index
 
@@ -793,7 +794,7 @@ class Table(Resource):
         """
         return self._column_tags.get_tags_at(column_index)
 
-    def get_column_tags_by_name(self, column_name: str) -> Dict[str, str]:
+    def get_column_tags_by_name(self, column_name: str) -> dict[str, str]:
         """
         Get the tags of a column by name
 
@@ -805,7 +806,7 @@ class Table(Resource):
         index = self.get_column_index_from_name(column_name)
         return self.get_column_tags_by_index(index)
 
-    def set_all_column_tags(self, tags: List[Dict[str, str]]) -> None:
+    def set_all_column_tags(self, tags: list[dict[str, str]]) -> None:
         """
         Set the tags of all columns, the length of the list must be equal to the number of columns
 
@@ -820,7 +821,7 @@ class Table(Resource):
 
     def get_column_tags(
         self, from_index: int = None, to_index: int = None, none_if_empty: bool = False
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """
         Get the tags of multiple columns by index
 
@@ -836,7 +837,7 @@ class Table(Resource):
 
         return self._column_tags.get_tags_between(from_index, to_index, none_if_empty)
 
-    def get_available_column_tags(self) -> Dict[str, List[str]]:
+    def get_available_column_tags(self) -> dict[str, list[str]]:
         """
         Get the available tags for each column.
 
@@ -847,7 +848,7 @@ class Table(Resource):
 
     def get_columns_info(
         self, from_index: int = None, to_index: int = None
-    ) -> List[TableColumnInfo]:
+    ) -> list[TableColumnInfo]:
         """
         Get the info of multiple columns by index
 
@@ -866,7 +867,7 @@ class Table(Resource):
         else:
             data = self._data
 
-        column_infos: List[TableColumnInfo] = []
+        column_infos: list[TableColumnInfo] = []
         for column in data:
             column_infos.append(self.get_column_info(column))
         return column_infos
@@ -935,7 +936,7 @@ class Table(Resource):
         else:
             new_row_name = self.generate_new_column_name(new_row_name)
 
-        tags: List[Dict[str, str]] = self.get_column_tags()
+        tags: list[dict[str, str]] = self.get_column_tags()
 
         tags_values = [tag.get(tag_key) for tag in tags]
         self.add_row(new_row_name, tags_values)
@@ -995,7 +996,7 @@ class Table(Resource):
         row_index = self.get_row_index_by_name(row_name)
         self.add_row_tag_by_index(row_index, key, value)
 
-    def set_row_tags_by_index(self, row_index: int, tags: Dict[str, str]) -> None:
+    def set_row_tags_by_index(self, row_index: int, tags: dict[str, str]) -> None:
         """
         Set the tags of a row at a given index
 
@@ -1006,7 +1007,7 @@ class Table(Resource):
         """
         self._row_tags.set_tags_at(row_index, tags)
 
-    def set_row_tags_by_name(self, row_name: str, tags: Dict[str, str]) -> None:
+    def set_row_tags_by_name(self, row_name: str, tags: dict[str, str]) -> None:
         """
         Set the tags of a row by name
 
@@ -1018,7 +1019,7 @@ class Table(Resource):
         row_index = self.get_row_index_by_name(row_name)
         self.set_row_tags_by_index(row_index, tags)
 
-    def get_row_tags_by_index(self, row_index: int) -> Dict[str, str]:
+    def get_row_tags_by_index(self, row_index: int) -> dict[str, str]:
         """
         Get the tags of a row at a given index
 
@@ -1030,7 +1031,7 @@ class Table(Resource):
 
         return self._row_tags.get_tags_at(row_index)
 
-    def get_row_tag_by_name(self, row_name: str) -> Dict[str, str]:
+    def get_row_tag_by_name(self, row_name: str) -> dict[str, str]:
         """
         Get the tags of a row by name
 
@@ -1043,7 +1044,7 @@ class Table(Resource):
         index = self.get_row_index_by_name(row_name)
         return self.get_row_tags_by_index(index)
 
-    def set_all_row_tags(self, tags: List[Dict[str, str]]) -> None:
+    def set_all_row_tags(self, tags: list[dict[str, str]]) -> None:
         """
         Set the tags of all rows, the length of the list must be equal to the number of rows
 
@@ -1062,7 +1063,7 @@ class Table(Resource):
         from_index: int = None,
         to_index: int = None,
         none_if_empty: bool = False,
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         """
         Get the tags of multiple rows by index
 
@@ -1077,7 +1078,7 @@ class Table(Resource):
         """
         return self._row_tags.get_tags_between(from_index, to_index, none_if_empty)
 
-    def get_available_row_tags(self) -> Dict[str, List[str]]:
+    def get_available_row_tags(self) -> dict[str, list[str]]:
         """
         Get the available tags for each row.
 
@@ -1086,7 +1087,7 @@ class Table(Resource):
         """
         return self._row_tags.get_available_tags()
 
-    def get_rows_info(self, from_index: int = None, to_index: int = None) -> List[TableHeaderInfo]:
+    def get_rows_info(self, from_index: int = None, to_index: int = None) -> list[TableHeaderInfo]:
         """
         Get the info of multiple rows by index
 
@@ -1105,7 +1106,7 @@ class Table(Resource):
         else:
             data = self._data
 
-        rows_info: List[TableHeaderInfo] = []
+        rows_info: list[TableHeaderInfo] = []
         for _, row in data.iterrows():
             rows_info.append(self.get_row_info(row.name))
 
@@ -1166,7 +1167,7 @@ class Table(Resource):
         else:
             new_column_name = self.generate_new_column_name(new_column_name)
 
-        tags: List[Dict[str, str]] = self.get_row_tags()
+        tags: list[dict[str, str]] = self.get_row_tags()
 
         tags_values = [tag.get(tag_key) for tag in tags]
         self.add_column(new_column_name, tags_values)
@@ -1199,7 +1200,7 @@ class Table(Resource):
 
     #################################### FILTERING ####################################
 
-    def select_by_row_indexes(self, indexes: List[int]) -> "Table":
+    def select_by_row_indexes(self, indexes: list[int]) -> "Table":
         """
         Select table rows matching a list of indexes, return a new table
 
@@ -1212,7 +1213,7 @@ class Table(Resource):
         row_names = self.get_row_names_by_indexes(indexes)
         return self.select_by_row_names([{"name": row_names}])
 
-    def select_by_column_indexes(self, indexes: List[int]) -> "Table":
+    def select_by_column_indexes(self, indexes: list[int]) -> "Table":
         """
         Select table columns matching a list of indexes, return a new table
 
@@ -1224,7 +1225,7 @@ class Table(Resource):
         column_names = self.get_column_names_by_indexes(indexes)
         return self.select_by_column_names([{"name": column_names}])
 
-    def select_by_row_names(self, filters: List[DataframeFilterName]) -> "Table":
+    def select_by_row_names(self, filters: list[DataframeFilterName]) -> "Table":
         """
         Select table rows matching a list of names, return a new table
 
@@ -1237,7 +1238,7 @@ class Table(Resource):
 
         return self.create_sub_table_filtered_by_rows(data)
 
-    def select_by_column_names(self, filters: List[DataframeFilterName]) -> "Table":
+    def select_by_column_names(self, filters: list[DataframeFilterName]) -> "Table":
         """
         Select table columns matching a list of names, return a new table
 
@@ -1277,7 +1278,7 @@ class Table(Resource):
             self.get_column_tags(from_index=from_column_id, to_index=to_column_id),
         )
 
-    def select_by_row_tags(self, tags: List[dict]) -> "Table":
+    def select_by_row_tags(self, tags: list[dict]) -> "Table":
         """
         Select table rows matching a list of tags
 
@@ -1297,7 +1298,7 @@ class Table(Resource):
 
         return self.select_by_tags("index", tags)
 
-    def select_by_column_tags(self, tags: List[dict]) -> "Table":
+    def select_by_column_tags(self, tags: list[dict]) -> "Table":
         """
         Select table columns matching a list of tags
 
@@ -1316,7 +1317,7 @@ class Table(Resource):
         """
         return self.select_by_tags("columns", tags)
 
-    def select_by_tags(self, axis: AxisType, tags: List[dict]) -> "Table":
+    def select_by_tags(self, axis: AxisType, tags: list[dict]) -> "Table":
         """
         Select table rows or columns matching a list of tags and return a new table
 
@@ -1343,7 +1344,7 @@ class Table(Resource):
             else self.select_by_column_indexes(indexes)
         )
 
-    def filter_out_by_tags(self, axis: AxisType, tags: List[dict]) -> "Table":
+    def filter_out_by_tags(self, axis: AxisType, tags: list[dict]) -> "Table":
         """
         Filter out table rows or columns matching a list of tags and return a new table. The row or column that matches the tags are removed.
 
@@ -1405,7 +1406,7 @@ class Table(Resource):
 
     # Selection by exclusion
 
-    def filter_out_by_row_names(self, filters: List[DataframeFilterName]) -> "Table":
+    def filter_out_by_row_names(self, filters: list[DataframeFilterName]) -> "Table":
         """
         Filter out table rows matching a list of names, return a new table
 
@@ -1418,7 +1419,7 @@ class Table(Resource):
 
         return self.create_sub_table_filtered_by_rows(data)
 
-    def filter_out_by_column_names(self, filters: List[DataframeFilterName]) -> "Table":
+    def filter_out_by_column_names(self, filters: list[DataframeFilterName]) -> "Table":
         """
         Filter out table columns matching a list of names, return a new table
 
@@ -1478,8 +1479,8 @@ class Table(Resource):
     def create_sub_table(
         self,
         dataframe: DataFrame,
-        row_tags: List[Dict[str, str]],
-        column_tags: List[Dict[str, str]],
+        row_tags: list[dict[str, str]],
+        column_tags: list[dict[str, str]],
     ) -> "Table":
         """
         Create a new table from a dataframe and a meta
@@ -1525,7 +1526,7 @@ class Table(Resource):
         return self._data.tail(nrows)
 
     @property
-    def shape(self) -> Tuple[int]:
+    def shape(self) -> tuple[int]:
         """
         Returns the shape of the table.
 
@@ -1582,7 +1583,7 @@ class Table(Resource):
         self._data = self._data.infer_objects()
         return self
 
-    def to_list(self) -> List[List[Any]]:
+    def to_list(self) -> list[list[Any]]:
         """
         Returns the table as a list of lists.
 

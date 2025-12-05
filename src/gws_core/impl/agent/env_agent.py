@@ -2,7 +2,7 @@ import json
 import os
 import shutil
 from abc import abstractmethod
-from typing import Any, Dict, List
+from typing import Any
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -96,7 +96,7 @@ class EnvAgent(Task):
         target = self.get_target_resources()
         return {"target": target}
 
-    def generate_code_file(self, code: str, params: Dict[str, Any], source_paths: List[str]) -> str:
+    def generate_code_file(self, code: str, params: dict[str, Any], source_paths: list[str]) -> str:
         # create the executable code file
         if self.SNIPPET_FILE_EXTENSION is None:
             raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
@@ -113,12 +113,12 @@ class EnvAgent(Task):
 
         return code_file_path
 
-    def get_source_path(self, source: ResourceList) -> List[str]:
+    def get_source_path(self, source: ResourceList) -> list[str]:
         if source is None or len(source) == 0:
             return []
 
-        nodes: List[FSNode] = []
-        skipped_resources: List[str] = []
+        nodes: list[FSNode] = []
+        skipped_resources: list[str] = []
 
         for resource in source:
             if resource is None:
@@ -144,9 +144,9 @@ class EnvAgent(Task):
                 "the target file path was not generated. Did you write paths in the targets_paths variable ?"
             )
 
-        target_paths: List[str] = None
+        target_paths: list[str] = None
         try:
-            with open(target_path_file, "r", encoding="utf-8") as file_path:
+            with open(target_path_file, encoding="utf-8") as file_path:
                 target_paths = json.load(file_path)
         except Exception as err:
             raise BadRequestException(f"Cannot parse the target paths file : {err}") from err
@@ -191,7 +191,7 @@ class EnvAgent(Task):
     def _create_shell_proxy(self, env: str) -> ShellProxy:
         pass
 
-    def _format_code(self, code: str, params: Dict[str, Any], source_paths: List[str]) -> str:
+    def _format_code(self, code: str, params: dict[str, Any], source_paths: list[str]) -> str:
         """
         Format the code to add parameters and input/output paths
         """
@@ -218,7 +218,7 @@ class EnvAgent(Task):
 """
 
     def _get_init_code(
-        self, source_paths_var_name: str, source_paths: List[str], target_paths_var_name: str
+        self, source_paths_var_name: str, source_paths: list[str], target_paths_var_name: str
     ) -> str:
         """
         Generate the code to initialize the source and target paths variables
@@ -256,7 +256,7 @@ with open('{target_paths_filename}', 'w') as f:
 
     @classmethod
     def build_config_params_dict(
-        cls, code: str, params: Dict[str, Any], env: str
+        cls, code: str, params: dict[str, Any], env: str
     ) -> ConfigParamsDict:
         return {"code": code, "params": params, "env": env}
 

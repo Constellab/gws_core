@@ -1,4 +1,3 @@
-from typing import List
 
 from mypy_boto3_s3.type_defs import TagTypeDef
 from typing_extensions import TypedDict
@@ -7,7 +6,7 @@ from typing_extensions import TypedDict
 class S3TagSet(TypedDict):
     """Type corresponding to the S3 TagSet used in XML"""
 
-    Tag: List[TagTypeDef]
+    Tag: list[TagTypeDef]
 
 
 class S3GetTagResponse(TypedDict):

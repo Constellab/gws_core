@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Optional
 
 from peewee import BooleanField, CharField, ModelSelect
 
@@ -51,7 +51,7 @@ class Typing(Model):
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
     related_model_typing_name: CharField = CharField(null=True, index=True)
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     _object_type: TypingObjectType = "MODEL"
 
@@ -61,29 +61,29 @@ class Typing(Model):
         if not self.is_saved() and not self.data:
             self.data = {}
 
-    def _get_hierarchy_table(self) -> List[str]:
-        model_t: Type = self.get_type()
+    def _get_hierarchy_table(self) -> list[str]:
+        model_t: type = self.get_type()
 
         if model_t is None:
             raise Exception(f"Can't get the type of the typing {self.typing_name}")
-        mro: List[Type] = inspect.getmro(model_t)
+        mro: list[type] = inspect.getmro(model_t)
 
-        ht: List[str] = []
+        ht: list[str] = []
         for t in mro:
             if issubclass(t, Base):
                 ht.append(t.full_classname())
         return ht
 
-    def _set_ancestors(self, ancestors: List[str]) -> None:
+    def _set_ancestors(self, ancestors: list[str]) -> None:
         self.data["ancestors"] = ancestors
 
     def refresh_ancestors(self) -> None:
         self._set_ancestors(self._get_hierarchy_table())
 
-    def get_ancestors(self) -> List[str]:
+    def get_ancestors(self) -> list[str]:
         return self.data["ancestors"]
 
-    def get_type(self) -> Optional[Type]:
+    def get_type(self) -> type | None:
         return Utils.get_model_type(self.model_type)
 
     def type_exists(self) -> bool:
@@ -96,7 +96,7 @@ class Typing(Model):
 
     def get_type_status(self) -> TypingStatus:
         # retrieve the task python type
-        model_t: Type[Base] = self.get_type()
+        model_t: type[Base] = self.get_type()
         return TypingStatus.OK if model_t is not None else TypingStatus.UNAVAILABLE
 
     def to_dto(self) -> TypingDTO:
@@ -140,7 +140,7 @@ class Typing(Model):
         full_dto = TypingFullDTO(**typing_dto.to_json_dict())
 
         # retrieve the task python type
-        model_t: Type[Base] = self.get_type()
+        model_t: type[Base] = self.get_type()
 
         if model_t:
             full_dto.doc = self.get_model_type_doc()
@@ -154,12 +154,12 @@ class Typing(Model):
 
     def get_parent_typing(self) -> Optional["Typing"]:
         # retrieve the task python type
-        model_t: Type[Base] = self.get_type()
+        model_t: type[Base] = self.get_type()
 
         if model_t is None:
             return None
 
-        parent_class: Type[Base] = model_t.__base__
+        parent_class: type[Base] = model_t.__base__
 
         # If the parent class has the attribute typing_name, it means that this is a typing
         if hasattr(parent_class, "__typing_name__"):
@@ -171,7 +171,7 @@ class Typing(Model):
         """Return the python documentation of the model type"""
 
         # retrieve the task python type
-        model_t: Type[Base] = self.get_type()
+        model_t: type[Base] = self.get_type()
 
         if model_t is None:
             return ""
@@ -227,31 +227,31 @@ class Typing(Model):
         )
 
     @classmethod
-    def get_by_object_sub_type(cls, sub_type: str) -> List["Typing"]:
+    def get_by_object_sub_type(cls, sub_type: str) -> list["Typing"]:
         return list(cls.select().where(cls.object_sub_type == sub_type).order_by(cls.human_name))
 
     @classmethod
-    def get_by_model_type(cls, model_type: Type[Base]) -> "Typing":
+    def get_by_model_type(cls, model_type: type[Base]) -> "Typing":
         return cls._get_by_model_type(model_type).first()
 
     @classmethod
-    def type_is_register(cls, model_type: Type[Base]) -> bool:
+    def type_is_register(cls, model_type: type[Base]) -> bool:
         return cls._get_by_model_type(model_type).count() > 0
 
     @classmethod
-    def _get_by_model_type(cls, model_type: Type[Base]) -> ModelSelect:
-        return cls.select().where((cls.model_type == model_type.full_classname()))
+    def _get_by_model_type(cls, model_type: type[Base]) -> ModelSelect:
+        return cls.select().where(cls.model_type == model_type.full_classname())
 
     @classmethod
-    def get_by_brick_and_object_type(cls, brick_name: str) -> List["Typing"]:
+    def get_by_brick_and_object_type(cls, brick_name: str) -> list["Typing"]:
         return cls.get_by_type_and_brick(cls._object_type, brick_name)
 
     @classmethod
     def get_children_typings(
-        cls, typing_type: TypingObjectType, base_type: Type[Base]
-    ) -> List["Typing"]:
+        cls, typing_type: TypingObjectType, base_type: type[Base]
+    ) -> list["Typing"]:
         """Retunr the list of typings that are a child class of the provided model_type"""
-        all_typings: List[Typing] = list(cls.get_by_object_type(typing_type))
+        all_typings: list[Typing] = list(cls.get_by_object_type(typing_type))
 
         typings = list(
             filter(lambda typing: Utils.issubclass(typing.get_type(), base_type), all_typings)

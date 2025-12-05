@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -58,7 +57,7 @@ class ResourceStacker(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource_list: ResourceList = inputs.get("source")
 
-        configs: List[dict] = params.get_value("keys")
+        configs: list[dict] = params.get_value("keys")
 
         resource_set: ResourceSet = ResourceSet()
 
@@ -133,7 +132,7 @@ class ResourcePicker(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource_set: ResourceSet = inputs.get("resource_set")
-        configs: List[dict] = params.get_value("keys")
+        configs: list[dict] = params.get_value("keys")
 
         resource_list = ResourceList()
 

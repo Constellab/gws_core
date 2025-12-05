@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.reflector_types import MethodDoc
@@ -7,8 +6,8 @@ from gws_core.resource.view.view_dto import ResourceViewMetadatalDTO
 
 
 class ResourceTypingMethodDTO(BaseModelDTO):
-    funcs: Optional[List[MethodDoc]]
-    views: Optional[List[ResourceViewMetadatalDTO]]
+    funcs: list[MethodDoc] | None
+    views: list[ResourceViewMetadatalDTO] | None
 
     def to_markdown(self, resource_class_name: str) -> str:
         markdown = ""
@@ -36,8 +35,8 @@ class ResourceTypingVariableDTO(BaseModelDTO):
 
 
 class ResourceTypingDTO(TypingFullDTO):
-    variables: Optional[Dict[str, str]]
-    methods: Optional[ResourceTypingMethodDTO]
+    variables: dict[str, str] | None
+    methods: ResourceTypingMethodDTO | None
 
     def to_markdown(self) -> str:
         markdown = super().to_markdown()

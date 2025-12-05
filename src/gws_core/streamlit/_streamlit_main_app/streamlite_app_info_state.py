@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, TypedDict
+from typing import Any, TypedDict
 
 import streamlit as st
 
@@ -8,9 +8,9 @@ class StreamlitAppInfo(TypedDict):
     user_access_token: str
     requires_authentication: bool
     user_id: str
-    sources: List[Any]
-    source_paths: List[str]
-    params: Dict[str, Any]
+    sources: list[Any]
+    source_paths: list[str]
+    params: dict[str, Any]
 
 
 class StreamlitAppInfoState:

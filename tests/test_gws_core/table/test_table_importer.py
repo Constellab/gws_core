@@ -3,7 +3,6 @@ from unittest import TestCase
 
 import numpy
 import pandas
-
 from gws_core import File, Table, TableExporter, TableImporter, TaskRunner
 
 from ..gws_core_test_helper import GWSCoreTestHelper
@@ -48,7 +47,7 @@ class TestTableImporter(TestCase):
         outputs = tester.run()
         file_: File = outputs["target"]
 
-        with open(file_.path, "r", encoding="utf-8") as fp:
+        with open(file_.path, encoding="utf-8") as fp:
             text = fp.read()
             self.assertTrue(text.startswith("#This is a table"))
 

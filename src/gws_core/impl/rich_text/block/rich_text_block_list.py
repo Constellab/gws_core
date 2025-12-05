@@ -1,4 +1,4 @@
-from typing import List, Literal
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
@@ -12,7 +12,7 @@ class RichTextBlockListItem(BaseModelDTO):
     """
 
     content: str
-    items: List["RichTextBlockListItem"] = []
+    items: list["RichTextBlockListItem"] = []
 
     def to_markdown(self, prefix="- ", indent="  ") -> str:
         """Convert the list item to markdown
@@ -41,7 +41,7 @@ class RichTextBlockList(RichTextBlockDataBase):
     """
 
     style: Literal["ordered", "unordered", "checklist"]
-    items: List[RichTextBlockListItem]
+    items: list[RichTextBlockListItem]
 
     def to_markdown(self) -> str:
         """Convert the list to markdown

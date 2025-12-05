@@ -6,7 +6,7 @@ JSON serialization and deserialization using Pydantic. This ensures type safety,
 validation, and clean serialization for structured data objects.
 """
 
-from typing import Any, Type
+from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.utils import Utils
@@ -72,9 +72,9 @@ class ModelRfield(BaseRField):
         - Default value is None (model is not instantiated by default)
     """
 
-    object_type: Type[BaseModelDTO]
+    object_type: type[BaseModelDTO]
 
-    def __init__(self, object_type: Type[BaseModelDTO], include_in_dict_view: bool = False) -> None:
+    def __init__(self, object_type: type[BaseModelDTO], include_in_dict_view: bool = False) -> None:
         """Initialize a ModelRfield for storing Pydantic model objects.
 
         :param object_type: The Pydantic model class (subclass of BaseModelDTO) that this field will store.

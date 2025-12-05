@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
@@ -11,8 +10,8 @@ from gws_core.user.user_dto import UserDTO
 
 class NoteSaveDTO(BaseModelDTO):
     title: str = None
-    folder_id: Optional[str] = None
-    template_id: Optional[str] = None
+    folder_id: str | None = None
+    template_id: str | None = None
 
     class Config:
         arbitrary_types_allowed = True
@@ -20,18 +19,18 @@ class NoteSaveDTO(BaseModelDTO):
 
 class NoteDTO(ModelWithUserDTO):
     title: str
-    folder: Optional[SpaceFolderDTO]
+    folder: SpaceFolderDTO | None
     is_validated: bool
-    validated_at: Optional[datetime]
-    validated_by: Optional[UserDTO]
-    last_sync_at: Optional[datetime]
-    last_sync_by: Optional[UserDTO]
+    validated_at: datetime | None
+    validated_by: UserDTO | None
+    last_sync_at: datetime | None
+    last_sync_by: UserDTO | None
     is_archived: bool
 
 
 class NoteFullDTO(NoteDTO):
     content: RichTextDTO
-    modifications: Optional[RichTextModificationsDTO]
+    modifications: RichTextModificationsDTO | None
 
 
 class NoteInsertTemplateDTO(BaseModelDTO):

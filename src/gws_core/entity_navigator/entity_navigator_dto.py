@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
@@ -7,7 +6,7 @@ from gws_core.entity_navigator.entity_navigator_type import EntityNavGroupDTO
 
 class ImpactResultDTO(BaseModelDTO):
     has_entities: bool
-    impacted_entities: List[EntityNavGroupDTO]
+    impacted_entities: list[EntityNavGroupDTO]
 
 
 class ImpactResult:

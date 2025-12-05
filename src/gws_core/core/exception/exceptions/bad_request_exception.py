@@ -1,4 +1,3 @@
-from typing import Dict
 
 from fastapi import status
 
@@ -16,8 +15,8 @@ class BadRequestException(BaseHTTPException):
         self,
         detail: str,
         unique_code: str = None,
-        detail_args: Dict = None,
-        headers: Dict = None,
+        detail_args: dict = None,
+        headers: dict = None,
         instance_id: str = None,
         show_as: ExceptionShowMode = "error",
     ) -> None:

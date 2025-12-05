@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 from pandas import DataFrame
 from typing_extensions import TypedDict
@@ -19,8 +19,8 @@ if TYPE_CHECKING:
 
 
 class DataWithTags(TypedDict):
-    values: List[Any]
-    tags: List[Dict[str, str]]
+    values: list[Any]
+    tags: list[dict[str, str]]
 
 
 class BaseTableView(View):
@@ -57,20 +57,20 @@ class BaseTableView(View):
             if name is not None and name not in self._table.get_data().columns:
                 raise BadRequestException(f"The column name '{name}' is not valid")
 
-    def get_values_from_columns(self, column_names: List[str]) -> List[Any]:
+    def get_values_from_columns(self, column_names: list[str]) -> list[Any]:
         """Get all the values of multiple column flattened"""
         dataframe = self.get_dataframe_from_columns(column_names)
         return DataframeHelper.flatten_dataframe_by_column(dataframe)
 
-    def get_dataframe_from_columns(self, column_names: List[str]) -> DataFrame:
+    def get_dataframe_from_columns(self, column_names: list[str]) -> DataFrame:
         """Extract a new dataframe"""
         self.check_column_names(column_names)
         return self._table.get_data()[column_names]
 
-    def get_values_from_coords(self, ranges: List[CellRange]) -> List[Any]:
+    def get_values_from_coords(self, ranges: list[CellRange]) -> list[Any]:
         """Get flattened values from a list of ranges"""
 
-        values: List[Any] = []
+        values: list[Any] = []
 
         for coord in ranges:
             sub_df = self.get_dataframe_from_coords(coord)
@@ -88,7 +88,7 @@ class BaseTableView(View):
             range.get_from().column : range.get_to().column + 1,
         ]
 
-    def get_values_from_selection_range(self, selection_range: TableSelection) -> List[Any]:
+    def get_values_from_selection_range(self, selection_range: TableSelection) -> list[Any]:
         """Get table flattened value form a SelectionRange"""
 
         if selection_range.is_range_selection():
@@ -99,15 +99,15 @@ class BaseTableView(View):
 
     def get_row_tags_from_selection_range(
         self, selection_range: TableSelection
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         if selection_range.is_range_selection():
             return self.get_row_tags_from_coords(selection_range.selection)
         else:
             # columns selection
             return self.get_row_tags()
 
-    def get_row_tags_from_coords(self, ranges: List[CellRange]) -> List[Dict[str, str]]:
-        tags: List[Dict[str, str]] = []
+    def get_row_tags_from_coords(self, ranges: list[CellRange]) -> list[dict[str, str]]:
+        tags: list[dict[str, str]] = []
 
         for coord in ranges:
             tags += self._table.get_row_tags(
@@ -120,7 +120,7 @@ class BaseTableView(View):
 
         return tags
 
-    def get_row_tags(self) -> List[Dict[str, str]]:
+    def get_row_tags(self) -> list[dict[str, str]]:
         return self._table.get_row_tags(none_if_empty=True)
 
         # def get_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:
@@ -156,7 +156,7 @@ class BaseTableView(View):
 
     def get_single_column_tags_from_selection_range(
         self, selection_range: TableSelection
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         if selection_range.is_single_column():
             column_index: int
             if selection_range.is_column_selection():
@@ -171,7 +171,7 @@ class BaseTableView(View):
         else:
             return None
 
-    def get_x_tick_labels_from_series_list(self, serie_list: Serie1dList) -> Optional[List[str]]:
+    def get_x_tick_labels_from_series_list(self, serie_list: Serie1dList) -> list[str] | None:
         """Get the x tick labels from a serie list if possible, if all the series have the same
         rows selection"""
 
@@ -182,7 +182,7 @@ class BaseTableView(View):
                 return self.get_table().get_row_names()
             else:
                 # otherwise, take the first serie row selection as they all have the same selection
-                cell_range: List[CellRange] = serie_list.series[0].y.selection
+                cell_range: list[CellRange] = serie_list.series[0].y.selection
 
                 x_tick_labels = []
                 # retrieve all the row names based on the row selection

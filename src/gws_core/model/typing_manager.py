@@ -1,4 +1,3 @@
-from typing import Dict, Optional, Type
 
 from peewee import ModelSelect
 
@@ -18,10 +17,10 @@ class TypingManager:
     _tables_are_created: bool = False
 
     # use to cache the names to prevent request each time
-    _typings_name_cache: Dict[str, Typing] = {}
+    _typings_name_cache: dict[str, Typing] = {}
 
     @classmethod
-    def get_typing_from_name(cls, typing_name: str) -> Optional[Typing]:
+    def get_typing_from_name(cls, typing_name: str) -> Typing | None:
         """Get typing from name and return None if not found"""
         if typing_name not in cls._typings_name_cache:
             typing: Typing = Typing.get_by_typing_name(typing_name)
@@ -36,21 +35,21 @@ class TypingManager:
     @classmethod
     def get_typing_from_name_and_check(cls, typing_name: str) -> Typing:
         """Get typing from name and check if it exists"""
-        typing: Optional[Typing] = cls.get_typing_from_name(typing_name)
+        typing: Typing | None = cls.get_typing_from_name(typing_name)
 
         if typing is None:
             raise TypingNotFoundException(typing_name)
         return typing
 
     @classmethod
-    def get_type_from_name(cls, typing_name: str) -> Optional[Type]:
+    def get_type_from_name(cls, typing_name: str) -> type | None:
         typing = cls.get_typing_from_name(typing_name)
         if not typing:
             return None
         return typing.get_type()
 
     @classmethod
-    def get_and_check_type_from_name(cls, typing_name: str) -> Type:
+    def get_and_check_type_from_name(cls, typing_name: str) -> type:
         type_ = cls.get_type_from_name(typing_name)
 
         if type_ is None:
@@ -60,7 +59,7 @@ class TypingManager:
 
     @classmethod
     def get_object_with_typing_name(cls, typing_name: str, object_id: str) -> Model:
-        model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        model_type: type[Model] = cls.get_type_from_name(typing_name)
         if not issubclass(model_type, Model):
             raise BadRequestException(
                 f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model"
@@ -69,7 +68,7 @@ class TypingManager:
 
     @classmethod
     def get_object_with_typing_name_and_id(cls, typing_name: str, id: str) -> Model:
-        model_type: Type[Model] = cls.get_type_from_name(typing_name)
+        model_type: type[Model] = cls.get_type_from_name(typing_name)
         if not issubclass(model_type, Model):
             raise BadRequestException(
                 f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model"
@@ -78,11 +77,11 @@ class TypingManager:
         return model_type.get_by_id(id)
 
     @classmethod
-    def type_is_register(cls, model_type: Type[Base]) -> bool:
+    def type_is_register(cls, model_type: type[Base]) -> bool:
         return Typing.type_is_register(model_type=model_type)
 
     @classmethod
-    def register_typing(cls, typing: Typing, object_class: Type[Base]) -> None:
+    def register_typing(cls, typing: Typing, object_class: type[Base]) -> None:
         """Register the typing into the manager to save it in the database
         Return the typing unique name
         """

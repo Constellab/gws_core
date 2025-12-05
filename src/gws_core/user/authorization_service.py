@@ -1,6 +1,7 @@
 from enum import Enum
 
 from fastapi import Request
+
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException

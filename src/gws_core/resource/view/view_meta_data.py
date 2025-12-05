@@ -1,4 +1,3 @@
-from typing import Optional, Type
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_style import TypingStyle
@@ -12,18 +11,18 @@ VIEW_SPEC_PREFIX: str = "view_"
 
 class ResourceViewMetaData:
     method_name: str
-    view_type: Type[View]
+    view_type: type[View]
     human_name: str
     short_description: str
     method_specs: ConfigSpecs
     default_view: bool
     hide: bool
-    style: Optional[TypingStyle]
+    style: TypingStyle | None
 
     def __init__(
         self,
         method_name: str,
-        view_type: Type[View],
+        view_type: type[View],
         human_name: str,
         short_description: str,
         method_specs: ConfigSpecs,

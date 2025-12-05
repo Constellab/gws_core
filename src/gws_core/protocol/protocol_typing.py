@@ -1,9 +1,9 @@
-from typing import Literal, Type, final
+from typing import Literal, final
 
-from gws_core.config.config_specs import ConfigSpecs
+from peewee import CharField, ModelSelect
+
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
-from peewee import CharField, ModelSelect
 
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
@@ -57,7 +57,7 @@ class ProtocolTyping(Typing):
         )
 
         # retrieve the task python type
-        model_t: Type[Protocol] = self.get_type()
+        model_t: type[Protocol] = self.get_type()
 
         if self.object_sub_type == "PROTOCOL" and model_t:
             protocol: Protocol = model_t.instantiate_protocol()

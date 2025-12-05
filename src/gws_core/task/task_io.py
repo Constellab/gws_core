@@ -1,14 +1,14 @@
-from typing import Dict, TypeVar
+from typing import TypeVar
 
 from ..resource.resource import Resource
 
 # Type for the output of a task
-TaskOutputs = Dict[str, Resource]
+TaskOutputs = dict[str, Resource]
 
 ResourceType = TypeVar("ResourceType", bound=Resource)
 
 
-class TaskInputs(Dict[str, ResourceType]):
+class TaskInputs(dict[str, ResourceType]):
     """Class wrapping all the inputs of a task
 
     :param Dict: [description]

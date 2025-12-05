@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, cast
+from typing import Literal, cast
 
 from fastapi.param_functions import Depends
 
@@ -40,8 +40,8 @@ def get_protocol_typing(
 @core_app.get("/typing/object-type/{object_type}", tags=["Resource"], summary="Get by object type")
 def get_by_object_type(
     object_type: TypingObjectType,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     return TypingService.get_typing_by_object_type(
@@ -52,8 +52,8 @@ def get_by_object_type(
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
 def advanced_search(
     search_params: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TypingDTO]:
     """
@@ -63,7 +63,7 @@ def advanced_search(
 
 
 class SearchWithResourceTypes(BaseModelDTO):
-    resource_typing_names: List[str]
+    resource_typing_names: list[str]
     search_params: SearchParams
 
 
@@ -75,8 +75,8 @@ class SearchWithResourceTypes(BaseModelDTO):
 def process_with_input_search(
     search: SearchWithResourceTypes,
     inputs_or_outputs: Literal["inputs", "outputs"],
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """
@@ -100,8 +100,8 @@ def importers_advanced_search(
     search_dict: SearchParams,
     resource_typing_name: str,
     extension: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """
@@ -115,8 +115,8 @@ def importers_advanced_search(
 @core_app.post("/typing/transformers/search", tags=["Typing"], summary="Search typings")
 def transformers_advanced_search(
     search: SearchWithResourceTypes,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """

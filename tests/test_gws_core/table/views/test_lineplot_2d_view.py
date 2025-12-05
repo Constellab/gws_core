@@ -1,4 +1,3 @@
-from typing import List
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
@@ -16,7 +15,7 @@ class TestTableLinePlot2DView(TestCase):
         # 2 series :
         # first : x = sepal_length, y = sepal_width
         # second : x = petal length, y = petal_width
-        series: List[Serie2d] = [
+        series: list[Serie2d] = [
             {
                 "name": "first",
                 "x": {"type": "columns", "selection": ["sepal_length"]},

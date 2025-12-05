@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.string_helper import StringHelper
@@ -123,4 +122,4 @@ class RichTextBlock(BaseModelDTO):
 class RichTextDTO(BaseModelDTO):
     version: int
     editorVersion: str
-    blocks: List[RichTextBlock]
+    blocks: list[RichTextBlock]

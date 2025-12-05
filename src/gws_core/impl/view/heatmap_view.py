@@ -1,4 +1,3 @@
-from typing import List
 
 from pandas import DataFrame
 
@@ -35,8 +34,8 @@ class HeatmapView(View):
 
     _type: ViewType = ViewType.HEATMAP
     _data: DataFrame = None
-    _rows_info: List[TableHeaderInfo] = None
-    _columns_info: List[TableHeaderInfo] = None
+    _rows_info: list[TableHeaderInfo] = None
+    _columns_info: list[TableHeaderInfo] = None
 
     x_label: str = None
     y_label: str = None
@@ -44,8 +43,8 @@ class HeatmapView(View):
     def set_data(
         self,
         data: DataFrame = None,
-        rows_info: List[TableHeaderInfo] = None,
-        columns_info: List[TableHeaderInfo] = None,
+        rows_info: list[TableHeaderInfo] = None,
+        columns_info: list[TableHeaderInfo] = None,
     ):
         if not isinstance(data, DataFrame):
             raise BadRequestException("The data must be a DataFrame")

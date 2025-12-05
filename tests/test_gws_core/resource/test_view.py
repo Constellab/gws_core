@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core import (
     BaseTestCase,
@@ -105,7 +104,7 @@ class ResourceViewTestOveride(ResourceViewTestOverideParent):
 
 class TestView(BaseTestCase):
     def test_view_def(self):
-        views: List[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(
+        views: list[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(
             ResourceViewTest
         )
 
@@ -119,7 +118,7 @@ class TestView(BaseTestCase):
         self.assertEqual(view_test.default_view, True)
 
         # Test with inheritance
-        views: List[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(
+        views: list[ResourceViewMetaData] = ResourceService.get_views_of_resource_type(
             ResourceViewTestSub
         )
         self.assertEqual(len(views), 3)
@@ -161,7 +160,7 @@ class TestView(BaseTestCase):
     def test_method_view_override_and_hide(self):
         """Test that the spec of a view are overrided but the children method. And check if hide param in view decorator works"""
 
-        views: List[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(
+        views: list[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(
             ResourceViewTestOveride
         )
 
@@ -254,6 +253,6 @@ class TestView(BaseTestCase):
         i_scenario.run()
 
         # check that view config was saved
-        view_configs: List[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))
+        view_configs: list[ViewConfig] = list(ViewConfig.get_by_resource(resource_model.id))
         self.assertEqual(len(view_configs), 1)
         self.assertTrue(view_configs[0].is_favorite)

@@ -1,8 +1,8 @@
-from typing import List
+
+from peewee import CompositeKey, ForeignKeyField, ModelSelect
 
 from gws_core.core.model.base_model import BaseModel
 from gws_core.resource.view_config.view_config import ViewConfig
-from peewee import CompositeKey, ForeignKeyField, ModelSelect
 
 from .note import Note
 
@@ -14,11 +14,11 @@ class NoteViewModel(BaseModel):
     view: ViewConfig = ForeignKeyField(ViewConfig, null=False, index=True, on_delete="RESTRICT")
 
     @classmethod
-    def get_by_note(cls, note_id: str) -> List["NoteViewModel"]:
+    def get_by_note(cls, note_id: str) -> list["NoteViewModel"]:
         return list(NoteViewModel.select().where(NoteViewModel.note == note_id))
 
     @classmethod
-    def get_by_notes(cls, note_ids: List[str]) -> ModelSelect:
+    def get_by_notes(cls, note_ids: list[str]) -> ModelSelect:
         return NoteViewModel.select().where(NoteViewModel.note.in_(note_ids))
 
     @classmethod
@@ -26,7 +26,7 @@ class NoteViewModel(BaseModel):
         return NoteViewModel.select().where(NoteViewModel.view == view_config_id)
 
     @classmethod
-    def get_by_views(cls, view_config_ids: List[str]) -> ModelSelect:
+    def get_by_views(cls, view_config_ids: list[str]) -> ModelSelect:
         return NoteViewModel.select().where(NoteViewModel.view.in_(view_config_ids))
 
     @classmethod
@@ -40,7 +40,7 @@ class NoteViewModel(BaseModel):
         )
 
     @classmethod
-    def get_by_resources(cls, resource_ids: List[str]) -> ModelSelect:
+    def get_by_resources(cls, resource_ids: list[str]) -> ModelSelect:
         return (
             NoteViewModel.select()
             .join(ViewConfig, on=(NoteViewModel.view == ViewConfig.id))

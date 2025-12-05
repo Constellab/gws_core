@@ -25,9 +25,8 @@ class JSONDict(Resource):
         super().__init__()
         if data is None:
             data = {}
-        else:
-            if not isinstance(data, dict):
-                raise BadRequestException("The data must be an instance of dict")
+        elif not isinstance(data, dict):
+            raise BadRequestException("The data must be an instance of dict")
         self.data = data
 
     def __getitem__(self, key):

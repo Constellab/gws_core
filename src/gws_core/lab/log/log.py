@@ -1,6 +1,5 @@
 from datetime import date, datetime, timedelta
 from json import loads
-from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
@@ -18,8 +17,8 @@ class OldLogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
-    stack_trace: Optional[str] = None
-    scenario_id: Optional[str] = None
+    stack_trace: str | None = None
+    scenario_id: str | None = None
 
 
 class LogLine:
@@ -41,7 +40,7 @@ class LogLine:
     message: str
     context: LogContext
     context_id: str
-    stack_trace: Optional[str] = None
+    stack_trace: str | None = None
 
     OLD_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     OLD_SCENARIO_TEXT = "[SCENARIO]"
@@ -161,7 +160,7 @@ class LogCompleteInfo:
         context: LogContext = None,
         context_id: str = None,
         nb_of_lines: int = None,
-    ) -> List[LogLine]:
+    ) -> list[LogLine]:
         """Filter the log lines by time and context
 
         :param start_time: start time of the filter
@@ -177,7 +176,7 @@ class LogCompleteInfo:
         :return: list of log lines matching the filters
         :rtype: List[LogLine]
         """
-        log_lines: List[LogLine] = []
+        log_lines: list[LogLine] = []
         stop_date: datetime = None
 
         for line in self.content.splitlines():
@@ -209,8 +208,8 @@ class LogCompleteInfo:
 
         return log_lines
 
-    def _get_all_lines(self) -> List[LogLine]:
-        log_lines: List[LogLine] = []
+    def _get_all_lines(self) -> list[LogLine]:
+        log_lines: list[LogLine] = []
         for line in self.content.splitlines():
             if len(line) == 0:
                 continue
@@ -223,7 +222,7 @@ class LogCompleteInfo:
 
         return log_lines
 
-    def get_content_as_dto(self) -> List[LogDTO]:
+    def get_content_as_dto(self) -> list[LogDTO]:
         lines = self._get_all_lines()
 
         return [log.to_dto() for log in lines]
@@ -240,7 +239,7 @@ class LogCompleteInfo:
 
 
 class LogsBetweenDates:
-    logs: List[LogLine]
+    logs: list[LogLine]
     from_date: datetime
     to_date: datetime
     context: LogContext
@@ -249,7 +248,7 @@ class LogsBetweenDates:
 
     def __init__(
         self,
-        logs: List[LogLine],
+        logs: list[LogLine],
         from_date: datetime,
         to_date: datetime,
         context: LogContext = None,

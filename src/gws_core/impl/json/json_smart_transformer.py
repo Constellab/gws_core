@@ -1,4 +1,3 @@
-from typing import Dict, List, Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -47,14 +46,14 @@ The 'source' dict has the following schema :
         # get the dict as source
         return {"source": self.json_}
 
-    def get_code_expected_output_types(self) -> Dict[str, Type]:
+    def get_code_expected_output_types(self) -> dict[str, type]:
         return {"target": dict}
 
-    def get_available_package_names(self) -> List[str]:
+    def get_available_package_names(self) -> list[str]:
         return [GwsCorePackages.NUMPY]
 
     def build_output(self, code_outputs: dict) -> dict:
-        output = code_outputs.get("target", None)
+        output = code_outputs.get("target")
 
         if output is None:
             raise Exception("The code did not generate any output")

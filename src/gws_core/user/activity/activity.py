@@ -1,9 +1,10 @@
 from datetime import datetime, timedelta
 from typing import Optional, final
 
+from peewee import CharField, ForeignKeyField
+
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.user.activity.activity_dto import ActivityDTO, ActivityObjectType, ActivityType
-from peewee import CharField, ForeignKeyField
 
 from ...core.model.model import Model
 from ..current_user_service import CurrentUserService

@@ -1,4 +1,4 @@
-from typing import Callable, Type
+from collections.abc import Callable
 
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_specs import ConfigSpecs
@@ -16,7 +16,7 @@ VIEW_META_DATA_ATTRIBUTE = "_view_mata_data"
 
 def _decorator_view(
     func: Callable,
-    view_type: Type[View],
+    view_type: type[View],
     human_name: str,
     short_description: str,
     specs: ConfigSpecs,
@@ -122,7 +122,7 @@ def _decorator_view(
 
 
 def view(
-    view_type: Type[View],
+    view_type: type[View],
     human_name: str = "",
     short_description: str = "",
     specs: ConfigSpecs = None,

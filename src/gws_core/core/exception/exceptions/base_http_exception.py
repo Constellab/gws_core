@@ -1,5 +1,4 @@
 import uuid
-from typing import Dict
 
 from fastapi import HTTPException
 
@@ -15,8 +14,8 @@ class BaseHTTPException(HTTPException):
 
     detail: str
     unique_code: str
-    detail_args: Dict
-    headers: Dict
+    detail_args: dict
+    headers: dict
     instance_id: str
     show_as: ExceptionShowMode
 
@@ -25,8 +24,8 @@ class BaseHTTPException(HTTPException):
         http_status_code: int,
         detail: str,
         unique_code: str = None,
-        detail_args: Dict = None,
-        headers: Dict = None,
+        detail_args: dict = None,
+        headers: dict = None,
         instance_id: str = None,
         show_as: ExceptionShowMode = "error",
     ) -> None:

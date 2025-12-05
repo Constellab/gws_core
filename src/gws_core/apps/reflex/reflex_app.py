@@ -1,5 +1,4 @@
 import os
-from typing import Optional
 
 from gws_core.apps.app_config import AppConfig
 from gws_core.apps.app_dto import AppType
@@ -54,7 +53,7 @@ class ReflexApp(AppInstance):
         self._app_config = app_config
         self._front_app_build_folder = front_app_build_folder
 
-    def get_front_app_build_folder(self) -> Optional[Folder]:
+    def get_front_app_build_folder(self) -> Folder | None:
         """Get the folder that contains the front build of the app.
         This folder is created by the task that generates the app.
 
@@ -139,7 +138,7 @@ class ReflexApp(AppInstance):
             ]
         )
 
-    def _get_front_built_brick_version(self) -> Optional[str]:
+    def _get_front_built_brick_version(self) -> str | None:
         """Get the front build brick version.
         This is used to check if the front build is up to date.
 
@@ -152,7 +151,7 @@ class ReflexApp(AppInstance):
             return version_tag.tag_value
         return None
 
-    def get_front_build_path_if_exists(self) -> Optional[str]:
+    def get_front_build_path_if_exists(self) -> str | None:
         """Check if the front build is already generated.
         If the build was generated from a previous brick version, it will be deleted
         and considered as not built.

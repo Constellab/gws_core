@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core import BaseTestCase, File, IntRField, ListRField, ResourceModel, StrRField
 from gws_core.impl.robot.robot_resource import Robot
@@ -14,7 +13,7 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 @resource_decorator(unique_name="TestResourceFields")
 class TestResourceFields(Resource):
     age: int = IntRField()
-    position: List[float] = ListRField()
+    position: list[float] = ListRField()
 
     long_str = StrRField()
 
@@ -22,7 +21,7 @@ class TestResourceFields(Resource):
 @resource_decorator(unique_name="TestResourceFieldsFile")
 class TestResourceFieldsFile(File):
     age: int = IntRField()
-    position: List[float] = ListRField()
+    position: list[float] = ListRField()
 
     long_str = StrRField()
 

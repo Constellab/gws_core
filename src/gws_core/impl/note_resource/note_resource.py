@@ -1,4 +1,4 @@
-from typing import Any, List, cast
+from typing import Any, cast
 
 from PIL import Image
 
@@ -469,7 +469,7 @@ class NoteResource(ResourceSet):
         """
         return self._rich_text.append_block(block)
 
-    def get_blocks(self) -> List[RichTextBlock]:
+    def get_blocks(self) -> list[RichTextBlock]:
         """
         Get the blocks of the note resource
 
@@ -478,7 +478,7 @@ class NoteResource(ResourceSet):
         """
         return self._rich_text.get_blocks()
 
-    def get_blocks_by_type(self, block_type: RichTextBlockType) -> List[RichTextBlock]:
+    def get_blocks_by_type(self, block_type: RichTextBlockType) -> list[RichTextBlock]:
         """
         Get the blocks of the note resource by type
 

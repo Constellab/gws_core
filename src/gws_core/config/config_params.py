@@ -1,8 +1,8 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.param.param_types import ParamValue
 
-ConfigParamsDict = Dict[str, ParamValue]
+ConfigParamsDict = dict[str, ParamValue]
 
 
 class ConfigParams(ConfigParamsDict):

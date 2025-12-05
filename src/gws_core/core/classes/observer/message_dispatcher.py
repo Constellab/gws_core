@@ -1,6 +1,5 @@
 import time
 from threading import Timer
-from typing import List, Optional
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -31,10 +30,10 @@ class MessageDispatcher:
     # Prefix for all the messages
     prefix: str = None
 
-    _observers: List[MessageObserver] = None
+    _observers: list[MessageObserver] = None
 
     # list of the messages that are waiting to be dispatched by the timer
-    _waiting_messages: List[DispatchedMessage] = None
+    _waiting_messages: list[DispatchedMessage] = None
 
     # last time a message was notified
     _last_notify_time: float = None
@@ -42,7 +41,7 @@ class MessageDispatcher:
     # store the timer to prevent to save the progress bar too often
     _waiting_dispatch_timer: Timer = None
     # store the thread when is it executing (after the timer and before it is finished)
-    _running_dispatch_timers: List[Timer] = []
+    _running_dispatch_timers: list[Timer] = []
 
     # when set, the message dispatcher will forward the message to the parent dispatcher
     # after prefix and log level modification
@@ -203,7 +202,7 @@ class MessageDispatcher:
         self._build_and_notify_message(message, MessageLevel.DEBUG)
 
     def _build_and_notify_message(
-        self, message: str, level: MessageLevel, progress: Optional[float] = None
+        self, message: str, level: MessageLevel, progress: float | None = None
     ) -> None:
         """
         Trigger a message in each subscriber.
@@ -310,7 +309,7 @@ class MessageDispatcher:
         return self._parent_dispatcher is not None
 
     def create_sub_dispatcher(
-        self, log_level: Optional[MessageLevel] = None, prefix: Optional[str] = None
+        self, log_level: MessageLevel | None = None, prefix: str | None = None
     ):
         """
         Create a sub dispatcher with the same configuration as the current dispatcher.

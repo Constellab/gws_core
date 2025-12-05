@@ -1,5 +1,4 @@
 import copy
-from typing import Dict, Union
 
 from gws_core.resource.view.view_types import ViewType
 
@@ -42,7 +41,7 @@ class VennDiagramView(View):
     """
 
     label: str = None
-    _groups: Dict[str, set] = None
+    _groups: dict[str, set] = None
     _type: ViewType = ViewType.VENN_DIAGRAM
     _title: str = "Venn Diagram"
 
@@ -91,7 +90,7 @@ class VennDiagramView(View):
         }
         return _data_dict
 
-    def add_group(self, name: str = None, data: Union[set, list] = None):
+    def add_group(self, name: str = None, data: set | list = None):
         if not self._groups:
             self._groups = {}
         if not isinstance(name, str):

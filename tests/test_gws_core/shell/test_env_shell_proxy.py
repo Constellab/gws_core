@@ -1,5 +1,4 @@
 import os
-from typing import Type
 from unittest import TestCase
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -37,7 +36,7 @@ class TestEnvShellProxy(TestCase):
         self._test_env_shell_proxy(MambaShellProxy, "MyMambaTestEnvironment", conda_env_file)
 
     def _test_env_shell_proxy(
-        self, shell_proxy_type: Type[BaseEnvShell], env_name: str, env_file_path: str
+        self, shell_proxy_type: type[BaseEnvShell], env_name: str, env_file_path: str
     ):
         python_file = os.path.join(
             os.path.dirname(os.path.realpath(__file__)), "penv", "jwt_encode.py"

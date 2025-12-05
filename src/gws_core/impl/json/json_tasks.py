@@ -1,6 +1,5 @@
 import json
 import os
-from typing import Type
 
 import simplejson
 
@@ -24,7 +23,7 @@ class JSONImporter(ResourceImporter):
     )
 
     def import_from_path(
-        self, source: File, params: ConfigParams, target_type: Type[JSONDict]
+        self, source: File, params: ConfigParams, target_type: type[JSONDict]
     ) -> JSONDict:
         if source.is_empty():
             raise BadRequestException(
@@ -33,7 +32,7 @@ class JSONImporter(ResourceImporter):
                 detail_args={"filename": source.path},
             )
 
-        with open(source.path, "r", encoding="utf-8") as f:
+        with open(source.path, encoding="utf-8") as f:
             json_data = target_type()
             json_data.data = json.load(f)
 
@@ -62,7 +61,7 @@ class JSONExporter(ResourceExporter):
     )
 
     def export_to_path(
-        self, source: JSONDict, dest_dir: str, params: ConfigParams, target_type: Type[File]
+        self, source: JSONDict, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", type(self).get_human_name())
         file_format = FileHelper.clean_extension(params.get_value("file_format", "json"))

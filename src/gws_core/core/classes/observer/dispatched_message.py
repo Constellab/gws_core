@@ -1,4 +1,3 @@
-from typing import Optional
 
 from .message_level import MessageLevel
 
@@ -6,9 +5,9 @@ from .message_level import MessageLevel
 class DispatchedMessage:
     status: MessageLevel
     message: str
-    progress: Optional[float] = None
+    progress: float | None = None
 
-    def __init__(self, status: MessageLevel, message: str, progress: Optional[float] = None):
+    def __init__(self, status: MessageLevel, message: str, progress: float | None = None):
         self.status = status
         self.message = message
         self.progress = progress

@@ -1,9 +1,7 @@
-from typing import Dict
 from unittest import TestCase
 
-from starlette.exceptions import HTTPException
-
 from gws_core import BadRequestException, ExceptionHandler, ExceptionResponse
+from starlette.exceptions import HTTPException
 
 
 # test_exception
@@ -30,7 +28,7 @@ class TestException(TestCase):
                 request=None, exception=err
             )
             self.assertEqual(response.status_code, 400)
-            body: Dict = response.get_json_body()
+            body: dict = response.get_json_body()
             self.assertEqual(body["code"], "test_gws_core.known_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertEqual(body["instanceId"], err.instance_id)
@@ -44,7 +42,7 @@ class TestException(TestCase):
                 request=None, exception=err
             )
             self.assertEqual(response.status_code, 400)
-            body: Dict = response.get_json_body()
+            body: dict = response.get_json_body()
             self.assertEqual(body["code"], "test_gws_core.test_exception.py.test_http_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instanceId"])
@@ -58,7 +56,7 @@ class TestException(TestCase):
                 request=None, exception=err
             )
             self.assertEqual(response.status_code, 500)
-            body: Dict = response.get_json_body()
+            body: dict = response.get_json_body()
             self.assertEqual(body["code"], "test_gws_core.test_exception.py.test_unknown_exception")
             self.assertEqual(body["detail"], "Error")
             self.assertIsNotNone(body["instanceId"])

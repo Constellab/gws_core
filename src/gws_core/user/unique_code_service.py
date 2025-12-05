@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import status
 
@@ -19,7 +19,7 @@ class CodeObject(BaseModelDTO):
 
 class UniqueCodeService:
     # dictionary where key = generated code
-    _generated_codes: Dict[str, CodeObject] = {}
+    _generated_codes: dict[str, CodeObject] = {}
 
     @classmethod
     def generate_code_current_user(cls, obj: Any, validity_duration: int) -> str:
@@ -50,7 +50,7 @@ class UniqueCodeService:
     def check_code(cls, code: str) -> CodeObject:
         """check if a code is valid, if yes, return the object containing user_id and obj, and unvalidate the code. If not valid, throw an HttpUnauthorized exception"""
 
-        if not code in cls._generated_codes:
+        if code not in cls._generated_codes:
             raise InvalidUniqueCodeException()
 
         code_obj = cls._generated_codes[code]

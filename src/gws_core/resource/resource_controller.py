@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -96,7 +95,7 @@ def get_a_resource(
 @core_app.get("/resource/{id_}/children", tags=["Resource"], summary="Get a resource")
 def get_resource_children(
     id_: str, _=Depends(AuthorizationService.check_user_access_token_or_app)
-) -> List[ResourceModelDTO]:
+) -> list[ResourceModelDTO]:
     """
     Retrieve a ResourceModel children resource of a ResourceModel id_
     """
@@ -128,8 +127,8 @@ def check_impact_delete_resource(
 @core_app.get("/resource/search-name/{name}", tags=["Resource"], summary="Search resource by name")
 def search_resource_by_name(
     name: str,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
@@ -144,8 +143,8 @@ def search_resource_by_name(
 )
 def advanced_search(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
@@ -158,8 +157,8 @@ def advanced_search(
 @core_app.post("/resource/search-app", tags=["Resource"], summary="Advanced search for apps")
 def search_apps(
     search_dict: SearchParams,
-    page: Optional[int] = 1,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 1,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
@@ -199,7 +198,7 @@ def update_flagged(
 
 
 class UpdateFolder(BaseModelDTO):
-    folder_id: Optional[str]
+    folder_id: str | None
 
 
 @core_app.put(
@@ -218,7 +217,7 @@ def update_folder(
     "/resource/{resource_model_id}/transform", tags=["Resource"], summary="Transform the resource"
 )
 def create_transformer_scenario(
-    transformers: List[TransformerDict],
+    transformers: list[TransformerDict],
     resource_model_id: str,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ResourceModelDTO:
@@ -285,7 +284,7 @@ def export_resource(
 )
 def get_resource_type_views(
     resource_typing_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> List[ResourceViewMetadatalDTO]:
+) -> list[ResourceViewMetadatalDTO]:
     view_metadatas = ResourceService.get_views_of_resource(resource_typing_name)
     return [view_metadata.to_dto() for view_metadata in view_metadatas]
 
@@ -337,7 +336,7 @@ def import_resource_from_link(
 )
 def get_import_resource_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecDTO]:
+) -> dict[str, ParamSpecDTO]:
     return ResourceTransfertService.get_import_from_link_config_specs()
 
 
@@ -359,7 +358,7 @@ def export_resource_to_lab(
 )
 def get_export_resource_to_lab_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> Dict[str, ParamSpecDTO]:
+) -> dict[str, ParamSpecDTO]:
     return ResourceTransfertService.get_export_resource_to_lab_config_specs()
 
 

@@ -1,4 +1,3 @@
-from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
@@ -16,8 +15,8 @@ class ExternalLabWithUserInfo(BaseModelDTO):
     user_firstname: str
     user_lastname: str
 
-    space_id: Optional[str]
-    space_name: Optional[str]
+    space_id: str | None
+    space_name: str | None
 
 
 class ExternalLabImportRequestDTO(BaseModelDTO):
@@ -34,4 +33,4 @@ class ExternalLabImportScenarioResponseDTO(BaseModelDTO):
     scenario: ScenarioDTO
     scenario_url: str
     lab_info: ExternalLabWithUserInfo
-    scenario_progress: Optional[ScenarioProgressDTO] = None
+    scenario_progress: ScenarioProgressDTO | None = None

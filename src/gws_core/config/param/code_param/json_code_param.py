@@ -1,6 +1,6 @@
 import re
 from json import dumps, loads
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
@@ -45,7 +45,7 @@ class JsonCodeParam(ParamSpec):
         return JsonCodeParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None
 
     def validate(self, value: Any) -> Any:

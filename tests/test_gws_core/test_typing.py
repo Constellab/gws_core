@@ -1,4 +1,3 @@
-from typing import List
 
 from gws_core import (
     BaseTestCase,
@@ -106,7 +105,7 @@ class TestTyping(BaseTestCase):
         self.assertEqual(robot_json.typing_name, "RESOURCE.gws_core.Robot")
 
     def test_get_children_typings(self):
-        typings: List[Typing] = Typing.get_children_typings("RESOURCE", File)
+        typings: list[Typing] = Typing.get_children_typings("RESOURCE", File)
 
         # Check that we found the File type
         self.assertIsNotNone([x for x in typings if x.unique_name == "File"][0])
@@ -117,7 +116,7 @@ class TestTyping(BaseTestCase):
         """Test the get of task typing by related resource"""
 
         # find task typings related to Table
-        typings: List[Typing] = TaskTyping.get_by_related_resource(SubFileTyping, "TRANSFORMER")
+        typings: list[Typing] = TaskTyping.get_by_related_resource(SubFileTyping, "TRANSFORMER")
 
         # Check that we found the FileTransformer
         self.assertEqual(len([x for x in typings if x.unique_name == "FileTransformer"]), 1)
@@ -232,7 +231,7 @@ class TestTyping(BaseTestCase):
         )
 
     def test_typing_search_by_name(self):
-        typings: List[Typing] = list(
+        typings: list[Typing] = list(
             Typing.get_by_object_type_and_name("PROTOCOL", "SimpleRobot2Deprecated")
         )
         self.assertEqual(len(typings), 1)

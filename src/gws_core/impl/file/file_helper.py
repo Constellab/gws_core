@@ -3,7 +3,7 @@ import os
 import shutil
 from pathlib import Path
 from re import sub
-from typing import Any, List, Literal, Union
+from typing import Any, Literal, Union
 
 from charset_normalizer import from_path
 from fastapi.responses import FileResponse
@@ -377,8 +377,8 @@ class FileHelper:
             return cls.get_name_with_extension(path)
 
         if cls.is_dir(path):
-            children: List[str] = os.listdir(path)
-            result: List[Any] = []
+            children: list[str] = os.listdir(path)
+            result: list[Any] = []
 
             for child in children:
                 result.append(cls.get_dir_content_as_json(os.path.join(path, child)))
@@ -590,7 +590,7 @@ class FileHelper:
         return FileHelper.generate_unique_fs_node_for_list(list_fs_node_names, fs_node_name)
 
     @staticmethod
-    def generate_unique_fs_node_for_list(list_fs_node_names: List[str], fs_node_name: str) -> str:
+    def generate_unique_fs_node_for_list(list_fs_node_names: list[str], fs_node_name: str) -> str:
         """
         Generate a unique fs node name for a list of node names.
         Append _1, _2... before the extension if the str is already in the list.

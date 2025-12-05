@@ -1,10 +1,16 @@
-from typing import List, Type
+
+from peewee import (
+    ColumnMetadata,
+    DatabaseProxy,
+    ForeignKeyField,
+    ForeignKeyMetadata,
+    Metadata,
+    ModelSelect,
+)
+from peewee import Model as PeeweeModel
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from peewee import ColumnMetadata, DatabaseProxy, ForeignKeyField, ForeignKeyMetadata, Metadata
-from peewee import Model as PeeweeModel
-from peewee import ModelSelect
 
 from ...core.exception.exceptions import BadRequestException
 from .base import Base
@@ -55,7 +61,7 @@ class BaseModel(Base, PeeweeModel):
             cls._schema.create_foreign_key(field)
 
     @classmethod
-    def create_full_text_index(cls, columns: List[str], index_name: str) -> None:
+    def create_full_text_index(cls, columns: list[str], index_name: str) -> None:
         """Method to create a full text index
 
         :param columns: [description]
@@ -69,7 +75,7 @@ class BaseModel(Base, PeeweeModel):
 
     @classmethod
     def foreign_key_exists(cls, column_name: str) -> bool:
-        foreign_keys: List[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(
+        foreign_keys: list[ForeignKeyMetadata] = cls._schema.database.get_foreign_keys(
             cls.get_table_name()
         )
         return len([x for x in foreign_keys if x.column == column_name]) > 0
@@ -118,7 +124,7 @@ class BaseModel(Base, PeeweeModel):
         :return: True if the column exists
         :rtype: `bool`
         """
-        columns: List[ColumnMetadata] = cls.get_db().get_columns(cls.get_table_name())
+        columns: list[ColumnMetadata] = cls.get_db().get_columns(cls.get_table_name())
         return len([x for x in columns if x.name == column_name]) > 0
 
     @classmethod

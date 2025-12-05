@@ -2,9 +2,9 @@ import os
 import shutil
 
 import typer
+from gws_core import FileHelper, StringHelper
 
 from gws_cli.utils.cli_utils import CLIUtils
-from gws_core import FileHelper, StringHelper
 
 NAME_VAR = "name"
 HUMAN_NAME_VAR = "humanName"

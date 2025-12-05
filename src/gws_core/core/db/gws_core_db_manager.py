@@ -1,6 +1,7 @@
+from peewee import DatabaseProxy
+
 from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.settings import Settings
-from peewee import DatabaseProxy
 
 from .abstract_db_manager import AbstractDbManager
 

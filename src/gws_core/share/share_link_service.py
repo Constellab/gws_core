@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -22,7 +21,7 @@ class ShareLinkService:
     @classmethod
     def find_by_type_and_entity(
         cls, entity_type: ShareLinkEntityType, entity_id: str, link_type: ShareLinkType
-    ) -> Optional[ShareLink]:
+    ) -> ShareLink | None:
         """Method that find a shared entity link by its entity id and type"""
 
         return ShareLink.find_by_entity_type_and_id(entity_type, entity_id, link_type)
@@ -145,12 +144,10 @@ class ShareLinkService:
         if not clean_expired_links and not clean_invalid_links:
             return
 
-        links: List[ShareLink] = ShareLink.select()
+        links: list[ShareLink] = ShareLink.select()
 
         for link in links:
-            if clean_expired_links and not link.is_valid():
-                link.delete_instance()
-            elif clean_invalid_links and link.get_model(link.entity_id, link.entity_type) is None:
+            if clean_expired_links and not link.is_valid() or clean_invalid_links and link.get_model(link.entity_id, link.entity_type) is None:
                 link.delete_instance()
 
     @classmethod

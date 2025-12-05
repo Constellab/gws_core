@@ -1,4 +1,3 @@
-from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
@@ -12,11 +11,11 @@ from gws_core.tag.tag_dto import TagDTO
 class ZipScenario(BaseModelDTO):
     id: str
     title: str
-    description: Optional[RichTextDTO] = None
+    description: RichTextDTO | None = None
     status: ScenarioStatus
-    folder: Optional[SpaceFolderDTO] = None
-    error_info: Optional[ProcessErrorInfo] = None
-    tags: Optional[List[TagDTO]] = None
+    folder: SpaceFolderDTO | None = None
+    error_info: ProcessErrorInfo | None = None
+    tags: list[TagDTO] | None = None
 
 
 class ZipScenarioInfo(BaseModelDTO):

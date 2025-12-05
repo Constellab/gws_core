@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Optional
+
+from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.user.user_group import UserGroup
-from typing_extensions import TypedDict
 
 
 class UserTheme(Enum):
@@ -26,14 +26,14 @@ class UserSpace(BaseModelDTO):
     email: str
     theme: UserTheme
     lang: UserLanguage
-    photo: Optional[str]
+    photo: str | None
 
 
 class Space(BaseModelDTO):
     id: str
     name: str
     domain: str
-    photo: Optional[str]
+    photo: str | None
 
 
 # Info provided by the user when he logs in
@@ -46,7 +46,7 @@ class SpaceDict(TypedDict):
     id: str
     name: str
     domain: str
-    photo: Optional[str]
+    photo: str | None
 
 
 class UserDTO(BaseModelDTO):
@@ -54,7 +54,7 @@ class UserDTO(BaseModelDTO):
     email: str
     first_name: str
     last_name: str
-    photo: Optional[str]
+    photo: str | None
 
     @staticmethod
     def from_user_space(user_space: UserSpace | dict) -> "UserDTO":
@@ -80,4 +80,4 @@ class UserFullDTO(UserDTO):
     is_active: bool
     theme: UserTheme = UserTheme.LIGHT_THEME
     lang: UserLanguage = UserLanguage.EN
-    photo: Optional[str] = None
+    photo: str | None = None

@@ -1,6 +1,5 @@
 import inspect
 import sys
-from typing import List, Type
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
@@ -43,9 +42,9 @@ class TechnicalDocService:
 
     @classmethod
     def export_typing_technical_doc(
-        cls, brick_name: str, typing_class: Type[Typing]
-    ) -> List[TypingFullDTO]:
-        typings: List[Typing] = typing_class.get_by_brick_and_object_type(brick_name)
+        cls, brick_name: str, typing_class: type[Typing]
+    ) -> list[TypingFullDTO]:
+        typings: list[Typing] = typing_class.get_by_brick_and_object_type(brick_name)
         sorted_typings = sorted(typings, key=lambda x: len(x.get_ancestors()))
         json_list = []
         for typing in sorted_typings:
@@ -59,16 +58,16 @@ class TechnicalDocService:
 
     @classmethod
     def _get_typing_technical_doc(cls, typing: Typing) -> TypingFullDTO:
-        type_: Type[Resource] = typing.get_type()
+        type_: type[Resource] = typing.get_type()
         if type_ is None:
             return None
         return typing.to_full_dto()
 
     @classmethod
     def export_other_classes_technical_doc(
-        cls, brick_name: str, resources_tasks_protocols: List[TypingFullDTO]
-    ) -> List[ClassicClassDocDTO]:
-        other_classes: List[ClassicClassDocDTO] = []
+        cls, brick_name: str, resources_tasks_protocols: list[TypingFullDTO]
+    ) -> list[ClassicClassDocDTO]:
+        other_classes: list[ClassicClassDocDTO] = []
         clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
 
         for name, obj in clsmembers:
@@ -104,7 +103,7 @@ class TechnicalDocService:
 
     @classmethod
     def _generate_objects_technical_doc_as_md(
-        cls, objects: List[TypingFullDTO], title: str, separator: str = None
+        cls, objects: list[TypingFullDTO], title: str, separator: str = None
     ) -> str:
         markdown = f"# {title}\n\n"
 

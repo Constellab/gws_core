@@ -1,5 +1,4 @@
 import os
-from typing import List
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
@@ -79,7 +78,7 @@ class CreateFolderFromFiles(Task):
         else:
             temp_dir = Settings.get_root_temp_dir()
 
-        configs: List[dict] = params.get_value("filenames")
+        configs: list[dict] = params.get_value("filenames")
 
         i = 0
         resource_list: ResourceList = inputs["source"]

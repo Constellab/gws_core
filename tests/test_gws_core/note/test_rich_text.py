@@ -8,7 +8,6 @@ from gws_core.impl.rich_text.block.rich_text_block_list import (
 from gws_core.impl.rich_text.block.rich_text_block_paragraph import RichTextBlockParagraph
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_transcription_service import RichTextTranscriptionService
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 
 

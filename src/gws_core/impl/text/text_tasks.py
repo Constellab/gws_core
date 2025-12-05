@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -25,9 +24,9 @@ class TextImporter(ResourceImporter):
         {"encoding": StrParam(default_value="utf-8", short_description="Text encoding")}
     )
 
-    def import_from_path(self, file: File, params: ConfigParams, target_type: Type[Text]) -> Text:
+    def import_from_path(self, file: File, params: ConfigParams, target_type: type[Text]) -> Text:
         try:
-            with open(file.path, "r+t", encoding=params.get_value("encoding", "utf-8")) as fp:
+            with open(file.path, "r+", encoding=params.get_value("encoding", "utf-8")) as fp:
                 text = fp.read()
         except Exception as err:
             raise BadRequestException("Cannot import the text") from err
@@ -64,7 +63,7 @@ class TextExporter(ResourceExporter):
     )
 
     def export_to_path(
-        self, resource: Text, dest_dir: str, params: ConfigParams, target_type: Type[File]
+        self, resource: Text, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", type(self).get_human_name())
         file_format = FileHelper.clean_extension(
@@ -73,7 +72,7 @@ class TextExporter(ResourceExporter):
         file_path = os.path.join(dest_dir, file_name + "." + file_format)
 
         try:
-            with open(file_path, "w+t", encoding=params.get_value("encoding", "utf-8")) as fp:
+            with open(file_path, "w+", encoding=params.get_value("encoding", "utf-8")) as fp:
                 fp.write(resource._data)
         except Exception as err:
             raise BadRequestException("Cannot export the text") from err

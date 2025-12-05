@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi.requests import Request
 from fastapi.security.utils import get_authorization_scheme_param
@@ -60,7 +59,7 @@ class ExternalLabAuth:
         CurrentUserService.set_auth_user(user)
 
     @classmethod
-    def _get_user_id(cls, request: Request) -> Optional[str]:
+    def _get_user_id(cls, request: Request) -> str | None:
         return request.headers.get(ExternalLabAuth.USER_ID_HEADER_NAME)
 
     @classmethod

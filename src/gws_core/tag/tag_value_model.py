@@ -1,4 +1,6 @@
-from typing import Any, Dict
+from typing import Any
+
+from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 from gws_core.community.community_dto import CommunityTagValueDTO
 from gws_core.core.classes.expression_builder import ExpressionBuilder
@@ -9,7 +11,6 @@ from gws_core.tag.tag import TagValueType
 from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
 
 
 class TagValueModel(Model):
@@ -32,7 +33,7 @@ class TagValueModel(Model):
 
     short_description = CharField(null=True, default=None)
 
-    additional_infos: Dict[str, Any] = JSONField(null=True)
+    additional_infos: dict[str, Any] = JSONField(null=True)
 
     deprecated = BooleanField(default=False)
 
@@ -87,7 +88,7 @@ class TagValueModel(Model):
         cls,
         tag_key_model: TagKeyModel,
         tag_value: TagValueType,
-        additional_info: Dict[str, Any] = {},
+        additional_info: dict[str, Any] = {},
         is_community_tag_value: bool = False,
     ) -> "TagValueModel":
         """Create a tag value model"""

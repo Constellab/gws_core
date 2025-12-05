@@ -1,6 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, List, Literal, Optional, Union
+from typing import Any, Literal, Union
+
+from pydantic import field_validator
+from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
@@ -10,8 +13,6 @@ from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.activity.activity_dto import ActivityDTO
 from gws_core.user.user_dto import UserDTO
-from pydantic import field_validator
-from typing_extensions import TypedDict
 
 
 class LabStartDTO(BaseModelDTO):
@@ -26,22 +27,22 @@ class SaveScenarioToSpaceDTO(BaseModelDTO):
 
 class SaveNoteToSpaceDTO(BaseModelDTO):
     note: NoteFullDTO
-    scenario_ids: List[str]
+    scenario_ids: list[str]
     lab_config: LabConfigModelDTO
 
 
 class SpaceSendMailToUsersDTO(BaseModelDTO):
-    receiver_ids: List[str]
+    receiver_ids: list[str]
     mail_template: Literal["scenario-finished", "generic"]
-    data: Optional[Any]
-    subject: Optional[str]  # if provided, it override the template subject
+    data: Any | None
+    subject: str | None  # if provided, it override the template subject
 
 
 class SpaceSendMailToMailsDTO(BaseModelDTO):
-    receiver_mails: List[str]
+    receiver_mails: list[str]
     mail_template: Literal["scenario-finished", "generic"]
-    data: Optional[Any]
-    subject: Optional[str]  # if provided, it override the template subject
+    data: Any | None
+    subject: str | None  # if provided, it override the template subject
 
 
 class SpaceSendNotificationDTO(BaseModelDTO):
@@ -49,13 +50,13 @@ class SpaceSendNotificationDTO(BaseModelDTO):
 
     # List of user IDs to receive the notification
     # The user must be in the space of the current lab
-    receiver_ids: List[str]
+    receiver_ids: list[str]
     text: str  # Main text of the notification
     # Link to the object related to the notification
     # can be a space route (starting with /app) or an URL
-    link: Optional[str] = None
+    link: str | None = None
     # IDs of associated objects related to the notification (like scenarios, notes, etc.)
-    associated_object_ids: Optional[List[str]] = None
+    associated_object_ids: list[str] | None = None
 
 
 class SendScenarioFinishMailData(BaseModelDTO):
@@ -69,7 +70,7 @@ class SendScenarioFinishMailData(BaseModelDTO):
 class LabActivityReponseDTO(BaseModelDTO):
     running_scenarios: int
     queued_scenarios: int
-    last_activity: Optional[ActivityDTO]
+    last_activity: ActivityDTO | None
     dev_env_running: bool
 
 
@@ -77,8 +78,8 @@ class SpaceNoteRichTextFileViewData(TypedDict):
     """Object representing a file view in a rich text for a note transfered to space"""
 
     id: str
-    title: Optional[str]
-    caption: Optional[str]
+    title: str | None
+    caption: str | None
 
 
 class ShareResourceWithSpaceDTO(BaseModelDTO):
@@ -87,7 +88,7 @@ class ShareResourceWithSpaceDTO(BaseModelDTO):
     typing_name: str
     style: TypingStyle
     token: str
-    valid_until: Optional[datetime] = None
+    valid_until: datetime | None = None
     is_application: bool
 
 
@@ -124,7 +125,7 @@ class SpaceHierarchyObjectDTO(BaseModelDTO):
     id: str
     name: str
     objectType: SpaceHierarchyObjectType
-    parentId: Optional[str] = None
+    parentId: str | None = None
 
 
 class SpaceGroupType(str, Enum):
@@ -136,7 +137,7 @@ class SpaceGroupDTO(BaseModelDTO):
     id: str
     label: str
     type: SpaceGroupType
-    user: Optional[UserDTO] = None
+    user: UserDTO | None = None
 
     @field_validator("user", mode="before")
     @classmethod
@@ -145,7 +146,7 @@ class SpaceGroupDTO(BaseModelDTO):
 
 
 class SpaceGroupListDTO(BaseModelDTO):
-    groups: List[SpaceGroupDTO]
+    groups: list[SpaceGroupDTO]
 
 
 class DocumentUploadOverrideMode(str, Enum):

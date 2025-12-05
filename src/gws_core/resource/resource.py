@@ -1,6 +1,5 @@
-import os
 from copy import deepcopy
-from typing import Dict, Optional, TypeVar, cast, final
+from typing import TypeVar, cast, final
 
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.impl.file.file_r_field import FileRField
@@ -11,7 +10,6 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.technical_info import TechnicalInfo, TechnicalInfoDict
 from gws_core.tag.tag_list import TagList
 from gws_core.tag.tag_list_field import TagListField
-from regex import T
 
 from ..config.config_params import ConfigParams
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
@@ -73,7 +71,7 @@ class Resource(BaseTyping):
         self.style = None
         self.flagged = False
         # Init default values of BaseRField
-        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
+        properties: dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
             type(self), BaseRField
         )
         for key, r_field in properties.items():
@@ -96,7 +94,7 @@ class Resource(BaseTyping):
         """By default the view_as_json dumps the RFields mark with, include_in_dict_view=True
         This method is used to send the resource information back to the interface
         """
-        properties: Dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
+        properties: dict[str, BaseRField] = ReflectorHelper.get_property_names_of_type(
             type(self), BaseRField
         )
 
@@ -133,7 +131,7 @@ class Resource(BaseTyping):
         """
         return self.name or self.get_default_name()
 
-    def set_name(self, name: Optional[str]) -> None:
+    def set_name(self, name: str | None) -> None:
         """Set the name of the resource.
         You can override this method to force a format for the name of the resource.
 
@@ -175,7 +173,7 @@ class Resource(BaseTyping):
         """
         return self.technical_info.get(key)
 
-    def check_resource(self) -> Optional[str]:
+    def check_resource(self) -> str | None:
         """You can redefine this method to define custom logic to check this resource.
         If there is a problem with the resource, return a string that define the error, otherwise return None
         This method is called on output resources of a task. If there is an error returned, the task will be set to error and next proceses will not be run.
@@ -198,7 +196,7 @@ class Resource(BaseTyping):
         # TODO copy other attributes (like tags, style, etc)
 
         # get the r_fields of the resource
-        r_fields: Dict[str, BaseRField] = self.__get_resource_r_fields__()
+        r_fields: dict[str, BaseRField] = self.__get_resource_r_fields__()
         for fieldname, _ in r_fields.items():
             value = getattr(self, fieldname)
             setattr(clone, fieldname, deepcopy(value))
@@ -207,7 +205,7 @@ class Resource(BaseTyping):
 
     @final
     @classmethod
-    def __get_resource_r_fields__(cls) -> Dict[str, BaseRField]:
+    def __get_resource_r_fields__(cls) -> dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object
         """

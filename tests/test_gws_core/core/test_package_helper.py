@@ -1,10 +1,9 @@
 import os
 from unittest import TestCase
 
-from pandas import DataFrame
-
 from gws_core import PackageHelper as pkg
 from gws_core import Text
+from pandas import DataFrame
 
 
 # test_package_helper

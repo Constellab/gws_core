@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi import Depends
 
@@ -30,8 +29,8 @@ class SearchBody(BaseModelDTO):
 def search(
     typing_name: str,
     search: SearchBody,
-    page: Optional[int] = 0,
-    number_of_items_per_page: Optional[int] = 20,
+    page: int | None = 0,
+    number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ModelDTO]:
     """

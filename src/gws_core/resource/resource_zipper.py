@@ -1,6 +1,5 @@
 import os
 from json import dump
-from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.compress.zip_compress import ZipCompress
@@ -27,21 +26,21 @@ class ZipResource(BaseModelDTO):
     resource_typing_name: str
     brick_version: str
     data: dict
-    parent_resource_id: Optional[str] = None
-    kvstore_dir_name: Optional[str] = None
-    tags: List[TagDTO]
-    style: Optional[TypingStyle] = None
+    parent_resource_id: str | None = None
+    kvstore_dir_name: str | None = None
+    tags: list[TagDTO]
+    style: TypingStyle | None = None
 
     # Name of the file or directory if the resource is a FsNode
-    fs_node_name: Optional[str]
+    fs_node_name: str | None
 
 
 class ZipResourceInfo(BaseModelDTO):
     """Content of the info.json file in the zip file when a resource is zipped"""
 
     zip_version: int
-    resource: Optional[ZipResource]
-    children_resources: List[ZipResource]
+    resource: ZipResource | None
+    children_resources: list[ZipResource]
     origin: ExternalLabWithUserInfo
 
 

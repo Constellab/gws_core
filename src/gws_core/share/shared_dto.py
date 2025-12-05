@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Literal, Optional
+from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
@@ -32,18 +32,18 @@ class SharedEntityMode(Enum):
 class ShareLinkDTO(ModelWithUserDTO):
     entity_id: str
     entity_type: ShareLinkEntityType
-    valid_until: Optional[datetime] = None
+    valid_until: datetime | None = None
     download_link: str
-    preview_link: Optional[str] = None
+    preview_link: str | None = None
     status: Literal["SUCCESS", "ERROR"]
-    entity_name: Optional[str] = None
+    entity_name: str | None = None
     link_type: ShareLinkType
 
 
 class GenerateShareLinkDTO(BaseModelDTO):
     entity_id: str
     entity_type: ShareLinkEntityType
-    valid_until: Optional[datetime] = None
+    valid_until: datetime | None = None
 
     @staticmethod
     def get_1_hour_validity(
@@ -57,7 +57,7 @@ class GenerateShareLinkDTO(BaseModelDTO):
 
 
 class UpdateShareLinkDTO(BaseModelDTO):
-    valid_until: Optional[datetime] = None
+    valid_until: datetime | None = None
 
 
 class ShareEntityInfoDTO(ModelDTO):
@@ -67,8 +67,8 @@ class ShareEntityInfoDTO(ModelDTO):
     user_id: str
     user_firstname: str
     user_lastname: str
-    space_id: Optional[str] = None
-    space_name: Optional[str] = None
+    space_id: str | None = None
+    space_name: str | None = None
     created_by: UserDTO
 
 
@@ -79,7 +79,7 @@ class ShareEntityInfoReponseDTO(BaseModelDTO):
 
 
 class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
-    entity_object: List[ResourceModelDTO]
+    entity_object: list[ResourceModelDTO]
     # full route to call to zip the entity
     zip_entity_route: str
 
@@ -111,6 +111,6 @@ class ShareEntityCreateMode(Enum):
 
 class GenerateUserAccessTokenForSpaceResponse(BaseModelDTO):
     # Valid until date for the share link
-    share_link_valid_until: Optional[datetime] = None
+    share_link_valid_until: datetime | None = None
     access_url: str
     access_url_valid_until: datetime

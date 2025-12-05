@@ -1,4 +1,3 @@
-from typing import Optional
 
 from fastapi.requests import Request
 from fastapi.security import OAuth2
@@ -10,7 +9,7 @@ from ..core.exception.exceptions import BadRequestException
 
 
 class SpaceApiKeyHeader(OAuth2):
-    async def __call__(self, request: Request) -> Optional[str]:
+    async def __call__(self, request: Request) -> str | None:
         header_authorization: str = request.headers.get(SpaceService.AUTH_HEADER_KEY)
         header_scheme, header_param = get_authorization_scheme_param(header_authorization)
 
@@ -33,7 +32,7 @@ space_api_key_header = SpaceApiKeyHeader()
 
 
 class SpaceAPIUserHeader(OAuth2):
-    async def __call__(self, request: Request) -> Optional[str]:
+    async def __call__(self, request: Request) -> str | None:
         return request.headers.get(SpaceService.USER_ID_HEADER_KEY)
 
 

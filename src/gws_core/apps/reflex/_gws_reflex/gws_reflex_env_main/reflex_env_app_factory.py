@@ -2,7 +2,6 @@
 Helper function to apply GWS standard configuration to Reflex applications.
 """
 
-from typing import Optional
 
 import reflex as rx
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
@@ -10,7 +9,7 @@ from gws_reflex_base import get_theme
 
 
 def register_gws_reflex_env_app(
-    app: Optional[rx.App] = None, add_unauthorized_page: bool = True
+    app: rx.App | None = None, add_unauthorized_page: bool = True
 ) -> rx.App:
     """
     Apply GWS standard configuration to a Reflex app in a virtual environment.

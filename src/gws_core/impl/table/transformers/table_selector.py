@@ -1,4 +1,3 @@
-from typing import List
 
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
@@ -86,7 +85,7 @@ class TableRowTagsSelector(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("row")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
         return source.select_by_row_tags(tags)
 
 
@@ -116,5 +115,5 @@ class TableColumnTagsSelector(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("column")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: List[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
         return source.select_by_column_tags(tags)

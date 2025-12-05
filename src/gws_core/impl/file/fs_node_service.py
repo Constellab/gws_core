@@ -1,11 +1,12 @@
 import os
 import shutil
 from pathlib import Path
-from typing import List, Literal, Type
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
+from typing_extensions import Buffer
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.utils.logger import Logger
@@ -16,7 +17,6 @@ from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_result import CallViewResult
-from typing_extensions import Buffer
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from ...core.exception.exceptions.not_found_exception import NotFoundException
@@ -70,7 +70,7 @@ class FsNodeService:
     @GwsCoreDbManager.transaction()
     def upload_file(cls, upload_file: UploadFile, typing_name: str) -> ResourceModel:
         """Upload a file to the store and create the resource."""
-        file_type: Type[File] = TypingManager.get_and_check_type_from_name(typing_name)
+        file_type: type[File] = TypingManager.get_and_check_type_from_name(typing_name)
 
         temp_dir = Settings.make_temp_dir()
         # create the file in the temp dir
@@ -87,7 +87,7 @@ class FsNodeService:
             except Exception as err:
                 error = str(err)
                 Logger.log_exception_stack_trace(err)
-            if error is not None and len(error):
+            if error is not None and error:
                 raise BadRequestException(
                     GWSException.INVALID_FILE_ON_UPLOAD.value,
                     GWSException.INVALID_FILE_ON_UPLOAD.name,
@@ -119,12 +119,12 @@ class FsNodeService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def upload_folder(
-        cls, folder_typing_name: str, files: List[UploadFile] = FastAPIFile(...)
+        cls, folder_typing_name: str, files: list[UploadFile] = FastAPIFile(...)
     ) -> ResourceModel:
         if len(files) == 0:
             raise BadRequestException("The folder is empty")
 
-        folder_type: Type[Folder] = TypingManager.get_and_check_type_from_name(folder_typing_name)
+        folder_type: type[Folder] = TypingManager.get_and_check_type_from_name(folder_typing_name)
 
         if not Utils.issubclass(folder_type, Folder):
             raise BadRequestException("The type is not a sub class of Folder")
@@ -147,7 +147,7 @@ class FsNodeService:
             except Exception as err:
                 error = str(err)
                 Logger.log_exception_stack_trace(err)
-            if error is not None and len(error):
+            if error is not None and error:
                 raise BadRequestException(
                     GWSException.INVALID_FOLDER_ON_UPLOAD.value,
                     GWSException.INVALID_FOLDER_ON_UPLOAD.name,
@@ -221,9 +221,9 @@ class FsNodeService:
     ############################# FILE TYPE ###########################
 
     @classmethod
-    def get_file_types(cls) -> List[FileTyping]:
+    def get_file_types(cls) -> list[FileTyping]:
         return FileTyping.get_typings()
 
     @classmethod
-    def get_folder_types(cls) -> List[ResourceTyping]:
+    def get_folder_types(cls) -> list[ResourceTyping]:
         return ResourceTyping.get_folder_types()

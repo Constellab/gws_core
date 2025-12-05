@@ -1,8 +1,9 @@
-from typing import TYPE_CHECKING, List, Optional, final
+from typing import TYPE_CHECKING, Optional, final
+
+from peewee import BigIntegerField, BooleanField, CharField, Expression, ForeignKeyField
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
-from peewee import BigIntegerField, BooleanField, CharField, Expression, ForeignKeyField
 
 from ...core.model.model import Model
 from ...impl.file.file_store import FileStore
@@ -46,7 +47,7 @@ class FSNodeModel(Model):
         return cls.find_by_path(path) is not None
 
     @classmethod
-    def path_start_with(cls, path: str) -> List["FSNodeModel"]:
+    def path_start_with(cls, path: str) -> list["FSNodeModel"]:
         return list(cls.select().where(cls.path.startswith(path)))
 
     @classmethod

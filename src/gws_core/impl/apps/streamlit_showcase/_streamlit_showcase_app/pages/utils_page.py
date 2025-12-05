@@ -1,7 +1,6 @@
 import os
 
 import streamlit as st
-
 from gws_core.streamlit import (
     StreamlitHelper,
     StreamlitRouter,

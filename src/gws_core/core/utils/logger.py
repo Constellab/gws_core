@@ -4,7 +4,7 @@ from enum import Enum
 from logging import Logger as PythonLogger
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs, path
-from typing import Any, List, Literal, Optional, cast
+from typing import Any, Literal, Optional, cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
@@ -30,9 +30,9 @@ class LogFileLine(BaseModelDTO):
     level: MessageType
     timestamp: str
     message: str
-    stack_trace: Optional[str] = None
+    stack_trace: str | None = None
     context: LogContext = LogContext.MAIN
-    context_id: Optional[str] = None
+    context_id: str | None = None
 
 
 class JSONFormatter(logging.Formatter):
@@ -76,7 +76,7 @@ class Logger:
     level: LoggerLevel = "INFO"
 
     # class level
-    _waiting_messages: List[dict] = []
+    _waiting_messages: list[dict] = []
     _logger_instance: Optional["Logger"] = None
 
     def __init__(

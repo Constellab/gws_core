@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -94,14 +93,14 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
         self, process_dto: ProcessConfigDTO, instance_name: str = None
     ) -> ProcessModel:
         process_type_str: str = process_dto.process_typing_name
-        process_type: Type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
+        process_type: type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
 
         return self._create_new_process(
             process_type=process_type, instance_name=instance_name, process_dto=process_dto
         )
 
     def _create_new_process(
-        self, process_type: Type[Process], instance_name: str, process_dto: ProcessConfigDTO
+        self, process_type: type[Process], instance_name: str, process_dto: ProcessConfigDTO
     ) -> ProcessModel:
         """Method to instantiate a new process and configure it"""
         config_params: ConfigParamsDict = {}

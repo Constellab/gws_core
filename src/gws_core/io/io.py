@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, Generic, List, Type, TypeVar, final
+from typing import Generic, TypeVar, final
 
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_dto import IODTO
@@ -23,7 +23,7 @@ class IO(Base, Generic[PortType]):
     Input and Output classes. A IO is a set of ports.
     """
 
-    _ports: Dict[str, PortType] = {}
+    _ports: dict[str, PortType] = {}
     _type: IOSpecsType = None
     _additional_info: dict = None
 
@@ -60,7 +60,7 @@ class IO(Base, Generic[PortType]):
     ################################################### PORTS ########################################
 
     @property
-    def ports(self) -> Dict[str, PortType]:
+    def ports(self) -> dict[str, PortType]:
         """
         Returns the list of ports.
 
@@ -80,7 +80,7 @@ class IO(Base, Generic[PortType]):
         :type resource_types: type
         """
 
-        port_type: Type[PortType] = self._get_port_type()
+        port_type: type[PortType] = self._get_port_type()
         port: PortType = port_type(name, resource_spec.to_dto())
         self.add_port(name, port)
         return port
@@ -104,14 +104,14 @@ class IO(Base, Generic[PortType]):
         self._ports[name] = port
 
     @abstractmethod
-    def _get_port_type(self) -> Type[PortType]:
+    def _get_port_type(self) -> type[PortType]:
         pass
 
     @abstractmethod
-    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
+    def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
         pass
 
-    def get_port_names(self) -> List[str]:
+    def get_port_names(self) -> list[str]:
         """
         Returns the names of all the ports.
 
@@ -146,11 +146,11 @@ class IO(Base, Generic[PortType]):
             raise BadRequestException(f"{self.classname()} port '{name}' not found")
 
     ################################################### RESOURCE ########################################
-    def get_resources(self, new_instance: bool = False) -> Dict[str, Resource]:
+    def get_resources(self, new_instance: bool = False) -> dict[str, Resource]:
         """
         Returns the resources of all the ports to be used for the input of a task.
         """
-        resources: Dict[str, Resource] = {}
+        resources: dict[str, Resource] = {}
 
         # for normal IO, add the resource with key = port name
         for key, port in self._ports.items():
@@ -161,7 +161,7 @@ class IO(Base, Generic[PortType]):
         """Set the resource_model of a port"""
         port: PortType = self.get_port(port_name)
 
-        resource_type: Type[Resource] = type(resource_model.get_resource())
+        resource_type: type[Resource] = type(resource_model.get_resource())
         if not port.resource_type_is_compatible(resource_type):
             raise ResourceNotCompatibleException(
                 port_name=port_name, resource_type=resource_type, spec=port.resource_spec
@@ -169,9 +169,9 @@ class IO(Base, Generic[PortType]):
 
         port.set_resource_model(resource_model)
 
-    def get_resource_models(self) -> Dict[str, ResourceModel]:
+    def get_resource_models(self) -> dict[str, ResourceModel]:
         """Get the resource_model of a port"""
-        resource_models: Dict[str, ResourceModel] = {}
+        resource_models: dict[str, ResourceModel] = {}
         for port_name, port in self._ports.items():
             if port.get_resource_model():
                 resource_models[port_name] = port.get_resource_model()
@@ -212,15 +212,15 @@ class IO(Base, Generic[PortType]):
     ################################################### JSON ########################################
 
     @classmethod
-    def load_from_json(cls: Type[IOType], io_json: dict) -> IOType:
+    def load_from_json(cls: type[IOType], io_json: dict) -> IOType:
         return cls.load_from_dto(IODTO.from_json(io_json))
 
     @classmethod
-    def load_from_dto(cls: Type[IOType], io_dto: IODTO) -> IOType:
+    def load_from_dto(cls: type[IOType], io_dto: IODTO) -> IOType:
         io: IOType = cls(type_=io_dto.type, additional_info=io_dto.additional_info)
 
         # To create an InPort or OutPort
-        port_type: Type[PortType] = io._get_port_type()
+        port_type: type[PortType] = io._get_port_type()
         for key, port_dto in io_dto.ports.items():
             port: PortType = port_type.load_from_dto(port_dto, key)
 
@@ -229,7 +229,7 @@ class IO(Base, Generic[PortType]):
         return io
 
     @classmethod
-    def load_from_specs(cls: Type[IOType], specs: IOSpecs) -> IOType:
+    def load_from_specs(cls: type[IOType], specs: IOSpecs) -> IOType:
         io: IOType = cls(type_=specs.get_type(), additional_info=specs.get_additional_info())
 
         # create the input ports from the Task input specs
@@ -258,7 +258,7 @@ class IO(Base, Generic[PortType]):
         :rtype: list
         """
 
-        specs: Dict[str, IOSpec] = {}
+        specs: dict[str, IOSpec] = {}
 
         for key, port in self._ports.items():
             specs[key] = port.resource_spec
@@ -281,10 +281,10 @@ class Inputs(IO[InPort]):
     Input class
     """
 
-    def _get_port_type(self) -> Type[InPort]:
+    def _get_port_type(self) -> type[InPort]:
         return InPort
 
-    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
+    def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
             return DynamicInputs.from_dto(specs, self._additional_info)
         return InputSpecs(specs)
@@ -296,10 +296,10 @@ class Outputs(IO[OutPort]):
     Output class
     """
 
-    def _get_port_type(self) -> Type[OutPort]:
+    def _get_port_type(self) -> type[OutPort]:
         return OutPort
 
-    def _build_specs(self, specs: Dict[str, IOSpec]) -> IOSpecs:
+    def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
         if self.is_dynamic:
             return DynamicOutputs.from_dto(specs, self._additional_info)
         return OutputSpecs(specs)

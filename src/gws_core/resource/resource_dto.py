@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
@@ -24,16 +23,16 @@ class ResourceOrigin(Enum):
 
 class ResourceModelDTO(ModelWithUserDTO):
     resource_typing_name: str
-    resource_type: Optional[TypingRefDTO] = None
-    fs_node: Optional[FsNodeModelDTO]
+    resource_type: TypingRefDTO | None = None
+    fs_node: FsNodeModelDTO | None
     is_downloadable: bool
     origin: ResourceOrigin
     name: str
     has_children: bool
     type_status: TypingStatus
     flagged: bool
-    scenario: Optional[ScenarioSimpleDTO]
-    folder: Optional[SpaceFolderDTO]
+    scenario: ScenarioSimpleDTO | None
+    folder: SpaceFolderDTO | None
     style: TypingStyle
 
 
@@ -44,4 +43,4 @@ class ResourceSimpleDTO(BaseModelDTO):
 
 class ShareResourceWithSpaceRequestDTO(BaseModelDTO):
     folder_id: str
-    valid_until: Optional[datetime] = None
+    valid_until: datetime | None = None

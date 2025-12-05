@@ -1,5 +1,8 @@
 import copy
-from typing import Any, Dict, List, Type, cast
+from typing import Any, cast
+
+from pandas import DataFrame
+from plotly.graph_objs import Figure
 
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
@@ -11,8 +14,6 @@ from gws_core.resource.r_field.r_field import BaseRField, RFieldStorage
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.tag.tag import Tag
-from pandas import DataFrame
-from plotly.graph_objs import Figure
 
 
 class ResourceFactory:
@@ -25,15 +26,15 @@ class ResourceFactory:
     @classmethod
     def create_resource(
         cls,
-        resource_type: Type[Resource],
+        resource_type: type[Resource],
         kv_store: KVStore,
-        data: Dict[str, Any],
+        data: dict[str, Any],
         resource_model_id: str | None = None,
         name: str | None = None,
-        tags: List[Tag] | None = None,
+        tags: list[Tag] | None = None,
         flagged: bool = False,
         style: TypingStyle | None = None,
-        additional_data: Dict[str, Any] | None = None,
+        additional_data: dict[str, Any] | None = None,
     ) -> Resource:
         """Creates and initializes a Resource instance with data from various storage backends.
 
@@ -87,8 +88,8 @@ class ResourceFactory:
         cls,
         resource: Resource,
         kv_store: KVStore,
-        data: Dict[str, Any],
-        additional_data: Dict[str, Any] | None = None,
+        data: dict[str, Any],
+        additional_data: dict[str, Any] | None = None,
     ) -> None:
         """Populates resource RFields from appropriate storage backends based on their RFieldStorage setting.
 
@@ -108,7 +109,7 @@ class ResourceFactory:
         :type additional_data: Dict[str, Any] | None, optional
         """
 
-        properties: Dict[str, BaseRField] = resource.__get_resource_r_fields__()
+        properties: dict[str, BaseRField] = resource.__get_resource_r_fields__()
 
         resource.__set_kv_store__(kv_store)
 
@@ -155,7 +156,7 @@ class ResourceFactory:
             return JSONDict(resource)
         if isinstance(resource, list):
             resources_list = cast(
-                List[Resource], [cls.create_from_object(r) for r in resource if r is not None]
+                list[Resource], [cls.create_from_object(r) for r in resource if r is not None]
             )
             return ResourceList(resources_list)
         if isinstance(resource, DataFrame):

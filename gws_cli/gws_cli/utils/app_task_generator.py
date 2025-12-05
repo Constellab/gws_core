@@ -2,8 +2,9 @@ import os
 import shutil
 from typing import Literal
 
-from gws_cli.utils.cli_utils import CLIUtils
 from gws_core import StringHelper
+
+from gws_cli.utils.cli_utils import CLIUtils
 
 NAME_VAR = "name"
 DASHBOARD_CLASS_VAR = "appClass"

@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from typing import List
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam, StrParam
@@ -74,7 +73,7 @@ class Folder(FSNode):
         """
         return FileHelper.create_dir_if_not_exist(self.get_sub_path(dir_path))
 
-    def list_dir(self) -> List[str]:
+    def list_dir(self) -> list[str]:
         """
         List the files and directories inside this folder (not recursive)
 
@@ -83,7 +82,7 @@ class Folder(FSNode):
         """
         return os.listdir(self.path)
 
-    def list_dir_path(self) -> List[str]:
+    def list_dir_path(self) -> list[str]:
         """
         List the files and directories absolute path inside this folder (not recursive)
 
@@ -92,7 +91,7 @@ class Folder(FSNode):
         """
         return list(map(self.get_sub_path, self.list_dir()))
 
-    def list_all_file_paths(self) -> List[str]:
+    def list_all_file_paths(self) -> list[str]:
         """
         List the files inside this folder recursively
 

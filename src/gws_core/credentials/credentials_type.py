@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
@@ -29,13 +29,13 @@ class CredentialsType(Enum):
 class CredentialsDTO(ModelWithUserDTO):
     name: str
     type: CredentialsType
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class SaveCredentialsDTO(BaseModelDTO):
     name: str
     type: CredentialsType
-    description: Optional[str] = None
+    description: str | None = None
     data: Any
 
 
@@ -46,18 +46,18 @@ class CredentialsDataTypeSpecDTO(BaseModelDTO):
     """DTO to get the spec  to configure the credentials data of a specific type"""
 
     type: CredentialsType
-    specs: Dict[str, ParamSpecDTO]
+    specs: dict[str, ParamSpecDTO]
 
 
 class CredentialsDataSpecsDTO(BaseModelDTO):
     """DTO to get the specs of credentaials all data types"""
 
-    data_specs: List[CredentialsDataTypeSpecDTO]
+    data_specs: list[CredentialsDataTypeSpecDTO]
 
 
 class CredentialsDataBase(BaseModelDTO):
     # this field contains meta info about the credentials
-    meta: Optional[CredentialsDTO] = None
+    meta: CredentialsDTO | None = None
 
     @classmethod
     @abstractmethod
@@ -65,7 +65,7 @@ class CredentialsDataBase(BaseModelDTO):
         """Get the specs of the credentials data"""
 
     @classmethod
-    def get_spec_dto(cls) -> Dict[str, ParamSpecDTO]:
+    def get_spec_dto(cls) -> dict[str, ParamSpecDTO]:
         """Get the specs of the credentials data in DTO format"""
         return cls.get_specs().to_dto()
 
@@ -75,7 +75,7 @@ class CredentialsDataBase(BaseModelDTO):
         data.meta = meta
         return data
 
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self) -> dict:
         # convert the data to dict, remove the meta
         dict_ = self.to_json_dict()
         del dict_["meta"]
@@ -89,7 +89,7 @@ class CredentialsDataS3(CredentialsDataBase):
     region: str
     access_key_id: str
     secret_access_key: str
-    bucket: Optional[str] = None
+    bucket: str | None = None
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
@@ -132,7 +132,7 @@ class CredentialsDataBasic(CredentialsDataBase):
 
     username: str
     password: str
-    url: Optional[str] = None
+    url: str | None = None
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
@@ -150,7 +150,7 @@ class CredentialsDataLab(CredentialsDataBase):
 
     lab_domain: str
     api_key: str
-    sub_domain_api_override: Optional[str] = None
+    sub_domain_api_override: str | None = None
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
@@ -183,7 +183,7 @@ class CredentialsDataLab(CredentialsDataBase):
 # A simple string to string dictionary
 # When convert to and from json the data will be converted to a list of key value pairs for ParamSet
 class CredentialsDataOther(CredentialsDataBase):
-    data: Dict[str, str]
+    data: dict[str, str]
 
     @classmethod
     def get_specs(cls) -> ConfigSpecs:
@@ -208,7 +208,7 @@ class CredentialsDataOther(CredentialsDataBase):
         data_dict = {d["key"]: d["value"] for d in json_["data"]}
         return super().build_from_json({"data": data_dict}, meta)
 
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self) -> dict:
         """Override to convert the data dict to list of key value pairs for ParamSet"""
         dict_ = super().convert_to_dict()
         dict_["data"] = [{"key": k, "value": v} for k, v in self.data.items()]

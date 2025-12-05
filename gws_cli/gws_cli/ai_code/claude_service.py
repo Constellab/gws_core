@@ -4,9 +4,10 @@ import os
 import subprocess
 from pathlib import Path
 
+from gws_core.core.utils.settings import Settings
+
 from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 from gws_cli.utils.node_service import NodeService
-from gws_core.core.utils.settings import Settings
 
 
 class ClaudeService(AICodeService):
@@ -170,7 +171,7 @@ argument-hint: [{frontmatter.argument_hint}]
             # Read existing settings or create empty dict
             settings = {}
             if settings_file.exists():
-                with open(settings_file, "r") as f:
+                with open(settings_file) as f:
                     settings = json.load(f)
             else:
                 print(f"Creating new settings file at {settings_file}")

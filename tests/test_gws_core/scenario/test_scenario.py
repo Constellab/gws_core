@@ -1,4 +1,4 @@
-from typing import List, cast
+from typing import cast
 
 from gws_core import (
     BaseTestCase,
@@ -163,13 +163,13 @@ class TestScenario(BaseTestCase):
         self.assertTrue(result)
 
         # check that the resources are archived
-        resources: List[ResourceModel] = scenario.resources
+        resources: list[ResourceModel] = scenario.resources
         self.assertEqual(len(resources), RobotWorldTravelProto.resource_count)
         for resource in resources:
             self.assertEqual(resource.is_archived, archive)
 
         # check that the process are archived
-        processes: List[ProcessModel] = scenario.task_models
+        processes: list[ProcessModel] = scenario.task_models
         self.assertEqual(len(processes), RobotWorldTravelProto.tasks_count)
         for process in processes:
             self.assertEqual(process.is_archived, archive)

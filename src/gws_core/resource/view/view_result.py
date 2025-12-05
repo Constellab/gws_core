@@ -1,4 +1,3 @@
-from typing import Optional
 
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.view.view_dto import CallViewResultDTO, ViewDTO
@@ -8,20 +7,20 @@ from gws_core.resource.view_config.view_config import ViewConfig
 
 class CallViewResult:
     view: ViewDTO
-    resource_id: Optional[str]
-    view_config: Optional[ViewConfig]
+    resource_id: str | None
+    view_config: ViewConfig | None
     title: str
     view_type: ViewType
-    style: Optional[TypingStyle]
+    style: TypingStyle | None
 
     def __init__(
         self,
         view: ViewDTO,
         resource_id: str,
-        view_config: Optional[ViewConfig],
+        view_config: ViewConfig | None,
         title: str,
         view_type: ViewType,
-        style: Optional[TypingStyle] = None,
+        style: TypingStyle | None = None,
     ) -> None:
         self.view = view
         self.resource_id = resource_id

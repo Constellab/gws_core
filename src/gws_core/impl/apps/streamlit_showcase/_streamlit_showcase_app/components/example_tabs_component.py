@@ -1,19 +1,18 @@
 """Component to display examples with tabs for demo, code, and documentation."""
 
-from typing import Callable, List, Optional, Type, Union
+from collections.abc import Callable
 
 import streamlit as st
-
 from gws_core.streamlit import class_doc_component, method_doc_component
 
 
 def example_tabs(
-    example_function: Optional[Callable] = None,
-    code: Optional[str] = None,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    doc_func: Optional[Union[Callable, List[Callable]]] = None,
-    doc_class: Optional[Union[Type, List[Type]]] = None,
+    example_function: Callable | None = None,
+    code: str | None = None,
+    title: str | None = None,
+    description: str | None = None,
+    doc_func: Callable | list[Callable] | None = None,
+    doc_class: type | list[type] | None = None,
 ) -> None:
     """
     Create a tabbed interface to display an example with its code and documentation.

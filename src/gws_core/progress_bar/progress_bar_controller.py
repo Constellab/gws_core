@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
@@ -26,7 +25,7 @@ def download_progress_bar(
 )
 def get_messages(
     id: str,
-    nb_of_messages: Optional[int] = 20,
+    nb_of_messages: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ProgressBarMessagesBetweenDatesDTO:
     """Get last progress bar messages"""
@@ -41,8 +40,8 @@ def get_messages(
 )
 def get_messages_from_date(
     id: str,
-    from_datetime: Optional[datetime],
-    nb_of_messages: Optional[int] = 20,
+    from_datetime: datetime | None,
+    nb_of_messages: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ProgressBarMessagesBetweenDatesDTO:
     """Get progress bar messages older than a given date"""

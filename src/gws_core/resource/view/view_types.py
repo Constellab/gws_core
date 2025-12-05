@@ -60,17 +60,11 @@ class ViewType(Enum):
             style = TypingStyle.material_icon("stacked_bar_chart")
         elif self == ViewType.HISTOGRAM:
             style = TypingStyle.material_icon("bar_chart")
-        elif self == ViewType.BOX_PLOT:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.HEATMAP:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.VENN_DIAGRAM:
+        elif self == ViewType.BOX_PLOT or self == ViewType.HEATMAP or self == ViewType.VENN_DIAGRAM:
             style = TypingStyle.material_icon("assessment")
         elif self == ViewType.RESOURCES_LIST_VIEW:
             style = TypingStyle.material_icon("format_list_bulleted", background_color="#496989")
-        elif self == ViewType.EMPTY:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.MULTI_VIEWS:
+        elif self == ViewType.EMPTY or self == ViewType.MULTI_VIEWS:
             style = TypingStyle.material_icon("assessment")
         elif self == ViewType.NETWORK:
             style = TypingStyle.material_icon("hub", background_color="#627254")

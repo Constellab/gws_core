@@ -1,9 +1,10 @@
+from typing import Annotated
+
 import typer
-from typing_extensions import Annotated
+from gws_core import StreamlitApp
 
 from gws_cli.app_cli import AppCli
 from gws_cli.generate_streamlit_app.generate_streamlit_app import generate_streamlit_app
-from gws_core import StreamlitApp
 
 app = typer.Typer(help="Generate and run Streamlit applications")
 

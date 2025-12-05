@@ -1,4 +1,3 @@
-from typing import Optional
 
 import reflex as rx
 from gws_reflex_main import ReflexMainState, main_component, register_gws_reflex_app
@@ -19,7 +18,7 @@ class State(ReflexMainState):
         return resources[0].name if resources else "No resource"
 
     @rx.var
-    async def get_param_name(self) -> Optional[str]:
+    async def get_param_name(self) -> str | None:
         """
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.

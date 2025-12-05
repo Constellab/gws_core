@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Type
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_specs import ConfigSpecs
 
@@ -61,7 +61,7 @@ class TableScatterPlot2DView(BaseTableView):
         }
     ).merge_specs(BaseTableView._2d_axis_labels_specs)
 
-    _view_helper: Type = ScatterPlot2DView
+    _view_helper: type = ScatterPlot2DView
     _type: ViewType = ViewType.SCATTER_PLOT_2D
 
     def data_to_dict(self, params: ConfigParams) -> dict:
@@ -70,7 +70,7 @@ class TableScatterPlot2DView(BaseTableView):
                 "Invalid view helper. An subclass of ScatterPlot2DView is expected"
             )
 
-        series: List[Serie2d] = Serie2d.from_list(params.get_value("series"))
+        series: list[Serie2d] = Serie2d.from_list(params.get_value("series"))
 
         if len(series) == 0:
             raise BadRequestException("There must be at least one serie")
@@ -83,7 +83,7 @@ class TableScatterPlot2DView(BaseTableView):
         for serie in series:
             y_data = self.get_values_from_selection_range(serie.y)
 
-            x_data: List[float] = None
+            x_data: list[float] = None
             if serie.x is not None:
                 x_data = self.get_values_from_selection_range(serie.x)
 

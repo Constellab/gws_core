@@ -1,4 +1,3 @@
-from typing import List
 
 from psutil import Popen, Process
 
@@ -35,7 +34,7 @@ class SysProc:
             child.kill()
         self.kill()
 
-    def get_all_children(self) -> List[Process]:
+    def get_all_children(self) -> list[Process]:
         """Return all the chlidren of process recursively.
 
         :return: _description_

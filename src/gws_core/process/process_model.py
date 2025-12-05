@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Type, final
+from typing import TYPE_CHECKING, Any, final
+
+from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -21,7 +23,6 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
-from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
 
 from ..config.config import Config
 from ..core.classes.enum_field import EnumField
@@ -69,7 +70,7 @@ class ProcessModel(ModelWithUser):
     started_at = DateTimeUTC(null=True, with_milliseconds=True)
     ended_at = DateTimeUTC(null=True, with_milliseconds=True)
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
     is_archived = BooleanField(default=False, index=True)
     style: TypingStyle = BaseDTOField(TypingStyle, null=False)
 
@@ -134,7 +135,7 @@ class ProcessModel(ModelWithUser):
         return self._parent_protocol
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> "ProcessModel":
+    def reset(self) -> ProcessModel:
         """
         Reset the process
         """
@@ -149,7 +150,7 @@ class ProcessModel(ModelWithUser):
         self.data["inputs"] = self.inputs.to_json()
         self.data["outputs"] = self.outputs.to_json()
 
-    def save(self, *args, **kwargs) -> "ProcessModel":
+    def save(self, *args, **kwargs) -> ProcessModel:
         """Override save to save the inputs and outputs"""
 
         # if inputs were loaded, save them
@@ -161,7 +162,7 @@ class ProcessModel(ModelWithUser):
             self.data["outputs"] = self.outputs.to_json()
         return super().save(*args, **kwargs)
 
-    def save_full(self) -> "ProcessModel":
+    def save_full(self) -> ProcessModel:
         """Function to run overrided by the sub classes"""
         pass
 
@@ -176,7 +177,7 @@ class ProcessModel(ModelWithUser):
 
         self.set_scenario(parent_protocol.scenario)
 
-    def set_process_type(self, process_type: Type[Process]) -> None:
+    def set_process_type(self, process_type: type[Process]) -> None:
         self.process_typing_name = process_type.get_typing_name()
         self.brick_version_on_create = self._get_type_brick_version()
         self.name = process_type.get_human_name()
@@ -219,7 +220,7 @@ class ProcessModel(ModelWithUser):
     def set_scenario(self, scenario: Scenario) -> None:
         self.scenario = scenario
 
-    def get_error_info(self) -> Optional[ProcessErrorInfo]:
+    def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
 
     def set_error_info(self, error_info: ProcessErrorInfo) -> None:
@@ -408,10 +409,10 @@ class ProcessModel(ModelWithUser):
         """Return the name of the process"""
         return self.name
 
-    def get_process_type(self) -> Type[Process]:
+    def get_process_type(self) -> type[Process]:
         return TypingManager.get_and_check_type_from_name(self.process_typing_name)
 
-    def get_process_typing(self) -> Optional[Typing]:
+    def get_process_typing(self) -> Typing | None:
         return TypingManager.get_typing_from_name(self.process_typing_name)
 
     def process_type_exists(self) -> bool:
@@ -452,7 +453,7 @@ class ProcessModel(ModelWithUser):
         """Return true if the process is enable in sub protocol"""
         return self.get_process_type().__enable_in_sub_protocol__
 
-    def get_last_message(self) -> Optional[ProgressBarMessageDTO]:
+    def get_last_message(self) -> ProgressBarMessageDTO | None:
         """Return the last message of the process"""
         if self.progress_bar is None:
             return None
@@ -486,7 +487,7 @@ class ProcessModel(ModelWithUser):
         if process_typing:
             process_type_dto = process_typing.to_simple_dto()
             type_status = process_typing.get_type_status()
-            process_type: Type[Process] = process_typing.get_type()
+            process_type: type[Process] = process_typing.get_type()
             if process_type is not None:
                 is_agent = process_type.__is_agent__
         else:
@@ -722,7 +723,7 @@ class ProcessModel(ModelWithUser):
 
     ######################################## CLASS METHODS ########################################
     @classmethod
-    def get_by_parent_protocol_id(cls, parent_protocol_id: str) -> List["ProcessModel"]:
+    def get_by_parent_protocol_id(cls, parent_protocol_id: str) -> list[ProcessModel]:
         """Get all the processes by parent protocol id
 
         :param parent_protocol_id: The parent protocol id

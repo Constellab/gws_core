@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi.param_functions import Depends
 
@@ -21,7 +20,7 @@ def synchronize_folder(_=Depends(AuthorizationService.check_user_access_token)) 
 @core_app.get("/space-folder/trees", tags=["Folder"])
 def get_folder_trees(
     _=Depends(AuthorizationService.check_user_access_token_or_app),
-) -> List[SpaceFolderTreeDTO]:
+) -> list[SpaceFolderTreeDTO]:
     """
     Get the list of available folders with children.
     """

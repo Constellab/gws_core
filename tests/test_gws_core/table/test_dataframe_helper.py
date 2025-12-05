@@ -1,9 +1,8 @@
 from unittest import TestCase
 
+from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from numpy import NaN
 from pandas import NA, DataFrame
-
-from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
 
 # test_dataframe_helper

@@ -1,5 +1,5 @@
 import re
-from typing import Dict, List, Literal, Optional, Set
+from typing import Literal
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
@@ -37,14 +37,14 @@ class ProtocolModel(ProcessModel):
     # False by default when instianting a protocol from the DB
     _is_loaded: bool = False
 
-    _processes: Dict[str, ProcessModel] = {}
-    _connectors: List[Connector] = None
-    _interfaces: Dict[str, IOface] = {}
-    _outerfaces: Dict[str, IOface] = {}
+    _processes: dict[str, ProcessModel] = {}
+    _connectors: list[Connector] = None
+    _interfaces: dict[str, IOface] = {}
+    _outerfaces: dict[str, IOface] = {}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._is_loaded = not self.is_saved() or not self.data or not "graph" in self.data
+        self._is_loaded = not self.is_saved() or not self.data or "graph" not in self.data
         self._processes = {}
         self._interfaces = {}
         self._outerfaces = {}
@@ -253,7 +253,7 @@ class ProtocolModel(ProcessModel):
         process.run()
 
         # propagate the outputs of the process to all the connected inputs
-        next_processes: Dict[str, ProcessModel] = {}
+        next_processes: dict[str, ProcessModel] = {}
         for connector in self.connectors:
             if connector.left_process.instance_name == process.instance_name:
                 connector.propagate_resource()
@@ -323,9 +323,7 @@ class ProtocolModel(ProcessModel):
             last_process_message = process.progress_bar.get_last_message()
 
             if last_process_message:
-                if last_message is None:
-                    last_message = last_process_message
-                elif last_process_message.is_after(last_message):
+                if last_message is None or last_process_message.is_after(last_message):
                     last_message = last_process_message
 
         return ScenarioProgressDTO(progress=round(progress), last_message=last_message)
@@ -333,7 +331,7 @@ class ProtocolModel(ProcessModel):
     ############################### PROCESS #################################
 
     @property
-    def processes(self) -> Dict[str, ProcessModel]:
+    def processes(self) -> dict[str, ProcessModel]:
         """
         Returns the processes of the protocol lazy loaded
 
@@ -345,13 +343,13 @@ class ProtocolModel(ProcessModel):
 
         return self._processes
 
-    def get_processes_from_db(self) -> Dict[str, ProcessModel]:
+    def get_processes_from_db(self) -> dict[str, ProcessModel]:
         from gws_core.task.task_model import TaskModel
 
-        protocols: List[ProcessModel] = list(ProtocolModel.get_by_parent_protocol_id(self.id))
-        tasks: List[ProcessModel] = list(TaskModel.get_by_parent_protocol_id(self.id))
+        protocols: list[ProcessModel] = list(ProtocolModel.get_by_parent_protocol_id(self.id))
+        tasks: list[ProcessModel] = list(TaskModel.get_by_parent_protocol_id(self.id))
 
-        process_dict: Dict[str, ProcessModel] = {}
+        process_dict: dict[str, ProcessModel] = {}
         for process in protocols + tasks:
             process_dict[process.instance_name] = process
 
@@ -449,7 +447,7 @@ class ProtocolModel(ProcessModel):
             self.layout.remove_process(name)
         del self._processes[name]
 
-    def get_direct_previous_processes(self, process_name: str) -> Set[ProcessModel]:
+    def get_direct_previous_processes(self, process_name: str) -> set[ProcessModel]:
         """
         Returns the previous processes of a process.
 
@@ -465,7 +463,7 @@ class ProtocolModel(ProcessModel):
             if connector.right_process.instance_name == process_name
         }
 
-    def get_direct_next_processes(self, process_name: str) -> Set[ProcessModel]:
+    def get_direct_next_processes(self, process_name: str) -> set[ProcessModel]:
         """
         Returns the next processes of a process.
 
@@ -486,7 +484,7 @@ class ProtocolModel(ProcessModel):
         process_name: str,
         check_parent_protocol: bool = True,
         check_circular_connexion: bool = False,
-    ) -> Set[ProcessModel]:
+    ) -> set[ProcessModel]:
         """
         Returns all the next processes of a process in this protocol and parent protocols.
 
@@ -511,10 +509,10 @@ class ProtocolModel(ProcessModel):
         self,
         process_name: str,
         root_process_name: str,
-        skip_processes: Set[str],
+        skip_processes: set[str],
         check_parent_protocol: bool = True,
         check_circular_connexion: bool = False,
-    ) -> Set[ProcessModel]:
+    ) -> set[ProcessModel]:
         """
         Returns all the next processes of a process in this protocol and parent protocols.
 
@@ -531,8 +529,8 @@ class ProtocolModel(ProcessModel):
         """
         self._check_instance_name(process_name)
 
-        next_processes: Set[ProcessModel] = self.get_direct_next_processes(process_name)
-        all_next_processes: Set[ProcessModel] = set(next_processes)
+        next_processes: set[ProcessModel] = self.get_direct_next_processes(process_name)
+        all_next_processes: set[ProcessModel] = set(next_processes)
 
         skip_processes.add(process_name)
 
@@ -566,13 +564,13 @@ class ProtocolModel(ProcessModel):
 
         return all_next_processes
 
-    def get_all_processes_flatten_sort_by_start_date(self) -> List[ProcessModel]:
+    def get_all_processes_flatten_sort_by_start_date(self) -> list[ProcessModel]:
         """Return all the processes of the protocol and its sub protocols, sorted by start date
 
         :return: all the processes of the protocol and its sub protocols
         :rtype: List[ProcessModel]
         """
-        all_processes: List[ProcessModel] = []
+        all_processes: list[ProcessModel] = []
         for process in self.processes.values():
             all_processes.append(process)
 
@@ -588,8 +586,8 @@ class ProtocolModel(ProcessModel):
 
         return all_processes
 
-    def get_error_tasks(self) -> List[ProcessModel]:
-        error_tasks: List[ProcessModel] = []
+    def get_error_tasks(self) -> list[ProcessModel]:
+        error_tasks: list[ProcessModel] = []
         for process in self.processes.values():
             if isinstance(process, ProtocolModel):
                 error_tasks.extend(process.get_error_tasks())
@@ -643,7 +641,7 @@ class ProtocolModel(ProcessModel):
                 return False
         return True
 
-    def get_running_task(self) -> Optional[ProcessModel]:
+    def get_running_task(self) -> ProcessModel | None:
         """Return the running process, go through all the sub protocols
 
         :return: the running process
@@ -665,7 +663,7 @@ class ProtocolModel(ProcessModel):
     ############################### CONNECTORS #################################
 
     @property
-    def connectors(self) -> List[Connector]:
+    def connectors(self) -> list[Connector]:
         """
         Returns the connectors of the protocol lazy loaded
         """
@@ -687,7 +685,7 @@ class ProtocolModel(ProcessModel):
                 if graph:
                     self.init_connectors_from_graph(graph.links, check_compatiblity=False)
 
-    def add_connectors(self, connectors: List[ConnectorSpec]) -> None:
+    def add_connectors(self, connectors: list[ConnectorSpec]) -> None:
         for connector in connectors:
             self.add_connector(
                 connector["from_process"],
@@ -770,7 +768,7 @@ class ProtocolModel(ProcessModel):
             process.out_port(port_name)
 
     def init_connectors_from_graph(
-        self, links: List[ConnectorDTO], check_compatiblity: bool = True
+        self, links: list[ConnectorDTO], check_compatiblity: bool = True
     ) -> None:
         self._connectors = []
         # create links
@@ -783,9 +781,9 @@ class ProtocolModel(ProcessModel):
                 check_compatiblity=check_compatiblity,
             )
 
-    def _get_connectors_linked_to_process(self, process_model: ProcessModel) -> List[Connector]:
+    def _get_connectors_linked_to_process(self, process_model: ProcessModel) -> list[Connector]:
         """return the list of connectors connected to a process (input or output)"""
-        connectors: List[Connector] = []
+        connectors: list[Connector] = []
 
         for connector in self.connectors:
             if connector.is_connected_to(process_model):
@@ -795,11 +793,11 @@ class ProtocolModel(ProcessModel):
 
     def delete_connector_from_right(
         self, right_process_name: str, right_process_port_name: str
-    ) -> Optional[Connector]:
+    ) -> Connector | None:
         """remove the connector which right side is connected to the specified port of the specified process
         return the list of deleted connectors
         """
-        connector_to_delete: Optional[Connector] = self.get_connector_from_right(
+        connector_to_delete: Connector | None = self.get_connector_from_right(
             right_process_name, right_process_port_name
         )
 
@@ -815,21 +813,21 @@ class ProtocolModel(ProcessModel):
         It can remove multiple connectors if there are multiple connectors connected to the same port
         Return the list of deleted connectors
         """
-        connectors_to_delete: List[Connector] = self.get_connectors_from_left(
+        connectors_to_delete: list[Connector] = self.get_connectors_from_left(
             left_process_name, left_process_port_name
         )
 
         self._delete_connector_from_list(connectors_to_delete)
 
-    def _delete_connectors_by_process(self, process_model: ProcessModel) -> List[Connector]:
+    def _delete_connectors_by_process(self, process_model: ProcessModel) -> list[Connector]:
         """remove all the connectors connected to a process (input or output), return the list of deleted connectors"""
-        connectors_to_delete: List[Connector] = [
+        connectors_to_delete: list[Connector] = [
             item for item in self.connectors if item.is_connected_to(process_model)
         ]
         self._delete_connector_from_list(connectors_to_delete)
         return connectors_to_delete
 
-    def _delete_connector_from_list(self, connectors_to_delete: List[Connector]) -> None:
+    def _delete_connector_from_list(self, connectors_to_delete: list[Connector]) -> None:
         """remove all the connectors in the list"""
         for connector in connectors_to_delete:
             connector.reset_right_port()
@@ -837,7 +835,7 @@ class ProtocolModel(ProcessModel):
 
     def get_connector_from_right(
         self, right_process_name: str, right_process_port_name: str
-    ) -> Optional[Connector]:
+    ) -> Connector | None:
         """
         Returns a connector by the destination process and port
         """
@@ -850,7 +848,7 @@ class ProtocolModel(ProcessModel):
 
     def get_connectors_from_left(
         self, left_process_name: str, left_process_port_name: str
-    ) -> List[Connector]:
+    ) -> list[Connector]:
         """
         Returns a connector by the destination process and port
         """
@@ -861,7 +859,7 @@ class ProtocolModel(ProcessModel):
         ]
 
     def propagate_resources(self) -> None:
-        affected_processes: Set[ProcessModel] = set()
+        affected_processes: set[ProcessModel] = set()
         for connector in self.connectors:
             if connector.propagate_resource():
                 affected_processes.add(connector.right_process)
@@ -873,7 +871,7 @@ class ProtocolModel(ProcessModel):
     ############################### INTERFACE #################################
 
     @property
-    def interfaces(self) -> Dict[str, IOface]:
+    def interfaces(self) -> dict[str, IOface]:
         """
         Returns the interfaces of the protocol lazy loaded
 
@@ -883,11 +881,11 @@ class ProtocolModel(ProcessModel):
 
         return self._interfaces
 
-    def add_interfaces(self, interfaces: Dict[str, InterfaceSpec]) -> None:
+    def add_interfaces(self, interfaces: dict[str, InterfaceSpec]) -> None:
         for key, spec in interfaces.items():
             self.add_interface(key, spec["process_instance_name"], spec["port_name"])
 
-    def add_interfaces_from_dto(self, interfaces: Dict[str, IOFaceDTO]) -> None:
+    def add_interfaces_from_dto(self, interfaces: dict[str, IOFaceDTO]) -> None:
         for key, spec in interfaces.items():
             self.add_interface(key, spec.process_instance_name, spec.port_name)
 
@@ -937,11 +935,11 @@ class ProtocolModel(ProcessModel):
         interfaces = self.get_interfaces_linked_to_process(process_instance_name)
         return len(interfaces) > 0
 
-    def get_interfaces_linked_to_process(self, process_instance_name: str) -> List[IOface]:
+    def get_interfaces_linked_to_process(self, process_instance_name: str) -> list[IOface]:
         """
         Returns the interfaces linked to a process
         """
-        interfaces: List[IOface] = []
+        interfaces: list[IOface] = []
 
         for interface in self.interfaces.values():
             if interface.process_instance_name == process_instance_name:
@@ -953,7 +951,7 @@ class ProtocolModel(ProcessModel):
         """
         Remove the interface linked the process with the given name
         """
-        to_delete: List[IOface] = self.get_interfaces_linked_to_process(process_name)
+        to_delete: list[IOface] = self.get_interfaces_linked_to_process(process_name)
 
         for interface in to_delete:
             self.remove_interface(interface.name)
@@ -966,7 +964,7 @@ class ProtocolModel(ProcessModel):
         :raises BadRequestException: _description_
         """
 
-        if not name in self.interfaces:
+        if name not in self.interfaces:
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an interface named '{name}'"
             )
@@ -985,7 +983,7 @@ class ProtocolModel(ProcessModel):
                 )
 
             # in parent check if an interface is linked to this interface
-            interfaces: List[IOface] = self.parent_protocol.get_interfaces_linked_to_process(
+            interfaces: list[IOface] = self.parent_protocol.get_interfaces_linked_to_process(
                 self.instance_name
             )
 
@@ -1017,13 +1015,13 @@ class ProtocolModel(ProcessModel):
         """Generate a unique interface name"""
         return self._generate_unique_io_name(self.interfaces, "interface")
 
-    def set_interfaces(self, interfaces: Dict[str, IOface]) -> None:
+    def set_interfaces(self, interfaces: dict[str, IOface]) -> None:
         self._interfaces = interfaces
 
     ############################### OUTERFACE #################################
 
     @property
-    def outerfaces(self) -> Dict[str, IOface]:
+    def outerfaces(self) -> dict[str, IOface]:
         """
         Returns the outerfaces of the protocol lazy loaded
         """
@@ -1043,11 +1041,11 @@ class ProtocolModel(ProcessModel):
             # port = outerface.source_port
             self.outputs.set_resource_model(key, port.get_resource_model())
 
-    def add_outerfaces(self, outerfaces: Dict[str, InterfaceSpec]) -> None:
+    def add_outerfaces(self, outerfaces: dict[str, InterfaceSpec]) -> None:
         for key, spec in outerfaces.items():
             self.add_outerface(key, spec["process_instance_name"], spec["port_name"])
 
-    def add_outerfaces_from_dto(self, outerfaces: Dict[str, IOFaceDTO]) -> None:
+    def add_outerfaces_from_dto(self, outerfaces: dict[str, IOFaceDTO]) -> None:
         for key, spec in outerfaces.items():
             self.add_outerface(key, spec.process_instance_name, spec.port_name)
 
@@ -1087,11 +1085,11 @@ class ProtocolModel(ProcessModel):
         outerfaces = self.get_outerface_linked_to_process(process_instance_name)
         return len(outerfaces) > 0
 
-    def get_outerface_linked_to_process(self, process_instance_name: str) -> List[IOface]:
+    def get_outerface_linked_to_process(self, process_instance_name: str) -> list[IOface]:
         """
         Returns the outerface linked to the process with the given name
         """
-        outerfaces: List[IOface] = []
+        outerfaces: list[IOface] = []
         for outerface in self.outerfaces.values():
             if outerface.process_instance_name == process_instance_name:
                 outerfaces.append(outerface)
@@ -1101,12 +1099,12 @@ class ProtocolModel(ProcessModel):
         """
         Remove the outerfaces linked to the process with the given name
         """
-        to_delete: List[IOface] = self.get_outerface_linked_to_process(process_instance_name)
+        to_delete: list[IOface] = self.get_outerface_linked_to_process(process_instance_name)
         for outerface in to_delete:
             self.remove_outerface(outerface.name)
 
     def remove_outerface(self, name: str) -> None:
-        if not name in self.outerfaces:
+        if name not in self.outerfaces:
             raise BadRequestException(
                 f"The protocol '{self.get_instance_name_context()}' does not have an outerface named '{name}'"
             )
@@ -1125,7 +1123,7 @@ class ProtocolModel(ProcessModel):
                 )
 
             # in parent check if an outerface is linked to this outerface
-            outerfaces: List[IOface] = self.parent_protocol.get_outerface_linked_to_process(
+            outerfaces: list[IOface] = self.parent_protocol.get_outerface_linked_to_process(
                 self.instance_name
             )
 
@@ -1145,7 +1143,7 @@ class ProtocolModel(ProcessModel):
         """Generate a unique outerface name"""
         return self._generate_unique_io_name(self.outerfaces, "outerface")
 
-    def set_outerfaces(self, outerfaces: Dict[str, IOface]) -> None:
+    def set_outerfaces(self, outerfaces: dict[str, IOface]) -> None:
         self._outerfaces = outerfaces
 
     ############################### JSON #################################
@@ -1199,7 +1197,7 @@ class ProtocolModel(ProcessModel):
         """Generate a unique instance name from an instance_name
         by adding _1 or _2... to the end of the instance name
         """
-        if not instance_name in self.processes:
+        if instance_name not in self.processes:
             return instance_name
 
         count: int = 1
@@ -1279,12 +1277,12 @@ class ProtocolModel(ProcessModel):
                     detail="The scenario is running or in queue, you can't update it"
                 )
 
-    def get_input_resource_model_ids(self) -> Set[str]:
+    def get_input_resource_model_ids(self) -> set[str]:
         """
         :return: return all the resource ids configured as input of this protocol
         :rtype: Set[str]
         """
-        resource_ids: Set[str] = set()
+        resource_ids: set[str] = set()
         for process in self.processes.values():
             if process.is_input_task():
                 resource_id = InputTask.get_resource_id_from_config(process.config.get_values())
@@ -1296,10 +1294,10 @@ class ProtocolModel(ProcessModel):
         """Method to replace each Input process with an interface
         and each Output process with an outerface. It does not replace on sub protocols
         """
-        new_interfaces: Dict[str, IOFaceDTO] = {}
-        new_outerfaces: Dict[str, IOFaceDTO] = {}
+        new_interfaces: dict[str, IOFaceDTO] = {}
+        new_outerfaces: dict[str, IOFaceDTO] = {}
 
-        processes_to_remove: List[str] = []
+        processes_to_remove: list[str] = []
 
         for process in self.processes.values():
             if process.is_input_task():
@@ -1339,10 +1337,10 @@ class ProtocolModel(ProcessModel):
         self.add_interfaces_from_dto(new_interfaces)
         self.add_outerfaces_from_dto(new_outerfaces)
 
-    def _generate_unique_io_name(self, io_dict: Dict[str, IOface], name: str) -> str:
+    def _generate_unique_io_name(self, io_dict: dict[str, IOface], name: str) -> str:
         """Generate a unique name for an io dict"""
 
-        if not name in io_dict:
+        if name not in io_dict:
             return name
 
         count: int = 1

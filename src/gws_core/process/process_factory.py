@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -35,15 +34,15 @@ class ProcessFactory:
     @classmethod
     def create_task_model_from_type(
         cls,
-        task_type: Type[Task],
-        config_params: Optional[ConfigParamsDict] = None,
-        instance_name: Optional[str] = None,
-        inputs_dto: Optional[IODTO] = None,
-        outputs_dto: Optional[IODTO] = None,
-        name: Optional[str] = None,
-        community_agent_version_id: Optional[str] = None,
-        style: Optional[TypingStyle] = None,
-        config_specs: Optional[ConfigSpecs] = None,
+        task_type: type[Task],
+        config_params: ConfigParamsDict | None = None,
+        instance_name: str | None = None,
+        inputs_dto: IODTO | None = None,
+        outputs_dto: IODTO | None = None,
+        name: str | None = None,
+        community_agent_version_id: str | None = None,
+        style: TypingStyle | None = None,
+        config_specs: ConfigSpecs | None = None,
     ) -> TaskModel:
         """
         Create a task model from a task type. The specs are created from the task type.
@@ -118,7 +117,7 @@ class ProcessFactory:
     def create_task_model_from_typing_name(
         cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None
     ) -> TaskModel:
-        task_type: Type[Task] = TypingManager.get_and_check_type_from_name(typing_name=typing_name)
+        task_type: type[Task] = TypingManager.get_and_check_type_from_name(typing_name=typing_name)
         return cls.create_task_model_from_type(
             task_type=task_type, config_params=config_params, instance_name=instance_name
         )
@@ -143,7 +142,7 @@ class ProcessFactory:
     @classmethod
     def create_protocol_model_from_type(
         cls,
-        protocol_type: Type[Protocol],
+        protocol_type: type[Protocol],
         config_params: ConfigParamsDict = None,
         instance_name: str = None,
         name: str = None,
@@ -175,7 +174,7 @@ class ProcessFactory:
             create_config: ProtocolCreateConfig = protocol.get_create_config()
 
             # Create the process and protocol (recursive)
-            processes: Dict[str, ProcessModel] = {}
+            processes: dict[str, ProcessModel] = {}
             for key, proc in create_config["process_specs"].items():
                 try:
                     processes[key] = ProcessFactory.create_process_model_from_type(
@@ -205,10 +204,10 @@ class ProcessFactory:
     def _build_protocol_model_from_type(
         cls,
         protocol_model: ProtocolModel,
-        processes: Dict[str, ProcessModel] = None,
-        connectors: List[ConnectorSpec] = None,
-        interfaces: Dict[str, InterfaceSpec] = None,
-        outerfaces: Dict[str, InterfaceSpec] = None,
+        processes: dict[str, ProcessModel] = None,
+        connectors: list[ConnectorSpec] = None,
+        interfaces: dict[str, InterfaceSpec] = None,
+        outerfaces: dict[str, InterfaceSpec] = None,
     ) -> ProtocolModel:
         """Construct the protocol graph from the attribut of Protocol class"""
         if processes is None:
@@ -276,7 +275,7 @@ class ProcessFactory:
 
     @classmethod
     def create_protocol_empty(
-        cls, instance_name: str = None, name: str = None, protocol_type: Type[Protocol] = Protocol
+        cls, instance_name: str = None, name: str = None, protocol_type: type[Protocol] = Protocol
     ) -> ProtocolModel:
         protocol_model: ProtocolModel = ProtocolModel()
 
@@ -295,7 +294,7 @@ class ProcessFactory:
     @classmethod
     def create_process_model_from_type(
         cls,
-        process_type: Type[Process],
+        process_type: type[Process],
         config_params: ConfigParamsDict = None,
         instance_name: str = None,
         community_agent_version_id: str = None,
@@ -319,7 +318,7 @@ class ProcessFactory:
     def create_process_model_from_typing_name(
         cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None
     ) -> TaskModel:
-        process_type: Type[Process] = TypingManager.get_and_check_type_from_name(
+        process_type: type[Process] = TypingManager.get_and_check_type_from_name(
             typing_name=typing_name
         )
         return cls.create_process_model_from_type(
@@ -354,12 +353,12 @@ class ProcessFactory:
     def _init_process_model(
         cls,
         process_model: ProcessModel,
-        config: Optional[Config] = None,
-        status: Optional[ProcessStatus] = None,
-        instance_name: Optional[str] = None,
-        name: Optional[str] = None,
-        style: Optional[TypingStyle] = None,
-        progress_bar: Optional[ProgressBar] = None,
+        config: Config | None = None,
+        status: ProcessStatus | None = None,
+        instance_name: str | None = None,
+        name: str | None = None,
+        style: TypingStyle | None = None,
+        progress_bar: ProgressBar | None = None,
     ) -> None:
         if status is not None:
             process_model.status = status

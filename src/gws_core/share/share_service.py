@@ -1,5 +1,5 @@
 import threading
-from typing import List, Optional, Type, cast
+from typing import cast
 
 from peewee import JOIN
 
@@ -61,7 +61,7 @@ class ShareService:
     ) -> Paginator[SharedEntityInfo]:
         """Retrun the list of lab that downloaded the resource"""
 
-        share_entity_info: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
+        share_entity_info: type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
         query = share_entity_info.get_sents(entity_id)
 
@@ -80,7 +80,7 @@ class ShareService:
         """Method called by an external lab after the an entity was successfully
         import in the external lab. This helps this lab to keep track of which lab downloaded the entity
         """
-        share_entity_info: Type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
+        share_entity_info: type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
         # check if this resource was already downloaded by this lab
         if share_entity_info.already_shared_with_lab(
@@ -96,7 +96,7 @@ class ShareService:
         )
 
     @classmethod
-    def _get_shared_entity_type(cls, entity_type: ShareLinkEntityType) -> Type[SharedEntityInfo]:
+    def _get_shared_entity_type(cls, entity_type: ShareLinkEntityType) -> type[SharedEntityInfo]:
         """Return the shared entity type"""
         if entity_type == ShareLinkEntityType.RESOURCE:
             return SharedResource
@@ -114,7 +114,7 @@ class ShareService:
         """Method for resource model to get the entity object info"""
         resource_model = ResourceModel.get_by_id_and_check(shared_entity_link.entity_id)
 
-        entity_object: List[ResourceModelDTO] = [resource_model.to_dto()]
+        entity_object: list[ResourceModelDTO] = [resource_model.to_dto()]
 
         # specific case for resource set that contains multiple resource
         # we need to add all the resource to the zip
@@ -171,7 +171,7 @@ class ShareService:
     @classmethod
     def _find_zipped_resource_from_origin_resource(
         cls, resource_model_id: str
-    ) -> Optional[ResourceModel]:
+    ) -> ResourceModel | None:
         """Method that find the zipped resource from the origin resource"""
         # check if the resource was already zipped in this lab for the current version of ResourceZipperTask
         typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask.get_typing_name())

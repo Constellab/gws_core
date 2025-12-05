@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Literal
+from typing import TYPE_CHECKING, Literal
 
 from pandas import DataFrame
 
-from gws_core.core.utils.logger import Logger
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from gws_core.resource.view.view_types import ViewType
 

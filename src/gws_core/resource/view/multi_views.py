@@ -1,4 +1,3 @@
-from typing import List
 
 from typing_extensions import TypedDict
 
@@ -39,7 +38,7 @@ class MultiViews(View):
     ```
     """
 
-    _sub_views: List[ViewGrid]
+    _sub_views: list[ViewGrid]
     _type: ViewType = ViewType.MULTI_VIEWS
     _nb_of_columns: int
 
@@ -113,7 +112,7 @@ class MultiViews(View):
         )
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        views_dict: List[dict] = []
+        views_dict: list[dict] = []
         for sub_view in self._sub_views:
             view_dict = (
                 sub_view["view"].to_dto(ConfigParams(sub_view["config_params"])).to_json_dict()

@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -33,7 +32,7 @@ class FolderExporter(ResourceExporter):
     )
 
     def export_to_path(
-        self, source: Resource, dest_dir: str, params: ConfigParams, target_type: Type[FSNode]
+        self, source: Resource, dest_dir: str, params: ConfigParams, target_type: type[FSNode]
     ) -> File:
         folder: Folder = source
         tmp_dir = self.create_tmp_dir()

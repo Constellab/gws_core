@@ -1,5 +1,6 @@
 import inspect
-from typing import Any, Callable, Dict, List, Optional, Tuple, cast
+from collections.abc import Callable
+from typing import Any, cast
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.reflector_types import (
@@ -17,7 +18,7 @@ class ReflectorHelper:
     """Class to manage reflection and simplify meta data on objects"""
 
     @classmethod
-    def get_property_names_of_type(cls, class_type: type, type_: type) -> Dict[str, Any]:
+    def get_property_names_of_type(cls, class_type: type, type_: type) -> dict[str, Any]:
         """Get all properties of a class that match a specific type.
 
         Retrieves non-callable, non-class members of a class that are instances
@@ -37,8 +38,8 @@ class ReflectorHelper:
             >>> ReflectorHelper.get_property_names_of_type(MyClass, str)
             {'text': 'hello'}
         """
-        properties: Dict[str, Any] = {}
-        member_list: List[Tuple[str, Any]] = inspect.getmembers(class_type)
+        properties: dict[str, Any] = {}
+        member_list: list[tuple[str, Any]] = inspect.getmembers(class_type)
 
         for member in member_list:
             member_value = member[1]
@@ -197,7 +198,7 @@ class ReflectorHelper:
         setattr(object_, meta_data_name, value)
 
     @classmethod
-    def get_method_named_args_json(cls, method: Any) -> List[MethodArgDoc]:
+    def get_method_named_args_json(cls, method: Any) -> list[MethodArgDoc]:
         """Convert method arguments to JSON-serializable documentation format.
 
         Extracts and formats method argument information into a list of MethodArgDoc
@@ -214,8 +215,8 @@ class ReflectorHelper:
             - Handles empty string default values specially
             - Converts all default values to string representation
         """
-        arguments: Dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
-        arguments_json: List[MethodArgDoc] = []
+        arguments: dict[str, FuncArgMetaData] = cls.get_function_arguments(method).get_named_args()
+        arguments_json: list[MethodArgDoc] = []
         for arg in arguments.items():
             arg_name: str = arg[0]
             arg_type: Any = arg[1].type_
@@ -250,8 +251,8 @@ class ReflectorHelper:
 
     @classmethod
     def get_func_doc(
-        cls, func: Callable[..., Any], type_: Optional[type] = None, func_name: Optional[str] = None
-    ) -> Optional[MethodDoc]:
+        cls, func: Callable[..., Any], type_: type | None = None, func_name: str | None = None
+    ) -> MethodDoc | None:
         """Get documentation for a single function.
 
         :param func: The function to document
@@ -302,7 +303,7 @@ class ReflectorHelper:
             return None
 
     @classmethod
-    def get_all_public_args(cls, type_: type) -> Optional[Dict[str, str]]:
+    def get_all_public_args(cls, type_: type) -> dict[str, str] | None:
         """Get all public type-annotated attributes from a class and its entire inheritance hierarchy.
 
         Traverses the Method Resolution Order (MRO) to collect all public type-annotated
@@ -336,7 +337,7 @@ class ReflectorHelper:
         return res if len(res) > 0 else None
 
     @classmethod
-    def get_public_args(cls, class_) -> Dict[str, str]:
+    def get_public_args(cls, class_) -> dict[str, str]:
         """Get the public type-annotated attributes of a class.
 
         This method extracts type annotations from a class definition, filtering out
@@ -373,7 +374,7 @@ class ReflectorHelper:
             vars_keys = sorted(
                 [i for i in variables.keys() if i[0] != "_"]
             )  # get the sorted keys of public variables
-            res: Dict[str, str] = {}
+            res: dict[str, str] = {}
             for k in vars_keys:
                 if hasattr(variables[k], "__name__"):
                     res.update({k: variables[k].__name__})
@@ -385,7 +386,7 @@ class ReflectorHelper:
             return {}
 
     @classmethod
-    def get_public_method_names(cls, type_: type, include_init: bool = False) -> List[str]:
+    def get_public_method_names(cls, type_: type, include_init: bool = False) -> list[str]:
         """Get the names of all public methods of a class.
 
         :param type_: The class type to inspect
@@ -407,7 +408,7 @@ class ReflectorHelper:
     @classmethod
     def get_class_public_methods_doc(
         cls, type_: type, include_init: bool = False
-    ) -> List[MethodDoc]:
+    ) -> list[MethodDoc]:
         """Get documentation for all public methods of a class.
 
         :param type_: The class type to inspect
@@ -420,7 +421,7 @@ class ReflectorHelper:
         # Get public method names
         public_method_names = cls.get_public_method_names(type_, include_init=include_init)
 
-        res: List[MethodDoc] = []
+        res: list[MethodDoc] = []
         for public_method in public_method_names:
             # Use getattr instead of getattr_static to handle decorated methods properly
             # getattr_static returns wrappers (e.g., deprecated_func), but getattr unwraps them
@@ -432,7 +433,7 @@ class ReflectorHelper:
         return res
 
     @classmethod
-    def get_class_docs(cls, type_: type) -> Optional[ClassicClassDocDTO]:
+    def get_class_docs(cls, type_: type) -> ClassicClassDocDTO | None:
         """Get the cleaned docstring of a class.
 
         :param type_: The class type to inspect

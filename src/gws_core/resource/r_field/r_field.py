@@ -5,9 +5,10 @@ This module provides the core infrastructure for defining fields on Resource obj
 that can be automatically persisted and retrieved from different storage backends.
 """
 
+from collections.abc import Callable
 from enum import Enum
 from inspect import isclass, isfunction
-from typing import Any, Callable, Type, Union
+from typing import Any
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 
@@ -84,7 +85,7 @@ class BaseRField:
 
     def __init__(
         self,
-        default_value: Union[Type, Callable[[], Any], int, float, str, bool] = None,
+        default_value: type | Callable[[], Any] | int | float | str | bool = None,
         include_in_dict_view: bool = False,
         storage: RFieldStorage = RFieldStorage.KV_STORE,
     ) -> None:
@@ -250,7 +251,7 @@ class RField(BaseRField):
         self,
         deserializer: Callable[[Any], Any] | None = None,
         serializer: Callable[[Any], Any] | None = None,
-        default_value: Union[type, Callable[[], Any], int, float, str, bool, None] = None,
+        default_value: type | Callable[[], Any] | int | float | str | bool | None = None,
         include_in_dict_view: bool = False,
         storage: RFieldStorage = RFieldStorage.KV_STORE,
     ) -> None:

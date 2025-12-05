@@ -1,4 +1,3 @@
-from typing import Dict, Optional, Type
 
 from gws_core.config.param.model_param import ModelParam
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
@@ -20,8 +19,8 @@ class NoteTemplateParam(ModelParam):
         self,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = "Select note template",
-        short_description: Optional[str] = None,
+        human_name: str | None = "Select note template",
+        short_description: str | None = None,
     ):
         """
         :param optional: See default value
@@ -46,7 +45,7 @@ class NoteTemplateParam(ModelParam):
     def get_str_type(cls) -> ParamSpecTypeStr:
         return ParamSpecTypeStr.NOTE_TEMPLATE
 
-    def get_model_type(self) -> Type[Model]:
+    def get_model_type(self) -> type[Model]:
         """Override this method to return the model type to use
 
         :return: The model type
@@ -59,5 +58,5 @@ class NoteTemplateParam(ModelParam):
         return NoteTemplateParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

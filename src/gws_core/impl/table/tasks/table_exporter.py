@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -50,7 +49,7 @@ class TableExporter(ResourceExporter):
     )
 
     def export_to_path(
-        self, source: Table, dest_dir: str, params: ConfigParams, target_type: Type[File]
+        self, source: Table, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", source.name) or "table"
         file_format = FileHelper.clean_extension(

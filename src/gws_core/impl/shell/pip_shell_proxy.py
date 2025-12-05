@@ -1,7 +1,5 @@
 import os
-from typing import Union
-
-from typing_extensions import Literal
+from typing import Literal
 
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_register_decorator import typing_registrator
@@ -52,7 +50,7 @@ class PipShellProxy(BaseEnvShell):
 
         return True
 
-    def format_command(self, user_cmd: Union[list, str]) -> Union[list, str]:
+    def format_command(self, user_cmd: list | str) -> list | str:
         """
         This method builds the command to execute.
 

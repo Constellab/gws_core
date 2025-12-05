@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -14,7 +14,7 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
     short_description: str
     default_view: bool
     has_config_specs: bool
-    config_specs: Dict[str, ParamSpecDTO]
+    config_specs: dict[str, ParamSpecDTO]
     style: TypingStyle
 
     def to_markdown(self, resource_class_name: str) -> str:
@@ -40,15 +40,15 @@ class ResourceViewMetadatalDTO(BaseModelDTO):
 
 class ViewDTO(BaseModelDTO):
     type: ViewType
-    title: Optional[str]
-    technical_info: List[dict]
+    title: str | None
+    technical_info: list[dict]
     data: Any
 
 
 class CallViewResultDTO(BaseModelDTO):
     view: ViewDTO
-    resource_id: Optional[str]
-    view_config: Optional[ViewConfigDTO]
+    resource_id: str | None
+    view_config: ViewConfigDTO | None
     title: str
     view_type: ViewType
     style: TypingStyle
@@ -56,5 +56,5 @@ class CallViewResultDTO(BaseModelDTO):
 
 class ViewTypeDTO(BaseModelDTO):
     type: ViewType
-    human_name: Optional[str]
+    human_name: str | None
     style: TypingStyle

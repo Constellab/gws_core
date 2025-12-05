@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional
+from typing import Any
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
@@ -9,11 +9,11 @@ class RichTextBlockResourceView(RichTextBlockDataBase):
     id: str
     view_config_id: str
     resource_id: str
-    scenario_id: Optional[str] = None
+    scenario_id: str | None = None
     view_method_name: str
-    view_config: Dict[str, Any]
-    title: Optional[str] = None
-    caption: Optional[str] = None
+    view_config: dict[str, Any]
+    title: str | None = None
+    caption: str | None = None
 
     def to_markdown(self) -> str:
         """Convert the resource view to markdown
@@ -38,9 +38,9 @@ class RichTextBlockNoteResourceView(RichTextBlockDataBase):
     # key in the note of the sub resource to call view on
     sub_resource_key: str
     view_method_name: str
-    view_config: Dict[str, Any]
-    title: Optional[str] = None
-    caption: Optional[str] = None
+    view_config: dict[str, Any]
+    title: str | None = None
+    caption: str | None = None
 
     def to_markdown(self) -> str:
         """Convert the note resource view to markdown
@@ -63,8 +63,8 @@ class RichTextBlockViewFile(RichTextBlockDataBase):
 
     id: str
     filename: str
-    title: Optional[str] = None
-    caption: Optional[str] = None
+    title: str | None = None
+    caption: str | None = None
 
     def to_markdown(self) -> str:
         """Convert the file view to markdown

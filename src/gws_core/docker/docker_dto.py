@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.credentials.credentials_type import CredentialsDataBasic
@@ -9,7 +8,7 @@ from gws_core.credentials.credentials_type import CredentialsDataBasic
 class StartComposeRequestDTO(BaseModelDTO):
     compose_yaml_content: str  # content of the yaml file
     description: str
-    env: Optional[Dict[str, str]] | None = None
+    env: dict[str, str] | None | None = None
     auto_start: bool = False
 
 
@@ -23,7 +22,7 @@ class DockerComposeStatus(str, Enum):
 
 class DockerComposeStatusInfoDTO(BaseModelDTO):
     status: DockerComposeStatus
-    info: Optional[str] = None
+    info: str | None = None
 
 
 class SubComposeInfoDTO(BaseModelDTO):
@@ -34,7 +33,7 @@ class SubComposeInfoDTO(BaseModelDTO):
 
 
 class SubComposeListDTO(BaseModelDTO):
-    composes: List[SubComposeInfoDTO]
+    composes: list[SubComposeInfoDTO]
 
 
 class RegisterSQLDBComposeRequestDTO(BaseModelDTO):
@@ -42,7 +41,7 @@ class RegisterSQLDBComposeRequestDTO(BaseModelDTO):
     password: str
     database: str
     description: str
-    env: Optional[Dict[str, str]] | None = None
+    env: dict[str, str] | None | None = None
     auto_start: bool = False
 
 
@@ -78,9 +77,9 @@ class SubComposeProcessInfoDTO(BaseModelDTO):
     status: SubComposeProcessStatus
     message: str
     startedAt: datetime
-    completedAt: Optional[datetime] = None
+    completedAt: datetime | None = None
 
-    def get_duration_seconds(self) -> Optional[float]:
+    def get_duration_seconds(self) -> float | None:
         if self.completedAt:
             return (self.completedAt - self.startedAt).total_seconds()
         return None
@@ -89,7 +88,7 @@ class SubComposeProcessInfoDTO(BaseModelDTO):
 class SubComposeStatusDTO(BaseModelDTO):
     """Overall status of a sub compose, including any running process and the docker-compose status"""
 
-    subComposeProcess: Optional[SubComposeProcessInfoDTO] = None
+    subComposeProcess: SubComposeProcessInfoDTO | None = None
     composeStatus: DockerComposeStatusInfoDTO
 
     def is_in_progress_status(self) -> bool:
@@ -98,7 +97,7 @@ class SubComposeStatusDTO(BaseModelDTO):
             and self.subComposeProcess.status == SubComposeProcessStatus.RUNNING
         )
 
-    def get_process_message(self) -> Optional[str]:
+    def get_process_message(self) -> str | None:
         if self.subComposeProcess:
             return self.subComposeProcess.message
         return None

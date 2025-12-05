@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
@@ -16,39 +15,39 @@ from gws_core.user.user_dto import UserDTO
 
 # DTO to create/update a scenario
 class ScenarioSaveDTO(BaseModelDTO):
-    folder_id: Optional[str] = None
+    folder_id: str | None = None
     title: str = None
-    scenario_template_id: Optional[str] = None
-    scenario_template_json: Optional[dict] = None
+    scenario_template_id: str | None = None
+    scenario_template_json: dict | None = None
 
 
 class RunningProcessInfo(BaseModelDTO):
     id: str
     title: str
-    last_message: Optional[ProgressBarMessageDTO]
+    last_message: ProgressBarMessageDTO | None
     progression: float
 
 
 class RunningScenarioInfoDTO(BaseModelDTO):
     id: str
     title: str = None
-    folder: Optional[SpaceFolderDTO]
-    running_tasks: List[RunningProcessInfo]
+    folder: SpaceFolderDTO | None
+    running_tasks: list[RunningProcessInfo]
 
 
 class ScenarioDTO(ModelWithUserDTO):
     title: str
-    description: Optional[RichTextDTO]
+    description: RichTextDTO | None
     creation_type: ScenarioCreationType
     protocol: dict
     status: ScenarioStatus
     is_validated: bool
-    validated_by: Optional[UserDTO]
-    validated_at: Optional[datetime]
-    last_sync_by: Optional[UserDTO]
-    last_sync_at: Optional[datetime]
+    validated_by: UserDTO | None
+    validated_at: datetime | None
+    last_sync_by: UserDTO | None
+    last_sync_at: datetime | None
     is_archived: bool
-    folder: Optional[SpaceFolderDTO]
+    folder: SpaceFolderDTO | None
     pid_status: ScenarioProcessStatus
 
 
@@ -63,7 +62,7 @@ class ScenarioSimpleDTO(BaseModelDTO):
 
 class ScenarioProgressDTO(BaseModelDTO):
     progress: int = None
-    last_message: Optional[ProgressBarMessageDTO] = None
+    last_message: ProgressBarMessageDTO | None = None
 
     def get_last_message_content(self) -> str | None:
         return self.last_message.text if self.last_message else None

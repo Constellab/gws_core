@@ -1,4 +1,3 @@
-from typing import Dict, List, Union
 
 from pandas import DataFrame
 
@@ -56,13 +55,10 @@ class StackedBarPlotView(BarPlotView):
 
     def add_series(
         self,
-        x: Union[
-            List[float],
-            List[str],
-        ] = None,
-        y: List[float] = None,
+        x: list[float] | list[str] = None,
+        y: list[float] = None,
         name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ):
         """
         Add a series of stacked-bars to plot

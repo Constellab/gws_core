@@ -1,4 +1,4 @@
-from typing import Literal, Set, Type
+from typing import Literal
 from unittest import TestCase
 
 from gws_core import Model, Utils
@@ -13,7 +13,7 @@ class SubString(str):
 # test_utils
 class TestUtils(TestCase):
     def test_get_model_type(self):
-        model_type: Type[Model] = Utils.get_model_type(Model.full_classname())
+        model_type: type[Model] = Utils.get_model_type(Model.full_classname())
 
         self.assertEqual(model_type, Model)
 
@@ -22,7 +22,7 @@ class TestUtils(TestCase):
         self.assertFalse(Utils.value_is_in_literal("three", LiteralType))
 
     def test_get_subclasses(self):
-        types: Set[Type[Model]] = Utils.get_all_subclasses(Model)
+        types: set[type[Model]] = Utils.get_all_subclasses(Model)
 
         self.assertTrue(len(types) > 0)
         for type_ in types:

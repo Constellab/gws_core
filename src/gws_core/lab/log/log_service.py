@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import List
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
@@ -40,7 +39,7 @@ class LogService:
         log_folder = Settings.get_instance().get_log_dir()
         log_file_path = os.path.join(log_folder, node_name)
 
-        with open(log_file_path, "r", encoding="UTF-8") as f:
+        with open(log_file_path, encoding="UTF-8") as f:
             content = f.read()
 
         return LogCompleteInfo(log_info, content)
@@ -70,7 +69,7 @@ class LogService:
         context_id: str = None,
         nb_of_lines: int = 100,
     ) -> LogsBetweenDates:
-        log_lines: List[LogLine] = []
+        log_lines: list[LogLine] = []
 
         # retrieve logs for each day
         for date in DateHelper.date_range(from_date, to_date, include_end_date=True):
@@ -132,7 +131,7 @@ class LogService:
         context: LogContext = None,
         context_id: str = None,
         nb_of_lines: int = 100,
-    ) -> List[LogLine]:
+    ) -> list[LogLine]:
         if not DateHelper.are_same_day(from_date, to_date):
             raise BadRequestException("The dates must be on the same day")
 

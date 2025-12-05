@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import Depends
 
@@ -11,7 +10,7 @@ from ..core_controller import core_app
 
 
 @core_app.get("/queue/jobs", tags=["Queue"], summary="Get the list of job of main queue")
-def get_the_scenario_queue(_=Depends(AuthorizationService.check_user_access_token)) -> List[JobDTO]:
+def get_the_scenario_queue(_=Depends(AuthorizationService.check_user_access_token)) -> list[JobDTO]:
     """
     Retrieve the queue of scenarios
     """

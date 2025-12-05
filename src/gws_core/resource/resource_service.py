@@ -1,4 +1,5 @@
-from typing import Any, Callable, Dict, List, Optional, Type
+from collections.abc import Callable
+from typing import Any
 
 from gws_core.apps.app_resource import AppResource
 from gws_core.config.config_params import ConfigParamsDict
@@ -82,7 +83,7 @@ class ResourceService:
 
         ResourceService._check_before_resource_update(resource_model)
 
-        file_type: Type[Resource] = TypingManager.get_and_check_type_from_name(file_typing_name)
+        file_type: type[Resource] = TypingManager.get_and_check_type_from_name(file_typing_name)
 
         if not Utils.issubclass(file_type, Resource):
             raise BadRequestException("The type must be a Resource")
@@ -107,7 +108,7 @@ class ResourceService:
         return resource_model.save()
 
     @classmethod
-    def update_folder(cls, resource_id: str, folder_id: Optional[str]) -> ResourceModel:
+    def update_folder(cls, resource_id: str, folder_id: str | None) -> ResourceModel:
         resource_model: ResourceModel = cls.get_by_id_and_check(resource_id)
 
         if resource_model.origin == ResourceOrigin.S3_FOLDER_STORAGE:
@@ -131,7 +132,7 @@ class ResourceService:
         return ResourceModel.get_by_id_and_check(id)
 
     @classmethod
-    def get_resource_children(cls, id: str) -> List[ResourceModel]:
+    def get_resource_children(cls, id: str) -> list[ResourceModel]:
         resource_model: ResourceModel = cls.get_by_id_and_check(id)
 
         resource: Resource = resource_model.get_resource()
@@ -142,7 +143,7 @@ class ResourceService:
         return []
 
     @classmethod
-    def get_scenarios_resources(cls, scenario_ids: List[str]) -> List[ResourceModel]:
+    def get_scenarios_resources(cls, scenario_ids: list[str]) -> list[ResourceModel]:
         """Return the list of reosurces used as input or output by the scenarios
 
         :param scenarios: _description_
@@ -157,18 +158,18 @@ class ResourceService:
         return list(set(generated_resources + task_inputs))
 
     @classmethod
-    def get_scenario_generated_resources(cls, scenario_ids: List[str]) -> List[ResourceModel]:
+    def get_scenario_generated_resources(cls, scenario_ids: list[str]) -> list[ResourceModel]:
         return list(ResourceModel.get_by_scenarios(scenario_ids))
 
     @classmethod
-    def get_scenario_input_resources(cls, scenario_ids: List[str]) -> List[ResourceModel]:
-        task_inputs: List[TaskInputModel] = list(TaskInputModel.get_by_scenarios(scenario_ids))
+    def get_scenario_input_resources(cls, scenario_ids: list[str]) -> list[ResourceModel]:
+        task_inputs: list[TaskInputModel] = list(TaskInputModel.get_by_scenarios(scenario_ids))
         return [task_input.resource_model for task_input in task_inputs]
 
     ################################# VIEW ###############################
 
     @classmethod
-    def get_views_of_resource(cls, resource_typing_name: str) -> List[ResourceViewMetaData]:
+    def get_views_of_resource(cls, resource_typing_name: str) -> list[ResourceViewMetaData]:
         resource_type = TypingManager.get_and_check_type_from_name(resource_typing_name)
 
         if not Utils.issubclass(resource_type, Resource):
@@ -178,8 +179,8 @@ class ResourceService:
 
     @classmethod
     def get_views_of_resource_type(
-        cls, resource_type: Type[Resource]
-    ) -> List[ResourceViewMetaData]:
+        cls, resource_type: type[Resource]
+    ) -> list[ResourceViewMetaData]:
         if not issubclass(resource_type, Resource):
             raise BadRequestException("Can't find views of an object other than a Resource")
         return ViewHelper.get_views_of_resource_type(resource_type)
@@ -199,7 +200,7 @@ class ResourceService:
     def get_view_specs_from_type(
         cls, resource_typing_name: str, view_name: str
     ) -> ResourceViewMetadatalDTO:
-        resource_type: Type[Resource] = TypingManager.get_and_check_type_from_name(
+        resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(
             resource_typing_name
         )
 
@@ -379,7 +380,7 @@ class ResourceService:
 
     @classmethod
     def check_column_tags(
-        cls, table_resource_model: ResourceModel, filter_column_tags: List[Any]
+        cls, table_resource_model: ResourceModel, filter_column_tags: list[Any]
     ) -> bool:
         if table_resource_model.resource_typing_name != "RESOURCE.gws_core.Table":
             return False

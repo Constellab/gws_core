@@ -1,7 +1,7 @@
 import os
 import tempfile
 import time
-from typing import Dict, Optional, cast
+from typing import cast
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
@@ -31,7 +31,7 @@ class DockerService(LabManagerServiceBase):
         unique_name: str,
         compose_yaml_content: str,
         description: str,
-        env: Optional[Dict[str, str]] = None,
+        env: dict[str, str] | None = None,
         auto_start: bool = False,
     ) -> None:
         """
@@ -84,7 +84,7 @@ class DockerService(LabManagerServiceBase):
         unique_name: str,
         folder_path: str,
         description: str,
-        env: Dict[str, str] | None = None,
+        env: dict[str, str] | None = None,
         auto_start: bool = False,
     ) -> None:
         """
@@ -142,7 +142,7 @@ class DockerService(LabManagerServiceBase):
         unique_name: str,
         database_name: str,
         description: str,
-        env: Dict[str, str] | None = None,
+        env: dict[str, str] | None = None,
         auto_start: bool = False,
     ) -> RegisterSQLDBComposeResponseDTO:
         """
@@ -356,9 +356,9 @@ class DockerService(LabManagerServiceBase):
         self,
         brick_name: str,
         unique_name: str,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        url: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
+        url: str | None = None,
     ) -> Credentials:
         """
         Get or create basic credentials using the brick_name_unique_name format as the credential name.
@@ -393,9 +393,9 @@ class DockerService(LabManagerServiceBase):
         self,
         brick_name: str,
         unique_name: str,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        url: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
+        url: str | None = None,
     ) -> CredentialsDataBasic:
         """
         Get or create basic credentials using the brick_name_unique_name format as the credential name.
@@ -424,7 +424,7 @@ class DockerService(LabManagerServiceBase):
 
         return cast(CredentialsDataBasic, credentials.get_data_object())
 
-    def get_basic_credentials(self, brick_name: str, unique_name: str) -> Optional[Credentials]:
+    def get_basic_credentials(self, brick_name: str, unique_name: str) -> Credentials | None:
         """
         Get basic credentials using the brick_name_unique_name format as the credential name.
 

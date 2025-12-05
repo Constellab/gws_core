@@ -1,5 +1,4 @@
 import sqlite3
-from typing import List
 
 from pandas import read_sql_query
 
@@ -16,9 +15,9 @@ from gws_core.resource.view.view_decorator import view
 
 @resource_decorator("SqliteResource")
 class SqliteResource(File):
-    __default_extensions__: List[str] = ["db", "sqlite", "sqlite3"]
+    __default_extensions__: list[str] = ["db", "sqlite", "sqlite3"]
 
-    def get_table_names(self) -> List[str]:
+    def get_table_names(self) -> list[str]:
         table = self.execute_select("SELECT name FROM sqlite_master WHERE type='table';")
         return table.get_column_data("name")
 

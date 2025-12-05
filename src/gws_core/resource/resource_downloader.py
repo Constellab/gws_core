@@ -1,4 +1,3 @@
-from typing import Optional
 
 import requests
 
@@ -20,7 +19,7 @@ class ResourceDownloader:
 
     _shared_entity_info: ShareResourceInfoReponseDTO = None
 
-    def __init__(self, message_dispatcher: Optional[MessageDispatcher] = None) -> None:
+    def __init__(self, message_dispatcher: MessageDispatcher | None = None) -> None:
         if message_dispatcher is None:
             self.message_dispatcher = MessageDispatcher()
         else:
@@ -45,7 +44,7 @@ class ResourceDownloader:
 
     def get_resource_if_exist_in_current_lab(
         self, resource_info_url: str
-    ) -> Optional[ResourceModel]:
+    ) -> ResourceModel | None:
         # if the link is not a share link from a lab, the resource does not exist in the current lab
         if not ShareLink.is_lab_share_resource_link(resource_info_url):
             return None

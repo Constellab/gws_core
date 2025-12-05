@@ -1,8 +1,9 @@
 import os
 from pathlib import Path
 
-from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 from gws_core.core.utils.settings import Settings
+
+from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 
 
 class CopilotService(AICodeService):

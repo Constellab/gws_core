@@ -1,10 +1,12 @@
-from typing import Any, Dict, Optional, Type, final
+import builtins
+from typing import Any, Optional, final
+
+from peewee import CharField, ModelSelect, TextField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.credentials.credentials_type import CredentialsDTO
-from peewee import CharField, ModelSelect, TextField
 
 from .credentials_type import (
     CredentialsDataBase,
@@ -24,7 +26,7 @@ class Credentials(ModelWithUser):
 
     description = TextField(null=True)
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -43,7 +45,7 @@ class Credentials(ModelWithUser):
             description=self.description,
         )
 
-    def get_credentials_data_type(self) -> Type[CredentialsDataBase]:
+    def get_credentials_data_type(self) -> builtins.type[CredentialsDataBase]:
         return self.get_data_types().get(self.type)
 
     def get_data_object(self) -> CredentialsDataBase:
@@ -87,7 +89,7 @@ class Credentials(ModelWithUser):
         return cls.select().where(Credentials.name.contains(name), Credentials.type == type_)
 
     @classmethod
-    def get_data_types(cls) -> Dict[CredentialsType, Type[CredentialsDataBase]]:
+    def get_data_types(cls) -> dict[CredentialsType, builtins.type[CredentialsDataBase]]:
         return {
             CredentialsType.BASIC: CredentialsDataBasic,
             CredentialsType.S3: CredentialsDataS3,

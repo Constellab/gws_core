@@ -1,5 +1,4 @@
 import os
-from typing import Type
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -31,7 +30,7 @@ class PlotlyImporter(ResourceImporter):
     """
 
     def import_from_path(
-        self, source: File, params: ConfigParams, target_type: Type[PlotlyResource]
+        self, source: File, params: ConfigParams, target_type: type[PlotlyResource]
     ) -> PlotlyResource:
         if source.is_empty():
             raise BadRequestException(
@@ -59,7 +58,7 @@ class PlotlyExporter(ResourceExporter):
     """
 
     def export_to_path(
-        self, source: PlotlyResource, dest_dir: str, params: ConfigParams, target_type: Type[File]
+        self, source: PlotlyResource, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", source.name) or "plotly"
         file_path = os.path.join(dest_dir, file_name + ".json")

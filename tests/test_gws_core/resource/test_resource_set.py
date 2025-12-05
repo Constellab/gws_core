@@ -1,7 +1,5 @@
 import os
 
-from pandas import DataFrame
-
 from gws_core import (
     ConfigParams,
     InputSpec,
@@ -32,6 +30,7 @@ from gws_core.resource.resource_set.resource_set_tasks import ResourceStacker
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
+from pandas import DataFrame
 
 
 @resource_decorator(unique_name="EmptyResource")

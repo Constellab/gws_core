@@ -1,4 +1,5 @@
-from typing import Any, Callable, Iterable, List, Literal
+from collections.abc import Callable, Iterable
+from typing import Any, Literal
 
 import streamlit as st
 from pandas import DataFrame
@@ -14,9 +15,9 @@ def _select_by_coords(
 def dataframe_paginated(
     dataframe: DataFrame,
     paginate_rows: bool = True,
-    row_page_size_options: List[int] = None,
+    row_page_size_options: list[int] = None,
     paginate_columns: bool = False,
-    column_page_size_options: List[int] = None,
+    column_page_size_options: list[int] = None,
     transformer: Callable[[Any], DataFrame] = None,
     width: int | None = None,
     height: int | None = None,

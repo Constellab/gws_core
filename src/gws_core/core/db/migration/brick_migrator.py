@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import List, Type
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.migration.migration_dto import MigrationDTO
@@ -32,7 +31,7 @@ class BrickMigration:
 class MigrationObject:
     """Simple object to store brick migration along with version"""
 
-    brick_migration: Type["BrickMigration"]
+    brick_migration: type["BrickMigration"]
     version: Version
     short_description: str
     authenticate_sys_user: bool
@@ -40,7 +39,7 @@ class MigrationObject:
 
     def __init__(
         self,
-        brick_migration: Type["BrickMigration"],
+        brick_migration: type["BrickMigration"],
         version: Version,
         short_description: str,
         authenticate_sys_user: bool,
@@ -91,7 +90,7 @@ class BrickMigrator:
     brick_name: str
     current_brick_version: Version
 
-    _migration_objects: List[MigrationObject]
+    _migration_objects: list[MigrationObject]
 
     def __init__(self, brick_name: str, brick_version: Version) -> None:
         self.brick_name = brick_name
@@ -119,7 +118,7 @@ class BrickMigrator:
 
         # retrieve all the migration objects that have an higher version of current brick version
         # and match the db_manager
-        to_migrate_list: List[MigrationObject] = self.get_to_migrate_list(db_manager)
+        to_migrate_list: list[MigrationObject] = self.get_to_migrate_list(db_manager)
 
         if len(to_migrate_list) == 0:
             Logger.debug(
@@ -132,10 +131,10 @@ class BrickMigrator:
 
         return True
 
-    def get_to_migrate_list(self, db_manager: AbstractDbManager) -> List[MigrationObject]:
+    def get_to_migrate_list(self, db_manager: AbstractDbManager) -> list[MigrationObject]:
         # retrieve all the migration objects that have an higher version of current brick version
         # and match the db_manager
-        to_migrate: List[MigrationObject] = [
+        to_migrate: list[MigrationObject] = [
             x
             for x in self._migration_objects
             if x.version > self.current_brick_version
@@ -195,10 +194,10 @@ class BrickMigrator:
         )
         return migration_objects[0] if len(migration_objects) > 0 else None
 
-    def get_migration_versions(self, version: Version) -> List[MigrationObject]:
+    def get_migration_versions(self, version: Version) -> list[MigrationObject]:
         return list([x for x in self._migration_objects if x.version == version])
 
-    def get_migration_objects(self) -> List[MigrationObject]:
+    def get_migration_objects(self) -> list[MigrationObject]:
         migration_object = [*self._migration_objects]
         migration_object.sort(key=lambda x: x.version)
         migration_object.reverse()

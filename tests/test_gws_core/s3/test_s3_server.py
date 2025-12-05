@@ -1,13 +1,9 @@
 import os
 from multiprocessing import Process
 from time import sleep
-from typing import List
 
 import boto3
 import requests
-from mypy_boto3_s3.client import S3Client
-from uvicorn import Config, Server
-
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
@@ -24,6 +20,8 @@ from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.test.base_test_case import BaseTestCase
+from mypy_boto3_s3.client import S3Client
+from uvicorn import Config, Server
 
 
 # test_s3_server.py
@@ -106,7 +104,7 @@ class TestS3Server(BaseTestCase):
         )
 
         # check resources
-        resources: List[ResourceModel] = list(ResourceModel.select())
+        resources: list[ResourceModel] = list(ResourceModel.select())
         self.assertEqual(len(resources), 1)
         self.assertEqual(resources[0].origin, ResourceOrigin.S3_FOLDER_STORAGE)
         self.assertEqual(resources[0].name, "test.py")

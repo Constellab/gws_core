@@ -1,14 +1,15 @@
 import os
 import sys
-from typing import List, Literal, Optional
+from typing import Literal
+
+from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
-from typing_extensions import TypedDict
 
 
 class BrickVersion(BaseModelDTO):
     name: str
-    version: Optional[str] = None
+    version: str | None = None
 
 
 class BrickMigrationLogHistory(TypedDict):
@@ -20,22 +21,22 @@ class BrickMigrationLog(TypedDict):
     brick_name: str
     version: str
     last_date_check: str
-    history: List[BrickMigrationLogHistory]
+    history: list[BrickMigrationLogHistory]
 
 
 class BrickInfo(BaseModelDTO):
     path: str
     name: str
-    version: Optional[str]
-    repo_type: Optional[Literal["git", "pip"]]
-    repo_commit: Optional[str]
+    version: str | None
+    repo_type: Literal["git", "pip"] | None
+    repo_commit: str | None
     # name of the package that depend on this module
-    parent_name: Optional[str]
-    error: Optional[str]  # provided if the module could not be loaded
+    parent_name: str | None
+    error: str | None  # provided if the module could not be loaded
 
     def get_python_module_path(self) -> str:
         """Returns the python module path of the brick"""
-        if not self.name in sys.modules:
+        if self.name not in sys.modules:
             raise ValueError(f"Brick {self.name} is not loaded in the system modules")
         return os.path.dirname(sys.modules[self.name].__path__[0])
 
@@ -53,12 +54,12 @@ class BrickMessageDTO(BaseModelDTO):
 class BrickDTO(ModelDTO):
     name: str
     status: BrickStatus
-    version: Optional[str] = None
-    repo_type: Optional[Literal["git", "pip"]] = None
-    brick_path: Optional[str] = None
-    repo_commit: Optional[str] = None
-    parent_name: Optional[str] = None
-    messages: List[BrickMessageDTO]
+    version: str | None = None
+    repo_type: Literal["git", "pip"] | None = None
+    brick_path: str | None = None
+    repo_commit: str | None = None
+    parent_name: str | None = None
+    messages: list[BrickMessageDTO]
 
 
 class BrickDirectoryDTO(BaseModelDTO):

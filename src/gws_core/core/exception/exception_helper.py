@@ -1,18 +1,17 @@
 from traceback import FrameSummary, extract_tb, format_exc, format_list
 from types import ModuleType, TracebackType
-from typing import List
 
 
 class ExceptionHelper:
     @staticmethod
-    def filter_traceback(traceback: TracebackType, module_type: ModuleType) -> List[FrameSummary]:
+    def filter_traceback(traceback: TracebackType, module_type: ModuleType) -> list[FrameSummary]:
         """Method to filter the traceback only keep frame after the last frame of module_type"""
         tb_frames = extract_tb(traceback)
         tb_frames.reverse()
 
         # keep only the frame that are after the last frame of file task_runner.py
         # we want to keep only the stack trace of the task
-        filtered_stack_trace: List[FrameSummary] = []
+        filtered_stack_trace: list[FrameSummary] = []
 
         for frame in tb_frames:
             if frame.filename == module_type.__file__:

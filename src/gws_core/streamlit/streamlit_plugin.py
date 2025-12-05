@@ -130,7 +130,7 @@ class StreamlitPlugin(AppPluginDownloader):
         if not os.path.exists(index_html_path):
             return None
 
-        with open(index_html_path, "r", encoding="utf-8") as file:
+        with open(index_html_path, encoding="utf-8") as file:
             content = file.read()
             # Use regex to find the version comment
             version_pattern = re.compile(
@@ -169,10 +169,10 @@ class StreamlitPlugin(AppPluginDownloader):
     def modifiy_streamlit_index_html(self):
         """Modify the Streamlit index.html file to inject the plugin."""
         # Read the HTML files
-        with open(self.get_plugin_html_file_path(), "r", encoding="utf-8") as file:
+        with open(self.get_plugin_html_file_path(), encoding="utf-8") as file:
             source_html = file.read()
 
-        with open(self.get_streamlit_html_file_path(), "r", encoding="utf-8") as file:
+        with open(self.get_streamlit_html_file_path(), encoding="utf-8") as file:
             destination_html = file.read()
 
         # Parse source HTML using HtmlParser
@@ -197,7 +197,7 @@ class StreamlitPlugin(AppPluginDownloader):
         """Reset the Streamlit index.html file by removing plugin-related content."""
         Logger.info("Resetting streamlit index.html file")
 
-        with open(self.get_streamlit_html_file_path(), "r", encoding="utf-8") as file:
+        with open(self.get_streamlit_html_file_path(), encoding="utf-8") as file:
             streamlit_index_content = file.read()
         streamlit_index = BeautifulSoup(streamlit_index_content, "html.parser")
 

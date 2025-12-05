@@ -1,4 +1,3 @@
-from typing import Dict, Type
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -31,10 +30,10 @@ class TaskRunner:
     :rtype: [type]
     """
 
-    _task_type: Type[Task]
+    _task_type: type[Task]
     _input_specs: InputSpecs
     _output_specs: OutputSpecs
-    _inputs: Dict[str, Resource]
+    _inputs: dict[str, Resource]
     _outputs: TaskOutputs
     _task_id: str
     _scenario_id: str
@@ -48,9 +47,9 @@ class TaskRunner:
 
     def __init__(
         self,
-        task_type: Type[Task],
+        task_type: type[Task],
         params: ConfigParamsDict = None,
-        inputs: Dict[str, Resource] = None,
+        inputs: dict[str, Resource] = None,
         config_model_id: str = None,
         input_specs: InputSpecs = None,
         output_specs: OutputSpecs = None,

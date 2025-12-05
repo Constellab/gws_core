@@ -1,11 +1,10 @@
 from unittest import TestCase
 
-from numpy import NaN
-from pandas import DataFrame
-
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.test.base_test_case import BaseTestCase
+from numpy import NaN
+from pandas import DataFrame
 
 
 # test_table_concat

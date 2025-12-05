@@ -1,13 +1,14 @@
 import subprocess
-from typing import Any, Dict, List
+from typing import Any
 
 import psutil
+from peewee import FloatField
+
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.monitor.monitor_dto import MonitorDTO
-from peewee import FloatField
 
 from ...core.model.model import Model
 
@@ -63,7 +64,7 @@ class Monitor(Model):
     gpu_memory_free = FloatField(default=0)
     gpu_memory_percent = FloatField(default=0)
 
-    data: Dict[str, Any] = JSONField(null=True)
+    data: dict[str, Any] = JSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -160,7 +161,7 @@ class Monitor(Model):
             return None
 
     @property
-    def get_all_cpu_percent(self) -> List[float]:
+    def get_all_cpu_percent(self) -> list[float]:
         return self.data.get("all_cpu_percent", [])
 
     def to_dto(self) -> MonitorDTO:

@@ -1,4 +1,3 @@
-from typing import Any, Dict, List
 
 from pandas import DataFrame
 
@@ -57,7 +56,7 @@ class TableAnnotatorHelper:
 
         # get the list of ids to match against the metadata table
         # from the row name or from the reference column
-        table_ids: List[str]
+        table_ids: list[str]
 
         if use_table_row_names_as_ref:
             # use the index
@@ -76,7 +75,7 @@ class TableAnnotatorHelper:
 
         # convert each value to string
         table_ids = [str(id_) for id_ in table_ids]
-        metadata_tags: Dict[str, Dict[str, str]] = cls._get_metadata_tags(
+        metadata_tags: dict[str, dict[str, str]] = cls._get_metadata_tags(
             metadata_table, metadata_table_ref_column, use_metadata_row_names_as_ref
         )
 
@@ -122,7 +121,7 @@ class TableAnnotatorHelper:
 
         # get the list of ids to match against the metadata table
         # from the column name or from the reference row
-        table_ids: List[str]
+        table_ids: list[str]
 
         if use_table_column_names_as_ref:
             # use the index
@@ -137,7 +136,7 @@ class TableAnnotatorHelper:
 
         # convert each value to string
         table_ids = [str(id_) for id_ in table_ids]
-        metadata_tags: Dict[str, Dict[str, str]] = cls._get_metadata_tags(
+        metadata_tags: dict[str, dict[str, str]] = cls._get_metadata_tags(
             metadata_table, metadata_table_ref_column, use_metadata_row_names_as_ref
         )
 
@@ -149,7 +148,7 @@ class TableAnnotatorHelper:
     @classmethod
     def _get_metadata_tags(
         cls, metadata_table: Table, ref_column: str = None, use_index_as_ref: bool = False
-    ) -> Dict[str, Dict[str, str]]:
+    ) -> dict[str, dict[str, str]]:
         """Return the metadata table as dict of tags where key = id and value = tags for the id"""
         dataframe: DataFrame
         if use_index_as_ref:

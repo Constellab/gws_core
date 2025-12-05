@@ -1,11 +1,10 @@
-from typing import Any, Dict, Optional
+from typing import Optional
 
 from peewee import BooleanField, CharField, IntegerField, ModelSelect
 
 from gws_core.community.community_dto import CommunityTagKeyDTO
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
-from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.tag.tag import TagValueType
@@ -31,7 +30,7 @@ class TagKeyModel(Model):
 
     deprecated = BooleanField(default=False)
 
-    additional_infos_specs: Dict = JSONField(null=True)
+    additional_infos_specs: dict = JSONField(null=True)
 
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return TagHelper.convert_str_value_to_type(value, self.value_format)

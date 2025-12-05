@@ -1,5 +1,6 @@
 from threading import Thread
-from typing import List
+
+from peewee import ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -11,7 +12,6 @@ from gws_core.resource.view.view_dto import ViewTypeDTO
 from gws_core.resource.view.view_helper import ViewHelper
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
-from peewee import ModelSelect
 
 from ...core.classes.paginator import Paginator
 from ...core.classes.search_builder import SearchBuilder, SearchParams
@@ -89,13 +89,13 @@ class ViewConfigService:
     def _limit_length_history(cls) -> None:
         # limit the length of the history
         if ViewConfig.select().count() > cls.MAX_HISTORY_SIZE:
-            to_delete: List[ViewConfig] = cls.get_old_views_to_delete()
+            to_delete: list[ViewConfig] = cls.get_old_views_to_delete()
 
             for view_config in to_delete:
                 view_config.delete_instance()
 
     @classmethod
-    def get_old_views_to_delete(cls) -> List[ViewConfig]:
+    def get_old_views_to_delete(cls) -> list[ViewConfig]:
         """return the 100 oldest view config that are not favorite and not used in a note"""
         return list(
             ViewConfig.select()
@@ -137,7 +137,7 @@ class ViewConfigService:
 
         # retrieve resources associated to the note's scenarios
         # It retrieves the resources used as input or output of the scenarios
-        resources: List[ResourceModel] = NoteService.get_resources_of_associated_scenarios(note_id)
+        resources: list[ResourceModel] = NoteService.get_resources_of_associated_scenarios(note_id)
         search_builder.add_expression(ViewConfig.resource_model.in_(resources))
 
         # exclude the type of view that are not useful in historic
@@ -189,8 +189,8 @@ class ViewConfigService:
     ############################# VIEW TYPE  ###########################
 
     @classmethod
-    def get_all_view_types(cls) -> List[ViewTypeDTO]:
-        view_types_dto: List[ViewTypeDTO] = []
+    def get_all_view_types(cls) -> list[ViewTypeDTO]:
+        view_types_dto: list[ViewTypeDTO] = []
         for view_type in ViewType:
             if view_type in [ViewType.VIEW, ViewType.EMPTY, ViewType.TABULAR]:
                 continue

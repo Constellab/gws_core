@@ -1,10 +1,11 @@
 from abc import abstractmethod
-from typing import Callable, Set, Type
+from collections.abc import Callable
+
+from peewee import DatabaseProxy, MySQLDatabase
+from playhouse.shortcuts import ReconnectMixin
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
-from peewee import DatabaseProxy, MySQLDatabase
-from playhouse.shortcuts import ReconnectMixin
 
 from .db_config import DbConfig, DbMode, SupportedDbEngine
 
@@ -132,7 +133,7 @@ class AbstractDbManager:
         if self.db.is_closed():
             self.db.connect()
 
-    def create_tables(self, models: list[Type]) -> None:
+    def create_tables(self, models: list[type]) -> None:
         """Create the tables for the provided models"""
 
         if not models or len(models) == 0:
@@ -140,7 +141,7 @@ class AbstractDbManager:
 
         self.db.create_tables(models)
 
-    def drop_tables(self, models: list[Type]) -> None:
+    def drop_tables(self, models: list[type]) -> None:
         """Drop the tables for the provided models"""
 
         if not models or len(models) == 0:
@@ -166,8 +167,7 @@ class AbstractDbManager:
         """Decrement the transaction counter"""
         self._count_transaction -= 1
 
-        if self._count_transaction < 0:
-            self._count_transaction = 0
+        self._count_transaction = max(self._count_transaction, 0)
 
     def has_transaction(self) -> bool:
         """Check if there is an active transaction"""
@@ -245,7 +245,7 @@ class AbstractDbManager:
         return decorator
 
     @classmethod
-    def get_db_managers(cls) -> Set["AbstractDbManager"]:
+    def get_db_managers(cls) -> set["AbstractDbManager"]:
         """Get all the classes that inherit this class"""
         db_managers = set(cls.__subclasses__()).union(
             [s for c in cls.__subclasses__() for s in c.get_db_managers()]

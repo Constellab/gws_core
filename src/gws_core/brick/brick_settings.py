@@ -2,7 +2,7 @@
 
 import json
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 
@@ -10,44 +10,44 @@ from gws_core.core.model.model_dto import BaseModelDTO
 class BrickSettingsPipPackage(BaseModelDTO):
     """DTO representing a pip package"""
 
-    name: Optional[str] = None
-    version: Optional[str] = None
+    name: str | None = None
+    version: str | None = None
 
 
 class BrickSettingsPipSource(BaseModelDTO):
     """DTO representing a pip source with packages"""
 
-    source: Optional[str] = None
-    packages: Optional[List[BrickSettingsPipPackage]] = None
+    source: str | None = None
+    packages: list[BrickSettingsPipPackage] | None = None
 
 
 class BrickSettingsEnvironment(BaseModelDTO):
     """DTO representing the environment section in settings.json"""
 
-    pip: Optional[List[BrickSettingsPipSource]] = None
-    git: Optional[List[Any]] = None
+    pip: list[BrickSettingsPipSource] | None = None
+    git: list[Any] | None = None
 
 
 class BrickSettings:
     """DTO representing the content of a brick's settings.json file"""
 
-    name: Optional[str] = None
-    author: Optional[str] = None
-    version: Optional[str] = None
-    variables: Optional[Dict[str, str]] = None
-    technical_info: Optional[Dict[str, str]] = None
-    environment: Optional[BrickSettingsEnvironment] = None
+    name: str | None = None
+    author: str | None = None
+    version: str | None = None
+    variables: dict[str, str] | None = None
+    technical_info: dict[str, str] | None = None
+    environment: BrickSettingsEnvironment | None = None
 
     FILE_NAME: str = "settings.json"
 
     def __init__(
         self,
-        name: Optional[str] = None,
-        author: Optional[str] = None,
-        version: Optional[str] = None,
-        variables: Optional[Dict[str, str]] = None,
-        technical_info: Optional[Dict[str, str]] = None,
-        environment: Optional[BrickSettingsEnvironment] = None,
+        name: str | None = None,
+        author: str | None = None,
+        version: str | None = None,
+        variables: dict[str, str] | None = None,
+        technical_info: dict[str, str] | None = None,
+        environment: BrickSettingsEnvironment | None = None,
     ):
         self.name = name
         self.author = author
@@ -68,8 +68,8 @@ class BrickSettings:
         if not os.path.exists(file_path):
             raise FileNotFoundError(f"settings.json file not found at path: {file_path}")
 
-        settings_data: Dict[str, Any]
-        with open(file_path, "r", encoding="utf-8") as f:
+        settings_data: dict[str, Any]
+        with open(file_path, encoding="utf-8") as f:
             settings_data = json.load(f)
 
         # Parse environment if present

@@ -14,7 +14,6 @@ from gws_core import (
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dto import TypingRefDTO
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService

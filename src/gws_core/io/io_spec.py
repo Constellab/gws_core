@@ -1,6 +1,7 @@
 from abc import abstractmethod
+from collections.abc import Iterable
 from collections.abc import Iterable as IterableClass
-from typing import Iterable, List, Optional, Tuple, Type, Union
+from typing import Union
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
@@ -11,17 +12,17 @@ from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from .io_validator import IOValidator
 
-ResourceType = Type[Resource]
+ResourceType = type[Resource]
 ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
 
 
 class IOSpecDTO(BaseModelDTO):
-    resource_types: List[TypingRefDTO]
-    human_name: Optional[str] = None
-    short_description: Optional[str] = None
+    resource_types: list[TypingRefDTO]
+    human_name: str | None = None
+    short_description: str | None = None
     optional: bool
-    sub_class: Optional[bool] = None
-    constant: Optional[bool] = None
+    sub_class: bool | None = None
+    constant: bool | None = None
 
     def to_markdown(self) -> str:
         text = f"- `{self.human_name}` ("
@@ -46,18 +47,18 @@ class IOSpecDTO(BaseModelDTO):
 
 
 class IOSpec:
-    resource_types: List[ResourceType]
+    resource_types: list[ResourceType]
 
     # Human readable name of the param, showed in the interface
-    human_name: Optional[str]
+    human_name: str | None
 
     # Description of the param, showed in the interface
-    short_description: Optional[str]
+    short_description: str | None
 
     optional: bool = False
 
     # not activated yet
-    validators: List[IOValidator] = []
+    validators: list[IOValidator] = []
 
     _name: str = "IOSpec"  # unique name to distinguish the types, do not modify
 
@@ -66,8 +67,8 @@ class IOSpec:
         resource_types: ResourceTypes,
         optional: bool = False,
         is_optional: bool = False,
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """Initialize the IOSpec with resource types and optional parameters.
 
@@ -94,7 +95,7 @@ class IOSpec:
 
         if is_optional:
             Logger.warning(
-                f"[IOSpec] 'is_optional' parameter is deprecated, please use 'optional' instead"
+                "[IOSpec] 'is_optional' parameter is deprecated, please use 'optional' instead"
             )
             optional = is_optional
         self.optional = optional
@@ -142,12 +143,12 @@ class IOSpec:
             resource_types=self.resource_types, expected_types=in_spec.resource_types
         )
 
-    def is_compatible_with_resource_type(self, resource_type: Type[Resource]) -> bool:
+    def is_compatible_with_resource_type(self, resource_type: type[Resource]) -> bool:
         return self._resource_types_are_compatible(
             resource_types=[resource_type], expected_types=self.resource_types
         )
 
-    def is_compatible_with_resource_types(self, resource_types: Iterable[Type[Resource]]) -> bool:
+    def is_compatible_with_resource_types(self, resource_types: Iterable[type[Resource]]) -> bool:
         """return True if one of the resource_types is compatible with the this spec"""
         return self._resource_types_are_compatible(
             resource_types=resource_types, expected_types=self.resource_types
@@ -161,11 +162,11 @@ class IOSpec:
     def subclass_out(self) -> bool:
         pass
 
-    def get_default_resource_type(self) -> Type[Resource]:
+    def get_default_resource_type(self) -> type[Resource]:
         """return the first default type"""
         return self.resource_types[0]
 
-    def get_resource_type_tuples(self) -> Tuple[Type[Resource]]:
+    def get_resource_type_tuples(self) -> tuple[type[Resource]]:
         return tuple(self.resource_types)
 
     def get_resources_human_names(self) -> str:
@@ -189,7 +190,7 @@ class IOSpec:
 
     @classmethod
     def _resource_types_are_compatible(
-        cls, resource_types: Iterable[Type[Resource]], expected_types: Iterable[Type[Resource]]
+        cls, resource_types: Iterable[type[Resource]], expected_types: Iterable[type[Resource]]
     ) -> bool:
         for resource_type in resource_types:
             if cls._resource_types_is_compatible(
@@ -201,7 +202,7 @@ class IOSpec:
 
     @classmethod
     def _resource_types_is_compatible(
-        cls, resource_type: Type[Resource], expected_types: Iterable[Type[Resource]]
+        cls, resource_type: type[Resource], expected_types: Iterable[type[Resource]]
     ) -> bool:
         # check that the resource type is a subclass of one of the port resources types
         for expected_type in expected_types:
@@ -212,7 +213,7 @@ class IOSpec:
 
     @classmethod
     def _resource_types_is_type(
-        cls, resource_type: Type[Resource], expected_types: Iterable[Type[Resource]]
+        cls, resource_type: type[Resource], expected_types: Iterable[type[Resource]]
     ) -> bool:
         return resource_type in expected_types
 
@@ -232,7 +233,7 @@ class IOSpec:
 
     @classmethod
     def from_dto(cls, dto: IOSpecDTO) -> "IOSpec":
-        resource_types: List[ResourceType] = []
+        resource_types: list[ResourceType] = []
 
         # retrieve all the resource type from the json specs
         for spec_dto in dto.resource_types:
@@ -279,8 +280,8 @@ class OutputSpec(IOSpec):
         sub_class: bool = False,
         constant: bool = False,
         is_constant: bool = False,
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ) -> None:
         """_summary_
 
@@ -314,7 +315,7 @@ class OutputSpec(IOSpec):
 
         if is_constant:
             Logger.warning(
-                f"[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead"
+                "[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead"
             )
             constant = is_constant
         self._is_constant = constant

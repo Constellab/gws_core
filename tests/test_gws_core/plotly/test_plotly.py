@@ -3,12 +3,11 @@ from unittest import TestCase
 
 import plotly.express as px
 import plotly.graph_objs as go
-from pandas import DataFrame
-
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.impl.plotly.plotly_view import PlotlyView
+from pandas import DataFrame
 
 
 # test_plotly

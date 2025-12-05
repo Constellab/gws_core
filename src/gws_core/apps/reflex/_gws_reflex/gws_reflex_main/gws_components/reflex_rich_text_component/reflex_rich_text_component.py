@@ -1,8 +1,8 @@
-from typing import Optional
 
 import reflex as rx
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from reflex.vars import Var
+
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 asset_path = rx.asset("reflex_rich_text_component.jsx", shared=True)
 public_js_path = "$/public/" + asset_path
@@ -19,24 +19,24 @@ class RichTextComponent(rx.Component):
     tag = "RichTextComponent"
 
     # Component props matching DcRichTextConfig interface
-    placeholder: Var[Optional[str]]
-    value: Var[Optional[RichTextDTO]]
-    disabled: Var[Optional[bool]]
-    change_event_debounce_time: Var[Optional[int]]
+    placeholder: Var[str | None]
+    value: Var[RichTextDTO | None]
+    disabled: Var[bool | None]
+    change_event_debounce_time: Var[int | None]
 
-    custom_style: Var[Optional[dict]]  # Additional style properties
+    custom_style: Var[dict | None]  # Additional style properties
 
     # Event handler for output events from the component
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
 
 
 def rich_text_component(
-    placeholder: Optional[str] = None,
-    value: Optional[RichTextDTO] = None,
-    disabled: Optional[bool] = None,
-    change_event_debounce_time: Optional[int] = None,
-    output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]] = None,
-    custom_style: Optional[dict] = None,
+    placeholder: str | None = None,
+    value: RichTextDTO | None = None,
+    disabled: bool | None = None,
+    change_event_debounce_time: int | None = None,
+    output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+    custom_style: dict | None = None,
 ):
     """Create a RichTextComponent instance.
 

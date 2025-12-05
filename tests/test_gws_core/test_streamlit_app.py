@@ -1,5 +1,3 @@
-from pandas import DataFrame
-
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.config.config_params import ConfigParams
@@ -9,6 +7,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.streamlit.streamlit_process import StreamlitProcess
 from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.test.base_test_case import BaseTestCase
+from pandas import DataFrame
 
 
 # test_streamlit_app

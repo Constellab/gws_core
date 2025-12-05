@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from enum import Enum
-from typing import Any, Callable, List, Optional, Type
+from typing import Any
 
 from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
@@ -51,7 +52,7 @@ class SearchFilterCriteria(BaseModelDTO):
 class SearchSortCriteria(BaseModelDTO):
     key: str
     direction: SearchDirection
-    nullManagement: Optional[SearchOrderNullOption] = SearchOrderNullOption.LAST
+    nullManagement: SearchOrderNullOption | None = SearchOrderNullOption.LAST
 
 
 class SearchJoin(BaseModelDTO):
@@ -69,8 +70,8 @@ class SearchParams(BaseModelDTO):
     :type TypedDict: [type]
     """
 
-    filtersCriteria: List[SearchFilterCriteria] = []
-    sortsCriteria: Optional[List[SearchSortCriteria]] = []
+    filtersCriteria: list[SearchFilterCriteria] = []
+    sortsCriteria: list[SearchSortCriteria] | None = []
 
     def add_filter_criteria(self, key: str, operator: SearchOperator, value: Any) -> None:
         self.filtersCriteria.append(SearchFilterCriteria(key=key, operator=operator, value=value))
@@ -101,7 +102,7 @@ class SearchParams(BaseModelDTO):
 
         return criteria.value
 
-    def set_filters_criteria(self, filters: List[SearchFilterCriteria]) -> None:
+    def set_filters_criteria(self, filters: list[SearchFilterCriteria]) -> None:
         self.filtersCriteria = filters
 
 
@@ -117,15 +118,15 @@ class SearchBuilder:
     :rtype: [type]
     """
 
-    _model_type: Type[Model]
+    _model_type: type[Model]
 
     _query_builder: ExpressionBuilder
-    _joins: List[SearchJoin]
-    _orderings: List[Ordering]
+    _joins: list[SearchJoin]
+    _orderings: list[Ordering]
 
-    _default_orders: List[Ordering]
+    _default_orders: list[Ordering]
 
-    def __init__(self, model_type: Type[Model], default_orders: List[Ordering] = None) -> None:
+    def __init__(self, model_type: type[Model], default_orders: list[Ordering] = None) -> None:
         """Create a search build to make dynamic search
 
 
@@ -148,7 +149,7 @@ class SearchBuilder:
         filter_expression = self._query_builder.build()
 
         # retrieve the order expression
-        orders: List[Ordering] = (
+        orders: list[Ordering] = (
             self._orderings if len(self._orderings) > 0 else self._default_orders
         )
 
@@ -165,13 +166,13 @@ class SearchBuilder:
 
         return model_select
 
-    def search_all(self) -> List[Model]:
+    def search_all(self) -> list[Model]:
         return list(self.build_search())
 
     def search_page(self, page: int = 0, number_of_items_per_page: int = 20) -> Paginator:
         return Paginator(self.build_search(), page, number_of_items_per_page)
 
-    def search_first(self) -> Optional[Model]:
+    def search_first(self) -> Model | None:
         """Search the first element of the search
 
         :return: [description]
@@ -194,17 +195,17 @@ class SearchBuilder:
         self._orderings.append(order)
         return self
 
-    def set_ordering(self: SearchBuilderType, orders: List[Ordering]) -> SearchBuilderType:
+    def set_ordering(self: SearchBuilderType, orders: list[Ordering]) -> SearchBuilderType:
         self._orderings = orders
         return self
 
     def add_join(
-        self: SearchBuilderType, table: Type[Model], on: Expression = None
+        self: SearchBuilderType, table: type[Model], on: Expression = None
     ) -> SearchBuilderType:
         self._joins.append(SearchJoin(table_type=table, on=on))
         return self
 
-    def _add_search_filter_query(self, filters: List[SearchFilterCriteria]) -> None:
+    def _add_search_filter_query(self, filters: list[SearchFilterCriteria]) -> None:
         for filter_ in filters:
             expression = self.convert_filter_to_expression(filter_)
             if expression:
@@ -218,11 +219,11 @@ class SearchBuilder:
 
         return self._get_expression(filter_.operator, field, value)
 
-    def _add_search_ordering(self, orders: List[SearchSortCriteria]) -> None:
+    def _add_search_ordering(self, orders: list[SearchSortCriteria]) -> None:
         if not orders:
             return
 
-        ordering: List[Ordering] = []
+        ordering: list[Ordering] = []
 
         for order in orders:
             ordering.append(self.convert_order_to_peewee_ordering(order))

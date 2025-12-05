@@ -1,6 +1,6 @@
 """Streamlit component to display function documentation extracted via ReflectorHelper."""
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import streamlit as st
 
@@ -10,7 +10,7 @@ from gws_core.core.utils.reflector_types import MethodDoc
 
 def render_method_doc(
     method_doc: MethodDoc,
-    title: Optional[str] = None,
+    title: str | None = None,
     show_description: bool = True,
     show_parameters: bool = True,
     show_return_type: bool = False,
@@ -66,9 +66,8 @@ def render_method_doc(
             # Display using st.table with dictionary format
             table_data = {"Parameter": parameter_names, "Type": types, "Description": descriptions}
             st.table(table_data)
-        else:
-            if show_parameters:
-                st.text("No parameters.")
+        elif show_parameters:
+            st.text("No parameters.")
 
     # Return type
     if show_return_type and method_doc.return_type:
@@ -81,7 +80,7 @@ def render_method_doc(
 
 def method_doc_component(
     func: Callable,
-    title: Optional[str] = None,
+    title: str | None = None,
     show_description: bool = True,
     show_parameters: bool = True,
     show_return_type: bool = False,
@@ -99,7 +98,7 @@ def method_doc_component(
     :param show_return_type: Whether to show the return type
     """
     # Extract documentation using ReflectorHelper
-    func_doc: Optional[MethodDoc] = ReflectorHelper.get_func_doc(func)
+    func_doc: MethodDoc | None = ReflectorHelper.get_func_doc(func)
 
     if func_doc is None:
         st.error("Unable to extract documentation for this function.")

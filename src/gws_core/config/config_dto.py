@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -10,8 +10,8 @@ class ConfigDTO(ModelWithUserDTO):
     ConfigDTO class.
     """
 
-    specs: Dict[str, ParamSpecDTO]
-    values: Dict[str, Any]
+    specs: dict[str, ParamSpecDTO]
+    values: dict[str, Any]
 
 
 class ConfigSimpleDTO(BaseModelDTO):
@@ -19,5 +19,5 @@ class ConfigSimpleDTO(BaseModelDTO):
     ConfigDTO class.
     """
 
-    specs: Dict[str, ParamSpecDTO]
-    values: Dict[str, Any]
+    specs: dict[str, ParamSpecDTO]
+    values: dict[str, Any]

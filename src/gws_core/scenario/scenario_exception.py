@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 
 from gws_core.core.service.front_service import FrontService
 
@@ -34,7 +34,7 @@ class ScenarioRunException(BadRequestException):
         self.original_exception = exception
         self.scenario = scenario
 
-        detail_arg: Dict = {"error": exception_detail, "scenario": scenario.id}
+        detail_arg: dict = {"error": exception_detail, "scenario": scenario.id}
         super().__init__(
             GWSException.SCENARIO_RUN_EXCEPTION.value,
             unique_code=unique_code,

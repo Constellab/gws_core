@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.resource.view.view_types import ViewType
@@ -52,19 +51,19 @@ class ScatterPlot2DView(View):
 
     x_label: str = None
     y_label: str = None
-    x_tick_labels: List[str] = None
-    _series: List = None
+    x_tick_labels: list[str] = None
+    _series: list = None
     _type: ViewType = ViewType.SCATTER_PLOT_2D
     _title: str = "2D-Scatter Plot"
 
     def add_series(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         name: str = None,
         x_name: str = None,
         y_name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ):
         """
         Add a series of points to plot

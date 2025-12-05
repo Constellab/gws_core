@@ -1,28 +1,27 @@
 from json import loads
-from typing import Dict, Optional
 
 from gws_core.core.model.db_field import SerializableObject
 from gws_core.core.model.model_dto import BaseModelDTO
 
 
 class ProcessLayoutDTO(BaseModelDTO):
-    x: Optional[float]
-    y: Optional[float]
+    x: float | None
+    y: float | None
 
 
 class ProtocolLayoutDTO(BaseModelDTO):
-    process_layouts: Dict[str, ProcessLayoutDTO]
-    interface_layouts: Dict[str, ProcessLayoutDTO]
-    outerface_layouts: Dict[str, ProcessLayoutDTO]
+    process_layouts: dict[str, ProcessLayoutDTO]
+    interface_layouts: dict[str, ProcessLayoutDTO]
+    outerface_layouts: dict[str, ProcessLayoutDTO]
 
 
 class ProtocolLayout(SerializableObject):
     """object to store the layout (position) of a protocol's processes"""
 
     # layout of the processes, key = process instance name
-    process_layouts: Dict[str, ProcessLayoutDTO]
-    interface_layouts: Dict[str, ProcessLayoutDTO]
-    outerface_layouts: Dict[str, ProcessLayoutDTO]
+    process_layouts: dict[str, ProcessLayoutDTO]
+    interface_layouts: dict[str, ProcessLayoutDTO]
+    outerface_layouts: dict[str, ProcessLayoutDTO]
 
     def __init__(self, layout_dto: ProtocolLayoutDTO = None) -> None:
         super().__init__()

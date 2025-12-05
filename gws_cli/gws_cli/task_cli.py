@@ -1,5 +1,6 @@
+from typing import Annotated
+
 import typer
-from typing_extensions import Annotated
 
 from gws_cli.generate_task.generate_task import generate_task
 

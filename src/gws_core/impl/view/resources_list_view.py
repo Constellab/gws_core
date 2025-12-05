@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.resource.view.view import View
@@ -24,7 +24,7 @@ class ResourcesListView(View):
     }
     """
 
-    _resource_model: List[ResourceModel]
+    _resource_model: list[ResourceModel]
     _type: ViewType = ViewType.RESOURCES_LIST_VIEW
     _title: str = "Resources list"
 
@@ -35,7 +35,7 @@ class ResourcesListView(View):
     def add_resource(self, resource_model: ResourceModel) -> None:
         self._resource_model.append(resource_model)
 
-    def add_resources(self, resource_model_json: List[ResourceModel]) -> None:
+    def add_resources(self, resource_model_json: list[ResourceModel]) -> None:
         self._resource_model += resource_model_json
 
     def data_to_dict(self, params: ConfigParams) -> dict:

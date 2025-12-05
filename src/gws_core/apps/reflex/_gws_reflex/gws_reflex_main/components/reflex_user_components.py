@@ -1,6 +1,7 @@
-from typing import List, Literal
+from typing import Literal
 
 import reflex as rx
+
 from gws_core.core.utils.settings import Settings
 from gws_core.user.user_dto import UserDTO
 
@@ -90,7 +91,7 @@ def user_inline_component(
 
 
 def user_select(
-    users: List[UserDTO],
+    users: list[UserDTO],
     placeholder: str = "Select a user",
     name: str = None,
     disabled: bool = False,

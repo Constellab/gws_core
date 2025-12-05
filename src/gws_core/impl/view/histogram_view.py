@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import Literal
 
 import numpy
 from pandas import DataFrame
@@ -61,9 +61,9 @@ class HistogramView(View):
     y_label: str = None
     nbins: int = None
     mode: HistogramMode = None
-    x_tick_labels: List[str] = None
+    x_tick_labels: list[str] = None
 
-    _series: List = None
+    _series: list = None
     _type: ViewType = ViewType.HISTOGRAM
     _title: str = "Histogram"
 
@@ -72,7 +72,7 @@ class HistogramView(View):
         self.nbins = nbins
         self.mode = mode
 
-    def add_data(self, data: List[float] = None, name: str = None) -> None:
+    def add_data(self, data: list[float] = None, name: str = None) -> None:
         """
         Add series of raw data.
 
@@ -115,7 +115,7 @@ class HistogramView(View):
         return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)
 
     def add_series(
-        self, x: Union[List[float], List[str]] = None, y: List[float] = None, name: str = None
+        self, x: list[float] | list[str] = None, y: list[float] = None, name: str = None
     ):
         """
         Add series of pre-computed x and y histogram values.

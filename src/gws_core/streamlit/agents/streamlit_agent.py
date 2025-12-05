@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -70,5 +70,5 @@ class StreamlitAgent(Task):
         return {"streamlit_app": streamlit_resource}
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: Dict[str, Any]) -> ConfigParamsDict:
+    def build_config_params_dict(cls, code: str, params: dict[str, Any]) -> ConfigParamsDict:
         return {"code": code, "params": params}

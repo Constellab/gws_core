@@ -1,4 +1,3 @@
-from typing import Type
 
 from peewee import Expression
 
@@ -45,7 +44,7 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
         """Filter the search query to scenarios that contains a specific process"""
         typing_name = TypingNameObj.from_typing_name(process_typing_name)
 
-        entity_alias: Type[ProcessModel] = typing_name.get_model_type().alias()
+        entity_alias: type[ProcessModel] = typing_name.get_model_type().alias()
 
         self.add_join(
             entity_alias,

@@ -1,4 +1,4 @@
-from typing import Any, List, Optional
+from typing import Any
 
 from numpy import inf, isnan
 
@@ -8,8 +8,8 @@ class NumericHelper:
 
     @staticmethod
     def list_2d_to_float(
-        list_2d: List[List[Any]], remove_none: bool = False, default_value: Any = None
-    ) -> List[List[Optional[float]]]:
+        list_2d: list[list[Any]], remove_none: bool = False, default_value: Any = None
+    ) -> list[list[float | None]]:
         """Convert a list of list of any to list of list of float. Replace infinity by default_value
 
         :param list_2d: _description_
@@ -24,8 +24,8 @@ class NumericHelper:
 
     @staticmethod
     def list_to_float(
-        list_: List[Any], remove_none: bool = False, default_value: Any = None
-    ) -> List[Optional[float]]:
+        list_: list[Any], remove_none: bool = False, default_value: Any = None
+    ) -> list[float | None]:
         """Convert a list of any to list of float. Replace infinity by default_value
 
         :param list_: _description_
@@ -43,7 +43,7 @@ class NumericHelper:
         return data
 
     @staticmethod
-    def to_float(value: Any, default_value: Any = None) -> Optional[float]:
+    def to_float(value: Any, default_value: Any = None) -> float | None:
         """Convert any to float. If NaN, inf or not convertible to float, returns default_value"""
 
         if value == inf or value == -inf:
@@ -58,7 +58,7 @@ class NumericHelper:
             return default_value
 
     @staticmethod
-    def list_to_int(list_: List[Any], remove_none: bool = False) -> List[Optional[int]]:
+    def list_to_int(list_: list[Any], remove_none: bool = False) -> list[int | None]:
         """Convert a list of any to list of int.
         :param list_: _description_
         :type list_: List[Any]
@@ -75,7 +75,7 @@ class NumericHelper:
         return data
 
     @staticmethod
-    def to_int(value: Any, default_value: Any = None) -> Optional[int]:
+    def to_int(value: Any, default_value: Any = None) -> int | None:
         """Convert any to int. If not convertible to int or NaN, returns None"""
 
         try:

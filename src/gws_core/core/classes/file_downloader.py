@@ -2,7 +2,6 @@ import mimetypes
 import os
 import time
 from email.header import decode_header
-from typing import Dict
 
 import requests
 
@@ -29,7 +28,7 @@ class FileDownloader:
         self,
         url: str,
         filename: str,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         timeout: float = None,
         decompress_file: bool = False,
     ) -> str:
@@ -87,7 +86,7 @@ class FileDownloader:
         self,
         url: str,
         filename: str = None,
-        headers: Dict[str, str] = None,
+        headers: dict[str, str] = None,
         timeout: float = None,
         destination_folder: str = None,
     ) -> str:

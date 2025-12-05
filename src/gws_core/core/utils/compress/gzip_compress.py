@@ -48,9 +48,8 @@ class GzipCompress(Compress):
         # create destination folder if not exist
         FileHelper.create_dir_if_not_exist(destination_folder)
 
-        with gzip.open(file_path, "rb") as f_in:
-            with open(decompress_file_path, "wb") as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        with gzip.open(file_path, "rb") as f_in, open(decompress_file_path, "wb") as f_out:
+            shutil.copyfileobj(f_in, f_out)
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:

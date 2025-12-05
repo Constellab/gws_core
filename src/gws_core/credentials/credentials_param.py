@@ -1,4 +1,4 @@
-from typing import Any, Dict, Optional, TypedDict
+from typing import Any, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
@@ -12,7 +12,7 @@ from .credentials_type import CredentialsDataBase, CredentialsType
 class CredentialsParamAdditionalInfo(TypedDict):
     """Additional info for credentials param"""
 
-    credentials_type: Optional[str]
+    credentials_type: str | None
 
 
 @param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
@@ -27,15 +27,15 @@ class CredentialsParam(ParamSpec):
 
     """
 
-    additional_info: Optional[CredentialsParamAdditionalInfo]
+    additional_info: CredentialsParamAdditionalInfo | None
 
     def __init__(
         self,
         credentials_type: CredentialsType = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
-        human_name: Optional[str] = None,
-        short_description: Optional[str] = None,
+        human_name: str | None = None,
+        short_description: str | None = None,
     ):
         """
         :param credentials_type: Type of credentials to use for this param (if empty, any credentials can be used)
@@ -100,5 +100,5 @@ class CredentialsParam(ParamSpec):
         return CredentialsParam()
 
     @classmethod
-    def get_additional_infos(cls) -> Dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
         return None

@@ -1,6 +1,6 @@
 """Component to display examples with tabs for demo, code, and documentation."""
 
-from typing import Callable, Optional
+from collections.abc import Callable
 
 import reflex as rx
 from gws_reflex_main import doc_component
@@ -28,9 +28,9 @@ class ExampleTabsState(rx.State):
 def example_tabs(
     example_component: rx.Component,
     code: str,
-    title: Optional[str] = None,
-    description: Optional[str] = None,
-    func: Optional[Callable] = None,
+    title: str | None = None,
+    description: str | None = None,
+    func: Callable | None = None,
 ) -> rx.Component:
     """
     Create a tabbed interface to display an example with its code and documentation.

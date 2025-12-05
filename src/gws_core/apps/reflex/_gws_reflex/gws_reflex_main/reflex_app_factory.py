@@ -2,12 +2,10 @@
 Helper function to apply GWS standard configuration to Reflex applications.
 """
 
-from typing import Optional
 
 import reflex as rx
-from gws_reflex_base import ReflexMainStateBase
+from gws_reflex_base import ReflexMainStateBase, get_theme
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
-from gws_reflex_base import get_theme
 from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
 
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
@@ -25,7 +23,7 @@ def default_gws_frontend_handler(exception: Exception) -> None:
 
 def default_gws_backend_handler(
     exception: Exception,
-) -> Optional[rx.event.EventSpec]:
+) -> rx.event.EventSpec | None:
     """Default backend exception handler for GWS apps.
 
     :param exception: The exception that occurred
@@ -49,7 +47,7 @@ def default_gws_backend_handler(
 
 
 def register_gws_reflex_app(
-    app: Optional[rx.App] = None, add_unauthorized_page: bool = True
+    app: rx.App | None = None, add_unauthorized_page: bool = True
 ) -> rx.App:
     """
     Apply GWS standard configuration to a Reflex app.

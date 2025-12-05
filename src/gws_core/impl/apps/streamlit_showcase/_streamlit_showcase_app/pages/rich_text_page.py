@@ -1,5 +1,4 @@
 import streamlit as st
-
 from gws_core import RichText
 from gws_core.streamlit import StreamlitContainers, rich_text_editor
 

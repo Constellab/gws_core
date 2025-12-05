@@ -1,4 +1,3 @@
-from typing import Dict, List, Optional
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_specs import IOSpecsType
@@ -11,7 +10,7 @@ from .io_specs import InputSpecs, OutputSpecs
 
 
 class AdditionalInfo(BaseModelDTO):
-    additionnal_port_spec: Optional[IOSpecDTO]
+    additionnal_port_spec: IOSpecDTO | None
 
 
 class DynamicInputs(InputSpecs):
@@ -21,7 +20,7 @@ class DynamicInputs(InputSpecs):
     additionnal_port_spec: InputSpec = None
 
     def __init__(
-        self, default_specs: Dict[str, InputSpec] = None, additionnal_port_spec: InputSpec = None
+        self, default_specs: dict[str, InputSpec] = None, additionnal_port_spec: InputSpec = None
     ) -> None:
         """
         :param default_specs: default specs used when creating the inputs, defaults to None
@@ -56,14 +55,14 @@ class DynamicInputs(InputSpecs):
                 additional_info_dto.additionnal_port_spec
             )
 
-    def _transform_input_resources(self, resources: Dict[str, Resource]) -> Dict[str, Resource]:
+    def _transform_input_resources(self, resources: dict[str, Resource]) -> dict[str, Resource]:
         """
         Returns the resources of all the ports to be used for the input of a task.
 
         as this is dynamic, we return only the resources of the 'source' port which is a ResourceList
         """
 
-        resources_list: List[Resource] = list(resources.values())
+        resources_list: list[Resource] = list(resources.values())
         return {self.SPEC_NAME: ResourceList(resources_list)}
 
     def get_default_spec(self) -> InputSpec:
@@ -73,7 +72,7 @@ class DynamicInputs(InputSpecs):
         return InputSpec(Resource, optional=True)
 
     @classmethod
-    def from_dto(cls, io_specs: Dict[str, InputSpec], additional_info: dict) -> "DynamicInputs":
+    def from_dto(cls, io_specs: dict[str, InputSpec], additional_info: dict) -> "DynamicInputs":
         dynamic_inputs = cls(io_specs)
         dynamic_inputs.set_additional_info(additional_info)
         return dynamic_inputs
@@ -86,7 +85,7 @@ class DynamicOutputs(OutputSpecs):
     additionnal_port_spec: OutputSpec = None
 
     def __init__(
-        self, default_specs: Dict[str, OutputSpec] = None, additionnal_port_spec: OutputSpec = None
+        self, default_specs: dict[str, OutputSpec] = None, additionnal_port_spec: OutputSpec = None
     ) -> None:
         """
         :param default_specs: default specs used when creating the outputs, defaults to None
@@ -140,7 +139,7 @@ class DynamicOutputs(OutputSpecs):
                 f"Output {self.SPEC_NAME} must be an iterable of resources, got {type(target)}"
             )
 
-        resource_list: List[Resource] = list(target)
+        resource_list: list[Resource] = list(target)
 
         output_resources = {}
 
@@ -171,7 +170,7 @@ class DynamicOutputs(OutputSpecs):
         return OutputSpec(Resource, sub_class=True)
 
     @classmethod
-    def from_dto(cls, io_specs: Dict[str, OutputSpec], additional_info: dict) -> "DynamicOutputs":
+    def from_dto(cls, io_specs: dict[str, OutputSpec], additional_info: dict) -> "DynamicOutputs":
         dynamic_outputs = cls(io_specs)
         dynamic_outputs.set_additional_info(additional_info)
         return dynamic_outputs

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional
 
 import streamlit as st
 
@@ -9,24 +9,24 @@ from gws_core.streamlit.components.streamlit_component_loader import StreamlitCo
 class StreamlitTreeMenuItemDTO(BaseModelDTO):
     id: str
     label: str
-    material_icon: Optional[str] = None
-    children: Optional[List["StreamlitTreeMenuItemDTO"]] = None
-    disabled: Optional[bool] = False
+    material_icon: str | None = None
+    children: list["StreamlitTreeMenuItemDTO"] | None = None
+    disabled: bool | None = False
 
 
 class StreamlitTreeMenuItem:
     key: str
     label: str
-    material_icon: Optional[str] = None
-    children: Optional[List["StreamlitTreeMenuItem"]] = None
-    disabled: Optional[bool] = False
+    material_icon: str | None = None
+    children: list["StreamlitTreeMenuItem"] | None = None
+    disabled: bool | None = False
 
     def __init__(
         self,
         label: str,
         key: str = None,
         material_icon: str = None,
-        children: List["StreamlitTreeMenuItem"] = None,
+        children: list["StreamlitTreeMenuItem"] = None,
         disabled: bool = False,
     ):
         """Create a menu button item
@@ -64,7 +64,7 @@ class StreamlitTreeMenuItem:
             self.children = []
         self.children.append(child)
 
-    def add_children(self, children: List["StreamlitTreeMenuItem"]) -> None:
+    def add_children(self, children: list["StreamlitTreeMenuItem"]) -> None:
         """Add a list of children to the item
 
         :param children: List of child items to add
@@ -151,7 +151,7 @@ class StreamlitTreeMenu:
 
     _streamlit_component_loader = StreamlitComponentLoader("tree-menu")
 
-    _items: List[StreamlitTreeMenuItem] = None
+    _items: list[StreamlitTreeMenuItem] = None
 
     def __init__(self, key="tree-menu"):
         self.key = key
@@ -168,7 +168,7 @@ class StreamlitTreeMenu:
         """
         self._items.append(item)
 
-    def add_items(self, items: List[StreamlitTreeMenuItem]) -> None:
+    def add_items(self, items: list[StreamlitTreeMenuItem]) -> None:
         """Add a list of items to the tree menu.
 
         :param items: List of items to add
@@ -203,7 +203,7 @@ class StreamlitTreeMenu:
         if self.get_selected_item() is None:
             self.set_selected_item(item_key)
 
-    def get_selected_item(self) -> Optional[StreamlitTreeMenuItem]:
+    def get_selected_item(self) -> StreamlitTreeMenuItem | None:
         """Get the selected item in the tree menu.
 
         :return: Selected item or None if no item is selected
@@ -216,7 +216,7 @@ class StreamlitTreeMenu:
 
         return self.find_item_by_key(item_key)
 
-    def find_item_by_key(self, key: str) -> Optional[StreamlitTreeMenuItem]:
+    def find_item_by_key(self, key: str) -> StreamlitTreeMenuItem | None:
         """Find an item by its key.
 
         :param key: Key of the item to find

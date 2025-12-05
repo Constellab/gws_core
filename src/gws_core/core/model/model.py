@@ -1,12 +1,13 @@
 import uuid
-from typing import List, Type, TypeVar
+from typing import TypeVar
+
+from peewee import CharField, DoesNotExist
+from peewee import Model as PeeweeModel
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.utils.date_helper import DateHelper
-from peewee import CharField, DoesNotExist
-from peewee import Model as PeeweeModel
 
 from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
@@ -35,7 +36,7 @@ class Model(BaseModel, PeeweeModel):
     created_at = DateTimeUTC(default=DateHelper.now_utc)
     last_modified_at = DateTimeUTC(default=DateHelper.now_utc)
 
-    _json_ignore_fields: List[str] = []
+    _json_ignore_fields: list[str] = []
     _is_saved: bool = False
 
     def __init__(self, *args, **kwargs):
@@ -76,15 +77,15 @@ class Model(BaseModel, PeeweeModel):
         return hash(type(self).__name__ + self.id)
 
     @classmethod
-    def get_by_id(cls: Type[ModelType], id: str) -> ModelType | None:
+    def get_by_id(cls: type[ModelType], id: str) -> ModelType | None:
         return cls.get_or_none(cls.id == id)
 
     @classmethod
-    def get_by_ids(cls: Type[ModelType], ids: List[str]) -> List[ModelType]:
+    def get_by_ids(cls: type[ModelType], ids: list[str]) -> list[ModelType]:
         return list(cls.select().where(cls.id.in_(ids)))
 
     @classmethod
-    def get_by_id_and_check(cls: Type[ModelType], id: str) -> ModelType:
+    def get_by_id_and_check(cls: type[ModelType], id: str) -> ModelType:
         """Get by ID and throw 404 error if object not found
 
         :param id: [description]
@@ -155,7 +156,7 @@ class Model(BaseModel, PeeweeModel):
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def save_all(cls: Type[ModelType], model_list: List[ModelType] = None) -> List[ModelType]:
+    def save_all(cls: type[ModelType], model_list: list[ModelType] = None) -> list[ModelType]:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.

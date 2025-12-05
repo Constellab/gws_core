@@ -1,4 +1,3 @@
-from typing import Dict, List
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -30,12 +29,12 @@ class VulcanoPlotView(ScatterPlot2DView):
 
     def add_series(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         name: str = None,
         x_name: str = None,
         y_name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ):
         if self._series and len(self._series) > 0:
             raise BadRequestException("Only one series is allowed")
@@ -47,12 +46,12 @@ class VulcanoPlotView(ScatterPlot2DView):
 
     def set_serie(
         self,
-        x: List[float],
-        y: List[float],
+        x: list[float],
+        y: list[float],
         name: str = None,
         x_name: str = None,
         y_name: str = None,
-        tags: List[Dict[str, str]] = None,
+        tags: list[dict[str, str]] = None,
     ):
         self._series = []
         return self.add_series(x, y, name, x_name, y_name, tags)

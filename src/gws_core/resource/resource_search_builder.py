@@ -1,4 +1,3 @@
-from typing import List, Type
 
 from peewee import Expression
 
@@ -31,7 +30,7 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         elif filter_.key == "resource_typing_names":
             return ResourceModel.get_by_types_and_sub_expression(filter_.value)
         elif filter_.key == "generated_by_task":
-            entity_alias: Type[TaskModel] = TaskModel.alias()
+            entity_alias: type[TaskModel] = TaskModel.alias()
 
             self.add_join(
                 entity_alias,
@@ -50,13 +49,13 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         self.add_expression(ResourceModel.name.contains(name))
         return self
 
-    def add_resource_type_filter(self, resource_type: Type[Resource]) -> "ResourceSearchBuilder":
+    def add_resource_type_filter(self, resource_type: type[Resource]) -> "ResourceSearchBuilder":
         """Filter the search query by a specific resource type"""
         self.add_resource_typing_name_filter(resource_type.get_typing_name())
         return self
 
     def add_resource_types_filter(
-        self, resource_types: List[Type[Resource]]
+        self, resource_types: list[type[Resource]]
     ) -> "ResourceSearchBuilder":
         """Filter the search query by a specific resource type"""
         typing_names = [resource_type.get_typing_name() for resource_type in resource_types]
@@ -69,7 +68,7 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         return self
 
     def add_resource_type_and_sub_types_filter(
-        self, resource_type: Type[Resource]
+        self, resource_type: type[Resource]
     ) -> "ResourceSearchBuilder":
         """Filter the search query by a specific resource type and its subtypes"""
         self.add_expression(
@@ -78,7 +77,7 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         return self
 
     def add_resource_types_and_sub_types_filter(
-        self, resource_types: List[Type[Resource]]
+        self, resource_types: list[type[Resource]]
     ) -> "ResourceSearchBuilder":
         """Filter the search query by resource types and its subtypes"""
         typing_names = [resource_type.get_typing_name() for resource_type in resource_types]
@@ -86,7 +85,7 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder):
         return self
 
     def add_resource_typing_names_and_sub_types_filter(
-        self, resource_typing_names: List[str]
+        self, resource_typing_names: list[str]
     ) -> "ResourceSearchBuilder":
         """Filter the search query by resource types and its subtypes"""
         self.add_expression(ResourceModel.get_by_types_and_sub_expression(resource_typing_names))

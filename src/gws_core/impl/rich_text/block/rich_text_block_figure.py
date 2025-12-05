@@ -1,4 +1,3 @@
-from typing import Optional
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
@@ -11,8 +10,8 @@ class RichTextBlockFigure(RichTextBlockDataBase):
     """
 
     filename: str
-    title: Optional[str] = None
-    caption: Optional[str] = None
+    title: str | None = None
+    caption: str | None = None
     width: int
     height: int
     naturalWidth: int

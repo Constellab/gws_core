@@ -1,4 +1,5 @@
-from gws_core.config.param.param_spec import FloatParam, StrParam, BoolParam, ListParam, IntParam
+
+from gws_core.config.param.param_spec import BoolParam, FloatParam, IntParam, ListParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -6,12 +7,8 @@ from ....config.config_params import ConfigParams
 from ....task.task import Task
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
-from ..plotly_resource import PlotlyResource
 from ...table.table import Table
-import pandas as pd
-
-import plotly.express as px
-
+from ..plotly_resource import PlotlyResource
 
 # from plotly.subplots import make_subplots
 

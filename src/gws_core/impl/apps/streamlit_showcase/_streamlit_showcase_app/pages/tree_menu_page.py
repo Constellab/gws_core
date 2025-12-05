@@ -1,5 +1,4 @@
 import streamlit as st
-
 from gws_core.streamlit import StreamlitTreeMenu, StreamlitTreeMenuItem
 
 from ..components.example_tabs_component import example_tabs

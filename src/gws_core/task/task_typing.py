@@ -1,9 +1,10 @@
-from typing import List, Literal, Set, Type, Union, final
+from typing import Literal, final
+
+from peewee import CharField, Expression, ModelSelect
 
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.task.task_dto import TaskTypingDTO
-from peewee import CharField, Expression, ModelSelect
 
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
@@ -29,8 +30,8 @@ class TaskTyping(Typing):
 
     @classmethod
     def get_by_related_resource(
-        cls, resource_type: Type[Resource], task_sub_type: TaskSubType
-    ) -> List["TaskTyping"]:
+        cls, resource_type: type[Resource], task_sub_type: TaskSubType
+    ) -> list["TaskTyping"]:
         # filter on object type and related_model_typing_name
         return list(
             cls.select()
@@ -44,7 +45,7 @@ class TaskTyping(Typing):
 
     @classmethod
     def get_related_model_expression(
-        cls, related_model_types: Union[Type[Resource], List[Type[Resource]]]
+        cls, related_model_types: type[Resource] | list[type[Resource]]
     ) -> Expression:
         """Return an expression for a model select that will return all the task types
         related to a resource type or its parent classes
@@ -56,11 +57,11 @@ class TaskTyping(Typing):
         if not isinstance(related_model_types, list):
             related_model_types = [related_model_types]
 
-        parent_typing_names: Set[str] = set()
+        parent_typing_names: set[str] = set()
 
         for related_model_type in related_model_types:
             # get all the class types between base_type and Resource
-            parent_classes: List[Type[Resource]] = Utils.get_parent_classes(
+            parent_classes: list[type[Resource]] = Utils.get_parent_classes(
                 related_model_type, Resource
             )
             # add typing name to the set
@@ -71,14 +72,14 @@ class TaskTyping(Typing):
         return cls.related_model_typing_name.in_(parent_typing_names)
 
     @classmethod
-    def get_by_brick(cls, brick_name: str) -> List["TaskTyping"]:
+    def get_by_brick(cls, brick_name: str) -> list["TaskTyping"]:
         return cls.get_by_type_and_brick(cls._object_type, brick_name)
 
     def importer_extension_is_supported(self, extension: str) -> bool:
         """Function that works only for IMPORTERS. It returns True if the extension is supported by the importer"""
         from ..task.converter.importer import ResourceImporter
 
-        type_: Type[ResourceImporter] = self.get_type()
+        type_: type[ResourceImporter] = self.get_type()
 
         if type_ is None or not Utils.issubclass(type_, ResourceImporter):
             return False
@@ -97,7 +98,7 @@ class TaskTyping(Typing):
         )
 
         # retrieve the task python type
-        model_t: Type[Task] = self.get_type()
+        model_t: type[Task] = self.get_type()
 
         if model_t:
             task_typing.input_specs = model_t.input_specs.to_dto()
@@ -107,7 +108,7 @@ class TaskTyping(Typing):
             from ..task.converter.importer import ResourceImporter
 
             if Utils.issubclass(model_t, ResourceImporter):
-                importer_t: Type[ResourceImporter] = model_t
+                importer_t: type[ResourceImporter] = model_t
                 task_typing.additional_data = {
                     "supported_extensions": importer_t.__supported_extensions__
                 }

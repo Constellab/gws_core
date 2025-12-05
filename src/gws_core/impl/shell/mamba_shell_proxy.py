@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing import Literal
 
 from gws_core.impl.shell.conda_shell_proxy import CondaShellProxy
 from gws_core.model.typing_register_decorator import typing_registrator

@@ -2,9 +2,10 @@ import os
 import shutil
 
 import typer
+from gws_core import FileHelper, StringHelper
+
 from gws_cli.utils.app_task_generator import generate_app_task, replace_vars_in_file
 from gws_cli.utils.dev_config_generator import create_dev_config_json
-from gws_core import FileHelper, StringHelper
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), "_template")
 

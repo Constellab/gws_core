@@ -1,5 +1,3 @@
-from pandas import DataFrame
-
 from gws_core import (
     ConfigParams,
     InputSpec,
@@ -13,6 +11,7 @@ from gws_core import (
 )
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from pandas import DataFrame
 
 
 @task_decorator(

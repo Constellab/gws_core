@@ -1,12 +1,11 @@
 import os
 
-from pandas import DataFrame
-
 from gws_core import BaseTestCase, File, FileHelper, KVStore, ResourceModel, Settings, Table
 from gws_core.impl.file.fs_node_service import FsNodeService
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.system_service import SystemService
 from gws_core.resource.resource_dto import ResourceOrigin
+from pandas import DataFrame
 
 
 # test_system_service
