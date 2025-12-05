@@ -255,15 +255,14 @@ class ReflexProcess(AppProcess):
         return services
 
     def _get_cloud_back_nginx_services(self) -> AppNginxServiceInfo:
-        # the back is always served by a redirect service
         return AppNginxRedirectServiceInfo(
             service_id=self.id + "-back",
             source_port=self.get_service_source_port(),
             server_name=self.get_host_name("-back"),
             destination_port=self.back_port,
-            # on localhost, add CORS header to allow requests from front
-            # otherwise the file upload will fail due to CORS policy
-            allow_access_origin=Settings.is_local_or_desktop_env(),
+            # the back is always served by a redirect service
+            # Set allowed_origin to the frontend URL to enable CORS
+            allowed_origin=self.get_host_url(),
         )
 
     def get_back_host_url(self) -> str:

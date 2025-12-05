@@ -23,7 +23,7 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
 
     destination_port: int
     use_localhost_host_header: bool
-    allow_wildcard_access_origin: bool
+    allowed_origin: str | None
 
     def __init__(
         self,
@@ -32,12 +32,12 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         server_name: str,
         destination_port: int,
         use_localhost_host_header: bool = False,
-        allow_access_origin: bool = False,
+        allowed_origin: str | None = None,
     ):
         super().__init__(service_id, source_port, server_name)
         self.destination_port = destination_port
         self.use_localhost_host_header = use_localhost_host_header
-        self.allow_wildcard_access_origin = allow_access_origin
+        self.allowed_origin = allowed_origin
 
     def get_nginx_service_config(self) -> str:
         """Generate nginx configuration block for this service"""
@@ -46,16 +46,16 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
             f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
         )
         cors_config = ""
-        if self.allow_wildcard_access_origin:
-            cors_config = """# CORS headers (permissive for local development)
-        add_header 'Access-Control-Allow-Origin' $http_origin always;
+        if self.allowed_origin:
+            cors_config = f"""# CORS headers
+        add_header 'Access-Control-Allow-Origin' '{self.allowed_origin}' always;
         add_header 'Access-Control-Allow-Methods' '*' always;
         add_header 'Access-Control-Allow-Headers' '*' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
 
         # Handle preflight OPTIONS requests
-        if ($request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' $http_origin always;
+        if ($request_method = 'OPTIONS') {{
+            add_header 'Access-Control-Allow-Origin' '{self.allowed_origin}' always;
             add_header 'Access-Control-Allow-Methods' '*' always;
             add_header 'Access-Control-Allow-Headers' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
@@ -63,7 +63,7 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
             add_header 'Content-Type' 'text/plain; charset=utf-8';
             add_header 'Content-Length' 0;
             return 204;
-        }
+        }}
 """
         return f"""
 server {{
