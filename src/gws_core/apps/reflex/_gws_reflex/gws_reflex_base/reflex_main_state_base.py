@@ -1,6 +1,6 @@
 import os
 from json import load
-from typing import cast
+from typing import Any, cast
 
 import reflex as rx
 from typing_extensions import TypedDict
@@ -86,6 +86,10 @@ class ReflexMainStateBase(rx.State):
         if not self._app_config:
             self._app_config = self._load_app_config()
 
+        # the router might not be ready on first request so we skip until next call
+        # otherwise we cannot get query params
+        if not self._app_router_ready():
+            return
         user_access_tokens = self._app_config.get("user_access_tokens", {})
 
         if not self.authenticated_user_id:
@@ -96,6 +100,7 @@ class ReflexMainStateBase(rx.State):
         if requires_authentication and not self.authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
             # redirect to the unauthorized page
+            raise Exception("User not authenticated")
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self._is_initialized = True
@@ -182,6 +187,9 @@ class ReflexMainStateBase(rx.State):
         """Check if the app is running in a virtual environment."""
         return os.environ.get("GWS_REFLEX_VIRTUAL_ENV", "false").lower() == "true"
 
+    def _app_router_ready(self) -> bool:
+        return self.router.url.path is not None and self.router.url.path != ""
+
     def get_query_params(self) -> QueryParamObject:
         """Get the query parameters from the app configuration."""
         return QueryParamObject(self.router.url.query)
@@ -208,7 +216,7 @@ class ReflexMainStateBase(rx.State):
 
     ####################### PARAMS #####################
 
-    async def get_param(self, key: str, default=None) -> str | None:
+    async def get_param(self, key: str, default=None) -> Any | None:
         """Get a parameter from the app configuration."""
         params = await self.get_params()
         return params.get(key, default)
