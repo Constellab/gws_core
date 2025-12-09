@@ -121,13 +121,42 @@ class Paginator(Generic[PaginatorType]):
         # mark the total count as approximate
         self.page_info.total_is_approximate = True
 
-    def map_result(self, map_result: Callable[[PaginatorType], Any]) -> None:
+    def map_result(self, map_result: Callable[[PaginatorType], Any]) -> "Paginator":
+        """Apply a function to each element and return a new Paginator with transformed results
+
+        :param map_result: Function to apply to each element
+        :type map_result: Callable[[PaginatorType], Any]
+        :return: A new Paginator instance with transformed results
+        :rtype: Paginator
+        """
+        # Create a new Paginator instance without calling __init__
+        new_paginator = Paginator.__new__(Paginator)
+        new_paginator._query = self._query
+        new_paginator._nb_of_items_per_page = self._nb_of_items_per_page
+        new_paginator._nb_max_of_items_per_page = self._nb_max_of_items_per_page
+        new_paginator.page_info = self.page_info
+        new_paginator.results = [map_result(x) for x in self.results]
+        return new_paginator
+
+    def map_page(self, map_result: Callable[[PaginatorType], Any]) -> PageDTO[Any]:
         """Set a function that will be call on each element to convert the result element
 
         :param map_result: _description_
         :type map_result: Callable[[PaginatorType], Any]
         """
-        self.results = [map_result(x) for x in self.results]
+        return PageDTO(
+            page=self.page_info.page,
+            prev_page=self.page_info.prev_page,
+            next_page=self.page_info.next_page,
+            last_page=self.page_info.last_page,
+            total_number_of_items=self.page_info.total_number_of_items,
+            total_number_of_pages=self.page_info.total_number_of_pages,
+            number_of_items_per_page=self.page_info.number_of_items_per_page,
+            is_first_page=self.page_info.is_first_page,
+            is_last_page=self.page_info.is_last_page,
+            total_is_approximate=self.page_info.total_is_approximate,
+            objects=[map_result(x) for x in self.results],
+        )
 
     def to_dto(self) -> PageDTO:
         return PageDTO(

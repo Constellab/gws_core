@@ -575,8 +575,7 @@ class NoteService:
         )
 
         map_function: Callable[[NoteViewModel], Note] = lambda x: x.note
-        paginator.map_result(map_function)
-        return paginator
+        return paginator.map_result(map_function)
 
     ################################################# Resource View ########################################
 
