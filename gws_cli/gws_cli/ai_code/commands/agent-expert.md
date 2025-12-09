@@ -448,6 +448,7 @@ targets = [merged_table, stats_table]
 4. **Close resources** (files, plots, connections) after use
 5. **Use descriptive variable names** for clarity
 6. **Comment complex logic** for maintainability
+7. **Brick imports**: When importing a brick (like gws_core), always import from the brick root (e.g., `from gws_core import Table`)
 
 ### Parameter Configuration
 1. **Provide default values** for optional parameters
