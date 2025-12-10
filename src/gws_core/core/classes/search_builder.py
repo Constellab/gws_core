@@ -73,17 +73,27 @@ class SearchParams(BaseModelDTO):
     filtersCriteria: list[SearchFilterCriteria] = []
     sortsCriteria: list[SearchSortCriteria] | None = []
 
-    def add_filter_criteria(self, key: str, operator: SearchOperator, value: Any) -> None:
-        self.filtersCriteria.append(SearchFilterCriteria(key=key, operator=operator, value=value))
+    def add_filter_criteria(
+        self, key: str, operator: SearchOperator, value: Any
+    ) -> None:
+        self.filtersCriteria.append(
+            SearchFilterCriteria(key=key, operator=operator, value=value)
+        )
 
     def remove_filter_criteria(self, key: str) -> None:
-        self.filtersCriteria = list(filter(lambda x: x.key != key, self.filtersCriteria))
+        self.filtersCriteria = list(
+            filter(lambda x: x.key != key, self.filtersCriteria)
+        )
 
-    def override_filter_criteria(self, key: str, operator: SearchOperator, value: Any) -> None:
+    def override_filter_criteria(
+        self, key: str, operator: SearchOperator, value: Any
+    ) -> None:
         self.remove_filter_criteria(key)
-        self.filtersCriteria.append(SearchFilterCriteria(key=key, operator=operator, value=value))
+        self.filtersCriteria.append(
+            SearchFilterCriteria(key=key, operator=operator, value=value)
+        )
 
-    def get_filter_criteria(self, key: str) -> SearchFilterCriteria:
+    def get_filter_criteria(self, key: str) -> SearchFilterCriteria | None:
         criterias = [x for x in self.filtersCriteria if x.key == key]
 
         if len(criterias) == 0:
@@ -95,7 +105,7 @@ class SearchParams(BaseModelDTO):
         return self.get_filter_criteria(key) is not None
 
     def get_filter_criteria_value(self, key: str) -> Any:
-        criteria: SearchFilterCriteria = self.get_filter_criteria(key)
+        criteria = self.get_filter_criteria(key)
 
         if criteria is None:
             return None
@@ -126,7 +136,9 @@ class SearchBuilder:
 
     _default_orders: list[Ordering]
 
-    def __init__(self, model_type: type[Model], default_orders: list[Ordering] = None) -> None:
+    def __init__(
+        self, model_type: type[Model], default_orders: list[Ordering] | None = None
+    ) -> None:
         """Create a search build to make dynamic search
 
 
@@ -169,7 +181,9 @@ class SearchBuilder:
     def search_all(self) -> list[Model]:
         return list(self.build_search())
 
-    def search_page(self, page: int = 0, number_of_items_per_page: int = 20) -> Paginator:
+    def search_page(
+        self, page: int = 0, number_of_items_per_page: int = 20
+    ) -> Paginator:
         return Paginator(self.build_search(), page, number_of_items_per_page)
 
     def search_first(self) -> Model | None:
@@ -180,14 +194,18 @@ class SearchBuilder:
         """
         return self.build_search().first()
 
-    def add_search_params(self: SearchBuilderType, search: SearchParams) -> SearchBuilderType:
+    def add_search_params(
+        self: SearchBuilderType, search: SearchParams
+    ) -> SearchBuilderType:
         self._add_search_filter_query(search.filtersCriteria)
 
         self._add_search_ordering(search.sortsCriteria)
 
         return self
 
-    def add_expression(self: SearchBuilderType, expression: Expression) -> SearchBuilderType:
+    def add_expression(
+        self: SearchBuilderType, expression: Expression
+    ) -> SearchBuilderType:
         self._query_builder.add_expression(expression)
         return self
 
@@ -195,12 +213,14 @@ class SearchBuilder:
         self._orderings.append(order)
         return self
 
-    def set_ordering(self: SearchBuilderType, orders: list[Ordering]) -> SearchBuilderType:
+    def set_ordering(
+        self: SearchBuilderType, orders: list[Ordering]
+    ) -> SearchBuilderType:
         self._orderings = orders
         return self
 
     def add_join(
-        self: SearchBuilderType, table: type[Model], on: Expression = None
+        self: SearchBuilderType, table: type[Model], on: Expression
     ) -> SearchBuilderType:
         self._joins.append(SearchJoin(table_type=table, on=on))
         return self
@@ -211,7 +231,9 @@ class SearchBuilder:
             if expression:
                 self.add_expression(expression)
 
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(
+        self, filter_: SearchFilterCriteria
+    ) -> Expression | None:
         field: Field = self._get_model_field(filter_.key)
 
         # convert the value in the correct format
@@ -219,7 +241,7 @@ class SearchBuilder:
 
         return self._get_expression(filter_.operator, field, value)
 
-    def _add_search_ordering(self, orders: list[SearchSortCriteria]) -> None:
+    def _add_search_ordering(self, orders: list[SearchSortCriteria] | None) -> None:
         if not orders:
             return
 
@@ -234,7 +256,9 @@ class SearchBuilder:
         """Convert a search order criteria to a peewee ordering"""
         field: Field = self._get_model_field(order.key)
 
-        null_option: SearchOrderNullOption = order.nullManagement or SearchOrderNullOption.LAST
+        null_option: SearchOrderNullOption = (
+            order.nullManagement or SearchOrderNullOption.LAST
+        )
 
         if order.direction == SearchDirection.DESC:
             return field.desc(nulls=null_option.value)
@@ -244,7 +268,9 @@ class SearchBuilder:
     def _get_model_field(self, key: str) -> Field:
         """Retrieve the peewee field of the model base on field name"""
         if not hasattr(self._model_type, key):
-            raise BadRequestException(f"The model does not have a attribute named '{key}'")
+            raise BadRequestException(
+                f"The model does not have a attribute named '{key}'"
+            )
 
         field: Field = getattr(self._model_type, key)
 
@@ -255,7 +281,7 @@ class SearchBuilder:
 
     def convert_value(self, field: Field, value: Any) -> Any:
         """Method to convert the search value (or values) to type of field"""
-        converter: Callable = self._get_converter(field)
+        converter = self._get_converter(field)
 
         # if there is no converter, return the value without touching it
         if converter is None:
@@ -268,7 +294,7 @@ class SearchBuilder:
         else:
             return converter(value)
 
-    def _get_converter(self, field: Field) -> Callable:
+    def _get_converter(self, field: Field) -> Callable | None:
         """Method that return a convert method to convert the search value to type of field"""
         # Convert the string to enum
         if isinstance(field, EnumField):
@@ -280,7 +306,9 @@ class SearchBuilder:
         else:
             return None
 
-    def _get_expression(self, operator: SearchOperator, field: Field, value: Any) -> Expression:
+    def _get_expression(
+        self, operator: SearchOperator, field: Field, value: Any
+    ) -> Expression:
         if operator == SearchOperator.EQ:
             return field == value
         elif operator == SearchOperator.NEQ:

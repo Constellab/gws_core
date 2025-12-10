@@ -1,4 +1,3 @@
-
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.entity_tag import EntityTag
@@ -17,14 +16,14 @@ class EntityTagList:
 
     _tags: list[EntityTag]
 
-    _default_origin: TagOrigin = None
+    _default_origin: TagOrigin | None
 
     def __init__(
         self,
         entity_type: TagEntityType,
         entity_id: str,
-        tags: list[EntityTag] = None,
-        default_origin: TagOrigin = None,
+        tags: list[EntityTag] | None = None,
+        default_origin: TagOrigin | None = None,
     ) -> None:
         self._entity_type = entity_type
         self._entity_id = entity_id
@@ -53,7 +52,9 @@ class EntityTagList:
 
     def get_tags_by_key(self, tag_key: str) -> list[EntityTag]:
         """return the tags with the given key"""
-        return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
+        return [
+            entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key
+        ]
 
     def get_first_tag_by_key(self, tag_key: str) -> EntityTag | None:
         """return the first tag with the given key or None if it does not exist"""
@@ -77,9 +78,14 @@ class EntityTagList:
     def get_propagable_tags(self) -> list[EntityTag]:
         return [tag for tag in self._tags if tag.is_propagable]
 
-    def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> list[Tag]:
+    def build_tags_propagated(
+        self, origin_type: TagOriginType, origin_id: str
+    ) -> list[Tag]:
         """Propagate the tags to the entity"""
-        return [tag.propagate_tag(origin_type, origin_id) for tag in self.get_propagable_tags()]
+        return [
+            tag.propagate_tag(origin_type, origin_id)
+            for tag in self.get_propagable_tags()
+        ]
 
     def is_empty(self) -> bool:
         return len(self._tags) == 0
@@ -100,7 +106,7 @@ class EntityTagList:
             else:
                 return existing_tag
 
-        if not tag.origin_is_defined():
+        if not tag.origin_is_defined() and self._default_origin is not None:
             tag.origins.add_origin(self._default_origin)
 
         tag_key_model = TagKeyModel.select().where(TagKeyModel.key == tag.key).first()
@@ -236,10 +242,16 @@ class EntityTagList:
 
     @classmethod
     def find_by_entity(
-        cls, entity_type: TagEntityType, entity_id: str, default_origin: TagOrigin = None
+        cls,
+        entity_type: TagEntityType,
+        entity_id: str,
+        default_origin: TagOrigin | None = None,
     ) -> "EntityTagList":
         return EntityTagList(
-            entity_type, entity_id, EntityTag.find_by_entity(entity_type, entity_id), default_origin
+            entity_type,
+            entity_id,
+            EntityTag.find_by_entity(entity_type, entity_id),
+            default_origin,
         )
 
     @classmethod

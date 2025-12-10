@@ -22,7 +22,10 @@ class TagOrigin:
     external_lab_origin_id: str | None = None
 
     def __init__(
-        self, origin_type: TagOriginType, origin_id: str, external_lab_origin_id: str = None
+        self,
+        origin_type: TagOriginType,
+        origin_id: str,
+        external_lab_origin_id: str | None = None,
     ) -> None:
         self.origin_type = origin_type
         self.origin_id = origin_id
@@ -31,7 +34,9 @@ class TagOrigin:
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, TagOrigin):
             return False
-        return (self is o) or (self.origin_type == o.origin_type and self.origin_id == o.origin_id)
+        return (self is o) or (
+            self.origin_type == o.origin_type and self.origin_id == o.origin_id
+        )
 
     def to_dto(self) -> TagOriginDTO:
         return TagOriginDTO(
@@ -74,7 +79,9 @@ class TagOrigins:
 
     _origins: list[TagOrigin]
 
-    def __init__(self, origin_type: TagOriginType = None, origin_id: str = None) -> None:
+    def __init__(
+        self, origin_type: TagOriginType | None = None, origin_id: str | None = None
+    ) -> None:
         self._origins = []
 
         if origin_type and origin_id:
@@ -188,16 +195,16 @@ class TagOrigins:
 
 
 class Tag:
-    key: str = None
-    value: TagValueType = None
+    key: str
+    value: TagValueType
     is_propagable: bool = False
 
-    is_community_tag_key: bool = None
-    is_community_tag_value: bool = None
+    is_community_tag_key: bool
+    is_community_tag_value: bool
 
-    additional_info: dict | None = None
+    additional_info: dict
 
-    origins: TagOrigins = None
+    origins: TagOrigins
 
     # Do not modified, this is to know if the tag is loaded from the database in a resource
     __is_field_loaded__: bool = False
@@ -209,11 +216,11 @@ class Tag:
         key: str,
         value: TagValueType,
         is_propagable: bool = False,
-        origins: TagOrigins = None,
+        origins: TagOrigins | None = None,
         auto_parse: bool = False,
         is_community_tag_key: bool = False,
         is_community_tag_value: bool = False,
-        additional_info: dict = None,
+        additional_info: dict | None = None,
     ) -> None:
         """Create a new tag
 
@@ -270,13 +277,13 @@ class Tag:
         Only the origin_type and origin_id are propagated
         """
         tag = Tag(
-            self.key,
-            self.value,
-            self.is_propagable,
-            None,
-            self.is_community_tag_key,
-            self.is_community_tag_value,
-            self.additional_info,
+            key=self.key,
+            value=self.value,
+            is_propagable=self.is_propagable,
+            origins=None,
+            is_community_tag_key=self.is_community_tag_key,
+            is_community_tag_value=self.is_community_tag_value,
+            additional_info=self.additional_info,
         )
         tag.origins.add_origin(TagOrigin(origin_type, origin_id))
         return tag
@@ -314,7 +321,7 @@ class Tag:
 
     @staticmethod
     def from_dto(dto: TagDTO) -> "Tag":
-        origins: TagOrigins = None
+        origins: TagOrigins
         if dto.origins:
             origins = TagOrigins.from_dto(dto.origins)
 
@@ -322,10 +329,10 @@ class Tag:
         return Tag(
             key=dto.key,
             value=value,
-            is_propagable=dto.is_propagable,
+            is_propagable=dto.is_propagable or False,
             origins=origins,
-            is_community_tag_key=dto.is_community_tag_key,
-            is_community_tag_value=dto.is_community_tag_value,
+            is_community_tag_key=dto.is_community_tag_key or False,
+            is_community_tag_value=dto.is_community_tag_value or False,
             additional_info=dto.additional_info,
         )
 
@@ -349,7 +356,11 @@ class Tag:
         return pattern.sub("_", tag_str)
 
     @staticmethod
-    def convert_str_value_to_type(value: str, value_format: TagValueFormat) -> TagValueType:
+    def convert_str_value_to_type(
+        value: str, value_format: TagValueFormat | None
+    ) -> TagValueType:
+        if value_format is None:
+            return value
         if value_format == TagValueFormat.INTEGER:
             return int(value)
         elif value_format == TagValueFormat.FLOAT:
