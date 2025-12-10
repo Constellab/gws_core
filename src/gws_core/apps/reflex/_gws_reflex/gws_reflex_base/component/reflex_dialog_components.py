@@ -3,7 +3,9 @@ from collections.abc import Callable
 import reflex as rx
 
 
-def dialog_header(title: str, close: Callable | None = None) -> rx.Component:
+def dialog_header(
+    title: str, close: Callable | None = None, additional_actions: rx.Component | None = None
+) -> rx.Component:
     """Create a styled header component for a Reflex dialog with a title and close button.
 
     This function generates a horizontal stack layout containing a heading and a close button,
@@ -15,11 +17,14 @@ def dialog_header(title: str, close: Callable | None = None) -> rx.Component:
     :type title: str
     :param close: Optional callback function to execute when the close button is clicked, defaults to None
     :type close: Callable | None, optional
+    :param additional_actions: Optional additional actions to include in the header (align on right side), defaults to None
+    :type additional_actions: rx.Component | None, optional
     :return: A horizontal stack component with heading and close button. The component includes full width styling, vertically centered items, and 1em bottom margin
     :rtype: rx.Component
     """
     return rx.hstack(
         rx.dialog.title(title, flex="1", margin_bottom="0"),
+        additional_actions if additional_actions else rx.box(),
         rx.dialog.close(
             rx.button(rx.icon("x"), variant="ghost", color_scheme="gray", on_click=close),
             flex_shrink="0",
