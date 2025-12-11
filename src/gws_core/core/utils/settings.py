@@ -1,9 +1,10 @@
 import os
 import re
+import shutil
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
@@ -33,16 +34,20 @@ class Settings:
 
     data: dict[str, Any]
 
-    _setting_instance: "Settings" = None
+    _setting_instance: Optional["Settings"] = None
 
-    __SETTINGS_DIR__ = "/conf/settings"
-    __SETTINGS_NAME__ = "settings.json"
+    OLD_SETTINGS_DIR = "/conf/settings"
+    SETTINGS_NAME = "settings.json"
 
-    __DEFAULT_SETTINGS__ = {
+    DEFAULT_SETTINGS = {
         "app_dir": os.path.dirname(os.path.abspath(__file__)),
         "app_host": "0.0.0.0",
         "app_port": 3000,
     }
+
+    DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
+    DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
+    DEFAULT_GWS_MONITOR_LOG_MAX_LINES = 86400  # 1 month of log with 1 log every 30 seconds
 
     def __init__(self, data: dict):
         self.data = data
@@ -60,9 +65,6 @@ class Settings:
         return settings
 
     def save(self) -> bool:
-        # create the parent directory
-        FileHelper.create_dir_if_not_exist(self.__SETTINGS_DIR__)
-
         with open(self._get_setting_file_path(), "w", encoding="UTF-8") as f:
             dump(self.data, f, sort_keys=True)
 
@@ -82,11 +84,50 @@ class Settings:
 
     @classmethod
     def _get_setting_file_path(cls) -> str:
-        return os.path.join(cls.__SETTINGS_DIR__, cls.__SETTINGS_NAME__)
+        return os.path.join(cls.get_system_folder(), cls.SETTINGS_NAME)
+
+    @classmethod
+    def _get_old_setting_file_path(cls) -> str:
+        """Returns the old settings file path for migration purposes"""
+        return os.path.join(cls.OLD_SETTINGS_DIR, cls.SETTINGS_NAME)
 
     @classmethod
     def _setting_file_exists(cls) -> bool:
         return FileHelper.exists_on_os(cls._get_setting_file_path())
+
+    @classmethod
+    def _old_setting_file_exists(cls) -> bool:
+        """Check if the old settings file exists"""
+        return FileHelper.exists_on_os(cls._get_old_setting_file_path())
+
+    @classmethod
+    def _migrate_settings_file(cls) -> None:
+        """Migrate settings file from old location to new location if it exists"""
+        if cls._old_setting_file_exists() and not cls._setting_file_exists():
+            old_path = cls._get_old_setting_file_path()
+            new_path = cls._get_setting_file_path()
+
+            # Move the file
+            shutil.move(old_path, new_path)
+
+    @classmethod
+    def get_os_environ(cls, key: str, error_message: str | None = None) -> str:
+        """Get an environment variable and raise an error if it's not set.
+
+        :param key: The environment variable key
+        :type key: str
+        :param error_message: Optional custom error message
+        :type error_message: str | None
+        :return: The environment variable value
+        :rtype: str
+        :raises ValueError: If the environment variable is not set
+        """
+        value = os.environ.get(key)
+        if value is None:
+            if error_message:
+                raise ValueError(error_message)
+            raise ValueError(f"Environment variable '{key}' is not set")
+        return value
 
     @classmethod
     def is_prod_mode(cls) -> bool:
@@ -98,15 +139,15 @@ class Settings:
 
     @classmethod
     def get_lab_prod_api_url(cls) -> str:
-        return os.environ.get("LAB_PROD_API_URL")
+        return cls.get_os_environ("LAB_PROD_API_URL")
 
     @classmethod
     def get_lab_dev_api_url(cls) -> str:
-        return os.environ.get("LAB_DEV_API_URL")
+        return cls.get_os_environ("LAB_DEV_API_URL")
 
     @classmethod
     def get_lab_manager_api_url(cls) -> str:
-        return os.environ.get("LAB_MANAGER_API_URL")
+        return cls.get_os_environ("LAB_MANAGER_API_URL")
 
     @classmethod
     def get_lab_api_url(cls) -> str:
@@ -187,11 +228,11 @@ class Settings:
     def get_community_api_url(cls) -> str:
         if cls.is_local_env():
             return "http://host.docker.internal:3333"
-        return os.getenv("COMMUNITY_API_URL")
+        return cls.get_os_environ("COMMUNITY_API_URL")
 
     @classmethod
     def get_community_front_url(cls) -> str:
-        return os.getenv("COMMUNITY_FRONT_URL")
+        return cls.get_os_environ("COMMUNITY_FRONT_URL")
 
     @classmethod
     def get_virtual_host(cls) -> str:
@@ -200,7 +241,7 @@ class Settings:
         :return: [description]
         :rtype: [type]
         """
-        return os.environ.get("VIRTUAL_HOST")
+        return cls.get_os_environ("VIRTUAL_HOST")
 
     @classmethod
     def gpu_is_available(cls) -> bool:
@@ -219,7 +260,7 @@ class Settings:
         if cls.is_local_env() and not os.environ.get("LAB_ID"):
             return "1"
 
-        return os.environ.get("LAB_ID")
+        return cls.get_os_environ("LAB_ID")
 
     @classmethod
     def get_lab_name(cls) -> str:
@@ -242,7 +283,7 @@ class Settings:
         # specific space api key for local env
         if cls.is_local_env() and not os.environ.get("SPACE_API_KEY"):
             return "123456"
-        return os.environ.get("SPACE_API_KEY")
+        return cls.get_os_environ("SPACE_API_KEY")
 
     @classmethod
     def get_space_api_url(cls) -> str:
@@ -256,7 +297,7 @@ class Settings:
         if cls.is_local_env() and not os.environ.get("SPACE_API_URL"):
             return "http://host.docker.internal:3001"
 
-        return os.environ.get("SPACE_API_URL")
+        return cls.get_os_environ("SPACE_API_URL")
 
     @classmethod
     def get_space_front_url(cls) -> str:
@@ -270,7 +311,7 @@ class Settings:
         if cls.is_local_env() and not os.environ.get("SPACE_FRONT_URL"):
             return "http://localhost:4200"
 
-        return os.environ.get("SPACE_FRONT_URL")
+        return cls.get_os_environ("SPACE_FRONT_URL")
 
     @classmethod
     def get_front_url(cls) -> str:
@@ -286,7 +327,7 @@ class Settings:
         :return: [description]
         :rtype: [type]
         """
-        return os.environ.get("OPENAI_API_KEY")
+        return cls.get_os_environ("OPENAI_API_KEY")
 
     @classmethod
     def get_lab_folder(cls) -> str:
@@ -319,22 +360,22 @@ class Settings:
     @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
         return {
-            "host": os.environ.get("GWS_CORE_DB_HOST"),
-            "user": os.environ.get("GWS_CORE_DB_USER"),
-            "password": os.environ.get("GWS_CORE_DB_PASSWORD"),
-            "port": int(os.environ.get("GWS_CORE_DB_PORT")),
-            "db_name": os.environ.get("GWS_CORE_DB_NAME"),
+            "host": cls.get_os_environ("GWS_CORE_DB_HOST"),
+            "user": cls.get_os_environ("GWS_CORE_DB_USER"),
+            "password": cls.get_os_environ("GWS_CORE_DB_PASSWORD"),
+            "port": int(cls.get_os_environ("GWS_CORE_DB_PORT")),
+            "db_name": cls.get_os_environ("GWS_CORE_DB_NAME"),
             "engine": "mariadb",
         }
 
     @classmethod
     def get_test_db_config(cls) -> DbConfig:
         return {
-            "host": os.environ.get("GWS_TEST_DB_HOST"),
-            "user": os.environ.get("GWS_TEST_DB_USER"),
-            "password": os.environ.get("GWS_TEST_DB_PASSWORD"),
-            "port": int(os.environ.get("GWS_TEST_DB_PORT")),
-            "db_name": os.environ.get("GWS_TEST_DB_NAME"),
+            "host": cls.get_os_environ("GWS_TEST_DB_HOST"),
+            "user": cls.get_os_environ("GWS_TEST_DB_USER"),
+            "password": cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
+            "port": int(cls.get_os_environ("GWS_TEST_DB_PORT")),
+            "db_name": cls.get_os_environ("GWS_TEST_DB_NAME"),
             "engine": "mariadb",
         }
 
@@ -374,8 +415,9 @@ class Settings:
     @classmethod
     def get_app_external_port(cls) -> int:
         """Returns the port where all the external request to app are sent."""
-        if os.environ.get("APP_EXTERNAL_PORT"):
-            return int(os.environ.get("APP_EXTERNAL_PORT"))
+        external_port = os.environ.get("APP_EXTERNAL_PORT")
+        if external_port is not None:
+            return int(external_port)
         else:
             return 8510
 
@@ -400,14 +442,22 @@ class Settings:
         """Return the tick interval for the monitor log in seconds.
         This is the interval at which the monitor data is logged.
         """
-        return int(os.environ.get("GWS_MONITOR_TICK_INTERVAL_LOG", 30))
+        return int(
+            os.environ.get(
+                "GWS_MONITOR_TICK_INTERVAL_LOG", cls.DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG
+            )
+        )
 
     @classmethod
     def get_monitor_tick_interval_cleanup(cls) -> int:
         """Return the tick interval for the monitor cleanup in seconds.
         This is the interval at which the monitor data is cleaned up.
         """
-        return int(os.environ.get("GWS_MONITOR_TICK_INTERVAL_CLEANUP", 60 * 60 * 24))
+        return int(
+            os.environ.get(
+                "GWS_MONITOR_TICK_INTERVAL_CLEANUP", cls.DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP
+            )
+        )
 
     @classmethod
     def get_monitor_log_max_lines(cls) -> int:
@@ -415,7 +465,9 @@ class Settings:
         This is the maximum number of lines to keep in the monitor log.
         With 1 log every 30 seconds, this is 86400 lines for 1 month.
         """
-        return int(os.environ.get("GWS_MONITOR_LOG_MAX_LINES", 86400))
+        return int(
+            os.environ.get("GWS_MONITOR_LOG_MAX_LINES", cls.DEFAULT_GWS_MONITOR_LOG_MAX_LINES)
+        )
 
     @classmethod
     def get_monitor_required_free_disk_space(cls) -> int | None:
@@ -443,7 +495,7 @@ class Settings:
     def set_main_settings_file_path(self, main_settings_file_path: str):
         self.data["main_settings_file_path"] = main_settings_file_path
 
-    def _get_data(self, k: str, default=None) -> str:
+    def _get_data(self, k: str, default=None) -> str | None:
         if k == "session_key":
             return self.data[k]
         else:
@@ -533,7 +585,7 @@ class Settings:
             self.data["bricks"] = {}
         self.data["bricks"][brick_info.name] = brick_info.to_json_dict()
 
-    def get_space(self) -> SpaceDict:
+    def get_space(self) -> SpaceDict | None:
         return self.data.get("space")
 
     def set_space(self, space: SpaceDict):
@@ -646,6 +698,9 @@ class Settings:
     @classmethod
     def get_instance(cls) -> "Settings":
         if cls._setting_instance is None:
+            # Migrate settings file from old location if needed
+            cls._migrate_settings_file()
+
             settings_json = None
 
             # try to read the settings file
@@ -661,7 +716,7 @@ class Settings:
                         raise err
             # use default settings if no file exists
             else:
-                settings_json = cls.__DEFAULT_SETTINGS__
+                settings_json = cls.DEFAULT_SETTINGS
 
             # set the setting instance
             cls._setting_instance = Settings(settings_json)

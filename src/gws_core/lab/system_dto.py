@@ -50,8 +50,8 @@ class BrickMigrationLogHistory(TypedDict):
 
 class BrickMigrationLog(TypedDict):
     brick_name: str
-    version: str
-    last_date_check: str
+    version: str | None
+    last_date_check: str | None
     history: list[BrickMigrationLogHistory]
     db_manager_unique_name: str
 
