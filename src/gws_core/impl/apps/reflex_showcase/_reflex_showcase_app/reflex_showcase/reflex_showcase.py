@@ -1,7 +1,14 @@
 import reflex as rx
 from gws_reflex_main import register_gws_reflex_app
 
-from .pages import doc_component_page, home_page, rich_text_page, user_components_page
+from .pages import (
+    dialog_page,
+    doc_component_page,
+    home_page,
+    layout_page,
+    rich_text_page,
+    user_components_page,
+)
 
 # Option 1: Simplest - create app with all GWS defaults
 app = register_gws_reflex_app()
@@ -35,6 +42,8 @@ def sidebar() -> rx.Component:
             sidebar_link("Home", "/", "🏠"),
             sidebar_link("Rich Text", "/rich-text", "✏️"),
             sidebar_link("User Components", "/user-components", "👤"),
+            sidebar_link("Dialogs", "/dialogs", "💬"),
+            sidebar_link("Layout Components", "/layout", "📐"),
             sidebar_link("Doc Component", "/doc-component", "📄"),
             width="100%",
             spacing="2",
@@ -78,6 +87,18 @@ def rich_text():
 def user_components():
     """User components demo page."""
     return layout(user_components_page.user_components_page())
+
+
+@rx.page(route="/dialogs")
+def dialogs():
+    """Dialog components demo page."""
+    return layout(dialog_page.dialog_page())
+
+
+@rx.page(route="/layout")
+def layout_components():
+    """Layout components demo page."""
+    return layout(layout_page.layout_page())
 
 
 @rx.page(route="/doc-component")

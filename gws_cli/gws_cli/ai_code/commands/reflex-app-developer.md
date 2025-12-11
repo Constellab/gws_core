@@ -115,7 +115,7 @@ class MainState(rx.State):
 - Important: After completing all development work or capturing screenshots, terminate the app process
 
 ### Test app in browser
-- Only if the user request it, otherwise assume that running the app locally is sufficient
+- ONLY IF THE USER EXPLICITLY REQUEST IT
 - To take a screen shot of the app and check browser console, use the `gws utils screenshot --url=[URL]` (in root folder of project) script.
 - The dev app must be running to use the screenshot utility, you can find the front url in the console logs of the app run process
 - The screenshot command print the path to the screenshot and console logs file
