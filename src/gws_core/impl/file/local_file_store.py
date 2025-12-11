@@ -48,7 +48,7 @@ class LocalFileStore(FileStore):
         self.check_disk_has_enough_space(file_size)
 
         if dest_name is None:
-            dest_name = FileHelper.get_name_with_extension(source_path)
+            dest_name = FileHelper.get_node_name(source_path)
 
         destination_path = self.generate_new_node_path(dest_name)
         self._move_node(source_path, destination_path)
@@ -135,7 +135,7 @@ class LocalFileStore(FileStore):
 
         return file
 
-    def generate_new_node_path(self, dest_node_name: str = None) -> str:
+    def generate_new_node_path(self, dest_node_name: str | None = None) -> str:
         """Generate the node path from node name and avoid duplicate
 
         :param dest_file_name: [description], defaults to None

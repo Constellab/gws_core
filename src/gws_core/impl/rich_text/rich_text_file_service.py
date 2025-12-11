@@ -58,7 +58,7 @@ class RichTextFileService:
         if file.content_type == "application/octet-stream":
             extension = "png"
         else:
-            extension = FileHelper.get_extension(file.filename)
+            extension = FileHelper.get_normalized_extension(file.filename)
 
         return cls.save_image(object_type, object_id, image, extension)
 

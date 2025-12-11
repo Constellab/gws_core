@@ -1,4 +1,3 @@
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_tasks import FsNodeExtractor
@@ -130,7 +129,7 @@ class ConverterService:
 
         # Create a scenario containing 1 source, 1 extractor , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(
-            None, title=f"{FileHelper.get_name(sub_path)} extractor"
+            None, title=f"{FileHelper.get_name_without_extension(sub_path)} extractor"
         )
         protocol: ProtocolProxy = scenario.get_protocol()
 

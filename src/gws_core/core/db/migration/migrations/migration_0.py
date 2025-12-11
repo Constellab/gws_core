@@ -442,7 +442,9 @@ class Migration043(BrickMigration):
                         if FileHelper.exists_on_os(value):
                             # unlock the kv_store to update it directly
                             resource.__kv_store__._lock = False
-                            resource.__kv_store__[key] = FileHelper.get_name(value)
+                            resource.__kv_store__[key] = FileHelper.get_name_without_extension(
+                                value
+                            )
                             resource.__kv_store__._lock = True
 
                 resource_model.save()

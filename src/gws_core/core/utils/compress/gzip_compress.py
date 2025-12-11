@@ -42,7 +42,7 @@ class GzipCompress(Compress):
         :param tar_gz_file_path: Path of the tar.gz file to uncompress
         :param tar_gz_file_path: `str`
         """
-        file_name = FileHelper.get_name(file_path) + ".txt"
+        file_name = FileHelper.get_name_without_extension(file_path) + ".txt"
         decompress_file_path = os.path.join(destination_folder, file_name)
 
         # create destination folder if not exist

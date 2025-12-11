@@ -112,7 +112,7 @@ class ResourceZipper:
             if FileHelper.is_dir(fs_node_model.path):
                 fs_node_file_name = f"{self.FS_NODE_FILE_NAME}_{resource_index}"
             else:
-                fs_node_file_name = f"{self.FS_NODE_FILE_NAME}_{resource_index}.{FileHelper.get_extension(fs_node_model.path)}"
+                fs_node_file_name = f"{self.FS_NODE_FILE_NAME}_{resource_index}.{FileHelper.get_normalized_extension(fs_node_model.path)}"
 
             self.zip.add_fs_node(fs_node_model.path, fs_node_name=fs_node_file_name)
             resource_zip.fs_node_name = fs_node_file_name

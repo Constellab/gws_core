@@ -82,7 +82,7 @@ class FSNode(Resource):
         """
         Get the name of the file or folder without the path
         """
-        return FileHelper.get_name_with_extension(self.path)
+        return FileHelper.get_node_name(self.path)
 
     def get_default_name(self) -> str:
         return self.get_base_name()

@@ -43,7 +43,7 @@ class FormData:
     def __enter__(self) -> list:
         data: list = []
         for key, file_path, filename in self.file_paths:
-            file_name = filename if filename else FileHelper.get_name_with_extension(file_path)
+            file_name = filename if filename else FileHelper.get_node_name(file_path)
             content_type = FileHelper.get_mime(file_path)
             opened_file = open(file_path, "rb")
             data.append((key, (file_name, opened_file, content_type)))

@@ -37,7 +37,7 @@ class Compress:
     def _generate_node_name(self, fs_node_path: str, fs_node_name: str = None) -> str:
         """Generate a unique name for the fs node. Use the node name if fs_node_name is None."""
         if fs_node_name is None:
-            fs_node_name = FileHelper.get_name(fs_node_path)
+            fs_node_name = FileHelper.get_name_without_extension(fs_node_path)
 
         # avoid duplicate name
         fs_node_name = FileHelper.generate_unique_fs_node_for_list(
@@ -106,7 +106,9 @@ class Compress:
         compress: type[Compress] = Compress._get_compress_class_from_extension(file_path)
 
         if compress is None:
-            raise Exception(f"Unsupported file extension: {FileHelper.get_extension(file_path)}")
+            raise Exception(
+                f"Unsupported file extension: {FileHelper.get_normalized_extension(file_path)}"
+            )
 
         compress.decompress(file_path, destination_folder)
 

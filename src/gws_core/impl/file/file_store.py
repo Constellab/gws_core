@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from io import IOBase
 from tempfile import SpooledTemporaryFile
-from typing import Any
+from typing import Any, cast
 
 from gws_core.core.model.db_field import JSONField
 
@@ -26,7 +26,7 @@ class FileStore(Model):
 
     @abstractmethod
     def add_node_from_path(
-        self, source_path: str, dest_name: str = None, node_type: type[FSNode] = None
+        self, source_path: str, dest_name: str | None = None, node_type: type[FSNode] | None = None
     ) -> FSNode:
         """Copy a node (file or directory) from the path to the store.
 
@@ -42,7 +42,7 @@ class FileStore(Model):
         raise BadRequestException("Not implemented")
 
     def add_file_from_path(
-        self, source_file_path: str, dest_file_name: str = None, file_type: type[File] = File
+        self, source_file_path: str, dest_file_name: str | None = None, file_type: type[File] = File
     ) -> File:
         """Copy a file (from the path) to the store.
 
@@ -54,13 +54,13 @@ class FileStore(Model):
         :type file_type: Type[File], optional
         :rtype: File
         """
-        return self.add_node_from_path(source_file_path, dest_file_name, file_type)
+        return cast(File, self.add_node_from_path(source_file_path, dest_file_name, file_type))
 
     @abstractmethod
     def add_from_temp_file(
         self,
         source_file: IOBase | SpooledTemporaryFile,
-        dest_file_name: str = None,
+        dest_file_name: str | None = None,
         file_type: type[File] = File,
     ) -> File:
         """[summary]
@@ -104,7 +104,9 @@ class FileStore(Model):
         raise BadRequestException("Not implemented")
 
     @abstractmethod
-    def get_node_by_path(self, node_path: str = None, node_type: type[FSNode] = None) -> FSNode:
+    def get_node_by_path(
+        self, node_path: str | None = None, node_type: type[FSNode] | None = None
+    ) -> FSNode:
         """Get a node by its path
 
         :param node_path: _description_, defaults to None

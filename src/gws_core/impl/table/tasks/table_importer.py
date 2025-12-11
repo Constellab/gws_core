@@ -1,4 +1,3 @@
-
 from pandas import DataFrame, ExcelFile, read_excel, read_table
 
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -166,7 +165,7 @@ class TableImporter(ResourceImporter):
         return table
 
     def get_file_format(self, source: File, file_format: str) -> str:
-        clean_file_format: str = FileHelper.clean_extension(file_format)
+        clean_file_format: str = FileHelper.normalize_extension(file_format)
 
         if clean_file_format == "auto":
             extension = source.extension

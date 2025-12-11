@@ -149,7 +149,7 @@ class ResourceImporter(Converter):
 
         if target.name is None:
             # set the target name = FsNode name without extension
-            target.name = FileHelper.get_name(source.path)
+            target.name = FileHelper.get_name_without_extension(source.path)
         return target
 
     @abstractmethod

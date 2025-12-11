@@ -64,7 +64,7 @@ class JSONExporter(ResourceExporter):
         self, source: JSONDict, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", type(self).get_human_name())
-        file_format = FileHelper.clean_extension(params.get_value("file_format", "json"))
+        file_format = FileHelper.normalize_extension(params.get_value("file_format", "json"))
         file_path = os.path.join(dest_dir, file_name + "." + file_format)
 
         with open(file_path, "w", encoding="utf-8") as file:

@@ -120,7 +120,7 @@ class DataHubS3ServerService(AbstractS3Service):
             # create a file in a temp folder
             temp_folder = Settings.make_temp_dir()
 
-            filename = FileHelper.get_name_with_extension(key)
+            filename = FileHelper.get_node_name(key)
             file_path = path.join(temp_folder, filename)
             with open(file_path, "wb") as write_file:
                 write_file.write(data)
@@ -133,7 +133,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
             # set default name of resource if not set in tags
             if not resource_model.name:
-                resource_model.name = FileHelper.get_name_with_extension(key)
+                resource_model.name = FileHelper.get_node_name(key)
 
             resource_model = resource_model.save_full()
 

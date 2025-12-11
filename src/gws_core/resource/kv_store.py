@@ -90,7 +90,7 @@ class KVStore(dict[str, Any]):
         # dump the resource value into the file
         file_r_field.dump_to_file(r_field_value, str(file_path))
         # store the file name (not absolute path) in the kv_store
-        self[key] = FileHelper.get_name(file_path)
+        self[key] = FileHelper.get_name_without_extension(file_path)
 
     def get_key_file_path(self, key: str) -> str:
         """Get the file path of a specific key in the kv store

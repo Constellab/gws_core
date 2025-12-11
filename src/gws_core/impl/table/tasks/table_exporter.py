@@ -52,7 +52,7 @@ class TableExporter(ResourceExporter):
         self, source: Table, dest_dir: str, params: ConfigParams, target_type: type[File]
     ) -> File:
         file_name = params.get_value("file_name", source.name) or "table"
-        file_format = FileHelper.clean_extension(
+        file_format = FileHelper.normalize_extension(
             params.get_value("file_format", Table.DEFAULT_FILE_FORMAT)
         )
         file_path = os.path.join(dest_dir, file_name + "." + file_format)

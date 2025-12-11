@@ -188,7 +188,7 @@ class FsNodeService:
             )
 
         return FileHelper.create_file_response(
-            sub_path_full, filename=FileHelper.get_name(sub_file_path)
+            sub_path_full, filename=FileHelper.get_name_without_extension(sub_file_path)
         )
 
     @classmethod

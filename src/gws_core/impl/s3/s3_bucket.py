@@ -105,7 +105,7 @@ class S3Bucket:
 
         if local_file_path is None:
             temp_dir = Settings.make_temp_dir()
-            local_file_path = f"{temp_dir}/{FileHelper.get_name_with_extension(object_key)}"
+            local_file_path = f"{temp_dir}/{FileHelper.get_node_name(object_key)}"
 
         upload_progress: S3BucketActionProgress = {"transfered_bytes": 0, "last_progress": 0}
 

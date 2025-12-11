@@ -423,7 +423,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
                 )
 
             new_node_path = local_file_store.generate_new_node_path(resource.get_base_name())
-            new_node_name = FileHelper.get_name_with_extension(new_node_path)
+            new_node_name = FileHelper.get_node_name(new_node_path)
 
             # Verify if a node with same path already exists
             existing_node: FSNodeModel = FSNodeModel.find_by_path(new_node_path)

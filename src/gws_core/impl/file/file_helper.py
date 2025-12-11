@@ -3,12 +3,12 @@ import os
 import shutil
 from pathlib import Path
 from re import sub
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from charset_normalizer import from_path
 from fastapi.responses import FileResponse
 
-PathType = Union[str, Path]
+PathType = str | Path
 
 
 class FileHelper:
@@ -54,25 +54,62 @@ class FileHelper:
         return total_size
 
     @classmethod
-    def get_extension(cls, path: PathType) -> str:
+    def get_normalized_extension(cls, path: PathType) -> str | None:
         """
-        Return the extension of a file without the '.'.
+        Return the extension of a file without the '.' in lowercase.
         Return None if no extension is found (like folder).
+        Special cases:
+        - .R extension is returned as uppercase 'R'
+        - Compound extensions like .tar.gz are returned as 'tar.gz'
 
         :param path: path to the file or folder
         :type path: PathType
         :return: extension of the file
         :rtype: str
         """
-        extension = cls.clean_extension(cls.get_path(path).suffix)
+        path_obj = cls.get_path(path)
+        suffixes = path_obj.suffixes
+
+        if not suffixes:
+            return None
+
+        # Handle compound extensions with .tar - only take the last 2 suffixes
+        if len(suffixes) >= 2 and suffixes[-2].lower() == ".tar":
+            extension = "".join(suffixes[-2:]).lstrip(".")
+        else:
+            extension = suffixes[-1]
 
         if extension == "":
             return None
-        return extension
+
+        return cls.normalize_extension(extension)
+
+    @classmethod
+    def normalize_extension(cls, extension: str) -> str | None:
+        """
+        Normalize a file extension by removing leading dots and applying case rules.
+        Returns the extension in lowercase except for special cases (.R stays uppercase).
+        Returns None if the input is None.
+
+        :param extension: extension to normalize (with or without leading dot)
+        :type extension: str
+        :return: normalized extension without leading dot, or None
+        :rtype: str | None
+        """
+        if extension is None:
+            return None
+
+        extension = sub(r"^\.", "", extension)
+        # Special case for R files
+        if extension.upper() == "R":
+            return "R"
+
+        return extension.lower()
 
     @classmethod
     def clean_extension(cls, extension: str) -> str:
         """
+        TODO deprecated, to remove in v0.19.0
         Return the extension of a file without the '.' if it is present on first caracter
 
         :param extension: extension of the file
@@ -86,16 +123,27 @@ class FileHelper:
         return sub(r"^\.", "", extension)
 
     @classmethod
-    def get_name(cls, path: PathType):
+    def get_name_without_extension(cls, path: PathType) -> str:
         """
-        Return the name of the file without the extension or the name of the folder
+        Return the name of the file without the extension or the name of the folder.
+        For compound extensions like .tar.gz, removes all extension parts.
 
         :param path: path to the file or folder
         :type path: PathType
         :return: name of the file or folder
         :rtype: _type_
         """
-        return cls.get_path(path).stem
+        extension = cls.get_normalized_extension(path)
+        if not extension:
+            # No extension, return the full name
+            return cls.get_path(path).stem
+
+        name_with_ext = cls.get_node_name(path)
+
+        # Remove the extension by slicing off the last characters
+        # +1 accounts for the dot separator
+        extension_length = len(extension) + 1
+        return name_with_ext[:-extension_length]
 
     @classmethod
     def get_dir_name(cls, path: PathType):
@@ -112,7 +160,7 @@ class FileHelper:
         return os.path.basename(path)
 
     @classmethod
-    def get_name_with_extension(cls, path: PathType):
+    def get_node_name(cls, path: PathType):
         """
         Return the name of the file with the extension or the name of the folder
 
@@ -171,27 +219,27 @@ class FileHelper:
 
     @classmethod
     def is_json(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["json"]
+        return cls.get_normalized_extension(path) in ["json"]
 
     @classmethod
     def is_csv(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["csv", "tsv"]
+        return cls.get_normalized_extension(path) in ["csv", "tsv"]
 
     @classmethod
     def is_txt(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["txt"]
+        return cls.get_normalized_extension(path) in ["txt"]
 
     @classmethod
     def is_jpg(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["jpg", "jpeg"]
+        return cls.get_normalized_extension(path) in ["jpg", "jpeg"]
 
     @classmethod
     def is_png(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["png"]
+        return cls.get_normalized_extension(path) in ["png"]
 
     @classmethod
     def is_image(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in [
+        return cls.get_normalized_extension(path) in [
             "jpg",
             "jpeg",
             "png",
@@ -220,7 +268,7 @@ class FileHelper:
 
     @classmethod
     def is_audio(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in [
+        return cls.get_normalized_extension(path) in [
             "mp3",
             "wav",
             "flac",
@@ -234,7 +282,15 @@ class FileHelper:
 
     @classmethod
     def is_video(cls, path: PathType) -> bool:
-        return cls.get_extension(path) in ["mp4", "mkv", "avi", "mov", "wmv", "flv", "webm"]
+        return cls.get_normalized_extension(path) in [
+            "mp4",
+            "mkv",
+            "avi",
+            "mov",
+            "wmv",
+            "flv",
+            "webm",
+        ]
 
     @classmethod
     def is_file(cls, path: PathType) -> bool:
@@ -251,7 +307,7 @@ class FileHelper:
 
         if cls.is_dir(path):
             return "application/x-directory"
-        ext: str = cls.get_extension(path)
+        ext: str = cls.get_normalized_extension(path)
         if ext:
             # specific case not handled by mimetypes
             custom_mimes = {
@@ -374,7 +430,7 @@ class FileHelper:
         :rtype: Any
         """
         if cls.is_file(path):
-            return cls.get_name_with_extension(path)
+            return cls.get_node_name(path)
 
         if cls.is_dir(path):
             children: list[str] = os.listdir(path)
@@ -392,6 +448,7 @@ class FileHelper:
         """
         Sanitize a file name, folder name or path in order to prevent injection when using the file name
         Removes dangerous characters and prevents path traversal attacks
+        Also normalizes file extensions (lowercase except for .R, handles .tar compounds)
 
         :param name: name to sanitize
         :type name: str
@@ -418,6 +475,26 @@ class FileHelper:
         # Ensure we don't have empty result or only dots/slashes
         if not name or name in (".", "/", ".."):
             return "sanitized_file"
+
+        # Normalize extension if present using get_extension logic
+        extension = cls.get_normalized_extension(name)
+        if extension:
+            # For compound extensions like tar.gz, we need to remove all parts
+            # Count the dots in the extension to know how many suffixes to remove
+            num_parts = extension.count(".") + 1
+            path_obj = cls.get_path(name)
+            suffixes = path_obj.suffixes
+
+            # Remove the correct number of suffixes from the name
+            if len(suffixes) >= num_parts:
+                # Get the name without the extension parts
+                base_name = name
+                for _ in range(num_parts):
+                    base_name = base_name.rsplit(".", 1)[0]
+            else:
+                base_name = cls.get_name_without_extension(name)
+
+            name = f"{base_name}.{extension}"
 
         # Limit length to prevent filesystem issues
         if len(name) > 255:
@@ -541,7 +618,7 @@ class FileHelper:
             raise FileNotFoundError(f"File {file_path} not found")
 
         if not filename:
-            filename = cls.get_name_with_extension(file_path)
+            filename = cls.get_node_name(file_path)
 
         if not media_type:
             media_type = cls.get_mime(file_path)
@@ -608,16 +685,16 @@ class FileHelper:
 
         i = 1
         name = (
-            f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}"
+            f"{FileHelper.get_name_without_extension(fs_node_name)}_{i}.{FileHelper.get_normalized_extension(fs_node_name)}"
             if "." in fs_node_name
-            else f"{FileHelper.get_name(fs_node_name)}_{i}"
+            else f"{FileHelper.get_name_without_extension(fs_node_name)}_{i}"
         )
         while name in list_fs_node_names:
             i += 1
             name = (
-                f"{FileHelper.get_name(fs_node_name)}_{i}.{FileHelper.get_extension(fs_node_name)}"
+                f"{FileHelper.get_name_without_extension(fs_node_name)}_{i}.{FileHelper.get_normalized_extension(fs_node_name)}"
                 if "." in fs_node_name
-                else f"{FileHelper.get_name(fs_node_name)}_{i}"
+                else f"{FileHelper.get_name_without_extension(fs_node_name)}_{i}"
             )
 
         return name

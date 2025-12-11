@@ -46,7 +46,7 @@ class LocalFolderView(View):
     def _get_content(self, path: str, node_models: list["FSNodeModel"]) -> dict | list:
         _json = {}
         if FileHelper.is_file(path):
-            _json["name"] = FileHelper.get_name_with_extension(path)
+            _json["name"] = FileHelper.get_node_name(path)
         else:
             _json["name"] = FileHelper.get_dir_name(path)
 

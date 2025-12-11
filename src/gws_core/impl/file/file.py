@@ -60,7 +60,7 @@ class File(FSNode):
 
     @property
     def extension(self):
-        return FileHelper.get_extension(self.path)
+        return FileHelper.get_normalized_extension(self.path)
 
     def is_json(self):
         return FileHelper.is_json(self.path)
@@ -122,9 +122,9 @@ class File(FSNode):
         :rtype: str
         """
         if not name:
-            name = FileHelper.get_name(self.path)
+            name = FileHelper.get_name_without_extension(self.path)
 
-        extension = FileHelper.get_extension(name)
+        extension = FileHelper.get_normalized_extension(name)
         if extension != self.extension:
             name += f".{self.extension}"
         super().set_name(name)

@@ -71,7 +71,7 @@ class FSNodeModel(Model):
             id=self.id,
             size=self.size,
             is_file=FileHelper.is_file(self.path),
-            name=FileHelper.get_name_with_extension(self.path),
+            name=FileHelper.get_node_name(self.path),
             path=self.path,
         )
 
