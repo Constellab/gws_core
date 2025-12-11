@@ -61,7 +61,7 @@ class Resource(BaseTyping):
         """
 
         # check that the class level property typing_name is set
-        if self.get_typing_name() == CONST_RESOURCE_TYPING_NAME and type(self) != Resource:  # pylint: disable=unidiomatic-typecheck
+        if self.get_typing_name() == CONST_RESOURCE_TYPING_NAME and type(self) is not Resource:
             raise BadRequestException(
                 f"The resource {self.full_classname()} is not decorated with @resource_decorator, it can't be instantiate. Please decorate the resource class with @ResourceDecorator"
             )
