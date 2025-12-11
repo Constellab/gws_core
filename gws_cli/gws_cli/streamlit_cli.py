@@ -26,7 +26,7 @@ def run_dev(
     shell_proxy = app_cli.build_shell_proxy()
 
     streamit_app = StreamlitApp(StreamlitApp.DEV_MODE_APP_ID, "main", shell_proxy)
-    streamit_app.set_dev_mode(config_file_path)
+    streamit_app.set_dev_mode(app_cli.config_file_path)
     streamit_app.set_enable_debugger(enable_debugger)
 
     app_cli.start_app(streamit_app, ctx)

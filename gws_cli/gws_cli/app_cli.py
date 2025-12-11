@@ -26,16 +26,16 @@ from gws_cli.utils.dev_config_generator import AppDevConfig
 app = typer.Typer()
 
 EnvType = Literal["NONE", "PIP", "CONDA", "MAMBA"]
+DEFAULT_CONFIG_FILE_NAME = "dev_config.json"
 
 
 class AppCli:
-    _config_file_path: str = None
-    _config: AppDevConfig = None
+    config_file_path: str
+    _config: AppDevConfig
     _env_type: EnvType = "NONE"
     _env_file_path: str | None = None
 
     def __init__(self, config_file_path: str):
-        self._config_file_path = config_file_path
         self._load_config(config_file_path)
         self._load_env()
         self._check_resource_ids()
@@ -44,9 +44,18 @@ class AppCli:
         if not os.path.isabs(config_file_path):
             config_file_path = os.path.abspath(config_file_path)
 
+        # If the path is a directory, use the default config file in that directory
+        if os.path.isdir(config_file_path):
+            config_file_path = os.path.join(config_file_path, DEFAULT_CONFIG_FILE_NAME)
+            Logger.info(
+                f"Provided path is a directory, using default config file: {config_file_path}"
+            )
+
         if not os.path.exists(config_file_path):
             typer.echo(f"Config file '{config_file_path}' does not exist.", err=True)
             raise typer.Abort()
+
+        self.config_file_path = config_file_path
 
         with open(config_file_path, encoding="UTF-8") as file:
             try:
@@ -79,7 +88,7 @@ class AppCli:
         if env_type != "NONE":
             if not env_file_path:
                 typer.echo(
-                    f"Env type is '{env_type}' but the config file '{self._config_file_path}' does not contain 'env_file_path'.",
+                    f"Env type is '{env_type}' but the config file '{self.config_file_path}' does not contain 'env_file_path'.",
                     err=True,
                 )
                 raise typer.Abort()
@@ -87,7 +96,7 @@ class AppCli:
             # if the app dir path is not absolute (usually on dev mode), make it absolute
             if not os.path.isabs(env_file_path):
                 # make the path absolute relative to the config file
-                config_file_dir = os.path.dirname(self._config_file_path)
+                config_file_dir = os.path.dirname(self.config_file_path)
                 env_file_path = os.path.join(config_file_dir, env_file_path)
                 print(
                     f"env_file_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {env_file_path}"
@@ -99,7 +108,10 @@ class AppCli:
     def _get_shell_proxy(self, env_type: EnvType, env_file_path: str | None) -> ShellProxy:
         if env_type == "NONE":
             return ShellProxy()
-        elif env_type == "PIP":
+
+        if not env_file_path:
+            raise ValueError(f"env_file_path must be provided for env type '{env_type}'")
+        if env_type == "PIP":
             return PipShellProxy(env_file_path)
         elif env_type == "CONDA":
             return CondaShellProxy(env_file_path)
@@ -155,7 +167,7 @@ class AppCli:
         # if the app dir path is not absolute (usually on dev mode), make it absolute
         if not os.path.isabs(app_dir_path):
             # make the path absolute relative to the config file
-            config_file_dir = os.path.dirname(self._config_file_path)
+            config_file_dir = os.path.dirname(self.config_file_path)
             app_dir_path = os.path.join(config_file_dir, app_dir_path)
             print(
                 f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_path}"
@@ -171,7 +183,7 @@ class AppCli:
         resource_ids = self._config.source_ids
         if not isinstance(resource_ids, list):
             typer.echo(
-                f"'source_ids' in config file '{self._config_file_path}' must be a list.", err=True
+                f"'source_ids' in config file '{self.config_file_path}' must be a list.", err=True
             )
             raise typer.Abort()
 

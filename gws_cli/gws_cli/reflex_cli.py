@@ -20,7 +20,7 @@ def run_dev(
     shell_proxy = app_cli.build_shell_proxy()
 
     reflex_app = ReflexApp(ReflexApp.DEV_MODE_APP_ID, "main", shell_proxy)
-    reflex_app.set_dev_mode(config_file_path)
+    reflex_app.set_dev_mode(app_cli.config_file_path)
     reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
     reflex_app.set_is_enterprise(app_cli.is_reflex_enterprise())
 
