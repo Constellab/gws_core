@@ -14,10 +14,8 @@ def protocol_decorator(
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> Callable:
     """ Decorator to be placed on all the protocols. A protocol not decorated will not be runnable.
     It define static information about the protocol
@@ -61,8 +59,6 @@ def protocol_decorator(
             short_description=short_description,
             hide=hide,
             style=style,
-            deprecated_since=deprecated_since,
-            deprecated_message=deprecated_message,
             deprecated=deprecated,
         )
 

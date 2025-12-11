@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections.abc import Callable
 from typing import final
 
 from gws_core.brick.brick_service import BrickService
@@ -10,7 +11,6 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.task.converter.converter import Converter, decorate_converter
 
 from ...resource.resource import Resource
-from ..task import Task
 from ..task_decorator import task_decorator
 
 
@@ -20,11 +20,9 @@ def transformer_decorator(
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
-):
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
+) -> Callable:
     """
     Decorator to place on a task instead of task_decorator. This create a specific task to transform the resource.
 
@@ -48,7 +46,7 @@ def transformer_decorator(
     :type deprecated: TypingDeprecated, optional
     """
 
-    def decorator(task_class: type[Task]):
+    def decorator(task_class: type[Transformer]):
         if not Utils.issubclass(task_class, Transformer):
             BrickService.log_brick_error(
                 task_class,
@@ -71,8 +69,6 @@ def transformer_decorator(
             short_description=short_description,
             hide=hide,
             style=style,
-            deprecated_since=deprecated_since,
-            deprecated_message=deprecated_message,
             deprecated=deprecated,
         )
 

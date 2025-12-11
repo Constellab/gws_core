@@ -38,13 +38,11 @@ def exporter_decorator(
     unique_name: str,
     source_type: type[Resource],
     target_type: type[File] = File,
-    human_name: str = None,
-    short_description: str = None,
+    human_name: str | None = None,
+    short_description: str | None = None,
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> Callable:
     """ Decorator to place on a ResourceExporter. It defines a special task to export a resource (of type resource_type) to
     a File (file or folder)
@@ -110,8 +108,6 @@ def exporter_decorator(
                 short_description=short_description_computed,
                 hide=hide,
                 style=style,
-                deprecated_since=deprecated_since,
-                deprecated_message=deprecated_message,
                 deprecated=deprecated,
             )
         except Exception as err:

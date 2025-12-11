@@ -25,14 +25,12 @@ def importer_decorator(
     target_type: type[Resource],
     supported_extensions: list[str],
     source_type: type[FSNode] = File,
-    human_name: str = None,
-    short_description: str = None,
+    human_name: str | None = None,
+    short_description: str | None = None,
     hide: bool = False,
-    style: TypingStyle = None,
+    style: TypingStyle | None = None,
     output_sub_class: bool = False,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> Callable:
     """ Decorator to place on a ResourceImporter instead of task_decorator. It defines a special task to import a FsNode (file or folder)
     to resource_type
@@ -100,8 +98,6 @@ def importer_decorator(
                 hide=hide,
                 style=style,
                 output_sub_class=output_sub_class,
-                deprecated_since=deprecated_since,
-                deprecated_message=deprecated_message,
                 deprecated=deprecated,
             )
         except Exception as err:

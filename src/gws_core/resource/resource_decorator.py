@@ -16,10 +16,8 @@ def resource_decorator(
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> Callable:
     """ Decorator to be placed on all the resourcees. A resource not decorated will not be runnable.
     It define static information about the resource
@@ -51,8 +49,6 @@ def resource_decorator(
             short_description=short_description,
             hide=hide,
             style=style,
-            deprecated_since=deprecated_since,
-            deprecated_message=deprecated_message,
             deprecated=deprecated,
         )
 
@@ -67,10 +63,8 @@ def decorate_resource(
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ):
     """Method to decorate a resource"""
     if not Utils.issubclass(resource_class, Resource):
@@ -102,8 +96,6 @@ def decorate_resource(
         hide=hide,
         style=style,
         object_sub_type="RESOURCE",
-        deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message,
         deprecated=deprecated,
     )
 

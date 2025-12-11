@@ -19,10 +19,8 @@ def task_decorator(
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> Callable:
     """ Decorator to be placed on all the tasks. A task not decorated will not be runnable.
     It define static information about the task
@@ -56,8 +54,6 @@ def task_decorator(
             short_description=short_description,
             hide=hide,
             style=style,
-            deprecated_since=deprecated_since,
-            deprecated_message=deprecated_message,
             deprecated=deprecated,
         )
 
@@ -70,14 +66,12 @@ def decorate_task(
     task_class: type[Task],
     unique_name: str,
     task_type: TaskSubType,
-    related_resource: type[Resource] = None,
+    related_resource: type[Resource] | None = None,
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
 ):
     """Method to decorate a task"""
     if not Utils.issubclass(task_class, Task):
@@ -142,8 +136,6 @@ def decorate_task(
         hide=hide,
         style=style,
         related_model_typing_name=related_resource_typing_name,
-        deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message,
         deprecated=deprecated,
     )
 

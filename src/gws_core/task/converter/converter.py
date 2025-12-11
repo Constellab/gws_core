@@ -26,15 +26,13 @@ def decorate_converter(
     task_type: TaskSubType,
     source_type: type[Resource] = Resource,
     target_type: type[Resource] = Resource,
-    related_resource: type[Resource] = None,
+    related_resource: type[Resource] | None = None,
     human_name: str = "",
     short_description: str = "",
     hide: bool = False,
-    style: TypingStyle = None,
+    style: TypingStyle | None = None,
     output_sub_class: bool = False,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> None:
     if not Utils.issubclass(task_class, Converter):
         BrickService.log_brick_error(
@@ -72,8 +70,6 @@ def decorate_converter(
         short_description=short_description,
         hide=hide,
         style=style,
-        deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message,
         deprecated=deprecated,
     )
 
@@ -183,8 +179,8 @@ class ConverterRunner:
     def __init__(
         self,
         converter_type: type[Converter],
-        params: ConfigParamsDict = None,
-        input_: Resource = None,
+        params: ConfigParamsDict | None = None,
+        input_: Resource | None = None,
     ) -> None:
         if not Utils.issubclass(converter_type, Converter):
             raise Exception("The ConverterRunner must have a Converter")

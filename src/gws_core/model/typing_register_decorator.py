@@ -14,7 +14,10 @@ from .typing_manager import TypingManager
 
 
 def typing_registrator(
-    unique_name: str, object_type: TypingObjectType, hide: bool = False, style: TypingStyle = None
+    unique_name: str,
+    object_type: TypingObjectType,
+    hide: bool = False,
+    style: TypingStyle | None = None,
 ) -> Callable:
     """Decorator to register the class as a typing with a typing name
 
@@ -50,25 +53,15 @@ def register_typing_class(
     human_name: str,
     short_description,
     hide: bool = False,
-    style: TypingStyle = None,
-    object_sub_type: str = None,
-    related_model_typing_name: str = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    style: TypingStyle | None = None,
+    object_sub_type: str | None = None,
+    related_model_typing_name: str | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> None:
     if not human_name:
         human_name = StringHelper.camel_case_to_sentence(unique_name)
 
-    # TODO v0.9.0 remove deprecated_since and deprecated_message
     from ..brick.brick_service import BrickService
-
-    if deprecated_since or deprecated_message:
-        BrickService.log_brick_warning(
-            object_class,
-            "deprecated_since and deprecated_message are deprecated. Use the TypingDeprecated object instead.",
-        )
-        deprecated = TypingDeprecated(deprecated_since, deprecated_message)
 
     # check deprecated_since version
     if deprecated is not None and not deprecated.check_version():
@@ -120,11 +113,9 @@ def register_gws_typing_class(
     short_description,
     hide: bool = False,
     style: TypingStyle | None = None,
-    object_sub_type: str = None,
-    related_model_typing_name: str = None,
-    deprecated_since: str = None,
-    deprecated_message: str = None,
-    deprecated: TypingDeprecated = None,
+    object_sub_type: str | None = None,
+    related_model_typing_name: str | None = None,
+    deprecated: TypingDeprecated | None = None,
 ) -> None:
     # import the BrickService here and not in register_typing_class because it would create a cyclic error
     from ..brick.brick_service import BrickService
@@ -153,7 +144,5 @@ def register_gws_typing_class(
         style=style,
         object_sub_type=object_sub_type,
         related_model_typing_name=related_model_typing_name,
-        deprecated_since=deprecated_since,
-        deprecated_message=deprecated_message,
         deprecated=deprecated,
     )
