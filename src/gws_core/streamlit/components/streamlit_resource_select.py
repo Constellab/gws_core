@@ -80,6 +80,9 @@ class StreamlitResourceSelect:
         key = f"__{key}_gws_resource_model__"
 
         if component_value is None:
+            if defaut_resource is not None:
+                st.session_state[key] = defaut_resource
+                return defaut_resource
             st.session_state[key] = None
             return None
 
