@@ -48,11 +48,11 @@ class TagOriginDTO(BaseModelDTO):
 class TagDTO(BaseModelDTO):
     key: str
     value: str
-    is_propagable: bool | None = None
+    is_propagable: bool = False
     origins: list[TagOriginDTO] | None = None
     value_format: TagValueFormat | None = TagValueFormat.STRING
-    is_community_tag_key: bool | None = None
-    is_community_tag_value: bool | None = None
+    is_community_tag_key: bool = False
+    is_community_tag_value: bool = False
     additional_info: dict | None = None
 
 

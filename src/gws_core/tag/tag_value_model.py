@@ -68,8 +68,8 @@ class TagValueModel(Model):
         tag_value_model.last_modified_at = tag_value_model_dto.last_modified_at
         tag_value_model.tag_key = tag_key_model
         tag_value_model.tag_value = TagHelper.convert_value_to_str(tag_value_model_dto.value)
-        tag_value_model.is_community_tag_value = tag_value_model_dto.is_community_tag_value
-        tag_value_model.deprecated = tag_value_model_dto.deprecated
+        tag_value_model.is_community_tag_value = tag_value_model_dto.is_community_tag_value or False
+        tag_value_model.deprecated = tag_value_model_dto.deprecated or False
         tag_value_model.short_description = tag_value_model_dto.short_description
         tag_value_model.additional_infos = tag_value_model_dto.additional_infos
 
@@ -83,12 +83,11 @@ class TagValueModel(Model):
         return cls.get_tag_value_model(tag_key, tag_value) is not None
 
     @classmethod
-    @GwsCoreDbManager.transaction()
     def create_tag_value(
         cls,
         tag_key_model: TagKeyModel,
         tag_value: TagValueType,
-        additional_info: dict[str, Any] = {},
+        additional_info: dict[str, Any],
         is_community_tag_value: bool = False,
     ) -> "TagValueModel":
         """Create a tag value model"""

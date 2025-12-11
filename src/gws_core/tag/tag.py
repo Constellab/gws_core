@@ -34,9 +34,7 @@ class TagOrigin:
     def __eq__(self, o: object) -> bool:
         if not isinstance(o, TagOrigin):
             return False
-        return (self is o) or (
-            self.origin_type == o.origin_type and self.origin_id == o.origin_id
-        )
+        return (self is o) or (self.origin_type == o.origin_type and self.origin_id == o.origin_id)
 
     def to_dto(self) -> TagOriginDTO:
         return TagOriginDTO(
@@ -317,6 +315,9 @@ class Tag:
             is_propagable=self.is_propagable,
             origins=self.origins.to_dto(),
             value_format=self.get_value_format(),
+            is_community_tag_key=self.is_community_tag_key,
+            is_community_tag_value=self.is_community_tag_value,
+            additional_info=self.additional_info,
         )
 
     @staticmethod
@@ -331,8 +332,8 @@ class Tag:
             value=value,
             is_propagable=dto.is_propagable or False,
             origins=origins,
-            is_community_tag_key=dto.is_community_tag_key or False,
-            is_community_tag_value=dto.is_community_tag_value or False,
+            is_community_tag_key=dto.is_community_tag_key,
+            is_community_tag_value=dto.is_community_tag_value,
             additional_info=dto.additional_info,
         )
 
@@ -356,9 +357,7 @@ class Tag:
         return pattern.sub("_", tag_str)
 
     @staticmethod
-    def convert_str_value_to_type(
-        value: str, value_format: TagValueFormat | None
-    ) -> TagValueType:
+    def convert_str_value_to_type(value: str, value_format: TagValueFormat | None) -> TagValueType:
         if value_format is None:
             return value
         if value_format == TagValueFormat.INTEGER:
