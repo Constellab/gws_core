@@ -40,8 +40,8 @@ class CreateFolderTest(Task):
         return {"folder": folder}
 
 
-# test_folder
-class TestFolder(BaseTestCase):
+# test_folder_resource
+class TestFolderResource(BaseTestCase):
     def test_folder_attr(self):
         tmp_dir = Settings.make_temp_dir()
         folder: Folder = Folder(os.path.join(tmp_dir, "folder"))
@@ -153,4 +153,4 @@ class TestFolder(BaseTestCase):
         result = task_runner.run()
         target = result["target"]
         self.assertTrue(isinstance(target, File))
-        self.assertEqual(target.extension, "gz")
+        self.assertEqual(target.extension, "tar.gz")

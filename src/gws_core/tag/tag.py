@@ -322,7 +322,7 @@ class Tag:
 
     @staticmethod
     def from_dto(dto: TagDTO) -> "Tag":
-        origins: TagOrigins
+        origins: TagOrigins | None = None
         if dto.origins:
             origins = TagOrigins.from_dto(dto.origins)
 

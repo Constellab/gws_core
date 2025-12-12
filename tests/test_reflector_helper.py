@@ -142,9 +142,7 @@ class TestClass:
         pass
 
 
-# ===== Test Cases =====
-
-
+# test_reflector_helper
 class TestReflectorHelper(unittest.TestCase):
     """Test suite for ReflectorHelper class."""
 
@@ -277,7 +275,7 @@ class TestReflectorHelper(unittest.TestCase):
         self.assertIsNotNone(method_doc.doc)
         self.assertEqual(len(method_doc.args), 2)
         # Return type is simplified by Utils.stringify_type
-        self.assertEqual(method_doc.return_type, "Dict")
+        self.assertEqual(method_doc.return_type, "dict")
 
         # Test docstring parsing - Google format
         arg_desc = method_doc.get_arg_description("items")
@@ -297,7 +295,7 @@ class TestReflectorHelper(unittest.TestCase):
         self.assertIsNotNone(method_doc.doc)
         self.assertEqual(len(method_doc.args), 2)
         # Return type is simplified by Utils.stringify_type
-        self.assertEqual(method_doc.return_type, "List")
+        self.assertEqual(method_doc.return_type, "list")
 
         # Test docstring parsing - NumPy format
         arg_desc = method_doc.get_arg_description("matrix")

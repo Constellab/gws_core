@@ -27,7 +27,7 @@ from gws_core.test.data_provider import DataProvider
 
 @resource_decorator(unique_name="ForSearch")
 class ForSearch(Resource):
-    searchable_text: str = RField(storage=RFieldStorage.KV_STORE)
+    searchable_text: str = RField(storage=RFieldStorage.DATABASE)
 
     @classmethod
     def create(cls, text) -> "ForSearch":
