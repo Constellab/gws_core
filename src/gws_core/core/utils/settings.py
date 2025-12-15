@@ -1,5 +1,4 @@
 import os
-import re
 import shutil
 import tempfile
 from copy import deepcopy
@@ -359,25 +358,25 @@ class Settings:
 
     @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
-        return {
-            "host": cls.get_os_environ("GWS_CORE_DB_HOST"),
-            "user": cls.get_os_environ("GWS_CORE_DB_USER"),
-            "password": cls.get_os_environ("GWS_CORE_DB_PASSWORD"),
-            "port": int(cls.get_os_environ("GWS_CORE_DB_PORT")),
-            "db_name": cls.get_os_environ("GWS_CORE_DB_NAME"),
-            "engine": "mariadb",
-        }
+        return DbConfig(
+            host=cls.get_os_environ("GWS_CORE_DB_HOST"),
+            user=cls.get_os_environ("GWS_CORE_DB_USER"),
+            password=cls.get_os_environ("GWS_CORE_DB_PASSWORD"),
+            port=int(cls.get_os_environ("GWS_CORE_DB_PORT")),
+            db_name=cls.get_os_environ("GWS_CORE_DB_NAME"),
+            engine="mariadb",
+        )
 
     @classmethod
     def get_test_db_config(cls) -> DbConfig:
-        return {
-            "host": cls.get_os_environ("GWS_TEST_DB_HOST"),
-            "user": cls.get_os_environ("GWS_TEST_DB_USER"),
-            "password": cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
-            "port": int(cls.get_os_environ("GWS_TEST_DB_PORT")),
-            "db_name": cls.get_os_environ("GWS_TEST_DB_NAME"),
-            "engine": "mariadb",
-        }
+        return DbConfig(
+            host=cls.get_os_environ("GWS_TEST_DB_HOST"),
+            user=cls.get_os_environ("GWS_TEST_DB_USER"),
+            password=cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
+            port=int(cls.get_os_environ("GWS_TEST_DB_PORT")),
+            db_name=cls.get_os_environ("GWS_TEST_DB_NAME"),
+            engine="mariadb",
+        )
 
     @classmethod
     def get_root_temp_dir(cls) -> str:
@@ -655,33 +654,12 @@ class Settings:
         self.data["brick_migrations"] = brick_migrations
         self.save()
 
-    def get_variable(self, key) -> str:
-        """Returns a variable. Returns `None` if the variable does not exist"""
-        value = self.data.get("variables", {}).get(key)
-        return self._format_variable(value)
-
-    def get_variables(self) -> dict:
-        """Returns the variables dict"""
-        variables = self.data.get("variables", {})
-        for key, val in variables.items():
-            variables[key] = self._format_variable(val)
-        return variables
-
-    def set_variable(self, key: str, value: str) -> None:
-        """Set a variable"""
-        self.data.setdefault("variables", {})[key] = value
-
-    def _format_variable(self, variable: str) -> str:
-        """Format a variable"""
-        if not variable:
-            return variable
-
-        tabs = re.findall(r"\$\{?([A-Z_]*)\}?", variable)
-        for token in tabs:
-            value = os.getenv(token)
-            if value:
-                variable = re.sub(r"\$\{?" + token + r"\}?", value, variable)
-        return variable
+    def get_variable(self, brick_name: str, key: str) -> str | None:
+        """Returns a variable for a specific brick. Returns `None` if the variable does not exist"""
+        brick_info = self.get_brick(brick_name)
+        if not brick_info:
+            return None
+        return brick_info.get_variable(key)
 
     @property
     def is_test(self) -> bool:

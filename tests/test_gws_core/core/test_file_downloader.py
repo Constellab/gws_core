@@ -8,7 +8,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.task.task_file_downloader import TaskFileDownloader
 
 settings = Settings.get_instance()
-testdata_dir = settings.get_variable("gws_core:testdata_dir")
+testdata_dir = settings.get_variable("gws_core", "testdata_dir")
 
 
 # test_file_downloader

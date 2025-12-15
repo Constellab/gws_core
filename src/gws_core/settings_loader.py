@@ -36,10 +36,10 @@ class SettingsLoader:
     GIT_INSTALLATION_FILE = ".gws-git-installation.json"
     SETTINGS_JSON_FILE = "settings.json"
 
-    main_settings_file_path: str = None
+    main_settings_file_path: str
     is_test: bool = False
 
-    settings: Settings = None
+    settings: Settings
 
     def __init__(self, main_settings_file_path: str, is_test: bool = False) -> None:
         self.main_settings_file_path = main_settings_file_path
@@ -61,7 +61,7 @@ class SettingsLoader:
 
     def _init(self):
         # read settings file
-        settings: dict = None
+        settings: dict
         try:
             settings = self._read_settings_file(self.main_settings_file_path)
         except Exception as err:
@@ -71,7 +71,7 @@ class SettingsLoader:
             raise err
 
         # load the main brick, if the settings.json is in a brick
-        main_brick_name: str = self.load_main_brick(settings)
+        main_brick_name = self.load_main_brick(settings)
 
         # load all the bricks dependencies
         bricks = settings["environment"].get("bricks", [])
@@ -98,7 +98,7 @@ class SettingsLoader:
 
     def load_main_brick(self, settings: dict) -> str | None:
         """Load the main brick is the main settings.json is in a brick folder"""
-        main_brick_name: str = None
+        main_brick_name: str | None = None
         settings_dir = os.path.dirname(self.main_settings_file_path)
         if BrickService.folder_is_brick(settings_dir):
             # Use BrickSettings to get the name
@@ -119,7 +119,7 @@ class SettingsLoader:
 
         return None
 
-    def load_brick(self, brick_name: str, parent_name: str = None) -> None:
+    def load_brick(self, brick_name: str, parent_name: str | None = None) -> None:
         # repo dir is the path to the brick folder
         # if the brick is not found in the user workspace, we look for it in the system workspace
         brick_path = (
@@ -140,6 +140,7 @@ class SettingsLoader:
             repo_commit=None,
             parent_name=parent_name,
             error=None,
+            variables={},
         )
 
         if not os.path.exists(brick_path):
@@ -180,6 +181,7 @@ class SettingsLoader:
             return
 
         brick_module.version = brick_settings.version
+        brick_module.variables = brick_settings.variables if brick_settings.variables else {}
 
         # add src folder to python path
         sys.path.insert(0, os.path.join(brick_path, self.SOURCE_FOLDER_NAME))
@@ -189,10 +191,6 @@ class SettingsLoader:
         brick_module.repo_commit = git_commit
         brick_module.repo_type = "git" if git_commit else "pip"
         self._save_brick(brick_module)
-
-        # parse and save variables
-        if brick_settings.variables:
-            self._save_brick_variables(brick_name, brick_path, brick_settings.variables)
 
         # loads git packages
         if brick_settings.environment and brick_settings.environment.git:
@@ -226,7 +224,7 @@ class SettingsLoader:
         with open(file_path, encoding="utf-8") as fp:
             return json.load(fp)
 
-    def _load_brick_dependencies(self, bricks: list[dict], parent_name: str = None) -> None:
+    def _load_brick_dependencies(self, bricks: list[dict], parent_name: str | None = None) -> None:
         for brick in bricks:
             brick_name = brick["name"]
 
@@ -235,7 +233,7 @@ class SettingsLoader:
     def _load_git_dependencies(self, git_env: list[dict]) -> None:
         for channel in git_env:
             channel_source = channel["source"]
-            for package in channel.get("packages"):
+            for package in channel.get("packages", []):
                 module_name = package["name"]
                 repo_dir = os.path.join(self.EXTERNAL_LIB_FOLDER, module_name)
                 self._load_package(
@@ -248,13 +246,18 @@ class SettingsLoader:
     def _load_pip_dependencies(self, pip_env: list[dict]) -> None:
         for channel in pip_env:
             channel_source = channel["source"]
-            for package in channel.get("packages"):
+            for package in channel.get("packages", []):
                 module_name = package["name"]
 
                 if module_name not in sys.modules:
                     # Logger.info(f"Skipping pip package '{module_name}'")
                     continue
                 module = importlib.import_module(module_name)
+                if module.__file__ is None:
+                    Logger.warning(
+                        f"Skipping pip package '{module_name}' - module has no __file__ attribute"
+                    )
+                    continue
                 module_dir = os.path.abspath(module.__file__)
                 self._load_package(
                     package_name=module_name,
@@ -314,14 +317,6 @@ class SettingsLoader:
             sys.path.insert(0, os.path.abspath(package_path))
         self._save_module(brick_module)
 
-    def _save_brick_variables(self, repo_name: str, cwd: str, variables: dict[str, str]) -> None:
-        """Save the repo variable in the settings and replace the variables with the correct value."""
-        for key, value in variables.items():
-            value = value.replace("${LAB_DIR}", self.LAB_WORKSPACE_DIR)
-            value = value.replace("${CURRENT_DIR}", cwd)
-            value = value.replace("${CURRENT_BRICK}", repo_name)
-            self.settings.set_variable(key, value)
-
     def _save_module(self, module_info: ModuleInfo) -> None:
         self.settings.add_module(module_info)
 
@@ -337,7 +332,7 @@ class SettingsLoader:
             ["python3", "-m", "pip", "freeze"], stderr=subprocess.DEVNULL, text=True
         )
 
-    def _get_git_commit(self, cwd) -> str:
+    def _get_git_commit(self, cwd) -> str | None:
         """retrieve the git commit info from GIT_INSTALLATION_FILE file
 
         :param cwd: _description_

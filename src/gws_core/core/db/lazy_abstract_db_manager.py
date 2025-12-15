@@ -45,7 +45,7 @@ class LazyAbstractDbManager(AbstractDbManager):
     # Default configuration
     PORT = 3306
 
-    _config: DbConfig = None
+    _config: DbConfig | None = None
 
     def init(self, mode: DbMode):
         """Initialize the database by starting the Docker container first"""
@@ -100,14 +100,19 @@ class LazyAbstractDbManager(AbstractDbManager):
                     f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} is not a basic credentials."
                 )
 
-            self._config = {
-                "host": credentials_data.url,
-                "port": self.PORT,
-                "user": credentials_data.username,
-                "password": credentials_data.password,
-                "db_name": self.get_unique_name(),
-                "engine": "mariadb",
-            }
+            if not credentials_data.url:
+                raise Exception(
+                    f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} has no URL."
+                )
+
+            self._config = DbConfig(
+                user=credentials_data.username,
+                password=credentials_data.password,
+                host=credentials_data.url,
+                port=self.PORT,
+                db_name=self.get_unique_name(),
+                engine="mariadb",
+            )
 
         return self._config
 

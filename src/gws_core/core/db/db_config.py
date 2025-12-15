@@ -1,13 +1,13 @@
 from typing import Literal
 
-from typing_extensions import TypedDict
+from gws_core.core.model.model_dto import BaseModelDTO
 
 SupportedDbEngine = Literal["mysql", "mariadb"]
 
 DbMode = Literal["prod", "dev", "test"]
 
 
-class DbConfig(TypedDict):
+class DbConfig(BaseModelDTO):
     user: str
     password: str
     host: str

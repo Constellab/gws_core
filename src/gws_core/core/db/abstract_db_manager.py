@@ -91,17 +91,17 @@ class AbstractDbManager:
                 "The db config is not provided, did you implement the 'get_config' in your DbManager ?"
             )
 
-        if not Utils.value_is_in_literal(db_config["engine"], SupportedDbEngine):
+        if not Utils.value_is_in_literal(db_config.engine, SupportedDbEngine):
             raise Exception(
-                "gws.db.model.DbManager", "init", f"Db engine '{db_config['engine']}' is not valid"
+                "gws.db.model.DbManager", "init", f"Db engine '{db_config.engine}' is not valid"
             )
 
         _db = ReconnectMySQLDatabase(
-            db_config["db_name"],
-            user=db_config["user"],
-            password=db_config["password"],
-            host=db_config["host"],
-            port=db_config["port"],
+            db_config.db_name,
+            user=db_config.user,
+            password=db_config.password,
+            host=db_config.host,
+            port=db_config.port,
         )
         self.db.initialize(_db)
         self._is_initialized = True
@@ -132,6 +132,20 @@ class AbstractDbManager:
 
         if self.db.is_closed():
             self.db.connect()
+
+    def check_connection(self) -> bool:
+        """Check if the database connection is working
+
+        :return: True if connection is working, False otherwise
+        :rtype: bool
+        """
+        try:
+            # Try to execute a simple query to verify the connection
+            self.db.execute_sql("SELECT 1")
+            return True
+        except Exception as e:
+            Logger.error(f"Database connection check failed: {e}")
+            return False
 
     def create_tables(self, models: list[type]) -> None:
         """Create the tables for the provided models"""

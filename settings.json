@@ -3,7 +3,7 @@
     "author": "Gencovery",
     "version": "0.19.0",
     "variables": {
-        "gws_core:testdata_dir": "${CURRENT_DIR}/tests/testdata"
+        "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
         "FRONT_VERSION": "2.6.2",
