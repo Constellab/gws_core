@@ -8,6 +8,7 @@ from gws_core.core.db.db_config import DbConfig, DbMode
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_type import CredentialsDataBasic
+from gws_core.docker.docker_dto import RegisterSQLDBComposeRequestOptionsDTO
 from gws_core.docker.docker_service import DockerService
 from gws_core.user.current_user_service import AuthenticateUser
 
@@ -67,13 +68,18 @@ class LazyAbstractDbManager(AbstractDbManager):
                     brick_name=brick_name,
                     unique_name=self.get_name(),
                     database_name=self.get_unique_name(),
-                    description=f"{brick_name} brick database in {mode} mode",
+                    options=RegisterSQLDBComposeRequestOptionsDTO(
+                        description=f"{brick_name} brick database in {mode} mode",
+                        auto_start=True,
+                    ),
                 )
                 Logger.info(f"{self.get_unique_name()} database container started")
 
         except Exception as err:
             # If the lab manager failed to start the docker, we try to get the credentials to connect
-            Logger.info(f"Cannot start the {self.get_brick_name()} db compose, skipping startup.")
+            Logger.info(
+                f"Cannot start the {self.get_brick_name()} db compose, skipping startup."
+            )
 
             if not Settings.is_local_dev_env():
                 Logger.log_exception_stack_trace(err)

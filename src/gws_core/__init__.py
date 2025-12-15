@@ -22,7 +22,9 @@ from .apps.reflex.reflex_resource import ReflexResource as ReflexResource
 from .brick.brick_service import BrickService as BrickService
 
 # Community
-from .community.community_front_service import CommunityFrontService as CommunityFrontService
+from .community.community_front_service import (
+    CommunityFrontService as CommunityFrontService,
+)
 from .community.community_service import CommunityService as CommunityService
 
 # Config
@@ -36,7 +38,9 @@ from .config.param.code_param.bash_code_param import BashCodeParam as BashCodePa
 from .config.param.code_param.json_code_param import JsonCodeParam as JsonCodeParam
 from .config.param.code_param.julia_code_param import JuliaCodeParam as JuliaCodeParam
 from .config.param.code_param.perl_code_param import PerlCodeParam as PerlCodeParam
-from .config.param.code_param.python_code_param import PythonCodeParam as PythonCodeParam
+from .config.param.code_param.python_code_param import (
+    PythonCodeParam as PythonCodeParam,
+)
 from .config.param.code_param.r_code_param import RCodeParam as RCodeParam
 from .config.param.code_param.yaml_code_param import YamlCodeParam as YamlCodeParam
 
@@ -59,11 +63,19 @@ from .config.param.tags_param_spec import TagsParam as TagsParam
 from .core.classes.enum_field import EnumField as EnumField
 from .core.classes.expression_builder import ExpressionBuilder as ExpressionBuilder
 from .core.classes.file_downloader import FileDownloader as FileDownloader
-from .core.classes.observer.dispatched_message import DispatchedMessage as DispatchedMessage
-from .core.classes.observer.message_dispatcher import MessageDispatcher as MessageDispatcher
+from .core.classes.observer.dispatched_message import (
+    DispatchedMessage as DispatchedMessage,
+)
+from .core.classes.observer.message_dispatcher import (
+    MessageDispatcher as MessageDispatcher,
+)
 from .core.classes.observer.message_level import MessageLevel as MessageLevel
-from .core.classes.observer.message_observer import BasicMessageObserver as BasicMessageObserver
-from .core.classes.observer.message_observer import LoggerMessageObserver as LoggerMessageObserver
+from .core.classes.observer.message_observer import (
+    BasicMessageObserver as BasicMessageObserver,
+)
+from .core.classes.observer.message_observer import (
+    LoggerMessageObserver as LoggerMessageObserver,
+)
 from .core.classes.observer.message_observer import MessageObserver as MessageObserver
 from .core.classes.observer.message_observer import (
     ProgressBarMessageObserver as ProgressBarMessageObserver,
@@ -82,11 +94,16 @@ from .core.classes.validator import StrValidator as StrValidator
 from .core.classes.validator import URLValidator as URLValidator
 from .core.classes.validator import Validator as Validator
 from .core.db.abstract_db_manager import AbstractDbManager as AbstractDbManager
+from .core.db.db_manager_service import DbManagerService as DbManagerService
 from .core.db.db_config import DbConfig as DbConfig
 from .core.db.db_config import DbMode as DbMode
 from .core.db.gws_core_db_manager import GwsCoreDbManager as GwsCoreDbManager
-from .core.db.lazy_abstract_db_manager import LazyAbstractDbManager as LazyAbstractDbManager
-from .core.db.migration.brick_migration_decorator import brick_migration as brick_migration
+from .core.db.lazy_abstract_db_manager import (
+    LazyAbstractDbManager as LazyAbstractDbManager,
+)
+from .core.db.migration.brick_migration_decorator import (
+    brick_migration as brick_migration,
+)
 
 # Core > DB
 from .core.db.migration.brick_migrator import BrickMigration as BrickMigration
@@ -144,33 +161,53 @@ from .credentials.credentials_type import CredentialsDataBasic as CredentialsDat
 from .credentials.credentials_type import CredentialsDataLab as CredentialsDataLab
 from .credentials.credentials_type import CredentialsDataOther as CredentialsDataOther
 from .credentials.credentials_type import CredentialsDataS3 as CredentialsDataS3
-from .credentials.credentials_type import CredentialsDataS3LabServer as CredentialsDataS3LabServer
+from .credentials.credentials_type import (
+    CredentialsDataS3LabServer as CredentialsDataS3LabServer,
+)
 from .credentials.credentials_type import CredentialsType as CredentialsType
 
 # Docker
 from .docker.docker_dto import DockerComposeStatus as DockerComposeStatus
 from .docker.docker_dto import DockerComposeStatusInfoDTO as DockerComposeStatusInfoDTO
 from .docker.docker_dto import StartComposeRequestDTO as StartComposeRequestDTO
+from .docker.docker_dto import (
+    RegisterComposeOptionsRequestDTO as RegisterComposeOptionsRequestDTO,
+)
+from .docker.docker_dto import (
+    RegisterSQLDBComposeRequestOptionsDTO as RegisterSQLDBComposeRequestOptionsDTO,
+)
 from .docker.docker_dto import SubComposeInfoDTO as SubComposeInfoDTO
 from .docker.docker_dto import SubComposeListDTO as SubComposeListDTO
 from .docker.docker_service import DockerService as DockerService
 
 # EntityNavigator
 from .entity_navigator.entity_navigator import EntityNavigator as EntityNavigator
-from .entity_navigator.entity_navigator import EntityNavigatorNote as EntityNavigatorNote
-from .entity_navigator.entity_navigator import EntityNavigatorResource as EntityNavigatorResource
-from .entity_navigator.entity_navigator import EntityNavigatorScenario as EntityNavigatorScenario
-from .entity_navigator.entity_navigator import EntityNavigatorView as EntityNavigatorView
+from .entity_navigator.entity_navigator import (
+    EntityNavigatorNote as EntityNavigatorNote,
+)
+from .entity_navigator.entity_navigator import (
+    EntityNavigatorResource as EntityNavigatorResource,
+)
+from .entity_navigator.entity_navigator import (
+    EntityNavigatorScenario as EntityNavigatorScenario,
+)
+from .entity_navigator.entity_navigator import (
+    EntityNavigatorView as EntityNavigatorView,
+)
 from .entity_navigator.entity_navigator_service import (
     EntityNavigatorService as EntityNavigatorService,
 )
-from .entity_navigator.entity_navigator_type import NavigableEntityType as NavigableEntityType
+from .entity_navigator.entity_navigator_type import (
+    NavigableEntityType as NavigableEntityType,
+)
 
 # Space Folder
 from .folder.space_folder import SpaceFolder as SpaceFolder
 from .folder.space_folder_dto import *
 from .folder.task.space_folder_param import SpaceFolderParam as SpaceFolderParam
-from .folder.task.space_folder_resource import SpaceFolderResource as SpaceFolderResource
+from .folder.task.space_folder_resource import (
+    SpaceFolderResource as SpaceFolderResource,
+)
 
 # Impl > Agent
 from .impl.agent.helper.agent_factory import AgentFactory as AgentFactory
@@ -219,27 +256,49 @@ from .impl.plotly.plotly_resource import PlotlyResource as PlotlyResource
 from .impl.plotly.plotly_view import PlotlyView as PlotlyView
 
 # Impl > RichText
-from .impl.rich_text.block.rich_text_block import RichTextBlockDataBase as RichTextBlockDataBase
+from .impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase as RichTextBlockDataBase,
+)
 from .impl.rich_text.block.rich_text_block import RichTextBlockType as RichTextBlockType
-from .impl.rich_text.block.rich_text_block_code import RichTextBlockCode as RichTextBlockCode
-from .impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure as RichTextBlockFigure
-from .impl.rich_text.block.rich_text_block_file import RichTextBlockFile as RichTextBlockFile
+from .impl.rich_text.block.rich_text_block_code import (
+    RichTextBlockCode as RichTextBlockCode,
+)
+from .impl.rich_text.block.rich_text_block_figure import (
+    RichTextBlockFigure as RichTextBlockFigure,
+)
+from .impl.rich_text.block.rich_text_block_file import (
+    RichTextBlockFile as RichTextBlockFile,
+)
 from .impl.rich_text.block.rich_text_block_formula import (
     RichTextBlockFormula as RichTextBlockFormula,
 )
-from .impl.rich_text.block.rich_text_block_header import RichTextBlockHeader as RichTextBlockHeader
-from .impl.rich_text.block.rich_text_block_hint import RichTextBlockHint as RichTextBlockHint
-from .impl.rich_text.block.rich_text_block_iframe import RichTextBlockIframe as RichTextBlockIframe
-from .impl.rich_text.block.rich_text_block_list import RichTextBlockList as RichTextBlockList
+from .impl.rich_text.block.rich_text_block_header import (
+    RichTextBlockHeader as RichTextBlockHeader,
+)
+from .impl.rich_text.block.rich_text_block_hint import (
+    RichTextBlockHint as RichTextBlockHint,
+)
+from .impl.rich_text.block.rich_text_block_iframe import (
+    RichTextBlockIframe as RichTextBlockIframe,
+)
+from .impl.rich_text.block.rich_text_block_list import (
+    RichTextBlockList as RichTextBlockList,
+)
 from .impl.rich_text.block.rich_text_block_paragraph import (
     RichTextBlockParagraph as RichTextBlockParagraph,
 )
-from .impl.rich_text.block.rich_text_block_quote import RichTextBlockQuote as RichTextBlockQuote
-from .impl.rich_text.block.rich_text_block_table import RichTextBlockTable as RichTextBlockTable
+from .impl.rich_text.block.rich_text_block_quote import (
+    RichTextBlockQuote as RichTextBlockQuote,
+)
+from .impl.rich_text.block.rich_text_block_table import (
+    RichTextBlockTable as RichTextBlockTable,
+)
 from .impl.rich_text.block.rich_text_block_timestamp import (
     RichTextBlockTimestamp as RichTextBlockTimestamp,
 )
-from .impl.rich_text.block.rich_text_block_video import RichTextBlockVideo as RichTextBlockVideo
+from .impl.rich_text.block.rich_text_block_video import (
+    RichTextBlockVideo as RichTextBlockVideo,
+)
 from .impl.rich_text.block.rich_text_block_view import (
     RichTextBlockNoteResourceView as RichTextBlockNoteResourceView,
 )
@@ -251,12 +310,16 @@ from .impl.rich_text.block.rich_text_block_view import (
 )
 from .impl.rich_text.rich_text import RichText as RichText
 from .impl.rich_text.rich_text_db_field import RichTextDbField as RichTextDbField
-from .impl.rich_text.rich_text_modification import RichTextAggregateDTO as RichTextAggregateDTO
+from .impl.rich_text.rich_text_modification import (
+    RichTextAggregateDTO as RichTextAggregateDTO,
+)
 from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock
 from .impl.rich_text.rich_text_types import RichTextDTO as RichTextDTO
 from .impl.rich_text.rich_text_types import RichTextObjectType as RichTextObjectType
 from .impl.rich_text.rich_text_view import RichTextView as RichTextView
-from .impl.s3.datahub_s3_server_service import DataHubS3ServerService as DataHubS3ServerService
+from .impl.s3.datahub_s3_server_service import (
+    DataHubS3ServerService as DataHubS3ServerService,
+)
 
 # Impl > s3
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket
@@ -283,18 +346,30 @@ from .impl.table.helper.dataframe_filter_helper import (
 from .impl.table.helper.dataframe_scaler_helper import (
     DataframeScalerHelper as DataframeScalerHelper,
 )
-from .impl.table.helper.table_concat_helper import TableConcatHelper as TableConcatHelper
-from .impl.table.helper.table_operation_helper import TableOperationHelper as TableOperationHelper
-from .impl.table.helper.table_scaler_helper import TableScalerHelper as TableScalerHelper
+from .impl.table.helper.table_concat_helper import (
+    TableConcatHelper as TableConcatHelper,
+)
+from .impl.table.helper.table_operation_helper import (
+    TableOperationHelper as TableOperationHelper,
+)
+from .impl.table.helper.table_scaler_helper import (
+    TableScalerHelper as TableScalerHelper,
+)
 from .impl.table.helper.table_tag_aggregator_helper import (
     TableTagAggregatorHelper as TableTagAggregatorHelper,
 )
-from .impl.table.helper.table_unfolder_helper import TableUnfolderHelper as TableUnfolderHelper
+from .impl.table.helper.table_unfolder_helper import (
+    TableUnfolderHelper as TableUnfolderHelper,
+)
 from .impl.table.metadata_table.helper.table_annotator_helper import (
     TableAnnotatorHelper as TableAnnotatorHelper,
 )
-from .impl.table.metadata_table.table_annotator import TableColumnAnnotator as TableColumnAnnotator
-from .impl.table.metadata_table.table_annotator import TableRowAnnotator as TableRowAnnotator
+from .impl.table.metadata_table.table_annotator import (
+    TableColumnAnnotator as TableColumnAnnotator,
+)
+from .impl.table.metadata_table.table_annotator import (
+    TableRowAnnotator as TableRowAnnotator,
+)
 from .impl.table.smart_tasks.table_smart_plotly import (
     AITableGeneratePlotly as AITableGeneratePlotly,
 )
@@ -302,8 +377,12 @@ from .impl.table.table import Table as Table
 from .impl.table.table_types import TableHeaderInfo as TableHeaderInfo
 from .impl.table.tasks.table_exporter import TableExporter as TableExporter
 from .impl.table.tasks.table_importer import TableImporter as TableImporter
-from .impl.table.transformers.table_aggregator import TableColumnAggregator as TableColumnAggregator
-from .impl.table.transformers.table_aggregator import TableRowAggregator as TableRowAggregator
+from .impl.table.transformers.table_aggregator import (
+    TableColumnAggregator as TableColumnAggregator,
+)
+from .impl.table.transformers.table_aggregator import (
+    TableRowAggregator as TableRowAggregator,
+)
 from .impl.table.transformers.table_aggregator_filter import (
     TableColumnAggregatorFilter as TableColumnAggregatorFilter,
 )
@@ -324,22 +403,30 @@ from .impl.table.transformers.table_data_filter_text import (
 from .impl.table.transformers.table_data_filter_text import (
     TableRowDataTextFilter as TableRowDataTextFilter,
 )
-from .impl.table.transformers.table_deleter import TableColumnsDeleter as TableColumnsDeleter
+from .impl.table.transformers.table_deleter import (
+    TableColumnsDeleter as TableColumnsDeleter,
+)
 from .impl.table.transformers.table_deleter import TableRowsDeleter as TableRowsDeleter
 from .impl.table.transformers.table_mass_operations import (
     TableColumnMassOperations as TableColumnMassOperations,
 )
-from .impl.table.transformers.table_operations import TableColumnOperations as TableColumnOperations
+from .impl.table.transformers.table_operations import (
+    TableColumnOperations as TableColumnOperations,
+)
 from .impl.table.transformers.table_replace import TableReplace as TableReplace
 from .impl.table.transformers.table_scaler import TableColumnScaler as TableColumnScaler
 from .impl.table.transformers.table_scaler import TableRowScaler as TableRowScaler
 from .impl.table.transformers.table_scaler import TableScaler as TableScaler
-from .impl.table.transformers.table_selector import TableColumnSelector as TableColumnSelector
+from .impl.table.transformers.table_selector import (
+    TableColumnSelector as TableColumnSelector,
+)
 from .impl.table.transformers.table_selector import (
     TableColumnTagsSelector as TableColumnTagsSelector,
 )
 from .impl.table.transformers.table_selector import TableRowSelector as TableRowSelector
-from .impl.table.transformers.table_selector import TableRowTagsSelector as TableRowTagsSelector
+from .impl.table.transformers.table_selector import (
+    TableRowTagsSelector as TableRowTagsSelector,
+)
 from .impl.table.transformers.table_tag_aggregator import (
     TableColumnTagAggregator as TableColumnTagAggregator,
 )
@@ -353,8 +440,12 @@ from .impl.table.transformers.table_tag_extractor import (
     TableRowTagToColumnExtractor as TableRowTagToColumnExtractor,
 )
 from .impl.table.transformers.table_transposer import TableTransposer as TableTransposer
-from .impl.table.transformers.table_unfolder import TableColumnTagUnfolder as TableColumnTagUnfolder
-from .impl.table.transformers.table_unfolder import TableRowTagUnfolder as TableRowTagUnfolder
+from .impl.table.transformers.table_unfolder import (
+    TableColumnTagUnfolder as TableColumnTagUnfolder,
+)
+from .impl.table.transformers.table_unfolder import (
+    TableRowTagUnfolder as TableRowTagUnfolder,
+)
 from .impl.table.view.table_view import TableView as TableView
 
 # Impl > Text
@@ -424,11 +515,17 @@ from .note.task.note_param import NoteParam as NoteParam
 
 # Note template
 from .note_template.note_template import NoteTemplate as NoteTemplate
-from .note_template.note_template_service import NoteTemplateService as NoteTemplateService
+from .note_template.note_template_service import (
+    NoteTemplateService as NoteTemplateService,
+)
 
 # Note template > task
-from .note_template.task.note_template_param import NoteTemplateParam as NoteTemplateParam
-from .note_template.task.note_template_resource import NoteTemplateResource as NoteTemplateResource
+from .note_template.task.note_template_param import (
+    NoteTemplateParam as NoteTemplateParam,
+)
+from .note_template.task.note_template_resource import (
+    NoteTemplateResource as NoteTemplateResource,
+)
 
 # Process
 from .process.process import Process as Process
@@ -465,14 +562,20 @@ from .resource.r_field.primitive_r_field import StrRField as StrRField
 from .resource.r_field.primitive_r_field import UUIDRField as UUIDRField
 from .resource.r_field.r_field import RField as RField
 from .resource.r_field.r_field import RFieldStorage as RFieldStorage
-from .resource.r_field.serializable_r_field import SerializableObjectJson as SerializableObjectJson
-from .resource.r_field.serializable_r_field import SerializableRField as SerializableRField
+from .resource.r_field.serializable_r_field import (
+    SerializableObjectJson as SerializableObjectJson,
+)
+from .resource.r_field.serializable_r_field import (
+    SerializableRField as SerializableRField,
+)
 from .resource.resource import Resource as Resource
 from .resource.resource_decorator import resource_decorator as resource_decorator
 from .resource.resource_dto import ResourceOrigin as ResourceOrigin
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
-from .resource.resource_search_builder import ResourceSearchBuilder as ResourceSearchBuilder
+from .resource.resource_search_builder import (
+    ResourceSearchBuilder as ResourceSearchBuilder,
+)
 from .resource.resource_service import ResourceService as ResourceService
 from .resource.resource_set.resource_list import ResourceList as ResourceList
 from .resource.resource_set.resource_set import ResourceSet as ResourceSet
@@ -480,8 +583,12 @@ from .resource.resource_transfert_service import (
     ResourceTransfertService as ResourceTransfertService,
 )
 from .resource.resource_typing import ResourceTyping as ResourceTyping
-from .resource.task.resource_downloader_base import ResourceDownloaderBase as ResourceDownloaderBase
-from .resource.task.resource_downloader_http import ResourceDownloaderHttp as ResourceDownloaderHttp
+from .resource.task.resource_downloader_base import (
+    ResourceDownloaderBase as ResourceDownloaderBase,
+)
+from .resource.task.resource_downloader_http import (
+    ResourceDownloaderHttp as ResourceDownloaderHttp,
+)
 from .resource.technical_info import TechnicalInfo as TechnicalInfo
 from .resource.view.multi_views import MultiViews as MultiViews
 from .resource.view.view import View as View
@@ -502,14 +609,18 @@ from .scenario.scenario_enums import ScenarioProcessStatus as ScenarioProcessSta
 from .scenario.scenario_enums import ScenarioStatus as ScenarioStatus
 from .scenario.scenario_proxy import ScenarioProxy as ScenarioProxy
 from .scenario.scenario_run_service import ScenarioRunService as ScenarioRunService
-from .scenario.scenario_search_builder import ScenarioSearchBuilder as ScenarioSearchBuilder
+from .scenario.scenario_search_builder import (
+    ScenarioSearchBuilder as ScenarioSearchBuilder,
+)
 from .scenario.scenario_service import ScenarioService as ScenarioService
 from .scenario.scenario_transfert_service import (
     ScenarioTransfertService as ScenarioTransfertService,
 )
 from .scenario.scenario_waiter import ScenarioWaiter as ScenarioWaiter
 from .scenario.scenario_waiter import ScenarioWaiterBasic as ScenarioWaiterBasic
-from .scenario.scenario_waiter import ScenarioWaiterExternalLab as ScenarioWaiterExternalLab
+from .scenario.scenario_waiter import (
+    ScenarioWaiterExternalLab as ScenarioWaiterExternalLab,
+)
 from .scenario.task.send_scenario_to_lab import SendScenarioToLab as SendScenarioToLab
 
 # Scenario template

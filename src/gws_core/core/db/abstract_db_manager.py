@@ -30,9 +30,10 @@ class AbstractDbManager:
     :type db: `DatabaseProxy`
     """
 
-    db: DatabaseProxy = None
+    # Define in subclasses
+    db: DatabaseProxy
 
-    mode: DbMode = None
+    mode: DbMode | None = None
 
     _is_initialized = False
 
@@ -78,6 +79,14 @@ class AbstractDbManager:
 
         return True
 
+    def auto_init(self) -> bool:
+        """
+        If True, the db will be automatically initialized by the DbManagerService
+        If False, the db won't be automatically initialized, and must be initialized manually
+        """
+
+        return True
+
     def init(self, mode: DbMode):
         """Initialize the DbManager"""
 
@@ -93,7 +102,9 @@ class AbstractDbManager:
 
         if not Utils.value_is_in_literal(db_config.engine, SupportedDbEngine):
             raise Exception(
-                "gws.db.model.DbManager", "init", f"Db engine '{db_config.engine}' is not valid"
+                "gws.db.model.DbManager",
+                "init",
+                f"Db engine '{db_config.engine}' is not valid",
             )
 
         _db = ReconnectMySQLDatabase(
@@ -104,6 +115,11 @@ class AbstractDbManager:
             port=db_config.port,
         )
         self.db.initialize(_db)
+
+        if self.check_connection() is False:
+            raise Exception(
+                f"Could not connect to the database '{db_config.db_name}' at '{db_config.host}:{db_config.port}' with user '{db_config.user}'"
+            )
         self._is_initialized = True
 
     def get_db(self) -> DatabaseProxy:
@@ -113,8 +129,11 @@ class AbstractDbManager:
 
     def get_engine(self) -> SupportedDbEngine:
         """Get the db object"""
-
-        return self.get_config(self.mode)["engine"]
+        if not self.mode:
+            raise Exception(
+                "The DbManager is not initialized, cannot get the engine type"
+            )
+        return self.get_config(self.mode).engine
 
     def is_mysql_engine(self):
         """Test if the mysql engine is active"""

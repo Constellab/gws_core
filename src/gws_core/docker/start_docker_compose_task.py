@@ -5,7 +5,10 @@ from gws_core.config.param.code_param.json_code_param import JsonCodeParam
 from gws_core.config.param.code_param.yaml_code_param import YamlCodeParam
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
-from gws_core.docker.docker_dto import DockerComposeStatus
+from gws_core.docker.docker_dto import (
+    DockerComposeStatus,
+    RegisterComposeOptionsRequestDTO,
+)
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -125,7 +128,9 @@ class StartDockerComposeTask(Task):
                 optional=True,
             ),
             "brick_name": StrParam(
-                human_name="Brick Name", short_description="Name of the brick", optional=False
+                human_name="Brick Name",
+                short_description="Name of the brick",
+                optional=False,
             ),
             "unique_name": StrParam(
                 human_name="Unique Name",
@@ -190,9 +195,11 @@ class StartDockerComposeTask(Task):
             brick_name=brick_name,
             unique_name=unique_name,
             compose_yaml_content=yaml_config,
-            description=params.get_value("description"),
-            env=env,
-            auto_start=params.get_value("auto_start"),
+            options=RegisterComposeOptionsRequestDTO(
+                description=params.get_value("description"),
+                environment_variables=env,
+                auto_start=params.get_value("auto_start"),
+            ),
         )
 
         self.log_info_message("Docker Compose started, waiting for ready status...")

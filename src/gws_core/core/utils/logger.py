@@ -165,8 +165,10 @@ class Logger:
         return cast(LoggerLevel, log_level)
 
     @classmethod
-    def error(cls, message: str) -> None:
+    def error(cls, message: str, exception: Exception | None = None) -> None:
         cls._log_message("ERROR", message)
+        if exception:
+            cls.log_exception_stack_trace(exception)
 
     @classmethod
     def log_exception_stack_trace(cls, exception: Exception) -> None:

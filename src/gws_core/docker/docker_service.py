@@ -12,8 +12,10 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_dto import (
+    RegisterComposeOptionsRequestDTO,
     RegisterSQLDBComposeAPIResponseDTO,
     RegisterSQLDBComposeRequestDTO,
+    RegisterSQLDBComposeRequestOptionsDTO,
     RegisterSQLDBComposeResponseDTO,
     StartComposeRequestDTO,
     SubComposeListDTO,
@@ -30,9 +32,7 @@ class DockerService(LabManagerServiceBase):
         brick_name: str,
         unique_name: str,
         compose_yaml_content: str,
-        description: str,
-        env: dict[str, str] | None = None,
-        auto_start: bool = False,
+        options: RegisterComposeOptionsRequestDTO,
     ) -> None:
         """
         Start a docker compose from string content
@@ -45,12 +45,8 @@ class DockerService(LabManagerServiceBase):
         :type unique_name: str
         :param compose_yaml_content: Content of the docker-compose YAML file
         :type compose_yaml_content: str
-        :param description: Description for the compose
-        :type description: str
-        :param env: Environment variables for the compose
-        :type env: Dict[str, str]
-        :param auto_start: Whether to automatically start the compose on lab start (default: False)
-        :type auto_start: bool
+        :param options: Options for the compose registration
+        :type options: RegisterComposeOptionsRequestDTO
         :return: Response containing message and output
         :rtype: DockerComposeResponseDTO
         """
@@ -61,9 +57,7 @@ class DockerService(LabManagerServiceBase):
 
         compose = StartComposeRequestDTO(
             compose_yaml_content=compose_yaml_content,
-            description=description,
-            env=env,
-            auto_start=auto_start,
+            options=options,
         )
 
         try:
@@ -83,9 +77,7 @@ class DockerService(LabManagerServiceBase):
         brick_name: str,
         unique_name: str,
         folder_path: str,
-        description: str,
-        env: dict[str, str] | None = None,
-        auto_start: bool = False,
+        options: RegisterComposeOptionsRequestDTO,
     ) -> None:
         """
         Register a docker compose from a folder by zipping it and uploading
@@ -96,12 +88,8 @@ class DockerService(LabManagerServiceBase):
         :type unique_name: str
         :param folder_path: Path to the folder containing the compose files
         :type folder_path: str
-        :param description: Description for the compose
-        :type description: str
-        :param env: Environment variables for the compose
-        :type env: Dict[str, str]
-        :param auto_start: Whether to automatically start the compose on lab start (default: False)
-        :type auto_start: bool
+        :param options: Options for the compose registration
+        :type options: RegisterComposeOptionsRequestDTO
         :return: Status information of the compose
         :rtype: DockerComposeStatusInfoDTO
         """
@@ -112,14 +100,17 @@ class DockerService(LabManagerServiceBase):
 
         try:
             # Create zip file in temporary location
-            zip_file_path = tempfile.NamedTemporaryFile(suffix=".zip", delete=False).name
+            zip_file_path = tempfile.NamedTemporaryFile(
+                suffix=".zip", delete=False
+            ).name
             ZipCompress.compress_dir_content(folder_path, zip_file_path)
 
             # Create form data with the zip file
             form_data = FormData()
             form_data.add_file_from_path("file", zip_file_path, "compose.zip")
             form_data.add_json_data(
-                "body", {"description": description, "env": env, "auto_start": auto_start}
+                "body",
+                options.to_json_dict(),
             )
 
             ExternalApiService.post_form_data(
@@ -141,9 +132,9 @@ class DockerService(LabManagerServiceBase):
         brick_name: str,
         unique_name: str,
         database_name: str,
-        description: str,
-        env: dict[str, str] | None = None,
-        auto_start: bool = False,
+        options: RegisterSQLDBComposeRequestOptionsDTO,
+        disable_volume_backup: bool = False,
+        all_environments_networks: bool = False,
     ) -> RegisterSQLDBComposeResponseDTO:
         """
         Register and start a SQL database docker compose.
@@ -155,12 +146,8 @@ class DockerService(LabManagerServiceBase):
         :type unique_name: str
         :param database: Database name
         :type database: str
-        :param description: Description for the compose
-        :type description: str
-        :param env: Environment variables for the compose
-        :type env: Dict[str, str]
-        :param auto_start: Whether to automatically start the compose on lab start (default: False)
-        :type auto_start: bool
+        :param options: Options for the compose registration
+        :type options: RegisterComposeOptionsRequestDTO
         :return: Response containing message and output
         :rtype: DockerComposeResponseDTO
         """
@@ -177,9 +164,7 @@ class DockerService(LabManagerServiceBase):
             username=credentials_data.username,
             password=credentials_data.password,
             database=database_name,
-            description=description,
-            env=env,
-            auto_start=auto_start,
+            options=options,
         )
 
         lab_api_url = self._get_lab_manager_api_url(
@@ -218,7 +203,11 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
             raise err
 
-    def unregister_compose(self, brick_name: str, unique_name: str) -> SubComposeStatusDTO:
+    def unregister_compose(
+        self,
+        brick_name: str,
+        unique_name: str,
+    ) -> SubComposeStatusDTO:
         """
         Stop and unregister a docker compose
 
@@ -226,6 +215,8 @@ class DockerService(LabManagerServiceBase):
         :type brick_name: str
         :param unique_name: Unique name for the compose
         :type unique_name: str
+        :param env: Environment of the compose registration (only define when you know what you are doing)
+        :type env: RegisterComposeEnv | None
         :return: Response containing message and output
         :rtype: SubComposeStatusDTO
         """
@@ -236,7 +227,9 @@ class DockerService(LabManagerServiceBase):
 
         try:
             response = ExternalApiService.delete(
-                lab_api_url, headers=self._get_request_header(), raise_exception_if_error=True
+                lab_api_url,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
             )
 
             return SubComposeStatusDTO.from_json(response.json())
@@ -245,7 +238,11 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't stop compose. Error: {err.detail}"
             raise err
 
-    def get_compose_status(self, brick_name: str, unique_name: str) -> SubComposeStatusDTO:
+    def get_compose_status(
+        self,
+        brick_name: str,
+        unique_name: str,
+    ) -> SubComposeStatusDTO:
         """
         Get the status of a docker compose
 
@@ -253,6 +250,8 @@ class DockerService(LabManagerServiceBase):
         :type brick_name: str
         :param unique_name: Unique name for the compose
         :type unique_name: str
+        :param env: Environment of the compose registration (only define when you know what you are doing)
+        :type env: RegisterComposeEnv | None
         :return: Status information of the compose
         :rtype: SubComposeStatusDTO
         """
@@ -263,7 +262,9 @@ class DockerService(LabManagerServiceBase):
 
         try:
             response = ExternalApiService.get(
-                lab_api_url, headers=self._get_request_header(), raise_exception_if_error=True
+                lab_api_url,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
             )
 
             return SubComposeStatusDTO.from_json(response.json())
@@ -278,7 +279,7 @@ class DockerService(LabManagerServiceBase):
         unique_name: str,
         interval_seconds: float = 5.0,
         max_attempts: int = 0,
-        message_dispatcher: MessageDispatcher = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ) -> SubComposeStatusDTO:
         """
         Wait for the compose status to stabilize (not STARTING or STOPPING)
@@ -295,7 +296,7 @@ class DockerService(LabManagerServiceBase):
         :rtype: SubComposeStatusDTO
         """
         attempts = 0
-        last_running_message: str = None
+        last_running_message: str | None = None
         while attempts < max_attempts or max_attempts == 0:
             status_info = self.get_compose_status(brick_name, unique_name)
 
@@ -309,9 +310,7 @@ class DockerService(LabManagerServiceBase):
                         text = f"Docker Compose process info: {status_info.subComposeProcess.status} {status_info.subComposeProcess.message}. "
                         duration = status_info.subComposeProcess.get_duration_seconds()
                         if duration is not None:
-                            text += (
-                                f" Start duration: {DateHelper.get_duration_pretty_text(duration)}."
-                            )
+                            text += f" Start duration: {DateHelper.get_duration_pretty_text(duration)}."
                     message_dispatcher.notify_info_message(text)
 
                 return status_info
@@ -343,7 +342,9 @@ class DockerService(LabManagerServiceBase):
 
         try:
             response = ExternalApiService.get(
-                lab_api_url, headers=self._get_request_header(), raise_exception_if_error=True
+                lab_api_url,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
             )
 
             return SubComposeListDTO.from_json(response.json())
@@ -424,7 +425,9 @@ class DockerService(LabManagerServiceBase):
 
         return cast(CredentialsDataBasic, credentials.get_data_object())
 
-    def get_basic_credentials(self, brick_name: str, unique_name: str) -> Credentials | None:
+    def get_basic_credentials(
+        self, brick_name: str, unique_name: str
+    ) -> Credentials | None:
         """
         Get basic credentials using the brick_name_unique_name format as the credential name.
 
