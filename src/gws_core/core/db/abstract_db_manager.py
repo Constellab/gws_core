@@ -79,13 +79,15 @@ class AbstractDbManager:
 
         return True
 
-    def auto_init(self) -> bool:
+    def ignore_error_on_init(self) -> bool:
         """
-        If True, the db will be automatically initialized by the DbManagerService
-        If False, the db won't be automatically initialized, and must be initialized manually
+        If True, errors during initialization from DbManagerService will be ignored
+        If False, errors during initialization will raise exceptions
+
+        Useful if the database need to be initialized manually later (eg: downloaded first)
         """
 
-        return True
+        return False
 
     def init(self, mode: DbMode):
         """Initialize the DbManager"""
@@ -130,9 +132,7 @@ class AbstractDbManager:
     def get_engine(self) -> SupportedDbEngine:
         """Get the db object"""
         if not self.mode:
-            raise Exception(
-                "The DbManager is not initialized, cannot get the engine type"
-            )
+            raise Exception("The DbManager is not initialized, cannot get the engine type")
         return self.get_config(self.mode).engine
 
     def is_mysql_engine(self):

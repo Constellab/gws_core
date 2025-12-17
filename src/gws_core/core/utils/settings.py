@@ -661,6 +661,13 @@ class Settings:
             return None
         return brick_info.get_variable(key)
 
+    def get_and_check_variable(self, brick_name: str, key: str) -> str:
+        """Returns a variable for a specific brick. Raises an error if the variable does not exist"""
+        value = self.get_variable(brick_name, key)
+        if value is None:
+            raise ValueError(f"Variable '{key}' not found for brick '{brick_name}'")
+        return value
+
     @property
     def is_test(self) -> bool:
         return self.data.get("is_test", False)

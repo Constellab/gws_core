@@ -23,9 +23,6 @@ class DbManagerService:
 
         db_managers = cls._get_db_manager_classes()
 
-        # remove db_managers that are not auto_init
-        db_managers = [db for db in db_managers if db.auto_init()]
-
         # sort the db_managers to have the lazy db at the end of the list
         db_managers.sort(key=lambda x: x.is_lazy_init())
 
@@ -37,7 +34,6 @@ class DbManagerService:
         cls,
         db_manager: AbstractDbManager,
         full_init: bool = True,
-        ignore_error: bool = False,
     ) -> bool:
         """
         Initialize the database of the provided DbManager
@@ -46,13 +42,11 @@ class DbManagerService:
         :type db_manager: AbstractDbManager
         :param full_init: If true, the migration and table creation will be done. If false, only the connection to the DB will be done. Defaults to True.
         :type full_init: bool, optional
-        :param ignore_error: If true, errors will be logged but not raised. Defaults to False.
-        :type ignore_error: bool, optional
         """
 
         mode: DbMode = cls.get_db_mode()
         return cls._init_db_with_error_handling(
-            db_manager, mode, full_init=full_init, ignore_error=ignore_error
+            db_manager, mode, full_init=full_init
         )
 
     @classmethod
@@ -61,17 +55,24 @@ class DbManagerService:
         db_manager: AbstractDbManager,
         mode: DbMode,
         full_init: bool,
-        ignore_error: bool = False,
     ) -> bool:
         """Wrapper that calls _init_db with error handling and logging."""
         try:
             cls._init_db(db_manager, mode, full_init)
         except Exception as err:
-            if ignore_error:
+            if db_manager.ignore_error_on_init():
                 return False
             unique_name = db_manager.get_unique_name()
-            error = f"Error while initializing the db '{unique_name}'. Error: {err}"
-            cls._handle_db_init_error(db_manager, err, error)
+            error_message = f"Error while initializing the db '{unique_name}'. Error: {err}"
+            if db_manager.is_lazy_init():
+                Logger.log_exception_stack_trace(err)
+                BrickService.log_brick_critical(
+                    db_manager,
+                    f"{error_message}. The db manager is lazy, so skipping initialization.",
+                )
+                return False
+            else:
+                raise Exception(error_message)
 
         return True
 
@@ -94,22 +95,6 @@ class DbManagerService:
 
         Logger.debug(f"Db manager '{unique_name}' initialized in '{mode}' mode")
 
-    @classmethod
-    def _handle_db_init_error(
-        cls,
-        db_manager: AbstractDbManager,
-        err: Exception,
-        error_message: str,
-    ) -> None:
-        if db_manager.is_lazy_init():
-            Logger.log_exception_stack_trace(err)
-            BrickService.log_brick_critical(
-                db_manager,
-                f"{error_message}. The db manager is lazy, so skipping initialization.",
-            )
-            return
-        else:
-            raise Exception(error_message)
 
     @classmethod
     def _get_db_manager_classes(cls) -> list[AbstractDbManager]:

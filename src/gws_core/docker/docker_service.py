@@ -12,6 +12,9 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 from gws_core.docker.docker_dto import (
+    DockerContainerHealth,
+    DockerContainerInspectDTO,
+    DockerContainerStatus,
     RegisterComposeOptionsRequestDTO,
     RegisterSQLDBComposeAPIResponseDTO,
     RegisterSQLDBComposeRequestDTO,
@@ -100,9 +103,9 @@ class DockerService(LabManagerServiceBase):
 
         try:
             # Create zip file in temporary location
-            zip_file_path = tempfile.NamedTemporaryFile(
-                suffix=".zip", delete=False
-            ).name
+            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
+                zip_file_path = temp_file.name
+
             ZipCompress.compress_dir_content(folder_path, zip_file_path)
 
             # Create form data with the zip file
@@ -133,8 +136,6 @@ class DockerService(LabManagerServiceBase):
         unique_name: str,
         database_name: str,
         options: RegisterSQLDBComposeRequestOptionsDTO,
-        disable_volume_backup: bool = False,
-        all_environments_networks: bool = False,
     ) -> RegisterSQLDBComposeResponseDTO:
         """
         Register and start a SQL database docker compose.
@@ -273,6 +274,113 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't get compose status. Error: {err.detail}"
             raise err
 
+    def get_sub_compose_service_status(
+        self,
+        brick_name: str,
+        unique_name: str,
+        service_name: str,
+    ) -> DockerContainerInspectDTO:
+        """
+        Get the status of a specific service within a docker compose
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param service_name: Name of the service within the compose
+        :type service_name: str
+        :return: Container inspection information for the service
+        :rtype: ContainerInspectDTO
+        """
+
+        lab_api_url = self._get_lab_manager_api_url(
+            f"{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/service/{service_name}/status"
+        )
+
+        try:
+            response = ExternalApiService.get(
+                lab_api_url,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
+            )
+
+            return DockerContainerInspectDTO.from_json(response.json())
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't get service status for '{service_name}'. Error: {err.detail}"
+            raise err
+
+    def wait_for_service_healthy(
+        self,
+        brick_name: str,
+        unique_name: str,
+        service_name: str,
+        interval_seconds: float = 5.0,
+        max_attempts: int = 0,
+        message_dispatcher: MessageDispatcher | None = None,
+    ) -> DockerContainerInspectDTO:
+        """
+        Wait for a service to be up and healthy
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param service_name: Name of the service within the compose
+        :type service_name: str
+        :param interval_seconds: Time in seconds between status checks (default: 5.0)
+        :type interval_seconds: float
+        :param max_attempts: Maximum number of attempts to check the status (default: 0 means no limit)
+        :type max_attempts: int
+        :param message_dispatcher: Optional message dispatcher for progress updates
+        :type message_dispatcher: MessageDispatcher | None
+        :return: Container inspection information when the service is healthy
+        :rtype: ContainerInspectDTO
+        """
+        attempts = 0
+        last_status_message: str | None = None
+
+        while attempts < max_attempts or max_attempts == 0:
+            container_info = self.get_sub_compose_service_status(
+                brick_name, unique_name, service_name
+            )
+
+            # Check if container is running and healthy
+            if (
+                container_info.status == DockerContainerStatus.RUNNING
+                and container_info.health == DockerContainerHealth.HEALTHY
+            ):
+                if message_dispatcher is not None:
+                    message_dispatcher.notify_info_message(
+                        f"Service '{service_name}' is up and healthy."
+                    )
+                return container_info
+
+            # Dispatch status message if it has changed
+            status_message = f"Service '{service_name}' status: {container_info.status.value}, health: {container_info.health}"
+            if message_dispatcher is not None and status_message != last_status_message:
+                message_dispatcher.notify_info_message(status_message)
+                last_status_message = status_message
+
+            # Check for error states
+            if container_info.status == DockerContainerStatus.ERROR:
+                raise Exception(
+                    f"Service '{service_name}' is in error state. Exit code: {container_info.exitCode}"
+                )
+
+            if container_info.status == DockerContainerStatus.STOPPED:
+                raise Exception(
+                    f"Service '{service_name}' has stopped. Exit code: {container_info.exitCode}"
+                )
+
+            time.sleep(interval_seconds)
+            attempts += 1
+
+        raise Exception(
+            f"Service '{service_name}' did not become healthy after {attempts * interval_seconds} seconds. "
+            f"Last status: {container_info.status.value}, health: {container_info.health}"
+        )
+
     def wait_for_compose_status(
         self,
         brick_name: str,
@@ -310,17 +418,22 @@ class DockerService(LabManagerServiceBase):
                         text = f"Docker Compose process info: {status_info.subComposeProcess.status} {status_info.subComposeProcess.message}. "
                         duration = status_info.subComposeProcess.get_duration_seconds()
                         if duration is not None:
-                            text += f" Start duration: {DateHelper.get_duration_pretty_text(duration)}."
+                            text += (
+                                f" Start duration: {DateHelper.get_duration_pretty_text(duration)}."
+                            )
                     message_dispatcher.notify_info_message(text)
 
                 return status_info
 
             # Dispatch process message if it has changed
             process_message = status_info.get_process_message()
-            if process_message is not None and message_dispatcher is not None:
-                if process_message != last_running_message:
-                    message_dispatcher.notify_info_message(process_message)
-                    last_running_message = process_message
+            if (
+                process_message is not None
+                and message_dispatcher is not None
+                and process_message != last_running_message
+            ):
+                message_dispatcher.notify_info_message(process_message)
+                last_running_message = process_message
 
             time.sleep(interval_seconds)
 
@@ -425,9 +538,7 @@ class DockerService(LabManagerServiceBase):
 
         return cast(CredentialsDataBasic, credentials.get_data_object())
 
-    def get_basic_credentials(
-        self, brick_name: str, unique_name: str
-    ) -> Credentials | None:
+    def get_basic_credentials(self, brick_name: str, unique_name: str) -> Credentials | None:
         """
         Get basic credentials using the brick_name_unique_name format as the credential name.
 

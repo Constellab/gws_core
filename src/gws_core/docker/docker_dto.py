@@ -5,6 +5,7 @@ from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.credentials.credentials_type import CredentialsDataBasic
 
 
+# ruff: noqa: N815
 class RegisterComposeOptionsRequestDTO(BaseModelDTO):
     """
     DTO for registering compose options
@@ -131,3 +132,26 @@ class SubComposeStatusDTO(BaseModelDTO):
         if self.subComposeProcess:
             return self.subComposeProcess.message
         return None
+
+
+class DockerContainerStatus(str, Enum):
+    RUNNING = "running"
+    STOPPED = "stopped"
+    ERROR = "error"
+    NONE = "none"  # when no container found
+
+
+class DockerContainerHealth(str, Enum):
+    HEALTHY = "healthy"
+    UNHEALTHY = "unhealthy"
+    STARTING = "starting"
+    NONE = "none"  # when no health info available
+
+
+class DockerContainerInspectDTO(BaseModelDTO):
+    names: str
+    status: DockerContainerStatus
+    exitCode: int
+    image: str
+    startedAt: str
+    health: DockerContainerHealth
