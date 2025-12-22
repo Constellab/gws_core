@@ -42,22 +42,22 @@ class Task(Process):
     config_specs: ConfigSpecs = ConfigSpecs({})
 
     # Message dispatcher used to log messages of the task
-    message_dispatcher: MessageDispatcher
+    message_dispatcher: MessageDispatcher | None
 
     # set this during the run of the task to apply a dynamic style to the task
     # This overrides the style set by the task_decorator
-    style: TypingStyle
+    style: TypingStyle | None
 
     # Current status of the task, do not update
-    __status__: Literal["CHECK_BEFORE_RUN", "RUN", "RUN_AFTER_TASK"]
+    __status__: Literal["CHECK_BEFORE_RUN", "RUN", "RUN_AFTER_TASK"] | None
 
     # list of temporary directories created by the task to be deleted after the task is run
     __temp_dirs__: list[str]
 
     # The scenario id and task id that run the task, do not update
     # This is only provided when the task is run by a scenario
-    __scenario_id__: str
-    __task_id__: str
+    __scenario_id__: str | None
+    __task_id__: str | None
 
     def __init__(self):
         """
@@ -77,6 +77,7 @@ class Task(Process):
         self.style = None
         self.__temp_dirs__ = []
         self.__scenario_id__ = None
+        self.__task_id__ = None
 
     def init(self) -> None:
         """
@@ -118,7 +119,7 @@ class Task(Process):
             FileHelper.delete_dir(tmp_dir)
 
     @final
-    def get_default_output_spec_type(self, spec_name: str) -> type[Resource]:
+    def get_default_output_spec_type(self, spec_name: str) -> type[Resource] | None:
         if not self.output_specs:
             return None
 
@@ -139,6 +140,8 @@ class Task(Process):
         if self.__status__ != "RUN":
             raise BadRequestException("The progress value can only be updated in run method")
 
+        if self.message_dispatcher is None:
+            raise BadRequestException("The message dispatcher is not set for the task")
         self.message_dispatcher.notify_progress_value(progress=value, message=message)
 
     @final
@@ -149,6 +152,9 @@ class Task(Process):
         :type message: str
         """
         dispatched_message = DispatchedMessage(status=type_, message=message)
+
+        if self.message_dispatcher is None:
+            raise BadRequestException("The message dispatcher is not set for the task")
 
         self.message_dispatcher.notify_message(dispatched_message)
 
@@ -181,7 +187,7 @@ class Task(Process):
         self.__scenario_id__ = scenario_id
 
     @final
-    def get_scenario_id(self) -> str:
+    def get_scenario_id(self) -> str | None:
         return self.__scenario_id__
 
     @final
@@ -189,7 +195,7 @@ class Task(Process):
         self.__task_id__ = task_id
 
     @final
-    def get_task_id(self) -> str:
+    def get_task_id(self) -> str | None:
         return self.__task_id__
 
     @final
