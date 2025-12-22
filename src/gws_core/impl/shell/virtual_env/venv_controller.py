@@ -10,14 +10,20 @@ from ....core_controller import core_app
 
 @core_app.get("/venv", tags=["VEnv"], summary="Get the list of virtual environments")
 def get_venv_list(_=Depends(AuthorizationService.check_user_access_token)) -> VEnsStatusDTO:
-    """
-    Retrieve a list of running scenarios.
+    """Retrieve the list of all virtual environments.
+
+    Returns status information for all virtual environments managed by the system,
+    including their names, creation info, and locations.
+
+    :return: Status DTO containing the list of virtual environments
+    :rtype: VEnsStatusDTO
     """
 
     return VEnvService.get_vens_status()
 
 
 class VenvNameRequest(BaseModelDTO):
+    """Request body for virtual environment operations that require a venv name."""
     venv_name: str
 
 
@@ -25,8 +31,15 @@ class VenvNameRequest(BaseModelDTO):
 def get_venv(
     venv_name: VenvNameRequest, _=Depends(AuthorizationService.check_user_access_token)
 ) -> VEnvCompleteInfoDTO:
-    """
-    Use a post and body to retrieve the name because the name can be weird
+    """Get complete information about a specific virtual environment.
+
+    Uses POST with a body to pass the venv name because the name may contain
+    special characters that are problematic in URL paths.
+
+    :param venv_name: Request containing the virtual environment name
+    :type venv_name: VenvNameRequest
+    :return: Complete information about the virtual environment
+    :rtype: VEnvCompleteInfoDTO
     """
 
     return VEnvService.get_venv_complete_info(venv_name.venv_name)
@@ -36,16 +49,26 @@ def get_venv(
 def delete_venv(
     venv_name: VenvNameRequest, _=Depends(AuthorizationService.check_user_access_token)
 ) -> None:
-    """
-    Delete a virtual environment
-    Use body to retrieve the name because the name can be weird
+    """Delete a specific virtual environment.
+
+    Uses POST with a body to pass the venv name because the name may contain
+    special characters. Checks for running scenarios before deletion to prevent
+    conflicts.
+
+    :param venv_name: Request containing the virtual environment name to delete
+    :type venv_name: VenvNameRequest
+    :raises BadRequestException: If a scenario is currently running
     """
     VEnvService.delete_venv(venv_name.venv_name, check_running_scenario=True)
 
 
 @core_app.delete("/venv", tags=["VEnv"], summary="Delete all virtual environments")
 def delete_all_venv(_=Depends(AuthorizationService.check_user_access_token)) -> None:
-    """
-    Delete all virtual environments
+    """Delete all virtual environments.
+
+    Removes all virtual environments managed by the system. Checks for running
+    scenarios before deletion to prevent conflicts.
+
+    :raises BadRequestException: If any scenario is currently running
     """
     VEnvService.delete_all_venvs()

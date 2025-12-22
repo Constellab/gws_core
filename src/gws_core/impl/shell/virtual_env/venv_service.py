@@ -17,14 +17,22 @@ from gws_core.scenario.scenario_service import ScenarioService
 
 
 class VEnvService:
-    """
-    Service to manager, list and delete virtual environments.
+    """Service to manage, list, and delete virtual environments.
+
+    Provides operations for retrieving information about virtual environments,
+    deleting individual environments, and bulk deletion. Works with Conda, Mamba,
+    and Pip-based environments.
     """
 
     @classmethod
     def get_vens_status(cls) -> VEnsStatusDTO:
-        """
-        Get the status of the virtual environments.
+        """Get the status of all virtual environments.
+
+        Scans the global environment directory and returns information about
+        all managed virtual environments.
+
+        :return: Status DTO containing all virtual environments
+        :rtype: VEnsStatusDTO
         """
         if not FileHelper.exists_on_os(Settings.get_global_env_dir()):
             FileHelper.create_dir_if_not_exist(Settings.get_global_env_dir())
@@ -52,8 +60,16 @@ class VEnvService:
 
     @classmethod
     def get_venv_complete_info(cls, venv_name: str) -> VEnvCompleteInfoDTO:
-        """
-        Get the information of a virtual environment.
+        """Get complete information about a specific virtual environment.
+
+        Retrieves detailed information including basic info, environment size,
+        and the content of the configuration file.
+
+        :param venv_name: Name of the virtual environment
+        :type venv_name: str
+        :return: Complete information DTO for the environment
+        :rtype: VEnvCompleteInfoDTO
+        :raises ValueError: If the venv does not exist or is not valid
         """
         venv_path = os.path.join(Settings.get_global_env_dir(), venv_name)
 
@@ -81,8 +97,15 @@ class VEnvService:
 
     @classmethod
     def get_venv_basic_info(cls, venv_name: str) -> VEnvBasicInfoDTO:
-        """
-        Get the information of a virtual environment.
+        """Get basic information about a specific virtual environment.
+
+        Retrieves the folder path, name, and creation metadata.
+
+        :param venv_name: Name of the virtual environment
+        :type venv_name: str
+        :return: Basic information DTO for the environment
+        :rtype: VEnvBasicInfoDTO
+        :raises ValueError: If the venv does not exist
         """
         venv_path = os.path.join(Settings.get_global_env_dir(), venv_name)
 
@@ -99,8 +122,15 @@ class VEnvService:
 
     @classmethod
     def delete_venv(cls, venv_name: str, check_running_scenario: bool = False) -> None:
-        """
-        Delete a virtual environment.
+        """Delete a specific virtual environment.
+
+        Removes the virtual environment directory and all its contents.
+
+        :param venv_name: Name of the virtual environment to delete
+        :type venv_name: str
+        :param check_running_scenario: If True, checks for running scenarios before deletion, defaults to False
+        :type check_running_scenario: bool, optional
+        :raises BadRequestException: If check_running_scenario is True and a scenario is running
         """
         if check_running_scenario and ScenarioService.count_of_running_scenarios() > 0:
             raise BadRequestException("Cannot delete a venv while a scenario is running.")
@@ -109,8 +139,12 @@ class VEnvService:
 
     @classmethod
     def delete_all_venvs(cls) -> None:
-        """
-        Delete all virtual environments.
+        """Delete all virtual environments.
+
+        Removes all virtual environment directories from the global environment folder.
+        Always checks for running scenarios before deletion.
+
+        :raises BadRequestException: If any scenario is currently running
         """
         if ScenarioService.count_of_running_scenarios() > 0:
             raise BadRequestException("Cannot delete a venv while a scenario is running.")
