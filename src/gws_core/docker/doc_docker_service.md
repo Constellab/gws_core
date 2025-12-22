@@ -128,14 +128,103 @@ if ready_status.composeStatus.status == DockerComposeStatus.UP:
     print("Service is up and running!")
 ```
 
-### 5. Stopping and Unregistering
+### 5. Temporary Docker Container for Process Execution
+
+This example shows how to use a temporary Docker container to execute a process (like a data processing task) and then stop it after completion. It uses `${LAB_VOLUME_HOST_NO_BACKUP}` for temporary processing data and `${LAB_VOLUME_HOST}` for final results.
+
+```python
+from gws_core import DockerService, DockerComposeStatus
+
+docker_service = DockerService()
+
+# Register and start a temporary processing container
+docker_service.register_and_start_compose(
+    brick_name="my_brick",
+    unique_name="data_processor",
+    compose_yaml_content="""
+services:
+  processor:
+    image: python:3.11-slim
+    container_name: ${CONTAINER_PREFIX}-processor
+    volumes:
+      # Input data - backed up (may contain important source data)
+      - ${LAB_VOLUME_HOST}/input:/data/input
+
+      # Temporary processing workspace - not backed up
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/temp:/data/temp
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/cache:/data/cache
+
+      # Final output - backed up (important results)
+      - ${LAB_VOLUME_HOST}/output:/data/output
+    environment:
+      - PROCESS_TYPE=${PROCESS_TYPE}
+    command: python /data/input/process.py
+    networks:
+      - ${CONTAINER_PREFIX}
+
+networks:
+  ${CONTAINER_PREFIX}:
+    driver: bridge
+""",
+    description="Temporary data processing container",
+    env={
+        "PROCESS_TYPE": "batch_analysis"
+    },
+    auto_start=False  # Don't auto-start on lab restart
+)
+
+# Wait for the compose to start
+self.log_info_message("Waiting for container to start...")
+status = docker_service.wait_for_compose_status(
+    brick_name="my_brick",
+    unique_name="data_processor",
+    interval_seconds=2.0,
+    max_attempts=30,
+    message_dispatcher=self.message_dispatcher
+)
+
+if status.composeStatus.status == DockerComposeStatus.UP:
+    self.log_info_message("Container is running, processing data...")
+
+    # Wait for processing to complete (monitor service status)
+    # Or implement your own logic to check if processing is done
+    import time
+    time.sleep(10)  # Example: wait for process completion
+
+    self.log_info_message("Processing complete, stopping container...")
+
+    # Stop the container (keeps it registered but not running)
+    docker_service.stop_compose(
+        brick_name="my_brick",
+        unique_name="data_processor"
+    )
+
+    self.log_success_message("Container stopped successfully!")
+
+    # Optional: Unregister completely if you don't need it anymore
+    # docker_service.unregister_compose(
+    #     brick_name="my_brick",
+    #     unique_name="data_processor"
+    # )
+```
+
+**Use case**: Execute one-time or periodic processing tasks in isolated containers, then clean up resources. The `stop_compose()` method stops the container while keeping it registered, allowing you to restart it later. Use `unregister_compose()` if you want to completely remove it.
+
+### 6. Stopping and Unregistering
 
 ```python
 from gws_core import DockerService
 
 docker_service = DockerService()
 
-# Stop and unregister the compose
+# Option 1: Stop the compose (keeps it registered)
+docker_service.stop_compose(
+    brick_name="my_brick",
+    unique_name="my_service"
+)
+print("Service stopped but still registered")
+
+# Option 2: Stop and unregister the compose (complete cleanup)
 status = docker_service.unregister_compose(
     brick_name="my_brick",
     unique_name="my_service"
@@ -144,7 +233,7 @@ status = docker_service.unregister_compose(
 print(f"Final status: {status.composeStatus.status.value}")
 ```
 
-### 6. List All Composes
+### 7. List All Composes
 
 ```python
 from gws_core import DockerService
@@ -242,7 +331,42 @@ networks:
 - Isolate the production and development environments
 - Internal communication with other lab services
 
-#### 3. `${LAB_VOLUME_HOST}`
+#### 3. `${LAB_NETWORK_ALL}`
+
+Automatically expands to include **both** production and development lab networks. This is useful when a service needs to communicate across both environments.
+
+**Replacement:**
+```yaml
+# Template
+services:
+  shared_service:
+    networks:
+      - ${CONTAINER_PREFIX}
+      - ${LAB_NETWORK_ALL}
+
+# Result (expands to both networks)
+services:
+  shared_service:
+    networks:
+      - my_brick-shared-prod
+      - gencovery-network-prod
+      - gencovery-network-dev
+
+networks:
+  gencovery-network-prod:
+    external: true
+  gencovery-network-dev:
+    external: true
+```
+
+**Use case:** Services that need to be accessible from both production and development environments simultaneously, such as:
+- Shared database services
+- Common API gateways
+- Cross-environment monitoring tools
+
+**Warning:** Use sparingly as it can break environment isolation. In most cases, use `${LAB_NETWORK}` instead.
+
+#### 4. `${LAB_VOLUME_HOST}`
 
 Replaced with either a host path (bind mount) or named volume, depending on the deployment mode.
 
@@ -325,7 +449,78 @@ services:
 
 **Warning:** Do NOT use custom absolute paths or Docker named volumes directly for persistent data. Always use `${LAB_VOLUME_HOST}` to ensure backup coverage.
 
-#### 4. `${LAB_DOMAIN}`
+#### 5. `${LAB_VOLUME_HOST_NO_BACKUP}`
+
+Similar to `${LAB_VOLUME_HOST}`, but stores data in a temporary location that is **NOT included in lab backups**. Use this for temporary data, caches, or ephemeral storage that doesn't need to be preserved.
+
+**IMPORTANT:** Only use this for data that can be safely deleted or regenerated. For critical data, always use `${LAB_VOLUME_HOST}`.
+
+**Bind Mount Mode** (Production/Remote):
+```yaml
+# Template
+services:
+  cache:
+    volumes:
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/cache:/app/cache
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/temp:/tmp/data
+
+# Result (tempVolume: '/mnt/lab-temp', isNamed: false)
+services:
+  cache:
+    volumes:
+      - /mnt/lab-temp/cache:/app/cache
+      - /mnt/lab-temp/temp:/tmp/data
+```
+
+**Named Volume Mode** (Localhost/Development):
+```yaml
+# Template
+services:
+  cache:
+    volumes:
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/cache:/app/cache
+
+# Result (tempVolume: 'myapp-temp', isNamed: true)
+services:
+  cache:
+    volumes:
+      - myapp-temp-cache:/app/cache
+
+volumes:
+  myapp-temp-cache:
+    name: myapp-temp-cache
+```
+
+**Use cases for `${LAB_VOLUME_HOST_NO_BACKUP}`:**
+- Cache directories (Redis cache, application caches)
+- Temporary processing files
+- Build artifacts that can be regenerated
+- Large downloads that can be re-downloaded
+- Session storage
+- Ephemeral logs that don't need long-term retention
+
+**Example - Combined Usage:**
+```yaml
+services:
+  app:
+    volumes:
+      # Critical data - backed up
+      - ${LAB_VOLUME_HOST}/database:/var/lib/db
+      - ${LAB_VOLUME_HOST}/user_uploads:/app/uploads
+
+      # Temporary data - not backed up
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/cache:/app/cache
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/temp:/tmp
+      - ${LAB_VOLUME_HOST_NO_BACKUP}/build:/app/build
+```
+
+**Benefits:**
+- Reduces backup size and duration
+- Improves backup performance
+- Clearly separates critical data from temporary data
+- Temp storage may be automatically cleaned up during maintenance
+
+#### 6. `${LAB_DOMAIN}`
 
 Replaced with the lab's domain name for constructing URLs.
 
@@ -621,19 +816,28 @@ docker_service.register_sub_compose_from_folder(
      - ${LAB_VOLUME_HOST}/app_data:/var/lib/app
    ```
 
-2. **Connect to both networks for lab integration:**
+2. **Use `${LAB_VOLUME_HOST_NO_BACKUP}` for temporary/cache data:**
+   ```yaml
+   volumes:
+     - ${LAB_VOLUME_HOST}/database:/var/lib/db          # Critical data - backed up
+     - ${LAB_VOLUME_HOST_NO_BACKUP}/cache:/app/cache    # Temporary data - not backed up
+   ```
+
+3. **Connect to the appropriate lab network:**
    ```yaml
    networks:
      - ${CONTAINER_PREFIX}      # Internal network
-     - ${LAB_NETWORK}            # Lab network
+     - ${LAB_NETWORK}            # Single environment (prod OR dev)
+     # OR
+     - ${LAB_NETWORK_ALL}        # Both environments (use sparingly)
    ```
 
-3. **Use `${CONTAINER_PREFIX}` for unique container names:**
+4. **Use `${CONTAINER_PREFIX}` for unique container names:**
    ```yaml
    container_name: ${CONTAINER_PREFIX}-service-name
    ```
 
-4. **Leverage `x-gws-config` for web interfaces:**
+5. **Leverage `x-gws-config` for web interfaces:**
    ```yaml
    x-gws-config:
      - https:
@@ -642,13 +846,13 @@ docker_service.register_sub_compose_from_folder(
          internalPort: 8080
    ```
 
-5. **Pass sensitive data via env parameters, not hardcoded:**
+6. **Pass sensitive data via env parameters, not hardcoded:**
    ```yaml
    environment:
      - DB_PASSWORD=${PASSWORD}  # Passed via env parameter
    ```
 
-6. **Use `${LAB_DOMAIN}` for callback URLs and service discovery:**
+7. **Use `${LAB_DOMAIN}` for callback URLs and service discovery:**
    ```yaml
    environment:
      - AUTH_CALLBACK=https://auth.${LAB_DOMAIN}/callback
@@ -944,6 +1148,7 @@ docker_service.unregister_compose(
 | `register_and_start_compose()` | Register compose from string content | None |
 | `register_sub_compose_from_folder()` | Register compose from folder | None |
 | `register_sqldb_compose()` | Register SQL database with auto-credentials | `RegisterSQLDBComposeResponseDTO` |
+| `stop_compose()` | Stop compose without unregistering | None |
 | `unregister_compose()` | Stop and unregister compose | `SubComposeStatusDTO` |
 | `get_compose_status()` | Get current compose status | `SubComposeStatusDTO` |
 | `wait_for_compose_status()` | Wait for compose to stabilize | `SubComposeStatusDTO` |

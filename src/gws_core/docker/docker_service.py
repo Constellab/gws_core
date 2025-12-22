@@ -239,6 +239,36 @@ class DockerService(LabManagerServiceBase):
             err.detail = f"Can't stop compose. Error: {err.detail}"
             raise err
 
+    def stop_compose(
+        self,
+        brick_name: str,
+        unique_name: str,
+    ) -> None:
+        """
+        Stop a docker compose without unregistering it
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        """
+
+        lab_api_url = self._get_lab_manager_api_url(
+            f"{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/stop"
+        )
+
+        try:
+            ExternalApiService.post(
+                lab_api_url,
+                None,
+                headers=self._get_request_header(),
+                raise_exception_if_error=True,
+            )
+
+        except BaseHTTPException as err:
+            err.detail = f"Can't stop compose. Error: {err.detail}"
+            raise err
+
     def get_compose_status(
         self,
         brick_name: str,
