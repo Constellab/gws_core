@@ -61,7 +61,7 @@ class TestTableOperations(TestCase):
         self.assertEqual(result_table.nb_columns, 5)
 
         # Test with unknown column in operation Z
-        operation_df = DataFrame({"Operation_name": ["R0", "R1"], "Operation": ["A + Z", "(Y) / (Z)"]})
+        operation_df = DataFrame({"Operation_name": ["R0"], "Operation": ["A + Z"]})
 
         result_table = TableOperationHelper.column_mass_operations(
             table,
@@ -69,7 +69,7 @@ class TestTableOperations(TestCase):
             replace_unknown_column=TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
         )
         # The result should be NaN
-        self.assertEqual(result_table.nb_columns, 2)
+        self.assertEqual(result_table.nb_columns, 1)
         # check if all element of R0 columns are NaN
         self.assertTrue(all(isna(list(result_table.get_data()["R0"]))))
 
@@ -80,4 +80,23 @@ class TestTableOperations(TestCase):
             replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0,
         )
         self.assertEqual(list(result_table.get_data()["R0"]), [1, 2, 3])
-        self.assertEqual(list(result_table.get_data()["R1"]), [float("inf"), float("inf"), float("inf")])
+
+
+    def test_table_column_mass_operations_division_by_zero(self):
+        """
+        Test a division with parenthesis where the columns are unknown and replace them with 0, so that we end up with (0)/(0).
+        """
+        dataframe = DataFrame({"A": [1, 2, 3], "B": [10, 8, 6], "C": [7, 1, 5]})
+
+        table = Table(data=dataframe)
+
+        # Test with unknown columns in operation with parenthesis
+        operation_df = DataFrame({"Operation_name": ["R0"], "Operation": ["(Y) / (Z)"]})
+
+        # replace unknown columns with 0
+        result_table = TableOperationHelper.column_mass_operations(
+            table,
+            operation_df,
+            replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0,
+        )
+        self.assertEqual(list(result_table.get_data()["R0"]), [float("inf"), float("inf"), float("inf")])
