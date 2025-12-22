@@ -47,6 +47,11 @@ class AICodeService(ABC):
             description="Create or modify a Constellab Agent that processes data resources",
             argument_hint="agent description or modification request",
         ),
+        CommandFrontmatter(
+            filename="nextflow-to-task.md",
+            description="Convert a Nextflow pipeline or process to Constellab Tasks",
+            argument_hint="path to Nextflow file or description of pipeline to convert",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):

@@ -9,6 +9,7 @@ The GWS Core environment provides specialized commands and instructions that hel
 - Generate Constellab Tasks (data processing components)
 - Create Streamlit web applications
 - Build Reflex web applications
+- Convert Nextflow pipelines to Constellab Tasks
 - Follow GWS Core best practices and conventions
 
 **What are AI coding tools?**
@@ -178,6 +179,53 @@ List available GWS commands: `gws copilot commands --list`
 - Component composition
 - Development workflow
 - Testing and debugging guidance
+
+### 4. Agent Expert (`/gws-agent-expert`)
+
+**Description:** Create or modify a Constellab Agent that processes data resources
+
+**Use Cases:**
+- Creating Python or R code snippets that process resources
+- Quick data transformations without formal task structure
+- Prototyping data analysis workflows
+- Working with custom dependencies in virtual environments
+
+**Example:**
+```
+/gws-agent-expert Create a Python agent that reads a CSV file, filters rows where sales > 1000, and outputs the result
+```
+
+**What it provides:**
+- Basic Python agent structure
+- Virtual environment agent configuration (Mamba/Conda/Pip)
+- Input/output handling (sources, targets)
+- Parameter management
+- Environment files (environment.yml, Pipfile)
+- Script conversion guidance
+
+### 5. Nextflow to Task Converter (`/gws-nextflow-to-task`)
+
+**Description:** Convert a Nextflow pipeline or process to Constellab Tasks
+
+**Use Cases:**
+- Migrating Nextflow workflows to Constellab
+- Converting bioinformatics pipelines
+- Translating container-based processes
+- Preserving existing workflow logic in a new environment
+
+**Example:**
+```
+/gws-nextflow-to-task Convert the nextflow/main.nf pipeline to Constellab tasks
+```
+
+**What it provides:**
+- One task per Nextflow process
+- Nextflow parameter mapping to config_specs
+- Channel mapping to input/output specs
+- Script block conversion to Python
+- Container/dependency handling with virtual environments
+- References to task-expert.md for detailed task information
+- Complete conversion examples
 
 ---
 
