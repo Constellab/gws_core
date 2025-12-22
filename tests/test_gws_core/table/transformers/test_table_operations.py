@@ -61,7 +61,7 @@ class TestTableOperations(TestCase):
         self.assertEqual(result_table.nb_columns, 5)
 
         # Test with unknown column in operation Z
-        operation_df = DataFrame({"Operation_name": ["R0"], "Operation": ["A + Z"]})
+        operation_df = DataFrame({"Operation_name": ["R0", "R1"], "Operation": ["A + Z", "(Y) / (Z)"]})
 
         result_table = TableOperationHelper.column_mass_operations(
             table,
@@ -69,7 +69,7 @@ class TestTableOperations(TestCase):
             replace_unknown_column=TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
         )
         # The result should be NaN
-        self.assertEqual(result_table.nb_columns, 1)
+        self.assertEqual(result_table.nb_columns, 2)
         # check if all element of R0 columns are NaN
         self.assertTrue(all(isna(list(result_table.get_data()["R0"]))))
 
@@ -80,3 +80,4 @@ class TestTableOperations(TestCase):
             replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0,
         )
         self.assertEqual(list(result_table.get_data()["R0"]), [1, 2, 3])
+        self.assertEqual(list(result_table.get_data()["R1"]), [float("inf"), float("inf"), float("inf")])
