@@ -80,3 +80,23 @@ class TestTableOperations(TestCase):
             replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0,
         )
         self.assertEqual(list(result_table.get_data()["R0"]), [1, 2, 3])
+
+
+    def test_table_column_mass_operations_division_by_zero(self):
+        """
+        Test a division with parenthesis where the columns are unknown and replace them with 0, so that we end up with (0)/(0).
+        """
+        dataframe = DataFrame({"A": [1, 2, 3], "B": [10, 8, 6], "C": [7, 1, 5]})
+
+        table = Table(data=dataframe)
+
+        # Test with unknown columns in operation with parenthesis
+        operation_df = DataFrame({"Operation_name": ["R0"], "Operation": ["(Y) / (Z)"]})
+
+        # replace unknown columns with 0
+        result_table = TableOperationHelper.column_mass_operations(
+            table,
+            operation_df,
+            replace_unknown_column=TableOperationUnknownColumnOption.REPLACE_WITH_0,
+        )
+        self.assertEqual(list(result_table.get_data()["R0"]), [float("inf"), float("inf"), float("inf")])

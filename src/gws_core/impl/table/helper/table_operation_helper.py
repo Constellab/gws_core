@@ -1,5 +1,5 @@
 from enum import Enum
-from re import split, sub
+from re import search, split, sub
 
 from numpy import NaN
 from pandas import DataFrame
@@ -201,4 +201,20 @@ class TableOperationHelper:
 
         # replace +0 and -0 with empty string to lighten the operation
         clean_operation = sub(r"\+0|\-0", "", clean_operation)
+
+        # Check for division by zero patterns
+        if TableOperationHelper._division_by_literal_zero(clean_operation):
+            return float("inf")
+
         return clean_operation
+
+    @staticmethod
+    def _division_by_literal_zero(expr: str) -> bool:
+        """
+        Returns True if the expression ends with a division by a literal zero:
+        /0, /(0), /(0.0), /0.00, /(0 + 0), etc.
+        """
+        expr = sub(r"\s+", "", expr)
+        pattern = r"/\((0+(\.0+)?([+-]0+(\.0+)?)*)\)$|/0+(\.0+)?$"
+
+        return search(pattern, expr) is not None
