@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from threading import Thread
@@ -13,7 +14,7 @@ from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabInfoDTO, LabStatusDTO, LabSystemConfig
+from gws_core.lab.system_dto import LabInfoDTO, LabStartLogFileObject, LabStatusDTO, LabSystemConfig
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
@@ -240,7 +241,30 @@ class SystemService:
 
     @classmethod
     def get_system_status(cls) -> LabStatusDTO:
-        return LabStatusDTO(free_disk=MonitorService.get_free_disk_info())
+        start_log = cls.get_start_logs()
+        has_start_error = start_log.has_main_errors() if start_log else False
+        return LabStatusDTO(free_disk=MonitorService.get_free_disk_info(), has_start_error=has_start_error)
+
+    @classmethod
+    def get_start_logs(cls) -> LabStartLogFileObject | None:
+        """Get the lab start logs from the start log file.
+
+        :return: The start log object or None if the file doesn't exist
+        :rtype: LabStartLogFileObject | None
+        """
+        start_log_file_path = Settings.get_lab_start_logs_file_path()
+
+        if not FileHelper.exists_on_os(start_log_file_path):
+            return None
+
+        try:
+            with open(start_log_file_path, encoding='UTF-8') as f:
+                data = json.load(f)
+                return LabStartLogFileObject(**data)
+        except Exception as err:
+            Logger.error(f"Error while reading start log file: {err}")
+            Logger.log_exception_stack_trace(err)
+            return None
 
     @classmethod
     def save_space_async(cls, space: Space) -> None:

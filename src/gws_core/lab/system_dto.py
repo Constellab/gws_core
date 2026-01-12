@@ -18,6 +18,7 @@ class LabInfoDTO(BaseModelDTO):
 
 class LabStatusDTO(BaseModelDTO):
     free_disk: MonitorFreeDiskDTO
+    has_start_error: bool
 
 
 class SettingsDTO(BaseModelDTO):
@@ -64,3 +65,12 @@ class PipPackage(BaseModelDTO):
 class LabSystemConfig(BaseModelDTO):
     python_version: str
     pip_packages: list[PipPackage]
+
+
+class LabStartLogFileObject(BaseModelDTO):
+    progress: dict
+    main_errors: list[str]
+    errors: list[str]
+
+    def has_main_errors(self) -> bool:
+        return len(self.main_errors) > 0

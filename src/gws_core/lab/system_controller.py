@@ -1,7 +1,13 @@
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.lab.system_dto import LabInfoDTO, LabStatusDTO, LabSystemConfig, SettingsDTO
+from gws_core.lab.system_dto import (
+    LabInfoDTO,
+    LabStartLogFileObject,
+    LabStatusDTO,
+    LabSystemConfig,
+    SettingsDTO,
+)
 
 from ..core.service.settings_service import SettingsService
 from ..core_controller import core_app
@@ -65,3 +71,10 @@ def get_settings(_=Depends(AuthorizationService.check_user_access_token)) -> Set
 @core_app.get("/system/config", tags=["System"], summary="Get system config")
 def get_pip_packages(_=Depends(AuthorizationService.check_user_access_token)) -> LabSystemConfig:
     return SystemService.get_system_config()
+
+
+@core_app.get("/system/start-logs", tags=["System"], summary="Get lab start logs")
+def get_start_logs(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> LabStartLogFileObject | None:
+    return SystemService.get_start_logs()

@@ -409,6 +409,11 @@ class Settings:
         else:
             return os.path.join(cls.get_system_folder(), "logs")
 
+    @classmethod
+    def get_lab_start_logs_file_path(cls) -> str:
+        """Return the file path where the lab start logs are stored"""
+        return os.path.join(cls.get_system_folder(), "start-log.json")
+
     ##### APPS ####
 
     @classmethod
