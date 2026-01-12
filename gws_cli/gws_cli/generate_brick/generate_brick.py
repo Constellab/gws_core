@@ -2,10 +2,20 @@ import json
 import os
 import shutil
 
+import typer
+from gws_core.brick.brick_helper import BrickHelper
+from gws_core.brick.brick_settings import (
+    BrickSettings,
+    BrickSettingsEnvironment,
+    BrickSettingsPipSource,
+)
+
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 skeleton_name = "brick_skeleton"
 user_bricks_folder = "/lab/user/bricks"
+
+DEFAULT_VERSION = "0.1.0"
 
 
 def generate_brick(name: str):
@@ -15,7 +25,10 @@ def generate_brick(name: str):
     brick_folder = os.path.join(user_bricks_folder, name)
 
     if os.path.exists(brick_folder):
-        raise Exception("A brick with the same name already exist")
+        typer.echo(
+            f"Error: A brick with the name '{name}' already exists at {brick_folder}", err=True
+        )
+        raise typer.Exit(1)
 
     shutil.copytree(skeleton_dir, brick_folder, dirs_exist_ok=True)
 
@@ -31,13 +44,31 @@ def generate_brick(name: str):
 
 
 def update_settings_file(dest_dir: str, name: str):
-    """Update settings.json"""
+    """Create settings.json from BrickSettings object"""
     settings_file = os.path.join(dest_dir, "settings.json")
-    with open(settings_file, encoding="UTF-8") as f:
-        settings = json.load(f)
-        settings["name"] = name
+
+    # Create environment with empty pip and git packages like the template
+    environment = BrickSettingsEnvironment(
+        pip=[BrickSettingsPipSource(source="https://pypi.python.org/simple", packages=[])], git=[]
+    )
+
+    # Create BrickSettings object
+    brick_settings = BrickSettings(
+        name=name,
+        author="",
+        version=DEFAULT_VERSION,
+        variables={f"{name}:testdata_dir": "${CURRENT_DIR}/tests/testdata"},
+        environment=environment,
+    )
+
+    # Add gws_core brick dependency if found
+    gws_core_info = BrickHelper.get_brick_info(BrickHelper.GWS_CORE)
+    if gws_core_info and gws_core_info.version:
+        brick_settings.add_brick_dependency(BrickHelper.GWS_CORE, gws_core_info.version)
+
+    # Write settings.json
     with open(settings_file, "w", encoding="UTF-8") as f:
-        json.dump(settings, f, indent=4)
+        json.dump(brick_settings.to_json_dict(), f, indent=2)
 
 
 def update_readme(dest_dir: str, name: str):

@@ -69,11 +69,32 @@ class BrickSettingsPipSource(BaseModelDTO):
         return ["pip", "install", "-i", self.get_source_url()] + package_specs
 
 
+class BrickSettingsBrickDependency(BaseModelDTO):
+    """DTO representing a brick dependency"""
+
+    name: str
+    version: str
+
+
 class BrickSettingsEnvironment(BaseModelDTO):
     """DTO representing the environment section in settings.json"""
 
+    bricks: list[BrickSettingsBrickDependency] | None = None
     pip: list[BrickSettingsPipSource] | None = None
     git: list[Any] | None = None
+
+    def add_brick_dependency(self, brick_name: str, brick_version: str) -> None:
+        """Add a brick dependency to the environment.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param brick_version: Version of the brick
+        :type brick_version: str
+        """
+        if not self.bricks:
+            self.bricks = []
+
+        self.bricks.append(BrickSettingsBrickDependency(name=brick_name, version=brick_version))
 
 
 class BrickSettings:
@@ -127,6 +148,34 @@ class BrickSettings:
         if not self.environment or not self.environment.pip:
             return []
         return self.environment.pip
+
+    def add_brick_dependency(self, brick_name: str, brick_version: str) -> None:
+        """Add a brick dependency to the technical_info section.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param brick_version: Version of the brick
+        :type brick_version: str
+        """
+        if not self.environment:
+            self.environment = BrickSettingsEnvironment()
+
+        self.environment.add_brick_dependency(brick_name, brick_version)
+
+    def to_json_dict(self) -> dict:
+        """Convert the BrickSettings to a JSON string.
+
+        :return: JSON string representation of the BrickSettings
+        :rtype: str
+        """
+        return {
+            "name": self.name,
+            "author": self.author,
+            "version": self.version,
+            "variables": self.variables,
+            "technical_info": self.technical_info,
+            "environment": self.environment.to_json_dict() if self.environment else {},
+        }
 
     @staticmethod
     def from_file_path(file_path: str) -> "BrickSettings":
