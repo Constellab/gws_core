@@ -21,9 +21,13 @@ class DevEnvCliService:
     OPENVSCODE_SERVER_BIN = "/home/.openvscode-server/bin/openvscode-server"
 
     @classmethod
-    def configure_dev_env(cls) -> None:
-        """Configure the development environment."""
-        cls.configure_vscode()
+    def configure_dev_env(cls, force: bool = False) -> None:
+        """Configure the development environment.
+
+        Args:
+            force: If True, delete all generated files before configuring VSCode.
+        """
+        cls.configure_vscode(force=force)
 
         # Update claude config if installed
         claude_service = ClaudeService()
@@ -34,11 +38,27 @@ class DevEnvCliService:
         copilot_service.update_if_configured()
 
     @classmethod
-    def configure_vscode(cls) -> None:
-        """Configure VS Code with recommended settings, extensions, and Python paths for all bricks."""
+    def configure_vscode(cls, force: bool = False) -> None:
+        """Configure VS Code with recommended settings, extensions, and Python paths for all bricks.
+
+        Args:
+            force: If True, delete all generated files before configuring VSCode.
+        """
         typer.echo("Configuring VS Code...")
 
         vs_code_folder = cls.get_vs_code_setting_folder()
+        notebook_template_dir = os.path.join(Settings.get_user_folder(), "notebooks", "template")
+
+        # Delete generated files if force is True
+        if force:
+            typer.echo("Force option enabled. Deleting generated files...")
+            if os.path.exists(vs_code_folder):
+                typer.echo(f"Deleting {vs_code_folder}...")
+                shutil.rmtree(vs_code_folder)
+            if os.path.exists(notebook_template_dir):
+                typer.echo(f"Deleting {notebook_template_dir}...")
+                shutil.rmtree(notebook_template_dir)
+
         if not os.path.exists(vs_code_folder):
             os.mkdir(vs_code_folder)
 

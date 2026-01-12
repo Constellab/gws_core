@@ -21,6 +21,13 @@ def reset_dev_env():
 
 
 @app.command("configure", help="Configure VsCode and AI tools for development environment")
-def configure():
+def configure(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Delete all generated files before configuring VSCode",
+    )
+):
     """Configure VS Code with recommended settings, extensions, and Python paths for all bricks."""
-    DevEnvCliService.configure_dev_env()
+    DevEnvCliService.configure_dev_env(force=force)

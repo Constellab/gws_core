@@ -112,7 +112,7 @@
                     },
                     {
                         "name": "streamlit",
-                        "version": "1.50.0"
+                        "version": "1.52.2"
                     },
                     {
                         "name": "streamlit-searchbox",
@@ -140,7 +140,7 @@
                     },
                     {
                         "name": "reflex",
-                        "version": "0.8.19"
+                        "version": "0.8.24.post1"
                     },
                     {
                         "name": "docstring-parser",
