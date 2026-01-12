@@ -52,6 +52,11 @@ class AICodeService(ABC):
             description="Convert a Nextflow pipeline or process to Constellab Tasks",
             argument_hint="path to Nextflow file or description of pipeline to convert",
         ),
+        CommandFrontmatter(
+            filename="snakemake-to-constellab.md",
+            description="Convert a Snakemake workflow or rule to Constellab Tasks",
+            argument_hint="path to Snakefile or description of workflow to convert",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):
