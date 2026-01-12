@@ -1,8 +1,7 @@
 """Layout components demo page for the Reflex showcase app."""
 
 import reflex as rx
-from gws_reflex_base.component.reflex_loader_section_component import loader_section
-from gws_reflex_base.component.reflex_page_sidebar import page_sidebar_component
+from gws_reflex_base import loader_section, page_sidebar_component
 from gws_reflex_main import ReflexMainState
 
 from ..components import example_tabs, page_layout
@@ -35,7 +34,7 @@ def layout_page() -> rx.Component:
     """Render the layout components demo page."""
 
     # Example 1: page_sidebar_component - Code only
-    code1 = '''from gws_reflex_base.component.reflex_page_sidebar import page_sidebar_component
+    code1 = '''from gws_reflex_base import page_sidebar_component
 import reflex as rx
 
 # Create sidebar content
@@ -108,7 +107,7 @@ def index():
         spacing="4",
     )
 
-    code2 = '''from gws_reflex_base.component.reflex_loader_section_component import loader_section
+    code2 = '''from gws_reflex_base import loader_section
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 

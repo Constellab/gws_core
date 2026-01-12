@@ -1,8 +1,7 @@
 """Rich text component demo page for the Reflex showcase app."""
 
 import reflex as rx
-from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core import RichText, RichTextDTO
 from gws_reflex_main import ReflexMainState
 from gws_reflex_main.gws_components import rich_text_component
 
@@ -77,11 +76,10 @@ def rich_text_page() -> rx.Component:
     )
 
     # Code example
-    code_example = """from gws_reflex_main.gws_components import rich_text_component
-from gws_reflex_main import ReflexMainState
+    code_example = """from gws_reflex_main import ReflexMainState
+from gws_reflex_main.gws_components import rich_text_component
+from gws_core import RichText, RichTextDTO
 import reflex as rx
-from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 # Create default content
 default_rich_text = RichText()

@@ -1,15 +1,15 @@
 """Dialog components demo page for the Reflex showcase app."""
 
+from typing import cast
+
 import reflex as rx
-from gws_reflex_base.component.reflex_confirm_dialog_component import (
+from gws_reflex_base import (
     ConfirmDialogState,
-    confirm_dialog,
-)
-from gws_reflex_base.component.reflex_dialog_components import dialog_header
-from gws_reflex_base.component.reflex_form_dialog_component import (
     FormDialogState,
+    dialog_header,
     form_dialog_component,
 )
+from gws_reflex_base.component.reflex_confirm_dialog_component import confirm_dialog
 from gws_reflex_main import ReflexMainState
 
 from ..components import example_tabs, page_layout
@@ -183,7 +183,7 @@ def dialog_page() -> rx.Component:
         align="start",
     )
 
-    code1 = """from gws_reflex_base.component.reflex_dialog_components import dialog_header
+    code1 = """from gws_reflex_base import dialog_header
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 
@@ -243,10 +243,7 @@ rx.dialog.root(
         align="start",
     )
 
-    code2 = '''from gws_reflex_base.component.reflex_confirm_dialog_component import (
-    ConfirmDialogState,
-    confirm_dialog,
-)
+    code2 = '''from gws_reflex_base import ConfirmDialogState, confirm_dialog
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 
@@ -356,15 +353,21 @@ def my_component():
         # Form dialog
         form_dialog_component(
             state=ExampleFormDialogState,
-            title=rx.cond(
-                ExampleFormDialogState.is_update_mode,
-                "Update Entry",
-                "Create New Entry",
+            title=cast(
+                str,
+                rx.cond(
+                    ExampleFormDialogState.is_update_mode,
+                    "Update Entry",
+                    "Create New Entry",
+                ),
             ),
-            description=rx.cond(
-                ExampleFormDialogState.is_update_mode,
-                "Update the entry details below.",
-                "Fill in the details below to create a new entry.",
+            description=cast(
+                str,
+                rx.cond(
+                    ExampleFormDialogState.is_update_mode,
+                    "Update the entry details below.",
+                    "Fill in the details below to create a new entry.",
+                ),
             ),
             form_content=form_content(),
             max_width="500px",
@@ -372,10 +375,7 @@ def my_component():
         align="start",
     )
 
-    code3 = '''from gws_reflex_base.component.reflex_form_dialog_component import (
-    FormDialogState,
-    form_dialog_component,
-)
+    code3 = '''from gws_reflex_base import FormDialogState, form_dialog_component
 import reflex as rx
 
 class MyFormState(FormDialogState, rx.State):
@@ -470,7 +470,6 @@ form_dialog_component(
             code=code2,
             title="confirm_dialog",
             description="A confirmation dialog for destructive actions with async action support.",
-            func=confirm_dialog,
         ),
         # Form dialog example
         example_tabs(

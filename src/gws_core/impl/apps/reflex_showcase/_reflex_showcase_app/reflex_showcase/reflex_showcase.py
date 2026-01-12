@@ -6,6 +6,7 @@ from .pages import (
     doc_component_page,
     home_page,
     layout_page,
+    resource_components_page,
     rich_text_page,
     user_components_page,
 )
@@ -42,6 +43,7 @@ def sidebar() -> rx.Component:
             sidebar_link("Home", "/", "🏠"),
             sidebar_link("Rich Text", "/rich-text", "✏️"),
             sidebar_link("User Components", "/user-components", "👤"),
+            sidebar_link("Resource Components", "/resource-components", "📁"),
             sidebar_link("Dialogs", "/dialogs", "💬"),
             sidebar_link("Layout Components", "/layout", "📐"),
             sidebar_link("Doc Component", "/doc-component", "📄"),
@@ -105,3 +107,9 @@ def layout_components():
 def doc_component():
     """Doc component demo page."""
     return layout(doc_component_page.doc_component_page())
+
+
+@rx.page(route="/resource-components")
+def resource_components():
+    """Resource components demo page."""
+    return layout(resource_components_page.resource_components_page())

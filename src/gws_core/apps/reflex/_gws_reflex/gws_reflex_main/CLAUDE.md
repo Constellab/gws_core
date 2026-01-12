@@ -61,6 +61,18 @@ Group selection component for forms and filters.
 
 ---
 
+## Resource Components
+
+### `resource_select_button()`
+Resource selection component with search dialog. Allows searching and selecting resources from the database with filters for name, flagged status, and archived status.
+
+**State: `ResourceSelectState`**
+Extend this state to handle resource selection:
+- Implement `on_resource_selected(resource_model)` to handle selection logic
+- Override `create_search_builder()` to add custom filters (e.g., filter by resource type)
+
+---
+
 ## Rich Text Components
 
 ### `rich_text_component()`
@@ -79,6 +91,8 @@ from gws_reflex_main import (
     user_inline_component,
     user_select,
     group_select,
+    resource_select_button,
+    ResourceSelectState,
     # Base components are also available
     form_dialog_component,
     FormDialogState,

@@ -1,7 +1,7 @@
 """User components demo page for the Reflex showcase app."""
 
 import reflex as rx
-from gws_core.user.user_dto import UserDTO
+from gws_core import UserDTO
 from gws_reflex_main import (
     ReflexMainState,
     user_inline_component,
@@ -72,7 +72,7 @@ def user_components_page() -> rx.Component:
     )
 
     code1 = """from gws_reflex_main import user_profile_picture
-from gws_core.user.user_dto import UserDTO
+from gws_core import UserDTO
 
 # Create a user DTO
 user = UserDTO(
@@ -105,7 +105,7 @@ user_profile_picture(user, size="small")   # 24px"""
     )
 
     code2 = """from gws_reflex_main import user_inline_component
-from gws_core.user.user_dto import UserDTO
+from gws_core import UserDTO
 
 # Create a user DTO
 user = UserDTO(
@@ -141,7 +141,7 @@ user_inline_component(user, size="small")   # 24px avatar, 12px text"""
     )
 
     code3 = """from gws_reflex_main import user_select, ReflexMainState
-from gws_core.user.user_dto import UserDTO
+from gws_core import UserDTO
 import reflex as rx
 
 class MyState(ReflexMainState):

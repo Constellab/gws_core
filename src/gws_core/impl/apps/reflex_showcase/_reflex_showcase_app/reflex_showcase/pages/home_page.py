@@ -78,7 +78,6 @@ rx.box(
 
     authentication_code = """import reflex as rx
 from gws_reflex_main import ReflexMainState
-from gws_core.user.current_user_service import CurrentUserService
 
 class HomePageState(ReflexMainState):
 
