@@ -213,6 +213,26 @@ class TestShareScenario(BaseTestCase):
         self.assertIsInstance(resource_set, ResourceSet)
         self.assertEqual(len(resource_set.get_resources()), 2)
 
+        # Check the robots in the resource set
+        new_robot_1_model = ResourceModel.get_by_id_and_check(
+            resource_set.get_resource("Robot 1").get_model_id()
+        )
+
+        # the robot must the same as the robot output of the move task
+        self.assertEqual(new_robot_1_model.id, new_move.out_port("robot").get_resource_model().id)
+        self.assertEqual(new_robot_1_model.scenario.id, new_scenario.id)
+        self.assertEqual(new_robot_1_model.task_model.id, new_move.get_id())
+        # The first robot should not be associated directly with resource set because it is created before
+        self.assertIsNone(new_robot_1_model.parent_resource_id)
+
+        # The second robot should be a child of the resource set
+        new_robot_2_model = ResourceModel.get_by_id_and_check(
+            resource_set.get_resource("Robot 2").get_model_id()
+        )
+        self.assertEqual(new_robot_2_model.parent_resource_id, new_resource_set.id)
+        self.assertEqual(new_robot_2_model.scenario.id, new_scenario.id)
+        self.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
+
         # Check that the task input model where created
         self.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
 
@@ -220,7 +240,7 @@ class TestShareScenario(BaseTestCase):
         self.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
         self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
-        ######################  Re-run the share without all resources ######################
+        ######################  Re-run the share without output only ######################
         new_scenario_2 = ScenarioTransfertService.import_from_lab_sync(
             ScenarioDownloader.build_config(
                 share_link.get_download_link(), "Outputs only", "Force new scenario"

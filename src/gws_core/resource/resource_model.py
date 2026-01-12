@@ -91,7 +91,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     content_is_deleted = BooleanField(default=False)
     style: TypingStyle = BaseDTOField(TypingStyle, null=False)
 
-    _resource: Resource = None
+    _resource: Resource | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -148,6 +148,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         # foreign key constraint
         resources.sort(key=lambda x: "b" if x.parent_resource_id is None else "a")
         for output_resource in resources:
+            Logger.info(f"Deleting resource {output_resource.id}")
             output_resource.delete_instance()
 
     @classmethod
@@ -235,7 +236,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.delete().where(ResourceModel.id.in_(resource_model_ids))
 
     @classmethod
-    def get_by_types_and_sub_expression(cls, typing_names: list[str]) -> Expression:
+    def get_by_types_and_sub_expression(cls, typing_names: list[str]) -> Expression | None:
         """Return the expression to search resource base on a type and all its subtypes.
 
         If the Resource type is provided, it returns None
@@ -246,13 +247,15 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             return None
 
         # Retrieve all type of typing_names
-        resource_types: list[type] = [
+        resource_types = [
             TypingManager.get_type_from_name(typing_name) for typing_name in typing_names
         ]
 
         # Get all type of class and subclasses
         all_types: set[type[Resource]] = set()
         for resource_type in resource_types:
+            if resource_type is None:
+                continue
             all_types.update(Utils.get_all_subclasses(resource_type))
             all_types.update([resource_type])
 
@@ -344,11 +347,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             ResourceOrigin.UPLOADED,
             ResourceOrigin.S3_FOLDER_STORAGE,
             ResourceOrigin.IMPORTED_FROM_LAB,
-        ]:
-            if scenario is None or task_model is None:
-                raise Exception(
-                    f"To create a {origin} resource, you must provide the scenario and the task"
-                )
+        ] and (scenario is None or task_model is None):
+            raise Exception(
+                f"To create a {origin} resource, you must provide the scenario and the task"
+            )
 
         # if the resource is imported and its id is define, use it
         # with this resources imported from another can keep their id
@@ -464,10 +466,10 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         cls,
         resource: Resource,
         origin: ResourceOrigin = ResourceOrigin.GENERATED,
-        scenario: Scenario = None,
-        task_model: TaskModel = None,
-        port_name: str = None,
-        flagged: bool = None,
+        scenario: Scenario | None = None,
+        task_model: TaskModel | None = None,
+        port_name: str | None = None,
+        flagged: bool | None = None,
     ) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it"""
         # FIX is flagged and export ResourceOrigin
@@ -645,16 +647,13 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
-        resource_type: type[Resource] = self.get_resource_type()
+        resource_type = self.get_resource_type()
         return self.fs_node_model is not None or (
             resource_type is not None and resource_type.__is_exportable__
         )
 
     def is_manually_generated(self) -> bool:
-        return (
-            self.origin == ResourceOrigin.UPLOADED
-            or self.origin == ResourceOrigin.IMPORTED_FROM_LAB
-        )
+        return self.origin in (ResourceOrigin.UPLOADED, ResourceOrigin.IMPORTED_FROM_LAB)
 
     def get_navigable_entity_name(self) -> str:
         return self.name
@@ -665,7 +664,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     def is_application(self) -> bool:
         from gws_core.apps.app_resource import AppResource
 
-        resource_type: type[Resource] = self.get_resource_type()
+        resource_type = self.get_resource_type()
         if resource_type is not None:
             return Utils.issubclass(resource_type, AppResource)
         return False

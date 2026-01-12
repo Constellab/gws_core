@@ -208,6 +208,15 @@ class TestShareResource(BaseTestCase):
         # check that this is a new resource
         self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
 
+        # Check that the resource and its children have the scenario_id and task_id set and same
+        self.assertIsNotNone(new_resource_model.scenario)
+        self.assertIsNotNone(new_resource_model.task_model)
+        self.assertNotEqual(original_resource_model.scenario.id, new_resource_model.scenario.id)
+        for resource in resource_set.get_resource_models():
+            self.assertEqual(new_resource_model.scenario, resource.scenario)
+            self.assertEqual(new_resource_model.task_model, resource.task_model)
+            self.assertNotEqual(original_resource_model.scenario.id, resource.scenario.id)
+
     def test_share_resource_list(self):
         # Generate a resource list
         i_scenario: ScenarioProxy = ScenarioProxy()
@@ -240,6 +249,15 @@ class TestShareResource(BaseTestCase):
         original_file = original_resource_list[1]
         # check that this is a new resource
         self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
+
+        # Check that the resource and its children have the scenario_id and task_id set and same
+        self.assertIsNotNone(new_resource_model.scenario)
+        self.assertIsNotNone(new_resource_model.task_model)
+        self.assertNotEqual(original_resource_model.scenario.id, new_resource_model.scenario.id)
+        for resource in resource_list.get_resource_models():
+            self.assertEqual(new_resource_model.scenario, resource.scenario)
+            self.assertEqual(new_resource_model.task_model, resource.task_model)
+            self.assertNotEqual(original_resource_model.scenario.id, resource.scenario.id)
 
     def _generate_link_and_download_resource(self, original_resource_id) -> ResourceModel:
         # create a share link
