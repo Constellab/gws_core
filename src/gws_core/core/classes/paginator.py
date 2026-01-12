@@ -4,7 +4,7 @@ from typing import Any, Generic, TypeVar
 from numpy.core.numeric import Infinity
 from peewee import ModelSelect
 
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 
 from ..model.model import Model
 
@@ -158,7 +158,27 @@ class Paginator(Generic[PaginatorType]):
             objects=[map_result(x) for x in self.results],
         )
 
-    def to_dto(self) -> PageDTO:
+    def get_page(self) -> PageDTO[PaginatorType]:
+        """Return the current page as a PageDTO
+
+        :return: The current page
+        :rtype: PageDTO[PaginatorType]
+        """
+        return PageDTO(
+            page=self.page_info.page,
+            prev_page=self.page_info.prev_page,
+            next_page=self.page_info.next_page,
+            last_page=self.page_info.last_page,
+            total_number_of_items=self.page_info.total_number_of_items,
+            total_number_of_pages=self.page_info.total_number_of_pages,
+            number_of_items_per_page=self.page_info.number_of_items_per_page,
+            is_first_page=self.page_info.is_first_page,
+            is_last_page=self.page_info.is_last_page,
+            total_is_approximate=self.page_info.total_is_approximate,
+            objects=self.results,
+        )
+
+    def to_dto(self) -> PageDTO[BaseModelDTO]:
         return PageDTO(
             page=self.page_info.page,
             prev_page=self.page_info.prev_page,

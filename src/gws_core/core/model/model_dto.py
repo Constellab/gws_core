@@ -73,7 +73,10 @@ class ModelDTO(BaseModelDTO):
     last_modified_at: datetime
 
 
-class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
+PageDTOType = TypeVar("PageDTOType")
+
+
+class PageDTO(BaseModelDTO, Generic[PageDTOType]):
     page: int
     prev_page: int
     next_page: int
@@ -84,7 +87,7 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
     is_first_page: bool
     is_last_page: bool
     total_is_approximate: bool
-    objects: list[BaseModelDTOType]
+    objects: list[PageDTOType]
 
     @classmethod
     def empty_page(cls: type["PageDTO"]) -> "PageDTO":
@@ -104,3 +107,6 @@ class PageDTO(BaseModelDTO, Generic[BaseModelDTOType]):
             total_is_approximate=False,
             objects=[],
         )
+
+    class Config:
+        arbitrary_types_allowed = True
