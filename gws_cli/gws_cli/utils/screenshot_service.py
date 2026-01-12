@@ -3,6 +3,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import typer
+
 
 class ScreenshotService:
     """Service to take screenshots of web applications using Playwright"""
@@ -21,23 +23,23 @@ class ScreenshotService:
         try:
             import playwright
 
-            print("Playwright is already installed.")
+            typer.echo("Playwright is already installed.")
         except ImportError:
-            print("Playwright not found. Installing playwright...")
+            typer.echo("Playwright not found. Installing playwright...")
             try:
                 # Install playwright package
                 subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
-                print("Playwright package installed successfully.")
+                typer.echo("Playwright package installed successfully.")
             except subprocess.CalledProcessError as e:
-                print(f"Failed to install playwright: {e}")
+                typer.echo(f"Failed to install playwright: {e}", err=True)
                 return False
 
         # Install playwright browsers and system dependencies
         try:
-            print("Installing playwright browsers and system dependencies...")
+            typer.echo("Installing playwright browsers and system dependencies...")
 
             # Install system dependencies using apt (requires sudo)
-            print("Installing system dependencies (requires sudo)...")
+            typer.echo("Installing system dependencies (requires sudo)...")
             apt_packages = [
                 "libglib2.0-0",
                 "libnspr4",
@@ -59,23 +61,26 @@ class ScreenshotService:
             ]
 
             result = subprocess.run(
-                ["sudo", "apt-get", "install", "-y"] + apt_packages, check=False, capture_output=True, text=True
+                ["sudo", "apt-get", "install", "-y"] + apt_packages,
+                check=False,
+                capture_output=True,
+                text=True,
             )
 
             if result.returncode != 0:
-                print(f"Warning: System dependencies installation had issues: {result.stderr}")
-                print("Attempting to continue with browser installation...")
+                typer.echo(f"Warning: System dependencies installation had issues: {result.stderr}")
+                typer.echo("Attempting to continue with browser installation...")
             else:
-                print("System dependencies installed successfully.")
+                typer.echo("System dependencies installed successfully.")
 
             # Install playwright browsers
-            print("Installing playwright browsers...")
+            typer.echo("Installing playwright browsers...")
             subprocess.check_call([sys.executable, "-m", "playwright", "install", "chromium"])
-            print("Playwright browsers installed successfully.")
+            typer.echo("Playwright browsers installed successfully.")
 
             return True
         except subprocess.CalledProcessError as e:
-            print(f"Failed to install playwright browsers: {e}")
+            typer.echo(f"Failed to install playwright browsers: {e}", err=True)
             return False
 
     @staticmethod
@@ -106,7 +111,7 @@ class ScreenshotService:
         try:
             from playwright.sync_api import sync_playwright
         except ImportError:
-            print("Failed to import playwright after installation.")
+            typer.echo("Failed to import playwright after installation.", err=True)
             return 1
 
         try:
@@ -123,7 +128,7 @@ class ScreenshotService:
 
                 # Navigate to the application
                 full_url = f"{url}{route}"
-                print(f"Navigating to {full_url}")
+                typer.echo(f"Navigating to {full_url}")
                 page.goto(full_url)
 
                 # Wait for page to load fully
@@ -146,13 +151,13 @@ class ScreenshotService:
 
                 # Take screenshot
                 page.screenshot(path=output_path)
-                print(f"Screenshot saved to {output_path}")
+                typer.echo(f"Screenshot saved to {output_path}")
 
                 # Print collected console logs
                 if console_logs:
-                    print("\nBrowser Console Logs:")
+                    typer.echo("\nBrowser Console Logs:")
                     for log in console_logs:
-                        print(log)
+                        typer.echo(log)
 
                 # Save console logs to a file
                 if save_console_logs and console_logs:
@@ -161,7 +166,7 @@ class ScreenshotService:
                     )
                     with open(log_path, "w") as f:
                         f.write("\n".join(console_logs))
-                    print(f"Console logs saved to {log_path}")
+                    typer.echo(f"Console logs saved to {log_path}")
 
                 # Close browser
                 browser.close()
@@ -169,5 +174,5 @@ class ScreenshotService:
                 return 0
 
         except Exception as e:
-            print(f"Error taking screenshot: {e}")
+            typer.echo(f"Error taking screenshot: {e}", err=True)
             return 1

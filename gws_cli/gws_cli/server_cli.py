@@ -47,11 +47,11 @@ def run(
 ):
     if allow_dev_app_connections:
         if Settings.is_prod_mode():
-            print("Error: --allow-dev-app-connections cannot be used in production mode.")
+            typer.echo(
+                "Error: --allow-dev-app-connections cannot be used in production mode.", err=True
+            )
             raise typer.Exit(code=1)
-        Logger.warning(
-            "Dev mode app connections are allowed. Only use if you are working on apps."
-        )
+        Logger.warning("Dev mode app connections are allowed. Only use if you are working on apps.")
         AuthorizationService.allow_dev_app_connections = True
 
     AppManager.start_app(
@@ -77,15 +77,16 @@ def test(
             "--brick-name",
             help="Name of the brick to test. If not provided, use brick of current folder.",
         ),
-    ] = None,
+    ]
+    | None = None,
     show_sql: ShowSqlAnnotation = False,
 ):
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)
-        print(f"Running tests for brick '{brick_dir}'")
+        typer.echo(f"Running tests for brick '{brick_dir}'")
     else:
-        print("No brick dir provided. Using current directory.")
+        typer.echo("No brick dir provided. Using current directory.")
         brick_dir = CLIUtils.get_and_check_current_brick_dir()
 
     AppManager.run_test(

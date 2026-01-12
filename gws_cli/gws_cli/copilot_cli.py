@@ -18,12 +18,14 @@ def _manage_instructions(pull: bool, list_commands: bool):
         if exit_code != 0:
             raise typer.Exit(exit_code)
     else:
-        print("Use --pull to copy GWS instructions to global GitHub Copilot instructions folder")
-        print("Use --list to show all available GWS commands")
-        print("Example: gws copilot instructions --pull")
-        print("Example: gws copilot instructions --list")
-        print("Example: gws copilot commands --pull")
-        print("Example: gws copilot commands --list")
+        typer.echo(
+            "Use --pull to copy GWS instructions to global GitHub Copilot instructions folder"
+        )
+        typer.echo("Use --list to show all available GWS commands")
+        typer.echo("Example: gws copilot instructions --pull")
+        typer.echo("Example: gws copilot instructions --list")
+        typer.echo("Example: gws copilot commands --pull")
+        typer.echo("Example: gws copilot commands --list")
 
 
 @app.command("instructions", help="Manage GitHub Copilot instructions")

@@ -13,7 +13,9 @@ SHORT_DESCRIPTION_VAR = "shortDescription"
 TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "task_template.txt")
 
 
-def generate_task(name: str, human_name: str = "", short_description: str = "") -> str:
+def generate_task(
+    name: str, human_name: str | None = None, short_description: str | None = None
+) -> str:
     """Method to create a new task file with the given name, human name and short description.
 
     :param name: _description_
@@ -34,7 +36,10 @@ def generate_task(name: str, human_name: str = "", short_description: str = "") 
         )
         raise typer.Abort()
 
-    task_file_path = os.path.join(os.getcwd(), f"{StringHelper.to_snake_case(name)}.py")
+    destination_dir = os.getcwd()
+    CLIUtils.check_folder_is_in_brick_src(destination_dir)
+
+    task_file_path = os.path.join(destination_dir, f"{StringHelper.to_snake_case(name)}.py")
 
     if FileHelper.exists_on_os(task_file_path):
         typer.echo(f"File '{task_file_path}' already exists.", err=True)

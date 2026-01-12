@@ -99,3 +99,64 @@ class CLIUtils:
             raise typer.Abort()
 
         return settings_file_path
+
+    @staticmethod
+    def check_folder_is_in_brick_src(folder_path: str) -> None:
+        """Verify if the provided folder is inside the brick package directory (src/brick_name).
+        Raises a typer error and aborts if the folder is not inside a brick's package directory.
+
+        :param folder_path: path to the folder to check
+        :type folder_path: str
+        :raises typer.Abort: if the folder is not inside a brick's package directory
+        """
+        # Get the absolute path
+        abs_folder_path = os.path.abspath(folder_path)
+
+        # Check if the folder exists
+        if not os.path.exists(abs_folder_path):
+            typer.echo(f"The folder '{folder_path}' does not exist.", err=True)
+            raise typer.Abort()
+
+        if not os.path.isdir(abs_folder_path):
+            typer.echo(f"The path '{folder_path}' is not a directory.", err=True)
+            raise typer.Abort()
+
+        # Get the parent brick folder
+        brick_dir = BrickService.get_parent_brick_folder(abs_folder_path)
+
+        if not brick_dir:
+            typer.echo(
+                f"The folder '{folder_path}' is not inside a brick. Please run the command inside a brick's package folder.",
+                err=True,
+            )
+            raise typer.Abort()
+
+        # Get the brick name from the brick directory path
+        brick_name = os.path.basename(brick_dir)
+
+        # Get the brick package folder path (src/brick_name)
+        brick_package_folder = os.path.join(brick_dir, BrickService.SOURCE_FOLDER, brick_name)
+
+        # Check if the brick package folder exists
+        if not os.path.exists(brick_package_folder):
+            typer.echo(
+                f"The brick package folder '{brick_package_folder}' does not exist.",
+                err=True,
+            )
+            raise typer.Abort()
+
+        # Check if the folder is inside the brick package folder
+        # Use os.path.commonpath to verify the relationship
+        try:
+            common_path = os.path.commonpath([abs_folder_path, brick_package_folder])
+            is_in_package = common_path == brick_package_folder
+        except ValueError:
+            # commonpath raises ValueError if paths are on different drives (Windows)
+            is_in_package = False
+
+        if not is_in_package:
+            typer.echo(
+                f"The folder '{folder_path}' is not inside the brick's package folder. Please provide a folder inside '{brick_package_folder}'.",
+                err=True,
+            )
+            raise typer.Abort()

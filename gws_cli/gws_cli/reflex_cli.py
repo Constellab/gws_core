@@ -35,7 +35,7 @@ def generate(
     ] = False,
 ):
     app_folder = generate_reflex_app(name, is_enterprise=is_enterprise)
-    print(f"Reflex app '{name}' created successfully in '{app_folder}'.")
+    typer.echo(f"Reflex app '{name}' created successfully in '{app_folder}'.")
 
 
 @app.command("init", help="Generate a new Reflex app (alias for generate)")
@@ -46,4 +46,4 @@ def init(
     ] = False,
 ):
     app_folder = generate_reflex_app(name, is_enterprise=is_enterprise)
-    print(f"Reflex app '{name}' created successfully in '{app_folder}'.")
+    typer.echo(f"Reflex app '{name}' created successfully in '{app_folder}'.")

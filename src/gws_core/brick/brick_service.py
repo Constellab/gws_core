@@ -282,6 +282,20 @@ class BrickService:
         return None
 
     @classmethod
+    def get_brick_name_from_path(cls, path: str) -> str | None:
+        """Get the brick name from a folder path
+
+        :param path: path to a file or folder inside a brick
+        :type path: str
+        :return: the brick name, None if the path is not inside a brick
+        :rtype: str | None
+        """
+        brick_folder = cls.get_parent_brick_folder(path)
+        if brick_folder:
+            return os.path.basename(brick_folder)
+        return None
+
+    @classmethod
     def get_brick_src_folder(cls, brick_name: str) -> str:
         """Get the folder of the brick source code"""
         spec = importlib.util.find_spec(brick_name)

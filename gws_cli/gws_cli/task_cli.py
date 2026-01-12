@@ -12,11 +12,13 @@ def generate(
     name: Annotated[str, typer.Argument(help="Name of the task class to create (PascalCase).")],
     human_name: Annotated[
         str, typer.Option("--human-name", help="Human-readable name of the task.")
-    ] = None,
+    ]
+    | None = None,
     short_description: Annotated[
         str, typer.Option("--short-description", help="Short description of what the task does.")
-    ] = None,
+    ]
+    | None = None,
 ):
-    print(f"Creating task: '{name}'")
+    typer.echo(f"Creating task: '{name}'")
     task_file = generate_task(name, human_name=human_name, short_description=short_description)
-    print(f"Task '{name}' created successfully in '{task_file}'.")
+    typer.echo(f"Task '{name}' created successfully in '{task_file}'.")

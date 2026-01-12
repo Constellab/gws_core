@@ -98,7 +98,7 @@ class AppCli:
                 # make the path absolute relative to the config file
                 config_file_dir = os.path.dirname(self.config_file_path)
                 env_file_path = os.path.join(config_file_dir, env_file_path)
-                print(
+                typer.echo(
                     f"env_file_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {env_file_path}"
                 )
 
@@ -151,14 +151,14 @@ class AppCli:
             if is_localhost
             else ""
         )
-        print(
+        typer.echo(
             "-------------------------------------------------------------------------------------------------------------------------------------"
         )
         env_txt = "" if self._env_type == "NONE" else f" with env type '{self._env_type}'"
-        print(
+        typer.echo(
             f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}.{additional_message}"
         )
-        print(
+        typer.echo(
             "-------------------------------------------------------------------------------------------------------------------------------------"
         )
 
@@ -169,13 +169,16 @@ class AppCli:
             # make the path absolute relative to the config file
             config_file_dir = os.path.dirname(self.config_file_path)
             app_dir_path = os.path.join(config_file_dir, app_dir_path)
-            print(
+            typer.echo(
                 f"app_dir_path is not absolute, making it absolute relative to the config file directory: {config_file_dir}. Absolute path: {app_dir_path}"
             )
 
         if not FileHelper.exists_on_os(app_dir_path):
             typer.echo(f"App directory '{app_dir_path}' does not exist.", err=True)
             raise typer.Abort()
+
+        # Check if the app directory is inside a brick's package folder
+        CLIUtils.check_folder_is_in_brick_src(app_dir_path)
 
         return app_dir_path
 

@@ -34,6 +34,6 @@ def run_dev(
 
 @app.command("generate", help="Generate a new Streamlit app")
 def generate(name: Annotated[str, typer.Argument(help="Name of the Streamlit app (snake_case).")]):
-    print(f"Generating streamlit app: '{name}'")
+    typer.echo(f"Generating streamlit app: '{name}'")
     app_folder = generate_streamlit_app(name)
-    print(f"Streamlit app '{name}' created successfully in '{app_folder}'.")
+    typer.echo(f"Streamlit app '{name}' created successfully in '{app_folder}'.")

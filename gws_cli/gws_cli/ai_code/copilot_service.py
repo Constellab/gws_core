@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import typer
 from gws_core.core.utils.settings import Settings
 
 from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
@@ -87,21 +88,21 @@ argument-hint: {frontmatter.argument_hint}
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        print("=== Updating GitHub Copilot configuration for GWS ===\n")
+        typer.echo("=== Updating GitHub Copilot configuration for GWS ===\n")
 
         # Pull commands
         result = self.pull_commands_to_global()
         if result != 0:
-            print("Failed to pull commands")
+            typer.echo("Failed to pull commands", err=True)
             return result
 
         # Generate main instructions
         result = self.generate_main_instructions()
         if result != 0:
-            print("Failed to generate main instructions")
+            typer.echo("Failed to generate main instructions", err=True)
             return result
 
-        print("\n=== GitHub Copilot configuration updated successfully! ===")
+        typer.echo("\n=== GitHub Copilot configuration updated successfully! ===")
         self._log_post_installation_instructions()
         return 0
 
@@ -124,10 +125,12 @@ argument-hint: {frontmatter.argument_hint}
 
     def _log_post_installation_instructions(self):
         """Log instructions for using GitHub Copilot with GWS commands"""
-        print("\n" + "=" * 70)
-        print("How to use GWS commands in GitHub Copilot:")
-        print("=" * 70)
-        print("\n1. Open GitHub Copilot Chat in your editor (VS Code, JetBrains, etc.)")
-        print("\n2. Use the / symbol to reference GWS prompts followed by your task description.")
-        print("   Exemple: /gws-streamlit-app-developer Create a data visualization dashboard")
-        print("\n" + "=" * 70)
+        typer.echo("\n" + "=" * 70)
+        typer.echo("How to use GWS commands in GitHub Copilot:")
+        typer.echo("=" * 70)
+        typer.echo("\n1. Open GitHub Copilot Chat in your editor (VS Code, JetBrains, etc.)")
+        typer.echo(
+            "\n2. Use the / symbol to reference GWS prompts followed by your task description."
+        )
+        typer.echo("   Exemple: /gws-streamlit-app-developer Create a data visualization dashboard")
+        typer.echo("\n" + "=" * 70)

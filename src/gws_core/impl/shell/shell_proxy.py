@@ -80,6 +80,30 @@ class ShellProxy(BaseTyping):
     - Integration with progress bars and message dispatchers
 
     The proxy can be used as a context manager for automatic cleanup of temporary directories.
+
+    ## Logging Format Support
+
+    When using ShellProxy with a message_dispatcher (e.g., in virtual environment agents),
+    the stdout/stderr output supports special format prefixes for message categorization:
+
+    - `[INFO] message` - Info message
+    - `[SUCCESS] message` - Success message
+    - `[WARNING] message` - Warning message
+    - `[ERROR] message` - Error message
+    - `[DEBUG] message` - Debug message
+    - `[PROGRESS:XX] message` - Progress message (XX = 0-100)
+
+    These format prefixes are automatically parsed by the message_dispatcher to dispatch
+    messages with the appropriate severity level and type. This is particularly useful
+    in virtual environment agents where standard logging methods are not available.
+
+    Example:
+        ```python
+        # In a virtual environment agent script
+        print("[INFO] Starting processing...")
+        print("[PROGRESS:50] Halfway done...")
+        print("[SUCCESS] Processing completed!")
+        ```
     """
 
     working_dir: str
@@ -378,6 +402,9 @@ class ShellProxy(BaseTyping):
 
     def _self_dispatch_stdout(self, message: bytes) -> None:
         """Dispatch stdout message to the message dispatcher.
+
+        Messages are parsed for special format prefixes like [INFO], [WARNING], [ERROR],
+        [SUCCESS], [DEBUG], or [PROGRESS:XX] to categorize the message type.
 
         :param message: Raw stdout message bytes
         :type message: bytes

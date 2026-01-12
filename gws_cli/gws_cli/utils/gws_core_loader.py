@@ -3,6 +3,8 @@ import os
 import sys
 from datetime import datetime
 
+import typer
+
 
 class LocalLogger:
     @classmethod
@@ -16,7 +18,7 @@ class LocalLogger:
     @classmethod
     def _log(cls, msg: str, type_: str):
         # get the date in UTC format
-        print(f"{type_} - {datetime.now().isoformat()} - {msg}")
+        typer.echo(f"{type_} - {datetime.now().isoformat()} - {msg}")
 
 
 gws_core_package = "gws_core"

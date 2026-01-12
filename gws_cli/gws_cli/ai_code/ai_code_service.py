@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
+import typer
+
 
 @dataclass
 class CommandFrontmatter:
@@ -142,7 +144,10 @@ class AICodeService(ABC):
         try:
             # Validate source directory exists
             if not self.SOURCE_COMMANDS_DIR.exists():
-                print(f"Error: Source commands directory not found at {self.SOURCE_COMMANDS_DIR}")
+                typer.echo(
+                    f"Error: Source commands directory not found at {self.SOURCE_COMMANDS_DIR}",
+                    err=True,
+                )
                 return 1
 
             # Get target directory from child class implementation
@@ -165,7 +170,7 @@ class AICodeService(ABC):
                 source_file = self.SOURCE_COMMANDS_DIR / frontmatter_config.filename
 
                 if not source_file.exists():
-                    print(f"Warning: Source file not found: {source_file}")
+                    typer.echo(f"Warning: Source file not found: {source_file}")
                     continue
 
                 # Target file with formatted filename (prefixed with 'gws-')
@@ -185,13 +190,13 @@ class AICodeService(ABC):
                 # Write to target file
                 target_file.write_text(content, encoding="utf-8")
 
-            print(
+            typer.echo(
                 f"GWS commands successfully pulled to global {self.ai_tool_name} commands folder! Location: {target_dir}."
             )
             return 0
 
         except OSError as e:
-            print(f"Error pulling commands: {e}")
+            typer.echo(f"Error pulling commands: {e}", err=True)
             return 1
 
     def get_commands_list(self) -> list[CommandInfo]:
@@ -253,12 +258,12 @@ class AICodeService(ABC):
         try:
             target_dir = self.get_target_dir()
 
-            print("\n" + "=" * 70)
-            print(f"Available GWS commands for {self.ai_tool_name}:")
-            print("=" * 70)
+            typer.echo("\n" + "=" * 70)
+            typer.echo(f"Available GWS commands for {self.ai_tool_name}:")
+            typer.echo("=" * 70)
 
             if not target_dir.exists():
-                print(
+                typer.echo(
                     f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands."
                 )
                 return 0
@@ -266,27 +271,27 @@ class AICodeService(ABC):
             commands = self.get_commands_list()
 
             if not commands:
-                print(
+                typer.echo(
                     f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands."
                 )
                 return 0
 
-            print(f"\nLocation: {target_dir}\n")
+            typer.echo(f"\nLocation: {target_dir}\n")
 
             for command in commands:
-                print(f"  /{command.name}")
+                typer.echo(f"  /{command.name}")
                 if command.description:
-                    print(f"    {command.description}")
-                print()
+                    typer.echo(f"    {command.description}")
+                typer.echo()
 
-            print("Usage: /gws-<command-name> [your task description]")
-            print("Example: /gws-streamlit-app-developer Create a dashboard")
-            print("=" * 70)
+            typer.echo("Usage: /gws-<command-name> [your task description]")
+            typer.echo("Example: /gws-streamlit-app-developer Create a dashboard")
+            typer.echo("=" * 70)
 
             return 0
 
         except Exception as e:
-            print(f"Error printing commands: {e}")
+            typer.echo(f"Error printing commands: {e}", err=True)
             return 1
 
     def generate_main_instructions(self) -> int:
@@ -307,7 +312,7 @@ class AICodeService(ABC):
             # Read the template
             template_path = Path(__file__).parent / "main_instructions.md"
             if not template_path.exists():
-                print(f"Error: Template file not found at {template_path}")
+                typer.echo(f"Error: Template file not found at {template_path}", err=True)
                 return 1
 
             template_content = template_path.read_text(encoding="utf-8")
@@ -348,11 +353,11 @@ class AICodeService(ABC):
             # Write the file
             target_path.write_text(new_content, encoding="utf-8")
 
-            print(f"Main instructions generated successfully at: {target_path}")
+            typer.echo(f"Main instructions generated successfully at: {target_path}")
             return 0
 
         except Exception as e:
-            print(f"Error generating main instructions: {e}")
+            typer.echo(f"Error generating main instructions: {e}", err=True)
             return 1
 
     def update_if_configured(self) -> None:
@@ -364,12 +369,12 @@ class AICodeService(ABC):
         if not self.is_configured():
             return
 
-        print(f"{self.ai_tool_name} is configured. Updating configuration...")
+        typer.echo(f"{self.ai_tool_name} is configured. Updating configuration...")
         exit_code = self.update()
         if exit_code != 0:
-            print(f"Error updating {self.ai_tool_name} configuration.")
+            typer.echo(f"Error updating {self.ai_tool_name} configuration.", err=True)
         else:
-            print(f"{self.ai_tool_name} configuration updated successfully.")
+            typer.echo(f"{self.ai_tool_name} configuration updated successfully.")
 
     def is_configured(self) -> bool:
         """Check if the AI tool is configured (i.e., if the target commands directory exists)

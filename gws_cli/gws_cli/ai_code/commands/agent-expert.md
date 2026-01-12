@@ -341,6 +341,52 @@ Access in code:
 param_value = params['Parameter Display Name']
 ```
 
+## Logging in Agents
+
+### Basic Python Agent
+In Basic Python Agent, you have access to the standard task logging methods:
+
+```python
+# Logging methods
+self.log_info_message('Processing started')
+self.log_success_message('Processing completed successfully')
+self.log_warning_message('Warning: Missing values found')
+self.log_error_message('Error occurred during processing')
+
+# Progress updates (0-100)
+self.update_progress_value(50, 'Processing data...')
+```
+
+### Virtual Environment Agent
+In Virtual Environment Agent, you do NOT have access to the task logging methods. Use `print()` statements for logging with special format prefixes:
+
+```python
+# Info message
+print("[INFO] Loading data...")
+print(f"[INFO] Processed {count} records")
+
+# Warning message
+print(f"[WARNING] Missing values found in column {col}")
+
+# Error message
+print("[ERROR] Failed to process data")
+
+# Success message
+print("[SUCCESS] Processing completed successfully")
+
+# Debug message
+print("[DEBUG] Debug information here")
+
+# Progress message (0-100)
+print("[PROGRESS:50] Processing data...")
+print("[PROGRESS:100] Processing complete")
+```
+
+**Note**:
+- All `print()` output is captured in the agent execution logs and visible in the platform UI
+- Use the format prefixes `[INFO]`, `[WARNING]`, `[ERROR]`, `[SUCCESS]`, `[DEBUG]`, or `[PROGRESS:XX]` for proper message categorization
+- For progress messages, use `[PROGRESS:XX]` where XX is a value from 0-100
+
 ## Common Patterns
 
 ### Pattern 1: Table Transformation

@@ -1,6 +1,8 @@
 import subprocess
 from pathlib import Path
 
+import typer
+
 
 class NodeService:
     """Service for managing Node.js installation and related operations"""
@@ -30,25 +32,25 @@ class NodeService:
         script_path = script_dir / "install-node.sh"
 
         if not script_path.exists():
-            print(f"Error: Install script not found at {script_path}")
+            typer.echo(f"Error: Install script not found at {script_path}", err=True)
             return 1
 
-        print("Starting Node.js installation...")
+        typer.echo("Starting Node.js installation...")
 
         try:
             # Execute the bash script
             result = subprocess.run(["bash", str(script_path)], check=True, capture_output=False)
 
             if result.returncode == 0:
-                print("Node.js installation completed successfully!")
+                typer.echo("Node.js installation completed successfully!")
                 return 0
             else:
-                print("Node.js installation failed!")
+                typer.echo("Node.js installation failed!")
                 return 1
 
         except subprocess.CalledProcessError as e:
-            print(f"Error during Node.js installation: {e}")
+            typer.echo(f"Error during Node.js installation: {e}", err=True)
             return 1
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            typer.echo(f"Unexpected error: {e}", err=True)
             return 1

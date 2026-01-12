@@ -49,7 +49,7 @@ def commands(
         if exit_code != 0:
             raise typer.Exit(exit_code)
     else:
-        print("Use --pull to copy GWS commands to global Claude commands folder")
-        print("Use --list to show all available GWS commands")
-        print("Example: gws claude commands --pull")
-        print("Example: gws claude commands --list")
+        typer.echo("Use --pull to copy GWS commands to global Claude commands folder")
+        typer.echo("Use --list to show all available GWS commands")
+        typer.echo("Example: gws claude commands --pull")
+        typer.echo("Example: gws claude commands --list")

@@ -4,6 +4,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import typer
 from gws_core.core.utils.settings import Settings
 
 from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
@@ -96,36 +97,40 @@ argument-hint: [{frontmatter.argument_hint}]
         """
         # First, check if Node.js is available
         if not NodeService.is_node_installed():
-            print("Node.js not found. Installing Node.js first...")
+            typer.echo("Node.js not found. Installing Node.js first...")
             node_result = NodeService.install_node()
             if node_result != 0:
+                typer.echo(
+                    "Failed to install Node.js. Cannot proceed with Claude Code installation.",
+                    err=True,
+                )
                 return node_result
 
         script_dir = Path(__file__).parent.parent / "scripts"
         script_path = script_dir / "install-claude-code.sh"
 
         if not script_path.exists():
-            print(f"Error: Install script not found at {script_path}")
+            typer.echo(f"Error: Install script not found at {script_path}", err=True)
             return 1
 
-        print("Starting Claude Code installation...")
+        typer.echo("Starting Claude Code installation...")
 
         try:
             # Execute the bash script
             result = subprocess.run(["bash", str(script_path)], check=True, capture_output=False)
 
             if result.returncode == 0:
-                print("Claude Code installation completed successfully!")
+                typer.echo("Claude Code installation completed successfully!")
                 return 0
             else:
-                print("Claude Code installation failed!")
+                typer.echo("Claude Code installation failed!", err=True)
                 return 1
 
         except subprocess.CalledProcessError as e:
-            print(f"Error during Claude Code installation: {e}")
+            typer.echo(f"Error during Claude Code installation: {e}", err=True)
             return 1
         except Exception as e:
-            print(f"Unexpected error: {e}")
+            typer.echo(f"Unexpected error: {e}", err=True)
             return 1
 
     def install_claude_code_if_not_installed(self) -> int:
@@ -135,10 +140,10 @@ argument-hint: [{frontmatter.argument_hint}]
             int: Exit code (0 for success, 1 for failure)
         """
         if self.is_claude_code_installed():
-            print("Claude Code is already installed.")
+            typer.echo("Claude Code is already installed.")
             return 0
 
-        print("Claude Code not found. Starting installation...")
+        typer.echo("Claude Code not found. Starting installation...")
         return self.install_claude_code()
 
     def init_settings(self) -> int:
@@ -154,7 +159,7 @@ argument-hint: [{frontmatter.argument_hint}]
             # Find the gws_core package path
             gws_core_spec = importlib.util.find_spec("gws_core")
             if gws_core_spec is None or gws_core_spec.origin is None:
-                print("Error: gws_core package not found")
+                typer.echo("Error: gws_core package not found", err=True)
                 return 1
 
             # Get the source directory (parent of the __init__.py file)
@@ -174,7 +179,7 @@ argument-hint: [{frontmatter.argument_hint}]
                 with open(settings_file) as f:
                     settings = json.load(f)
             else:
-                print(f"Creating new settings file at {settings_file}")
+                typer.echo(f"Creating new settings file at {settings_file}")
 
             # Ensure env key exists
             if "env" not in settings:
@@ -190,7 +195,7 @@ argument-hint: [{frontmatter.argument_hint}]
             return 0
 
         except Exception as e:
-            print(f"Error initializing settings: {e}")
+            typer.echo(f"Error initializing settings: {e}", err=True)
             return 1
 
     def _update_claude_config(self) -> int:
@@ -207,19 +212,19 @@ argument-hint: [{frontmatter.argument_hint}]
         # Pull commands
         result = self.pull_commands_to_global()
         if result != 0:
-            print("Failed to pull commands")
+            typer.echo("Failed to pull commands", err=True)
             return result
 
         # Update settings
         result = self.init_settings()
         if result != 0:
-            print("Failed to update settings")
+            typer.echo("Failed to update settings", err=True)
             return result
 
         # Generate main instructions
         result = self.generate_main_instructions()
         if result != 0:
-            print("Failed to generate main instructions")
+            typer.echo("Failed to generate main instructions", err=True)
             return result
 
         return 0
@@ -235,22 +240,22 @@ argument-hint: [{frontmatter.argument_hint}]
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        print("=== Initializing Claude Code for GWS ===\n")
+        typer.echo("=== Initializing Claude Code for GWS ===\n")
 
         # Step 1: Install Claude Code
-        print("Installing Claude Code...")
+        typer.echo("Installing Claude Code...")
         result = self.install_claude_code_if_not_installed()
         if result != 0:
-            print("Failed to install Claude Code")
+            typer.echo("Failed to install Claude Code", err=True)
             return result
-        print()
+        typer.echo()
 
         # Step 2 & 3: Update configuration
         result = self._update_claude_config()
         if result != 0:
             return result
 
-        print("=== Claude Code initialization completed successfully! ===")
+        typer.echo("=== Claude Code initialization completed successfully! ===")
         self._log_post_installation_instructions()
         return 0
 
@@ -267,21 +272,21 @@ argument-hint: [{frontmatter.argument_hint}]
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        print("=== Updating Claude Code configuration for GWS ===\n")
+        typer.echo("=== Updating Claude Code configuration for GWS ===\n")
 
         # Check if Claude Code is installed
         if not self.is_claude_code_installed():
-            print("Claude Code is not installed. Nothing to update.")
+            typer.echo("Claude Code is not installed. Nothing to update.")
             return 0
 
-        print("Claude Code is installed. Proceeding with update...\n")
+        typer.echo("Claude Code is installed. Proceeding with update...\n")
 
         # Update configuration
         result = self._update_claude_config()
         if result != 0:
             return result
 
-        print("=== Claude Code configuration updated successfully! ===")
+        typer.echo("=== Claude Code configuration updated successfully! ===")
         self._log_post_installation_instructions()
         return 0
 
@@ -304,12 +309,12 @@ argument-hint: [{frontmatter.argument_hint}]
 
     def _log_post_installation_instructions(self):
         """Log instructions for installing Claude Code manually if needed"""
-        print("\n" + "=" * 70)
-        print("How to use GWS commands in Claude Code:")
-        print("=" * 70)
-        print("\n1. Open Claude Code in your terminal or editor")
-        print(
+        typer.echo("\n" + "=" * 70)
+        typer.echo("How to use GWS commands in Claude Code:")
+        typer.echo("=" * 70)
+        typer.echo("\n1. Open Claude Code in your terminal or editor")
+        typer.echo(
             "\n2. Use the / symbol to invoke GWS slash commands followed by your task description."
         )
-        print("   Example: /gws-streamlit-app-developer Create a data visualization dashboard")
-        print("\n" + "=" * 70)
+        typer.echo("   Example: /gws-streamlit-app-developer Create a data visualization dashboard")
+        typer.echo("\n" + "=" * 70)

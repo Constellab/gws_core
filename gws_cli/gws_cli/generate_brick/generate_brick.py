@@ -40,7 +40,7 @@ def generate_brick(name: str):
     update_settings_file(brick_folder, name)
     update_readme(brick_folder, name)
     update_code(brick_folder, name)
-    print(f"The brick {name} was successfully created at {brick_folder}")
+    typer.echo(f"The brick {name} was successfully created at {brick_folder}")
 
 
 def update_settings_file(dest_dir: str, name: str):
