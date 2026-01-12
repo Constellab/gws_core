@@ -15,7 +15,6 @@ class ResourceComponentsPageState(ReflexMainState):
     """State for the resource components page."""
 
     selected_resource_name: str = ""
-    selected_resource_id: str = ""
 
 
 class DemoResourceSelectState(ResourceSelectState, ResourceComponentsPageState):
@@ -24,7 +23,6 @@ class DemoResourceSelectState(ResourceSelectState, ResourceComponentsPageState):
     async def on_resource_selected(self, resource_model: ResourceModel):
         """Handle resource selection."""
         self.selected_resource_name = resource_model.name
-        self.selected_resource_id = resource_model.id
 
 
 class FilteredResourceSelectState(ResourceSelectState, ResourceComponentsPageState):
@@ -33,7 +31,6 @@ class FilteredResourceSelectState(ResourceSelectState, ResourceComponentsPageSta
     async def on_resource_selected(self, resource_model: ResourceModel):
         """Handle resource selection."""
         self.selected_resource_name = resource_model.name
-        self.selected_resource_id = resource_model.id
 
     async def create_search_builder(self) -> ResourceSearchBuilder:
         """Create search builder with custom filter for flagged resources only."""
@@ -58,12 +55,6 @@ def resource_components_page() -> rx.Component:
             rx.box(
                 rx.text(
                     f"Selected Resource: {ResourceComponentsPageState.selected_resource_name}",
-                    weight="bold",
-                ),
-                rx.text(
-                    f"Resource ID: {ResourceComponentsPageState.selected_resource_id}",
-                    size="2",
-                    color="gray",
                 ),
                 margin_top="1em",
                 padding="1em",
@@ -80,13 +71,11 @@ import reflex as rx
 
 class MyState(ReflexMainState):
     selected_resource_name: str = ""
-    selected_resource_id: str = ""
 
 class MyResourceSelectState(ResourceSelectState, MyState):
     async def on_resource_selected(self, resource_model: ResourceModel):
         \"\"\"Handle resource selection.\"\"\"
         self.selected_resource_name = resource_model.name
-        self.selected_resource_id = resource_model.id
 
 # Display resource select button
 resource_select_button(state=MyResourceSelectState)"""

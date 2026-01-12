@@ -119,25 +119,44 @@ def _resource_table_row(
         A table row component with resource information
     """
     return rx.table.row(
-        rx.table.cell(rx.text(resource.name, weight="medium")),
+        rx.table.cell(
+            rx.vstack(
+                rx.text(resource.name, weight="medium"),
+                rx.cond(
+                    resource.scenario,
+                    rx.hstack(
+                        rx.icon("circle-arrow-right", size=12, color="gray"),
+                        rx.text(resource.scenario.title, size="1", color="gray"),
+                        spacing="1",
+                        align_items="center",
+                    ),
+                    rx.fragment(),
+                ),
+                spacing="0",
+                align_items="start",
+            ),
+            flex="2",
+        ),
         rx.table.cell(
             rx.text(
                 rx.cond(resource.resource_type, resource.resource_type.human_name, ""),
                 size="2",
                 color="gray",
-            )
+            ),
+            flex="1",
         ),
         rx.table.cell(
             rx.hstack(
                 user_profile_picture(resource.last_modified_by),
                 rx.moment(
                     resource.last_modified_at,
-                    format="YYYY-MM-DD HH:mm",
+                    format="MMM DD, YYYY",
                     size="2",
                     color="gray",
                 ),
                 align_items="center",
-            )
+            ),
+            flex="1",
         ),
         rx.table.cell(
             rx.button(
@@ -145,8 +164,10 @@ def _resource_table_row(
                 on_click=lambda: state.select_resource(resource.id),
                 size="2",
                 variant="soft",
-            )
+            ),
+            width="100px",
         ),
+        style={"display": "flex"},
     )
 
 
@@ -170,10 +191,11 @@ def _resource_table(state: type[ResourceSelectState]) -> rx.Component:
                     rx.table.root(
                         rx.table.header(
                             rx.table.row(
-                                rx.table.column_header_cell("Name"),
-                                rx.table.column_header_cell("Resource Type"),
-                                rx.table.column_header_cell("Last Modified"),
-                                rx.table.column_header_cell("Actions"),
+                                rx.table.column_header_cell("Name", flex="2"),
+                                rx.table.column_header_cell("Resource Type", flex="1"),
+                                rx.table.column_header_cell("Last Modified", flex="1"),
+                                rx.table.column_header_cell("Actions", width="100px"),
+                                style={"display": "flex"},
                             ),
                         ),
                         rx.table.body(
@@ -184,6 +206,7 @@ def _resource_table(state: type[ResourceSelectState]) -> rx.Component:
                         ),
                         variant="surface",
                         width="100%",
+                        style={"--table-cell-min-height": "initial"},
                     ),
                     # Load more section
                     rx.cond(
