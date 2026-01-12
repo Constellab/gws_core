@@ -2,9 +2,9 @@ import os
 import shutil
 
 import typer
-from gws_core import FileHelper, ShellProxy, StringHelper
+from gws_core import FileHelper, ShellProxy
 
-from gws_cli.utils.app_task_generator import generate_app_task
+from gws_cli.utils.app_generator import AppGenerator
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import create_dev_config_json
 from gws_cli.utils.typer_message_observer import TyperMessageObserver
@@ -25,21 +25,12 @@ def generate_reflex_app(name: str, is_enterprise: bool) -> str:
     :return: path to the created reflex app
     :rtype: str
     """
-    if not StringHelper.is_alphanumeric(name):
-        typer.echo(
-            f"Invalid reflex app name '{name}'. It must contains only alpha numeric characters and '_'.",
-            err=True,
-        )
-        raise typer.Abort()
-
-    snake_case_name = StringHelper.to_snake_case(name)
+    # Validate app name and check if folder already exists
+    current_folder = os.getcwd()
+    snake_case_name = AppGenerator.validate_app_name_and_folder(name, current_folder)
 
     # The folder where the app will be created
-    app_folder = os.path.join(os.getcwd(), snake_case_name)
-
-    if FileHelper.exists_on_os(app_folder):
-        typer.echo(f"Folder '{app_folder}' already exists.", err=True)
-        raise typer.Abort()
+    app_folder = os.path.join(current_folder, snake_case_name)
 
     # create the app folder
     FileHelper.create_dir_if_not_exist(app_folder)
@@ -100,7 +91,7 @@ def generate_reflex_app(name: str, is_enterprise: bool) -> str:
             raise typer.Abort()
 
         # Create the generate task file
-        generate_app_task(snake_case_name, app_folder, "reflex")
+        AppGenerator.generate_app_task(snake_case_name, app_folder, "reflex")
 
         # Copy the CSS file into assets folder
         assets_folder = os.path.join(reflex_app_folder, ASSETS_FOLDER)

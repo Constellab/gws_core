@@ -101,13 +101,15 @@ class CLIUtils:
         return settings_file_path
 
     @staticmethod
-    def check_folder_is_in_brick_src(folder_path: str) -> None:
+    def check_folder_is_in_brick_src(folder_path: str) -> str:
         """Verify if the provided folder is inside the brick package directory (src/brick_name).
         Raises a typer error and aborts if the folder is not inside a brick's package directory.
 
         :param folder_path: path to the folder to check
         :type folder_path: str
         :raises typer.Abort: if the folder is not inside a brick's package directory
+        :return: brick name
+        :rtype: str
         """
         # Get the absolute path
         abs_folder_path = os.path.abspath(folder_path)
@@ -160,3 +162,5 @@ class CLIUtils:
                 err=True,
             )
             raise typer.Abort()
+
+        return brick_name
