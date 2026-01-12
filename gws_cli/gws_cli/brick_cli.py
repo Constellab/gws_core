@@ -55,6 +55,7 @@ def install_deps(
     # Get all pip sources from settings
     pip_sources = settings.get_pip_sources()
 
+    has_errors = False
     for source in pip_sources:
         pip_cmd = source.get_pip_install_command()
         if not pip_cmd:
@@ -70,9 +71,15 @@ def install_deps(
                 f"✓ Successfully installed {len(package_specs)} packages: {', '.join(package_specs)}"
             )
         except subprocess.CalledProcessError as e:
+            has_errors = True
             typer.echo(f"✗ Failed to install packages: {e.stderr}", err=True)
             typer.echo(f"Command: {' '.join(pip_cmd)}", err=True)
         except Exception as e:
+            has_errors = True
             typer.echo(f"✗ Error installing packages: {e}", err=True)
 
-    typer.echo("\nDependency installation completed")
+    if has_errors:
+        typer.echo("\nDependency installation completed with errors", err=True)
+        raise typer.Exit(1)
+
+    typer.echo("\nDependency installation completed successfully")

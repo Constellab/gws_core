@@ -16,12 +16,22 @@ class BrickSettingsPipPackage(BaseModelDTO):
     def get_package_spec(self) -> str | None:
         """Get the package specification for pip install.
 
-        :return: Package spec like 'package==1.0.0' or 'package', None if no name
+        :return: Package spec like 'package==1.0.0', 'package>=1.0,<2.0', or 'package', None if no name
         :rtype: str | None
         """
         if not self.name:
             return None
-        return f"{self.name}=={self.version}" if self.version else self.name
+
+        if not self.version:
+            return self.name
+
+        # If version contains operators (>, <, =, !, ~, etc.), use it as-is
+        # Otherwise, treat it as an exact version and prefix with ==
+        version_operators = ['>', '<', '=', '!', '~', '*']
+        if any(op in self.version for op in version_operators):
+            return f"{self.name}{self.version}"
+        else:
+            return f"{self.name}=={self.version}"
 
 
 class BrickSettingsPipSource(BaseModelDTO):
