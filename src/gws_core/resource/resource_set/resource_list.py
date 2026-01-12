@@ -1,4 +1,3 @@
-
 from gws_core.resource.r_field.list_r_field import ListRField
 
 from ..resource import Resource
@@ -22,11 +21,11 @@ class ResourceList(ResourceListBase):
     _resource_ids: list[str] = ListRField()
 
     # dict provided before the resources are saved
-    _resources: list[Resource] = None
+    _resources: list[Resource]
 
-    def __init__(self, resources: list[Resource] = None):
+    def __init__(self, resources: list[Resource] | None = None):
         super().__init__()
-        self._resources = resources
+        self._resources = resources or []
 
     def get_resources(self) -> list[Resource]:
         """
@@ -77,15 +76,19 @@ class ResourceList(ResourceListBase):
                 return resource
         return None
 
-    def __set_r_field__(self, ids_map: dict[str, str]) -> None:
-        """set _resource_ids with key = resource_name and value = resource_id"""
+    def __set_r_field__(self, saved_resources: dict[str, Resource]) -> None:
+        resources_list = []
         resource_ids = []
-        for resource in self._resources:
-            model_id = ids_map.get(resource.uid)
-            if not model_id:
-                raise Exception(f"Resource {resource.name} not found in the map")
-            resource_ids.append(model_id)
+        for existing_resource in self._resources:
+            if existing_resource.uid not in saved_resources:
+                raise Exception(
+                    f"The resource with uid '{existing_resource.uid}' was not found in the saved resources"
+                )
+            new_resource = saved_resources[existing_resource.uid]
+            resources_list.append(new_resource)
+            resource_ids.append(new_resource.get_model_id())
 
+        self._resources = resources_list
         self._resource_ids = resource_ids
 
     def add_resource(self, resource: Resource, create_new_resource: bool = True) -> None:
@@ -103,15 +106,18 @@ class ResourceList(ResourceListBase):
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:
-            if self.__constant_resource_uids__ is None:
-                self.__constant_resource_uids__ = set()
-            self.__constant_resource_uids__.add(resource.uid)
+            self._mark_resource_as_constant(resource)
 
-        self.get_resources().append(resource)
+        # load the existing resources
+        resources = self.get_resources()
+        if resources is None:
+            self._resources = []
+        self._resources.append(resource)
 
     def clear_resources(self) -> None:
         self._resources = []
         self._resource_ids = []
+        self.__constant_resource_model_ids__ = set()
 
     def to_list(self) -> list[Resource]:
         """

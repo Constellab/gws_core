@@ -19,9 +19,9 @@
     // configuration to start the gws with debug log
     {
       "args": [
+        "--log-level=DEBUG",
         "server",
         "run",
-        "--log-level=DEBUG"
       ],
       "name": "Starts and debug dev server - DEBUG log",
       "type": "debugpy",

@@ -10,6 +10,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
 from gws_core.share.shared_resource import SharedResource
@@ -32,14 +33,14 @@ class ResourceDownloaderBase(Task):
     )
     config_specs = ConfigSpecs({})
 
-    uncompressConfig = StrParam(
+    uncompress_config = StrParam(
         human_name="Uncompress file",
         allowed_values=["auto", "yes", "no"],
         default_value="auto",
         short_description="Option to uncompress the file if it is compresses.",
     )
 
-    resource_loader: ResourceLoader = None
+    resource_loader: ResourceLoader | None = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -50,6 +51,7 @@ class ResourceDownloaderBase(Task):
         resource_file: str,
         uncompress_option: Literal["auto", "yes", "no"],
         resource_loader_mode: ShareEntityCreateMode,
+        resource_origin: ResourceOrigin | None = None,
     ) -> Resource:
         """Methode to create the resource from a file (once downloaded) and return it as a task output"""
 
@@ -68,11 +70,11 @@ class ResourceDownloaderBase(Task):
         try:
             self.log_info_message("Uncompressing the file")
             self.resource_loader = ResourceLoader.from_compress_file(
-                resource_file, resource_loader_mode
+                resource_file, resource_loader_mode, resource_origin
             )
         except Exception as err:
             if uncompress_option == "yes":
-                raise Exception("Error while unzipping the file. Error: {err}.")
+                raise Exception(f"Error while unzipping the file. Error: {err}.") from err
 
             # skip if the option is auto
             self.log_error_message(

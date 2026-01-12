@@ -8,7 +8,11 @@ from .resource_model import ResourceModel
 
 @final
 class ResourceRField(BaseRField):
-    """RField, these fields must be used in resource attribute
+    """.. deprecated::
+        ResourceRField is deprecated and will be removed in a future version.
+        Please define a sub class of ResourceSet instead.
+
+    RField, these fields must be used in resource attribute
     This field is useful to link a resource with another resource without duplicating them.
     When the resource is saved after a task, the field must contains a Resource and if yes, this resource
     will be linked with the generated resource. Next time this resource is instantiated, the linked resource will be
@@ -17,16 +21,12 @@ class ResourceRField(BaseRField):
     //!\\ WARNING: the linked resource MUST be a resource provided as input of the task that generate
     the resource marked with ResourceRField. Otherwise there will be an error before saving the generated resource because it can
     break the tracability of resources
-
-    .. deprecated::
-        ResourceRField is deprecated and will be removed in a future version.
-        Please consider alternative approaches for resource linking.
     """
 
     def __init__(self) -> None:
         warnings.warn(
             "ResourceRField is deprecated and will be removed in a future version. "
-            "Please dfine a sub class of ResourceSet instead.",
+            "Please define a sub class of ResourceSet instead.",
             DeprecationWarning,
             stacklevel=2,
         )

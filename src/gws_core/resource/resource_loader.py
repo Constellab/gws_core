@@ -10,7 +10,9 @@ from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
+from gws_core.resource.r_field.primitive_r_field import UUIDRField
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.share.shared_dto import ShareEntityCreateMode
@@ -22,7 +24,7 @@ from .resource_zipper import ResourceZipper, ZipResource, ZipResourceInfo
 class ResourceLoader:
     """Class to load a resource from a folder"""
 
-    info_json: ZipResourceInfo
+    info_json: ZipResourceInfo | None
 
     _resource_folder: str
 
@@ -31,12 +33,19 @@ class ResourceLoader:
     _children_resources: dict[str, Resource]
 
     mode: ShareEntityCreateMode
+    resource_origin: ResourceOrigin | None
 
-    def __init__(self, resource_folder: str, mode: ShareEntityCreateMode) -> None:
+    def __init__(
+        self,
+        resource_folder: str,
+        mode: ShareEntityCreateMode,
+        resource_origin: ResourceOrigin | None = None,
+    ) -> None:
         self.info_json = None
         self._resource_folder = resource_folder
         self._children_resources = {}
         self.mode = mode
+        self.resource_origin = resource_origin
 
     def is_resource_zip(self) -> bool:
         """Return true if the zip file is a resource zip file"""
@@ -67,15 +76,15 @@ class ResourceLoader:
         return self._resource
 
     def _check_compatibility(self) -> None:
-        if self.info_json.zip_version != 1:
-            raise Exception(f"Zip version {self.info_json.zip_version} is not supported.")
+        if self._load_info_json().zip_version != 1:
+            raise Exception(f"Zip version {self._load_info_json().zip_version} is not supported.")
 
         for zip_resource in self._get_all_zip_resources():
             TypingManager.check_typing_name_compatibility(zip_resource.resource_typing_name)
 
     def _load_resource(self, zip_resource: ZipResource) -> Resource:
         # create the kvstore
-        kv_store: KVStore = None
+        kv_store: KVStore | None = None
         if zip_resource.kvstore_dir_name is not None:
             # build the path to the kvstore file
             kvstore_path = os.path.join(
@@ -95,7 +104,7 @@ class ResourceLoader:
         for tag in tags:
             tag.set_external_lab_origin(self.get_origin_info().lab_id)
 
-        resource_model_id: str = None
+        resource_model_id: str | None = None
         if self.mode == ShareEntityCreateMode.KEEP_ID:
             resource_model_id = zip_resource.id
 
@@ -111,7 +120,7 @@ class ResourceLoader:
 
         if self.mode == ShareEntityCreateMode.NEW_ID:
             # generate a new uid for the resource
-            resource.uid = Resource.uid.get_default_value()
+            resource.uid = UUIDRField().get_default_value()
 
         # if the resource is an fs_node_name
         if zip_resource.fs_node_name is not None:
@@ -124,6 +133,9 @@ class ResourceLoader:
             resource.file_store_id = None
             resource.is_symbolic_link = False
 
+        if self.resource_origin is not None:
+            resource.__set_origin__(self.resource_origin)
+
         return resource
 
     def _load_info_json(self) -> ZipResourceInfo:
@@ -135,7 +147,7 @@ class ResourceLoader:
         if not FileHelper.exists_on_os(info_json_path):
             raise Exception(f"File {info_json_path} not found in the zip file.")
 
-        info_json: dict = None
+        info_json: dict
         with open(info_json_path, encoding="UTF-8") as file:
             info_json = load(file)
 
@@ -183,16 +195,16 @@ class ResourceLoader:
             return Folder(self._resource_folder)
 
     def get_origin_info(self) -> ExternalLabWithUserInfo:
-        return self.info_json.origin
+        return self._load_info_json().origin
 
     def get_main_resource_origin_id(self) -> str:
-        return self.info_json.resource.id
+        return self._load_info_json().resource.id
 
     def get_main_resource(self) -> ZipResource:
-        return self.info_json.resource
+        return self._load_info_json().resource
 
     def _get_children_zip_resources(self) -> list[ZipResource]:
-        return self.info_json.children_resources
+        return self._load_info_json().children_resources
 
     def _get_all_zip_resources(self) -> list[ZipResource]:
         return [self.get_main_resource()] + self._get_children_zip_resources()
@@ -208,9 +220,12 @@ class ResourceLoader:
 
     @classmethod
     def from_compress_file(
-        cls, compress_file_path: str, mode: ShareEntityCreateMode
+        cls,
+        compress_file_path: str,
+        mode: ShareEntityCreateMode,
+        resource_origin: ResourceOrigin | None = None,
     ) -> "ResourceLoader":
         """Uncompress a file and create a ResourceLoader"""
         temp_dir = Settings.get_instance().make_temp_dir()
         Compress.smart_decompress(compress_file_path, temp_dir)
-        return ResourceLoader(temp_dir, mode)
+        return ResourceLoader(temp_dir, mode, resource_origin)

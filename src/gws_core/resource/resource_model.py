@@ -148,7 +148,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         # foreign key constraint
         resources.sort(key=lambda x: "b" if x.parent_resource_id is None else "a")
         for output_resource in resources:
-            Logger.info(f"Deleting resource {output_resource.id}")
             output_resource.delete_instance()
 
     @classmethod
@@ -354,11 +353,17 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         # if the resource is imported and its id is define, use it
         # with this resources imported from another can keep their id
+        resource_model_id = resource.get_model_id()
         if (
             resource_model.origin == ResourceOrigin.IMPORTED_FROM_LAB
-            and resource.get_model_id() is not None
+            and resource_model_id is not None
         ):
-            resource_model.id = resource.get_model_id()
+            existing_resource_model = ResourceModel.get_by_id(resource_model_id)
+            if existing_resource_model is not None:
+                raise BadRequestException(
+                    f"A resource with id '{resource_model_id}' already exists. Cannot import the resource."
+                )
+            resource_model.id = resource_model_id
 
         resource_model.set_resource_typing_name(resource.get_typing_name())
 

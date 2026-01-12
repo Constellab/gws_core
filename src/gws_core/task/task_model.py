@@ -285,6 +285,7 @@ class TaskModel(ProcessModel):
             new_children_resources = self._save_resource_list_children(resource, port_name)
 
         # create and save the resource model from the resource
+        # Save the main resource after because the _save_resource_list_children fills the Rfield
         resource_model = ResourceModel.save_from_resource(
             resource,
             origin=ResourceOrigin.GENERATED,
@@ -296,7 +297,7 @@ class TaskModel(ProcessModel):
         # update the parent of new children resource
         if isinstance(resource, ResourceListBase):
             for child_resource in new_children_resources:
-                child_resource.set_parent_and_save(resource_model)
+                child_resource.set_parent_and_save(resource_model.id)
 
         return resource_model
 
@@ -329,22 +330,21 @@ class TaskModel(ProcessModel):
 
         for resource in resource_list.get_resources_as_set():
             # for constant resource, only check if it was set as input
-            if resource_list.__resource_is_constant__(resource.uid):
-                # verify that the resource exists
-                if resource.get_model_id() is None:
-                    raise Exception(
-                        f"The resource with '{resource.name or resource.uid}' was added to a ResourceList with create_new_resource set to False but the resource does not exists in the system. It seems it wasn't saved in the database before, is it a new resource ?"
-                    )
+            if resource_list.__resource_is_constant__(resource):
                 # case when the resource is a constant and we don't create a new resource
                 # if the resource is not listed in task input, error
                 # Accept the resource if it is a sub resource of a input resource set
-                if not self.inputs.has_resource_model(
-                    resource.get_model_id(), include_sub_resouces=True
+                resource_model_id = resource.get_model_id()
+                if resource_model_id and not self.inputs.has_resource_model(
+                    resource_model_id, include_sub_resouces=True
                 ):
                     raise BadRequestException(
-                        GWSException.INVALID_LINKED_RESOURCE.value,
-                        unique_code=GWSException.INVALID_LINKED_RESOURCE.name,
-                        detail_args={"port_name": port_name},
+                        GWSException.INVALID_SUB_RESOURCE.value,
+                        unique_code=GWSException.INVALID_SUB_RESOURCE.name,
+                        detail_args={
+                            "port_name": port_name,
+                            "sub_resource": resource.name or resource.uid,
+                        },
                     )
             else:
                 self._check_resource_before_save(resource, port_name)

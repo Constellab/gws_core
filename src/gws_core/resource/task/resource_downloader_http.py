@@ -9,11 +9,18 @@ from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
-from gws_core.resource.resource_downloader import ResourceDownloader
+from gws_core.resource.resource_downloader import (
+    LabShareResourceDownloader,
+    ResourceDownloader,
+)
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.task.resource_downloader_base import ResourceDownloaderBase
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import ShareEntityCreateMode, ShareLinkEntityType
+from gws_core.share.shared_dto import (
+    ShareEntityCreateMode,
+    ShareLinkEntityType,
+)
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -45,7 +52,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             "link": StrParam(
                 human_name="Resource link", short_description="Link to download the resource"
             ),
-            "uncompress": ResourceDownloaderBase.uncompressConfig,
+            "uncompress": ResourceDownloaderBase.uncompress_config,
             "create_option": StrParam(
                 human_name="Create option",
                 allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
@@ -61,40 +68,39 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.link = params["link"]
 
-        resource_downloader = ResourceDownloader(self.message_dispatcher)
+        # Use factory to create the appropriate downloader
+        resource_downloader = ResourceDownloader.create(self.link, self.message_dispatcher)
 
         create_option = params["create_option"]
-
         uncompressed_option = params["uncompress"]
 
-        resource_loader_mode: ShareEntityCreateMode = None
+        resource_loader_mode: ShareEntityCreateMode
         # We keep the id only if option activated and uncompressed option is activated as well
         if create_option == "Skip if exists" and uncompressed_option != "no":
             resource_loader_mode = ShareEntityCreateMode.KEEP_ID
         else:
             resource_loader_mode = ShareEntityCreateMode.NEW_ID
 
-        # if we keep the resource id, we check if the resource already exists in the current lab
-        if resource_loader_mode == ShareEntityCreateMode.KEEP_ID:
-            resource_model = resource_downloader.get_resource_if_exist_in_current_lab(self.link)
-            if resource_model:
-                raise Exception(
-                    "The resource already exists in the current lab."
-                    + f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.'
-                )
-
-        zip_resource_link = resource_downloader.check_compatiblity(self.link)
+        # if we keep the resource id and it's a lab share link, check if the resource already exists
+        if resource_loader_mode == ShareEntityCreateMode.KEEP_ID and isinstance(
+            resource_downloader, LabShareResourceDownloader
+        ):
+            self._check_existing_resource(resource_downloader)
 
         # download the resource file
-        resource_file = resource_downloader.zip_and_download_resource_as_file(zip_resource_link)
+        resource_file = resource_downloader.download()
 
-        resource = self.create_resource_from_file(
-            resource_file, uncompressed_option, resource_loader_mode
+        # set the origin to imported from lab if the link is from a lab share link
+        resource_origin = (
+            ResourceOrigin.IMPORTED_FROM_LAB
+            if isinstance(resource_downloader, LabShareResourceDownloader)
+            else None
         )
 
-        if ShareLink.is_lab_share_resource_link(self.link):
-            # set a special origin for the resource
-            resource.__set_origin__(ResourceOrigin.IMPORTED_FROM_LAB)
+        resource = self.create_resource_from_file(
+            resource_file, uncompressed_option, resource_loader_mode, resource_origin
+        )
+
         return {"resource": resource}
 
     def run_after_task(self) -> None:
@@ -122,6 +128,32 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text
                 )
+
+    def _check_existing_resource(
+        self, share_resource_downloader: LabShareResourceDownloader
+    ) -> None:
+        """Check if the resource already exists in the current lab.
+
+        :param resource_downloader: The resource downloader
+        :return: ResourceModel if it exists, None otherwise
+        """
+        for resource_dto in share_resource_downloader.get_resources_info():
+            resource_model = ResourceModel.get_by_id(resource_dto.id)
+            if resource_model:
+                if share_resource_downloader.is_main_resource(resource_model.id):
+                    raise Exception(
+                        "The resource '"
+                        + resource_dto.name
+                        + "' already exists in the current lab."
+                        + f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.'
+                    )
+                else:
+                    raise Exception(
+                        "The child resource '"
+                        + resource_dto.name
+                        + "' of the main resource already exists in the current lab. Please use the 'Force new resource' option to create a new copy of the resource."
+                        + f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.'
+                    )
 
     @classmethod
     def build_config(

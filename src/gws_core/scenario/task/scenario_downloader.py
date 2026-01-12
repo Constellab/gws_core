@@ -17,7 +17,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_downloader import ResourceDownloader
+from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_model import ResourceModel
@@ -253,12 +253,11 @@ class ScenarioDownloader(Task):
         message_dispatcher: MessageDispatcher,
         create_mode: ShareEntityCreateMode,
     ) -> Resource:
-        resource_downloader = ResourceDownloader(message_dispatcher)
+        # ScenarioDownloader receives zip route URLs, not resource info URLs
+        resource_downloader = LabShareZipRouteDownloader(download_url, message_dispatcher)
 
         # download the resource file
-        download_route = resource_downloader.call_zip_resource(download_url)
-
-        resource_file = resource_downloader.download_resource(download_route)
+        resource_file = resource_downloader.download()
 
         message_dispatcher.notify_info_message("Loading the resource")
         resource_loader = ResourceLoader.from_compress_file(resource_file, create_mode)
@@ -375,22 +374,23 @@ class ScenarioDownloader(Task):
         if len(downloaded_resource.children) > 0 and isinstance(
             downloaded_resource.resource, ResourceListBase
         ):
-            # map where key is the resource uid and value is the resource model id
-            # use to set the r_field of the resource list
-            ids_map = {}
+            # dict where key is resource uid and value is the new saved resource object
+            new_children_resources: dict[str, Resource] = {}
             for child_old_id, child_resource in downloaded_resource.children.items():
                 # If the children was already saved, we skip it
                 # This happens if the children was not created by the current task but already exist before
                 # when create_new_resource=False during the resource set building
                 if child_old_id in self.resource_models:
-                    ids_map[child_resource.uid] = self.resource_models[child_old_id].id
+                    new_children_resources[child_resource.uid] = self.resource_models[
+                        child_old_id
+                    ].get_resource()
                     continue
                 child_model = self.save_resource(
                     child_old_id, child_resource, task_model, scenario, task_port_name
                 )
-                ids_map[child_resource.uid] = child_model.id
+                new_children_resources[child_resource.uid] = child_model.get_resource()
                 children_resource_models.append(child_model)
-            downloaded_resource.resource.__set_r_field__(ids_map)
+            downloaded_resource.resource.__set_r_field__(new_children_resources)
 
         resource_model = self.save_resource(
             old_resource_id,

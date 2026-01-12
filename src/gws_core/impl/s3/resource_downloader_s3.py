@@ -40,7 +40,7 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
                 short_description="If provided, override the bucket name in credentials",
                 optional=True,
             ),
-            "uncompress": ResourceDownloaderBase.uncompressConfig,
+            "uncompress": ResourceDownloaderBase.uncompress_config,
         }
     )
 

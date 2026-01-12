@@ -33,16 +33,14 @@ class ResourceListBase(Resource):
     resource for each resource in the set when saving the set
     """
 
-    # list the resource uids (not model id) that are constant (the system doesn't create new resources on save)
-    __constant_resource_uids__: set[str] = None
+    # list the resource model ids that are constant (the system doesn't create new resources on save)
+    __constant_resource_model_ids__: set[str] | None = None
 
     def init(self) -> None:
         # On init, mark the existing resources of the resource list
         # as constant resources, so if this resource is saved on task output,
         # the existing sub resources are not created again
-        self.__constant_resource_uids__ = set()
-        for resource in self.get_resources_as_set():
-            self.__constant_resource_uids__.add(resource.uid)
+        self.__constant_resource_model_ids__ = set(self.get_resource_model_ids())
 
     @abstractmethod
     def get_resource_model_ids(self) -> set[str]:
@@ -83,30 +81,45 @@ class ResourceListBase(Resource):
         """
         return resource_model_id in self.get_resource_model_ids()
 
-    def __resource_is_constant__(self, resource_uid: str) -> bool:
+    def _mark_resource_as_constant(self, resource: Resource) -> None:
+        """Mark the resource as constant, so the system will not create a new resource on save"""
+        resource_model_id = resource.get_model_id()
+        if resource_model_id is None:
+            raise Exception(
+                f"Adding the resource {resource.name or resource.uid} as existing resource in the resource list, "
+                "but the resource is not saved in the database. If you want to add a new resource, set create_new_resource to True. "
+                "If you want to add an existing resource, use an existing resource from the task inputs."
+            )
+
+        if self.__constant_resource_model_ids__ is None:
+            self.__constant_resource_model_ids__ = set()
+        self.__constant_resource_model_ids__.add(resource_model_id)
+
+    def __resource_is_constant__(self, resource: Resource) -> bool:
         """return true if the resource is constant and was create before
         a task that generated this resource set
         """
         return (
-            self.__constant_resource_uids__ is not None
-            and resource_uid in self.__constant_resource_uids__
+            resource.get_model_id() is not None
+            and self.__constant_resource_model_ids__ is not None
+            and resource.get_model_id() in self.__constant_resource_model_ids__
         )
 
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
         if resource_model_id not in self.get_resource_model_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
 
-        from ..resource_model import ResourceModel
+        from ..resource_model import ResourceModel  # noqa: PLC0415
 
         return ResourceModel.get_by_id_and_check(resource_model_id).get_resource()
 
     @abstractmethod
-    def __set_r_field__(self, ids_map: dict[str, str]) -> None:
+    def __set_r_field__(self, saved_resources: dict[str, Resource]) -> None:
         """This method is called before the save of this resource but after the save of the
         child resources. Set the r_field of this resource with the ids of the child
 
-        :param ids_map: dict where key is the resource uid and value is the resource model id
-        :type ids_map: Dict[str, str]
+        :param saved_resources: dict where key is the resource uid and value is the saved resource
+        :type saved_resources: Dict[str, Resource]
         :raises NotImplementedError: _description_
         """
         raise NotImplementedError()
@@ -115,22 +128,20 @@ class ResourceListBase(Resource):
     def save_new_children_resources(
         self,
         resource_origin: ResourceOrigin,
-        scenario: Scenario = None,
-        task_model: TaskModel = None,
-        port_name: str = None,
+        scenario: Scenario | None = None,
+        task_model: TaskModel | None = None,
+        port_name: str | None = None,
     ) -> list[ResourceModel]:
-        from ..resource_model import ResourceModel
+        from ..resource_model import ResourceModel  # noqa: PLC0415
 
         new_children_resources: list[ResourceModel] = []
 
-        ids_map = {}
+        new_resources: dict[str, Resource] = {}
         for resource in self.get_resources_as_set():
-            # if this is a new resource
-
-            if self.__resource_is_constant__(resource.uid):
+            if self.__resource_is_constant__(resource):
                 # if the resource is constant, get the model id of the resource
                 # from the resource and add it to the map
-                ids_map[resource.uid] = resource.get_model_id()
+                new_resources[resource.uid] = resource
             else:
                 # create and save the resource model from the resource
                 resource_model = ResourceModel.save_from_resource(
@@ -140,9 +151,9 @@ class ResourceListBase(Resource):
                     task_model=task_model,
                     port_name=port_name,
                 )
-                ids_map[resource.uid] = resource_model.id
+                new_resources[resource.uid] = resource_model.get_resource()
                 new_children_resources.append(resource_model)
-        self.__set_r_field__(ids_map)
+        self.__set_r_field__(new_resources)
         return new_children_resources
 
     def _load_resources(self) -> set[Resource]:
@@ -160,12 +171,12 @@ class ResourceListBase(Resource):
         :return: list of resource models
         :rtype: List[ResourceModel]
         """
-        from ..resource_model import ResourceModel
+        from ..resource_model import ResourceModel  # noqa: PLC0415
 
         resource_ids = list(self.get_resource_model_ids())
 
         if not resource_ids:
-            return list()
+            return []
 
         return list(
             ResourceModel.select()

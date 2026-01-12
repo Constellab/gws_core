@@ -5,6 +5,8 @@ from gws_core import (
     BaseTestCase,
     ConfigParams,
     File,
+    InputSpec,
+    InputSpecs,
     OutputSpec,
     OutputSpecs,
     ResourceModel,
@@ -39,6 +41,8 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.test.test_helper import TestHelper
 from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate
 from pandas import DataFrame
 
 
@@ -57,9 +61,13 @@ def get_file() -> File:
 
 @task_decorator(unique_name="GenerateResourceSet")
 class GenerateResourceSet(Task):
+    input_specs = InputSpecs({"robot": InputSpec(Robot)})
     output_specs = OutputSpecs({"resource_set": OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # Get the input robot
+        robot = inputs.get("robot")
+
         # create a simple resource
         table = get_table()
 
@@ -67,6 +75,8 @@ class GenerateResourceSet(Task):
         file = get_file()
 
         resource_set: ResourceSet = ResourceSet()
+        # Add the input robot that was already created and saved
+        resource_set.add_resource(robot, "robot", create_new_resource=False)
         resource_set.add_resource(table, "table")
         resource_set.add_resource(file, "file")
 
@@ -75,9 +85,13 @@ class GenerateResourceSet(Task):
 
 @task_decorator(unique_name="GenerateResourceList")
 class GenerateResourceList(Task):
+    input_specs = InputSpecs({"robot": InputSpec(Robot)})
     output_specs = OutputSpecs({"resource_list": OutputSpec(ResourceList)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        # Get the input robot
+        robot = inputs.get("robot")
+
         # create a simple resource
         table = get_table()
 
@@ -85,6 +99,8 @@ class GenerateResourceList(Task):
         file = get_file()
 
         resource_list: ResourceList = ResourceList()
+        # Add the input robot that was already created and saved
+        resource_list.add_resource(robot, create_new_resource=False)
         resource_list.add_resource(table)
         resource_list.add_resource(file)
 
@@ -178,7 +194,11 @@ class TestShareResource(BaseTestCase):
     def test_share_resource_set(self):
         # Generate a resource set
         i_scenario: ScenarioProxy = ScenarioProxy()
-        i_scenario.get_protocol().add_process(GenerateResourceSet, "generate_resource_set")
+        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
+        generate_resource_set = i_scenario.get_protocol().add_process(GenerateResourceSet, "generate_resource_set")
+        i_scenario.get_protocol().add_connectors(
+            [(robot_create >> "robot", generate_resource_set << "robot")]
+        )
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process("generate_resource_set")
         resource_model_id = i_process.get_output_resource_model("resource_set").id
@@ -190,11 +210,26 @@ class TestShareResource(BaseTestCase):
 
         resource_set: ResourceSet = new_resource_model.get_resource()
         self.assertIsInstance(resource_set, ResourceSet)
-        self.assertEqual(2, len(resource_set))
+        self.assertEqual(3, len(resource_set))
+
+        # Check that the resource set has the correct origin
+        self.assertEqual(new_resource_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+
+        # check the robot
+        robot: Robot = resource_set.get_resource("robot")
+        self.assertIsNotNone(robot)
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        self.assertEqual(robot_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        original_robot: Robot = original_resource_set.get_resource("robot")
+        # check that this is a new resource
+        self.assertNotEqual(original_robot.get_model_id(), robot.get_model_id())
+        self.assertEqual(original_robot.age, robot.age)
 
         # check the table
         table: Table = resource_set.get_resource("table")
         self.assertIsNotNone(table)
+        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        self.assertEqual(table_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
         original_table: Table = original_resource_set.get_resource("table")
         # check that this is a new resource
         self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
@@ -203,6 +238,8 @@ class TestShareResource(BaseTestCase):
         # check the file
         file: File = resource_set.get_resource("file")
         self.assertIsNotNone(file)
+        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        self.assertEqual(file_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
         self.assertEqual("test", file.read())
         original_file = original_resource_set.get_resource("file")
         # check that this is a new resource
@@ -220,7 +257,11 @@ class TestShareResource(BaseTestCase):
     def test_share_resource_list(self):
         # Generate a resource list
         i_scenario: ScenarioProxy = ScenarioProxy()
-        i_scenario.get_protocol().add_process(GenerateResourceList, "generate_resource_list")
+        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
+        generate_resource_list = i_scenario.get_protocol().add_process(GenerateResourceList, "generate_resource_list")
+        i_scenario.get_protocol().add_connectors(
+            [(robot_create >> "robot", generate_resource_list << "robot")]
+        )
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process("generate_resource_list")
         resource_model_id = i_process.get_output_resource_model("resource_list").id
@@ -232,21 +273,38 @@ class TestShareResource(BaseTestCase):
         resource_list: ResourceList = new_resource_model.get_resource()
 
         self.assertIsInstance(resource_list, ResourceList)
-        self.assertEqual(2, len(resource_list))
+        self.assertEqual(3, len(resource_list))
+
+        # Check that the resource list has the correct origin
+        self.assertEqual(new_resource_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+
+        # check the robot
+        robot: Robot = resource_list[0]
+        self.assertIsNotNone(robot)
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        self.assertEqual(robot_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        original_robot: Robot = original_resource_list[0]
+        # check that this is a new resource
+        self.assertNotEqual(original_robot.get_model_id(), robot.get_model_id())
+        self.assertEqual(original_robot.age, robot.age)
 
         # check the table
-        table: Table = resource_list[0]
+        table: Table = resource_list[1]
         self.assertIsNotNone(table)
-        original_table: Table = original_resource_list[0]
+        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        self.assertEqual(table_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        original_table: Table = original_resource_list[1]
         # check that this is a new resource
         self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
         self.assertTrue(original_table.equals(table))
 
         # check the file
-        file: File = resource_list[1]
+        file: File = resource_list[2]
         self.assertIsNotNone(file)
+        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        self.assertEqual(file_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
         self.assertEqual("test", file.read())
-        original_file = original_resource_list[1]
+        original_file = original_resource_list[2]
         # check that this is a new resource
         self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
 

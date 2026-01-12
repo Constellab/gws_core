@@ -1,4 +1,3 @@
-
 from gws_core.resource.r_field.dict_r_field import DictRField
 
 from ..resource import Resource
@@ -30,10 +29,10 @@ class ResourceSet(ResourceListBase):
         if not self._resources:
             resources = self._load_resources()
             self._resources = {}
-            for resource_name, id in self._resource_ids.items():
+            for resource_name, id_ in self._resource_ids.items():
                 # search the resource with same id and set it in _resources
                 for resource in resources:
-                    if resource.get_model_id() == id:
+                    if resource.get_model_id() == id_:
                         self._resources[resource_name] = resource
                         break
 
@@ -57,20 +56,23 @@ class ResourceSet(ResourceListBase):
         """
         return set(self.get_resources().values())
 
-    def __set_r_field__(self, ids_map: dict[str, str]) -> None:
-        """set _resource_ids with key = resource_name and value = resource_id"""
+    def __set_r_field__(self, saved_resources: dict[str, Resource]) -> None:
+        resources_dict = {}
         resource_ids = {}
-        for name, resource in self._resources.items():
-            model_id = ids_map.get(resource.uid)
-            if not model_id:
-                raise Exception(f"Resource with name {name} has no model id")
-
-            resource_ids[name] = model_id
+        for key, existing_resource in self._resources.items():
+            if existing_resource.uid not in saved_resources:
+                raise Exception(
+                    f"The resource with uid '{existing_resource.uid}' was not found in the saved resources"
+                )
+            new_resource = saved_resources[existing_resource.uid]
+            resources_dict[key] = new_resource
+            resource_ids[key] = new_resource.get_model_id()
 
         self._resource_ids = resource_ids
+        self._resources = resources_dict
 
     def add_resource(
-        self, resource: Resource, unique_name: str = None, create_new_resource: bool = True
+        self, resource: Resource, unique_name: str | None = None, create_new_resource: bool = True
     ) -> None:
         """Add a resource to the set
 
@@ -87,21 +89,22 @@ class ResourceSet(ResourceListBase):
         """
         self._check_resource_before_add(resource)
 
-        if self._resources is None:
+        # load the existing resources
+        resources = self.get_resources()
+        if resources is None:
             self._resources = {}
 
         name = unique_name or resource.name
         if name is None:
             raise Exception("The unique name was not provided and the resource name is not set")
-        if name in self._resources:
+
+        if name in resources:
             raise Exception(f"Resource with name '{name}' already exists in the ResourceSet")
 
         # if the resource already exist, add it to the constant list so
         # the system will not create a new resource on save
         if not create_new_resource:
-            if self.__constant_resource_uids__ is None:
-                self.__constant_resource_uids__ = set()
-            self.__constant_resource_uids__.add(resource.uid)
+            self._mark_resource_as_constant(resource)
 
         self._resources[name] = resource
 
@@ -153,6 +156,7 @@ class ResourceSet(ResourceListBase):
         """
         self._resources = {}
         self._resource_ids = {}
+        self.__constant_resource_model_ids__ = set()
 
     def replace_resources_by_model_id(self, resources: dict[str, Resource]) -> None:
         """

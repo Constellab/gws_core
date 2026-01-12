@@ -43,6 +43,7 @@ class GWSException(Enum):
     )
     INVALID_UNIQUE_CODE = "Not authorized. Invalid url"
     INVALID_LINKED_RESOURCE = "The resource generated on port {{port_name}} is linked to another resource which is not a input of the task. This break the tracability."
+    INVALID_SUB_RESOURCE = "The resource generated on port '{{port_name}}' contains the sub resource '{{sub_resource}}' that was created by another task but is not an input of the current task. This breaks the traceability. Please make sur this resource is an input of the task. or create a new resource instead (using create_new_resource=True in the ResourceSet)."
     NOTE_VALIDATED = "The note can't be updated not delete because it is validated"
     NOTE_EXP_ALREADY_LINKED = "The scenario is already linked with the note"
     NOTE_VALIDATION_EXP_NOT_VALIDATED = "The linked scenario '{{title}}' must be validated first"
