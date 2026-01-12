@@ -66,13 +66,18 @@ class StreamlitMainAppRunner:
                 .block-container {
                     padding: 8px;
                 }
+
+                /*
+                  Hide the main streamlit menu and loader
+                  We don't hide the complete header because, the toggle sidebar button is there
+                */
                 header {
                     background: transparent !important;
                     width: fit-content !important;
 
-                    .e3g0k5y6 {
-                        display: none !important;
-                    }
+                }
+                header :has(> .stMainMenu) {
+                   display: none !important;
                 }
 
 
