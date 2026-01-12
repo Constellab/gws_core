@@ -50,7 +50,7 @@ class TaskModel(ProcessModel):
     # with lazy load = false, the Resource is not Loaded, it only contains the id
     source_config_id: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
 
-    community_agent_version_id: str = CharField(null=True, max_length=36, default="")
+    community_agent_version_id: str = CharField(null=True, max_length=36, default=None)
 
     community_agent_version_modified: bool = BooleanField(default=False)
 
