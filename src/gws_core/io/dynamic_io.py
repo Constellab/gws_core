@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+from typing import cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_specs import IOSpecsType
@@ -10,23 +12,68 @@ from .io_specs import InputSpecs, OutputSpecs
 
 
 class AdditionalInfo(BaseModelDTO):
+    """Data transfer object for storing additional information about dynamic IO specifications.
+
+    This class is used to serialize and deserialize additional port specification information
+    for dynamic inputs and outputs. It allows the system to persist and restore the configuration
+    of dynamically created ports.
+
+    Attributes:
+        additionnal_port_spec: Optional specification for additional ports that can be dynamically
+            created. This defines the type and constraints for newly added ports.
+    """
+
     additionnal_port_spec: IOSpecDTO | None
 
 
 class DynamicInputs(InputSpecs):
+    """Dynamic input specification that allows tasks to have a variable number of input ports.
+
+    This class enables tasks to accept a dynamic number of input resources that can be added
+    or removed at runtime. All input resources are aggregated into a single ResourceList that
+    is passed to the task under the name specified by SPEC_NAME ('source').
+
+    Dynamic inputs are useful for tasks that need to process an arbitrary number of similar
+    resources, such as merging multiple files or combining multiple datasets.
+
+    Attributes:
+        SPEC_NAME: The name of the input parameter passed to the task ('source'). This is the
+            key under which the aggregated ResourceList will be available.
+        additionnal_port_spec: Optional specification that defines the type and constraints
+            for dynamically created input ports. If None, defaults to accepting any Resource type.
+
+    Example:
+        ```python
+        # Define dynamic inputs that accept Table resources
+        inputs = DynamicInputs(
+            additionnal_port_spec=InputSpec(Table, human_name="Input table")
+        )
+
+        # In the task's run method:
+        def run(self, params: ConfigParams, inputs: InputsDTO) -> OutputsDTO:
+            # Access all inputs as a ResourceList
+            sources: ResourceList = inputs['source']
+            # Process each table
+            for table in sources:
+                # Process table...
+        ```
+    """
+
     # name of the spec passed to the task
     SPEC_NAME = "source"
 
-    additionnal_port_spec: InputSpec = None
+    additionnal_port_spec: InputSpec | None = None
 
     def __init__(
-        self, default_specs: dict[str, InputSpec] = None, additionnal_port_spec: InputSpec = None
+        self,
+        default_specs: dict[str, InputSpec] | None = None,
+        additionnal_port_spec: InputSpec | None = None,
     ) -> None:
         """
         :param default_specs: default specs used when creating the inputs, defaults to None
         :type default_specs: Dict[str, InputSpec], optional
         :param additionnal_port_spec: force the type of newly created port, defaults to Resource
-        :type additionnal_port_spec: Type[Resource], optional
+        :type additionnal_port_spec: InputSpec, optional
         """
         self.additionnal_port_spec = additionnal_port_spec
         if default_specs is None:
@@ -44,7 +91,7 @@ class DynamicInputs(InputSpecs):
             else None
         ).to_json_dict()
 
-    def set_additional_info(self, additional_info: dict) -> None:
+    def set_additional_info(self, additional_info: dict | None) -> None:
         if not additional_info:
             return
 
@@ -72,20 +119,63 @@ class DynamicInputs(InputSpecs):
         return InputSpec(Resource, optional=True)
 
     @classmethod
-    def from_dto(cls, io_specs: dict[str, InputSpec], additional_info: dict) -> "DynamicInputs":
+    def from_dto(
+        cls, io_specs: dict[str, InputSpec], additional_info: dict | None
+    ) -> "DynamicInputs":
         dynamic_inputs = cls(io_specs)
         dynamic_inputs.set_additional_info(additional_info)
         return dynamic_inputs
 
 
 class DynamicOutputs(OutputSpecs):
+    """Dynamic output specification that allows tasks to have a variable number of output ports.
+
+    This class enables tasks to produce a variable number of output resources that can be defined
+    at runtime. The task should return an iterable of resources under the name specified by
+    SPEC_NAME ('target'), which will be automatically distributed to the individual output ports
+    based on their order.
+
+    Dynamic outputs are useful for tasks that produce an unpredictable number of results, such as
+    splitting a file into multiple parts or generating multiple datasets from a single analysis.
+
+    Attributes:
+        SPEC_NAME: The name of the output parameter the task should return ('target'). The task
+            must return an iterable of resources under this key.
+        additionnal_port_spec: Optional specification that defines the type and constraints
+            for dynamically created output ports. If None, defaults to accepting any Resource subclass.
+
+    Example:
+        ```python
+        # Define dynamic outputs that produce Table resources
+        outputs = DynamicOutputs(
+            additionnal_port_spec=OutputSpec(Table, human_name="Output table")
+        )
+
+        # In the task's run method:
+        def run(self, params: ConfigParams, inputs: InputsDTO) -> OutputsDTO:
+            # Create multiple output tables
+            tables = [table1, table2, table3]
+            # Return as an iterable under 'target'
+            return {'target': tables}
+        ```
+
+    Notes:
+        - The number of resources in the returned iterable must not exceed the number of
+          configured output ports.
+        - Resources are assigned to ports based on their order in the iterable and the order
+          of the port keys.
+        - If fewer resources are returned than there are ports, remaining ports will be empty.
+    """
+
     # name of the spec passed to the task
     SPEC_NAME = "target"
 
-    additionnal_port_spec: OutputSpec = None
+    additionnal_port_spec: OutputSpec | None = None
 
     def __init__(
-        self, default_specs: dict[str, OutputSpec] = None, additionnal_port_spec: OutputSpec = None
+        self,
+        default_specs: dict[str, OutputSpec] | None = None,
+        additionnal_port_spec: OutputSpec | None = None,
     ) -> None:
         """
         :param default_specs: default specs used when creating the outputs, defaults to None
@@ -111,7 +201,7 @@ class DynamicOutputs(OutputSpecs):
             else None
         ).to_json_dict()
 
-    def set_additional_info(self, additional_info: dict) -> None:
+    def set_additional_info(self, additional_info: dict | None) -> None:
         if not additional_info:
             return
 
@@ -131,7 +221,7 @@ class DynamicOutputs(OutputSpecs):
         if self.SPEC_NAME not in task_outputs:
             raise Exception(f"Output {self.SPEC_NAME} not found in task outputs")
 
-        target = task_outputs["target"]
+        target = cast(Iterable[Resource], task_outputs["target"])
 
         # check if target is a iterable
         if not hasattr(target, "__iter__"):
@@ -150,10 +240,8 @@ class DynamicOutputs(OutputSpecs):
                 f"Too many resources in output {self.SPEC_NAME}, expected {len(port_keys)} got {len(resource_list)}"
             )
         if resource_list:
-            count = 0
-            for resource in resource_list:
+            for count, resource in enumerate(resource_list):
                 output_resources[port_keys[count]] = resource
-                count += 1
 
         return output_resources
 
@@ -170,7 +258,9 @@ class DynamicOutputs(OutputSpecs):
         return OutputSpec(Resource, sub_class=True)
 
     @classmethod
-    def from_dto(cls, io_specs: dict[str, OutputSpec], additional_info: dict) -> "DynamicOutputs":
+    def from_dto(
+        cls, io_specs: dict[str, OutputSpec], additional_info: dict | None
+    ) -> "DynamicOutputs":
         dynamic_outputs = cls(io_specs)
         dynamic_outputs.set_additional_info(additional_info)
         return dynamic_outputs

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from ..brick.brick_service import BrickService
 from .io_spec import IOSpec
@@ -11,22 +11,19 @@ class IOSpecsHelper:
     @classmethod
     def check_input_specs(cls, input_specs: InputSpecs, task_type: type) -> InputSpecs:
         """Method to verify that input specs are valid"""
-        return cls._check_io_spec_param(input_specs, "input", task_type)
+        return cast(InputSpecs, cls._check_io_spec_param(input_specs, "input", task_type))
 
     @classmethod
     def check_output_specs(cls, output_specs: OutputSpecs, task_type: type) -> OutputSpecs:
         """Method to verify that output specs are valid"""
-        return cls._check_io_spec_param(output_specs, "output", task_type)
+        return cast(OutputSpecs, cls._check_io_spec_param(output_specs, "output", task_type))
 
     @classmethod
     def _check_io_spec_param(
         cls, io_specs: IOSpecs, param_type: Literal["input", "output"], task_type: type
     ) -> IOSpecs:
         if not io_specs:
-            if param_type == "input":
-                io_specs = InputSpecs()
-            else:
-                io_specs = OutputSpecs()
+            io_specs = InputSpecs() if param_type == "input" else OutputSpecs()
 
         # TODO for now this is just a warning
         if not isinstance(io_specs, IOSpecs):
@@ -34,10 +31,7 @@ class IOSpecsHelper:
                 task_type,
                 f"The specs of task {task_type.__name__} must be an InputSpecs or OutputSpecs",
             )
-            if param_type == "input":
-                io_specs = InputSpecs(io_specs)
-            else:
-                io_specs = OutputSpecs(io_specs)
+            io_specs = InputSpecs(io_specs) if param_type == "input" else OutputSpecs(io_specs)
 
         if not isinstance(io_specs.get_specs(), dict):
             raise Exception("The specs must be a dictionary")

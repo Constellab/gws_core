@@ -23,12 +23,12 @@ class Port(Base):
     name: str
 
     _resource_id: str | None = None
-    _spec: IOSpecDTO = None
+    _spec: IOSpecDTO
 
     # use to cache the resource model
-    _resource_model: ResourceModel = None
+    _resource_model: ResourceModel | None = None
     # use to cache the resource spec
-    _resource_spec: IOSpec = None
+    _resource_spec: IOSpec | None = None
 
     # Switch to true when the set_resource_model is set (even if it is set with a None value)
     _resource_provided: bool = False
@@ -109,7 +109,7 @@ class Port(Base):
             except Exception as e:
                 raise ValueError(
                     f"{self._get_type_name()} port '{self.get_human_name()}' ({self.name}) has invalid resource spec. {e}"
-                )
+                ) from e
 
         return self._resource_spec
 
@@ -151,10 +151,13 @@ class Port(Base):
 
         return self.resource_spec.is_compatible_with_resource_type(resource_type)
 
-    def get_resource(self, new_instance: bool = False) -> Resource:
+    def get_resource(self, new_instance: bool = False) -> Resource | None:
         if self.is_empty:
             return None
-        return self.get_resource_model().get_resource(new_instance=new_instance)
+        resource_model = self.get_resource_model()
+        if resource_model is None:
+            return None
+        return resource_model.get_resource(new_instance=new_instance)
 
     def get_human_name(self) -> str:
         return self._spec.human_name or self.name

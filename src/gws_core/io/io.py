@@ -1,9 +1,9 @@
 from abc import abstractmethod
-from typing import Generic, TypeVar, final
+from typing import Generic, TypeVar, cast, final
 
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_dto import IODTO
-from gws_core.io.io_spec import IOSpec
+from gws_core.io.io_spec import InputSpec, IOSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, IOSpecs, IOSpecsType, OutputSpecs
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 
@@ -24,14 +24,12 @@ class IO(Base, Generic[PortType]):
     """
 
     _ports: dict[str, PortType] = {}
-    _type: IOSpecsType = None
-    _additional_info: dict = None
+    _type: IOSpecsType
+    _additional_info: dict | None = None
 
-    def __init__(self, type_: IOSpecsType = "normal", additional_info: dict = None) -> None:
-        self._ports = dict()
+    def __init__(self, type_: IOSpecsType = "normal", additional_info: dict | None = None) -> None:
+        self._ports = {}
         self._type = type_
-        if additional_info is None:
-            additional_info = None
         self._additional_info = additional_info
 
     @property
@@ -43,11 +41,7 @@ class IO(Base, Generic[PortType]):
         :rtype: bool
         """
 
-        for port in self._ports.values():
-            if not port.is_ready:
-                return False
-
-        return True
+        return all(port.is_ready for port in self._ports.values())
 
     @property
     def is_dynamic(self) -> bool:
@@ -169,15 +163,15 @@ class IO(Base, Generic[PortType]):
 
         port.set_resource_model(resource_model)
 
-    def get_resource_models(self) -> dict[str, ResourceModel]:
+    def get_resource_models(self) -> dict[str, ResourceModel | None]:
         """Get the resource_model of a port"""
-        resource_models: dict[str, ResourceModel] = {}
+        resource_models: dict[str, ResourceModel | None] = {}
         for port_name, port in self._ports.items():
             if port.get_resource_model():
                 resource_models[port_name] = port.get_resource_model()
         return resource_models
 
-    def get_resource_model(self, port_name: str) -> ResourceModel:
+    def get_resource_model(self, port_name: str) -> ResourceModel | None:
         """Get the resource_model of a port"""
         port: PortType = self.get_port(port_name)
         return port.get_resource_model()
@@ -285,9 +279,10 @@ class Inputs(IO[InPort]):
         return InPort
 
     def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
+        input_specs = cast(dict[str, InputSpec], specs)
         if self.is_dynamic:
-            return DynamicInputs.from_dto(specs, self._additional_info)
-        return InputSpecs(specs)
+            return DynamicInputs.from_dto(input_specs, self._additional_info)
+        return InputSpecs(input_specs)
 
 
 @final
@@ -300,6 +295,7 @@ class Outputs(IO[OutPort]):
         return OutPort
 
     def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
+        output_specs = cast(dict[str, OutputSpec], specs)
         if self.is_dynamic:
-            return DynamicOutputs.from_dto(specs, self._additional_info)
-        return OutputSpecs(specs)
+            return DynamicOutputs.from_dto(output_specs, self._additional_info)
+        return OutputSpecs(output_specs)

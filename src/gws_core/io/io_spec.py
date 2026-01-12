@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Iterable
 from collections.abc import Iterable as IterableClass
-from typing import Union
+from typing import TypeVar
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
@@ -12,8 +12,9 @@ from ..model.typing_manager import TypingManager
 from ..resource.resource import Resource
 from .io_validator import IOValidator
 
-ResourceType = type[Resource]
-ResourceTypes = Union[ResourceType, Iterable[ResourceType]]
+ResourceTypes = type[Resource] | Iterable[type[Resource]]
+
+IOSpecType = TypeVar("IOSpecType", bound="IOSpec")
 
 
 class IOSpecDTO(BaseModelDTO):
@@ -47,7 +48,7 @@ class IOSpecDTO(BaseModelDTO):
 
 
 class IOSpec:
-    resource_types: list[ResourceType]
+    resource_types: list[type[Resource]]
 
     # Human readable name of the param, showed in the interface
     human_name: str | None
@@ -166,7 +167,7 @@ class IOSpec:
         """return the first default type"""
         return self.resource_types[0]
 
-    def get_resource_type_tuples(self) -> tuple[type[Resource]]:
+    def get_resource_type_tuples(self) -> tuple[type[Resource], ...]:
         return tuple(self.resource_types)
 
     def get_resources_human_names(self) -> str:
@@ -205,11 +206,7 @@ class IOSpec:
         cls, resource_type: type[Resource], expected_types: Iterable[type[Resource]]
     ) -> bool:
         # check that the resource type is a subclass of one of the port resources types
-        for expected_type in expected_types:
-            if issubclass(resource_type, expected_type):
-                return True
-
-        return False
+        return any(issubclass(resource_type, expected_type) for expected_type in expected_types)
 
     @classmethod
     def _resource_types_is_type(
@@ -232,12 +229,12 @@ class IOSpec:
         return spec_dto
 
     @classmethod
-    def from_dto(cls, dto: IOSpecDTO) -> "IOSpec":
-        resource_types: list[ResourceType] = []
+    def from_dto(cls: type[IOSpecType], dto: IOSpecDTO) -> IOSpecType:
+        resource_types: list[type[Resource]] = []
 
         # retrieve all the resource type from the json specs
         for spec_dto in dto.resource_types:
-            resource_type: ResourceType = TypingManager.get_type_from_name(spec_dto.typing_name)
+            resource_type = TypingManager.get_type_from_name(spec_dto.typing_name)
 
             if resource_type is None:
                 raise Exception(f"[IOSpec] Invalid resource type '{spec_dto.typing_name}'")

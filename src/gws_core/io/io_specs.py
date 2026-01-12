@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
@@ -50,7 +50,7 @@ class OutputCheckResult(BaseModelDTO):
 class IOSpecs:
     _specs: dict[str, IOSpec] = {}
 
-    def __init__(self, specs: dict[str, IOSpec] = None) -> None:
+    def __init__(self, specs: dict[str, IOSpec] | None = None) -> None:
         if specs is None:
             specs = {}
         if not isinstance(specs, dict):
@@ -75,7 +75,7 @@ class IOSpecs:
     def set_additional_info(self, additional_info: dict) -> None:
         pass
 
-    def get_first_spec(self) -> IOSpec:
+    def get_first_spec(self) -> IOSpec | None:
         if len(self._specs) == 0:
             return None
         return list(self._specs.values())[0]
@@ -94,8 +94,8 @@ class IOSpecs:
 class InputSpecs(IOSpecs):
     _specs: dict[str, InputSpec] = {}
 
-    def __init__(self, input_specs: dict[str, InputSpec] = None) -> None:
-        super().__init__(input_specs)
+    def __init__(self, input_specs: dict[str, InputSpec] | None = None) -> None:
+        super().__init__(cast(dict[str, IOSpec], input_specs))
 
     def check_and_build_inputs(self, inputs: dict[str, Resource]) -> TaskInputs:
         """Check and convert input to TaskInputs
@@ -104,7 +104,7 @@ class InputSpecs(IOSpecs):
         missing_resource: list[str] = []
         invalid_input_text: str = ""
 
-        input_dict: dict[str, Resource] = {}
+        input_dict: dict[str, Resource | None] = {}
 
         for key, spec in self._specs.items():
             # If the resource is None
@@ -136,7 +136,9 @@ class InputSpecs(IOSpecs):
 
         return TaskInputs(self._transform_input_resources(input_dict))
 
-    def _transform_input_resources(self, resources: dict[str, Resource]) -> dict[str, Resource]:
+    def _transform_input_resources(
+        self, resources: dict[str, Resource | None]
+    ) -> dict[str, Resource | None]:
         """
         Returns the resources of all the ports to be used for the input of a task.
         """
@@ -147,8 +149,8 @@ class InputSpecs(IOSpecs):
 class OutputSpecs(IOSpecs):
     _specs: dict[str, OutputSpec] = {}
 
-    def __init__(self, output_specs: dict[str, OutputSpec] = None) -> None:
-        super().__init__(output_specs)
+    def __init__(self, output_specs: dict[str, OutputSpec] | None = None) -> None:
+        super().__init__(cast(dict[str, IOSpec], output_specs))
 
     def check_and_build_outputs(self, task_outputs: TaskOutputs) -> OutputsCheckResult:
         """Method that check if the task outputs
@@ -211,7 +213,7 @@ class OutputSpecs(IOSpecs):
     ) -> OutputCheckResult:
         """Method to check a output resource, return str if there is an error with the resource"""
 
-        auto_convert_message: str = None
+        auto_convert_message: str | None = None
         # if the resource is not a Resource, try to convert it
         if not isinstance(output_resource, Resource):
             converted_resource = ResourceFactory.create_from_object(output_resource)

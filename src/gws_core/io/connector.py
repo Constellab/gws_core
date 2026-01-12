@@ -18,11 +18,11 @@ class Connector:
     :type out_port: OutPort
     """
 
-    left_process: ProcessModel = None
-    right_process: ProcessModel = None
+    left_process: ProcessModel
+    right_process: ProcessModel
 
-    left_port_name: str = None
-    right_port_name: str = None
+    left_port_name: str
+    right_port_name: str
 
     def __init__(
         self,

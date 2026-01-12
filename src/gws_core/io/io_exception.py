@@ -63,8 +63,8 @@ class ImcompatiblePortsException(BadRequestException):
     :type BadRequestException: [type]
     """
 
-    out_port: OutPort = None
-    in_port: InPort = None
+    out_port: OutPort
+    in_port: InPort
 
     def __init__(self, out_port: OutPort, in_port: InPort) -> None:
         self.in_port = in_port
