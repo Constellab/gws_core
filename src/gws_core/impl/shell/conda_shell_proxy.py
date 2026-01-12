@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Literal
 
@@ -6,6 +7,7 @@ from gws_core.impl.shell.virtual_env.venv_dto import VEnvCreationInfo
 from gws_core.model.typing_register_decorator import typing_registrator
 
 from .base_env_shell import BaseEnvShell
+from .shell_proxy import ShellProxy
 
 
 @typing_registrator(unique_name="CondaShellProxy", object_type="MODEL", hide=True)
@@ -205,6 +207,34 @@ class CondaShellProxy(BaseEnvShell):
             return env_creation_info.env_type in ["conda", "mamba"]
         except:
             return False
+
+    def _list_packages(self) -> dict[str, str]:
+        """List all installed packages with their versions in the Conda environment.
+
+        Uses `conda list` to retrieve all packages installed in the virtual environment.
+
+        :return: Dictionary mapping package names to their versions
+        :rtype: dict[str, str]
+        """
+        # Build the conda list command to get packages in JSON format
+        cmd = self._build_str_conda_command(
+            CondaShellProxy.conda_command, f"list --prefix {self.get_venv_dir_path()} --json"
+        )
+
+        try:
+            # Call ShellProxy's check_output directly, bypassing format_command
+            output = ShellProxy.check_output(self, cmd, shell_mode=True, text=True)
+            packages_list = json.loads(output)
+
+            # Convert list of dicts to dict of name: version
+            packages_dict = {}
+            for package in packages_list:
+                if isinstance(package, dict) and "name" in package and "version" in package:
+                    packages_dict[package["name"]] = package["version"]
+
+            return packages_dict
+        except Exception as err:
+            raise Exception(f"Failed to list packages in conda environment. Error: {err}") from err
 
     @classmethod
     def get_env_type(cls) -> Literal["conda", "mamba", "pip"]:

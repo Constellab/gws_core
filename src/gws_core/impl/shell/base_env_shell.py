@@ -566,6 +566,36 @@ class BaseEnvShell(ShellProxy):
         :rtype: Literal["conda", "mamba", "pip"]
         """
 
+    @final
+    def list_packages(self) -> dict[str, str]:
+        """List all installed packages with their versions in the virtual environment.
+
+        Returns a dictionary where keys are package names and values are version strings.
+        Only works if the environment is installed.
+
+        :return: Dictionary mapping package names to their versions
+        :rtype: dict[str, str]
+        :raises Exception: If the virtual environment is not installed
+        """
+        if not self.env_is_installed():
+            raise Exception(
+                f"The virtual environment '{self.env_name}' is not installed. "
+                "Please install it first using install_env()."
+            )
+
+        return self._list_packages()
+
+    @abstractmethod
+    def _list_packages(self) -> dict[str, str]:
+        """List all installed packages with their versions.
+
+        Subclasses must implement this method to provide environment-specific
+        package listing logic.
+
+        :return: Dictionary mapping package names to their versions
+        :rtype: dict[str, str]
+        """
+
     def to_dto(self) -> ShellProxyDTO:
         return ShellProxyDTO(
             typing_name=self.get_typing_name(),

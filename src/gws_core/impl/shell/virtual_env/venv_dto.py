@@ -9,6 +9,7 @@ class VEnvCreationInfo(BaseModelDTO):
     This metadata is stored in the environment directory to track when and how
     the environment was created.
     """
+
     file_version: int
     name: str
     hash: str
@@ -23,6 +24,7 @@ class VEnvBasicInfoDTO(BaseModelDTO):
 
     Includes the folder location, name, and creation metadata.
     """
+
     folder: str
     name: str
     creation_info: VEnvCreationInfo
@@ -34,6 +36,7 @@ class VEnvCompleteInfoDTO(BaseModelDTO):
     Extends basic info with the environment size and the content of the
     configuration file used to create it.
     """
+
     basic_info: VEnvBasicInfoDTO
     env_size: int
     config_file_content: str
@@ -45,6 +48,16 @@ class VEnsStatusDTO(BaseModelDTO):
     Contains the global virtual environment folder path and a list of all
     managed environments.
     """
+
     venv_folder: str
 
     envs: list[VEnvBasicInfoDTO]
+
+
+class VEnvPackagesDTO(BaseModelDTO):
+    """Package list for a virtual environment.
+
+    Contains a dictionary mapping package names to their installed versions.
+    """
+
+    packages: dict[str, str]

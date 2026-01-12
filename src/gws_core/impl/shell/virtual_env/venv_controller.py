@@ -1,7 +1,11 @@
 from fastapi import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.shell.virtual_env.venv_dto import VEnsStatusDTO, VEnvCompleteInfoDTO
+from gws_core.impl.shell.virtual_env.venv_dto import (
+    VEnsStatusDTO,
+    VEnvCompleteInfoDTO,
+    VEnvPackagesDTO,
+)
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 from gws_core.user.authorization_service import AuthorizationService
 
@@ -24,6 +28,7 @@ def get_venv_list(_=Depends(AuthorizationService.check_user_access_token)) -> VE
 
 class VenvNameRequest(BaseModelDTO):
     """Request body for virtual environment operations that require a venv name."""
+
     venv_name: str
 
 
@@ -72,3 +77,23 @@ def delete_all_venv(_=Depends(AuthorizationService.check_user_access_token)) -> 
     :raises BadRequestException: If any scenario is currently running
     """
     VEnvService.delete_all_venvs()
+
+
+@core_app.post(
+    "/venv/packages", tags=["VEnv"], summary="Get packages list for a virtual environment"
+)
+def get_venv_packages(
+    venv_name: VenvNameRequest, _=Depends(AuthorizationService.check_user_access_token)
+) -> VEnvPackagesDTO:
+    """Get the list of installed packages with versions for a virtual environment.
+
+    Uses POST with a body to pass the venv name because the name may contain
+    special characters that are problematic in URL paths.
+
+    :param venv_name: Request containing the virtual environment name
+    :type venv_name: VenvNameRequest
+    :return: DTO containing the dictionary of package names and versions
+    :rtype: VEnvPackagesDTO
+    :raises ValueError: If the venv does not exist or is not valid
+    """
+    return VEnvService.get_venv_packages(venv_name.venv_name)

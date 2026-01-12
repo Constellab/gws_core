@@ -11,6 +11,7 @@ from gws_core.impl.shell.virtual_env.venv_dto import (
     VEnsStatusDTO,
     VEnvBasicInfoDTO,
     VEnvCreationInfo,
+    VEnvPackagesDTO,
 )
 from gws_core.impl.shell.virtual_env.venv_service import VEnvService
 
@@ -98,6 +99,17 @@ class TestEnvShellProxy(TestCase):
             result = shell_proxy.run(f"python {python_file}", shell_mode=True, dispatch_stdout=True)
             self.assertEqual(result, 0)
             self.assertTrue(basic_observer.has_message_containing("eyJhb"))
+
+            # Test VEnvService.get_venv_packages method
+            packages_dto: VEnvPackagesDTO = VEnvService.get_venv_packages(basic_info.name)
+            self.assertIsInstance(packages_dto, VEnvPackagesDTO)
+            self.assertIsInstance(packages_dto.packages, dict)
+            # Test that expected package is present (PyJWT should be installed from the env file)
+            self.assertIn(
+                "pyjwt",
+                [p.lower() for p in packages_dto.packages],
+                "PyJWT should be installed in the environment",
+            )
 
             VEnvService.delete_venv(basic_info.name)
             self.assertFalse(shell_proxy.env_is_installed())

@@ -12,6 +12,7 @@ from gws_core.impl.shell.virtual_env.venv_dto import (
     VEnvBasicInfoDTO,
     VEnvCompleteInfoDTO,
     VEnvCreationInfo,
+    VEnvPackagesDTO,
 )
 from gws_core.scenario.scenario_service import ScenarioService
 
@@ -149,3 +150,38 @@ class VEnvService:
         if ScenarioService.count_of_running_scenarios() > 0:
             raise BadRequestException("Cannot delete a venv while a scenario is running.")
         FileHelper.delete_dir_content(Settings.get_global_env_dir())
+
+    @classmethod
+    def get_venv_packages(cls, venv_name: str) -> VEnvPackagesDTO:
+        """Get the list of installed packages with versions for a virtual environment.
+
+        Retrieves all packages installed in the specified virtual environment.
+
+        :param venv_name: Name of the virtual environment
+        :type venv_name: str
+        :return: DTO containing the dictionary of package names and versions
+        :rtype: VEnvPackagesDTO
+        :raises ValueError: If the venv does not exist or is not valid
+        """
+        venv_path = os.path.join(Settings.get_global_env_dir(), venv_name)
+
+        if not FileHelper.is_dir(venv_path):
+            raise ValueError(f"Venv {venv_name} does not exist.")
+
+        # Create the appropriate shell proxy based on the env type
+        shell_proxy: BaseEnvShell
+        if PipShellProxy.folder_is_env(venv_path):
+            # Get the config file to create the shell proxy
+            config_file_path = os.path.join(venv_path, PipShellProxy.CONFIG_FILE_NAME)
+            shell_proxy = PipShellProxy(env_file_path=config_file_path, env_name=venv_name)
+        elif CondaShellProxy.folder_is_env(venv_path):
+            # Get the config file to create the shell proxy
+            config_file_path = os.path.join(venv_path, CondaShellProxy.CONFIG_FILE_NAME)
+            shell_proxy = CondaShellProxy(env_file_path=config_file_path, env_name=venv_name)
+        else:
+            raise ValueError(f"Venv {venv_name} is not a valid venv.")
+
+        # Get the packages using the list_packages method
+        packages = shell_proxy.list_packages()
+
+        return VEnvPackagesDTO(packages=packages)

@@ -1,3 +1,4 @@
+import json
 import os
 from typing import Literal
 
@@ -20,6 +21,7 @@ class PipShellProxy(BaseEnvShell):
     The virtual environment is created in the project directory (.venv subdirectory)
     using the PIPENV_VENV_IN_PROJECT setting.
     """
+
     CONFIG_FILE_NAME = "Pipfile"
     LOCK_FILE_NAME = "Pipfile.lock"
 
@@ -139,6 +141,38 @@ class PipShellProxy(BaseEnvShell):
             and FileHelper.exists_on_os(pipfile_lock_path)
             and FileHelper.exists_on_os(sub_venv_path)
         )
+
+    def _list_packages(self) -> dict[str, str]:
+        """List all installed packages with their versions in the Pipenv environment.
+
+        Uses `pipenv graph --json` to retrieve all packages installed in the virtual environment.
+
+        :return: Dictionary mapping package names to their versions
+        :rtype: dict[str, str]
+        """
+        cmd = "pipenv graph --json"
+
+        try:
+            output = self.check_output(cmd, shell_mode=True, text=True)
+            packages_list = json.loads(output)
+
+            # Convert list of dicts to dict of name: version
+            # pipenv graph returns a list with nested package info in format:
+            # [{"package": {"package_name": "PyJWT", "installed_version": "2.10.1"}, "dependencies": []}, ...]
+            packages_dict = {}
+            for item in packages_list:
+                if isinstance(item, dict) and "package" in item:
+                    package = item["package"]
+                    if (
+                        isinstance(package, dict)
+                        and "package_name" in package
+                        and "installed_version" in package
+                    ):
+                        packages_dict[package["package_name"]] = package["installed_version"]
+
+            return packages_dict
+        except Exception as err:
+            raise Exception(f"Failed to list packages in pipenv environment. Error: {err}") from err
 
     @classmethod
     def get_env_type(cls) -> Literal["conda", "mamba", "pip"]:
