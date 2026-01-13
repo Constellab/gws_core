@@ -55,7 +55,9 @@ class BrickInfo(BaseModelDTO):
         actual values from the system environment. Only matches uppercase letters and
         underscores (standard environment variable naming convention).
 
-        Special variable ${CURRENT_DIR} is replaced with the brick's path.
+        Special variables:
+        - ${CURRENT_DIR} is replaced with the brick's path
+        - ${CURRENT_BRICK} is replaced with the brick's name
 
         :param variable: The string potentially containing environment variable references
         :type variable: str
@@ -70,14 +72,21 @@ class BrickInfo(BaseModelDTO):
             'Path: /home/user/data'
             >>> self._expand_environment_variables("${CURRENT_DIR}/config")
             '/path/to/brick/config'
+            >>> self._expand_environment_variables("Brick: ${CURRENT_BRICK}")
+            'Brick: my_brick_name'
         """
         if not variable:
             return variable
 
         tabs = re.findall(r"\$\{?([A-Z_]*)\}?", variable)
         for token in tabs:
-            # Special case for CURRENT_DIR - replace with brick path
-            value = self.path if token == "CURRENT_DIR" else os.getenv(token)
+            # Special cases for brick-specific variables
+            if token == "CURRENT_DIR":
+                value = self.path
+            elif token == "CURRENT_BRICK":
+                value = self.name
+            else:
+                value = os.getenv(token)
             if value:
                 variable = re.sub(r"\$\{?" + token + r"\}?", value, variable)
         return variable
