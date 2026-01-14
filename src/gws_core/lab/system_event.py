@@ -20,4 +20,12 @@ class SystemStartedEvent(BaseSystemEvent):
     data: None = None
 
 
-SystemEvent = SystemStartedEvent
+@dataclass
+class SystemStoppedEvent(BaseSystemEvent):
+    """Event dispatched when the system is stopped"""
+
+    action: Literal["stopped"] = "stopped"
+    data: None = None
+
+
+SystemEvent = SystemStartedEvent | SystemStoppedEvent

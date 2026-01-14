@@ -415,12 +415,7 @@ class ScenarioRunService:
 
     @classmethod
     def get_all_running_scenarios(cls) -> list[Scenario]:
-        return list(
-            Scenario.select().where(
-                (Scenario.status == ScenarioStatus.RUNNING)
-                | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
-            )
-        )
+        return list(Scenario.get_running_scenarios())
 
     @classmethod
     def _send_scenario_finished_mail(cls, scenario: Scenario) -> None:

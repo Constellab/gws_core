@@ -102,7 +102,7 @@ class SystemService:
 
         with AuthenticateUser(User.get_and_check_sysuser()):
             try:
-                scenarios: list[Scenario] = list(Scenario.get_running_scenarios())
+                scenarios: list[Scenario] = ScenarioRunService.get_all_running_scenarios()
 
                 for scenario in scenarios:
                     if scenario.get_process_status() != ScenarioStatus.RUNNING:
@@ -243,7 +243,9 @@ class SystemService:
     def get_system_status(cls) -> LabStatusDTO:
         start_log = cls.get_start_logs()
         has_start_error = start_log.has_main_errors() if start_log else False
-        return LabStatusDTO(free_disk=MonitorService.get_free_disk_info(), has_start_error=has_start_error)
+        return LabStatusDTO(
+            free_disk=MonitorService.get_free_disk_info(), has_start_error=has_start_error
+        )
 
     @classmethod
     def get_start_logs(cls) -> LabStartLogFileObject | None:
@@ -258,7 +260,7 @@ class SystemService:
             return None
 
         try:
-            with open(start_log_file_path, encoding='UTF-8') as f:
+            with open(start_log_file_path, encoding="UTF-8") as f:
                 data = json.load(f)
                 return LabStartLogFileObject(**data)
         except Exception as err:

@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from threading import Thread
 
 import uvicorn
@@ -7,7 +8,7 @@ from starlette_context.middleware.context_middleware import ContextMiddleware
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_controller import external_lab_app
 from gws_core.impl.s3.s3_server_fastapi_app import s3_server_app
-from gws_core.lab.system_event import SystemStartedEvent
+from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
 from .core.classes.cors_config import CorsConfig
@@ -16,27 +17,25 @@ from .core_controller import core_app
 from .lab.system_service import SystemService
 from .space.space_controller import space_app
 
-app = FastAPI(docs_url=None)
-
 ####################################################################################
 #
-# Startup & Shutdown Events
+# Lifespan Events
 #
 ####################################################################################
 
 
-@app.on_event("startup")
-def startup():
-    """Called before the app is started"""
-
-    App.init()
-
-
-@app.on_event("shutdown")
-def shutdown():
-    """Called before the application is stopped"""
-
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifespan event handler for startup and shutdown events
+    """
+    # Startup: code before yield
+    yield
+    # Shutdown: code after yield
     App.deinit()
+
+
+app = FastAPI(docs_url=None, lifespan=lifespan)
 
 
 ####################################################################################
@@ -52,25 +51,15 @@ class App:
     """
 
     app: FastAPI = app
-    is_running: bool = False
-
-    @classmethod
-    def init(cls):
-        """
-        Initialize the app
-        """
-
-        cls.is_running = True
-        SystemService.init_queue_and_monitor()
 
     @classmethod
     def deinit(cls):
         """
         Deinitialize the app
         """
-
         SystemService.deinit_queue_and_monitor()
-        cls.is_running = False
+        # Dispatch the system stopped event
+        EventDispatcher.get_instance().dispatch(SystemStoppedEvent())
 
     @classmethod
     def start(cls, port: int = 3000):
@@ -79,6 +68,8 @@ class App:
         """
 
         SystemService.init()
+
+        SystemService.init_queue_and_monitor()
 
         # Configure the CORS
         CorsConfig.configure_app_cors(app)
