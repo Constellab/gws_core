@@ -1614,3 +1614,14 @@ class Migration0180(BrickMigration):
 
         # create foreign key if not exist
         FSNodeModel.create_foreign_key_if_not_exist(FSNodeModel.file_store_id)
+
+
+@brick_migration(
+    "0.19.3",
+    short_description="Add share link type column if not exists",
+)
+class Migration0190(BrickMigration):
+    @classmethod
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.add_column_if_not_exists(ShareLink, ShareLink.link_type)
+        sql_migrator.migrate()
