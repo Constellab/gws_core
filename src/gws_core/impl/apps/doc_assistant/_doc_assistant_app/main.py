@@ -1,11 +1,12 @@
 import importlib.util
 
-from _doc_assistant_app.pages import chat_page, config_page
+from _doc_assistant_app.app_pages import chat_page, config_page
+from gws_streamlit_main import StreamlitMainState, StreamlitRouter
 
-from gws_core.streamlit import StreamlitRouter
+# Initialize GWS - MUST be at the top
+StreamlitMainState.initialize()
 
-sources: list
-params: dict
+params = StreamlitMainState.get_params()
 
 router = StreamlitRouter.load_from_session()
 

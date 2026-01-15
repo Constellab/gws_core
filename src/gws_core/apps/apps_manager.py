@@ -8,34 +8,25 @@ from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
+from gws_core.apps.streamlit.streamlit_app import StreamlitApp
+from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
-from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogContext
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
-from gws_core.streamlit.streamlit_app import StreamlitApp
-from gws_core.streamlit.streamlit_process import StreamlitProcess
-
-
-class AppPort(BaseModelDTO):
-    """Class to represent a port for an app"""
-
-    port: int = None
-    host_url: str = None
 
 
 class AppsManager:
-    """Class to manage the different apps
+    """Class to manage the different apps.
 
-    All the normal apps (without env) run in the same streamlit process (8501)
-    the env apps run in different processes with different ports. One process per env.
+    Each app runs in its own dedicated process.
     """
 
-    app_dir: str = None
+    app_dir: str | None = None
 
-    # key is the env hash
+    # key is the app resource model id
     running_processes: dict[str, AppProcess] = {}
 
     MAX_RUNNING_APPS = 50
@@ -49,7 +40,7 @@ class AppsManager:
         if not app_process.is_running():
             raise Exception("App failed to start")
 
-        return cls.get_app_full_url(app.resource_model_id)
+        return app_process.get_app_full_url()
 
     @classmethod
     def create_or_get_app_async(cls, app: AppInstance) -> CreateAppAsyncResultDTO:
@@ -64,7 +55,7 @@ class AppsManager:
 
         return CreateAppAsyncResultDTO(
             app_id=app.resource_model_id,
-            app_url=app_process.get_app_full_url(app.resource_model_id),
+            app_url=app_process.get_app_full_url(),
             get_status_route=get_status_route,
             status=app_process.get_status(),
             status_text=app_process.get_status_text(),
@@ -75,20 +66,19 @@ class AppsManager:
         """Create app asynchronously and return the app ID. The app will be registered and started in background."""
         cls._refresh_processes()
 
-        # Create or get process and add app to it
+        # Create or get process and set app for it
         app_process = cls._register_app_and_process(app)
 
-        app_process.start_app_async(app.resource_model_id)
+        app_process.start_app_async()
 
         return app_process
 
     @classmethod
     def _register_app_and_process(cls, app: AppInstance) -> AppProcess:
-        """Create or get process and add app to it if not exists"""
-        # get the env hash for this app
-        env_hash: str = app.get_app_process_hash()
+        """Create or get process and set the app for it"""
+        app_id: str = app.resource_model_id
 
-        app_process = cls.running_processes.get(env_hash)
+        app_process = cls.running_processes.get(app_id)
 
         # register the process if it does not exist
         if not app_process:
@@ -104,29 +94,26 @@ class AppsManager:
 
             # create a new process with assigned ports
             if isinstance(app, StreamlitApp):
-                app_process = StreamlitProcess(front_port, app.resource_model_id, env_hash)
+                app_process = StreamlitProcess(front_port, app)
             elif isinstance(app, ReflexApp):
                 back_port = cls._get_next_available_port(
                     front_port + 1
                 )  # take the next available port for the backend
                 # for reflex app, we need both front and back ports
-                # also we set the id as the resource model id because 1 Process = 1 app
+                # the id is set as the resource model id because 1 Process = 1 app
                 # and the id is used to build the app front and back URL and the url must not change
                 # when the app is restarted (because back url is in front build)
-                app_process = ReflexProcess(front_port, back_port, app.resource_model_id, env_hash)
+                app_process = ReflexProcess(front_port, back_port, app)
             else:
                 raise Exception(f"Unsupported app type: {type(app)}")
 
-        # Add the app to the process if it does not exist
-        app_process.add_app_if_not_exists(app)
-
-        # Add the app to the process and register the process
-        cls.running_processes[env_hash] = app_process
+            # Register the process
+            cls.running_processes[app_id] = app_process
 
         return app_process
 
     @classmethod
-    def _get_next_available_port(cls, start_port: int = None) -> int:
+    def _get_next_available_port(cls, start_port: int | None = None) -> int:
         """Get the next available port for an app.
         This is used to find a port for the env apps.
         """
@@ -150,7 +137,6 @@ class AppsManager:
         """Register signal handlers to gracefully stop all processes on exit"""
 
         def signal_handler(sig, frame):
-            print("Stopping all app processes before exit...")
             cls.stop_all_processes()
             sys.exit(0)
 
@@ -168,22 +154,22 @@ class AppsManager:
         cls.running_processes = {}
 
     @classmethod
-    def stop_process(cls, env_hash: str) -> None:
-        if env_hash in cls.running_processes:
-            cls.running_processes[env_hash].stop_process()
-            del cls.running_processes[env_hash]
+    def stop_process(cls, app_id: str) -> None:
+        if app_id in cls.running_processes:
+            cls.running_processes[app_id].stop_process()
+            del cls.running_processes[app_id]
 
     ############################# OTHERS ####################################
 
     @classmethod
     def _refresh_processes(cls) -> None:
         """Method to remove the stopped processes from the running_processes dict.
-        Because if it is killed after inactivity, the APpManager does not know it.
+        Because if it is killed after inactivity, the AppsManager does not know it.
         """
         stopped_processes = [x for x in cls.running_processes.values() if x.is_stopped()]
 
         for process in stopped_processes:
-            del cls.running_processes[process.env_hash]
+            del cls.running_processes[process.get_id()]
 
     @classmethod
     def get_status_dto(cls) -> AppsStatusDTO:
@@ -191,14 +177,6 @@ class AppsManager:
         return AppsStatusDTO(
             processes=[process.get_status_dto() for process in cls.running_processes.values()],
         )
-
-    @classmethod
-    def get_app_full_url(cls, app_id: str) -> AppInstanceUrl:
-        for running_process in cls.running_processes.values():
-            if running_process.has_app(app_id):
-                return running_process.get_app_full_url(app_id)
-
-        raise Exception(f"App {app_id} not found")
 
     @classmethod
     def get_app_dir(cls) -> str:
@@ -209,18 +187,9 @@ class AppsManager:
     @classmethod
     def user_has_access_to_app(cls, app_id: str, user_access_token: str) -> str | None:
         """Return the user id from the user access token if the user has access to the app"""
-        for running_process in cls.running_processes.values():
-            if running_process.has_app(app_id):
-                return running_process.user_has_access_to_app(app_id, user_access_token)
-
-        return None
-
-    @classmethod
-    def find_process_of_app(cls, resource_model_id: str) -> AppProcess | None:
-        """Find the process that contains the app with the given resource model id"""
-        for running_process in cls.running_processes.values():
-            if running_process.has_app(resource_model_id):
-                return running_process
+        app = cls.find_app_by_resource_model_id(app_id)
+        if app is not None:
+            return app.user_has_access_to_app(user_access_token)
 
         return None
 
@@ -234,45 +203,37 @@ class AppsManager:
         return None
 
     @classmethod
-    def find_app_by_resource_model_id(cls, resource_model_id: str) -> AppInstance | None:
+    def find_app_by_resource_model_id(cls, resource_model_id: str) -> AppProcess | None:
         """Find the streamlit app that was generated from the given resource model id"""
-        for running_process in cls.running_processes.values():
-            app = running_process.find_app_by_resource_model_id(resource_model_id)
-            if app:
-                return app
-
-        return None
+        return cls.running_processes.get(resource_model_id)
 
     @classmethod
-    def get_logs_of_app(cls, app_id: str, from_page_date: datetime = None) -> LogsBetweenDates:
+    def get_logs_of_app(
+        cls, app_id: str, from_page_date: datetime | None = None
+    ) -> LogsBetweenDates:
         """Read the server log filtered by the app id
 
         :param app_id: the resource model id of the app
         :param from_page_date: the date to start reading from (for pagination)
         :return: LogsBetweenDates object containing the logs
         """
-        app = cls.find_app_by_resource_model_id(app_id)
+        app_process = cls.find_app_by_resource_model_id(app_id)
 
-        if app is None:
+        if app_process is None:
             raise BadRequestException(f"App with ID {app_id} not found")
 
         # Determine the log context based on the app type
         context = None
-        if isinstance(app, StreamlitApp):
+        if isinstance(app_process, StreamlitProcess):
             context = LogContext.STREAMLIT
-        elif isinstance(app, ReflexApp):
+        elif isinstance(app_process, ReflexProcess):
             context = LogContext.REFLEX
         else:
-            raise BadRequestException(f"Unsupported app type: {type(app)}")
+            raise BadRequestException(f"Unsupported app type: {type(app_process)}")
 
         # Use a reasonable time window - apps don't have exact start times stored
         # So we'll get logs from a reasonable time ago (e.g., 24 hours)
-        start_date: datetime = None
-        if from_page_date:
-            start_date = from_page_date
-        else:
-            # Get logs from the last 24 hours
-            start_date = DateHelper.now_utc() - timedelta(hours=24)
+        start_date: datetime = from_page_date or DateHelper.now_utc() - timedelta(hours=24)
 
         end_date = DateHelper.now_utc()
 

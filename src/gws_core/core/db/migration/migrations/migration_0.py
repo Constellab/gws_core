@@ -5,6 +5,7 @@ from copy import deepcopy
 
 from peewee import BigIntegerField, CharField
 
+from gws_core.apps.streamlit.streamlit_resource import StreamlitResource
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.config.config import Config
 from gws_core.config.param.dynamic_param import DynamicParam
@@ -50,7 +51,6 @@ from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_scenario import SharedScenario
-from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_key_model import TagKeyModel

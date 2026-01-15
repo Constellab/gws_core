@@ -1,7 +1,6 @@
+from gws_streamlit_main import StreamlitHelper, StreamlitMainState, StreamlitRouter
 
-from gws_core.streamlit import StreamlitHelper, StreamlitRouter
-
-from _streamlit_showcase_app.pages import (
+from _streamlit_showcase_app.app_pages import (
     ai_chat_page,
     containers_page,
     dataframes_page,
@@ -12,6 +11,9 @@ from _streamlit_showcase_app.pages import (
     tree_menu_page,
     utils_page,
 )
+
+# Initialize GWS - MUST be at the top
+StreamlitMainState.initialize()
 
 sources: list
 

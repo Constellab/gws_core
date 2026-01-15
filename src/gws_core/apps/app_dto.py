@@ -1,6 +1,8 @@
+from datetime import datetime
 from enum import Enum
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class AppType(Enum):
@@ -31,9 +33,8 @@ class AppInstanceDTO(BaseModelDTO):
     app_type: AppType
     app_resource_id: str
     name: str
-    app_config_path: str
     env_type: str
-    source_ids: list[str] = None
+    source_ids: list[str] | None = None
     env_file_path: str | None = None  # for env app
     env_file_content: str | None = None  # for env app
 
@@ -56,8 +57,11 @@ class AppProcessStatusDTO(BaseModelDTO):
     id: str
     status: AppProcessStatus
     status_text: str | None = None
-    running_apps: list[AppInstanceDTO]
+    app: AppInstanceDTO
     nb_of_connections: int
+    config_file_path: str
+    started_at: datetime | None
+    started_by: UserDTO | None
 
 
 class AppsStatusDTO(BaseModelDTO):
@@ -65,10 +69,8 @@ class AppsStatusDTO(BaseModelDTO):
 
 
 class AppInstanceConfigDTO(BaseModelDTO):
-    app_dir_path: str
     source_ids: list[str]
     params: dict | None
-    requires_authentication: bool
     # List of token of user that can access the app
     # Only provided if the app requires authentication
     # Key is access token, value is user id

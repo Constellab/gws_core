@@ -2,9 +2,10 @@ import json
 import os
 
 import streamlit as st
-
 from gws_core import FileHelper, OpenAiHelper
-from gws_core.streamlit import StreamlitContainers, StreamlitHelper, StreamlitOpenAiChat
+from gws_streamlit_main import StreamlitContainers, StreamlitOpenAiChat
+
+from ..utils.doc_assistant_utils import DocAssistantUtils
 
 
 def load_prompts(prompts_json_path: str) -> dict:
@@ -105,7 +106,7 @@ def render_chat_page(prompts_json_path: str):
 
 def _transcribe_audio_file(file):
     """Transcribe audio file and return the text"""
-    file_path = StreamlitHelper.store_uploaded_file_in_tmp_dir(file)
+    file_path = DocAssistantUtils.store_uploaded_file_in_tmp_dir(file)
 
     text: str = None
     with st.spinner("Transcribing the audio file..."):

@@ -16,6 +16,7 @@ class AppDevConfig(BaseModelDTO):
     env_type: str = "NONE"
     env_file_path: str = ""
     is_reflex_enterprise: bool = False
+    is_streamlit_v2: bool = False
     dev_user_email: str | None = ""
 
 

@@ -17,6 +17,7 @@ class DevEnvCliService:
     # Get the directory where the dev_env module is located
     TEMPLATE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "template")
 
+    CUSTOM_GWS_CORE_STREAMLIT_PATH = os.path.join("gws_core", "apps", "streamlit", "_gws_streamlit")
     CUSTOM_GWS_CORE_REFLEX_PATH = os.path.join("gws_core", "apps", "reflex", "_gws_reflex")
     OPENVSCODE_SERVER_BIN = "/home/.openvscode-server/bin/openvscode-server"
 
@@ -121,7 +122,6 @@ class DevEnvCliService:
                 )
                 # Create a new settings file
                 settings = cls.generate_vs_code_settings_json(settings_path)
-                return
 
         typer.echo("Adding the bricks to the python path...")
         # Init the extra paths if not already done
@@ -154,8 +154,12 @@ class DevEnvCliService:
             brick_src_path = os.path.join(brick_folder.path, BrickService.SOURCE_FOLDER)
             existing_paths.append(brick_src_path)
 
-            # Add special path for gws_core Reflex
+            # Add special path for gws_core Streamlit and Reflex
             if brick_folder.name == Settings.get_gws_core_brick_name():
+                streamlit_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_STREAMLIT_PATH)
+                if os.path.exists(streamlit_path):
+                    existing_paths.append(streamlit_path)
+
                 reflex_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_REFLEX_PATH)
                 if os.path.exists(reflex_path):
                     existing_paths.append(reflex_path)

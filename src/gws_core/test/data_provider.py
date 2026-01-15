@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from gws_core import File, Settings, Table, TableImporter
 from gws_core.impl.file.file_helper import FileHelper
@@ -7,7 +8,7 @@ from gws_core.impl.file.file_helper import FileHelper
 class DataProvider:
     @classmethod
     def _get_test_data_dir(cls) -> str:
-        return Settings.get_instance().get_variable("gws_core", "testdata_dir")
+        return Settings.get_instance().get_and_check_variable("gws_core", "testdata_dir")
 
     @classmethod
     def get_test_data_path(cls, path: str) -> str:
@@ -25,16 +26,19 @@ class DataProvider:
 
     @classmethod
     def get_iris_table(cls, keep_variety: bool = True) -> Table:
-        return TableImporter.call(
-            cls.get_iris_file(),
-            {
-                "delimiter": ",",
-                "header": 0,
-                "metadata_columns": [
-                    {
-                        "column": "variety",
-                        "keep_in_table": keep_variety,
-                    }
-                ],
-            },
+        return cast(
+            Table,
+            TableImporter.call(
+                cls.get_iris_file(),
+                {
+                    "delimiter": ",",
+                    "header": 0,
+                    "metadata_columns": [
+                        {
+                            "column": "variety",
+                            "keep_in_table": keep_variety,
+                        }
+                    ],
+                },
+            ),
         )

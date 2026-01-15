@@ -2,11 +2,11 @@ import os
 
 from gws_core.apps.app_config import AppConfig, app_decorator
 from gws_core.apps.app_dto import AppType
+from gws_core.apps.streamlit.streamlit_resource import StreamlitResource
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
-from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs

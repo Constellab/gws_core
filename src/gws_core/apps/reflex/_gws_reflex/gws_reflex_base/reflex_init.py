@@ -11,7 +11,7 @@ class ReflexInit:
         """
         # load the gws_core library if not already loaded
         # only if the app is not a virtual env app
-        is_virtual_env = os.environ.get("GWS_REFLEX_VIRTUAL_ENV", "false").lower() == "true"
+        is_virtual_env = os.environ.get("GWS_IS_VIRTUAL_ENV", "false").lower() == "true"
 
         if not is_virtual_env:
             ReflexInit._load_gws_core()
@@ -23,9 +23,9 @@ class ReflexInit:
 
         if manage.AppManager.gws_env_initialized:
             return
-        app_id = os.environ.get("GWS_REFLEX_APP_ID", "reflex_app")
+        app_id = os.environ.get("GWS_APP_ID", "reflex_app")
 
-        is_test = os.environ.get("GWS_REFLEX_TEST_ENV", "false").lower() == "true"
+        is_test = os.environ.get("GWS_IS_TEST_ENV", "false").lower() == "true"
 
         manage.AppManager.init_gws_env_and_db(
             main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),

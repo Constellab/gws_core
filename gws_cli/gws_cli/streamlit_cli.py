@@ -2,6 +2,7 @@ from typing import Annotated
 
 import typer
 from gws_core import StreamlitApp
+from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
 
 from gws_cli.app_cli import AppCli
 from gws_cli.generate_streamlit_app.generate_streamlit_app import generate_streamlit_app
@@ -25,11 +26,12 @@ def run_dev(
     app_cli = AppCli(config_file_path)
     shell_proxy = app_cli.build_shell_proxy()
 
-    streamit_app = StreamlitApp(StreamlitApp.DEV_MODE_APP_ID, "main", shell_proxy)
-    streamit_app.set_dev_mode(app_cli.config_file_path)
-    streamit_app.set_enable_debugger(enable_debugger)
+    streamlit_app = StreamlitApp(StreamlitProcess.DEV_MODE_APP_ID, "main", shell_proxy)
+    streamlit_app.set_dev_mode()
+    streamlit_app.set_streamlit_folder(app_cli.get_app_dir_path())
+    streamlit_app.set_enable_debugger(enable_debugger)
 
-    app_cli.start_app(streamit_app, ctx)
+    app_cli.start_app(streamlit_app, ctx)
 
 
 @app.command("generate", help="Generate a new Streamlit app")

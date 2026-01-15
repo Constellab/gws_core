@@ -18,6 +18,8 @@ from gws_core.apps.app_instance import AppInstance
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.manage import AppManager
+from gws_core.resource.resource import Resource
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.user import User
 
 from gws_cli.utils.cli_utils import CLIUtils
@@ -138,6 +140,20 @@ class AppCli:
 
         AppsManager.init()
 
+        # load the resources
+        source_ids = self._config.source_ids
+        resources: list[Resource] = []
+        for source_id in source_ids:
+            resource = ResourceModel.get_by_id(source_id)
+            if resource is None:
+                typer.echo(f"Resource with id '{source_id}' not found.", err=True)
+                raise typer.Abort()
+            resources.append(resource.get_resource())
+        app_.set_input_resources(resources)
+
+        # load the parameters
+        app_.set_params(self._config.params)
+
         dev_user_email = self._config.dev_user_email
         if dev_user_email:
             user = User.get_by_email_and_check(dev_user_email)
@@ -200,3 +216,6 @@ class AppCli:
 
     def is_reflex_enterprise(self) -> bool:
         return self._config.is_reflex_enterprise
+
+    def is_streamlit_v2(self) -> bool:
+        return self._config.is_streamlit_v2

@@ -1,11 +1,11 @@
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
+from gws_core.apps.streamlit.streamlit_resource import StreamlitResource
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.table.table import Table
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.streamlit.streamlit_process import StreamlitProcess
-from gws_core.streamlit.streamlit_resource import StreamlitResource
 from gws_core.test.base_test_case import BaseTestCase
 from pandas import DataFrame
 
@@ -50,7 +50,9 @@ if sources:
             # generate the streamlit app
             streamlit_resource.default_view(ConfigParams())
 
-            streamlit_process = AppsManager.find_process_of_app(streamlit_resource.get_model_id())
+            streamlit_process = AppsManager.find_app_by_resource_model_id(
+                streamlit_resource.get_model_id()
+            )
 
             if streamlit_process is None:
                 self.fail("No streamlit process found")
@@ -64,10 +66,8 @@ if sources:
 
             status = streamlit_process.get_status_dto()
             self.assertEqual(status.status, AppProcessStatus.RUNNING)
-            self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(
-                status.running_apps[0].app_resource_id, streamlit_resource.get_model_id()
-            )
+            self.assertEqual(len(status.app), 1)
+            self.assertEqual(status.app[0].app_resource_id, streamlit_resource.get_model_id())
 
             AppsManager.stop_all_processes()
 

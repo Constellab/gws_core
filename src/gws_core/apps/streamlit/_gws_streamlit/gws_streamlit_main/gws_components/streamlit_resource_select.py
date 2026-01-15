@@ -1,0 +1,99 @@
+from typing import Any
+
+import streamlit as st
+
+from gws_core.resource.resource_model import ResourceModel
+
+from ..gws_streamlit_main_state import StreamlitMainState
+from .streamlit_gws_component_loader import StreamlitComponentLoader
+
+
+class StreamlitResourceSelect:
+    """Streamlit component to select a resource.
+
+    This component is a wrapper around the GWS resource search component.
+    It allows the user to search and select a resource.
+    """
+
+    _streamlit_component_loader = StreamlitComponentLoader("select-resource")
+    filters: dict[str, Any]
+    column_tags_filter_keys: list[str]
+
+    def __init__(self):
+        """Initialize the StreamlitResourceSelect component."""
+        self.filters = {}
+        self.column_tags_filter_keys = []
+
+    def add_tag_filter(self, key: str, value: Any = None) -> None:
+        """Add a tag filter to the resource search.
+
+        :param key: Tag key to filter by
+        :type key: str
+        :param value: Optional tag value to filter by, defaults to None
+        :type value: Any, optional
+        """
+        if "tags" not in self.filters:
+            self.filters["tags"] = []
+        tag = {"key": key, "value": value} if value is not None else {"key": key}
+        self.filters["tags"].append(tag)
+
+    def add_column_tag_filter_key(self, key: str) -> None:
+        """Add a column tag filter key to the resource search.
+
+        :param key: Column tag filter key to add
+        :type key: str
+        """
+        self.column_tags_filter_keys.append(key)
+
+    def include_not_flagged_resources(self) -> None:
+        """Add a filter to include not flagged resources."""
+        self.filters["includeNotFlagged"] = True
+
+    def select_resource(
+        self,
+        placeholder: str = "Search for resource",
+        key="resource-select",
+        default_resource: ResourceModel | None = None,
+    ) -> ResourceModel | None:
+        """Create a search box to select a resource.
+
+        :param placeholder: Placeholder text shown within the component for empty searches, defaults to 'Search for resource'
+        :type placeholder: str, optional
+        :param key: Unique key for the component, defaults to 'resource-select'
+        :type key: str, optional
+        :param default_resource: Default resource to show, defaults to None
+        :type default_resource: ResourceModel | None, optional
+        :return: Selected resource model or None if no resource is selected
+        :rtype: Optional[ResourceModel]
+        """
+
+        data = {
+            "default_resource": default_resource.to_dto() if default_resource is not None else None,
+            "placeholder": placeholder,
+            "default_filters": self.filters,
+            "column_tags_filter_keys": self.column_tags_filter_keys,
+        }
+
+        component_value = self._streamlit_component_loader.call_component(
+            data, key=key, authentication_info=StreamlitMainState.get_user_auth_info()
+        )
+
+        key = f"__{key}_gws_resource_model__"
+
+        if component_value is None:
+            if default_resource is not None:
+                st.session_state[key] = default_resource
+                return default_resource
+            st.session_state[key] = None
+            return None
+
+        if "resourceId" in component_value:
+            resource_id = component_value["resourceId"]
+            if resource_id is None:
+                st.session_state[key] = None
+                return None
+            resource_model = ResourceModel.get_by_id_and_check(resource_id)
+
+            st.session_state[key] = resource_model
+
+        return st.session_state.get(key)

@@ -10,10 +10,8 @@ APP_CONFIG_FILENAME = "app_config.json"
 
 
 class ReflexConfigDTO(TypedDict):
-    app_dir_path: str
     source_ids: list[str]
     params: dict | None
-    requires_authentication: bool
     # List of token of user that can access the app
     # Only provided if the app requires authentication
     # Key is access token, value is user id
@@ -95,7 +93,7 @@ class ReflexMainStateBase(rx.State):
         if not self.authenticated_user_id:
             self.authenticated_user_id = await self._check_user_token(user_access_tokens)
 
-        requires_authentication = self._app_config.get("requires_authentication", False)
+        requires_authentication = self.requires_authentication()
 
         if requires_authentication and not self.authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
@@ -125,24 +123,22 @@ class ReflexMainStateBase(rx.State):
             raise ValueError(f"Error reading app config file: {e}")
 
     def _get_app_config_file_path(self) -> str:
-        config_dir = os.environ.get("GWS_REFLEX_APP_CONFIG_DIR_PATH")
-        if not config_dir:
+        config_file_path = os.environ.get("GWS_APP_CONFIG_FILE_PATH")
+        if not config_file_path:
             raise ValueError(
-                "GWS_REFLEX_APP_CONFIG_DIR_PATH environment variable is not set in production mode"
+                "GWS_APP_CONFIG_FILE_PATH environment variable is not set in production mode"
             )
 
-        app_id: str = self.get_app_id()
-
-        return os.path.join(config_dir, app_id, APP_CONFIG_FILENAME)
+        return config_file_path
 
     def get_app_id(self) -> str:
         """Get the app ID from the environment variable."""
         if self.is_dev_mode():
             return self.DEV_MODE_APP_ID
 
-        app_id = os.environ.get("GWS_REFLEX_APP_ID")
+        app_id = os.environ.get("GWS_APP_ID")
         if not app_id:
-            raise ValueError("GWS_REFLEX_APP_ID environment variable is not set")
+            raise ValueError("GWS_APP_ID environment variable is not set")
         return app_id
 
     async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
@@ -153,7 +149,7 @@ class ReflexMainStateBase(rx.State):
 
         url_token = query_params.get("gws_token")
 
-        env_token = os.environ.get("GWS_REFLEX_TOKEN")
+        env_token = os.environ.get("GWS_APP_TOKEN")
 
         if url_token != env_token:
             return None
@@ -167,7 +163,7 @@ class ReflexMainStateBase(rx.State):
 
     def is_dev_mode(self) -> bool:
         """Check if the app is running in development mode."""
-        return os.environ.get("GWS_REFLEX_DEV_MODE", "false").lower() == "true"
+        return os.environ.get("GWS_IS_DEV_MODE", "false").lower() == "true"
 
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
@@ -185,7 +181,7 @@ class ReflexMainStateBase(rx.State):
 
     def is_virtual_env_app(self) -> bool:
         """Check if the app is running in a virtual environment."""
-        return os.environ.get("GWS_REFLEX_VIRTUAL_ENV", "false").lower() == "true"
+        return os.environ.get("GWS_IS_VIRTUAL_ENV", "false").lower() == "true"
 
     def _app_router_ready(self) -> bool:
         return self.router.url.path is not None and self.router.url.path != ""
@@ -196,16 +192,16 @@ class ReflexMainStateBase(rx.State):
 
     ##################### AUTHENTICATION #####################
 
-    async def requires_authentication(self) -> bool:
+    def requires_authentication(self) -> bool:
         """Check if the app requires authentication."""
-        return (await self.get_app_config()).get("requires_authentication", False)
+        return os.environ.get("GWS_REQUIRES_AUTHENTICATION", "true").lower() == "true"
 
     async def check_authentication(self) -> bool:
         if not self._is_initialized:
             return False
         if self.is_dev_mode():
             return True
-        if not await self.requires_authentication():
+        if not self.requires_authentication():
             return True
         return self.authenticated_user_id is not None
 

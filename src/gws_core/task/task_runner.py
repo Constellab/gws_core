@@ -1,4 +1,3 @@
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -34,28 +33,28 @@ class TaskRunner:
     _input_specs: InputSpecs
     _output_specs: OutputSpecs
     _inputs: dict[str, Resource]
-    _outputs: TaskOutputs
-    _task_id: str
-    _scenario_id: str
+    _outputs: TaskOutputs | None
+    _task_id: str | None
+    _scenario_id: str | None
 
-    _task: Task
+    _task: Task | None
     _message_dispatcher: MessageDispatcher
 
-    _config_model_id: str = None
+    _config_model_id: str | None
 
-    _config_params: ConfigParams = None
+    _config_params: ConfigParams | None
 
     def __init__(
         self,
         task_type: type[Task],
-        params: ConfigParamsDict = None,
-        inputs: dict[str, Resource] = None,
-        config_model_id: str = None,
-        input_specs: InputSpecs = None,
-        output_specs: OutputSpecs = None,
-        config_specs: ConfigSpecs = None,
-        task_id: str = None,
-        scenario_id: str = None,
+        params: ConfigParamsDict | None = None,
+        inputs: dict[str, Resource] | None = None,
+        config_model_id: str | None = None,
+        input_specs: InputSpecs | None = None,
+        output_specs: OutputSpecs | None = None,
+        config_specs: ConfigSpecs | None = None,
+        task_id: str | None = None,
+        scenario_id: str | None = None,
     ):
         self._task_type = task_type
 
@@ -66,6 +65,7 @@ class TaskRunner:
 
         self._task = None
         self._outputs = None
+        self._config_params = None
         self._config_model_id = config_model_id
 
         self._message_dispatcher = MessageDispatcher()
@@ -95,7 +95,7 @@ class TaskRunner:
 
         result = None
         try:
-            result = task.check_before_run(self._config_params, inputs)
+            result = task.check_before_run(self._get_config_params(), inputs)
         except KeyError as exception:
             raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
@@ -117,7 +117,7 @@ class TaskRunner:
 
         Logger.debug(f"Running task {self._task_type}")
         try:
-            task_outputs: TaskOutputs = task.run(self._config_params, inputs)
+            task_outputs: TaskOutputs = task.run(self._get_config_params(), inputs)
         except KeyError as exception:
             raise Exception(f"KeyError : {str(exception)}")
         except Exception as exception:
@@ -146,9 +146,11 @@ class TaskRunner:
         self._inputs[input_name] = resource
 
     def get_output(self, output_name: str) -> Resource:
-        return self._outputs[output_name]
+        return self.get_outputs()[output_name]
 
     def get_outputs(self) -> TaskOutputs:
+        if self._outputs is None:
+            raise Exception("Task not run yet")
         return self._outputs
 
     def _get_task_instance(self) -> Task:
@@ -156,8 +158,10 @@ class TaskRunner:
         if self._task is None:
             self._task = self._task_type()
             self._task.__set_message_dispatcher__(self._message_dispatcher)
-            self._task.__set_task_id__(self._task_id)
-            self._task.__set_scenario_id__(self._scenario_id)
+            if self._task_id:
+                self._task.__set_task_id__(self._task_id)
+            if self._scenario_id:
+                self._task.__set_scenario_id__(self._scenario_id)
 
             try:
                 self._task.init()
@@ -203,7 +207,7 @@ class TaskRunner:
         for auto_convert_message in result.auto_convert_messages:
             self._message_dispatcher.notify_info_message(auto_convert_message)
 
-        self._outputs = result.outputs
+        self._outputs = result.outputs or {}
 
         if result.error and len(result.error) > 0:
             raise InvalidOutputsException(result.error)
@@ -238,5 +242,10 @@ class TaskRunner:
     def force_dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()
 
-    def get_task(self) -> Task:
+    def get_task(self) -> Task | None:
         return self._task
+
+    def _get_config_params(self) -> ConfigParams:
+        if self._config_params is None:
+            raise Exception("Config params not built")
+        return self._config_params

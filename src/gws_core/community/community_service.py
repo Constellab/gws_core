@@ -22,7 +22,6 @@ from .community_dto import (
 
 
 class CommunityService:
-    community_api_url = Settings.get_community_api_url()
     api_key_header_key: str = "Authorization"
     api_key_header_prefix: str = "api-key"
     # Key to set the user in the request
@@ -33,9 +32,7 @@ class CommunityService:
         """
         Get a community by its id
         """
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/{agent_version_id}/version/latest/for-lab/{AgentFactory().current_json_version}"
+        url = f"{cls.get_community_api_url()}/agent/{agent_version_id}/version/latest/for-lab/{AgentFactory().current_json_version}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -47,9 +44,7 @@ class CommunityService:
 
     @classmethod
     def get_community_available_space(cls) -> Any:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/space/available/for-lab"
+        url = f"{cls.get_community_api_url()}/space/available/for-lab"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -68,9 +63,7 @@ class CommunityService:
         page: int,
         number_of_items_per_page: int,
     ) -> PageDTO[CommunityAgentDTO]:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/available/for-lab?page={page}&size={number_of_items_per_page}"
+        url = f"{cls.get_community_api_url()}/agent/available/for-lab?page={page}&size={number_of_items_per_page}"
         try:
             response = ExternalApiService.post(
                 url,
@@ -105,9 +98,7 @@ class CommunityService:
         """
         Get a community agent by comunity agent version id
         """
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/for-lab/version/{agent_version_id}/{AgentFactory().current_json_version}"
+        url = f"{cls.get_community_api_url()}/agent/for-lab/version/{agent_version_id}/{AgentFactory().current_json_version}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -124,9 +115,7 @@ class CommunityService:
         """
         Get a community agent by comunity agent version id and check if the user has the right to edit it, if not return None
         """
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/for-lab/check-rights/version/{agent_version_id}/{AgentFactory().current_json_version}"
+        url = f"{cls.get_community_api_url()}/agent/for-lab/check-rights/version/{agent_version_id}/{AgentFactory().current_json_version}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -140,9 +129,7 @@ class CommunityService:
     def create_community_agent(
         cls, version_file: CommunityAgentFileDTO, form_data: CommunityCreateAgentDTO
     ) -> CommunityAgentVersionCreateResDTO:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/for-lab"
+        url = f"{cls.get_community_api_url()}/agent/for-lab"
         try:
             response = ExternalApiService.post(
                 url,
@@ -167,9 +154,7 @@ class CommunityService:
         form_data: CommunityCreateAgentDTO,
         agent_version_id: str,
     ) -> CommunityAgentVersionCreateResDTO:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/for-lab/fork/{agent_version_id}"
+        url = f"{cls.get_community_api_url()}/agent/for-lab/fork/{agent_version_id}"
         try:
             response = ExternalApiService.post(
                 url,
@@ -191,9 +176,7 @@ class CommunityService:
     def create_community_agent_version(
         cls, version_file: CommunityAgentFileDTO, agent_id: str
     ) -> CommunityAgentVersionCreateResDTO:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/agent/for-lab/version/{agent_id}"
+        url = f"{cls.get_community_api_url()}/agent/for-lab/version/{agent_id}"
         try:
             response = ExternalApiService.post(
                 url,
@@ -208,9 +191,7 @@ class CommunityService:
 
     @classmethod
     def send_process_run_stats(cls, run_stats: list[dict]) -> None:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/run-stat-lab/new-stats"
+        url = f"{cls.get_community_api_url()}/run-stat-lab/new-stats"
         try:
             ExternalApiService.post(
                 url, {"stats": run_stats}, cls._get_request_header(), raise_exception_if_error=True
@@ -221,9 +202,7 @@ class CommunityService:
 
     @classmethod
     def send_app_stat(cls, app_url: str) -> None:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/app/for-lab/stat"
+        url = f"{cls.get_community_api_url()}/app/for-lab/stat"
         try:
             ExternalApiService.post(
                 url, {"app_url": app_url}, cls._get_request_header(), raise_exception_if_error=True
@@ -237,9 +216,7 @@ class CommunityService:
         """
         Get a community tag key by its technical name
         """
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/tag/for-lab/key/{key}"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/key/{key}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -254,9 +231,7 @@ class CommunityService:
         """
         Get a community tag value by its key and value id
         """
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/tag/for-lab/key/{key}/value/{value_id}"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/key/{key}/value/{value_id}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -276,9 +251,7 @@ class CommunityService:
         page: int,
         number_of_items_per_page: int,
     ) -> PageDTO[CommunityTagKeyDTO]:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/tag/for-lab/available?page={page}&size={number_of_items_per_page}"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/available?page={page}&size={number_of_items_per_page}"
         try:
             response = ExternalApiService.post(
                 url,
@@ -327,9 +300,7 @@ class CommunityService:
     def get_community_tag_values(
         cls, community_tag_key: str, page: int, number_of_items_per_page: int
     ) -> PageDTO[CommunityTagValueDTO]:
-        if cls.community_api_url is None:
-            return None
-        url = f"{cls.community_api_url}/tag/for-lab/key/{community_tag_key}/values?page={page}&size={number_of_items_per_page}"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/key/{community_tag_key}/values?page={page}&size={number_of_items_per_page}"
         try:
             response = ExternalApiService.get(
                 url, cls._get_request_header(), raise_exception_if_error=True
@@ -371,10 +342,7 @@ class CommunityService:
         """
         Get all community tag values for a given key
         """
-        if cls.community_api_url is None:
-            return []
-
-        url = f"{cls.community_api_url}/tag/for-lab/key/{key}/values/all"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/key/{key}/values/all"
 
         try:
             response = ExternalApiService.get(
@@ -396,10 +364,7 @@ class CommunityService:
         """
         Share a tag key and its values to the community
         """
-        if cls.community_api_url is None:
-            return None
-
-        url = f"{cls.community_api_url}/tag/for-lab/share"
+        url = f"{cls.get_community_api_url()}/tag/for-lab/share"
 
         try:
             response = ExternalApiService.post(
@@ -416,6 +381,13 @@ class CommunityService:
             err.detail = f"Can't share tag to community. Error : {err.detail}"
             raise err
         return CommunityTagKeyDTO.from_json(response.json())
+
+    @classmethod
+    def get_community_api_url(cls) -> str:
+        community_api_url = Settings.get_community_api_url()
+        if community_api_url is None:
+            raise Exception("Environment variable 'COMMUNITY_API_URL' is not set")
+        return community_api_url
 
     @classmethod
     def _get_request_header(cls) -> dict[str, str]:

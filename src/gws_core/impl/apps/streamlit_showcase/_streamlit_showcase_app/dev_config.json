@@ -3,5 +3,6 @@
     "source_ids": [],
     "params": {},
     "env_type": "NONE",
-    "env_file_path": ""
+    "env_file_path": "",
+    "is_streamlit_v2": true
 }

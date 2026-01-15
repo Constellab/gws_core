@@ -44,7 +44,9 @@ class TestReflexApp(BaseTestCase):
             # generate the reflex app
             reflex_resource.default_view(ConfigParams())
 
-            reflex_process = AppsManager.find_process_of_app(reflex_resource.get_model_id())
+            reflex_process = AppsManager.find_app_by_resource_model_id(
+                reflex_resource.get_model_id()
+            )
 
             if reflex_process is None:
                 self.fail("No reflex process found")
@@ -58,8 +60,8 @@ class TestReflexApp(BaseTestCase):
 
             status = reflex_process.get_status_dto()
             self.assertEqual(status.status, AppProcessStatus.RUNNING)
-            self.assertEqual(len(status.running_apps), 1)
-            self.assertEqual(status.running_apps[0].app_resource_id, reflex_resource.get_model_id())
+            self.assertEqual(len(status.app), 1)
+            self.assertEqual(status.app[0].app_resource_id, reflex_resource.get_model_id())
 
             AppsManager.stop_all_processes()
 

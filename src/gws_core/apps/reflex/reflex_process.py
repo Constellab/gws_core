@@ -11,6 +11,7 @@ from gws_core.apps.app_nginx_service import (
 )
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.logger import Logger
@@ -31,8 +32,8 @@ class ReflexProcess(AppProcess):
     In prod the front build folder is stored in resource path.
     """
 
-    front_port: int = None
-    back_port: int = None
+    front_port: int
+    back_port: int
 
     # timeout in second to wait for the main app to start
     # increase it to 90 to allow the app to start as it compiles the front and back
@@ -42,15 +43,15 @@ class ReflexProcess(AppProcess):
     ZIP_FILE_NAME = "frontend.zip"
     INDEX_HTML_FILE = "index.html"
 
-    _front_app_build_folder: str = None
+    _front_app_build_folder: str | None = None
 
     # Cache for reflex access token (class variables for shared caching)
     _cached_access_token: str | None = None
     _cache_timestamp: float | None = None
     _cache_duration_seconds: int = 3600  # 1 hour
 
-    def __init__(self, front_port: int, back_port: int, id_: str, env_hash: str):
-        super().__init__(id_, env_hash)
+    def __init__(self, front_port: int, back_port: int, app: AppInstance):
+        super().__init__(app)
         self.front_port = front_port
         self.back_port = back_port
 
@@ -83,7 +84,6 @@ class ReflexProcess(AppProcess):
         ]
 
         env = self._get_base_env(app)
-        env["GWS_REFLEX_DEV_MODE"] = "true"
 
         process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
         services = self._get_dev_nginx_services()
@@ -100,7 +100,7 @@ class ReflexProcess(AppProcess):
         # so we use a redirect service for the front
         services.append(
             AppNginxRedirectServiceInfo(
-                service_id=self.id + "-front",
+                service_id=self.get_id() + "-front",
                 source_port=self.get_service_source_port(),
                 server_name=self.get_host_name(),
                 destination_port=self.front_port,
@@ -116,7 +116,6 @@ class ReflexProcess(AppProcess):
     def _start_prod_process(self, app: ReflexApp, shell_proxy: ShellProxy) -> AppProcessStartResult:
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
         env = self._get_base_env(app)
-        env["GWS_REFLEX_TOKEN"] = self._token
 
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
@@ -150,25 +149,21 @@ class ReflexProcess(AppProcess):
         if not os.path.exists(reflex_modules_path):
             raise Exception(f"Reflex modules not found at {reflex_modules_path}")
 
-        gws_core_path = os.path.dirname(sys.modules["gws_core"].__path__[0])
+        brick_info = BrickHelper.get_brick_info_and_check(BrickHelper.GWS_CORE)
         theme = self.get_current_user_theme()
 
         python_path = reflex_modules_path
 
         # for non virtual env apps, add gws_core to python path
         if not app.is_virtual_env_app():
-            python_path += ":" + gws_core_path
+            python_path += ":" + brick_info.get_python_module_path()
 
-        env_dict = {
-            # define python path to include gws_reflex_base and gws_reflex_main and gws_core
-            "PYTHONPATH": python_path,
-            "GWS_REFLEX_APP_ID": app.resource_model_id,
-            "GWS_REFLEX_VIRTUAL_ENV": str(app.is_virtual_env_app()),
-            "GWS_REFLEX_API_URL": self.get_back_host_url(),
-            "GWS_THEME": theme.theme,
-            "GWS_REFLEX_APP_CONFIG_DIR_PATH": self.get_working_dir(),
-            "GWS_REFLEX_TEST_ENV": str(Settings.get_instance().is_test),
-        }
+        env_dict = self._get_common_env_variables()
+
+        # define python path to include gws_reflex_base and gws_reflex_main and gws_core
+        env_dict["PYTHONPATH"] = python_path
+        env_dict["GWS_REFLEX_API_URL"] = self.get_back_host_url()
+        env_dict["GWS_THEME"] = theme.theme
 
         # Get access token based on whether this is an enterprise app
         access_token: str | None = None  # Default token
@@ -242,7 +237,7 @@ class ReflexProcess(AppProcess):
         # In prod mode, we serve the front from the build folder
         services.append(
             AppNginxReflexFrontServerServiceInfo(
-                service_id=self.id + "-front",
+                service_id=self.get_id() + "-front",
                 source_port=self.get_service_source_port(),
                 server_name=self.get_host_name(),
                 front_folder_path=front_build_folder,
@@ -256,7 +251,7 @@ class ReflexProcess(AppProcess):
 
     def _get_cloud_back_nginx_services(self) -> AppNginxServiceInfo:
         return AppNginxRedirectServiceInfo(
-            service_id=self.id + "-back",
+            service_id=self.get_id() + "-back",
             source_port=self.get_service_source_port(),
             server_name=self.get_host_name("-back"),
             destination_port=self.back_port,

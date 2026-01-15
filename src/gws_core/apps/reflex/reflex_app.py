@@ -81,24 +81,6 @@ class ReflexApp(AppInstance):
             return self._app_config.get_app_folder_path()
         return self._app_static_folder
 
-    def generate_app(self, working_dir: str) -> None:
-        """Generate the dir for the process. Then inside this dir
-        generate a dir for this app and generate the app configuration file.
-
-        :param working_dir: _description_
-        :type working_dir: str
-        """
-        app_config_dir = self._generate_config_dir(working_dir)
-
-        if self._dev_mode:
-            self._generate_config_dev_mode()
-        else:
-            self._generate_config(app_config_dir)
-
-    def get_app_process_hash(self) -> str:
-        # all app are using a different process
-        return self.resource_model_id
-
     def get_app_type(self) -> AppType:
         """Get the type of the app."""
         return AppType.REFLEX

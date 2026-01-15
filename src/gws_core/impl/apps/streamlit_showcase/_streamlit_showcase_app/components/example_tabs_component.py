@@ -3,7 +3,7 @@
 from collections.abc import Callable
 
 import streamlit as st
-from gws_core.streamlit import class_doc_component, method_doc_component
+from gws_streamlit_main import class_doc_component, method_doc_component
 
 
 def example_tabs(

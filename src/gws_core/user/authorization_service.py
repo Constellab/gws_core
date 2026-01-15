@@ -3,6 +3,7 @@ from enum import Enum
 from fastapi import Request
 
 from gws_core.apps.app_instance import AppInstance
+from gws_core.apps.app_process import AppProcess
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.utils.settings import Settings
@@ -116,8 +117,8 @@ class AuthorizationService:
         user: User = None
 
         if (
-            app_id == AppInstance.DEV_MODE_APP_ID
-            and user_access_token == AppInstance.DEV_MODE_USER_ACCESS_TOKEN_KEY
+            app_id == AppProcess.DEV_MODE_APP_ID
+            and user_access_token == AppProcess.DEV_MODE_USER_ACCESS_TOKEN_KEY
         ):
             if Settings.is_prod_mode():
                 raise UnauthorizedException(

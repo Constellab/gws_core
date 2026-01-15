@@ -8,9 +8,9 @@ ConfigParamsDict = dict[str, ParamValue]
 class ConfigParams(ConfigParamsDict):
     """Config values send to the task"""
 
-    __config_model_id__: str = None
+    __config_model_id__: str | None
 
-    def set_config_model_id(self, config_model_id: str) -> None:
+    def set_config_model_id(self, config_model_id: str | None) -> None:
         self.__config_model_id__ = config_model_id
 
     # specification of the config
@@ -67,12 +67,12 @@ class ConfigParams(ConfigParamsDict):
         :rtype: OutputSpecs
         """
 
+        from .config import Config
+
         if not self.__config_model_id__:
             return
 
-        from .config import Config
-
-        config: Config = Config.get_by_id(self.__config_model_id__)
+        config = Config.get_by_id(self.__config_model_id__)
 
         if config is None:
             raise Exception(
