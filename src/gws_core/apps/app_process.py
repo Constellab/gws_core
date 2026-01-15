@@ -19,6 +19,7 @@ from gws_core.core.exception.exceptions.unauthorized_exception import Unauthoriz
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.execution_context import ExecutionContext
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
@@ -321,7 +322,7 @@ class AppProcess:
     def get_service_source_port(self) -> int:
         return Settings.get_app_external_port()
 
-    def _get_common_env_variables(self) -> dict[str, str]:
+    def _get_common_env_variables(self, execution_context: ExecutionContext) -> dict[str, str]:
         """Get common environment variables for the app process."""
         env_vars = {
             "GWS_APP_ID": self._app.resource_model_id,
@@ -331,6 +332,7 @@ class AppProcess:
             "GWS_IS_TEST_ENV": str(Settings.get_instance().is_test),
             "GWS_IS_DEV_MODE": str(self._app.is_dev_mode()),
             "GWS_REQUIRES_AUTHENTICATION": str(self._app.requires_authentication),
+            ExecutionContext.get_os_env_name(): execution_context.value,
         }
         return env_vars
 

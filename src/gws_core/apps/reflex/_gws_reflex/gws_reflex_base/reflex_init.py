@@ -19,6 +19,8 @@ class ReflexInit:
     @staticmethod
     def _load_gws_core():
         # retrieve the reflex app id to the logs context
+        from gws_reflex_main.reflex_auth_context_loader import ReflexAuthContextLoader
+
         from gws_core import LogContext, Settings, manage
 
         if manage.AppManager.gws_env_initialized:
@@ -33,4 +35,5 @@ class ReflexInit:
             log_context=LogContext.REFLEX,
             log_context_id=app_id,
             is_test=is_test,
+            auth_context_loader=ReflexAuthContextLoader(),
         )

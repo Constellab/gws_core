@@ -26,6 +26,3 @@ from .gws_components.streamlit_tree_menu import StreamlitTreeMenuItem as Streaml
 # State Management
 from .gws_streamlit_main_state import StreamlitMainState as StreamlitMainState
 from .gws_streamlit_main_state import StreamlitUserAuthInfo as StreamlitUserAuthInfo
-
-# Utils
-from .utils.streamlit_auth_user import StreamlitAuthenticateUser as StreamlitAuthenticateUser

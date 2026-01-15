@@ -8,6 +8,7 @@ from gws_core.apps.streamlit.streamlit_plugin import StreamlitPlugin
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.external_api_service import ExternalApiService
+from gws_core.core.utils.execution_context import ExecutionContext
 from gws_core.core.utils.logger import Logger
 
 
@@ -125,7 +126,7 @@ class StreamlitProcess(AppProcess):
         if not app.is_virtual_env_app():
             python_path += ":" + brick_info.get_python_module_path()
 
-        env_dict = self._get_common_env_variables()
+        env_dict = self._get_common_env_variables(ExecutionContext.STREAMLIT)
         env_dict["PYTHONPATH"] = python_path
 
         return env_dict

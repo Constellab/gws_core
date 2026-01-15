@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 
 from gws_core.apps.app_dto import AppProcessStatus
@@ -14,6 +13,7 @@ from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
+from gws_core.core.utils.execution_context import ExecutionContext
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -158,7 +158,7 @@ class ReflexProcess(AppProcess):
         if not app.is_virtual_env_app():
             python_path += ":" + brick_info.get_python_module_path()
 
-        env_dict = self._get_common_env_variables()
+        env_dict = self._get_common_env_variables(ExecutionContext.REFLEX)
 
         # define python path to include gws_reflex_base and gws_reflex_main and gws_core
         env_dict["PYTHONPATH"] = python_path

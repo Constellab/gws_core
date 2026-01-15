@@ -1,4 +1,3 @@
-
 from gws_reflex_base import ReflexMainStateBase
 
 from gws_core.resource.resource import Resource
@@ -26,9 +25,6 @@ class ReflexMainState(ReflexMainStateBase):
 
     async def get_current_user(self) -> User | None:
         """Return the current user of the app."""
-        # in dev mode we load the system user by default
-        # if authentication is enabled
-
         if not self._is_initialized:
             await self._on_load()
 

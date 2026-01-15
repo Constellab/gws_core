@@ -6,6 +6,7 @@ import requests
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
+from gws_core.core.utils.execution_context import ExecutionContext
 
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
@@ -44,7 +45,7 @@ class SpaceServiceBase:
         :rtype: SpaceService
         """
         # For app context, we force the access token
-        if CurrentUserService.is_app_context():
+        if ExecutionContext.is_app_context():
             return cls.create_with_access_token()
 
         return cls()

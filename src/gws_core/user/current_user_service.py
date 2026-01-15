@@ -1,38 +1,50 @@
-import contextvars
-from enum import Enum
-
-from starlette_context import context
-
 from gws_core.core.service.front_service import FrontService, FrontTheme
 from gws_core.user.auth_context import AuthContextBase, AuthContextUser
+from gws_core.user.auth_context_loader import (
+    AuthContextLoader,
+)
 
 from ..core.exception.exceptions import BadRequestException, UnauthorizedException
 from ..core.utils.http_helper import HTTPHelper
 from .user import User
 
-# Context variable for Reflex apps (thread-safe, async-safe)
-_reflex_auth_context: contextvars.ContextVar[AuthContextBase | None] = contextvars.ContextVar(
-    "reflex_auth_context", default=None
-)
-
-
-class CurrentUserContext(Enum):
-    NORMAL = "NORMAL"
-    # set to app context when the code is executed in app
-    APP = "APP"
-    # set to reflex context when the code is executed in reflex app
-    REFLEX = "REFLEX"
-
 
 class CurrentUserService:
-    """Class to manage the current connected user
+    """Class to manage the current connected user with pluggable storage.
 
-    Use to set and get the user in a session
+    Use to set and get the user in a session. The storage mechanism is determined
+    by the initialized loader (HTTP, Streamlit, Reflex, etc.).
     """
 
-    _no_http_context_auth: AuthContextBase = None
+    _auth_loader: AuthContextLoader | None = None
 
-    _run_context: CurrentUserContext = CurrentUserContext.NORMAL
+    @classmethod
+    def initialize_loader(cls, loader: AuthContextLoader) -> None:
+        """
+        Initialize the auth context loader for the application.
+        Must be called at app startup (Streamlit, Reflex, etc.)
+
+        Args:
+            loader: The loader implementation to use
+            context: The context type (APP, REFLEX, etc.)
+        """
+        cls._auth_loader = loader
+
+    @classmethod
+    def _get_loader(cls) -> AuthContextLoader:
+        """Get the appropriate loader for current context."""
+
+        if cls._auth_loader is None:
+            raise Exception("CurrentUserService not initialized with a loader")
+
+        return cls._auth_loader
+
+    @classmethod
+    def is_initialized(cls) -> bool:
+        """
+        Check if the CurrentUserService has been initialized with a loader.
+        """
+        return cls._auth_loader is not None
 
     @classmethod
     def get_and_check_current_user(cls) -> User:
@@ -40,17 +52,10 @@ class CurrentUserService:
         Get the user in the current session, throw an exception if the user does not exists
         """
 
-        user: User = cls.get_current_user()
+        user = cls.get_current_user()
 
         if user is None:
-            if cls._run_context == CurrentUserContext.APP:
-                raise UnauthorizedException(
-                    "User not authenticated in app context. "
-                    + "If this action was trigger in a `on_click`, `on_change`, in a st.dialog or similar, "
-                    + "please use the `StreamlitAuthenticateUser` class in streamlit app to authenticate the user"
-                )
-            else:
-                raise UnauthorizedException("User not authenticated")
+            raise UnauthorizedException("User not authenticated")
 
         return user
 
@@ -59,13 +64,7 @@ class CurrentUserService:
         """
         Get the auth context in the current session, return none if not exists
         """
-        if HTTPHelper.is_http_context():
-            return context.data.get("auth_context")
-        elif cls.is_reflex_context():
-            # In Reflex context, use contextvars (thread-safe, async-safe)
-            return _reflex_auth_context.get()
-        else:
-            return cls._no_http_context_auth
+        return cls._get_loader().get()
 
     @classmethod
     def get_current_user(cls) -> User | None:
@@ -107,29 +106,14 @@ class CurrentUserService:
         if not isinstance(auth_context, AuthContextBase):
             raise BadRequestException("Invalid auth context")
 
-        if HTTPHelper.is_http_context():
-            # is http contexts
-            context.data["auth_context"] = auth_context
-        elif cls.is_reflex_context():
-            # In Reflex context, use contextvars (thread-safe, async-safe)
-            _reflex_auth_context.set(auth_context)
-        else:
-            # For other non-http contexts
-            cls._no_http_context_auth = auth_context
+        cls._get_loader().set(auth_context)
 
     @classmethod
     def clear_auth_context(cls) -> None:
         """
         Clear the auth context in the current session
         """
-        if HTTPHelper.is_http_context():
-            # is http contexts
-            context.data["auth_context"] = None
-        elif cls.is_reflex_context():
-            _reflex_auth_context.set(None)
-        else:
-            # For other non-http contexts
-            cls._no_http_context_auth = None
+        cls._get_loader().clear()
 
     @classmethod
     def set_current_user_from_share_auth(cls) -> None:
@@ -138,10 +122,11 @@ class CurrentUserService:
         """
 
         if not HTTPHelper.is_http_context():
-            # is http contexts
             raise BadRequestException("Cannot set share user in non http context")
         system_user = User.get_and_check_sysuser()
-        context.data["auth_context"] = AuthContextBase("share", system_user)
+        # Use AuthContextUser for share authentication with system user
+        auth_context = AuthContextUser(system_user)
+        cls._get_loader().set(auth_context)
 
     @classmethod
     def check_is_sysuser(cls):
@@ -174,24 +159,6 @@ class CurrentUserService:
             if user.has_dark_theme()
             else FrontService.get_light_theme()
         )
-
-    @classmethod
-    def set_app_context(cls):
-        cls._run_context = CurrentUserContext.APP
-
-    @classmethod
-    def is_app_context(cls) -> bool:
-        return cls._run_context == CurrentUserContext.APP
-
-    @classmethod
-    def set_reflex_context(cls):
-        """Set the context to Reflex mode to enable contextvars-based user isolation"""
-        cls._run_context = CurrentUserContext.REFLEX
-
-    @classmethod
-    def is_reflex_context(cls) -> bool:
-        """Check if the current context is Reflex"""
-        return cls._run_context == CurrentUserContext.REFLEX
 
 
 class AuthenticateUser:

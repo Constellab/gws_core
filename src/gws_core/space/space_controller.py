@@ -1,4 +1,3 @@
-
 from fastapi import Depends, FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
@@ -223,6 +222,7 @@ def generate_user_access_token(
 ) -> GenerateUserAccessTokenForSpaceResponse:
     """
     Route to generate a user access token for a space share link.
+    This is called to view resources and apps from the space.
     This token usure that the user is connected and has access to the share link.
     """
 

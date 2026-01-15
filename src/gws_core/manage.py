@@ -6,19 +6,22 @@ from unittest.suite import TestSuite
 import plotly.express as px
 from dotenv import load_dotenv
 
-from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.lab.system_service import SystemService
 from gws_core.model.typing_manager import TypingManager
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.settings_loader import SettingsLoader
 from gws_core.test.test_helper import TestHelper
-from gws_core.user.current_user_service import AuthenticateUser
+from gws_core.user.auth_context_loader import AuthContextLoader, DefaultAuthContextLoader
+from gws_core.user.current_user_service import (
+    AuthenticateUser,
+    CurrentUserService,
+)
 from gws_core.user.user import User
 
 from .app import App
 from .core.db.db_manager_service import DbManagerService
 from .core.exception.exceptions import BadRequestException
-from .core.utils.logger import LogContext, Logger
 from .core.utils.settings import Settings
 
 
@@ -34,6 +37,7 @@ class AppManager:
         log_context_id: str | None = None,
         show_sql: bool = False,
         is_test: bool = False,
+        auth_context_loader: AuthContextLoader | None = None,
     ) -> Settings:
         settings = cls.init_gws_env(
             main_setting_file_path=main_setting_file_path,
@@ -42,6 +46,7 @@ class AppManager:
             log_context_id=log_context_id,
             show_sql=show_sql,
             is_test=is_test,
+            auth_context_loader=auth_context_loader,
         )
         # Init the db
         DbManagerService.init_all_db(full_init=False)
@@ -56,6 +61,7 @@ class AppManager:
         log_context_id: str | None = None,
         show_sql: bool = False,
         is_test: bool = False,
+        auth_context_loader: AuthContextLoader | None = None,
     ) -> Settings:
         log_dir = Settings.build_log_dir(is_test=is_test)
 
@@ -69,6 +75,11 @@ class AppManager:
             Logger.info(
                 f"Logger configured for context {log_context} with object {log_context_id} with log level: {logger.level}"
             )
+
+        # Initialize the CurrentUserService with the provided loader
+        if auth_context_loader is None:
+            auth_context_loader = DefaultAuthContextLoader()
+        CurrentUserService.initialize_loader(auth_context_loader)
 
         if show_sql:
             Logger.print_sql_queries()

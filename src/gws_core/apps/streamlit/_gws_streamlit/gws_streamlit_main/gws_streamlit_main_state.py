@@ -2,6 +2,7 @@
 
 import streamlit as st
 from gws_streamlit_base import StreamlitMainStateBase
+from gws_streamlit_main.utils.streamlit_auth_context_loader import StreamlitAuthContextLoader
 
 from gws_core import (
     CurrentUserService,
@@ -38,19 +39,17 @@ class StreamlitMainState(StreamlitMainStateBase):
                 log_level="INFO",
                 log_context=LogContext.STREAMLIT,
                 log_context_id=app_id,
+                auth_context_loader=StreamlitAuthContextLoader(),
             )
 
         # Authenticate user in GWS system
-        if cls.is_dev_mode():
-            user = User.get_and_check_sysuser()
-        else:
-            user_id = st.session_state["__gws_user_id__"]
-            user = UserService.get_or_import_user_info(user_id)
+        user_id = cls.get_current_user_id()
+        user = UserService.get_by_id_or_none(user_id)
+        if not user:
+            raise Exception("User not authenticated, cannot find the user from the id")
 
         auth_context = AuthContextApp(app_id=cls.get_app_id(), user=user)
-
         CurrentUserService.set_auth_context(auth_context)
-        CurrentUserService.set_app_context()
 
     @classmethod
     def register_streamlit_app(cls) -> None:
@@ -101,10 +100,7 @@ class StreamlitMainState(StreamlitMainStateBase):
         :return: the current connected user
         :rtype: User | None
         """
-        user = cls.get_current_user()
-        if not user:
-            raise Exception("User not authenticated")
-        return user
+        return CurrentUserService.get_and_check_current_user()
 
     @classmethod
     @st.cache_data
@@ -116,10 +112,7 @@ class StreamlitMainState(StreamlitMainStateBase):
         :return: the current connected user
         :rtype: User | None
         """
-        user_id = cls.get_current_user_id()
-        if not user_id:
-            return None
-        return UserService.get_or_import_user_info(user_id)
+        return CurrentUserService.get_current_user()
 
     @classmethod
     def get_user_auth_info(cls) -> StreamlitUserAuthInfo:
