@@ -156,7 +156,7 @@ class ResourceSet(ResourceListBase):
         """
         self._resources = {}
         self._resource_ids = {}
-        self.__constant_resource_model_ids__ = set()
+        self.__constant_resource_uid__ = set()
 
     def replace_resources_by_model_id(self, resources: dict[str, Resource]) -> None:
         """

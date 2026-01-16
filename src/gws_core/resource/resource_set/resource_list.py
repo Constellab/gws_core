@@ -117,7 +117,7 @@ class ResourceList(ResourceListBase):
     def clear_resources(self) -> None:
         self._resources = []
         self._resource_ids = []
-        self.__constant_resource_model_ids__ = set()
+        self.__constant_resource_uid__ = set()
 
     def to_list(self) -> list[Resource]:
         """
