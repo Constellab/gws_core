@@ -3,6 +3,8 @@ import { useEffect, useRef, useMemo } from 'react';
 // Import scripts directly using ES6 import
 // These will be loaded and executed when the module loads
 import '/public/external/gws_plugin/main.js';
+import '/public/external/gws_plugin/styles.css';
+import '/public/external/gws_plugin/light-theme.css';
 
 // Component that matches DcRichTextConfig interface
 export function RichTextComponent({
