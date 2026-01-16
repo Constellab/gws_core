@@ -597,7 +597,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         )
         if resource_typing:
             resource_type_ref = resource_typing.to_ref_dto()
-            is_downloadable = self.is_downloadable
+            is_downloadable = self.is_downloadable()
             type_status = resource_typing.get_type_status()
 
             resource_type: type = resource_typing.get_type()
@@ -626,6 +626,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             scenario=self.scenario.to_simple_dto() if self.scenario else None,
             folder=self.folder.to_dto() if self.folder else None,
             style=self.style,
+            is_application=self.is_application(),
         )
 
     def to_simple_dto(self) -> ResourceSimpleDTO:
@@ -649,7 +650,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             return TechnicalInfoDict.deserialize(kv_store.get("technical_info"))
         return TechnicalInfoDict()
 
-    @property
     def is_downloadable(self) -> bool:
         # the resource is downloadable if it's a file or if the export_to_path is defined
         resource_type = self.get_resource_type()

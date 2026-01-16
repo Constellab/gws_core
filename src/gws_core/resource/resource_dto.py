@@ -34,6 +34,7 @@ class ResourceModelDTO(ModelWithUserDTO):
     scenario: ScenarioSimpleDTO | None
     folder: SpaceFolderDTO | None
     style: TypingStyle
+    is_application: bool
 
 
 class ResourceSimpleDTO(BaseModelDTO):
