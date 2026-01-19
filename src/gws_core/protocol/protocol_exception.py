@@ -17,8 +17,8 @@ class ProtocolBuildException(BadRequestException):
     def __init__(
         self,
         process_type: Literal["Task", "Protocol"],
-        instance_name: str,
-        parent_instance_name: str,
+        instance_name: str | None,
+        parent_instance_name: str | None,
         exception_detail: str,
         unique_code: str,
         exception: Exception,
@@ -36,7 +36,7 @@ class ProtocolBuildException(BadRequestException):
 
     @staticmethod
     def from_exception(
-        process_type: Literal["Task", "Protocol"], instance_name: str, exception: Exception
+        process_type: Literal["Task", "Protocol"], instance_name: str | None, exception: Exception
     ) -> ProtocolBuildException:
         # create from a know exception
         if isinstance(exception, BaseHTTPException):
@@ -62,7 +62,7 @@ class ProtocolBuildException(BadRequestException):
     # Build from a ProtocolBuildException to provide parent instance_name
     @staticmethod
     def from_build_exception(
-        parent_instance_name: str, exception: ProtocolBuildException
+        parent_instance_name: str | None, exception: ProtocolBuildException
     ) -> ProtocolBuildException:
         return ProtocolBuildException(
             process_type=exception.process_type,
@@ -74,12 +74,14 @@ class ProtocolBuildException(BadRequestException):
         )
 
     # Build the instance name with the parent instance name
-    def _get_instance_name_chain(self, parent_instance_name: str, instance_name_chain: str) -> str:
+    def _get_instance_name_chain(
+        self, parent_instance_name: str | None, instance_name_chain: str | None
+    ) -> str:
         if parent_instance_name is None and instance_name_chain is None:
             return "Main protocol"
 
         if parent_instance_name is None:
-            return instance_name_chain
+            return instance_name_chain or ""
 
         return f"{parent_instance_name} > {instance_name_chain}"
 

@@ -38,7 +38,7 @@ class ProtocolModel(ProcessModel):
     _is_loaded: bool = False
 
     _processes: dict[str, ProcessModel] = {}
-    _connectors: list[Connector] = None
+    _connectors: list[Connector] | None = None
     _interfaces: dict[str, IOface] = {}
     _outerfaces: dict[str, IOface] = {}
 
@@ -322,9 +322,10 @@ class ProtocolModel(ProcessModel):
             # retrieve the last message of the running process
             last_process_message = process.progress_bar.get_last_message()
 
-            if last_process_message:
-                if last_message is None or last_process_message.is_after(last_message):
-                    last_message = last_process_message
+            if last_process_message and (
+                last_message is None or last_process_message.is_after(last_message)
+            ):
+                last_message = last_process_message
 
         return ScenarioProgressDTO(progress=round(progress), last_message=last_message)
 
@@ -355,7 +356,9 @@ class ProtocolModel(ProcessModel):
 
         return process_dict
 
-    def add_process_model(self, process_model: ProcessModel, instance_name: str = None) -> None:
+    def add_process_model(
+        self, process_model: ProcessModel, instance_name: str | None = None
+    ) -> None:
         """
         Adds a process to the protocol.
 
@@ -625,10 +628,7 @@ class ProtocolModel(ProcessModel):
         :return: True if all the processes are in success
         :rtype: bool
         """
-        for process in self.processes.values():
-            if not process.is_success:
-                return False
-        return True
+        return all(process.is_success for process in self.processes.values())
 
     def all_processes_are_draft(self) -> bool:
         """Return True if all the processes are in draft

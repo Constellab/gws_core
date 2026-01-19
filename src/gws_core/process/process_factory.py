@@ -1,3 +1,4 @@
+from typing import cast
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
@@ -94,7 +95,8 @@ class ProcessFactory:
             task_model.set_outputs_from_specs(task_type.output_specs)
 
         # Set the community_agent_version_id if provided
-        task_model.community_agent_version_id = community_agent_version_id
+        if community_agent_version_id is not None:
+            task_model.community_agent_version_id = community_agent_version_id
 
         task_model.community_agent_version_modified = False
 
@@ -115,7 +117,10 @@ class ProcessFactory:
 
     @classmethod
     def create_task_model_from_typing_name(
-        cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None
+        cls,
+        typing_name: str,
+        config_params: ConfigParamsDict | None = None,
+        instance_name: str | None = None,
     ) -> TaskModel:
         task_type: type[Task] = TypingManager.get_and_check_type_from_name(typing_name=typing_name)
         return cls.create_task_model_from_type(
@@ -135,7 +140,9 @@ class ProcessFactory:
         :rtype: TaskModel
         """
         task_model: TaskModel = TaskModel()
-        return cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id)
+        return cast(
+            TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id)
+        )
 
     ############################################### PROTOCOL FROM TYPE #################################################
 
@@ -143,9 +150,9 @@ class ProcessFactory:
     def create_protocol_model_from_type(
         cls,
         protocol_type: type[Protocol],
-        config_params: ConfigParamsDict = None,
-        instance_name: str = None,
-        name: str = None,
+        config_params: ConfigParamsDict | None = None,
+        instance_name: str | None = None,
+        name: str | None = None,
     ) -> ProtocolModel:
         try:
             if not issubclass(protocol_type, Protocol):
@@ -183,7 +190,7 @@ class ProcessFactory:
                 except ProtocolBuildException as err:
                     raise err
                 except Exception as err:
-                    raise ProtocolBuildException.from_exception("Task", key, err)
+                    raise ProtocolBuildException.from_exception("Task", key, err) from err
 
             # create the protocol from a statis protocol class
             return cls._build_protocol_model_from_type(
@@ -196,18 +203,18 @@ class ProcessFactory:
         except ProtocolBuildException as err:
             raise ProtocolBuildException.from_build_exception(
                 parent_instance_name=instance_name, exception=err
-            )
+            ) from err
         except Exception as err:
-            raise ProtocolBuildException.from_exception("Protocol", instance_name, err)
+            raise ProtocolBuildException.from_exception("Protocol", instance_name, err) from err
 
     @classmethod
     def _build_protocol_model_from_type(
         cls,
         protocol_model: ProtocolModel,
-        processes: dict[str, ProcessModel] = None,
-        connectors: list[ConnectorSpec] = None,
-        interfaces: dict[str, InterfaceSpec] = None,
-        outerfaces: dict[str, InterfaceSpec] = None,
+        processes: dict[str, ProcessModel] | None = None,
+        connectors: list[ConnectorSpec] | None = None,
+        interfaces: dict[str, InterfaceSpec] | None = None,
+        outerfaces: dict[str, InterfaceSpec] | None = None,
     ) -> ProtocolModel:
         """Construct the protocol graph from the attribut of Protocol class"""
         if processes is None:
@@ -257,17 +264,18 @@ class ProcessFactory:
         :return: The task model
         :rtype: TaskModel
         """
-        protocol_model: ProtocolModel = ProtocolModel()
-        protocol_model = cls._init_process_model_from_config_dto(
-            protocol_model, protocol_config_dto, copy_id
+        protocol_model: ProtocolModel = cast(
+            ProtocolModel,
+            cls._init_process_model_from_config_dto(ProtocolModel(), protocol_config_dto, copy_id),
         )
 
         # force the interface and outerface from DTO
-        interfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.interfaces)
-        protocol_model.set_interfaces(interfaces)
+        if protocol_config_dto.graph is not None:
+            interfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.interfaces)
+            protocol_model.set_interfaces(interfaces)
 
-        outerfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.outerfaces)
-        protocol_model.set_outerfaces(outerfaces)
+            outerfaces = IOface.load_from_dto_dict(protocol_config_dto.graph.outerfaces)
+            protocol_model.set_outerfaces(outerfaces)
 
         return protocol_model
 
@@ -275,7 +283,10 @@ class ProcessFactory:
 
     @classmethod
     def create_protocol_empty(
-        cls, instance_name: str = None, name: str = None, protocol_type: type[Protocol] = Protocol
+        cls,
+        instance_name: str | None = None,
+        name: str | None = None,
+        protocol_type: type[Protocol] = Protocol,
     ) -> ProtocolModel:
         protocol_model: ProtocolModel = ProtocolModel()
 
@@ -295,9 +306,9 @@ class ProcessFactory:
     def create_process_model_from_type(
         cls,
         process_type: type[Process],
-        config_params: ConfigParamsDict = None,
-        instance_name: str = None,
-        community_agent_version_id: str = None,
+        config_params: ConfigParamsDict | None = None,
+        instance_name: str | None = None,
+        community_agent_version_id: str | None = None,
     ) -> TaskModel:
         if issubclass(process_type, Task):
             return cls.create_task_model_from_type(
@@ -307,7 +318,10 @@ class ProcessFactory:
                 community_agent_version_id=community_agent_version_id,
             )
         elif issubclass(process_type, Protocol):
-            return cls.create_protocol_model_from_type(process_type, config_params, instance_name)
+            return cast(
+                TaskModel,
+                cls.create_protocol_model_from_type(process_type, config_params, instance_name),
+            )
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(process_type)
             raise BadRequestException(
@@ -316,7 +330,10 @@ class ProcessFactory:
 
     @classmethod
     def create_process_model_from_typing_name(
-        cls, typing_name: str, config_params: ConfigParamsDict = None, instance_name: str = None
+        cls,
+        typing_name: str,
+        config_params: ConfigParamsDict | None = None,
+        instance_name: str | None = None,
     ) -> TaskModel:
         process_type: type[Process] = TypingManager.get_and_check_type_from_name(
             typing_name=typing_name
@@ -329,7 +346,7 @@ class ProcessFactory:
     def _init_process_model_from_config_dto(
         cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO, copy_id: bool
     ) -> ProcessModel:
-        if copy_id:
+        if copy_id and process_config_dto.id is not None:
             process_model.id = process_config_dto.id
         process_model.process_typing_name = process_config_dto.process_typing_name
         process_model.set_inputs_from_dto(process_config_dto.inputs)
@@ -344,7 +361,9 @@ class ProcessFactory:
             instance_name=process_config_dto.instance_name,
             name=process_config_dto.name,
             style=process_config_dto.style,
-            progress_bar=ProgressBar.from_config_dto(process_config_dto.progress_bar),
+            progress_bar=ProgressBar.from_config_dto(process_config_dto.progress_bar)
+            if process_config_dto.progress_bar
+            else None,
         )
 
         return process_model
@@ -377,7 +396,7 @@ class ProcessFactory:
             progress_bar.process_typing_name = process_model.process_typing_name
             process_model.progress_bar = progress_bar
         else:
-            progress_bar: ProgressBar = ProgressBar(
+            progress_bar = ProgressBar(
                 process_id=process_model.id, process_typing_name=process_model.process_typing_name
             )
             process_model.progress_bar = progress_bar

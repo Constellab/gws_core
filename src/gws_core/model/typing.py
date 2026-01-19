@@ -86,6 +86,14 @@ class Typing(Model):
     def get_type(self) -> type | None:
         return Utils.get_model_type(self.model_type)
 
+    def get_and_check_type(self) -> type:
+        model_t: type | None = self.get_type()
+        if model_t is None:
+            raise Exception(
+                f"The type '{self.model_type}' of the typing '{self.typing_name}' does not exist in the system"
+            )
+        return model_t
+
     def type_exists(self) -> bool:
         """Check if the type exists in the system."""
         return self.get_type() is not None

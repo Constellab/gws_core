@@ -78,43 +78,49 @@ class ProcessProxy:
 
     ############################################### INPUTS & OUTPUTS #########################################
 
-    def get_input(self, name: str) -> Resource:
+    def get_input(self, name: str) -> Resource | None:
         """retrieve the resource of the input
 
-        :param name: [description]
+        :param name: name of the input port
         :type name: str
-        :return: [description]
-        :rtype: Resource
+        :return: resource of the input
+        :rtype: Resource | None
         """
-        return self.get_input_resource_model(name).get_resource()
+        resource_model = self.get_input_resource_model(name)
+        if resource_model is None:
+            return None
+        return resource_model.get_resource()
 
-    def get_input_resource_model(self, name: str) -> ResourceModel:
+    def get_input_resource_model(self, name: str) -> ResourceModel | None:
         """retrieve the resource model of the input
 
-        :param name: [description]
+        :param name: name of the input port
         :type name: str
-        :return: [description]
-        :rtype: Resource
+        :return: resource model of the input
+        :rtype: ResourceModel | None
         """
         return self._process_model.inputs.get_resource_model(name)
 
-    def get_output(self, name: str) -> Resource:
+    def get_output(self, name: str) -> Resource | None:
         """retrieve the resource of the output
 
-        :param name: [description]
+        :param name: name of the output port
         :type name: str
-        :return: [description]
-        :rtype: Resource
+        :return: resource of the output
+        :rtype: Resource | None
         """
-        return self.get_output_resource_model(name).get_resource()
+        resource_model = self.get_output_resource_model(name)
+        if resource_model is None:
+            return None
+        return resource_model.get_resource()
 
-    def get_output_resource_model(self, name: str) -> ResourceModel:
+    def get_output_resource_model(self, name: str) -> ResourceModel | None:
         """retrieve the resource model of the output
 
-        :param name: [description]
+        :param name: name of the output port
         :type name: str
-        :return: [description]
-        :rtype: Resource
+        :return: resource model of the output
+        :rtype: ResourceModel | None
         """
         return self._process_model.outputs.get_resource_model(name)
 

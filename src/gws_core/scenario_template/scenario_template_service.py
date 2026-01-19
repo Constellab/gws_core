@@ -15,7 +15,7 @@ from .scenario_template import ScenarioTemplate
 class ScenarioTemplateService:
     @classmethod
     def create_from_protocol(
-        cls, protocol: ProtocolModel, name: str, description: RichTextDTO = None
+        cls, protocol: ProtocolModel, name: str, description: RichTextDTO | None = None
     ) -> ScenarioTemplate:
         scenario_template = ScenarioTemplateFactory.from_protocol_model(protocol, name, description)
         return scenario_template.save()
@@ -31,9 +31,9 @@ class ScenarioTemplateService:
     def update(
         cls,
         id_: str,
-        protocol: ProtocolModel = None,
-        name: str = None,
-        description: RichTextDTO = None,
+        protocol: ProtocolModel | None = None,
+        name: str | None = None,
+        description: RichTextDTO | None = None,
     ) -> ScenarioTemplate:
         scenario_template = cls.get_by_id_and_check(id_)
 
@@ -47,9 +47,10 @@ class ScenarioTemplateService:
         return scenario_template.save()
 
     @classmethod
-    def update_name(cls, id_: str, name: str) -> ScenarioTemplate:
+    def update_name(cls, id_: str, name: str | None = None) -> ScenarioTemplate:
         scenario_template = cls.get_by_id_and_check(id_)
-        scenario_template.name = name
+        if name:
+            scenario_template.name = name
         return scenario_template.save()
 
     @classmethod

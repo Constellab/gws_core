@@ -51,11 +51,11 @@ class EnvAgent(Task):
 
     # override this in subclasses
     config_specs = ConfigSpecs({})
-    SNIPPET_FILE_EXTENSION: str = None
+    SNIPPET_FILE_EXTENSION: str | None = None
 
-    shell_proxy: ShellProxy = None
+    shell_proxy: ShellProxy | None = None
 
-    target_temp_folder: str = None
+    target_temp_folder: str | None = None
 
     SOURCE_PATHS_VAR_NAME = "source_paths"
     TARGET_PATHS_VAR_NAME = "target_paths"
@@ -80,12 +80,14 @@ class EnvAgent(Task):
 
         # create the executable code file
         code_file_path = self.generate_code_file(
-            code, params.get_value(self.PARAMS_CONFIG_NAME), source_paths
+            code,
+            params.get_value(self.PARAMS_CONFIG_NAME),
+            source_paths,
+            self.shell_proxy.working_dir,
         )
 
         # validate user inputs, params, code
         cmd = self._format_command(code_file_path)
-        result: int = None
         result = self.shell_proxy.run(cmd, shell_mode=False, dispatch_stdout=log_stdout)
 
         if result != 0:
@@ -93,19 +95,19 @@ class EnvAgent(Task):
                 "An error occured during the execution of the live code. Please view the logs for more details."
             )
 
-        target = self.get_target_resources()
+        target = self.get_target_resources(self.shell_proxy.working_dir)
         return {"target": target}
 
-    def generate_code_file(self, code: str, params: dict[str, Any], source_paths: list[str]) -> str:
+    def generate_code_file(
+        self, code: str, params: dict[str, Any], source_paths: list[str], working_dir: str
+    ) -> str:
         # create the executable code file
         if self.SNIPPET_FILE_EXTENSION is None:
             raise BadRequestException("No SNIPPET_FILE_EXTENSION defined")
 
         # format code to add inputs
         formatted_code = self._format_code(code, params, source_paths)
-        code_file_path = os.path.join(
-            self.shell_proxy.working_dir, f"code.{self.SNIPPET_FILE_EXTENSION}"
-        )
+        code_file_path = os.path.join(working_dir, f"code.{self.SNIPPET_FILE_EXTENSION}")
 
         # write the file
         with open(code_file_path, "w", encoding="utf-8") as file_path:
@@ -126,7 +128,7 @@ class EnvAgent(Task):
             if isinstance(resource, FSNode):
                 nodes.append(resource)
             else:
-                skipped_resources.append(resource.name)
+                skipped_resources.append(resource.name or str(resource))
 
         if len(skipped_resources) > 0:
             raise Exception(
@@ -135,16 +137,16 @@ class EnvAgent(Task):
 
         return [x.path for x in nodes]
 
-    def get_target_resources(self) -> ResourceList:
+    def get_target_resources(self, working_dir: str) -> ResourceList:
         # read the target paths json file
-        target_path_file = os.path.join(self.shell_proxy.working_dir, self.TARGET_PATHS_FILENAME)
+        target_path_file = os.path.join(working_dir, self.TARGET_PATHS_FILENAME)
 
         if not os.path.exists(target_path_file):
             raise BadRequestException(
                 "the target file path was not generated. Did you write paths in the targets_paths variable ?"
             )
 
-        target_paths: list[str] = None
+        target_paths: list[str]
         try:
             with open(target_path_file, encoding="utf-8") as file_path:
                 target_paths = json.load(file_path)
@@ -155,7 +157,7 @@ class EnvAgent(Task):
         if not isinstance(target_paths, list):
             raise BadRequestException("The target_paths variable does not contain a list of paths.")
 
-        if len(target_path_file) == 0:
+        if len(target_paths) == 0:
             raise BadRequestException(
                 "The code snippet did not generate any output file or folder. Did you forget to write path result in target_paths variable ?"
             )
@@ -167,19 +169,21 @@ class EnvAgent(Task):
                     f"The path {path} in target_path variable is not a string. It will be ignored."
                 )
 
+            clear_path = path
+
             # check if path is absolute
             if not os.path.isabs(path):
-                path = os.path.join(self.shell_proxy.working_dir, path)
+                clear_path = os.path.join(working_dir, path)
 
-            if not os.path.exists(path):
+            if not os.path.exists(clear_path):
                 raise Exception(
-                    f"The path {path} in target_path variable does not exist. It will be ignored."
+                    f"The path {clear_path} in target_path variable does not exist. It will be ignored."
                 )
 
-            if os.path.isdir(path):
-                resource_list.add_resource(Folder(path))
+            if os.path.isdir(clear_path):
+                resource_list.add_resource(Folder(clear_path))
             else:
-                resource_list.add_resource(File(path))
+                resource_list.add_resource(File(clear_path))
 
         return resource_list
 
@@ -245,7 +249,8 @@ with open('{target_paths_filename}', 'w') as f:
         resource save. Temp object can be safely deleted here, the resources will still exist
         """
 
-        self.shell_proxy.clean_working_dir()
+        if self.shell_proxy:
+            self.shell_proxy.clean_working_dir()
 
         if self.target_temp_folder:
             shutil.rmtree(self.target_temp_folder, ignore_errors=True)
@@ -256,7 +261,7 @@ with open('{target_paths_filename}', 'w') as f:
 
     @classmethod
     def build_config_params_dict(
-        cls, code: str, params: dict[str, Any], env: str
+        cls, code: str, params: dict[str, Any], env: str | None = None
     ) -> ConfigParamsDict:
         return {"code": code, "params": params, "env": env}
 

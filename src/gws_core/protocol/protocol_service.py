@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.config.config_params import ConfigParamsDict
@@ -36,6 +36,7 @@ from gws_core.scenario_template.scenario_template_factory import ScenarioTemplat
 from gws_core.scenario_template.scenario_template_service import ScenarioTemplateService
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.task.task import Task
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..community.community_dto import (
@@ -65,16 +66,16 @@ class ProtocolService:
     ########################## GET #####################
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> ProtocolModel:
-        return ProtocolModel.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> ProtocolModel:
+        return ProtocolModel.get_by_id_and_check(id_)
 
     ########################## CREATE #####################
     @classmethod
     def create_protocol_model_from_type(
         cls,
         protocol_type: type[Protocol],
-        instance_name: str = None,
-        config_params: ConfigParamsDict = None,
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             protocol_type=protocol_type, instance_name=instance_name, config_params=config_params
@@ -84,7 +85,7 @@ class ProtocolService:
         return protocol
 
     @classmethod
-    def create_empty_protocol(cls, instance_name: str = None) -> ProtocolModel:
+    def create_empty_protocol(cls, instance_name: str | None = None) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_protocol_empty(instance_name=instance_name)
 
         protocol.save_full()
@@ -98,8 +99,8 @@ class ProtocolService:
         cls,
         protocol_id: str,
         process_typing_name: str,
-        instance_name: str = None,
-        config_params: ConfigParamsDict = None,
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
@@ -107,7 +108,7 @@ class ProtocolService:
 
         return cls.add_process_to_protocol(
             protocol_model=protocol_model,
-            process_type=process_typing.get_type(),
+            process_type=process_typing.get_and_check_type(),
             instance_name=instance_name,
             config_params=config_params,
         )
@@ -119,18 +120,15 @@ class ProtocolService:
     ) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
-        if protocol_model is None:
-            raise BadRequestException("The protocol does not exist")
-
-        process_model: TaskModel = protocol_model.get_process(process_instance_name)
+        process_model = protocol_model.get_process(process_instance_name)
 
         if process_model is None:
             raise BadRequestException("The process does not exist in the protocol")
 
-        duplicate_process_model: ProcessModel = None
+        duplicate_process_model: ProcessModel | None = None
         if isinstance(process_model, TaskModel):
             duplicate_process_model = ProcessFactory.create_task_model_from_type(
-                task_type=process_model.get_process_type(),
+                task_type=cast(type[Task], process_model.get_process_type()),
                 config_params=process_model.config.get_values(),
                 inputs_dto=process_model.to_config_dto().inputs,
                 outputs_dto=process_model.to_config_dto().outputs,
@@ -162,7 +160,10 @@ class ProtocolService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def add_empty_protocol_to_protocol(
-        cls, protocol_model: ProtocolModel, instance_name: str = None, name: str = None
+        cls,
+        protocol_model: ProtocolModel,
+        instance_name: str | None = None,
+        name: str | None = None,
     ) -> ProtocolUpdate:
         child_protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty(
             name=name, instance_name=instance_name
@@ -180,8 +181,8 @@ class ProtocolService:
         cls,
         protocol_model: ProtocolModel,
         process_type: type[Process],
-        instance_name: str = None,
-        config_params: ConfigParamsDict = None,
+        instance_name: str | None = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolUpdate:
         # create the process
         process_model: ProcessModel = ProcessFactory.create_process_model_from_type(
@@ -195,7 +196,10 @@ class ProtocolService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def add_process_model_to_protocol(
-        cls, protocol_model: ProtocolModel, process_model: ProcessModel, instance_name: str = None
+        cls,
+        protocol_model: ProtocolModel,
+        process_model: ProcessModel,
+        instance_name: str | None = None,
     ) -> ProtocolUpdate:
         protocol_model.check_is_updatable(error_if_finished=False)
         protocol_model.add_process_model(process_model=process_model, instance_name=instance_name)
@@ -220,7 +224,7 @@ class ProtocolService:
         process_typing_name: str,
         output_process_name: str,
         output_port_name: str,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolUpdate:
         """Add a process to the protocol and connect it to an output port of a previous process."""
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
@@ -243,7 +247,7 @@ class ProtocolService:
         new_process_type: type[Process],
         out_process: ProcessModel,
         out_port_name: str,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolUpdate:
         input_name: str
         out_port = out_process.out_port(out_port_name)
@@ -262,6 +266,9 @@ class ProtocolService:
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model, process_type=new_process_type, config_params=config_params
         )
+
+        if protocol_update.process is None:
+            raise BadRequestException("The process was not added to the protocol")
 
         # Create the connector between the provided output port and the new process input port
         protocol_update_2 = cls.add_connector_to_protocol(
@@ -282,7 +289,7 @@ class ProtocolService:
         process_typing_name: str,
         input_process_name: str,
         input_port_name: str,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProtocolUpdate:
         """Add a process to the protocol and connect it to an input port of a process."""
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
@@ -312,6 +319,9 @@ class ProtocolService:
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
             protocol_model, process_type=new_process_type, config_params=config_params
         )
+
+        if protocol_update.process is None:
+            raise BadRequestException("The process was not added to the protocol")
 
         # Create the connector between the provided input port and the new process output port
         protocol_update_2 = cls.add_connector_to_protocol(
@@ -404,9 +414,9 @@ class ProtocolService:
     def _on_protocol_object_updated(
         cls,
         protocol_model: ProtocolModel,
-        process_model: ProcessModel = None,
-        connector: Connector = None,
-        ioface: IOface = None,
+        process_model: ProcessModel | None = None,
+        connector: Connector | None = None,
+        ioface: IOface | None = None,
         protocol_updated: bool = False,
     ) -> ProtocolUpdate:
         """Called when a process or connector is updated."""
@@ -649,7 +659,10 @@ class ProtocolService:
         cls, protocol_id: str, process_instance_name: str, new_visibility: ParamSpecVisibilty
     ) -> ProcessDTO:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
-        process_model: ProcessModel = protocol_model.get_process(process_instance_name)
+        process_model = protocol_model.get_process(process_instance_name)
+
+        if not isinstance(process_model, TaskModel):
+            raise BadRequestException("Only tasks can have code visibility updated")
 
         if process_model.config.has_spec(EnvAgent.ENV_CONFIG_NAME):
             env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
@@ -663,12 +676,13 @@ class ProtocolService:
 
         if process_model.config.has_spec(EnvAgent.PARAMS_CONFIG_NAME):
             param_spec = process_model.config.get_spec(EnvAgent.PARAMS_CONFIG_NAME)
-            param_spec.edition_mode = True if new_visibility == "public" else False
+            if isinstance(param_spec, DynamicParam):
+                param_spec.edition_mode = new_visibility == "public"
             process_model.config.update_spec(EnvAgent.PARAMS_CONFIG_NAME, param_spec)
 
         process_model.config.save()
         if (
-            process_model.get_community_agent_version_id is not None
+            process_model.get_community_agent_version_id() is not None
             and process_model.get_community_agent_version_modified() is False
         ):
             process_model.community_agent_version_modified = True
@@ -679,7 +693,7 @@ class ProtocolService:
     @GwsCoreDbManager.transaction()
     def configure_process_model(
         cls, process_model: ProcessModel, config_values: ConfigParamsDict
-    ) -> ProtocolUpdate:
+    ) -> ProcessModel:
         for key in process_model.config.get_specs().specs:
             spec = process_model.config.get_spec(key)
             if spec.visibility == "private":
@@ -696,7 +710,7 @@ class ProtocolService:
     @GwsCoreDbManager.transaction()
     def set_process_model_config_value(
         cls, process_model: ProcessModel, param_name: str, value: ParamValue
-    ) -> ProtocolUpdate:
+    ) -> ProcessModel:
         # set config value and save
         process_model.set_config_value(param_name, value)
         process_model.config.save()
@@ -846,13 +860,13 @@ class ProtocolService:
 
     @classmethod
     def add_dynamic_input_port_to_process(
-        cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO = None
+        cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO | None = None
     ) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, "input", io_spec_dto)
 
     @classmethod
     def add_dynamic_output_port_to_process(
-        cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO = None
+        cls, protocol_id: str, process_name: str, io_spec_dto: IOSpecDTO | None = None
     ) -> ProtocolUpdate:
         return cls._add_dynamic_port_to_process(protocol_id, process_name, "output", io_spec_dto)
 
@@ -862,7 +876,7 @@ class ProtocolService:
         protocol_id: str,
         process_name: str,
         port_type: Literal["input", "output"],
-        io_spec_dto: IOSpecDTO = None,
+        io_spec_dto: IOSpecDTO | None = None,
     ) -> ProtocolUpdate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
@@ -873,9 +887,12 @@ class ProtocolService:
         io: IO = process_model.inputs if port_type == "input" else process_model.outputs
 
         # generate the default spec and add port
-        io_specs: DynamicInputs | DynamicOutputs = io.get_specs()
+        io_specs = io.get_specs()
 
-        io_spec: IOSpec = None
+        if not isinstance(io_specs, (DynamicInputs, DynamicOutputs)):
+            raise BadRequestException(f"The process does not support dynamic {port_type} ports")
+
+        io_spec: IOSpec
         if io_spec_dto is None:
             io_spec = io_specs.get_default_spec()
         elif port_type == "output":
@@ -1006,7 +1023,7 @@ class ProtocolService:
 
     @classmethod
     def create_scenario_template_from_id(
-        cls, protocol_id: str, name: str, description: RichTextDTO = None
+        cls, protocol_id: str, name: str, description: RichTextDTO | None = None
     ) -> ScenarioTemplate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
         return ScenarioTemplateService.create_from_protocol(
@@ -1063,7 +1080,7 @@ class ProtocolService:
             community_agent_version.type
         )
 
-        agent_type: type[Process] = process_typing.get_type()
+        agent_type = process_typing.get_and_check_type()
 
         params = {}
         if community_agent_version.params:
@@ -1090,7 +1107,7 @@ class ProtocolService:
 
         # create the process and add it to the protocol
         process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
-            task_type=process_typing.get_type(),
+            task_type=process_typing.get_and_check_type(),
             config_params=config_params,
             community_agent_version_id=community_agent_version.id,
             name=community_agent_version.agent.title,
@@ -1103,6 +1120,9 @@ class ProtocolService:
         )
 
         dynamic_param_spec.edition_mode = False
+
+        if community_agent_version.params is None:
+            raise BadRequestException("The community agent version has no params specs")
 
         for param_name, param_value in community_agent_version.params["specs"].items():
             # for each values in specs, add the good spec type to the dynamic param
@@ -1127,26 +1147,31 @@ class ProtocolService:
         )
 
         # TODO TO IMPROVE WHEN UPDATING AGENT CONFIG
-        if protocol_update.process.inputs.is_dynamic:
-            for port in list(protocol_update.process.inputs.ports.keys()):
+        if protocol_update.process is None:
+            raise BadRequestException("The process was not added to the protocol")
+
+        process_model = protocol_update.process
+
+        if process_model.inputs.is_dynamic:
+            for port in list(process_model.inputs.ports.keys()):
                 protocol_update = cls.delete_dynamic_input_port_of_process(
-                    protocol_id, protocol_update.process.instance_name, port
+                    protocol_id, process_model.instance_name, port
                 )
 
             for io_spec in list(community_agent_version.input_specs.specs.values()):
                 protocol_update = cls.add_dynamic_input_port_to_process(
-                    protocol_id, protocol_update.process.instance_name, io_spec
+                    protocol_id, process_model.instance_name, io_spec
                 )
 
-        if protocol_update.process.outputs.is_dynamic:
-            for port in list(protocol_update.process.outputs.ports.keys()):
+        if process_model.outputs.is_dynamic:
+            for port in list(process_model.outputs.ports.keys()):
                 protocol_update = cls.delete_dynamic_output_port_of_process(
-                    protocol_id, protocol_update.process.instance_name, port
+                    protocol_id, process_model.instance_name, port
                 )
 
             for io_spec in list(community_agent_version.output_specs.specs.values()):
                 protocol_update = cls.add_dynamic_output_port_to_process(
-                    protocol_id, protocol_update.process.instance_name, io_spec
+                    protocol_id, process_model.instance_name, io_spec
                 )
 
         return protocol_update
@@ -1230,10 +1255,11 @@ class ProtocolService:
     ) -> None:
         """Check if the dynamic param spec has a default value and set it if not already set."""
         values = process_model.config.get_value(config_spec_name)
-        if spec_dto.default_value is not None:
-            if param_name not in values or values[param_name] is None:
-                values[param_name] = spec_dto.default_value
-                process_model.config.set_value(config_spec_name, values, skip_validate=True)
+        if spec_dto.default_value is not None and (
+            param_name not in values or values[param_name] is None
+        ):
+            values[param_name] = spec_dto.default_value
+            process_model.config.set_value(config_spec_name, values, skip_validate=True)
 
     @classmethod
     def _update_dynamic_param_config_spec(
@@ -1241,7 +1267,7 @@ class ProtocolService:
         process_model: ProcessModel,
         config_spec_name: str,
         dynamic_param_spec: DynamicParam,
-        values: dict[str, Any] = None,
+        values: dict[str, Any] | None = None,
     ) -> ProtocolUpdate:
         process_model.config.update_spec(config_spec_name, dynamic_param_spec)
 

@@ -12,7 +12,7 @@ from gws_core.scenario_template.scenario_template_dto import ScenarioTemplateExp
 class ScenarioTemplateFactory:
     @classmethod
     def from_protocol_model(
-        cls, protocol_model: ProtocolModel, name: str, description: RichTextDTO = None
+        cls, protocol_model: ProtocolModel, name: str, description: RichTextDTO | None = None
     ) -> ScenarioTemplate:
         scenario_template = ScenarioTemplate()
         # retrieve the protocol config, without the source task config
