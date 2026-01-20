@@ -63,8 +63,7 @@ class EntityTag(Model):
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
-            label=tag_key_model.label,
-            is_community_tag_key=tag_key_model.is_community_tag,
+            label=tag_key_model.label
         )
 
     def to_full_dto(self) -> EntityTagFullDTO:
@@ -75,7 +74,6 @@ class EntityTag(Model):
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
             label=tag_key_model.label,
-            is_community_tag_key=tag_key_model.is_community_tag,
             is_propagable=self.is_propagable,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,

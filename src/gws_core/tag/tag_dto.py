@@ -65,7 +65,6 @@ class EntityTagDTO(BaseModelDTO):
     key: str
     value: Any
     is_user_origin: bool
-    is_community_tag_key: bool | None = None
     label: str | None = None
 
 
