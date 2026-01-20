@@ -382,20 +382,35 @@ class ResourceService:
     def check_column_tags(
         cls, table_resource_model: ResourceModel, filter_column_tags: list[Any]
     ) -> bool:
+        """
+        Check if the table resource model contains the provided column tags
+        Args:
+            table_resource_model (ResourceModel): The table resource model to check
+            filter_column_tags (list[Any]): The list of column tags to check
+        Returns:
+            bool: True if the table resource model contains the provided column tags, False otherwise
+        """
         if table_resource_model.resource_typing_name != "RESOURCE.gws_core.Table":
             return False
 
         table: Table = table_resource_model.get_resource()
 
+        if table.column_names is None or table.nb_columns == 0:
+            return False
+
         for filter_column_tag in filter_column_tags:
             key = filter_column_tag["key"]
-            value: str = filter_column_tag["value"]
-            if value is not None:
-                value = value.strip().lower()
+
+            if "value" in filter_column_tag and filter_column_tag["value"] is not None:
+                value = filter_column_tag["value"].strip().lower()
+            else:
+                value = None
 
             not_found = True
             for column_tag in table.get_column_tags():
-                if key in column_tag and value in column_tag[key]:
+                if key in column_tag:
+                    if value is not None and value not in column_tag[key]:
+                        continue
                     not_found = False
                     break
             if not_found:

@@ -3,6 +3,8 @@ from enum import Enum
 
 import streamlit as st
 
+from gws_core.core.utils.logger import Logger
+
 
 class StreamlitTranslateLang(Enum):
     """Enum to define supported languages for translation."""
@@ -94,5 +96,6 @@ class StreamlitTranslateService:
             Exception: If the key is not found in the translation dictionary.
         """
         if key not in self.translation_dict:
-            raise Exception(f"No translation for key : {key}")
+            Logger.warning(f"No translation for key: {key}")
+            return key
         return self.translation_dict[key]
