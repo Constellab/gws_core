@@ -9,7 +9,7 @@ from gws_core.user.user_dto import UserDTO
 
 
 class NoteSaveDTO(BaseModelDTO):
-    title: str = None
+    title: str
     folder_id: str | None = None
     template_id: str | None = None
 

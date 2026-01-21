@@ -1,4 +1,3 @@
-
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
@@ -10,6 +9,7 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.resource.resource_dto import ResourceModelDTO, ShareResourceWithSpaceRequestDTO
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.resource.view.view_dto import CallViewResultDTO, ResourceViewMetadatalDTO
 from gws_core.share.shared_dto import ShareEntityInfoDTO, ShareLinkDTO
@@ -166,6 +166,18 @@ def search_apps(
     """
 
     return ResourceService.search_apps(search_dict, page, number_of_items_per_page).to_dto()
+
+
+# TODO TO REMOVE
+@core_app.get("/resource/count/count", tags=["Resource"], summary="Count resources")
+def count_resources(
+    _=Depends(AuthorizationService.check_user_access_token_or_app),
+) -> dict:
+    """
+    Advanced search on resources
+    """
+
+    return {"count": ResourceModel.select().count()}
 
 
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")

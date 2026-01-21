@@ -1,13 +1,12 @@
 """Home page for the Reflex showcase app."""
 
-
 import reflex as rx
 from gws_reflex_main import ReflexMainState
 
 from ..components import example_tabs, page_layout
 
 
-class HomePageState(ReflexMainState):
+class HomePageState(rx.State):
     """State for the home page."""
 
     value: int = 0
@@ -17,9 +16,10 @@ class HomePageState(ReflexMainState):
         """Return the name of the resource."""
         # Secure the method to ensure it checks authentication
         # before accessing resources.
-        if not await self.check_authentication():
+        main_state = await self.get_state(ReflexMainState)
+        if not await main_state.check_authentication():
             return "Unauthorized"
-        resources = await self.get_resources()
+        resources = await main_state.get_resources()
         return resources[0].name if resources else "No resource"
 
     @rx.var
@@ -28,12 +28,14 @@ class HomePageState(ReflexMainState):
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
         """
-        return await self.get_param("param_name", "default_value")
+        main_state = await self.get_state(ReflexMainState)
+        return await main_state.get_param("param_name", "default_value")
 
     @rx.var
     async def get_current_user_name(self) -> str | None:
         """Return the name of the current user, or None if no user is set."""
-        user = await self.get_current_user()
+        main_state = await self.get_state(ReflexMainState)
+        user = await main_state.get_current_user()
         return user.email if user else None
 
 
@@ -49,21 +51,23 @@ def home_page() -> rx.Component:
     resource_access_code = """import reflex as rx
 from gws_reflex_main import ReflexMainState
 
-class HomePageState(ReflexMainState):
+class HomePageState(rx.State):
 
     @rx.var
     async def get_resource_name(self) -> str:
         # Secure method - checks authentication before accessing resources
-        if not await self.check_authentication():
+        main_state = await self.get_state(ReflexMainState)
+        if not await main_state.check_authentication():
             return 'Unauthorized'
-        resources = await self.get_resources()
+        resources = await main_state.get_resources()
         return resources[0].name if resources else 'No resource'
 
     @rx.var
     async def get_param_name(self) -> str:
         # Get a parameter from the app configuration
         # This route is not secured by default
-        return await self.get_param('param_name', 'default_value')
+        main_state = await self.get_state(ReflexMainState)
+        return await main_state.get_param('param_name', 'default_value')
 
 # Use in component
 rx.box(
@@ -79,11 +83,12 @@ rx.box(
     authentication_code = """import reflex as rx
 from gws_reflex_main import ReflexMainState
 
-class HomePageState(ReflexMainState):
+class HomePageState(rx.State):
 
     @rx.var
     async def get_current_user_name(self) -> str:
-        user = await self.get_current_user()
+        main_state = await self.get_state(ReflexMainState)
+        user = await main_state.get_current_user()
         return user.email if user else None
 
 # Use in component

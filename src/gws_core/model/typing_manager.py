@@ -1,4 +1,3 @@
-
 from peewee import ModelSelect
 
 from gws_core.model.typing_exception import TypingNotFoundException
@@ -58,23 +57,16 @@ class TypingManager:
         return type_
 
     @classmethod
-    def get_object_with_typing_name(cls, typing_name: str, object_id: str) -> Model:
-        model_type: type[Model] = cls.get_type_from_name(typing_name)
-        if not issubclass(model_type, Model):
-            raise BadRequestException(
-                f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model"
-            )
-        return model_type.get_by_id(object_id)
-
-    @classmethod
-    def get_object_with_typing_name_and_id(cls, typing_name: str, id: str) -> Model:
-        model_type: type[Model] = cls.get_type_from_name(typing_name)
+    def get_object_with_typing_name_and_id(cls, typing_name: str, id_: str) -> Model | None:
+        model_type: type[Model] | None = cls.get_type_from_name(typing_name)
+        if model_type is None:
+            raise TypingNotFoundException(typing_name)
         if not issubclass(model_type, Model):
             raise BadRequestException(
                 f"Can't get the object of type {model_type} (typing name: {typing_name}) from the DB because it is not a Model"
             )
 
-        return model_type.get_by_id(id)
+        return model_type.get_by_id(id_)
 
     @classmethod
     def type_is_register(cls, model_type: type[Base]) -> bool:

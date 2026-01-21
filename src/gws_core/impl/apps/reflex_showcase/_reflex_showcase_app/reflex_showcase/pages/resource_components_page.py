@@ -3,7 +3,6 @@
 import reflex as rx
 from gws_core import ResourceModel, ResourceSearchBuilder, Table
 from gws_reflex_main import (
-    ReflexMainState,
     ResourceSelectState,
     resource_select_button,
 )
@@ -11,7 +10,7 @@ from gws_reflex_main import (
 from ..components import example_tabs, page_layout
 
 
-class ResourceComponentsPageState(ReflexMainState):
+class ResourceComponentsPageState(rx.State):
     """State for the resource components page."""
 
     selected_resource_name: str = ""
@@ -69,7 +68,7 @@ def resource_components_page() -> rx.Component:
 from gws_core.resource.resource_model import ResourceModel
 import reflex as rx
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
     selected_resource_name: str = ""
 
 class MyResourceSelectState(ResourceSelectState, MyState):

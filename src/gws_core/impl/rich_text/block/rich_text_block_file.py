@@ -1,7 +1,12 @@
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.FILE.value)
 class RichTextBlockFile(RichTextBlockDataBase):
     name: str
     size: int  # in bytes
@@ -14,6 +19,3 @@ class RichTextBlockFile(RichTextBlockDataBase):
         """
 
         return f"[File: {self.name} ({FileHelper.get_file_size_pretty_text(self.size)})]"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.FILE

@@ -1,7 +1,11 @@
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.VIDEO.value)
 class RichTextBlockVideo(RichTextBlockDataBase):
     """Object representing a video block in a rich text"""
 
@@ -21,6 +25,3 @@ class RichTextBlockVideo(RichTextBlockDataBase):
         if self.caption:
             markdown += f"\n*{self.caption}*"
         return markdown
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.VIDEO

@@ -2,6 +2,8 @@
 
 import reflex as rx
 from gws_core import RichText, RichTextDTO
+from gws_core.note.note_dto import NoteSaveDTO
+from gws_core.note.note_service import NoteService
 from gws_reflex_main import ReflexMainState
 from gws_reflex_main.gws_components import rich_text_component
 
@@ -18,7 +20,7 @@ default_rich_text.add_paragraph(
 )
 
 
-class RichTextPageState(ReflexMainState):
+class RichTextPageState(rx.State):
     """State for the rich text page."""
 
     _rich_text: RichText = default_rich_text
@@ -48,6 +50,14 @@ class RichTextPageState(ReflexMainState):
         """Handle changes from the rich text component."""
         self._rich_text = RichText.from_json(event_data)
 
+    @rx.event
+    async def save_as_note(self):
+        """Save the rich text content as a note in the user's account."""
+        main_state = await self.get_state(ReflexMainState)
+        with await main_state.authenticate_user():
+            note = NoteService.create(NoteSaveDTO(title="Rich Text Content"))
+            NoteService.update_content(note.id, self._rich_text.to_dto())
+
 
 def rich_text_page() -> rx.Component:
     """Render the rich text component demo page."""
@@ -58,6 +68,7 @@ def rich_text_page() -> rx.Component:
             placeholder="Type something here...",
             value=RichTextPageState.rich_text,
             output_event=RichTextPageState.handle_rich_text_change,
+            use_custom_tools=True,
         ),
         rx.cond(
             RichTextPageState.is_not_empty,
@@ -73,6 +84,12 @@ def rich_text_page() -> rx.Component:
             rx.text("The rich text is currently empty.", color="gray", margin_top="1em"),
         ),
         rx.button("Reset Content", on_click=RichTextPageState.reset_rich_text, margin_top="1em"),
+        rx.button(
+            "Save as Note",
+            on_click=RichTextPageState.save_as_note,
+            margin_top="1em",
+            margin_left="1em",
+        ),
     )
 
     # Code example
@@ -86,7 +103,7 @@ default_rich_text = RichText()
 default_rich_text.add_paragraph("This is a paragraph of sample text.")
 default_rich_text.add_formula("E = mc^2")
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
     _rich_text: RichText = default_rich_text
 
     @rx.var

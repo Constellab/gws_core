@@ -21,14 +21,15 @@ class ViewResource(Resource):
 
     view_dict: dict = DictRField()
 
-    def __init__(self, view_dict: dict = None) -> None:
+    def __init__(self, view_dict: dict | None = None) -> None:
         """Create the view resource from the view dict
 
         :param view_dict: dict of a view, defaults to None
         :type view_dict: dict, optional
         """
         super().__init__()
-        self.view_dict = view_dict
+        if view_dict is not None:
+            self.view_dict = view_dict
 
     @view(view_type=View, human_name="Show view", default_view=True)
     def default_view(self, params: ConfigParams) -> View:
@@ -36,7 +37,7 @@ class ViewResource(Resource):
 
     @staticmethod
     def from_resource(
-        resource: Resource, view_method_name: str, config_values: ConfigParamsDict = None
+        resource: Resource, view_method_name: str, config_values: ConfigParamsDict | None = None
     ) -> "ViewResource":
         """Create a view resource from a resource and a view method name
 
@@ -59,7 +60,9 @@ class ViewResource(Resource):
         return ViewResource(view_dto.to_json_dict())
 
     @staticmethod
-    def from_view(view_: View, view_config_values: ConfigParamsDict = None) -> "ViewResource":
+    def from_view(
+        view_: View, view_config_values: ConfigParamsDict | None = None
+    ) -> "ViewResource":
         """Create a view resource directly from the view object
 
         :param view_: view object to use
@@ -88,8 +91,6 @@ class ViewResource(Resource):
 
         :param view_: view object to use
         :type view_: View
-        :param view_config_values: config value of the view when call to_json_dict, defaults to None
-        :type view_config_values: ConfigParamsDict, optional
         :return: _description_
         :rtype: ViewResource
         """

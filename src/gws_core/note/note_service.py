@@ -1,5 +1,3 @@
-from collections.abc import Callable
-
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.date_helper import DateHelper
@@ -49,12 +47,11 @@ from .note_search_builder import NoteSearchBuilder
 class NoteService:
     @classmethod
     @GwsCoreDbManager.transaction()
-    def create(cls, note_dto: NoteSaveDTO, scenario_ids: list[str] = None) -> Note:
+    def create(cls, note_dto: NoteSaveDTO, scenario_ids: list[str] | None = None) -> Note:
         note = Note()
-        note.title = note_dto.title
-        note.folder = (
-            SpaceFolder.get_by_id_and_check(note_dto.folder_id) if note_dto.folder_id else None
-        )
+        note.title = note_dto.title.strip()
+        if note_dto.folder_id:
+            note.folder = SpaceFolder.get_by_id_and_check(note_dto.folder_id)
 
         if note_dto.template_id:
             template: NoteTemplate = NoteTemplate.get_by_id_and_check(note_dto.template_id)
@@ -145,7 +142,7 @@ class NoteService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def _update_note_folder(cls, note: Note, new_folder_id: str) -> Note:
+    def _update_note_folder(cls, note: Note, new_folder_id: str | None) -> Note:
         # update folder
         if new_folder_id:
             new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
@@ -266,7 +263,7 @@ class NoteService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def _validate(cls, note_id: str, folder_id: str = None) -> Note:
+    def _validate(cls, note_id: str, folder_id: str | None = None) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
         rich_text = note.get_content_as_rich_text()
@@ -338,7 +335,7 @@ class NoteService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def validate_and_send_to_space(cls, note_id: str, folder_id: str = None) -> Note:
+    def validate_and_send_to_space(cls, note_id: str, folder_id: str | None = None) -> Note:
         note = cls._validate(note_id, folder_id)
 
         note = cls._synchronize_with_space(note)
@@ -531,6 +528,13 @@ class NoteService:
         return Note.get_by_id_and_check(id_)
 
     @classmethod
+    def get_note_content(cls, note_id: str) -> RichTextDTO:
+        note = cls.get_by_id_and_check(note_id)
+        rich_text = note.get_content_as_rich_text()
+
+        return rich_text.to_dto(convert_special_blocks=True)
+
+    @classmethod
     def get_by_scenario(cls, scenario_id: str) -> list[Note]:
         return list(
             Note.select()
@@ -574,8 +578,7 @@ class NoteService:
             query, page=page, nb_of_items_per_page=number_of_items_per_page
         )
 
-        map_function: Callable[[NoteViewModel], Note] = lambda x: x.note
-        return paginator.map_result(map_function)
+        return paginator.map_result(lambda x: x.note)
 
     ################################################# Resource View ########################################
 
@@ -744,23 +747,21 @@ class NoteService:
 
         rollbacked_content = cls.get_undo_content(note_id, modification_id)
 
-        modification_index = note.modifications.modifications.index(
-            next(
-                (
-                    modif
-                    for modif in note.modifications.modifications
-                    if modif.id == modification_id
-                ),
-                None,
-            )
-        )
+        # Find the modification by ID
+        target_modification = None
+        for modif in note.modifications.modifications:
+            if modif.id == modification_id:
+                target_modification = modif
+                break
+
+        if target_modification is None:
+            raise BadRequestException(f"Modification with id {modification_id} not found")
+
+        modification_index = note.modifications.modifications.index(target_modification)
 
         modif_type = note.modifications.modifications[modification_index].type
 
-        if (
-            not modif_type == RichTextModificationType.DELETED
-            and not modif_type == RichTextModificationType.MOVED
-        ):
+        if modif_type not in (RichTextModificationType.DELETED, RichTextModificationType.MOVED):
             modification_index = modification_index + 1
 
         note.modifications.modifications = note.modifications.modifications[:modification_index]

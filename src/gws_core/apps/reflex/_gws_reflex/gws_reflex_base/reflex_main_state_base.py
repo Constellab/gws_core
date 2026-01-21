@@ -1,4 +1,5 @@
 import os
+from abc import abstractmethod
 from json import load
 from typing import Any, cast
 
@@ -38,7 +39,7 @@ class QueryParamObject:
         return self.params.get(key, default)
 
 
-class ReflexMainStateBase(rx.State):
+class ReflexMainStateBase(rx.State, mixin=True):
     """Base State of Reflex. This state is used by normal app and virtual environment app.
 
     It is used to manage the app configuration, authentication, and parameters.
@@ -51,9 +52,13 @@ class ReflexMainStateBase(rx.State):
     # None if the user is not authenticated
     authenticated_user_id: str | None = None
 
+    user_access_token: str | None = None
+
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
     DEV_MODE_APP_ID = "dev-app"
+
+    MAIN_STATE_CLASS = type["ReflexMainStateBase"]
 
     @rx.event
     async def on_main_component_mount(self):
@@ -103,6 +108,16 @@ class ReflexMainStateBase(rx.State):
 
         self._is_initialized = True
 
+        await self._on_initialized()
+
+    @abstractmethod
+    async def _on_initialized(self) -> None:
+        """Called when the base state has finished initialization.
+
+        Override this method in subclasses to perform actions after initialization.
+        """
+        pass
+
     def _load_app_config(self) -> dict:
         """Load the app configuration from the environment variable."""
         app_config_path = self._get_app_config_file_path()
@@ -142,17 +157,15 @@ class ReflexMainStateBase(rx.State):
         return app_id
 
     async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
-        if self.is_dev_mode():
-            return user_access_tokens.get(self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+        if not self.is_dev_mode():
+            query_params = self.get_query_params()
 
-        query_params = self.get_query_params()
+            url_token = query_params.get("gws_token")
 
-        url_token = query_params.get("gws_token")
+            env_token = os.environ.get("GWS_APP_TOKEN")
 
-        env_token = os.environ.get("GWS_APP_TOKEN")
-
-        if url_token != env_token:
-            return None
+            if url_token != env_token:
+                return None
 
         # load user id from access token
         user_access_token = self._get_user_access_token()
@@ -160,10 +173,6 @@ class ReflexMainStateBase(rx.State):
             return None
 
         return user_access_tokens.get(user_access_token)
-
-    def is_dev_mode(self) -> bool:
-        """Check if the app is running in development mode."""
-        return os.environ.get("GWS_IS_DEV_MODE", "false").lower() == "true"
 
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
@@ -207,8 +216,13 @@ class ReflexMainStateBase(rx.State):
 
     def _get_user_access_token(self) -> str | None:
         """Get the user access token from the app configuration."""
-        query_params = self.get_query_params()
-        return query_params.get("gws_user_access_token")
+        if self.is_dev_mode():
+            return self.DEV_MODE_USER_ACCESS_TOKEN_KEY
+
+        if not self.user_access_token:
+            query_params = self.get_query_params()
+            self.user_access_token = query_params.get("gws_user_access_token")
+        return self.user_access_token
 
     ####################### PARAMS #####################
 
@@ -225,6 +239,10 @@ class ReflexMainStateBase(rx.State):
         return params
 
     ###################### UTILITIES #####################
+    @classmethod
+    def is_dev_mode(cls) -> bool:
+        """Check if the app is running in development mode."""
+        return os.environ.get("GWS_IS_DEV_MODE", "false").lower() == "true"
 
     async def get_first_child_of_state(self, state_class: type[rx.State]) -> rx.State | None:
         """Get the first child state of a given type.
@@ -243,3 +261,35 @@ class ReflexMainStateBase(rx.State):
                 return await self.get_state(sub)
 
         return None
+
+
+class ReflexMainStateBaseFactory:
+    """Class to store the main state class to use because the
+    ReflexMainStateBase is an abstract class and cannot be instantiated directly.
+    So in the gws_reflex_base package we must use this factory to get the main state class.
+
+    And this is set in the gws_reflex_main or gws_reflex_env package when registering the app.
+
+    """
+
+    __MAIN_STATE_CLASS__: type[ReflexMainStateBase] | None = None
+
+    @staticmethod
+    def set_main_state_class(main_state_class: type[ReflexMainStateBase]) -> None:
+        """Set the main state class to use for the Reflex app.
+
+        Args:
+            main_state_class (type): The main state class to set.
+        """
+        ReflexMainStateBaseFactory.__MAIN_STATE_CLASS__ = main_state_class
+
+    @staticmethod
+    def get_main_state_class() -> type[ReflexMainStateBase]:
+        """Get the main state class to use for the Reflex app.
+
+        Returns:
+            type: The main state class.
+        """
+        if ReflexMainStateBaseFactory.__MAIN_STATE_CLASS__ is None:
+            raise ValueError("Main state class is not set. Call set_main_state_class() first.")
+        return ReflexMainStateBaseFactory.__MAIN_STATE_CLASS__

@@ -8,6 +8,7 @@ from .component.reflex_page_sidebar import page_sidebar_component as page_sideba
 from .reflex_init import ReflexInit as ReflexInit
 from .reflex_main_state_base import ReflexConfigDTO as ReflexConfigDTO
 from .reflex_main_state_base import ReflexMainStateBase as ReflexMainStateBase
+from .reflex_main_state_base import ReflexMainStateBaseFactory as ReflexMainStateBaseFactory
 from .reflex_main_state_env import ReflexMainStateEnv as ReflexMainStateEnv
 from .reflex_main_utils import add_unauthorized_page as add_unauthorized_page
 from .reflex_main_utils import get_theme as get_theme

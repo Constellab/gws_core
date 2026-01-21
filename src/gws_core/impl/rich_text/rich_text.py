@@ -2,7 +2,11 @@ import re
 from typing import cast
 
 from gws_core.core.utils.string_helper import StringHelper
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockDataSpecial,
+    RichTextBlockTypeStandard,
+)
 from gws_core.impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure
 from gws_core.impl.rich_text.block.rich_text_block_file import RichTextBlockFile
 from gws_core.impl.rich_text.block.rich_text_block_formula import RichTextBlockFormula
@@ -10,6 +14,7 @@ from gws_core.impl.rich_text.block.rich_text_block_header import (
     RichTextBlockHeader,
     RichTextBlockHeaderLevel,
 )
+from gws_core.impl.rich_text.block.rich_text_block_html import RichTextBlockHTML
 from gws_core.impl.rich_text.block.rich_text_block_list import RichTextBlockList
 from gws_core.impl.rich_text.block.rich_text_block_paragraph import RichTextBlockParagraph
 from gws_core.impl.rich_text.block.rich_text_block_timestamp import RichTextBlockTimestamp
@@ -30,7 +35,7 @@ class RichText(SerializableObjectJson):
     :rtype: [type]
     """
 
-    CURRENT_VERION = 2
+    CURRENT_VERSION = 2
     CURRENT_EDITOR_VERSION = "2.30.2"
 
     version: int
@@ -39,10 +44,10 @@ class RichText(SerializableObjectJson):
     blocks: list[RichTextBlock]
 
     def __init__(
-        self, rich_text_dto: RichTextDTO | None = None, target_version: int = None
+        self, rich_text_dto: RichTextDTO | None = None, target_version: int | None = None
     ) -> None:
         if target_version is None:
-            target_version = RichText.CURRENT_VERION
+            target_version = RichText.CURRENT_VERSION
 
         if rich_text_dto is None:
             rich_text_dto = self.create_rich_text_dto([])
@@ -63,9 +68,11 @@ class RichText(SerializableObjectJson):
     def get_blocks(self) -> list[RichTextBlock]:
         return self.blocks
 
-    def get_blocks_by_type(self, block_type: RichTextBlockType) -> list[RichTextBlock]:
+    def get_blocks_by_type(
+        self, block_type: RichTextBlockTypeStandard | str
+    ) -> list[RichTextBlock]:
         """Get the blocks of the given type"""
-        return [block for block in self.get_blocks() if block.type == block_type]
+        return [block for block in self.get_blocks() if block.is_type(block_type)]
 
     def append_block(self, block: RichTextBlock) -> int:
         """
@@ -165,7 +172,7 @@ class RichText(SerializableObjectJson):
             current_block = self.get_blocks()[block_index]
 
             # only keep the paragraph blocks
-            if current_block.type != RichTextBlockType.PARAGRAPH:
+            if not current_block.is_type(RichTextBlockTypeStandard.PARAGRAPH):
                 block_index += 1
                 continue
 
@@ -199,7 +206,7 @@ class RichText(SerializableObjectJson):
 
     def set_parameter(self, parameter_name: str, value: str, replace_block: bool = False) -> None:
         """Replace the parameter in the rich text content text"""
-        paragraphs = self.get_blocks_by_type(RichTextBlockType.PARAGRAPH)
+        paragraphs = self.get_blocks_by_type(RichTextBlockTypeStandard.PARAGRAPH)
 
         for paragraph in paragraphs:
             data = paragraph.get_data()
@@ -221,7 +228,7 @@ class RichText(SerializableObjectJson):
         """
 
         view_index = 1
-        for block in self.get_blocks_by_type(RichTextBlockType.RESOURCE_VIEW):
+        for block in self.get_blocks_by_type(RichTextBlockTypeStandard.RESOURCE_VIEW):
             parameter_inline = (
                 '<te-variable-inline data-jsondata=\'{"name": "figure_'
                 + str(view_index)
@@ -238,7 +245,7 @@ class RichText(SerializableObjectJson):
     def get_figures_data(self) -> list[RichTextBlockFigure]:
         return [
             cast(RichTextBlockFigure, block.get_data())
-            for block in self.get_blocks_by_type(RichTextBlockType.FIGURE)
+            for block in self.get_blocks_by_type(RichTextBlockTypeStandard.FIGURE)
         ]
 
     ##################################### RESOURCE VIEW #########################################
@@ -246,13 +253,13 @@ class RichText(SerializableObjectJson):
     def get_resource_views_data(self) -> list[RichTextBlockResourceView]:
         return [
             cast(RichTextBlockResourceView, block.get_data())
-            for block in self.get_blocks_by_type(RichTextBlockType.RESOURCE_VIEW)
+            for block in self.get_blocks_by_type(RichTextBlockTypeStandard.RESOURCE_VIEW)
         ]
 
     def get_file_views_data(self) -> list[RichTextBlockViewFile]:
         return [
             cast(RichTextBlockViewFile, block.get_data())
-            for block in self.get_blocks_by_type(RichTextBlockType.FILE_VIEW)
+            for block in self.get_blocks_by_type(RichTextBlockTypeStandard.FILE_VIEW)
         ]
 
     def has_view_config(self, view_config_id: str) -> bool:
@@ -265,16 +272,16 @@ class RichText(SerializableObjectJson):
         return {rv.resource_id for rv in resource_views}
 
     def add_resource_view(
-        self, resource_view: RichTextBlockResourceView, parameter_name: str = None
+        self, resource_view: RichTextBlockResourceView, parameter_name: str | None = None
     ) -> RichTextBlock:
         block: RichTextBlock = self.create_block(
-            self.generate_id(), RichTextBlockType.RESOURCE_VIEW, resource_view
+            self.generate_id(), resource_view
         )
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
     def add_note_resource_view(
-        self, resource_view: RichTextBlockNoteResourceView, parameter_name: str = None
+        self, resource_view: RichTextBlockNoteResourceView, parameter_name: str | None = None
     ) -> RichTextBlock:
         """
         Add a view to a rich text content used in note. This requires the note to call the view
@@ -285,13 +292,13 @@ class RichText(SerializableObjectJson):
         :type parameter_name: str, optional
         """
         block: RichTextBlock = self.create_block(
-            self.generate_id(), RichTextBlockType.NOTE_RESOURCE_VIEW, resource_view
+            self.generate_id(), resource_view
         )
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
     def add_file_view(
-        self, file_view: RichTextBlockViewFile, parameter_name: str = None
+        self, file_view: RichTextBlockViewFile, parameter_name: str | None = None
     ) -> RichTextBlock:
         """
         Add a view to a rich text content. This view is not associated with a resource
@@ -302,7 +309,7 @@ class RichText(SerializableObjectJson):
         :type parameter_name: str, optional
         """
         block: RichTextBlock = self.create_block(
-            self.generate_id(), RichTextBlockType.FILE_VIEW, file_view
+            self.generate_id(), file_view
         )
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
@@ -334,11 +341,11 @@ class RichText(SerializableObjectJson):
     ##################################### FIGURE #########################################
 
     def add_figure(
-        self, figure_data: RichTextBlockFigure, parameter_name: str = None
+        self, figure_data: RichTextBlockFigure, parameter_name: str | None = None
     ) -> RichTextBlock:
         """Add a figure to the rich text content"""
         block: RichTextBlock = self.create_block(
-            self.generate_id(), RichTextBlockType.FIGURE, figure_data
+            self.generate_id(), figure_data
         )
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
@@ -348,20 +355,22 @@ class RichText(SerializableObjectJson):
     def get_files_data(self) -> list[RichTextBlockFile]:
         return [
             cast(RichTextBlockFile, block.get_data())
-            for block in self.get_blocks_by_type(RichTextBlockType.FILE)
+            for block in self.get_blocks_by_type(RichTextBlockTypeStandard.FILE)
         ]
 
-    def add_file(self, file_data: RichTextBlockFile, parameter_name: str = None) -> RichTextBlock:
+    def add_file(
+        self, file_data: RichTextBlockFile, parameter_name: str | None = None
+    ) -> RichTextBlock:
         """Add a file to the rich text content"""
         block: RichTextBlock = self.create_block(
-            self.generate_id(), RichTextBlockType.FILE, file_data
+            self.generate_id(), file_data
         )
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
     ##################################### FORMULA #########################################
 
-    def add_formula(self, formula: str, parameter_name: str = None) -> RichTextBlock:
+    def add_formula(self, formula: str, parameter_name: str | None = None) -> RichTextBlock:
         """Add a math formula to the rich text content
 
         :param formula_data: math formula using the KaTeX syntax
@@ -378,7 +387,7 @@ class RichText(SerializableObjectJson):
     ##################################### TIME STAMP #########################################
 
     def add_timestamp(
-        self, timestamp_data: RichTextBlockTimestamp, parameter_name: str = None
+        self, timestamp_data: RichTextBlockTimestamp, parameter_name: str | None = None
     ) -> RichTextBlock:
         """Add a timestamp to the rich text content"""
         block: RichTextBlock = self.create_timestamp(self.generate_id(), timestamp_data)
@@ -387,10 +396,29 @@ class RichText(SerializableObjectJson):
 
     ##################################### OTHERS #########################################
 
-    def to_dto(self) -> RichTextDTO:
-        return RichTextDTO(
-            version=self.version, editorVersion=self.editor_version, blocks=self.blocks
-        )
+    def to_dto(self, convert_special_blocks: bool = False) -> RichTextDTO:
+        """Convert the rich text to a DTO.
+
+        :param convert_special_blocks: If True, blocks that extend RichTextBlockDataSpecial
+            are converted to RichTextBlockHTML by calling their to_html() method.
+            This is useful for rendering special blocks in contexts where they are
+            not natively supported.
+        :type convert_special_blocks: bool
+        :return: The rich text DTO
+        :rtype: RichTextDTO
+        """
+        blocks = self.blocks
+        if convert_special_blocks:
+            blocks = []
+            for block in self.blocks:
+                block_data = block.get_data()
+                # Convert special blocks to HTML blocks
+                if isinstance(block_data, RichTextBlockDataSpecial):
+                    html_data = RichTextBlockHTML(html=block_data.to_html())
+                    blocks.append(RichTextBlock.from_data(html_data, block.id))
+                else:
+                    blocks.append(block)
+        return RichTextDTO(version=self.version, editorVersion=self.editor_version, blocks=blocks)
 
     def to_dto_json_dict(self) -> dict:
         return self.to_dto().to_json_dict()
@@ -494,7 +522,9 @@ class RichText(SerializableObjectJson):
     @classmethod
     def create_paragraph(cls, id_: str, text: str) -> RichTextBlock:
         """Create a paragraph block"""
-        return cls.create_block(id_, RichTextBlockType.PARAGRAPH, RichTextBlockParagraph(text=text))
+        return cls.create_block(
+            id_, RichTextBlockParagraph(text=text)
+        )
 
     @classmethod
     def create_header(cls, id_: str, text: str, level: RichTextBlockHeaderLevel) -> RichTextBlock:
@@ -505,17 +535,17 @@ class RichText(SerializableObjectJson):
             raise ValueError("The level is not valid")
 
         header_data = RichTextBlockHeader(text=text, level=level)
-        return cls.create_block(id_, RichTextBlockType.HEADER, header_data)
+        return cls.create_block(id_, header_data)
 
     @classmethod
     def create_list(cls, id_: str, data: RichTextBlockList) -> RichTextBlock:
         """Create a list block"""
-        return cls.create_block(id_, RichTextBlockType.LIST, data)
+        return cls.create_block(id_, data)
 
     @classmethod
     def create_timestamp(cls, id_: str, data: RichTextBlockTimestamp) -> RichTextBlock:
         """Create a timestamp block"""
-        return cls.create_block(id_, RichTextBlockType.TIMESTAMP, data)
+        return cls.create_block(id_, data)
 
     @classmethod
     def create_formula(cls, id_: str, formula: str) -> RichTextBlock:
@@ -529,28 +559,25 @@ class RichText(SerializableObjectJson):
         :rtype: RichTextBlock
         """
         data: RichTextBlockFormula = RichTextBlockFormula(formula=formula)
-        return cls.create_block(id_, RichTextBlockType.FORMULA, data)
+        return cls.create_block(id_, data)
 
     @classmethod
     def create_block(
-        cls, id_: str, block_type: RichTextBlockType, data: RichTextBlockDataBase
+        cls, id_: str, data: RichTextBlockDataBase
     ) -> RichTextBlock:
         """Create a block"""
         if not data:
             raise ValueError("The data is empty")
         if not isinstance(data, RichTextBlockDataBase):
             raise ValueError("The data is not valid; it should be a RichTextBlockDataBase")
-        return RichTextBlock(
-            id=id_,
-            type=block_type,
-            data=data.to_json_dict(),
-        )
+
+        return RichTextBlock.from_data(id_=id_, data=data)
 
     @classmethod
     def create_rich_text_dto(cls, blocks: list[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
-            version=RichText.CURRENT_VERION,
+            version=RichText.CURRENT_VERSION,
             editorVersion=RichText.CURRENT_EDITOR_VERSION,
         )
 

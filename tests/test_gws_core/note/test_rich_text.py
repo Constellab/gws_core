@@ -1,4 +1,6 @@
-from gws_core import RichTextBlock, RichTextBlockType
+from gws_core import RichTextBlock, RichTextBlockTypeStandard
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataSpecial
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 from gws_core.impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_list import (
@@ -8,11 +10,27 @@ from gws_core.impl.rich_text.block.rich_text_block_list import (
 from gws_core.impl.rich_text.block.rich_text_block_paragraph import RichTextBlockParagraph
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.test.base_test_case_light import BaseTestCaseLight
+from gws_core.test.base_test_case import BaseTestCase
+
+
+@rich_text_block_decorator("Special")
+class RichTextBlocSpecial(RichTextBlockDataSpecial):
+    text: str
+
+    def to_markdown(self) -> str:
+        """Convert the iframe to markdown
+
+        :return: the markdown representation of the iframe
+        :rtype: str
+        """
+        return ""
+
+    def to_html(self) -> str:
+        return f"<p>Hello {self.text}</p>"
 
 
 # test_rich_text
-class TestRichText(BaseTestCaseLight):
+class TestRichText(BaseTestCase):
     def test_rich_text(self):
         rich_text: RichText = RichText()
         rich_text.add_header("Introduction", RichTextBlockHeaderLevel.HEADER_1)
@@ -83,13 +101,17 @@ class TestRichText(BaseTestCaseLight):
         rich_text.add_resource_view(view, "figure_1")
         # no block should be added
         self.assertEqual(len(rich_text.to_dto().blocks), block_count)
-        self.assertEqual(rich_text.to_dto().blocks[4].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertTrue(
+            rich_text.to_dto().blocks[4].is_type(RichTextBlockTypeStandard.RESOURCE_VIEW)
+        )
 
         # add the resource view in the rich text at a specific variable
         # this should split the block in 3 blocks
         rich_text.add_resource_view(view, "figure_2")
         self.assertEqual(rich_text.to_dto().blocks[5].data["text"], "Variable : ")
-        self.assertEqual(rich_text.to_dto().blocks[6].type, RichTextBlockType.RESOURCE_VIEW)
+        self.assertTrue(
+            rich_text.to_dto().blocks[6].is_type(RichTextBlockTypeStandard.RESOURCE_VIEW)
+        )
         self.assertEqual(rich_text.to_dto().blocks[7].data["text"], " super")
         self.assertEqual(rich_text.to_dto().blocks[8].data["text"], "End")
 
@@ -98,12 +120,10 @@ class TestRichText(BaseTestCaseLight):
             0, RichTextBlock.from_data(RichTextBlockParagraph(text="NewContent"))
         )
 
-        rich_text.to_dto().blocks[0].type = RichTextBlockType.PARAGRAPH
-
         # test replace views block with variables
         rich_text.replace_resource_views_with_parameters()
         # TODO check to improve
-        self.assertEqual(rich_text.to_dto().blocks[4].type, RichTextBlockType.PARAGRAPH)
+        self.assertTrue(rich_text.to_dto().blocks[4].is_type(RichTextBlockTypeStandard.PARAGRAPH))
 
     def test_is_empty(self):
         rich_text = RichText()
@@ -173,3 +193,26 @@ class TestRichText(BaseTestCaseLight):
   - sub item 2
 """
         self.assertEqual(result, expected_result)
+
+    def test_convert_special_blocks(self):
+        """Test that special blocks are converted to HTML blocks when calling to_dto"""
+        rich_text = RichText()
+
+        # Add a special block (RichTextBlocSpecial extends RichTextBlockDataSpecial)
+        special_block = RichTextBlock.from_data(RichTextBlocSpecial(text="World"))
+        rich_text.append_block(special_block)
+
+        # Convert to JSON and reload
+        json_dict = rich_text.to_dto_json_dict()
+        reloaded_rich_text = RichText.from_json(json_dict)
+
+        # Without convert_special_blocks, the block type should remain "Special"
+        dto_without_conversion = reloaded_rich_text.to_dto(convert_special_blocks=False)
+        self.assertEqual(
+            dto_without_conversion.blocks[0].type, "RICH_TEXT_BLOCK.test_gws_core.Special"
+        )
+
+        # With convert_special_blocks, the block should be converted to HTML
+        dto_with_conversion = reloaded_rich_text.to_dto(convert_special_blocks=True)
+        self.assertEqual(dto_with_conversion.blocks[0].type, "html")
+        self.assertEqual(dto_with_conversion.blocks[0].data["data"], "<p>Hello World</p>")

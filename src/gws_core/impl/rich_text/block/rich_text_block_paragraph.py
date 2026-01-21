@@ -3,7 +3,11 @@ from typing import Any, Literal
 from bs4 import BeautifulSoup
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
 class RichTextVariableData(BaseModelDTO):
@@ -29,6 +33,7 @@ class ReplaceWithBlockResultDTO(BaseModelDTO):
     variable_data: RichTextVariableData
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.PARAGRAPH.value)
 class RichTextBlockParagraph(RichTextBlockDataBase):
     """Class to manipulate the rich text paragraph text (including variables)"""
 
@@ -75,7 +80,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         if variable_applied:
             self.text = str(soup)
 
-    def replace_parameter_with_block(self, variable_name: str) -> ReplaceWithBlockResultDTO:
+    def replace_parameter_with_block(self, variable_name: str) -> ReplaceWithBlockResultDTO | None:
         """Replace the variable in the rich text content text
 
         :param variable_name: the name of the variable to replace
@@ -153,9 +158,6 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
         :rtype: str
         """
         return self.text
-
-    def get_type(self):
-        return RichTextBlockType.PARAGRAPH
 
     @classmethod
     def get_variable_tag_name(cls) -> str:

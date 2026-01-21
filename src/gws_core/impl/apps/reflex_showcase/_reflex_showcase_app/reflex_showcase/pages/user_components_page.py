@@ -3,7 +3,6 @@
 import reflex as rx
 from gws_core import UserDTO
 from gws_reflex_main import (
-    ReflexMainState,
     user_inline_component,
     user_profile_picture,
     user_select,
@@ -12,7 +11,7 @@ from gws_reflex_main import (
 from ..components import example_tabs, page_layout
 
 
-class UserComponentsPageState(ReflexMainState):
+class UserComponentsPageState(rx.State):
     """State for the user components page."""
 
     selected_user_id: str = ""
@@ -144,7 +143,7 @@ user_inline_component(user, size="small")   # 24px avatar, 12px text"""
 from gws_core import UserDTO
 import reflex as rx
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
     selected_user_id: str = ""
 
     @rx.event

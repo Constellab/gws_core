@@ -11,7 +11,9 @@ class TypingStatus(Enum):
 
 
 # different object typed store in the typing table
-TypingObjectType = Literal["TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION", "APP"]
+TypingObjectType = Literal[
+    "TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION", "APP", "RICH_TEXT_BLOCK"
+]
 
 
 # Minimum object to reference another type
@@ -71,5 +73,5 @@ class TypingFullDTO(TypingDTO):
 
 
 class SimpleTypingDTO(BaseModelDTO):
-    human_name: str = None
+    human_name: str | None = None
     short_description: str | None = None

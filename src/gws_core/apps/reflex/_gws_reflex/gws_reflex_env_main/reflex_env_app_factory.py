@@ -2,7 +2,6 @@
 Helper function to apply GWS standard configuration to Reflex applications.
 """
 
-
 import reflex as rx
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from gws_reflex_base import get_theme

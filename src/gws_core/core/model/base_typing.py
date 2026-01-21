@@ -10,10 +10,10 @@ from gws_core.model.typing_style import TypingStyle
 class BaseTyping(Base):
     # Provided at the Class level automatically by the Decorator
     # //!\\ Do not modify theses values
-    __typing_name__: str = None
-    __human_name__: str = None
-    __short_description__: str = None
-    __style__: TypingStyle = None
+    __typing_name__: str
+    __human_name__: str
+    __short_description__: str
+    __style__: TypingStyle
 
     @final
     @classmethod
@@ -52,7 +52,7 @@ class BaseTyping(Base):
         """Get the style of the object
 
         :return: style
-        :rtype: str
+        :rtype: TypingStyle
         """
         return cls.__style__
 

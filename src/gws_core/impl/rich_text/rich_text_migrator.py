@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Any, TypedDict
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 
 from .rich_text_types import RichTextDTO
 
@@ -22,7 +22,7 @@ class TeRichTextMigrator:
         return content
 
     @abstractmethod
-    def migrate_block_data(self, block_type: RichTextBlockType, block_data: Any) -> Any:
+    def migrate_block_data(self, block_type: str, block_data: Any) -> Any:
         pass
 
     @abstractmethod
@@ -51,8 +51,8 @@ class TeRichTextMigrator:
 
 
 class TeRichTextMigrator1To2(TeRichTextMigrator):
-    def migrate_block_data(self, block_type: RichTextBlockType, block_data: Any) -> Any:
-        if block_type == RichTextBlockType.LIST:
+    def migrate_block_data(self, block_type: RichTextBlockTypeStandard, block_data: Any) -> Any:
+        if block_type == RichTextBlockTypeStandard.LIST:
             return self.migrate_list_item(block_data)
         return block_data
 

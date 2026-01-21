@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 
@@ -30,7 +30,7 @@ class RichTextBlockModificationDTO(BaseModelDTO):
     id: str
     time: datetime
     blockId: str
-    blockType: RichTextBlockType
+    blockType: RichTextBlockTypeStandard
     differences: list[RichTextModificationDifferenceDTO] | None = None
     blockValue: dict[str, Any] | None = None
     type: RichTextModificationType

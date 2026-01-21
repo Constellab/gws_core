@@ -1,4 +1,6 @@
+import reflex as rx
 from gws_reflex_base import ReflexMainStateBase
+from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
 
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
@@ -8,11 +10,20 @@ from gws_core.user.user import User
 from .reflex_auth_user import ReflexAuthUser
 
 
-class ReflexMainState(ReflexMainStateBase):
+class ReflexMainState(ReflexMainStateBase, rx.State):
     """Main state for the normal (not in virtual environment) Reflex app. extending the base state with resource management.
 
     It provides methods to access the input resources of the app.
     """
+
+    async def _on_initialized(self) -> None:
+        """Called when the base state has finished initialization.
+
+        Override this method in subclasses to perform actions after initialization.
+        """
+        # Sotre the app_id and user_access_token in the local storage for use in frontend
+        rx.Cookie(self.get_app_id(), name="gws_app_id", path="/")
+        rx.Cookie(self._get_user_access_token(), name="gws_user_access_token", path="/")
 
     async def get_resources(self) -> list[Resource]:
         """Return the resources of the app."""
@@ -55,3 +66,15 @@ class ReflexMainState(ReflexMainStateBase):
         app_id = self.get_app_id()
         auth_context = AuthContextApp(app_id=app_id, user=user)
         return ReflexAuthUser(auth_context)
+
+    @rx.var
+    async def get_reflex_user_auth_info(self) -> ReflexUserAuthInfo:
+        """Get the Reflex user authentication info.
+
+        Returns:
+            ReflexUserAuthInfo: The Reflex user authentication info.
+        """
+        user_access_token = self._get_user_access_token()
+        if not user_access_token:
+            raise Exception("User access token not found")
+        return ReflexUserAuthInfo(app_id=self.get_app_id(), user_access_token=user_access_token)

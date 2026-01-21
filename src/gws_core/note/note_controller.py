@@ -1,4 +1,3 @@
-
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
@@ -136,7 +135,7 @@ def get_by_id(id_: str, _=Depends(AuthorizationService.check_user_access_token))
     summary="Get the note content",
 )
 def get_content(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> RichTextDTO:
-    return NoteService.get_by_id_and_check(id_).content
+    return NoteService.get_note_content(id_)
 
 
 @core_app.get("/note/scenario/{scenario_id}", tags=["Note"], summary="Find notes of a scenario")

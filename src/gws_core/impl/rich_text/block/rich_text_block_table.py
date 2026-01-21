@@ -1,7 +1,11 @@
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.TABLE.value)
 class RichTextBlockTable(RichTextBlockDataBase):
     """Object representing a table block in a rich text"""
 
@@ -29,6 +33,3 @@ class RichTextBlockTable(RichTextBlockDataBase):
                 result.append("| " + " | ".join(["---"] * len(row)) + " |")
 
         return "\n".join(result)
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.TABLE

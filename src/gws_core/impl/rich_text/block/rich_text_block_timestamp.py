@@ -1,8 +1,13 @@
 from typing import Literal
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.TIMESTAMP.value)
 class RichTextBlockTimestamp(RichTextBlockDataBase):
     """Object representing a variable in a rich text"""
 
@@ -18,6 +23,3 @@ class RichTextBlockTimestamp(RichTextBlockDataBase):
         :rtype: str
         """
         return f"[Timestamp: {self.timestamp} ({self.format})]"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.TIMESTAMP

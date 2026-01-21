@@ -1,8 +1,13 @@
 from typing import Any
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.RESOURCE_VIEW.value)
 class RichTextBlockResourceView(RichTextBlockDataBase):
     """Object representing a resource view in a rich text"""
 
@@ -27,10 +32,8 @@ class RichTextBlockResourceView(RichTextBlockDataBase):
         result += f"\n(Resource ID: {self.resource_id}, View Method: {self.view_method_name})"
         return result
 
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.RESOURCE_VIEW
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.NOTE_RESOURCE_VIEW.value)
 class RichTextBlockNoteResourceView(RichTextBlockDataBase):
     """Object representing a resource view in an note rich text"""
 
@@ -54,10 +57,8 @@ class RichTextBlockNoteResourceView(RichTextBlockDataBase):
         result += f"\n(Resource Key: {self.sub_resource_key}, View Method: {self.view_method_name})"
         return result
 
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.NOTE_RESOURCE_VIEW
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.FILE_VIEW.value)
 class RichTextBlockViewFile(RichTextBlockDataBase):
     """Object representing a independant view in a rich text, the view is not associated with a resource"""
 
@@ -77,6 +78,3 @@ class RichTextBlockViewFile(RichTextBlockDataBase):
             result += f"\n*{self.caption}*"
         result += f"\n(File: {self.filename})"
         return result
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.FILE_VIEW

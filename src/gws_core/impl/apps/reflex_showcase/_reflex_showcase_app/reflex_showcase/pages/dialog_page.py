@@ -10,12 +10,11 @@ from gws_reflex_base import (
     form_dialog_component,
 )
 from gws_reflex_base.component.reflex_confirm_dialog_component import confirm_dialog
-from gws_reflex_main import ReflexMainState
 
 from ..components import example_tabs, page_layout
 
 
-class DialogPageState(ReflexMainState):
+class DialogPageState(rx.State):
     """State for the dialog page."""
 
     # Basic dialog state
@@ -187,7 +186,7 @@ def dialog_page() -> rx.Component:
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
     dialog_opened: bool = False
 
     @rx.event
@@ -247,7 +246,7 @@ rx.dialog.root(
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
 
     @rx.event
     async def open_delete_confirmation(self, item_id: str):

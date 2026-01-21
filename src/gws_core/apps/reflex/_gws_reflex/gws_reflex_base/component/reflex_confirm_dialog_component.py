@@ -20,8 +20,9 @@ class ConfirmDialogState(rx.State):
 
     Usage Example:
         ```python
+        import reflex as rx
         # In your state class
-        class MyState(ReflexMainState):
+        class MyState(rx.State):
 
             @rx.event
             async def open_delete_confirmation(self, item_id: str):
@@ -39,7 +40,8 @@ class ConfirmDialogState(rx.State):
             # Define the action to perform when user confirms
             async def delete_action(self, item_id: str):
                 '''This action will be executed when user clicks Confirm.'''
-                with await self.authenticate_user():
+                main_state = await self.get_state(ReflexMainState)
+                with await main_state.authenticate_user():
                     service = MyService()
                     service.delete_item(item_id)
 

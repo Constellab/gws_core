@@ -6,8 +6,6 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.view.view_dto import ViewDTO
 
-from ...config.config_params import ConfigParams
-from ..resource import Resource
 from .view import View
 from .view_helper import ViewHelper
 from .view_meta_data import ResourceViewMetaData
@@ -19,11 +17,13 @@ class ViewRunner:
 
     config_params: ConfigParams
 
-    _view_metadata: ResourceViewMetaData = None
+    _view_metadata: ResourceViewMetaData | None = None
 
-    _view: View = None
+    _view: View | None = None
 
-    def __init__(self, resource: Resource, view_name: str, config: ConfigParamsDict):
+    def __init__(
+        self, resource: Resource, view_name: str, config: ConfigParamsDict | None = None
+    ) -> None:
         self.resource = resource
         self.view_name = view_name
         self._build_config(config)
@@ -58,15 +58,14 @@ class ViewRunner:
         return view
 
     def call_view_to_dto(self) -> ViewDTO:
-        if self._view is None:
-            self.generate_view()
+        view = self._view
+        if view is None:
+            view = self.generate_view()
 
         # create a new config for the view to_dict method based on view specs
-        config_params: ConfigParams = self._view._specs.build_config_params(
-            dict(self.config_params)
-        )
+        config_params: ConfigParams = view._specs.build_config_params(dict(self.config_params))
 
-        return self._view.to_dto(config_params)
+        return view.to_dto(config_params)
 
     def _get_and_check_view_meta(self) -> ResourceViewMetaData:
         if self._view_metadata is None:
@@ -76,12 +75,12 @@ class ViewRunner:
 
         return self._view_metadata
 
-    def _build_config(self, config_values: ConfigParamsDict) -> None:
+    def _build_config(self, config_values: ConfigParamsDict | None) -> None:
         metadata = self._get_and_check_view_meta()
 
         self.config_params = metadata.get_view_specs_from_type(
             skip_private=False
-        ).build_config_params(config_values)
+        ).build_config_params(config_values or {})
 
     def get_config(self) -> Config:
         config = Config()

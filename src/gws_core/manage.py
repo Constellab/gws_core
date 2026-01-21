@@ -121,9 +121,6 @@ class AppManager:
 
     @classmethod
     def run_test(cls, brick_dir: str, tests: list[str], log_level: str, show_sql: bool) -> None:
-        if App.is_running:
-            raise BadRequestException("Cannot run tests while the Application is running.")
-
         if not tests:
             raise BadRequestException("Please provide a test to run.")
 

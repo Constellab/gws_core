@@ -1,7 +1,11 @@
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.FORMULA.value)
 class RichTextBlockFormula(RichTextBlockDataBase):
     formula: str
     title: str | None = None
@@ -14,6 +18,3 @@ class RichTextBlockFormula(RichTextBlockDataBase):
         :rtype: str
         """
         return f"$$\n{self.formula}\n$$"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.FORMULA

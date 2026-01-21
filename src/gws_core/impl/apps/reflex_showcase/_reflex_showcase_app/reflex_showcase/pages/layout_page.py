@@ -2,12 +2,11 @@
 
 import reflex as rx
 from gws_reflex_base import loader_section, page_sidebar_component
-from gws_reflex_main import ReflexMainState
 
 from ..components import example_tabs, page_layout
 
 
-class LayoutPageState(ReflexMainState):
+class LayoutPageState(rx.State):
     """State for the layout page."""
 
     # Loader section state
@@ -34,7 +33,7 @@ def layout_page() -> rx.Component:
     """Render the layout components demo page."""
 
     # Example 1: page_sidebar_component - Code only
-    code1 = '''from gws_reflex_base import page_sidebar_component
+    code1 = """from gws_reflex_base import page_sidebar_component
 import reflex as rx
 
 # Create sidebar content
@@ -72,7 +71,7 @@ def index():
 
 # Responsive behavior:
 # - Desktop (≥ md breakpoint): Fixed sidebar on left
-# - Mobile/Tablet (< md): Hamburger menu with drawer sidebar'''
+# - Mobile/Tablet (< md): Hamburger menu with drawer sidebar"""
 
     # Example 2: loader_section
     example_loader = rx.vstack(
@@ -111,7 +110,7 @@ def index():
 from gws_reflex_main import ReflexMainState
 import reflex as rx
 
-class MyState(ReflexMainState):
+class MyState(rx.State):
     is_loading: bool = False
 
     @rx.event(background=True)

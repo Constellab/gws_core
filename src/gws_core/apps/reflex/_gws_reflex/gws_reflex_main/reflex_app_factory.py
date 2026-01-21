@@ -2,14 +2,15 @@
 Helper function to apply GWS standard configuration to Reflex applications.
 """
 
-
 import reflex as rx
-from gws_reflex_base import ReflexMainStateBase, get_theme
+from gws_reflex_base import ReflexMainStateBaseFactory, get_theme
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
 
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.utils.logger import Logger
+
+from .reflex_main_state import ReflexMainState
 
 
 def default_gws_frontend_handler(exception: Exception) -> None:
@@ -36,7 +37,7 @@ def default_gws_backend_handler(
 
     Logger.log_exception_stack_trace(exception)
 
-    if ReflexMainStateBase.is_dev_mode():
+    if ReflexMainState.is_dev_mode():
         # In dev mode, show the full error message
         return rx.toast.error(
             f"An unexpected error occurred: {str(exception)}", position="top-center"
@@ -89,6 +90,7 @@ def register_gws_reflex_app(
     :return: The configured app instance
     :rtype: rx.App
     """
+    ReflexMainStateBaseFactory.set_main_state_class(ReflexMainState)
     # Create app if not provided
     if app is None:
         app = rx.App()

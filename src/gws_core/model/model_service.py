@@ -1,4 +1,3 @@
-
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.logger import Logger
@@ -36,7 +35,7 @@ class ModelService:
     # -- F --
 
     @classmethod
-    def fetch_model(cls, typing_name: str, id: str) -> Model:
+    def fetch_model(cls, typing_name: str, id_: str) -> Model | None:
         """
         Fetch a model
 
@@ -48,7 +47,7 @@ class ModelService:
         :rtype: instance of `gws.db.model.Model`
         """
 
-        return TypingManager.get_object_with_typing_name_and_id(typing_name, id)
+        return TypingManager.get_object_with_typing_name_and_id(typing_name, id_)
 
     @classmethod
     def fetch_list_of_models(

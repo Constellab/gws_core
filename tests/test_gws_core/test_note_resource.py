@@ -7,7 +7,7 @@ from gws_core.impl.note_resource.generate_lab_note import GenerateLabNote
 from gws_core.impl.note_resource.merge_notes_resource import MergeNoteResources
 from gws_core.impl.note_resource.note_resource import NoteResource
 from gws_core.impl.note_resource.update_note_resource import UpdatNoteResource
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure
 from gws_core.impl.rich_text.block.rich_text_block_file import RichTextBlockFile
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeader
@@ -38,7 +38,7 @@ class TestNoteResource(BaseTestCase):
     def test_create_methods(self):
         note = NoteResource()
         note.add_paragraph("This is a test paragraph")
-        self.assertEqual(note.get_block_at_index(0).type, RichTextBlockType.PARAGRAPH)
+        self.assertTrue(note.get_block_at_index(0).is_type(RichTextBlockTypeStandard.PARAGRAPH))
 
     def test_create_note(self):
         rich_text = RichText()
@@ -135,10 +135,10 @@ class TestNoteResource(BaseTestCase):
         note_resource = NoteResource(title="My custom note")
         note_resource.add_paragraph("This is a test paragraph")
         note_resource.add_figure_file(
-            self._create_note_image(), title="test", create_new_resource=False
+            self._create_note_image(), title="test", create_new_resource=True
         )
         note_resource.add_default_view_from_resource(
-            self._create_resource(), title="view", create_new_resource=False
+            self._create_resource(), title="view", create_new_resource=True
         )
 
         # add a view from a resource that is not saved
@@ -159,11 +159,15 @@ class TestNoteResource(BaseTestCase):
         self.assertIsInstance(first_block, RichTextBlockParagraph)
         self.assertEqual(first_block.text, "This is a test paragraph")
         # the first view was attached to a resource, it should generate a RESOURCE_VIEW
-        self.assertEqual(
-            note.get_content().get_block_at_index(2).type, RichTextBlockType.RESOURCE_VIEW
+        self.assertTrue(
+            note.get_content()
+            .get_block_at_index(2)
+            .is_type(RichTextBlockTypeStandard.RESOURCE_VIEW)
         )
         # the second view was not attached to a resource, it should generate a FILE_VIEW
-        self.assertEqual(note.get_content().get_block_at_index(3).type, RichTextBlockType.FILE_VIEW)
+        self.assertTrue(
+            note.get_content().get_block_at_index(3).is_type(RichTextBlockTypeStandard.FILE_VIEW)
+        )
 
         note_db = Note.get_by_id_and_check(note.note_id)
         self.assertIsNotNone(note_db)
@@ -176,10 +180,10 @@ class TestNoteResource(BaseTestCase):
         second_note = NoteResource(title="Second note resource")
         second_note.add_paragraph("This is a second paragraph")
         second_note.add_figure_file(
-            self._create_note_image(), title="figure", create_new_resource=False
+            self._create_note_image(), title="figure", create_new_resource=True
         )
         second_note.add_default_view_from_resource(
-            self._create_resource(), title="view", create_new_resource=False
+            self._create_resource(), title="view", create_new_resource=True
         )
 
         resource_list = ResourceList([first_note, second_note])
@@ -237,7 +241,7 @@ class TestNoteResource(BaseTestCase):
         return File(filename)
 
     def _create_note_template_image(
-        self, note_template_id: str, title: str = None
+        self, note_template_id: str, title: str | None = None
     ) -> RichTextBlockFigure:
         # create an image with a red pixel and save it in note storage
         img = self._create_image()
@@ -256,9 +260,7 @@ class TestNoteResource(BaseTestCase):
             caption=None,
         )
 
-    def _create_note_template_file(
-        self, note_template_id: str, filename: str = None
-    ) -> RichTextBlockFile:
+    def _create_note_template_file(self, note_template_id: str, filename: str) -> RichTextBlockFile:
         # write the file
         file = RichTextFileService.write_file(
             RichTextObjectType.NOTE_TEMPLATE, note_template_id, "hello", filename, "w"

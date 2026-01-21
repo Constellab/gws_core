@@ -1,7 +1,11 @@
 from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
 class RichTextBlockListItem(BaseModelDTO):
@@ -33,6 +37,7 @@ class RichTextBlockListItem(BaseModelDTO):
         return result
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.LIST.value)
 class RichTextBlockList(RichTextBlockDataBase):
     """Object representing a list block data in a rich text
 
@@ -61,11 +66,3 @@ class RichTextBlockList(RichTextBlockDataBase):
             result.append(item.to_markdown(prefix=prefix))
 
         return "\n".join(result)
-
-    def get_type(self) -> RichTextBlockType:
-        """Get the type of the block
-
-        :return: the type of the block
-        :rtype: RichTextBlockType
-        """
-        return RichTextBlockType.LIST

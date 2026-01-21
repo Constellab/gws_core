@@ -1,9 +1,8 @@
-
 import reflex as rx
 from gws_reflex_main import ReflexMainState, main_component, register_gws_reflex_app
 
 
-class State(ReflexMainState):
+class State(rx.State):
     value = 0
 
     @rx.var
@@ -12,9 +11,10 @@ class State(ReflexMainState):
 
         # Secure the method to ensure it checks authentication
         # before accessing resources.
-        if not await self.check_authentication():
+        main_state = await self.get_state(ReflexMainState)
+        if not await main_state.check_authentication():
             return "Unauthorized"
-        resources = await self.get_resources()
+        resources = await main_state.get_resources()
         return resources[0].name if resources else "No resource"
 
     @rx.var
@@ -23,7 +23,8 @@ class State(ReflexMainState):
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
         """
-        return await self.get_param("param_name", "default_value")
+        main_state = await self.get_state(ReflexMainState)
+        return await main_state.get_param("param_name", "default_value")
 
     @rx.event
     def increment(self):

@@ -1,6 +1,11 @@
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.IFRAME.value)
 class RichTextBlockIframe(RichTextBlockDataBase):
     iframeHeight: int
     url: str
@@ -12,6 +17,3 @@ class RichTextBlockIframe(RichTextBlockDataBase):
         :rtype: str
         """
         return f"<iframe src='{self.url}' height='{self.iframeHeight}'></iframe>"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.IFRAME

@@ -1,6 +1,11 @@
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.CODE.value)
 class RichTextBlockCode(RichTextBlockDataBase):
     """Object representing a code block in a rich text"""
 
@@ -15,6 +20,3 @@ class RichTextBlockCode(RichTextBlockDataBase):
         """
         lang = self.language if self.language else ""
         return f"```{lang}\n{self.code}\n```"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.CODE

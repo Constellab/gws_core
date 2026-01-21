@@ -1,6 +1,10 @@
 from enum import Enum
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
 
 class RichTextBlockHeaderLevel(Enum):
@@ -33,6 +37,7 @@ class RichTextBlockHeaderLevel(Enum):
             return "####"
 
 
+@rich_text_block_decorator(RichTextBlockTypeStandard.HEADER.value)
 class RichTextBlockHeader(RichTextBlockDataBase):
     """Object representing a paragraph block data in a rich text
 
@@ -50,6 +55,3 @@ class RichTextBlockHeader(RichTextBlockDataBase):
         :rtype: str
         """
         return f"{self.level.to_markdown()} {self.text}"
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.HEADER

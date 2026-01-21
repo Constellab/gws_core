@@ -1,6 +1,6 @@
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextBlockType, RichTextDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.note.note import Note, NoteScenario
@@ -94,7 +94,7 @@ class TestNote(BaseTestCase):
 
         # simulate the rich text with resource id
         rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
-        block = RichText.create_block("1", RichTextBlockType.RESOURCE_VIEW, rich_text_resource_view)
+        block = RichText.create_block("1", rich_text_resource_view)
 
         # update note content
         new_content = RichText.create_rich_text_dto([block])

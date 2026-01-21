@@ -1,7 +1,11 @@
+from gws_core.impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataBase,
+    RichTextBlockTypeStandard,
+)
+from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase, RichTextBlockType
 
-
+@rich_text_block_decorator(RichTextBlockTypeStandard.FIGURE.value)
 class RichTextBlockFigure(RichTextBlockDataBase):
     """Object representing a figure in a rich text
 
@@ -31,6 +35,3 @@ class RichTextBlockFigure(RichTextBlockDataBase):
 
         # return markdown
         return ""
-
-    def get_type(self) -> RichTextBlockType:
-        return RichTextBlockType.FIGURE
