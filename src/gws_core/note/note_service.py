@@ -170,7 +170,9 @@ class NoteService:
 
         for scenario in scenarios:
             if scenario.folder is None:
-                ScenarioService.update_scenario_folder(scenario.id, new_folder_id, check_note=False)
+                ScenarioService.update_scenario_folder(
+                    scenario.id, new_folder_id, check_notes=False
+                )
 
         return note
 

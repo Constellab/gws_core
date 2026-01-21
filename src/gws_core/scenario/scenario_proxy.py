@@ -30,13 +30,15 @@ class ScenarioProxy:
     _scenario: Scenario
     _protocol: ProtocolProxy
 
+    START_SCENARIO_TIMEOUT = 30  # seconds
+
     def __init__(
         self,
-        protocol_type: type[Protocol] = None,
-        folder: SpaceFolder = None,
+        protocol_type: type[Protocol] | None = None,
+        folder: SpaceFolder | None = None,
         title: str = "",
         creation_type: ScenarioCreationType = ScenarioCreationType.AUTO,
-        scenario_id: str = None,
+        scenario_id: str | None = None,
     ) -> None:
         """This create a scenario in the database with the provided Task or Protocol
 
@@ -106,7 +108,11 @@ class ScenarioProxy:
         if self._scenario.is_error:
             if auto_delete_if_error:
                 self.delete()
-            raise Exception(self._scenario.get_error_info().detail)
+            error_info = self._scenario.get_error_info()
+            if error_info:
+                raise Exception(error_info.detail)
+            else:
+                raise Exception("Error during the execution of the scenario")
 
         if exitcode != 0:
             raise Exception("Error in during the execution of the scenario")
@@ -126,7 +132,7 @@ class ScenarioProxy:
 
         # Wait for scenario to start running
         count = 0
-        while count < 15:
+        while count < self.START_SCENARIO_TIMEOUT / 2:
             self.refresh()
             if not self._scenario.is_draft:
                 break

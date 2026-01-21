@@ -29,6 +29,7 @@ export function getCustomTools(authenticationInfo) {
 
       const httpService = new DcHttpService(authenticationInfo?.app_id || '', authenticationInfo?.user_access_token || '');
 
+      // TODO change the endpoint as needed
       httpService.get('resource/count/count', {
         headers: {
           'gws_user_access_token': authenticationInfo?.user_access_token || '',

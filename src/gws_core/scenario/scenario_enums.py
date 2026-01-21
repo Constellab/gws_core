@@ -19,6 +19,8 @@ class ScenarioCreationType(Enum):
     AUTO = "AUTO"
     # Imported from another lab
     IMPORTED = "IMPORTED"
+    # Created by a triggered job (cron, webhook)
+    TRIGGERED_JOB = "TRIGGERED_JOB"
 
 
 class ScenarioProcessStatus(Enum):

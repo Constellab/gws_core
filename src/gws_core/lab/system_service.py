@@ -24,6 +24,7 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
+from gws_core.triggered_job.triggered_job_scheduler import TriggeredJobScheduler
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.user_dto import Space
@@ -67,6 +68,9 @@ class SystemService:
 
         if not Settings.get_instance().is_test:
             ProcessService.init_cron_thread_run_stats()
+
+            # Initialize triggered jobs
+            TriggeredJobScheduler.init()
 
         # Init AppsManager
         AppsManager.init()
@@ -137,6 +141,7 @@ class SystemService:
     def deinit_queue_and_monitor(cls) -> None:
         MonitorService.deinit()
         QueueService.deinit()
+        TriggeredJobScheduler.stop()
 
     @classmethod
     def drop_all_tables(cls):

@@ -1,4 +1,3 @@
-
 from peewee import ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -42,7 +41,7 @@ class ScenarioService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def create_scenario_from_dto(cls, scenario_dto: ScenarioSaveDTO) -> Scenario:
-        scenario_template: ScenarioTemplate = None
+        scenario_template: ScenarioTemplate | None = None
         if scenario_dto.scenario_template_id:
             scenario_template = ScenarioTemplate.get_by_id_and_check(
                 scenario_dto.scenario_template_id
@@ -65,14 +64,14 @@ class ScenarioService:
     @GwsCoreDbManager.transaction()
     def create_scenario(
         cls,
-        folder_id: str = None,
+        folder_id: str | None = None,
         title: str = "",
-        scenario_template: ScenarioTemplate = None,
+        scenario_template: ScenarioTemplate | None = None,
         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL,
     ) -> Scenario:
-        protocol_model: ProtocolModel = None
+        protocol_model: ProtocolModel
 
-        description: RichTextDTO = None
+        description: RichTextDTO | None = None
         if scenario_template is not None:
             description = scenario_template.description
             protocol_model = ProtocolService.create_protocol_model_from_template(scenario_template)
@@ -100,9 +99,9 @@ class ScenarioService:
     def create_scenario_from_protocol_model(
         cls,
         protocol_model: ProtocolModel,
-        folder: SpaceFolder = None,
+        folder: SpaceFolder | None = None,
         title: str = "",
-        description: RichTextDTO = None,
+        description: RichTextDTO | None = None,
         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL,
     ) -> Scenario:
         if not isinstance(protocol_model, ProtocolModel):
@@ -124,7 +123,7 @@ class ScenarioService:
     def create_scenario_from_protocol_type(
         cls,
         protocol_type: type[Protocol],
-        folder: SpaceFolder = None,
+        folder: SpaceFolder | None = None,
         title: str = "",
         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL,
     ) -> Scenario:
@@ -153,13 +152,13 @@ class ScenarioService:
 
     @classmethod
     def update_scenario_folder(
-        cls, scenario_id: str, folder_id: str | None, check_note: bool = True
+        cls, scenario_id: str, folder_id: str | None, check_notes: bool = True
     ) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         scenario.check_is_updatable()
 
-        scenario = cls._update_scenario_folder(scenario, folder_id, check_notes=check_note)
+        scenario = cls._update_scenario_folder(scenario, folder_id, check_notes=check_notes)
 
         ActivityService.add_or_update_async(
             ActivityType.UPDATE, object_type=ActivityObjectType.SCENARIO, object_id=scenario.id
@@ -176,7 +175,7 @@ class ScenarioService:
         folder_removed = False
         old_folder: SpaceFolder = scenario.folder
 
-        new_folder: SpaceFolder = None
+        new_folder: SpaceFolder | None = None
         # update the folder
         if new_folder_id:
             new_folder = SpaceFolder.get_by_id_and_check(new_folder_id)
@@ -212,9 +211,8 @@ class ScenarioService:
                 resource.save()
 
         # if the folder was removed
-        if folder_removed:
-            if scenario.last_sync_at is not None:
-                cls._unsynchronize_with_space(scenario, old_folder.id, check_notes=check_notes)
+        if folder_removed and scenario.last_sync_at is not None:
+            cls._unsynchronize_with_space(scenario, old_folder.id, check_notes=check_notes)
 
         return scenario
 
@@ -246,7 +244,7 @@ class ScenarioService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def validate_scenario_by_id(cls, id: str, folder_id: str = None) -> Scenario:
+    def validate_scenario_by_id(cls, id: str, folder_id: str | None = None) -> Scenario:
         scenario: Scenario = Scenario.get_by_id_and_check(id)
 
         # set the folder if it is provided
@@ -328,8 +326,8 @@ class ScenarioService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def archive_scenario_by_id(cls, id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def archive_scenario_by_id(cls, id_: str) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         if scenario.is_archived:
             raise BadRequestException("The scenario is already archived")
@@ -338,20 +336,20 @@ class ScenarioService:
             raise BadRequestException("You can't archive a scenario that is running")
 
         ActivityService.add(
-            ActivityType.ARCHIVE, object_type=ActivityObjectType.SCENARIO, object_id=id
+            ActivityType.ARCHIVE, object_type=ActivityObjectType.SCENARIO, object_id=id_
         )
 
         return scenario.archive(archive=True)
 
     @classmethod
-    def unarchive_scenario_by_id(cls, id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def unarchive_scenario_by_id(cls, id_: str) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         if not scenario.is_archived:
             raise BadRequestException("The scenario is not archived")
 
         ActivityService.add(
-            ActivityType.UNARCHIVE, object_type=ActivityObjectType.SCENARIO, object_id=id
+            ActivityType.UNARCHIVE, object_type=ActivityObjectType.SCENARIO, object_id=id_
         )
 
         return scenario.archive(archive=False)
@@ -376,8 +374,8 @@ class ScenarioService:
         return Scenario.count_queued_scenarios()
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> Scenario:
-        return Scenario.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> Scenario:
+        return Scenario.get_by_id_and_check(id_)
 
     @classmethod
     def search(
