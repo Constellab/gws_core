@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Literal
 
 import reflex as rx
@@ -90,12 +91,45 @@ def user_inline_component(
     )
 
 
+def user_with_date_component(
+    user: UserDTO,
+    date: datetime,
+    size: Literal["small", "normal"] = "normal",
+    date_format: str = "MMM D, YYYY",
+) -> rx.Component:
+    """User with date component that displays user photo and date horizontally.
+
+    This component displays a user's photo (or initials if no photo) alongside
+    a date in a compact horizontal layout. This is a dense way to display both
+    the user and timestamp information without showing the user's name.
+
+    :param user: User data transfer object containing first_name, last_name, and optional photo
+    :param date: Date to display next to the user avatar
+    :param size: Size of the avatar - "small" (24px) or "normal" (32px), defaults to "normal"
+    :param date_format: Moment.js format string for the date, defaults to "MMM D, YYYY"
+    :return: Horizontal stack with user photo/initials and formatted date
+    """
+    font_size = "12px" if size == "small" else "14px"
+
+    return rx.hstack(
+        user_profile_picture(user, size),
+        rx.moment(
+            date,
+            format=date_format,
+            font_size=font_size,
+            color="var(--gray-11)",
+        ),
+        spacing="2",
+        align="center",
+    )
+
+
 def user_select(
     users: list[UserDTO],
     placeholder: str = "Select a user",
-    name: str = None,
+    name: str | None = None,
     disabled: bool = False,
-    width: str = None,
+    width: str | None = None,
     **kwargs,
 ) -> rx.Component:
     """User select component that allows selecting users from a list.

@@ -46,6 +46,9 @@ Display user photo (or initials) and name horizontally with customizable avatar 
 ### `user_profile_picture()`
 Display user profile picture or initials fallback.
 
+### `user_with_date_component()`
+Display user photo (or initials) and a date horizontally without the user name. A dense way to show both user and timestamp information in a compact layout.
+
 ### `user_select()`
 User selection component for forms and filters.
 

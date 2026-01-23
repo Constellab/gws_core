@@ -4,6 +4,8 @@ from collections.abc import AsyncGenerator
 
 import reflex as rx
 
+from .reflex_dialog_components import dialog_header
+
 
 class FormDialogState(rx.State, mixin=True):
     """Mixin state for managing a form dialog with create/update modes.
@@ -223,13 +225,10 @@ def form_dialog_component(
         ```
     """
 
-    # Convert title to component if it is a string
-    title_component = rx.text(title) if isinstance(title, str) else title
-
     return rx.dialog.root(
         rx.dialog.content(
             rx.vstack(
-                rx.dialog.title(title_component),
+                dialog_header(title, close=state.close_dialog),
                 rx.cond(
                     description,
                     rx.dialog.description(description, size="2", margin_bottom="1rem"),

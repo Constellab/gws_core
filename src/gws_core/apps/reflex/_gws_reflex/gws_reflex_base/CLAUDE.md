@@ -42,6 +42,9 @@ TypedDict defining the structure of app configuration including app directory pa
   - `loader_section()`: Loader section wrapper that displays a spinner when loading
 - **reflex_page_sidebar.py**
   - `page_sidebar_component()`: Generic page layout with responsive sidebar and main content area
+- **reflex_sidebar_menu_component.py**
+  - `sidebar_menu_component()`: Sidebar menu with logo, title, and navigation links (use with `page_sidebar_component`)
+  - `menu_item_component()`: Individual menu item with icon and label for sidebar navigation
 
 ---
 

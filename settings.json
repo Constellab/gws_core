@@ -157,6 +157,11 @@
                     {
                         "name": "croniter",
                         "version": "6.0.0"
+                    },
+                    {
+                        "name": "dill",
+                        "version": "0.4.1",
+                        "comment": "Added to support serialization of callback functions in reflex."
                     }
                 ]
             }
