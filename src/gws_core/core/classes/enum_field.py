@@ -21,6 +21,8 @@ class EnumField(CharField):
         return value
 
     def python_value(self, value: Any) -> Any:
+        if value is None:
+            return None
         return StringHelper.to_enum(self.choices, value)
 
 
@@ -39,4 +41,6 @@ class IntEnumField(IntegerField):
         return value
 
     def python_value(self, value: Any) -> Any:
+        if value is None:
+            return None
         return StringHelper.to_enum(self.choices, value)
