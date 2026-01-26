@@ -234,9 +234,15 @@ from .impl.plotly.plotly_view import PlotlyView as PlotlyView
 # Impl > RichText
 from .impl.rich_text.block.rich_text_block import RichTextBlockDataBase as RichTextBlockDataBase
 from .impl.rich_text.block.rich_text_block import (
+    RichTextBlockDataSpecial as RichTextBlockDataSpecial,
+)
+from .impl.rich_text.block.rich_text_block import (
     RichTextBlockTypeStandard as RichTextBlockTypeStandard,
 )
 from .impl.rich_text.block.rich_text_block_code import RichTextBlockCode as RichTextBlockCode
+from .impl.rich_text.block.rich_text_block_decorator import (
+    rich_text_block_decorator as rich_text_block_decorator,
+)
 from .impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure as RichTextBlockFigure
 from .impl.rich_text.block.rich_text_block_file import RichTextBlockFile as RichTextBlockFile
 from .impl.rich_text.block.rich_text_block_formula import (

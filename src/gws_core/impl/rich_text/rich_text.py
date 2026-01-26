@@ -23,6 +23,12 @@ from gws_core.impl.rich_text.block.rich_text_block_view import (
     RichTextBlockResourceView,
     RichTextBlockViewFile,
 )
+from gws_core.impl.rich_text.rich_text_diff import (
+    RichTextBlockAdded,
+    RichTextBlockDeleted,
+    RichTextBlockModified,
+    RichTextDiff,
+)
 from gws_core.impl.rich_text.rich_text_migrator import TeRichTextMigrator
 from gws_core.impl.rich_text.rich_text_types import RichTextBlock, RichTextDTO
 from gws_core.resource.r_field.serializable_r_field import SerializableObjectJson
@@ -274,9 +280,7 @@ class RichText(SerializableObjectJson):
     def add_resource_view(
         self, resource_view: RichTextBlockResourceView, parameter_name: str | None = None
     ) -> RichTextBlock:
-        block: RichTextBlock = self.create_block(
-            self.generate_id(), resource_view
-        )
+        block: RichTextBlock = self.create_block(self.generate_id(), resource_view)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -291,9 +295,7 @@ class RichText(SerializableObjectJson):
         :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
         :type parameter_name: str, optional
         """
-        block: RichTextBlock = self.create_block(
-            self.generate_id(), resource_view
-        )
+        block: RichTextBlock = self.create_block(self.generate_id(), resource_view)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -308,9 +310,7 @@ class RichText(SerializableObjectJson):
         :param parameter_name: name of the parameter where to insert the block. If None, the block is appended
         :type parameter_name: str, optional
         """
-        block: RichTextBlock = self.create_block(
-            self.generate_id(), file_view
-        )
+        block: RichTextBlock = self.create_block(self.generate_id(), file_view)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -344,9 +344,7 @@ class RichText(SerializableObjectJson):
         self, figure_data: RichTextBlockFigure, parameter_name: str | None = None
     ) -> RichTextBlock:
         """Add a figure to the rich text content"""
-        block: RichTextBlock = self.create_block(
-            self.generate_id(), figure_data
-        )
+        block: RichTextBlock = self.create_block(self.generate_id(), figure_data)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -362,9 +360,7 @@ class RichText(SerializableObjectJson):
         self, file_data: RichTextBlockFile, parameter_name: str | None = None
     ) -> RichTextBlock:
         """Add a file to the rich text content"""
-        block: RichTextBlock = self.create_block(
-            self.generate_id(), file_data
-        )
+        block: RichTextBlock = self.create_block(self.generate_id(), file_data)
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
@@ -488,6 +484,65 @@ class RichText(SerializableObjectJson):
             if not self.get_block_by_id(id_):
                 return id_
 
+    def diff(self, other: "RichText") -> RichTextDiff:
+        """Compare this rich text (old) with another rich text (new) and return the differences.
+
+        Blocks are matched by their id. If a block's id exists in both but
+        the type changed, it is treated as deleted + added (not modified).
+
+        :param other: the new version to compare against
+        :type other: RichText
+        :return: the diff result
+        :rtype: RichTextDiff
+        """
+        old_blocks_by_id: dict[str, tuple[int, RichTextBlock]] = {
+            block.id: (index, block) for index, block in enumerate(self.blocks)
+        }
+        new_blocks_by_id: dict[str, tuple[int, RichTextBlock]] = {
+            block.id: (index, block) for index, block in enumerate(other.blocks)
+        }
+
+        old_ids = set(old_blocks_by_id.keys())
+        new_ids = set(new_blocks_by_id.keys())
+
+        added: list[RichTextBlockAdded] = []
+        deleted: list[RichTextBlockDeleted] = []
+        modified: list[RichTextBlockModified] = []
+
+        # Blocks only in old → deleted
+        for block_id in old_ids - new_ids:
+            old_index, old_block = old_blocks_by_id[block_id]
+            deleted.append(RichTextBlockDeleted(block=old_block, index=old_index))
+
+        # Blocks only in new → added
+        for block_id in new_ids - old_ids:
+            new_index, new_block = new_blocks_by_id[block_id]
+            added.append(RichTextBlockAdded(block=new_block, index=new_index))
+
+        # Blocks in both → check for type change or data change
+        for block_id in old_ids & new_ids:
+            old_index, old_block = old_blocks_by_id[block_id]
+            new_index, new_block = new_blocks_by_id[block_id]
+
+            if old_block.type != new_block.type:
+                # Type changed → treat as deleted + added
+                # This should not happen as block id should change if type changes,
+                deleted.append(RichTextBlockDeleted(block=old_block, index=old_index))
+                added.append(RichTextBlockAdded(block=new_block, index=new_index))
+            elif old_block.data != new_block.data:
+                # Same type, data changed → modified
+                modified.append(
+                    RichTextBlockModified(
+                        block_id=block_id,
+                        old_block=old_block,
+                        new_block=new_block,
+                        old_index=old_index,
+                        new_index=new_index,
+                    )
+                )
+
+        return RichTextDiff(added=added, deleted=deleted, modified=modified)
+
     def append_rich_text(self, rich_text: "RichText") -> None:
         for block in rich_text.get_blocks():
             self.append_block(block)
@@ -522,9 +577,7 @@ class RichText(SerializableObjectJson):
     @classmethod
     def create_paragraph(cls, id_: str, text: str) -> RichTextBlock:
         """Create a paragraph block"""
-        return cls.create_block(
-            id_, RichTextBlockParagraph(text=text)
-        )
+        return cls.create_block(id_, RichTextBlockParagraph(text=text))
 
     @classmethod
     def create_header(cls, id_: str, text: str, level: RichTextBlockHeaderLevel) -> RichTextBlock:
@@ -562,9 +615,7 @@ class RichText(SerializableObjectJson):
         return cls.create_block(id_, data)
 
     @classmethod
-    def create_block(
-        cls, id_: str, data: RichTextBlockDataBase
-    ) -> RichTextBlock:
+    def create_block(cls, id_: str, data: RichTextBlockDataBase) -> RichTextBlock:
         """Create a block"""
         if not data:
             raise ValueError("The data is empty")
