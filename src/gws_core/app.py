@@ -14,6 +14,7 @@ from gws_core.model.event.event_dispatcher import EventDispatcher
 from .core.classes.cors_config import CorsConfig
 from .core.classes.security_headers import SecurityHeadersMiddleware
 from .core_controller import core_app
+from .lab.brick_app_registry import BrickAppRegistry
 from .lab.system_service import SystemService
 from .space.space_controller import space_app
 
@@ -96,5 +97,9 @@ class App:
         cls.app.mount(f"/{Settings.space_api_route_path()}/", space_app)
         cls.app.mount(f"/{Settings.external_lab_api_route_path()}/", external_lab_app)
         cls.app.mount(f"/{Settings.s3_server_api_route_path()}/", s3_server_app)
+
+        # Mount custom brick apps registered by external bricks
+        for brick_name, brick_app in BrickAppRegistry.get_all_brick_apps().items():
+            cls.app.mount(f"/brick/{brick_name}/", brick_app)
 
         uvicorn.run(cls.app, host="0.0.0.0", port=int(port))

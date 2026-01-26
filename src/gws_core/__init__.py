@@ -418,6 +418,7 @@ from .io.port import OutPort as OutPort
 from .io.port import Port as Port
 
 # Lab
+from .lab.brick_app_registry import BrickAppRegistry as BrickAppRegistry
 from .lab.monitor.monitor import Monitor as Monitor
 from .lab.monitor.monitor_service import MonitorService as MonitorService
 
