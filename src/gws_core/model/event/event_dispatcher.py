@@ -35,12 +35,12 @@ class EventDispatcher:
         dispatcher.unregister(listener)
     """
 
-    _instance: EventDispatcher = None
+    _instance: EventDispatcher | None = None
     _lock: Lock = Lock()
     _listeners: list[EventListener] = []
     _listeners_lock: Lock = Lock()
-    _event_queue: Queue = None
-    _worker_thread: Thread = None
+    _event_queue: Queue
+    _worker_thread: Thread
     _running: bool = False
 
     def __init__(self):
@@ -93,32 +93,15 @@ class EventDispatcher:
                 Logger.debug(f"Unregistered event listener: {listener.__class__.__name__}")
 
     def dispatch(self, event: Event) -> None:
-        """Dispatch an event to all registered listeners asynchronously.
+        """Dispatch an event to all registered listeners.
 
-        This method adds the event to a queue that is processed by a single
-        worker thread, so it returns immediately without blocking.
+        Synchronous listeners (is_synchronous() == True) are called immediately
+        in the caller's thread. Exceptions propagate to the caller.
 
-        :param event: The event to dispatch
-        :type event: Event
-        """
-        if not isinstance(event, BaseEvent):
-            raise ValueError("Event must be an instance of BaseEvent")
+        Asynchronous listeners (is_synchronous() == False) are queued for the
+        background worker thread. Exceptions are caught and logged.
 
-        listeners = self._get_all_listeners()
-
-        if not listeners:
-            Logger.debug(f"No listeners registered for event: {event.get_event_name()}")
-            return
-
-        # Add event to queue for processing by worker thread
-        self._event_queue.put((event, listeners))
-
-    def dispatch_sync(self, event: Event) -> None:
-        """Dispatch an event to all registered listeners synchronously.
-
-        This method blocks until all listeners have been notified.
-        Use this when you need to ensure listeners have processed the event
-        before continuing.
+        Sync listeners always run BEFORE async listeners are queued.
 
         :param event: The event to dispatch
         :type event: Event
@@ -132,7 +115,16 @@ class EventDispatcher:
             Logger.debug(f"No listeners registered for event: {event.get_event_name()}")
             return
 
-        self._notify_listeners(event, listeners)
+        sync_listeners = [listener for listener in listeners if listener.is_synchronous()]
+        async_listeners = [listener for listener in listeners if not listener.is_synchronous()]
+
+        # Sync listeners: run in caller's thread, exceptions propagate
+        if sync_listeners:
+            self._notify_sync_listeners(event, sync_listeners)
+
+        # Async listeners: queue for worker thread
+        if async_listeners:
+            self._event_queue.put((event, async_listeners))
 
     def _get_all_listeners(self) -> list[EventListener]:
         """Get all registered listeners.
@@ -155,7 +147,7 @@ class EventDispatcher:
             try:
                 # Block for up to 1 second waiting for an event
                 event, listeners = self._event_queue.get(timeout=1)
-                self._notify_listeners(event, listeners)
+                self._notify_async_listeners(event, listeners)
                 self._event_queue.task_done()
             except Empty:
                 # Timeout - no events in queue, continue loop
@@ -165,18 +157,35 @@ class EventDispatcher:
 
         Logger.debug("EventDispatcher worker thread stopped")
 
-    def _notify_listeners(self, event: Event, listeners: list[EventListener]) -> None:
-        """Notify all listeners of an event.
+    def _notify_sync_listeners(self, event: Event, listeners: list[EventListener]) -> None:
+        """Notify synchronous listeners in the caller's thread.
+
+        Exceptions are NOT caught — they propagate to the caller.
+        This allows sync listeners to abort/rollback the caller's operation.
+
+        :param event: The event to notify
+        :type event: Event
+        :param listeners: The synchronous listeners to notify
+        :type listeners: list[EventListener]
+        """
+        event_name = event.get_event_name()
+        Logger.debug(f"Dispatching event (sync): {event_name} to {len(listeners)} listener(s)")
+
+        for listener in listeners:
+            listener.handle(event)
+
+    def _notify_async_listeners(self, event: Event, listeners: list[EventListener]) -> None:
+        """Notify asynchronous listeners of an event.
 
         This method is called in a background thread. Each listener is called and errors are caught and logged.
 
         :param event: The event to notify
         :type event: Event
         :param listeners: The listeners to notify
-        :type listeners: List[EventListener]
+        :type listeners: list[EventListener]
         """
         event_name = event.get_event_name()
-        Logger.debug(f"Dispatching event: {event_name} to {len(listeners)} listener(s)")
+        Logger.debug(f"Dispatching event (async): {event_name} to {len(listeners)} listener(s)")
 
         for listener in listeners:
             try:

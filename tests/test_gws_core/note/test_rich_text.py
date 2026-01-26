@@ -194,6 +194,172 @@ class TestRichText(BaseTestCase):
 """
         self.assertEqual(result, expected_result)
 
+    def test_diff_no_changes(self):
+        """Test diff between two identical rich texts returns no changes."""
+        rt1 = RichText()
+        rt1.add_paragraph("Hello")
+        rt1.add_header("Title", RichTextBlockHeaderLevel.HEADER_1)
+
+        # Build a second rich text with the same block ids and content
+        rt2 = RichText.from_json(rt1.to_dto_json_dict())
+
+        diff = rt1.diff(rt2)
+        self.assertFalse(diff.has_changes())
+        self.assertEqual(len(diff.added), 0)
+        self.assertEqual(len(diff.deleted), 0)
+        self.assertEqual(len(diff.modified), 0)
+
+    def test_diff_added_blocks(self):
+        """Test diff detects blocks that were added."""
+        rt1 = RichText()
+        rt1.add_paragraph("Hello")
+
+        rt2 = RichText()
+        # Copy existing block
+        old_block = rt1.get_blocks()[0]
+        rt2.append_block(RichTextBlock(id=old_block.id, type=old_block.type, data=old_block.data))
+        # Add a new block
+        new_block = rt2.add_paragraph("New paragraph")
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.added), 1)
+        self.assertEqual(len(diff.deleted), 0)
+        self.assertEqual(len(diff.modified), 0)
+        self.assertEqual(diff.added[0].block.id, new_block.id)
+        self.assertEqual(diff.added[0].index, 1)
+
+    def test_diff_deleted_blocks(self):
+        """Test diff detects blocks that were deleted."""
+        rt1 = RichText()
+        block_a = rt1.add_paragraph("Keep me")
+        block_b = rt1.add_paragraph("Delete me")
+
+        rt2 = RichText()
+        rt2.append_block(RichTextBlock(id=block_a.id, type=block_a.type, data=block_a.data))
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.added), 0)
+        self.assertEqual(len(diff.deleted), 1)
+        self.assertEqual(len(diff.modified), 0)
+        self.assertEqual(diff.deleted[0].block.id, block_b.id)
+        self.assertEqual(diff.deleted[0].index, 1)
+
+    def test_diff_modified_blocks(self):
+        """Test diff detects blocks whose data changed but type stayed the same."""
+        rt1 = RichText()
+        block_a = rt1.add_paragraph("Original text")
+
+        rt2 = RichText()
+        rt2.append_block(
+            RichTextBlock(
+                id=block_a.id,
+                type=block_a.type,
+                data={"text": "Modified text"},
+            )
+        )
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.added), 0)
+        self.assertEqual(len(diff.deleted), 0)
+        self.assertEqual(len(diff.modified), 1)
+        self.assertEqual(diff.modified[0].block_id, block_a.id)
+        self.assertEqual(diff.modified[0].old_block.data["text"], "Original text")
+        self.assertEqual(diff.modified[0].new_block.data["text"], "Modified text")
+        self.assertEqual(diff.modified[0].old_index, 0)
+        self.assertEqual(diff.modified[0].new_index, 0)
+
+    def test_diff_type_change_treated_as_delete_plus_add(self):
+        """Test that a block with the same id but different type is treated as deleted + added."""
+        rt1 = RichText()
+        block_a = rt1.add_paragraph("Some text")
+
+        # Create a header block reusing the same id
+        rt2 = RichText()
+        rt2.append_block(
+            RichTextBlock(
+                id=block_a.id,
+                type="header",
+                data={"text": "Some text", "level": 2},
+            )
+        )
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.modified), 0)
+        self.assertEqual(len(diff.deleted), 1)
+        self.assertEqual(len(diff.added), 1)
+        self.assertEqual(diff.deleted[0].block.id, block_a.id)
+        self.assertEqual(diff.deleted[0].block.type, "paragraph")
+        self.assertEqual(diff.added[0].block.id, block_a.id)
+        self.assertEqual(diff.added[0].block.type, "header")
+
+    def test_diff_mixed_changes(self):
+        """Test diff with a combination of added, deleted, and modified blocks."""
+        rt1 = RichText()
+        block_a = rt1.add_paragraph("Unchanged")
+        block_b = rt1.add_paragraph("Will be modified")
+        block_c = rt1.add_paragraph("Will be deleted")
+
+        rt2 = RichText()
+        # block_a unchanged
+        rt2.append_block(RichTextBlock(id=block_a.id, type=block_a.type, data=block_a.data))
+        # block_b modified
+        rt2.append_block(
+            RichTextBlock(
+                id=block_b.id,
+                type=block_b.type,
+                data={"text": "Has been modified"},
+            )
+        )
+        # block_c not present → deleted
+        # new block added
+        new_block = rt2.add_paragraph("Brand new")
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.deleted), 1)
+        self.assertEqual(len(diff.added), 1)
+        self.assertEqual(len(diff.modified), 1)
+
+        self.assertEqual(diff.deleted[0].block.id, block_c.id)
+        self.assertEqual(diff.added[0].block.id, new_block.id)
+        self.assertEqual(diff.modified[0].block_id, block_b.id)
+
+    def test_diff_both_empty(self):
+        """Test diff between two empty rich texts."""
+        rt1 = RichText()
+        rt2 = RichText()
+
+        diff = rt1.diff(rt2)
+        self.assertFalse(diff.has_changes())
+
+    def test_diff_old_empty(self):
+        """Test diff when old is empty and new has blocks."""
+        rt1 = RichText()
+        rt2 = RichText()
+        new_block = rt2.add_paragraph("New")
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.added), 1)
+        self.assertEqual(len(diff.deleted), 0)
+        self.assertEqual(diff.added[0].block.id, new_block.id)
+
+    def test_diff_new_empty(self):
+        """Test diff when new is empty and old has blocks."""
+        rt1 = RichText()
+        block = rt1.add_paragraph("Old")
+        rt2 = RichText()
+
+        diff = rt1.diff(rt2)
+        self.assertTrue(diff.has_changes())
+        self.assertEqual(len(diff.deleted), 1)
+        self.assertEqual(len(diff.added), 0)
+        self.assertEqual(diff.deleted[0].block.id, block.id)
+
     def test_convert_special_blocks(self):
         """Test that special blocks are converted to HTML blocks when calling to_dto"""
         rich_text = RichText()
@@ -215,4 +381,4 @@ class TestRichText(BaseTestCase):
         # With convert_special_blocks, the block should be converted to HTML
         dto_with_conversion = reloaded_rich_text.to_dto(convert_special_blocks=True)
         self.assertEqual(dto_with_conversion.blocks[0].type, "html")
-        self.assertEqual(dto_with_conversion.blocks[0].data["data"], "<p>Hello World</p>")
+        self.assertEqual(dto_with_conversion.blocks[0].data["html"], "<p>Hello World</p>")

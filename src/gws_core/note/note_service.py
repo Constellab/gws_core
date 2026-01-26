@@ -3,6 +3,8 @@ from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
+from gws_core.model.event.event_dispatcher import EventDispatcher
+from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
@@ -181,6 +183,16 @@ class NoteService:
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
+        # Dispatch event BEFORE saving — sync listeners can mutate note_content
+        # or raise exceptions to abort the save
+        EventDispatcher.get_instance().dispatch(
+            NoteContentUpdatedEvent(
+                note_id=note_id,
+                old_content=note.content,
+                new_content=note_content,
+            )
+        )
+
         if not Settings.get_instance().is_test and not Settings.get_instance().is_local_env():
             note.modifications = SpaceService.get_instance().get_modifications(
                 note.content, note_content, note.modifications
@@ -252,6 +264,15 @@ class NoteService:
     @GwsCoreDbManager.transaction()
     def _delete_note_db(cls, note_id: str) -> None:
         note: Note = cls._get_and_check_before_update(note_id)
+
+        # Dispatch event BEFORE deletion — sync listeners can clean up related data
+        # or raise exceptions to abort the deletion
+        EventDispatcher.get_instance().dispatch(
+            NoteDeletedEvent(
+                note_id=note_id,
+                content=note.content,
+            )
+        )
 
         note.delete_instance()
 

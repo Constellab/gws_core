@@ -15,15 +15,31 @@ def event_listener(cls: type[T]) -> type[T]:
     When the class is defined (at import time), an instance is created and
     automatically registered with the EventDispatcher singleton.
 
-    Example:
+    Listeners can control their execution mode by overriding ``is_synchronous()``:
+
+    - **Asynchronous** (default): the listener runs in a background worker
+      thread. Exceptions are caught and logged without affecting the caller.
+    - **Synchronous** (``is_synchronous()`` returns ``True``): the listener
+      runs in the caller's thread and within the same DB transaction.
+      Exceptions propagate to the caller, which allows rolling back the
+      transaction. Sync listeners always execute **before** async listeners.
+
+    Example (async listener — default):
         @event_listener
         class UserAuditListener(EventListener):
             def handle(self, event: Event) -> None:
                 if event.entity_type == 'user':
                     Logger.info(f"User event: {event.action}")
 
-            def get_priority(self) -> int:
-                return 10
+    Example (sync listener):
+        @event_listener
+        class NoteActivitySyncListener(EventListener):
+            def is_synchronous(self) -> bool:
+                return True
+
+            def handle(self, event: Event) -> None:
+                # Runs in the caller's thread; exceptions rollback the transaction.
+                ...
 
     The listener is automatically registered when the module is imported.
 

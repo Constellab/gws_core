@@ -13,17 +13,14 @@ class EventListener(ABC):
     Event listeners receive all events and decide internally which ones to handle.
     Implement the `handle` method to filter and process events.
 
-    Example:
-        class UserAuditListener(EventListener):
-            def handle(self, event: Event) -> None:
-                # Filter events in the handle method using discriminated unions
-                if event.entity_type == 'user':
-                    if event.action == 'created':
-                        user = event.entity  # Type checker knows it's User
-                        Logger.info(f"User created: {user.email}")
-                    elif event.action == 'activated':
-                        user = event.entity
-                        Logger.info(f"User activated: {user.email}")
+    Listeners can be synchronous or asynchronous:
+    - Synchronous (is_synchronous() returns True):
+      Runs in the caller's thread, same DB transaction.
+      Exceptions propagate to the caller (can rollback transactions).
+      Runs BEFORE async listeners.
+    - Asynchronous (default, is_synchronous() returns False):
+      Runs in background worker thread.
+      Exceptions are caught and logged.
     """
 
     @abstractmethod
@@ -40,3 +37,20 @@ class EventListener(ABC):
         :type event: Event
         """
         pass
+
+    def is_synchronous(self) -> bool:
+        """Whether this listener runs synchronously in the caller's thread.
+
+        If True:
+        - Executes in the caller's thread (same DB transaction)
+        - Exceptions propagate to the caller (can rollback transactions)
+        - Runs BEFORE async listeners
+
+        If False (default):
+        - Executes in background worker thread
+        - Exceptions are caught and logged
+
+        :return: True for synchronous execution, False for async (default)
+        :rtype: bool
+        """
+        return False

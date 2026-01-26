@@ -278,9 +278,9 @@ from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock
 from .impl.rich_text.rich_text_types import RichTextDTO as RichTextDTO
 from .impl.rich_text.rich_text_types import RichTextObjectType as RichTextObjectType
 from .impl.rich_text.rich_text_view import RichTextView as RichTextView
-from .impl.s3.datahub_s3_server_service import DataHubS3ServerService as DataHubS3ServerService
 
 # Impl > s3
+from .impl.s3.datahub_s3_server_service import DataHubS3ServerService as DataHubS3ServerService
 from .impl.s3.s3_bucket import S3Bucket as S3Bucket
 
 # Impl > Shell
@@ -438,6 +438,8 @@ from .model.typing_style import TypingStyle as TypingStyle
 
 # Note
 from .note.note import Note as Note
+from .note.note_events import NoteContentUpdatedEvent as NoteContentUpdatedEvent
+from .note.note_events import NoteDeletedEvent as NoteDeletedEvent
 from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder
 from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
