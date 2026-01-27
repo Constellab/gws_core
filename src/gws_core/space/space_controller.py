@@ -1,10 +1,10 @@
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException
+from fastapi import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.settings import Settings
 from gws_core.folder.space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 from gws_core.folder.space_folder_service import SpaceFolderService
+from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.lab.system_dto import SettingsDTO
 from gws_core.scenario.scenario_service import ScenarioService
@@ -15,33 +15,16 @@ from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.authentication_service import AuthenticationService
 
-from ..core.exception.exception_handler import ExceptionHandler
 from ..core.service.settings_service import SettingsService
 from ..user.user_dto import UserFullDTO, UserLoginInfo
 from ..user.user_service import UserService
 from ._auth_space import AuthSpace
 
-space_app = FastAPI(docs_url="/docs")
-
-
-# Catch HTTP Exceptions
-@space_app.exception_handler(HTTPException)
-async def all_http_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(request, exc)
-
-
-# Catch RequestValidationError (422 Unprocessable Entity)
-
-
-@space_app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
-    return ExceptionHandler.handle_request_validation_error(exc)
-
-
-# Catch all other exceptions
-@space_app.exception_handler(Exception)
-async def all_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(request, exc)
+space_app = ApiRegistry.register_api(
+    f"/{Settings.space_api_route_path()}/",
+    docs_url="/docs",
+    with_exception_handlers=True,
+)
 
 
 ##################################################### GLOBAL  #####################################################

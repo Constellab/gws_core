@@ -1,7 +1,6 @@
-from fastapi import Depends, FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
+from fastapi import Depends
 
-from gws_core.core.exception.exception_handler import ExceptionHandler
+from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_auth import ExternalLabAuth
 from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportRequestDTO,
@@ -9,27 +8,13 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportScenarioResponseDTO,
 )
 from gws_core.external_lab.external_lab_service import ExternalLabService
+from gws_core.lab.api_registry import ApiRegistry
 
-external_lab_app = FastAPI(docs_url="/docs")
-
-# Catch HTTP Exceptions
-
-
-@external_lab_app.exception_handler(HTTPException)
-async def all_http_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(request, exc)
-
-
-# Catch RequestValidationError (422 Unprocessable Entity)
-@external_lab_app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
-    return ExceptionHandler.handle_request_validation_error(exc)
-
-
-# Catch all other exceptions
-@external_lab_app.exception_handler(Exception)
-async def all_exception_handler(request, exc):
-    return ExceptionHandler.handle_exception(request, exc)
+external_lab_app = ApiRegistry.register_api(
+    f"/{Settings.external_lab_api_route_path()}/",
+    docs_url="/docs",
+    with_exception_handlers=True,
+)
 
 
 @external_lab_app.get("/health-check", summary="Health check route")
