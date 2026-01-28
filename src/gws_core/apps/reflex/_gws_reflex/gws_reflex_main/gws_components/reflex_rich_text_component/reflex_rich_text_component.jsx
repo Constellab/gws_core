@@ -90,7 +90,9 @@ export function RichTextComponent({
   customToolsEvent = null,
 }) {
   const componentRef = useRef(null);
+  const inputDataCountRef = useRef(0);
   const { customTools, error: customToolsError } = useCustomToolsLoader(customToolsConfig, authenticationInfo, customToolsEvent);
+
 
   // Combine all input data into a single JSON object
   const inputData = useMemo(() => ({
@@ -99,6 +101,19 @@ export function RichTextComponent({
     disabled,
     changeEventDebounceTime,
   }), [placeholder, value, disabled, changeEventDebounceTime]);
+
+  // Set inputData as a property on the element so the web component picks up changes
+  useEffect(() => {
+    const element = componentRef.current;
+    if (!element) return;
+
+    // Increment __count__ to force a change in inputData even when the value is the same as the
+    // previously sent one. This is needed for rollback scenarios where the outer value reverts to a
+    // previous state but the dc component's inner value has diverged and must be overwritten.
+    inputDataCountRef.current += 1;
+    const dataWithCount = { ...inputData, __count__: inputDataCountRef.current };
+    element.inputData = JSON.stringify(dataWithCount);
+  }, [inputData]);
 
   // Set up the component and event listeners
   useEffect(() => {
@@ -147,11 +162,12 @@ export function RichTextComponent({
   return (
     <dc-text-editor
       ref={componentRef}
-      inputData={JSON.stringify(inputData)}
       useCustomTools={hasCustomTools ? 'true' : 'false'}
       authenticationInfo={JSON.stringify(authenticationInfo)}
-      style={{ display: 'flex', flexDirection: 'column', width: '100%',
-       ...(customStyle || {}) }}
+      style={{
+        display: 'flex', flexDirection: 'column', width: '100%',
+        ...(customStyle || {})
+      }}
     ></dc-text-editor>
   );
 }

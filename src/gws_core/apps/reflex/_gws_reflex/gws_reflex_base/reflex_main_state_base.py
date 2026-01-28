@@ -102,7 +102,6 @@ class ReflexMainStateBase(rx.State, mixin=True):
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self._is_initialized = True
-        print("ReflexMainStateBase initialized")
 
         await self._on_initialized()
 
@@ -122,12 +121,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
             str | None: The authenticated user ID if authentication succeeds, None otherwise.
         """
         # Load app config if not already loaded
-        if not self._app_config:
-            _app_config = self._load_app_config()
-            if store_in_state:
-                self._app_config = _app_config
-        else:
-            _app_config = self._app_config
+        app_config = self._load_app_config(store_in_state=store_in_state)
 
         if self.authenticated_user_id:
             return self.authenticated_user_id
@@ -136,7 +130,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if not self._app_router_ready():
             return None
 
-        user_access_tokens = _app_config.get("user_access_tokens", {})
+        user_access_tokens = app_config.get("user_access_tokens", {})
         user_id = await self._check_user_token(user_access_tokens)
 
         # Store in state if requested
@@ -153,8 +147,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
         """
         pass
 
-    def _load_app_config(self) -> dict:
+    def _load_app_config(self, store_in_state: bool = False) -> dict:
         """Load the app configuration from the environment variable."""
+        if self._app_config is not None:
+            return self._app_config
+
         app_config_path = self._get_app_config_file_path()
 
         if not app_config_path:
@@ -166,8 +163,13 @@ class ReflexMainStateBase(rx.State, mixin=True):
             raise FileNotFoundError(f"App config file not found at {app_config_path}")
 
         try:
+            app_config: dict
             with open(app_config_path, encoding="utf-8") as file:
-                return load(file)
+                app_config = load(file)
+
+            if store_in_state:
+                self._app_config = app_config
+            return app_config
 
         except Exception as e:
             raise ValueError(f"Error reading app config file: {e}")
@@ -212,13 +214,14 @@ class ReflexMainStateBase(rx.State, mixin=True):
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
         if self._app_config is None:
-            await self._on_load()
+            return cast(ReflexConfigDTO, self._load_app_config(store_in_state=False))
         # raise ValueError("App configuration is not loaded. Call on_load() first.")
         return cast(ReflexConfigDTO, self._app_config)
 
     async def get_sources_ids(self) -> list[str]:
         """Get the source IDs from the app configuration."""
-        source_ids = (await self.get_app_config()).get("source_ids")
+        app_config = await self.get_app_config()
+        source_ids = app_config.get("source_ids")
         if source_ids is None:
             return []
         return source_ids
@@ -275,7 +278,8 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
     async def get_params(self) -> dict:
         """Get the parameters from the app configuration."""
-        params = (await self.get_app_config()).get("params")
+        app_config = await self.get_app_config()
+        params = app_config.get("params")
         if params is None:
             return {}
         return params
