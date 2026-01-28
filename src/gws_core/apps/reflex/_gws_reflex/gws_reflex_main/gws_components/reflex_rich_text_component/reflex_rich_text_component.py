@@ -1,13 +1,35 @@
 import reflex as rx
+from attr import dataclass
 from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
 from reflex.vars import Var
 
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 from ...reflex_main_state import ReflexMainState
 
 asset_path = rx.asset("reflex_rich_text_component.jsx", shared=True)
 public_js_path = "$/public/" + asset_path
+
+
+@dataclass
+class RichTextCustomBlocksConfig:
+    jsx_file_path: str
+    custom_blocks: dict[str, type[RichTextBlockDataBase]] | None = None
+    """Configuration for custom rich text editor tools."""
+    config: dict | None = None
+
+    def to_dict(self) -> dict:
+        """Convert the config to a dictionary for serialization."""
+        return {
+            "jsxFilePath": self.jsx_file_path,
+            "customBlocks": (
+                {name: block.get_typing_name() for name, block in self.custom_blocks.items()}
+                if self.custom_blocks
+                else None
+            ),
+            "config": self.config,
+        }
 
 
 class RichTextComponent(rx.Component):
@@ -28,13 +50,14 @@ class RichTextComponent(rx.Component):
 
     custom_style: Var[dict | None]  # Additional style properties
 
-    # Whether to load custom tools from /public/custom_block.jsx
-    use_custom_tools: Var[bool | None]
+    custom_tools_config: Var[dict | None]
 
     authentication_info: Var[ReflexUserAuthInfo | None]
 
     # Event handler for output events from the component
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
+
+    custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
 
 
 def rich_text_component(
@@ -44,7 +67,8 @@ def rich_text_component(
     change_event_debounce_time: int | None = None,
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
     custom_style: dict | None = None,
-    use_custom_tools: bool | None = None,
+    custom_tools_config: RichTextCustomBlocksConfig | None = None,
+    custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
 ):
     """Create a RichTextComponent instance.
 
@@ -60,43 +84,95 @@ def rich_text_component(
     :type output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]], optional
     :param custom_style: Additional style properties for the component, defaults to None
     :type custom_style: Optional[dict], optional
-    :param use_custom_tools: Whether to load custom editor block tools from /public/custom_block.jsx.
-        When set to True, the component will dynamically import a JavaScript file that must export
-        a `customTools` object. This allows you to define custom block types for the editor.
+    :param custom_tools_config: Configuration for custom rich text editor blocks.
+        When provided, the component will dynamically import the JSX file at ``jsx_file_path``
+        which must export a ``getCustomTools(config, authenticationInfo)`` function returning
+        an object of custom tool classes (editorjs tools).
 
-        The custom_block.jsx file must be placed in your app's assets folder and should export:
-        ``export const customTools = { toolName: ToolClass, ... };``
+        The ``custom_blocks`` dict maps editor tool names to their
+        ``RichTextBlockDataBase`` subclass so that block type names are forwarded
+        automatically.  An optional ``config`` dict is passed through to the JSX
+        factory function as-is.
 
-        Each tool class should implement:
-        - ``static get toolbox()`` - Returns an array of toolbox entries with title and icon
-        - ``render()`` - Returns the DOM element to display
-        - ``save(block)`` - Returns the data to save for this block
+        **Step 1 — Define a custom block in Python**::
 
-        Example custom_block.jsx:
+            from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataSpecial
+            from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
-            export class MyCustomBlock {
+            @rich_text_block_decorator("CustomBlock", human_name="Custom Block")
+            class CustomBlock(RichTextBlockDataSpecial):
+                text: str
+
+                def to_html(self) -> str:
+                    return f"<p>Custom Block: {self.text}</p>"
+
+                def to_markdown(self) -> str:
+                    return ""
+
+        **Step 2 — Create a JSX file** (e.g. ``rich_text_extension.jsx``) that exports
+        ``getCustomTools``.  The returned object maps block type names to editorjs tool
+        classes::
+
+            // rich_text_extension.jsx
+            export function getCustomTools(config, authenticationInfo) {
+              class DcTextEditorToolExampleBlock {
+                constructor({data}) { this.data = data; }
+
                 static get toolbox() {
-                    return [{
-                        title: 'My Block',
-                        icon: '<span class="material-icons-outlined">star</span>',
-                    }];
+                  return {
+                    title: 'Example Tool',
+                    icon: '<span class="material-icons-outlined">build</span>',
+                  };
                 }
 
                 render() {
-                    const wrapper = document.createElement('div');
-                    wrapper.innerHTML = '<p>My custom content</p>';
-                    return wrapper;
+                  const wrapper = document.createElement('div');
+                  const p = document.createElement('p');
+                  p.innerText = `Custom block content : '${this.data?.text || 'default text'}'`;
+                  wrapper.appendChild(p);
+                  return wrapper;
                 }
 
                 save(block) {
-                    return { data: 'my data' };
+                  return { data: this.data?.text || 'default text' };
                 }
+              }
+
+              return { [config.block_name]: DcTextEditorToolExampleBlock };
             }
 
-            export const customTools = { myBlock: MyCustomBlock };
+        **Step 3 — Register the asset and wire up the component**::
+
+            import reflex as rx
+            from gws_core import RichText, RichTextDTO
+            from gws_reflex_main.gws_components import RichTextCustomBlocksConfig, rich_text_component
+
+            asset_path = rx.asset("rich_text_extension.jsx", shared=True)
+            public_path = "/public" + asset_path
+
+            class MyState(rx.State):
+                _rich_text: RichText = RichText()
+
+                @rx.var
+                def rich_text(self) -> RichTextDTO:
+                    return self._rich_text.to_dto()
+
+                @rx.event
+                def handle_rich_text_change(self, event_data: dict):
+                    self._rich_text = RichText.from_json(event_data)
+
+            rich_text_component(
+                placeholder="Type something here...",
+                value=MyState.rich_text,
+                output_event=MyState.handle_rich_text_change,
+                custom_tools_config=RichTextCustomBlocksConfig(
+                    jsx_file_path=public_path,
+                    custom_blocks={"CustomBlock": CustomBlock},
+                ),
+            )
 
         Defaults to None (disabled).
-    :type use_custom_tools: Optional[bool], optional
+    :type custom_tools_config: Optional[RichTextCustomBlocksConfig], optional
     :return: Instance of RichTextComponent
     :rtype: RichTextComponent
     """
@@ -108,6 +184,7 @@ def rich_text_component(
         change_event_debounce_time=change_event_debounce_time,
         output_event=output_event,
         custom_style=custom_style,
-        use_custom_tools=use_custom_tools,
+        custom_tools_config=custom_tools_config.to_dict() if custom_tools_config else None,
         authentication_info=ReflexMainState.get_reflex_user_auth_info,
+        custom_tools_event=custom_tools_event,
     )

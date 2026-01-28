@@ -1,6 +1,9 @@
 # The component are exported at this level to only load them when they are used
 # Because it triggers the loading of the reflex_plugin that load js assets
 from .reflex_rich_text_component.reflex_rich_text_component import (
+    RichTextCustomBlocksConfig as RichTextCustomBlocksConfig,
+)
+from .reflex_rich_text_component.reflex_rich_text_component import (
     rich_text_component as rich_text_component,
 )
 

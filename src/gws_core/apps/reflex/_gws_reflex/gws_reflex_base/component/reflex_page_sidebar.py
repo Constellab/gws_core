@@ -127,6 +127,9 @@ def _create_content_wrapper(
         ),
         height="100vh",
         overflow_y="auto",
+        class_name="page-layout-content-wrapper",
+        display="flex",
+        flex_direction="column",
     )
 
 

@@ -31,6 +31,7 @@ def example_tabs(
     title: str | None = None,
     description: str | None = None,
     func: Callable | None = None,
+    additional_tabs: list[tuple[str, rx.Component]] | None = None,
 ) -> rx.Component:
     """
     Create a tabbed interface to display an example with its code and documentation.
@@ -40,11 +41,15 @@ def example_tabs(
     2. Code - Displays the source code in a code block
     3. API - Shows the function documentation (if func is provided)
 
+    Additional custom tabs can be appended after the built-in tabs.
+
     :param example_component: The live Reflex component to display in the Example tab
     :param code: The source code as a string to display in the Code tab
     :param title: Optional title for the example section
     :param description: Optional brief description of what the example demonstrates
     :param func: Optional function to document in the API tab. If None, API tab is hidden
+    :param additional_tabs: Optional list of (label, component) tuples for extra tabs.
+        Each tuple contains the tab label string and the Reflex component to render in that tab.
     :return: A Reflex component with tabbed interface
     """
     # Build the tabs list
@@ -56,6 +61,11 @@ def example_tabs(
     # Add API tab trigger if function is provided
     if func is not None:
         tabs_content.append(rx.tabs.trigger("API", value="api"))
+
+    # Add additional tab triggers
+    if additional_tabs:
+        for label, _ in additional_tabs:
+            tabs_content.append(rx.tabs.trigger(label, value=label.lower().replace(" ", "_")))
 
     # Build tab content panels
     tab_panels = [
@@ -103,6 +113,19 @@ def example_tabs(
                 value="api",
             )
         )
+
+    # Add additional tab panels
+    if additional_tabs:
+        for label, component in additional_tabs:
+            tab_panels.append(
+                rx.tabs.content(
+                    rx.box(
+                        component,
+                        padding="1em",
+                    ),
+                    value=label.lower().replace(" ", "_"),
+                )
+            )
 
     # Build header components (optional)
     header_components = []

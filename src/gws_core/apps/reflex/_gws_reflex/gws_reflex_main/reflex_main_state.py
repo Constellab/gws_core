@@ -21,9 +21,7 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
 
         Override this method in subclasses to perform actions after initialization.
         """
-        # Sotre the app_id and user_access_token in the local storage for use in frontend
-        rx.Cookie(self.get_app_id(), name="gws_app_id", path="/")
-        rx.Cookie(self._get_user_access_token(), name="gws_user_access_token", path="/")
+        pass
 
     async def get_resources(self) -> list[Resource]:
         """Return the resources of the app."""

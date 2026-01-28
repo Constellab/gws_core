@@ -419,7 +419,6 @@ from .io.port import Port as Port
 
 # Lab
 from .lab.api_registry import ApiRegistry as ApiRegistry
-from .lab.brick_app_registry import BrickAppRegistry as BrickAppRegistry  # backward compat
 from .lab.monitor.monitor import Monitor as Monitor
 from .lab.monitor.monitor_service import MonitorService as MonitorService
 
@@ -439,6 +438,8 @@ from .model.typing_style import TypingStyle as TypingStyle
 
 # Note
 from .note.note import Note as Note
+from .note.note_dto import NoteDTO as NoteDTO
+from .note.note_dto import NoteSaveDTO as NoteSaveDTO
 from .note.note_events import NoteContentUpdatedEvent as NoteContentUpdatedEvent
 from .note.note_events import NoteDeletedEvent as NoteDeletedEvent
 from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder

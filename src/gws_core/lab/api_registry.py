@@ -83,10 +83,19 @@ class ApiRegistry:
             exception handlers
         :return: The newly created FastAPI app
         """
-        path = f"/brick/{brick_name}/"
+        path = cls.get_brick_api_path(brick_name)
         return cls.register_api(
             path, docs_url=docs_url, with_exception_handlers=with_exception_handlers
         )
+
+    @classmethod
+    def get_brick_api_path(cls, brick_name: str) -> str:
+        """Get the mount path for a registered brick API.
+
+        :param brick_name: The brick name
+        :return: The mount path (e.g. "/brick/gws_eln/")
+        """
+        return f"/brick/{brick_name}/"
 
     @classmethod
     def configure_exception_handlers(cls, app: FastAPI) -> None:

@@ -2,12 +2,10 @@
 
 import reflex as rx
 from gws_core import RichText, RichTextDTO
-from gws_core.note.note_dto import NoteSaveDTO
-from gws_core.note.note_service import NoteService
-from gws_reflex_main import ReflexMainState
 from gws_reflex_main.gws_components import rich_text_component
 
 from ..components import example_tabs, page_layout
+from .rich_text_advanced_page import rich_text_advanced_page
 
 default_rich_text = RichText()
 default_rich_text.add_paragraph("This is a paragraph of sample text.")
@@ -43,20 +41,12 @@ class RichTextPageState(rx.State):
     @rx.var
     def rich_text_string(self) -> str:
         """Get the current rich text as a JSON string."""
-        return self._rich_text.to_dto().to_json_str()
+        return self._rich_text.to_dto().model_dump_json(indent=2)
 
     @rx.event
     def handle_rich_text_change(self, event_data: dict):
         """Handle changes from the rich text component."""
         self._rich_text = RichText.from_json(event_data)
-
-    @rx.event
-    async def save_as_note(self):
-        """Save the rich text content as a note in the user's account."""
-        main_state = await self.get_state(ReflexMainState)
-        with await main_state.authenticate_user():
-            note = NoteService.create(NoteSaveDTO(title="Rich Text Content"))
-            NoteService.update_content(note.id, self._rich_text.to_dto())
 
 
 def rich_text_page() -> rx.Component:
@@ -68,7 +58,6 @@ def rich_text_page() -> rx.Component:
             placeholder="Type something here...",
             value=RichTextPageState.rich_text,
             output_event=RichTextPageState.handle_rich_text_change,
-            use_custom_tools=True,
         ),
         rx.cond(
             RichTextPageState.is_not_empty,
@@ -79,17 +68,12 @@ def rich_text_page() -> rx.Component:
                     RichTextPageState.rich_text_string,
                     language="json",
                     margin_top="0.5em",
+                    max_height="400px",
                 ),
             ),
             rx.text("The rich text is currently empty.", color="gray", margin_top="1em"),
         ),
         rx.button("Reset Content", on_click=RichTextPageState.reset_rich_text, margin_top="1em"),
-        rx.button(
-            "Save as Note",
-            on_click=RichTextPageState.save_as_note,
-            margin_top="1em",
-            margin_left="1em",
-        ),
     )
 
     # Code example
@@ -143,4 +127,5 @@ rx.box(
             code=code_example,
             func=rich_text_component,
         ),
+        rich_text_advanced_page(),
     )

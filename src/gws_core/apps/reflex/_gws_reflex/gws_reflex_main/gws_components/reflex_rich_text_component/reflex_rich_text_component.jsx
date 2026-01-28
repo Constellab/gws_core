@@ -3,50 +3,53 @@ import { useEffect, useRef, useMemo, useState } from 'react';
 // Import scripts directly using ES6 import
 // These will be loaded and executed when the module loads
 // import '/public/external/gws_plugin/main.js';
-import '/public/external/gws_plugin/styles.css';
-import '/public/external/gws_plugin/light-theme.css';
+// TODO TO FIX
+import '/public/external/browser/styles.css';
+import '/public/external/browser/light-theme.css';
 import { dcInitComponents } from '/public/external/browser/dc-reflex.js';
 // Initialize the web components
 await dcInitComponents();
 
 
 /**
- * Custom hook to load custom tools from /public/custom_block.jsx
- * @param {boolean} enabled - Whether to load custom tools
+ * Custom hook to load custom tools from a JSX file specified in customToolsConfig.
+ * @param {object|null} customToolsConfig - Configuration with jsxFilePath and optional config dict
  * @param {object|null} authenticationInfo - Authentication info to pass to the custom tools factory
  * @returns {{ customTools: object|null, error: string|null }}
  */
-function useCustomToolsLoader(enabled, authenticationInfo) {
+function useCustomToolsLoader(customToolsConfig, authenticationInfo, customToolsEvent) {
   const [customTools, setCustomTools] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!customToolsConfig || !customToolsConfig.jsxFilePath) {
       setCustomTools(null);
       setError(null);
       return;
     }
 
+    const jsxFilePath = customToolsConfig.jsxFilePath;
+
     setError(null);
 
-    import('/public/custom_block.jsx')
+    import(jsxFilePath)
       .then((module) => {
         if (!module.getCustomTools) {
           throw new Error(
-            "The file '/public/custom_block.jsx' was loaded but does not export a 'getCustomTools' function. " +
-            "Please ensure the file contains: export function getCustomTools(authenticationInfo) { ... }"
+            `The file '${jsxFilePath}' was loaded but does not export a 'getCustomTools' function. ` +
+            "Please ensure the file contains: export function getCustomTools(config, authenticationInfo) { ... }"
           );
         }
         if (typeof module.getCustomTools !== 'function') {
           throw new Error(
-            "The 'getCustomTools' export in '/public/custom_block.jsx' must be a function. " +
+            `The 'getCustomTools' export in '${jsxFilePath}' must be a function. ` +
             `Received: ${typeof module.getCustomTools}`
           );
         }
-        const tools = module.getCustomTools(authenticationInfo);
+        const tools = module.getCustomTools(customToolsConfig, authenticationInfo, customToolsEvent);
         if (typeof tools !== 'object' || tools === null) {
           throw new Error(
-            "The 'getCustomTools' function in '/public/custom_block.jsx' must return an object. " +
+            `The 'getCustomTools' function in '${jsxFilePath}' must return an object. ` +
             `Received: ${typeof tools}`
           );
         }
@@ -56,20 +59,20 @@ function useCustomToolsLoader(enabled, authenticationInfo) {
         let errorMessage;
         if (err.message?.includes('Failed to fetch') || err.message?.includes('404')) {
           errorMessage =
-            "Failed to load custom tools: The file '/public/custom_block.jsx' was not found. " +
-            "Please ensure the file exists in your app's assets folder and will be served at '/public/custom_block.jsx'.";
+            `Failed to load custom tools: The file '${jsxFilePath}' was not found. ` +
+            "Please ensure the file exists in your app's assets folder.";
         } else if (err.message?.includes('SyntaxError') || err.name === 'SyntaxError') {
           errorMessage =
-            "Failed to load custom tools: Syntax error in '/public/custom_block.jsx'. " +
+            `Failed to load custom tools: Syntax error in '${jsxFilePath}'. ` +
             `Please check the file for JavaScript syntax errors. Details: ${err.message}`;
         } else {
           errorMessage =
-            `Failed to load custom tools from '/public/custom_block.jsx': ${err.message}`;
+            `Failed to load custom tools from '${jsxFilePath}': ${err.message}`;
         }
         console.error('[RichTextComponent] Custom tools loading error:', errorMessage, err);
         setError(errorMessage);
       });
-  }, [enabled, authenticationInfo]);
+  }, [customToolsConfig, authenticationInfo, customToolsEvent]);
 
   return { customTools, error };
 }
@@ -82,11 +85,12 @@ export function RichTextComponent({
   changeEventDebounceTime = null,
   outputEvent = null,  // Event handler callback
   customStyle = {},
-  useCustomTools = false,  // Whether to load custom tools from /public/custom_block.jsx
+  customToolsConfig = null,
   authenticationInfo = null,
+  customToolsEvent = null,
 }) {
   const componentRef = useRef(null);
-  const { customTools, error: customToolsError } = useCustomToolsLoader(useCustomTools, authenticationInfo);
+  const { customTools, error: customToolsError } = useCustomToolsLoader(customToolsConfig, authenticationInfo, customToolsEvent);
 
   // Combine all input data into a single JSON object
   const inputData = useMemo(() => ({
@@ -102,7 +106,6 @@ export function RichTextComponent({
     if (!element) return;
 
     // Set customTools directly on the element (can't be passed as JSON since it contains class references)
-    // Only set if we have loaded custom tools or if useCustomTools is false
     if (customTools) {
       element.customTools = customTools;
     }
@@ -139,11 +142,13 @@ export function RichTextComponent({
     );
   }
 
+  const hasCustomTools = customToolsConfig && typeof customToolsConfig === 'object' && customToolsConfig.jsxFilePath;
+
   return (
     <dc-text-editor
       ref={componentRef}
       inputData={JSON.stringify(inputData)}
-      useCustomTools={useCustomTools ? 'true' : 'false'}
+      useCustomTools={hasCustomTools ? 'true' : 'false'}
       authenticationInfo={JSON.stringify(authenticationInfo)}
       style={{ display: 'flex', flexDirection: 'column', width: '100%',
        ...(customStyle || {}) }}

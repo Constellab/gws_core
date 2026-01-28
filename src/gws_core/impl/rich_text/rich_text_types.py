@@ -8,6 +8,9 @@ from gws_core.impl.rich_text.block.rich_text_block import (
 )
 from gws_core.model.typing_manager import TypingManager
 
+RICH_TEXT_CURRENT_VERSION = 2
+RICH_TEXT_EDITORJS_VERSION = "2.31.0"
+
 
 class RichTextObjectType(Enum):
     """Different object that use the rich text editor
@@ -118,6 +121,21 @@ class RichTextBlock(BaseModelDTO):
 
 
 class RichTextDTO(BaseModelDTO):
-    version: int
-    editorVersion: str
+    version: int = RICH_TEXT_CURRENT_VERSION
+    editorVersion: str = RICH_TEXT_EDITORJS_VERSION
     blocks: list[RichTextBlock]
+
+    @staticmethod
+    def from_editor_js_json(editor_js_json: dict) -> "RichTextDTO":
+        """Populate the RichTextDTO from EditorJS JSON
+
+        :param editor_js_json: The EditorJS JSON data
+        :type editor_js_json: dict
+        """
+        return RichTextDTO.from_json(
+            {
+                "blocks": editor_js_json.get("blocks", []),
+                "editorVersion": editor_js_json.get("version", RICH_TEXT_EDITORJS_VERSION),
+                "version": RICH_TEXT_CURRENT_VERSION,
+            }
+        )

@@ -86,29 +86,64 @@ class ReflexMainStateBase(rx.State, mixin=True):
             # If already initialized, do nothing
             return
 
-        if not self._app_config:
-            self._app_config = self._load_app_config()
-
         # the router might not be ready on first request so we skip until next call
         # otherwise we cannot get query params
         if not self._app_router_ready():
             return
-        user_access_tokens = self._app_config.get("user_access_tokens", {})
 
-        if not self.authenticated_user_id:
-            self.authenticated_user_id = await self._check_user_token(user_access_tokens)
+        authenticated_user_id = await self._load_and_check_user_authentication(store_in_state=True)
 
         requires_authentication = self.requires_authentication()
 
-        if requires_authentication and not self.authenticated_user_id:
+        if requires_authentication and not authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
             # redirect to the unauthorized page
             raise Exception("User not authenticated")
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self._is_initialized = True
+        print("ReflexMainStateBase initialized")
 
         await self._on_initialized()
+
+    async def _load_and_check_user_authentication(self, store_in_state: bool = False) -> str | None:
+        """Load the app configuration and check user authentication.
+
+        This method can be called from both initialization flow and @rx.var contexts.
+        It loads the app config if needed and checks user authentication without
+        modifying the state unless explicitly requested.
+
+        Args:
+            store_in_state (bool): If True, stores the authenticated user ID in self.authenticated_user_id.
+                                   If False, only returns the user ID without storing it (useful for @rx.var contexts).
+                                   Defaults to False.
+
+        Returns:
+            str | None: The authenticated user ID if authentication succeeds, None otherwise.
+        """
+        # Load app config if not already loaded
+        if not self._app_config:
+            _app_config = self._load_app_config()
+            if store_in_state:
+                self._app_config = _app_config
+        else:
+            _app_config = self._app_config
+
+        if self.authenticated_user_id:
+            return self.authenticated_user_id
+
+        # Check if router is ready (needed to get query params)
+        if not self._app_router_ready():
+            return None
+
+        user_access_tokens = _app_config.get("user_access_tokens", {})
+        user_id = await self._check_user_token(user_access_tokens)
+
+        # Store in state if requested
+        if store_in_state and user_id:
+            self.authenticated_user_id = user_id
+
+        return user_id
 
     @abstractmethod
     async def _on_initialized(self) -> None:
@@ -206,13 +241,20 @@ class ReflexMainStateBase(rx.State, mixin=True):
         return os.environ.get("GWS_REQUIRES_AUTHENTICATION", "true").lower() == "true"
 
     async def check_authentication(self) -> bool:
-        if not self._is_initialized:
-            return False
-        if self.is_dev_mode():
-            return True
+        """Check if the current user is authenticated.
+
+        This method is safe to call from @rx.var contexts as it does not modify state
+        when called before initialization. It will load and check authentication without
+        storing the result in the state.
+
+        Returns:
+            bool: True if the user is authenticated (or if authentication is not required),
+                  False otherwise.
+        """
         if not self.requires_authentication():
             return True
-        return self.authenticated_user_id is not None
+        user_id = await self._load_and_check_user_authentication(store_in_state=False)
+        return user_id is not None
 
     def _get_user_access_token(self) -> str | None:
         """Get the user access token from the app configuration."""

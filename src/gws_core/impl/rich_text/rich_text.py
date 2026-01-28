@@ -30,7 +30,12 @@ from gws_core.impl.rich_text.rich_text_diff import (
     RichTextDiff,
 )
 from gws_core.impl.rich_text.rich_text_migrator import TeRichTextMigrator
-from gws_core.impl.rich_text.rich_text_types import RichTextBlock, RichTextDTO
+from gws_core.impl.rich_text.rich_text_types import (
+    RICH_TEXT_CURRENT_VERSION,
+    RICH_TEXT_EDITORJS_VERSION,
+    RichTextBlock,
+    RichTextDTO,
+)
 from gws_core.resource.r_field.serializable_r_field import SerializableObjectJson
 
 
@@ -41,9 +46,6 @@ class RichText(SerializableObjectJson):
     :rtype: [type]
     """
 
-    CURRENT_VERSION = 2
-    CURRENT_EDITOR_VERSION = "2.30.2"
-
     version: int
     editor_version: str
 
@@ -53,7 +55,7 @@ class RichText(SerializableObjectJson):
         self, rich_text_dto: RichTextDTO | None = None, target_version: int | None = None
     ) -> None:
         if target_version is None:
-            target_version = RichText.CURRENT_VERSION
+            target_version = RICH_TEXT_CURRENT_VERSION
 
         if rich_text_dto is None:
             rich_text_dto = self.create_rich_text_dto([])
@@ -103,9 +105,15 @@ class RichText(SerializableObjectJson):
 
         self.blocks.insert(index, block)
 
-    def _remove_block_at_index(self, block_index: int) -> RichTextBlock:
+    def remove_block_at_index(self, block_index: int) -> RichTextBlock:
         """Remove an element from the rich text content"""
         return self.blocks.pop(block_index)
+
+    def remove_block_by_id(self, block_id: str) -> None:
+        """Remove a block by its id"""
+        block_index = self.get_block_index_by_id(block_id)
+        if block_index >= 0:
+            self.remove_block_at_index(block_index)
 
     def replace_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Replace a block at the given index"""
@@ -192,7 +200,7 @@ class RichText(SerializableObjectJson):
 
             if result is not None:
                 # remove current block
-                self._remove_block_at_index(block_index)
+                self.remove_block_at_index(block_index)
 
                 if result.before:
                     before_paragraph = self.create_paragraph(self.generate_id(), result.before)
@@ -628,8 +636,8 @@ class RichText(SerializableObjectJson):
     def create_rich_text_dto(cls, blocks: list[RichTextBlock]) -> RichTextDTO:
         return RichTextDTO(
             blocks=blocks,
-            version=RichText.CURRENT_VERSION,
-            editorVersion=RichText.CURRENT_EDITOR_VERSION,
+            version=RICH_TEXT_CURRENT_VERSION,
+            editorVersion=RICH_TEXT_EDITORJS_VERSION,
         )
 
     @classmethod
