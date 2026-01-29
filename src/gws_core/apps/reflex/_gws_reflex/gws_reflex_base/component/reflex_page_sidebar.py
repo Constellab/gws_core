@@ -55,17 +55,16 @@ def _create_desktop_sidebar(
     )
 
 
-def _create_mobile_header(
-    header_content: rx.Component | None,
+def _create_mobile_header_bar(
     sidebar_drawer: rx.Component,
 ) -> rx.Component:
-    """Create the mobile/tablet header with hamburger menu."""
-    if header_content is None:
-        return rx.fragment()
+    """Create the mobile/tablet header bar with just the hamburger menu.
 
+    The actual header_content is rendered in the content wrapper to avoid
+    duplicating components (which can cause issues with dialogs).
+    """
     return rx.hstack(
         sidebar_drawer,
-        header_content,
         width="100%",
         align_items="center",
         spacing="3",
@@ -87,23 +86,23 @@ def _create_content_wrapper(
     content: rx.Component,
     header_content: rx.Component | None,
     sidebar_width: str,
+    has_mobile_header_bar: bool,
 ) -> rx.Component:
-    """Create a single content wrapper with responsive styling."""
-    padding_top_mobile = "5rem" if header_content is not None else "1rem"
+    """Create a single content wrapper with responsive styling.
+
+    The header_content is rendered only once here, avoiding duplicate
+    components (which can cause issues with dialogs bound to state).
+    """
+    padding_top_mobile = "5rem" if has_mobile_header_bar else "1rem"
 
     return rx.box(
-        # Desktop header (conditional)
+        # Header content rendered once with responsive styling
         rx.cond(
             header_content is not None,
             rx.box(
                 header_content,
                 width="100%",
                 padding_bottom="1rem",
-                display=rx.breakpoints(
-                    initial="none",  # Mobile: hidden
-                    sm="none",  # Tablet: hidden
-                    md="block",  # Desktop: visible
-                ),
             ),
             rx.fragment(),
         ),
@@ -147,6 +146,9 @@ def page_sidebar_component(
     - Desktop: Fixed sidebar on left, content on right with optional header on top
     - Mobile/Tablet: Hamburger menu with drawer sidebar, optional header bar on top
 
+    Note: header_content is rendered only once in the content wrapper to avoid
+    duplicating components (which can cause issues with dialogs bound to state).
+
     :param sidebar_content: The content to display in the sidebar
     :type sidebar_content: rx.Component
     :param content: The main content to display
@@ -161,14 +163,19 @@ def page_sidebar_component(
     :rtype: rx.Component
     """
     sidebar_drawer = _create_sidebar_drawer(sidebar_content, sidebar_width)
+    has_mobile_header_bar = header_content is not None
 
     return rx.box(
         # Desktop: Fixed sidebar
         _create_desktop_sidebar(sidebar_content, sidebar_width),
-        # Mobile/Tablet: Header with hamburger (if header provided)
-        _create_mobile_header(header_content, sidebar_drawer),
-        # Content wrapper (single instance with responsive styling)
-        _create_content_wrapper(content, header_content, sidebar_width),
+        # Mobile/Tablet: Header bar with hamburger menu only
+        rx.cond(
+            has_mobile_header_bar,
+            _create_mobile_header_bar(sidebar_drawer),
+            rx.fragment(),
+        ),
+        # Content wrapper (header_content rendered only once here)
+        _create_content_wrapper(content, header_content, sidebar_width, has_mobile_header_bar),
         width="100%",
         height=height,
         position="relative",
