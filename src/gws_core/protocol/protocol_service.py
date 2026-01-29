@@ -34,6 +34,7 @@ from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.scenario_template.scenario_template_service import ScenarioTemplateService
 from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
+from gws_core.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
@@ -1075,7 +1076,12 @@ class ProtocolService:
             config_params = agent_type.build_config_params_dict(
                 code=community_agent_version.code, params=params
             )
-        elif issubclass(agent_type, EnvAgent):
+        elif issubclass(agent_type, EnvAgent) or issubclass(agent_type, StreamlitEnvAgent):
+            config_params = agent_type.build_config_params_dict(
+                code=community_agent_version.code,
+                params=params,
+                env=community_agent_version.environment,
+            )
             config_params = agent_type.build_config_params_dict(
                 code=community_agent_version.code,
                 params=params,
@@ -1116,7 +1122,7 @@ class ProtocolService:
         config_code_spec.visibility = "private"
         process_model.config.update_spec(EnvAgent.CODE_CONFIG_NAME, config_code_spec)
 
-        if issubclass(agent_type, EnvAgent):
+        if issubclass(agent_type, EnvAgent) or issubclass(agent_type, StreamlitEnvAgent):
             # set the default visibility of config spec 'env' to 'private'
             config_env_spec = process_model.config.get_spec(EnvAgent.ENV_CONFIG_NAME)
             config_env_spec.visibility = "private"
