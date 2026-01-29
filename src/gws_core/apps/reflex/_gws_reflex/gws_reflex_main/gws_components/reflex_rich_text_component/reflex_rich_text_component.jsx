@@ -1,12 +1,9 @@
 import { useEffect, useRef, useMemo, useState } from 'react';
 
 // Import scripts directly using ES6 import
-// These will be loaded and executed when the module loads
-// import '/public/external/gws_plugin/main.js';
-// TODO TO FIX
-import '/public/external/browser/styles.css';
-import '/public/external/browser/light-theme.css';
-import { dcInitComponents } from '/public/external/browser/dc-reflex.js';
+import '/public/external/gws_plugin/styles.css';
+import '/public/external/gws_plugin/light-theme.css';
+import { dcInitComponents } from '/public/external/gws_plugin/dc-reflex.js';
 // Initialize the web components
 await dcInitComponents();
 

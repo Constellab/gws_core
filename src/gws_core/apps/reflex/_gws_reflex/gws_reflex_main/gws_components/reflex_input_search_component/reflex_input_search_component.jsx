@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 
-import '/public/external/browser/styles.css';
-import '/public/external/browser/light-theme.css';
-import { dcInitComponents } from '/public/external/browser/dc-reflex.js';
+import '/public/external/gws_plugin/styles.css';
+import '/public/external/gws_plugin/light-theme.css';
+import { dcInitComponents } from '/public/external/gws_plugin/dc-reflex.js';
 
 await dcInitComponents();
 

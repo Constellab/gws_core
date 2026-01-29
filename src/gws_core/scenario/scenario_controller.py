@@ -3,7 +3,6 @@ from fastapi import Depends
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
-from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
@@ -61,7 +60,6 @@ def advanced_search(
     """
     Advanced search on scenario
     """
-    raise BadRequestException("C'est nuuufuul")
     return ScenarioService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
