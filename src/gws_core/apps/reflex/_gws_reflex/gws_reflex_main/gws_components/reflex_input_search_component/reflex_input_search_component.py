@@ -1,8 +1,9 @@
 from typing import Any, Generic, TypeVar
 
 import reflex as rx
-from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from reflex.vars import Var
+
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 
 asset_path = rx.asset("reflex_input_search_component.jsx", shared=True)
 public_js_path = "$/public/" + asset_path
@@ -25,6 +26,25 @@ class InputSearchResultDTO(BaseModelDTO, Generic[InputSearchResultObjectType]):
     id: str
     display_text: str
     object: InputSearchResultObjectType
+
+    @staticmethod
+    def from_json_object(
+        data: dict, object_type: type[InputSearchResultObjectType]
+    ) -> "InputSearchResultDTO[InputSearchResultObjectType]":
+        """Create an InputSearchResultDTO from a JSON dictionary.
+
+        :param data: The JSON dictionary representing the search result item
+        :type data: dict
+        :param object_type: The type of the object contained in the search result
+        :type object_type: type[InputSearchResultObjectType]
+        :return: An instance of InputSearchResultDTO
+        :rtype: InputSearchResultDTO[InputSearchResultObjectType]
+        """
+        return InputSearchResultDTO(
+            id=data["id"],
+            display_text=data["display_text"],
+            object=object_type.from_json(data["object"]),
+        )
 
 
 class InputSearchComponent(rx.Component):
@@ -58,6 +78,9 @@ class InputSearchComponent(rx.Component):
     page_size: Var[int]
     """Number of items per page in the search results. Defaults to 20."""
 
+    disabled: Var[bool]
+    """If True, disables the input field. Defaults to False."""
+
     item_selected: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
     """Event handler called when an item is selected from the search results."""
 
@@ -75,6 +98,8 @@ def input_search_component(
     min_input_search_length: int = 2,
     init_search_on_focus: bool = False,
     page_size: int = 20,
+    disabled: bool = False,
+    **kwargs,
 ):
     """Create an InputSearchComponent with the given configuration.
 
@@ -105,6 +130,8 @@ def input_search_component(
     :type init_search_on_focus: bool, optional
     :param page_size: Number of items per page in the search results, defaults to 20
     :type page_size: int, optional
+    :param disabled: If True, disables the input field, defaults to False
+    :type disabled: bool, optional
     :return: An InputSearchComponent instance
     :rtype: InputSearchComponent
 
@@ -154,4 +181,6 @@ def input_search_component(
         min_input_search_length=min_input_search_length,
         init_search_on_focus=init_search_on_focus,
         page_size=page_size,
+        disabled=disabled,
+        **kwargs,
     )

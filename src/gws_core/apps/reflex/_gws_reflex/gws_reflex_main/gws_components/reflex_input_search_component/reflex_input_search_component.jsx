@@ -16,6 +16,7 @@ export function InputSearchComponent({
     minInputSearchLength = 2,
     initSearchOnFocus = false,
     pageSize = 20,
+    disabled = false,
 }) {
     const componentRef = useRef(null);
 
@@ -32,6 +33,13 @@ export function InputSearchComponent({
         if (!element) return;
         element.selectedItem = selectedItem;
     }, [selectedItem]);
+
+    // Set disabled on the element when it changes
+    useEffect(() => {
+        const element = componentRef.current;
+        if (!element) return;
+        element.disabled = disabled;
+    }, [disabled]);
 
     // Set up event listeners for output events
     useEffect(() => {
