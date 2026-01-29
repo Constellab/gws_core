@@ -66,7 +66,7 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         return ReflexAuthUser(auth_context)
 
     @rx.var
-    async def get_reflex_user_auth_info(self) -> ReflexUserAuthInfo:
+    async def get_reflex_user_auth_info(self) -> ReflexUserAuthInfo | None:
         """Get the Reflex user authentication info.
 
         Returns:
@@ -74,5 +74,5 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         """
         user_access_token = self._get_user_access_token()
         if not user_access_token:
-            raise Exception("User access token not found")
+            return None
         return ReflexUserAuthInfo(app_id=self.get_app_id(), user_access_token=user_access_token)
