@@ -1,5 +1,11 @@
 # The component are exported at this level to only load them when they are used
 # Because it triggers the loading of the reflex_plugin that load js assets
+from .reflex_input_search_component.reflex_input_search_component import (
+    InputSearchResultDTO as InputSearchResultDTO,
+)
+from .reflex_input_search_component.reflex_input_search_component import (
+    input_search_component as input_search_component,
+)
 from .reflex_rich_text_component.reflex_rich_text_component import (
     RichTextCustomBlocksConfig as RichTextCustomBlocksConfig,
 )

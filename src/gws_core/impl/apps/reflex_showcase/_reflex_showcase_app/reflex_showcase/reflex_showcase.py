@@ -5,6 +5,7 @@ from .pages import (
     dialog_page,
     doc_component_page,
     home_page,
+    input_search_page,
     layout_page,
     resource_components_page,
     rich_text_page,
@@ -47,6 +48,7 @@ def sidebar() -> rx.Component:
             sidebar_link("Dialogs", "/dialogs", "💬"),
             sidebar_link("Layout Components", "/layout", "📐"),
             sidebar_link("Doc Component", "/doc-component", "📄"),
+            sidebar_link("Input search", "/input-search", "🔎"),
             width="100%",
             spacing="2",
         ),
@@ -113,3 +115,9 @@ def doc_component():
 def resource_components():
     """Resource components demo page."""
     return layout(resource_components_page.resource_components_page())
+
+
+@rx.page(route="/input-search")
+def input_search():
+    """Input search component demo page."""
+    return layout(input_search_page.input_search_page())

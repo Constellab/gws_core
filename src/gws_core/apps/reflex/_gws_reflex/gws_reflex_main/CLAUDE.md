@@ -83,6 +83,13 @@ Rich text editor component using dc-text-editor Angular component. Provides a WY
 
 ---
 
+## Input Search Components
+
+### `input_search_component()`
+Input search component using dc-input-search web component. Provides a searchable input field with autocomplete functionality. Triggers search requests as the user types and displays results in a dropdown.
+
+---
+
 ## Usage
 
 Import components and state from `gws_reflex_main` module:
