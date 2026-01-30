@@ -9,6 +9,23 @@ await dcInitComponents();
 
 
 /**
+ * Normalize asset path for dev/prod mode compatibility.
+ * In dev mode (Vite dev server), static assets in /public need the /public prefix for dynamic imports.
+ * In prod mode (built/bundled), assets are served from root without the /public prefix.
+ * @param {string} path - The asset path (e.g., '/external/app/file.js')
+ * @returns {string} The normalized path with /public prefix in dev mode
+ */
+function normalizeAssetPath(path) {
+  if (!path) return path;
+  // In dev mode, add /public prefix if not already present
+  if (import.meta.env.DEV && !path.startsWith('/public')) {
+    return '/public' + path;
+  }
+  return path;
+}
+
+
+/**
  * Custom hook to load custom tools from a JSX file specified in customToolsConfig.
  * @param {object|null} customToolsConfig - Configuration with jsxFilePath and optional config dict
  * @param {object|null} authenticationInfo - Authentication info to pass to the custom tools factory
@@ -25,9 +42,13 @@ function useCustomToolsLoader(customToolsConfig, authenticationInfo, customTools
       return;
     }
 
-    const jsxFilePath = customToolsConfig.jsxFilePath;
+    // Normalize the path for dev/prod mode compatibility
+    const jsxFilePath = normalizeAssetPath(customToolsConfig.jsxFilePath);
 
     setError(null);
+    // Pre-compute the dc-reflex.js path for custom tools to use
+    const DC_REFLEX_PATH = normalizeAssetPath('/external/gws_plugin/dc-reflex.js');
+
 
     import(jsxFilePath)
       .then((module) => {
@@ -43,7 +64,12 @@ function useCustomToolsLoader(customToolsConfig, authenticationInfo, customTools
             `Received: ${typeof module.getCustomTools}`
           );
         }
-        const tools = module.getCustomTools(customToolsConfig, authenticationInfo, customToolsEvent);
+        // Add dcReflexPath to config so custom tools can import from dc-reflex.js
+        const configWithPaths = {
+          ...customToolsConfig,
+          dcReflexPath: DC_REFLEX_PATH,
+        };
+        const tools = module.getCustomTools(configWithPaths, authenticationInfo, customToolsEvent);
         if (typeof tools !== 'object' || tools === null) {
           throw new Error(
             `The 'getCustomTools' function in '${jsxFilePath}' must return an object. ` +

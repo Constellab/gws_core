@@ -10,11 +10,9 @@ from gws_reflex_main.gws_components import RichTextCustomBlocksConfig, rich_text
 
 from ..components import example_tabs, page_layout
 
-asset_path = rx.asset("rich_text_extension.jsx", shared=True)
+asset_path = rx.asset("rich_text_extension.js", shared=True)
 
-jsx_file_content = Path(__file__).parent.joinpath("rich_text_extension.jsx").read_text()
-
-public_path = "/public" + asset_path
+js_file_content = Path(__file__).parent.joinpath("rich_text_extension.js").read_text()
 
 
 @rich_text_block_decorator("CustomBlock", human_name="Custom Block")
@@ -78,7 +76,7 @@ def rich_text_advanced_page() -> rx.Component:
             value=RichTextAdvancedPageState.rich_text,
             output_event=RichTextAdvancedPageState.handle_rich_text_change,
             custom_tools_config=RichTextCustomBlocksConfig(
-                jsx_file_path=public_path,
+                jsx_file_path=asset_path,
                 custom_blocks={"CustomBlock": CustomBlock},
             ),
         ),
@@ -113,8 +111,7 @@ class CustomBlock(RichTextBlockDataSpecial):
         return ""
 
 
-asset_path = rx.asset("rich_text_extension.jsx", shared=True)
-public_path = "/public" + asset_path
+asset_path = rx.asset("rich_text_extension.js", shared=True)
 
 
 class MyState(rx.State):
@@ -139,7 +136,7 @@ rich_text_component(
     value=MyState.rich_text,
     output_event=MyState.handle_rich_text_change,
     custom_tools_config=RichTextCustomBlocksConfig(
-        jsx_file_path=public_path,
+        jsx_file_path=asset_path,
         custom_blocks={"CustomBlock": CustomBlock},
     ),
 )"""
@@ -156,9 +153,9 @@ rich_text_component(
             func=rich_text_component,
             additional_tabs=[
                 (
-                    "JSX Component",
+                    "JS Component",
                     rx.code_block(
-                        jsx_file_content,
+                        js_file_content,
                         language="javascript",
                     ),
                 ),

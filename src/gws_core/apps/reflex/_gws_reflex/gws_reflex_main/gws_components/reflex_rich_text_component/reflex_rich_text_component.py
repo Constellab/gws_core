@@ -148,7 +148,6 @@ def rich_text_component(
             from gws_reflex_main.gws_components import RichTextCustomBlocksConfig, rich_text_component
 
             asset_path = rx.asset("rich_text_extension.jsx", shared=True)
-            public_path = "/public" + asset_path
 
             class MyState(rx.State):
                 _rich_text: RichText = RichText()
@@ -166,7 +165,7 @@ def rich_text_component(
                 value=MyState.rich_text,
                 output_event=MyState.handle_rich_text_change,
                 custom_tools_config=RichTextCustomBlocksConfig(
-                    jsx_file_path=public_path,
+                    jsx_file_path=asset_path,  # No /public prefix needed - handled automatically
                     custom_blocks={"CustomBlock": CustomBlock},
                 ),
             )
