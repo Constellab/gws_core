@@ -20,21 +20,25 @@ class ScenarioRunException(BadRequestException):
     :type BadRequestException: [type]
     """
 
-    original_exception: Exception
+    original_exception: Exception | None
     scenario: Scenario
 
     def __init__(
         self,
         scenario: Scenario,
         exception_detail: str,
-        unique_code: str,
-        instance_id: str,
-        exception: Exception,
+        unique_code: str | None = None,
+        instance_id: str | None = None,
+        exception: Exception | None = None,
     ) -> None:
         self.original_exception = exception
         self.scenario = scenario
 
-        detail_arg: dict = {"error": exception_detail, "scenario": scenario.id}
+        detail_arg: dict = {
+            "error": exception_detail,
+            "scenario": scenario.title,
+            "scenario_url": FrontService.get_scenario_url(scenario.id),
+        }
         super().__init__(
             GWSException.SCENARIO_RUN_EXCEPTION.value,
             unique_code=unique_code,
@@ -44,8 +48,8 @@ class ScenarioRunException(BadRequestException):
 
     @staticmethod
     def from_exception(scenario: Scenario, exception: Exception) -> ScenarioRunException:
-        unique_code: str
-        instance_id: str
+        unique_code: str | None
+        instance_id: str | None
 
         # create from a know exception
         if isinstance(exception, ProcessRunException):

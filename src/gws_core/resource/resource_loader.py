@@ -35,17 +35,21 @@ class ResourceLoader:
     mode: ShareEntityCreateMode
     resource_origin: ResourceOrigin | None
 
+    skip_tags: bool
+
     def __init__(
         self,
         resource_folder: str,
         mode: ShareEntityCreateMode,
         resource_origin: ResourceOrigin | None = None,
+        skip_tags: bool = False,
     ) -> None:
         self.info_json = None
         self._resource_folder = resource_folder
         self._children_resources = {}
         self.mode = mode
         self.resource_origin = resource_origin
+        self.skip_tags = skip_tags
 
     def is_resource_zip(self) -> bool:
         """Return true if the zip file is a resource zip file"""
@@ -97,12 +101,14 @@ class ResourceLoader:
             zip_resource.resource_typing_name
         )
 
-        tags_dict = zip_resource.tags or []
-        tags = TagHelper.tags_dto_to_list(tags_dict)
+        tags = []
+        if not self.skip_tags:
+            tags_dict = zip_resource.tags or []
+            tags = TagHelper.tags_dto_to_list(tags_dict)
 
-        # Set the external lab origin for all tags
-        for tag in tags:
-            tag.set_external_lab_origin(self.get_origin_info().lab_id)
+            # Set the external lab origin for all tags
+            for tag in tags:
+                tag.set_external_lab_origin(self.get_origin_info().lab_id)
 
         resource_model_id: str | None = None
         if self.mode == ShareEntityCreateMode.KEEP_ID:
@@ -224,8 +230,9 @@ class ResourceLoader:
         compress_file_path: str,
         mode: ShareEntityCreateMode,
         resource_origin: ResourceOrigin | None = None,
+        skip_tags: bool = False,
     ) -> "ResourceLoader":
         """Uncompress a file and create a ResourceLoader"""
         temp_dir = Settings.get_instance().make_temp_dir()
         Compress.smart_decompress(compress_file_path, temp_dir)
-        return ResourceLoader(temp_dir, mode, resource_origin)
+        return ResourceLoader(temp_dir, mode, resource_origin, skip_tags)

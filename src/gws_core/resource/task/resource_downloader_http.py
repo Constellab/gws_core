@@ -58,6 +58,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
                 default_value="Skip if exists",
             ),
+            "skip_tags": ResourceDownloaderBase.skip_tags_config,
         }
     )
 
@@ -98,7 +99,11 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         )
 
         resource = self.create_resource_from_file(
-            resource_file, uncompressed_option, resource_loader_mode, resource_origin
+            resource_file,
+            uncompressed_option,
+            resource_loader_mode,
+            resource_origin,
+            skip_tags=params.get_value("skip_tags"),
         )
 
         return {"resource": resource}
@@ -161,7 +166,13 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         link: str,
         uncompress: Literal["auto", "yes", "no"],
         create_option: ResourceDownloaderCreateOption,
+        skip_tags: bool = False,
     ) -> ConfigParams:
         return ConfigParams(
-            {cls.LINK_PARAM_NAME: link, "uncompress": uncompress, "create_option": create_option}
+            {
+                cls.LINK_PARAM_NAME: link,
+                "uncompress": uncompress,
+                "create_option": create_option,
+                "skip_tags": skip_tags,
+            }
         )

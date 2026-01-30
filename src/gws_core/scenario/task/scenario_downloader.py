@@ -4,7 +4,7 @@ import requests
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.service.front_service import FrontService
@@ -36,6 +36,7 @@ from gws_core.share.shared_dto import (
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
@@ -93,6 +94,16 @@ class ScenarioDownloader(Task):
                 allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
                 default_value="Skip if exists",
             ),
+            "skip_scenario_tags": BoolParam(
+                default_value=False,
+                human_name="Skip scenario tags",
+                short_description="If true, the scenario tags will not be set in the destination",
+            ),
+            "skip_resource_tags": BoolParam(
+                default_value=False,
+                human_name="Skip resource tags",
+                short_description="If true, the resource tags will not be set in the destination",
+            ),
         }
     )
 
@@ -101,6 +112,8 @@ class ScenarioDownloader(Task):
     resource_models: dict[str, ResourceModel]
 
     downloaded_resources: dict[str, ImportedResource]
+
+    skip_resource_tags: bool
 
     # define the percentage of the progress bar for each step
     INIT_EXP_PERCENT = 10
@@ -144,6 +157,7 @@ class ScenarioDownloader(Task):
             scenario_info.protocol.data.graph, params["resource_mode"]
         )
 
+        self.skip_resource_tags = params.get_value("skip_resource_tags")
         self.download_resources(resource_ids, self.share_entity, create_mode)
 
         self.update_progress_value(
@@ -152,7 +166,8 @@ class ScenarioDownloader(Task):
 
         scenario_loader = self.load_scenario(scenario_info, create_mode)
 
-        scenario = self.build_scenario(scenario_loader)
+        skip_scenario_tags = params.get_value("skip_scenario_tags")
+        scenario = self.build_scenario(scenario_loader, skip_scenario_tags)
 
         return {"scenario": ScenarioResource(scenario.id)}
 
@@ -216,7 +231,7 @@ class ScenarioDownloader(Task):
         for resource_id in resource_ids:
             # create a sub dispatcher to define a prefix
             sub_dispatcher = self.message_dispatcher.create_sub_dispatcher(
-                prefix=f"[Resource n°{i}]"
+                prefix=f"[Resource n°{i}] "
             )
 
             # if the KEEP_ID mode is activated, and the resource exists in the current lab, skip the download
@@ -235,7 +250,9 @@ class ScenarioDownloader(Task):
                     self.INIT_EXP_PERCENT
                     + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
                 )
-                sub_dispatcher.notify_progress_value(current_percent, "Downloading the resource.")
+                sub_dispatcher.notify_progress_value(
+                    current_percent, f"Downloading the resource '{resource_id}'."
+                )
 
                 url = share_entity.get_resource_route(resource_id)
                 self.download_resource(url, sub_dispatcher, create_mode)
@@ -243,7 +260,9 @@ class ScenarioDownloader(Task):
             current_percent = (
                 self.INIT_EXP_PERCENT + ((i) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
             )
-            sub_dispatcher.notify_progress_value(current_percent, "Resource loaded")
+            sub_dispatcher.notify_progress_value(
+                current_percent, f"Resource '{resource_id}' loaded"
+            )
 
             i += 1
 
@@ -260,7 +279,9 @@ class ScenarioDownloader(Task):
         resource_file = resource_downloader.download()
 
         message_dispatcher.notify_info_message("Loading the resource")
-        resource_loader = ResourceLoader.from_compress_file(resource_file, create_mode)
+        resource_loader = ResourceLoader.from_compress_file(
+            resource_file, create_mode, skip_tags=self.skip_resource_tags
+        )
 
         # store the loader to clean at the end
         self.resource_loaders.append(resource_loader)
@@ -277,7 +298,9 @@ class ScenarioDownloader(Task):
         return resource
 
     @GwsCoreDbManager.transaction()
-    def build_scenario(self, scenario_load: ScenarioLoader) -> Scenario:
+    def build_scenario(
+        self, scenario_load: ScenarioLoader, skip_scenario_tags: bool = False
+    ) -> Scenario:
         self.log_info_message("Building the scenario")
 
         scenario = scenario_load.get_scenario()
@@ -287,14 +310,10 @@ class ScenarioDownloader(Task):
         scenario.save()
         protocol_model.save_full()
 
-        self.log_info_message("Saving the scenario tags")
-        tags = scenario_load.get_tags()
-        # set the lab origin for the tags
-        for tag in tags:
-            tag.set_external_lab_origin(self.share_entity.origin.lab_id)
-        # Add tags
-        entity_tags: EntityTagList = EntityTagList(TagEntityType.SCENARIO, scenario.id)
-        entity_tags.add_tags(tags)
+        if not skip_scenario_tags:
+            self.save_scenario_tags(scenario.id, scenario_load.get_tags())
+        else:
+            self.log_info_message("Skipping scenario tags")
 
         self.log_info_message("Saving the resources")
 
@@ -420,14 +439,19 @@ class ScenarioDownloader(Task):
         if old_resource_id in self.resource_models:
             return self.resource_models[old_resource_id]
 
-        resource_model = ResourceModel.save_from_resource(
-            resource,
-            origin=ResourceOrigin.IMPORTED_FROM_LAB,
-            scenario=scenario,
-            task_model=task_model,
-            port_name=task_port_name,
-            flagged=flagged,
-        )
+        try:
+            resource_model = ResourceModel.save_from_resource(
+                resource,
+                origin=ResourceOrigin.IMPORTED_FROM_LAB,
+                scenario=scenario,
+                task_model=task_model,
+                port_name=task_port_name,
+                flagged=flagged,
+            )
+        except Exception as err:
+            raise Exception(
+                f"Error while saving resource withld id '{old_resource_id}'. {str(err)}"
+            ) from err
 
         # save the origin for the input resource
         SharedResource.create_from_lab_info(
@@ -476,11 +500,36 @@ class ScenarioDownloader(Task):
                     "Error while marking the resource as received: " + response.text
                 )
 
+    def save_scenario_tags(self, scenario_id: str, tags: list[Tag]) -> None:
+        self.log_info_message("Saving the scenario tags")
+
+        # set the lab origin for the tags
+        for tag in tags:
+            tag.set_external_lab_origin(self.share_entity.origin.lab_id)
+
+        # Add tags
+        try:
+            entity_tags: EntityTagList = EntityTagList(TagEntityType.SCENARIO, scenario_id)
+            entity_tags.add_tags(tags)
+        except Exception as err:
+            raise Exception(
+                "Error while saving scenario tags. You can skip tags saving in the config. "
+                + str(err)
+            ) from err
+
     @classmethod
     def build_config(
         cls,
         link: str,
         mode: ScenarioDownloaderResourceMode,
         create_option: ScenarioDownloaderCreateOption,
+        skip_scenario_tags: bool = False,
+        skip_resource_tags: bool = False,
     ) -> ConfigParamsDict:
-        return {"link": link, "resource_mode": mode, "create_option": create_option}
+        return {
+            "link": link,
+            "resource_mode": mode,
+            "create_option": create_option,
+            "skip_scenario_tags": skip_scenario_tags,
+            "skip_resource_tags": skip_resource_tags,
+        }

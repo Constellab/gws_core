@@ -28,7 +28,9 @@ class GWSException(Enum):
     INVALID_PARAM_VALUE = (
         "Invalid value '{{param_value}}' for the parameter '{{param_name}}'. Error : {{error}}"
     )
-    SCENARIO_RUN_EXCEPTION = "{{error}} | Scenario : '{{scenario}}'"
+    SCENARIO_RUN_EXCEPTION = (
+        "{{error}} | Scenario : '<a href=\"{{scenario_url}}\">{{scenario}}</a>'"
+    )
     TASK_BUILD_EXCEPTION = "{{error}} | Task : '{{instance_name}}'"
     PROTOCOL_BUILD_EXCEPTION = "{{error}} | Protocol : '{{instance_name}}'"
     MISSING_INPUT_RESOURCES = "The inputs '{{port_names}}' were not provided but are mandatory"

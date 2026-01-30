@@ -3,7 +3,7 @@ from typing import Literal
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -40,6 +40,12 @@ class ResourceDownloaderBase(Task):
         short_description="Option to uncompress the file if it is compresses.",
     )
 
+    skip_tags_config = BoolParam(
+        default_value=False,
+        human_name="Skip tags",
+        short_description="If true, the resource tags will not be set in the destination",
+    )
+
     resource_loader: ResourceLoader | None = None
 
     @abstractmethod
@@ -52,6 +58,7 @@ class ResourceDownloaderBase(Task):
         uncompress_option: Literal["auto", "yes", "no"],
         resource_loader_mode: ShareEntityCreateMode,
         resource_origin: ResourceOrigin | None = None,
+        skip_tags: bool = False,
     ) -> Resource:
         """Methode to create the resource from a file (once downloaded) and return it as a task output"""
 
@@ -70,7 +77,7 @@ class ResourceDownloaderBase(Task):
         try:
             self.log_info_message("Uncompressing the file")
             self.resource_loader = ResourceLoader.from_compress_file(
-                resource_file, resource_loader_mode, resource_origin
+                resource_file, resource_loader_mode, resource_origin, skip_tags
             )
         except Exception as err:
             if uncompress_option == "yes":

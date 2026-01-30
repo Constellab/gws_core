@@ -41,6 +41,7 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
                 optional=True,
             ),
             "uncompress": ResourceDownloaderBase.uncompress_config,
+            "skip_tags": ResourceDownloaderBase.skip_tags_config,
         }
     )
 
@@ -64,6 +65,9 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         resource_file = s3_bucket.get_object(params.get_value("object_key"))
 
         resource = self.create_resource_from_file(
-            resource_file, params["uncompress"], ShareEntityCreateMode.NEW_ID
+            resource_file,
+            params["uncompress"],
+            ShareEntityCreateMode.NEW_ID,
+            skip_tags=params.get_value("skip_tags"),
         )
         return {"resource": resource}

@@ -4,6 +4,7 @@ from time import sleep
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -110,12 +111,16 @@ class ScenarioProxy:
                 self.delete()
             error_info = self._scenario.get_error_info()
             if error_info:
-                raise Exception(error_info.detail)
+                raise ScenarioRunException(self._scenario, error_info.detail)
             else:
-                raise Exception("Error during the execution of the scenario")
+                raise ScenarioRunException(
+                    self._scenario, "Error during the execution of the scenario"
+                )
 
         if exitcode != 0:
-            raise Exception("Error in during the execution of the scenario")
+            raise ScenarioRunException(
+                self._scenario, "Error in during the execution of the scenario"
+            )
 
     def run_async(self) -> ScenarioWaiterBasic:
         """Run the scenario in a separate process but don't wait for it to finish

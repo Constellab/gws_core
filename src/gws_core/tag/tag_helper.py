@@ -1,10 +1,8 @@
-from datetime import datetime
-
 from numpy import array, meshgrid
 
-from gws_core.tag.tag_dto import TagDTO, TagValueFormat
+from gws_core.tag.tag_dto import TagDTO
 
-from .tag import Tag, TagValueType
+from .tag import Tag
 
 
 class TagHelper:
@@ -58,7 +56,7 @@ class TagHelper:
     @classmethod
     def get_all_tags_combinasons(cls, distinct_tags: dict[str, list[str]]) -> list[dict[str, str]]:
         """Return a list of all possible combinations of tags"""
-        tag_values = [v for v in distinct_tags.values()]
+        tag_values = list(distinct_tags.values())
 
         # 2D array where each element in a array representing a combination
         result = array(meshgrid(*tag_values)).T.reshape(-1, len(tag_values))
@@ -69,47 +67,8 @@ class TagHelper:
 
         # loop over all combinations to retrieve key for each value
         for combination in result:
-            tag_combinasion = {}
-            i = 0
-            for value in combination:
-                tag_combinasion[tag_keys[i]] = value
-                i += 1
-            result_2.append(tag_combinasion)
+            tag_combination = {}
+            for i, value in enumerate(combination):
+                tag_combination[tag_keys[i]] = value
+            result_2.append(tag_combination)
         return result_2
-
-    ################################ Tag value check ################################
-
-    @classmethod
-    def check_and_convert_value(
-        cls, value: TagValueType, value_format: TagValueFormat
-    ) -> TagValueType:
-        if value is None:
-            raise Exception("The tag value cannot be None")
-        try:
-            if cls._check_value(value, value_format):
-                return value
-
-            return cls.convert_str_value_to_type(value, value_format)
-        except:
-            raise Exception(f"Invalid value {value}, expected type {value_format.value}")
-
-    @classmethod
-    def _check_value(cls, value: TagValueType, value_format: TagValueFormat) -> bool:
-        if value is None:
-            return False
-        if value_format == TagValueFormat.INTEGER:
-            return isinstance(value, int)
-        elif value_format == TagValueFormat.FLOAT:
-            return isinstance(value, float)
-        elif value_format == TagValueFormat.DATETIME:
-            return isinstance(value, datetime)
-        else:
-            return isinstance(value, str)
-
-    @classmethod
-    def convert_str_value_to_type(cls, value: str, value_format: TagValueFormat) -> TagValueType:
-        return Tag.convert_str_value_to_type(value, value_format)
-
-    @classmethod
-    def convert_value_to_str(cls, value: TagValueType) -> str:
-        return Tag.convert_value_to_str(value)

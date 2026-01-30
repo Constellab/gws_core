@@ -276,7 +276,9 @@ argument-hint: [{frontmatter.argument_hint}]
 
         # Check if Claude Code is installed
         if not self.is_claude_code_installed():
-            typer.echo("Claude Code is not installed. Nothing to update.")
+            typer.echo(
+                "Claude Code is not installed. Nothing to update. Run 'gws claude install' to install."
+            )
             return 0
 
         typer.echo("Claude Code is installed. Proceeding with update...\n")

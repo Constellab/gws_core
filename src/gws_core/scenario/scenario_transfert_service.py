@@ -1,4 +1,3 @@
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.scenario.scenario import Scenario

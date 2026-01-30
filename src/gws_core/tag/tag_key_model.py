@@ -7,9 +7,8 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import JSONField
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-from gws_core.tag.tag import TagValueType
+from gws_core.tag.tag import Tag, TagValueType
 from gws_core.tag.tag_dto import TagKeyModelDTO, TagValueFormat
-from gws_core.tag.tag_helper import TagHelper
 
 from ..core.model.model import Model
 
@@ -33,7 +32,7 @@ class TagKeyModel(Model):
     additional_infos_specs: dict = JSONField(null=True)
 
     def convert_str_value_to_type(self, value: str) -> TagValueType:
-        return TagHelper.convert_str_value_to_type(value, self.value_format)
+        return Tag.convert_value_to_type(value, self.value_format)
 
     def to_dto(self) -> TagKeyModelDTO:
         return TagKeyModelDTO(

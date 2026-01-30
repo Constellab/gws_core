@@ -13,20 +13,20 @@ class BaseHTTPException(HTTPException):
     """
 
     detail: str
-    unique_code: str
-    detail_args: dict
-    headers: dict
-    instance_id: str
+    unique_code: str | None
+    detail_args: dict | None
+    headers: dict | None
+    instance_id: str | None
     show_as: ExceptionShowMode
 
     def __init__(
         self,
         http_status_code: int,
         detail: str,
-        unique_code: str = None,
-        detail_args: dict = None,
-        headers: dict = None,
-        instance_id: str = None,
+        unique_code: str | None = None,
+        detail_args: dict | None = None,
+        headers: dict | None = None,
+        instance_id: str | None = None,
         show_as: ExceptionShowMode = "error",
     ) -> None:
         """Throw a generic exception

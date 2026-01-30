@@ -1,4 +1,3 @@
-
 from peewee import BooleanField, CharField, Expression, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
@@ -14,7 +13,6 @@ from gws_core.tag.tag_dto import (
     TagValueFormat,
 )
 from gws_core.tag.tag_entity_type import TagEntityType
-from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_value_model import TagValueModel
 
@@ -41,11 +39,21 @@ class EntityTag(Model):
     is_propagable = BooleanField(default=False)
 
     def get_tag_value(self) -> TagValueType:
-        return TagHelper.convert_str_value_to_type(self.tag_value, self.value_format)
+        return Tag.convert_value_to_type(self.tag_value, self.value_format)
 
     def set_value(self, value: TagValueType) -> None:
-        checked_value = TagHelper.check_and_convert_value(value, self.value_format)
-        self.tag_value = TagHelper.convert_value_to_str(checked_value)
+        checked_value = self._check_and_convert_value(value)
+        self.tag_value = Tag.convert_value_to_str(checked_value)
+
+    def _check_and_convert_value(self, value: TagValueType) -> TagValueType:
+        if value is None:
+            raise ValueError(f"The value for tag '{self.tag_key}' cannot be None")
+        try:
+            return Tag.convert_value_to_type(value, self.value_format)
+        except Exception as e:
+            raise ValueError(
+                f"Invalid value '{value}' for tag '{self.tag_key}', expected type {self.value_format.value}"
+            ) from e
 
     def origin_is_user(self) -> bool:
         return self.get_origins().is_user_origin()

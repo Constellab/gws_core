@@ -26,11 +26,18 @@ class ProcessRunException(BadRequestException):
         self,
         process_model: ProcessModel,
         exception_detail: str,
-        unique_code: str,
+        unique_code: str | None,
         error_prefix: str,
         exception: Exception,
     ) -> None:
-        super().__init__(detail=exception_detail, unique_code=unique_code)
+        super().__init__(
+            detail=exception_detail,
+            unique_code=unique_code,
+            detail_args={
+                "process_model_id": process_model.id,
+                "scenario_id": process_model.scenario.id if process_model.scenario else None,
+            },
+        )
 
         self.error_prefix = error_prefix
         self.original_exception = exception
@@ -40,14 +47,10 @@ class ProcessRunException(BadRequestException):
     def from_exception(
         process_model: ProcessModel, exception: Exception, error_prefix: str = "Error during task"
     ) -> ProcessRunException:
-        unique_code: str
-
-        # create from a know exception
-        if isinstance(exception, BaseHTTPException):
-            unique_code = exception.unique_code
-        # create from a unknow exception
-        else:
-            unique_code = None
+        # create from a know exception or unknown exception
+        unique_code: str | None = (
+            exception.unique_code if isinstance(exception, BaseHTTPException) else None
+        )
 
         return ProcessRunException(
             process_model=process_model,
@@ -57,7 +60,7 @@ class ProcessRunException(BadRequestException):
             exception=exception,
         )
 
-    def get_error_message(self, context: str = None) -> str:
+    def get_error_message(self, context: str | None = None) -> str:
         error = ""
         if context is not None:
             error = f"{self.error_prefix} '{context}' : "

@@ -7,9 +7,8 @@ from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
-from gws_core.tag.tag import TagValueType
+from gws_core.tag.tag import Tag, TagValueType
 from gws_core.tag.tag_dto import TagValueModelDTO
-from gws_core.tag.tag_helper import TagHelper
 from gws_core.tag.tag_key_model import TagKeyModel
 
 
@@ -67,7 +66,7 @@ class TagValueModel(Model):
         tag_value_model.created_at = tag_value_model_dto.created_at
         tag_value_model.last_modified_at = tag_value_model_dto.last_modified_at
         tag_value_model.tag_key = tag_key_model
-        tag_value_model.tag_value = TagHelper.convert_value_to_str(tag_value_model_dto.value)
+        tag_value_model.tag_value = Tag.convert_value_to_str(tag_value_model_dto.value)
         tag_value_model.is_community_tag_value = tag_value_model_dto.is_community_tag_value or False
         tag_value_model.deprecated = tag_value_model_dto.deprecated or False
         tag_value_model.short_description = tag_value_model_dto.short_description
@@ -107,7 +106,7 @@ class TagValueModel(Model):
             tag_key=tag_key_model,
             additional_infos=additional_info,
             is_community_tag_value=is_community_tag_value,
-            tag_value=TagHelper.convert_value_to_str(tag_value),
+            tag_value=Tag.convert_value_to_str(tag_value),
         )
 
     @classmethod
@@ -131,7 +130,7 @@ class TagValueModel(Model):
         """Update a tag value model"""
         tag_value_model = cls.get_tag_value_model(tag_key, old_tag_value)
         if tag_value_model:
-            tag_value_model.tag_value = TagHelper.convert_value_to_str(new_tag_value)
+            tag_value_model.tag_value = Tag.convert_value_to_str(new_tag_value)
             tag_value_model.save()
 
         return tag_value_model
@@ -162,7 +161,7 @@ class TagValueModel(Model):
         cls, tag_key: str, tag_value: TagValueType
     ) -> "TagValueModel":
         """Return the tag value model by its key and value"""
-        return cls.get_or_none(tag_key=tag_key, tag_value=TagHelper.convert_value_to_str(tag_value))
+        return cls.get_or_none(tag_key=tag_key, tag_value=Tag.convert_value_to_str(tag_value))
 
     @classmethod
     def find_by_tag_key(cls, tag_key: str) -> ModelSelect:
@@ -173,7 +172,7 @@ class TagValueModel(Model):
         expression_builder = ExpressionBuilder(cls.tag_key == tag_key)
         if tag_value:
             expression_builder.add_expression(
-                cls.tag_value.contains(TagHelper.convert_value_to_str(tag_value))
+                cls.tag_value.contains(Tag.convert_value_to_str(tag_value))
             )
         return cls.select().where(expression_builder.build()).order_by(TagValueModel.tag_value)
 

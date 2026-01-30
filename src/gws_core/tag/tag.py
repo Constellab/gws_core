@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Union
+from typing import Any, Union
 
 from fastapi.encoders import jsonable_encoder
 
@@ -326,7 +326,7 @@ class Tag:
         if dto.origins:
             origins = TagOrigins.from_dto(dto.origins)
 
-        value = Tag.convert_str_value_to_type(dto.value, dto.value_format)
+        value = Tag.convert_value_to_type(dto.value, dto.value_format)
         return Tag(
             key=dto.key,
             value=value,
@@ -357,17 +357,31 @@ class Tag:
         return pattern.sub("_", tag_str)
 
     @staticmethod
-    def convert_str_value_to_type(value: str, value_format: TagValueFormat | None) -> TagValueType:
+    def convert_value_to_type(value: Any, value_format: TagValueFormat | None) -> TagValueType:
+        """Convert a value to the expected type based on the value format.
+
+        If the value is already of the correct type, it is returned as-is.
+        Otherwise, conversion is attempted (e.g., str to int).
+
+        :param value: The value to convert
+        :param value_format: The expected format (INTEGER, FLOAT, DATETIME, or STRING)
+        :raises ValueError: If the value cannot be converted to the expected type
+        :return: The value converted to the appropriate type
+        """
         if value_format is None:
             return value
-        if value_format == TagValueFormat.INTEGER:
-            return int(value)
-        elif value_format == TagValueFormat.FLOAT:
-            return float(value)
-        elif value_format == TagValueFormat.DATETIME:
-            return DateHelper.from_iso_str(value)
-        else:
-            return value
+
+        type_checks = {
+            TagValueFormat.INTEGER: (int, int),
+            TagValueFormat.FLOAT: (float, float),
+            TagValueFormat.DATETIME: (datetime, DateHelper.from_iso_str),
+        }
+
+        if value_format in type_checks:
+            expected_type, converter = type_checks[value_format]
+            return value if isinstance(value, expected_type) else converter(value)
+
+        return value
 
     @staticmethod
     def convert_value_to_str(value: TagValueType) -> str:
