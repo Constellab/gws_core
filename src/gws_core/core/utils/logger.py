@@ -220,7 +220,7 @@ class Logger:
                 logger._log_error(obj)
             elif level_name == "WARNING":
                 logger._log_warning(obj)
-            elif level_name == "INFO" or level_name == "PROGRESS":
+            elif level_name in {"INFO", "PROGRESS"}:
                 logger._log_info(obj)
             elif level_name == "DEBUG":
                 logger._log_debug(obj)
@@ -296,15 +296,13 @@ class Logger:
         :return: True if the logger is in debug level, False otherwise
         :rtype: bool
         """
-        if cls._logger_instance and cls._logger_instance.level == "DEBUG":
-            return True
-        return False
+        return bool(cls._logger_instance and cls._logger_instance.level == "DEBUG")
 
     def _clear(self) -> None:
         self._logger.handlers.clear()
 
-    def _log_exception(self, message: str) -> None:
-        self._logger.exception(message, exc_info=True)
+    def _log_exception(self, exception: Exception) -> None:
+        self._logger.exception(str(exception), exc_info=exception)
 
     def _log_error(self, message: str) -> None:
         self._logger.error(message)
