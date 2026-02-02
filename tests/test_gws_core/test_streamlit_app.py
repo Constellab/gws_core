@@ -66,8 +66,7 @@ if sources:
 
             status = streamlit_process.get_status_dto()
             self.assertEqual(status.status, AppProcessStatus.RUNNING)
-            self.assertEqual(len(status.app), 1)
-            self.assertEqual(status.app[0].app_resource_id, streamlit_resource.get_model_id())
+            self.assertEqual(status.app.app_resource_id, streamlit_resource.get_model_id())
 
             AppsManager.stop_all_processes()
 
