@@ -1,4 +1,7 @@
+import glob
 import os
+import shutil
+import tempfile
 import time
 
 from gws_core.apps.app_dto import AppProcessStatus
@@ -42,6 +45,9 @@ class ReflexProcess(AppProcess):
     REFLEX_MODULES_PATH = "_gws_reflex"
     ZIP_FILE_NAME = "frontend.zip"
     INDEX_HTML_FILE = "index.html"
+    # Placeholder used during build to allow runtime api_url replacement
+    # This placeholder is replaced with the actual api_url when starting each instance
+    API_URL_PLACEHOLDER = "http://gws-api-url-placeholder.localhost:8510"
 
     _front_app_build_folder: str | None = None
 
@@ -115,10 +121,18 @@ class ReflexProcess(AppProcess):
 
     def _start_prod_process(self, app: ReflexApp, shell_proxy: ShellProxy) -> AppProcessStartResult:
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
-        env = self._get_base_env(app)
+        # For build, use placeholder so we can patch it per-instance
+        build_env = self._get_base_env(app, use_placeholder_api_url=True)
 
-        # Build frontend
-        front_build_path = self._build_frontend(shell_proxy, env, app)
+        # Build frontend (uses placeholder api_url)
+        front_build_path = self._build_frontend(shell_proxy, build_env, app)
+
+        # Create a patched copy with the real api_url for this instance
+        actual_api_url = self.get_back_host_url()
+        patched_front_path = self._create_patched_frontend_copy(front_build_path, actual_api_url)
+
+        # For backend runtime, use the real api_url
+        runtime_env = self._get_base_env(app, use_placeholder_api_url=False)
 
         # Start backend-only
         backend_cmd = [
@@ -132,17 +146,23 @@ class ReflexProcess(AppProcess):
             #    '--env=prod'
         ]
 
-        process = shell_proxy.run_in_new_thread(backend_cmd, shell_mode=False, env=env)
+        process = shell_proxy.run_in_new_thread(backend_cmd, shell_mode=False, env=runtime_env)
 
-        services = self._get_prod_nginx_services(front_build_path)
+        # Use the patched frontend folder for nginx
+        services = self._get_prod_nginx_services(patched_front_path)
 
         return AppProcessStartResult(
             process=process,
             services=services,
         )
 
-    def _get_base_env(self, app: AppInstance) -> dict:
-        """Get base environment variables for reflex processes"""
+    def _get_base_env(self, app: AppInstance, use_placeholder_api_url: bool = False) -> dict:
+        """Get base environment variables for reflex processes.
+
+        :param app: The app instance
+        :param use_placeholder_api_url: If True, use a placeholder for api_url (for building).
+                                        If False, use the actual api_url (for runtime).
+        """
         reflex_modules_path = os.path.join(
             os.path.abspath(os.path.dirname(__file__)), ReflexProcess.REFLEX_MODULES_PATH
         )
@@ -162,7 +182,13 @@ class ReflexProcess(AppProcess):
 
         # define python path to include gws_reflex_base and gws_reflex_main and gws_core
         env_dict["PYTHONPATH"] = python_path
-        env_dict["GWS_REFLEX_API_URL"] = self.get_back_host_url()
+
+        # Use placeholder during build so we can patch per-instance at runtime
+        if use_placeholder_api_url:
+            env_dict["GWS_REFLEX_API_URL"] = ReflexProcess.API_URL_PLACEHOLDER
+        else:
+            env_dict["GWS_REFLEX_API_URL"] = self.get_back_host_url()
+
         env_dict["GWS_THEME"] = theme.theme
 
         # Get access token based on whether this is an enterprise app
@@ -231,6 +257,68 @@ class ReflexProcess(AppProcess):
         Logger.info("Frontend built successfully")
         return app_build_folder.path
 
+    def _create_patched_frontend_copy(self, source_build_folder: str, api_url: str) -> str:
+        """Create a copy of the frontend build with the api_url placeholder replaced.
+
+        This allows multiple instances of the same app to run with different backend URLs.
+        The copy is created in a temporary directory that will be cleaned up when the process stops.
+
+        :param source_build_folder: Path to the original build folder
+        :param api_url: The actual api_url to use for this instance
+        :return: Path to the patched copy
+        """
+        # Create a unique temp directory for this instance
+        patched_folder = tempfile.mkdtemp(prefix=f"reflex_front_{self.get_id()}_")
+        self._front_app_build_folder = patched_folder
+
+        Logger.debug(f"Creating patched frontend copy in {patched_folder}")
+
+        # Copy the entire build folder
+        shutil.copytree(source_build_folder, patched_folder, dirs_exist_ok=True)
+
+        # Find and patch the reflex-env JS file (contains the api_url)
+        # The file is named like: reflex-env-XXXX.js in assets folder
+        assets_folder = os.path.join(patched_folder, "client", "assets")
+        if os.path.exists(assets_folder):
+            env_files = glob.glob(os.path.join(assets_folder, "reflex-env-*.js"))
+            for env_file in env_files:
+                self._replace_placeholder_in_file(env_file, api_url)
+
+        # Also patch env.json if it exists (for backwards compatibility)
+        env_json_path = os.path.join(patched_folder, "env.json")
+        if os.path.exists(env_json_path):
+            self._replace_placeholder_in_file(env_json_path, api_url)
+
+        Logger.info(f"Patched frontend with api_url: {api_url}")
+        return patched_folder
+
+    def _replace_placeholder_in_file(self, file_path: str, api_url: str) -> None:
+        """Replace the API_URL_PLACEHOLDER with the actual api_url in a file."""
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                content = f.read()
+
+            # Replace the placeholder hostname with the actual api_url hostname
+            # The placeholder looks like: http://gws-api-url-placeholder.localhost:8510
+            # We need to replace it with the actual URL like: http://uuid-back.localhost:8510
+            if ReflexProcess.API_URL_PLACEHOLDER in content:
+                new_content = content.replace(ReflexProcess.API_URL_PLACEHOLDER, api_url)
+                with open(file_path, "w", encoding="utf-8") as f:
+                    f.write(new_content)
+                Logger.debug(f"Patched api_url in {file_path}")
+        except Exception as e:
+            Logger.warning(f"Failed to patch {file_path}: {e}")
+
+    def _cleanup_patched_frontend(self) -> None:
+        """Clean up the temporary patched frontend folder."""
+        if self._front_app_build_folder and os.path.exists(self._front_app_build_folder):
+            try:
+                shutil.rmtree(self._front_app_build_folder)
+                Logger.debug(f"Cleaned up patched frontend: {self._front_app_build_folder}")
+            except Exception as e:
+                Logger.warning(f"Failed to cleanup patched frontend: {e}")
+            self._front_app_build_folder = None
+
     def _get_prod_nginx_services(self, front_build_folder: str) -> list[AppNginxServiceInfo]:
         services: list[AppNginxServiceInfo] = []
 
@@ -290,6 +378,13 @@ class ReflexProcess(AppProcess):
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
         return self.front_port == port or self.back_port == port
+
+    def stop_process(self) -> None:
+        """Kill the process, clean up patched frontend, and stop the app"""
+        # Clean up the patched frontend folder before stopping
+        self._cleanup_patched_frontend()
+        # Call parent's stop_process
+        super().stop_process()
 
     def _get_log_level_option(self) -> str:
         return f"--loglevel={Logger.get_instance().level.lower()}"
