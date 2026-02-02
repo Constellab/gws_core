@@ -1,6 +1,7 @@
 from typing import Any, Literal, cast
 
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
+from gws_core.apps.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
@@ -34,8 +35,6 @@ from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.scenario_template.scenario_template_service import ScenarioTemplateService
-from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
-from gws_core.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task import Task

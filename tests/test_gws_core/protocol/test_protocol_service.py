@@ -2,6 +2,7 @@ from time import sleep
 
 from gws_core import ResourceModel
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
+from gws_core.apps.streamlit.agents.streamlit_pipenv_agent import StreamlitPipenvAgent
 from gws_core.community.community_dto import CommunityAgentVersionDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.agent.py_agent import PyAgent
@@ -15,8 +16,6 @@ from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
-from gws_core.streamlit.agents.streamlit_pipenv_agent import StreamlitPipenvAgent
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.base_test_case import BaseTestCase
@@ -575,7 +574,7 @@ class TestProtocolService(BaseTestCase):
 
         protocol_model = protocol_model.refresh()
 
-        streamlit_base_process_name = StreamlitPipenvAgent().get_typing_name().split(".")[-1]
+        streamlit_base_process_name = StreamlitPipenvAgent.get_typing_name().split(".")[-1]
         streamlit_process = protocol_model.get_process(streamlit_base_process_name)
 
         self.assertIsNotNone(streamlit_process)
