@@ -33,6 +33,9 @@ class ScenarioRunService:
     # additional disk space required to run the scenario
     REQUIRED_DISK_SPACE_RUN_SCENARIO = 1 * 1024 * 1024 * 1024  # 1 GB
 
+    # duration of scenario to send mail (5min)
+    SCENARIO_DURATION_TO_SEND_MAIL_MS = 5 * 60 * 1000
+
     @classmethod
     def run_scenario_in_cli(cls, scenario_id: str) -> None:
         """Method called by the cli sub process to run the scenario"""
@@ -105,7 +108,7 @@ class ScenarioRunService:
             scenario.mark_as_error(error)
 
             cls._send_scenario_finished_mail(scenario)
-            raise exception
+            raise exception from err
 
     @classmethod
     def run_scenario_process_in_cli(
@@ -179,7 +182,7 @@ class ScenarioRunService:
             )
 
             process_model.mark_as_error_and_parent(exception)
-            raise exception
+            raise exception from err
 
     @classmethod
     def _check_scenario_before_start(cls, scenario: Scenario) -> None:
@@ -210,7 +213,7 @@ class ScenarioRunService:
                     instance_id=exception.instance_id,
                 )
             )
-            raise exception
+            raise exception from err
 
     @classmethod
     def create_cli_for_scenario_process(
@@ -250,7 +253,7 @@ class ScenarioRunService:
                     instance_id=exception.instance_id,
                 )
             )
-            raise exception
+            raise exception from err
 
     @classmethod
     def _create_cli(
@@ -269,7 +272,10 @@ class ScenarioRunService:
         cls._check_disk_space_before_run(scenario)
 
         settings = Settings.get_instance()
-        gws_core_path = settings.get_brick("gws_core").path
+
+        gws_core_brick = settings.get_brick("gws_core")
+        if not gws_core_brick:
+            raise Exception("gws_core brick not found")
 
         options: list[str] = [
             "--scenario-id",
@@ -298,7 +304,7 @@ class ScenarioRunService:
 
         cmd = [
             "python3",
-            os.path.join(gws_core_path, "gws_cli", "gws_cli", "main_cli.py"),
+            os.path.join(gws_core_brick.path, "gws_cli", "gws_cli", "main_cli.py"),
             "--log-level",
             Logger.level,
             "server",
@@ -362,7 +368,7 @@ class ScenarioRunService:
         task_models: list[TaskModel] = scenario.get_running_tasks()
         for task_model in task_models:
             exception = ProcessRunException(
-                task_model, error.detail, error.unique_code, "Task error", None
+                task_model, error.detail, error.unique_code, "Task error"
             )
             task_model.mark_as_error_and_parent(exception)
 
@@ -419,13 +425,13 @@ class ScenarioRunService:
 
     @classmethod
     def _send_scenario_finished_mail(cls, scenario: Scenario) -> None:
-        if not Settings.get_instance().is_prod_mode() or not scenario.is_manual():
-            return
+        # if not Settings.get_instance().is_prod_mode() or not scenario.is_manual():
+        #     return
         try:
             elapsed_time = scenario.protocol_model.progress_bar.get_last_execution_time()
 
             # if the last execution was runned in under 5 minutes, don't send an email
-            if elapsed_time < 1000 * 60 * 5:
+            if elapsed_time < cls.SCENARIO_DURATION_TO_SEND_MAIL_MS:
                 return
 
             user: User = CurrentUserService.get_and_check_current_user()

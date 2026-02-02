@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Literal, Union
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -31,18 +31,35 @@ class SaveNoteToSpaceDTO(BaseModelDTO):
     lab_config: LabConfigModelDTO
 
 
+class SpaceSendMailTemplate(Enum):
+    SCENARIO_FINISHED = "scenario-finished"
+    GENERIC = "generic"
+
+
 class SpaceSendMailToUsersDTO(BaseModelDTO):
     receiver_ids: list[str]
-    mail_template: Literal["scenario-finished", "generic"]
+    mail_template: SpaceSendMailTemplate
     data: Any | None
-    subject: str | None  # if provided, it override the template subject
+    subject: str | None = None  # Must be provided if mail_template is 'generic'
+
+    @model_validator(mode="after")
+    def check_subject_for_generic(self):
+        if self.mail_template == SpaceSendMailTemplate.GENERIC and not self.subject:
+            raise ValueError("Subject is required when mail_template is 'generic'")
+        return self
 
 
 class SpaceSendMailToMailsDTO(BaseModelDTO):
     receiver_mails: list[str]
-    mail_template: Literal["scenario-finished", "generic"]
+    mail_template: SpaceSendMailTemplate
     data: Any | None
-    subject: str | None  # if provided, it override the template subject
+    subject: str | None = None  # Must be provided if mail_template is 'generic'
+
+    @model_validator(mode="after")
+    def check_subject_for_generic(self):
+        if self.mail_template == SpaceSendMailTemplate.GENERIC and not self.subject:
+            raise ValueError("Subject is required when mail_template is 'generic'")
+        return self
 
 
 class SpaceSendNotificationDTO(BaseModelDTO):

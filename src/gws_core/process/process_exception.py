@@ -18,7 +18,6 @@ class ProcessRunException(BadRequestException):
     :type BadRequestException: [type]
     """
 
-    original_exception: Exception
     process_model: ProcessModel
     error_prefix: str
 
@@ -28,7 +27,6 @@ class ProcessRunException(BadRequestException):
         exception_detail: str,
         unique_code: str | None,
         error_prefix: str,
-        exception: Exception,
     ) -> None:
         super().__init__(
             detail=exception_detail,
@@ -40,7 +38,6 @@ class ProcessRunException(BadRequestException):
         )
 
         self.error_prefix = error_prefix
-        self.original_exception = exception
         self.process_model = process_model
 
     @staticmethod
@@ -57,7 +54,6 @@ class ProcessRunException(BadRequestException):
             exception_detail=str(exception),
             unique_code=unique_code,
             error_prefix=error_prefix,
-            exception=exception,
         )
 
     def get_error_message(self, context: str | None = None) -> str:
