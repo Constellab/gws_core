@@ -15,6 +15,8 @@ from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.streamlit.agents.streamlit_agent import StreamlitAgent
+from gws_core.streamlit.agents.streamlit_pipenv_agent import StreamlitPipenvAgent
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.base_test_case import BaseTestCase
@@ -494,3 +496,96 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(len(protocol_model.processes), 1)
         self.assertEqual(len(agent_process.inputs.ports), 2)
         self.assertEqual(len(agent_process.outputs.ports), 2)
+
+    def test_add_streamlit_env_agent(self):
+        """Test the import of a streamlit env agent from Community and check that the env config is created properly"""
+
+        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+
+        community_agent_version: CommunityAgentVersionDTO = CommunityAgentVersionDTO.from_json(
+            {
+                "id": "a8ab67eb-5b5e-4c1c-b11a-ecacd9ee957f",
+                "version": 1,
+                "type": "TASK.gws_core.StreamlitPipenvAgent",
+                "environment": "[[source]]\nurl = 'https://pypi.python.org/simple_2'\nverify_ssl = true\nname = 'pypi'\n\n[requires]\npython_version = '3.10'\n\n[packages]\nstreamlit = '==1.42.2'\npandas = '==2.2.2'\nplotly = '==5.22.0'",
+                "code": '# This is a template for a streamlit agent.\n# This generates an app with one dataframe as input. Then the user can select 2 columns to plot a scatter plot.\n\nimport plotly.express as px\nimport streamlit as st\nfrom pandas import DataFrame, read_csv\n\n# Your Streamlit app code here\nst.title("App example")\n\n# show a table from file_path which is a csv file full width\nif source_paths:\n    df: DataFrame = read_csv(source_paths[0], header=0, index_col=0, sep=",")\n\n    # show the dataframe\n    st.dataframe(df)\n\n    # add a select widget with the columns names with no default value\n    # set the selectbox side by side\n    col1, col2 = st.columns(2)\n\n    with col1:\n        x_col = st.selectbox("Select x column", options=df.columns, index=0)\n\n    with col2:\n        y_col = st.selectbox("Select y column", options=df.columns, index=1)\n\n    if x_col and y_col:\n        # Generate a scatter plot with plotly express\n        fig = px.scatter(df, x=x_col, y=y_col)\n        st.plotly_chart(fig)\n',
+                "params": {"specs": {}, "values": {}},
+                "input_specs": {
+                    "specs": {
+                        "source": {
+                            "resource_types": [
+                                {
+                                    "typing_name": "RESOURCE.gws_core.Resource",
+                                    "brick_version": "0.10.0",
+                                    "human_name": "Resource",
+                                    "style": {
+                                        "icon_technical_name": "resource",
+                                        "icon_type": "MATERIAL_ICON",
+                                        "background_color": "#c7c8cc",
+                                        "icon_color": "#000000",
+                                    },
+                                    "short_description": "",
+                                }
+                            ],
+                            "human_name": "Resource",
+                            "short_description": "",
+                            "optional": True,
+                            "sub_class": None,
+                            "constant": None,
+                        }
+                    }
+                },
+                "output_specs": {
+                    "specs": {
+                        "streamlit_app": {
+                            "resource_types": [
+                                {
+                                    "typing_name": "RESOURCE.gws_core.StreamlitResource",
+                                    "brick_version": "0.10.0",
+                                    "human_name": "Streamlit App",
+                                    "style": {
+                                        "icon_technical_name": "dashboard",
+                                        "icon_type": "MATERIAL_ICON",
+                                        "background_color": "#ff4b4b",
+                                        "icon_color": "#000000",
+                                    },
+                                    "short_description": "Streamlit App",
+                                }
+                            ],
+                            "human_name": "Streamlit app",
+                            "short_description": "Streamlit App",
+                            "optional": False,
+                            "sub_class": False,
+                            "constant": False,
+                        }
+                    }
+                },
+                "config_specs": {},
+                "agent": {
+                    "id": "ea6cf1c6-3b66-4997-acda-0ee22e1a70a1",
+                    "title": "gaga",
+                    "latest_publish_version": 1,
+                },
+            }
+        )
+
+        ProtocolService.add_community_agent_version_to_protocol_id(
+            protocol_model.id, community_agent_version
+        )
+
+        protocol_model = protocol_model.refresh()
+
+        streamlit_base_process_name = StreamlitPipenvAgent().get_typing_name().split(".")[-1]
+        streamlit_process = protocol_model.get_process(streamlit_base_process_name)
+
+        self.assertIsNotNone(streamlit_process)
+        self.assertEqual(streamlit_process.get_process_type(), StreamlitPipenvAgent)
+        # check that the env config is properly created
+        env_config_value = streamlit_process.config.get_value("env")
+        self.assertIsNotNone(env_config_value)
+        self.assertIn("[[source]]", env_config_value)
+        self.assertIn("streamlit = '==1.42.2'", env_config_value)
+        self.assertIn("pandas = '==2.2.2'", env_config_value)
+        self.assertIn("plotly = '==5.22.0'", env_config_value)
+        self.assertIn("simple_2", env_config_value)
+        self.assertEqual(len(protocol_model.processes), 1)

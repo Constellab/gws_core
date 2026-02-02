@@ -317,7 +317,6 @@ class Tag:
             value_format=self.get_value_format(),
             is_community_tag_key=self.is_community_tag_key,
             is_community_tag_value=self.is_community_tag_value,
-            additional_info=self.additional_info,
         )
 
     @staticmethod
@@ -334,7 +333,6 @@ class Tag:
             origins=origins,
             is_community_tag_key=dto.is_community_tag_key,
             is_community_tag_value=dto.is_community_tag_value,
-            additional_info=dto.additional_info,
         )
 
     @staticmethod

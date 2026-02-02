@@ -92,5 +92,5 @@ params = StreamlitEnvMainState.get_params()
         return streamlit_resource
 
     @classmethod
-    def build_config_params_dict(cls, code: str, params: dict[str, Any]) -> ConfigParamsDict:
-        return {"code": code, "params": params}
+    def build_config_params_dict(cls, code: str, params: dict[str, Any], env: str) -> ConfigParamsDict:
+        return {"code": code, "params": params, "env": env}

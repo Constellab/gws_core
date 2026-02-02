@@ -20,9 +20,9 @@ class AgentFactory:
         "TASK.gws_core.RCondaAgent": "CONDA_R",
         "TASK.gws_core.RMambaAgent": "MAMBA_R",
         "TASK.gws_core.StreamlitAgent": "STREAMLIT",
-        "TASK.gws_core.StreamlitCondaAgent": "STREAMLIT",
-        "TASK.gws_core.StreamlitMambaAgent": "STREAMLIT",
-        "TASK.gws_core.StreamlitPipenvAgent": "STREAMLIT",
+        "TASK.gws_core.StreamlitCondaAgent": "STREAMLIT_CONDA",
+        "TASK.gws_core.StreamlitMambaAgent": "STREAMLIT_MAMBA",
+        "TASK.gws_core.StreamlitPipenvAgent": "STREAMLIT_PIP",
     }
 
     @classmethod
@@ -79,7 +79,7 @@ class AgentFactory:
         cls, task_id: str, with_value: bool = False
     ) -> CommunityAgentFileDTO:
         task: TaskModel = TaskModel.get_by_id_and_check(task_id)
-        values = task.config.get_values()
+        values = task.config.get_and_check_values()
         code = task.config.get_value("code")
         params = None
         if values.get("params") is not None:

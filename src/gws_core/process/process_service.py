@@ -9,6 +9,7 @@ from gws_core.community.community_service import CommunityService
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogContext, Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.lab.monitor.monitor_dto import MonitorBetweenDateGraphicsDTO
@@ -96,6 +97,9 @@ class ProcessService:
         """
         CRON scheduled method to send run stats to community
         """
+        if Settings.is_local_dev_env():
+            Logger.info("Local dev env detected, skip sending process run stats to Community")
+            return
 
         try:
             Logger.debug("Check to send run stats to Community")
