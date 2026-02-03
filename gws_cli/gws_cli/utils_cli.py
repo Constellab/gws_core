@@ -6,7 +6,7 @@ from gws_cli.utils.screenshot_service import ScreenshotService
 app = typer.Typer(help="Utility commands for development environment setup")
 
 
-@app.command("install node", help="Install Node.js via NVM")
+@app.command("install-node", help="Install Node.js via NVM")
 def install_node():
     """Install Node.js using NVM (Node Version Manager)"""
     exit_code = NodeService.install_node()
