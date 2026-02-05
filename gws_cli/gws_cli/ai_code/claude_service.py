@@ -8,7 +8,6 @@ import typer
 from gws_core.core.utils.settings import Settings
 
 from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
-from gws_cli.utils.node_service import NodeService
 
 
 class ClaudeService(AICodeService):
@@ -90,22 +89,11 @@ argument-hint: [{frontmatter.argument_hint}]
             return False
 
     def install_claude_code(self) -> int:
-        """Install Claude Code CLI tool (automatically installs Node.js if needed)
+        """Install Claude Code CLI tool using the official installer
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        # First, check if Node.js is available
-        if not NodeService.is_node_installed():
-            typer.echo("Node.js not found. Installing Node.js first...")
-            node_result = NodeService.install_node()
-            if node_result != 0:
-                typer.echo(
-                    "Failed to install Node.js. Cannot proceed with Claude Code installation.",
-                    err=True,
-                )
-                return node_result
-
         script_dir = Path(__file__).parent.parent / "scripts"
         script_path = script_dir / "install-claude-code.sh"
 
