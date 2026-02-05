@@ -223,9 +223,7 @@ class Resource(BaseTyping):
         attr = super().__getattribute__(name)
 
         if isinstance(attr, BaseRField):
-            if not self.__kv_store__:
-                return attr
-            if name in self.__kv_store__:
+            if self.__kv_store__ and name in self.__kv_store__:
                 if isinstance(attr, FileRField):
                     value = attr.deserialize(self.__kv_store__.get_key_file_path(name))
                 else:
