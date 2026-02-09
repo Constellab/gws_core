@@ -223,10 +223,11 @@ class TriggeredJobService:
             )
 
         finally:
-            # Update next run time for CRON jobs
             if job.is_active and job.is_cron_job():
-                job.update_next_run()
-                job.save()
+                # Update next run time for CRON jobs
+                with AuthenticateUser(User.get_and_check_sysuser()):
+                    job.update_next_run()
+                    job.save()
 
         return run
 
