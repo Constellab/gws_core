@@ -4,6 +4,7 @@ from typing import Literal
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
+from gws_core.process.process import Process
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import (
     ConnectorDTO,
@@ -582,9 +583,9 @@ class ProtocolModel(ProcessModel):
 
         # sort all processes by end_date, with null end_date at the end
         all_processes.sort(
-            key=lambda x: x.progress_bar.started_at
-            if x.progress_bar.started_at
-            else DateHelper.MAX_DATE
+            key=lambda x: (
+                x.progress_bar.started_at if x.progress_bar.started_at else DateHelper.MAX_DATE
+            )
         )
 
         return all_processes
@@ -653,6 +654,21 @@ class ProtocolModel(ProcessModel):
                     return process.get_running_task()
                 return process
         return None
+
+    def get_processes_by_type(self, process_type: type[Process]) -> list[ProcessModel]:
+        """Return the processes of a given type, go through all the sub protocols
+
+        :param process_type: the type of the process to return
+        :type process_type: type
+        :return: the processes of the given type
+        :rtype: list[ProcessModel]
+        """
+        processes = []
+        process_typing = process_type.get_typing_name()
+        for process in self.processes.values():
+            if process.process_typing_name == process_typing:
+                processes.append(process)
+        return processes
 
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:

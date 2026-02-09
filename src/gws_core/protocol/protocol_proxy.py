@@ -115,6 +115,26 @@ class ProtocolProxy(ProcessProxy):
         else:
             return TaskProxy(process)
 
+    def get_processes_by_type(self, process_type: type[Process]) -> list[ProcessProxy]:
+        """retreive a protocol or a task in this protocol by type
+
+        :param process_type: [description]
+        :type process_type: type[Process]
+        :raises Exception: [description]
+        :return: [description]
+        :rtype: list[ProcessProxy]
+        """
+        processes: list[ProcessModel] = self._process_model.get_processes_by_type(process_type)
+
+        process_proxies: list[ProcessProxy] = []
+        for process in processes:
+            if isinstance(process, ProtocolModel):
+                process_proxies.append(ProtocolProxy(process))
+            else:
+                process_proxies.append(TaskProxy(process))
+
+        return process_proxies
+
     def delete_process(self, instance_name: str) -> None:
         ProtocolService.delete_process_of_protocol(self._process_model, instance_name)
 
