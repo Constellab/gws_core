@@ -71,11 +71,13 @@ class EntityTag(Model):
             key=self.tag_key,
             value=self.get_tag_value(),
             is_user_origin=self.origin_is_user(),
-            label=tag_key_model.label
+            label=tag_key_model.label,
+            is_community_tag_key=tag_key_model.is_community_tag
         )
 
     def to_full_dto(self) -> EntityTagFullDTO:
         tag_key_model = self.get_tag_key_model()
+        tag_value_model = self.get_tag_value_model(tag_key_model)
         return EntityTagFullDTO(
             id=self.id,
             key=self.tag_key,
@@ -85,6 +87,9 @@ class EntityTag(Model):
             is_propagable=self.is_propagable,
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
+            is_community_tag_key=tag_key_model.is_community_tag,
+            is_community_tag_value=tag_value_model.is_community_tag_value,
+            additional_info=tag_value_model.additional_infos,
         )
 
     def to_simple_tag(self) -> Tag:

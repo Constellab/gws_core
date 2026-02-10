@@ -66,12 +66,16 @@ class EntityTagDTO(BaseModelDTO):
     value: Any
     is_user_origin: bool
     label: str | None = None
+    is_community_tag_key: bool | None = None
+
 
 
 class EntityTagFullDTO(EntityTagDTO):
     is_propagable: bool
     created_at: datetime
     last_modified_at: datetime
+    is_community_tag_value: bool | None = None
+    additional_info: dict | None = None
 
 
 class NewTagDTO(BaseModelDTO):

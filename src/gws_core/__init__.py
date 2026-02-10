@@ -618,6 +618,9 @@ from .test.test_mock_space_service import TestMockSpaceService as TestMockSpaceS
 from .test.view_tester import ViewTester as ViewTester
 
 # Triggered Job
+from .triggered_job.run_scenario_template_triggered_job_by_tag import (
+    RunScenarioTemplateTriggeredJobByTag as RunScenarioTemplateTriggeredJobByTag,
+)
 from .triggered_job.triggered_job_model import TriggeredJobModel as TriggeredJobModel
 from .triggered_job.triggered_job_run_model import TriggeredJobRunModel as TriggeredJobRunModel
 from .triggered_job.triggered_job_scheduler import TriggeredJobScheduler as TriggeredJobScheduler
