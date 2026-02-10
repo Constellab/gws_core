@@ -124,6 +124,10 @@ class ProtocolProxy(ProcessProxy):
         :return: [description]
         :rtype: list[ProcessProxy]
         """
+        if not isclass(process_type) or not issubclass(process_type, Process):
+            raise BadRequestException(
+                f"Invalid process_type '{process_type}'. Expected a subclass of Process."
+            )
         processes: list[ProcessModel] = self._process_model.get_processes_by_type(process_type)
 
         process_proxies: list[ProcessProxy] = []
