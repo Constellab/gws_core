@@ -50,16 +50,13 @@ class RunScenarioTemplateTriggeredJobByTag(Task):
             tag_value=tag_value
         )
 
-        # Build config values for the scenario template
-        config_values = {}
-
         # Create the triggered job from the template
         create_job_dto = CreateTriggeredJobFromTemplateDTO(
             scenario_template_id=scenario_template.id,
             name=f"Triggered job from template: {scenario_template.name}",
             description=f"Scheduled job from scenario template tagged with {tag_key}={tag_value}",
             cron_expression=cron_expression,
-            config_values=config_values,
+            config_values={},
             is_active=True
         )
 
