@@ -33,7 +33,7 @@ class RunScenarioTemplateTriggeredJobByTag(Task):
         "cron_expression": StrParam(
                 human_name="Cron expression",
                 short_description="Cron expression for scheduling the job (e.g., */10 * * * * for every 10 minutes)",
-                optional=False,
+                optional=True,
                 default_value="*/10 * * * *"
             )
     })

@@ -192,9 +192,11 @@ class TriggeredJobService:
         # Create run record
         run = TriggeredJobRunModel.create_run(job, trigger)
 
+        user = User.get_and_check_sysuser()
+
         try:
             # Authenticate as sys user for execution
-            with AuthenticateUser(User.get_and_check_sysuser()):
+            with AuthenticateUser(user):
                 # Create and run scenario
                 scenario = cls._create_scenario_for_job(job)
                 run.scenario = scenario
@@ -225,7 +227,7 @@ class TriggeredJobService:
         finally:
             if job.is_active and job.is_cron_job():
                 # Update next run time for CRON jobs
-                with AuthenticateUser(User.get_and_check_sysuser()):
+                with AuthenticateUser(user):
                     job.update_next_run()
                     job.save()
 
