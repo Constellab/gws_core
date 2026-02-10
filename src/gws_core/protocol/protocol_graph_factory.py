@@ -1,8 +1,13 @@
 from abc import abstractmethod
+from typing import cast
 
 from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process import Process
 from gws_core.process.process_factory import ProcessFactory
@@ -104,9 +109,13 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
     ) -> ProcessModel:
         """Method to instantiate a new process and configure it"""
         config_params: ConfigParamsDict = {}
+        config_specs: ConfigSpecs | None = None
         # Configure the process
         if process_dto.config:
             config_params = process_dto.config.values
+            config_specs = self._build_config_specs_with_dynamic_params(
+                process_type, process_dto.config.specs
+            )
 
         if issubclass(process_type, Task):
             return ProcessFactory.create_task_model_from_type(
@@ -116,6 +125,7 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
                 inputs_dto=process_dto.inputs if process_dto.inputs.type == "dynamic" else None,
                 outputs_dto=process_dto.outputs if process_dto.outputs.type == "dynamic" else None,
                 name=process_dto.name,
+                config_specs=config_specs,
             )
         elif issubclass(process_type, Protocol):
             # create protocol from dto, not from type
@@ -127,6 +137,34 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
             raise BadRequestException(
                 f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes"
             )
+
+    @staticmethod
+    def _build_config_specs_with_dynamic_params(
+        process_type: type[Process],
+        specs_dto: dict[str, ParamSpecDTO],
+    ) -> ConfigSpecs | None:
+        """Build config specs by taking the task type's default specs and overriding
+        only the dynamic param specs from the template DTO.
+        Returns None if no dynamic param specs are found.
+        """
+        if not Utils.issubclass(process_type, Task):
+            return None
+        has_dynamic = any(
+            spec_dto.type == ParamSpecTypeStr.DYNAMIC_PARAM for spec_dto in specs_dto.values()
+        )
+
+        if not has_dynamic:
+            return None
+
+        task_type = cast(type[Task], process_type)
+        config_specs = ConfigSpecs(dict(task_type.config_specs.specs))
+        for key, spec_dto in specs_dto.items():
+            if spec_dto.type == ParamSpecTypeStr.DYNAMIC_PARAM:
+                config_specs.add_or_update_spec(
+                    key, ParamSpecHelper.create_param_spec_from_dto(spec_dto)
+                )
+
+        return config_specs
 
 
 class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):

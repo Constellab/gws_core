@@ -1,5 +1,10 @@
+from typing import cast
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -27,6 +32,25 @@ class TestScenarioTemplateDynamic(Task):
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
     config_specs = ConfigSpecs({})
+
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+        return {}
+
+
+@task_decorator("TestScenarioTemplateDynamicConfig")
+class TestScenarioTemplateDynamicConfig(Task):
+    input_specs: InputSpecs = InputSpecs()
+    output_specs: OutputSpecs = OutputSpecs()
+    config_specs = ConfigSpecs(
+        {
+            "code": StrParam(
+                default_value="print('hello')",
+                human_name="Code",
+                short_description="A code snippet",
+            ),
+            "params": DynamicParam(),
+        }
+    )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
@@ -368,3 +392,96 @@ class TestScenarioTemplate(BaseTestCase):
 
         new_scenario_template = ScenarioTemplateFactory.from_export_dto_dict(old_scenario_template)
         self.assertEqual(new_scenario_template.version, 3)
+
+    def test_dynamic_config(self):
+        """Test that the scenario template supports dynamic config (DynamicParam)"""
+        scenario = ScenarioProxy()
+
+        protocol = scenario.get_protocol()
+
+        process = protocol.add_process(TestScenarioTemplateDynamicConfig, "dynamic_config")
+
+        protocol_id = protocol.get_model().id
+        process_name = process.get_model().instance_name
+
+        # Add dynamic param specs
+        str_spec_dto = ParamSpecDTO(
+            type=ParamSpecTypeStr.STRING,
+            optional=True,
+            default_value="hello",
+            human_name="My string param",
+            short_description="A string parameter",
+        )
+        ProtocolService.add_dynamic_param_spec_of_process(
+            protocol_id, process_name, "params", "my_str", str_spec_dto
+        )
+
+        int_spec_dto = ParamSpecDTO(
+            type=ParamSpecTypeStr.INT,
+            optional=True,
+            default_value=42,
+            human_name="My int param",
+            short_description="An integer parameter",
+        )
+        ProtocolService.add_dynamic_param_spec_of_process(
+            protocol_id, process_name, "params", "my_int", int_spec_dto
+        )
+
+        # Set config values
+        ProtocolService.configure_process(
+            protocol_id,
+            process_name,
+            {"code": "print('world')", "params": {"my_str": "world", "my_int": 100}},
+        )
+
+        # Create a template
+        template = ProtocolService.create_scenario_template_from_id(
+            protocol_id=protocol_id, name="test_dynamic_config"
+        )
+
+        # Test create a scenario from template id
+        scenario_dto = ScenarioSaveDTO(scenario_template_id=template.id, title="")
+        scenario_2 = ScenarioService.create_scenario_from_dto(scenario_dto)
+
+        # Check dynamic config specs and values survived the round-trip
+        protocol_2 = scenario_2.protocol_model
+        process_2 = protocol_2.get_process("dynamic_config")
+        config_2 = process_2.config
+
+        # Check the normal config spec and value are preserved
+        self.assertIsInstance(config_2.get_spec("code"), StrParam)
+        self.assertEqual(config_2.get_value("code"), "print('world')")
+
+        # Check the dynamic param specs are preserved
+        dynamic_param_spec = cast(DynamicParam, config_2.get_spec("params"))
+        self.assertIsInstance(dynamic_param_spec, DynamicParam)
+        self.assertIn("my_str", dynamic_param_spec.specs.specs)
+        self.assertIn("my_int", dynamic_param_spec.specs.specs)
+
+        # Check the config values are preserved
+        params_value = config_2.get_value("params")
+        self.assertEqual(params_value["my_str"], "world")
+        self.assertEqual(params_value["my_int"], 100)
+
+        # Test create the same scenario with the template json instead of the template id
+        export_dto = template.to_export_dto()
+        scenario_dto = ScenarioSaveDTO(scenario_template_json=export_dto.to_json_dict(), title="")
+        scenario_3 = ScenarioService.create_scenario_from_dto(scenario_dto)
+
+        # Check dynamic config specs and values survived the json round-trip
+        protocol_3 = scenario_3.protocol_model
+        process_3 = protocol_3.get_process("dynamic_config")
+        config_3 = process_3.config
+
+        # Check the normal config spec and value are preserved
+        self.assertIsInstance(config_3.get_spec("code"), StrParam)
+        self.assertEqual(config_3.get_value("code"), "print('world')")
+
+        dynamic_param_spec_3 = cast(DynamicParam, config_3.get_spec("params"))
+        self.assertIsInstance(dynamic_param_spec_3, DynamicParam)
+        self.assertIn("my_str", dynamic_param_spec_3.specs.specs)
+        self.assertIn("my_int", dynamic_param_spec_3.specs.specs)
+
+        params_value_3 = config_3.get_value("params")
+        self.assertEqual(params_value_3["my_str"], "world")
+        self.assertEqual(params_value_3["my_int"], 100)
