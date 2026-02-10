@@ -284,10 +284,20 @@ class BaseEnvShell(ShellProxy):
         :type env: dict[str, str], optional
         :raises Exception: If the installation command fails
         """
+        # Build the environment variables for the subprocess.
+        # PYTHONNOUSERSITE=1 prevents pip from seeing/modifying packages
+        # in the user site-packages (~/.local/lib/python3.x/site-packages),
+        # which would otherwise cause the venv install to uninstall packages
+        # from the main environment.
+        install_env = os.environ.copy()
+        install_env["PYTHONNOUSERSITE"] = "1"
+        if env:
+            install_env.update(env)
+
         res: subprocess.CompletedProcess = subprocess.run(
             cmd,
             cwd=self.get_env_dir_path(),
-            env=env,
+            env=install_env,
             capture_output=True,
             shell=True,
             check=False,

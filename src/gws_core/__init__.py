@@ -249,6 +249,9 @@ from .impl.rich_text.block.rich_text_block_formula import (
     RichTextBlockFormula as RichTextBlockFormula,
 )
 from .impl.rich_text.block.rich_text_block_header import RichTextBlockHeader as RichTextBlockHeader
+from .impl.rich_text.block.rich_text_block_header import (
+    RichTextBlockHeaderLevel as RichTextBlockHeaderLevel,
+)
 from .impl.rich_text.block.rich_text_block_hint import RichTextBlockHint as RichTextBlockHint
 from .impl.rich_text.block.rich_text_block_html import RichTextBlockHTML as RichTextBlockHTML
 from .impl.rich_text.block.rich_text_block_iframe import RichTextBlockIframe as RichTextBlockIframe
