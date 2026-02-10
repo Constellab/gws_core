@@ -663,12 +663,13 @@ class ProtocolModel(ProcessModel):
         :return: the processes of the given type
         :rtype: list[ProcessModel]
         """
-        processes = []
         process_typing = process_type.get_typing_name()
-        for process in self.processes.values():
-            if process.process_typing_name == process_typing:
-                processes.append(process)
-        return processes
+        all_processes = self.get_all_processes_flatten_sort_by_start_date()
+        
+        return [
+            process for process in all_processes
+            if process.process_typing_name == process_typing
+        ]
 
     def _check_instance_name(self, instance_name: str) -> None:
         if instance_name not in self.processes:
