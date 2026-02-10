@@ -1270,6 +1270,7 @@ class ProtocolService:
     @classmethod
     def _update_dynamic_param_config_spec(
         cls,
+        protocol_model: ProtocolModel,
         process_model: ProcessModel,
         config_spec_name: str,
         dynamic_param_spec: DynamicParam,
@@ -1285,10 +1286,11 @@ class ProtocolService:
         process_model.save()
 
         return ProtocolUpdate(
-            protocol=process_model.parent_protocol, process=process_model, protocol_updated=False
+            protocol=protocol_model, process=process_model, protocol_updated=False
         )
 
     @classmethod
+    @GwsCoreDbManager.transaction()
     def add_dynamic_param_spec_of_process(
         cls,
         protocol_id: str,
@@ -1310,10 +1312,11 @@ class ProtocolService:
         cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
 
         return cls._update_dynamic_param_config_spec(
-            process_model, config_spec_name, dynamic_param_spec
+            protocol_model, process_model, config_spec_name, dynamic_param_spec
         )
 
     @classmethod
+    @GwsCoreDbManager.transaction()
     def update_dynamic_param_spec_of_process(
         cls,
         protocol_id: str,
@@ -1341,10 +1344,11 @@ class ProtocolService:
         cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
 
         return cls._update_dynamic_param_config_spec(
-            process_model, config_spec_name, dynamic_param_spec
+            protocol_model, process_model, config_spec_name, dynamic_param_spec
         )
 
     @classmethod
+    @GwsCoreDbManager.transaction()
     def rename_and_update_dynamic_param_spec_of_process(
         cls,
         protocol_id: str,
@@ -1376,10 +1380,11 @@ class ProtocolService:
         cls._check_and_set_default_value(process_model, config_spec_name, param_name, spec_dto)
 
         return cls._update_dynamic_param_config_spec(
-            process_model, config_spec_name, dynamic_param_spec, values
+            protocol_model, process_model, config_spec_name, dynamic_param_spec, values
         )
 
     @classmethod
+    @GwsCoreDbManager.transaction()
     def remove_dynamic_param_spec_of_process(
         cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str
     ) -> ProtocolUpdate:
@@ -1399,7 +1404,7 @@ class ProtocolService:
             del values[param_name]
 
         return cls._update_dynamic_param_config_spec(
-            process_model, config_spec_name, dynamic_param_spec, values
+            protocol_model, process_model, config_spec_name, dynamic_param_spec, values
         )
 
     @classmethod
