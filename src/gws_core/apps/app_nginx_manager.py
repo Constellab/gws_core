@@ -18,7 +18,7 @@ class AppNginxManager:
     """
 
     _instance: Optional["AppNginxManager"] = None
-    _services: dict[str, AppNginxServiceInfo] = None
+    _services: dict[str, AppNginxServiceInfo]
 
     _NGINX_CONF_FILENAME = "nginx.conf"
 
@@ -272,6 +272,14 @@ http {
         shell_proxy = self._get_shell_proxy()
         command = ["nginx", "-c", self.get_nginx_config_file_path()] + args
         return shell_proxy.run(command)
+
+    def get_nginx_access_log_path(self) -> str:
+        """Get the path to the nginx access log file"""
+        return os.path.join(self.get_nginx_config_dir(), "access.log")
+
+    def get_nginx_error_log_path(self) -> str:
+        """Get the path to the nginx error log file"""
+        return os.path.join(self.get_nginx_config_dir(), "error.log")
 
     def get_nginx_config_dir(self) -> str:
         """Get the nginx config directory"""

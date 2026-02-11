@@ -47,8 +47,6 @@ class AppProcess:
     expose the app on the host URL.
     """
 
-    _host_name: str
-
     _token: str
 
     _app: AppInstance
@@ -97,9 +95,7 @@ class AppProcess:
         self._process = None
         self._working_dir = None
         self._app = app
-        self._host_name = (
-            self.DEV_MODE_APP_ID if app.is_dev_mode() else StringHelper.generate_uuid()
-        )
+
         self._check_is_running = False
         self._current_no_connection_check = 0
         # User access tokens: maps user_access_token -> user_id
@@ -261,15 +257,18 @@ class AppProcess:
     def get_host_name(self, suffix: str = "") -> str:
         """Get the host name for the app process based on the port and suffix.
         This is used to generate the host URL for the app.
+        We use the resource_model_id as host name to have a stable URL for the app.
+        The stable URL is required for reflex as the backend url is stored in the front build and should not change at each deployment.
         """
+        host_name = self.DEV_MODE_APP_ID if self._app.is_dev_mode() else self._app.resource_model_id
 
         if Settings.is_local_or_desktop_env():
-            return f"{self._host_name}{suffix}.localhost"
+            return f"{host_name}{suffix}.localhost"
 
         sub_domain = Settings.get_app_sub_domain()
         virtual_host = Settings.get_virtual_host()
 
-        return f"{sub_domain}-{self._host_name}{suffix}.{virtual_host}"
+        return f"{sub_domain}-{host_name}{suffix}.{virtual_host}"
 
     def get_host_url(self, suffix: str = "") -> str:
         if Settings.is_local_or_desktop_env():

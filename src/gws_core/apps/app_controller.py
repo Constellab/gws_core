@@ -4,6 +4,7 @@ from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
 from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO
+from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.lab.log.log import LogsBetweenDates
@@ -59,7 +60,7 @@ def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
 )
 def get_app_logs(
     app_id: str,
-    from_page_date: datetime = None,
+    from_page_date: datetime | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> LogsBetweenDatesDTO:
     """
@@ -85,3 +86,54 @@ def download_app_logs(
     logs: LogsBetweenDates = AppsManager.get_logs_of_app(app_id)
 
     return ResponseHelper.create_file_response_from_str(logs.to_str(), "logs.txt")
+
+
+@core_app.get(
+    "/apps/nginx/config",
+    tags=["App"],
+    summary="Get the nginx configuration file content",
+    response_model=None,
+)
+def get_nginx_config(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> StreamingResponse:
+    """
+    Get the content of the nginx configuration file
+    """
+
+    nginx_manager = AppNginxManager.get_instance()
+    return ResponseHelper.create_file_response_from_path(nginx_manager.get_nginx_config_file_path())
+
+
+@core_app.get(
+    "/apps/nginx/access-log",
+    tags=["App"],
+    summary="Get the nginx access log content",
+    response_model=None,
+)
+def get_nginx_access_log(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> StreamingResponse:
+    """
+    Get the content of the nginx access log file
+    """
+
+    nginx_manager = AppNginxManager.get_instance()
+    return ResponseHelper.create_file_response_from_path(nginx_manager.get_nginx_access_log_path())
+
+
+@core_app.get(
+    "/apps/nginx/error-log",
+    tags=["App"],
+    summary="Get the nginx error log content",
+    response_model=None,
+)
+def get_nginx_error_log(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> StreamingResponse:
+    """
+    Get the content of the nginx error log file
+    """
+
+    nginx_manager = AppNginxManager.get_instance()
+    return ResponseHelper.create_file_response_from_path(nginx_manager.get_nginx_error_log_path())

@@ -1,4 +1,6 @@
 import json
+import mimetypes
+import os
 from io import StringIO
 from typing import Any
 
@@ -60,6 +62,38 @@ class ResponseHelper:
         response = StreamingResponse(iter([file_like_object.getvalue()]), media_type=media_type)
 
         # set the file name in the Content-Disposition header
+        response.headers["Content-Disposition"] = f"attachment; filename={file_name}"
+
+        return response
+
+    @staticmethod
+    def create_file_response_from_path(
+        file_path: str, file_name: str | None = None, media_type: str | None = None
+    ) -> StreamingResponse:
+        """
+        Create a StreamingResponse from a file path on the local filesystem.
+
+        :param file_path: the path to the file on disk
+        :param file_name: the name of the file in the response. If None, uses the basename of file_path
+        :param media_type: the media type of the file. If None, it is guessed from the file extension
+        :return: the StreamingResponse
+        """
+        if not os.path.isfile(file_path):
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        if file_name is None:
+            file_name = os.path.basename(file_path)
+
+        if media_type is None:
+            guessed_type, _ = mimetypes.guess_type(file_path)
+            media_type = guessed_type or "application/octet-stream"
+
+        def iter_file():
+            with open(file_path, "rb") as f:
+                while chunk := f.read(65536):
+                    yield chunk
+
+        response = StreamingResponse(iter_file(), media_type=media_type)
         response.headers["Content-Disposition"] = f"attachment; filename={file_name}"
 
         return response
