@@ -27,7 +27,13 @@ def configure(
         "--force",
         "-f",
         help="Delete all generated files before configuring VSCode",
-    )
+    ),
+    configure_bricks: bool = typer.Option(
+        False,
+        "--configure-bricks",
+        "-b",
+        help="Configure user bricks with AI code instruction files (.github/)",
+    ),
 ):
     """Configure VS Code with recommended settings, extensions, and Python paths for all bricks."""
-    DevEnvCliService.configure_dev_env(force=force)
+    DevEnvCliService.configure_dev_env(force=force, configure_bricks=configure_bricks)

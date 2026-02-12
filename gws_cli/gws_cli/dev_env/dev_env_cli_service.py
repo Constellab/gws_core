@@ -9,6 +9,7 @@ from gws_core.impl.file.file_helper import FileHelper
 
 from gws_cli.ai_code.claude_service import ClaudeService
 from gws_cli.ai_code.copilot_service import CopilotService
+from gws_cli.brick_configure_service import BrickConfigureService
 
 
 class DevEnvCliService:
@@ -22,13 +23,18 @@ class DevEnvCliService:
     OPENVSCODE_SERVER_BIN = "/home/.openvscode-server/bin/openvscode-server"
 
     @classmethod
-    def configure_dev_env(cls, force: bool = False) -> None:
+    def configure_dev_env(cls, force: bool = False, configure_bricks: bool = False) -> None:
         """Configure the development environment.
 
         Args:
             force: If True, delete all generated files before configuring VSCode.
+            configure_bricks: If True, configure user bricks with AI code instruction files.
         """
         cls.configure_vscode(force=force)
+
+        # Configure user bricks with AI code instruction files if requested
+        if configure_bricks:
+            cls.configure_bricks(force=force)
 
         # Update claude config if installed
         claude_service = ClaudeService()
@@ -37,6 +43,27 @@ class DevEnvCliService:
         # Update copilot config if installed
         copilot_service = CopilotService()
         copilot_service.update_if_configured()
+
+    @classmethod
+    def configure_bricks(cls, force: bool = False) -> None:
+        """Configure user bricks with AI code instruction files.
+
+        Only configures bricks in the user folder (/lab/user), not system bricks.
+
+        Args:
+            force: If True, overwrite existing generated files.
+        """
+        typer.echo("Configuring user bricks with AI code instruction files...")
+
+        brick_folders = BrickService.list_brick_directories(distinct=True)
+
+        for brick_folder in brick_folders:
+            if brick_folder.folder != "user":
+                continue
+            typer.echo(f"Configuring brick: {brick_folder.name}...")
+            BrickConfigureService.configure_brick(brick_folder.path, force=force)
+
+        typer.echo("All user bricks configured successfully!")
 
     @classmethod
     def configure_vscode(cls, force: bool = False) -> None:

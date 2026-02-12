@@ -5,8 +5,10 @@ from typing import Annotated
 import typer
 from gws_core.brick.brick_service import BrickService
 
+from gws_cli.brick_configure_service import BrickConfigureService
 from gws_cli.generate_brick.generate_brick import generate_brick
 from gws_cli.utils.brick_cli_service import BrickCliService
+from gws_cli.utils.cli_utils import CLIUtils
 
 app = typer.Typer(help="Generate and manage bricks - reusable components for data processing")
 
@@ -83,3 +85,18 @@ def install_deps(
         raise typer.Exit(1)
 
     typer.echo("\nDependency installation completed successfully")
+
+
+@app.command("configure", help="Configure a brick with GitHub Copilot instruction files")
+def configure(
+    force: bool = typer.Option(
+        False,
+        "--force",
+        "-f",
+        help="Overwrite existing generated files",
+    ),
+):
+    """Configure the current brick with GitHub Copilot instruction files in .github/."""
+
+    brick_dir = CLIUtils.get_and_check_current_brick_dir()
+    BrickConfigureService.configure_brick(brick_dir, force=force)

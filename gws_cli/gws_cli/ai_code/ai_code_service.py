@@ -59,6 +59,11 @@ class AICodeService(ABC):
             description="Convert a Snakemake workflow or rule to Constellab Tasks",
             argument_hint="path to Snakefile or description of workflow to convert",
         ),
+        CommandFrontmatter(
+            filename="code-review-instructions.md",
+            description="Instructions for reviewing code",
+            argument_hint="description of code review request",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):
