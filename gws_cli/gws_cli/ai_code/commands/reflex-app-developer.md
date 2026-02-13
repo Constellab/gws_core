@@ -55,6 +55,8 @@ Note: the `dev_config.json` simulate configuration values that would normally be
    - If you don't need to pass a custom argument, use `on_click=MyState.my_event` instead of `on_click=lambda: MyState.my_event()`
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
 - Do not use state_auto_setters, it is deprecated. Define setters explicitly for state attributes that need them.
+- Dialogs should close when clicking outside by default. Add `on_interact_outside=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`.
+- Dialogs should close on Escape key by default. Add `on_escape_key_down=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`. For `rx.alert_dialog`, this is already the default behavior.
 
 ### GWS Core custom Reflex Components
 - Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
