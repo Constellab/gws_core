@@ -29,8 +29,8 @@ def user_profile_picture(
     :return: Circular avatar with photo or initials
     """
     # Determine pixel size and font size based on size parameter
-    pixel_size = "24px" if size == "small" else "32px"
-    font_size = "11px" if size == "small" else "14px"
+    pixel_size = rx.cond(size == "small", "24px", "32px")
+    font_size = rx.cond(size == "small", "11px", "14px")
 
     # Create avatar component - either with photo or initials
     return rx.cond(
@@ -77,14 +77,11 @@ def user_inline_component(
     :param size: Size of the avatar - "small" (24px) or "normal" (32px), defaults to "normal"
     :return: Horizontal stack with user photo/initials and name
     """
-    # Determine font size based on size parameter
-    font_size = "12px" if size == "small" else "14px"
-
     return rx.hstack(
         user_profile_picture(user, size),
         rx.text(
             user.first_name + " " + user.last_name,
-            font_size=font_size,
+            font_size=rx.cond(size == "small", "12px", "14px"),
         ),
         spacing="2",
         align="center",
@@ -109,14 +106,13 @@ def user_with_date_component(
     :param date_format: Moment.js format string for the date, defaults to "MMM D, YYYY"
     :return: Horizontal stack with user photo/initials and formatted date
     """
-    font_size = "12px" if size == "small" else "14px"
 
     return rx.hstack(
         user_profile_picture(user, size),
         rx.moment(
             date,
             format=date_format,
-            font_size=font_size,
+            font_size=rx.cond(size == "small", "12px", "14px"),
             color="var(--gray-11)",
         ),
         spacing="2",
