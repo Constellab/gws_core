@@ -257,6 +257,8 @@ def form_dialog_component(
                 width="100%",
             ),
             max_width=max_width,
+            on_interact_outside=state.close_dialog,
+            on_escape_key_down=state.close_dialog,
         ),
         open=state.dialog_opened,
     )

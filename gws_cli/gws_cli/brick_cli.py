@@ -89,6 +89,12 @@ def install_deps(
 
 @app.command("configure", help="Configure a brick with GitHub Copilot instruction files")
 def configure(
+    brick_path: Annotated[
+        str | None,
+        typer.Argument(
+            help="Path to the brick folder. If not provided, uses the current directory."
+        ),
+    ] = None,
     force: bool = typer.Option(
         False,
         "--force",
@@ -96,7 +102,15 @@ def configure(
         help="Overwrite existing generated files",
     ),
 ):
-    """Configure the current brick with GitHub Copilot instruction files in .github/."""
+    """Configure a brick with GitHub Copilot instruction files in .github/."""
 
-    brick_dir = CLIUtils.get_and_check_current_brick_dir()
+    if brick_path:
+        absolute_path = os.path.abspath(brick_path)
+        brick_dir = BrickService.get_parent_brick_folder(absolute_path)
+        if not brick_dir:
+            typer.echo(f"Error: {brick_path} is not inside a valid brick directory", err=True)
+            raise typer.Exit(1)
+    else:
+        brick_dir = CLIUtils.get_and_check_current_brick_dir()
+
     BrickConfigureService.configure_brick(brick_dir, force=force)

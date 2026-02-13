@@ -1,4 +1,3 @@
-
 from gws_core.core.utils.logger import Logger
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.space.space_service import SpaceService
@@ -44,7 +43,7 @@ class UserService:
         user.id = user_dto.id
         user.from_full_dto(user_dto)
         user.save()
-        user = User.get_by_id(user.id)
+        user = User.get_by_id_and_check(user.id)
 
         # Dispatch creation event
         EventDispatcher.get_instance().dispatch(
@@ -80,15 +79,10 @@ class UserService:
         if not is_active:
             if user.is_sysuser:
                 raise BadRequestException("Cannot deactivate the system user")
-            if user.is_admin:
-                # check if this is the last admin
-                if (
-                    User.select()
-                    .where((User.group == UserGroup.ADMIN) & (User.is_active == True))
-                    .count()
-                    == 1
-                ):
-                    raise BadRequestException("Cannot deactivate the last admin")
+            if user.is_admin and (
+                User.select().where((User.group == UserGroup.ADMIN) & User.is_active).count() == 1
+            ):
+                raise BadRequestException("Cannot deactivate the last admin")
 
         user.is_active = is_active
         user = user.save()
