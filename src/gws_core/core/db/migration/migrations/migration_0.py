@@ -1625,3 +1625,17 @@ class Migration0190(BrickMigration):
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         sql_migrator.add_column_if_not_exists(ShareLink, ShareLink.link_type)
         sql_migrator.migrate()
+
+
+@brick_migration(
+    "0.20.5",
+    short_description="Remove email index and make it unique in user table.",
+)
+class Migration0205(BrickMigration):
+    @classmethod
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        sql_migrator.drop_index_if_exists(User, "user_email")
+        sql_migrator.add_index_if_not_exists(
+            User, "gws_user_email", [User.email.column_name], unique=True
+        )
+        sql_migrator.migrate()
