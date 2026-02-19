@@ -9,7 +9,7 @@ from gws_core.impl.file.file_helper import FileHelper
 
 from gws_cli.ai_code.claude_service import ClaudeService
 from gws_cli.ai_code.copilot_service import CopilotService
-from gws_cli.brick_configure_service import BrickConfigureService
+from gws_cli.utils.brick_configure_service import BrickConfigureService
 
 
 class DevEnvCliService:

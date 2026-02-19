@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase
 from gws_core.model.typing_register_decorator import register_gws_typing_class
@@ -42,7 +42,7 @@ def rich_text_block_decorator(
     def decorator(data_class: type[RichTextBlockDataBase]):
         # Verify that the decorated class extends RichTextBlockDataBase
         if not Utils.issubclass(data_class, RichTextBlockDataBase):
-            BrickService.log_brick_error(
+            BrickLogService.log_brick_error(
                 data_class,
                 f"The rich_text_block_decorator is used on class '{data_class.__name__}' "
                 f"but this class is not a subclass of RichTextBlockDataBase",

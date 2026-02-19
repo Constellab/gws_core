@@ -8,6 +8,7 @@ from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
 from ..brick.brick_helper import BrickHelper
+from ..brick.brick_log_service import BrickLogService
 from ..model.typing import Typing
 from ..model.typing_dto import TypingObjectType
 from .typing_manager import TypingManager
@@ -61,19 +62,17 @@ def register_typing_class(
     if not human_name:
         human_name = StringHelper.camel_case_to_sentence(unique_name)
 
-    from ..brick.brick_service import BrickService
-
     # check deprecated_since version
     if deprecated is not None and not deprecated.check_version():
-        # import the BrickService here and not in register_typing_class because it would create a cyclic error
-        BrickService.log_brick_error(
+        # import the BrickLogService here and not in register_typing_class because it would create a cyclic error
+        BrickLogService.log_brick_error(
             object_class,
             f"The deprecated_since property '{deprecated.deprecated_since}' for typing object {human_name} is not a version. Must be formatted like 1.0.0",
         )
         deprecated = None
 
     if not Utils.value_is_in_literal(object_type, TypingObjectType):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             object_class,
             f"The type {object_type} is not authorized in Typing, possible values: {Utils.get_literal_values(TypingObjectType)}",
         )
@@ -117,12 +116,11 @@ def register_gws_typing_class(
     related_model_typing_name: str | None = None,
     deprecated: TypingDeprecated | None = None,
 ) -> None:
-    # import the BrickService here and not in register_typing_class because it would create a cyclic error
-    from ..brick.brick_service import BrickService
+    # import the BrickLogService here and not in register_typing_class because it would create a cyclic error
 
     # check if unique name is only alpha numeric and '_'
     if not unique_name or not StringHelper.is_alphanumeric(unique_name):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             object_class,
             f"The unique name '{unique_name}' for typing object {human_name} is not valid. It must contains only alpha numeric characters and '_'.",
         )

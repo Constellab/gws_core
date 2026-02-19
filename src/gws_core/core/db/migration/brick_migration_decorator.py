@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.migration.brick_migrator import BrickMigration, MigrationObject
@@ -35,7 +35,7 @@ def brick_migration(
 
     def decorator(class_: type[BrickMigration]):
         if not Utils.issubclass(class_, BrickMigration):
-            BrickService.log_brick_error(
+            BrickLogService.log_brick_error(
                 class_,
                 f"The brick_migration decorator is used on class '{class_.__name__}' but this class is not a subclass of BrickMigration",
             )
@@ -44,7 +44,7 @@ def brick_migration(
         try:
             version_obj = Version(version)
         except:
-            BrickService.log_brick_error(
+            BrickLogService.log_brick_error(
                 class_,
                 f"The version '{version}' used in brick_migration decorator on class '{class_.__name__}' is invalid",
             )

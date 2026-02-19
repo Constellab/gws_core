@@ -1,9 +1,9 @@
 from collections.abc import Callable
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
-from ..brick.brick_service import BrickService
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_gws_typing_class
 from ..protocol.protocol import Protocol
@@ -44,7 +44,7 @@ def protocol_decorator(
 
     def decorator(protocol_class: type[Protocol]):
         if not Utils.issubclass(protocol_class, Protocol):
-            BrickService.log_brick_error(
+            BrickLogService.log_brick_error(
                 protocol_class,
                 f"The ProtocolDecorator is used on the class: {protocol_class.__name__} and this class is not a sub class of Protocol",
             )

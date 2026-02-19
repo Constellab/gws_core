@@ -14,6 +14,7 @@ def main():
     from gws_cli import (
         brick_cli,
         claude_cli,
+        community_cli,
         copilot_cli,
         dev_env_cli,
         reflex_cli,
@@ -67,6 +68,7 @@ def main():
         dev_env_cli.app, name="dev-env", help="Manage development environment (reset data)"
     )
     app.add_typer(claude_cli.app, name="claude", help="Claude Code management commands")
+    app.add_typer(community_cli.app, name="community", help="Community commands (documentation, chatbot)")
     app.add_typer(copilot_cli.app, name="copilot", help="GitHub Copilot management commands")
     app.add_typer(
         utils_cli.app, name="utils", help="Utility commands for development environment setup"

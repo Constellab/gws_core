@@ -1,5 +1,6 @@
 import typer
 
+from gws_cli.ai_code.claude.statusline.configure_statusline import StatuslineService
 from gws_cli.ai_code.claude_service import ClaudeService
 
 app = typer.Typer(help="Claude Code management commands")
@@ -53,3 +54,11 @@ def commands(
         typer.echo("Use --list to show all available GWS commands")
         typer.echo("Example: gws claude commands --pull")
         typer.echo("Example: gws claude commands --list")
+
+
+@app.command("statusline", help="Configure Claude Code statusline")
+def statusline():
+    """Configure Claude Code statusline at user level so it applies in any project."""
+    exit_code = StatuslineService.configure()
+    if exit_code != 0:
+        raise typer.Exit(exit_code)

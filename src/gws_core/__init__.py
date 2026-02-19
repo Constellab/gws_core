@@ -24,6 +24,7 @@ from .apps.streamlit.streamlit_process import StreamlitProcess as StreamlitProce
 from .apps.streamlit.streamlit_resource import StreamlitResource as StreamlitResource
 
 # Brick
+from .brick.brick_log_service import BrickLogService as BrickLogService
 from .brick.brick_service import BrickService as BrickService
 
 # Community

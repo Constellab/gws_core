@@ -6,6 +6,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.tag.tag_dto import TagValueFormat
+from gws_core.user.user_dto import UserSpace
 
 
 class CommunitySpaceDTO(BaseModelDTO):
@@ -114,3 +115,24 @@ class CommunityTagValueDTO(BaseModelDTO):
     tag_key: CommunityTagKeyDTO
     short_description: str | None = None
     additional_infos: dict[str, Any] | None = None
+
+
+class CommunityRagflowAskResponseDTO(BaseModelDTO):
+    """Response from the ragflow-chatbot/ask endpoint."""
+    answer: str
+    session_id: str
+    references: list[dict] = []
+
+
+class CommunityDocumentationDTO(BaseModelDTO):
+    """Response from the GET /documentation/:id endpoint."""
+    id: str
+    created_at: str
+    created_by: UserSpace
+    last_modified_at: str
+    last_modified_by: UserSpace
+    title: str
+    content: RichTextDTO
+    path: str
+    complete_path: str
+    order: int

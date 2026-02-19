@@ -1,6 +1,6 @@
-
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.migration.brick_migrator import BrickMigrator, MigrationObject
@@ -75,7 +75,7 @@ class DbMigrationService:
 
             # Check that the migration version is not higher than the brick version
             if migration_version > current_brick_version:
-                BrickService.log_brick_message(
+                BrickLogService.log_brick_message(
                     brick_name=brick_name,
                     message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' is higher than the brick version '{str(current_brick_version)}'. Skipping migration.",
                     status="ERROR",
@@ -101,7 +101,7 @@ class DbMigrationService:
             if brick_migrator.has_migration_version(
                 migration_version, migration_obj.get_db_unique_name()
             ):
-                BrickService.log_brick_message(
+                BrickLogService.log_brick_message(
                     brick_name=brick_name,
                     message=f"Error while registering migration for brick {brick_name}. The migration version '{str(migration_version)}' was already registered. Skipping migration.",
                     status="ERROR",

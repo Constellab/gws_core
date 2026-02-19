@@ -64,6 +64,16 @@ class AICodeService(ABC):
             description="Instructions for reviewing code",
             argument_hint="description of code review request",
         ),
+        # CommandFrontmatter(
+        #     filename="update-doc.md",
+        #     description="Update a developer documentation file to match current source code",
+        #     argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
+        # ),
+        CommandFrontmatter(
+            filename="update-doc-json.md",
+            description="Update a developer documentation file to match current source code using JSON input",
+            argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):

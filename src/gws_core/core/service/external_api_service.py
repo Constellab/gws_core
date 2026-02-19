@@ -15,7 +15,7 @@ DEFAULT_TIMEOUT = 60
 
 
 class FormData:
-    file_paths: list[tuple[str, str, str]]
+    file_paths: list[tuple[str, str, str | None]]
     json_data: list[tuple[str, Any]]
 
     _opened_files: list[BufferedReader]
@@ -25,7 +25,7 @@ class FormData:
         self.json_data = []
         self._opened_files = []
 
-    def add_file_from_path(self, key: str, file_path: str, filename: str = None) -> None:
+    def add_file_from_path(self, key: str, file_path: str, filename: str | None = None) -> None:
         self.file_paths.append((key, file_path, filename))
 
     def add_file_from_json(self, json_data: Any, key: str, filename: str) -> None:
@@ -74,7 +74,8 @@ class ExternalApiService:
         cls,
         url: str,
         body: Any,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -83,7 +84,7 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        response = requests.post(url, json=jsonable_encoder(body), headers=headers, timeout=timeout)
+        response = requests.post(url, json=jsonable_encoder(body), headers=headers, cookies=cookies, timeout=timeout)
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
@@ -92,7 +93,8 @@ class ExternalApiService:
         url: str,
         form_data: FormData,
         data: Any = None,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -103,7 +105,7 @@ class ExternalApiService:
             headers = {}
         session = requests.Session()
         with form_data as files:
-            response = session.post(url, data=data, headers=headers, files=files, timeout=timeout)
+            response = session.post(url, data=data, headers=headers, cookies=cookies, files=files, timeout=timeout)
 
         return cls._handle_response(response, raise_exception_if_error)
 
@@ -112,7 +114,8 @@ class ExternalApiService:
         cls,
         url: str,
         body: Any,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         files: Any = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
@@ -123,7 +126,7 @@ class ExternalApiService:
         if headers is None:
             headers = {}
         response = requests.put(
-            url, json=jsonable_encoder(body), headers=headers, files=files, timeout=timeout
+            url, json=jsonable_encoder(body), headers=headers, cookies=cookies, files=files, timeout=timeout
         )
         return cls._handle_response(response, raise_exception_if_error)
 
@@ -133,7 +136,8 @@ class ExternalApiService:
         url: str,
         form_data: FormData,
         data: Any = None,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -145,7 +149,7 @@ class ExternalApiService:
 
         with form_data as files:
             session = requests.Session()
-            response = session.put(url, data=data, headers=headers, files=files, timeout=timeout)
+            response = session.put(url, data=data, headers=headers, cookies=cookies, files=files, timeout=timeout)
 
         return cls._handle_response(response, raise_exception_if_error)
 
@@ -153,7 +157,8 @@ class ExternalApiService:
     def get(
         cls,
         url: str,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
@@ -162,23 +167,24 @@ class ExternalApiService:
         """
         if headers is None:
             headers = {}
-        response = requests.get(url, headers=headers, timeout=timeout)
+        response = requests.get(url, headers=headers, cookies=cookies, timeout=timeout)
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
     def delete(
         cls,
         url: str,
-        headers: dict[str, str] = None,
+        headers: dict[str, str] | None = None,
+        cookies: dict[str, str] | None = None,
         raise_exception_if_error: bool = False,
         timeout: int = DEFAULT_TIMEOUT,
     ) -> Response:
         """
-        Make an HTTP get request
+        Make an HTTP delete request
         """
         if headers is None:
             headers = {}
-        response = requests.delete(url, headers=headers, timeout=timeout)
+        response = requests.delete(url, headers=headers, cookies=cookies, timeout=timeout)
         return cls._handle_response(response, raise_exception_if_error)
 
     @classmethod
@@ -192,7 +198,7 @@ class ExternalApiService:
 
     @classmethod
     def raise_error_from_response(cls, response: Response) -> None:
-        json_: dict = None
+        json_: dict | None = None
         try:
             json_ = response.json()
         except Exception:
@@ -201,7 +207,8 @@ class ExternalApiService:
 
         # if this is a constellab know error
         if (
-            "status" in json_
+            json_ is not None
+            and "status" in json_
             and "code" in json_
             and "detail" in json_
             and ("instanceId" in json_ or "instance_id" in json_)

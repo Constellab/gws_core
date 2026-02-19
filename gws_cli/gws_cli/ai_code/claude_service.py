@@ -13,6 +13,9 @@ from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 class ClaudeService(AICodeService):
     """Service for managing Claude Code installation and related operations"""
 
+    MCP_SCRIPT_PATH = Path(__file__).parent / ".." / "mcp" / "rag_mcp.py"
+    MCP_NAME = "gws-mcp"
+
     def __init__(self):
         """Initialize ClaudeService"""
         super().__init__(ai_tool_name="Claude Code")
@@ -186,6 +189,68 @@ argument-hint: [{frontmatter.argument_hint}]
             typer.echo(f"Error initializing settings: {e}", err=True)
             return 1
 
+    def configure_mcp(self) -> int:
+        """Configure the gws-mcp MCP server for Claude Code
+
+        This method adds (or refreshes) the gws-mcp MCP server by running
+        the claude mcp add command. If the MCP server already exists, it is
+        removed first to ensure a fresh configuration.
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        mcp_script = self.MCP_SCRIPT_PATH.resolve()
+
+        if not mcp_script.exists():
+            typer.echo(f"Error: MCP script not found at {mcp_script}", err=True)
+            return 1
+
+        try:
+            # Check if the MCP server already exists
+            result = subprocess.run(
+                ["claude", "mcp", "get", self.MCP_NAME],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                # MCP server exists, remove it first
+                typer.echo(f"Removing existing MCP server '{self.MCP_NAME}'...")
+                subprocess.run(
+                    ["claude", "mcp", "remove", "--scope", "user", self.MCP_NAME],
+                    check=True,
+                    capture_output=True,
+                )
+
+            # Add the MCP server at user level so it's available in all projects
+            typer.echo(f"Adding MCP server '{self.MCP_NAME}'...")
+            subprocess.run(
+                [
+                    "claude",
+                    "mcp",
+                    "add",
+                    "--scope",
+                    "user",
+                    self.MCP_NAME,
+                    "--",
+                    "python",
+                    str(mcp_script),
+                ],
+                check=True,
+                capture_output=True,
+            )
+
+            typer.echo(f"MCP server '{self.MCP_NAME}' configured successfully.")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            typer.echo(f"Error configuring MCP server: {e}", err=True)
+            return 1
+        except Exception as e:
+            typer.echo(f"Unexpected error configuring MCP server: {e}", err=True)
+            return 1
+
     def _update_claude_config(self) -> int:
         """Common method to update Claude Code configuration (commands and settings)
 
@@ -193,6 +258,7 @@ argument-hint: [{frontmatter.argument_hint}]
         1. Pulls GWS commands to global Claude commands folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
         3. Generates main instructions file
+        4. Configures gws-mcp MCP server
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -214,6 +280,12 @@ argument-hint: [{frontmatter.argument_hint}]
         if result != 0:
             typer.echo("Failed to generate main instructions", err=True)
             return result
+
+        # Configure MCP server
+        # result = self.configure_mcp()
+        # if result != 0:
+        #     typer.echo("Failed to configure MCP server", err=True)
+        #     return result
 
         return 0
 

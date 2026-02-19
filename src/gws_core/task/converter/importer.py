@@ -3,6 +3,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import final
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -66,14 +67,14 @@ def importer_decorator(
     def decorator(task_class: type[ResourceImporter]):
         try:
             if not Utils.issubclass(task_class, ResourceImporter):
-                BrickService.log_brick_error(
+                BrickLogService.log_brick_error(
                     task_class,
                     f"The importer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceImporter",
                 )
                 return task_class
 
             if not Utils.issubclass(source_type, FSNode):
-                BrickService.log_brick_error(
+                BrickLogService.log_brick_error(
                     task_class,
                     f"Error in the importer_decorator of class {task_class.__name__}. The source_type must be an FsNode or child class",
                 )
@@ -102,7 +103,7 @@ def importer_decorator(
             )
         except Exception as err:
             traceback.print_stack()
-            BrickService.log_brick_error(task_class, str(err))
+            BrickLogService.log_brick_error(task_class, str(err))
 
         return task_class
 

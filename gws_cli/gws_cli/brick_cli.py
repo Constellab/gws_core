@@ -1,14 +1,11 @@
-import os
 import subprocess
 from typing import Annotated
 
 import typer
-from gws_core.brick.brick_service import BrickService
 
-from gws_cli.brick_configure_service import BrickConfigureService
 from gws_cli.generate_brick.generate_brick import generate_brick
 from gws_cli.utils.brick_cli_service import BrickCliService
-from gws_cli.utils.cli_utils import CLIUtils
+from gws_cli.utils.brick_configure_service import BrickConfigureService
 
 app = typer.Typer(help="Generate and manage bricks - reusable components for data processing")
 
@@ -24,27 +21,22 @@ def generate(
 
 @app.command("install-deps", help="Install pip dependencies from a brick's settings.json file")
 def install_deps(
-    settings_path: Annotated[
-        str, typer.Argument(help="Path to the settings.json file or brick directory")
-    ],
+    brick_path: Annotated[
+        str | None,
+        typer.Argument(
+            help="Path to the brick folder. If not provided, uses the current directory."
+        ),
+    ] = None,
 ):
     """Install pip dependencies from a brick's settings.json file."""
 
-    # Convert to absolute path before searching for parent brick folder
-    absolute_path = os.path.abspath(settings_path)
-
-    # Get the parent brick folder from the provided path
-    brick_folder = BrickService.get_parent_brick_folder(absolute_path)
-
-    if not brick_folder:
-        typer.echo(f"Error: {settings_path} is not inside a valid brick directory", err=True)
-        raise typer.Exit(1)
+    brick_dir = BrickCliService.resolve_brick_dir(brick_path)
 
     # Use BrickCliService to read settings
-    settings = BrickCliService.get_brick_settings(brick_folder)
+    settings = BrickCliService.get_brick_settings(brick_dir)
 
     if not settings:
-        typer.echo(f"Error: Could not read settings.json from {settings_path}", err=True)
+        typer.echo(f"Error: Could not read settings.json from {brick_dir}", err=True)
         raise typer.Exit(1)
 
     total_packages = settings.count_pip_packages()
@@ -104,13 +96,76 @@ def configure(
 ):
     """Configure a brick with GitHub Copilot instruction files in .github/."""
 
-    if brick_path:
-        absolute_path = os.path.abspath(brick_path)
-        brick_dir = BrickService.get_parent_brick_folder(absolute_path)
-        if not brick_dir:
-            typer.echo(f"Error: {brick_path} is not inside a valid brick directory", err=True)
-            raise typer.Exit(1)
-    else:
-        brick_dir = CLIUtils.get_and_check_current_brick_dir()
-
+    brick_dir = BrickCliService.resolve_brick_dir(brick_path)
     BrickConfigureService.configure_brick(brick_dir, force=force)
+
+
+version_app = typer.Typer(help="Manage brick versions")
+app.add_typer(version_app, name="version")
+
+
+@version_app.command("push", help="Push a new brick version to the Constellab community")
+def version_push(
+    brick_path: Annotated[
+        str | None,
+        typer.Argument(
+            help="Path to the brick folder. If not provided, uses the current directory."
+        ),
+    ] = None,
+    yes: bool = typer.Option(
+        False,
+        "--yes",
+        "-y",
+        help="Skip confirmation prompt",
+    ),
+):
+    """Read the brick settings, verify a matching git tag exists, and publish the version."""
+
+    brick_dir = BrickCliService.resolve_brick_dir(brick_path)
+
+    settings = BrickCliService.get_brick_settings(brick_dir)
+    if not settings:
+        typer.echo("Error: Could not read brick settings", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Brick: {settings.name}")
+    typer.echo(f"Version: {settings.version}")
+
+    # Check if git tag exists before proceeding
+    version = settings.version
+    if not version:
+        typer.echo("Error: Brick settings do not contain a version", err=True)
+        raise typer.Exit(1)
+
+    if not BrickCliService.git_tag_exists(brick_dir, version):
+        typer.echo(f"Git tag '{version}' does not exist in the repository.")
+        create_tag = typer.confirm(
+            f"Would you like to create the tag '{version}'?",
+            default=False,
+        )
+        if not create_tag:
+            typer.echo("Aborted. Please create the tag manually before pushing the version.")
+            raise typer.Exit(1)
+
+        push_tag = typer.confirm(
+            f"Push the tag '{version}' to origin?",
+            default=True,
+        )
+
+        try:
+            BrickCliService.create_git_tag(brick_dir, version, push=push_tag)
+            typer.echo(f"Created tag '{version}'" + (" and pushed to origin" if push_tag else ""))
+        except Exception as e:
+            typer.echo(f"Error creating tag: {e}", err=True)
+            raise typer.Exit(1) from e
+
+    if not yes:
+        typer.confirm("Do you want to push this version?", abort=True)
+
+    try:
+        result = BrickCliService.create_new_brick_version(brick_dir)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(1) from e
+
+    typer.echo(f"Successfully pushed version {result.version} of brick {result.name}")

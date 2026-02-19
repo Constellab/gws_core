@@ -1,3 +1,4 @@
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
 from gws_core.core.utils.logger import Logger
@@ -104,7 +105,7 @@ class ModelService:
             try:
                 list(Typing.select().where(Typing.brick == brick.name))
             except Exception as e:
-                BrickService.log_brick_message(
+                BrickLogService.log_brick_message(
                     brick_name=brick.name,
                     message=f"Error while getting typings from the database: {str(e)}",
                     status="CRITICAL",

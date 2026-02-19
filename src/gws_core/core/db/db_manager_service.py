@@ -1,4 +1,4 @@
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.db.db_config import DbMode
 from gws_core.core.db.migration.db_migration_service import DbMigrationService
 from gws_core.core.model.base_model_service import BaseModelService
@@ -45,9 +45,7 @@ class DbManagerService:
         """
 
         mode: DbMode = cls.get_db_mode()
-        return cls._init_db_with_error_handling(
-            db_manager, mode, full_init=full_init
-        )
+        return cls._init_db_with_error_handling(db_manager, mode, full_init=full_init)
 
     @classmethod
     def _init_db_with_error_handling(
@@ -66,7 +64,7 @@ class DbManagerService:
             error_message = f"Error while initializing the db '{unique_name}'. Error: {err}"
             if db_manager.is_lazy_init():
                 Logger.log_exception_stack_trace(err)
-                BrickService.log_brick_critical(
+                BrickLogService.log_brick_critical(
                     db_manager,
                     f"{error_message}. The db manager is lazy, so skipping initialization.",
                 )
@@ -77,9 +75,7 @@ class DbManagerService:
         return True
 
     @classmethod
-    def _init_db(
-        cls, db_manager: AbstractDbManager, mode: DbMode, full_init: bool
-    ) -> None:
+    def _init_db(cls, db_manager: AbstractDbManager, mode: DbMode, full_init: bool) -> None:
         """Core initialization logic that raises exceptions directly."""
         unique_name = db_manager.get_unique_name()
 
@@ -94,7 +90,6 @@ class DbManagerService:
             BaseModelService.create_database_tables(db_manager)
 
         Logger.debug(f"Db manager '{unique_name}' initialized in '{mode}' mode")
-
 
     @classmethod
     def _get_db_manager_classes(cls) -> list[AbstractDbManager]:
