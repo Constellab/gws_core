@@ -382,3 +382,220 @@ class TestRichText(BaseTestCase):
         dto_with_conversion = reloaded_rich_text.to_dto(convert_special_blocks=True)
         self.assertEqual(dto_with_conversion.blocks[0].type, "html")
         self.assertEqual(dto_with_conversion.blocks[0].data["html"], "<p>Hello World</p>")
+
+    # ===================== Block manipulation =====================
+
+    def test_insert_block_at_index(self):
+        rt = RichText()
+        rt.add_paragraph("A")
+        rt.add_paragraph("C")
+
+        block_b = RichText.create_paragraph("b_id", "B")
+        rt.insert_block_at_index(1, block_b)
+
+        self.assertEqual(len(rt.get_blocks()), 3)
+        self.assertEqual(rt.get_block_at_index(1).data["text"], "B")
+
+        # Invalid index raises
+        with self.assertRaises(Exception):
+            rt.insert_block_at_index(-1, block_b)
+        with self.assertRaises(Exception):
+            rt.insert_block_at_index(100, block_b)
+
+    def test_remove_block_at_index(self):
+        rt = RichText()
+        rt.add_paragraph("A")
+        rt.add_paragraph("B")
+
+        removed = rt.remove_block_at_index(0)
+        self.assertEqual(removed.data["text"], "A")
+        self.assertEqual(len(rt.get_blocks()), 1)
+
+    def test_remove_block_by_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        rt.add_paragraph("B")
+
+        rt.remove_block_by_id(block_a.id)
+        self.assertEqual(len(rt.get_blocks()), 1)
+        self.assertEqual(rt.get_blocks()[0].data["text"], "B")
+
+        # Removing a non-existent id does nothing
+        rt.remove_block_by_id("non_existent_id")
+        self.assertEqual(len(rt.get_blocks()), 1)
+
+    def test_get_block_at_index(self):
+        rt = RichText()
+        rt.add_paragraph("A")
+
+        block = rt.get_block_at_index(0)
+        self.assertEqual(block.data["text"], "A")
+
+        with self.assertRaises(Exception):
+            rt.get_block_at_index(-1)
+        with self.assertRaises(Exception):
+            rt.get_block_at_index(5)
+
+    def test_get_block_by_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+
+        found = rt.get_block_by_id(block_a.id)
+        self.assertIsNotNone(found)
+        self.assertEqual(found.data["text"], "A")
+
+        self.assertIsNone(rt.get_block_by_id("non_existent"))
+
+    def test_get_block_index_by_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        rt.add_paragraph("B")
+
+        self.assertEqual(rt.get_block_index_by_id(block_a.id), 0)
+        self.assertEqual(rt.get_block_index_by_id("non_existent"), -1)
+
+    def test_replace_block_by_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        rt.add_paragraph("B")
+
+        replacement = RichText.create_paragraph("new_id", "Replaced")
+        rt.replace_block_by_id(block_a.id, replacement)
+
+        self.assertEqual(rt.get_block_at_index(0).data["text"], "Replaced")
+        self.assertEqual(len(rt.get_blocks()), 2)
+
+        # Non-existent id does nothing
+        rt.replace_block_by_id("non_existent", replacement)
+        self.assertEqual(len(rt.get_blocks()), 2)
+
+    def test_insert_block_after_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        block_c = rt.add_paragraph("C")
+
+        block_b = RichText.create_paragraph("b_id", "B")
+        rt.insert_block_after_id(block_a.id, block_b)
+
+        self.assertEqual(len(rt.get_blocks()), 3)
+        self.assertEqual(rt.get_block_at_index(1).data["text"], "B")
+        self.assertEqual(rt.get_block_at_index(2).id, block_c.id)
+
+        # Non-existent after_block_id raises
+        with self.assertRaises(Exception):
+            rt.insert_block_after_id("non_existent", block_b)
+
+    def test_insert_multiple_blocks_after_id(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        block_d = rt.add_paragraph("D")
+
+        block_b = RichText.create_paragraph("b_id", "B")
+        block_c = RichText.create_paragraph("c_id", "C")
+        rt.insert_multiple_blocks_after_id(block_a.id, [block_b, block_c])
+
+        self.assertEqual(len(rt.get_blocks()), 4)
+        self.assertEqual(rt.get_block_at_index(0).data["text"], "A")
+        self.assertEqual(rt.get_block_at_index(1).data["text"], "B")
+        self.assertEqual(rt.get_block_at_index(2).data["text"], "C")
+        self.assertEqual(rt.get_block_at_index(3).id, block_d.id)
+
+        # Empty list does nothing
+        rt.insert_multiple_blocks_after_id(block_a.id, [])
+        self.assertEqual(len(rt.get_blocks()), 4)
+
+        # Non-existent after_block_id raises
+        with self.assertRaises(Exception):
+            rt.insert_multiple_blocks_after_id("non_existent", [block_b])
+
+    def test_move_block(self):
+        rt = RichText()
+        block_a = rt.add_paragraph("A")
+        block_b = rt.add_paragraph("B")
+        block_c = rt.add_paragraph("C")
+
+        # Move C to the beginning
+        rt.move_block(block_c.id, after_block_id=None)
+        self.assertEqual(rt.get_block_at_index(0).id, block_c.id)
+        self.assertEqual(rt.get_block_at_index(1).id, block_a.id)
+        self.assertEqual(rt.get_block_at_index(2).id, block_b.id)
+
+        # Move A after C (to position 1)
+        rt.move_block(block_a.id, after_block_id=block_c.id)
+        self.assertEqual(rt.get_block_at_index(0).id, block_c.id)
+        self.assertEqual(rt.get_block_at_index(1).id, block_a.id)
+        self.assertEqual(rt.get_block_at_index(2).id, block_b.id)
+
+        # Non-existent block_id raises
+        with self.assertRaises(Exception):
+            rt.move_block("non_existent")
+
+        # Non-existent after_block_id raises
+        with self.assertRaises(Exception):
+            rt.move_block(block_a.id, after_block_id="non_existent")
+
+    # ===================== Filtering & querying =====================
+
+    def test_get_blocks_by_type(self):
+        rt = RichText()
+        rt.add_paragraph("P1")
+        rt.add_header("H1", RichTextBlockHeaderLevel.HEADER_1)
+        rt.add_paragraph("P2")
+        rt.add_code("print('hello')", "python")
+
+        paragraphs = rt.get_blocks_by_type(RichTextBlockTypeStandard.PARAGRAPH)
+        self.assertEqual(len(paragraphs), 2)
+
+        headers = rt.get_blocks_by_type(RichTextBlockTypeStandard.HEADER)
+        self.assertEqual(len(headers), 1)
+
+        codes = rt.get_blocks_by_type(RichTextBlockTypeStandard.CODE)
+        self.assertEqual(len(codes), 1)
+
+        tables = rt.get_blocks_by_type(RichTextBlockTypeStandard.TABLE)
+        self.assertEqual(len(tables), 0)
+
+    # ===================== Parameters =====================
+
+    def test_delete_parameter(self):
+        rt = RichText()
+        rt.add_paragraph(
+            'Before <te-variable-inline data-jsondata=\'{"name": "my_param", "description": "", "type": "string", "value": null}\'></te-variable-inline> after'
+        )
+
+        rt.delete_parameter("my_param")
+        self.assertEqual(rt.to_dto().blocks[0].data["text"], "Before  after")
+
+    # ===================== Append rich text =====================
+
+    def test_append_rich_text(self):
+        rt1 = RichText()
+        rt1.add_paragraph("A")
+
+        rt2 = RichText()
+        rt2.add_paragraph("B")
+        rt2.add_paragraph("C")
+
+        rt1.append_rich_text(rt2)
+        self.assertEqual(len(rt1.get_blocks()), 3)
+        self.assertEqual(rt1.get_block_at_index(0).data["text"], "A")
+        self.assertEqual(rt1.get_block_at_index(1).data["text"], "B")
+        self.assertEqual(rt1.get_block_at_index(2).data["text"], "C")
+
+    # ===================== Markdown =====================
+
+    def test_to_markdown_with_block_comments(self):
+        rt = RichText()
+        block = rt.add_paragraph("Hello")
+
+        md = rt.to_markdown(include_block_comments=True)
+        self.assertIn(f"<!-- {block.id} | paragraph -->", md)
+        self.assertIn("Hello", md)
+
+    def test_to_markdown_code_block(self):
+        rt = RichText()
+        rt.add_code("x = 1", "python")
+
+        md = rt.to_markdown()
+        self.assertIn("```python", md)
+        self.assertIn("x = 1", md)

@@ -6,13 +6,15 @@ from gws_core.impl.rich_text.block.rich_text_block import (
 )
 from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
 
+RichTextBlockHintType = Literal["info", "warning", "science"]
+
 
 @rich_text_block_decorator(RichTextBlockTypeStandard.HINT.value)
 class RichTextBlockHint(RichTextBlockDataBase):
     """Object representing a hint block in a rich text"""
 
     content: str
-    hintType: Literal["info", "warning", "science"] = "info"
+    hintType: RichTextBlockHintType = "info"
 
     def to_markdown(self) -> str:
         """Convert the hint to markdown

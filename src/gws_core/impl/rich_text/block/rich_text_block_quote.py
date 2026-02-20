@@ -10,7 +10,7 @@ class RichTextBlockQuote(RichTextBlockDataBase):
     """Object representing a quote block in a rich text"""
 
     text: str
-    caption: str = None
+    caption: str | None = None
 
     def to_markdown(self) -> str:
         """Convert the quote to markdown

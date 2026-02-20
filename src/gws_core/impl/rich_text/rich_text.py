@@ -7,6 +7,7 @@ from gws_core.impl.rich_text.block.rich_text_block import (
     RichTextBlockDataSpecial,
     RichTextBlockTypeStandard,
 )
+from gws_core.impl.rich_text.block.rich_text_block_code import RichTextBlockCode
 from gws_core.impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure
 from gws_core.impl.rich_text.block.rich_text_block_file import RichTextBlockFile
 from gws_core.impl.rich_text.block.rich_text_block_formula import RichTextBlockFormula
@@ -14,10 +15,18 @@ from gws_core.impl.rich_text.block.rich_text_block_header import (
     RichTextBlockHeader,
     RichTextBlockHeaderLevel,
 )
+from gws_core.impl.rich_text.block.rich_text_block_hint import (
+    RichTextBlockHint,
+    RichTextBlockHintType,
+)
 from gws_core.impl.rich_text.block.rich_text_block_html import RichTextBlockHTML
+from gws_core.impl.rich_text.block.rich_text_block_iframe import RichTextBlockIframe
 from gws_core.impl.rich_text.block.rich_text_block_list import RichTextBlockList
 from gws_core.impl.rich_text.block.rich_text_block_paragraph import RichTextBlockParagraph
+from gws_core.impl.rich_text.block.rich_text_block_quote import RichTextBlockQuote
+from gws_core.impl.rich_text.block.rich_text_block_table import RichTextBlockTable
 from gws_core.impl.rich_text.block.rich_text_block_timestamp import RichTextBlockTimestamp
+from gws_core.impl.rich_text.block.rich_text_block_video import RichTextBlockVideo
 from gws_core.impl.rich_text.block.rich_text_block_view import (
     RichTextBlockNoteResourceView,
     RichTextBlockResourceView,
@@ -117,13 +126,13 @@ class RichText(SerializableObjectJson):
 
     def replace_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Replace a block at the given index"""
-        if index < 0 or index > len(self.get_blocks()):
+        if index < 0 or index >= len(self.get_blocks()):
             raise Exception("The index is not valid")
         self.blocks[index] = block
 
     def get_block_at_index(self, index: int) -> RichTextBlock:
         """Get the block at the given index"""
-        if index < 0 or index > len(self.get_blocks()):
+        if index < 0 or index >= len(self.get_blocks()):
             raise Exception("The index is not valid")
         return self.blocks[index]
 
@@ -156,6 +165,58 @@ class RichText(SerializableObjectJson):
             if current_block.id == block_id:
                 return current_block
         return None
+
+    def insert_block_after_id(self, after_block_id: str, block: RichTextBlock) -> None:
+        """Insert a block after the block with the given id
+
+        :param after_block_id: id of the block after which to insert
+        :type after_block_id: str
+        :param block: block to insert
+        :type block: RichTextBlock
+        """
+        index = self.get_block_index_by_id(after_block_id)
+        if index < 0:
+            raise Exception(f"Block with id '{after_block_id}' not found")
+        self.insert_block_at_index(index + 1, block)
+
+    def insert_multiple_blocks_after_id(
+        self, after_block_id: str, blocks: list[RichTextBlock]
+    ) -> None:
+        """Insert multiple blocks after the block with the given id.
+        Blocks are inserted in order so they appear in the same order as the list.
+
+        :param after_block_id: id of the block after which to insert
+        :type after_block_id: str
+        :param blocks: blocks to insert
+        :type blocks: list[RichTextBlock]
+        """
+        index = self.get_block_index_by_id(after_block_id)
+        if index < 0:
+            raise Exception(f"Block with id '{after_block_id}' not found")
+        for i, block in enumerate(blocks):
+            self.insert_block_at_index(index + 1 + i, block)
+
+    def move_block(self, block_id: str, after_block_id: str | None = None) -> None:
+        """Move a block to after another block. If after_block_id is None, move to the beginning.
+
+        :param block_id: id of the block to move
+        :type block_id: str
+        :param after_block_id: id of the block after which to place it, or None for the beginning
+        :type after_block_id: str | None
+        """
+        block_index = self.get_block_index_by_id(block_id)
+        if block_index < 0:
+            raise Exception(f"Block with id '{block_id}' not found")
+
+        block = self.remove_block_at_index(block_index)
+
+        if after_block_id is None:
+            self.insert_block_at_index(0, block)
+        else:
+            target_index = self.get_block_index_by_id(after_block_id)
+            if target_index < 0:
+                raise Exception(f"Block with id '{after_block_id}' not found")
+            self.insert_block_at_index(target_index + 1, block)
 
     ##################################### PARAMETER  #########################################
 
@@ -398,6 +459,76 @@ class RichText(SerializableObjectJson):
         self._append_or_insert_block_at_parameter(block, parameter_name)
         return block
 
+    ##################################### TABLE #########################################
+
+    def add_table(self, data: RichTextBlockTable) -> RichTextBlock:
+        """Add a table to the rich text content"""
+        block = self.create_block(self.generate_id(), data)
+        self.append_block(block)
+        return block
+
+    ##################################### CODE #########################################
+
+    def add_code(self, code: str, language: str = "") -> RichTextBlock:
+        """Add a code block to the rich text content"""
+        block = self.create_block(
+            self.generate_id(), RichTextBlockCode(code=code, language=language)
+        )
+        self.append_block(block)
+        return block
+
+    ##################################### QUOTE #########################################
+
+    def add_quote(self, text: str, caption: str | None = None) -> RichTextBlock:
+        """Add a quote to the rich text content"""
+        block = self.create_block(
+            self.generate_id(), RichTextBlockQuote(text=text, caption=caption)
+        )
+        self.append_block(block)
+        return block
+
+    ##################################### HINT #########################################
+
+    def add_hint(self, content: str, hint_type: RichTextBlockHintType = "info") -> RichTextBlock:
+        """Add a hint to the rich text content
+
+        :param content: hint text
+        :type content: str
+        :param hint_type: type of hint ('info', 'warning', or 'science')
+        :type hint_type: str
+        """
+        block = self.create_block(
+            self.generate_id(), RichTextBlockHint(content=content, hintType=hint_type)
+        )
+        self.append_block(block)
+        return block
+
+    ##################################### VIDEO #########################################
+
+    def add_video(self, url: str, caption: str | None = None) -> RichTextBlock:
+        """Add a video to the rich text content"""
+        block = self.create_block(self.generate_id(), RichTextBlockVideo(url=url, caption=caption))
+        self.append_block(block)
+        return block
+
+    ##################################### IFRAME #########################################
+
+    def add_iframe(self, url: str, iframe_height: int) -> RichTextBlock:
+        """Add an iframe to the rich text content"""
+        block = self.create_block(
+            self.generate_id(), RichTextBlockIframe(url=url, iframeHeight=iframe_height)
+        )
+        self.append_block(block)
+        return block
+
+    ##################################### HTML #########################################
+
+    def add_html(self, html: str) -> RichTextBlock:
+        """Add an HTML block to the rich text content"""
+        block = self.create_block(self.generate_id(), RichTextBlockHTML(html=html))
+        self.append_block(block)
+        return block
+
     ##################################### OTHERS #########################################
 
     def to_dto(self, convert_special_blocks: bool = False) -> RichTextDTO:
@@ -432,10 +563,24 @@ class RichText(SerializableObjectJson):
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(str_dict)
 
-    def to_markdown(self) -> str:
-        """Convert the rich text content to markdown"""
-        markdowns = [block.get_data().to_markdown() for block in self.get_blocks()]
-        markdown = "\n\n".join(markdown for markdown in markdowns if markdown) + "\n"
+    def to_markdown(self, include_block_comments: bool = False) -> str:
+        """Convert the rich text content to markdown
+
+        :param include_block_comments: If True, add an HTML comment before each block
+            with the block type and id (e.g. <!-- block: paragraph id=aB3xK9mQ2p -->).
+            Useful for mapping markdown sections back to their block IDs.
+        :type include_block_comments: bool
+        """
+        parts: list[str] = []
+        for block in self.get_blocks():
+            block_md = block.get_data().to_markdown()
+            if not block_md:
+                continue
+            if include_block_comments:
+                parts.append(f"<!-- {block.id} | {block.type} -->")
+            parts.append(block_md)
+
+        markdown = "\n\n".join(parts) + "\n"
 
         # Process inline styles
         markdown = self._process_markdown_inline_styles(markdown)
