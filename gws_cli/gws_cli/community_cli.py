@@ -2,6 +2,7 @@ import json
 from typing import Annotated
 
 import typer
+from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 from .utils.community_cli_service import CommunityCliService
@@ -70,7 +71,11 @@ def get_documentation(
     ],
 ):
     result = CommunityCliService.get_community_service().get_documentation(documentation_id)
+
+    rich_text = RichText(result.content)
+    markdown = rich_text.to_markdown(include_block_comments=True)
+
     with open(output_file_path, "w", encoding="utf-8") as f:
-        json.dump(result.to_json_dict(), f, indent=2, ensure_ascii=False)
+        f.write(markdown)
 
     typer.echo(f"Documentation '{result.title}' written to '{output_file_path}'.")

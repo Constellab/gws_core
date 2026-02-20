@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -6,7 +7,6 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.tag.tag_dto import TagValueFormat
-from gws_core.user.user_dto import UserSpace
 
 
 class CommunitySpaceDTO(BaseModelDTO):
@@ -119,20 +119,29 @@ class CommunityTagValueDTO(BaseModelDTO):
 
 class CommunityRagflowAskResponseDTO(BaseModelDTO):
     """Response from the ragflow-chatbot/ask endpoint."""
+
     answer: str
     session_id: str
     references: list[dict] = []
 
 
+class CommunityUserDTO(BaseModelDTO):
+    id: str
+    alias: str
+    userCode: str
+    photo: str | None = None
+
+
 class CommunityDocumentationDTO(BaseModelDTO):
     """Response from the GET /documentation/:id endpoint."""
+
     id: str
-    created_at: str
-    created_by: UserSpace
-    last_modified_at: str
-    last_modified_by: UserSpace
+    createdAt: datetime
+    createdBy: CommunityUserDTO
+    lastModifiedAt: datetime
+    lastModifiedBy: CommunityUserDTO
     title: str
     content: RichTextDTO
     path: str
-    complete_path: str
+    completePath: str
     order: int

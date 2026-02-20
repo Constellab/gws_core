@@ -102,6 +102,7 @@ class CommunityUserService:
     @classmethod
     def get_community_api_url(cls) -> str:
         # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        return "https://api.constellab.community"
         community_api_url = Settings.get_community_api_url()
         if community_api_url is None:
             raise Exception("Environment variable 'COMMUNITY_API_URL' is not set")
