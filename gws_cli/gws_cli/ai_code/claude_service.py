@@ -13,6 +13,14 @@ from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
 class ClaudeService(AICodeService):
     """Service for managing Claude Code installation and related operations"""
 
+    MCP_DIR = Path(__file__).parent / ".." / "mcp"
+
+    # List of MCP servers to configure: (name, script filename)
+    MCP_SERVERS: list[tuple[str, str]] = [
+        # ("gws-mcp", "rag_mcp.py"),
+        ("rich-text-editor", "rich_text_mcp.py"),
+    ]
+
     def __init__(self):
         """Initialize ClaudeService"""
         super().__init__(ai_tool_name="Claude Code")
@@ -186,6 +194,71 @@ argument-hint: [{frontmatter.argument_hint}]
             typer.echo(f"Error initializing settings: {e}", err=True)
             return 1
 
+    def _configure_single_mcp(self, mcp_name: str, script_filename: str) -> int:
+        """Configure a single MCP server for Claude Code.
+
+        Adds (or refreshes) the MCP server by running the claude mcp add command.
+        If the server already exists, it is removed first.
+
+        Args:
+            mcp_name: The MCP server name (e.g. 'rich-text-editor')
+            script_filename: The script filename inside the mcp/ directory
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        mcp_script = (self.MCP_DIR / script_filename).resolve()
+
+        if not mcp_script.exists():
+            typer.echo(f"Error: MCP script not found at {mcp_script}", err=True)
+            return 1
+
+        try:
+            # Check if the MCP server already exists
+            result = subprocess.run(
+                ["claude", "mcp", "get", mcp_name],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+
+            if result.returncode == 0:
+                typer.echo(f"Removing existing MCP server '{mcp_name}'...")
+                subprocess.run(
+                    ["claude", "mcp", "remove", "--scope", "user", mcp_name],
+                    check=True,
+                    capture_output=True,
+                )
+
+            typer.echo(f"Adding MCP server '{mcp_name}'...")
+            subprocess.run(
+                ["claude", "mcp", "add", "--scope", "user", mcp_name, "--", "python", str(mcp_script)],
+                check=True,
+                capture_output=True,
+            )
+
+            typer.echo(f"MCP server '{mcp_name}' configured successfully.")
+            return 0
+
+        except subprocess.CalledProcessError as e:
+            typer.echo(f"Error configuring MCP server '{mcp_name}': {e}", err=True)
+            return 1
+        except Exception as e:
+            typer.echo(f"Unexpected error configuring MCP server '{mcp_name}': {e}", err=True)
+            return 1
+
+    def configure_mcp_servers(self) -> int:
+        """Configure all MCP servers listed in MCP_SERVERS.
+
+        Returns:
+            int: Exit code (0 for success, 1 for failure)
+        """
+        for mcp_name, script_filename in self.MCP_SERVERS:
+            result = self._configure_single_mcp(mcp_name, script_filename)
+            if result != 0:
+                return result
+        return 0
+
     def _update_claude_config(self) -> int:
         """Common method to update Claude Code configuration (commands and settings)
 
@@ -193,6 +266,7 @@ argument-hint: [{frontmatter.argument_hint}]
         1. Pulls GWS commands to global Claude commands folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
         3. Generates main instructions file
+        4. Configures gws-mcp MCP server
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -213,6 +287,12 @@ argument-hint: [{frontmatter.argument_hint}]
         result = self.generate_main_instructions()
         if result != 0:
             typer.echo("Failed to generate main instructions", err=True)
+            return result
+
+        # Configure MCP servers
+        result = self.configure_mcp_servers()
+        if result != 0:
+            typer.echo("Failed to configure MCP servers", err=True)
             return result
 
         return 0

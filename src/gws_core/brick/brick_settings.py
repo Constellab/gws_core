@@ -188,21 +188,14 @@ class BrickSettings:
         }
 
     @staticmethod
-    def from_file_path(file_path: str) -> "BrickSettings":
-        """Create a BrickSettingsDTO from a settings.json file path.
+    def from_json_dict(settings_data: dict[str, Any]) -> "BrickSettings":
+        """Create a BrickSettings from a dictionary.
 
-        :param file_path: Path to the settings.json file
-        :type file_path: str
-        :return: BrickSettingsDTO with all settings, or None if file doesn't exist or can't be parsed
-        :rtype: Optional[BrickSettingsDTO]
+        :param settings_data: Dictionary with settings data
+        :type settings_data: dict[str, Any]
+        :return: BrickSettings instance
+        :rtype: BrickSettings
         """
-        if not os.path.exists(file_path):
-            raise FileNotFoundError(f"settings.json file not found at path: {file_path}")
-
-        settings_data: dict[str, Any]
-        with open(file_path, encoding="utf-8") as f:
-            settings_data = json.load(f)
-
         # Parse environment if present
         environment = None
         if "environment" in settings_data:
@@ -229,3 +222,20 @@ class BrickSettings:
             technical_info=settings_data.get("technical_info"),
             environment=environment,
         )
+
+    @staticmethod
+    def from_file_path(file_path: str) -> "BrickSettings":
+        """Create a BrickSettings from a settings.json file path.
+
+        :param file_path: Path to the settings.json file
+        :type file_path: str
+        :return: BrickSettings instance
+        :rtype: BrickSettings
+        """
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"settings.json file not found at path: {file_path}")
+
+        with open(file_path, encoding="utf-8") as f:
+            settings_data = json.load(f)
+
+        return BrickSettings.from_json_dict(settings_data)

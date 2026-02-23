@@ -1,12 +1,12 @@
 from collections.abc import Callable
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 
-from ..brick.brick_service import BrickService
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
@@ -75,20 +75,20 @@ def decorate_task(
 ):
     """Method to decorate a task"""
     if not Utils.issubclass(task_class, Task):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class,
             f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task",
         )
         return
 
     if related_resource and not Utils.issubclass(related_resource, Resource):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class, f"The task {unique_name} has a related object which is not a resource."
         )
         return
 
     if not Utils.value_is_in_literal(task_type, TaskSubType):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class,
             f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}",
         )
@@ -104,7 +104,7 @@ def decorate_task(
         # check the config specs
         if isinstance(task_class.config_specs, dict):
             # TODO for now this is just a warning
-            BrickService.log_brick_warning(
+            BrickLogService.log_brick_warning(
                 task_class,
                 f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
             )
@@ -113,7 +113,7 @@ def decorate_task(
         task_class.config_specs.check_config_specs()
 
     except Exception as err:
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}"
         )
         return

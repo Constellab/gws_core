@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_style import TypingStyle
@@ -46,7 +46,7 @@ def _decorator_view(
 
         if isinstance(specs, dict):
             # TODO for now this is just a warning
-            BrickService.log_brick_warning(
+            BrickLogService.log_brick_warning(
                 func,
                 f"View error. The config specs of the view (method: '{func_args.func_name}', view type: '{view_type}') must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
             )
@@ -117,7 +117,7 @@ def _decorator_view(
         # Store the meta data object into the view_meta_data_attribute of the function
         ReflectorHelper.set_object_has_metadata(func, VIEW_META_DATA_ATTRIBUTE, view_meta_data)
     except Exception as e:
-        BrickService.log_brick_error(func, str(e))
+        BrickLogService.log_brick_error(func, str(e))
     return func
 
 
@@ -125,10 +125,10 @@ def view(
     view_type: type[View],
     human_name: str = "",
     short_description: str = "",
-    specs: ConfigSpecs = None,
+    specs: ConfigSpecs | None = None,
     default_view: bool = False,
     hide: bool = False,
-    style: TypingStyle = None,
+    style: TypingStyle | None = None,
 ) -> Callable:
     """Decorator the place one resource method to define it as a view.
     Views a reference in the interfave when viewing a resource

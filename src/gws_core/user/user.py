@@ -11,7 +11,7 @@ from .user_group import UserGroup
 
 @final
 class User(Model):
-    email: str = CharField(default=False, index=True)
+    email: str = CharField(default=False, unique=True)
     first_name: str = CharField(default=False)
     last_name: str = CharField(default=False)
     group: UserGroup = EnumField(choices=UserGroup, default=UserGroup.USER)

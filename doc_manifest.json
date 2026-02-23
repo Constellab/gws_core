@@ -1,0 +1,12 @@
+{
+  "docs": [
+    {
+      "title": "Deploy containers",
+      "remote_doc_id": "5daa8186-3535-490f-92a5-ebf1b0e06133",
+      "source_files": [
+        "src/gws_core/docker/docker_service.py",
+        "src/gws_core/docker/docker_dto.py"
+      ]
+    }
+  ]
+}

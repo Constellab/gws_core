@@ -194,7 +194,11 @@ class CommunityService:
         url = f"{cls.get_community_api_url()}/run-stat-lab/new-stats"
         try:
             ExternalApiService.post(
-                url, {"stats": run_stats}, cls._get_request_header(), raise_exception_if_error=True, timeout=60*5
+                url,
+                {"stats": run_stats},
+                cls._get_request_header(),
+                raise_exception_if_error=True,
+                timeout=60 * 5,
             )
         except BaseHTTPException as err:
             err.detail = f"Can't send run stats to Community. Error : {err.detail}"
@@ -399,7 +403,7 @@ class CommunityService:
             cls.api_key_header_key: cls.api_key_header_prefix + " " + Settings.get_space_api_key()
         }
 
-        user: User = CurrentUserService.get_current_user()
+        user = CurrentUserService.get_current_user()
 
         if user:
             headers[cls.user_id_header_key] = user.id

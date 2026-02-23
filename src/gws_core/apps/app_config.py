@@ -3,7 +3,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 
 from gws_core.apps.app_dto import AppType
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -91,14 +91,14 @@ def _decorate_app(
 ):
     """Method to decorate a task"""
     if not Utils.issubclass(app_class, AppConfig):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             app_class,
             f"The app_decorator is used on the class: {app_class.__name__} and this class is not a sub class of App",
         )
         return
 
     if not isinstance(app_type, AppType):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             app_class, f"The app_type: {app_type} is not a instance of AppType"
         )
         return

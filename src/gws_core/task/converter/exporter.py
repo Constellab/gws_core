@@ -6,6 +6,7 @@ from typing import final
 
 from typing_extensions import TypedDict
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -14,7 +15,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
-from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...core.utils.settings import Settings
@@ -75,14 +75,14 @@ def exporter_decorator(
     def decorator(task_class: type[ResourceExporter]):
         try:
             if not Utils.issubclass(task_class, ResourceExporter):
-                BrickService.log_brick_error(
+                BrickLogService.log_brick_error(
                     task_class,
                     f"The exporter_decorator is used on the class: {task_class.__name__} and this class is not a sub class of ResourceExporter",
                 )
                 return task_class
 
             if not Utils.issubclass(target_type, File):
-                BrickService.log_brick_error(
+                BrickLogService.log_brick_error(
                     task_class,
                     f"Error in the exporter_decorator of class {task_class.__name__}. The target_type must be an File or child class",
                 )
@@ -112,7 +112,7 @@ def exporter_decorator(
             )
         except Exception as err:
             traceback.print_stack()
-            BrickService.log_brick_error(task_class, str(err))
+            BrickLogService.log_brick_error(task_class, str(err))
 
         return task_class
 

@@ -1,6 +1,6 @@
-
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.brick.brick_model import BrickModel
 from gws_core.brick.brick_service import BrickService
 from gws_core.task.task import Task
@@ -28,7 +28,7 @@ class TestBrick(BaseTestCase):
         self.assertIsNotNone([brick_model.to_dto() for brick_model in brick_models])
 
     def test_log_brick_message(self):
-        BrickService.log_brick_message_from_obj(Task, "Test message", "ERROR")
+        BrickLogService.log_brick_message_from_obj(Task, "Test message", "ERROR")
 
         brick_model = BrickService.get_brick_model("gws_core")
         self.assertEqual(brick_model.status, "ERROR")

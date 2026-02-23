@@ -62,7 +62,7 @@ class ApiRegistry:
         cls._apis[path] = app
         if with_exception_handlers:
             cls.configure_exception_handlers(app)
-        Logger.info(f"Registered FastAPI app at path '{path}'")
+        Logger.debug(f"Registered FastAPI app at path '{path}'")
         return app
 
     @classmethod

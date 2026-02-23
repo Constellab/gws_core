@@ -1,11 +1,11 @@
 from collections.abc import Callable
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 
-from ..brick.brick_service import BrickService
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_gws_typing_class
 from ..resource.resource import Resource
@@ -68,7 +68,7 @@ def decorate_resource(
 ):
     """Method to decorate a resource"""
     if not Utils.issubclass(resource_class, Resource):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             resource_class,
             f"The ResourceDecorator is used on class '{resource_class.__name__}' but this class is not a subclass of Resource",
         )
@@ -76,7 +76,7 @@ def decorate_resource(
 
     # check resource constructor, it must have only optional params
     if not ReflectorHelper.function_args_are_optional(resource_class.__init__):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             resource_class,
             f"The Resource '{resource_class.__name__}' have a constructor with mandatory params. The resource constructor must contain only optional arguments",
         )

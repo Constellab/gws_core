@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import final
 
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -9,7 +10,6 @@ from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 
-from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
 from ...core.utils.utils import Utils
 from ...resource.resource import Resource
@@ -35,14 +35,14 @@ def decorate_converter(
     deprecated: TypingDeprecated | None = None,
 ) -> None:
     if not Utils.issubclass(task_class, Converter):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class,
             f"The decorate_converter is used on the class: {task_class.__name__} and this class is not a sub class of Converter",
         )
         return
 
     if not Utils.issubclass(source_type, Resource):
-        BrickService.log_brick_error(
+        BrickLogService.log_brick_error(
             task_class, f"The source_type: {source_type.__name__} is not a sub class of Resource"
         )
         return

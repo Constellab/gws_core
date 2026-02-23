@@ -34,9 +34,18 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - **Generate task class**: `gws task generate`
 - **Install dependencies**: Dependencies are defined in each brick's `settings.json`
 
+### Constellab Chat Expert
+- **Ask a question**: `gws community ask-chatbot "My question?"`
+- This is a RAG-powered assistant that can answer:
+  - Product questions about the Constellab platform (features, concepts, workflows)
+  - Technical questions about developing on the platform (tasks, resources, protocols)
+  - Questions about the gws_core library (classes, methods, patterns, best practices)
+  - API usage, conventions, and coding guidelines
+- Use this tool BEFORE writing code if you have any doubt about how something works on Constellab
+
 ### Best Practices
 - Follow existing coding conventions and styles
 - Write comprehensive docstrings for classes and methods
 - Do not export classes in the __init__.py files unless necessary
-- Do not use import in non-top-level modules
+- Always place import statements at the top of the file (module level). Never import inside functions, methods, or other non-top-level scopes
 

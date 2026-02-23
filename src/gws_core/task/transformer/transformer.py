@@ -2,7 +2,7 @@ from abc import abstractmethod
 from collections.abc import Callable
 from typing import final
 
-from gws_core.brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -48,7 +48,7 @@ def transformer_decorator(
 
     def decorator(task_class: type[Transformer]):
         if not Utils.issubclass(task_class, Transformer):
-            BrickService.log_brick_error(
+            BrickLogService.log_brick_error(
                 task_class,
                 f"The transformer_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Transformer",
             )

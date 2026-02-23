@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -114,3 +115,33 @@ class CommunityTagValueDTO(BaseModelDTO):
     tag_key: CommunityTagKeyDTO
     short_description: str | None = None
     additional_infos: dict[str, Any] | None = None
+
+
+class CommunityRagflowAskResponseDTO(BaseModelDTO):
+    """Response from the ragflow-chatbot/ask endpoint."""
+
+    answer: str
+    session_id: str
+    references: list[dict] = []
+
+
+class CommunityUserDTO(BaseModelDTO):
+    id: str
+    alias: str
+    userCode: str
+    photo: str | None = None
+
+
+class CommunityDocumentationDTO(BaseModelDTO):
+    """Response from the GET /documentation/:id endpoint."""
+
+    id: str
+    createdAt: datetime
+    createdBy: CommunityUserDTO
+    lastModifiedAt: datetime
+    lastModifiedBy: CommunityUserDTO
+    title: str
+    content: RichTextDTO
+    path: str
+    completePath: str
+    order: int

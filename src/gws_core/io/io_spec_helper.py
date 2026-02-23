@@ -1,6 +1,7 @@
 from typing import Literal, cast
 
-from ..brick.brick_service import BrickService
+from gws_core.brick.brick_log_service import BrickLogService
+
 from .io_spec import IOSpec
 from .io_specs import InputSpecs, IOSpecs, OutputSpecs
 
@@ -27,7 +28,7 @@ class IOSpecsHelper:
 
         # TODO for now this is just a warning
         if not isinstance(io_specs, IOSpecs):
-            BrickService.log_brick_warning(
+            BrickLogService.log_brick_warning(
                 task_type,
                 f"The specs of task {task_type.__name__} must be an InputSpecs or OutputSpecs",
             )
@@ -39,7 +40,7 @@ class IOSpecsHelper:
         for key, item in io_specs.get_specs().items():
             if not isinstance(item, IOSpec):
                 error = f"The {param_type} specs '{key}' of task '{task_type.__name__}' is not a TypeIO, please use InputSpec or OutputSpec"
-                BrickService.log_brick_error(task_type, error)
+                BrickLogService.log_brick_error(task_type, error)
                 raise Exception(error)
 
             item.check_resource_types()
