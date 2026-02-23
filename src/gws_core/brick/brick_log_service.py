@@ -52,7 +52,7 @@ class BrickLogService:
         brick_name: str
         try:
             brick_name = BrickHelper.get_brick_name(obj)
-        except:
+        except Exception:
             brick_name = "__Unknown"
 
         cls.log_brick_message(brick_name=brick_name, message=message, status=status)

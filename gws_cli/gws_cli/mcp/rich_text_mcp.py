@@ -1,4 +1,11 @@
 import os
+import sys
+
+# Add the utils directory to sys.path so we can import shared modules
+# (this MCP server runs as a standalone process, not as part of the gws_cli package)
+# This is temporary
+_utils_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "utils")
+sys.path.insert(0, _utils_dir)
 
 
 def init_gws_core():
@@ -117,7 +124,9 @@ def upload_document(documentation_id: str) -> str:
     """Upload the document to the platform."""
     doc = _get_document(documentation_id)
     community_service = CommunityCliService.get_community_service()
-    result = community_service.update_documentation_content(documentation_id, doc.rich_text.to_dto())
+    result = community_service.update_documentation_content(
+        documentation_id, doc.rich_text.to_dto()
+    )
     return f"Uploaded '{result.title}' (id={result.id}) — {len(doc.rich_text.get_blocks())} blocks"
 
 
