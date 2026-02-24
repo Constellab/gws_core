@@ -4,7 +4,11 @@ from .component.reflex_dialog_components import dialog_header as dialog_header
 from .component.reflex_form_dialog_component import FormDialogState as FormDialogState
 from .component.reflex_form_dialog_component import form_dialog_component as form_dialog_component
 from .component.reflex_loader_section_component import loader_section as loader_section
+from .component.reflex_page_sidebar import SidebarState as SidebarState
+from .component.reflex_page_sidebar import left_sidebar_open_button as left_sidebar_open_button
 from .component.reflex_page_sidebar import page_sidebar_component as page_sidebar_component
+from .component.reflex_page_sidebar import right_sidebar_close_button as right_sidebar_close_button
+from .component.reflex_page_sidebar import right_sidebar_open_button as right_sidebar_open_button
 from .component.reflex_sidebar_menu_component import menu_item_component as menu_item_component
 from .component.reflex_sidebar_menu_component import (
     sidebar_menu_component as sidebar_menu_component,

@@ -93,10 +93,7 @@ def register_gws_reflex_app(
     ReflexMainStateBaseFactory.set_main_state_class(ReflexMainState)
     # Create app if not provided
     if app is None:
-        app = rx.App()
-
-    # Apply GWS
-    app.theme = get_theme()
+        app = rx.App(theme=get_theme())
 
     if not app.stylesheets:
         app.stylesheets = ["/style.css"]

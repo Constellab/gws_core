@@ -1,6 +1,6 @@
 /* Temporary hide build with reflex */
 a[href="https://reflex.dev"] {
-    display: none !important;
+  display: none !important;
 }
 
 @font-face {
@@ -35,8 +35,8 @@ a[href="https://reflex.dev"] {
   font-display: swap;
 }
 
-.dense-markdown{
-    line-height: 1;
+.dense-markdown {
+  line-height: 1;
 }
 
 .dense-markdown h1,
@@ -49,24 +49,112 @@ a[href="https://reflex.dev"] {
 .dense-markdown ul,
 .dense-markdown ol,
 .dense-markdown li {
-    margin-top: 0;
-    margin-bottom: 0;
+  margin-top: 0;
+  margin-bottom: 0;
 }
 
 
-.radix-themes{
-    --default-font-family: 'Plus Jakarta Sans', sans-serif;
-    --cursor-button: pointer;
-    --cursor-checkbox: pointer;
-    --cursor-disabled: not-allowed;
-    --cursor-link: pointer;
-    --cursor-menu-item: pointer;
-    --cursor-radio: pointer;
-    --cursor-slider-thumb: grab;
-    --cursor-slider-thumb-active: grabbing;
-    --cursor-switch: pointer; 
+.radix-themes {
+  --default-font-family: 'Plus Jakarta Sans', sans-serif;
+  --cursor-button: pointer;
+  --cursor-checkbox: pointer;
+  --cursor-disabled: not-allowed;
+  --cursor-link: pointer;
+  --cursor-menu-item: pointer;
+  --cursor-radio: pointer;
+  --cursor-slider-thumb: grab;
+  --cursor-slider-thumb-active: grabbing;
+  --cursor-switch: pointer;
+  --color-background: var(--accent-1);
+
+  /* Custom accent color palette */
+  --accent-1: #f7fdfc;
+  --accent-2: #e9f8f5;
+  --accent-3: #d3f0eb;
+  --accent-4: #bde9e1;
+  --accent-5: #a7e1d7;
+  --accent-6: #7cd2c4;
+  --accent-7: #50c3b0;
+  --accent-8: #25b49c;
+  --accent-9: #1d907d;
+  --accent-10: #166c5e;
+  --accent-11: #0e483e;
+  --accent-12: #0b362f;
+
+  --accent-a1: #25b49c08;
+  --accent-a2: #25b49c0d;
+  --accent-a3: #25b49c1a;
+  --accent-a4: #25b49c2e;
+  --accent-a5: #25b49c45;
+  --accent-a6: #25b49c66;
+  --accent-a7: #25b49c8c;
+  --accent-a8: #25b49cbd;
+  --accent-a9: #1d907dde;
+  --accent-a10: #166c5eef;
+  --accent-a11: #0e483ef5;
+  --accent-a12: #0b362ffa;
+
+  --accent-surface: #d3f0eb33;
+  --accent-indicator: var(--accent-9);
+  --accent-track: var(--accent-9);
+  --accent-contrast: #e9f7f5;
+
+  /* Custom secondary color palette (purple/violet) */
+  --secondary-1: #f9f8fd;
+  --secondary-2: #f3f1fc;
+  --secondary-3: #eeebfa;
+  --secondary-4: #e8e4f8;
+  --secondary-5: #dcd6f5;
+  --secondary-6: #d1c9f1;
+  --secondary-7: #c5bbee;
+  --secondary-8: #a69bd3;
+  --secondary-9: #877bb8;
+  --secondary-10: #675a9d;
+  --secondary-11: #584a90;
+  --secondary-12: #291a67;
+
+  --secondary-a1: #584a900d;
+  --secondary-a2: #584a901a;
+  --secondary-a3: #584a902e;
+  --secondary-a4: #584a9045;
+  --secondary-a5: #584a9066;
+  --secondary-a6: #584a908c;
+  --secondary-a7: #584a90bd;
+  --secondary-a8: #584a90de;
+  --secondary-a9: #877bb8ef;
+  --secondary-a10: #675a9df5;
+  --secondary-a11: #584a90fa;
+  --secondary-a12: #291a67fc;
+
+  --secondary-contrast: #f9f8fd;
+
+  /* Custom tertiary color palette (pink/magenta) */
+  --tertiary-0: #6a003c;
+  --tertiary-5: #790f4b;
+  --tertiary-10: #881d5a;
+  --tertiary-15: #972c68;
+  --tertiary-20: #a63b77;
+  --tertiary-30: #c35895;
+  --tertiary-40: #e176b2;
+  --tertiary-50: #ff93d0;
+  --tertiary-60: #ffa9d9;
+  --tertiary-70: #ffbee3;
+  --tertiary-80: #ffd4ec;
+  --tertiary-85: #ffdff1;
+  --tertiary-90: #ffe9f6;
+  --tertiary-95: #fff4fa;
+  --tertiary-100: #fff;
+
+  --tertiary-contrast: #fff4fa;
+  
+
 }
 
 .AccordionTrigger {
-    cursor: pointer;
+  cursor: pointer;
+}
+
+/* Light header color on table, look better */
+.rt-TableHeader .rt-TableRow {
+  color: var(--gray-9);
 }

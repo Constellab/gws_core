@@ -46,6 +46,7 @@ def add_unauthorized_page(app: rx.App):
 def get_theme():
     """Get the theme of the app."""
     return rx.theme(
-        accent_color="teal",
+        gray_color="sage",
         appearance=os.environ.get("GWS_THEME", "light"),
+        radius="large",
     )

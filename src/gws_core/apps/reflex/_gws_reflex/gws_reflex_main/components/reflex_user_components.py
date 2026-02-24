@@ -7,6 +7,47 @@ from gws_core.core.utils.settings import Settings
 from gws_core.user.user_dto import UserDTO
 
 
+def _user_color(first_name_initial: str) -> rx.Component:
+    """Generate a consistent pretty color based on the user's first name initial.
+
+    Uses rx.match to map the first letter to a curated color, ensuring
+    compatibility with Reflex's reactive Var system.
+
+    :param first_name_initial: First character of the user's first name (as a Var)
+    :return: HSL color string (as a reactive Var)
+    """
+    return rx.match(
+        first_name_initial,
+        ("A", "#6C63FF"),  # Periwinkle
+        ("B", "#FF6B6B"),  # Coral
+        ("C", "#4ECDC4"),  # Mint
+        ("D", "#FFB347"),  # Peach
+        ("E", "#A78BFA"),  # Lavender
+        ("F", "#F472B6"),  # Pink
+        ("G", "#34D399"),  # Emerald
+        ("H", "#60A5FA"),  # Sky blue
+        ("I", "#FBBF24"),  # Amber
+        ("J", "#F87171"),  # Soft red
+        ("K", "#38BDF8"),  # Light blue
+        ("L", "#A3E635"),  # Lime
+        ("M", "#FB923C"),  # Orange
+        ("N", "#818CF8"),  # Indigo
+        ("O", "#2DD4BF"),  # Teal
+        ("P", "#E879F9"),  # Fuchsia
+        ("Q", "#22D3EE"),  # Cyan
+        ("R", "#F9A8D4"),  # Rose
+        ("S", "#7DD3FC"),  # Pale blue
+        ("T", "#C084FC"),  # Purple
+        ("U", "#86EFAC"),  # Light green
+        ("V", "#FCA5A5"),  # Light coral
+        ("W", "#93C5FD"),  # Periwinkle blue
+        ("X", "#D8B4FE"),  # Light purple
+        ("Y", "#FDE68A"),  # Light yellow
+        ("Z", "#67E8F9"),  # Light cyan
+        "#6C63FF",  # Default fallback
+    )
+
+
 def profile_picture_url(photo: str) -> str:
     """Generate URL for user profile picture with specified size.
 
@@ -30,7 +71,7 @@ def user_profile_picture(
     """
     # Determine pixel size and font size based on size parameter
     pixel_size = rx.cond(size == "small", "24px", "32px")
-    font_size = rx.cond(size == "small", "11px", "14px")
+    font_size = rx.cond(size == "small", "11px", "12px")
 
     # Create avatar component - either with photo or initials
     return rx.cond(
@@ -55,7 +96,7 @@ def user_profile_picture(
             width=pixel_size,
             height=pixel_size,
             border_radius="50%",
-            background_color="var(--accent-10)",
+            background_color=_user_color(user.first_name[0].upper()),
             align="center",
             justify="center",
             flex_shrink=0,
