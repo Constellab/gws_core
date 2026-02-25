@@ -22,13 +22,13 @@ class ReflexApp(AppInstance):
     """
 
     # if a static folder is provided
-    _app_static_folder: str = None
+    _app_static_folder: str | None = None
 
     # If app config is set,
-    _app_config: AppConfig = None
+    _app_config: AppConfig | None = None
 
     # The folder that contains the front build of the app.
-    _front_app_build_folder: Folder = None
+    _front_app_build_folder: Folder | None = None
 
     _is_enterprise: bool = False
 

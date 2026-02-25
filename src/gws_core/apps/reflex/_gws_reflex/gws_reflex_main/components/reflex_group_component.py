@@ -60,7 +60,7 @@ def group_inline_component(
 def group_select(
     groups: list[SpaceGroupDTO],
     placeholder: str = "Select a group",
-    name: str = None,
+    name: str | None = None,
     disabled: bool = False,
     **kwargs,
 ) -> rx.Component:

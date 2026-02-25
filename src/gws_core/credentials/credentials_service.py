@@ -35,9 +35,9 @@ class CredentialsService:
 
     @classmethod
     def _check_and_build_from_dto(
-        cls, save_credentials: SaveCredentialsDTO, id_: str = None
+        cls, save_credentials: SaveCredentialsDTO, id_: str | None = None
     ) -> Credentials:
-        credentials: Credentials = None
+        credentials: Credentials | None = None
 
         # check that another credentials with the same name does not exist
         if id_:
@@ -115,7 +115,7 @@ class CredentialsService:
         return Credentials.find_by_name(name)
 
     @classmethod
-    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> Credentials:
+    def find_by_name_and_check(cls, name: str, type_: CredentialsType | None = None) -> Credentials:
         return Credentials.find_by_name_and_check(name, type_)
 
     @classmethod

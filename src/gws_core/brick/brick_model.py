@@ -27,7 +27,7 @@ class BrickModel(Model):
             self.data = {}
 
     def add_message(
-        self, message: str, status: BrickMessageStatus, timestamp: float = None
+        self, message: str, status: BrickMessageStatus, timestamp: float | None = None
     ) -> None:
         if "messages" not in self.data:
             self.data["messages"] = []

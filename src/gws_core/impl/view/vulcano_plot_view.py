@@ -18,11 +18,11 @@ class VulcanoPlotView(ScatterPlot2DView):
     :rtype: _type_
     """
 
-    x_threshold: float = None
-    y_threshold: float = None
+    x_threshold: float | None = None
+    y_threshold: float | None = None
     _type: ViewType = ViewType.VULCANO_PLOT
 
-    def __init__(self, x_threshold: float = None, y_threshold: float = None):
+    def __init__(self, x_threshold: float | None = None, y_threshold: float | None = None):
         super().__init__()
         self.x_threshold = x_threshold
         self.y_threshold = y_threshold
@@ -31,10 +31,10 @@ class VulcanoPlotView(ScatterPlot2DView):
         self,
         x: list[float],
         y: list[float],
-        name: str = None,
-        x_name: str = None,
-        y_name: str = None,
-        tags: list[dict[str, str]] = None,
+        name: str | None = None,
+        x_name: str | None = None,
+        y_name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ):
         if self._series and len(self._series) > 0:
             raise BadRequestException("Only one series is allowed")
@@ -48,10 +48,10 @@ class VulcanoPlotView(ScatterPlot2DView):
         self,
         x: list[float],
         y: list[float],
-        name: str = None,
-        x_name: str = None,
-        y_name: str = None,
-        tags: list[dict[str, str]] = None,
+        name: str | None = None,
+        x_name: str | None = None,
+        y_name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ):
         self._series = []
         return self.add_series(x, y, name, x_name, y_name, tags)

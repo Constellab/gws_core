@@ -20,10 +20,10 @@ from gws_core.resource.view.view_decorator import view
 class NoteTemplateResource(Resource):
     note_template_id: str = StrRField()
 
-    _note_template: NoteTemplate = None
-    _content: RichText = None
+    _note_template: NoteTemplate | None = None
+    _content: RichText | None = None
 
-    def __init__(self, note_template_id: str = None):
+    def __init__(self, note_template_id: str | None = None):
         super().__init__()
         self.note_template_id = note_template_id
 
@@ -41,7 +41,7 @@ class NoteTemplateResource(Resource):
         return NoteResource.from_note_template(self.get_note_template())
 
     @view(view_type=RichTextView, human_name="View note template", default_view=True)
-    def view_note_template(self, config: ConfigParamsDict = None) -> RichTextView:
+    def view_note_template(self, config: ConfigParamsDict | None = None) -> RichTextView:
         return RichTextView(
             self.get_note_template().title,
             self.get_content(),

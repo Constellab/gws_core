@@ -61,7 +61,7 @@ class AuthenticationService:
         return cls.log_user(user)
 
     @classmethod
-    def log_user(cls, user: User, response: Response = None) -> Response:
+    def log_user(cls, user: User, response: Response | None = None) -> Response:
         # now save user activity
         ActivityService.add(
             ActivityType.HTTP_AUTHENTICATION,

@@ -8,7 +8,7 @@ class TechnicalInfo:
     short_description: str | None
 
     def __init__(
-        self, key: str, value: str | float | int | bool, short_description: str = None
+        self, key: str, value: str | float | int | bool, short_description: str | None = None
     ) -> None:
         self.key = key
         self.value = value

@@ -22,7 +22,7 @@ from .process_service import ProcessService, ProcessType
 def get_process_logs(
     process_type: ProcessType,
     id: str,
-    from_page_date: datetime = None,
+    from_page_date: datetime | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> LogsBetweenDatesDTO:
     """

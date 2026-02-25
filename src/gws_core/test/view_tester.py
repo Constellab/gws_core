@@ -13,7 +13,7 @@ class ViewTester:
     def __init__(self, view: View):
         self._view = view
 
-    def to_dto(self, params: ConfigParamsDict = None) -> ViewDTO:
+    def to_dto(self, params: ConfigParamsDict | None = None) -> ViewDTO:
         if params is None:
             params = {}
 

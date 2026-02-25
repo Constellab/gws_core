@@ -215,7 +215,7 @@ class TagService:
 
     @classmethod
     def create_tag_value(
-        cls, edit_tag_value: TagValueEditDTO, tag_key_model: TagKeyModel = None
+        cls, edit_tag_value: TagValueEditDTO, tag_key_model: TagKeyModel | None = None
     ) -> TagValueModel:
         """Create a new tag value"""
         if not tag_key_model:

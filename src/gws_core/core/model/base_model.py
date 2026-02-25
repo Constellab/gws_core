@@ -170,7 +170,7 @@ class BaseModel(Base, PeeweeModel):
         return cls._meta
 
     @classmethod
-    def search(cls, phrase: str, modifier: str = None) -> ModelSelect:
+    def search(cls, phrase: str, modifier: str | None = None) -> ModelSelect:
         """
         Performs full-text search on the field. Must be overrided by child class to work
         :param phrase: The phrase to search

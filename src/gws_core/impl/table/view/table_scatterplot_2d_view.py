@@ -83,7 +83,7 @@ class TableScatterPlot2DView(BaseTableView):
         for serie in series:
             y_data = self.get_values_from_selection_range(serie.y)
 
-            x_data: list[float] = None
+            x_data: list[float] | None = None
             if serie.x is not None:
                 x_data = self.get_values_from_selection_range(serie.x)
 

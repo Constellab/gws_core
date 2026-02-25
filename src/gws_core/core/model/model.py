@@ -156,7 +156,7 @@ class Model(BaseModel, PeeweeModel):
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def save_all(cls: type[ModelType], model_list: list[ModelType] = None) -> list[ModelType]:
+    def save_all(cls: type[ModelType], model_list: list[ModelType] | None = None) -> list[ModelType]:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.

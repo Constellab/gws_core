@@ -21,17 +21,17 @@ class AbstractS3Service(ABC):
     @abstractmethod
     def list_objects(
         self,
-        prefix: str = None,
+        prefix: str | None = None,
         max_keys: int = 1000,
-        delimiter: str = None,
-        continuation_token: str = None,
-        start_after: str = None,
+        delimiter: str | None = None,
+        continuation_token: str | None = None,
+        start_after: str | None = None,
     ) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
 
     @abstractmethod
     def upload_object(
-        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] | None = None, last_modified: float | None = None
     ) -> dict:
         """Upload an object to the bucket"""
 
@@ -64,7 +64,7 @@ class AbstractS3Service(ABC):
         """Update the tags of an object with a dictionary"""
 
     @abstractmethod
-    def initiate_multipart_upload(self, key: str, last_modified: float = None) -> str:
+    def initiate_multipart_upload(self, key: str, last_modified: float | None = None) -> str:
         """Initiate a multipart upload and return upload ID"""
 
     @abstractmethod

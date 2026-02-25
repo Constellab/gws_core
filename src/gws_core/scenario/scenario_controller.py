@@ -128,7 +128,7 @@ def create_an_scenario(
     "/scenario/{id_}/validate/{folder_id}", tags=["Scenario"], summary="Validate a scenario"
 )
 def validate_an_scenario(
-    id_: str, folder_id: str = None, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, folder_id: str | None = None, _=Depends(AuthorizationService.check_user_access_token)
 ) -> ScenarioDTO:
     """
     Validate a protocol

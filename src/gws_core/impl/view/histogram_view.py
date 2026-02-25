@@ -57,13 +57,13 @@ class HistogramView(View):
     ```
     """
 
-    x_label: str = None
-    y_label: str = None
-    nbins: int = None
-    mode: HistogramMode = None
-    x_tick_labels: list[str] = None
+    x_label: str | None = None
+    y_label: str | None = None
+    nbins: int | None = None
+    mode: HistogramMode | None = None
+    x_tick_labels: list[str] | None = None
 
-    _series: list = None
+    _series: list | None = None
     _type: ViewType = ViewType.HISTOGRAM
     _title: str = "Histogram"
 
@@ -72,7 +72,7 @@ class HistogramView(View):
         self.nbins = nbins
         self.mode = mode
 
-    def add_data(self, data: list[float] = None, name: str = None) -> None:
+    def add_data(self, data: list[float] | None = None, name: str | None = None) -> None:
         """
         Add series of raw data.
 
@@ -106,7 +106,7 @@ class HistogramView(View):
 
         self.add_series(x=bin_edges.tolist(), y=hist.tolist(), name=name)
 
-    def add_data_from_dataframe(self, dataframe: DataFrame = None, name: str = None) -> None:
+    def add_data_from_dataframe(self, dataframe: DataFrame | None = None, name: str | None = None) -> None:
         """
         Add series of raw data from a dataframe. The values are flattened by column
         """
@@ -115,7 +115,7 @@ class HistogramView(View):
         return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)
 
     def add_series(
-        self, x: list[float] | list[str] = None, y: list[float] = None, name: str = None
+        self, x: list[float] | list[str] | None = None, y: list[float] | None = None, name: str | None = None
     ):
         """
         Add series of pre-computed x and y histogram values.

@@ -22,7 +22,7 @@ class SqlMigrator:
         self._operations.append(operation)
 
     def add_column_if_not_exists(
-        self, model_type: type[BaseModel], field: Field, column_name: str = None
+        self, model_type: type[BaseModel], field: Field, column_name: str | None = None
     ) -> bool:
         new_column_name = column_name or field.column_name
         if not new_column_name:

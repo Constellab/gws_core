@@ -12,7 +12,7 @@ class TestStartUvicornApp:
     It automatically starts the server when entering the context and stops it when exiting.
     """
 
-    process: Process = None
+    process: Process | None = None
 
     def enter(self):
         self.__enter__()

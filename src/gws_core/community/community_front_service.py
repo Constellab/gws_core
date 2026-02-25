@@ -14,7 +14,7 @@ class CommunityFrontService:
             "latest" if brick_major_version == "latest" else "v" + str(brick_major_version)
         )
 
-        object_type: str = None
+        object_type: str | None = None
         if typing_name_obj.object_type == "TASK":
             object_type = "task"
         elif typing_name_obj.object_type == "RESOURCE":

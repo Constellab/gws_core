@@ -26,7 +26,7 @@ class Queue(Model):
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
 
-    _current_queue: "Queue" = None
+    _current_queue: Optional["Queue"] = None
 
     @classmethod
     def get_current_queue(cls) -> Optional["Queue"]:

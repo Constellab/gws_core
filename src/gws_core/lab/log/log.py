@@ -157,9 +157,9 @@ class LogCompleteInfo:
         self,
         start_time: datetime,
         end_time: datetime,
-        context: LogContext = None,
-        context_id: str = None,
-        nb_of_lines: int = None,
+        context: LogContext | None = None,
+        context_id: str | None = None,
+        nb_of_lines: int | None = None,
     ) -> list[LogLine]:
         """Filter the log lines by time and context
 
@@ -177,7 +177,7 @@ class LogCompleteInfo:
         :rtype: List[LogLine]
         """
         log_lines: list[LogLine] = []
-        stop_date: datetime = None
+        stop_date: datetime | None = None
 
         for line in self.content.splitlines():
             if len(line) == 0:
@@ -251,8 +251,8 @@ class LogsBetweenDates:
         logs: list[LogLine],
         from_date: datetime,
         to_date: datetime,
-        context: LogContext = None,
-        context_id: str = None,
+        context: LogContext | None = None,
+        context_id: str | None = None,
         is_last_page: bool = False,
     ) -> None:
         self.logs = logs

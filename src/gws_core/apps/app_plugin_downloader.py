@@ -54,8 +54,8 @@ class AppPluginDownloader:
     def __init__(
         self,
         package_name: str,
-        destination_folder: str = None,
-        message_dispatcher: MessageDispatcher = None,
+        destination_folder: str | None = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ):
         """Initialize the ComponentPackageDownloader.
 

@@ -42,7 +42,7 @@ class SharedEntityInfo(Model):
     created_by: User = ForeignKeyField(User, null=True, backref="+")
 
     # override on children classes
-    entity: Model = None
+    entity: Model | None = None
 
     @classmethod
     def get_and_check_entity_origin(cls, entity_id: str) -> "SharedEntityInfo":

@@ -9,9 +9,9 @@ from .param.param_types import ParamSpecDTO
 
 
 class ConfigSpecs:
-    specs: dict[str, ParamSpec] = None
+    specs: dict[str, ParamSpec] | None = None
 
-    def __init__(self, specs: dict[str, ParamSpec] = None) -> None:
+    def __init__(self, specs: dict[str, ParamSpec] | None = None) -> None:
         """Define the spec of a task or a view
         Example:
         ConfigSpecs({

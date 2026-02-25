@@ -40,9 +40,9 @@ class FileDecompressTask(ResourceImporter):
         }
     )
 
-    resource_loader: ResourceLoader = None
+    resource_loader: ResourceLoader | None = None
 
-    resource_to_delete_id: str = None
+    resource_to_delete_id: str | None = None
 
     def import_from_path(
         self, source: File, params: ConfigParams, target_type: type[Resource]

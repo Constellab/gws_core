@@ -13,7 +13,7 @@ def brick_migration(
     version: str,
     short_description: str,
     authenticate_sys_user: bool = True,
-    db_manager: AbstractDbManager = None,
+    db_manager: AbstractDbManager | None = None,
 ) -> Callable:
     """Decorator to place on sub class of BrickMigration to declare a new migration code
 

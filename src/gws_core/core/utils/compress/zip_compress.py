@@ -15,7 +15,7 @@ class ZipCompress(Compress):
         super().__init__(destination_file_path)
         self.zipf = ZipFile(destination_file_path, "w", ZIP_DEFLATED)
 
-    def add_dir(self, dir_path: str, dir_name: str = None) -> None:
+    def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
 
         # ziph is zipfile handle
@@ -24,7 +24,7 @@ class ZipCompress(Compress):
                 new_path = root.replace(dir_path, dir_name)
                 self.zipf.write(os.path.join(root, file), os.path.join(new_path, file))
 
-    def add_file(self, file_path: str, file_name: str = None) -> None:
+    def add_file(self, file_path: str, file_name: str | None = None) -> None:
         file_name = self._generate_node_name(file_path, file_name)
         self.zipf.write(file_path, file_name)
 

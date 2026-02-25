@@ -34,7 +34,7 @@ class NavigableEntitySet:
 
     def __init__(
         self,
-        entities: NavigableEntity | Iterable[NavigableEntity] = None,
+        entities: NavigableEntity | Iterable[NavigableEntity] | None = None,
         deep_level: int = 0,
     ):
         self._entities = set()

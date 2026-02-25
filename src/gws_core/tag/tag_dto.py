@@ -157,7 +157,7 @@ class TagValueNotSynchronizedFields(Enum):
 
 class TagValueNotSynchronizedFieldsDTO(BaseModelDTO):
     old_value: TagValueModelDTO | None = None
-    new_value: TagValueModelDTO = None
+    new_value: TagValueModelDTO | None = None
     not_synchronized_fields: list[TagValueNotSynchronizedFields] = []
 
 

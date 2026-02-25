@@ -21,7 +21,7 @@ from .json_view import JSONView
 class JSONDict(Resource):
     data: dict = DictRField()
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict | None = None):
         super().__init__()
         if data is None:
             data = {}

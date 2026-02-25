@@ -49,10 +49,10 @@ class ScatterPlot2DView(View):
     ```
     """
 
-    x_label: str = None
-    y_label: str = None
-    x_tick_labels: list[str] = None
-    _series: list = None
+    x_label: str | None = None
+    y_label: str | None = None
+    x_tick_labels: list[str] | None = None
+    _series: list | None = None
     _type: ViewType = ViewType.SCATTER_PLOT_2D
     _title: str = "2D-Scatter Plot"
 
@@ -60,10 +60,10 @@ class ScatterPlot2DView(View):
         self,
         x: list[float],
         y: list[float],
-        name: str = None,
-        x_name: str = None,
-        y_name: str = None,
-        tags: list[dict[str, str]] = None,
+        name: str | None = None,
+        x_name: str | None = None,
+        y_name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ):
         """
         Add a series of points to plot

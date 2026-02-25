@@ -19,12 +19,12 @@ class TarCompress(Compress):
         super().__init__(destination_file_path)
         self.tar_file = tar_open(destination_file_path, "w" + self.compress_option)
 
-    def add_dir(self, dir_path: str, dir_name: str = None) -> None:
+    def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
 
         self.tar_file.add(dir_path, arcname=dir_name)
 
-    def add_file(self, file_path: str, file_name: str = None) -> None:
+    def add_file(self, file_path: str, file_name: str | None = None) -> None:
         file_name = self._generate_node_name(file_path, file_name)
         self.tar_file.add(file_path, arcname=file_name)
 

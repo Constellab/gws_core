@@ -111,7 +111,7 @@ class ReflectorHelper:
 
     @classmethod
     def object_has_metadata(
-        cls, object_: Any, meta_data_name: str, meta_obj_type: type = None
+        cls, object_: Any, meta_data_name: str, meta_obj_type: type | None = None
     ) -> bool:
         """Check if an object has a specific metadata attribute.
 
@@ -145,7 +145,7 @@ class ReflectorHelper:
 
     @classmethod
     def get_and_check_object_metadata(
-        cls, object_: Any, meta_data_name: str, meta_obj_type: type = None
+        cls, object_: Any, meta_data_name: str, meta_obj_type: type | None = None
     ) -> Any:
         """Retrieve metadata from an object with optional type validation.
 
@@ -445,7 +445,7 @@ class ReflectorHelper:
         variables = cls.get_all_public_args(type_)
         methods = cls.get_class_public_methods_doc(type_, include_init=True)
 
-        name: str = None
+        name: str | None = None
         if not hasattr(type_, "__name__"):
             name = str(type_)
         else:

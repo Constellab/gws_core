@@ -90,8 +90,8 @@ class TableOperationHelper:
     def column_mass_operations(
         table: Table,
         operation_df: DataFrame,
-        operation_name_column: str = None,
-        operation_calculations_column: str = None,
+        operation_name_column: str | None = None,
+        operation_calculations_column: str | None = None,
         replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
         keep_original_columns: bool = False,
     ) -> Table:

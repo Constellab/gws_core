@@ -26,9 +26,9 @@ class ScenarioResource(Resource):
 
     scenario_id: str = StrRField()
 
-    _scenario: Scenario = None
+    _scenario: Scenario | None = None
 
-    def __init__(self, scenario_id: str = None):
+    def __init__(self, scenario_id: str | None = None):
         super().__init__()
         self.scenario_id = scenario_id
 
@@ -38,7 +38,7 @@ class ScenarioResource(Resource):
         return self._scenario
 
     @view(view_type=JSONView, human_name="View scenario info", default_view=True)
-    def view_scenario(self, config: ConfigParamsDict = None) -> JSONView:
+    def view_scenario(self, config: ConfigParamsDict | None = None) -> JSONView:
         return JSONView(
             {
                 "id": self.scenario_id,

@@ -13,7 +13,7 @@ from gws_core.tag.tag import Tag
 class ResourceSearchInput:
     search_builder: ResourceSearchBuilder
 
-    _default_options: list[ResourceModel] = None
+    _default_options: list[ResourceModel] | None = None
 
     def __init__(self):
         self.search_builder = ResourceSearchBuilder()
@@ -23,7 +23,7 @@ class ResourceSearchInput:
         placeholder: str = "Search for resource",
         key: str = "searchbox",
         debounce: int = 300,
-        label: str = None,
+        label: str | None = None,
     ) -> ResourceModel | None:
         """Create a search box to select a resource
 

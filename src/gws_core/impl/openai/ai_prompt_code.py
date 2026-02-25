@@ -43,8 +43,8 @@ class AIPromptCode:
     PROMPT_PY_INTRO = "You are a developer assistant that generate code in python."
     PROMPT_R_INTRO = "You are a developer assistant that generate code in R."
 
-    chat: OpenAiChat = None
-    message_dispatcher: MessageDispatcher = None
+    chat: OpenAiChat | None = None
+    message_dispatcher: MessageDispatcher | None = None
 
     def __init__(self, chat: OpenAiChat, message_dispatcher: MessageDispatcher | None = None):
         self.chat = chat
@@ -155,7 +155,7 @@ class AIPromptCode:
             return ""
         return OpenAiHelper.describe_outputs_for_context(output_specs)
 
-    def build_code_rules_context(self, pip_package_names: list[str] = None) -> str:
+    def build_code_rules_context(self, pip_package_names: list[str] | None = None) -> str:
         """Method to define the context rules for the code generation, so the generated code is executable.
         This method can be overrided to change the way of describing the code context.
         :param pip_package_names: list of available package that can be used in the generated code. The version of the package will be automatically retrieved, defaults to None

@@ -23,7 +23,7 @@ class StreamlitRouter:
     :rtype: _type_
     """
 
-    pages: dict[str, StreamlitPage] = None
+    pages: dict[str, StreamlitPage] | None = None
 
     SESSION_KEY = "__gws_streamlit_router__"
 

@@ -20,11 +20,11 @@ class IFrameView(View):
     _type: ViewType = ViewType.IFRAME
     _src: str
 
-    def __init__(self, src: str = None):
+    def __init__(self, src: str | None = None):
         super().__init__()
         self._src = src
 
-    def data_to_dict(self, params: ConfigParams = None) -> dict:
+    def data_to_dict(self, params: ConfigParams | None = None) -> dict:
         return {"src": self._src}
 
     @staticmethod

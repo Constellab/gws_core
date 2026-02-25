@@ -12,10 +12,10 @@ class UnauthorizedException(BaseHTTPException):
     def __init__(
         self,
         detail: str,
-        unique_code: str = None,
-        detail_args: dict = None,
-        headers: dict = None,
-        instance_id: str = None,
+        unique_code: str | None = None,
+        detail_args: dict | None = None,
+        headers: dict | None = None,
+        instance_id: str | None = None,
     ) -> None:
         """Throw a generic exception
 

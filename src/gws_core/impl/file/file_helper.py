@@ -597,8 +597,8 @@ class FileHelper:
     def create_file_response(
         cls,
         file_path: PathType,
-        filename: str = None,
-        media_type: str = None,
+        filename: str | None = None,
+        media_type: str | None = None,
         content_disposition_type: Literal["inline", "attachment"] = "attachment",
     ) -> FileResponse:
         """

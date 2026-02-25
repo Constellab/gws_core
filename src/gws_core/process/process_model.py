@@ -77,10 +77,10 @@ class ProcessModel(ModelWithUser):
     # name of the process set by the user
     name = CharField(null=True)
 
-    _scenario: Scenario = None
-    _parent_protocol: ProtocolModel = None
-    _inputs: Inputs = None
-    _outputs: Outputs = None
+    _scenario: Scenario | None = None
+    _parent_protocol: ProtocolModel | None = None
+    _inputs: Inputs | None = None
+    _outputs: Outputs | None = None
 
     def __init__(self, *args, **kwargs):
         """
@@ -481,7 +481,7 @@ class ProcessModel(ModelWithUser):
 
     def to_dto(self) -> ProcessDTO:
         process_typing: Typing = self.get_process_typing()
-        process_type_dto: SimpleTypingDTO = None
+        process_type_dto: SimpleTypingDTO | None = None
         type_status: TypingStatus = TypingStatus.OK
         is_agent: bool = False
         if process_typing:
@@ -655,7 +655,7 @@ class ProcessModel(ModelWithUser):
         self.save()
         self.progress_bar.reset()
 
-    def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str = None):
+    def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str | None = None):
         self.mark_as_error(
             ProcessErrorInfo(
                 detail=process_error.get_error_message(context),

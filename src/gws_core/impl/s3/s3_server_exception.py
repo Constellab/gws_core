@@ -10,7 +10,7 @@ class S3ServerException(HTTPException):
     bucket_name: str
 
     def __init__(
-        self, status_code: int, code: str, message: str, bucket_name: str, key: str = None
+        self, status_code: int, code: str, message: str, bucket_name: str, key: str | None = None
     ) -> None:
         super().__init__(status_code=status_code, detail=message)
         self.code = code
@@ -20,7 +20,7 @@ class S3ServerException(HTTPException):
 
     @staticmethod
     def from_http_exception(
-        exc: HTTPException, bucket_name: str = None, key: str = None
+        exc: HTTPException, bucket_name: str | None = None, key: str | None = None
     ) -> "S3ServerException":
         return S3ServerException(
             status_code=exc.status_code,
@@ -32,7 +32,7 @@ class S3ServerException(HTTPException):
 
     @staticmethod
     def from_exception(
-        exc: Exception, bucket_name: str = None, key: str = None
+        exc: Exception, bucket_name: str | None = None, key: str | None = None
     ) -> "S3ServerException":
         if isinstance(exc, S3ServerException):
             return exc

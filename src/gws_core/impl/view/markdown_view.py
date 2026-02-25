@@ -19,9 +19,9 @@ class MarkdownView(View):
     _type: ViewType = ViewType.MARKDOWN
     _markdown: str
 
-    def __init__(self, markdown: str = None):
+    def __init__(self, markdown: str | None = None):
         super().__init__()
         self._markdown = markdown
 
-    def data_to_dict(self, params: ConfigParams = None) -> dict:
+    def data_to_dict(self, params: ConfigParams | None = None) -> dict:
         return {"markdown": self._markdown}

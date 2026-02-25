@@ -16,12 +16,12 @@ class ParamSet(ParamSpec):
 
     """
 
-    param_set: ConfigSpecs = None
+    param_set: ConfigSpecs | None = None
     max_number_of_occurrences: int
 
     def __init__(
         self,
-        param_set: ConfigSpecs = None,
+        param_set: ConfigSpecs | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,

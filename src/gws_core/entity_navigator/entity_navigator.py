@@ -37,7 +37,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         else:
             self._entities = set([entities])
 
-    def has_next_entities(self, requested_entities: list[NavigableEntityType] = None) -> bool:
+    def has_next_entities(self, requested_entities: list[NavigableEntityType] | None = None) -> bool:
         if requested_entities is None:
             requested_entities = self._all_entity_types
         return len(self.get_next_entities(requested_entities)) > 0
@@ -73,7 +73,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def get_next_entities_recursive(
         self,
-        requested_entities: list[NavigableEntityType] = None,
+        requested_entities: list[NavigableEntityType] | None = None,
         include_current_entities: bool = False,
     ) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
@@ -168,7 +168,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     def get_previous_entities_recursive(
         self,
-        requested_entities: list[NavigableEntityType] = None,
+        requested_entities: list[NavigableEntityType] | None = None,
         include_current_entities: bool = False,
     ) -> NavigableEntitySet:
         """Return all the entities that are linked to the current entities
@@ -302,7 +302,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return entities[0] if len(entities) > 0 else None
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ) -> None:
         pass
 
@@ -312,7 +312,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity: GenericNavigableEntity,
         new_origin_type: TagOriginType,
         new_origin_id: str,
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] = None,
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
     ):
         if entity_tags_cache is None:
             entity_tags_cache = {}
@@ -327,7 +327,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity_tags.add_tags(new_tags)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ):
         pass
 
@@ -337,7 +337,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity: GenericNavigableEntity,
         origin_type: TagOriginType,
         origin_id: str,
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] = None,
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
     ):
         if entity_tags_cache is None:
             entity_tags_cache = {}
@@ -402,7 +402,7 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
         return self.get_previous_resources().get_previous_scenarios()
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ) -> None:
         for scenario in self._entities:
             # Propagate to resources
@@ -430,7 +430,7 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
             next_notes.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ):
         for scenario in self._entities:
             # Propagate to resources
@@ -543,7 +543,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return EntityNavigatorScenario(scenarios)
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ) -> None:
         for resource in self._entities:
             # Propagate to next views
@@ -572,7 +572,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
             next_resources.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ):
         for resource in self._entities:
             # Propagate to next views
@@ -625,7 +625,7 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
         return [view.resource_model for view in self._entities]
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ) -> None:
         for view in self._entities:
             # Propagate to next notes
@@ -641,7 +641,7 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
             next_notes.propagate_tags(tags, entity_tags_cache)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] = None
+        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
     ):
         for view in self._entities:
             # Propagate to next notes

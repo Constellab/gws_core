@@ -79,11 +79,11 @@ class Table(Resource):
 
     def __init__(
         self,
-        data: DataFrame | np.ndarray | list = None,
-        row_names: list[str] = None,
-        column_names: list[str] = None,
-        row_tags: list[dict[str, str]] = None,
-        column_tags: list[dict[str, str]] = None,
+        data: DataFrame | np.ndarray | list | None = None,
+        row_names: list[str] | None = None,
+        column_names: list[str] | None = None,
+        row_tags: list[dict[str, str]] | None = None,
+        column_tags: list[dict[str, str]] | None = None,
         strict_format_header_names: bool = False,
     ):
         """Create a new Table
@@ -120,11 +120,11 @@ class Table(Resource):
 
     def _set_data(
         self,
-        data: DataFrame | np.ndarray = None,
+        data: DataFrame | np.ndarray | None = None,
         row_names=None,
         column_names=None,
-        row_tags: list[dict[str, str]] = None,
-        column_tags: list[dict[str, str]] = None,
+        row_tags: list[dict[str, str]] | None = None,
+        column_tags: list[dict[str, str]] | None = None,
         strict_format_header_names: bool = False,
     ) -> "Table":
         if data is None:
@@ -242,7 +242,7 @@ class Table(Resource):
             dataframe.dropna(inplace=True)
         return dataframe
 
-    def add_column(self, name: str, data: list | Series = None, index: int = None):
+    def add_column(self, name: str, data: list | Series | None = None, index: int | None = None):
         """
         Add a new column to the Dataframe.
 
@@ -361,7 +361,7 @@ class Table(Resource):
         except:
             return None
 
-    def get_column_names(self, from_index: int = None, to_index: int = None) -> list[str]:
+    def get_column_names(self, from_index: int | None = None, to_index: int | None = None) -> list[str]:
         """
         Get the column names
 
@@ -497,7 +497,7 @@ class Table(Resource):
         else:
             return self._data.loc[row_name].tolist()
 
-    def add_row(self, name: str, data: list | Series = None, index: int = None) -> None:
+    def add_row(self, name: str, data: list | Series | None = None, index: int | None = None) -> None:
         """
         Add a row to the Dataframe.
 
@@ -588,7 +588,7 @@ class Table(Resource):
 
         self._data.index = row_names
 
-    def get_row_names(self, from_index: int = None, to_index: int = None) -> list[str]:
+    def get_row_names(self, from_index: int | None = None, to_index: int | None = None) -> list[str]:
         """
         Get the row names of the table by index
 
@@ -682,7 +682,7 @@ class Table(Resource):
 
     ######################################## TAGS ########################################
     def _set_tags(
-        self, row_tags: list[dict[str, str]] = None, column_tags: list[dict[str, str]] = None
+        self, row_tags: list[dict[str, str]] | None = None, column_tags: list[dict[str, str]] | None = None
     ):
         if row_tags:
             self.set_all_row_tags(row_tags)
@@ -820,7 +820,7 @@ class Table(Resource):
         self._column_tags = TableAxisTags(tags)
 
     def get_column_tags(
-        self, from_index: int = None, to_index: int = None, none_if_empty: bool = False
+        self, from_index: int | None = None, to_index: int | None = None, none_if_empty: bool = False
     ) -> list[dict[str, str]]:
         """
         Get the tags of multiple columns by index
@@ -847,7 +847,7 @@ class Table(Resource):
         return self._column_tags.get_available_tags()
 
     def get_columns_info(
-        self, from_index: int = None, to_index: int = None
+        self, from_index: int | None = None, to_index: int | None = None
     ) -> list[TableColumnInfo]:
         """
         Get the info of multiple columns by index
@@ -861,7 +861,7 @@ class Table(Resource):
         """
 
         # reduce the number of columns to retrieve
-        data: DataFrame = None
+        data: DataFrame | None = None
         if from_index is not None or to_index is not None:
             data = self._data.iloc[:, from_index:to_index]
         else:
@@ -891,7 +891,7 @@ class Table(Resource):
         }
 
     def copy_column_tags_by_index(
-        self, source_table: "Table", from_index: int = None, to_index: int = None
+        self, source_table: "Table", from_index: int | None = None, to_index: int | None = None
     ) -> None:
         """
         Copy column tags from source_table to self matching by index.
@@ -920,7 +920,7 @@ class Table(Resource):
                     column_name, source_table.get_column_tags_by_name(column_name)
                 )
 
-    def extract_column_tags_to_new_row(self, tag_key: str, new_row_name: str = None) -> None:
+    def extract_column_tags_to_new_row(self, tag_key: str, new_row_name: str | None = None) -> None:
         """
         Create a new row and fill it with the values of the tag of each column.
 
@@ -942,7 +942,7 @@ class Table(Resource):
         self.add_row(new_row_name, tags_values)
 
     def extract_row_values_to_column_tags(
-        self, row_name: str, new_tag_key: str = None, delete_row: bool = False
+        self, row_name: str, new_tag_key: str | None = None, delete_row: bool = False
     ) -> None:
         """
         Create a new tag for each column and fill it with the values of the row.
@@ -1060,8 +1060,8 @@ class Table(Resource):
 
     def get_row_tags(
         self,
-        from_index: int = None,
-        to_index: int = None,
+        from_index: int | None = None,
+        to_index: int | None = None,
         none_if_empty: bool = False,
     ) -> list[dict[str, str]]:
         """
@@ -1087,7 +1087,7 @@ class Table(Resource):
         """
         return self._row_tags.get_available_tags()
 
-    def get_rows_info(self, from_index: int = None, to_index: int = None) -> list[TableHeaderInfo]:
+    def get_rows_info(self, from_index: int | None = None, to_index: int | None = None) -> list[TableHeaderInfo]:
         """
         Get the info of multiple rows by index
 
@@ -1100,7 +1100,7 @@ class Table(Resource):
         """
 
         # reduce the data to the requested rows
-        data: DataFrame = None
+        data: DataFrame | None = None
         if from_index is not None or to_index is not None:
             data = self._data.iloc[from_index:to_index, :]
         else:
@@ -1126,7 +1126,7 @@ class Table(Resource):
         return {"name": row_name, "tags": self._row_tags.get_tags_at(row_index)}
 
     def copy_row_tags_by_index(
-        self, source_table: "Table", from_index: int = None, to_index: int = None
+        self, source_table: "Table", from_index: int | None = None, to_index: int | None = None
     ) -> None:
         """
         Copy row tag from source_table to self matching by index
@@ -1151,7 +1151,7 @@ class Table(Resource):
             if source_table.row_exists(row_name):
                 self.set_row_tags_by_name(row_name, source_table.get_row_tag_by_name(row_name))
 
-    def extract_row_tags_to_new_column(self, tag_key: str, new_column_name: str = None) -> None:
+    def extract_row_tags_to_new_column(self, tag_key: str, new_column_name: str | None = None) -> None:
         """
         Create a new columns and fill it with the values of the tag of each row
 
@@ -1173,7 +1173,7 @@ class Table(Resource):
         self.add_column(new_column_name, tags_values)
 
     def extract_column_values_to_row_tags(
-        self, column_name: str, new_tag_key: str = None, delete_column: bool = False
+        self, column_name: str, new_tag_key: str | None = None, delete_column: bool = False
     ) -> None:
         """
         Create a new tag for each row and fill it with the values of the provided column

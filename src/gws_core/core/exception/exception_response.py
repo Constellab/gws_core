@@ -20,7 +20,7 @@ class ExceptionResponse(JSONResponse):
         detail: str,
         instance_id: str,
         show_as: ExceptionShowMode = "error",
-        headers: dict = None,
+        headers: dict | None = None,
     ):
         """
 

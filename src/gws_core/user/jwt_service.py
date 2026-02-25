@@ -21,7 +21,7 @@ class JWTService:
     ALGORITHM = "HS256"
     ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2  # 2 days
 
-    _secret: str = None
+    _secret: str | None = None
 
     @classmethod
     def create_jwt(cls, user_id: str) -> str:

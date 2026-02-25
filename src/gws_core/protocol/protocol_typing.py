@@ -29,7 +29,7 @@ class ProtocolTyping(Typing):
 
     @classmethod
     def new_manual_protocol(
-        cls, graph: dict, human_name: str, short_description: str = None
+        cls, graph: dict, human_name: str, short_description: str | None = None
     ) -> "ProtocolTyping":
         # retrieve the protocol typing to copy info from it
         protocol_typing: Typing = Typing.get_by_object_type(Protocol)

@@ -78,7 +78,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         return result
 
     def to_rich_text_resource_view(
-        self, title: str = None, caption: str = None
+        self, title: str | None = None, caption: str | None = None
     ) -> RichTextBlockResourceView:
         return RichTextBlockResourceView(
             id=self.id + "_" + str(DateHelper.now_utc_as_milliseconds()),  # generate a unique id

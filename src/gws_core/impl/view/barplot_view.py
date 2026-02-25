@@ -48,20 +48,20 @@ class BarPlotView(View):
     ```
     """
 
-    x_label: str = None
-    y_label: str = None
-    x_tick_labels: list[str] = None
-    x_tick_tags: list[dict[str, str]] = None
-    _series: list = None
+    x_label: str | None = None
+    y_label: str | None = None
+    x_tick_labels: list[str] | None = None
+    x_tick_tags: list[dict[str, str]] | None = None
+    _series: list | None = None
     _type: ViewType = ViewType.BAR_PLOT
     _title: str = "Bar Plot"
 
     def add_series(
         self,
-        x: list[float] | list[str] = None,
-        y: list[float] = None,
-        name: str = None,
-        tags: list[dict[str, str]] = None,
+        x: list[float] | list[str] | None = None,
+        y: list[float] | None = None,
+        name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ):
         """
         Add a series of bars to plot

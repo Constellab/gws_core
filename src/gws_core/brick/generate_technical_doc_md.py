@@ -55,7 +55,7 @@ class GenerateTechnicalDocMarkdown(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result: str = None
+        result: str | None = None
         brick_name: str = params["brick_name"]
         object_type: str = params["object_type"]
         separator: str = params["separator"]

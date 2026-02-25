@@ -162,7 +162,7 @@ class TableTagAggregatorHelper:
         # Create an array of tag where each key is the key the one tag per value
         aggregate_tags = [{key: val} for val in all_tag_values]
 
-        result: Table = None
+        result: Table | None = None
         if is_row_axis(axis):
             df.index = list(df_list.keys())
             result = Table(df, column_tags=table.get_column_tags(), row_tags=aggregate_tags)

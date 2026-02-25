@@ -29,7 +29,7 @@ class LabConfigModel(BaseModel):
     brick_versions = JSONField(null=False)
     hash = CharField(null=False)
 
-    _current_config: "LabConfigModel" = None
+    _current_config: Optional["LabConfigModel"] = None
 
     def is_compatible_with(self, other: "LabConfigModel") -> bool:
         """Check if the current config is compatible with the other config

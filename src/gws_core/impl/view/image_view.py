@@ -18,7 +18,7 @@ class ImageView(View):
 
     """
 
-    _base_64_img: bytes = None
+    _base_64_img: bytes | None = None
     _mime_type: str
 
     _type: ViewType = ViewType.IMAGE

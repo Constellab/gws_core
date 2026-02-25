@@ -136,7 +136,7 @@ class TableImporter(ResourceImporter):
         if comment_char == "":
             comment_char = None
 
-        dataframe: DataFrame = None
+        dataframe: DataFrame | None = None
         # import the dataframe
         if (
             source.extension in Table.ALLOWED_XLS_FILE_FORMATS
@@ -242,7 +242,7 @@ class TableImporter(ResourceImporter):
         return comments
 
     @staticmethod
-    def import_excel_multiple_sheets(file: File, params: dict = None) -> dict[str, Table]:
+    def import_excel_multiple_sheets(file: File, params: dict | None = None) -> dict[str, Table]:
         """
         Import an Excel file with multiple sheets and return a dictionary with sheet names as keys and Table objects as values.
 

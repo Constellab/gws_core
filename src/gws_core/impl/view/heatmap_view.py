@@ -33,18 +33,18 @@ class HeatmapView(View):
     """
 
     _type: ViewType = ViewType.HEATMAP
-    _data: DataFrame = None
-    _rows_info: list[TableHeaderInfo] = None
-    _columns_info: list[TableHeaderInfo] = None
+    _data: DataFrame | None = None
+    _rows_info: list[TableHeaderInfo] | None = None
+    _columns_info: list[TableHeaderInfo] | None = None
 
-    x_label: str = None
-    y_label: str = None
+    x_label: str | None = None
+    y_label: str | None = None
 
     def set_data(
         self,
-        data: DataFrame = None,
-        rows_info: list[TableHeaderInfo] = None,
-        columns_info: list[TableHeaderInfo] = None,
+        data: DataFrame | None = None,
+        rows_info: list[TableHeaderInfo] | None = None,
+        columns_info: list[TableHeaderInfo] | None = None,
     ):
         if not isinstance(data, DataFrame):
             raise BadRequestException("The data must be a DataFrame")

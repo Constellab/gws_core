@@ -20,7 +20,7 @@ class DbMigrationService:
     _migration_objects: list[MigrationObject] = []
 
     @classmethod
-    def migrate(cls, db_manager: AbstractDbManager = None):
+    def migrate(cls, db_manager: AbstractDbManager | None = None):
         """Migrate all bricks for the specified db_manager
 
         :param db_manager: The AbstractDbManager instance to migrate. Defaults to GwsCoreDbManager.

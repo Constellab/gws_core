@@ -47,7 +47,7 @@ class StackedBarPlotView(BarPlotView):
     _type: ViewType = ViewType.STACKED_BAR_PLOT
     _title: str = "Stacked-Bar Plot"
     _normalize: bool = False
-    _series_sums: DataFrame = None
+    _series_sums: DataFrame | None = None
 
     def __init__(self, normalize: bool = False):
         super().__init__()
@@ -55,10 +55,10 @@ class StackedBarPlotView(BarPlotView):
 
     def add_series(
         self,
-        x: list[float] | list[str] = None,
-        y: list[float] = None,
-        name: str = None,
-        tags: list[dict[str, str]] = None,
+        x: list[float] | list[str] | None = None,
+        y: list[float] | None = None,
+        name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ):
         """
         Add a series of stacked-bars to plot

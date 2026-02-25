@@ -14,7 +14,7 @@ class NavigableEntityType(Enum):
     NOTE = "NOTE"
 
     def get_human_name(self, capitalize: bool = False, plurial: bool = False) -> str:
-        human_name: str = None
+        human_name: str | None = None
         if self == NavigableEntityType.SCENARIO:
             human_name = "Scenario"
         elif self == NavigableEntityType.RESOURCE:

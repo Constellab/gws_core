@@ -25,7 +25,7 @@ class PlotlyView(View):
       }
     """
 
-    figure: go.Figure = None
+    figure: go.Figure | None = None
 
     _type: ViewType = ViewType.PLOTLY
 

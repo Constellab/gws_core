@@ -99,7 +99,7 @@ class Protocol(Process):
         self,
         process_type: type[Process],
         instance_name: str,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProcessSpec:
         """Add a process to this protocol. The process_type can be a task or a protocol
 

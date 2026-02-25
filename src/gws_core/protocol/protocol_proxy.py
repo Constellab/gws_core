@@ -44,7 +44,7 @@ class ProtocolProxy(ProcessProxy):
         self,
         process_type: type[Process],
         instance_name: str | None = None,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> ProcessProxy:
         """Add a process (task or protocol) to this protocol. This process is automatically saved in the database"""
 
@@ -64,7 +64,7 @@ class ProtocolProxy(ProcessProxy):
         self,
         task_type: type[Task],
         instance_name: str | None = None,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> TaskProxy:
         """Add a task to this"""
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(
@@ -87,7 +87,7 @@ class ProtocolProxy(ProcessProxy):
         self,
         protocol_type: type[Protocol],
         instance_name: str | None = None,
-        config_params: ConfigParamsDict = None,
+        config_params: ConfigParamsDict | None = None,
     ) -> "ProtocolProxy":
         """Add a protocol from a protocol type"""
         protocol_update: ProtocolUpdate = ProtocolService.add_process_to_protocol(

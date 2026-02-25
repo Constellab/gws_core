@@ -260,7 +260,7 @@ class ResourceService:
 
         style = view.get_style() or view_runner.get_metadata_style()
         # Save the view config
-        view_config: ViewConfig = None
+        view_config: ViewConfig | None = None
         if save_view_config and CurrentUserService.get_current_user():
             view_config = ViewConfigService.save_view_config(
                 resource_model=resource_model,
@@ -342,7 +342,7 @@ class ResourceService:
 
         # Handle 'column_tags'
         column_tags: SearchFilterCriteria = search.get_filter_criteria("column_tags")
-        column_tags_filter_function: Callable[[ResourceModel], bool] = None
+        column_tags_filter_function: Callable[[ResourceModel], bool] | None = None
         if column_tags is not None and column_tags.value:
             column_tags_filter_function: Callable[[ResourceModel], bool] = (
                 lambda table_resource_model: cls.check_column_tags(

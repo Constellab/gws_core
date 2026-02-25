@@ -70,7 +70,7 @@ class TypingService:
         search: SearchParams,
         page: int = 0,
         number_of_items_per_page: int = 20,
-        search_builder: TypingSearchBuilder = None,
+        search_builder: TypingSearchBuilder | None = None,
     ) -> Paginator[Typing]:
         if search_builder is None:
             search_builder = TypingSearchBuilder(Typing)
@@ -171,12 +171,12 @@ class TypingService:
         return pagination
 
     @classmethod
-    def delete_unavailable_typings(cls, brick_name: str = None) -> None:
+    def delete_unavailable_typings(cls, brick_name: str | None = None) -> None:
         """
         Remove typing names that are not available in the database
         """
 
-        typing_names: list[Typing] = None
+        typing_names: list[Typing] | None = None
 
         if brick_name:
             typing_names = list(Typing.select().where(Typing.brick == brick_name))

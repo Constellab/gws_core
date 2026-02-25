@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from gws_core.user.user import User
@@ -22,7 +22,7 @@ class BaseEvent:
         class UserCreatedEvent(BaseEvent):
             type: Literal['user'] = 'user'
             action: Literal['created'] = 'created'
-            data: User = None
+            data: User | None = None
             triggered_by: User | None = None
     """
 
@@ -32,13 +32,13 @@ class BaseEvent:
     action: str = ""
     """The action that occurred (e.g., 'created', 'updated', 'deleted')"""
 
-    data: any = None
+    data: Any | None = None
     """The main data of the event (e.g., the entity or data involved)"""
 
     timestamp: datetime = field(default_factory=datetime.now)
     """When the event occurred"""
 
-    triggered_by: "User | None" = None
+    triggered_by: Optional["User"] = None
     """The user who triggered this action (None for system actions)"""
 
     def get_event_name(self) -> str:

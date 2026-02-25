@@ -33,5 +33,5 @@ class ProcessDTO(ModelWithUserDTO):
     name: str | None = None
     community_agent_version_id: str | None = None
     community_agent_version_modified: bool | None = None
-    style: TypingStyle = None
+    style: TypingStyle | None = None
     is_agent: bool = False

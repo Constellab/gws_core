@@ -60,7 +60,7 @@ class ExternalSpaceCreateFolderDTO(BaseModelDTO):
 class ExternalSpaceCreateFolder:
     name: str
     code: str | None = None
-    tags: list[Tag] = None
+    tags: list[Tag] | None = None
     starting_date: datetime | None = None
     ending_date: datetime | None = None
 

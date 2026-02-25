@@ -19,7 +19,7 @@ class BaseModelService:
     :rtype: [type]
     """
 
-    __model_types: list[type[BaseModel]] = None
+    __model_types: list[type[BaseModel]] | None = None
 
     @classmethod
     def get_base_model_types(cls) -> list[type[BaseModel]]:

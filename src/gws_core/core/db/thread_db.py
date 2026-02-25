@@ -34,10 +34,10 @@ class ThreadDb(Thread):
         self,
         group=None,
         target=None,
-        name: str = None,
+        name: str | None = None,
         args: tuple = (),
-        kwargs: dict = None,
-        daemon: bool = None,
+        kwargs: dict | None = None,
+        daemon: bool | None = None,
     ):
         """
         Initialize the ThreadDb

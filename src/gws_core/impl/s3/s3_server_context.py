@@ -14,7 +14,7 @@ class S3ServerContext:
     bucket_name: str
     key: str
 
-    def __init__(self, bucket_name: str = None, key: str = None) -> None:
+    def __init__(self, bucket_name: str | None = None, key: str | None = None) -> None:
         self.bucket_name = bucket_name
         self.key = key
 

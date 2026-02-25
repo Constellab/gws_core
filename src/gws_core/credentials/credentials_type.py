@@ -70,7 +70,7 @@ class CredentialsDataBase(BaseModelDTO):
         return cls.get_specs().to_dto()
 
     @classmethod
-    def build_from_json(cls, json_: dict, meta: CredentialsDTO = None) -> "CredentialsDataBase":
+    def build_from_json(cls, json_: dict, meta: CredentialsDTO | None = None) -> "CredentialsDataBase":
         data = cls.from_json(json_)
         data.meta = meta
         return data
@@ -203,7 +203,7 @@ class CredentialsDataOther(CredentialsDataBase):
         )
 
     @classmethod
-    def build_from_json(cls, json_: dict, meta: CredentialsDTO = None) -> "CredentialsDataBase":
+    def build_from_json(cls, json_: dict, meta: CredentialsDTO | None = None) -> "CredentialsDataBase":
         """Override to convert ParamSet list to basic dict"""
         data_dict = {d["key"]: d["value"] for d in json_["data"]}
         return super().build_from_json({"data": data_dict}, meta)

@@ -72,11 +72,11 @@ class LocalS3ServerService(AbstractS3Service):
 
     def list_objects(
         self,
-        prefix: str = None,
+        prefix: str | None = None,
         max_keys: int = 1000,
-        delimiter: str = None,
-        continuation_token: str = None,
-        start_after: str = None,
+        delimiter: str | None = None,
+        continuation_token: str | None = None,
+        start_after: str | None = None,
     ) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
         if not path.exists(self.bucket_path):
@@ -191,7 +191,7 @@ class LocalS3ServerService(AbstractS3Service):
         }
 
     def upload_object(
-        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] | None = None, last_modified: float | None = None
     ) -> dict:
         """Upload an object to the bucket"""
         del tags  # Unused parameter
@@ -267,7 +267,7 @@ class LocalS3ServerService(AbstractS3Service):
         del key, tags  # Unused parameters
         raise NotImplementedError("Tagging is not supported in basic S3 service")
 
-    def initiate_multipart_upload(self, key: str, last_modified: float = None) -> str:
+    def initiate_multipart_upload(self, key: str, last_modified: float | None = None) -> str:
         """Initiate a multipart upload and return upload ID"""
         # Clean up old uploads before starting new one
         self._cleanup_abandoned_uploads()

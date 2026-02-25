@@ -23,12 +23,12 @@ class Validator:
     :type type: type
     """
 
-    _type: type = None
-    _allowed_values: list = None
+    _type: type | None = None
+    _allowed_values: list | None = None
 
     _valid_types = ["bool", "int", "float", "str", "list", "dict", "dynamic"]
 
-    def __init__(self, type_: ValidatorType = None, allowed_values: list = None):
+    def __init__(self, type_: ValidatorType | None = None, allowed_values: list | None = None):
         self.set_type(type_)
 
         if allowed_values is not None:
@@ -163,7 +163,7 @@ class NumericValidator(Validator):
         max_value=math.inf,
         include_min=False,
         include_max=False,
-        allowed_values: list = None,
+        allowed_values: list | None = None,
     ):
         if min_value is None:
             self._min_value = -math.inf
@@ -249,7 +249,7 @@ class IntValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values: list[int] = None,
+        allowed_values: list[int] | None = None,
     ):
         super().__init__(
             type_=int,
@@ -290,7 +290,7 @@ class FloatValidator(NumericValidator):
         max_value=math.inf,
         include_min=True,
         include_max=True,
-        allowed_values: list[float] = None,
+        allowed_values: list[float] | None = None,
     ):
         super().__init__(
             type_=float,
@@ -321,7 +321,7 @@ class StrValidator(Validator):
     _max_length = math.inf
 
     def __init__(
-        self, allowed_values: list[str] = None, min_length: int = None, max_length: int = None
+        self, allowed_values: list[str] | None = None, min_length: int | None = None, max_length: int | None = None
     ):
         super().__init__(
             type_=str,
@@ -391,7 +391,7 @@ class ListValidator(Validator):
         self,
         min_number_of_occurrences: int = -1,
         max_number_of_occurrences: int = -1,
-        allowed_values: list = None,
+        allowed_values: list | None = None,
     ):
         super().__init__(type_=list, allowed_values=allowed_values)
         self.min_number_of_occurrences = min_number_of_occurrences

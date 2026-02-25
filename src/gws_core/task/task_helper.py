@@ -6,7 +6,7 @@ from .task import Task
 
 
 class TaskHelper:
-    _observers: list[Task] = None
+    _observers: list[Task] | None = None
 
     def __init__(self):
         Logger.info(

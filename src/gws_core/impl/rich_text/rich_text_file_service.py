@@ -47,7 +47,7 @@ class RichTextFileService:
     def upload_image(
         cls, object_type: RichTextObjectType, object_id: str, file: UploadFile
     ) -> RichTextUploadImageResultDTO:
-        image: Image.Image = None
+        image: Image.Image | None = None
         try:
             image = Image.open(file.file)
         except Exception:

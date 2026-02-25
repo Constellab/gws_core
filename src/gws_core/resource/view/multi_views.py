@@ -54,7 +54,7 @@ class MultiViews(View):
         self._nb_of_columns = nb_of_columns
 
     def add_view(
-        self, view: View, params: ConfigParamsDict = None, colspan: int = 1, rowspan: int = 1
+        self, view: View, params: ConfigParamsDict | None = None, colspan: int = 1, rowspan: int = 1
     ) -> None:
         """Add a view to the multi view
 

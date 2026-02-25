@@ -45,7 +45,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
     It is used to manage the app configuration, authentication, and parameters.
     """
 
-    _app_config: dict = None
+    _app_config: dict | None = None
     _is_initialized: bool = False
     main_component_initialized: bool = False
 

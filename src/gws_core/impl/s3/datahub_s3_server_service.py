@@ -62,11 +62,11 @@ class DataHubS3ServerService(AbstractS3Service):
 
     def list_objects(
         self,
-        prefix: str = None,
+        prefix: str | None = None,
         max_keys: int = 1000,
-        delimiter: str = None,
-        continuation_token: str = None,
-        start_after: str = None,
+        delimiter: str | None = None,
+        continuation_token: str | None = None,
+        start_after: str | None = None,
     ) -> ListObjectsV2OutputTypeDef:
         """List objects in a bucket"""
 
@@ -101,7 +101,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
     @GwsCoreDbManager.transaction()
     def upload_object(
-        self, key: str, data: ByteString, tags: dict[str, str] = None, last_modified: float = None
+        self, key: str, data: ByteString, tags: dict[str, str] | None = None, last_modified: float | None = None
     ) -> None:
         """Upload an object to the bucket"""
 
@@ -113,7 +113,7 @@ class DataHubS3ServerService(AbstractS3Service):
         else:
             self._create_object(key, data, tags)
 
-    def _create_object(self, key: str, data: ByteString, tags: dict[str, str] = None) -> None:
+    def _create_object(self, key: str, data: ByteString, tags: dict[str, str] | None = None) -> None:
         with S3ServerContext(self.bucket_name, key):
             self._get_and_check_folder_bucket(tags.get(self.FOLDER_TAG_NAME) if tags else None)
 
@@ -178,7 +178,7 @@ class DataHubS3ServerService(AbstractS3Service):
                     )
 
     def _update_object(
-        self, key: str, data: ByteString, resource_model: ResourceModel, tags: dict[str, str] = None
+        self, key: str, data: ByteString, resource_model: ResourceModel, tags: dict[str, str] | None = None
     ) -> None:
         with S3ServerContext(self.bucket_name, key):
             if not resource_model.fs_node_model:
@@ -347,7 +347,7 @@ class DataHubS3ServerService(AbstractS3Service):
         }
 
     def _get_s3_expression_builder(
-        self, key: str = None, prefix: str = None
+        self, key: str | None = None, prefix: str | None = None
     ) -> ResourceSearchBuilder:
         """Method to get the expression builder to filter resource model by bucket, key..."""
         search_builder = ResourceSearchBuilder()
@@ -477,7 +477,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
     ##################################################### MULTIPART UPLOAD METHODS #####################################################
 
-    def initiate_multipart_upload(self, key: str, last_modified: float = None) -> str:
+    def initiate_multipart_upload(self, key: str, last_modified: float | None = None) -> str:
         """Initiate a multipart upload and return upload ID"""
         raise NotImplementedError("Multipart upload is not supported in DataHub S3 service")
 

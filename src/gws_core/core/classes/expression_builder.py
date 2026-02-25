@@ -10,7 +10,7 @@ class ExpressionBuilder:
 
     _expression: Expression
 
-    def __init__(self, expression: Expression = None) -> None:
+    def __init__(self, expression: Expression | None = None) -> None:
         self._expression = expression
 
     def add_expression(self, expression: Expression) -> None:

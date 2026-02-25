@@ -20,8 +20,8 @@ TYPING_DEFAULT_ICON_COLOR = TypingIconColor.BLACK
 
 
 class TypingStyle(BaseModelDTO):
-    icon_technical_name: str = None
-    icon_type: TypingIconType = None
+    icon_technical_name: str | None = None
+    icon_type: TypingIconType | None = None
     background_color: str | None = None
     icon_color: TypingIconColor | None = None
 
@@ -89,7 +89,7 @@ class TypingStyle(BaseModelDTO):
     @staticmethod
     def material_icon(
         material_icon_name: str,
-        background_color: str = None,
+        background_color: str | None = None,
         icon_color: TypingIconColor | None = None,
     ) -> "TypingStyle":
         """Use an icon from the material icon library. List of available icons are here :
@@ -115,7 +115,7 @@ class TypingStyle(BaseModelDTO):
     @staticmethod
     def community_icon(
         icon_technical_name: str,
-        background_color: str = None,
+        background_color: str | None = None,
         icon_color: TypingIconColor | None = None,
     ) -> "TypingStyle":
         """Use an icon from the community icon library. List of available icons are here :
@@ -139,7 +139,7 @@ class TypingStyle(BaseModelDTO):
         )
 
     @staticmethod
-    def community_image(icon_technical_name: str, background_color: str = None) -> "TypingStyle":
+    def community_image(icon_technical_name: str, background_color: str | None = None) -> "TypingStyle":
         """Use an image from the community image library. List of available images are here :
         https://constellab.community/icons
 

@@ -1,5 +1,6 @@
 import time
 from threading import Timer
+from typing import Optional
 
 from gws_core.core.classes.observer.message_level import MessageLevel
 from gws_core.progress_bar.progress_bar import ProgressBar
@@ -19,41 +20,41 @@ class MessageDispatcher:
     # if the last message was send less than this time ago,
     # and the last message type is the same as the current one,
     # then the messages are merged separated by a new line
-    interval_time_merging_message: float = None
+    interval_time_merging_message: float | None = None
 
     # During this time all the notify message are buffered before being dispatched all at once
-    interval_time_dispatched_buffer: float = None
+    interval_time_dispatched_buffer: float | None = None
 
     # Min level of message to be notified
-    message_level: MessageLevel = None
+    message_level: MessageLevel | None = None
 
     # Prefix for all the messages
-    prefix: str = None
+    prefix: str | None = None
 
-    _observers: list[MessageObserver] = None
+    _observers: list[MessageObserver] | None = None
 
     # list of the messages that are waiting to be dispatched by the timer
-    _waiting_messages: list[DispatchedMessage] = None
+    _waiting_messages: list[DispatchedMessage] | None = None
 
     # last time a message was notified
-    _last_notify_time: float = None
+    _last_notify_time: float | None = None
 
     # store the timer to prevent to save the progress bar too often
-    _waiting_dispatch_timer: Timer = None
+    _waiting_dispatch_timer: Timer | None = None
     # store the thread when is it executing (after the timer and before it is finished)
     _running_dispatch_timers: list[Timer] = []
 
     # when set, the message dispatcher will forward the message to the parent dispatcher
     # after prefix and log level modification
-    _parent_dispatcher: "MessageDispatcher" = None
+    _parent_dispatcher: Optional["MessageDispatcher"] = None
 
     def __init__(
         self,
         interval_time_merging_message=0.1,
         interval_time_dispatched_buffer=1,
         log_level: MessageLevel = MessageLevel.INFO,
-        prefix: str = None,
-        parent_dispatcher: "MessageDispatcher" = None,
+        prefix: str | None = None,
+        parent_dispatcher: Optional["MessageDispatcher"] = None,
     ):
         self._observers = []
         self._waiting_messages = []

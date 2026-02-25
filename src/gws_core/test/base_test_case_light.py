@@ -71,7 +71,7 @@ class BaseTestCaseLight(TestCase):
 
     @classmethod
     def assert_json(
-        cls, json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
+        cls, json_1: dict | list, json_2: dict | list, ignore_keys: list[str] | None = None
     ) -> None:
         """Assert a json with possibility to ignore key"""
         Utils.assert_json_equals(json_1, json_2, ignore_keys)

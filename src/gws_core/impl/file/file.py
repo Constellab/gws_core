@@ -129,7 +129,7 @@ class File(FSNode):
             name += f".{self.extension}"
         super().set_name(name)
 
-    def open(self, mode: str, encoding: str = None) -> Any:
+    def open(self, mode: str, encoding: str | None = None) -> Any:
         """
         Open the file
 
@@ -154,7 +154,7 @@ class File(FSNode):
             return open(self.path, mode="w+", encoding=encoding)
 
     def read_part(
-        self, from_line: int = 0, to_line: int = 10, encoding: str = None, mode: str = "r+t"
+        self, from_line: int = 0, to_line: int = 10, encoding: str | None = None, mode: str = "r+t"
     ) -> str:
         """
         Read a part of the file
@@ -179,7 +179,7 @@ class File(FSNode):
                     break
         return text
 
-    def read(self, size: int = -1, encoding: str = None, mode: str = "r+t") -> AnyStr:
+    def read(self, size: int = -1, encoding: str | None = None, mode: str = "r+t") -> AnyStr:
         """
         Read the file
 
@@ -197,7 +197,7 @@ class File(FSNode):
             data = file.read(size)
         return data
 
-    def write(self, data: str, encoding: str = None, mode: str = "a+t"):
+    def write(self, data: str, encoding: str | None = None, mode: str = "a+t"):
         """
         Write data to the file
 

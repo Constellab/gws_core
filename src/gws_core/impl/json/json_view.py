@@ -24,7 +24,7 @@ class JSONView(View):
     _type: ViewType = ViewType.JSON
     _json_data: Any
 
-    def __init__(self, data: dict = None):
+    def __init__(self, data: dict | None = None):
         super().__init__()
         self.set_data(data)
 
@@ -37,5 +37,5 @@ class JSONView(View):
             )
         self._json_data = JSONHelper.convert_dict_to_json(data)
 
-    def data_to_dict(self, params: ConfigParams = None) -> dict:
+    def data_to_dict(self, params: ConfigParams | None = None) -> dict:
         return self._json_data

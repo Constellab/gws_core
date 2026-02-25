@@ -286,7 +286,7 @@ class SpaceService(SpaceServiceBase):
         parent_folder_id: str,
         file_path: str,
         override_mode: DocumentUploadOverrideMode,
-        filename: str = None,
+        filename: str | None = None,
     ) -> SpaceHierarchyObjectDTO:
         """Upload a document to a folder in space
 
@@ -319,7 +319,7 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "upload document to space")
 
-    def download_document_bytes(self, document_id: str, filename: str = None) -> bytes:
+    def download_document_bytes(self, document_id: str, filename: str | None = None) -> bytes:
         """Download a document from space and return the bytes directly
 
         :param document_id: id of the document to download

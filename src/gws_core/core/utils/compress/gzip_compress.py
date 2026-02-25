@@ -14,12 +14,12 @@ class GzipCompress(Compress):
     :rtype: _type_
     """
 
-    file_path: str = None
+    file_path: str | None = None
 
-    def add_dir(self, dir_path: str, dir_name: str = None) -> None:
+    def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         raise Exception("GzipCompress does not support directory")
 
-    def add_file(self, file_path: str, file_name: str = None) -> None:
+    def add_file(self, file_path: str, file_name: str | None = None) -> None:
         if self.file_path is not None:
             raise Exception("GzipCompress does not support multiple file")
         self.file_path = file_path

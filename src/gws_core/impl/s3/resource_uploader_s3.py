@@ -49,7 +49,7 @@ class ResourceUploaderS3(Task):
         }
     )
 
-    zip_file_path: str = None
+    zip_file_path: str | None = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         bucket_name = params.get_value("s3_bucket")

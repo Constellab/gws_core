@@ -25,8 +25,8 @@ class TableAnnotatorHelper:
         cls,
         table: Table,
         metadata_table: Table,
-        table_ref_column: str = None,
-        metadata_table_ref_column: str = None,
+        table_ref_column: str | None = None,
+        metadata_table_ref_column: str | None = None,
         use_table_row_names_as_ref: bool = False,
         use_metadata_row_names_as_ref: bool = False,
     ) -> Table:
@@ -89,8 +89,8 @@ class TableAnnotatorHelper:
         cls,
         table: Table,
         metadata_table: Table,
-        table_ref_row: str = None,
-        metadata_table_ref_column: str = None,
+        table_ref_row: str | None = None,
+        metadata_table_ref_column: str | None = None,
         use_table_column_names_as_ref: bool = False,
         use_metadata_row_names_as_ref: bool = False,
     ) -> Table:
@@ -147,7 +147,7 @@ class TableAnnotatorHelper:
 
     @classmethod
     def _get_metadata_tags(
-        cls, metadata_table: Table, ref_column: str = None, use_index_as_ref: bool = False
+        cls, metadata_table: Table, ref_column: str | None = None, use_index_as_ref: bool = False
     ) -> dict[str, dict[str, str]]:
         """Return the metadata table as dict of tags where key = id and value = tags for the id"""
         dataframe: DataFrame

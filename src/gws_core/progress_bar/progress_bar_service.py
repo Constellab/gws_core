@@ -13,7 +13,7 @@ class ProgressBarService:
 
     @classmethod
     def get_progress_bar_messages(
-        cls, id: str, nb_of_messages: int, from_datetime: datetime = None
+        cls, id: str, nb_of_messages: int, from_datetime: datetime | None = None
     ) -> ProgressBarMessagesBetweenDatesDTO:
         progress_bar: ProgressBar = ProgressBar.get_by_id_and_check(id)
 

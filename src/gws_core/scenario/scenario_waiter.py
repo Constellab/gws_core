@@ -30,7 +30,7 @@ class ScenarioWaiter:
         self,
         refresh_interval: int = 30,
         refresh_interval_max_count: int = 10,
-        message_dispatcher: MessageDispatcher = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ) -> ScenarioWaitInfoDTO:
         """Wait until the scenario is finished.
         If the scenario is in draft mode, it will raise an exception
@@ -54,7 +54,7 @@ class ScenarioWaiter:
         while count < max_refresh:
             count += 1
 
-            scenario: ScenarioWaitInfoDTO = None
+            scenario: ScenarioWaitInfoDTO | None = None
             try:
                 scenario = self.get_scenario_dto()
             except Exception as e:

@@ -8,7 +8,7 @@ class HtmlStyle:
     """Represents an external stylesheet link."""
 
     href: str
-    attributes: dict = None
+    attributes: dict | None = None
 
     def __post_init__(self):
         if self.attributes is None:
@@ -20,7 +20,7 @@ class HtmlScript:
     """Represents an external script."""
 
     src: str
-    attributes: dict = None
+    attributes: dict | None = None
 
     def __post_init__(self):
         if self.attributes is None:
@@ -34,7 +34,7 @@ class HtmlBody:
     links: list["HtmlLink"]  # Links in the body (modulepreload, etc.)
     scripts: list["HtmlScript"]  # External scripts in the body
     content: str  # The remaining HTML content (excluding links and scripts)
-    attributes: dict = None  # Body tag attributes
+    attributes: dict | None = None  # Body tag attributes
 
     def __post_init__(self):
         if self.attributes is None:
@@ -47,7 +47,7 @@ class HtmlLink:
 
     href: str
     rel: str
-    attributes: dict = None
+    attributes: dict | None = None
 
     def __post_init__(self):
         if self.attributes is None:

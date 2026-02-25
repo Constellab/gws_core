@@ -32,7 +32,7 @@ class KVStore(dict[str, Any]):
     # copies the file before updating the data
     # It create a copy of the current file to _lock_copy_file_path
     _lock: bool = False
-    _lock_copy_full_file_path: str = None
+    _lock_copy_full_file_path: str | None = None
 
     _full_file_path: str
 
@@ -40,7 +40,7 @@ class KVStore(dict[str, Any]):
     _iterable_index = 0
 
     # class level
-    _base_dir: str = None
+    _base_dir: str | None = None
 
     def __init__(self, full_file_path: str):
         super().__init__()

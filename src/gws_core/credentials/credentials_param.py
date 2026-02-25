@@ -31,7 +31,7 @@ class CredentialsParam(ParamSpec):
 
     def __init__(
         self,
-        credentials_type: CredentialsType = None,
+        credentials_type: CredentialsType | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,

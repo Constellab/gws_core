@@ -51,7 +51,7 @@ class BasicMessageObserver(MessageObserver):
     def update(self, messages: list[DispatchedMessage]) -> None:
         self.messages.extend(messages)
 
-    def has_message_containing(self, sub_text: str, level: MessageLevel = None) -> bool:
+    def has_message_containing(self, sub_text: str, level: MessageLevel | None = None) -> bool:
         for message in self.messages:
             if level is not None and message.status != level:
                 continue
@@ -59,7 +59,7 @@ class BasicMessageObserver(MessageObserver):
                 return True
         return False
 
-    def has_message(self, message: str, level: MessageLevel = None) -> bool:
+    def has_message(self, message: str, level: MessageLevel | None = None) -> bool:
         for mes in self.messages:
             if level is not None and mes.status != level:
                 continue

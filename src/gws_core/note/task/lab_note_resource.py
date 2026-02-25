@@ -22,10 +22,10 @@ from gws_core.resource.view.view_result import CallViewResult
 class LabNoteResource(Resource):
     note_id: str = StrRField()
 
-    _note: Note = None
-    _content: RichText = None
+    _note: Note | None = None
+    _content: RichText | None = None
 
-    def __init__(self, note_id: str = None):
+    def __init__(self, note_id: str | None = None):
         super().__init__()
         self.note_id = note_id
 
@@ -55,10 +55,10 @@ class LabNoteResource(Resource):
         self,
         resource: Resource,
         view_method_name: str,
-        config_values: ConfigParamsDict = None,
-        title: str = None,
-        caption: str = None,
-        variable_name: str = None,
+        config_values: ConfigParamsDict | None = None,
+        title: str | None = None,
+        caption: str | None = None,
+        variable_name: str | None = None,
     ) -> None:
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
             resource.get_model_id(), view_method_name, config_values, True
@@ -86,7 +86,7 @@ class LabNoteResource(Resource):
         short_description="View note content",
         default_view=True,
     )
-    def view_note(self, config: ConfigParamsDict = None) -> RichTextView:
+    def view_note(self, config: ConfigParamsDict | None = None) -> RichTextView:
         return RichTextView(
             self.get_note().title,
             self.get_content(),

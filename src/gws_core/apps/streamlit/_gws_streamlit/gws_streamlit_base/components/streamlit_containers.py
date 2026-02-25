@@ -12,7 +12,7 @@ class StreamlitGridCell:
     row_span: int
     style: str
 
-    def __init__(self, col_span: int, row_span: int, style: str = None):
+    def __init__(self, col_span: int, row_span: int, style: str | None = None):
         """Define a cell of a grid (for StreamlitContainers.container_grid method)
 
         :param col_span: number of columns spanned by the cell.
@@ -31,7 +31,7 @@ class StreamlitGridCell:
 
 class StreamlitContainers:
     @classmethod
-    def container_centered(cls, key: str, max_width: str = "48em", additional_style: str = None):
+    def container_centered(cls, key: str, max_width: str = "48em", additional_style: str | None = None):
         """Define a centered container with max width. Useful to center content like an article.
 
         :param key: key
@@ -60,8 +60,8 @@ class StreamlitContainers:
         key: str,
         flow: Literal["row", "row wrap"] = "row wrap",
         vertical_align_items: FlexAlignItems = "start",
-        gap: str = None,
-        additional_style: str = None,
+        gap: str | None = None,
+        additional_style: str | None = None,
     ):
         """Define a row container, element inside a in a row (like buttons, text...)
 
@@ -100,7 +100,7 @@ class StreamlitContainers:
         key: str,
         cols: list[int | Literal["fit-content"]],
         vertical_align_items: FlexAlignItems = "start",
-        additional_style: str = None,
+        additional_style: str | None = None,
     ):
         """Define columns that also support fit content width.
 
@@ -144,7 +144,7 @@ class StreamlitContainers:
         return container.columns(int_cols)
 
     @classmethod
-    def container_full_min_height(cls, key: str, additional_style: str = None):
+    def container_full_min_height(cls, key: str, additional_style: str | None = None):
         """Define a container with full min height.
 
         :param key: key
@@ -166,7 +166,7 @@ class StreamlitContainers:
         return cls.container_with_style(key, style)
 
     @classmethod
-    def full_width_dataframe_container(cls, key: str, additional_style: str = None):
+    def full_width_dataframe_container(cls, key: str, additional_style: str | None = None):
         """Define a container for a dataframe that uses width='stretch'.
         This prevent the dataframe to be too large and to create a horizontal scroll.
         The horizontal scroll of the dataframe is due to the resize absolute cursor.
@@ -222,7 +222,7 @@ class StreamlitContainers:
         cells: list[StreamlitGridCell],
         key: str,
         row_height: str = "auto",
-        gap: str = None,
+        gap: str | None = None,
     ):
         """
         Define a grid container with cells. All columns have the same width.
@@ -283,7 +283,7 @@ class StreamlitContainers:
 
     @classmethod
     def exception_container(
-        cls, key: str, error_text: str = "An error occurred", exception: BaseException = None
+        cls, key: str, error_text: str = "An error occurred", exception: BaseException | None = None
     ):
         """Define a container that display an error message and an exception if provided.
         The exception detail can be displayed in a popover.

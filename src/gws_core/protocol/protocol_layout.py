@@ -23,7 +23,7 @@ class ProtocolLayout(SerializableObject):
     interface_layouts: dict[str, ProcessLayoutDTO]
     outerface_layouts: dict[str, ProcessLayoutDTO]
 
-    def __init__(self, layout_dto: ProtocolLayoutDTO = None) -> None:
+    def __init__(self, layout_dto: ProtocolLayoutDTO | None = None) -> None:
         super().__init__()
 
         if layout_dto:

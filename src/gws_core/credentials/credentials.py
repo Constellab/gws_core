@@ -57,7 +57,7 @@ class Credentials(ModelWithUser):
         return cls.select().where(Credentials.name == name).first()
 
     @classmethod
-    def find_by_name_and_check(cls, name: str, type_: CredentialsType = None) -> "Credentials":
+    def find_by_name_and_check(cls, name: str, type_: CredentialsType | None = None) -> "Credentials":
         credentials = cls.find_by_name(name)
         if not credentials:
             raise Exception(

@@ -20,7 +20,7 @@ def _render_tree_menu():
     def example_demo():
         col1, col2 = st.columns([1, 3])
 
-        selected_item: StreamlitTreeMenuItem = None
+        selected_item: StreamlitTreeMenuItem | None = None
         button_menu = StreamlitTreeMenu()
         # Parent item
         parent_item = StreamlitTreeMenuItem(label="Parent", material_icon="folder")
@@ -60,7 +60,7 @@ from gws_streamlit_main import StreamlitTreeMenu, StreamlitTreeMenuItem
 
 col1, col2 = st.columns([1, 3])
 
-selected_item: StreamlitTreeMenuItem = None
+selected_item: StreamlitTreeMenuItem | None = None
 button_menu = StreamlitTreeMenu()
 # Parent item
 parent_item = StreamlitTreeMenuItem(label='Parent', material_icon='folder')

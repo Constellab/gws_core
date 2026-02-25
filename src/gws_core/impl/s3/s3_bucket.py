@@ -40,7 +40,7 @@ class S3Bucket:
         access_key_id: str,
         secret_access_key: str,
         bucket_name: str,
-        message_dispatcher: MessageDispatcher = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ):
         """
 
@@ -100,7 +100,7 @@ class S3Bucket:
             f"File '{object_key}' uploaded to bucket '{self.bucket_name}' in {duration}"
         )
 
-    def get_object(self, object_key: str, local_file_path: str = None) -> str:
+    def get_object(self, object_key: str, local_file_path: str | None = None) -> str:
         bucket = self._get_s3_bucket()
 
         if local_file_path is None:

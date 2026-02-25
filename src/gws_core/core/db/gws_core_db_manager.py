@@ -1,3 +1,5 @@
+from typing import Union
+
 from peewee import DatabaseProxy
 
 from gws_core.core.db.db_config import DbConfig, DbMode
@@ -9,7 +11,7 @@ from .abstract_db_manager import AbstractDbManager
 class GwsCoreDbManager(AbstractDbManager):
     db = DatabaseProxy()
 
-    _instance: "GwsCoreDbManager" = None
+    _instance: Union["GwsCoreDbManager", None] = None
 
     @classmethod
     def get_instance(cls):

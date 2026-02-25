@@ -68,7 +68,7 @@ class CreateFolderFromFiles(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        temp_dir: str = None
+        temp_dir: str | None = None
 
         # get the folder name from the config or generate a temp folder
         folder_name = params.get_value("folder_name")
@@ -88,7 +88,7 @@ class CreateFolderFromFiles(Task):
                 continue
 
             # retrive the node name from config or use the base name
-            node_name: str = None
+            node_name: str | None = None
             if len(configs) > i and configs[i] and configs[i]["filename"]:
                 node_name = configs[i]["filename"]
             else:

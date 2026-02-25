@@ -20,7 +20,7 @@ class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
     _data: str = StrRField(storage=RFieldStorage.KV_STORE)
 
-    def __init__(self, data: str = None):
+    def __init__(self, data: str | None = None):
         super().__init__()
         self.set_data(data)
 

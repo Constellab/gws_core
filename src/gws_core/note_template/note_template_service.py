@@ -35,7 +35,7 @@ class NoteTemplateService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def _create(cls, title: str, content: RichTextDTO = None) -> NoteTemplate:
+    def _create(cls, title: str, content: RichTextDTO | None = None) -> NoteTemplate:
         document = NoteTemplate()
         document.title = title
 

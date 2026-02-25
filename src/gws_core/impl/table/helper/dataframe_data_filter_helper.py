@@ -72,7 +72,7 @@ class DataframeDataFilterHelper:
 
         numeric_df: DataFrame = DataframeHelper.nanify_none_number(filtered_df)
 
-        bool_df: DataFrame = None
+        bool_df: DataFrame | None = None
         if comp == ">":
             bool_df = numeric_df > value
         elif comp == ">=":
@@ -101,7 +101,7 @@ class DataframeDataFilterHelper:
 
         str_df = DataframeHelper.nanify_none_str(filtered_df)
 
-        bool_df: DataFrame = None
+        bool_df: DataFrame | None = None
 
         if comp == "=":
             bool_df = str_df == value

@@ -17,24 +17,24 @@ class Compress:
         self._fs_node_names = []
 
     @abstractmethod
-    def add_dir(self, dir_path: str, dir_name: str = None) -> None:
+    def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         pass
 
     @abstractmethod
-    def add_file(self, file_path: str, file_name: str = None) -> None:
+    def add_file(self, file_path: str, file_name: str | None = None) -> None:
         pass
 
     @abstractmethod
     def close(self) -> str:
         pass
 
-    def add_fs_node(self, fs_node_path: str, fs_node_name: str = None) -> None:
+    def add_fs_node(self, fs_node_path: str, fs_node_name: str | None = None) -> None:
         if FileHelper.is_dir(fs_node_path):
             self.add_dir(fs_node_path, fs_node_name)
         else:
             self.add_file(fs_node_path, fs_node_name)
 
-    def _generate_node_name(self, fs_node_path: str, fs_node_name: str = None) -> str:
+    def _generate_node_name(self, fs_node_path: str, fs_node_name: str | None = None) -> str:
         """Generate a unique name for the fs node. Use the node name if fs_node_name is None."""
         if fs_node_name is None:
             fs_node_name = FileHelper.get_name_without_extension(fs_node_path)

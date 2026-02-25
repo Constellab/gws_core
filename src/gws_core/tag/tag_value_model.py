@@ -168,7 +168,7 @@ class TagValueModel(Model):
         return cls.select().where(cls.tag_key == tag_key)
 
     @classmethod
-    def search_by_value(cls, tag_key: str, tag_value: TagValueType = None) -> ModelSelect:
+    def search_by_value(cls, tag_key: str, tag_value: TagValueType | None = None) -> ModelSelect:
         expression_builder = ExpressionBuilder(cls.tag_key == tag_key)
         if tag_value:
             expression_builder.add_expression(

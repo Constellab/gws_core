@@ -61,7 +61,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     data: dict[str, Any] = JSONField(null=True)
 
     # cache of the _protocol
-    _protocol: ProtocolModel = None
+    _protocol: ProtocolModel | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

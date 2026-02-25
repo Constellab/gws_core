@@ -112,7 +112,7 @@ class QueueService:
         :rtype: Scenario
         """
 
-        scenario: Scenario = None
+        scenario: Scenario | None = None
         try:
             scenario = Scenario.get(Scenario.id == scenario_id)
         except Exception as err:

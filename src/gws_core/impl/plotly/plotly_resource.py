@@ -32,7 +32,7 @@ class PlotlyResource(Resource):
 
     figure: go.Figure = PlotlyRField()
 
-    def __init__(self, figure: go.Figure = None):
+    def __init__(self, figure: go.Figure | None = None):
         super().__init__()
         self.figure = figure
 
@@ -104,7 +104,7 @@ class PlotlyResource(Resource):
 
     @classmethod
     def from_json_file(cls, path: str) -> "PlotlyResource":
-        dict_: dict = None
+        dict_: dict | None = None
 
         try:
             with open(path, encoding="utf-8") as file:

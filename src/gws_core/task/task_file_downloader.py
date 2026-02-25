@@ -17,7 +17,7 @@ class TaskFileDownloader(FileDownloader):
 
     brick_name: str
 
-    def __init__(self, brick_name: str, message_dispatcher: MessageDispatcher = None) -> None:
+    def __init__(self, brick_name: str, message_dispatcher: MessageDispatcher | None = None) -> None:
         """_summary_
 
         :param brick_name: brick name of the task, use : MyTaskClass.get_brick_name()

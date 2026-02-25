@@ -17,7 +17,7 @@ class ResourceSet(ResourceListBase):
     _resource_ids: dict[str, str] = DictRField()
 
     # dict provided before the resources are saved
-    _resources: dict[str, Resource] = None
+    _resources: dict[str, Resource] | None = None
 
     def get_resources(self) -> dict[str, Resource]:
         """

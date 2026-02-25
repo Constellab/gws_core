@@ -91,7 +91,7 @@ class ViewHelper:
         """
 
         class_hierarchy: list[type[Resource]] = cls._get_class_hierarchy(resource_type)
-        last_default_name: str = None
+        last_default_name: str | None = None
         view_meta_data: dict[str, ResourceViewMetaData] = {}
 
         for class_ in class_hierarchy:

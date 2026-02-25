@@ -34,7 +34,7 @@ class RichTextView(View):
         self.object_type = object_type
         self.object_id = object_id
 
-    def data_to_dict(self, params: ConfigParams = None) -> dict:
+    def data_to_dict(self, params: ConfigParams | None = None) -> dict:
         return {
             "title": self._title,
             "content": self._rich_text.to_dto_json_dict(),

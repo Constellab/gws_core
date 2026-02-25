@@ -5,7 +5,7 @@ from gws_core.tag.tag import Tag, TagValueType
 class TagList:
     _tags: list[Tag]
 
-    def __init__(self, tags: list[Tag] = None) -> None:
+    def __init__(self, tags: list[Tag] | None = None) -> None:
         if tags is None:
             tags = []
         self._tags = tags

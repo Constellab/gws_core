@@ -315,7 +315,7 @@ class ProtocolModel(ProcessModel):
         # we add the process of running processes (normalized)
         running_processes = [process for process in processes if process.is_running]
 
-        last_message: ProgressBarMessageDTO = None
+        last_message: ProgressBarMessageDTO | None = None
 
         for process in running_processes:
             progress += process.progress_bar.current_value / len(processes)

@@ -25,7 +25,7 @@ class TestHelper:
     Provides functionalities to initilize unit testing environments
     """
 
-    user: User = None
+    user: User | None = None
 
     @classmethod
     def init_complete(cls):

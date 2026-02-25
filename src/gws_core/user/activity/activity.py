@@ -32,7 +32,7 @@ class Activity(Model):
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> "Activity":
         if user is None:
             user = CurrentUserService.get_and_check_current_user()
@@ -51,7 +51,7 @@ class Activity(Model):
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> "Activity":
         max_date = datetime.now() - timedelta(seconds=Activity.ACTIVITY_MERGE_MAX_TIME)
 
@@ -76,7 +76,7 @@ class Activity(Model):
         object_type: ActivityObjectType,
         object_id: str,
         max_date: datetime,
-        user: User = None,
+        user: User | None = None,
     ) -> Optional["Activity"]:
         """Method to check if an activity exists for a given type and object
         and is more recent than a given date

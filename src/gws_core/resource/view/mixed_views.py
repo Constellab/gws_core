@@ -29,7 +29,7 @@ class MixedViews(View):
         super().__init__()
         self._sub_views = []
 
-    def add_view(self, view: View, params: ConfigParamsDict = None) -> None:
+    def add_view(self, view: View, params: ConfigParamsDict | None = None) -> None:
         """Add a view to the multi view
 
         :param view: view

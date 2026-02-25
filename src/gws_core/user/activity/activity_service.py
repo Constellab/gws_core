@@ -18,7 +18,7 @@ class ActivityService:
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> Activity:
         return Activity.add(
             activity_type=activity_type,
@@ -33,7 +33,7 @@ class ActivityService:
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> Activity | None:
         try:
             return cls.add(activity_type, object_type, object_id, user)
@@ -49,7 +49,7 @@ class ActivityService:
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> Activity:
         return Activity.add_or_update(
             activity_type=activity_type,
@@ -64,7 +64,7 @@ class ActivityService:
         activity_type: ActivityType,
         object_type: ActivityObjectType,
         object_id: str,
-        user: User = None,
+        user: User | None = None,
     ) -> None:
         if user is None:
             user = CurrentUserService.get_and_check_current_user()

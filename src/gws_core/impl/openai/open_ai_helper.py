@@ -28,7 +28,7 @@ class OpenAiHelper:
         return response.choices[0].message.content
 
     @classmethod
-    def get_code_context(cls, pip_package_names: list[str] = None) -> str:
+    def get_code_context(cls, pip_package_names: list[str] | None = None) -> str:
         """Define the context rules for the code generation, so the generated code is executable.
 
         :param pip_package_names: list of available package that can be used in the generated code. The version of the package will be automatically retrieved, defaults to None

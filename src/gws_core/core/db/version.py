@@ -28,7 +28,7 @@ class Version:
                 raise VersionInvalidException(version)
 
             main_version_str = version
-            sub_patch: int = None
+            sub_patch: int | None = None
 
             # if the version contains a subpatch
             if "-beta." in version:

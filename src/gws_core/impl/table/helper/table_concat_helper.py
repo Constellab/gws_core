@@ -45,9 +45,9 @@ class TableConcatHelper:
         :rtype: Table
         """
 
-        concat_df: DataFrame = None
-        row_tags: list[dict] = None
-        column_tags: list[dict] = None
+        concat_df: DataFrame | None = None
+        row_tags: list[dict] | None = None
+        column_tags: list[dict] | None = None
 
         for table in tables:
             if concat_df is None:

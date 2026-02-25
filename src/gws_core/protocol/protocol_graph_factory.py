@@ -31,7 +31,7 @@ class ProtocolGraphFactory:
 
     @abstractmethod
     def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str = None
+        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
     ) -> ProcessModel:
         """Method to instantiate the processes of the protocol"""
 
@@ -95,7 +95,7 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
             )
 
     def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str = None
+        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
     ) -> ProcessModel:
         process_type_str: str = process_dto.process_typing_name
         process_type: type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
@@ -196,7 +196,7 @@ class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
         )
 
     def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str = None
+        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
     ) -> ProcessModel:
         return self._create_new_process(process_dto=process_dto)
 

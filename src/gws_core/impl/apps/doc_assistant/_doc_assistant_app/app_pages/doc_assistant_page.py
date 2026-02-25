@@ -54,7 +54,7 @@ def _transcribe_audio_file(file):
     """Transcribe audio file and return the text"""
     file_path = DocAssistantUtils.store_uploaded_file_in_tmp_dir(file)
 
-    text: str = None
+    text: str | None = None
     with st.spinner("Transcribing the audio file..."):
         # Call whisper
         text = OpenAiHelper.call_whisper(
@@ -71,7 +71,7 @@ def _transcribe_audio_file(file):
 def generate_doc_from_text(streamlit_ai_chat: StreamlitOpenAiChat, text: str):
     streamlit_ai_chat.add_user_message(text)
 
-    response: str = None
+    response: str | None = None
     with st.spinner("Generating documentation..."):
         response = streamlit_ai_chat.chat.call_gpt()
 

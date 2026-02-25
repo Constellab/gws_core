@@ -38,7 +38,7 @@ class ViewConfigService:
         view_name: str,
         config: Config,
         is_favorite: bool = False,
-        view_style: TypingStyle = None,
+        view_style: TypingStyle | None = None,
     ) -> ViewConfig:
         view_meta_data = ViewHelper.get_and_check_view_meta(
             resource_model.get_and_check_resource_type(), view_name
@@ -170,7 +170,7 @@ class ViewConfigService:
         page: int = 0,
         number_of_items_per_page: int = 20,
     ) -> Paginator[ViewConfig]:
-        query: ModelSelect = None
+        query: ModelSelect | None = None
         if favorite:
             query = ViewConfig.get_by_resource_and_favorite(resource_id).order_by(
                 ViewConfig.last_modified_at.desc()

@@ -19,9 +19,9 @@ class HTMLView(View):
     _type: ViewType = ViewType.HTML
     _html: str
 
-    def __init__(self, html: str = None):
+    def __init__(self, html: str | None = None):
         super().__init__()
         self._html = html
 
-    def data_to_dict(self, params: ConfigParams = None) -> dict:
+    def data_to_dict(self, params: ConfigParams | None = None) -> dict:
         return {"html": self._html}

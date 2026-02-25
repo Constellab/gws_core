@@ -29,7 +29,7 @@ class ProcessService:
 
     @classmethod
     def get_logs_of_process(
-        cls, process_type: ProcessType, process_id: str, from_page_date: datetime = None
+        cls, process_type: ProcessType, process_id: str, from_page_date: datetime | None = None
     ) -> LogsBetweenDates:
         """Read the server log on filtered by the process start and end date"""
         process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)
@@ -37,7 +37,7 @@ class ProcessService:
         if process_model.status == ProcessStatus.DRAFT:
             raise BadRequestException("Can't get logs of a process in draft status")
 
-        start_date: datetime = None
+        start_date: datetime | None = None
         # if a page date is given, use it (it is when we load a new page)
         if from_page_date:
             start_date = from_page_date

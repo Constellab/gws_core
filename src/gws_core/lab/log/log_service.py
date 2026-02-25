@@ -65,16 +65,16 @@ class LogService:
         cls,
         from_date: datetime,
         to_date: datetime,
-        context: LogContext = None,
-        context_id: str = None,
+        context: LogContext | None = None,
+        context_id: str | None = None,
         nb_of_lines: int = 100,
     ) -> LogsBetweenDates:
         log_lines: list[LogLine] = []
 
         # retrieve logs for each day
         for date in DateHelper.date_range(from_date, to_date, include_end_date=True):
-            one_day_from: datetime = None
-            one_day_to: datetime = None
+            one_day_from: datetime | None = None
+            one_day_to: datetime | None = None
             # if the from_date is the same day as the date, we use the from_date
             # otherwise with use the date at 00:00:00
             if DateHelper.are_same_day(from_date, date):
@@ -128,8 +128,8 @@ class LogService:
         cls,
         from_date: datetime,
         to_date: datetime,
-        context: LogContext = None,
-        context_id: str = None,
+        context: LogContext | None = None,
+        context_id: str | None = None,
         nb_of_lines: int = 100,
     ) -> list[LogLine]:
         if not DateHelper.are_same_day(from_date, to_date):

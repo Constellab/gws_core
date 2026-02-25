@@ -719,7 +719,7 @@ def update_process_style(
 
 
 class CreateScenarioTemplate(BaseModelDTO):
-    name: str = None
+    name: str | None = None
     description: RichTextDTO | None = None
 
 

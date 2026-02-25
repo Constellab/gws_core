@@ -76,7 +76,7 @@ class BaseDTOField(TextField):
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"
     field_type = JSON_FIELD_TEXT_TYPE
 
-    dto_type: type[BaseModelDTO] = None
+    dto_type: type[BaseModelDTO] | None = None
 
     def __init__(self, dto_type: type[BaseModelDTO], *args, **kwargs):
         self.dto_type = dto_type
@@ -116,7 +116,7 @@ class SerializableDBField(TextField):
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"
     field_type = JSON_FIELD_TEXT_TYPE
 
-    object_type: type[SerializableObject] = None
+    object_type: type[SerializableObject] | None = None
 
     def __init__(self, object_type: type[SerializableObject], *args, **kwargs):
         self.object_type = object_type

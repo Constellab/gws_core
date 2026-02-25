@@ -7,8 +7,8 @@ from gws_core.impl.openai.open_ai_types import AiChatMessage
 
 
 class StreamlitOpenAiChat:
-    chat: OpenAiChat = None
-    key: str = None
+    chat: OpenAiChat | None = None
+    key: str | None = None
 
     def __init__(self, chat: OpenAiChat, key: str) -> None:
         """Initialize the StreamlitOpenAiChat.
@@ -25,7 +25,7 @@ class StreamlitOpenAiChat:
         self.key = key
 
     @staticmethod
-    def load_from_session(key: str, system_prompt: str = None) -> "StreamlitOpenAiChat":
+    def load_from_session(key: str, system_prompt: str | None = None) -> "StreamlitOpenAiChat":
         """Load or create a StreamlitOpenAiChat from session state.
 
         :param key: Unique key for storing the chat in session state

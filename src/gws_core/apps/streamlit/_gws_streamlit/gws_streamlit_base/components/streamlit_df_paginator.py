@@ -15,10 +15,10 @@ def _select_by_coords(
 def dataframe_paginated(
     dataframe: DataFrame,
     paginate_rows: bool = True,
-    row_page_size_options: list[int] = None,
+    row_page_size_options: list[int] | None = None,
     paginate_columns: bool = False,
-    column_page_size_options: list[int] = None,
-    transformer: Callable[[Any], DataFrame] = None,
+    column_page_size_options: list[int] | None = None,
+    transformer: Callable[[Any], DataFrame] | None = None,
     width: int | None = None,
     height: int | None = None,
     hide_index: bool = False,

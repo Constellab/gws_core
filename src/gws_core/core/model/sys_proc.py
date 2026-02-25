@@ -12,9 +12,9 @@ class SysProc:
     This class that only exposes necessary functionalities to easily manage shell processes.
     """
 
-    _process: Process = None
+    _process: Process | None = None
 
-    def __init__(self, process: Process = None):
+    def __init__(self, process: Process | None = None):
         self._process = process
 
     def get_process(self) -> Process:

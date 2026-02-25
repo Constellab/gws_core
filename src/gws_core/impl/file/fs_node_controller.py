@@ -18,7 +18,7 @@ from .fs_node_service import FsNodeService
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
 def upload_file(
     file: UploadFile = FastAPIFile(...),
-    typing_name: list[str] = None,
+    typing_name: list[str] | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ResourceModelDTO:
     """Upload a file

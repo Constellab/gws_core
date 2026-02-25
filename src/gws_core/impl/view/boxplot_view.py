@@ -58,15 +58,15 @@ class BoxPlotView(View):
     ```
     """
 
-    x_label: str = None
-    y_label: str = None
-    x_tick_labels: list[str] = None
-    _series: list = None
+    x_label: str | None = None
+    y_label: str | None = None
+    x_tick_labels: list[str] | None = None
+    _series: list | None = None
     _type: ViewType = ViewType.BOX_PLOT
     _title: str = "Box Plot"
 
     def add_data(
-        self, data: list[float] = None, name: str = None, tags: list[dict[str, str]] = None
+        self, data: list[float] | None = None, name: str | None = None, tags: list[dict[str, str]] | None = None
     ) -> None:
         """
         Add series of raw data.
@@ -84,7 +84,7 @@ class BoxPlotView(View):
         self.add_data_from_dataframe(DataFrame(data), name, tags)
 
     def add_data_from_dataframe(
-        self, data: DataFrame = None, name: str = None, tags: list[dict[str, str]] = None
+        self, data: DataFrame | None = None, name: str | None = None, tags: list[dict[str, str]] | None = None
     ) -> None:
         if data is None or not isinstance(data, DataFrame):
             raise BadRequestException("The data is required and must be a DataFrame")
@@ -127,16 +127,16 @@ class BoxPlotView(View):
 
     def add_series(
         self,
-        x: list[float] = None,
-        median: list[float] = None,
-        q1: list[float] = None,
-        q3: list[float] = None,
-        min: list[float] = None,
-        max: list[float] = None,
-        lower_whisker: list[float] = None,
-        upper_whisker: list[float] = None,
-        name: str = None,
-        tags: list[dict[str, str]] = None,
+        x: list[float] | None = None,
+        median: list[float] | None = None,
+        q1: list[float] | None = None,
+        q3: list[float] | None = None,
+        min: list[float] | None = None,
+        max: list[float] | None = None,
+        lower_whisker: list[float] | None = None,
+        upper_whisker: list[float] | None = None,
+        name: str | None = None,
+        tags: list[dict[str, str]] | None = None,
     ) -> None:
         """
         Add series of pre-computed x and y box values.

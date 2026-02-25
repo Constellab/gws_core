@@ -77,7 +77,7 @@ class ResourceZipper:
             raise Exception("Resource must have a model id")
         self.add_resource_model(resource.get_model_id())
 
-    def add_resource_model(self, resource_id: str, parent_resource_id: str = None) -> None:
+    def add_resource_model(self, resource_id: str, parent_resource_id: str | None = None) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
 
         resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_id)

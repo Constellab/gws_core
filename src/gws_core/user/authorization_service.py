@@ -113,7 +113,7 @@ class AuthorizationService:
         if not app_id or not user_access_token:
             return None
 
-        user: User = None
+        user: User | None = None
 
         if (
             app_id == AppProcess.DEV_MODE_APP_ID

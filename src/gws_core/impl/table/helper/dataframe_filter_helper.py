@@ -39,7 +39,7 @@ class DataframeFilterHelper:
     def filter_by_axis_names(
         cls, data: DataFrame, axis: AxisName, filters: list[DataframeFilterName]
     ):
-        dataframe: DataFrame = None
+        dataframe: DataFrame | None = None
         if not isinstance(filters, list):
             raise BadRequestException("The filters must be a list of dictionnary")
 
@@ -99,8 +99,8 @@ class DataframeFilterHelper:
     def get_filter_param_set(
         cls,
         axis_name: AxisName,
-        param_set_human_name: str = None,
-        param_set_short_description: str = None,
+        param_set_human_name: str | None = None,
+        param_set_short_description: str | None = None,
         optional: bool = False,
     ) -> ParamSet:
         """Get a param set that is of type DataframeFilterName"""

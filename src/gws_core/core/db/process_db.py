@@ -34,12 +34,12 @@ class ProcessDb(Process):
     def __init__(
         self,
         group=None,
-        target: Callable = None,
-        name: str = None,
+        target: Callable | None = None,
+        name: str | None = None,
         args: tuple = (),
-        kwargs: dict = None,
+        kwargs: dict | None = None,
         *,
-        daemon: bool = None,
+        daemon: bool | None = None,
     ):
         """
         Initialize the ProcessDb

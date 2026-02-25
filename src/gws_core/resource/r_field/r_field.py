@@ -85,7 +85,7 @@ class BaseRField:
 
     def __init__(
         self,
-        default_value: type | Callable[[], Any] | int | float | str | bool = None,
+        default_value: type | Callable[[], Any] | int | float | str | bool | None = None,
         include_in_dict_view: bool = False,
         storage: RFieldStorage = RFieldStorage.KV_STORE,
     ) -> None:

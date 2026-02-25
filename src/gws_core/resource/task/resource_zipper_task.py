@@ -57,7 +57,7 @@ class ResourceZipperTask(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         shared_by_id = params.get_value("shared_by_id")
 
-        shared_by: User = None
+        shared_by: User | None = None
         if shared_by_id:
             shared_by = User.get_by_id(shared_by_id)
 
@@ -108,7 +108,7 @@ class ResourceUnZipper(Task):
 
     config_specs = ConfigSpecs({})
 
-    resource_loader: ResourceLoader = None
+    resource_loader: ResourceLoader | None = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         source: File = inputs["source"]

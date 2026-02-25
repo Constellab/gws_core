@@ -127,7 +127,7 @@ class Converter(Task):
 
     @final
     @classmethod
-    def call(cls, source: Resource, params: ConfigParamsDict = None) -> Resource:
+    def call(cls, source: Resource, params: ConfigParamsDict | None = None) -> Resource:
         """Call the ResourceExporter method manually
 
         :param resource: resource to export

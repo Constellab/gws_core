@@ -15,7 +15,7 @@ class View:
     _type: ViewType = ViewType.VIEW
     _title: str | None = None
     _technical_info: TechnicalInfoDict
-    _style: TypingStyle = None
+    _style: TypingStyle | None = None
 
     _disable_pagination: bool = False
 

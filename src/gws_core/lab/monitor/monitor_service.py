@@ -90,7 +90,7 @@ class MonitorService:
 
     @classmethod
     def get_plotly_figure_dict(
-        cls, dataframe: DataFrame, x: str, y: list, y_labs: dict = None
+        cls, dataframe: DataFrame, x: str, y: list, y_labs: dict | None = None
     ) -> dict:
         # Create the plotly figure from the dataframe
 
@@ -128,7 +128,7 @@ class MonitorService:
         from_date: datetime,
         to_date: datetime,
         utc_number: float = 0,
-        seconds_margin: int = None,
+        seconds_margin: int | None = None,
     ) -> MonitorBetweenDateGraphicsDTO:
         # add tick interval to be sure to have at least one tick
         if seconds_margin is None:

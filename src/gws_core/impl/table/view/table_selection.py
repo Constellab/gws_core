@@ -72,7 +72,7 @@ class TableSelection:
         else:
             ranges: list[CellRange] = self.selection
 
-            column: int = None
+            column: int | None = None
 
             # check that all ranges are single columns and that they are in the same column
             for range_ in ranges:
@@ -165,7 +165,7 @@ class Serie2d(Serie1d):
 
     @staticmethod
     def from_dict(dict_: dict[str, Any]) -> "Serie2d":
-        x: TableSelection = None
+        x: TableSelection | None = None
         if "x" in dict_ and dict_["x"] is not None:
             x = TableSelection.from_dict(dict_["x"])
         return Serie2d(dict_["name"], TableSelection.from_dict(dict_["y"]), x)

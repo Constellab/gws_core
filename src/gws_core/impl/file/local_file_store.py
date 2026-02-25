@@ -22,7 +22,7 @@ from .fs_node import FSNode
 class LocalFileStore(FileStore):
     title = "Local file store"
     description = "Storage engine to locally store files"
-    _base_dir: str = None
+    _base_dir: str | None = None
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -30,7 +30,7 @@ class LocalFileStore(FileStore):
             self.data["path"] = os.path.join(self.get_base_dir(), self.id)
 
     def add_node_from_path(
-        self, source_path: str, dest_name: str = None, node_type: type[FSNode] = None
+        self, source_path: str, dest_name: str | None = None, node_type: type[FSNode] | None = None
     ) -> FSNode:
         """
         Add a file from an external repository to a local store.
@@ -58,7 +58,7 @@ class LocalFileStore(FileStore):
     def add_from_temp_file(
         self,
         source_file: IOBase | SpooledTemporaryFile,
-        dest_file_name: str = None,
+        dest_file_name: str | None = None,
         file_type: type[File] = File,
     ) -> File:
         """
@@ -120,7 +120,7 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir_):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def get_node_by_path(self, node_path: str = None, node_type: type[FSNode] = None) -> FSNode:
+    def get_node_by_path(self, node_path: str | None = None, node_type: type[FSNode] | None = None) -> FSNode:
         if node_type is None:
             if FileHelper.is_file(node_path):
                 node_type = File

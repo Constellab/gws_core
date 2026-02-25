@@ -53,12 +53,12 @@ class TabularView(View):
     number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE
     number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE
     replace_nan_by: str = ""
-    sort_column: str = None
-    sort_direction: TabularViewSortDirection = None
+    sort_column: str | None = None
+    sort_direction: TabularViewSortDirection | None = None
 
     _type: ViewType = ViewType.TABULAR
 
-    _table: Table = None
+    _table: Table | None = None
 
     # btyg set table not optional
     def __init__(
@@ -69,8 +69,8 @@ class TabularView(View):
         number_of_rows_per_page: int = MAX_NUMBER_OF_ROWS_PER_PAGE,
         number_of_columns_per_page: int = MAX_NUMBER_OF_COLUMNS_PER_PAGE,
         replace_nan_by: str = "",
-        sort_column: str = None,
-        sort_direction: TabularViewSortDirection = None,
+        sort_column: str | None = None,
+        sort_direction: TabularViewSortDirection | None = None,
     ):
         super().__init__()
 
@@ -141,8 +141,8 @@ class TabularView(View):
             else None
         )
 
-        total_number_of_rows: int = None
-        total_number_of_columns: int = None
+        total_number_of_rows: int | None = None
+        total_number_of_columns: int | None = None
 
         if self._disable_pagination:
             total_number_of_rows = min(self._get_safe_nb_of_rows_per_page(), self._table.nb_rows)

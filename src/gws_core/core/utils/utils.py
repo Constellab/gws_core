@@ -125,7 +125,7 @@ class Utils:
         )
 
     @staticmethod
-    def get_parent_classes(class_: type, max_parent: type = None) -> list[type]:
+    def get_parent_classes(class_: type, max_parent: type | None = None) -> list[type]:
         """Return  a list of parent class of class_ arg (containing class_).
         :param class_: [description]
         :type class_: Type
@@ -215,14 +215,14 @@ class Utils:
 
     @staticmethod
     def json_equals(
-        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
+        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] | None = None
     ) -> bool:
         """Assert a json with possibility to ignore key"""
         return Utils._json_equals_recur(json_1, json_2, ignore_keys, "") is None
 
     @staticmethod
     def assert_json_equals(
-        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] = None
+        json_1: dict | list, json_2: dict | list, ignore_keys: list[str] | None = None
     ):
         """Assert a json with possibility to ignore key"""
         result = Utils._json_equals_recur(json_1, json_2, ignore_keys, "")
@@ -236,7 +236,7 @@ class Utils:
     def _json_equals_recur(
         json_1: dict | list,
         json_2: dict | list,
-        ignore_keys: list[str] = None,
+        ignore_keys: list[str] | None = None,
         cumulated_key: str = "",
     ) -> str | None:
         # handle list

@@ -227,7 +227,7 @@ class ProgressBar(Model):
         return messages[-1]
 
     def get_messages_paginated(
-        self, nb_of_messages: int, before_date: datetime = None
+        self, nb_of_messages: int, before_date: datetime | None = None
     ) -> list[ProgressBarMessageDTO]:
         """
         Get the last nb_of_messages messages

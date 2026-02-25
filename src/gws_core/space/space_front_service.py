@@ -9,7 +9,7 @@ class SpaceFrontService:
 
     space_base_url: str
 
-    def __init__(self, space_base_url: str = None):
+    def __init__(self, space_base_url: str | None = None):
         """Initialize the SpaceFrontService with an optional base URL.
 
         :param space_base_url: The base URL of the Space app. If not provided, it will use the default from settings.
@@ -72,13 +72,13 @@ class SpaceFrontService:
     def get_lab_url(
         self,
         lab_id: str,
-        tab: Literal["dashboard", "config", "usage", "backup", "status-history"] = None,
+        tab: Literal["dashboard", "config", "usage", "backup", "status-history"] | None = None,
     ) -> str:
         """Get the URL of a specific lab of the Space app."""
         return f"{self.get_app_url()}/labs/{lab_id}" + (f"/{tab}" if tab else "")
 
     def get_current_lab_url(
-        self, tab: Literal["dashboard", "config", "usage", "backup", "status-history"] = None
+        self, tab: Literal["dashboard", "config", "usage", "backup", "status-history"] | None = None
     ) -> str:
         """Get the URL of the current lab of the Space app."""
         lab_id = Settings.get_lab_id()

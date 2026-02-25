@@ -140,7 +140,7 @@ class TestMockSpaceService(SpaceService):
         self,
         old_content: RichTextDTO,
         new_content: RichTextDTO,
-        old_modifications: RichTextModificationsDTO = None,
+        old_modifications: RichTextModificationsDTO | None = None,
     ) -> RichTextModificationsDTO:
         """Mock get_modifications"""
         return RichTextModificationsDTO(version=1, modifications=[])

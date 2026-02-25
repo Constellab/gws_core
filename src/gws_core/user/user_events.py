@@ -15,7 +15,7 @@ class BaseUserEvent(BaseEvent):
 
     type: Literal["user"] = "user"
     action: str = ""
-    data: User = None
+    data: User | None = None
 
 
 # ============================================================================

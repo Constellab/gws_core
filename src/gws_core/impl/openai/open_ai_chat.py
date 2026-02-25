@@ -13,7 +13,7 @@ class OpenAiChat:
 
     _messages: list[AiChatMessage]
 
-    def __init__(self, system_prompt: str = None, messages: list[AiChatMessage] = None):
+    def __init__(self, system_prompt: str | None = None, messages: list[AiChatMessage] | None = None):
         self._messages = []
         if messages:
             self._messages.extend(messages)
@@ -98,7 +98,7 @@ class OpenAiChat:
             self.set_system_prompt(system_prompt)
 
     @classmethod
-    def from_json(cls, json: OpenAiChatDict, system_prompt: str = None) -> "OpenAiChat":
+    def from_json(cls, json: OpenAiChatDict, system_prompt: str | None = None) -> "OpenAiChat":
         return cls(
             messages=AiChatMessage.from_json_list(json["messages"]), system_prompt=system_prompt
         )

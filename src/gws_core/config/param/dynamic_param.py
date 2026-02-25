@@ -23,15 +23,15 @@ from .param_types import ParamSpecDTO, ParamSpecTypeStr
 class DynamicParam(ParamSpec):
     """Dynamic param"""
 
-    specs: ConfigSpecs = None
+    specs: ConfigSpecs | None = None
 
-    edition_mode: bool = None
+    edition_mode: bool | None = None
 
     def __init__(
         self,
-        specs: ConfigSpecs = None,
+        specs: ConfigSpecs | None = None,
         human_name: str = "Dynamic params",
-        short_description: str = None,
+        short_description: str | None = None,
     ) -> None:
         super().__init__(
             optional=True,

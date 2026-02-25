@@ -40,8 +40,8 @@ class VennDiagramView(View):
     ```
     """
 
-    label: str = None
-    _groups: dict[str, set] = None
+    label: str | None = None
+    _groups: dict[str, set] | None = None
     _type: ViewType = ViewType.VENN_DIAGRAM
     _title: str = "Venn Diagram"
 
@@ -90,7 +90,7 @@ class VennDiagramView(View):
         }
         return _data_dict
 
-    def add_group(self, name: str = None, data: set | list = None):
+    def add_group(self, name: str | None = None, data: set | list | None = None):
         if not self._groups:
             self._groups = {}
         if not isinstance(name, str):

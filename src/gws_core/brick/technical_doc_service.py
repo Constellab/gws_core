@@ -83,27 +83,27 @@ class TechnicalDocService:
         return other_classes
 
     @classmethod
-    def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
+    def generate_tasks_technical_doc_as_md(cls, brick_name: str, separator: str | None = None) -> str:
         """Method to return the technical doc information about a brick to upload it on the hub"""
         tasks = cls.export_typing_technical_doc(brick_name, TaskTyping)
 
         return cls._generate_objects_technical_doc_as_md(tasks, "Tasks", separator)
 
     @classmethod
-    def generate_protocols_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
+    def generate_protocols_technical_doc_as_md(cls, brick_name: str, separator: str | None = None) -> str:
         protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
 
         return cls._generate_objects_technical_doc_as_md(protocols, "Protocols", separator)
 
     @classmethod
-    def generate_resources_technical_doc_as_md(cls, brick_name: str, separator: str = None) -> str:
+    def generate_resources_technical_doc_as_md(cls, brick_name: str, separator: str | None = None) -> str:
         resources = cls.export_typing_technical_doc(brick_name, ResourceTyping)
 
         return cls._generate_objects_technical_doc_as_md(resources, "Resources", separator)
 
     @classmethod
     def _generate_objects_technical_doc_as_md(
-        cls, objects: list[TypingFullDTO], title: str, separator: str = None
+        cls, objects: list[TypingFullDTO], title: str, separator: str | None = None
     ) -> str:
         markdown = f"# {title}\n\n"
 

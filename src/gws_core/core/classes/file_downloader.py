@@ -20,7 +20,7 @@ class FileDownloader:
     message_dispatcher: MessageDispatcher
     destination_folder: str
 
-    def __init__(self, destination_folder: str, message_dispatcher: MessageDispatcher = None):
+    def __init__(self, destination_folder: str, message_dispatcher: MessageDispatcher | None = None):
         self.destination_folder = destination_folder
         self.message_dispatcher = message_dispatcher
 
@@ -28,8 +28,8 @@ class FileDownloader:
         self,
         url: str,
         filename: str,
-        headers: dict[str, str] = None,
-        timeout: float = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
         decompress_file: bool = False,
     ) -> str:
         """Download a file from a given url if the file does not already exist. This class is useful for downloading
@@ -85,10 +85,10 @@ class FileDownloader:
     def download_file(
         self,
         url: str,
-        filename: str = None,
-        headers: dict[str, str] = None,
-        timeout: float = None,
-        destination_folder: str = None,
+        filename: str | None = None,
+        headers: dict[str, str] | None = None,
+        timeout: float | None = None,
+        destination_folder: str | None = None,
     ) -> str:
         """
         Download a file from a given url to a given file path

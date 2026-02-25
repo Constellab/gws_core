@@ -6,9 +6,9 @@ from gws_core.tag.tag_helper import TagHelper
 
 
 class TableAxisTags(SerializableObjectJson):
-    _tags: list[dict[str, str]] = None
+    _tags: list[dict[str, str]] | None = None
 
-    def __init__(self, tags: list[dict[str, str]] = None):
+    def __init__(self, tags: list[dict[str, str]] | None = None):
         super().__init__()
 
         if tags is None:
@@ -16,7 +16,7 @@ class TableAxisTags(SerializableObjectJson):
         else:
             self.set_all_tags(tags)
 
-    def insert_new_empty_tags(self, index: int = None, count: int = 1):
+    def insert_new_empty_tags(self, index: int | None = None, count: int = 1):
         """
         Add a new empty tags dict.
         If index is None, the new tags will be added at the end of the list.
@@ -55,7 +55,7 @@ class TableAxisTags(SerializableObjectJson):
         del self._tags[index]
 
     def get_tags_between(
-        self, from_index: int = None, to_index: int = None, none_if_empty: bool = False
+        self, from_index: int | None = None, to_index: int | None = None, none_if_empty: bool = False
     ) -> list[dict[str, str]]:
         """Get the tags between the given indexes. It includes the to_index"""
         if none_if_empty and self.all_tag_are_empty():

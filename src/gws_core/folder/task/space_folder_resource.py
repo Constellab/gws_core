@@ -25,9 +25,9 @@ class SpaceFolderResource(Resource):
 
     space_folder_id: str = StrRField()
 
-    _space_folder: SpaceFolder = None
+    _space_folder: SpaceFolder | None = None
 
-    def __init__(self, space_folder_id: str = None):
+    def __init__(self, space_folder_id: str | None = None):
         super().__init__()
         self.space_folder_id = space_folder_id
 
@@ -37,7 +37,7 @@ class SpaceFolderResource(Resource):
         return self._space_folder
 
     @view(view_type=JSONView, human_name="View space folder info", default_view=True)
-    def view_space_folder(self, config: ConfigParamsDict = None) -> JSONView:
+    def view_space_folder(self, config: ConfigParamsDict | None = None) -> JSONView:
         return JSONView(
             {
                 "id": self.space_folder_id,

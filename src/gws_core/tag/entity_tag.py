@@ -150,7 +150,7 @@ class EntityTag(Model):
         value_format: TagValueFormat,
         entity_id: str,
         entity_type: TagEntityType,
-        label: str = None,
+        label: str | None = None,
         is_community_tag: bool = False,
     ) -> "EntityTag":
         if not origins or origins.is_empty():

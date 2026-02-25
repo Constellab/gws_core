@@ -55,7 +55,7 @@ class TaskModel(ProcessModel):
     community_agent_version_modified: bool = BooleanField(default=False)
 
     # cache to store the list of tags of all inputs
-    _input_resource_tags: list[Tag] = None
+    _input_resource_tags: list[Tag] | None = None
 
     def set_process_type(self, process_type: type[Process]) -> None:
         """Method used when creating a new task model, it init the input and output from task specs

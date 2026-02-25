@@ -28,7 +28,7 @@ class ResourceViewMetaData:
         method_specs: ConfigSpecs,
         default_view: bool,
         hide: bool,
-        style: TypingStyle = None,
+        style: TypingStyle | None = None,
     ) -> None:
         self.method_name = method_name
         self.view_type = view_type

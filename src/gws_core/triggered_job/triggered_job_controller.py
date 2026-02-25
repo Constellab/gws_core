@@ -96,7 +96,7 @@ def update(
 @core_app.post("/triggered-jobs/{id_}/activate", tags=["Triggered Jobs"])
 def activate(
     id_: str,
-    dto: ActivateTriggeredJobDTO = None,
+    dto: ActivateTriggeredJobDTO | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TriggeredJobDTO:
     """Activate a triggered job"""

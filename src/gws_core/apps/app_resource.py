@@ -56,7 +56,7 @@ class AppResource(ResourceList):
 
     _params: dict = DictRField()
 
-    _app_config: AppConfig = None
+    _app_config: AppConfig | None = None
 
     def __init__(self):
         super().__init__()
@@ -281,7 +281,7 @@ class AppResource(ResourceList):
         return super().add_resource(resource, create_new_resource)
 
     def add_multiple_resources(
-        self, resources: list[Resource], message_dispatcher: MessageDispatcher = None
+        self, resources: list[Resource], message_dispatcher: MessageDispatcher | None = None
     ) -> None:
         """
 
