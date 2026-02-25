@@ -3,8 +3,46 @@ from typing import Literal
 
 import reflex as rx
 
-from gws_core.core.utils.settings import Settings
+from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserDTO
+
+
+DEFAULT_USER_COLOR = "#6C63FF"
+
+
+def get_user_color_mapping() -> dict[str, str]:
+    """Return a mapping of first name initials to their assigned colors.
+
+    :return: Dictionary mapping uppercase letters (A-Z) to hex color strings
+    """
+    return {
+        "A": "#6C63FF",  # Periwinkle
+        "B": "#FF6B6B",  # Coral
+        "C": "#4ECDC4",  # Mint
+        "D": "#FFB347",  # Peach
+        "E": "#A78BFA",  # Lavender
+        "F": "#F472B6",  # Pink
+        "G": "#34D399",  # Emerald
+        "H": "#60A5FA",  # Sky blue
+        "I": "#FBBF24",  # Amber
+        "J": "#F87171",  # Soft red
+        "K": "#38BDF8",  # Light blue
+        "L": "#A3E635",  # Lime
+        "M": "#FB923C",  # Orange
+        "N": "#818CF8",  # Indigo
+        "O": "#2DD4BF",  # Teal
+        "P": "#E879F9",  # Fuchsia
+        "Q": "#22D3EE",  # Cyan
+        "R": "#F9A8D4",  # Rose
+        "S": "#7DD3FC",  # Pale blue
+        "T": "#C084FC",  # Purple
+        "U": "#86EFAC",  # Light green
+        "V": "#FCA5A5",  # Light coral
+        "W": "#93C5FD",  # Periwinkle blue
+        "X": "#D8B4FE",  # Light purple
+        "Y": "#FDE68A",  # Light yellow
+        "Z": "#67E8F9",  # Light cyan
+    }
 
 
 def _user_color(first_name_initial: str) -> rx.Component:
@@ -16,45 +54,12 @@ def _user_color(first_name_initial: str) -> rx.Component:
     :param first_name_initial: First character of the user's first name (as a Var)
     :return: HSL color string (as a reactive Var)
     """
+    color_mapping = get_user_color_mapping()
     return rx.match(
         first_name_initial,
-        ("A", "#6C63FF"),  # Periwinkle
-        ("B", "#FF6B6B"),  # Coral
-        ("C", "#4ECDC4"),  # Mint
-        ("D", "#FFB347"),  # Peach
-        ("E", "#A78BFA"),  # Lavender
-        ("F", "#F472B6"),  # Pink
-        ("G", "#34D399"),  # Emerald
-        ("H", "#60A5FA"),  # Sky blue
-        ("I", "#FBBF24"),  # Amber
-        ("J", "#F87171"),  # Soft red
-        ("K", "#38BDF8"),  # Light blue
-        ("L", "#A3E635"),  # Lime
-        ("M", "#FB923C"),  # Orange
-        ("N", "#818CF8"),  # Indigo
-        ("O", "#2DD4BF"),  # Teal
-        ("P", "#E879F9"),  # Fuchsia
-        ("Q", "#22D3EE"),  # Cyan
-        ("R", "#F9A8D4"),  # Rose
-        ("S", "#7DD3FC"),  # Pale blue
-        ("T", "#C084FC"),  # Purple
-        ("U", "#86EFAC"),  # Light green
-        ("V", "#FCA5A5"),  # Light coral
-        ("W", "#93C5FD"),  # Periwinkle blue
-        ("X", "#D8B4FE"),  # Light purple
-        ("Y", "#FDE68A"),  # Light yellow
-        ("Z", "#67E8F9"),  # Light cyan
-        "#6C63FF",  # Default fallback
+        *((letter, color) for letter, color in color_mapping.items()),
+        DEFAULT_USER_COLOR,
     )
-
-
-def profile_picture_url(photo: str) -> str:
-    """Generate URL for user profile picture with specified size.
-
-    :param photo: Base URL of the user's photo
-    :return: URL with size parameter appended
-    """
-    return Settings.get_space_api_url() + f"/users/photo-v2/{photo}"
 
 
 def user_profile_picture(
@@ -78,7 +83,7 @@ def user_profile_picture(
         user.photo,
         # If photo exists, show image
         rx.image(
-            src=profile_picture_url(user.photo),
+            src=SpaceService.get_user_profile_picture_url(user.photo),
             width=pixel_size,
             height=pixel_size,
             border_radius="50%",

@@ -889,6 +889,15 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "retrieve user info")
 
+    @classmethod
+    def get_user_profile_picture_url(cls, photo: str) -> str:
+        """Generate URL for user profile picture with specified size.
+
+        :param photo: Base URL of the user's photo
+        :return: URL with size parameter appended
+        """
+        return Settings.get_space_api_url() + f"/users/photo-v2/{photo}"
+
     #################################### MAIL ####################################
 
     def send_mail(self, send_mail_dto: SpaceSendMailToUsersDTO) -> Response:

@@ -143,6 +143,8 @@ class SpaceHierarchyObjectDTO(BaseModelDTO):
     name: str
     objectType: SpaceHierarchyObjectType
     parentId: str | None = None
+    documentSize: int | None = None
+    lastModifiedAt: datetime
 
 
 class SpaceGroupType(str, Enum):

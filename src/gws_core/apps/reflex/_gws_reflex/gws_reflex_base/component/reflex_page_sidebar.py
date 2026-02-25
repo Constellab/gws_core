@@ -278,13 +278,17 @@ def _create_content_wrapper(
     header_content: rx.Component | None,
     sidebar_width: str,
     mobile_menu_button: rx.Component | None = None,
+    max_content_width: str | None = None,
 ) -> rx.Component:
     """Create a single content wrapper with responsive styling.
 
     On mobile, the hamburger menu button is placed on the left of the header row.
     On desktop, the sidebar is always visible so the button is hidden.
+
+    :param max_content_width: Optional max width to constrain the header and content area
+    :type max_content_width: str | None
     """
-    return rx.box(
+    inner_children = [
         # Header row: mobile menu button + header content + right sidebar toggle
         rx.cond(
             header_content is not None,
@@ -300,6 +304,22 @@ def _create_content_wrapper(
         ),
         # The actual content (rendered only once)
         content,
+    ]
+
+    # If max_content_width is set, wrap header + content in a constraining box
+    if max_content_width:
+        inner = rx.vstack(
+            *inner_children,
+            max_width=max_content_width,
+            width="100%",
+            flex="1",
+            min_height="0",
+        )
+    else:
+        inner = rx.fragment(*inner_children)
+
+    return rx.box(
+        inner,
         # Responsive styling — desktop sidebar is always visible
         width=rx.breakpoints(
             initial="100%",  # Mobile: full width
@@ -329,6 +349,7 @@ def page_sidebar_component(
     header_content: rx.Component | None = None,
     right_sidebar_content: rx.Component | None = None,
     right_sidebar_width: str = "450px",
+    max_content_width: str | None = None,
     **kwargs,
 ) -> rx.Component:
     """Create a generic page layout with responsive sidebar and main content area.
@@ -355,6 +376,8 @@ def page_sidebar_component(
     :type right_sidebar_content: rx.Component | None
     :param right_sidebar_width: The width of the right sidebar (default: "450px")
     :type right_sidebar_width: str
+    :param max_content_width: Optional max width to constrain the header and content area (optional)
+    :type max_content_width: str | None
     :return: The page sidebar component
     :rtype: rx.Component
     """
@@ -368,7 +391,9 @@ def page_sidebar_component(
         # Content + optional right sidebar in a horizontal layout
         rx.hstack(
             # Content wrapper (mobile menu button inline with header)
-            _create_content_wrapper(content, header_content, sidebar_width, mobile_menu_button),
+            _create_content_wrapper(
+                content, header_content, sidebar_width, mobile_menu_button, max_content_width
+            ),
             # Desktop right sidebar (always visible on xl+ via CSS, hidden below)
             rx.cond(
                 has_right_sidebar,

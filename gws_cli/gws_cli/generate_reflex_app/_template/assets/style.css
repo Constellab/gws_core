@@ -129,24 +129,34 @@ a[href="https://reflex.dev"] {
   --secondary-contrast: #f9f8fd;
 
   /* Custom tertiary color palette (pink/magenta) */
-  --tertiary-0: #6a003c;
-  --tertiary-5: #790f4b;
+  --tertiary-1: #fff4fa;
+  --tertiary-2: #ffe9f6;
+  --tertiary-3: #ffd4ec;
+  --tertiary-4: #ffbee3;
+  --tertiary-5: #ffa9d9;
+  --tertiary-6: #ff93d0;
+  --tertiary-7: #e176b2;
+  --tertiary-8: #c35895;
+  --tertiary-9: #a63b77;
   --tertiary-10: #881d5a;
-  --tertiary-15: #972c68;
-  --tertiary-20: #a63b77;
-  --tertiary-30: #c35895;
-  --tertiary-40: #e176b2;
-  --tertiary-50: #ff93d0;
-  --tertiary-60: #ffa9d9;
-  --tertiary-70: #ffbee3;
-  --tertiary-80: #ffd4ec;
-  --tertiary-85: #ffdff1;
-  --tertiary-90: #ffe9f6;
-  --tertiary-95: #fff4fa;
-  --tertiary-100: #fff;
+  --tertiary-11: #6a003c;
+  --tertiary-12: #4d002c;
+
+  --tertiary-a1: #a63b7708;
+  --tertiary-a2: #a63b770d;
+  --tertiary-a3: #a63b771a;
+  --tertiary-a4: #a63b772e;
+  --tertiary-a5: #a63b7745;
+  --tertiary-a6: #a63b7766;
+  --tertiary-a7: #a63b778c;
+  --tertiary-a8: #a63b77bd;
+  --tertiary-a9: #a63b77de;
+  --tertiary-a10: #881d5aef;
+  --tertiary-a11: #6a003cf5;
+  --tertiary-a12: #4d002cfa;
 
   --tertiary-contrast: #fff4fa;
-  
+
 
 }
 

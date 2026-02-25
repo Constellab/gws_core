@@ -10,6 +10,7 @@ from .components.reflex_select_resource_component.resource_select_component impo
 from .components.reflex_select_resource_component.resource_select_state import (
     ResourceSelectState as ResourceSelectState,
 )
+from .components.reflex_user_components import get_user_color_mapping as get_user_color_mapping
 from .components.reflex_user_components import user_inline_component as user_inline_component
 from .components.reflex_user_components import user_profile_picture as user_profile_picture
 from .components.reflex_user_components import user_select as user_select
