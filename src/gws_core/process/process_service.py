@@ -103,19 +103,31 @@ class ProcessService:
 
         try:
             Logger.debug("Check to send run stats to Community")
-            stats = (
+            stats = list(
                 ProcessRunStatModel.select()
                 .where(ProcessRunStatModel.sync_with_community == False)
                 .order_by(ProcessRunStatModel.created_at.asc())
             )
             if len(stats) > 0:
-                run_stats: list[dict] = []
-                for stat in stats:
-                    run_stats.append(stat.to_dto().to_json_dict())
-                CommunityService.send_process_run_stats(run_stats)
-                for stat in stats:
-                    stat.sync_with_community = True
-                    stat.save()
+                stat_ids = [stat.id for stat in stats]
+
+                # Mark as synced BEFORE the HTTP call to prevent duplicate sends
+                # if the server crashes or an error occurs after sending
+                ProcessRunStatModel.update(sync_with_community=True).where(
+                    ProcessRunStatModel.id.in_(stat_ids)
+                ).execute()
+
+                try:
+                    run_stats: list[dict] = []
+                    for stat in stats:
+                        run_stats.append(stat.to_dto().to_json_dict())
+                    CommunityService.send_process_run_stats(run_stats)
+                except Exception:
+                    # Revert the sync flag if the HTTP call fails so they are retried next time
+                    ProcessRunStatModel.update(sync_with_community=False).where(
+                        ProcessRunStatModel.id.in_(stat_ids)
+                    ).execute()
+                    raise
         except Exception as err:
             Logger.error("Error sending run statistics to the Community. Error: " + str(err))
 

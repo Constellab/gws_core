@@ -54,6 +54,7 @@ class ProcessRunStatModel(Model):
         stat.config_value = config_value
         stat.lab_env = lab_env
         stat.executed_by = executed_by
+        stat.sync_with_community = False
 
         stat.save()
 
