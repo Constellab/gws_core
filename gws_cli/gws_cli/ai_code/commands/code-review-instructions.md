@@ -48,7 +48,13 @@ Use these guidelines to review Python code. For each violation found, report the
 - Do not use mutable default arguments (`def f(items=[])`). Use `None` and initialize inside the function.
 - Use type hints for all function signatures.
 
-### PY-FUNC-003: Return consistency
+### PY-FUNC-003: Dead code / unused functions
+**Severity: HIGH**
+- Flag functions, methods, or classes that are defined but never referenced or called within the codebase.
+- Flag unused imports and unused variables.
+- Remove dead code rather than commenting it out — version control preserves history.
+
+### PY-FUNC-004: Return consistency
 **Severity: HIGH**
 - A function should return a consistent type. Avoid returning `str` in one branch and `None` in another unless the return type is explicitly `str | None`.
 - Avoid bare `return` mixed with `return value` in the same function.

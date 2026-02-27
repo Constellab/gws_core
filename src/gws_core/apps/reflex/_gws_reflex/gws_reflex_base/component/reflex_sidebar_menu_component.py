@@ -3,23 +3,26 @@
 import reflex as rx
 
 
-def sidebar_menu_component(
+def sidebar_header_component(
     title: str,
-    menu_items: list[rx.Component],
     logo_src: str | None = None,
     subtitle: str | None = None,
+    padding: str = "1em",
+    **kwargs,
 ) -> rx.Component:
-    """Create a sidebar menu with logo, title and navigation links.
+    """Create a sidebar header with logo, title and optional subtitle.
 
-    :param logo_src: The source path for the logo image
-    :type logo_src: str
     :param title: The title to display next to the logo
     :type title: str
-    :param menu_items: List of menu item components (use menu_item_component)
-    :type menu_items: list[rx.Component]
+    :param logo_src: The source path for the logo image
+    :type logo_src: str | None
     :param subtitle: An optional subtitle displayed below the title in smaller grey text
     :type subtitle: str | None
-    :return: The sidebar menu component
+    :param margin_bottom: Bottom margin of the header
+    :type margin_bottom: str
+    :param padding: Padding of the header
+    :type padding: str
+    :return: The sidebar header component
     :rtype: rx.Component
     """
     title_section = [rx.heading(title, size="4", line_height="1em")]
@@ -28,27 +31,50 @@ def sidebar_menu_component(
             rx.text(subtitle, size="1", color="var(--gray-9)", line_height="1em"),
         )
 
-    return rx.vstack(
-        rx.hstack(
-            rx.cond(
-                logo_src,
-                rx.image(
-                    src=logo_src,
-                    height="2rem",
-                    width="auto",
-                ),
+    return rx.hstack(
+        rx.cond(
+            logo_src,
+            rx.image(
+                src=logo_src,
+                height="2rem",
+                width="auto",
             ),
-            rx.vstack(*title_section, spacing="1"),
-            spacing="2",
-            align="center",
-            margin_bottom="1rem",
-            padding="1em",
         ),
+        rx.vstack(*title_section, spacing="1"),
+        spacing="2",
+        align="center",
+        padding=padding,
+        **kwargs,
+    )
+
+
+def sidebar_menu_component(
+    title: str,
+    menu_items: list[rx.Component],
+    logo_src: str | None = None,
+    subtitle: str | None = None,
+) -> rx.Component:
+    """Create a sidebar menu with logo, title and navigation links.
+
+    :param title: The title to display next to the logo
+    :type title: str
+    :param menu_items: List of menu item components (use menu_item_component)
+    :type menu_items: list[rx.Component]
+    :param logo_src: The source path for the logo image
+    :type logo_src: str | None
+    :param subtitle: An optional subtitle displayed below the title in smaller grey text
+    :type subtitle: str | None
+    :return: The sidebar menu component
+    :rtype: rx.Component
+    """
+    return rx.vstack(
+        sidebar_header_component(title, logo_src=logo_src, subtitle=subtitle, margin_bottom="1rem"),
         rx.vstack(
             *menu_items,
             width="100%",
             spacing="1",
             align_items="start",
+            padding="0 1rem",
         ),
         width="100%",
         align_items="start",

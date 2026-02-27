@@ -34,10 +34,8 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
 
     async def get_current_user(self) -> User | None:
         """Return the current user of the app."""
-        if not self._is_initialized:
-            await self._on_load()
 
-        user_id = self.authenticated_user_id
+        user_id = await self._load_and_check_user_authentication(store_in_state=False)
         if not user_id:
             return None
         return User.get_by_id_and_check(user_id)
