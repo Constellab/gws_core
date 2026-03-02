@@ -11,14 +11,12 @@ from .community_dto import (
 
 
 class CommunityUserService:
-    """Service to make requests to the community API using the user JWT for authentication"""
+    """Service to make requests to the community API using a Bearer access token for authentication"""
 
-    jws_cookie_key: str = "Authorization"
+    _access_token: str | None
 
-    _jwt_token: str | None
-
-    def __init__(self, jwt_token: str | None = None):
-        self._jwt_token = jwt_token
+    def __init__(self, access_token: str | None = None):
+        self._access_token = access_token
 
     def ask_ragflow_chatbot(
         self, message: str, session_id: str | None = None
@@ -34,7 +32,7 @@ class CommunityUserService:
             response = ExternalApiService.post(
                 url,
                 payload,
-                cookies=self._get_request_cookies(),
+                headers=self._get_request_headers(),
                 raise_exception_if_error=True,
                 timeout=120,
             )
@@ -55,7 +53,7 @@ class CommunityUserService:
 
         try:
             response = ExternalApiService.get(
-                url, cookies=self._get_request_cookies(), raise_exception_if_error=True
+                url, headers=self._get_request_headers(), raise_exception_if_error=True
             )
         except BaseHTTPException as err:
             err.detail = f"Can't retrieve documentation. Error : {err.detail}"
@@ -73,7 +71,7 @@ class CommunityUserService:
             response = ExternalApiService.put(
                 url,
                 content.to_json_dict(),
-                cookies=self._get_request_cookies(),
+                headers=self._get_request_headers(),
                 raise_exception_if_error=True,
             )
         except BaseHTTPException as err:
@@ -90,7 +88,7 @@ class CommunityUserService:
             response = ExternalApiService.post(
                 url,
                 brick_settings.to_json_dict(),
-                cookies=self._get_request_cookies(),
+                headers=self._get_request_headers(),
                 raise_exception_if_error=True,
             )
         except BaseHTTPException as err:
@@ -108,13 +106,11 @@ class CommunityUserService:
             raise Exception("Environment variable 'COMMUNITY_API_URL' is not set")
         return community_api_url
 
-    def _get_request_cookies(self) -> dict[str, str]:
-        """
-        Return the cookies for a request to the community API, with the JWT token if provided
-        """
-        cookies: dict[str, str] = {}
+    def _get_request_headers(self) -> dict[str, str]:
+        """Return the headers for a request to the community API, with the Bearer token if provided."""
+        headers: dict[str, str] = {}
 
-        if self._jwt_token is not None:
-            cookies[self.jws_cookie_key] = self._jwt_token
+        if self._access_token is not None:
+            headers["Authorization"] = f"Bearer {self._access_token}"
 
-        return cookies
+        return headers

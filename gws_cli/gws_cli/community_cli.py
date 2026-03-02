@@ -10,12 +10,28 @@ from .utils.community_cli_service import CommunityCliService
 app = typer.Typer(help="Community commands (documentation, chatbot)")
 
 
-@app.command("login", help="Login to the community platform")
+@app.command("login", help="Authenticate with the Community platform via browser")
 def login(
-    jwt_token: Annotated[str, typer.Argument(help="The JWT token to authenticate with.")],
+    force: Annotated[
+        bool,
+        typer.Option("--force", help="Re-authenticate even if already logged in."),
+    ] = False,
 ):
-    CommunityCliService.save_credentials(jwt_token)
-    typer.echo("Login successful. Credentials saved.")
+    try:
+        CommunityCliService.run_login_flow(force=force)
+    except KeyboardInterrupt:
+        typer.echo("\nLogin cancelled.")
+        raise typer.Exit(0)
+
+
+@app.command("logout", help="Remove stored authentication credentials")
+def logout():
+    if not CommunityCliService.has_credentials():
+        typer.echo("You are not logged in.")
+        return
+
+    CommunityCliService.delete_credentials()
+    typer.echo("You have been logged out successfully.")
 
 
 # Command to update a documentation's content from a JSON file
