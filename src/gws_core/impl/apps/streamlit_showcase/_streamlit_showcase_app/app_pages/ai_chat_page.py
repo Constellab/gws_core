@@ -15,7 +15,7 @@ def render_chat():
         _render_ai_chat(table)
 
     page_layout(
-        title="AI Chat",
+        title="Chat",
         description="This page contains a showcase for streamlit chat component.",
         content_function=page_content,
     )
@@ -105,7 +105,7 @@ with StreamlitContainers.container_centered('chat-container'):
     example_tabs(
         example_function=example_demo,
         code=code,
-        title="AI Chat",
+        title="Chat",
         description="A chat component using OpenAI to generate plots from natural language prompts. Only the table size is sent, not the data itself.",
         doc_class=StreamlitOpenAiChat,
     )
