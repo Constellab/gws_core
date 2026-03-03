@@ -44,7 +44,7 @@ class ParamSpecTypeStr(Enum):
 class ParamSpecSimpleDTO(BaseModelDTO):
     type: ParamSpecTypeStr
     optional: bool
-    visibility: ParamSpecVisibilty | None = "public"
+    visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
     additional_info: dict | None = {}
 

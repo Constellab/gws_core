@@ -23,12 +23,12 @@ class Validator:
     :type type: type
     """
 
-    _type: type | None = None
+    _type: type
     _allowed_values: list | None = None
 
-    _valid_types = ["bool", "int", "float", "str", "list", "dict", "dynamic"]
+    _valid_types: list[str] = ["bool", "int", "float", "str", "list", "dict", "dynamic"]
 
-    def __init__(self, type_: ValidatorType | None = None, allowed_values: list | None = None):
+    def __init__(self, type_: type | None = None, allowed_values: list | None = None):
         self.set_type(type_)
 
         if allowed_values is not None:
@@ -37,18 +37,18 @@ class Validator:
             else:
                 raise BadRequestException("The parameter allowed_values must be a list")
 
-    def set_type(self, type_: str | type) -> None:
-        if type_ == bool or type_ == "bool":
+    def set_type(self, type_: type | None) -> None:
+        if type_ is bool:
             self._type = bool
-        elif type_ == int or type_ == "int":
+        elif type_ is int:
             self._type = int
-        elif type_ == float or type_ == "float":
+        elif type_ is float:
             self._type = float
-        elif type_ == str or type_ == "str":
+        elif type_ is str:
             self._type = str
-        elif type_ == list or type_ == "list":
+        elif type_ is list:
             self._type = list
-        elif type_ == dict or type_ == "dict" or type_ == "dynamic":
+        elif type_ is dict:
             self._type = dict
         else:
             raise BadRequestException("Invalid type")
@@ -82,13 +82,13 @@ class Validator:
             )
 
         # If the value as the correct type
-        if type(value) == self._type:
+        if type(value) is self._type:
             return value
 
         if isinstance(value, str):
             value = self._from_str(value)
 
-            if type(value) != self._type:
+            if type(value) is not self._type:
                 raise BadRequestException(
                     f"The value {value} is of type {type(value).__name__} but it expected a {self._type.__name__}"
                 )
@@ -151,18 +151,18 @@ class NumericValidator(Validator):
         * `validator.validate('foo') -> ValueError`
     """
 
-    _min_value = None
-    _max_value = None
-    _include_min = True
-    _include_max = True
+    _min_value: float | None = None
+    _max_value: float | None = None
+    _include_min: bool = True
+    _include_max: bool = True
 
     def __init__(
         self,
-        type_=float,
-        min_value=-math.inf,
-        max_value=math.inf,
-        include_min=False,
-        include_max=False,
+        type_: type = float,
+        min_value: float = -math.inf,
+        max_value: float = math.inf,
+        include_min: bool = False,
+        include_max: bool = False,
         allowed_values: list | None = None,
     ):
         if min_value is None:
@@ -245,10 +245,10 @@ class IntValidator(NumericValidator):
 
     def __init__(
         self,
-        min_value=-math.inf,
-        max_value=math.inf,
-        include_min=True,
-        include_max=True,
+        min_value: float | None = -math.inf,
+        max_value: float | None = math.inf,
+        include_min: bool = True,
+        include_max: bool = True,
         allowed_values: list[int] | None = None,
     ):
         super().__init__(
@@ -286,10 +286,10 @@ class FloatValidator(NumericValidator):
 
     def __init__(
         self,
-        min_value=-math.inf,
-        max_value=math.inf,
-        include_min=True,
-        include_max=True,
+        min_value: float | None = -math.inf,
+        max_value: float | None = math.inf,
+        include_min: bool = True,
+        include_max: bool = True,
         allowed_values: list[float] | None = None,
     ):
         super().__init__(
@@ -317,11 +317,14 @@ class StrValidator(Validator):
             * `validator.validate(True) -> ValueError`
     """
 
-    _min_length = -1
-    _max_length = math.inf
+    _min_length: float = -1
+    _max_length: float = math.inf
 
     def __init__(
-        self, allowed_values: list[str] | None = None, min_length: int | None = None, max_length: int | None = None
+        self,
+        allowed_values: list[str] | None = None,
+        min_length: int | None = None,
+        max_length: int | None = None,
     ):
         super().__init__(
             type_=str,
@@ -333,16 +336,14 @@ class StrValidator(Validator):
                 min_length = int(min_length)
             if not isinstance(min_length, (int, float)):
                 raise BadRequestException("The min_length must be a numeric")
-            min_length = max(-1, min_length)
-            self._min_length = min_length
+            self._min_length = max(-1, float(min_length))
 
         if max_length is not None:
             if isinstance(max_length, str):
                 max_length = int(max_length)
             if not isinstance(max_length, (int, float)):
                 raise BadRequestException("The max_length must be a numeric")
-            max_length = min(math.inf, max_length)
-            self._max_length = max_length
+            self._max_length = min(math.inf, float(max_length))
 
         if self._min_length > self._max_length:
             raise BadRequestException(
@@ -353,16 +354,16 @@ class StrValidator(Validator):
         return str_value
 
     def _validate(self, value) -> str:
-        value: str = super()._validate(value)
-        if len(value) < self._min_length:
+        validated_value: str = super()._validate(value)
+        if len(validated_value) < self._min_length:
             raise BadRequestException(
-                f"The string length is {len(value)}. It is less than the min length of {self._min_length}"
+                f"The string length is {len(validated_value)}. It is less than the min length of {self._min_length}"
             )
-        if len(value) > self._max_length:
+        if len(validated_value) > self._max_length:
             raise BadRequestException(
-                f"The string length is {len(value)}. It exceeds the max length of {self._min_length}"
+                f"The string length is {len(validated_value)}. It exceeds the max length of {self._max_length}"
             )
-        return value
+        return validated_value
 
 
 class ListValidator(Validator):
@@ -384,8 +385,8 @@ class ListValidator(Validator):
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
 
-    min_number_of_occurrences: int = True
-    max_number_of_occurrences: int = True
+    min_number_of_occurrences: int = -1
+    max_number_of_occurrences: int = -1
 
     def __init__(
         self,
@@ -398,23 +399,29 @@ class ListValidator(Validator):
         self.max_number_of_occurrences = max_number_of_occurrences
 
     def _validate(self, value):
-        value: list = super()._validate(value)
+        validated_value: list = super()._validate(value)
 
         # Check if the value is json
-        if not Utils.is_json(value):
-            raise BadRequestException(f"The value {value} is not json like.")
+        if not Utils.is_json(validated_value):
+            raise BadRequestException(f"The value {validated_value} is not json like.")
 
-        if self.min_number_of_occurrences >= 0 and len(value) < self.min_number_of_occurrences:
+        if (
+            self.min_number_of_occurrences >= 0
+            and len(validated_value) < self.min_number_of_occurrences
+        ):
             raise BadRequestException(
-                f"The list contains {len(value)} elements but the minimum number of elements is {self.min_number_of_occurrences}."
+                f"The list contains {len(validated_value)} elements but the minimum number of elements is {self.min_number_of_occurrences}."
             )
 
-        if self.max_number_of_occurrences >= 0 and len(value) > self.max_number_of_occurrences:
+        if (
+            self.max_number_of_occurrences >= 0
+            and len(validated_value) > self.max_number_of_occurrences
+        ):
             raise BadRequestException(
-                f"The list contains {len(value)} elements but the maximum number of elements is {self.max_number_of_occurrences}."
+                f"The list contains {len(validated_value)} elements but the maximum number of elements is {self.max_number_of_occurrences}."
             )
 
-        return value
+        return validated_value
 
 
 class DictValidator(Validator):
@@ -439,17 +446,17 @@ class DictValidator(Validator):
         super().__init__(type_=dict, allowed_values=None)
 
     def _validate(self, value):
-        value: dict = super()._validate(value)
+        validated_value: dict = super()._validate(value)
 
         # Check if the value is jsonable
-        if not Utils.is_json(value):
-            raise BadRequestException(f"The value {value} is json like.")
+        if not Utils.is_json(validated_value):
+            raise BadRequestException(f"The value {validated_value} is not json like.")
 
-        return value
+        return validated_value
 
 
 class URLValidator(StrValidator):
-    _type = str
+    _type: type = str
 
     def _validate(self, value):
         value = super()._validate(value)
@@ -465,7 +472,7 @@ class URLValidator(StrValidator):
         )
 
         valid = re.match(regex, value) is not None
-        if valid == True:
+        if valid:
             return value
         else:
             raise BadRequestException(f"The URL {value} is not valid")
