@@ -207,7 +207,7 @@ class StrParamAdditionalInfo(TypedDict):
 class StrParam(ParamSpec):
     """String param"""
 
-    additional_info: StrParamAdditionalInfo | None
+    additional_info: StrParamAdditionalInfo
 
     def __init__(
         self,
@@ -269,7 +269,7 @@ class StrParam(ParamSpec):
         return StrParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return {
             "min_length": IntParam(optional=True, human_name="Min length").to_dto(),
             "max_length": IntParam(optional=True, human_name="Max length").to_dto(),
@@ -342,7 +342,7 @@ class TextParam(ParamSpec):
         return TextParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return None
 
 
@@ -397,7 +397,7 @@ class BoolParam(ParamSpec):
         return BoolParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return None
 
 
@@ -451,7 +451,7 @@ class DictParam(ParamSpec):
         return DictParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return None
 
 
@@ -505,7 +505,7 @@ class ListParam(ParamSpec):
         return ListParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return None
 
 
@@ -525,7 +525,7 @@ class NumericParamAdditionalInfo(TypedDict):
 class NumericParam(ParamSpec):
     """Abstract numerci param class (int or float)"""
 
-    additional_info: NumericParamAdditionalInfo | None
+    additional_info: NumericParamAdditionalInfo
 
     def __init__(
         self,

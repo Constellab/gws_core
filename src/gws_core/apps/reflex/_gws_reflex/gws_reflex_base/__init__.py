@@ -1,6 +1,9 @@
 from .component.reflex_confirm_dialog_component import ConfirmDialogAction as ConfirmDialogAction
 from .component.reflex_confirm_dialog_component import ConfirmDialogState as ConfirmDialogState
 from .component.reflex_dialog_components import dialog_header as dialog_header
+from .component.reflex_extension_badge_component import (
+    extension_badge_component as extension_badge_component,
+)
 from .component.reflex_form_dialog_component import FormDialogState as FormDialogState
 from .component.reflex_form_dialog_component import form_dialog_component as form_dialog_component
 from .component.reflex_loader_section_component import loader_section as loader_section
@@ -9,7 +12,16 @@ from .component.reflex_page_sidebar import left_sidebar_open_button as left_side
 from .component.reflex_page_sidebar import page_sidebar_component as page_sidebar_component
 from .component.reflex_page_sidebar import right_sidebar_close_button as right_sidebar_close_button
 from .component.reflex_page_sidebar import right_sidebar_open_button as right_sidebar_open_button
+from .component.reflex_plotly_fullscreen_component import (
+    plotly_fullscreen_dialog as plotly_fullscreen_dialog,
+)
+from .component.reflex_plotly_fullscreen_component import (
+    plotly_with_fullscreen as plotly_with_fullscreen,
+)
 from .component.reflex_sidebar_menu_component import menu_item_component as menu_item_component
+from .component.reflex_sidebar_menu_component import (
+    sidebar_header_component as sidebar_header_component,
+)
 from .component.reflex_sidebar_menu_component import (
     sidebar_menu_component as sidebar_menu_component,
 )

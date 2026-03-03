@@ -3,7 +3,7 @@ import os
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.utils.compress.tar_compress import TarGzCompress
+from gws_core.core.utils.compress.tar_compress import TarCompress, TarGzCompress
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -17,7 +17,7 @@ from gws_core.task.converter.exporter import ResourceExporter, exporter_decorato
     "FolderExporter",
     source_type=Folder,
     human_name="Folder exporter",
-    short_description="Export a folder to a zip or tar.gz file",
+    short_description="Export a folder to a zip, tar, or tar.gz file",
 )
 class FolderExporter(ResourceExporter):
     config_specs = ConfigSpecs(
@@ -26,7 +26,7 @@ class FolderExporter(ResourceExporter):
                 optional=True,
                 human_name="Compression type",
                 default_value="zip",
-                allowed_values=["zip", "tar.gz"],
+                allowed_values=["zip", "tar", "tar.gz"],
             )
         }
     )
@@ -45,6 +45,10 @@ class FolderExporter(ResourceExporter):
             destination += folder_name + ".zip"
             self.log_info_message("Compressing folder " + folder_name + " to " + destination)
             ZipCompress.compress_dir(folder.path, destination)
+        elif compression == "tar":
+            destination += folder_name + ".tar"
+            self.log_info_message("Compressing folder " + folder_name + " to " + destination)
+            TarCompress.compress_dir(folder.path, destination)
         elif compression == "tar.gz":
             destination += folder_name + ".tar.gz"
             self.log_info_message("Compressing folder " + folder_name + " to " + destination)

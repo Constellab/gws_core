@@ -121,7 +121,7 @@ def _create_sidebar_drawer(
                 right="auto",
                 height="100%",
                 width=sidebar_width,
-                padding="2rem 1rem",
+                padding="1rem 0",
                 bg="var(--gray-2)",
                 display="flex",
                 flex_direction="column",
@@ -140,12 +140,15 @@ def _create_desktop_sidebar(
     """Create the fixed sidebar for desktop.
 
     Always visible on desktop (md+), hidden on mobile/tablet.
+    The container has no horizontal padding so that scrollable content
+    can place its scrollbar flush against the edge. The sidebar_content
+    is responsible for its own horizontal padding.
     """
     return rx.vstack(
         sidebar_content,
         width=sidebar_width,
         min_width=sidebar_width,
-        padding="1rem",
+        padding="1rem 0",
         background="white",
         border_right="1px solid var(--gray-4)",
         align_items="start",
@@ -162,13 +165,13 @@ def _create_desktop_sidebar(
     )
 
 
-def _create_mobile_menu_button(
-    sidebar_drawer: rx.Component,
-) -> rx.Component:
-    """Create the mobile hamburger menu button and drawer.
+def _create_mobile_menu_button() -> rx.Component:
+    """Create the mobile hamburger menu button.
 
     Only visible on mobile/tablet. Hidden on desktop where the sidebar is
-    always visible as a fixed panel.
+    always visible as a fixed panel. The sidebar drawer is rendered
+    separately at the top level of page_sidebar_component so that
+    left_sidebar_open_button works even without header_content.
     """
     return rx.box(
         rx.tooltip(
@@ -181,7 +184,6 @@ def _create_mobile_menu_button(
             ),
             content="Show sidebar",
         ),
-        sidebar_drawer,
         display=rx.breakpoints(
             initial="block",  # Mobile: visible
             sm="block",  # Tablet: visible
@@ -279,6 +281,7 @@ def _create_content_wrapper(
     sidebar_width: str,
     mobile_menu_button: rx.Component | None = None,
     max_content_width: str | None = None,
+    has_right_sidebar: bool = False,
 ) -> rx.Component:
     """Create a single content wrapper with responsive styling.
 
@@ -295,7 +298,7 @@ def _create_content_wrapper(
             rx.hstack(
                 mobile_menu_button if mobile_menu_button is not None else rx.fragment(),
                 rx.box(header_content, flex=1),
-                right_sidebar_open_button(),
+                right_sidebar_open_button() if has_right_sidebar else rx.fragment(),
                 width="100%",
                 align_items="center",
                 class_name="page-header-content",
@@ -359,6 +362,11 @@ def page_sidebar_component(
     - Mobile/Tablet: Hamburger menu with drawer sidebar, optional header bar on top
     - Optional right sidebar: Full-height panel on the right with close/open toggle
 
+    The sidebar container has no horizontal padding so that scrollable content
+    can place its scrollbar flush against the edge. The sidebar_content is
+    responsible for its own horizontal padding (e.g. via sidebar_header_component
+    or menu_item_component which have built-in padding).
+
     Note: header_content is rendered only once in the content wrapper to avoid
     duplicating components (which can cause issues with dialogs bound to state).
 
@@ -382,17 +390,25 @@ def page_sidebar_component(
     :rtype: rx.Component
     """
     sidebar_drawer = _create_sidebar_drawer(sidebar_content, sidebar_width)
-    mobile_menu_button = _create_mobile_menu_button(sidebar_drawer)
+    mobile_menu_button = _create_mobile_menu_button()
     has_right_sidebar = right_sidebar_content is not None
 
     return rx.box(
         # Desktop: Fixed left sidebar (always visible on md+)
         _create_desktop_sidebar(sidebar_content, sidebar_width),
+        # Mobile/Tablet: Sidebar drawer (always in the DOM so
+        # left_sidebar_open_button works even without header_content)
+        sidebar_drawer,
         # Content + optional right sidebar in a horizontal layout
         rx.hstack(
             # Content wrapper (mobile menu button inline with header)
             _create_content_wrapper(
-                content, header_content, sidebar_width, mobile_menu_button, max_content_width
+                content,
+                header_content,
+                sidebar_width,
+                mobile_menu_button,
+                max_content_width,
+                has_right_sidebar,
             ),
             # Desktop right sidebar (always visible on xl+ via CSS, hidden below)
             rx.cond(
