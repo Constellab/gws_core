@@ -5,7 +5,6 @@ from pathlib import Path
 
 import requests
 import typer
-
 from gws_core.community.community_user_service import CommunityUserService
 from gws_core.core.utils.settings import Settings
 
@@ -23,6 +22,7 @@ class CommunityCliService:
     GWS_CLI_CREDENTIALS_FILE = GWS_CLI_CONFIG_DIR / "credentials.json"
 
     POLL_INTERVAL_SECONDS = 5
+    POLL_TIMEOUT_SECONDS = 600  # 10 minutes
 
     @staticmethod
     def save_credentials(access_token: str) -> None:
@@ -40,10 +40,14 @@ class CommunityCliService:
         """Load access token from the credentials file."""
         if not CommunityCliService.GWS_CLI_CREDENTIALS_FILE.exists():
             return None
-        credentials = json.loads(
-            CommunityCliService.GWS_CLI_CREDENTIALS_FILE.read_text(encoding="utf-8")
-        )
-        return credentials.get("access_token")
+        try:
+            credentials = json.loads(
+                CommunityCliService.GWS_CLI_CREDENTIALS_FILE.read_text(encoding="utf-8")
+            )
+            return credentials.get("access_token")
+        except (OSError, json.JSONDecodeError):
+            # Treat unreadable or invalid credentials as "not logged in"
+            return None
 
     @staticmethod
     def delete_credentials() -> None:
@@ -92,14 +96,64 @@ class CommunityCliService:
 
         try:
             response = requests.post(url, json={}, timeout=30)
-        except requests.exceptions.RequestException:
-            raise Exception("Cannot reach the Community server. Please check your connection.")
+        except requests.exceptions.RequestException as err:
+            raise Exception("Cannot reach the Community server. Please check your connection.") from err
 
         if response.status_code < 200 or response.status_code >= 300:
             raise Exception(f"Failed to request authorization code (HTTP {response.status_code}).")
 
-        data = response.json()
-        return data["code"], data.get("authUrl", "")
+        try:
+            data = response.json()
+        except ValueError as err:
+            raise Exception(
+                "Unexpected response from the Community server when requesting authorization code."
+            ) from err
+        if not isinstance(data, dict) or "code" not in data:
+            raise Exception(
+                "Unexpected response format from the Community server when requesting authorization code."
+            ) from None
+        auth_url = data.get("authUrl", "")
+        return data["code"], auth_url
+
+    @staticmethod
+    def _parse_poll_response(response: requests.Response) -> str | None:
+        """Parse a poll response and return the access token if available.
+
+        :return: The access token, or None if authorization is still pending
+        :raises AuthorizationExpiredError: If the code has expired
+        :raises AuthorizationDeniedError: If the authorization was denied
+        """
+        if response.status_code == 410:
+            raise AuthorizationExpiredError()
+        if response.status_code == 409:
+            raise AuthorizationDeniedError()
+
+        try:
+            data = response.json()
+        except ValueError:
+            return None
+
+        if not isinstance(data, dict):
+            return None
+
+        # Check status field from response body
+        status = data.get("status", "").lower()
+        if "expired" in status:
+            raise AuthorizationExpiredError()
+        if "denied" in status or "refused" in status:
+            raise AuthorizationDeniedError()
+
+        # Check for error HTTP codes with message fallback
+        if response.status_code < 200 or response.status_code >= 300:
+            message = data.get("message", "").lower()
+            if "expired" in message:
+                raise AuthorizationExpiredError()
+            if "denied" in message or "already" in message:
+                raise AuthorizationDeniedError()
+            return None
+
+        # Success: extract token
+        return data.get("token") or data.get("accessToken") or data.get("access_token")
 
     @staticmethod
     def poll_for_token(code: str) -> str:
@@ -112,9 +166,13 @@ class CommunityCliService:
         """
         api_url = CommunityUserService.get_community_api_url()
         url = f"{api_url}/cli-auth/token"
+        start_time = time.monotonic()
 
         while True:
             time.sleep(CommunityCliService.POLL_INTERVAL_SECONDS)
+
+            if time.monotonic() - start_time >= CommunityCliService.POLL_TIMEOUT_SECONDS:
+                raise AuthorizationExpiredError()
 
             try:
                 response = requests.post(url, json={"code": code}, timeout=30)
@@ -122,43 +180,9 @@ class CommunityCliService:
                 # Network error: retry silently
                 continue
 
-            if response.status_code == 410:
-                raise AuthorizationExpiredError()
-
-            if response.status_code == 409:
-                raise AuthorizationDeniedError()
-
-            try:
-                data = response.json()
-            except ValueError:
-                continue
-
-            if not isinstance(data, dict):
-                continue
-
-            # Check status field from response body
-            status = data.get("status", "").lower()
-            if "expired" in status:
-                raise AuthorizationExpiredError()
-            if "denied" in status or "refused" in status:
-                raise AuthorizationDeniedError()
-
-            # Check for error HTTP codes with message fallback
-            if response.status_code < 200 or response.status_code >= 300:
-                message = data.get("message", "").lower()
-                if "expired" in message:
-                    raise AuthorizationExpiredError()
-                if "denied" in message or "already" in message:
-                    raise AuthorizationDeniedError()
-                # Unknown error: retry silently
-                continue
-
-            # Success: extract token
-            access_token = data.get("token") or data.get("accessToken") or data.get("access_token")
+            access_token = CommunityCliService._parse_poll_response(response)
             if access_token:
                 return access_token
-
-            # Pending (status=authorization_pending): continue polling
 
     @staticmethod
     def open_browser(url: str) -> None:
