@@ -224,16 +224,32 @@ class Settings:
         return cls.is_local_env() and cls.is_dev_mode()
 
     @classmethod
-    def get_community_api_url(cls) -> str:
+    def get_community_api_url(cls) -> str | None:
         if cls.is_local_env():
             return "http://host.docker.internal:3333"
         return cls.get_os_environ("COMMUNITY_API_URL")
 
     @classmethod
-    def get_community_front_url(cls) -> str:
+    def get_community_api_url_and_check(cls) -> str:
+        """Get the community API URL and check if it's set. Raise an error if it's not set."""
+        url = cls.get_community_api_url()
+        if not url:
+            raise ValueError("Environment variable 'COMMUNITY_API_URL' is not set")
+        return url
+
+    @classmethod
+    def get_community_front_url(cls) -> str | None:
         if cls.is_local_env() and not os.environ.get("COMMUNITY_FRONT_URL"):
             return "http://localhost:4200"
         return cls.get_os_environ("COMMUNITY_FRONT_URL")
+
+    @classmethod
+    def get_community_front_url_and_check(cls) -> str:
+        """Get the community front URL and check if it's set. Raise an error if it's not set."""
+        url = cls.get_community_front_url()
+        if not url:
+            raise ValueError("Environment variable 'COMMUNITY_FRONT_URL' is not set")
+        return url
 
     @classmethod
     def get_virtual_host(cls) -> str:

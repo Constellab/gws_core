@@ -68,21 +68,21 @@ class CommunityCliService:
         """
         access_token = CommunityCliService.load_access_token()
         if requires_authentication and not access_token:
-            raise Exception(
-                "You are not authenticated. Please run 'gws community login' first."
-            )
+            raise Exception("You are not authenticated. Please run 'gws community login' first.")
         return CommunityUserService(access_token=access_token)
 
     @staticmethod
     def get_community_front_url() -> str:
         """Get the community front URL."""
-        try:
-            url = Settings.get_community_front_url()
-            if url:
-                return url
-        except Exception:
-            pass
-        return "https://constellab.community"
+        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        return Settings.get_community_front_url_and_check()
+
+    @classmethod
+    def get_community_api_url(cls) -> str:
+        """Get the community API URL, preferring environment variable over settings."""
+        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        # return "https://api.constellab.community"
+        return Settings.get_community_api_url_and_check()
 
     @staticmethod
     def request_device_code() -> tuple[str, str]:
@@ -91,13 +91,15 @@ class CommunityCliService:
         :return: Tuple of (code, auth_url)
         :raises Exception: If the server cannot be reached
         """
-        api_url = CommunityUserService.get_community_api_url()
+        api_url = CommunityCliService.get_community_api_url()
         url = f"{api_url}/cli-auth/code"
 
         try:
             response = requests.post(url, json={}, timeout=30)
         except requests.exceptions.RequestException as err:
-            raise Exception("Cannot reach the Community server. Please check your connection.") from err
+            raise Exception(
+                "Cannot reach the Community server. Please check your connection."
+            ) from err
 
         if response.status_code < 200 or response.status_code >= 300:
             raise Exception(f"Failed to request authorization code (HTTP {response.status_code}).")
@@ -164,7 +166,7 @@ class CommunityCliService:
         :raises AuthorizationExpiredError: If the code has expired
         :raises AuthorizationDeniedError: If the authorization was denied
         """
-        api_url = CommunityUserService.get_community_api_url()
+        api_url = CommunityCliService.get_community_api_url()
         url = f"{api_url}/cli-auth/token"
         start_time = time.monotonic()
 
@@ -227,10 +229,15 @@ class CommunityCliService:
         try:
             access_token = CommunityCliService.poll_for_token(code)
         except AuthorizationExpiredError:
-            typer.echo("The authorization code has expired. Run `gws community login` to try again.", err=True)
+            typer.echo(
+                "The authorization code has expired. Run `gws community login` to try again.",
+                err=True,
+            )
             raise typer.Exit(1)
         except AuthorizationDeniedError:
-            typer.echo("Authorization was denied. Run `gws community login` to try again.", err=True)
+            typer.echo(
+                "Authorization was denied. Run `gws community login` to try again.", err=True
+            )
             raise typer.Exit(1)
 
         # Step 4: Save token

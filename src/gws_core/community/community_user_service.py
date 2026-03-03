@@ -82,7 +82,7 @@ class CommunityUserService:
 
     def create_new_brick_version(self, brick_settings: BrickSettings) -> BrickSettings:
         """Create a new brick version on the community."""
-        url = f"{self.get_community_api_url()}/brick/new-version"
+        url = f"{self.get_community_api_url()}/brick/version-from-settings"
 
         try:
             response = ExternalApiService.post(
@@ -101,16 +101,13 @@ class CommunityUserService:
     def get_community_api_url(cls) -> str:
         # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
         # return "https://api.constellab.community"
-        community_api_url = Settings.get_community_api_url()
-        if community_api_url is None:
-            raise Exception("Environment variable 'COMMUNITY_API_URL' is not set")
-        return community_api_url
+        return Settings.get_community_api_url_and_check()
 
     def _get_request_headers(self) -> dict[str, str]:
         """Return the headers for a request to the community API, with the Bearer token if provided."""
         headers: dict[str, str] = {}
 
         if self._access_token is not None:
-            headers["Authorization"] = f"Bearer {self._access_token}"
+            headers["Authorization"] = f"{self._access_token}"
 
         return headers
