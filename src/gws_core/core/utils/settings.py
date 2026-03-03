@@ -231,6 +231,8 @@ class Settings:
 
     @classmethod
     def get_community_front_url(cls) -> str:
+        if cls.is_local_env() and not os.environ.get("COMMUNITY_FRONT_URL"):
+            return "http://localhost:4200"
         return cls.get_os_environ("COMMUNITY_FRONT_URL")
 
     @classmethod
