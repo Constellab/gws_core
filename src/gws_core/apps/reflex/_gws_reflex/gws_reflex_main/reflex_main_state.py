@@ -2,6 +2,7 @@ import reflex as rx
 from gws_reflex_base import ReflexMainStateBase
 from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
 
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.auth_context import AuthContextApp
@@ -54,7 +55,7 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         user = await self.get_current_user()
 
         if not user:
-            raise Exception("User not authenticated")
+            raise BadRequestException("User not authenticated")
         return user
 
     async def authenticate_user(self) -> ReflexAuthUser:

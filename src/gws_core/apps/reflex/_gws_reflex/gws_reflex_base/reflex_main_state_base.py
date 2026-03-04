@@ -6,6 +6,8 @@ from typing import Any, cast
 import reflex as rx
 from typing_extensions import TypedDict
 
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+
 UNAUTHORIZED_ROUTE = "/unauthorized"
 APP_CONFIG_FILENAME = "app_config.json"
 
@@ -98,7 +100,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if requires_authentication and not authenticated_user_id:
             # If the app requires authentication and the user is not authenticated,
             # redirect to the unauthorized page
-            raise Exception("User not authenticated")
+            raise BadRequestException("User not authenticated")
             return rx.redirect(UNAUTHORIZED_ROUTE)
 
         self._is_initialized = True
@@ -160,7 +162,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if not os.path.exists(app_config_path):
             # Logger.warning(f"App config file not found at {app_config_path}")
             # return {}
-            raise FileNotFoundError(f"App config file not found at {app_config_path}")
+            raise BadRequestException(f"App config file not found at {app_config_path}")
 
         try:
             app_config: dict
@@ -172,12 +174,12 @@ class ReflexMainStateBase(rx.State, mixin=True):
             return app_config
 
         except Exception as e:
-            raise ValueError(f"Error reading app config file: {e}")
+            raise BadRequestException(f"Error reading app config file: {e}")
 
     def _get_app_config_file_path(self) -> str:
         config_file_path = os.environ.get("GWS_APP_CONFIG_FILE_PATH")
         if not config_file_path:
-            raise ValueError(
+            raise BadRequestException(
                 "GWS_APP_CONFIG_FILE_PATH environment variable is not set in production mode"
             )
 
@@ -190,7 +192,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
         app_id = os.environ.get("GWS_APP_ID")
         if not app_id:
-            raise ValueError("GWS_APP_ID environment variable is not set")
+            raise BadRequestException("GWS_APP_ID environment variable is not set")
         return app_id
 
     async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:

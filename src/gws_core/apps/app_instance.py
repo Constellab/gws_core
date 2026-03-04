@@ -1,7 +1,5 @@
 from abc import abstractmethod
 
-from numpy import source
-
 from gws_core.apps.app_dto import AppInstanceDTO, AppType
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
