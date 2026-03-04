@@ -34,4 +34,5 @@ from .reflex_main_utils import add_unauthorized_page as add_unauthorized_page
 from .reflex_main_utils import get_theme as get_theme
 from .reflex_main_utils import main_component as main_component
 from .reflex_type import ReflexDialogCloseEvent as ReflexDialogCloseEvent
+from .reflex_utils import ReflexTheme as ReflexTheme
 from .reflex_utils import ReflexUtils as ReflexUtils

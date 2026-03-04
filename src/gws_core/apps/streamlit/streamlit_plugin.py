@@ -4,7 +4,6 @@ import re
 
 import streamlit
 from bs4 import BeautifulSoup, Comment, Tag
-from httpx import head
 
 from gws_core.apps.app_plugin_downloader import AppPluginDownloader
 from gws_core.apps.app_plugin_html_parser import AppPluginHtmlParser

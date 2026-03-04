@@ -53,7 +53,6 @@ export function InputSearchComponent({
         };
 
         const handleSearchRequest = (event) => {
-            console.log("Search request event detail:", event.detail);
             if (searchTrigger) {
                 searchTrigger(event.detail);
             }

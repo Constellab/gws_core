@@ -48,6 +48,15 @@ TypedDict defining the structure of app configuration including app directory pa
 
 ---
 
+## Utilities
+
+- **reflex_utils.py**
+  - `ReflexTheme`: Enum defining theme color constants (`ACCENT`, `SECONDARY`, `TERTIARY`)
+  - `ReflexUtils`: Static utility class
+    - `multiline_ellipsis_css(lines, max_width="100%")`: Returns CSS styles dict for multiline text ellipsis truncation
+
+---
+
 
 ## Usage
 

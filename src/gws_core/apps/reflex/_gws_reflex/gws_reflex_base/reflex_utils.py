@@ -1,6 +1,17 @@
 from typing import Any
 
 
+class ReflexTheme:
+    """
+    Theme color constants for Reflex components.
+    The color schemes are overriden in the style.css of the main Reflex app.
+    """
+
+    ACCENT = "accent"
+    SECONDARY = "violet"
+    TERTIARY = "pink"
+
+
 class ReflexUtils:
     @staticmethod
     def multiline_ellipsis_css(lines: int, max_width: str = "100%") -> dict[str, Any]:
@@ -8,8 +19,8 @@ class ReflexUtils:
 
 
         Args:
-            lines (int): _description_
-            max_width (str, optional): _description_. Defaults to "100%".
+            lines (int): The number of lines to display before truncating.
+            max_width (str, optional): The maximum width of the text container. Defaults to "100%".
 
         Returns:
             Dict[str, Any]: A dictionary containing the CSS styles for multiline text ellipsis.
