@@ -26,6 +26,7 @@ class WaitingMessage(BaseModelDTO):
 
 class BrickService:
     SOURCE_FOLDER = "src"
+    BRICK_LOAD_TIME_WARNING_THRESHOLD = 5
 
     _waiting_messages: list[WaitingMessage] = []
 
@@ -190,11 +191,19 @@ class BrickService:
                 # stop the brick load and go to next brick
                 break
 
-        BrickLogService.log_brick_message(
-            brick_name=brick_name,
-            message=f"Brick loaded in {round(time() - start_time, 2)}s",
-            status="INFO",
-        )
+        load_time = round(time() - start_time, 2)
+        if load_time > cls.BRICK_LOAD_TIME_WARNING_THRESHOLD:
+            BrickLogService.log_brick_message(
+                brick_name=brick_name,
+                message=f"Brick loaded in {load_time}s. This is slower than expected, check for heavy imports or slow module-level code.",
+                status="WARNING",
+            )
+        else:
+            BrickLogService.log_brick_message(
+                brick_name=brick_name,
+                message=f"Brick loaded in {load_time}s",
+                status="INFO",
+            )
 
     @classmethod
     def folder_is_brick(cls, path: str) -> bool:
