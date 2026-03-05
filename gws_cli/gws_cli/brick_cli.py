@@ -139,18 +139,24 @@ def version_push(
 
     if not BrickCliService.git_tag_exists(brick_dir, version):
         typer.echo(f"Git tag '{version}' does not exist in the repository.")
-        create_tag = typer.confirm(
-            f"Would you like to create the tag '{version}'?",
-            default=False,
-        )
+        if yes:
+            create_tag = True
+        else:
+            create_tag = typer.confirm(
+                f"Would you like to create the tag '{version}'?",
+                default=False,
+            )
         if not create_tag:
             typer.echo("Aborted. Please create the tag manually before pushing the version.")
             raise typer.Exit(1)
 
-        push_tag = typer.confirm(
-            f"Push the tag '{version}' to origin?",
-            default=True,
-        )
+        if yes:
+            push_tag = True
+        else:
+            push_tag = typer.confirm(
+                f"Push the tag '{version}' to origin?",
+                default=True,
+            )
 
         try:
             BrickCliService.create_git_tag(brick_dir, version, push=push_tag)
