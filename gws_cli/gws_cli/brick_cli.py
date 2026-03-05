@@ -169,9 +169,9 @@ def version_push(
         typer.confirm("Do you want to push this version?", abort=True)
 
     try:
-        result = BrickCliService.create_new_brick_version(brick_dir)
+        BrickCliService.create_new_brick_version(brick_dir)
     except Exception as e:
         typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1) from e
 
-    typer.echo(f"Successfully pushed version {result.version} of brick {result.name}")
+    typer.echo(f"Successfully pushed version {version} of brick {settings.name}")
