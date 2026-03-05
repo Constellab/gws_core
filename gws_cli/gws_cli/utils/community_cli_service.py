@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import webbrowser
 from pathlib import Path
@@ -187,12 +188,24 @@ class CommunityCliService:
                 return access_token
 
     @staticmethod
-    def open_browser(url: str) -> None:
-        """Try to open a URL in the default browser."""
+    def open_browser(url: str) -> bool:
+        """Try to open a URL in the default browser.
+
+        :return: True if the browser was opened successfully, False otherwise
+        """
         try:
-            webbrowser.open(url)
+            # Redirect stderr to suppress noisy errors from webbrowser (e.g. VS Code socket errors)
+            devnull = os.open(os.devnull, os.O_WRONLY)
+            old_stderr = os.dup(2)
+            os.dup2(devnull, 2)
+            try:
+                return webbrowser.open(url)
+            finally:
+                os.dup2(old_stderr, 2)
+                os.close(devnull)
+                os.close(old_stderr)
         except Exception:
-            pass
+            return False
 
     @staticmethod
     def run_login_flow(force: bool = False) -> None:
@@ -218,10 +231,13 @@ class CommunityCliService:
             front_url = CommunityCliService.get_community_front_url()
             auth_url = f"{front_url}/cli-auth?code={code}"
 
-        typer.echo("\nOpening browser for authentication...")
-        typer.echo(f"{auth_url}\n")
-        typer.echo("If the browser didn't open, copy and paste the URL above.\n")
-        CommunityCliService.open_browser(auth_url)
+        browser_opened = CommunityCliService.open_browser(auth_url)
+        if browser_opened:
+            typer.echo("\nBrowser opened for authentication.")
+            typer.echo(f"If the browser didn't open, copy and paste this URL manually:\n{auth_url}\n")
+        else:
+            typer.echo("\nCould not open the browser automatically.")
+            typer.echo(f"Please open the following URL manually in your browser:\n{auth_url}\n")
 
         typer.echo("Waiting for authorization...\n")
 
