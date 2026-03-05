@@ -26,3 +26,7 @@ from .gws_components.streamlit_tree_menu import StreamlitTreeMenuItem as Streaml
 # State Management
 from .gws_streamlit_main_state import StreamlitMainState as StreamlitMainState
 from .gws_streamlit_main_state import StreamlitUserAuthInfo as StreamlitUserAuthInfo
+
+# Utils
+from .utils.streamlit_translate import StreamlitTranslateLang as StreamlitTranslateLang
+from .utils.streamlit_translate import StreamlitTranslateService as StreamlitTranslateService

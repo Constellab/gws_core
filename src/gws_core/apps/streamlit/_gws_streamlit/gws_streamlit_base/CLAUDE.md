@@ -1,5 +1,7 @@
 # GWS Core Streamlit Base Module
 
+**CRITICAL: Do NOT import from `gws_core` in this folder.** This module can be used in a virtual environment where `gws_core` is not installed. All code in `gws_streamlit_base` must be fully self-contained and must not depend on any `gws_core` imports (direct or transitive).
+
 This module provides the foundational utilities and state management for building Streamlit applications within the GWS Core (Constellab) ecosystem. These elements are available both directly from `gws_streamlit_base` and are automatically included when importing from `gws_streamlit_main`.
 
 All public components and states must be exported in the `__init__.py` file of the `gws_streamlit_base` module. If you add new components or states, ensure they are properly documented here.
