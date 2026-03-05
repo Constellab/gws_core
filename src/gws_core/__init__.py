@@ -616,6 +616,7 @@ from .task.transformer.transformer import transformer_decorator as transformer_d
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.test_mock_space_service import TestMockSpaceService as TestMockSpaceService
+from .test.app_tester import AppTester as AppTester
 from .test.view_tester import ViewTester as ViewTester
 
 # Triggered Job

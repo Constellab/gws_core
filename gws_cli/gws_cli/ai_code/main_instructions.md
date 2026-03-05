@@ -44,8 +44,19 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - Use this tool BEFORE writing code if you have any doubt about how something works on Constellab
 
 ### Best Practices
-- Follow existing coding conventions and styles
+
+#### General Rules
+- Always read files before editing them. Never assume file contents — use the Read tool first to understand current state
+- Don't over-explore the codebase. When the task is clear (e.g., write documentation, create a file), start working immediately rather than reading unrelated files
+- Follow existing coding conventions and styles. When implementing new features, look for similar existing implementations and match their approach (e.g., file storage patterns, SDK object usage, import styles)
 - Write comprehensive docstrings for classes and methods
 - Do not export classes in the __init__.py files unless necessary
 - Always place import statements at the top of the file (module level). Never import inside functions, methods, or other non-top-level scopes
+
+#### Refactoring Rules
+- When refactoring or restructuring files, verify all existing functionality is preserved. After moving/rewriting code, check that no functions, imports, or features were accidentally removed
+- After large refactors, grep for references to functions from the original file to catch anything broken
+
+#### UI/Styling Rules
+- When asked to remove a color or style, remove the property entirely rather than replacing with another explicit value. Prefer framework defaults over explicit alternatives
 
