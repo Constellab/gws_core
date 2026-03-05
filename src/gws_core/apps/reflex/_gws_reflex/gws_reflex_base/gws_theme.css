@@ -157,8 +157,72 @@ a[href="https://reflex.dev"] {
 
   --tertiary-contrast: #fff4fa;
 
+  /* Override Radix "violet" palette with secondary colors */
+  --violet-1: var(--secondary-1);
+  --violet-2: var(--secondary-2);
+  --violet-3: var(--secondary-3);
+  --violet-4: var(--secondary-4);
+  --violet-5: var(--secondary-5);
+  --violet-6: var(--secondary-6);
+  --violet-7: var(--secondary-7);
+  --violet-8: var(--secondary-8);
+  --violet-9: var(--secondary-9);
+  --violet-10: var(--secondary-10);
+  --violet-11: var(--secondary-11);
+  --violet-12: var(--secondary-12);
 
+  --violet-a1: var(--secondary-a1);
+  --violet-a2: var(--secondary-a2);
+  --violet-a3: var(--secondary-a3);
+  --violet-a4: var(--secondary-a4);
+  --violet-a5: var(--secondary-a5);
+  --violet-a6: var(--secondary-a6);
+  --violet-a7: var(--secondary-a7);
+  --violet-a8: var(--secondary-a8);
+  --violet-a9: var(--secondary-a9);
+  --violet-a10: var(--secondary-a10);
+  --violet-a11: var(--secondary-a11);
+  --violet-a12: var(--secondary-a12);
+
+  --violet-contrast: var(--secondary-contrast);
+  --violet-surface: #eeebfa33;
+  --violet-indicator: var(--secondary-9);
+  --violet-track: var(--secondary-9);
+
+  /* Override Radix "pink" palette with tertiary colors */
+  --pink-1: var(--tertiary-1);
+  --pink-2: var(--tertiary-2);
+  --pink-3: var(--tertiary-3);
+  --pink-4: var(--tertiary-4);
+  --pink-5: var(--tertiary-5);
+  --pink-6: var(--tertiary-6);
+  --pink-7: var(--tertiary-7);
+  --pink-8: var(--tertiary-8);
+  --pink-9: var(--tertiary-9);
+  --pink-10: var(--tertiary-10);
+  --pink-11: var(--tertiary-11);
+  --pink-12: var(--tertiary-12);
+
+  --pink-a1: var(--tertiary-a1);
+  --pink-a2: var(--tertiary-a2);
+  --pink-a3: var(--tertiary-a3);
+  --pink-a4: var(--tertiary-a4);
+  --pink-a5: var(--tertiary-a5);
+  --pink-a6: var(--tertiary-a6);
+  --pink-a7: var(--tertiary-a7);
+  --pink-a8: var(--tertiary-a8);
+  --pink-a9: var(--tertiary-a9);
+  --pink-a10: var(--tertiary-a10);
+  --pink-a11: var(--tertiary-a11);
+  --pink-a12: var(--tertiary-a12);
+
+  --pink-contrast: var(--tertiary-contrast);
+  --pink-surface: #ffd4ec33;
+  --pink-indicator: var(--tertiary-9);
+  --pink-track: var(--tertiary-9);
 }
+
+/* Component overrides */
 
 .AccordionTrigger {
   cursor: pointer;
@@ -167,4 +231,19 @@ a[href="https://reflex.dev"] {
 /* Light header color on table, look better */
 .rt-TableHeader .rt-TableRow {
   color: var(--gray-9);
+}
+
+/* Override surface button style */
+.rt-BaseButton:where(.rt-variant-surface) {
+  background: var(--accent-2);
+  color: var(--accent-9);
+  transition: all 0.2s;
+}
+
+.rt-BaseButton:where(.rt-variant-surface):hover {
+  background: var(--accent-3);
+}
+
+.rt-Badge {
+  border-radius: 50px
 }

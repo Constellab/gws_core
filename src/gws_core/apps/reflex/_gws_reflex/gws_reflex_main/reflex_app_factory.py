@@ -95,9 +95,6 @@ def register_gws_reflex_app(
     if app is None:
         app = rx.App(theme=get_theme())
 
-    if not app.stylesheets:
-        app.stylesheets = ["/style.css"]
-
     # Check if using default exception handlers (compare functions, not instances)
 
     if (
