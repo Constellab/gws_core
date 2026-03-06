@@ -20,6 +20,11 @@ class NavigableEntityDeep(BaseModelDTO):
     def __hash__(self) -> int:
         return self.entity.__hash__()
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, NavigableEntityDeep):
+            return False
+        return self.entity == other.entity
+
     def get_entity_type(self) -> NavigableEntityType:
         return self.entity.get_navigable_entity_type()
 
@@ -90,7 +95,26 @@ class NavigableEntitySet:
         ]
 
     def add(self, entity: NavigableEntity, deep_level: int = 0):
-        self._entities.add(NavigableEntityDeep(entity=entity, deep_level=deep_level))
+        # If the entity already exists, update its deep_level to the maximum.
+        # This ensures correct deletion ordering when an entity is reachable
+        # from multiple paths at different depths.
+        new_entry = NavigableEntityDeep(entity=entity, deep_level=deep_level)
+        existing = self._find_entity_deep(entity)
+        if existing is not None:
+            if deep_level > existing.deep_level:
+                self._entities.discard(existing)
+                self._entities.add(new_entry)
+        else:
+            self._entities.add(new_entry)
+
+    def _find_entity_deep(self, entity: NavigableEntity) -> NavigableEntityDeep | None:
+        """Find an existing NavigableEntityDeep by its entity.
+        We need a linear scan because __eq__ ignores deep_level,
+        so we need to retrieve the actual stored object to check its deep_level."""
+        for entity_deep in self._entities:
+            if entity_deep.entity == entity:
+                return entity_deep
+        return None
 
     def update(self, entity: Iterable[NavigableEntity], deep_level: int = 0):
         for e in entity:

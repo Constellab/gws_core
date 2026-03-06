@@ -1,4 +1,3 @@
-
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.entity_navigator.entity_navigator import (
@@ -215,11 +214,6 @@ class EntityNavigatorService:
         for note in notes:
             NoteService.delete(note.id)
 
-        # TODO to improve because this is not perfect if I have 3 scenario.
-        # Exp 1: output --> A
-        # Exp 2: input --> A, output --> B
-        # Exp 3: input --> A, B
-        # In this case the Exp 3 will have the same deep level as the Exp 2
         scenarios = entities.get_entities_from_deepest_level(NavigableEntityType.SCENARIO)
         for scenario in scenarios:
             ScenarioService.delete_scenario(scenario.id)
