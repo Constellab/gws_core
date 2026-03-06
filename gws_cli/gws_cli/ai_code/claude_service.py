@@ -1,13 +1,14 @@
 import importlib.util
 import json
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
 import typer
 from gws_core.core.utils.settings import Settings
 
-from gws_cli.ai_code.ai_code_service import AICodeService, CommandFrontmatter
+from gws_cli.ai_code.ai_code_service import AICodeService, SkillFrontmatter
 
 
 class ClaudeService(AICodeService):
@@ -25,8 +26,8 @@ class ClaudeService(AICodeService):
         """Initialize ClaudeService"""
         super().__init__(ai_tool_name="Claude Code")
 
-    def format_frontmatter(self, frontmatter: CommandFrontmatter) -> str:
-        """Format frontmatter for Claude Code
+    def format_frontmatter(self, frontmatter: SkillFrontmatter) -> str:
+        """Format frontmatter for Claude Code skills
 
         Args:
             frontmatter: The frontmatter configuration to format
@@ -42,37 +43,39 @@ argument-hint: [{frontmatter.argument_hint}]
 """
 
     def get_target_dir(self) -> Path:
-        """Get the base directory for Claude Code commands
+        """Get the plugin root directory for Claude Code skills
 
         Returns:
-            Path to ~/.claude/commands/gws-commands
+            Path to ~/.claude/plugins/gws-commands
         """
-        return Path(os.path.join(Path.home(), ".claude", "commands", "gws-commands"))
+        return Path(os.path.join(Path.home(), ".claude", "plugins", "gws-commands"))
 
-    def format_filename(self, base_filename: str) -> str:
-        """Format the filename for Claude Code
+    def get_skill_dir_name(self, base_filename: str) -> str:
+        """Get the skill directory name for Claude Code
 
         Args:
             base_filename: The base filename (e.g., 'streamlit-app-developer.md')
 
         Returns:
-            The same filename (Claude uses .md files)
+            The skill directory name with gws- prefix (e.g., 'gws-streamlit-app-developer')
         """
-        return base_filename
+        if base_filename.endswith(".md"):
+            return f"gws-{base_filename[:-3]}"
+        return f"gws-{base_filename}"
 
-    def get_file_pattern(self) -> str:
-        """Get the glob pattern to match command files in the target directory
+    def get_skill_pattern(self) -> str:
+        """Get the glob pattern to match skill files in the target directory
 
         Returns:
-            Glob pattern for Claude Code command files
+            Glob pattern for Claude Code skill files
         """
-        return "gws-*.md"
+        return "skills/gws-*/SKILL.md"
 
     def get_install_command(self) -> str:
-        """Get the command to install/pull commands for Claude Code
+        """Get the command to install/pull skills for Claude Code
 
         Returns:
-            Command string to initialize Claude Code
+            Command string to update Claude Code
         """
         return "gws claude update"
 
@@ -83,6 +86,51 @@ argument-hint: [{frontmatter.argument_hint}]
             Path to ~/CLAUDE.md
         """
         return Path(os.path.join(Settings.get_user_folder(), "CLAUDE.md"))
+
+    def _generate_plugin_manifest(self, target_dir: Path) -> None:
+        """Generate the .claude-plugin/plugin.json manifest
+
+        Args:
+            target_dir: The plugin root directory
+        """
+        plugin_dir = target_dir / ".claude-plugin"
+        plugin_dir.mkdir(parents=True, exist_ok=True)
+
+        manifest = {
+            "name": self.PLUGIN_NAME,
+            "description": self.PLUGIN_DESCRIPTION,
+            "version": self.PLUGIN_VERSION,
+        }
+
+        manifest_path = plugin_dir / "plugin.json"
+        manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+    def _write_skill_file(self, target_dir: Path, skill_name: str, content: str) -> None:
+        """Write a skill as a directory with SKILL.md inside
+
+        Args:
+            target_dir: The plugin root directory
+            skill_name: The skill directory name (e.g., 'gws-task-expert')
+            content: The skill content with frontmatter
+        """
+        skill_dir = target_dir / "skills" / skill_name
+        skill_dir.mkdir(parents=True, exist_ok=True)
+        skill_file = skill_dir / "SKILL.md"
+        skill_file.write_text(content, encoding="utf-8")
+
+    def is_configured(self) -> bool:
+        """Check if Claude Code is configured (new plugin skills or legacy commands exist)
+
+        Returns:
+            bool: True if configured, False otherwise
+        """
+        # Check for new plugin skills
+        if super().is_configured():
+            return True
+
+        # Check for legacy commands directory
+        legacy_dir = Path(os.path.join(Path.home(), ".claude", "commands", "gws-commands"))
+        return legacy_dir.exists() and any(legacy_dir.glob("gws-*"))
 
     def is_claude_code_installed(self) -> bool:
         """Check if Claude Code is installed
@@ -144,9 +192,11 @@ argument-hint: [{frontmatter.argument_hint}]
 
     def init_settings(self) -> int:
         """Initialize Claude Code settings with GWS_CORE_SRC environment variable
+        and register the GWS plugin
 
         This method retrieves the path of the gws_core Python package and sets the
-        GWS_CORE_SRC environment variable in ~/.claude/settings.json.
+        GWS_CORE_SRC environment variable in ~/.claude/settings.json. It also
+        registers the gws-commands plugin.
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -183,6 +233,14 @@ argument-hint: [{frontmatter.argument_hint}]
 
             # Set GWS_CORE_SRC
             settings["env"]["GWS_CORE_SRC"] = str(gws_core_path)
+
+            # Register the gws-commands plugin
+            plugin_dir = str(self.get_target_dir())
+            if "enabledPlugins" not in settings:
+                settings["enabledPlugins"] = []
+
+            if plugin_dir not in settings["enabledPlugins"]:
+                settings["enabledPlugins"].append(plugin_dir)
 
             # Write settings back
             with open(settings_file, "w") as f:
@@ -259,22 +317,33 @@ argument-hint: [{frontmatter.argument_hint}]
                 return result
         return 0
 
+    def _cleanup_legacy_commands(self) -> None:
+        """Remove old legacy commands directory (~/.claude/commands/gws-commands/) if it exists"""
+        legacy_dir = Path(os.path.join(Path.home(), ".claude", "commands", "gws-commands"))
+        if legacy_dir.exists() and legacy_dir.is_dir():
+            shutil.rmtree(legacy_dir)
+            typer.echo(f"Removed legacy commands directory: {legacy_dir}")
+
     def _update_claude_config(self) -> int:
-        """Common method to update Claude Code configuration (commands and settings)
+        """Common method to update Claude Code configuration (skills and settings)
 
         This helper method performs the configuration update steps:
-        1. Pulls GWS commands to global Claude commands folder
-        2. Updates Claude Code settings with GWS_CORE_SRC environment variable
-        3. Generates main instructions file
-        4. Configures gws-mcp MCP server
+        1. Removes legacy commands directory if it exists
+        2. Pulls GWS skills to global Claude plugin folder
+        3. Updates Claude Code settings with GWS_CORE_SRC environment variable and plugin registration
+        4. Generates main instructions file
+        5. Configures MCP servers
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        # Pull commands
-        result = self.pull_commands_to_global()
+        # Clean up old legacy commands
+        self._cleanup_legacy_commands()
+
+        # Pull skills
+        result = self.pull_skills_to_global()
         if result != 0:
-            typer.echo("Failed to pull commands", err=True)
+            typer.echo("Failed to pull skills", err=True)
             return result
 
         # Update settings
@@ -302,7 +371,7 @@ argument-hint: [{frontmatter.argument_hint}]
 
         This method performs the following steps:
         1. Installs Claude Code (if not already installed)
-        2. Pulls GWS commands to global Claude commands folder
+        2. Pulls GWS skills to global Claude plugin folder
         3. Initializes Claude Code settings with GWS_CORE_SRC environment variable
 
         Returns:
@@ -334,7 +403,7 @@ argument-hint: [{frontmatter.argument_hint}]
         If Claude Code is not installed, it does nothing and returns success.
 
         Steps performed (if Claude Code is installed):
-        1. Pulls GWS commands to global Claude commands folder
+        1. Pulls GWS skills to global Claude plugin folder
         2. Updates Claude Code settings with GWS_CORE_SRC environment variable
 
         Returns:
@@ -360,17 +429,17 @@ argument-hint: [{frontmatter.argument_hint}]
         self._log_post_installation_instructions()
         return 0
 
-    def pull_claude_commands(self) -> int:
-        """Pull GWS commands to global Claude Code commands folder and display usage instructions
+    def pull_claude_skills(self) -> int:
+        """Pull GWS skills to global Claude Code plugin folder and display usage instructions
 
-        This method wraps pull_commands_to_global() and provides helpful information about
-        how to use the installed commands in Claude Code.
+        This method wraps pull_skills_to_global() and provides helpful information about
+        how to use the installed skills in Claude Code.
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        # Call the base method to pull commands
-        result = self.pull_commands_to_global()
+        # Call the base method to pull skills
+        result = self.pull_skills_to_global()
 
         if result == 0:
             self._log_post_installation_instructions()
@@ -378,13 +447,13 @@ argument-hint: [{frontmatter.argument_hint}]
         return result
 
     def _log_post_installation_instructions(self):
-        """Log instructions for installing Claude Code manually if needed"""
+        """Log instructions for using GWS skills in Claude Code"""
         typer.echo("\n" + "=" * 70)
-        typer.echo("How to use GWS commands in Claude Code:")
+        typer.echo("How to use GWS skills in Claude Code:")
         typer.echo("=" * 70)
         typer.echo("\n1. Open Claude Code in your terminal or editor")
         typer.echo(
-            "\n2. Use the / symbol to invoke GWS slash commands followed by your task description."
+            "\n2. Use the / symbol to invoke GWS skills followed by your task description."
         )
-        typer.echo("   Example: /gws-streamlit-app-developer Create a data visualization dashboard")
+        typer.echo("   Example: /gws-commands:gws-streamlit-app-developer Create a data visualization dashboard")
         typer.echo("\n" + "=" * 70)
