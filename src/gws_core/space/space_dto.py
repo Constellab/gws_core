@@ -62,6 +62,14 @@ class SpaceSendMailToMailsDTO(BaseModelDTO):
         return self
 
 
+class SpaceSendMailToSupportDTO(BaseModelDTO):
+    """DTO to send a mail to support"""
+
+    content: str
+    subject: str
+    data: dict[str, Any] | None = None
+
+
 class SpaceSendNotificationDTO(BaseModelDTO):
     """DTO to send a notification to users in a space"""
 

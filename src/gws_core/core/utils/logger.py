@@ -8,6 +8,7 @@ from typing import Any, Literal, Optional, cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.request_context import RequestContext
 from gws_core.core.utils.utils import Utils
 
 LOGGER_NAME = "gws"
@@ -33,6 +34,8 @@ class LogFileLine(BaseModelDTO):
     stack_trace: str | None = None
     context: LogContext = LogContext.MAIN
     context_id: str | None = None
+    instance_id: str | None = None
+    request_id: str | None = None
 
 
 class JSONFormatter(logging.Formatter):
@@ -48,14 +51,16 @@ class JSONFormatter(logging.Formatter):
 
     def format(self, record) -> str:
         log_data = LogFileLine(
-            level=record.levelname,
+            level=cast(MessageType, record.levelname),
             timestamp=Logger.get_date(),
             message=record.getMessage(),
             context=self.context,
             context_id=self.context_id,
             stack_trace=record.exc_text if record.exc_text else None,
+            instance_id=getattr(record, "instance_id", None),
+            request_id=RequestContext.get_request_id(),
         )
-        return log_data.to_json_str()
+        return log_data.to_json_str(exclude_none=True)
 
 
 class Logger:
@@ -165,14 +170,18 @@ class Logger:
         return cast(LoggerLevel, log_level)
 
     @classmethod
-    def error(cls, message: str, exception: Exception | None = None) -> None:
-        cls._log_message("ERROR", message)
+    def error(
+        cls, message: str, exception: Exception | None = None, instance_id: str | None = None
+    ) -> None:
+        cls._log_message("ERROR", message, instance_id=instance_id)
         if exception:
-            cls.log_exception_stack_trace(exception)
+            cls.log_exception_stack_trace(exception, instance_id=instance_id)
 
     @classmethod
-    def log_exception_stack_trace(cls, exception: Exception) -> None:
-        cls._log_message("EXCEPTION", exception)
+    def log_exception_stack_trace(
+        cls, exception: Exception, instance_id: str | None = None
+    ) -> None:
+        cls._log_message("EXCEPTION", exception, instance_id=instance_id)
 
     @classmethod
     def warning(cls, message: str) -> None:
@@ -201,23 +210,27 @@ class Logger:
         return cls._logger_instance
 
     @classmethod
-    def _log_message(cls, level_name: MessageType, obj: Any) -> None:
+    def _log_message(
+        cls, level_name: MessageType, obj: Any, instance_id: str | None = None
+    ) -> None:
         """Log a message
 
         :param level_name: level of the message
         :type level_name: str
-        :param message: message to log
-        :type message: str
+        :param obj: message or exception to log
+        :type obj: Any
+        :param instance_id: optional instance id to include in the log
+        :type instance_id: str | None
         """
         if cls._logger_instance:
             logger = cls._logger_instance
 
             if level_name == "EXCEPTION":
-                logger._log_exception(obj)
+                logger._log_exception(obj, instance_id)
                 return
 
             if level_name == "ERROR":
-                logger._log_error(obj)
+                logger._log_error(obj, instance_id)
             elif level_name == "WARNING":
                 logger._log_warning(obj)
             elif level_name in {"INFO", "PROGRESS"}:
@@ -227,13 +240,17 @@ class Logger:
 
         else:
             # add the message in the waiting list to be logged later
-            cls._waiting_messages.append({"level_name": level_name, "obj": obj})
+            cls._waiting_messages.append(
+                {"level_name": level_name, "obj": obj, "instance_id": instance_id}
+            )
 
     @classmethod
     def _log_waiting_message(cls) -> None:
         """Log all the waiting messages"""
         for message in cls._waiting_messages:
-            cls._log_message(message["level_name"], message["obj"])
+            cls._log_message(
+                message["level_name"], message["obj"], instance_id=message["instance_id"]
+            )
         cls._waiting_messages = []
 
     # Get the current date in Human readable format
@@ -301,11 +318,13 @@ class Logger:
     def _clear(self) -> None:
         self._logger.handlers.clear()
 
-    def _log_exception(self, exception: Exception) -> None:
-        self._logger.exception(str(exception), exc_info=exception)
+    def _log_exception(self, exception: Exception, instance_id: str | None = None) -> None:
+        self._logger.exception(
+            str(exception), exc_info=exception, extra={"instance_id": instance_id}
+        )
 
-    def _log_error(self, message: str) -> None:
-        self._logger.error(message)
+    def _log_error(self, message: str, instance_id: str | None = None) -> None:
+        self._logger.error(message, extra={"instance_id": instance_id})
 
     def _log_warning(self, message: str) -> None:
         self._logger.warning(message)

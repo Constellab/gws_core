@@ -5,14 +5,11 @@ import uvicorn
 from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
-import gws_core.core_controller  # noqa: F401  # side-effect: registers app
-import gws_core.external_lab.external_lab_controller  # noqa: F401  # side-effect: registers app
-import gws_core.impl.s3.s3_server_fastapi_app  # noqa: F401  # side-effect: registers app
-import gws_core.space.space_controller  # noqa: F401  # side-effect: registers app
 from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
 from .core.classes.cors_config import CorsConfig
+from .core.classes.request_id_middleware import RequestIdMiddleware
 from .core.classes.security_headers import SecurityHeadersMiddleware
 from .lab.api_registry import ApiRegistry
 from .lab.system_service import SystemService
@@ -76,6 +73,9 @@ class App:
 
         # Add security headers middleware
         app.add_middleware(SecurityHeadersMiddleware)
+
+        # Add request ID middleware (outermost — runs first, sets request_id for all logs)
+        app.add_middleware(RequestIdMiddleware)
 
         # Registrer the lab start. Use a new thread to prevent blocking the start
         th = Thread(target=SystemService.register_lab_start)

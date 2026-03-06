@@ -19,6 +19,7 @@ from gws_core.space.space_dto import (
     SpaceGroupDTO,
     SpaceHierarchyObjectDTO,
     SpaceSendMailToMailsDTO,
+    SpaceSendMailToSupportDTO,
     SpaceSendMailToUsersDTO,
     SpaceSendNotificationDTO,
     SpaceSyncObjectDTO,
@@ -931,6 +932,25 @@ class SpaceService(SpaceServiceBase):
         return ExternalApiService.post(
             space_api_url,
             send_mail_to_mails_dto,
+            self._get_request_header(),
+            raise_exception_if_error=True,
+        )
+
+    def send_mail_to_support(self, send_mail_to_support_dto: SpaceSendMailToSupportDTO) -> Response:
+        """Send a mail to support.
+
+        :param send_mail_to_support_dto: mail information
+        :type send_mail_to_support_dto: SpaceSendMailToSupportDTO
+        :return: http response
+        :rtype: Response
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-support"
+        )
+        return ExternalApiService.post(
+            space_api_url,
+            send_mail_to_support_dto,
             self._get_request_header(),
             raise_exception_if_error=True,
         )

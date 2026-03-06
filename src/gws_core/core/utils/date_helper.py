@@ -38,8 +38,10 @@ class DateHelper:
         return date.strftime("%a, %d %b %Y %H:%M:%S GMT")
 
     @staticmethod
-    def are_same_day(date1: datetime, date2: datetime) -> bool:
-        return date1.date() == date2.date()
+    def are_same_day(date1: date | datetime, date2: date | datetime) -> bool:
+        d1 = date1.date() if isinstance(date1, datetime) else date1
+        d2 = date2.date() if isinstance(date2, datetime) else date2
+        return d1 == d2
 
     @staticmethod
     def date_range(start_date: date, end_date: date, include_end_date: bool = False):

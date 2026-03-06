@@ -16,9 +16,10 @@ class ExceptionResponse(JSONResponse):
     def __init__(
         self,
         status_code: int,
-        code: str,
         detail: str,
-        instance_id: str,
+        instance_id: str | None = None,
+        request_id: str | None = None,
+        code: str | None = None,
         show_as: ExceptionShowMode = "error",
         headers: dict | None = None,
     ):
@@ -26,7 +27,7 @@ class ExceptionResponse(JSONResponse):
 
         Arguments:
             status_code {int} -- HTTP Status
-            code {str} -- Custom unique code
+            code {str} | None -- Custom unique code
             detail {str} -- Detail of the error
             instance_id {str} -- Unique instance id of this instance of error
 
@@ -39,6 +40,7 @@ class ExceptionResponse(JSONResponse):
                 "status": status_code,
                 "detail": detail,
                 "instanceId": instance_id,
+                "requestId": request_id,
                 "show_as": show_as,
             },
             headers=headers,

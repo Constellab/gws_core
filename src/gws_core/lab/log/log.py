@@ -1,5 +1,6 @@
 from datetime import date, datetime, timedelta
 from json import loads
+from typing import cast
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.date_helper import DateHelper
@@ -39,8 +40,10 @@ class LogLine:
     date_time: datetime
     message: str
     context: LogContext
-    context_id: str
+    context_id: str | None = None
     stack_trace: str | None = None
+    instance_id: str | None = None
+    request_id: str | None = None
 
     OLD_DATE_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
     OLD_SCENARIO_TEXT = "[SCENARIO]"
@@ -50,10 +53,6 @@ class LogLine:
         if line_str is None or len(line_str) == 0:
             raise ValueError("line_str is empty")
         self.full_line = line_str
-
-        self.level = None
-        self.date_time = None
-        self.message = None
 
         if line_str[0] == "{":
             self._init_new(line_str)
@@ -75,6 +74,8 @@ class LogLine:
                 self.context = line_json.context
                 self.context_id = line_json.context_id
                 self.stack_trace = line_json.stack_trace
+                self.instance_id = line_json.instance_id
+                self.request_id = line_json.request_id
             else:
                 old_line_json = OldLogFileLine.from_json(dict_)
                 self.level = old_line_json.level
@@ -101,7 +102,7 @@ class LogLine:
         self.context_id = None
 
         if len(logs_parts) >= 3:
-            self.level = logs_parts[0]
+            self.level = cast(MessageType, logs_parts[0])
 
             self.init_old_date(logs_parts[1])
 
@@ -135,6 +136,8 @@ class LogLine:
             context=self.context,
             context_id=self.context_id,
             stack_trace=self.stack_trace,
+            instance_id=self.instance_id,
+            request_id=self.request_id,
         )
 
     def to_str(self) -> str:
@@ -144,10 +147,12 @@ class LogLine:
 class LogCompleteInfo:
     log_info: LogInfo
     content: str
+    _all_lines: list[LogLine] | None = None
 
     def __init__(self, log_info: LogInfo, content: str) -> None:
         self.log_info = log_info
         self.content = content
+        self._all_lines = None
 
     def get_log_file_date(self) -> date:
         name = self.log_info.name
@@ -209,6 +214,9 @@ class LogCompleteInfo:
         return log_lines
 
     def _get_all_lines(self) -> list[LogLine]:
+        if self._all_lines is not None:
+            return self._all_lines
+
         log_lines: list[LogLine] = []
         for line in self.content.splitlines():
             if len(line) == 0:
@@ -220,6 +228,7 @@ class LogCompleteInfo:
 
             log_lines.append(log_line)
 
+        self._all_lines = log_lines
         return log_lines
 
     def get_content_as_dto(self) -> list[LogDTO]:
@@ -234,6 +243,26 @@ class LogCompleteInfo:
 
         return lines_json
 
+    def contains_request_id(self, request_id: str) -> bool:
+        """Check if the log contains any log lines for the given request ID.
+
+        :param request_id: the request ID to search for
+        :type request_id: str
+        :return: True if the log contains at least one line with the given request ID
+        :rtype: bool
+        """
+        return any(log_line.request_id == request_id for log_line in self._get_all_lines())
+
+    def get_log_lines_by_request_id(self, request_id: str) -> list[LogLine]:
+        """Return the list of LogLine for a given request ID.
+
+        :param request_id: the request ID to filter by
+        :type request_id: str
+        :return: list of log lines matching the request ID
+        :rtype: list[LogLine]
+        """
+        return [log_line for log_line in self._get_all_lines() if log_line.request_id == request_id]
+
     def to_dto(self) -> LogCompleteInfoDTO:
         return LogCompleteInfoDTO(log_info=self.log_info, content=self.get_content_as_dto())
 
@@ -242,8 +271,8 @@ class LogsBetweenDates:
     logs: list[LogLine]
     from_date: datetime
     to_date: datetime
-    context: LogContext
-    context_id: str
+    context: LogContext | None = None
+    context_id: str | None = None
     is_last_page: bool
 
     def __init__(

@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from typing import TypeVar
+
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -15,6 +18,8 @@ from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
 from ..task.task import CheckBeforeTaskResult, Task
 from ..task.task_io import TaskInputs, TaskOutputs
+
+_T = TypeVar("_T")
 
 
 class TaskRunner:
@@ -93,14 +98,9 @@ class TaskRunner:
         task: Task = self._get_task_instance()
         task.__set_status__("CHECK_BEFORE_RUN")
 
-        result = None
-        try:
-            result = task.check_before_run(self._get_config_params(), inputs)
-        except KeyError as exception:
-            raise Exception(f"KeyError : {str(exception)}")
-        except Exception as exception:
-            self.force_dispatch_waiting_messages()
-            raise exception
+        result = self._execute_task_method(
+            lambda: task.check_before_run(self._get_config_params(), inputs)
+        )
 
         self.force_dispatch_waiting_messages()
         return result
@@ -116,13 +116,9 @@ class TaskRunner:
         task.__set_status__("RUN")
 
         Logger.debug(f"Running task {self._task_type}")
-        try:
-            task_outputs: TaskOutputs = task.run(self._get_config_params(), inputs)
-        except KeyError as exception:
-            raise Exception(f"KeyError : {str(exception)}")
-        except Exception as exception:
-            self.force_dispatch_waiting_messages()
-            raise exception from exception
+        task_outputs: TaskOutputs = self._execute_task_method(
+            lambda: task.run(self._get_config_params(), inputs)
+        )
 
         outputs = self._check_outputs(task_outputs)
         self.force_dispatch_waiting_messages()
@@ -132,13 +128,7 @@ class TaskRunner:
         task: Task = self._get_task_instance()
         task.__set_status__("RUN_AFTER_TASK")
 
-        try:
-            task.run_after_task()
-        except KeyError as exception:
-            raise Exception(f"KeyError : {str(exception)}")
-        except Exception as exception:
-            self.force_dispatch_waiting_messages()
-            raise exception
+        self._execute_task_method(lambda: task.run_after_task())
 
         self.force_dispatch_waiting_messages()
 
@@ -238,6 +228,18 @@ class TaskRunner:
         :rtype: BasicMessageObserver
         """
         self._message_dispatcher.attach(observer)
+
+    def _execute_task_method(self, func: Callable[[], _T]) -> _T:
+        try:
+            return func()
+        except KeyError as exception:
+            raise Exception(f"KeyError : {str(exception)}") from exception
+        except Exception as exception:
+            Logger.error(
+                f"Error when executing task method : {str(exception)}", exception=exception
+            )
+            self.force_dispatch_waiting_messages()
+            raise exception
 
     def force_dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()
