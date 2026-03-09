@@ -70,7 +70,7 @@ class DbManagerService:
                 )
                 return False
             else:
-                raise Exception(error_message)
+                raise Exception(error_message) from err
 
         return True
 

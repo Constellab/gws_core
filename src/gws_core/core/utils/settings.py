@@ -9,7 +9,7 @@ from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.system_dto import (
-    BrickMigrationLog,
+    BrickMigrationsLogs,
     LabEnvironment,
     ModuleInfo,
     PipPackage,
@@ -17,7 +17,6 @@ from gws_core.lab.system_dto import (
 )
 from gws_core.user.user_dto import SpaceDict
 
-from .date_helper import DateHelper
 from .string_helper import StringHelper
 
 
@@ -618,63 +617,30 @@ class Settings:
 
     # BRICK MIGRATION
 
-    def get_brick_migrations_logs(self) -> dict[str, BrickMigrationLog]:
-        """Retrieve the list of all brick migrations"""
-        return self.data.get("brick_migrations", {})
+    def get_brick_migrations_logs(self) -> BrickMigrationsLogs:
+        """Retrieve all brick migration logs.
 
-    def get_brick_migration_log(self, brick_name: str) -> BrickMigrationLog | None:
-        """Get a brick migration log for the specified brick and db_manager
-
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param db_manager_unique_name: Unique name of the database manager. If None, will try the old key format for backward compatibility.
-        :type db_manager_unique_name: str
-        :return: The brick migration log or None
-        :rtype: Union[BrickMigrationLog, None]
+        :return: BrickMigrationsLogs object containing all migration logs
+        :rtype: BrickMigrationsLogs
         """
-        brick_migrations = self.get_brick_migrations_logs()
-        return brick_migrations.get(brick_name)
+        raw = self.data.get("brick_migrations", {})
 
-    def update_brick_migration_log(
-        self, brick_name: str, version: str, db_manager_unique_name: str
-    ) -> None:
-        """Add a new brick migration log and update last migration version
+        # Backward compatibility: clear old flat format entries
+        has_old_format = any("version" in value and "brick_name" in value for value in raw.values())
+        if has_old_format:
+            raw = {}
+            self.data["brick_migrations"] = raw
+            self.save()
 
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param version: Version of the brick
-        :type version: str
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
+        return BrickMigrationsLogs(bricks=raw)
+
+    def save_brick_migrations_logs(self, logs: BrickMigrationsLogs) -> None:
+        """Save brick migration logs to settings.
+
+        :param logs: The BrickMigrationsLogs object to save
+        :type logs: BrickMigrationsLogs
         """
-        brick_migrations: dict[str, BrickMigrationLog] = self.get_brick_migrations_logs()
-        brick_migration: BrickMigrationLog
-
-        # if this is the first time the migration is executed for this brick and db_manager
-        if brick_name not in brick_migrations:
-            brick_migration = {
-                "brick_name": brick_name,
-                "version": None,
-                "history": [],
-                "last_date_check": None,
-                "db_manager_unique_name": db_manager_unique_name,
-            }
-            # add the new migration to the list of migration and save it in data
-            brick_migrations[brick_name] = brick_migration
-
-        brick_migration = brick_migrations[brick_name]
-        date = DateHelper.now_utc().isoformat()
-
-        # Update the date check
-        brick_migration["last_date_check"] = date
-
-        # update the version and history only if this is a new version
-        if brick_migration["version"] != version:
-            # udpate the brick version
-            brick_migration["version"] = version
-            # add the history
-            brick_migration["history"].append({"version": version, "migration_date": date})
-        self.data["brick_migrations"] = brick_migrations
+        self.data["brick_migrations"] = logs.save_as_json()
         self.save()
 
     def get_variable(self, brick_name: str, key: str) -> str | None:
