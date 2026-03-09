@@ -1,5 +1,4 @@
 import os
-import shutil
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
@@ -7,6 +6,7 @@ from typing import Any, Optional, cast
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.system_dto import (
     BrickMigrationsLogs,
@@ -34,7 +34,6 @@ class Settings:
 
     _setting_instance: Optional["Settings"] = None
 
-    OLD_SETTINGS_DIR = "/conf/settings"
     SETTINGS_NAME = "settings.json"
 
     DEFAULT_SETTINGS = {
@@ -85,28 +84,8 @@ class Settings:
         return os.path.join(cls.get_system_folder(), cls.SETTINGS_NAME)
 
     @classmethod
-    def _get_old_setting_file_path(cls) -> str:
-        """Returns the old settings file path for migration purposes"""
-        return os.path.join(cls.OLD_SETTINGS_DIR, cls.SETTINGS_NAME)
-
-    @classmethod
     def _setting_file_exists(cls) -> bool:
         return FileHelper.exists_on_os(cls._get_setting_file_path())
-
-    @classmethod
-    def _old_setting_file_exists(cls) -> bool:
-        """Check if the old settings file exists"""
-        return FileHelper.exists_on_os(cls._get_old_setting_file_path())
-
-    @classmethod
-    def _migrate_settings_file(cls) -> None:
-        """Migrate settings file from old location to new location if it exists"""
-        if cls._old_setting_file_exists() and not cls._setting_file_exists():
-            old_path = cls._get_old_setting_file_path()
-            new_path = cls._get_setting_file_path()
-
-            # Move the file
-            shutil.move(old_path, new_path)
 
     @classmethod
     def get_os_environ(cls, key: str, error_message: str | None = None) -> str:
@@ -672,9 +651,6 @@ class Settings:
     @classmethod
     def get_instance(cls) -> "Settings":
         if cls._setting_instance is None:
-            # Migrate settings file from old location if needed
-            cls._migrate_settings_file()
-
             settings_json = None
 
             # try to read the settings file
@@ -682,12 +658,13 @@ class Settings:
                 with open(cls._get_setting_file_path(), encoding="UTF-8") as file:
                     try:
                         settings_json = load(file)
-                    except JSONDecodeError as err:
-                        print(
-                            f"Error while reading settings file at '{cls._get_setting_file_path()}'. Please check the syntax of the file. Here is the file content"
+                    except JSONDecodeError:
+                        Logger.error(
+                            f"Error while reading settings file at '{cls._get_setting_file_path()}'. "
+                            "The JSON is invalid, using default settings. "
+                            "The migrations will be skiped as will be considered as first run. "
                         )
-                        print(file.read())
-                        raise err
+                        settings_json = cls.DEFAULT_SETTINGS
             # use default settings if no file exists
             else:
                 settings_json = cls.DEFAULT_SETTINGS
@@ -696,11 +673,6 @@ class Settings:
             cls._setting_instance = Settings(settings_json)
 
         return cls._setting_instance
-
-    @classmethod
-    def retrieve(cls) -> "Settings":
-        print("[SETTINGS] Method 'retrieve' deprecated, please use 'get_instance'")
-        return cls.get_instance()
 
     def set_data(self, key: str, val: Any) -> None:
         self.data[key] = val
