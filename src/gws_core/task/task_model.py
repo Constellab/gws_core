@@ -226,8 +226,7 @@ class TaskModel(ProcessModel):
             input_resource.protocol_model = parent
             input_resource.port_name = port_name
             input_resource.is_interface = parent.port_is_interface(self.instance_name, port_name)
-
-            input_resource.save()
+            input_resource.save_if_not_exists()
 
     def _run_task(self, task_runner: TaskRunner) -> None:
         """
