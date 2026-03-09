@@ -11,7 +11,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
 
-from ...brick.brick_service import BrickService
 from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...core.utils.utils import Utils
@@ -146,11 +145,11 @@ class ResourceImporter(Converter):
         except Exception as err:
             raise Exception(
                 f"Cannot import file '{source.path}' using importer : '{self.get_typing_name()}' because of the following error: {err}"
-            )
+            ) from err
 
         if target.name is None:
             # set the target name = FsNode name without extension
-            target.name = FileHelper.get_name_without_extension(source.path)
+            target.name = FileHelper.get_name_without_extension(source.name or source.path)
         return target
 
     @abstractmethod

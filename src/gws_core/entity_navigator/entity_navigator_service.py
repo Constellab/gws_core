@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.entity_navigator.entity_navigator import (
@@ -119,8 +121,9 @@ class EntityNavigatorService:
 
         # if yes, raise an error, no force reset for this mode
         if reset_result.has_entities():
-            scenarios: list[Scenario] = reset_result.impacted_entities.get_entity_by_type(
-                NavigableEntityType.SCENARIO
+            scenarios = cast(
+                list[Scenario],
+                reset_result.impacted_entities.get_entity_by_type(NavigableEntityType.SCENARIO),
             )
 
             if len(scenarios) > 0:
@@ -128,8 +131,9 @@ class EntityNavigatorService:
                     scenarios[0].get_short_name(), scenarios[0].id
                 )
 
-            notes: list[Note] = reset_result.impacted_entities.get_entity_by_type(
-                NavigableEntityType.NOTE
+            notes = cast(
+                list[Note],
+                reset_result.impacted_entities.get_entity_by_type(NavigableEntityType.NOTE),
             )
             if len(notes) > 0:
                 raise ResourceUnknownUsedInNoteException(notes[0].title, notes[0].id)
