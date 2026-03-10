@@ -95,4 +95,7 @@ class App:
         for path, sub_app in ApiRegistry.get_all_apis().items():
             cls.app.mount(path, sub_app)
 
+        # Install access log filter for silent APIs (e.g. S3 server)
+        ApiRegistry.install_access_log_filter()
+
         uvicorn.run(cls.app, host="0.0.0.0", port=int(port))

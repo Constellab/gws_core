@@ -50,10 +50,7 @@ async def _delete_object(request: Request, service: AbstractS3Service) -> Respon
     dict_ = XMLHelper.xml_to_dict(str_xml)
     objects: dict | list[dict] = dict_["Delete"]["Object"]
     keys: list[str]
-    if not isinstance(objects, list):
-        keys = [objects["Key"]]
-    else:
-        keys = [obj["Key"] for obj in objects]
+    keys = [objects["Key"]] if not isinstance(objects, list) else [obj["Key"] for obj in objects]
     service.delete_objects(keys)
     return Response(status_code=204)
 

@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException
@@ -6,6 +8,22 @@ from starlette.responses import Response
 
 from gws_core.core.exception.exception_handler import ExceptionHandler
 from gws_core.core.utils.logger import Logger
+
+
+class _SilentAccessLogFilter(logging.Filter):
+    """Filter that suppresses access log entries for specific paths.
+
+    This prevents high-volume routes (e.g. S3 server called by rclone)
+    from flooding the logs.
+    """
+
+    def __init__(self, silent_paths: list[str]) -> None:
+        super().__init__()
+        self._silent_paths = silent_paths
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        message = record.getMessage()
+        return all(silent_path not in message for silent_path in self._silent_paths)
 
 
 class ApiRegistry:
@@ -17,7 +35,8 @@ class ApiRegistry:
 
     - ``register_api(path, ...)`` -- creates a FastAPI app at the given
       mount path. Pass ``with_exception_handlers=True`` to add the standard
-      exception handlers automatically.
+      exception handlers automatically. Pass ``silent_access_log=True`` to
+      downgrade access logs for this path to DEBUG level.
 
     - ``register_brick_app(brick_name, ...)`` -- convenience wrapper that
       calls ``register_api`` with path ``/brick/{brick_name}/`` and
@@ -41,12 +60,16 @@ class ApiRegistry:
     # dict of mount_path -> FastAPI app
     _apis: dict[str, FastAPI] = {}
 
+    # paths whose access logs are downgraded to DEBUG
+    _silent_paths: list[str] = []
+
     @classmethod
     def register_api(
         cls,
         path: str,
         docs_url: str | None = None,
         with_exception_handlers: bool = True,
+        silent_access_log: bool = False,
     ) -> FastAPI:
         """Create and register a FastAPI sub-app at the given mount path.
 
@@ -54,6 +77,8 @@ class ApiRegistry:
         :param docs_url: The docs_url passed to FastAPI (None to disable docs)
         :param with_exception_handlers: If True, add the standard exception
             handlers (HTTPException, RequestValidationError, generic Exception)
+        :param silent_access_log: If True, downgrade access logs for this path
+            to DEBUG level (visible only with --log-level=DEBUG)
         :return: The newly created FastAPI app
         """
         if path in cls._apis:
@@ -62,6 +87,8 @@ class ApiRegistry:
         cls._apis[path] = app
         if with_exception_handlers:
             cls.configure_exception_handlers(app)
+        if silent_access_log:
+            cls._silent_paths.append(path)
         Logger.debug(f"Registered FastAPI app at path '{path}'")
         return app
 
@@ -124,6 +151,18 @@ class ApiRegistry:
         return cls._apis
 
     @classmethod
+    def install_access_log_filter(cls) -> None:
+        """Install the access log filter on uvicorn's access logger.
+
+        Downgrades log entries to DEBUG for all paths registered with
+        ``silent_access_log=True``. Call this before ``uvicorn.run()``.
+        """
+        if cls._silent_paths:
+            access_logger = logging.getLogger("uvicorn.access")
+            access_logger.addFilter(_SilentAccessLogFilter(cls._silent_paths))
+
+    @classmethod
     def clear(cls) -> None:
         """Clear all registered apis. Useful for tests."""
         cls._apis = {}
+        cls._silent_paths = []

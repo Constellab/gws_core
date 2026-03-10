@@ -7,6 +7,7 @@ from gws_core.lab.api_registry import ApiRegistry
 s3_server_app = ApiRegistry.register_api(
     f"/{Settings.s3_server_api_route_path()}/",
     with_exception_handlers=False,
+    silent_access_log=True,
 )
 
 
