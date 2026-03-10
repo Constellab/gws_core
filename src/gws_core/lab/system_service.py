@@ -97,7 +97,12 @@ class SystemService:
     def init_queue_and_monitor(cls) -> None:
         cls._check_running_scenarios()
         MonitorService.init()
-        QueueService.init(daemon=True)
+
+        try:
+            QueueService.init(daemon=True)
+        except Exception as err:
+            Logger.error(f"[SystemService] Error while initializing the queue: {err}")
+            Logger.log_exception_stack_trace(err)
 
     @classmethod
     def _check_running_scenarios(cls):
