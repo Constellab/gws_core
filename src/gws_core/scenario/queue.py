@@ -26,23 +26,17 @@ class Queue(Model):
     is_active = BooleanField(default=False)
     max_length = IntegerField(default=10)
 
-    _current_queue: Optional["Queue"] = None
-
     @classmethod
     def get_current_queue(cls) -> Optional["Queue"]:
-        return cls._current_queue
+        return Queue.select().first()
 
     @classmethod
     @GwsCoreDbManager.transaction(nested_transaction=True)  # force new transaction to commit anyway
     def _get_or_create_instance(cls) -> "Queue":
-        if cls._current_queue is None:
-            queue = Queue.select().first()
-            if queue is not None:
-                cls._current_queue = queue
-            else:
-                cls._current_queue = Queue().save()
-
-        return cls._current_queue
+        queue = Queue.select().first()
+        if queue is not None:
+            return queue
+        return Queue().save()
 
     @classmethod
     def init(cls) -> "Queue":
@@ -62,7 +56,6 @@ class Queue(Model):
 
         if queue is not None:
             cls.delete_by_id(queue.id)
-            cls._current_queue = None
 
     @classmethod
     @GwsCoreDbManager.transaction(
