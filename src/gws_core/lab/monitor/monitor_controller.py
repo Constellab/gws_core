@@ -1,6 +1,10 @@
 from fastapi import Depends
 
-from gws_core.lab.monitor.monitor_dto import CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO
+from gws_core.lab.monitor.monitor_dto import (
+    CurrentMonitorDTO,
+    DiskFolderSizesDTO,
+    MonitorBetweenDateGraphicsDTO,
+)
 
 from ...core_controller import core_app
 from ...user.authorization_service import AuthorizationService
@@ -29,3 +33,14 @@ def get_the_lab_monitor_graphics(
     return MonitorService.get_monitor_graphics_between_dates_str(
         from_date_str=request.from_date, to_date_str=request.to_date, utc_num=timezone_num
     )
+
+
+@core_app.get("/monitor/folder-sizes", tags=["Lab"], summary="Get folder sizes")
+def get_folder_sizes(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> DiskFolderSizesDTO:
+    """
+    Get the size of important system folders (data, env, logs, bricks, etc.).
+    Uses parallel 'du -sb' subprocess calls for efficiency on large directories.
+    """
+    return MonitorService.get_folder_sizes()
