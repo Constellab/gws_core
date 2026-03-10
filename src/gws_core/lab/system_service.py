@@ -13,8 +13,9 @@ from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.lab_model import LabModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabInfoDTO, LabStartLogFileObject, LabStatusDTO, LabSystemConfig
+from gws_core.lab.system_dto import LabStartLogFileObject, LabStatusDTO, LabSystemConfig, LabSystemInfoDTO
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
@@ -59,6 +60,9 @@ class SystemService:
 
         BrickService.init()
         LabConfigModel.save_current_config()
+
+        # Create or update the current lab entry
+        LabModel.get_or_create_current_lab()
 
         # Init data folder
         cls.init_data_folder()
@@ -240,13 +244,11 @@ class SystemService:
             Logger.log_exception_stack_trace(err)
 
     @classmethod
-    def get_lab_info(cls) -> LabInfoDTO:
-        settings = Settings.get_instance()
-        return LabInfoDTO(
-            lab_name=settings.get_lab_name(),
-            front_version=settings.get_front_version(),
-            space=settings.get_space(),
-            id=settings.get_lab_id(),
+    def get_system_info(cls) -> LabSystemInfoDTO:
+        lab = LabModel.get_or_create_current_lab()
+        return LabSystemInfoDTO(
+            lab=lab.to_dto(),
+            front_version=Settings.get_front_version(),
         )
 
     @classmethod

@@ -6,6 +6,7 @@ from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.lab.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_zipper import ZipScenarioInfo
 from gws_core.user.user_dto import UserDTO
@@ -62,14 +63,9 @@ class UpdateShareLinkDTO(BaseModelDTO):
 
 class ShareEntityInfoDTO(ModelDTO):
     share_mode: SharedEntityMode
-    lab_id: str
-    lab_name: str
-    user_id: str
-    user_firstname: str
-    user_lastname: str
-    space_id: str | None = None
-    space_name: str | None = None
-    created_by: UserDTO
+    lab: LabDTO | None = None
+    user: UserDTO | None = None
+    created_by: UserDTO | None = None
 
 
 class ShareEntityInfoReponseDTO(BaseModelDTO):

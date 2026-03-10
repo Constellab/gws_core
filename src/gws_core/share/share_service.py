@@ -84,7 +84,7 @@ class ShareService:
 
         # check if this resource was already downloaded by this lab
         if share_entity_info.already_shared_with_lab(
-            shared_entity_link.entity_id, receiver_lab.lab_id
+            shared_entity_link.entity_id, receiver_lab.lab.id
         ):
             return
 

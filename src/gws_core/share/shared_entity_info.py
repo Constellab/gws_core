@@ -1,44 +1,31 @@
-from peewee import CharField, ForeignKeyField
+from peewee import ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.lab.lab_model import LabModel
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
+from gws_core.user.user_service import UserService
 
 
 class SharedEntityInfo(Model):
-    """Class to store information about an shared entity.
-    It stored the origin of the entity if the entity was imported from an external source.
-    It store the destination of the entity if the entity was exported to an external source.
-
-    :param Model: _description_
-    :type Model: _type_
-    :raises ValueError: _description_
-    :return: _description_
-    :rtype: _type_
+    """Class to store information about a shared entity.
+    It stores the origin of the entity if the entity was imported from an external source.
+    It stores the destination of the entity if the entity was exported to an external source.
     """
 
     share_mode: SharedEntityMode = EnumField(choices=SharedEntityMode)
 
-    lab_id: str = CharField()
+    # FK to LabModel — replaces lab_id, lab_name, space_id, space_name
+    lab: LabModel = ForeignKeyField(LabModel, null=True, backref="+")
 
-    lab_name: str = CharField()
+    # FK to User — the user from the external lab who shared/received the entity.
+    # If the user doesn't exist locally, import them as inactive.
+    user: User = ForeignKeyField(User, null=True, backref="+")
 
-    user_id: str = CharField()
-
-    user_firstname: str = CharField()
-
-    user_lastname: str = CharField()
-
-    space_id: str = CharField(null=True)
-
-    space_name: str = CharField(null=True)
-
-    # current lab user that
-    # In SENT mode is the one who created the share link
-    # In RECEIVED mode, is the one that imported the entity
+    # Current lab user who created the share link (SENT) or imported the entity (RECEIVED)
     created_by: User = ForeignKeyField(User, null=True, backref="+")
 
     # override on children classes
@@ -63,7 +50,7 @@ class SharedEntityInfo(Model):
             cls.get_or_none(
                 (cls.entity == entity_id)
                 & (cls.share_mode == SharedEntityMode.SENT)
-                & (cls.lab_id == lab_id)
+                & (cls.lab == lab_id)
             )
             is not None
         )
@@ -86,17 +73,14 @@ class SharedEntityInfo(Model):
         created_by: User,
     ) -> None:
         """Method that log the resource origin for each imported resources"""
+        lab = LabModel.get_or_create_from_dto(lab_info.lab)
+        user = UserService.get_or_import_user_info(lab_info.user.id)
 
         shared_entity = cls()
         shared_entity.entity = entity_id
         shared_entity.share_mode = mode
-        shared_entity.lab_id = lab_info.lab_id
-        shared_entity.lab_name = lab_info.lab_name
-        shared_entity.user_id = lab_info.user_id
-        shared_entity.user_firstname = lab_info.user_firstname
-        shared_entity.user_lastname = lab_info.user_lastname
-        shared_entity.space_id = lab_info.space_id
-        shared_entity.space_name = lab_info.space_name
+        shared_entity.lab = lab
+        shared_entity.user = user
         shared_entity.created_by = created_by
         shared_entity.save()
 
@@ -106,12 +90,7 @@ class SharedEntityInfo(Model):
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             share_mode=self.share_mode,
-            lab_id=self.lab_id,
-            lab_name=self.lab_name,
-            user_id=self.user_id,
-            user_firstname=self.user_firstname,
-            user_lastname=self.user_lastname,
-            space_id=self.space_id,
-            space_name=self.space_name,
+            lab=self.lab.to_dto() if self.lab else None,
+            user=self.user.to_dto() if self.user else None,
             created_by=self.created_by.to_dto() if self.created_by else None,
         )

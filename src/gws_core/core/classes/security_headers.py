@@ -4,7 +4,7 @@ from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from gws_core.core.utils.settings import Settings
-from gws_core.lab.system_dto import LabEnvironment
+from gws_core.lab.lab_dto import LabEnvironment
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

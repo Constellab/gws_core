@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-from gws_core.lab.system_dto import LabEnvironment
+from gws_core.lab.lab_dto import LabEnvironment
 
 from ..utils.settings import Settings
 

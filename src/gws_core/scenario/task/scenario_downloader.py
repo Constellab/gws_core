@@ -505,7 +505,7 @@ class ScenarioDownloader(Task):
 
         # set the lab origin for the tags
         for tag in tags:
-            tag.set_external_lab_origin(self.share_entity.origin.lab_id)
+            tag.set_external_lab_origin(self.share_entity.origin.lab.id)
 
         # Add tags
         try:

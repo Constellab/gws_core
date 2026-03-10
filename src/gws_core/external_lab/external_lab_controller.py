@@ -9,6 +9,8 @@ from gws_core.external_lab.external_lab_dto import (
 )
 from gws_core.external_lab.external_lab_service import ExternalLabService
 from gws_core.lab.api_registry import ApiRegistry
+from gws_core.lab.lab_dto import LabDTO
+from gws_core.user.user_dto import UserDTO
 
 external_lab_app = ApiRegistry.register_api(
     f"/{Settings.external_lab_api_route_path()}/",
@@ -67,3 +69,24 @@ def import_scenario(
     Import scenario from the lab
     """
     return ExternalLabService.import_scenario(import_dto)
+
+
+@external_lab_app.get("/lab-info", summary="Get current lab information")
+def get_current_lab_info(
+    _=Depends(ExternalLabAuth.check_auth),
+) -> LabDTO:
+    """
+    Get information about the current lab (name, space, etc.)
+    """
+    return ExternalLabService.get_current_lab_info()
+
+
+@external_lab_app.get("/user/{user_id}", summary="Get user information")
+def get_user_info(
+    user_id: str, _=Depends(ExternalLabAuth.check_auth)
+) -> UserDTO:
+    """
+    Get user information by id. If the user doesn't exist locally,
+    imports them from Constellab as inactive.
+    """
+    return ExternalLabService.get_user_info(user_id)

@@ -10,6 +10,7 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportScenarioResponseDTO,
     ExternalLabWithUserInfo,
 )
+from gws_core.lab.lab_model import LabModel
 from gws_core.share.shared_dto import ShareLinkEntityType
 from gws_core.user.user import User
 
@@ -100,18 +101,13 @@ class ExternalLabApiService:
 
     @classmethod
     def get_current_lab_info(cls, user: User) -> ExternalLabWithUserInfo:
-        """Get information about the current lab. Usefule when 2 labs communicate with each other"""
-        settings = Settings.get_instance()
-        space = settings.get_space()
+        """Get information about the current lab. Useful when 2 labs communicate with each other."""
+        lab = LabModel.get_or_create_current_lab()
         return ExternalLabWithUserInfo(
-            lab_id=settings.get_lab_id(),
-            lab_name=settings.get_lab_name(),
-            lab_api_url=settings.get_lab_api_url(),
-            user_id=user.id,
-            user_firstname=user.first_name,
-            user_lastname=user.last_name,
-            space_id=space["id"] if space is not None else None,
-            space_name=space["name"] if space is not None else None,
+            lab=lab.to_dto(),
+            lab_api_url=Settings.get_instance().get_lab_api_url(),
+            lab_mode=Settings.get_lab_mode(),
+            user=user.to_dto(),
         )
 
     @classmethod

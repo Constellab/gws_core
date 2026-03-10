@@ -1,20 +1,15 @@
 from datetime import datetime, timezone
-from typing import Literal
 
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.lab.lab_dto import LabDTO
 from gws_core.lab.monitor.monitor_dto import MonitorFreeDiskDTO
-from gws_core.user.user_dto import SpaceDict
-
-LabEnvironment = Literal["ON_CLOUD", "DESKTOP", "LOCAL"]
 
 
-class LabInfoDTO(BaseModelDTO):
-    id: str
-    lab_name: str
+class LabSystemInfoDTO(BaseModelDTO):
+    lab: LabDTO
     front_version: str
-    space: SpaceDict | None
 
 
 class LabStatusDTO(BaseModelDTO):
@@ -89,9 +84,7 @@ class BrickMigrationsLogs(BaseModelDTO):
         """
         return any(db_manager_unique_name in brick_logs for brick_logs in self.bricks.values())
 
-    def set_brick_version(
-        self, brick_name: str, version: str, db_manager_unique_name: str
-    ) -> None:
+    def set_brick_version(self, brick_name: str, version: str, db_manager_unique_name: str) -> None:
         """Set the current version and last_date_check for a brick+db_manager pair.
         Does not add a history entry. Use this to record the current state without
         indicating an actual migration was run.
@@ -131,9 +124,7 @@ class BrickMigrationsLogs(BaseModelDTO):
             BrickMigrationLogHistory(version=version, migration_date=date)
         )
 
-    def _get_or_create_log(
-        self, brick_name: str, db_manager_unique_name: str
-    ) -> BrickMigrationLog:
+    def _get_or_create_log(self, brick_name: str, db_manager_unique_name: str) -> BrickMigrationLog:
         """Get or create a BrickMigrationLog for the specified brick+db_manager pair."""
         if brick_name not in self.bricks:
             self.bricks[brick_name] = {}

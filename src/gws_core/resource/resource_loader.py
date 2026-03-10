@@ -108,7 +108,7 @@ class ResourceLoader:
 
             # Set the external lab origin for all tags
             for tag in tags:
-                tag.set_external_lab_origin(self.get_origin_info().lab_id)
+                tag.set_external_lab_origin(self.get_origin_info().lab.id)
 
         resource_model_id: str | None = None
         if self.mode == ShareEntityCreateMode.KEEP_ID:

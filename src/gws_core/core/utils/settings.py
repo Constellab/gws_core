@@ -8,9 +8,9 @@ from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.lab_dto import LabEnvironment, LabMode
 from gws_core.lab.system_dto import (
     BrickMigrationsLogs,
-    LabEnvironment,
     ModuleInfo,
     PipPackage,
     SettingsDTO,
@@ -35,12 +35,6 @@ class Settings:
     _setting_instance: Optional["Settings"] = None
 
     SETTINGS_NAME = "settings.json"
-
-    DEFAULT_SETTINGS = {
-        "app_dir": os.path.dirname(os.path.abspath(__file__)),
-        "app_host": "0.0.0.0",
-        "app_port": 3000,
-    }
 
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
@@ -108,11 +102,21 @@ class Settings:
 
     @classmethod
     def is_prod_mode(cls) -> bool:
-        return os.environ.get("LAB_MODE", "dev") == "prod"
+        return os.environ.get("LAB_MODE", "dev") == LabMode.PROD.value
 
     @classmethod
     def is_dev_mode(cls) -> bool:
         return not cls.is_prod_mode()
+
+    @classmethod
+    def get_lab_mode(cls) -> LabMode:
+        mode_str = os.environ.get("LAB_MODE", LabMode.PROD.value)
+        try:
+            return LabMode(mode_str)
+        except ValueError as e:
+            raise ValueError(
+                f"Invalid LAB_MODE '{mode_str}'. Valid values are: {[mode.value for mode in LabMode]}"
+            ) from e
 
     @classmethod
     def get_lab_prod_api_url(cls) -> str:
@@ -664,10 +668,10 @@ class Settings:
                             "The JSON is invalid, using default settings. "
                             "The migrations will be skiped as will be considered as first run. "
                         )
-                        settings_json = cls.DEFAULT_SETTINGS
+                        settings_json = {}
             # use default settings if no file exists
             else:
-                settings_json = cls.DEFAULT_SETTINGS
+                settings_json = {}
 
             # set the setting instance
             cls._setting_instance = Settings(settings_json)
