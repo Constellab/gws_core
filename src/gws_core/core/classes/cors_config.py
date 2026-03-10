@@ -80,7 +80,7 @@ class CorsConfig:
         # in local enviornment we allow all origins
         lab_env: LabEnvironment = Settings.get_lab_environment()
 
-        if lab_env != "ON_CLOUD":
+        if lab_env != LabEnvironment.ON_CLOUD:
             return "." + cls._ALLOW_ANY_ORIGIN
 
         # In prod env we allow origin only from the virtual host (like tokyo.gencovery.io)

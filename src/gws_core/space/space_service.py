@@ -5,6 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.brick.brick_log_service import BrickLogService
+from gws_core.lab.lab_dto import LabEnvironment
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
@@ -58,7 +59,7 @@ class SpaceService(SpaceServiceBase):
 
     def check_api_key(self, api_key: str) -> bool:
         # In local env, we don't check the api key
-        if Settings.get_lab_environment() == "LOCAL":
+        if Settings.get_lab_environment() == LabEnvironment.LOCAL:
             return True
 
         if Settings.is_dev_mode():

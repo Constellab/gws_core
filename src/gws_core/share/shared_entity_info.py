@@ -4,6 +4,7 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.lab.lab_dto import LabDTO
 from gws_core.lab.lab_model import LabModel
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
@@ -44,13 +45,19 @@ class SharedEntityInfo(Model):
         return shared_resource
 
     @classmethod
-    def already_shared_with_lab(cls, entity_id: str, lab_id: str) -> bool:
-        """Method that check if the entity is already shared with the lab"""
+    def already_shared_with_lab(cls, entity_id: str, lab_dto: LabDTO) -> bool:
+        """Method that check if the entity is already shared with the lab.
+
+        Resolves the lab by (lab_id, mode) to find the local LabModel row.
+        """
+        lab = LabModel.get_by_lab_id_and_mode(lab_dto.lab_id, lab_dto.mode)
+        if lab is None:
+            return False
         return (
             cls.get_or_none(
                 (cls.entity == entity_id)
                 & (cls.share_mode == SharedEntityMode.SENT)
-                & (cls.lab == lab_id)
+                & (cls.lab == lab.id)
             )
             is not None
         )

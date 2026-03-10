@@ -34,7 +34,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         # HTTP Strict Transport Security (HSTS)
         # Only add HSTS in production/cloud environments with HTTPS
         lab_env: LabEnvironment = Settings.get_lab_environment()
-        if lab_env == "ON_CLOUD":
+        if lab_env == LabEnvironment.ON_CLOUD:
             response.headers["Strict-Transport-Security"] = (
                 "max-age=31536000; includeSubDomains; preload"
             )
@@ -59,7 +59,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """Generate Content Security Policy based on environment"""
         lab_env: LabEnvironment = Settings.get_lab_environment()
 
-        if lab_env == "ON_CLOUD":
+        if lab_env == LabEnvironment.ON_CLOUD:
             # Stricter CSP for production
             virtual_host = Settings.get_virtual_host()
             if virtual_host:

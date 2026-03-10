@@ -106,7 +106,6 @@ class ExternalLabApiService:
         return ExternalLabWithUserInfo(
             lab=lab.to_dto(),
             lab_api_url=Settings.get_instance().get_lab_api_url(),
-            lab_mode=Settings.get_lab_mode(),
             user=user.to_dto(),
         )
 

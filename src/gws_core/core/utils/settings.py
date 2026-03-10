@@ -2,7 +2,7 @@ import os
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
@@ -168,11 +168,15 @@ class Settings:
         :return: [description]
         :rtype: [type]
         """
-        return cast(LabEnvironment, os.environ.get("LAB_ENVIRONMENT", "ON_CLOUD"))
+        env_str = os.environ.get("LAB_ENVIRONMENT", "ON_CLOUD")
+        try:
+            return LabEnvironment(env_str)
+        except ValueError:
+            return LabEnvironment.ON_CLOUD
 
     @classmethod
     def is_cloud_env(cls) -> bool:
-        return cls.get_lab_environment() == "ON_CLOUD"
+        return cls.get_lab_environment() == LabEnvironment.ON_CLOUD
 
     @classmethod
     def is_desktop_env(cls) -> bool:
@@ -181,11 +185,11 @@ class Settings:
         :return: _description_
         :rtype: bool
         """
-        return cls.get_lab_environment() == "DESKTOP"
+        return cls.get_lab_environment() == LabEnvironment.DESKTOP
 
     @classmethod
     def is_local_env(cls) -> bool:
-        return cls.get_lab_environment() == "LOCAL"
+        return cls.get_lab_environment() == LabEnvironment.LOCAL
 
     @classmethod
     def is_local_or_desktop_env(cls) -> bool:
