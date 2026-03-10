@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.abstract_s3_service import AbstractS3Service
 from gws_core.impl.s3.s3_server_dto import S3GetTagResponse, S3UpdateTagRequest
@@ -31,9 +32,14 @@ class LocalS3ServerService(AbstractS3Service):
         os.makedirs(self.bucket_path, exist_ok=True)
 
     @property
+    def _multipart_dir(self) -> str:
+        """Path to multipart upload temp directory, stored in system temp to avoid permission issues"""
+        return path.join(Settings.get_root_temp_dir(), ".s3_multipart", self.bucket_name)
+
+    @property
     def _multipart_state_file(self) -> str:
         """Path to multipart upload state file"""
-        return path.join(self.bucket_path, ".multipart", "state.json")
+        return path.join(self._multipart_dir, "state.json")
 
     def _load_multipart_state(self) -> dict[str, Any]:
         """Load multipart upload state from disk"""
@@ -275,7 +281,7 @@ class LocalS3ServerService(AbstractS3Service):
         upload_id = str(uuid.uuid4())
 
         # Create temp directory for parts
-        temp_dir = path.join(self.bucket_path, ".multipart", upload_id)
+        temp_dir = path.join(self._multipart_dir, upload_id)
         os.makedirs(temp_dir, exist_ok=True)
 
         # Load current state and add new upload

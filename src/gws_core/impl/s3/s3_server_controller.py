@@ -1,4 +1,3 @@
-
 from fastapi import Depends, Request
 from fastapi.params import Query
 from fastapi.responses import Response
@@ -25,11 +24,6 @@ TAG_HEADER = "x-amz-tagging"
 
 @s3_server_app.get("/health-check")
 def health_check() -> bool:
-    return True
-
-
-@s3_server_app.get("v1/health-check")
-def health_check_v1() -> bool:
     return True
 
 
