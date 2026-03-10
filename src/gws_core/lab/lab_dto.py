@@ -21,8 +21,8 @@ class LabDTO(BaseModelDTO):
     lab_id: str
     name: str
     is_current_lab: bool
-    mode: LabMode | None = None
-    environment: LabEnvironment | None = None
+    mode: LabMode
+    environment: LabEnvironment
     domain: str | None = None
     space_id: str | None = None
     space_name: str | None = None

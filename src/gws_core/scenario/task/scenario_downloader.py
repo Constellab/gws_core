@@ -14,8 +14,10 @@ from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.io.port import Port
 from gws_core.model.typing_style import TypingStyle
+from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph import ProtocolGraph
+from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -49,7 +51,7 @@ from gws_core.user.current_user_service import CurrentUserService
 ScenarioDownloaderResourceMode = Literal[
     "Inputs and outputs", "Inputs only", "Outputs only", "All", "None"
 ]
-ScenarioDownloaderCreateOption = Literal["Skip if exists", "Force new scenario"]
+ScenarioDownloaderCreateOption = Literal["Skip if exists", "Force new scenario", "Update if exists"]
 
 
 class ImportedResource:
@@ -115,6 +117,9 @@ class ScenarioDownloader(Task):
 
     skip_resource_tags: bool
 
+    _existing_scenario: Scenario | None
+    _is_update_mode: bool
+
     # define the percentage of the progress bar for each step
     INIT_EXP_PERCENT = 10
     DOWNLOAD_RESOURCE_PERCENT = 80
@@ -139,14 +144,24 @@ class ScenarioDownloader(Task):
             else ShareEntityCreateMode.KEEP_ID
         )
 
+        self._existing_scenario = None
+        self._is_update_mode = create_option == "Update if exists"
+
         # if we keep the scenario id, we check if the scenario already exists in the current lab
         if create_mode == ShareEntityCreateMode.KEEP_ID:
             scenario_model = Scenario.get_by_id(self.share_entity.entity_id)
             if scenario_model:
-                raise Exception(
-                    "The scenario already exists in the current lab."
-                    + f' <a href="{FrontService.get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.'
-                )
+                if self._is_update_mode:
+                    # Update mode: store the existing scenario for later diffing
+                    self._existing_scenario = scenario_model
+                    self.log_info_message(
+                        f"Scenario '{scenario_model.title}' already exists, will update it"
+                    )
+                else:
+                    raise Exception(
+                        "The scenario already exists in the current lab."
+                        + f' <a href="{FrontService.get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.'
+                    )
 
         self.update_progress_value(self.INIT_EXP_PERCENT, "Scenario information retrieved")
 
@@ -167,7 +182,11 @@ class ScenarioDownloader(Task):
         scenario_loader = self.load_scenario(scenario_info, create_mode)
 
         skip_scenario_tags = params.get_value("skip_scenario_tags")
-        scenario = self.build_scenario(scenario_loader, skip_scenario_tags)
+
+        if self._existing_scenario:
+            scenario = self.update_scenario(scenario_loader, skip_scenario_tags)
+        else:
+            scenario = self.build_scenario(scenario_loader, skip_scenario_tags)
 
         return {"scenario": ScenarioResource(scenario.id)}
 
@@ -369,6 +388,206 @@ class ScenarioDownloader(Task):
 
         return scenario
 
+    @GwsCoreDbManager.transaction()
+    def update_scenario(
+        self, scenario_load: ScenarioLoader, skip_scenario_tags: bool = False
+    ) -> Scenario:
+        """Update an existing scenario using smart protocol diffing."""
+        self.log_info_message("Updating the existing scenario")
+
+        existing_scenario = self._existing_scenario
+
+        if not existing_scenario:
+            raise Exception("No existing scenario found to update")
+
+        # Validate the scenario can be updated
+        existing_scenario.check_is_updatable()
+        if existing_scenario.is_running:
+            raise Exception("Cannot update a running scenario")
+
+        # Update scenario metadata from the new scenario info
+        new_scenario = scenario_load.get_scenario()
+        existing_scenario.title = new_scenario.title
+        existing_scenario.description = new_scenario.description
+        existing_scenario.status = new_scenario.status
+        existing_scenario.error_info = new_scenario.error_info
+        if new_scenario.folder:
+            existing_scenario.folder = new_scenario.folder
+        existing_scenario.save()
+
+        # Diff the protocol graph
+        new_protocol_model = scenario_load.get_protocol_model()
+        existing_protocol = existing_scenario.protocol_model
+
+        self._diff_protocol(existing_protocol, new_protocol_model)
+
+        # Update tags
+        if not skip_scenario_tags:
+            self._update_scenario_tags(existing_scenario.id, scenario_load.get_tags())
+        else:
+            self.log_info_message("Skipping scenario tags")
+
+        self.log_info_message("Saving the resources")
+
+        # Save resources for all processes (same logic as build_scenario)
+        for process_model in existing_protocol.get_all_processes_flatten_sort_by_start_date():
+            if process_model.is_input_task():
+                resource_model_id = process_model.out_port(
+                    InputTask.output_name
+                ).get_resource_model_id()
+
+                resource_model = self.save_resource_and_children(resource_model_id, flagged=True)
+
+                new_resource_id = resource_model.id if resource_model else None
+                process_model.set_config_value(InputTask.config_name, new_resource_id)
+
+            elif isinstance(process_model, TaskModel):
+                for port_name, out_port in process_model.outputs.ports.items():
+                    old_resource_id = out_port.get_resource_model_id()
+
+                    self.save_resource_and_children(
+                        old_resource_id, process_model, existing_scenario, port_name
+                    )
+
+            # update the resources in the ports
+            self.update_ports_resources(cast(dict[str, Port], process_model.inputs.ports))
+            self.update_ports_resources(cast(dict[str, Port], process_model.outputs.ports))
+
+            # create TaskInputModel
+            if isinstance(process_model, TaskModel):
+                process_model.save_input_resources()
+
+            # mark the output resource as flagged
+            if process_model.is_output_task():
+                resource_model = process_model.in_port(OutputTask.input_name).get_resource_model()
+                if resource_model:
+                    resource_model.flagged = True
+                    resource_model.save()
+
+        existing_protocol.save_full()
+
+        # Update the shared entity info
+        self.log_info_message("Storing the scenario origin info")
+        SharedScenario.create_from_lab_info(
+            existing_scenario.id,
+            SharedEntityMode.RECEIVED,
+            self.share_entity.origin,
+            CurrentUserService.get_and_check_current_user(),
+        )
+
+        return existing_scenario
+
+    def _diff_protocol(self, existing_protocol: ProtocolModel, new_protocol: ProtocolModel) -> None:
+        """Recursively diff old and new protocol graphs, updating/adding/removing processes."""
+        self.log_info_message("Diffing protocol graph")
+
+        old_processes = dict(existing_protocol.processes)
+        new_processes = dict(new_protocol.processes)
+
+        # UPDATE: processes that exist in both
+        for process_id, new_process in new_processes.items():
+            if process_id in old_processes:
+                old_process = old_processes[process_id]
+
+                if isinstance(old_process, ProtocolModel) and isinstance(
+                    new_process, ProtocolModel
+                ):
+                    # Recurse into sub-protocols
+                    self._update_process_metadata(old_process, new_process)
+                    self._diff_protocol(old_process, new_process)
+                else:
+                    self._update_process_metadata(old_process, new_process)
+
+        # ADD: processes in new but not in old
+        for process_id, new_process in new_processes.items():
+            if process_id not in old_processes:
+                self.log_info_message(f"Adding new process '{new_process.instance_name}'")
+                new_process.set_parent_protocol(existing_protocol)
+                new_process.set_scenario(existing_protocol.scenario)
+                if isinstance(new_process, ProtocolModel):
+                    new_process.save_full()
+                else:
+                    new_process.save_full()
+                existing_protocol.add_process_model(new_process, instance_name=process_id)
+
+        # REMOVE: processes in old but not in new
+        for process_id, old_process in old_processes.items():
+            if process_id not in new_processes:
+                self.log_info_message(f"Removing process '{old_process.instance_name}'")
+                self._remove_process(old_process)
+                del existing_protocol._processes[process_id]
+
+        # Update protocol graph structure (links, interfaces, outerfaces, layout)
+        existing_protocol._connectors = list(new_protocol.connectors)
+        existing_protocol._interfaces = dict(new_protocol.interfaces)
+        existing_protocol._outerfaces = dict(new_protocol.outerfaces)
+        existing_protocol.layout = new_protocol.layout
+
+        existing_protocol.save_graph()
+
+    def _update_process_metadata(
+        self, old_process: ProcessModel, new_process: ProcessModel
+    ) -> None:
+        """Update an existing process's metadata from a new process."""
+        old_process.process_typing_name = new_process.process_typing_name
+        old_process.name = new_process.name
+        old_process.instance_name = new_process.instance_name
+        old_process.style = new_process.style
+        old_process.brick_version_on_create = new_process.brick_version_on_create
+        old_process.brick_version_on_run = new_process.brick_version_on_run
+        old_process.status = new_process.status
+        old_process.error_info = new_process.error_info
+        old_process.started_at = new_process.started_at
+        old_process.ended_at = new_process.ended_at
+
+        # Update config values
+        old_process.config.set_values(new_process.config.get_values())
+        old_process.config.save()
+
+        # Update I/O
+        old_process.set_inputs_from_dto(new_process.inputs.to_dto())
+        old_process.set_outputs_from_dto(new_process.outputs.to_dto())
+
+        # Update lab reference
+        if new_process.run_by_lab:
+            old_process.run_by_lab = new_process.run_by_lab
+
+        # Update progress bar
+        old_process.progress_bar.started_at = new_process.progress_bar.started_at
+        old_process.progress_bar.ended_at = new_process.progress_bar.ended_at
+        old_process.progress_bar.current_value = new_process.progress_bar.current_value
+        old_process.progress_bar.elapsed_time = new_process.progress_bar.elapsed_time
+        old_process.progress_bar.second_start = new_process.progress_bar.second_start
+        old_process.progress_bar.save()
+
+        old_process.save()
+
+    def _remove_process(self, process: ProcessModel) -> None:
+        """Remove a process and its generated resources."""
+        if isinstance(process, ProtocolModel):
+            # Recursively remove sub-protocol children
+            for child in list(process.processes.values()):
+                self._remove_process(child)
+            process.delete_instance()
+        else:
+            # Reset the process (deletes generated resources and TaskInputModel)
+            process.reset()
+            # Safety net: detach any remaining resource FK references
+            ResourceModel.update(task_model=None).where(
+                ResourceModel.task_model == process.id
+            ).execute()
+            process.delete_instance()
+
+    def _update_scenario_tags(self, scenario_id: str, tags: list[Tag]) -> None:
+        """Delete existing tags and add new ones."""
+        self.log_info_message("Updating scenario tags")
+
+        # Delete existing tags
+        EntityTagList.delete_by_entity(TagEntityType.SCENARIO, scenario_id)
+
+        # Add new tags
+        self.save_scenario_tags(scenario_id, tags)
+
     def save_resource_and_children(
         self,
         old_resource_id: str | None,
@@ -381,7 +600,13 @@ class ScenarioDownloader(Task):
             return None
 
         if old_resource_id in self.resource_models:
-            return self.resource_models[old_resource_id]
+            resource_model = self.resource_models[old_resource_id]
+            # In update mode, re-link existing resources to the updated task model
+            if self._is_update_mode and task_model is not None:
+                resource_model.task_model = task_model
+                resource_model.generated_by_port_name = task_port_name
+                resource_model.save()
+            return resource_model
 
         downloaded_resource = self.downloaded_resources.get(old_resource_id)
         # if the resource was not downloaded, we skip it

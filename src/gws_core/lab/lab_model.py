@@ -12,11 +12,11 @@ class LabModel(Model):
     lab_id: str = CharField(max_length=36)
     name: str = CharField()
     is_current_lab: bool = BooleanField(default=False)
-    mode: LabMode = EnumField(choices=LabMode, null=True)
+    mode: LabMode = EnumField(choices=LabMode, null=False)
     environment: LabEnvironment = EnumField(choices=LabEnvironment, null=False)
-    domain: str = CharField(null=True)
-    space_id: str = CharField(null=True)
-    space_name: str = CharField(null=True)
+    domain: str | None = CharField(null=True)
+    space_id: str | None = CharField(null=True)
+    space_name: str | None = CharField(null=True)
 
     class Meta:
         table_name = "gws_lab"
@@ -46,14 +46,12 @@ class LabModel(Model):
         """
         space = Settings.get_instance().get_space()
 
-        lab_mode = Settings.get_lab_mode()
-
         lab_dto = LabDTO(
             id="",
             lab_id=Settings.get_lab_id(),
             name=Settings.get_lab_name(),
             is_current_lab=True,
-            mode=lab_mode,
+            mode=Settings.get_lab_mode(),
             environment=Settings.get_lab_environment(),
             domain=Settings.get_virtual_host(),
             space_id=space["id"] if space else None,
@@ -88,7 +86,7 @@ class LabModel(Model):
         prod and dev mode will have two separate rows.
         Creates the row if it doesn't exist, updates fields if they changed.
         """
-        lab: LabModel = cls.get_by_lab_id_and_mode(lab_dto.lab_id, lab_dto.mode)
+        lab = cls.get_by_lab_id_and_mode(lab_dto.lab_id, lab_dto.mode)
 
         if lab is None:
             lab = cls()

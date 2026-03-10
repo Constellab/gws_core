@@ -1,7 +1,10 @@
 from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.lab.lab_model import LabModel
+from gws_core.process.process_model import ProcessModel
+from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.task.task_model import TaskModel
 from gws_core.user.user_service import UserService
 
 from ....utils.logger import Logger
@@ -12,7 +15,8 @@ from ..brick_migrator import BrickMigration
 
 @brick_migration(
     "0.21.0",
-    short_description="Migrate SharedResource and SharedScenario to use LabModel FK and User FK.",
+    short_description="Migrate SharedResource and SharedScenario to use LabModel and User. "
+    "Add run_by_lab column to TaskModel and ProtocolModel.",
 )
 class Migration0210(BrickMigration):
     @classmethod
@@ -23,6 +27,28 @@ class Migration0210(BrickMigration):
         # Migrate data and drop old columns for both shared tables
         for shared_model in [SharedResource, SharedScenario]:
             cls._migrate_shared_table(sql_migrator, shared_model)
+
+        # Add run_by_lab_id column to both task and protocol tables
+        sql_migrator.add_column_if_not_exists(TaskModel, ProcessModel.run_by_lab)
+        sql_migrator.add_column_if_not_exists(ProtocolModel, ProcessModel.run_by_lab)
+        sql_migrator.migrate()
+
+        # Get or create the current lab entry and fill run_by_lab for executed processes
+        current_lab = LabModel.get_or_create_current_lab()
+        for model in [TaskModel, ProtocolModel]:
+            table_name = model.get_table_name()
+            model.execute_sql(
+                f"""
+                UPDATE {table_name}
+                SET run_by_lab_id = '{current_lab.id}'
+                WHERE status != 'DRAFT'
+                  AND run_by_lab_id IS NULL
+                """
+            )
+
+        # Add FK constraints for run_by_lab
+        TaskModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
+        ProtocolModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
 
     @classmethod
     def _migrate_shared_table(cls, sql_migrator: SqlMigrator, shared_model: type) -> None:

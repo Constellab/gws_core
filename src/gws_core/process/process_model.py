@@ -21,6 +21,7 @@ from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.lab.lab_model import LabModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -64,6 +65,7 @@ class ProcessModel(ModelWithUser):
     # version of the brick when the process was run
     brick_version_on_run = CharField(null=True, max_length=50)
     run_by = ForeignKeyField(User, null=True, backref="+")
+    run_by_lab: LabModel = ForeignKeyField(LabModel, null=True, backref="+")
     status: ProcessStatus = EnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
 
@@ -334,6 +336,9 @@ class ProcessModel(ModelWithUser):
         # Set the run by user
         self.run_by = CurrentUserService().get_and_check_current_user()
 
+        # Set the run by lab
+        self.run_by_lab = LabModel.get_or_create_current_lab()
+
         self.save()
 
     def _run_after_task(self):
@@ -553,6 +558,7 @@ class ProcessModel(ModelWithUser):
             process_type=process_typing.to_simple_dto(),
             style=self.style,
             progress_bar=self.progress_bar.to_config_dto(),
+            run_by_lab=self.run_by_lab.to_dto() if self.run_by_lab else None,
         )
 
     @abstractmethod
@@ -652,6 +658,7 @@ class ProcessModel(ModelWithUser):
         self.set_error_info(None)
         self.brick_version_on_run = None
         self.run_by = None
+        self.run_by_lab = None
         self.save()
         self.progress_bar.reset()
 
