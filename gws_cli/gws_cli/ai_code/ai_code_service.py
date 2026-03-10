@@ -48,12 +48,12 @@ class AICodeService(ABC):
         ),
         SkillFrontmatter(
             filename="task-expert.md",
-            description="Create or modify a Constellab Task that processes data resources",
+            description="Create, modify or document a Constellab Task that processes data resources",
             argument_hint="task description or modification request",
         ),
         SkillFrontmatter(
             filename="agent-expert.md",
-            description="Create or modify a Constellab Agent that processes data resources",
+            description="Create, modify or document a Constellab Agent that processes data resources",
             argument_hint="agent description or modification request",
         ),
         SkillFrontmatter(
@@ -201,8 +201,10 @@ class AICodeService(ABC):
         for gws_file in target_dir.glob("gws-*"):
             if gws_file.is_file():
                 gws_file.unlink()
+            elif gws_file.is_dir():
+                shutil.rmtree(gws_file)
 
-        # Remove existing gws- skill directories (new format)
+        # Remove existing gws- skill directories in skills/ subdirectory (legacy plugin format)
         skills_dir = target_dir / "skills"
         if skills_dir.exists():
             for skill_dir in skills_dir.glob("gws-*"):
@@ -354,7 +356,7 @@ class AICodeService(ABC):
                 typer.echo()
 
             typer.echo("Usage: /<skill-name> [your task description]")
-            typer.echo("Example: /gws-commands:gws-streamlit-app-developer Create a dashboard")
+            typer.echo("Example: /gws-streamlit-app-developer Create a dashboard")
             typer.echo("=" * 70)
 
             return 0

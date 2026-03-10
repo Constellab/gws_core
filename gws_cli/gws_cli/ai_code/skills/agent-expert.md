@@ -556,6 +556,34 @@ To migrate a Task to an Agent:
 - Task examples: [${GWS_CORE_SRC}/impl](${GWS_CORE_SRC}/impl)
 - Table tasks: [${GWS_CORE_SRC}/impl/table/tasks](${GWS_CORE_SRC}/impl/table/tasks)
 
+## File Output Requirements
+
+When generating agent code, **ALWAYS save files to `/lab/user/agents/`** instead of printing them to the console.
+
+### File Naming and Structure
+1. **Create a subfolder** for each agent under `/lab/user/agents/` using a descriptive snake_case name (e.g., `/lab/user/agents/sales_analysis/`)
+2. **Save the agent code** as a Python file: `/lab/user/agents/<agent_name>/agent.py`
+3. **Save environment files** (when applicable) alongside the agent code: `/lab/user/agents/<agent_name>/environment.yml` or `/lab/user/agents/<agent_name>/Pipfile`
+
+### Example Output Structure
+```
+/lab/user/agents/
+├── sales_analysis/
+│   ├── agent.py
+│   └── environment.yml       # Only for virtual environment agents
+├── table_transformer/
+│   └── agent.py               # Basic agent, no env file needed
+└── r_statistics/
+    ├── agent.r
+    └── environment.yml        # Required for R agents
+```
+
+### Rules
+- **Never print agent code to the console** — always write it to files using the Write tool
+- If the user specifies a custom name, use it as the subfolder name (converted to snake_case)
+- If a file already exists, read it first before overwriting
+- After writing the files, inform the user of the file paths created
+
 ## Task
 
 $ARGUMENTS
