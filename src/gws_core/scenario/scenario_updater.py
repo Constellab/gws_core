@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
@@ -124,6 +126,8 @@ class ScenarioUpdater:
                 self._message_dispatcher.notify_info_message(
                     f"Adding new process '{new_process.instance_name}'"
                 )
+                # Generate a fresh ID to avoid conflicts with existing DB records
+                new_process.id = str(uuid4())
                 new_process.set_parent_protocol(existing_protocol)
                 new_process.set_scenario(existing_protocol.scenario)
                 new_process.save_full()

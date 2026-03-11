@@ -78,7 +78,7 @@ class TestScenario(BaseTestCase):
         scenario = Scenario.get_by_id_and_check(scenario.id)
 
         self.assertEqual(Scenario.select().count(), scenario_count + 1)
-        self.assertEqual(len(scenario.task_models), RobotSimpleTravel.tasks_count)
+        self.assertEqual(len(scenario.get_task_models()), RobotSimpleTravel.tasks_count)
         self.assertEqual(TaskModel.select().count(), task_count + RobotSimpleTravel.tasks_count)
         self.assertEqual(ResourceModel.select().count(), resource_count)
         self.assertEqual(scenario.title, "My exp title")
@@ -93,7 +93,7 @@ class TestScenario(BaseTestCase):
         self.assertEqual(
             ResourceModel.select().count(), resource_count + RobotSimpleTravel.resources_count
         )
-        self.assertEqual(len(scenario.resources), RobotSimpleTravel.resources_count)
+        self.assertEqual(len(scenario.get_generated_resources()), RobotSimpleTravel.resources_count)
         self.assertEqual(
             ResourceModel.get_by_scenario(scenario.id).count(), RobotSimpleTravel.resources_count
         )
@@ -101,7 +101,7 @@ class TestScenario(BaseTestCase):
 
         # Check that all processes were run and have run_by and run_by_lab set
         current_lab = LabModel.get_or_create_current_lab()
-        for task_model in scenario.task_models:
+        for task_model in scenario.get_task_models():
             self.assertEqual(task_model.status, ProcessStatus.SUCCESS)
             self.assertEqual(task_model.run_by.id, TestHelper.user.id)
             self.assertEqual(task_model.run_by_lab.id, current_lab.id)
@@ -166,7 +166,9 @@ class TestScenario(BaseTestCase):
         self.assertIsNone(scenario.pid)
         self.assertEqual(scenario.lab_config.id, LabConfigModel.id)
 
-        self.assertEqual(len(scenario.resources), RobotWorldTravelProto.resource_count)
+        self.assertEqual(
+            len(scenario.get_generated_resources()), RobotWorldTravelProto.resource_count
+        )
 
         self._archive_scenario(scenario, True)
         self._archive_scenario(scenario, False)
@@ -177,13 +179,13 @@ class TestScenario(BaseTestCase):
         self.assertTrue(result)
 
         # check that the resources are archived
-        resources: list[ResourceModel] = scenario.resources
+        resources: list[ResourceModel] = scenario.get_generated_resources()
         self.assertEqual(len(resources), RobotWorldTravelProto.resource_count)
         for resource in resources:
             self.assertEqual(resource.is_archived, archive)
 
         # check that the process are archived
-        processes: list[ProcessModel] = scenario.task_models
+        processes: list[ProcessModel] = scenario.get_task_models()
         self.assertEqual(len(processes), RobotWorldTravelProto.tasks_count)
         for process in processes:
             self.assertEqual(process.is_archived, archive)

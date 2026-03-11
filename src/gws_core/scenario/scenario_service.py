@@ -6,6 +6,7 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
+from gws_core.protocol import protocol_model
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_zipper import ScenarioExportDTO, ScenarioExportPackage
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
@@ -571,7 +572,7 @@ class ScenarioService:
             tags=tags_dtos,
         )
 
-        resource_models = ResourceModel.get_root_resources_by_scenario(scenario.id)
+        resource_models = scenario.protocol_model.get_input_and_output_resource_models()
 
         return ScenarioExportPackage(
             zip_version=1,

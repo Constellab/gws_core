@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from requests.models import Response
 
@@ -72,7 +72,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         # Use factory to create the appropriate downloader
         resource_downloader = ResourceDownloader.create(self.link, self.message_dispatcher)
 
-        create_option = params["create_option"]
+        create_option = cast(ResourceDownloaderCreateOption, params["create_option"])
         uncompressed_option = params["uncompress"]
 
         resource_loader_mode: ShareEntityCreateMode

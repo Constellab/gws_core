@@ -7,7 +7,6 @@ from gws_core.scenario.scenario_loader import ScenarioLoader
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.scenario_updater import ScenarioUpdater
-from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
@@ -37,7 +36,7 @@ class TestScenarioUpdater(BaseTestCase):
         scenario_2_model = scenario_2.get_model()
 
         zip_info = ScenarioService.export_scenario(scenario_2_model.id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.NEW_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario_1_model, loader)
@@ -72,7 +71,7 @@ class TestScenarioUpdater(BaseTestCase):
 
         # Export with NEW_ID to avoid ID collisions on insert
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.NEW_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario_model, loader)
@@ -117,7 +116,7 @@ class TestScenarioUpdater(BaseTestCase):
         new_protocol.add_process(RobotCreate, "create")
 
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.NEW_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario_model, loader)
@@ -142,7 +141,7 @@ class TestScenarioUpdater(BaseTestCase):
         new_scenario.add_tag(_make_tag("key2", "value2", propagable=True))
 
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.KEEP_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario.get_model(), loader)
@@ -165,7 +164,7 @@ class TestScenarioUpdater(BaseTestCase):
         new_scenario.add_tag(_make_tag("new_key", "new_value"))
 
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.KEEP_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario.get_model(), loader)
@@ -186,7 +185,7 @@ class TestScenarioUpdater(BaseTestCase):
         new_scenario.add_tag(_make_tag("shared_key", "shared_value", propagable=True))
 
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.KEEP_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         origin_lab_id = "external-lab-123"
@@ -239,7 +238,7 @@ class TestScenarioUpdater(BaseTestCase):
 
         # Export scenario 2 and load it for updating scenario 1
         zip_info = ScenarioService.export_scenario(scenario_2.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.NEW_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario_1.get_model(), loader)
@@ -271,7 +270,7 @@ class TestScenarioUpdater(BaseTestCase):
         new_scenario = ScenarioProxy()
 
         zip_info = ScenarioService.export_scenario(new_scenario.get_model().id)
-        loader = ScenarioLoader(zip_info, mode=ShareEntityCreateMode.KEEP_ID)
+        loader = ScenarioLoader(zip_info)
         loader.load_scenario()
 
         updater = ScenarioUpdater(scenario.get_model(), loader)

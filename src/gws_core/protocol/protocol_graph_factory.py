@@ -129,9 +129,7 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
             )
         elif issubclass(process_type, Protocol):
             # create protocol from dto, not from type
-            return ProcessFactory.create_empty_protocol_model_from_config_dto(
-                process_dto, copy_id=False
-            )
+            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto)
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(process_type)
             raise BadRequestException(
@@ -176,19 +174,17 @@ class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
     """
 
     protocol_config_dto: ProcessConfigDTO
-    copy_ids: bool
 
-    def __init__(self, protocol_config_dto: ProcessConfigDTO, copy_ids: bool):
+    def __init__(self, protocol_config_dto: ProcessConfigDTO):
         # in the config mode, the process and resources types might not exist in the system
         # so we need to create the process from the config and not from the type
         # no need to check the connector compatibility because the process is created from the config
         super().__init__(check_connector_compatiblity=False)
         self.protocol_config_dto = protocol_config_dto
-        self.copy_ids = copy_ids
 
     def create_protocol_model(self) -> ProtocolModel:
         protocol: ProtocolModel = ProcessFactory.create_empty_protocol_model_from_config_dto(
-            self.protocol_config_dto, copy_id=self.copy_ids
+            self.protocol_config_dto
         )
 
         return self._create_protocol_model_from_graph_recur(
@@ -204,11 +200,7 @@ class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
         """Method to instantiate a new process and configure it"""
 
         if process_dto.graph is None:
-            return ProcessFactory.create_task_model_from_config_dto(
-                process_dto, copy_id=self.copy_ids
-            )
+            return ProcessFactory.create_task_model_from_config_dto(process_dto)
         else:
             # create protocol from dto
-            return ProcessFactory.create_empty_protocol_model_from_config_dto(
-                process_dto, copy_id=self.copy_ids
-            )
+            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto)

@@ -1,4 +1,6 @@
 from datetime import timedelta
+from typing import cast
+from unittest import TestCase
 
 from gws_core import (
     ConfigParams,
@@ -11,22 +13,32 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
-from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
+from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_builder import ScenarioBuilder
 from gws_core.scenario.scenario_enums import ScenarioCreationType, ScenarioStatus
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkEntityType, ShareLinkType
+from gws_core.share.shared_dto import (
+    GenerateShareLinkDTO,
+    ShareEntityCreateMode,
+    ShareLinkEntityType,
+    ShareLinkType,
+)
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -40,6 +52,7 @@ from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.test_helper import TestHelper
 from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
+from gws_core.user.current_user_service import CurrentUserService
 
 
 @task_decorator(unique_name="RobotsGeneratorShare")
@@ -60,6 +73,253 @@ class RobotsGeneratorShare(Task):
         return {"set": resource_set}
 
 
+class ShareScenarioTestSetup:
+    """Builds and runs the standard share-scenario test topology (source→move→generate→output),
+    then exports the scenario package so tests can use it directly without any HTTP calls.
+
+    Attributes
+    ----------
+    input_robot_model : ResourceModel
+        The robot resource used as the scenario input.
+    folder : SpaceFolder
+        The folder the scenario is placed in.
+    scenario_model : Scenario
+        The Scenario DB model after the run.
+    protocol_model : ProtocolModel
+        The protocol DB model after the run.
+    tag_key : str
+        Tag key applied to the scenario.
+    tag_value : str
+        Tag value applied to the scenario.
+    """
+
+    initial_input_robot_model: ResourceModel
+    initial_folder: SpaceFolder
+    initial_scenario_model: Scenario
+    initial_protocol_model: ProtocolModel
+
+    initial_tag_key: str
+    initial_tag_value: str
+
+    create_mode: ShareEntityCreateMode
+    _tc: TestCase
+
+    def __init__(
+        self,
+        test_case: TestCase,
+        title: str,
+        tag_key: str,
+        tag_value: str,
+        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.NEW_ID,
+    ) -> None:
+        self._tc = test_case
+        self.initial_tag_key = tag_key
+        self.initial_tag_value = tag_value
+        self.create_mode = create_mode
+
+        self.initial_input_robot_model = TestHelper.save_robot_resource()
+        self.initial_folder = TestHelper.create_default_folder()
+
+        scenario = ScenarioProxy(title=title, folder=self.initial_folder)
+        scenario.add_tag(
+            Tag(
+                tag_key,
+                tag_value,
+                is_propagable=True,
+                origins=TagOrigins(TagOriginType.USER, "test"),
+            )
+        )
+        protocol = scenario.get_protocol()
+        move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
+        generate = protocol.add_process(RobotsGeneratorShare, "generate")
+        protocol.add_resource("source", self.initial_input_robot_model.id, move << "robot")
+        protocol.add_connector(move >> "robot", generate << "robot")
+        protocol.add_output("output", generate >> "set")
+        scenario.run()
+
+        self.initial_scenario_model = scenario.refresh().get_model()
+        self.initial_protocol_model = protocol.refresh().get_model()
+
+        # load the progress bar so if the element are deleted in DB, progress_bar still exist
+        self._tc.assertIsNotNone(self.initial_protocol_model.progress_bar)
+        self._tc.assertIsNotNone(self.get_initial_move_process().progress_bar)
+
+    def get_initial_move_process(self) -> TaskModel:
+        return cast(TaskModel, self.initial_protocol_model.get_process("move"))
+
+    def get_initial_source_process(self) -> TaskModel:
+        return cast(TaskModel, self.initial_protocol_model.get_process("source"))
+
+    def get_initial_generate_process(self) -> TaskModel:
+        return cast(TaskModel, self.initial_protocol_model.get_process("generate"))
+
+    def get_initial_output_process(self) -> TaskModel:
+        return cast(TaskModel, self.initial_protocol_model.get_process("output"))
+
+    def get_initial_source_resource(self) -> ResourceModel:
+        return (
+            self.get_initial_source_process().out_port(InputTask.output_name).get_resource_model()
+        )
+
+    def get_initial_move_resource(self) -> ResourceModel:
+        return self.get_initial_move_process().out_port("robot").get_resource_model()
+
+    def get_initial_resource_set(self) -> ResourceModel:
+        return self.get_initial_generate_process().out_port("set").get_resource_model()
+
+    def _check_id(self, imported_id: str, original_id: str) -> None:
+        """Assert that imported_id equals or differs from original_id depending on create_mode."""
+        if self.create_mode == ShareEntityCreateMode.KEEP_ID:
+            self._tc.assertEqual(imported_id, original_id)
+        else:
+            self._tc.assertNotEqual(imported_id, original_id)
+
+    def assert_imported_scenario(
+        self,
+        new_scenario: Scenario,
+        new_protocol_model: ProtocolModel,
+        new_source: TaskModel,
+        new_move: TaskModel,
+    ) -> None:
+        self._check_id(new_scenario.id, self.initial_scenario_model.id)
+        self._tc.assertEqual(new_scenario.title, self.initial_scenario_model.title)
+        self._tc.assertEqual(new_scenario.folder.id, self.initial_folder.id)
+        self._tc.assertEqual(new_scenario.status, self.initial_scenario_model.status)
+        self._tc.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
+
+        # Check the tags
+        tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, new_scenario.id)
+        self._tc.assertEqual(len(tags.get_tags()), 1)
+        tag = tags.get_tags()[0]
+        self._tc.assertEqual(tag.tag_key, self.initial_tag_key)
+        self._tc.assertEqual(tag.tag_value, self.initial_tag_value)
+        self._tc.assertTrue(tag.is_propagable)
+        origins = tag.get_origins()
+        self._tc.assertEqual(origins.count_origins(), 1)
+        self._tc.assertTrue(origins.has_origin(TagOriginType.USER, "test"))
+
+        # Check the protocol and processes
+        self._assert_imported_protocol(new_protocol_model, new_source, new_move)
+
+        # Check the resources
+        self._assert_imported_resources(new_scenario, new_protocol_model, new_source, new_move)
+
+    def _assert_imported_protocol(
+        self,
+        new_protocol_model: ProtocolModel,
+        new_source: TaskModel,
+        new_move: TaskModel,
+    ) -> None:
+        self._check_id(new_protocol_model.id, self.initial_protocol_model.id)
+        self._tc.assertEqual(len(new_protocol_model.processes), 4)
+        self._tc.assertEqual(len(new_protocol_model.connectors), 3)
+        self._tc.assertEqual(new_protocol_model.status, self.initial_protocol_model.status)
+        self._tc.assertEqual(
+            new_protocol_model.progress_bar.get_elapsed_time(),
+            self.initial_protocol_model.progress_bar.get_elapsed_time(),
+        )
+        self._tc.assertEqual(
+            new_source.process_typing_name,
+            self.get_initial_source_process().process_typing_name,
+        )
+        self._tc.assertEqual(
+            new_move.process_typing_name, self.get_initial_move_process().process_typing_name
+        )
+        self._tc.assertEqual(new_move.status, self.get_initial_move_process().status)
+        self._tc.assertEqual(
+            new_move.progress_bar.get_elapsed_time(),
+            self.get_initial_move_process().progress_bar.get_elapsed_time(),
+        )
+        self._tc.assertEqual(
+            new_protocol_model.get_process("generate").process_typing_name,
+            self.get_initial_generate_process().process_typing_name,
+        )
+        self._tc.assertEqual(
+            new_protocol_model.get_process("output").process_typing_name,
+            self.get_initial_output_process().process_typing_name,
+        )
+
+    def _assert_imported_resources(
+        self,
+        new_scenario: Scenario,
+        new_protocol_model: ProtocolModel,
+        new_source: TaskModel,
+        new_move: TaskModel,
+    ) -> None:
+        # Check the source resource
+        new_source_output = new_source.out_port(InputTask.output_name).get_resource_model()
+        self._tc.assertIsNotNone(new_source_output)
+        self._check_id(new_source_output.id, self.get_initial_source_resource().id)
+        self._tc.assertIsNone(new_source_output.scenario)
+        self._tc.assertEqual(new_source_output.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        self._tc.assertTrue(new_source_output.flagged)
+        self._tc.assertEqual(new_source.source_config_id, new_source_output.id)
+        self._tc.assertEqual(
+            new_source.config.get_value(InputTask.config_name), new_source_output.id
+        )
+
+        new_move_process = new_protocol_model.get_process("move")
+        self._tc.assertEqual(
+            new_move_process.in_port("robot").get_resource_model_id(), new_source_output.id
+        )
+        new_resource_1 = new_move_process.out_port("robot").get_resource_model()
+        initial_resource_1 = self.get_initial_move_resource()
+        self._tc.assertIsNotNone(new_resource_1)
+        self._check_id(new_resource_1.id, initial_resource_1.id)
+        self._tc.assertEqual(new_resource_1.scenario.id, new_scenario.id)
+        self._tc.assertEqual(new_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        self._tc.assertEqual(
+            new_resource_1.task_model.id, new_protocol_model.get_process("move").id
+        )
+        self._tc.assertEqual(new_resource_1.folder.id, new_scenario.folder.id)
+        self._tc.assertFalse(new_resource_1.flagged)
+        self._tc.assertEqual(
+            new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name
+        )
+
+        # Check the resource set
+        initial_resource_set_model = self.get_initial_resource_set()
+        new_generator_process = new_protocol_model.get_process("generate")
+        new_resource_set_model = new_generator_process.out_port("set").get_resource_model()
+        self._tc.assertIsNotNone(new_resource_set_model)
+        self._check_id(new_resource_set_model.id, initial_resource_set_model.id)
+        self._tc.assertTrue(new_resource_set_model.flagged)
+        new_resource_set: ResourceSet = new_resource_set_model.get_resource()
+        self._tc.assertIsInstance(new_resource_set, ResourceSet)
+        self._tc.assertEqual(len(new_resource_set.get_resources()), 2)
+
+        initial_resource_set = cast(ResourceSet, initial_resource_set_model.get_resource())
+
+        new_robot_1_model = ResourceModel.get_by_id_and_check(
+            new_resource_set.get_resource("Robot 1").get_model_id()
+        )
+        self._check_id(
+            new_robot_1_model.id, initial_resource_set.get_resource("Robot 1").get_model_id()
+        )
+        # verify that the robot 1 is the output of the move
+        self._tc.assertEqual(
+            new_robot_1_model.id, new_move.out_port("robot").get_resource_model().id
+        )
+        self._tc.assertEqual(new_robot_1_model.scenario.id, new_scenario.id)
+        self._tc.assertEqual(new_robot_1_model.task_model.id, new_move.get_id())
+        # The first robot should not be associated directly with resource set because it is created before
+        self._tc.assertIsNone(new_robot_1_model.parent_resource_id)
+
+        new_robot_2_model = ResourceModel.get_by_id_and_check(
+            new_resource_set.get_resource("Robot 2").get_model_id()
+        )
+        self._check_id(
+            new_robot_2_model.id, initial_resource_set.get_resource("Robot 2").get_model_id()
+        )
+        self._tc.assertEqual(new_robot_2_model.parent_resource_id, new_resource_set_model.id)
+        self._tc.assertEqual(new_robot_2_model.scenario.id, new_scenario.id)
+        self._tc.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
+
+        self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
+        self._tc.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
+        self._tc.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
+
+
 # test_share_scenario
 class TestShareScenario(BaseTestCase):
     # method to start the uvicorn app only once for all the tests
@@ -77,10 +337,106 @@ class TestShareScenario(BaseTestCase):
         cls.start_uvicorn_app.exit(None, None, None)
 
     def test_share_scenario(self):
+        setup = ShareScenarioTestSetup(
+            self, "Test scenario", "scenario_tag", "scenario_value", ShareEntityCreateMode.NEW_ID
+        )
+
+        share_link = ShareLinkService.generate_share_link(
+            GenerateShareLinkDTO(
+                entity_id=setup.initial_scenario_model.id,
+                entity_type=ShareLinkEntityType.SCENARIO,
+                valid_until=DateHelper.now_utc() + timedelta(days=1),
+            ),
+            ShareLinkType.PUBLIC,
+        )
+
+        new_scenario = ScenarioTransfertService.import_from_lab_sync(
+            ScenarioDownloader.build_config(
+                share_link.get_download_link(), "All", "Force new scenario"
+            )
+        )
+
+        new_protocol_model = new_scenario.protocol_model
+        new_source = cast(TaskModel, new_protocol_model.get_process("source"))
+        new_move = cast(TaskModel, new_protocol_model.get_process("move"))
+        setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
+        self.assert_imported_outputs_only(share_link)
+
+    def assert_imported_outputs_only(self, share_link) -> None:
+        new_scenario_2 = ScenarioTransfertService.import_from_lab_sync(
+            ScenarioDownloader.build_config(
+                share_link.get_download_link(), "Outputs only", "Force new scenario"
+            )
+        )
+
+        new_protocol_2 = new_scenario_2.protocol_model
+
+        # 3 resources should have been created (resource set and 2 robots)
+        self.assertEqual(
+            ResourceModel.select().where(ResourceModel.scenario == new_scenario_2.id).count(), 3
+        )
+        # the input of the generator must have been created because the resource
+        # robot 1 was downloaded because it in in Resource set output
+        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 2)
+
+        # the source task should not be configured as only the output resources are imported
+        new_source_2: TaskModel = new_protocol_2.get_process("source")
+        self.assertIsNone(new_source_2.source_config_id)
+        self.assertIsNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
+
+        new_output_process = new_protocol_2.get_process("output")
+        self.assertIsNotNone(new_output_process.in_port(OutputTask.input_name).get_resource_model())
+
+    def test_skip_if_exists(self):
+        """Test ScenarioBuilder with KEEP_ID: deletes the scenario then rebuilds it from a
+        locally-exported package and zipped resources, without any HTTP calls."""
+        setup = ShareScenarioTestSetup(
+            self,
+            "Test scenario skip if exists",
+            "skip_tag",
+            "skip_value",
+            ShareEntityCreateMode.KEEP_ID,
+        )
+
+        # Export package and zip all resources before deleting the scenario
+        scenario_package = ScenarioService.export_scenario(setup.initial_scenario_model.id)
+        current_user = CurrentUserService.get_and_check_current_user()
+        protocol_graph = ProtocolGraph(scenario_package.protocol.data.graph)
+        zip_paths = []
+        for resource_id in protocol_graph.get_all_resource_ids():
+            zipper = ResourceZipper(current_user)
+            zipper.add_resource_model(resource_id)
+            zipper.close_zip()
+            zip_paths.append(zipper.get_zip_file_path())
+        origin = ExternalLabApiService.get_current_lab_info(current_user)
+
+        # Delete the scenario and input resource so the builder recreates them from scratch
+        ScenarioService.delete_scenario(setup.initial_scenario_model.id)
+        self.assertIsNone(Scenario.get_by_id(setup.initial_scenario_model.id))
+        setup.initial_input_robot_model.delete_instance()
+
+        builder = ScenarioBuilder(
+            scenario_info=scenario_package,
+            resource_zip_paths=zip_paths,
+            origin=origin,
+        )
+        try:
+            new_scenario = builder.build(
+                skip_scenario_tags=False,
+                create_mode=ShareEntityCreateMode.KEEP_ID,
+            )
+        finally:
+            builder.cleanup()
+
+        new_protocol_model = new_scenario.protocol_model
+        new_source = cast(TaskModel, new_protocol_model.get_process("source"))
+        new_move = cast(TaskModel, new_protocol_model.get_process("move"))
+        setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
+
+    def test_send_scenario(self):
         input_robot_model = TestHelper.save_robot_resource()
 
         # Create and run a scenario
-        # Input > Move > RobotsGenerator > Output
         folder = TestHelper.create_default_folder()
         scenario = ScenarioProxy(title="Test scenario", folder=folder)
 
@@ -95,249 +451,21 @@ class TestShareScenario(BaseTestCase):
         protocol = scenario.get_protocol()
 
         move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
-        generate = protocol.add_process(RobotsGeneratorShare, "generate")
 
-        source = protocol.add_resource("source", input_robot_model.id, move << "robot")
-        protocol.add_connector(move >> "robot", generate << "robot")
-        output = protocol.add_output("output", generate >> "set")
+        # Input > Move  > Output
+        protocol.add_resource("source", input_robot_model.id, move << "robot")
+        protocol.add_output("output", move >> "robot")
         scenario.run()
 
-        initial_scenario_model = scenario.refresh().get_model()
-        initial_protocol_model: ProtocolModel = protocol.refresh().get_model()
-        source_process_model = source.refresh().get_model()
-        move_process_model = move.refresh().get_model()
-        generate_process_model = generate.refresh().get_model()
-        output_process_model = output.refresh().get_model()
+        lab_credentials = TestHelper.create_lab_credentials()
 
-        # generate share link
-        share_dto = GenerateShareLinkDTO(
-            entity_id=scenario.get_model().id,
-            entity_type=ShareLinkEntityType.SCENARIO,
-            valid_until=DateHelper.now_utc() + timedelta(days=1),
+        scenario_count = Scenario.select().count()
+
+        scenario = ScenarioTransfertService.export_scenario_to_lab(
+            scenario.get_model().id,
+            SendScenarioToLab.build_config(lab_credentials.name, 1, "None", "Force new scenario"),
         )
 
-        share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
-
-        new_scenario = ScenarioTransfertService.import_from_lab_sync(
-            ScenarioDownloader.build_config(
-                share_link.get_download_link(), "All", "Force new scenario"
-            )
-        )
-
-        self.assertEqual(new_scenario.title, initial_scenario_model.title)
-        self.assertEqual(new_scenario.folder.id, folder.id)
-        self.assertEqual(new_scenario.status, initial_scenario_model.status)
-        self.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
-
-        # Check the tags
-        tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, new_scenario.id)
-        self.assertEqual(len(tags.get_tags()), 1)
-        tag = tags.get_tags()[0]
-        self.assertEqual(tag.tag_key, "scenario_tag")
-        self.assertEqual(tag.tag_value, "scenario_value")
-        self.assertTrue(tag.is_propagable)
-        origins = tag.get_origins()
-        self.assertEqual(origins.count_origins(), 1)
-        self.assertTrue(origins.has_origin(TagOriginType.USER, "test"))
-
-        new_protocol_model = new_scenario.protocol_model
-
-        # Check the protocol
-        self.assertEqual(len(new_protocol_model.processes), 4)
-        self.assertEqual(len(new_protocol_model.connectors), 3)
-        self.assertEqual(new_protocol_model.status, initial_protocol_model.status)
-        self.assertEqual(
-            new_protocol_model.progress_bar.get_elapsed_time(),
-            initial_protocol_model.progress_bar.get_elapsed_time(),
-        )
-
-        # check the processes
-        new_source: TaskModel = new_protocol_model.get_process("source")
-        self.assertEqual(new_source.process_typing_name, source_process_model.process_typing_name)
-
-        new_move = new_protocol_model.get_process("move")
-        self.assertEqual(new_move.process_typing_name, move_process_model.process_typing_name)
-        self.assertEqual(new_move.status, move_process_model.status)
-        self.assertEqual(
-            new_move.progress_bar.get_elapsed_time(),
-            move_process_model.progress_bar.get_elapsed_time(),
-        )
-
-        self.assertEqual(
-            new_protocol_model.get_process("generate").process_typing_name,
-            generate_process_model.process_typing_name,
-        )
-
-        self.assertEqual(
-            new_protocol_model.get_process("output").process_typing_name,
-            output_process_model.process_typing_name,
-        )
-
-        # Check the source resource
-        new_source_output = new_source.out_port(InputTask.output_name).get_resource_model()
-        self.assertIsNotNone(new_source_output)
-        self.assertEqual(new_source_output.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        self.assertNotEqual(new_source_output.id, input_robot_model.id)
-        self.assertTrue(new_source_output.flagged)
-        # check that the source config id and the source config where update with the new resource id
-        self.assertEqual(new_source.source_config_id, new_source_output.id)
-        self.assertEqual(new_source.config.get_value(InputTask.config_name), new_source_output.id)
-
-        # Check the resources
-        new_move_process = new_protocol_model.get_process("move")
-        # input resource has the same id as the output resource of the source
-        self.assertEqual(
-            new_move_process.in_port("robot").get_resource_model_id(), new_source_output.id
-        )
-        # output resource
-        new_resource_1 = new_move_process.out_port("robot").get_resource_model()
-        initial_resource_1 = (
-            initial_protocol_model.get_process("move").out_port("robot").get_resource_model()
-        )
-        self.assertIsNotNone(new_resource_1)
-        self.assertEqual(new_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        self.assertEqual(new_resource_1.task_model.id, new_protocol_model.get_process("move").id)
-        self.assertEqual(new_resource_1.scenario.id, new_scenario.id)
-        self.assertEqual(new_resource_1.folder.id, new_scenario.folder.id)
-        self.assertFalse(new_resource_1.flagged)
-        self.assertNotEqual(new_resource_1.id, initial_resource_1.id)
-        self.assertEqual(
-            new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name
-        )
-
-        # Check the resource set
-        new_generator_process = new_protocol_model.get_process("generate")
-        new_resource_set = new_generator_process.out_port("set").get_resource_model()
-        self.assertIsNotNone(new_resource_set)
-        self.assertTrue(new_resource_set.flagged)
-        resource_set: ResourceSet = new_resource_set.get_resource()
-        self.assertIsInstance(resource_set, ResourceSet)
-        self.assertEqual(len(resource_set.get_resources()), 2)
-
-        # Check the robots in the resource set
-        new_robot_1_model = ResourceModel.get_by_id_and_check(
-            resource_set.get_resource("Robot 1").get_model_id()
-        )
-
-        # the robot must the same as the robot output of the move task
-        self.assertEqual(new_robot_1_model.id, new_move.out_port("robot").get_resource_model().id)
-        self.assertEqual(new_robot_1_model.scenario.id, new_scenario.id)
-        self.assertEqual(new_robot_1_model.task_model.id, new_move.get_id())
-        # The first robot should not be associated directly with resource set because it is created before
-        self.assertIsNone(new_robot_1_model.parent_resource_id)
-
-        # The second robot should be a child of the resource set
-        new_robot_2_model = ResourceModel.get_by_id_and_check(
-            resource_set.get_resource("Robot 2").get_model_id()
-        )
-        self.assertEqual(new_robot_2_model.parent_resource_id, new_resource_set.id)
-        self.assertEqual(new_robot_2_model.scenario.id, new_scenario.id)
-        self.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
-
-        # Check that the task input model where created
-        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
-
-        # Check taht the ShareScenario was created
-        self.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
-        self.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
-
-        ######################  Re-run the share without output only ######################
-        new_scenario_2 = ScenarioTransfertService.import_from_lab_sync(
-            ScenarioDownloader.build_config(
-                share_link.get_download_link(), "Outputs only", "Force new scenario"
-            )
-        )
-
-        new_protocol_2 = new_scenario_2.protocol_model
-
-        # 3 resources should have been created (resource set and 2 robots)
-        self.assertEqual(
-            ResourceModel.select().where(ResourceModel.scenario == new_scenario_2.id).count(), 3
-        )
-
-        # Check that the task input model where created
-        self.assertNotEqual(new_scenario_2.id, new_scenario.id)
-        # the input of the generator must have been created because the resource
-        # robot 1 was downloaded because it in in Resource set output
-        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 2)
-
-        # the source task should not be configured as only the output resources are imported
-        new_source_2: TaskModel = new_protocol_2.get_process("source")
-        self.assertIsNone(new_source_2.source_config_id)
-        self.assertIsNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
-
-        # the output resource should be imported
-        new_output_process = new_protocol_2.get_process("output")
-        new_output_resource = new_output_process.in_port(OutputTask.input_name).get_resource_model()
-        self.assertIsNotNone(new_output_resource)
-
-    # def test_update_scenario_validated_rejected(self):
-    #     """Test that updating a validated scenario raises an error."""
-    #     input_robot_model = TestHelper.save_robot_resource()
-
-    #     folder = TestHelper.create_default_folder()
-    #     scenario = ScenarioProxy(title="Test scenario validated", folder=folder)
-    #     protocol = scenario.get_protocol()
-    #     move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
-    #     protocol.add_resource("source", input_robot_model.id, move << "robot")
-    #     protocol.add_output("output", move >> "robot")
-    #     scenario.run()
-
-    #     initial_scenario_model = scenario.refresh().get_model()
-
-    #     # Validate the original scenario
-    #     initial_scenario_model.validate()
-    #     initial_scenario_model.save()
-
-    #     # Generate share link
-    #     share_dto = GenerateShareLinkDTO(
-    #         entity_id=initial_scenario_model.id,
-    #         entity_type=ShareLinkEntityType.SCENARIO,
-    #         valid_until=DateHelper.now_utc() + timedelta(days=1),
-    #     )
-    #     share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
-
-    #     # Try to update — should fail because scenario is validated
-    #     with self.assertRaises(BadRequestException):
-    #         ScenarioTransfertService.import_from_lab_sync(
-    #             ScenarioDownloader.build_config(
-    #                 share_link.get_download_link(), "All", "Update if exists"
-    #             )
-    #         )
-
-    # def test_send_scenario(self):
-    #     input_robot_model = TestHelper.save_robot_resource()
-
-    #     # Create and run a scenario
-    #     folder = TestHelper.create_default_folder()
-    #     scenario = ScenarioProxy(title="Test scenario", folder=folder)
-
-    #     scenario.add_tag(
-    #         Tag(
-    #             "scenario_tag",
-    #             "scenario_value",
-    #             is_propagable=True,
-    #             origins=TagOrigins(TagOriginType.USER, "test"),
-    #         )
-    #     )
-    #     protocol = scenario.get_protocol()
-
-    #     move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
-
-    #     # Input > Move  > Output
-    #     protocol.add_resource("source", input_robot_model.id, move << "robot")
-    #     protocol.add_output("output", move >> "robot")
-    #     scenario.run()
-
-    #     lab_credentials = TestHelper.create_lab_credentials()
-
-    #     scenario_count = Scenario.select().count()
-
-    #     scenario = ScenarioTransfertService.export_scenario_to_lab(
-    #         scenario.get_model().id,
-    #         SendScenarioToLab.build_config(lab_credentials.name, 1, "None", "Force new scenario"),
-    #     )
-
-    #     self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
-    #     # there should 3 more scenario, the send, the import scenario and the new copied scenario
-    #     self.assertEqual(Scenario.select().count(), scenario_count + 3)
+        self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
+        # there should 3 more scenario, the send, the import scenario and the new copied scenario
+        self.assertEqual(Scenario.select().count(), scenario_count + 3)

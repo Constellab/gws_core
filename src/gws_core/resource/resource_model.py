@@ -249,12 +249,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceModel.select().where(ResourceModel.scenario.in_(scenario_ids))
 
     @classmethod
-    def get_root_resources_by_scenario(cls, scenario_id: str) -> ModelSelect:
-        return ResourceModel.select().where(
-            (ResourceModel.scenario == scenario_id) & (ResourceModel.parent_resource_id.is_null())
-        )
-
-    @classmethod
     def get_by_task_model(cls, task_model_id: str) -> ModelSelect:
         return ResourceModel.select().where(ResourceModel.task_model == task_model_id)
 
@@ -513,7 +507,14 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         flagged: bool | None = None,
     ) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it"""
-        # FIX is flagged and export ResourceOrigin
+        # Handle specific case of ResourceSet, it saves all the sub-resources
+        new_children_resources: list[ResourceModel] = []
+        if isinstance(resource, ResourceListBase):
+            new_children_resources = resource.save_new_children_resources(
+                origin, scenario, task_model, port_name
+            )
+
+        # Save the main resource after because the save_new_children_resources fills the Rfield
         resource_model = cls.from_resource(
             resource,
             origin=origin,
@@ -522,6 +523,11 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             port_name=port_name,
             flagged=flagged,
         ).save_full()
+
+        # Update the parent of the children resources to this resource
+        if isinstance(resource, ResourceListBase):
+            for child_resource in new_children_resources:
+                child_resource.set_parent_and_save(resource_model.id)
 
         if resource.tags and isinstance(resource.tags, TagList):
             # Add tags, use current user origin as default origin

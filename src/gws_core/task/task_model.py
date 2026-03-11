@@ -48,9 +48,11 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id: str = ForeignKeyField(ResourceModel, null=True, index=True, lazy_load=False)
+    source_config_id: str | None = ForeignKeyField(
+        ResourceModel, null=True, index=True, lazy_load=False
+    )
 
-    community_agent_version_id: str = CharField(null=True, max_length=36, default=None)
+    community_agent_version_id: str | None = CharField(null=True, max_length=36, default=None)
 
     community_agent_version_modified: bool = BooleanField(default=False)
 
@@ -91,7 +93,7 @@ class TaskModel(ProcessModel):
         if self.is_archived == archive:
             return self
 
-        for resource in self.resources:
+        for resource in self.get_generated_resources():
             resource.archive(archive)
 
         self.is_archived = archive
@@ -114,8 +116,7 @@ class TaskModel(ProcessModel):
 
         return process
 
-    @property
-    def resources(self) -> list[ResourceModel]:
+    def get_generated_resources(self) -> list[ResourceModel]:
         if not self.is_saved():
             return []
 
@@ -278,27 +279,15 @@ class TaskModel(ProcessModel):
         """Save the resource"""
         self._check_resource_before_save(resource, port_name)
 
-        # Handle specific case of ResourceSet, it saves all the sub
-        new_children_resources: list[ResourceModel] = []
-        if isinstance(resource, ResourceListBase):
-            new_children_resources = self._save_resource_list_children(resource, port_name)
-
         # create and save the resource model from the resource
         # Save the main resource after because the _save_resource_list_children fills the Rfield
-        resource_model = ResourceModel.save_from_resource(
+        return ResourceModel.save_from_resource(
             resource,
             origin=ResourceOrigin.GENERATED,
             scenario=self.scenario,
             task_model=self,
             port_name=port_name,
         )
-
-        # update the parent of new children resource
-        if isinstance(resource, ResourceListBase):
-            for child_resource in new_children_resources:
-                child_resource.set_parent_and_save(resource_model.id)
-
-        return resource_model
 
     def _check_resource_before_save(self, resource: Resource, port_name: str) -> None:
         # check the resource r field before saving
@@ -322,35 +311,28 @@ class TaskModel(ProcessModel):
         resource.tags.add_tags(self._get_input_resource_tags())
         resource.tags.add_tags(self._get_scenario_tags())
 
-    def _save_resource_list_children(
-        self, resource_list: ResourceListBase, port_name: str
-    ) -> list[ResourceModel]:
-        """Specific management to save resources of a resource set, return the new created resources"""
-
-        for resource in resource_list.get_resources_as_set():
-            # for constant resource, only check if it was set as input
-            if resource_list.__resource_is_constant__(resource):
-                # case when the resource is a constant and we don't create a new resource
-                # if the resource is not listed in task input, error
-                # Accept the resource if it is a sub resource of a input resource set
-                resource_model_id = resource.get_model_id()
-                if resource_model_id and not self.inputs.has_resource_model(
-                    resource_model_id, include_sub_resouces=True
-                ):
-                    raise BadRequestException(
-                        GWSException.INVALID_SUB_RESOURCE.value,
-                        unique_code=GWSException.INVALID_SUB_RESOURCE.name,
-                        detail_args={
-                            "port_name": port_name,
-                            "sub_resource": resource.name or resource.uid,
-                        },
-                    )
-            else:
-                self._check_resource_before_save(resource, port_name)
-
-        return resource_list.save_new_children_resources(
-            ResourceOrigin.GENERATED, self.scenario, self, port_name
-        )
+        # Special check for the resource with children
+        if isinstance(resource, ResourceListBase):
+            for child in resource.get_resources_as_set():
+                # for constant resource, only check if it was set as input
+                if resource.__resource_is_constant__(child):
+                    # case when the resource is a constant and we don't create a new resource
+                    # if the resource is not listed in task input, error
+                    # Accept the resource if it is a sub resource of a input resource set
+                    resource_model_id = child.get_model_id()
+                    if resource_model_id and not self.inputs.has_resource_model(
+                        resource_model_id, include_sub_resouces=True
+                    ):
+                        raise BadRequestException(
+                            GWSException.INVALID_SUB_RESOURCE.value,
+                            unique_code=GWSException.INVALID_SUB_RESOURCE.name,
+                            detail_args={
+                                "port_name": port_name,
+                                "sub_resource": child.name or child.uid,
+                            },
+                        )
+                else:
+                    self._check_resource_before_save(child, port_name)
 
     def _check_resource_r_fields(self, resource: Resource, port_name: str):
         """check all ResourceRField are resource that are input of the task"""
@@ -438,15 +420,7 @@ class TaskModel(ProcessModel):
         """
 
         if self.is_input_task():
-            resource_model_id = InputTask.get_resource_id_from_config(self.config.get_values())
-
-            if resource_model_id is not None:
-                resource = ResourceModel.get_by_id(resource_model_id)
-
-                if resource is not None:
-                    self.source_config_id = resource.id
-            else:
-                self.source_config_id = None
+            self.source_config_id = InputTask.get_resource_id_from_config(self.config.get_values())
 
     ################################# OTHER #################################
 

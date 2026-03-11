@@ -69,7 +69,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             self.data = {}
 
     @property
-    def pid(self) -> int:
+    def pid(self) -> int | None:
         if "pid" not in self.data:
             return None
         return self.data["pid"]
@@ -92,8 +92,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return self._protocol
 
-    @property
-    def task_models(self) -> list[TaskModel]:
+    def get_task_models(self) -> list[TaskModel]:
         """
         Returns child process models.
         """
@@ -104,8 +103,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return list(TaskModel.select().where(TaskModel.scenario == self))
 
-    @property
-    def resources(self) -> list[ResourceModel]:
+    def get_generated_resources(self) -> list[ResourceModel]:
         """
         Returns child resources.
         """

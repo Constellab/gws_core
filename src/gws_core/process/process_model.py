@@ -12,6 +12,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecs
+from gws_core.lab.lab_model import LabModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
@@ -19,9 +20,9 @@ from gws_core.process.process_dto import ProcessDTO
 from gws_core.process_run_stat.process_run_stat_model import ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
-from gws_core.lab.lab_model import LabModel
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -323,6 +324,19 @@ class ProcessModel(ModelWithUser):
         :rtype: OutPort
         """
         return self.outputs.get_port(port_name)
+
+    ################################# RESOURCES  #########################
+    def get_input_and_output_resource_models(self) -> set[ResourceModel]:
+        """Return all the resource models used as input or output of the task"""
+
+        ports = list(self.inputs.ports.values()) + list(self.outputs.ports.values())
+        resource_models = set()
+        for port in ports:
+            resource_model = port.get_resource_model()
+            if resource_model is not None:
+                resource_models.add(resource_model)
+
+        return resource_models
 
     ################################# RUN #########################
 
@@ -692,7 +706,9 @@ class ProcessModel(ModelWithUser):
         self.save()
         self.progress_bar.reset()
 
-    def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str | None = None):
+    def mark_as_error_and_parent(
+        self, process_error: ProcessRunException, context: str | None = None
+    ):
         self.mark_as_error(
             ProcessErrorInfo(
                 detail=process_error.get_error_message(context),

@@ -129,7 +129,7 @@ class ProcessFactory:
 
     @classmethod
     def create_task_model_from_config_dto(
-        cls, task_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, task_config_dto: ProcessConfigDTO
     ) -> TaskModel:
         """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
         the process type is not used. It can create a task where the type does not exist in the system.
@@ -141,7 +141,7 @@ class ProcessFactory:
         """
         task_model: TaskModel = TaskModel()
         return cast(
-            TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id)
+            TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto)
         )
 
     ############################################### PROTOCOL FROM TYPE #################################################
@@ -253,7 +253,7 @@ class ProcessFactory:
 
     @classmethod
     def create_empty_protocol_model_from_config_dto(
-        cls, protocol_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, protocol_config_dto: ProcessConfigDTO
     ) -> ProtocolModel:
         """Create a protocol model from a ProcessConfigDTO. The protocol is fully created from the dto and
         the process type is not used. It can create a protocol where the type does not exist in the system.
@@ -266,7 +266,7 @@ class ProcessFactory:
         """
         protocol_model: ProtocolModel = cast(
             ProtocolModel,
-            cls._init_process_model_from_config_dto(ProtocolModel(), protocol_config_dto, copy_id),
+            cls._init_process_model_from_config_dto(ProtocolModel(), protocol_config_dto),
         )
 
         # force the interface and outerface from DTO
@@ -344,9 +344,9 @@ class ProcessFactory:
 
     @classmethod
     def _init_process_model_from_config_dto(
-        cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO
     ) -> ProcessModel:
-        if copy_id and process_config_dto.id is not None:
+        if process_config_dto.id is not None:
             process_model.id = process_config_dto.id
         process_model.process_typing_name = process_config_dto.process_typing_name
         process_model.set_inputs_from_dto(process_config_dto.inputs)
