@@ -302,6 +302,7 @@ class ShareScenarioTestSetup:
         )
         self._tc.assertEqual(new_robot_1_model.scenario.id, new_scenario.id)
         self._tc.assertEqual(new_robot_1_model.task_model.id, new_move.get_id())
+        self._tc.assertEqual(new_robot_1_model.generated_by_port_name, "robot")
         # The first robot should not be associated directly with resource set because it is created before
         self._tc.assertIsNone(new_robot_1_model.parent_resource_id)
 
@@ -314,6 +315,7 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(new_robot_2_model.parent_resource_id, new_resource_set_model.id)
         self._tc.assertEqual(new_robot_2_model.scenario.id, new_scenario.id)
         self._tc.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
+        self._tc.assertEqual(new_robot_2_model.generated_by_port_name, "set")
 
         self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
         self._tc.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
@@ -375,14 +377,14 @@ class TestShareScenario(BaseTestCase):
         self.assertEqual(
             ResourceModel.select().where(ResourceModel.scenario == new_scenario_2.id).count(), 3
         )
-        # the input of the generator must have been created because the resource
-        # robot 1 was downloaded because it in in Resource set output
-        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 2)
+        # All TaskInputModel should have been created because even if the source resource is not imported,
+        #  the input task config should still be created with a Shell resource
+        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 3)
 
-        # the source task should not be configured as only the output resources are imported
+        # the source task should be configured event if the source resource is not imported
         new_source_2: TaskModel = new_protocol_2.get_process("source")
-        self.assertIsNone(new_source_2.source_config_id)
-        self.assertIsNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
+        self.assertIsNotNone(new_source_2.source_config_id)
+        self.assertIsNotNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
 
         new_output_process = new_protocol_2.get_process("output")
         self.assertIsNotNone(new_output_process.in_port(OutputTask.input_name).get_resource_model())

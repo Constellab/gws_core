@@ -74,7 +74,6 @@ class ScenarioBuilder:
     _resource_models: dict[str, ResourceModel]
     _downloaded_resources: dict[str, ImportedResource]
     _root_resource_old_ids: set[str]
-    _is_update_mode: bool
 
     def __init__(
         self,
@@ -94,7 +93,6 @@ class ScenarioBuilder:
         self._resource_models = {}
         self._downloaded_resources = {}
         self._root_resource_old_ids = set()
-        self._is_update_mode = False
 
     # ------------------------------------------------------------------
     # Public API
@@ -115,16 +113,11 @@ class ScenarioBuilder:
         :param existing_scenario: Provide only in update mode.
         :return: The created or updated Scenario.
         """
-        self._is_update_mode = existing_scenario is not None
-
         self._load_resources(create_mode)
 
         scenario_loader = self._load_scenario()
 
-        if self._is_update_mode and existing_scenario:
-            raise Exception("Update mode is not yet implemented")
-        else:
-            return self._build_scenario(scenario_loader, skip_scenario_tags, create_mode)
+        return self._build_scenario(scenario_loader, skip_scenario_tags, create_mode)
 
     def cleanup(self) -> None:
         """Delete temporary resource folders created during zip extraction. Always call this."""
@@ -207,6 +200,11 @@ class ScenarioBuilder:
                 resource_model.save_full()
                 self._resource_models[resource_model.id] = resource_model
 
+        # Save all the TaskInputModel
+        for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
+            if isinstance(process_model, TaskModel):
+                process_model.save_input_resources()
+
         # Track old IDs of root-level resources to distinguish owned children
         # from resources referenced inside a ResourceListBase.
         self._root_resource_old_ids = set(metadata_resource_models.keys())
@@ -218,7 +216,7 @@ class ScenarioBuilder:
                 self._resource_models[old_id] = resource_model
 
         # Fill downloaded content into resource shells and create child models
-        self._fill_resources_content(protocol_model)
+        self._fill_resources_content()
 
         # Create the shared entity info
         self._log_info("Storing the scenario origin info")
@@ -241,7 +239,7 @@ class ScenarioBuilder:
         id_mapper = ScenarioIdMapper()
         id_mapper.apply_new_ids(protocol_model, list(metadata_resource_models.values()), scenario)
 
-    def _fill_resources_content(self, protocol_model: ProtocolModel) -> None:
+    def _fill_resources_content(self) -> None:
         """Fill downloaded content into pre-created resource shells,
         create child resource models, and create TaskInputModel records."""
         self._log_info("Saving the resources")
@@ -252,36 +250,11 @@ class ScenarioBuilder:
             scenario = shell.scenario if shell else None
             self._save_resource_and_children(old_resource_id, task_model, scenario)
 
-        # Post-fill: update InputTask configs and create TaskInputModel records
-        for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
-            if process_model.is_input_task():
-                resource_model_id = process_model.out_port(
-                    InputTask.output_name
-                ).get_resource_model_id()
-                resource_model = (
-                    ResourceModel.get_by_id(resource_model_id) if resource_model_id else None
-                )
-                if resource_model is None or resource_model.content_is_deleted:
-                    process_model.set_config_value(InputTask.config_name, None)
-                    process_model.out_port(InputTask.output_name).set_resource_model(None)
-                    process_model.save()
-
-            elif isinstance(process_model, TaskModel):
-                has_content = all(
-                    rm is None or not rm.content_is_deleted
-                    for rm in (
-                        port.get_resource_model() for port in process_model.inputs.ports.values()
-                    )
-                )
-                if has_content:
-                    process_model.save_input_resources()
-
     def _save_resource_and_children(
         self,
         old_resource_id: str | None,
         task_model: TaskModel | None = None,
         scenario: Scenario | None = None,
-        task_port_name: str | None = None,
     ) -> ResourceModel | None:
         if not old_resource_id:
             return None
@@ -296,10 +269,6 @@ class ScenarioBuilder:
 
         # If the resource model already exists with content, return it as-is
         if not existing_model.content_is_deleted:
-            if self._is_update_mode and task_model is not None:
-                existing_model.task_model = task_model
-                existing_model.generated_by_port_name = task_port_name
-                existing_model.save()
             return existing_model
 
         downloaded_resource = self._downloaded_resources.get(old_resource_id)
@@ -314,7 +283,11 @@ class ScenarioBuilder:
             new_children_resources: dict[str, Resource] = {}
             for child_old_id, child_resource in downloaded_resource.children.items():
                 child_model = self._save_resource(
-                    child_old_id, child_resource, task_model, scenario, task_port_name
+                    child_old_id,
+                    child_resource,
+                    task_model,
+                    scenario,
+                    port_name=existing_model.generated_by_port_name,
                 )
                 new_children_resources[child_resource.uid] = child_model.get_resource()
                 if child_old_id not in self._root_resource_old_ids:
@@ -324,8 +297,10 @@ class ScenarioBuilder:
         resource_model = self._save_resource(
             old_resource_id,
             downloaded_resource.resource,
+            task_model,
+            scenario,
+            existing_model.generated_by_port_name,
         )
-        self._resource_models[old_resource_id] = resource_model
 
         for child_model in children_resource_models:
             child_model.set_parent_and_save(resource_model.id)
@@ -338,7 +313,7 @@ class ScenarioBuilder:
         resource: Resource,
         task_model: TaskModel | None = None,
         scenario: Scenario | None = None,
-        task_port_name: str | None = None,
+        port_name: str | None = None,
         flagged: bool = False,
     ) -> ResourceModel:
         existing_model = self._resource_models.get(old_resource_id)
@@ -355,7 +330,7 @@ class ScenarioBuilder:
                     origin=ResourceOrigin.IMPORTED_FROM_LAB,
                     scenario=scenario,
                     task_model=task_model,
-                    port_name=task_port_name,
+                    port_name=port_name,
                     flagged=flagged,
                 )
         except Exception as err:

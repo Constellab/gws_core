@@ -140,27 +140,6 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.save()
 
     @GwsCoreDbManager.transaction()
-    def fill_content_from_resource(self, resource: Resource) -> ResourceModel:
-        """Fill an existing content-deleted ResourceModel with actual resource content.
-
-        This updates the model with data, kv_store, and fs_node from the resource
-        and sets content_is_deleted to False.
-
-        :param resource: the resource to fill the model with
-        :return: the updated resource model
-        """
-        if isinstance(resource, FSNode):
-            self.init_fs_node_model(resource)
-
-        self._receive_fields_from_resource(resource)
-        self.content_is_deleted = False
-
-        # set the resource model id in the resource
-        resource.__set_model_id__(self.id)
-
-        return self.save_full()
-
-    @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> ResourceModel:
         """
         Archive the process
@@ -538,6 +517,30 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
             entity_tags.add_tags(resource.tags.get_tags())
         return resource_model
+
+    @GwsCoreDbManager.transaction()
+    def fill_content_from_resource(
+        self,
+        resource: Resource,
+    ) -> ResourceModel:
+        """Fill an existing content-deleted ResourceModel with actual resource content.
+
+        This updates the model with data, kv_store, and fs_node from the resource
+        and sets content_is_deleted to False.
+
+        :param resource: the resource to fill the model with
+        :return: the updated resource model
+        """
+        if isinstance(resource, FSNode):
+            self.init_fs_node_model(resource)
+
+        self._receive_fields_from_resource(resource)
+        self.content_is_deleted = False
+
+        # set the resource model id in the resource
+        resource.__set_model_id__(self.id)
+
+        return self.save_full()
 
     def set_resource_typing_name(self, typing_name: str) -> None:
         typing: Typing = TypingManager.get_typing_from_name_and_check(typing_name)
