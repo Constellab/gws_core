@@ -37,6 +37,12 @@ class ResourceModelDTO(ModelWithUserDTO):
     is_application: bool
 
 
+class ResourceModelExportDTO(ResourceModelDTO):
+    parent_resource_id: str | None = None
+    generated_by_port_name: str | None = None
+    task_model_id: str | None = None
+
+
 class ResourceSimpleDTO(BaseModelDTO):
     id: str
     name: str

@@ -7,7 +7,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
+from gws_core.scenario.scenario_zipper import ScenarioExportDTO, ScenarioExportPackage
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -555,13 +555,13 @@ class ScenarioService:
     ################################### EXPORT / IMPORT ##############################
 
     @classmethod
-    def export_scenario(cls, scenario_id: str) -> ZipScenarioInfo:
+    def export_scenario(cls, scenario_id: str) -> ScenarioExportPackage:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
         scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario_id)
         tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
 
-        experimeny_zip = ZipScenario(
+        experimeny_zip = ScenarioExportDTO(
             id=scenario.id,
             title=scenario.title,
             description=scenario.description,
@@ -571,8 +571,13 @@ class ScenarioService:
             tags=tags_dtos,
         )
 
-        return ZipScenarioInfo(
+        resource_models = ResourceModel.get_root_resources_by_scenario(scenario.id)
+
+        return ScenarioExportPackage(
             zip_version=1,
             scenario=experimeny_zip,
             protocol=scenario.export_protocol(),
+            root_resource_models=[
+                resource_model.to_full_dto() for resource_model in resource_models
+            ],
         )

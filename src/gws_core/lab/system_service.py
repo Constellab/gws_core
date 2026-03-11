@@ -15,11 +15,17 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.lab_model import LabModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabStartLogFileObject, LabStatusDTO, LabSystemConfig, LabSystemInfoDTO
+from gws_core.lab.system_dto import (
+    LabStartLogFileObject,
+    LabStatusDTO,
+    LabSystemConfig,
+    LabSystemInfoDTO,
+)
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
@@ -37,7 +43,6 @@ from ..core.utils.settings import Settings
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
 from ..process.process_service import ProcessService
-from ..scenario.queue_service import QueueService
 from ..user.current_user_service import AuthenticateUser, CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService

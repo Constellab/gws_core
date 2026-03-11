@@ -8,7 +8,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.lab.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
-from gws_core.scenario.scenario_zipper import ZipScenarioInfo
+from gws_core.scenario.scenario_zipper import ScenarioExportPackage
 from gws_core.user.user_dto import UserDTO
 
 
@@ -81,7 +81,7 @@ class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
 
 
 class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
-    entity_object: ZipScenarioInfo
+    entity_object: ScenarioExportPackage
     resource_route: str
     token: str
     origin: ExternalLabWithUserInfo

@@ -199,6 +199,12 @@ class Task(Process):
         return self.__task_id__
 
     @final
+    def get_message_dispatcher(self) -> MessageDispatcher:
+        if self.message_dispatcher is None:
+            raise BadRequestException("The message dispatcher is not set for the task")
+        return self.message_dispatcher
+
+    @final
     @classmethod
     def get_input_specs(cls) -> InputSpecs:
         return cls.input_specs

@@ -20,6 +20,7 @@ from gws_core.impl.robot.robot_service import RobotService
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.lab_model import LabModel
 from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.scenario.scenario_proxy import ScenarioProxy
@@ -97,6 +98,19 @@ class TestScenario(BaseTestCase):
             ResourceModel.get_by_scenario(scenario.id).count(), RobotSimpleTravel.resources_count
         )
         self.assertIsNone(scenario.pid)
+
+        # Check that all processes were run and have run_by and run_by_lab set
+        current_lab = LabModel.get_or_create_current_lab()
+        for task_model in scenario.task_models:
+            self.assertEqual(task_model.status, ProcessStatus.SUCCESS)
+            self.assertEqual(task_model.run_by.id, TestHelper.user.id)
+            self.assertEqual(task_model.run_by_lab.id, current_lab.id)
+
+        # Also check the protocol model itself
+        protocol_model = scenario.protocol_model
+        self.assertEqual(protocol_model.status, ProcessStatus.SUCCESS)
+        self.assertEqual(protocol_model.run_by.id, TestHelper.user.id)
+        self.assertEqual(protocol_model.run_by_lab.id, current_lab.id)
 
         # refresh scenario
         scenario = Scenario.get_by_id_and_check(scenario.id)

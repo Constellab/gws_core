@@ -20,7 +20,7 @@ from gws_core.user.user import User
 from .resource_model import ResourceModel
 
 
-class ZipResource(BaseModelDTO):
+class ResourceExportDTO(BaseModelDTO):
     id: str
     name: str
     resource_typing_name: str
@@ -35,12 +35,12 @@ class ZipResource(BaseModelDTO):
     fs_node_name: str | None
 
 
-class ZipResourceInfo(BaseModelDTO):
+class ResourceExportPackage(BaseModelDTO):
     """Content of the info.json file in the zip file when a resource is zipped"""
 
     zip_version: int
-    resource: ZipResource | None
-    children_resources: list[ZipResource]
+    resource: ResourceExportDTO | None
+    children_resources: list[ResourceExportDTO]
     origin: ExternalLabWithUserInfo
 
 
@@ -57,7 +57,7 @@ class ResourceZipper:
 
     zip: ZipCompress
 
-    resource_info: ZipResourceInfo
+    resource_info: ResourceExportPackage
 
     shared_by: User
 
@@ -65,7 +65,7 @@ class ResourceZipper:
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
         self.zip = ZipCompress(self.get_zip_file_path())
-        self.resource_info = ZipResourceInfo(
+        self.resource_info = ResourceExportPackage(
             zip_version=1,
             resource=None,
             children_resources=[],
@@ -83,7 +83,7 @@ class ResourceZipper:
         resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_id)
         tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
 
-        resource_zip = ZipResource(
+        resource_zip = ResourceExportDTO(
             id=resource_model.id,
             name=resource_model.name,
             resource_typing_name=resource_model.resource_typing_name,

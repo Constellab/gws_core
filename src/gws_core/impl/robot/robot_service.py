@@ -1,6 +1,6 @@
 from ...process.process_factory import ProcessFactory
 from ...protocol.protocol_model import ProtocolModel
-from ...scenario.queue_service import QueueService
+from ...scenario.queue.queue_service import QueueService
 from ...scenario.scenario_service import ScenarioService
 from .robot_protocol import RobotSimpleTravel, RobotWorldTravelProto
 

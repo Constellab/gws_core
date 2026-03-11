@@ -18,13 +18,13 @@ from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.tag.tag_helper import TagHelper
 
-from .resource_zipper import ResourceZipper, ZipResource, ZipResourceInfo
+from .resource_zipper import ResourceExportDTO, ResourceExportPackage, ResourceZipper
 
 
 class ResourceLoader:
     """Class to load a resource from a folder"""
 
-    info_json: ZipResourceInfo | None
+    info_json: ResourceExportPackage | None
 
     _resource_folder: str
 
@@ -86,7 +86,7 @@ class ResourceLoader:
         for zip_resource in self._get_all_zip_resources():
             TypingManager.check_typing_name_compatibility(zip_resource.resource_typing_name)
 
-    def _load_resource(self, zip_resource: ZipResource) -> Resource:
+    def _load_resource(self, zip_resource: ResourceExportDTO) -> Resource:
         # create the kvstore
         kv_store: KVStore | None = None
         if zip_resource.kvstore_dir_name is not None:
@@ -144,7 +144,7 @@ class ResourceLoader:
 
         return resource
 
-    def _load_info_json(self) -> ZipResourceInfo:
+    def _load_info_json(self) -> ResourceExportPackage:
         if self.info_json is not None:
             return self.info_json
 
@@ -173,7 +173,7 @@ class ResourceLoader:
                 f"The children_resources value in {info_json_path} file is invalid, must be a list"
             )
 
-        self.info_json = ZipResourceInfo.from_json(info_json)
+        self.info_json = ResourceExportPackage.from_json(info_json)
 
         return self.info_json
 
@@ -206,13 +206,13 @@ class ResourceLoader:
     def get_main_resource_origin_id(self) -> str:
         return self._load_info_json().resource.id
 
-    def get_main_resource(self) -> ZipResource:
+    def get_main_resource(self) -> ResourceExportDTO:
         return self._load_info_json().resource
 
-    def _get_children_zip_resources(self) -> list[ZipResource]:
+    def _get_children_zip_resources(self) -> list[ResourceExportDTO]:
         return self._load_info_json().children_resources
 
-    def _get_all_zip_resources(self) -> list[ZipResource]:
+    def _get_all_zip_resources(self) -> list[ResourceExportDTO]:
         return [self.get_main_resource()] + self._get_children_zip_resources()
 
     def get_all_generated_resources(self) -> list[Resource]:

@@ -218,6 +218,8 @@ class Settings:
     @classmethod
     def get_community_api_url_and_check(cls) -> str:
         """Get the community API URL and check if it's set. Raise an error if it's not set."""
+        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        # return "https://api.constellab.community"
         url = cls.get_community_api_url()
         if not url:
             raise ValueError("Environment variable 'COMMUNITY_API_URL' is not set")

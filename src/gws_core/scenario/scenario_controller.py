@@ -7,11 +7,11 @@ from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
 
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
-from .queue_service import QueueService
 from .scenario_dto import (
     RunningScenarioInfoDTO,
     ScenarioCountByTitleResultDTO,

@@ -524,9 +524,9 @@ from .resource.view.viewer import Viewer as Viewer
 from .resource.view_config.view_config import ViewConfig as ViewConfig
 
 # Scenario
-from .scenario.queue import Job as Job
-from .scenario.queue import Queue as Queue
-from .scenario.queue_service import QueueService as QueueService
+from .scenario.queue.queue import Job as Job
+from .scenario.queue.queue import Queue as Queue
+from .scenario.queue.queue_service import QueueService as QueueService
 from .scenario.scenario import Scenario as Scenario
 from .scenario.scenario_dto import ScenarioSaveDTO as ScenarioSaveDTO
 from .scenario.scenario_enums import ScenarioCreationType as ScenarioCreationType
@@ -611,12 +611,12 @@ from .task.task_typing import TaskTyping as TaskTyping
 # Task > Transformer
 from .task.transformer.transformer import Transformer as Transformer
 from .task.transformer.transformer import transformer_decorator as transformer_decorator
+from .test.app_tester import AppTester as AppTester
 
 # Core > Test
 from .test.base_test_case import BaseTestCase as BaseTestCase
 from .test.base_test_case import BaseTestCaseLight as BaseTestCaseLight
 from .test.test_mock_space_service import TestMockSpaceService as TestMockSpaceService
-from .test.app_tester import AppTester as AppTester
 from .test.view_tester import ViewTester as ViewTester
 
 # Triggered Job

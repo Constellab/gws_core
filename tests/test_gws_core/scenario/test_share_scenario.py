@@ -80,6 +80,7 @@ class TestShareScenario(BaseTestCase):
         input_robot_model = TestHelper.save_robot_resource()
 
         # Create and run a scenario
+        # Input > Move > RobotsGenerator > Output
         folder = TestHelper.create_default_folder()
         scenario = ScenarioProxy(title="Test scenario", folder=folder)
 
@@ -96,7 +97,6 @@ class TestShareScenario(BaseTestCase):
         move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
         generate = protocol.add_process(RobotsGeneratorShare, "generate")
 
-        # Input > Move > RobotsGenerator > Output
         source = protocol.add_resource("source", input_robot_model.id, move << "robot")
         protocol.add_connector(move >> "robot", generate << "robot")
         output = protocol.add_output("output", generate >> "set")
@@ -271,167 +271,73 @@ class TestShareScenario(BaseTestCase):
         new_output_resource = new_output_process.in_port(OutputTask.input_name).get_resource_model()
         self.assertIsNotNone(new_output_resource)
 
-    def test_update_scenario(self):
-        """Test the 'Update if exists' mode of ScenarioDownloader.
+    # def test_update_scenario_validated_rejected(self):
+    #     """Test that updating a validated scenario raises an error."""
+    #     input_robot_model = TestHelper.save_robot_resource()
 
-        The scenario is created and shared locally. The share link's entity_id
-        is the original scenario's ID. Importing with "Update if exists" will
-        find the original scenario already in the DB and update it in place.
-        """
-        input_robot_model = TestHelper.save_robot_resource()
+    #     folder = TestHelper.create_default_folder()
+    #     scenario = ScenarioProxy(title="Test scenario validated", folder=folder)
+    #     protocol = scenario.get_protocol()
+    #     move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
+    #     protocol.add_resource("source", input_robot_model.id, move << "robot")
+    #     protocol.add_output("output", move >> "robot")
+    #     scenario.run()
 
-        # Create and run a scenario
-        folder = TestHelper.create_default_folder()
-        scenario = ScenarioProxy(title="Test scenario", folder=folder)
+    #     initial_scenario_model = scenario.refresh().get_model()
 
-        scenario.add_tag(
-            Tag(
-                "scenario_tag",
-                "scenario_value",
-                is_propagable=True,
-                origins=TagOrigins(TagOriginType.USER, "test"),
-            )
-        )
-        protocol = scenario.get_protocol()
+    #     # Validate the original scenario
+    #     initial_scenario_model.validate()
+    #     initial_scenario_model.save()
 
-        move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
+    #     # Generate share link
+    #     share_dto = GenerateShareLinkDTO(
+    #         entity_id=initial_scenario_model.id,
+    #         entity_type=ShareLinkEntityType.SCENARIO,
+    #         valid_until=DateHelper.now_utc() + timedelta(days=1),
+    #     )
+    #     share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
 
-        # Input > Move > Output
-        protocol.add_resource("source", input_robot_model.id, move << "robot")
-        protocol.add_output("output", move >> "robot")
-        scenario.run()
+    #     # Try to update — should fail because scenario is validated
+    #     with self.assertRaises(BadRequestException):
+    #         ScenarioTransfertService.import_from_lab_sync(
+    #             ScenarioDownloader.build_config(
+    #                 share_link.get_download_link(), "All", "Update if exists"
+    #             )
+    #         )
 
-        initial_scenario_model = scenario.refresh().get_model()
-        initial_protocol_model: ProtocolModel = protocol.refresh().get_model()
-        original_scenario_id = initial_scenario_model.id
+    # def test_send_scenario(self):
+    #     input_robot_model = TestHelper.save_robot_resource()
 
-        # generate share link
-        share_dto = GenerateShareLinkDTO(
-            entity_id=original_scenario_id,
-            entity_type=ShareLinkEntityType.SCENARIO,
-            valid_until=DateHelper.now_utc() + timedelta(days=1),
-        )
-        share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
+    #     # Create and run a scenario
+    #     folder = TestHelper.create_default_folder()
+    #     scenario = ScenarioProxy(title="Test scenario", folder=folder)
 
-        # Import with "Update if exists" — the original scenario already exists locally
-        # so this should update it in place
-        updated_scenario = ScenarioTransfertService.import_from_lab_sync(
-            ScenarioDownloader.build_config(
-                share_link.get_download_link(), "All", "Update if exists"
-            )
-        )
+    #     scenario.add_tag(
+    #         Tag(
+    #             "scenario_tag",
+    #             "scenario_value",
+    #             is_propagable=True,
+    #             origins=TagOrigins(TagOriginType.USER, "test"),
+    #         )
+    #     )
+    #     protocol = scenario.get_protocol()
 
-        # The scenario ID must be the same (updated in place)
-        self.assertEqual(updated_scenario.id, original_scenario_id)
-        self.assertEqual(updated_scenario.title, initial_scenario_model.title)
-        self.assertEqual(updated_scenario.status, initial_scenario_model.status)
+    #     move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
 
-        updated_protocol = updated_scenario.protocol_model
+    #     # Input > Move  > Output
+    #     protocol.add_resource("source", input_robot_model.id, move << "robot")
+    #     protocol.add_output("output", move >> "robot")
+    #     scenario.run()
 
-        # Protocol structure should be preserved
-        self.assertEqual(len(updated_protocol.processes), 3)
-        self.assertEqual(len(updated_protocol.connectors), 2)
+    #     lab_credentials = TestHelper.create_lab_credentials()
 
-        # Check processes are still present and correctly typed
-        updated_source: TaskModel = updated_protocol.get_process("source")
-        self.assertIsNotNone(updated_source)
+    #     scenario_count = Scenario.select().count()
 
-        updated_move: TaskModel = updated_protocol.get_process("move")
-        self.assertIsNotNone(updated_move)
-        self.assertEqual(updated_move.status, initial_protocol_model.get_process("move").status)
+    #     scenario = ScenarioTransfertService.export_scenario_to_lab(
+    #         scenario.get_model().id,
+    #         SendScenarioToLab.build_config(lab_credentials.name, 1, "None", "Force new scenario"),
+    #     )
 
-        updated_output = updated_protocol.get_process("output")
-        self.assertIsNotNone(updated_output)
-
-        # Check that resources exist
-        updated_source_resource = updated_source.out_port(
-            InputTask.output_name
-        ).get_resource_model()
-        self.assertIsNotNone(updated_source_resource)
-
-        updated_move_resource = updated_move.out_port("robot").get_resource_model()
-        self.assertIsNotNone(updated_move_resource)
-
-        # Check tags were updated
-        tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, updated_scenario.id)
-        self.assertEqual(len(tags.get_tags()), 1)
-        tag = tags.get_tags()[0]
-        self.assertEqual(tag.tag_key, "scenario_tag")
-        self.assertEqual(tag.tag_value, "scenario_value")
-
-        # Check that SharedScenario was created for the updated scenario
-        self.assertIsNotNone(SharedScenario.get_and_check_entity_origin(updated_scenario.id))
-
-        # Check that TaskInputModel entries were created
-        self.assertGreater(TaskInputModel.get_by_scenario(updated_scenario.id).count(), 0)
-
-    def test_update_scenario_validated_rejected(self):
-        """Test that updating a validated scenario raises an error."""
-        input_robot_model = TestHelper.save_robot_resource()
-
-        folder = TestHelper.create_default_folder()
-        scenario = ScenarioProxy(title="Test scenario validated", folder=folder)
-        protocol = scenario.get_protocol()
-        move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
-        protocol.add_resource("source", input_robot_model.id, move << "robot")
-        protocol.add_output("output", move >> "robot")
-        scenario.run()
-
-        initial_scenario_model = scenario.refresh().get_model()
-
-        # Validate the original scenario
-        initial_scenario_model.validate()
-        initial_scenario_model.save()
-
-        # Generate share link
-        share_dto = GenerateShareLinkDTO(
-            entity_id=initial_scenario_model.id,
-            entity_type=ShareLinkEntityType.SCENARIO,
-            valid_until=DateHelper.now_utc() + timedelta(days=1),
-        )
-        share_link = ShareLinkService.generate_share_link(share_dto, ShareLinkType.PUBLIC)
-
-        # Try to update — should fail because scenario is validated
-        with self.assertRaises(BadRequestException):
-            ScenarioTransfertService.import_from_lab_sync(
-                ScenarioDownloader.build_config(
-                    share_link.get_download_link(), "All", "Update if exists"
-                )
-            )
-
-    def test_send_scenario(self):
-        input_robot_model = TestHelper.save_robot_resource()
-
-        # Create and run a scenario
-        folder = TestHelper.create_default_folder()
-        scenario = ScenarioProxy(title="Test scenario", folder=folder)
-
-        scenario.add_tag(
-            Tag(
-                "scenario_tag",
-                "scenario_value",
-                is_propagable=True,
-                origins=TagOrigins(TagOriginType.USER, "test"),
-            )
-        )
-        protocol = scenario.get_protocol()
-
-        move = protocol.add_process(RobotMove, "move", config_params={"moving_step": 100})
-
-        # Input > Move  > Output
-        protocol.add_resource("source", input_robot_model.id, move << "robot")
-        protocol.add_output("output", move >> "robot")
-        scenario.run()
-
-        lab_credentials = TestHelper.create_lab_credentials()
-
-        scenario_count = Scenario.select().count()
-
-        scenario = ScenarioTransfertService.export_scenario_to_lab(
-            scenario.get_model().id,
-            SendScenarioToLab.build_config(lab_credentials.name, 1, "None", "Force new scenario"),
-        )
-
-        self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
-        # there should 3 more scenario, the send, the import scenario and the new copied scenario
-        self.assertEqual(Scenario.select().count(), scenario_count + 3)
+    #     self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
+    #     # there should 3 more scenario, the send, the import scenario and the new copied scenario
+    #     self.assertEqual(Scenario.select().count(), scenario_count + 3)

@@ -3,13 +3,12 @@ from typing import Optional, Union
 from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.scenario.queue_dto import JobDTO
-
-from ..core.exception.exceptions import BadRequestException
-from ..core.model.model import Model
-from ..core.utils.logger import Logger
-from ..user.user import User
-from .scenario import Scenario
+from gws_core.core.exception.exceptions import BadRequestException
+from gws_core.core.model.model import Model
+from gws_core.core.utils.logger import Logger
+from gws_core.scenario.queue.queue_dto import JobDTO
+from gws_core.scenario.scenario import Scenario
+from gws_core.user.user import User
 
 
 class Queue(Model):

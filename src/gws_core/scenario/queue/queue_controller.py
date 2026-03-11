@@ -1,12 +1,10 @@
-
 from fastapi import Depends
 
-from gws_core.scenario.queue_dto import JobDTO
-from gws_core.scenario.queue_service import QueueService
+from gws_core.core_controller import core_app
+from gws_core.scenario.queue.queue_dto import JobDTO
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.user.authorization_service import AuthorizationService
-
-from ..core_controller import core_app
 
 
 @core_app.get("/queue/jobs", tags=["Queue"], summary="Get the list of job of main queue")

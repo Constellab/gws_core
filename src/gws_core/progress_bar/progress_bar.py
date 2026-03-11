@@ -276,6 +276,15 @@ class ProgressBar(Model):
 
     ################################################## TO JSON #################################################
 
+    def copy_from_and_save(self, other: "ProgressBar") -> None:
+        """Copy timing and progress fields from another ProgressBar and save."""
+        self.started_at = other.started_at
+        self.ended_at = other.ended_at
+        self.current_value = other.current_value
+        self.elapsed_time = other.elapsed_time
+        self.second_start = other.second_start
+        self.save()
+
     def to_dto(self) -> ProgressBarDTO:
         return ProgressBarDTO(
             id=self.id,

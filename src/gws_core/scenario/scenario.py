@@ -402,6 +402,16 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
                 detail="The scenario is archived, please unachived it to update it"
             )
 
+    def copy_from_and_save(self, other: Scenario) -> None:
+        """Copy metadata fields from another Scenario and save."""
+        self.title = other.title
+        self.description = other.description
+        self.status = other.status
+        self.error_info = other.error_info
+        if other.folder:
+            self.folder = other.folder
+        self.save()
+
     def get_process_status(self) -> ScenarioProcessStatus:
         if self.pid == None or not self.is_running:
             return ScenarioProcessStatus.NONE

@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.process.process import Process
 from gws_core.protocol.protocol_service import ProtocolService
@@ -239,3 +240,22 @@ class ProcessProxy:
 
     def is_output_task(self) -> bool:
         return self._process_model.is_output_task()
+
+    ############################################### RESET & DELETE #########################################
+
+    def reset_process(self) -> None:
+        """Reset the process, clearing its execution results and impacted entities."""
+        EntityNavigatorService.reset_process_of_protocol_id(
+            self._process_model.parent_protocol_id, self.instance_name
+        )
+
+    def delete_process(self) -> None:
+        """Delete the process from its parent protocol.
+        If the process is not in draft status, it is reset first.
+        """
+        if not self._process_model.is_draft:
+            self.reset_process()
+
+        ProtocolService.delete_process_of_protocol_id(
+            self._process_model.parent_protocol_id, self.instance_name
+        )

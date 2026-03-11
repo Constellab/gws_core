@@ -1,16 +1,14 @@
 import threading
 
+from gws_core.core.exception.exceptions import BadRequestException, NotFoundException
 from gws_core.core.model.sys_proc import SysProc
+from gws_core.core.utils.logger import Logger
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.scenario.queue.queue import Job, Queue
+from gws_core.scenario.scenario import Scenario, ScenarioStatus
+from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.user.current_user_service import AuthenticateUser, CurrentUserService
 from gws_core.user.user import User
-
-from ..core.exception.exceptions import NotFoundException
-from ..core.exception.exceptions.bad_request_exception import BadRequestException
-from ..core.utils.logger import Logger
-from ..user.current_user_service import AuthenticateUser, CurrentUserService
-from .queue import Job, Queue
-from .scenario import Scenario, ScenarioStatus
-from .scenario_run_service import ScenarioRunService
 
 TICK_INTERVAL_SECONDS = 60  # 60 sec
 

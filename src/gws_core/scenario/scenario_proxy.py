@@ -151,7 +151,7 @@ class ScenarioProxy:
         return ScenarioWaiterBasic(self._scenario.id)
 
     def add_to_queue(self) -> None:
-        from gws_core.scenario.queue_service import QueueService
+        from gws_core.scenario.queue.queue_service import QueueService
 
         QueueService.add_scenario_to_queue(self._scenario.id)
 

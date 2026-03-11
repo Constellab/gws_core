@@ -108,6 +108,19 @@ class ProtocolModel(ProcessModel):
         self.refresh_graph_from_dump()
         return self.save()
 
+    def reload_graph(self) -> None:
+        """Force reload the graph (processes, connectors, interfaces, outerfaces) from DB."""
+        self._is_loaded = False
+        self._load_from_graph()
+
+    def copy_graph_from_and_save(self, other: "ProtocolModel") -> None:
+        """Copy the graph structure (connectors, interfaces, outerfaces, layout) from another protocol and save."""
+        self._connectors = list(other.connectors)
+        self._interfaces = dict(other.interfaces)
+        self._outerfaces = dict(other.outerfaces)
+        self.layout = other.layout
+        self.save_graph()
+
     def set_scenario(self, scenario):
         super().set_scenario(scenario)
         for process in self.processes.values():
@@ -440,6 +453,21 @@ class ProtocolModel(ProcessModel):
             )
 
         return process.get_process_by_instance_path(".".join(instance_names[1:]))
+
+    def get_process_by_id(self, process_id: str) -> ProcessModel | None:
+        """Returns a process by its id, searching recursively through sub protocols.
+
+        :param process_id: the id of the process to find
+        :return: the process if found, None otherwise
+        """
+        for process in self.processes.values():
+            if process.id == process_id:
+                return process
+            if isinstance(process, ProtocolModel):
+                found = process.get_process_by_id(process_id)
+                if found:
+                    return found
+        return None
 
     def remove_process(self, name: str) -> None:
         self._check_instance_name(name)
