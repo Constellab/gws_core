@@ -28,7 +28,7 @@ class ResourceLoader:
 
     _resource_folder_path: str
 
-    _resource: Resource
+    _resource: Resource | None = None
     # dict where key is old resource model id and value is the resource
     _children_resources: dict[str, Resource]
 
@@ -60,6 +60,9 @@ class ResourceLoader:
             return False
 
     def load_resource(self) -> Resource:
+        if self._resource is not None:
+            return self._resource
+
         if not self.is_resource_zip():
             return self.load_fs_node_resource()
 
@@ -224,7 +227,15 @@ class ResourceLoader:
         return [self.get_main_resource()] + self.get_children_zip_resources()
 
     def get_all_generated_resources(self) -> list[Resource]:
-        return [self._resource] + list(self._children_resources.values())
+        resource = self.load_resource()
+        return [resource] + list(self._children_resources.values())
+
+    def get_children_dto(self, children_id: str) -> ResourceExportDTO | None:
+        """Return the child resource DTO with the given id, or None if not found."""
+        for child in self.get_children_zip_resources():
+            if child.resource_model_export.id == children_id:
+                return child
+        return None
 
     def get_generated_children_resources(self) -> dict[str, Resource]:
         return self._children_resources

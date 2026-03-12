@@ -389,6 +389,7 @@ class TestShareScenario(BaseTestCase):
                 share_link.get_download_link(), "Outputs only", "Force new scenario"
             )
         )
+
         setup.assert_imported_outputs_only(new_scenario_outputs_only)
 
     def test_skip_if_exists(self):
@@ -405,12 +406,12 @@ class TestShareScenario(BaseTestCase):
         # Export package and zip all resources before deleting the scenario
         scenario_package = ScenarioService.export_scenario(setup.initial_scenario_model.id)
         current_user = CurrentUserService.get_and_check_current_user()
-        zip_paths = []
+        zip_paths = {}
         for resource_models in scenario_package.main_resource_models:
             zipper = ResourceZipper(current_user)
             zipper.add_resource_model(resource_models.id)
             zipper.close_zip()
-            zip_paths.append(zipper.get_zip_file_path())
+            zip_paths[resource_models.id] = zipper.get_zip_file_path()
         origin = ExternalLabApiService.get_current_lab_info(current_user)
 
         # Delete the scenario and input resource so the builder recreates them from scratch
@@ -440,11 +441,11 @@ class TestShareScenario(BaseTestCase):
         output_resource_model = (
             setup.get_initial_output_process().in_port(OutputTask.input_name).get_resource_model()
         )
-        output_zip_paths = []
+        output_zip_paths = {}
         zipper = ResourceZipper(current_user)
         zipper.add_resource_model(output_resource_model.id)
         zipper.close_zip()
-        output_zip_paths.append(zipper.get_zip_file_path())
+        output_zip_paths[output_resource_model.id] = zipper.get_zip_file_path()
 
         # Delete the rebuilt scenario before importing outputs only
         # Leave the input resource to simulate an import where the input resource already exists.

@@ -1,7 +1,8 @@
-import uuid
+from abc import abstractmethod
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceModelExportDTO, ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
@@ -31,324 +32,260 @@ class ImportedResource:
 
 
 class ResourceBuilder:
-    """
-    Builds and persists a single resource from an already-downloaded zip file.
+    """Parent class for building and persisting resources regardless of source.
 
-    Responsibilities:
-    - Loading the zip file into a `Resource` object via `ResourceLoader`
-    - Loading `ResourceModel` shells from `ResourceModelExportDTO` metadata
-    - Filling content into pre-created resource model shells
-    - Saving the resource and its children to the DB
-    - Recording shared-entity provenance
-
-    This class is used by `ScenarioBuilder` to handle individual resource
-    persistence, and can also be used standalone for resource imports.
-
-    Usage::
-
-        builder = ResourceBuilder(
-            resource_zip_path="/tmp/resource_abc.zip",
-            origin=external_lab_info,
-        )
-        try:
-            imported = builder.load_resource(create_mode=ShareEntityCreateMode.KEEP_ID)
-        finally:
-            builder.cleanup()
+    Shared state and internal helpers live here. Subclasses implement ``save()``
+    for their specific source type (metadata-only DTO or full zip content).
     """
 
-    _resource_zip_path: str
     _origin: ExternalLabWithUserInfo
     _skip_resource_tags: bool
     _create_mode: ShareEntityCreateMode
-
-    # Internal state populated during load/build
-    _resource_loader: ResourceLoader | None
-    _imported_resource: ImportedResource | None
-    # Mapping from old DTO ID to new ResourceModel ID (used in NEW_ID mode)
-    _old_to_new_id: dict[str, str]
+    _message_dispatcher: MessageDispatcher | None
+    _id_mapper: IdMapper
 
     def __init__(
         self,
-        resource_zip_path: str,
         origin: ExternalLabWithUserInfo,
         skip_resource_tags: bool = False,
         create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
+        message_dispatcher: MessageDispatcher | None = None,
     ):
-        self._resource_zip_path = resource_zip_path
         self._origin = origin
         self._skip_resource_tags = skip_resource_tags
         self._create_mode = create_mode
+        self._message_dispatcher = message_dispatcher
+        self._id_mapper = IdMapper()
 
-        self._resource_loader = None
-        self._imported_resource = None
-        self._old_to_new_id = {}
+    # ------------------------------------------------------------------
+    # Abstract
+    # ------------------------------------------------------------------
+
+    @abstractmethod
+    def save(self) -> ResourceModel:
+        """Save the resource to the DB. Each subclass implements its own logic."""
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def load_resource(self) -> ImportedResource:
-        """Load the zip file into an ImportedResource.
-
-        :return: The loaded ImportedResource.
-        """
-        self._resource_loader = ResourceLoader.from_compress_file(
-            self._resource_zip_path, skip_tags=self._skip_resource_tags, mode=self._create_mode
-        )
-
-        resource = self._resource_loader.load_resource()
-
-        self._imported_resource = ImportedResource(
-            self._resource_loader.get_main_resource_origin_id(),
-            resource,
-            self._resource_loader.get_generated_children_resources(),
-        )
-
-        return self._imported_resource
-
-    def get_imported_resource(self) -> ImportedResource | None:
-        """Return the imported resource loaded by `load_resource`, or None if not yet loaded."""
-        return self._imported_resource
-
-    def set_old_to_new_id_mapping(self, mapping: dict[str, str]) -> None:
-        """Set the mapping from old resource IDs to new resource IDs.
+    def set_id_mapper(self, id_mapper: IdMapper) -> None:
+        """Set the ID mapper for resolving old resource IDs to new resource IDs.
 
         Used by ScenarioBuilder in NEW_ID mode where resource models are created
         with new IDs by ScenarioIdMapper before content is filled.
         """
-        self._old_to_new_id = mapping
-
-    @classmethod
-    def from_loaded_resource_loader(
-        cls,
-        resource_loader: ResourceLoader,
-        resource: Resource,
-        origin: ExternalLabWithUserInfo,
-        skip_resource_tags: bool = False,
-        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
-    ) -> "ResourceBuilder":
-        """Create a ResourceBuilder from an already-loaded ResourceLoader and resource."""
-        builder = cls(
-            resource_zip_path="",
-            origin=origin,
-            skip_resource_tags=skip_resource_tags,
-            create_mode=create_mode,
-        )
-        builder._resource_loader = resource_loader
-        builder._imported_resource = ImportedResource(
-            resource_loader.get_main_resource_origin_id(),
-            resource,
-            resource_loader.get_generated_children_resources(),
-        )
-        return builder
-
-    def fill_resources_content(
-        self,
-        root_resource_old_ids: set[str] | None = None,
-    ) -> None:
-        """Fill downloaded content into pre-created resource shells,
-        create child resource models, and create shared entity records.
-
-        :param root_resource_old_ids: Old IDs of root-level resources. Children whose ID
-            is in this set won't get parent_resource_id set (they are standalone resources
-            referenced in a ResourceListBase). Pass None or empty set for standalone mode.
-        """
-        if self._imported_resource is None:
-            raise Exception("No imported resource. Call load_resource() first.")
-
-        old_resource_id = self._imported_resource.old_id
-        self.save_resource_and_children(old_resource_id, root_resource_old_ids)
-
-    def save_resource_and_children(
-        self,
-        old_resource_id: str | None,
-        root_resource_old_ids: set[str] | None = None,
-    ) -> ResourceModel | None:
-        """Save a resource and its children to the DB.
-
-        :param old_resource_id: The original resource ID from the export.
-        :param task_model: The task model that generated this resource.
-        :param scenario: The scenario this resource belongs to.
-        :param root_resource_old_ids: Old IDs of root-level resources to distinguish
-            owned children from standalone resources referenced in a ResourceListBase.
-        :return: The saved ResourceModel, or None if old_resource_id is None.
-        """
-        if not old_resource_id:
-            return None
-
-        if root_resource_old_ids is None:
-            root_resource_old_ids = set()
-
-        resolved_id = self._resolve_resource_id(old_resource_id)
-        existing_model = ResourceModel.get_by_id(resolved_id)
-
-        if not existing_model:
-            raise Exception(
-                f"Resource model with id '{old_resource_id}' not found in the database. "
-                "All resource models must be pre-created from metadata before saving content."
-            )
-
-        # If the resource model already exists with content, return it as-is
-        if not existing_model.content_is_deleted:
-            return existing_model
-
-        downloaded_resource = self._get_downloaded_resource(old_resource_id)
-        if not downloaded_resource:
-            return existing_model
-
-        # First save the children resources
-        children_resource_models: list[ResourceModel] = []
-        if len(downloaded_resource.children) > 0 and isinstance(
-            downloaded_resource.resource, ResourceListBase
-        ):
-            new_children_resources: dict[str, Resource] = {}
-            for child_old_id, child_resource in downloaded_resource.children.items():
-                child_model = self._save_resource(
-                    child_old_id,
-                    child_resource,
-                    existing_model.task_model,
-                    existing_model.scenario,
-                    port_name=existing_model.generated_by_port_name,
-                )
-                new_children_resources[child_resource.uid] = child_model.get_resource()
-                if child_old_id not in root_resource_old_ids:
-                    children_resource_models.append(child_model)
-            downloaded_resource.resource.__set_r_field__(new_children_resources)
-
-        resource_model = self._save_resource(
-            old_resource_id,
-            downloaded_resource.resource,
-            existing_model.task_model,
-            existing_model.scenario,
-            existing_model.generated_by_port_name,
-        )
-
-        for child_model in children_resource_models:
-            child_model.set_parent_and_save(resource_model.id)
-
-        return resource_model
-
-    def build_and_save_resource(
-        self,
-        message_dispatcher: MessageDispatcher | None = None,
-    ) -> ResourceModel:
-        """Build and save the resource and its children directly from zip metadata.
-
-        Creates ResourceModel shells from the zip's ResourceModelExportDTO metadata,
-        looking up existing resources in the DB. Then fills content into the shells.
-
-        :param message_dispatcher: optional dispatcher for info messages
-        :return: The saved main ResourceModel.
-        """
-        if self._imported_resource is None:
-            raise Exception("No imported resource. Call load_resource() first.")
-        if self._resource_loader is None:
-            raise Exception("No resource loader available.")
-
-        # Create/resolve ResourceModel shells for all resources from zip metadata
-        for zip_resource in self._resource_loader.get_all_zip_resources():
-            dto = zip_resource.resource_model_export
-            self._resolve_or_create_resource_model(dto, message_dispatcher)
-
-        # Use existing fill_resources_content logic
-        self.fill_resources_content()
-
-        # Return the main resource model
-        main_id = self._resolve_resource_id(self._imported_resource.old_id)
-        return ResourceModel.get_by_id_and_check(main_id)
+        self._id_mapper = id_mapper
 
     def cleanup(self) -> None:
-        """Delete temporary resource folders created during zip extraction. Always call this."""
-        if self._resource_loader:
-            self._resource_loader.delete_resource_folder()
+        """Clean up temporary files. No-op in base class."""
 
     # ------------------------------------------------------------------
-    # Internal helpers
+    # Internal helpers (shared logic)
     # ------------------------------------------------------------------
-
-    def _resolve_or_create_resource_model(
-        self,
-        dto: ResourceModelExportDTO,
-        message_dispatcher: MessageDispatcher | None = None,
-    ) -> ResourceModel:
-        """Resolve an existing ResourceModel from the DB or create a new shell from metadata.
-
-        In KEEP_ID mode:
-        - Resource doesn't exist: create shell via ResourceModelLoader, save it
-        - Resource exists with content_is_deleted: update attributes, return (content filled later)
-        - Resource exists with content: update attributes, return as-is
-
-        In NEW_ID mode:
-        - Always create a new shell with a fresh ID
-        """
-        # In NEW_ID mode, always create a new resource model with a new ID
-        if self._create_mode == ShareEntityCreateMode.NEW_ID:
-            resource_model = ResourceModelLoader(dto).load_resource_model(
-                origin=ResourceOrigin.IMPORTED_FROM_LAB,
-                message_dispatcher=message_dispatcher,
-            )
-            # Assign a new ID
-            resource_model.id = str(uuid.uuid4())
-            resource_model.parent_resource_id = (
-                self._resolve_resource_id(dto.parent_resource_id)
-                if dto.parent_resource_id
-                else None
-            )
-            resource_model.save_full()
-            # Track old->new ID mapping
-            self._old_to_new_id[dto.id] = resource_model.id
-            return resource_model
-
-        existing = ResourceModel.get_by_id(dto.id)
-
-        if existing is None:
-            # Create a new shell from metadata
-            resource_model = ResourceModelLoader(dto).load_resource_model(
-                origin=ResourceOrigin.IMPORTED_FROM_LAB,
-                message_dispatcher=message_dispatcher,
-            )
-            resource_model.save_full()
-            return resource_model
-
-        # Resource exists — update attributes from DTO
-        ResourceModelLoader(dto).update_resource_model(
-            existing,
-            origin=ResourceOrigin.IMPORTED_FROM_LAB,
-            message_dispatcher=message_dispatcher,
-        )
-        existing.save()
-        return existing
 
     def _resolve_resource_id(self, old_resource_id: str) -> str:
         """Resolve an old resource ID to the actual DB ID.
 
         In NEW_ID mode, returns the mapped new ID. In KEEP_ID mode, returns the same ID.
         """
-        return self._old_to_new_id.get(old_resource_id, old_resource_id)
+        if self._create_mode == ShareEntityCreateMode.KEEP_ID:
+            return old_resource_id
+        return self._id_mapper.generate_new_id(old_resource_id)
 
-    def _get_downloaded_resource(self, old_resource_id: str) -> ImportedResource | None:
-        """Look up a downloaded resource by its old ID."""
-        if self._imported_resource and self._imported_resource.old_id == old_resource_id:
-            return self._imported_resource
-        return None
+
+class ResourceDtoBuilder(ResourceBuilder):
+    """Handles metadata-only resources (no zip content).
+
+    Creates or resolves a resource model shell in the DB from a ``ResourceModelExportDTO``.
+    """
+
+    _resource_model_dto: ResourceModelExportDTO
+
+    def __init__(
+        self,
+        resource_model_dto: ResourceModelExportDTO,
+        origin: ExternalLabWithUserInfo,
+        skip_resource_tags: bool = False,
+        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
+        message_dispatcher: MessageDispatcher | None = None,
+    ):
+        super().__init__(origin, skip_resource_tags, create_mode, message_dispatcher)
+        self._resource_model_dto = resource_model_dto
+
+    def save(self) -> ResourceModel:
+        """Save a shell resource model from DTO metadata.
+
+        KEEP_ID mode:
+        - Doesn't exist: create shell (content_is_deleted=True), save it
+        - Exists: update attributes from DTO, save it
+
+        NEW_ID mode:
+        - Always create a new shell with a fresh UUID
+        """
+        return self._resolve_or_create_resource_model(self._resource_model_dto)
+
+    def get_resource_model_dto(self) -> ResourceModelExportDTO:
+        return self._resource_model_dto
+
+    def _resolve_or_create_resource_model(
+        self,
+        dto: ResourceModelExportDTO,
+    ) -> ResourceModel:
+        """Resolve an existing ResourceModel from the DB or create a new shell from metadata."""
+        # In NEW_ID mode, always create a new resource model with a new ID
+        if self._create_mode == ShareEntityCreateMode.NEW_ID:
+            return self._create_resource_with_new_id(dto)
+
+        resource_model_id = self._resolve_resource_id(dto.id)
+        existing = ResourceModel.get_by_id(resource_model_id)
+
+        if existing is None:
+            # Create a new shell from metadata
+            resource_model = ResourceModelLoader(
+                dto, self._message_dispatcher, self._id_mapper
+            ).load_resource_model(
+                origin=ResourceOrigin.IMPORTED_FROM_LAB,
+            )
+            resource_model.save_full()
+            return resource_model
+
+        # Resource exists — update attributes from DTO
+        ResourceModelLoader(dto, self._message_dispatcher, self._id_mapper).update_resource_model(
+            existing,
+            origin=ResourceOrigin.IMPORTED_FROM_LAB,
+        )
+        existing.save()
+        return existing
+
+    def _create_resource_with_new_id(
+        self,
+        dto: ResourceModelExportDTO,
+    ) -> ResourceModel:
+        resource_model = ResourceModelLoader(
+            dto, self._message_dispatcher, self._id_mapper
+        ).load_resource_model(
+            origin=ResourceOrigin.IMPORTED_FROM_LAB,
+        )
+        # Assign a new ID
+        resource_model.id = self._resolve_resource_id(dto.id)
+        resource_model.parent_resource_id = (
+            self._resolve_resource_id(dto.parent_resource_id) if dto.parent_resource_id else None
+        )
+        resource_model.save_full()
+        # Track old->new ID mapping
+        self._id_mapper.set_mapping(dto.id, resource_model.id)
+        return resource_model
+
+
+class ResourceZipBuilder(ResourceBuilder):
+    """Handles full zip imports with content via a pre-loaded ``ResourceLoader``.
+
+    The caller is responsible for creating the ``ResourceLoader``
+    (e.g. via ``ResourceLoader.from_compress_file()``).
+    """
+
+    _resource_loader: ResourceLoader
+
+    def __init__(
+        self,
+        resource_loader: ResourceLoader,
+        origin: ExternalLabWithUserInfo,
+        skip_resource_tags: bool = False,
+        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
+        message_dispatcher: MessageDispatcher | None = None,
+    ):
+        super().__init__(origin, skip_resource_tags, create_mode, message_dispatcher)
+        self._resource_loader = resource_loader
+
+    def save(self) -> ResourceModel:
+        """Save the resource with its full content directly.
+
+        KEEP_ID mode:
+        - Doesn't exist: create and save with content
+        - Exists without content (content_is_deleted=True): fill the content
+        - Exists with content: return as-is
+
+        NEW_ID mode:
+        - Always create a new resource with a fresh UUID and save with content
+
+        Also handles children resources (for ResourceListBase) and
+        creates SharedResource provenance records.
+        """
+        main_resource_dto = self._resource_loader.get_main_resource()
+        main_resource = self._resource_loader.load_resource()
+        generated_children = self._resource_loader.get_generated_children_resources()
+
+        # store the generated children by parent so we set the parent_id after
+        children_resource_models: list[ResourceModel] = []
+
+        # Save children first if this is a ResourceListBase
+        if len(generated_children) > 0 and isinstance(main_resource, ResourceListBase):
+            new_children_resources: dict[str, Resource] = {}
+
+            for child_old_id, child_resource in generated_children.items():
+                child_dto = self._resource_loader.get_children_dto(child_old_id)
+                if child_dto is None:
+                    raise Exception(
+                        f"Missing DTO metadata for child resource with old id '{child_old_id}'"
+                    )
+                child_model = self._save_resource(
+                    child_old_id,
+                    child_resource,
+                    scenario=None,
+                    task_model=None,
+                    port_name=None,
+                    flagged=False,
+                    resource_model_export_dto=child_dto.resource_model_export,
+                )
+                new_children_resources[child_resource.uid] = child_model.get_resource()
+
+                # Store the children that were generated by parent to link them later
+                if (
+                    child_dto.resource_model_export.parent_resource_id
+                    == main_resource_dto.resource_model_export.id
+                ):
+                    children_resource_models.append(child_model)
+            main_resource.__set_r_field__(new_children_resources)
+
+        # Save the main resource
+        resource_model = self._save_resource(
+            self._resource_loader.get_main_resource_origin_id(),
+            main_resource,
+            resource_model_export_dto=main_resource_dto.resource_model_export,
+        )
+
+        # Set parent on owned children
+        for child_model in children_resource_models:
+            child_model.set_parent_and_save(resource_model.id)
+
+        return resource_model
 
     def _save_resource(
         self,
         old_resource_id: str,
         resource: Resource,
-        task_model: TaskModel | None = None,
         scenario: Scenario | None = None,
+        task_model: TaskModel | None = None,
         port_name: str | None = None,
         flagged: bool = False,
+        resource_model_export_dto: ResourceModelExportDTO | None = None,
     ) -> ResourceModel:
+        """Save a single resource directly with its content.
+
+        In KEEP_ID mode, checks for an existing model:
+        - If it exists with content, returns it as-is.
+        - If it exists with content_is_deleted, fills the content.
+        - If it doesn't exist, creates a new model with content.
+
+        In NEW_ID mode, creates a new model with a fresh UUID.
+        """
         resolved_id = self._resolve_resource_id(old_resource_id)
 
         # In NEW_ID mode, only look up models we explicitly created/mapped.
-        # Don't accidentally reuse original models still in the DB.
         existing_model: ResourceModel | None = None
-        if (
-            self._create_mode != ShareEntityCreateMode.NEW_ID
-            or old_resource_id in self._old_to_new_id
+        if self._create_mode != ShareEntityCreateMode.NEW_ID or self._id_mapper.has_mapping(
+            old_resource_id
         ):
             existing_model = ResourceModel.get_by_id(resolved_id)
 
@@ -367,6 +304,11 @@ class ResourceBuilder:
                     )
                     entity_tags.add_tags(resource.tags.get_tags())
             else:
+                resource_id = (
+                    self._resolve_resource_id(old_resource_id)
+                    if self._id_mapper.has_mapping(old_resource_id)
+                    else None
+                )
                 resource_model = ResourceModel.save_from_resource(
                     resource,
                     origin=ResourceOrigin.IMPORTED_FROM_LAB,
@@ -374,11 +316,23 @@ class ResourceBuilder:
                     task_model=task_model,
                     port_name=port_name,
                     flagged=flagged,
+                    skip_children=True,
+                    id=resource_id,
                 )
         except Exception as err:
             raise Exception(
                 f"Error while saving resource with old id '{old_resource_id}'. {str(err)}"
             ) from err
+
+        # Update the resource_model information (like scenario, task, project...)
+        if resource_model_export_dto is not None:
+            ResourceModelLoader(
+                resource_model_export_dto, self._message_dispatcher, self._id_mapper
+            ).update_resource_model(
+                resource_model,
+                origin=ResourceOrigin.IMPORTED_FROM_LAB,
+            )
+        resource_model.save()
 
         SharedResource.create_from_lab_info(
             resource_model.id,
@@ -388,3 +342,7 @@ class ResourceBuilder:
         )
 
         return resource_model
+
+    def cleanup(self) -> None:
+        """Delete temporary resource folder created during zip extraction."""
+        self._resource_loader.delete_resource_folder()

@@ -152,7 +152,6 @@ class ScenarioDownloader(Task):
         scenario = self._builder.build(
             skip_scenario_tags=skip_scenario_tags,
             create_mode=create_mode,
-            existing_scenario=existing_scenario,
         )
 
         return {"scenario": ScenarioResource(scenario.id)}
@@ -193,15 +192,15 @@ class ScenarioDownloader(Task):
         resource_ids: set[str],
         share_entity: ShareScenarioInfoReponseDTO,
         create_mode: ShareEntityCreateMode,
-    ) -> list[str]:
+    ) -> dict[str, str]:
         """Download zip files for each resource that is not already present in the DB.
 
-        Returns a list of local zip file paths to be loaded by ScenarioBuilder.
+        Returns a dict mapping resource ID to local zip file path.
         """
         nb_resources = len(resource_ids)
         self.log_info_message(f"Downloading {nb_resources} resources")
 
-        zip_paths: list[str] = []
+        zip_paths: dict[str, str] = {}
         message_dispatcher = self.get_message_dispatcher()
         i = 1
         for resource_id in resource_ids:
@@ -228,7 +227,7 @@ class ScenarioDownloader(Task):
             url = share_entity.get_resource_route(resource_id)
             resource_downloader = LabShareZipRouteDownloader(url, sub_dispatcher)
             zip_path = resource_downloader.download()
-            zip_paths.append(zip_path)
+            zip_paths[resource_id] = zip_path
 
             current_percent = (
                 self.INIT_EXP_PERCENT + (i / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT

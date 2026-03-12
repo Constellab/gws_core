@@ -10,7 +10,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
-from gws_core.resource.resource_builder import ResourceBuilder
+from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
@@ -48,7 +48,7 @@ class ResourceDownloaderBase(Task):
     )
 
     resource_loader: ResourceLoader | None = None
-    _resource_builder: ResourceBuilder | None = None
+    _resource_builder: ResourceZipBuilder | None = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -96,16 +96,14 @@ class ResourceDownloaderBase(Task):
 
         # If it's a resource zip, directly save ResourceModels preserving original metadata
         if self.resource_loader.is_resource_zip():
-            builder = ResourceBuilder.from_loaded_resource_loader(
+            builder = ResourceZipBuilder(
                 resource_loader=self.resource_loader,
-                resource=resource,
                 origin=self.resource_loader.get_origin_info(),
                 skip_resource_tags=skip_tags,
                 create_mode=resource_loader_mode,
-            )
-            resource_model = builder.build_and_save_resource(
                 message_dispatcher=self.message_dispatcher,
             )
+            resource_model = builder.save()
             self._resource_builder = builder
 
             # Return resource marked as reference so TaskModel._save_outputs uses existing model

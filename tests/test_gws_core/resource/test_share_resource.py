@@ -25,8 +25,9 @@ from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorSe
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
-from gws_core.resource.resource_builder import ResourceBuilder
+from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
@@ -162,18 +163,20 @@ class ShareResourceTestSetup:
         return zipper.get_zip_file_path()
 
     def build_resource_from_zip(self, zip_path: str) -> ResourceModel:
-        """Use ResourceBuilder to import a resource from a zip file with the configured create_mode."""
+        """Use ResourceZipBuilder to import a resource from a zip file with the configured create_mode."""
         current_user = CurrentUserService.get_and_check_current_user()
         origin = ExternalLabApiService.get_current_lab_info(current_user)
 
-        builder = ResourceBuilder(
-            resource_zip_path=zip_path,
+        resource_loader = ResourceLoader.from_compress_file(
+            zip_path, skip_tags=False, mode=self.create_mode
+        )
+        builder = ResourceZipBuilder(
+            resource_loader=resource_loader,
             origin=origin,
             create_mode=self.create_mode,
         )
         try:
-            builder.load_resource()
-            return builder.build_and_save_resource()
+            return builder.save()
         finally:
             builder.cleanup()
 
@@ -221,10 +224,10 @@ class ShareResourceTestSetup:
         self,
         child_resource_model: ResourceModel,
         original_child_resource_model: ResourceModel,
-        new_parent_resource_model: ResourceModel,
+        new_parent_resource_model_id: str | None,
     ) -> None:
         self._assert_new_resource_model(child_resource_model, original_child_resource_model)
-        self._tc.assertEqual(child_resource_model.parent_resource_id, new_parent_resource_model.id)
+        self._tc.assertEqual(child_resource_model.parent_resource_id, new_parent_resource_model_id)
 
     def assert_imported_basic_resource(self, new_resource_model: ResourceModel) -> None:
         """Assert that a basic table resource was imported correctly."""
@@ -322,8 +325,9 @@ class ShareResourceTestSetup:
         robot: Robot = resource_set.get_resource("robot")
         self._tc.assertIsNotNone(robot)
         robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        # The robot should not have the parent resource model id
         self._assert_new_child_resource_model(
-            robot_model, self._children_resource_models["robot"], new_resource_model
+            robot_model, self._children_resource_models["robot"], None
         )
 
         original_robot: Robot = self._original_resource_set.get_resource("robot")
@@ -335,7 +339,7 @@ class ShareResourceTestSetup:
         self._tc.assertIsNotNone(table)
         table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
         self._assert_new_child_resource_model(
-            table_model, self._children_resource_models["table"], new_resource_model
+            table_model, self._children_resource_models["table"], new_resource_model.id
         )
         self._tc.assertTrue(table.equals(get_table()))
 
@@ -344,7 +348,7 @@ class ShareResourceTestSetup:
         self._tc.assertIsNotNone(file)
         file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
         self._assert_new_child_resource_model(
-            file_model, self._children_resource_models["file"], new_resource_model
+            file_model, self._children_resource_models["file"], new_resource_model.id
         )
         self._tc.assertEqual("test", file.read())
 
@@ -395,8 +399,9 @@ class ShareResourceTestSetup:
         robot: Robot = resource_list[0]
         self._tc.assertIsNotNone(robot)
         robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        # The robot should not have the parent resource model id
         self._assert_new_child_resource_model(
-            robot_model, self._children_resource_models["robot"], new_resource_model
+            robot_model, self._children_resource_models["robot"], None
         )
         original_robot: Robot = self._original_resource_list[0]
         self._check_id(robot.get_model_id(), original_robot.get_model_id())
@@ -407,7 +412,7 @@ class ShareResourceTestSetup:
         self._tc.assertIsNotNone(table)
         table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
         self._assert_new_child_resource_model(
-            table_model, self._children_resource_models["table"], new_resource_model
+            table_model, self._children_resource_models["table"], new_resource_model.id
         )
         self._tc.assertTrue(table.equals(get_table()))
 
@@ -416,7 +421,7 @@ class ShareResourceTestSetup:
         self._tc.assertIsNotNone(file)
         file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
         self._assert_new_child_resource_model(
-            file_model, self._children_resource_models["file"], new_resource_model
+            file_model, self._children_resource_models["file"], new_resource_model.id
         )
         self._tc.assertEqual("test", file.read())
 

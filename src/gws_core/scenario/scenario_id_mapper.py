@@ -1,38 +1,19 @@
-from uuid import uuid4
-
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.task_model import TaskModel
 
 
-class ScenarioIdMapper:
+class ScenarioIdMapper(IdMapper):
     """Generates new IDs and replaces all cross-references in-memory.
 
     Used during scenario import in NEW_ID mode to replace all original IDs
     with fresh UUIDs while maintaining referential integrity across
     scenario, processes, resource models, ports, and configs.
     """
-
-    _id_mapping: dict[str, str]  # old_id -> new_id
-
-    def __init__(self) -> None:
-        self._id_mapping = {}
-
-    def generate_new_id(self, old_id: str) -> str:
-        """Generate a new UUID for an old ID and store the mapping."""
-        new_id = str(uuid4())
-        self._id_mapping[old_id] = new_id
-        return new_id
-
-    def get_new_id(self, old_id: str | None) -> str | None:
-        """Look up the new ID for an old ID. Returns None if old_id is None,
-        or the original value if no mapping exists."""
-        if old_id is None:
-            return None
-        return self._id_mapping.get(old_id, old_id)
 
     def apply_new_ids(
         self,

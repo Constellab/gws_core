@@ -88,7 +88,6 @@ class ResourceZipper:
         tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
 
         resource_model_export = resource_model.to_export_dto()
-        resource_model_export.parent_resource_id = parent_resource_id
 
         resource_zip = ResourceExportDTO(
             resource_model_export=resource_model_export,
