@@ -87,14 +87,13 @@ class ResourceBuilder:
     # Public API
     # ------------------------------------------------------------------
 
-    def load_resource(self, create_mode: ShareEntityCreateMode) -> ImportedResource:
+    def load_resource(self) -> ImportedResource:
         """Load the zip file into an ImportedResource.
 
-        :param create_mode: KEEP_ID preserves original IDs; NEW_ID assigns fresh UUIDs.
         :return: The loaded ImportedResource.
         """
         self._resource_loader = ResourceLoader.from_compress_file(
-            self._resource_zip_path, skip_tags=self._skip_resource_tags, mode=create_mode
+            self._resource_zip_path, skip_tags=self._skip_resource_tags, mode=self._create_mode
         )
 
         resource = self._resource_loader.load_resource()
@@ -312,37 +311,13 @@ class ResourceBuilder:
             return resource_model
 
         # Resource exists — update attributes from DTO
-        self._update_resource_model_attributes(existing, dto, message_dispatcher)
+        ResourceModelLoader(dto).update_resource_model(
+            existing,
+            origin=ResourceOrigin.IMPORTED_FROM_LAB,
+            message_dispatcher=message_dispatcher,
+        )
         existing.save()
         return existing
-
-    def _update_resource_model_attributes(
-        self,
-        resource_model: ResourceModel,
-        dto: ResourceModelExportDTO,
-        message_dispatcher: MessageDispatcher | None = None,
-    ) -> None:
-        """Update metadata attributes on an existing ResourceModel from DTO."""
-        resource_model.name = dto.name
-        resource_model.flagged = dto.flagged
-        resource_model.style = dto.style
-        resource_model.generated_by_port_name = dto.generated_by_port_name
-        resource_model.origin = ResourceOrigin.IMPORTED_FROM_LAB
-
-        # Resolve scenario and task_model (they might not exist in this lab)
-        if dto.scenario and dto.task_model_id:
-            existing_scenario = Scenario.get_by_id(dto.scenario.id)
-            existing_task = TaskModel.get_by_id(dto.task_model_id)
-            if existing_scenario and existing_task:
-                resource_model.scenario = existing_scenario
-                resource_model.task_model = existing_task
-            else:
-                dispatcher = message_dispatcher or MessageDispatcher()
-                dispatcher.notify_info_message(
-                    f"Resource '{dto.name}' references scenario '{dto.scenario.title}' "
-                    f"and task model '{dto.task_model_id}' which could not be found. "
-                    "Attributes updated without scenario/task link."
-                )
 
     def _resolve_resource_id(self, old_resource_id: str) -> str:
         """Resolve an old resource ID to the actual DB ID.

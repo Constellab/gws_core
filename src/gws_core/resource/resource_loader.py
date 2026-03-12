@@ -26,7 +26,7 @@ class ResourceLoader:
 
     info_json: ResourceExportPackage | None
 
-    _resource_folder: str
+    _resource_folder_path: str
 
     _resource: Resource
     # dict where key is old resource model id and value is the resource
@@ -39,13 +39,13 @@ class ResourceLoader:
 
     def __init__(
         self,
-        resource_folder: str,
+        resource_folder_path: str,
         mode: ShareEntityCreateMode,
         resource_origin: ResourceOrigin | None = None,
         skip_tags: bool = False,
     ) -> None:
         self.info_json = None
-        self._resource_folder = resource_folder
+        self._resource_folder_path = resource_folder_path
         self._children_resources = {}
         self.mode = mode
         self.resource_origin = resource_origin
@@ -95,7 +95,7 @@ class ResourceLoader:
         kv_store: KVStore | None = None
         if zip_resource.has_kvstore:
             kvstore_path = os.path.join(
-                self._resource_folder, zip_resource.get_kvstore_dir_name(), KVStore.FILE_NAME
+                self._resource_folder_path, zip_resource.get_kvstore_dir_name(), KVStore.FILE_NAME
             )
 
             kv_store = KVStore(kvstore_path)
@@ -138,7 +138,7 @@ class ResourceLoader:
 
             fs_node_name = zip_resource.get_fs_node_name()
             # set the path of the resource node
-            resource.path = os.path.join(self._resource_folder, fs_node_name)
+            resource.path = os.path.join(self._resource_folder_path, fs_node_name)
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -152,7 +152,9 @@ class ResourceLoader:
         if self.info_json is not None:
             return self.info_json
 
-        info_json_path = os.path.join(self._resource_folder, ResourceZipper.INFO_JSON_FILE_NAME)
+        info_json_path = os.path.join(
+            self._resource_folder_path, ResourceZipper.INFO_JSON_FILE_NAME
+        )
 
         if not FileHelper.exists_on_os(info_json_path):
             raise Exception(f"File {info_json_path} not found in the zip file.")
@@ -188,21 +190,21 @@ class ResourceLoader:
         If there is more than 1 file in the folder, return the folder.
         """
         # count the files and folders directly in the result folder
-        count = len(os.listdir(self._resource_folder))
+        count = len(os.listdir(self._resource_folder_path))
 
         if count == 0:
             raise Exception("The zipped file does not contains any resource.")
 
         if count == 1:
-            node_name = os.listdir(self._resource_folder)[0]
-            sub_path = os.path.join(self._resource_folder, node_name)
+            node_name = os.listdir(self._resource_folder_path)[0]
+            sub_path = os.path.join(self._resource_folder_path, node_name)
             if os.path.isdir(sub_path):
                 return Folder(sub_path)
             else:
                 return File(sub_path)
         else:
             # if there is more than 1 file or folder, return a Folder
-            return Folder(self._resource_folder)
+            return Folder(self._resource_folder_path)
 
     def get_origin_info(self) -> ExternalLabWithUserInfo:
         return self._load_info_json().origin
@@ -228,7 +230,7 @@ class ResourceLoader:
         return self._children_resources
 
     def delete_resource_folder(self) -> None:
-        FileHelper.delete_dir(self._resource_folder)
+        FileHelper.delete_dir(self._resource_folder_path)
 
     @classmethod
     def from_compress_file(

@@ -119,7 +119,7 @@ class ScenarioBuilder:
             )
             self._resource_builders.append(resource_builder)
 
-            imported = resource_builder.load_resource(create_mode)
+            imported = resource_builder.load_resource()
             self._downloaded_resources[imported.old_id] = imported
 
     def _load_scenario(self) -> ScenarioLoader:

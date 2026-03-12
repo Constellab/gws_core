@@ -172,7 +172,7 @@ class ShareResourceTestSetup:
             create_mode=self.create_mode,
         )
         try:
-            builder.load_resource(create_mode=self.create_mode)
+            builder.load_resource()
             return builder.build_and_save_resource()
         finally:
             builder.cleanup()
