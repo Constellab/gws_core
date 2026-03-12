@@ -103,10 +103,10 @@ class ResourceList(ResourceListBase):
         :type create_new_resource: bool, optional
         """
         self._check_resource_before_add(resource)
-        # if the resource already exist, add it to the constant list so
+        # if the resource already exists, mark it as reference so
         # the system will not create a new resource on save
         if not create_new_resource:
-            self._mark_resource_as_constant(resource)
+            resource.set_as_reference()
 
         # load the existing resources
         resources = self.get_resources()
@@ -117,7 +117,6 @@ class ResourceList(ResourceListBase):
     def clear_resources(self) -> None:
         self._resources = []
         self._resource_ids = []
-        self.__constant_resource_uid__ = set()
 
     def to_list(self) -> list[Resource]:
         """

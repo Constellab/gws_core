@@ -33,9 +33,6 @@ class ResourceListBase(Resource):
     resource for each resource in the set when saving the set
     """
 
-    # list the resource model ids that are constant (the system doesn't create new resources on save)
-    __constant_resource_uid__: set[str] | None = None
-
     @abstractmethod
     def get_resource_model_ids(self) -> set[str]:
         """
@@ -75,31 +72,6 @@ class ResourceListBase(Resource):
         """
         return resource_model_id in self.get_resource_model_ids()
 
-    def _mark_resource_as_constant(
-        self,
-        resource: Resource,
-    ) -> None:
-        """Mark the resource as constant, so the system will not create a new resource on save"""
-        constant_resource_uids = self.__get_constant_resource_uid__()
-        constant_resource_uids.add(resource.uid)
-
-    def __resource_is_constant__(self, resource: Resource) -> bool:
-        """return true if the resource is constant and was create before
-        a task that generated this resource set
-        """
-        return resource.uid in self.__get_constant_resource_uid__()
-
-    def __get_constant_resource_uid__(self) -> set[str]:
-        """Add the resource uid to the constant resource uid set"""
-        if self.__constant_resource_uid__ is None:
-            self.__constant_resource_uid__ = set()
-
-            # load existing constant resource uids
-            resources = self.get_resources_as_set()
-            for resource in resources:
-                self.__constant_resource_uid__.add(resource.uid)
-        return self.__constant_resource_uid__
-
     def _get_resource_by_model_id(self, resource_model_id: str) -> Resource:
         if resource_model_id not in self.get_resource_model_ids():
             raise Exception(f"The resource with id {resource_model_id} is not in the resource list")
@@ -133,12 +105,19 @@ class ResourceListBase(Resource):
 
         new_resources: dict[str, Resource] = {}
         for resource in self.get_resources_as_set():
-            if self.__resource_is_constant__(resource):
-                if resource.get_model_id() is None:
+            if resource.__is_reference__:
+                model_id = resource.get_model_id()
+                if model_id is None:
                     raise Exception(
-                        f"The resource {resource.name or resource.uid} is marked as constant resource in the resource list, "
+                        f"The resource '{resource.name or resource.uid}' is marked as reference in the resource list, "
                         "but the resource is not saved in the database. If you want to add a new resource, set create_new_resource to True. "
                         "If you want to add an existing resource, use an existing resource from the task inputs."
+                    )
+                resource_model = ResourceModel.get_by_id(model_id)
+                if resource_model is None:
+                    raise Exception(
+                        f"The resource '{resource.name or resource.uid}' is marked as reference "
+                        f"but the resource model with id '{model_id}' was not found in the database."
                     )
 
                 new_resources[resource.uid] = resource
@@ -161,7 +140,10 @@ class ResourceListBase(Resource):
 
         resources: set[Resource] = set()
         for resource_model in resource_models:
-            resources.add(resource_model.get_resource())
+            resource = resource_model.get_resource()
+            # Mark loaded resources as references since they already exist in the database
+            resource.set_as_reference()
+            resources.add(resource)
         return resources
 
     def get_resource_models(self) -> list[ResourceModel]:
@@ -193,9 +175,6 @@ class ResourceListBase(Resource):
 
         if isinstance(resource, ResourceListBase):
             raise Exception("ResourceSet does not support nested")
-
-        # force the load of constant resource uids
-        self.__get_constant_resource_uid__()
 
     @view(
         view_type=ResourcesListView,

@@ -153,12 +153,14 @@ class OptionalTaskOut(Task):
 class Log(Task):
     input_specs = InputSpecs({"person": InputSpec(Person)})
     output_specs = OutputSpecs(
-        {"samePerson": OutputSpec(Person, constant=True), "otherPerson": OutputSpec(Person)}
+        {"samePerson": OutputSpec(Person), "otherPerson": OutputSpec(Person)}
     )
     config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return {"samePerson": inputs.get("person"), "otherPerson": inputs.get("person")}
+        same_person = inputs.get("person")
+        same_person.set_as_reference()
+        return {"samePerson": same_person, "otherPerson": inputs.get("person")}
 
 
 @protocol_decorator("TestPersonProtocol")
@@ -179,7 +181,7 @@ class Skippable(Task):
         }
     )
     output_specs: OutputSpecs = OutputSpecs(
-        {"resource": OutputSpec(resource_types=Resource, sub_class=True, constant=True)}
+        {"resource": OutputSpec(resource_types=Resource, sub_class=True)}
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -191,7 +193,10 @@ class Skippable(Task):
                 "The two resources are set and it should be only one because of Skippable"
             )
 
-        return super().run(params, inputs)
+        resource = resource1 or resource2
+        if resource:
+            resource.set_as_reference()
+        return {"resource": resource}
 
 
 @protocol_decorator("TestSkippable")

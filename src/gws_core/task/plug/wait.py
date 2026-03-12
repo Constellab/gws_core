@@ -29,7 +29,7 @@ class Wait(Task):
 
     input_specs: InputSpecs = InputSpecs({"resource": InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs(
-        {"resource": OutputSpec(resource_types=Resource, sub_class=True, constant=True)}
+        {"resource": OutputSpec(resource_types=Resource, sub_class=True)}
     )
     config_specs = ConfigSpecs(
         {
@@ -51,6 +51,7 @@ class Wait(Task):
             time.sleep(1)
 
         resource = inputs["resource"]
+        resource.set_as_reference()
         return {"resource": resource}
 
 
@@ -70,7 +71,7 @@ class ShellWait(Task):
 
     input_specs: InputSpecs = InputSpecs({"resource": InputSpec(Resource)})
     output_specs: OutputSpecs = OutputSpecs(
-        {"resource": OutputSpec(resource_types=Resource, sub_class=True, constant=True)}
+        {"resource": OutputSpec(resource_types=Resource, sub_class=True)}
     )
     config_specs = ConfigSpecs(
         {
@@ -95,4 +96,5 @@ class ShellWait(Task):
 
         # return the input resource as output
         resource = inputs["resource"]
+        resource.set_as_reference()
         return {"resource": resource}

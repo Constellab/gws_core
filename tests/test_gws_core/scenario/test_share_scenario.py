@@ -321,6 +321,27 @@ class ShareScenarioTestSetup:
         self._tc.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
         self._tc.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
 
+    def assert_imported_outputs_only(self, new_scenario: Scenario) -> None:
+        new_protocol = new_scenario.protocol_model
+
+        # 3 resources should have been created (resource set and 2 robots)
+        self._tc.assertEqual(
+            ResourceModel.select().where(ResourceModel.scenario == new_scenario.id).count(), 3
+        )
+        # All TaskInputModel should have been created because even if the source resource is not imported,
+        #  the input task config should still be created with a Shell resource
+        self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
+
+        # the source task should be configured event if the source resource is not imported
+        new_source: TaskModel = new_protocol.get_process("source")
+        self._tc.assertIsNotNone(new_source.source_config_id)
+        self._tc.assertIsNotNone(new_source.out_port(InputTask.output_name).get_resource_model())
+
+        new_output_process = new_protocol.get_process("output")
+        self._tc.assertIsNotNone(
+            new_output_process.in_port(OutputTask.input_name).get_resource_model()
+        )
+
 
 # test_share_scenario
 class TestShareScenario(BaseTestCase):
@@ -362,32 +383,13 @@ class TestShareScenario(BaseTestCase):
         new_source = cast(TaskModel, new_protocol_model.get_process("source"))
         new_move = cast(TaskModel, new_protocol_model.get_process("move"))
         setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
-        self.assert_imported_outputs_only(share_link)
 
-    def assert_imported_outputs_only(self, share_link) -> None:
-        new_scenario_2 = ScenarioTransfertService.import_from_lab_sync(
+        new_scenario_outputs_only = ScenarioTransfertService.import_from_lab_sync(
             ScenarioDownloader.build_config(
                 share_link.get_download_link(), "Outputs only", "Force new scenario"
             )
         )
-
-        new_protocol_2 = new_scenario_2.protocol_model
-
-        # 3 resources should have been created (resource set and 2 robots)
-        self.assertEqual(
-            ResourceModel.select().where(ResourceModel.scenario == new_scenario_2.id).count(), 3
-        )
-        # All TaskInputModel should have been created because even if the source resource is not imported,
-        #  the input task config should still be created with a Shell resource
-        self.assertEqual(TaskInputModel.get_by_scenario(new_scenario_2.id).count(), 3)
-
-        # the source task should be configured event if the source resource is not imported
-        new_source_2: TaskModel = new_protocol_2.get_process("source")
-        self.assertIsNotNone(new_source_2.source_config_id)
-        self.assertIsNotNone(new_source_2.out_port(InputTask.output_name).get_resource_model())
-
-        new_output_process = new_protocol_2.get_process("output")
-        self.assertIsNotNone(new_output_process.in_port(OutputTask.input_name).get_resource_model())
+        setup.assert_imported_outputs_only(new_scenario_outputs_only)
 
     def test_skip_if_exists(self):
         """Test ScenarioBuilder with KEEP_ID: deletes the scenario then rebuilds it from a
@@ -403,11 +405,10 @@ class TestShareScenario(BaseTestCase):
         # Export package and zip all resources before deleting the scenario
         scenario_package = ScenarioService.export_scenario(setup.initial_scenario_model.id)
         current_user = CurrentUserService.get_and_check_current_user()
-        protocol_graph = ProtocolGraph(scenario_package.protocol.data.graph)
         zip_paths = []
-        for resource_id in protocol_graph.get_all_resource_ids():
+        for resource_models in scenario_package.root_resource_models:
             zipper = ResourceZipper(current_user)
-            zipper.add_resource_model(resource_id)
+            zipper.add_resource_model(resource_models.id)
             zipper.close_zip()
             zip_paths.append(zipper.get_zip_file_path())
         origin = ExternalLabApiService.get_current_lab_info(current_user)
@@ -434,6 +435,34 @@ class TestShareScenario(BaseTestCase):
         new_source = cast(TaskModel, new_protocol_model.get_process("source"))
         new_move = cast(TaskModel, new_protocol_model.get_process("move"))
         setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
+
+        # Export the scenario again and zip only the output resource
+        output_resource_model = (
+            setup.get_initial_output_process().in_port(OutputTask.input_name).get_resource_model()
+        )
+        output_zip_paths = []
+        zipper = ResourceZipper(current_user)
+        zipper.add_resource_model(output_resource_model.id)
+        zipper.close_zip()
+        output_zip_paths.append(zipper.get_zip_file_path())
+
+        # Delete the rebuilt scenario before importing outputs only
+        # Leave the input resource to simulate an import where the input resource already exists.
+        ScenarioService.delete_scenario(new_scenario.id)
+
+        builder_outputs = ScenarioBuilder(
+            scenario_info=scenario_package,
+            resource_zip_paths=output_zip_paths,
+            origin=origin,
+        )
+        try:
+            new_scenario_outputs_only = builder_outputs.build(
+                skip_scenario_tags=False,
+                create_mode=ShareEntityCreateMode.KEEP_ID,
+            )
+        finally:
+            builder_outputs.cleanup()
+        setup.assert_imported_outputs_only(new_scenario_outputs_only)
 
     def test_send_scenario(self):
         input_robot_model = TestHelper.save_robot_resource()

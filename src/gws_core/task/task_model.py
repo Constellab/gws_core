@@ -145,6 +145,11 @@ class TaskModel(ProcessModel):
         params: ConfigParamsDict = self.config.get_and_check_values()
         inputs: dict[str, Resource] = self.inputs.get_resources(new_instance=True)
 
+        # Reset runtime flags on input resources before passing them to the task
+        for resource in inputs.values():
+            if resource is not None:
+                resource.__prepare_for_task_run__()
+
         task_runner: TaskRunner = TaskRunner(
             task_type=self.get_process_type(),
             params=params,
@@ -263,16 +268,27 @@ class TaskModel(ProcessModel):
 
             resource_model: ResourceModel
 
-            port: Port = self.outputs.get_port(key)
-
-            if port.constant_out:
-                # If the port is mark as is_constant_out, we don't create a new resource
+            if resource is not None and resource.__is_reference__:
+                # The resource is marked as a reference, we don't create a new resource
                 # We use the same resource
-                resource_model = ResourceModel.get_by_id_and_check(resource.get_model_id())
+                model_id = resource.get_model_id()
+                if model_id is None:
+                    raise Exception(
+                        f"The resource '{resource.get_name() or resource.uid}' on port '{key}' is marked as reference "
+                        "but has no model id. A reference resource must be an existing saved resource."
+                    )
+                resource_model = ResourceModel.get_by_id(model_id)
+                if resource_model is None:
+                    raise Exception(
+                        f"The resource '{resource.get_name() or resource.uid}' on port '{key}' is marked as reference "
+                        f"but the resource model with id '{model_id}' was not found in the database."
+                    )
             else:
+                port: Port = self.outputs.get_port(key)
                 resource_model = self._save_output_resource(resource, port.name)
 
             # save the resource model into the output's port (even if it's None)
+            port = self.outputs.get_port(key)
             port.set_resource_model(resource_model)
 
     def _save_output_resource(self, resource: Resource, port_name: str) -> ResourceModel:
@@ -314,9 +330,9 @@ class TaskModel(ProcessModel):
         # Special check for the resource with children
         if isinstance(resource, ResourceListBase):
             for child in resource.get_resources_as_set():
-                # for constant resource, only check if it was set as input
-                if resource.__resource_is_constant__(child):
-                    # case when the resource is a constant and we don't create a new resource
+                # for reference resource, only check if it was set as input
+                if child.__is_reference__:
+                    # case when the resource is a reference and we don't create a new resource
                     # if the resource is not listed in task input, error
                     # Accept the resource if it is a sub resource of a input resource set
                     resource_model_id = child.get_model_id()

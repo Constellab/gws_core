@@ -109,7 +109,7 @@ class ResourcePicker(Task):
         }
     )
     output_specs: OutputSpecs = DynamicOutputs(
-        additionnal_port_spec=OutputSpec(Resource, sub_class=True, constant=True)
+        additionnal_port_spec=OutputSpec(Resource, sub_class=True)
     )
 
     config_specs = ConfigSpecs(
@@ -139,6 +139,7 @@ class ResourcePicker(Task):
         for config in configs:
             if config.get("key"):
                 resource = resource_set.get_resource(config["key"])
+                resource.set_as_reference()
                 resource_list.add_resource(resource)
 
         return {"target": resource_list}

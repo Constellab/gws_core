@@ -34,7 +34,6 @@ class InputTask(Task):
             "resource": OutputSpec(
                 Resource,
                 sub_class=True,
-                constant=True,
                 human_name="Resource",
                 short_description="Loaded resource",
             )
@@ -57,7 +56,9 @@ class InputTask(Task):
         # retrieve the resource model based and id and resource type
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(r_id)
 
-        return {"resource": resource_model.get_resource()}
+        resource = resource_model.get_resource()
+        resource.set_as_reference()
+        return {"resource": resource}
 
     @staticmethod
     def get_resource_id_from_config(config: ConfigParamsDict) -> str | None:

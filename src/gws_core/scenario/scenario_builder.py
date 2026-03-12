@@ -172,6 +172,12 @@ class ScenarioBuilder:
 
         # Save all protocol input resources first
         for resource_model_id in protocol_model.get_input_resource_model_ids():
+            # Check if the resource already exists in the DB
+            existing_resource = ResourceModel.get_by_id(resource_model_id)
+            if existing_resource:
+                self._resource_models[resource_model_id] = existing_resource
+                continue
+
             # search the resource by the actual resource model ID, the metadata_resource_models keys are old IDs but model.
             # id is the new ID in NEW_ID mode
             resource_model = next(
