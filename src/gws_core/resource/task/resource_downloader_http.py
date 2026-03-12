@@ -5,7 +5,6 @@ from requests.models import Response
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
@@ -14,7 +13,6 @@ from gws_core.resource.resource_downloader import (
     ResourceDownloader,
 )
 from gws_core.resource.resource_dto import ResourceOrigin
-from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.task.resource_downloader_base import ResourceDownloaderBase
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_dto import (
@@ -82,12 +80,6 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         else:
             resource_loader_mode = ShareEntityCreateMode.NEW_ID
 
-        # if we keep the resource id and it's a lab share link, check if the resource already exists
-        if resource_loader_mode == ShareEntityCreateMode.KEEP_ID and isinstance(
-            resource_downloader, LabShareResourceDownloader
-        ):
-            self._check_existing_resource(resource_downloader)
-
         # download the resource file
         resource_file = resource_downloader.download()
 
@@ -133,32 +125,6 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text
                 )
-
-    def _check_existing_resource(
-        self, share_resource_downloader: LabShareResourceDownloader
-    ) -> None:
-        """Check if the resource already exists in the current lab.
-
-        :param resource_downloader: The resource downloader
-        :return: ResourceModel if it exists, None otherwise
-        """
-        for resource_dto in share_resource_downloader.get_resources_info():
-            resource_model = ResourceModel.get_by_id(resource_dto.id)
-            if resource_model:
-                if share_resource_downloader.is_main_resource(resource_model.id):
-                    raise Exception(
-                        "The resource '"
-                        + resource_dto.name
-                        + "' already exists in the current lab."
-                        + f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.'
-                    )
-                else:
-                    raise Exception(
-                        "The child resource '"
-                        + resource_dto.name
-                        + "' of the main resource already exists in the current lab. Please use the 'Force new resource' option to create a new copy of the resource."
-                        + f' <a href="{FrontService.get_resource_url(resource_model.id)}">Click here to view the existing resource</a>.'
-                    )
 
     @classmethod
     def build_config(

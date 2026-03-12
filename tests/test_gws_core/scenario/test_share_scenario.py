@@ -406,7 +406,7 @@ class TestShareScenario(BaseTestCase):
         scenario_package = ScenarioService.export_scenario(setup.initial_scenario_model.id)
         current_user = CurrentUserService.get_and_check_current_user()
         zip_paths = []
-        for resource_models in scenario_package.root_resource_models:
+        for resource_models in scenario_package.main_resource_models:
             zipper = ResourceZipper(current_user)
             zipper.add_resource_model(resource_models.id)
             zipper.close_zip()

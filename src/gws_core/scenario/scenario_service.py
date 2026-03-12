@@ -578,7 +578,7 @@ class ScenarioService:
             zip_version=1,
             scenario=experimeny_zip,
             protocol=scenario.export_protocol(),
-            root_resource_models=[
-                resource_model.to_full_dto() for resource_model in resource_models
+            main_resource_models=[
+                resource_model.to_export_dto() for resource_model in resource_models
             ],
         )

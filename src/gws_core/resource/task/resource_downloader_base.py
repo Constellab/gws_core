@@ -10,6 +10,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_builder import ResourceBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
@@ -47,6 +48,7 @@ class ResourceDownloaderBase(Task):
     )
 
     resource_loader: ResourceLoader | None = None
+    _resource_builder: ResourceBuilder | None = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -92,6 +94,29 @@ class ResourceDownloaderBase(Task):
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()
 
+        # If it's a resource zip, directly save ResourceModels preserving original metadata
+        if self.resource_loader.is_resource_zip():
+            builder = ResourceBuilder.from_loaded_resource_loader(
+                resource_loader=self.resource_loader,
+                resource=resource,
+                origin=self.resource_loader.get_origin_info(),
+                skip_resource_tags=skip_tags,
+                create_mode=resource_loader_mode,
+            )
+            resource_model = builder.build_and_save_resource(
+                message_dispatcher=self.message_dispatcher,
+            )
+            self._resource_builder = builder
+
+            # Return resource marked as reference so TaskModel._save_outputs uses existing model
+            result_resource = resource_model.get_resource()
+            result_resource.__set_model_id__(resource_model.id)
+            result_resource.set_as_reference()
+
+            # Delete the compressed file
+            FileHelper.delete_file(resource_file)
+            return result_resource
+
         # delete the compressed file
         FileHelper.delete_file(resource_file)
 
@@ -99,6 +124,11 @@ class ResourceDownloaderBase(Task):
 
     def run_after_task(self) -> None:
         """Save share info, clean temp files, etc"""
+        if self._resource_builder:
+            self.log_info_message("Cleaning the temp files")
+            self._resource_builder.cleanup()
+            return
+
         if not self.resource_loader:
             return
 

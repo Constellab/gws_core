@@ -674,7 +674,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             is_application=self.is_application(),
         )
 
-    def to_full_dto(self) -> ResourceModelExportDTO:
+    def to_export_dto(self) -> ResourceModelExportDTO:
         dto = self.to_dto()
         return ResourceModelExportDTO(
             **dto.to_json_dict(),

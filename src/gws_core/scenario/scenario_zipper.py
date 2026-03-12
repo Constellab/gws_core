@@ -24,4 +24,4 @@ class ScenarioExportPackage(BaseModelDTO):
     zip_version: int
     scenario: ScenarioExportDTO
     protocol: ScenarioProtocolDTO
-    root_resource_models: list[ResourceModelExportDTO]
+    main_resource_models: list[ResourceModelExportDTO]

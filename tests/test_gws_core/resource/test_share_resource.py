@@ -1,5 +1,7 @@
 import os
 from datetime import datetime, timedelta
+from typing import cast
+from unittest import TestCase
 
 from gws_core import (
     BaseTestCase,
@@ -19,10 +21,16 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.impl.robot.robot_resource import Robot
+from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.resource.resource_builder import ResourceBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
+from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.task.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
 from gws_core.scenario.scenario_enums import ScenarioStatus
@@ -31,6 +39,7 @@ from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
+    ShareEntityCreateMode,
     ShareLinkEntityType,
     ShareLinkType,
     ShareResourceInfoReponseDTO,
@@ -41,14 +50,19 @@ from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.test.test_helper import TestHelper
 from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
-from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.user.current_user_service import CurrentUserService
 from pandas import DataFrame
 
 
 def get_table() -> Table:
     df = DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-    return Table(df)
+    table = Table(df)
+    table.name = "MyTestName"
+    table.set_all_column_tags([{"name": "tag1"}, {"name": "tag2"}])
+    table.tags.add_tag(
+        Tag("resource_tag", "resource_tag_value", origins=TagOrigins(TagOriginType.USER, "test"))
+    )
+    return table
 
 
 def get_file() -> File:
@@ -105,6 +119,306 @@ class GenerateResourceList(Task):
         resource_list.add_resource(file)
 
         return {"resource_list": resource_list}
+
+
+class ShareResourceTestSetup:
+    """Helper class that creates a resource, zips it, and provides assertion methods.
+
+    Supports both NEW_ID and KEEP_ID create modes for testing resource sharing.
+
+    Attributes
+    ----------
+    original_resource_model : ResourceModel
+        The original resource model before sharing.
+    create_mode : ShareEntityCreateMode
+        The create mode used for this test setup.
+    """
+
+    original_resource_model: ResourceModel
+    _children_resource_models: dict[str, ResourceModel]
+    _original_resource_set: ResourceSet
+    _original_resource_list: ResourceList
+
+    create_mode: ShareEntityCreateMode
+    _tc: TestCase
+
+    def __init__(self, test_case: TestCase, create_mode: ShareEntityCreateMode) -> None:
+        self._tc = test_case
+        self.create_mode = create_mode
+
+    def _check_id(self, imported_id: str, original_id: str) -> None:
+        """Assert that imported_id equals or differs from original_id depending on create_mode."""
+        if self.create_mode == ShareEntityCreateMode.KEEP_ID:
+            self._tc.assertEqual(imported_id, original_id)
+        else:
+            self._tc.assertNotEqual(imported_id, original_id)
+
+    def _zip_resource(self, resource_model_id: str) -> str:
+        """Zip a resource and return the zip file path."""
+        current_user = CurrentUserService.get_and_check_current_user()
+        zipper = ResourceZipper(current_user)
+        zipper.add_resource_model(resource_model_id)
+        zipper.close_zip()
+        return zipper.get_zip_file_path()
+
+    def build_resource_from_zip(self, zip_path: str) -> ResourceModel:
+        """Use ResourceBuilder to import a resource from a zip file with the configured create_mode."""
+        current_user = CurrentUserService.get_and_check_current_user()
+        origin = ExternalLabApiService.get_current_lab_info(current_user)
+
+        builder = ResourceBuilder(
+            resource_zip_path=zip_path,
+            origin=origin,
+            create_mode=self.create_mode,
+        )
+        try:
+            builder.load_resource(create_mode=self.create_mode)
+            return builder.build_and_save_resource()
+        finally:
+            builder.cleanup()
+
+    def _delete_resource(self, resource_model_id: str) -> None:
+        """Delete a resource model and its children from the DB."""
+        # Delete children first to avoid FK constraint violations
+        EntityNavigatorService.delete_resource(resource_model_id)
+
+    def setup_and_import_basic_resource(self) -> ResourceModel:
+        """Create a table resource, zip it, optionally delete original, and import via ResourceBuilder."""
+        table = get_table()
+        table.name = "MyTestName"
+        table.set_all_column_tags([{"name": "tag1"}, {"name": "tag2"}])
+        table.tags.add_tag(
+            Tag(
+                "resource_tag", "resource_tag_value", origins=TagOrigins(TagOriginType.USER, "test")
+            )
+        )
+
+        self.original_resource_model = ResourceModel.save_from_resource(
+            table, origin=ResourceOrigin.UPLOADED
+        )
+
+        zip_path = self._zip_resource(self.original_resource_model.id)
+
+        self._delete_resource(self.original_resource_model.id)
+
+        return self.build_resource_from_zip(zip_path)
+
+    def _assert_new_resource_model(
+        self, new_resource_model: ResourceModel, original_resource_model: ResourceModel
+    ) -> None:
+        self._check_id(new_resource_model.id, original_resource_model.id)
+        self._tc.assertEqual(new_resource_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        # the scenario and task should not be set on the resource model of the imported resource because
+        # they should not exist
+        self._tc.assertEqual(new_resource_model.name, original_resource_model.name)
+        self._tc.assertEqual(
+            new_resource_model.resource_typing_name, original_resource_model.resource_typing_name
+        )
+        self._tc.assertIsNone(new_resource_model.scenario)
+        self._tc.assertIsNone(new_resource_model.task_model)
+
+    def _assert_new_child_resource_model(
+        self,
+        child_resource_model: ResourceModel,
+        original_child_resource_model: ResourceModel,
+        new_parent_resource_model: ResourceModel,
+    ) -> None:
+        self._assert_new_resource_model(child_resource_model, original_child_resource_model)
+        self._tc.assertEqual(child_resource_model.parent_resource_id, new_parent_resource_model.id)
+
+    def assert_imported_basic_resource(self, new_resource_model: ResourceModel) -> None:
+        """Assert that a basic table resource was imported correctly."""
+        self._assert_new_resource_model(new_resource_model, self.original_resource_model)
+
+        new_table = cast(Table, new_resource_model.get_resource())
+
+        # Check the tags
+        tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, new_resource_model.id)
+        self._tc.assertEqual(len(tags.get_tags()), 1)
+        self._tc.assertTrue(new_table.tags.has_tag(Tag("resource_tag", "resource_tag_value")))
+        tag = new_table.tags.get_tag("resource_tag", "resource_tag_value")
+        self._tc.assertTrue(tag.origins.has_origin(TagOriginType.USER, "test"))
+        self._tc.assertIsNotNone(tag.origins.get_origins()[0].external_lab_origin_id)
+
+        self._tc.assertIsInstance(new_table, Table)
+        self._tc.assertEqual(new_table.name, "MyTestName")
+        self._tc.assertTrue(new_table.equals(get_table()))
+
+        # Check the tags
+
+        # test that the origin of the resource exist
+        shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        self._tc.assertEqual(shared_resource.entity.id, new_resource_model.id)
+
+    def setup_and_import_file_resource(self) -> ResourceModel:
+        """Create a file resource, zip it, optionally delete original, and import via ResourceBuilder."""
+        file = get_file()
+
+        self.original_resource_model = ResourceModel.save_from_resource(
+            file, origin=ResourceOrigin.UPLOADED
+        )
+
+        zip_path = self._zip_resource(self.original_resource_model.id)
+
+        self._delete_resource(self.original_resource_model.id)
+
+        return self.build_resource_from_zip(zip_path)
+
+    def assert_imported_file_resource(self, new_resource_model: ResourceModel) -> None:
+        """Assert that a file resource was imported correctly."""
+        self._assert_new_resource_model(new_resource_model, self.original_resource_model)
+        self._tc.assertIsNotNone(new_resource_model.fs_node_model)
+
+        resource: File = new_resource_model.get_resource()
+        self._tc.assertTrue(resource.name.startswith("test"))
+        self._tc.assertEqual("test", resource.read())
+
+    def setup_and_import_resource_set(self) -> ResourceModel:
+        """Create a resource set via scenario, zip it, optionally delete original,
+        and import via ResourceBuilder."""
+        i_scenario: ScenarioProxy = ScenarioProxy()
+        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
+        generate_resource_set = i_scenario.get_protocol().add_process(
+            GenerateResourceSet, "generate_resource_set"
+        )
+        i_scenario.get_protocol().add_connectors(
+            [(robot_create >> "robot", generate_resource_set << "robot")]
+        )
+        i_scenario.run()
+        i_process = i_scenario.get_protocol().get_process("generate_resource_set")
+        resource_model_id = i_process.get_output_resource_model("resource_set").id
+
+        self.original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
+        self._original_resource_set: ResourceSet = self.original_resource_model.get_resource()
+
+        zip_path = self._zip_resource(self.original_resource_model.id)
+
+        # store the children resource models
+        self._children_resource_models = {
+            "robot": ResourceModel.get_by_id_and_check(
+                self._original_resource_set.get_resource("robot").get_model_id()
+            ),
+            "table": ResourceModel.get_by_id_and_check(
+                self._original_resource_set.get_resource("table").get_model_id()
+            ),
+            "file": ResourceModel.get_by_id_and_check(
+                self._original_resource_set.get_resource("file").get_model_id()
+            ),
+        }
+
+        i_scenario.delete()
+
+        return self.build_resource_from_zip(zip_path)
+
+    def assert_imported_resource_set(self, new_resource_model: ResourceModel) -> None:
+        """Assert that a resource set was imported correctly."""
+        self._assert_new_resource_model(new_resource_model, self.original_resource_model)
+
+        resource_set: ResourceSet = new_resource_model.get_resource()
+        self._tc.assertIsInstance(resource_set, ResourceSet)
+        self._tc.assertEqual(3, len(resource_set))
+
+        # check the robot
+        robot: Robot = resource_set.get_resource("robot")
+        self._tc.assertIsNotNone(robot)
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        self._assert_new_child_resource_model(
+            robot_model, self._children_resource_models["robot"], new_resource_model
+        )
+
+        original_robot: Robot = self._original_resource_set.get_resource("robot")
+        self._check_id(robot.get_model_id(), original_robot.get_model_id())
+        self._tc.assertEqual(original_robot.age, robot.age)
+
+        # check the table
+        table: Table = resource_set.get_resource("table")
+        self._tc.assertIsNotNone(table)
+        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        self._assert_new_child_resource_model(
+            table_model, self._children_resource_models["table"], new_resource_model
+        )
+        self._tc.assertTrue(table.equals(get_table()))
+
+        # check the file
+        file: File = resource_set.get_resource("file")
+        self._tc.assertIsNotNone(file)
+        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        self._assert_new_child_resource_model(
+            file_model, self._children_resource_models["file"], new_resource_model
+        )
+        self._tc.assertEqual("test", file.read())
+
+    def setup_and_import_resource_list(self) -> ResourceModel:
+        """Create a resource list via scenario, zip it, optionally delete original,
+        and import via ResourceBuilder."""
+        i_scenario: ScenarioProxy = ScenarioProxy()
+        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
+        generate_resource_list = i_scenario.get_protocol().add_process(
+            GenerateResourceList, "generate_resource_list"
+        )
+        i_scenario.get_protocol().add_connectors(
+            [(robot_create >> "robot", generate_resource_list << "robot")]
+        )
+        i_scenario.run()
+        i_process = i_scenario.get_protocol().get_process("generate_resource_list")
+        resource_model_id = i_process.get_output_resource_model("resource_list").id
+
+        self.original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
+        self._original_resource_list: ResourceList = self.original_resource_model.get_resource()
+
+        self._children_resource_models = {
+            "robot": ResourceModel.get_by_id_and_check(
+                self._original_resource_list[0].get_model_id()
+            ),
+            "table": ResourceModel.get_by_id_and_check(
+                self._original_resource_list[1].get_model_id()
+            ),
+            "file": ResourceModel.get_by_id_and_check(
+                self._original_resource_list[2].get_model_id()
+            ),
+        }
+
+        zip_path = self._zip_resource(self.original_resource_model.id)
+        i_scenario.delete()
+
+        return self.build_resource_from_zip(zip_path)
+
+    def assert_imported_resource_list(self, new_resource_model: ResourceModel) -> None:
+        """Assert that a resource list was imported correctly."""
+        self._assert_new_resource_model(new_resource_model, self.original_resource_model)
+
+        resource_list: ResourceList = new_resource_model.get_resource()
+        self._tc.assertIsInstance(resource_list, ResourceList)
+        self._tc.assertEqual(3, len(resource_list))
+
+        # check the robot
+        robot: Robot = resource_list[0]
+        self._tc.assertIsNotNone(robot)
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        self._assert_new_child_resource_model(
+            robot_model, self._children_resource_models["robot"], new_resource_model
+        )
+        original_robot: Robot = self._original_resource_list[0]
+        self._check_id(robot.get_model_id(), original_robot.get_model_id())
+        self._tc.assertEqual(original_robot.age, robot.age)
+
+        # check the table
+        table: Table = resource_list[1]
+        self._tc.assertIsNotNone(table)
+        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        self._assert_new_child_resource_model(
+            table_model, self._children_resource_models["table"], new_resource_model
+        )
+        self._tc.assertTrue(table.equals(get_table()))
+
+        # check the file
+        file: File = resource_list[2]
+        self._tc.assertIsNotNone(file)
+        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        self._assert_new_child_resource_model(
+            file_model, self._children_resource_models["file"], new_resource_model
+        )
+        self._tc.assertEqual("test", file.read())
 
 
 # test_share_resource
@@ -175,147 +489,53 @@ class TestShareResource(BaseTestCase):
         shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
         self.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
-    def test_share_file_resource(self):
-        # save the resource model
-        file = get_file()
+    def test_share_basic_resource_with_builder(self):
+        """Test basic resource sharing using ResourceBuilder in both NEW_ID and KEEP_ID modes."""
+        # Test NEW_ID mode
+        setup_new = ShareResourceTestSetup(self, ShareEntityCreateMode.NEW_ID)
+        new_resource_model = setup_new.setup_and_import_basic_resource()
+        setup_new.assert_imported_basic_resource(new_resource_model)
 
-        original_resource_model = ResourceModel.save_from_resource(
-            file, origin=ResourceOrigin.UPLOADED
-        )
+        # Test KEEP_ID mode
+        setup_keep = ShareResourceTestSetup(self, ShareEntityCreateMode.KEEP_ID)
+        new_resource_model = setup_keep.setup_and_import_basic_resource()
+        setup_keep.assert_imported_basic_resource(new_resource_model)
 
-        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
-        resource: File = new_resource_model.get_resource()
+    def test_share_file_resource_with_builder(self):
+        """Test file resource sharing using ResourceBuilder in both NEW_ID and KEEP_ID modes."""
+        # Test NEW_ID mode
+        setup_new = ShareResourceTestSetup(self, ShareEntityCreateMode.NEW_ID)
+        new_resource_model = setup_new.setup_and_import_file_resource()
+        setup_new.assert_imported_file_resource(new_resource_model)
 
-        self.assertEqual(resource.name, "test.txt")
-        # check that the path is different form the original
-        self.assertNotEqual(resource.path, original_resource_model.fs_node_model.path)
-        self.assertEqual("test", resource.read())
+        # Test KEEP_ID mode
+        setup_keep = ShareResourceTestSetup(self, ShareEntityCreateMode.KEEP_ID)
+        new_resource_model = setup_keep.setup_and_import_file_resource()
+        setup_keep.assert_imported_file_resource(new_resource_model)
 
-    def test_share_resource_set(self):
-        # Generate a resource set
-        i_scenario: ScenarioProxy = ScenarioProxy()
-        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
-        generate_resource_set = i_scenario.get_protocol().add_process(GenerateResourceSet, "generate_resource_set")
-        i_scenario.get_protocol().add_connectors(
-            [(robot_create >> "robot", generate_resource_set << "robot")]
-        )
-        i_scenario.run()
-        i_process = i_scenario.get_protocol().get_process("generate_resource_set")
-        resource_model_id = i_process.get_output_resource_model("resource_set").id
+    def test_share_resource_set_with_builder(self):
+        """Test resource set sharing using ResourceBuilder in both NEW_ID and KEEP_ID modes."""
+        # Test NEW_ID mode
+        setup_new = ShareResourceTestSetup(self, ShareEntityCreateMode.NEW_ID)
+        new_resource_model = setup_new.setup_and_import_resource_set()
+        setup_new.assert_imported_resource_set(new_resource_model)
 
-        original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
-        original_resource_set: ResourceSet = original_resource_model.get_resource()
+        # Test KEEP_ID mode
+        setup_keep = ShareResourceTestSetup(self, ShareEntityCreateMode.KEEP_ID)
+        new_resource_model = setup_keep.setup_and_import_resource_set()
+        setup_keep.assert_imported_resource_set(new_resource_model)
 
-        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
+    def test_share_resource_list_with_builder(self):
+        """Test resource list sharing using ResourceBuilder in both NEW_ID and KEEP_ID modes."""
+        # Test NEW_ID mode
+        setup_new = ShareResourceTestSetup(self, ShareEntityCreateMode.NEW_ID)
+        new_resource_model = setup_new.setup_and_import_resource_list()
+        setup_new.assert_imported_resource_list(new_resource_model)
 
-        resource_set: ResourceSet = new_resource_model.get_resource()
-        self.assertIsInstance(resource_set, ResourceSet)
-        self.assertEqual(3, len(resource_set))
-
-        # Check that the resource set has the correct origin
-        self.assertEqual(new_resource_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-
-        # check the robot
-        robot: Robot = resource_set.get_resource("robot")
-        self.assertIsNotNone(robot)
-        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
-        self.assertEqual(robot_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        original_robot: Robot = original_resource_set.get_resource("robot")
-        # check that this is a new resource
-        self.assertNotEqual(original_robot.get_model_id(), robot.get_model_id())
-        self.assertEqual(original_robot.age, robot.age)
-
-        # check the table
-        table: Table = resource_set.get_resource("table")
-        self.assertIsNotNone(table)
-        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
-        self.assertEqual(table_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        original_table: Table = original_resource_set.get_resource("table")
-        # check that this is a new resource
-        self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
-        self.assertTrue(original_table.equals(table))
-
-        # check the file
-        file: File = resource_set.get_resource("file")
-        self.assertIsNotNone(file)
-        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
-        self.assertEqual(file_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        self.assertEqual("test", file.read())
-        original_file = original_resource_set.get_resource("file")
-        # check that this is a new resource
-        self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
-
-        # Check that the resource and its children have the scenario_id and task_id set and same
-        self.assertIsNotNone(new_resource_model.scenario)
-        self.assertIsNotNone(new_resource_model.task_model)
-        self.assertNotEqual(original_resource_model.scenario.id, new_resource_model.scenario.id)
-        for resource in resource_set.get_resource_models():
-            self.assertEqual(new_resource_model.scenario, resource.scenario)
-            self.assertEqual(new_resource_model.task_model, resource.task_model)
-            self.assertNotEqual(original_resource_model.scenario.id, resource.scenario.id)
-
-    def test_share_resource_list(self):
-        # Generate a resource list
-        i_scenario: ScenarioProxy = ScenarioProxy()
-        robot_create = i_scenario.get_protocol().add_process(RobotCreate, "robot_create")
-        generate_resource_list = i_scenario.get_protocol().add_process(GenerateResourceList, "generate_resource_list")
-        i_scenario.get_protocol().add_connectors(
-            [(robot_create >> "robot", generate_resource_list << "robot")]
-        )
-        i_scenario.run()
-        i_process = i_scenario.get_protocol().get_process("generate_resource_list")
-        resource_model_id = i_process.get_output_resource_model("resource_list").id
-
-        original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
-        original_resource_list: ResourceList = original_resource_model.get_resource()
-
-        new_resource_model = self._generate_link_and_download_resource(original_resource_model.id)
-        resource_list: ResourceList = new_resource_model.get_resource()
-
-        self.assertIsInstance(resource_list, ResourceList)
-        self.assertEqual(3, len(resource_list))
-
-        # Check that the resource list has the correct origin
-        self.assertEqual(new_resource_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-
-        # check the robot
-        robot: Robot = resource_list[0]
-        self.assertIsNotNone(robot)
-        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
-        self.assertEqual(robot_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        original_robot: Robot = original_resource_list[0]
-        # check that this is a new resource
-        self.assertNotEqual(original_robot.get_model_id(), robot.get_model_id())
-        self.assertEqual(original_robot.age, robot.age)
-
-        # check the table
-        table: Table = resource_list[1]
-        self.assertIsNotNone(table)
-        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
-        self.assertEqual(table_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        original_table: Table = original_resource_list[1]
-        # check that this is a new resource
-        self.assertNotEqual(original_table.get_model_id(), table.get_model_id())
-        self.assertTrue(original_table.equals(table))
-
-        # check the file
-        file: File = resource_list[2]
-        self.assertIsNotNone(file)
-        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
-        self.assertEqual(file_model.origin, ResourceOrigin.IMPORTED_FROM_LAB)
-        self.assertEqual("test", file.read())
-        original_file = original_resource_list[2]
-        # check that this is a new resource
-        self.assertNotEqual(original_file.get_model_id(), file.get_model_id())
-
-        # Check that the resource and its children have the scenario_id and task_id set and same
-        self.assertIsNotNone(new_resource_model.scenario)
-        self.assertIsNotNone(new_resource_model.task_model)
-        self.assertNotEqual(original_resource_model.scenario.id, new_resource_model.scenario.id)
-        for resource in resource_list.get_resource_models():
-            self.assertEqual(new_resource_model.scenario, resource.scenario)
-            self.assertEqual(new_resource_model.task_model, resource.task_model)
-            self.assertNotEqual(original_resource_model.scenario.id, resource.scenario.id)
+        # Test KEEP_ID mode
+        setup_keep = ShareResourceTestSetup(self, ShareEntityCreateMode.KEEP_ID)
+        new_resource_model = setup_keep.setup_and_import_resource_list()
+        setup_keep.assert_imported_resource_list(new_resource_model)
 
     def _generate_link_and_download_resource(self, original_resource_id) -> ResourceModel:
         # create a share link

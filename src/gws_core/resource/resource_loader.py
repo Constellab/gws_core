@@ -70,9 +70,9 @@ class ResourceLoader:
 
         if isinstance(self._resource, ResourceListBase):
             # load all the children resources
-            for zip_resource in self._get_children_zip_resources():
+            for zip_resource in self.get_children_zip_resources():
                 resource: Resource = self._load_resource(zip_resource)
-                self._children_resources[zip_resource.id] = resource
+                self._children_resources[zip_resource.resource_model_export.id] = resource
 
             # replace the resources in the ResourceListBase by the new ones
             self._resource.replace_resources_by_model_id(self._children_resources)
@@ -80,25 +80,28 @@ class ResourceLoader:
         return self._resource
 
     def _check_compatibility(self) -> None:
-        if self._load_info_json().zip_version != 1:
+        if self._load_info_json().zip_version != ResourceZipper.EXPORT_VERSION:
             raise Exception(f"Zip version {self._load_info_json().zip_version} is not supported.")
 
-        for zip_resource in self._get_all_zip_resources():
-            TypingManager.check_typing_name_compatibility(zip_resource.resource_typing_name)
+        for zip_resource in self.get_all_zip_resources():
+            TypingManager.check_typing_name_compatibility(
+                zip_resource.resource_model_export.resource_typing_name
+            )
 
     def _load_resource(self, zip_resource: ResourceExportDTO) -> Resource:
+        resource_export = zip_resource.resource_model_export
+
         # create the kvstore
         kv_store: KVStore | None = None
-        if zip_resource.kvstore_dir_name is not None:
-            # build the path to the kvstore file
+        if zip_resource.has_kvstore:
             kvstore_path = os.path.join(
-                self._resource_folder, zip_resource.kvstore_dir_name, KVStore.FILE_NAME
+                self._resource_folder, zip_resource.get_kvstore_dir_name(), KVStore.FILE_NAME
             )
 
             kv_store = KVStore(kvstore_path)
 
         resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(
-            zip_resource.resource_typing_name
+            resource_export.resource_typing_name
         )
 
         tags = []
@@ -112,29 +115,30 @@ class ResourceLoader:
 
         resource_model_id: str | None = None
         if self.mode == ShareEntityCreateMode.KEEP_ID:
-            resource_model_id = zip_resource.id
+            resource_model_id = resource_export.id
 
         resource = ResourceFactory.create_resource(
             resource_type,
             kv_store=kv_store,
             data=zip_resource.data,
-            name=zip_resource.name,
+            name=resource_export.name,
             tags=tags,
             resource_model_id=resource_model_id,
-            style=zip_resource.style,
+            style=resource_export.style,
         )
 
         if self.mode == ShareEntityCreateMode.NEW_ID:
             # generate a new uid for the resource
             resource.uid = UUIDRField().get_default_value()
 
-        # if the resource is an fs_node_name
-        if zip_resource.fs_node_name is not None:
+        # if the resource is an fs_node
+        if zip_resource.resource_model_export.fs_node:
             if not isinstance(resource, FSNode):
                 raise Exception("Resource type is not a FSNode")
 
+            fs_node_name = zip_resource.get_fs_node_name()
             # set the path of the resource node
-            resource.path = os.path.join(self._resource_folder, zip_resource.fs_node_name)
+            resource.path = os.path.join(self._resource_folder, fs_node_name)
             # clear other values
             resource.file_store_id = None
             resource.is_symbolic_link = False
@@ -204,16 +208,18 @@ class ResourceLoader:
         return self._load_info_json().origin
 
     def get_main_resource_origin_id(self) -> str:
-        return self._load_info_json().resource.id
+        return self._load_info_json().resource.resource_model_export.id
 
     def get_main_resource(self) -> ResourceExportDTO:
         return self._load_info_json().resource
 
-    def _get_children_zip_resources(self) -> list[ResourceExportDTO]:
+    def get_children_zip_resources(self) -> list[ResourceExportDTO]:
+        """Return the children zip resource DTOs from the export package."""
         return self._load_info_json().children_resources
 
-    def _get_all_zip_resources(self) -> list[ResourceExportDTO]:
-        return [self.get_main_resource()] + self._get_children_zip_resources()
+    def get_all_zip_resources(self) -> list[ResourceExportDTO]:
+        """Return all zip resource DTOs (main + children) from the export package."""
+        return [self.get_main_resource()] + self.get_children_zip_resources()
 
     def get_all_generated_resources(self) -> list[Resource]:
         return [self._resource] + list(self._children_resources.values())

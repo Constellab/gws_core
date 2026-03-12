@@ -35,7 +35,7 @@ class TestScenarioZipperLoader(BaseTestCase):
         self.assertEqual(export_package.scenario.status, ScenarioStatus.SUCCESS)
         self.assertEqual(export_package.protocol.version, 3)
         self.assertIsNotNone(export_package.protocol.data)
-        self.assertGreater(len(export_package.root_resource_models), 0)
+        self.assertGreater(len(export_package.main_resource_models), 0)
 
         # Load the exported scenario
         loader = ScenarioLoader(export_package)
