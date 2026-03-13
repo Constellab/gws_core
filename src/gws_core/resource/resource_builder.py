@@ -9,14 +9,12 @@ from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_model_loader import ResourceModelLoader
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.scenario.scenario import Scenario
 from gws_core.share.shared_dto import SharedEntityMode
 from gws_core.share.shared_resource import SharedResource
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import TagOrigin
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_list import TagList
-from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -151,8 +149,6 @@ class ResourceDtoBuilder(ResourceBuilder):
         resource_model.parent_resource_id = (
             self._resolve_id(dto.parent_resource_id) if dto.parent_resource_id else None
         )
-        # Track old->new ID mapping
-        self._id_mapper.set_mapping(dto.id, resource_model.id)
 
         return resource_model.save_full()
 
@@ -250,7 +246,7 @@ class ResourceZipBuilder(ResourceBuilder):
         """Save a single resource directly with its content.
 
         In KEEP_ID mode, checks for an existing model:
-        - If it exists with content, returns it as-is.
+        - If it exists with content, update model data
         - If it exists with content_is_deleted, fills the content.
         - If it doesn't exist, creates a new model with content.
 
@@ -258,14 +254,11 @@ class ResourceZipBuilder(ResourceBuilder):
         """
         resolved_id = self._resolve_id(old_resource_id)
 
-        existing_model = ResourceModel.get_by_id(resolved_id)
-
-        if existing_model and not existing_model.content_is_deleted:
-            return existing_model
+        resource_model = ResourceModel.get_by_id(resolved_id)
 
         try:
-            if existing_model and existing_model.content_is_deleted:
-                resource_model = existing_model.fill_content_from_resource(resource)
+            if resource_model and resource_model.content_is_deleted:
+                resource_model = resource_model.fill_content_from_resource(resource)
 
                 # fill_content_from_resource doesn't save tags, do it here
                 if resource.tags and isinstance(resource.tags, TagList):
@@ -274,7 +267,7 @@ class ResourceZipBuilder(ResourceBuilder):
                         TagEntityType.RESOURCE, resource_model.id, default_origin=user_origin
                     )
                     entity_tags.add_tags(resource.tags.get_tags())
-            else:
+            if not resource_model:
                 resource_model = ResourceModel.save_from_resource(
                     resource,
                     origin=ResourceOrigin.IMPORTED_FROM_LAB,

@@ -30,13 +30,3 @@ class IdMapper:
         new_id = str(uuid4())
         self._id_mapping[old_id] = new_id
         return new_id
-
-
-
-    def set_mapping(self, old_id: str, new_id: str) -> None:
-        """Explicitly set a mapping from an old ID to a new ID."""
-        self._id_mapping[old_id] = new_id
-
-    def has_mapping(self, old_id: str) -> bool:
-        """Check if there is a mapping for the given old ID."""
-        return old_id in self._id_mapping
