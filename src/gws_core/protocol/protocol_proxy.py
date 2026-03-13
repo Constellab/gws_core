@@ -99,6 +99,9 @@ class ProtocolProxy(ProcessProxy):
 
         return ProtocolProxy(protocol_update.process)
 
+    def has_process(self, instance_name: str) -> bool:
+        return instance_name in self._process_model.processes
+
     def get_process(self, instance_name: str) -> ProcessProxy:
         """retreive a protocol or a task in this protocol
 
@@ -109,6 +112,25 @@ class ProtocolProxy(ProcessProxy):
         :rtype: IProcess
         """
         process: ProcessModel = self._process_model.get_process(instance_name)
+
+        if isinstance(process, ProtocolModel):
+            return ProtocolProxy(process)
+        else:
+            return TaskProxy(process)
+
+    def get_process_by_id(self, process_id: str) -> ProcessProxy | None:
+        """retreive a protocol or a task in this protocol by id
+
+        :param process_id: [description]
+        :type process_id: str
+        :raises Exception: [description]
+        :return: [description]
+        :rtype: IProcess
+        """
+        process: ProcessModel | None = self._process_model.get_process_by_id(process_id)
+
+        if process is None:
+            return None
 
         if isinstance(process, ProtocolModel):
             return ProtocolProxy(process)

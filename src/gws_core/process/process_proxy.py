@@ -27,6 +27,8 @@ class ProcessProxy:
     _process_model: ProcessModel
 
     def __init__(self, process_model: ProcessModel) -> None:
+        if not isinstance(process_model, ProcessModel):
+            raise ValueError("process_model should be an instance of ProcessModel")
         self._process_model = process_model
 
     @property

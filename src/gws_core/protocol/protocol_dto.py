@@ -1,4 +1,3 @@
-
 from pydantic import Field
 
 from gws_core.config.config_dto import ConfigSimpleDTO
@@ -83,7 +82,7 @@ class ProtocolDTO(ProcessDTO):
 
 
 class ScenarioProtocolDTO(BaseModelDTO):
-    version: int
+    version: int = 3
     data: ProcessConfigDTO
 
 

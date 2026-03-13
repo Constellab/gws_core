@@ -559,24 +559,10 @@ class ScenarioService:
     def export_scenario(cls, scenario_id: str) -> ScenarioExportPackage:
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
-        scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario_id)
-        tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
-
-        experimeny_zip = ScenarioExportDTO(
-            id=scenario.id,
-            title=scenario.title,
-            description=scenario.description,
-            status=scenario.status,
-            folder=scenario.folder.to_dto() if scenario.folder is not None else None,
-            error_info=scenario.error_info,
-            tags=tags_dtos,
-        )
-
         resource_models = scenario.protocol_model.get_input_and_output_resource_models()
 
         return ScenarioExportPackage(
-            zip_version=1,
-            scenario=experimeny_zip,
+            scenario=scenario.to_scenario_export_dto(),
             protocol=scenario.export_protocol(),
             main_resource_models=[
                 resource_model.to_export_dto() for resource_model in resource_models

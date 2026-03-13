@@ -21,7 +21,7 @@ class ScenarioExportDTO(BaseModelDTO):
 class ScenarioExportPackage(BaseModelDTO):
     """Content of the info.json file in the zip file when a resource is zipped"""
 
-    zip_version: int
+    zip_version: int = 1
     scenario: ScenarioExportDTO
     protocol: ScenarioProtocolDTO
     main_resource_models: list[ResourceModelExportDTO]

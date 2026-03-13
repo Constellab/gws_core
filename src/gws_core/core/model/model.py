@@ -115,7 +115,7 @@ class Model(BaseModel, PeeweeModel):
     def refresh(self: ModelType) -> ModelType:
         return self.get_by_id_and_check(self.id)
 
-    def save(self: ModelType, *args, **kwargs) -> ModelType:
+    def save(self: ModelType, auto_save: bool = False, *args, **kwargs) -> ModelType:
         """
         Sets the `data`
         set force_insert to True to force creation of the object
@@ -125,14 +125,18 @@ class Model(BaseModel, PeeweeModel):
         :type data: dict
         :raises Exception: If the input data is not a `dict`
         """
-        # set the force insert value
-        # if define in params, use the value
-        # otherwise true if the object was not created
-        force_insert: bool = (
-            kwargs.get("force_insert")
-            if kwargs.get("force_insert") is not None
-            else not self.is_saved()
-        )
+        if auto_save:
+            force_insert = self.get_by_id(self.id) is None
+
+        else:
+            # set the force insert value
+            # if define in params, use the value
+            # otherwise true if the object was not created
+            force_insert: bool = (
+                kwargs.get("force_insert")
+                if kwargs.get("force_insert") is not None
+                else not self.is_saved()
+            )
 
         # if skip_hook is set to true, do not call the before insert or update
         if not kwargs.pop("skip_hook", False):

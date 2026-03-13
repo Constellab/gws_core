@@ -54,15 +54,15 @@ class ProtocolModel(ProcessModel):
     ############################### MODEL METHODS #################################
 
     @GwsCoreDbManager.transaction()
-    def save_full(self) -> "ProtocolModel":
+    def save_full(self, auto_save: bool = False, *args, **kwargs) -> "ProtocolModel":
         """Save the protocol, its progress bar, its config and all its processes"""
-        self.config.save()
-        self.progress_bar.save()
+        self.config.save(auto_save=auto_save, *args, **kwargs)
+        self.progress_bar.save(auto_save=auto_save, *args, **kwargs)
         self.save_graph()
 
         for process in self.processes.values():
             process.set_parent_protocol(self)
-            process.save_full()
+            process.save_full(auto_save=auto_save, *args, **kwargs)
 
         return self
 
@@ -105,9 +105,9 @@ class ProtocolModel(ProcessModel):
 
         return self.save_graph()
 
-    def save_graph(self) -> "ProtocolModel":
+    def save_graph(self, auto_save: bool = False, *args, **kwargs) -> "ProtocolModel":
         self.refresh_graph_from_dump()
-        return self.save()
+        return self.save(auto_save=auto_save, *args, **kwargs)
 
     def reload_graph(self) -> None:
         """Force reload the graph (processes, connectors, interfaces, outerfaces) from DB."""

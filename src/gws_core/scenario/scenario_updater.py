@@ -126,6 +126,7 @@ class ScenarioUpdater:
                 self._message_dispatcher.notify_info_message(
                     f"Adding new process '{new_process.instance_name}'"
                 )
+                # TODO to fix
                 # Generate a fresh ID to avoid conflicts with existing DB records
                 new_process.id = str(uuid4())
                 new_process.set_parent_protocol(existing_protocol)

@@ -16,6 +16,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO, ScenarioSimpleDTO
+from gws_core.scenario.scenario_zipper import ScenarioExportDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
@@ -411,7 +412,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.save()
 
     def get_process_status(self) -> ScenarioProcessStatus:
-        if self.pid == None or not self.is_running:
+        if self.pid is None or not self.is_running:
             return ScenarioProcessStatus.NONE
         try:
             process = SysProc.from_pid(self.pid)
@@ -446,12 +447,24 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             pid_status=self.get_process_status(),
         )
 
+    def to_scenario_export_dto(self) -> ScenarioExportDTO:
+        scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.id)
+        tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
+        return ScenarioExportDTO(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            status=self.status,
+            folder=self.folder.to_dto() if self.folder else None,
+            error_info=self.get_error_info(),
+            tags=tags_dtos,
+        )
+
     def to_simple_dto(self) -> ScenarioSimpleDTO:
         return ScenarioSimpleDTO(id=self.id, title=self.title)
 
     def export_protocol(self) -> ScenarioProtocolDTO:
         return ScenarioProtocolDTO(
-            version=3,  # version of the protocol json format
             data=self.protocol_model.to_config_dto(),
         )
 
