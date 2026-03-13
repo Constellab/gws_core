@@ -79,8 +79,9 @@ class ResourceDownloaderBase(Task):
         # Convert the zip file to a resource
         try:
             self.log_info_message("Uncompressing the file")
+            id_mapper = IdMapper(resource_loader_mode)
             self.resource_loader = ResourceLoader.from_compress_file(
-                resource_file, resource_loader_mode, resource_origin, skip_tags
+                resource_file, id_mapper, resource_origin, skip_tags
             )
         except Exception as err:
             if uncompress_option == "yes":
@@ -100,9 +101,8 @@ class ResourceDownloaderBase(Task):
             builder = ResourceZipBuilder(
                 resource_loader=self.resource_loader,
                 origin=self.resource_loader.get_origin_info(),
-                id_mapper=IdMapper(resource_loader_mode),
+                id_mapper=self.resource_loader.id_mapper,
                 skip_resource_tags=skip_tags,
-                create_mode=resource_loader_mode,
                 message_dispatcher=self.message_dispatcher,
             )
             resource_model = builder.save()

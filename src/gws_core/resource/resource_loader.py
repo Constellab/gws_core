@@ -10,12 +10,11 @@ from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.model.typing_manager import TypingManager
 from gws_core.resource.kv_store import KVStore
-from gws_core.resource.r_field.primitive_r_field import UUIDRField
 from gws_core.resource.resource import Resource
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
-from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.tag.tag_helper import TagHelper
 
 from .resource_zipper import ResourceExportDTO, ResourceExportPackage, ResourceZipper
@@ -32,7 +31,7 @@ class ResourceLoader:
     # dict where key is old resource model id and value is the resource
     _children_resources: dict[str, Resource]
 
-    mode: ShareEntityCreateMode
+    id_mapper: IdMapper
     resource_origin: ResourceOrigin | None
 
     skip_tags: bool
@@ -40,14 +39,14 @@ class ResourceLoader:
     def __init__(
         self,
         resource_folder_path: str,
-        mode: ShareEntityCreateMode,
+        id_mapper: IdMapper,
         resource_origin: ResourceOrigin | None = None,
         skip_tags: bool = False,
     ) -> None:
         self.info_json = None
         self._resource_folder_path = resource_folder_path
         self._children_resources = {}
-        self.mode = mode
+        self.id_mapper = id_mapper
         self.resource_origin = resource_origin
         self.skip_tags = skip_tags
 
@@ -74,7 +73,9 @@ class ResourceLoader:
         if isinstance(self._resource, ResourceListBase):
             # load all the children resources
             for zip_resource in self.get_children_zip_resources():
-                resource: Resource = self._load_resource(zip_resource)
+                resource: Resource = self._load_resource(
+                    zip_resource, parent_id=main_resource.resource_model_export.id
+                )
                 self._children_resources[zip_resource.resource_model_export.id] = resource
 
             # replace the resources in the ResourceListBase by the new ones
@@ -91,7 +92,9 @@ class ResourceLoader:
                 zip_resource.resource_model_export.resource_typing_name
             )
 
-    def _load_resource(self, zip_resource: ResourceExportDTO) -> Resource:
+    def _load_resource(
+        self, zip_resource: ResourceExportDTO, parent_id: str | None = None
+    ) -> Resource:
         resource_export = zip_resource.resource_model_export
 
         # create the kvstore
@@ -116,23 +119,19 @@ class ResourceLoader:
             for tag in tags:
                 tag.set_external_lab_origin(self.get_origin_info().lab.id)
 
-        resource_model_id: str | None = None
-        if self.mode == ShareEntityCreateMode.KEEP_ID:
-            resource_model_id = resource_export.id
-
         resource = ResourceFactory.create_resource(
             resource_type,
             kv_store=kv_store,
             data=zip_resource.data,
             name=resource_export.name,
             tags=tags,
-            resource_model_id=resource_model_id,
+            resource_model_id=self.id_mapper.generate_new_id(resource_export.id),
             style=resource_export.style,
         )
 
-        if self.mode == ShareEntityCreateMode.NEW_ID:
-            # generate a new uid for the resource
-            resource.uid = UUIDRField().get_default_value()
+        new_uid = self.id_mapper.generate_new_id(resource.uid)
+        if new_uid != resource.uid:
+            resource.uid = new_uid
 
         # if the resource is an fs_node
         if zip_resource.resource_model_export.fs_node:
@@ -148,6 +147,10 @@ class ResourceLoader:
 
         if self.resource_origin is not None:
             resource.__set_origin__(self.resource_origin)
+
+        if parent_id and parent_id != resource_export.parent_resource_id:
+            resource.set_as_reference()
+
 
         return resource
 
@@ -247,11 +250,11 @@ class ResourceLoader:
     def from_compress_file(
         cls,
         compress_file_path: str,
-        mode: ShareEntityCreateMode,
+        id_mapper: IdMapper,
         resource_origin: ResourceOrigin | None = None,
         skip_tags: bool = False,
     ) -> "ResourceLoader":
         """Uncompress a file and create a ResourceLoader"""
         temp_dir = Settings.get_instance().make_temp_dir()
         Compress.smart_decompress(compress_file_path, temp_dir)
-        return ResourceLoader(temp_dir, mode, resource_origin, skip_tags)
+        return ResourceLoader(temp_dir, id_mapper, resource_origin, skip_tags)

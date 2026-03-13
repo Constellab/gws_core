@@ -77,10 +77,10 @@ class ScenarioIdMapper(IdMapper):
         """Replace resource models in all ports recursively."""
         for process in protocol.processes.values():
             for port in process.inputs.ports.values():
-                new_id = self.get_new_id(port.get_resource_model_id())
+                new_id = self.generate_new_id(port.get_resource_model_id())
                 port.set_resource_model(resource_models_by_id.get(new_id) if new_id else None)
             for port in process.outputs.ports.values():
-                new_id = self.get_new_id(port.get_resource_model_id())
+                new_id = self.generate_new_id(port.get_resource_model_id())
                 port.set_resource_model(resource_models_by_id.get(new_id) if new_id else None)
             if isinstance(process, ProtocolModel):
                 self._apply_to_ports(process, resource_models_by_id)

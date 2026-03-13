@@ -6,6 +6,7 @@ from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
 from gws_core.resource.resource import Resource
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.technical_info import TechnicalInfo
@@ -115,7 +116,7 @@ class ResourceUnZipper(Task):
 
         self.log_info_message("Uncompressing the file")
         self.resource_loader = ResourceLoader.from_compress_file(
-            source.path, ShareEntityCreateMode.NEW_ID
+            source.path, IdMapper(ShareEntityCreateMode.NEW_ID)
         )
 
         self.log_info_message("Loading the resource")

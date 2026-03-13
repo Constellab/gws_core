@@ -131,14 +131,13 @@ class ScenarioBuilder:
                 # Zip content available — create ResourceZipBuilder
                 zip_path = self._resource_zip_paths[resource_id]
                 resource_loader = ResourceLoader.from_compress_file(
-                    zip_path, skip_tags=self._skip_resource_tags, mode=self._create_mode
+                    zip_path, skip_tags=self._skip_resource_tags, id_mapper=self._id_mapper
                 )
                 builder = ResourceZipBuilder(
                     resource_loader=resource_loader,
                     origin=self._origin,
                     id_mapper=self._id_mapper,
                     skip_resource_tags=self._skip_resource_tags,
-                    create_mode=self._create_mode,
                     message_dispatcher=self._message_dispatcher,
                 )
                 self._resource_builders[resource_id] = builder
@@ -149,7 +148,6 @@ class ScenarioBuilder:
                     origin=self._origin,
                     id_mapper=self._id_mapper,
                     skip_resource_tags=self._skip_resource_tags,
-                    create_mode=self._create_mode,
                     message_dispatcher=self._message_dispatcher,
                 )
                 self._resource_builders[resource_id] = builder
@@ -180,7 +178,7 @@ class ScenarioBuilder:
 
             # make the resource_builder using new IDs as keys instead of old IDs, to be able to find them when saving resources
             resource_builders = {
-                (self._id_mapper.get_new_id(old_id) or old_id): builder
+                (self._id_mapper.generate_new_id(old_id) or old_id): builder
                 for old_id, builder in self._resource_builders.items()
             }
 

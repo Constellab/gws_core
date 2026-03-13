@@ -105,6 +105,7 @@ class ResourceListBase(Resource):
 
         new_resources: dict[str, Resource] = {}
         for resource in self.get_resources_as_set():
+
             if resource.__is_reference__:
                 model_id = resource.get_model_id()
                 if model_id is None:

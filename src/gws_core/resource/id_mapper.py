@@ -31,13 +31,7 @@ class IdMapper:
         self._id_mapping[old_id] = new_id
         return new_id
 
-    def get_new_id(self, old_id: str | None) -> str | None:
-        """Get the new ID corresponding to an old ID, or None if not found."""
-        if old_id is None:
-            return None
-        if self._create_mode == ShareEntityCreateMode.KEEP_ID:
-            return old_id
-        return self._id_mapping.get(old_id)
+
 
     def set_mapping(self, old_id: str, new_id: str) -> None:
         """Explicitly set a mapping from an old ID to a new ID."""

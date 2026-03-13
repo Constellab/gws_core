@@ -169,7 +169,7 @@ class ShareResourceTestSetup:
         origin = ExternalLabApiService.get_current_lab_info(current_user)
 
         resource_loader = ResourceLoader.from_compress_file(
-            zip_path, skip_tags=False, mode=self.create_mode
+            zip_path, skip_tags=False, id_mapper=IdMapper(self.create_mode)
         )
         builder = ResourceZipBuilder(
             resource_loader=resource_loader,

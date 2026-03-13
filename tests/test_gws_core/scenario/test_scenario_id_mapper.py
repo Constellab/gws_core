@@ -39,7 +39,6 @@ class TestScenarioIdMapper(BaseTestCase):
         protocol_model = scenario_model.protocol_model
         original_scenario_id = scenario_model.id
         original_protocol_id = protocol_model.id
-        resource_models = protocol_model.get_input_and_output_resource_models()
         original_process_ids = {
             name: process.id for name, process in protocol_model.processes.items()
         }
@@ -53,19 +52,18 @@ class TestScenarioIdMapper(BaseTestCase):
         mapper = ScenarioIdMapper(ShareEntityCreateMode.NEW_ID)
         mapper.apply_new_ids(
             protocol_model,
-            resource_models,
             scenario_model,
         )
 
         # Verify scenario ID changed
         self.assertNotEqual(scenario_model.id, original_scenario_id)
-        self.assertEqual(mapper.get_new_id(original_scenario_id), scenario_model.id)
+        self.assertEqual(mapper.generate_new_id(original_scenario_id), scenario_model.id)
 
         # Verify protocol ID changed
         self.assertNotEqual(protocol_model.id, original_protocol_id)
-        self.assertEqual(mapper.get_new_id(original_protocol_id), protocol_model.id)
+        self.assertEqual(mapper.generate_new_id(original_protocol_id), protocol_model.id)
         # Verify protocol.scenario_id updated
-        self.assertEqual(mapper.get_new_id(original_scenario_id), protocol_model.scenario.id)
+        self.assertEqual(mapper.generate_new_id(original_scenario_id), protocol_model.scenario.id)
 
         # Verify protocol progress_bar.process_id updated
         self.assertEqual(protocol_model.progress_bar.process_id, protocol_model.id)
@@ -74,7 +72,7 @@ class TestScenarioIdMapper(BaseTestCase):
         for name, original_id in original_process_ids.items():
             process = protocol_model.get_process(name)
             self.assertNotEqual(process.id, original_id)
-            self.assertEqual(mapper.get_new_id(original_id), process.id)
+            self.assertEqual(mapper.generate_new_id(original_id), process.id)
             self.assertEqual(process.progress_bar.process_id, process.id)
 
         # Verify port resource IDs were updated for robot_source and move processes
@@ -85,11 +83,8 @@ class TestScenarioIdMapper(BaseTestCase):
         source_robot_port = source_process.out_port(InputTask.output_name)
         self.assertNotEqual(source_robot_port.get_resource_model_id(), original_robot_source.id)
         self.assertEqual(
-            source_robot_port.get_resource_model_id(), mapper.get_new_id(original_robot_source.id)
+            source_robot_port.get_resource_model_id(), mapper.generate_new_id(original_robot_source.id)
         )
-        source_resource_model = source_robot_port.get_resource_model()
-        self.assertIsNone(source_resource_model.scenario)
-        self.assertIsNone(source_resource_model.task_model)
 
         # Check move process input port
         move_input_robot_port = move_process.in_port("robot")
@@ -98,28 +93,25 @@ class TestScenarioIdMapper(BaseTestCase):
         )
         self.assertEqual(
             move_input_robot_port.get_resource_model_id(),
-            mapper.get_new_id(original_move_input_robot_id),
+            mapper.generate_new_id(original_move_input_robot_id),
         )
 
         # Check move process output port
         move_robot_port = move_process.out_port("robot")
         self.assertNotEqual(move_robot_port.get_resource_model_id(), original_move_robot_id)
         self.assertEqual(
-            move_robot_port.get_resource_model_id(), mapper.get_new_id(original_move_robot_id)
+            move_robot_port.get_resource_model_id(), mapper.generate_new_id(original_move_robot_id)
         )
-        move_resource_model = move_robot_port.get_resource_model()
-        self.assertEqual(move_resource_model.scenario.id, scenario_model.id)
-        self.assertEqual(move_resource_model.task_model.id, move_process.id)
 
         # Verify InputTask config resource_id was updated
         new_config_resource_id = source_process.config.get_value(InputTask.config_name)
         self.assertIsNotNone(new_config_resource_id)
         self.assertNotEqual(new_config_resource_id, original_robot_source.id)
-        self.assertEqual(new_config_resource_id, mapper.get_new_id(original_robot_source.id))
+        self.assertEqual(new_config_resource_id, mapper.generate_new_id(original_robot_source.id))
 
         # Verify task model source_config_id updated for InputTask
         self.assertEqual(
-            source_process.source_config_id, mapper.get_new_id(original_robot_source.id)
+            source_process.source_config_id, mapper.generate_new_id(original_robot_source.id)
         )
 
     def test_apply_keep_ids(self):
@@ -160,7 +152,6 @@ class TestScenarioIdMapper(BaseTestCase):
         mapper = ScenarioIdMapper(ShareEntityCreateMode.KEEP_ID)
         mapper.apply_new_ids(
             protocol_model,
-            resource_models,
             scenario_model,
         )
 

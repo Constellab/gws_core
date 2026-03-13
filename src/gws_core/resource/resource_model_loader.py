@@ -128,4 +128,4 @@ class ResourceModelLoader:
 
         In NEW_ID mode, returns the mapped new ID. In KEEP_ID mode, returns the same ID.
         """
-        return self._id_mapper.get_new_id(old_id) or old_id
+        return self._id_mapper.generate_new_id(old_id) or old_id
