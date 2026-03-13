@@ -3,6 +3,7 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
+from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.task.plug.input_task import InputTask
 
 
@@ -23,6 +24,8 @@ class ScenarioIdMapper(IdMapper):
 
         This is the single public entry point that orchestrates all ID replacements.
         """
+        if self._create_mode == ShareEntityCreateMode.KEEP_ID:
+            return  # No changes needed in KEEP_ID mode
         self._apply_to_scenario(scenario)
         self._apply_to_protocol(protocol_model)
         protocol_model.scenario = scenario  # Ensure protocol references the updated scenario

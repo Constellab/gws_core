@@ -1,6 +1,5 @@
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.folder.space_folder import SpaceFolder
-from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_dto import ResourceModelExportDTO, ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel

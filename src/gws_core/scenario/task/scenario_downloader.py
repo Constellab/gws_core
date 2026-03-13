@@ -146,13 +146,10 @@ class ScenarioDownloader(Task):
             create_mode=create_mode,
             message_dispatcher=self.get_message_dispatcher(),
             skip_resource_tags=params.get_value("skip_resource_tags"),
+            skip_scenario_tags=params.get_value("skip_scenario_tags"),
         )
 
-        skip_scenario_tags = params.get_value("skip_scenario_tags")
-
-        scenario = self._builder.build(
-            skip_scenario_tags=skip_scenario_tags,
-        )
+        scenario = self._builder.build()
 
         return {"scenario": ScenarioResource(scenario.id)}
 

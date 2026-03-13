@@ -462,9 +462,7 @@ class TestShareScenario(BaseTestCase):
             create_mode=ShareEntityCreateMode.KEEP_ID,
         )
         try:
-            new_scenario = builder.build(
-                skip_scenario_tags=False,
-            )
+            new_scenario = builder.build()
         finally:
             builder.cleanup()
 
@@ -494,9 +492,7 @@ class TestShareScenario(BaseTestCase):
             create_mode=ShareEntityCreateMode.KEEP_ID,
         )
         try:
-            new_scenario_outputs_only = builder_outputs.build(
-                skip_scenario_tags=False,
-            )
+            new_scenario_outputs_only = builder_outputs.build()
         finally:
             builder_outputs.cleanup()
         setup.assert_imported_outputs_only(new_scenario_outputs_only)
