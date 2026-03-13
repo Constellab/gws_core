@@ -262,19 +262,30 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(
             new_move_process.in_port("robot").get_resource_model_id(), new_source_output.id
         )
-        new_resource_1 = new_move_process.out_port("robot").get_resource_model()
+        new_move_resource_1 = new_move_process.out_port("robot").get_resource_model()
         initial_resource_1 = self.get_initial_move_resource()
-        self._tc.assertIsNotNone(new_resource_1)
-        self._check_id(new_resource_1.id, initial_resource_1.id)
-        self._tc.assertEqual(new_resource_1.scenario.id, new_scenario.id)
-        self._tc.assertEqual(new_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        self._tc.assertIsNotNone(new_move_resource_1)
+        self._check_id(new_move_resource_1.id, initial_resource_1.id)
+        self._tc.assertEqual(new_move_resource_1.scenario.id, new_scenario.id)
+        self._tc.assertEqual(new_move_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
         self._tc.assertEqual(
-            new_resource_1.task_model.id, new_protocol_model.get_process("move").id
+            new_move_resource_1.task_model.id, new_protocol_model.get_process("move").id
         )
-        self._tc.assertEqual(new_resource_1.folder.id, new_scenario.folder.id)
-        self._tc.assertFalse(new_resource_1.flagged)
+        self._tc.assertEqual(new_move_resource_1.folder.id, new_scenario.folder.id)
+        self._tc.assertFalse(new_move_resource_1.flagged)
         self._tc.assertEqual(
-            new_resource_1.resource_typing_name, initial_resource_1.resource_typing_name
+            new_move_resource_1.resource_typing_name, initial_resource_1.resource_typing_name
+        )
+        # Check TaskInputModel
+        self._tc.assertTrue(
+            TaskInputModel.select()
+            .where(
+                (TaskInputModel.scenario == new_scenario.id)
+                & (TaskInputModel.task_model == new_move_process.id)
+                & (TaskInputModel.port_name == "robot")
+                & (TaskInputModel.resource_model == new_source_output.id)
+            )
+            .exists()
         )
 
         # Check the resource set
@@ -287,6 +298,18 @@ class ShareScenarioTestSetup:
         new_resource_set: ResourceSet = new_resource_set_model.get_resource()
         self._tc.assertIsInstance(new_resource_set, ResourceSet)
         self._tc.assertEqual(len(new_resource_set.get_resources()), 2)
+
+        # Check TaskInputModel
+        self._tc.assertTrue(
+            TaskInputModel.select()
+            .where(
+                (TaskInputModel.scenario == new_scenario.id)
+                & (TaskInputModel.task_model == new_generator_process.id)
+                & (TaskInputModel.port_name == "robot")
+                & (TaskInputModel.resource_model == new_move_resource_1.id)
+            )
+            .exists()
+        )
 
         initial_resource_set = cast(ResourceSet, initial_resource_set_model.get_resource())
 
@@ -320,6 +343,19 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
         self._tc.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
         self._tc.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
+
+        # check the task input model of the output process
+        new_output_process = new_protocol_model.get_process("output")
+        self._tc.assertTrue(
+            TaskInputModel.select()
+            .where(
+                (TaskInputModel.scenario == new_scenario.id)
+                & (TaskInputModel.task_model == new_output_process.id)
+                & (TaskInputModel.port_name == OutputTask.input_name)
+                & (TaskInputModel.resource_model == new_resource_set_model.id)
+            )
+            .exists()
+        )
 
     def assert_imported_outputs_only(self, new_scenario: Scenario) -> None:
         new_protocol = new_scenario.protocol_model
@@ -423,11 +459,11 @@ class TestShareScenario(BaseTestCase):
             scenario_info=scenario_package,
             resource_zip_paths=zip_paths,
             origin=origin,
+            create_mode=ShareEntityCreateMode.KEEP_ID,
         )
         try:
             new_scenario = builder.build(
                 skip_scenario_tags=False,
-                create_mode=ShareEntityCreateMode.KEEP_ID,
             )
         finally:
             builder.cleanup()
@@ -455,11 +491,11 @@ class TestShareScenario(BaseTestCase):
             scenario_info=scenario_package,
             resource_zip_paths=output_zip_paths,
             origin=origin,
+            create_mode=ShareEntityCreateMode.KEEP_ID,
         )
         try:
             new_scenario_outputs_only = builder_outputs.build(
                 skip_scenario_tags=False,
-                create_mode=ShareEntityCreateMode.KEEP_ID,
             )
         finally:
             builder_outputs.cleanup()

@@ -20,17 +20,6 @@ from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import CurrentUserService
 
 
-class ImportedResource:
-    old_id: str
-    resource: Resource
-    children: dict[str, Resource]
-
-    def __init__(self, old_id: str, resource: Resource, children: dict[str, Resource]):
-        self.old_id = old_id
-        self.resource = resource
-        self.children = children
-
-
 class ResourceBuilder:
     """Parent class for building and persisting resources regardless of source.
 
@@ -44,18 +33,26 @@ class ResourceBuilder:
     _message_dispatcher: MessageDispatcher | None
     _id_mapper: IdMapper
 
+    _loaded_resource: Resource | None
+    _children_resources: dict[str, Resource]
+    _children_resource_models: list[ResourceModel]
+
     def __init__(
         self,
         origin: ExternalLabWithUserInfo,
+        id_mapper: IdMapper,
         skip_resource_tags: bool = False,
         create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
         message_dispatcher: MessageDispatcher | None = None,
     ):
         self._origin = origin
+        self._id_mapper = id_mapper
         self._skip_resource_tags = skip_resource_tags
         self._create_mode = create_mode
         self._message_dispatcher = message_dispatcher
-        self._id_mapper = IdMapper()
+        self._loaded_resource = None
+        self._children_resources = {}
+        self._children_resource_models = []
 
     # ------------------------------------------------------------------
     # Abstract
@@ -69,13 +66,17 @@ class ResourceBuilder:
     # Public API
     # ------------------------------------------------------------------
 
-    def set_id_mapper(self, id_mapper: IdMapper) -> None:
-        """Set the ID mapper for resolving old resource IDs to new resource IDs.
+    def get_loaded_resource(self) -> Resource | None:
+        """Return the loaded resource, available after ``save()`` has been called."""
+        return self._loaded_resource
 
-        Used by ScenarioBuilder in NEW_ID mode where resource models are created
-        with new IDs by ScenarioIdMapper before content is filled.
-        """
-        self._id_mapper = id_mapper
+    def get_children_resources(self) -> dict[str, Resource]:
+        """Return the children resources, available after ``save()`` has been called."""
+        return self._children_resources
+
+    def get_children_resource_models(self) -> list[ResourceModel]:
+        """Return the children resource models, available after ``save()`` has been called."""
+        return self._children_resource_models
 
     def cleanup(self) -> None:
         """Clean up temporary files. No-op in base class."""
@@ -84,13 +85,11 @@ class ResourceBuilder:
     # Internal helpers (shared logic)
     # ------------------------------------------------------------------
 
-    def _resolve_resource_id(self, old_resource_id: str) -> str:
+    def _resolve_id(self, old_resource_id: str) -> str:
         """Resolve an old resource ID to the actual DB ID.
 
         In NEW_ID mode, returns the mapped new ID. In KEEP_ID mode, returns the same ID.
         """
-        if self._create_mode == ShareEntityCreateMode.KEEP_ID:
-            return old_resource_id
         return self._id_mapper.generate_new_id(old_resource_id)
 
 
@@ -106,11 +105,12 @@ class ResourceDtoBuilder(ResourceBuilder):
         self,
         resource_model_dto: ResourceModelExportDTO,
         origin: ExternalLabWithUserInfo,
+        id_mapper: IdMapper,
         skip_resource_tags: bool = False,
         create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
         message_dispatcher: MessageDispatcher | None = None,
     ):
-        super().__init__(origin, skip_resource_tags, create_mode, message_dispatcher)
+        super().__init__(origin, id_mapper, skip_resource_tags, create_mode, message_dispatcher)
         self._resource_model_dto = resource_model_dto
 
     def save(self) -> ResourceModel:
@@ -133,49 +133,32 @@ class ResourceDtoBuilder(ResourceBuilder):
         dto: ResourceModelExportDTO,
     ) -> ResourceModel:
         """Resolve an existing ResourceModel from the DB or create a new shell from metadata."""
-        # In NEW_ID mode, always create a new resource model with a new ID
-        if self._create_mode == ShareEntityCreateMode.NEW_ID:
-            return self._create_resource_with_new_id(dto)
 
-        resource_model_id = self._resolve_resource_id(dto.id)
-        existing = ResourceModel.get_by_id(resource_model_id)
+        resource_model_id = self._resolve_id(dto.id)
+        resource_model = ResourceModel.get_by_id(resource_model_id)
 
-        if existing is None:
+        resource_model_loader = ResourceModelLoader(dto, self._id_mapper, self._message_dispatcher)
+
+        if resource_model is None:
             # Create a new shell from metadata
-            resource_model = ResourceModelLoader(
-                dto, self._message_dispatcher, self._id_mapper
-            ).load_resource_model(
+            resource_model = resource_model_loader.load_resource_model(
                 origin=ResourceOrigin.IMPORTED_FROM_LAB,
             )
-            resource_model.save_full()
-            return resource_model
+        else:
+            # Resource exists — update attributes from DTO
+            resource_model = resource_model_loader.update_resource_model(
+                resource_model,
+                origin=ResourceOrigin.IMPORTED_FROM_LAB,
+            )
 
-        # Resource exists — update attributes from DTO
-        ResourceModelLoader(dto, self._message_dispatcher, self._id_mapper).update_resource_model(
-            existing,
-            origin=ResourceOrigin.IMPORTED_FROM_LAB,
-        )
-        existing.save()
-        return existing
-
-    def _create_resource_with_new_id(
-        self,
-        dto: ResourceModelExportDTO,
-    ) -> ResourceModel:
-        resource_model = ResourceModelLoader(
-            dto, self._message_dispatcher, self._id_mapper
-        ).load_resource_model(
-            origin=ResourceOrigin.IMPORTED_FROM_LAB,
-        )
-        # Assign a new ID
-        resource_model.id = self._resolve_resource_id(dto.id)
+        resource_model.id = self._resolve_id(dto.id)
         resource_model.parent_resource_id = (
-            self._resolve_resource_id(dto.parent_resource_id) if dto.parent_resource_id else None
+            self._resolve_id(dto.parent_resource_id) if dto.parent_resource_id else None
         )
-        resource_model.save_full()
         # Track old->new ID mapping
         self._id_mapper.set_mapping(dto.id, resource_model.id)
-        return resource_model
+
+        return resource_model.save_full()
 
 
 class ResourceZipBuilder(ResourceBuilder):
@@ -191,11 +174,12 @@ class ResourceZipBuilder(ResourceBuilder):
         self,
         resource_loader: ResourceLoader,
         origin: ExternalLabWithUserInfo,
+        id_mapper: IdMapper,
         skip_resource_tags: bool = False,
         create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
         message_dispatcher: MessageDispatcher | None = None,
     ):
-        super().__init__(origin, skip_resource_tags, create_mode, message_dispatcher)
+        super().__init__(origin, id_mapper, skip_resource_tags, create_mode, message_dispatcher)
         self._resource_loader = resource_loader
 
     def save(self) -> ResourceModel:
@@ -232,13 +216,10 @@ class ResourceZipBuilder(ResourceBuilder):
                 child_model = self._save_resource(
                     child_old_id,
                     child_resource,
-                    scenario=None,
-                    task_model=None,
-                    port_name=None,
-                    flagged=False,
                     resource_model_export_dto=child_dto.resource_model_export,
                 )
                 new_children_resources[child_resource.uid] = child_model.get_resource()
+                self._children_resource_models.append(child_model)
 
                 # Store the children that were generated by parent to link them later
                 if (
@@ -247,6 +228,10 @@ class ResourceZipBuilder(ResourceBuilder):
                 ):
                     children_resource_models.append(child_model)
             main_resource.__set_r_field__(new_children_resources)
+
+        # Store the loaded resource and children
+        self._loaded_resource = main_resource
+        self._children_resources = generated_children
 
         # Save the main resource
         resource_model = self._save_resource(
@@ -265,10 +250,6 @@ class ResourceZipBuilder(ResourceBuilder):
         self,
         old_resource_id: str,
         resource: Resource,
-        scenario: Scenario | None = None,
-        task_model: TaskModel | None = None,
-        port_name: str | None = None,
-        flagged: bool = False,
         resource_model_export_dto: ResourceModelExportDTO | None = None,
     ) -> ResourceModel:
         """Save a single resource directly with its content.
@@ -280,20 +261,16 @@ class ResourceZipBuilder(ResourceBuilder):
 
         In NEW_ID mode, creates a new model with a fresh UUID.
         """
-        resolved_id = self._resolve_resource_id(old_resource_id)
+        resolved_id = self._resolve_id(old_resource_id)
 
-        # In NEW_ID mode, only look up models we explicitly created/mapped.
-        existing_model: ResourceModel | None = None
-        if self._create_mode != ShareEntityCreateMode.NEW_ID or self._id_mapper.has_mapping(
-            old_resource_id
-        ):
-            existing_model = ResourceModel.get_by_id(resolved_id)
+        existing_model = ResourceModel.get_by_id(resolved_id)
 
         if existing_model and not existing_model.content_is_deleted:
             return existing_model
 
         try:
             if existing_model and existing_model.content_is_deleted:
+                print(f"FILL CONTENT 2 '{resolved_id}' ")
                 resource_model = existing_model.fill_content_from_resource(resource)
 
                 # fill_content_from_resource doesn't save tags, do it here
@@ -303,23 +280,24 @@ class ResourceZipBuilder(ResourceBuilder):
                         TagEntityType.RESOURCE, resource_model.id, default_origin=user_origin
                     )
                     entity_tags.add_tags(resource.tags.get_tags())
-            else:
-                resource_id = (
-                    self._resolve_resource_id(old_resource_id)
-                    if self._id_mapper.has_mapping(old_resource_id)
-                    else None
+                print(
+                    f"FILL CONTENT 2 '{resource_model.id}': '{resource_model.resource_typing_name}' - '{resource_model.parent_resource_id}' "
                 )
+            else:
+                print(f"SAVE RESOURCE 1 '{resolved_id}' ")
                 resource_model = ResourceModel.save_from_resource(
                     resource,
                     origin=ResourceOrigin.IMPORTED_FROM_LAB,
-                    scenario=scenario,
-                    task_model=task_model,
-                    port_name=port_name,
-                    flagged=flagged,
                     skip_children=True,
-                    id=resource_id,
+                    id=resolved_id,
+                )
+                print(
+                    f"SAVE RESOURCE 2 '{resource_model.id}': '{resource_model.resource_typing_name}' - '{resource_model.parent_resource_id}' "
                 )
         except Exception as err:
+            print(
+                f"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA '{resolved_id}' '{resource.name}': {type(resource)}"
+            )
             raise Exception(
                 f"Error while saving resource with old id '{old_resource_id}'. {str(err)}"
             ) from err
@@ -327,12 +305,12 @@ class ResourceZipBuilder(ResourceBuilder):
         # Update the resource_model information (like scenario, task, project...)
         if resource_model_export_dto is not None:
             ResourceModelLoader(
-                resource_model_export_dto, self._message_dispatcher, self._id_mapper
+                resource_model_export_dto, self._id_mapper, self._message_dispatcher
             ).update_resource_model(
                 resource_model,
                 origin=ResourceOrigin.IMPORTED_FROM_LAB,
             )
-        resource_model.save()
+            resource_model.save()
 
         SharedResource.create_from_lab_info(
             resource_model.id,

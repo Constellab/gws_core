@@ -338,6 +338,18 @@ class ProcessModel(ModelWithUser):
 
         return resource_models
 
+    def get_output_resource_models(self) -> set[ResourceModel]:
+        """Return all the resource models used as output of the task"""
+
+        ports = list(self.outputs.ports.values())
+        resource_models = set()
+        for port in ports:
+            resource_model = port.get_resource_model()
+            if resource_model is not None:
+                resource_models.add(resource_model)
+
+        return resource_models
+
     ################################# RUN #########################
 
     @final

@@ -1,3 +1,5 @@
+import resource
+
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
@@ -56,6 +58,8 @@ class ScenarioBuilder:
     _origin: ExternalLabWithUserInfo
     _message_dispatcher: MessageDispatcher | None
     _skip_resource_tags: bool
+    _create_mode: ShareEntityCreateMode
+    _id_mapper: ScenarioIdMapper
 
     # Internal state populated during build
     _resource_builders: dict[str, ResourceBuilder]
@@ -65,6 +69,7 @@ class ScenarioBuilder:
         scenario_info: ScenarioExportPackage,
         resource_zip_paths: dict[str, str],
         origin: ExternalLabWithUserInfo,
+        create_mode: ShareEntityCreateMode,
         message_dispatcher: MessageDispatcher | None = None,
         skip_resource_tags: bool = False,
     ):
@@ -73,6 +78,8 @@ class ScenarioBuilder:
         self._origin = origin
         self._message_dispatcher = message_dispatcher
         self._skip_resource_tags = skip_resource_tags
+        self._create_mode = create_mode
+        self._id_mapper = ScenarioIdMapper(create_mode)
 
         self._resource_builders = {}
 
@@ -84,20 +91,18 @@ class ScenarioBuilder:
     def build(
         self,
         skip_scenario_tags: bool = False,
-        create_mode: ShareEntityCreateMode = ShareEntityCreateMode.KEEP_ID,
     ) -> Scenario:
         """
         Load resources from zip files and build (or update) the scenario in the DB.
 
         :param skip_scenario_tags: If True, scenario tags are not saved.
-        :param create_mode: KEEP_ID preserves original IDs; NEW_ID assigns fresh UUIDs.
         :return: The created or updated Scenario.
         """
         scenario_loader = self._load_scenario()
 
-        self._load_resources(create_mode, scenario_loader)
+        self._load_resources(scenario_loader)
 
-        return self._build_scenario(scenario_loader, skip_scenario_tags, create_mode)
+        return self._build_scenario(scenario_loader, skip_scenario_tags)
 
     def cleanup(self) -> None:
         """Delete temporary resource folders created during zip extraction. Always call this."""
@@ -110,7 +115,6 @@ class ScenarioBuilder:
 
     def _load_resources(
         self,
-        create_mode: ShareEntityCreateMode,
         scenario_loader: ScenarioLoader,
     ) -> None:
         """Create resource builders for each resource in the scenario.
@@ -127,13 +131,14 @@ class ScenarioBuilder:
                 # Zip content available — create ResourceZipBuilder
                 zip_path = self._resource_zip_paths[resource_id]
                 resource_loader = ResourceLoader.from_compress_file(
-                    zip_path, skip_tags=self._skip_resource_tags, mode=create_mode
+                    zip_path, skip_tags=self._skip_resource_tags, mode=self._create_mode
                 )
                 builder = ResourceZipBuilder(
                     resource_loader=resource_loader,
                     origin=self._origin,
+                    id_mapper=self._id_mapper,
                     skip_resource_tags=self._skip_resource_tags,
-                    create_mode=create_mode,
+                    create_mode=self._create_mode,
                     message_dispatcher=self._message_dispatcher,
                 )
                 self._resource_builders[resource_id] = builder
@@ -142,8 +147,9 @@ class ScenarioBuilder:
                 builder = ResourceDtoBuilder(
                     resource_model_dto=dto,
                     origin=self._origin,
+                    id_mapper=self._id_mapper,
                     skip_resource_tags=self._skip_resource_tags,
-                    create_mode=create_mode,
+                    create_mode=self._create_mode,
                     message_dispatcher=self._message_dispatcher,
                 )
                 self._resource_builders[resource_id] = builder
@@ -159,7 +165,6 @@ class ScenarioBuilder:
         self,
         scenario_loader: ScenarioLoader,
         skip_scenario_tags: bool,
-        create_mode: ShareEntityCreateMode,
     ) -> Scenario:
         self._log_info("Building the scenario")
 
@@ -168,26 +173,18 @@ class ScenarioBuilder:
 
         # Create resource models from metadata (content_is_deleted=True)
         self._log_info("Creating resource models from metadata")
-        metadata_resource_models = scenario_loader.load_resource_models()
 
-        id_mapper = ScenarioIdMapper()
         resource_builders: dict[str, ResourceBuilder] = self._resource_builders
-        if create_mode == ShareEntityCreateMode.NEW_ID:
-            id_mapper.apply_new_ids(
-                protocol_model, list(metadata_resource_models.values()), scenario
-            )
+        if self._create_mode == ShareEntityCreateMode.NEW_ID:
+            self._id_mapper.apply_new_ids(protocol_model, scenario)
 
-            #######################
-            ### TODO to improve
-            #######################
             # make the resource_builder using new IDs as keys instead of old IDs, to be able to find them when saving resources
             resource_builders = {
-                (id_mapper.get_new_id(old_id) or old_id): builder
+                (self._id_mapper.get_new_id(old_id) or old_id): builder
                 for old_id, builder in self._resource_builders.items()
             }
 
         # Track which resource models have been saved to DB
-        saved_resource_ids: set[str] = set()
         # Collect saved ResourceModel instances by ID to update port references later
         saved_models_by_id: dict[str, ResourceModel] = {}
 
@@ -199,10 +196,7 @@ class ScenarioBuilder:
                     f"Protocol input resource with id '{resource_model_id}' not found in resource builders. "
                     "All protocol input resources must have a corresponding builder to ensure they are saved before the scenario and protocol."
                 )
-            resource_builder.set_id_mapper(id_mapper)
-            resource_model = resource_builder.save()
-            saved_resource_ids.add(resource_model.id)
-            saved_models_by_id[resource_model.id] = resource_model
+            self._save_builder_and_collect(resource_builder, saved_models_by_id)
 
         scenario.save()
         protocol_model.save_full()
@@ -212,34 +206,19 @@ class ScenarioBuilder:
         else:
             self._log_info("Skipping scenario tags")
 
-        #######################
-        ### TODO use builder instead of metadata_resource_models
-        #######################
-
-        # Save remaining resources
-        for metadata_rm in metadata_resource_models.values():
-            if metadata_rm.id not in saved_resource_ids:
-                resource_builder = resource_builders.get(metadata_rm.id)
-                if resource_builder is None:
-                    raise Exception(
-                        f"Resource with id '{metadata_rm.id}' not found in resource builders. "
-                        "All resources must have a corresponding builder."
-                    )
-                resource_builder.set_id_mapper(id_mapper)
-                saved_rm = resource_builder.save()
-                saved_resource_ids.add(saved_rm.id)
-                saved_models_by_id[saved_rm.id] = saved_rm
-
-        #######################
-        ### TODO use scenario mapper id
-        #######################
-
-        # Update port references again for any remaining resources just saved
-        self._update_port_resource_models(protocol_model, saved_models_by_id)
-
-        # Save all the TaskInputModel
+        # Save all the TaskInputModel and remaining resource in the correct order
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             if isinstance(process_model, TaskModel):
+                for port in process_model.outputs.ports.values():
+                    resource_model_id = port.get_resource_model_id()
+                    if resource_model_id and resource_model_id not in saved_models_by_id:
+                        resource_builder = resource_builders.get(resource_model_id)
+                        if resource_builder is None:
+                            raise Exception(
+                                f"Resource with id '{resource_model_id}' not found in resource builders. "
+                                "All protocol output resources must have a corresponding builder to ensure TaskInputModel records can be created."
+                            )
+                        self._save_builder_and_collect(resource_builder, saved_models_by_id)
                 process_model.save_input_resources()
 
         # Create the shared entity info
@@ -254,37 +233,15 @@ class ScenarioBuilder:
         return scenario
 
     @staticmethod
-    def _update_port_resource_models(
-        protocol: ProtocolModel,
+    def _save_builder_and_collect(
+        resource_builder: ResourceBuilder,
         saved_models_by_id: dict[str, ResourceModel],
     ) -> None:
-        """Replace port resource model references with the actual saved instances.
-
-        After ResourceBuilder.save() creates its own ResourceModel instances,
-        the ports still hold the old metadata-only instances that were never persisted.
-        This walks all ports and swaps in the saved instances so that
-        save_input_resources() sees is_saved() == True.
-        """
-        for process in protocol.processes.values():
-            for port in process.inputs.ports.values():
-                rm_id = port.get_resource_model_id()
-                if rm_id and rm_id in saved_models_by_id:
-                    port.set_resource_model(saved_models_by_id[rm_id])
-            for port in process.outputs.ports.values():
-                rm_id = port.get_resource_model_id()
-                if rm_id and rm_id in saved_models_by_id:
-                    port.set_resource_model(saved_models_by_id[rm_id])
-            if isinstance(process, ProtocolModel):
-                ScenarioBuilder._update_port_resource_models(process, saved_models_by_id)
-
-    def _save_resources(self, id_mapper: IdMapper | None = None) -> None:
-        """Save all resources via their builders."""
-        self._log_info("Saving the resources")
-
-        for resource_builder in self._resource_builders.values():
-            if id_mapper:
-                resource_builder.set_id_mapper(id_mapper)
-            resource_builder.save()
+        """Save a resource builder and collect the main and children models into the map."""
+        resource_model = resource_builder.save()
+        saved_models_by_id[resource_model.id] = resource_model
+        for child_model in resource_builder.get_children_resource_models():
+            saved_models_by_id[child_model.id] = child_model
 
     def _save_scenario_tags(self, scenario_id: str, tags: list[Tag]) -> None:
         self._log_info("Saving the scenario tags")

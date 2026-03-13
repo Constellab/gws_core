@@ -25,6 +25,7 @@ from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorSe
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
@@ -173,6 +174,7 @@ class ShareResourceTestSetup:
         builder = ResourceZipBuilder(
             resource_loader=resource_loader,
             origin=origin,
+            id_mapper=IdMapper(self.create_mode),
             create_mode=self.create_mode,
         )
         try:

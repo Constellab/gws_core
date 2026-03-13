@@ -27,12 +27,12 @@ class ResourceModelLoader:
     def __init__(
         self,
         dto: ResourceModelExportDTO,
+        id_mapper: IdMapper,
         message_dispatcher: MessageDispatcher | None = None,
-        id_mapper: IdMapper | None = None,
     ) -> None:
         self._dto = dto
+        self._id_mapper = id_mapper
         self._message_dispatcher = message_dispatcher
-        self._id_mapper = id_mapper if id_mapper is not None else IdMapper()
 
     def load_resource_model(
         self,

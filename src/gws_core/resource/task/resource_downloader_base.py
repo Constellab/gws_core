@@ -9,6 +9,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -99,6 +100,7 @@ class ResourceDownloaderBase(Task):
             builder = ResourceZipBuilder(
                 resource_loader=self.resource_loader,
                 origin=self.resource_loader.get_origin_info(),
+                id_mapper=IdMapper(resource_loader_mode),
                 skip_resource_tags=skip_tags,
                 create_mode=resource_loader_mode,
                 message_dispatcher=self.message_dispatcher,

@@ -61,15 +61,6 @@ class TestScenarioZipperLoader(BaseTestCase):
             loaded_process = protocol_model.get_process(instance_name)
             self.assertEqual(loaded_process.id, original_process.id)
 
-        # Verify resource models are loaded and linked to the scenario
-        resource_models = loader.load_resource_models()
-        self.assertGreater(len(resource_models), 0)
-        for original_id, resource_model in resource_models.items():
-            self.assertIsNotNone(resource_model)
-            self.assertEqual(resource_model.scenario.id, loaded_scenario.id)
-            # Verify resource model ID is preserved
-            self.assertEqual(resource_model.id, original_id)
-
         # Verify tags (none set, should be empty)
         tags = loader.get_tags()
         self.assertEqual(len(tags), 0)

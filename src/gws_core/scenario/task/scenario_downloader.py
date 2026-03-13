@@ -143,6 +143,7 @@ class ScenarioDownloader(Task):
             scenario_info=scenario_info,
             resource_zip_paths=zip_paths,
             origin=self.share_entity.origin,
+            create_mode=create_mode,
             message_dispatcher=self.get_message_dispatcher(),
             skip_resource_tags=params.get_value("skip_resource_tags"),
         )
@@ -151,7 +152,6 @@ class ScenarioDownloader(Task):
 
         scenario = self._builder.build(
             skip_scenario_tags=skip_scenario_tags,
-            create_mode=create_mode,
         )
 
         return {"scenario": ScenarioResource(scenario.id)}
@@ -217,8 +217,7 @@ class ScenarioDownloader(Task):
                     continue
 
             current_percent = (
-                self.INIT_EXP_PERCENT
-                + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
+                self.INIT_EXP_PERCENT + ((i - 1) / nb_resources) * self.DOWNLOAD_RESOURCE_PERCENT
             )
             sub_dispatcher.notify_progress_value(
                 current_percent, f"Downloading the resource '{resource_id}'."
