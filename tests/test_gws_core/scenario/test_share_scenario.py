@@ -428,7 +428,7 @@ class TestShareScenario(BaseTestCase):
 
         setup.assert_imported_outputs_only(new_scenario_outputs_only)
 
-    def test_skip_if_exists(self):
+    def test_keep_id_exists(self):
         """Test ScenarioBuilder with KEEP_ID: deletes the scenario then rebuilds it from a
         locally-exported package and zipped resources, without any HTTP calls."""
         setup = ShareScenarioTestSetup(
@@ -496,6 +496,27 @@ class TestShareScenario(BaseTestCase):
         finally:
             builder_outputs.cleanup()
         setup.assert_imported_outputs_only(new_scenario_outputs_only)
+
+        # Step 3: Rebuild with ALL resources without deleting the scenario.
+        # KEEP_ID mode should handle the case where the scenario already exists.
+        # if should fill the remaining resources
+        builder_all_again = ScenarioBuilder(
+            scenario_info=scenario_package,
+            resource_zip_paths=zip_paths,
+            origin=origin,
+            create_mode=ShareEntityCreateMode.KEEP_ID,
+        )
+        try:
+            new_scenario_again = builder_all_again.build()
+        finally:
+            builder_all_again.cleanup()
+
+        new_protocol_model_again = new_scenario_again.protocol_model
+        new_source_again = cast(TaskModel, new_protocol_model_again.get_process("source"))
+        new_move_again = cast(TaskModel, new_protocol_model_again.get_process("move"))
+        setup.assert_imported_scenario(
+            new_scenario_again, new_protocol_model_again, new_source_again, new_move_again
+        )
 
     def test_send_scenario(self):
         input_robot_model = TestHelper.save_robot_resource()

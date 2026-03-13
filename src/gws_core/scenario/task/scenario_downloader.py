@@ -106,7 +106,6 @@ class ScenarioDownloader(Task):
             else ShareEntityCreateMode.KEEP_ID
         )
 
-        existing_scenario = None
         is_update_mode = create_option == "Update if exists"
 
         # if we keep the scenario id, we check if the scenario already exists in the current lab
@@ -114,7 +113,6 @@ class ScenarioDownloader(Task):
             scenario_model = Scenario.get_by_id(self.share_entity.entity_id)
             if scenario_model:
                 if is_update_mode:
-                    existing_scenario = scenario_model
                     self.log_info_message(
                         f"Scenario '{scenario_model.title}' already exists, will update it"
                     )

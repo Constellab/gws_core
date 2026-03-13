@@ -42,6 +42,30 @@ class ScenarioBuilder:
     build logic to be tested independently — e.g. to exercise "Skip if exists" without making
     any HTTP calls.
 
+    **Build flow — creation mode** (new scenario):
+
+    1. ``_load_scenario`` — parse the export package via ``ScenarioLoader``.
+    2. ``_load_resources`` — create a ``ResourceBuilder`` for every resource
+       (zip-backed or metadata-only).
+    3. ``_build_scenario`` — remap IDs, save protocol-input resources, persist
+       the scenario and protocol (``save_full``), save remaining resources in
+       execution order, then record tags and shared-entity origin.
+
+    **Build flow — update mode** (``KEEP_ID`` and a scenario with the same ID
+    already exists):
+
+    Steps 1–2 are identical.  Inside ``_build_scenario``:
+
+    3a. ``_update_scenario`` — copy metadata onto the existing scenario, then
+        call ``_sync_existing_processes`` to diff the old and new protocols
+        (delete removed processes, reset rerun ones).
+    3b. After saving the scenario, call ``_merge_protocol_into_db`` to
+        reconcile the DB protocol: update existing processes, add new ones,
+        reload the graph, and copy the new graph structure (connectors,
+        interfaces, outerfaces, layout).
+    3c. Save remaining resources, tags, and shared-entity origin as in
+        creation mode.
+
     Usage::
 
         builder = ScenarioBuilder(
@@ -59,7 +83,7 @@ class ScenarioBuilder:
     _resource_zip_paths: dict[str, str]
     _origin: ExternalLabWithUserInfo
     _create_mode: ShareEntityCreateMode
-    _message_dispatcher: MessageDispatcher | None
+    _message_dispatcher: MessageDispatcher
     _skip_resource_tags: bool
     _skip_scenario_tags: bool
     _id_mapper: ScenarioIdMapper
@@ -81,7 +105,7 @@ class ScenarioBuilder:
         self._resource_zip_paths = resource_zip_paths
         self._origin = origin
         self._create_mode = create_mode
-        self._message_dispatcher = message_dispatcher
+        self._message_dispatcher = message_dispatcher or MessageDispatcher()
         self._skip_resource_tags = skip_resource_tags
         self._skip_scenario_tags = skip_scenario_tags
         self._id_mapper = ScenarioIdMapper(create_mode)
@@ -209,9 +233,10 @@ class ScenarioBuilder:
 
         scenario.save()
 
+        # If we are in update mode, we update the protocol manually
         if update_mode:
             db_protocol_model = ProtocolModel.get_by_id_and_check(protocol_model.id)
-            protocol_model = self._update_protocol_model(db_protocol_model, protocol_model)
+            protocol_model = self._merge_protocol_into_db(db_protocol_model, protocol_model)
         else:
             protocol_model.save_full()
 
@@ -266,16 +291,31 @@ class ScenarioBuilder:
 
         # 2. Update protocol: remove unused processes & reset rerun processes
         existing_protocol = existing_scenario.protocol_model
-        self._update_protocol(existing_protocol, new_protocol_model)
+        self._sync_existing_processes(existing_protocol, new_protocol_model)
 
         return existing_scenario, new_protocol_model
 
-    def _update_protocol(
+    def _sync_existing_processes(
         self,
         existing_protocol: ProtocolModel,
         new_protocol: ProtocolModel,
     ) -> None:
-        """Diff existing and new protocols: delete removed processes, reset rerun ones."""
+        """Synchronise the existing protocol's processes with the new protocol definition.
+
+        Iterates over every process in the existing protocol and compares it
+        against the new protocol's process list:
+
+        - **Removed processes** (present in existing but absent in new) are
+          deleted from the existing protocol via their parent protocol.
+        - **Rerun processes** (present in both but with different output
+          resource IDs) are reset so they will be re-executed.
+
+        The method operates through a ``ProtocolProxy`` which is refreshed
+        after each mutation to keep the in-memory graph consistent.
+
+        This method is called recursively by ``_merge_protocol_into_db`` for
+        nested sub-protocols.
+        """
         existing_processes_ids = [
             process.id
             for process in existing_protocol.get_all_processes_flatten_sort_by_start_date()
@@ -326,10 +366,30 @@ class ScenarioBuilder:
                 return True
         return False
 
-    def _update_protocol_model(
+    def _merge_protocol_into_db(
         self, db_protocol_model: ProtocolModel, new_protocol_model: ProtocolModel
     ) -> ProtocolModel:
-        """Save the new protocol model on top of the existing one to update the graph with new/updated processes."""
+        """Merge the new protocol definition into the existing DB protocol.
+
+        Reconciles the persisted protocol with the incoming one in three phases:
+
+        1. **Update / add processes** — for each process in ``new_protocol_model``:
+           - If it already exists in the DB protocol, its metadata is copied
+             over. For nested sub-protocols, ``_sync_existing_processes`` is
+             called recursively to propagate deletions and resets downward.
+           - If it is new, it is attached to the DB protocol, linked to the
+             parent scenario, fully saved, and registered as a child process.
+        2. **Reload graph** — the DB protocol reloads its process map from the
+           database so that any deletions performed by
+           ``_sync_existing_processes`` are reflected in memory.
+        3. **Copy graph structure** — connectors, interfaces, outerfaces, and
+           layout are copied from ``new_protocol_model`` onto the DB protocol
+           and persisted.
+
+        :param db_protocol_model: The protocol currently stored in the DB.
+        :param new_protocol_model: The freshly loaded protocol to merge in.
+        :return: The updated ``db_protocol_model`` after merge.
+        """
         # UPDATE: processes that exist in both
         db_processes = dict(db_protocol_model.processes)
         for process_instance_name, new_process in new_protocol_model.processes.items():
@@ -338,17 +398,13 @@ class ScenarioBuilder:
 
                 if isinstance(db_process, ProtocolModel) and isinstance(new_process, ProtocolModel):
                     db_process.copy_from_and_save(new_process)
-                    self._update_protocol(db_process, new_process)
+                    self._sync_existing_processes(db_process, new_process)
                 else:
                     db_process.copy_from_and_save(new_process)
 
             # ADD: processes in new but not in old
             if process_instance_name not in db_processes:
-                # self._message_dispatcher.notify_info_message(
-                #     f"Adding new process '{new_process.instance_name}'"
-                # )
-                # TODO to fix
-                # Generate a fresh ID to avoid conflicts with existing DB records
+                self._log_info(f"Adding new process '{new_process.instance_name}'")
                 new_process.id = new_process.id
                 new_process.set_parent_protocol(db_protocol_model)
                 new_process.set_scenario(db_protocol_model.scenario)
@@ -380,17 +436,17 @@ class ScenarioBuilder:
     def _save_scenario_tags(self, scenario_id: str, tags: list[Tag]) -> None:
         self._log_info("Saving the scenario tags")
 
+        entity_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, scenario_id)
         for tag in tags:
             tag.set_external_lab_origin(self._origin.lab.id)
-
-        try:
-            entity_tags = EntityTagList(TagEntityType.SCENARIO, scenario_id)
-            entity_tags.add_tags(tags)
-        except Exception as err:
-            raise Exception(
-                "Error while saving scenario tags. You can skip tags saving in the config. "
-                + str(err)
-            ) from err
+            try:
+                if not entity_tags.has_tag(tag):
+                    entity_tags.add_tag(tag)
+            except Exception as err:
+                self._message_dispatcher.notify_error_message(
+                    f"Error while saving tag '{tag.key}={tag.value}': {err}. "
+                    "You can skip tags saving in the config."
+                )
 
     def _log_info(self, message: str) -> None:
         if self._message_dispatcher:

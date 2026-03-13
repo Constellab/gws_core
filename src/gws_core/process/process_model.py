@@ -195,7 +195,7 @@ class ProcessModel(ModelWithUser):
             self.data["outputs"] = self.outputs.to_json()
         return super().save(*args, **kwargs)
 
-    def save_full(self, auto_save: bool = False, *args, **kwargs) -> ProcessModel:
+    def save_full(self, *args, **kwargs) -> ProcessModel:
         """Function to run overrided by the sub classes"""
         pass
 

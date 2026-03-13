@@ -79,10 +79,10 @@ class TaskModel(ProcessModel):
 
     ################################# MODEL METHODS #############################
 
-    def save_full(self, auto_save: bool = False, *args, **kwargs) -> "TaskModel":
-        self.config.save(auto_save=auto_save, *args, **kwargs)
-        self.progress_bar.save(auto_save=auto_save, *args, **kwargs)
-        return self.save(auto_save=auto_save, *args, **kwargs)
+    def save_full(self, *args, **kwargs) -> "TaskModel":
+        self.config.save(*args, **kwargs)
+        self.progress_bar.save(*args, **kwargs)
+        return self.save(*args, **kwargs)
 
     @GwsCoreDbManager.transaction()
     def archive(self, archive: bool) -> "TaskModel":
