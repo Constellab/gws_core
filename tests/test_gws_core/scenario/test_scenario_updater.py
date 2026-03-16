@@ -30,15 +30,13 @@ def _build_keep_id(
 
     builder = ScenarioBuilder(
         scenario_info=scenario_package,
-        resource_zip_paths=resource_zip_paths,
         origin=origin,
         create_mode=ShareEntityCreateMode.KEEP_ID,
         skip_scenario_tags=skip_scenario_tags,
     )
-    try:
-        return builder.build()
-    finally:
-        builder.cleanup()
+    scenario = builder.build()
+    builder.fill_zip_resources(resource_zip_paths)
+    return scenario
 
 
 def _export_with_remapped_ids(

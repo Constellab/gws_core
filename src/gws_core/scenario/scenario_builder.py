@@ -1,14 +1,10 @@
-import resource
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_builder import (
-    ResourceBuilder,
     ResourceDtoBuilder,
     ResourceZipBuilder,
 )
@@ -33,28 +29,35 @@ class ScenarioBuilder:
     of resource zip file paths.
 
     The class is responsible for:
-    - Loading each zip file into a ``Resource`` object via ``ResourceZipBuilder``
-    - Creating ``ResourceDtoBuilder`` instances for metadata-only resources
+    - Creating ``ResourceDtoBuilder`` instances for all resources (shell models)
     - Running ``ScenarioLoader`` to prepare the scenario and protocol model
-    - Persisting the scenario, protocol, resource models, tags, and shared-entity records to the DB
+    - Persisting the scenario, protocol, shell resource models, tags, and shared-entity records
+      to the DB inside a single transaction
+    - After the transaction, filling zip-backed resources with their actual content
+      via ``ResourceZipBuilder``
 
     This separation from ``ScenarioDownloader`` (which handles the HTTP/download phase) allows the
     build logic to be tested independently — e.g. to exercise "Skip if exists" without making
     any HTTP calls.
 
-    **Build flow — creation mode** (new scenario):
+    **Build flow — phase 1 (transaction)**:
 
     1. ``_load_scenario`` — parse the export package via ``ScenarioLoader``.
-    2. ``_load_resources`` — create a ``ResourceBuilder`` for every resource
-       (zip-backed or metadata-only).
-    3. ``_build_scenario`` — remap IDs, save protocol-input resources, persist
-       the scenario and protocol (``save_full``), save remaining resources in
-       execution order, then record tags and shared-entity origin.
+    2. ``_load_resource_dtos`` — create a ``ResourceDtoBuilder`` for every
+       resource (both zip-backed and metadata-only).
+    3. ``_build_scenario`` (in transaction) — remap IDs, save shell resource
+       models, persist the scenario and protocol (``save_full``), save
+       remaining shell resources in execution order, then record tags and
+       shared-entity origin.
 
-    **Build flow — update mode** (``KEEP_ID`` and a scenario with the same ID
-    already exists):
+    **Build flow — phase 2 (after transaction)**:
 
-    Steps 1–2 are identical.  Inside ``_build_scenario``:
+    4. ``_fill_zip_resources`` — for each resource with a zip file, create a
+       ``ResourceZipBuilder`` and fill the shell resource with actual content.
+
+    **Update mode** (``KEEP_ID`` and a scenario with the same ID already exists):
+
+    Steps 1–2 are identical. Inside ``_build_scenario``:
 
     3a. ``_update_scenario`` — copy metadata onto the existing scenario, then
         call ``_sync_existing_processes`` to diff the old and new protocols
@@ -63,24 +66,21 @@ class ScenarioBuilder:
         reconcile the DB protocol: update existing processes, add new ones,
         reload the graph, and copy the new graph structure (connectors,
         interfaces, outerfaces, layout).
-    3c. Save remaining resources, tags, and shared-entity origin as in
+    3c. Save remaining shell resources, tags, and shared-entity origin as in
         creation mode.
+    3d. Phase 2 then fills zip-backed resources as usual.
 
     Usage::
 
         builder = ScenarioBuilder(
             scenario_info=package,
-            resource_zip_paths={resource_id: "/tmp/resource_abc.zip"},
             origin=external_lab_info,
         )
-        try:
-            scenario = builder.build()
-        finally:
-            builder.cleanup()
+        scenario = builder.build()
+        builder.fill_zip_resources({resource_id: "/tmp/resource_abc.zip"})
     """
 
     _scenario_info: ScenarioExportPackage
-    _resource_zip_paths: dict[str, str]
     _origin: ExternalLabWithUserInfo
     _create_mode: ShareEntityCreateMode
     _message_dispatcher: MessageDispatcher
@@ -88,13 +88,9 @@ class ScenarioBuilder:
     _skip_scenario_tags: bool
     _id_mapper: ScenarioIdMapper
 
-    # Internal state populated during build
-    _resource_builders: dict[str, ResourceBuilder]
-
     def __init__(
         self,
         scenario_info: ScenarioExportPackage,
-        resource_zip_paths: dict[str, str],
         origin: ExternalLabWithUserInfo,
         create_mode: ShareEntityCreateMode,
         message_dispatcher: MessageDispatcher | None = None,
@@ -102,7 +98,6 @@ class ScenarioBuilder:
         skip_scenario_tags: bool = False,
     ):
         self._scenario_info = scenario_info
-        self._resource_zip_paths = resource_zip_paths
         self._origin = origin
         self._create_mode = create_mode
         self._message_dispatcher = message_dispatcher or MessageDispatcher()
@@ -110,16 +105,18 @@ class ScenarioBuilder:
         self._skip_scenario_tags = skip_scenario_tags
         self._id_mapper = ScenarioIdMapper(create_mode)
 
-        self._resource_builders = {}
-
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    @GwsCoreDbManager.transaction()
     def build(self) -> Scenario:
         """
-        Load resources from zip files and build (or update) the scenario in the DB.
+        Build (or update) the scenario in the DB inside a transaction.
+
+        Creates shell resource models (``ResourceDtoBuilder``) for every
+        resource and persists the scenario, protocol, and shell resources
+        atomically. Call ``fill_zip_resources()`` afterwards to fill
+        zip-backed resources with their actual content.
 
         In ``KEEP_ID`` mode, if a scenario with the same ID already exists in
         the database the builder automatically switches to **update mode**:
@@ -131,52 +128,38 @@ class ScenarioBuilder:
         """
         scenario_loader = self._load_scenario()
 
-        self._load_resources(scenario_loader)
-
         return self._build_scenario(scenario_loader)
 
     # ------------------------------------------------------------------
     # Internal steps
     # ------------------------------------------------------------------
 
-    def _load_resources(
+    def _load_resource_dtos(
         self,
         scenario_loader: ScenarioLoader,
-    ) -> None:
-        """Create resource builders for each resource in the scenario.
+    ) -> dict[str, ResourceDtoBuilder]:
+        """Create a ``ResourceDtoBuilder`` for every resource in the scenario.
 
-        For resources with a zip path, creates a ResourceZipBuilder and loads the resource.
-        For metadata-only resources, creates a ResourceDtoBuilder.
+        All resources — whether they have zip content or not — are first
+        created as shell models from their DTO metadata. Zip-backed resources
+        will have their content filled in a second phase after the scenario
+        transaction completes.
+
+        :return: A dict mapping original resource IDs to their builders.
         """
-        # Get all resource DTOs from the scenario metadata
         resource_dtos = scenario_loader.get_main_resource_model_dtos()
 
+        resource_dto_builders: dict[str, ResourceDtoBuilder] = {}
         for dto in resource_dtos:
-            resource_id = dto.id
-            if resource_id in self._resource_zip_paths:
-                # Zip content available — create ResourceZipBuilder
-                zip_path = self._resource_zip_paths[resource_id]
-                resource_loader = ResourceLoader.from_compress_file(
-                    zip_path, skip_tags=self._skip_resource_tags, id_mapper=self._id_mapper
-                )
-                builder = ResourceZipBuilder(
-                    resource_loader=resource_loader,
-                    origin=self._origin,
-                    id_mapper=self._id_mapper,
-                    skip_resource_tags=self._skip_resource_tags,
-                    message_dispatcher=self._message_dispatcher,
-                )
-                self._resource_builders[resource_id] = builder
-            else:
-                # Metadata only — create ResourceDtoBuilder
-                builder = ResourceDtoBuilder(
-                    resource_model_dto=dto,
-                    origin=self._origin,
-                    id_mapper=self._id_mapper,
-                    skip_resource_tags=self._skip_resource_tags,
-                    message_dispatcher=self._message_dispatcher,
-                )
-                self._resource_builders[resource_id] = builder
+            builder = ResourceDtoBuilder(
+                resource_model_dto=dto,
+                origin=self._origin,
+                id_mapper=self._id_mapper,
+                skip_resource_tags=self._skip_resource_tags,
+                message_dispatcher=self._message_dispatcher,
+            )
+            resource_dto_builders[self._id_mapper.generate_new_id(dto.id)] = builder
+        return resource_dto_builders
 
     def _load_scenario(self) -> ScenarioLoader:
         """Initialise and run ScenarioLoader over the scenario export package."""
@@ -185,10 +168,17 @@ class ScenarioBuilder:
         loader.load_scenario()
         return loader
 
+    @GwsCoreDbManager.transaction()
     def _build_scenario(
         self,
         scenario_loader: ScenarioLoader,
     ) -> Scenario:
+        """Build (or update) the scenario with shell resources inside a single transaction.
+
+        All resources are saved as shell models (``content_is_deleted=True``)
+        via their ``ResourceDtoBuilder``. Zip content is filled separately
+        after the transaction by ``_fill_zip_resources``.
+        """
         self._log_info("Building the scenario")
 
         scenario = scenario_loader.get_scenario()
@@ -206,24 +196,18 @@ class ScenarioBuilder:
                 update_mode = True
 
         # Create resource models from metadata (content_is_deleted=True)
-        self._log_info("Creating resource models from metadata")
+        self._log_info("Creating shell resource models from metadata")
 
-        resource_builders: dict[str, ResourceBuilder] = self._resource_builders
         self._id_mapper.apply_new_ids(protocol_model, scenario)
 
-        # make the resource_builder using new IDs as keys instead of old IDs, to be able to find them when saving resources
-        resource_builders = {
-            (self._id_mapper.generate_new_id(old_id)): builder
-            for old_id, builder in self._resource_builders.items()
-        }
+        resource_dto_builders = self._load_resource_dtos(scenario_loader)
 
         # Track which resource models have been saved to DB
-        # Collect saved ResourceModel instances by ID to update port references later
         saved_models_by_id: dict[str, ResourceModel] = {}
 
         # Save all protocol input resources first
         for resource_model_id in protocol_model.get_input_resource_model_ids():
-            resource_builder = resource_builders.get(resource_model_id)
+            resource_builder = resource_dto_builders.get(resource_model_id)
             if resource_builder is None:
                 raise Exception(
                     f"Protocol input resource with id '{resource_model_id}' not found in resource builders. "
@@ -245,13 +229,13 @@ class ScenarioBuilder:
         else:
             self._log_info("Skipping scenario tags")
 
-        # Save all the TaskInputModel and remaining resource in the correct order
+        # Save all the TaskInputModel and remaining resources in the correct order
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             if isinstance(process_model, TaskModel):
                 for port in process_model.outputs.ports.values():
                     resource_model_id = port.get_resource_model_id()
                     if resource_model_id and resource_model_id not in saved_models_by_id:
-                        resource_builder = resource_builders.get(resource_model_id)
+                        resource_builder = resource_dto_builders.get(resource_model_id)
                         if resource_builder is None:
                             raise Exception(
                                 f"Resource with id '{resource_model_id}' not found in resource builders. "
@@ -413,7 +397,6 @@ class ScenarioBuilder:
                     new_process, instance_name=process_instance_name
                 )
 
-        # TODO this is not great
         # Reload processes from DB after removals
         db_protocol_model.reload_graph()
 
@@ -422,16 +405,41 @@ class ScenarioBuilder:
 
         return db_protocol_model
 
+    def fill_zip_resources(self, resource_zip_paths: dict[str, str]) -> None:
+        """Fill shell resources that have zip content with their actual data.
+
+        Should be called after ``build()`` completes. For each resource
+        that has a corresponding zip file, creates a ``ResourceZipBuilder``
+        and saves the content into the existing shell resource model.
+
+        :param resource_zip_paths: Mapping of resource IDs to zip file paths.
+        """
+        if not resource_zip_paths:
+            return
+
+        self._log_info("Filling resource content from zip files")
+
+        for zip_path in resource_zip_paths.values():
+            resource_loader = ResourceLoader.from_compress_file(
+                zip_path, skip_tags=self._skip_resource_tags, id_mapper=self._id_mapper
+            )
+            zip_builder = ResourceZipBuilder(
+                resource_loader=resource_loader,
+                origin=self._origin,
+                id_mapper=self._id_mapper,
+                skip_resource_tags=self._skip_resource_tags,
+                message_dispatcher=self._message_dispatcher,
+            )
+            zip_builder.save()
+
     def _save_builder_and_collect(
         self,
-        resource_builder: ResourceBuilder,
+        resource_builder: ResourceDtoBuilder,
         saved_models_by_id: dict[str, ResourceModel],
     ) -> None:
-        """Save a resource builder and collect the main and children models into the map."""
+        """Save a resource dto builder and collect the model into the map."""
         resource_model = resource_builder.save()
         saved_models_by_id[resource_model.id] = resource_model
-        for child_model in resource_builder.get_children_resource_models():
-            saved_models_by_id[child_model.id] = child_model
 
     def _save_scenario_tags(self, scenario_id: str, tags: list[Tag]) -> None:
         self._log_info("Saving the scenario tags")
@@ -451,8 +459,3 @@ class ScenarioBuilder:
     def _log_info(self, message: str) -> None:
         if self._message_dispatcher:
             self._message_dispatcher.notify_info_message(message)
-
-    def cleanup(self) -> None:
-        """Delete temporary resource folders created during zip extraction. Always call this."""
-        for builder in self._resource_builders.values():
-            builder.cleanup()

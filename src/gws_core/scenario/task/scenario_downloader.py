@@ -127,6 +127,18 @@ class ScenarioDownloader(Task):
         scenario_info = self.share_entity.entity_object
         if not scenario_info.protocol.data.graph:
             raise Exception("The scenario protocol graph is missing.")
+        self._builder = ScenarioBuilder(
+            scenario_info=scenario_info,
+            origin=self.share_entity.origin,
+            create_mode=create_mode,
+            message_dispatcher=self.get_message_dispatcher(),
+            skip_resource_tags=params.get_value("skip_resource_tags"),
+            skip_scenario_tags=params.get_value("skip_scenario_tags"),
+        )
+
+        scenario = self._builder.build()
+
+        # Download and fill resource content after the scenario is built
         resource_ids = self._get_resource_to_download(
             scenario_info.protocol.data.graph, params["resource_mode"]
         )
@@ -137,17 +149,7 @@ class ScenarioDownloader(Task):
             self.INIT_EXP_PERCENT + self.DOWNLOAD_RESOURCE_PERCENT, "Resources downloaded"
         )
 
-        self._builder = ScenarioBuilder(
-            scenario_info=scenario_info,
-            resource_zip_paths=zip_paths,
-            origin=self.share_entity.origin,
-            create_mode=create_mode,
-            message_dispatcher=self.get_message_dispatcher(),
-            skip_resource_tags=params.get_value("skip_resource_tags"),
-            skip_scenario_tags=params.get_value("skip_scenario_tags"),
-        )
-
-        scenario = self._builder.build()
+        self._builder.fill_zip_resources(zip_paths)
 
         return {"scenario": ScenarioResource(scenario.id)}
 
@@ -236,9 +238,6 @@ class ScenarioDownloader(Task):
 
     def run_after_task(self) -> None:
         super().run_after_task()
-
-        if self._builder:
-            self._builder.cleanup()
 
         if self.share_entity:
             self.log_info_message("Marking the resource as received in the origin lab")

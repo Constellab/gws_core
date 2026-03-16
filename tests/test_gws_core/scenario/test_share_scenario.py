@@ -457,14 +457,11 @@ class TestShareScenario(BaseTestCase):
 
         builder = ScenarioBuilder(
             scenario_info=scenario_package,
-            resource_zip_paths=zip_paths,
             origin=origin,
             create_mode=ShareEntityCreateMode.KEEP_ID,
         )
-        try:
-            new_scenario = builder.build()
-        finally:
-            builder.cleanup()
+        new_scenario = builder.build()
+        builder.fill_zip_resources(zip_paths)
 
         new_protocol_model = new_scenario.protocol_model
         new_source = cast(TaskModel, new_protocol_model.get_process("source"))
@@ -487,14 +484,11 @@ class TestShareScenario(BaseTestCase):
 
         builder_outputs = ScenarioBuilder(
             scenario_info=scenario_package,
-            resource_zip_paths=output_zip_paths,
             origin=origin,
             create_mode=ShareEntityCreateMode.KEEP_ID,
         )
-        try:
-            new_scenario_outputs_only = builder_outputs.build()
-        finally:
-            builder_outputs.cleanup()
+        new_scenario_outputs_only = builder_outputs.build()
+        builder_outputs.fill_zip_resources(output_zip_paths)
         setup.assert_imported_outputs_only(new_scenario_outputs_only)
 
         # Step 3: Rebuild with ALL resources without deleting the scenario.
@@ -502,14 +496,11 @@ class TestShareScenario(BaseTestCase):
         # if should fill the remaining resources
         builder_all_again = ScenarioBuilder(
             scenario_info=scenario_package,
-            resource_zip_paths=zip_paths,
             origin=origin,
             create_mode=ShareEntityCreateMode.KEEP_ID,
         )
-        try:
-            new_scenario_again = builder_all_again.build()
-        finally:
-            builder_all_again.cleanup()
+        new_scenario_again = builder_all_again.build()
+        builder_all_again.fill_zip_resources(zip_paths)
 
         new_protocol_model_again = new_scenario_again.protocol_model
         new_source_again = cast(TaskModel, new_protocol_model_again.get_process("source"))
