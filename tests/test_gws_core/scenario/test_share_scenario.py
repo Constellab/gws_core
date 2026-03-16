@@ -451,7 +451,7 @@ class TestShareScenario(BaseTestCase):
         origin = ExternalLabApiService.get_current_lab_info(current_user)
 
         # Delete the scenario and input resource so the builder recreates them from scratch
-        ScenarioService.delete_scenario(setup.initial_scenario_model.id)
+        ScenarioProxy.from_existing_scenario(setup.initial_scenario_model.id).delete()
         self.assertIsNone(Scenario.get_by_id(setup.initial_scenario_model.id))
         setup.initial_input_robot_model.delete_instance()
 
@@ -480,7 +480,7 @@ class TestShareScenario(BaseTestCase):
 
         # Delete the rebuilt scenario before importing outputs only
         # Leave the input resource to simulate an import where the input resource already exists.
-        ScenarioService.delete_scenario(new_scenario.id)
+        ScenarioProxy.from_existing_scenario(new_scenario.id).delete()
 
         builder_outputs = ScenarioBuilder(
             scenario_info=scenario_package,

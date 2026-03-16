@@ -181,7 +181,14 @@ class ScenarioDownloader(Task):
 
         if response.status_code != 200:
             raise Exception("Error while getting information of the resource: " + response.text)
-        return ShareScenarioInfoReponseDTO.from_json(response.json())
+
+        try:
+            return ShareScenarioInfoReponseDTO.from_json(response.json())
+        except Exception as e:
+            raise Exception(
+                f"Error while parsing the scenario information from the share link. "
+                f"The response format may be incompatible with this version of the lab. Details: {e}"
+            ) from e
 
     def _get_resource_to_download(
         self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode

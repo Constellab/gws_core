@@ -10,6 +10,7 @@ class ScenarioStatus(Enum):
     SUCCESS = "SUCCESS"
     ERROR = "ERROR"
     PARTIALLY_RUN = "PARTIALLY_RUN"
+    RUNNING_IN_EXTERNAL_LAB = "RUNNING_IN_EXTERNAL_LAB"
 
 
 class ScenarioCreationType(Enum):

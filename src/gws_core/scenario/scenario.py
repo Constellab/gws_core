@@ -41,21 +41,21 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     status: ScenarioStatus = EnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
-    error_info = JSONField(null=True)
+    error_info: dict[str, Any] | None = JSONField(null=True)
     creation_type: ScenarioCreationType = EnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
     title = CharField(max_length=50)
     description: RichTextDTO = RichTextDbField(null=True)
-    lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
+    lab_config: LabConfigModel | None = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)
-    validated_at: datetime = DateTimeUTC(null=True)
+    validated_at: datetime | None = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = DateTimeUTC(null=True)
+    last_sync_at: datetime | None = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
@@ -76,7 +76,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.data["pid"]
 
     @pid.setter
-    def pid(self, value: int):
+    def pid(self, value: int | None) -> None:
         self.data["pid"] = value
 
     @property
@@ -211,7 +211,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
-        self.check_is_updatable()
+        # Allow reset when running in external lab (user escape hatch for stuck scenarios)
+        if not self.is_running_in_external_lab:
+            self.check_is_updatable()
 
         if not self.is_saved():
             raise BadRequestException("Can't reset a scenario not saved before")
@@ -237,6 +239,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException(
                 GWSException.SCENARIO_VALIDATE_RUNNING.value,
                 unique_code=GWSException.SCENARIO_VALIDATE_RUNNING.name,
+            )
+        if self.is_running_in_external_lab:
+            raise BadRequestException(
+                "The scenario is currently running in an external lab, it cannot be validated"
             )
 
         if self.folder is None:
@@ -292,10 +298,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_running(self) -> bool:
         """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
-        return (
-            self.status == ScenarioStatus.RUNNING
-            or self.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS
-        )
+        return self.status in (ScenarioStatus.RUNNING, ScenarioStatus.WAITING_FOR_CLI_PROCESS)
 
     @property
     def is_running_or_waiting(self) -> bool:
@@ -314,6 +317,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_partially_run(self) -> bool:
         return self.status == ScenarioStatus.PARTIALLY_RUN
+
+    @property
+    def is_running_in_external_lab(self) -> bool:
+        return self.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB
 
     def mark_as_in_queue(self):
         self.status = ScenarioStatus.IN_QUEUE
@@ -364,10 +371,30 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.set_error_info(None)
         self.save()
 
+    def mark_as_running_in_external_lab(self) -> None:
+        """Mark the scenario as being processed in an external lab."""
+        self.status = ScenarioStatus.RUNNING_IN_EXTERNAL_LAB
+        self.save()
+
+    def unmark_running_in_external_lab(self) -> None:
+        """Remove the RUNNING_IN_EXTERNAL_LAB lock by computing the correct
+        status from the protocol model's current ProcessStatus."""
+        if not self.is_running_in_external_lab:
+            return
+        protocol_status = self.protocol_model.status
+        status_map = {
+            ProcessStatus.DRAFT: ScenarioStatus.DRAFT,
+            ProcessStatus.SUCCESS: ScenarioStatus.SUCCESS,
+            ProcessStatus.ERROR: ScenarioStatus.ERROR,
+            ProcessStatus.PARTIALLY_RUN: ScenarioStatus.PARTIALLY_RUN,
+        }
+        self.status = status_map.get(protocol_status, ScenarioStatus.DRAFT)
+        self.save()
+
     def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
 
-    def set_error_info(self, error_info: ProcessErrorInfo) -> None:
+    def set_error_info(self, error_info: ProcessErrorInfo | None) -> None:
         self.error_info = error_info.to_json_dict() if error_info else None
 
     def check_is_runnable(self) -> None:
@@ -382,6 +409,8 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException("The scenario is already running")
         if self.is_success:
             raise BadRequestException("The scenario is already finished")
+        if self.is_running_in_external_lab:
+            raise BadRequestException("The scenario is currently running in an external lab")
 
     def check_is_stopable(self) -> None:
         """Throw an error if the scenario is not stopable"""
@@ -399,6 +428,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.is_archived:
             raise BadRequestException(
                 detail="The scenario is archived, please unachived it to update it"
+            )
+        if self.is_running_in_external_lab:
+            raise BadRequestException(
+                detail="The scenario is currently running in an external lab, you can't update it"
             )
 
     def copy_from_and_save(self, other: Scenario) -> None:
@@ -450,11 +483,26 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def to_scenario_export_dto(self) -> ScenarioExportDTO:
         scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.id)
         tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
+
+        # Derive status from protocol model when locked, so the destination lab
+        # doesn't inherit RUNNING_IN_EXTERNAL_LAB
+        if self.is_running_in_external_lab:
+            protocol_status = self.protocol_model.status
+            status_map = {
+                ProcessStatus.DRAFT: ScenarioStatus.DRAFT,
+                ProcessStatus.SUCCESS: ScenarioStatus.SUCCESS,
+                ProcessStatus.ERROR: ScenarioStatus.ERROR,
+                ProcessStatus.PARTIALLY_RUN: ScenarioStatus.PARTIALLY_RUN,
+            }
+            export_status = status_map.get(protocol_status, ScenarioStatus.DRAFT)
+        else:
+            export_status = self.status
+
         return ScenarioExportDTO(
             id=self.id,
             title=self.title,
             description=self.description,
-            status=self.status,
+            status=export_status,
             folder=self.folder.to_dto() if self.folder else None,
             error_info=self.get_error_info(),
             tags=tags_dtos,

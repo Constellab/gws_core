@@ -88,6 +88,8 @@ class SendScenarioToLab(Task):
 
         if scenario.is_running:
             raise ValueError("The scenario is running, it cannot be sent to the lab")
+        if scenario.is_running_in_external_lab:
+            raise ValueError("The scenario is already running in an external lab")
 
         generate_share_link = GenerateShareLinkDTO(
             entity_id=scenario.id,
@@ -110,36 +112,44 @@ class SendScenarioToLab(Task):
             ),
         )
 
-        response = ExternalLabApiService.send_scenario_to_lab(
-            request_dto, credentials, CurrentUserService.get_and_check_current_user().id
-        )
+        # Lock the scenario while it's being processed externally
+        scenario.mark_as_running_in_external_lab()
 
-        self.log_success_message(
-            f"Import of scenario started, follow progress in destination lab : {response.scenario_url}"
-        )
-
-        scenario_waiter = ScenarioWaiterExternalLab(
-            response.scenario.id, credentials, CurrentUserService.get_and_check_current_user().id
-        )
-
-        # refresh every 30 seconds, max 2 hours
-        scenario_info = scenario_waiter.wait_until_finished(
-            refresh_interval=30,
-            refresh_interval_max_count=240,
-            message_dispatcher=self.message_dispatcher,
-        )
-
-        if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
-            error = (
-                scenario_info.progress.last_message.text
-                if scenario_info.progress and scenario_info.progress.has_last_message()
-                else "Unknown error"
-            )
-            raise Exception(
-                f"Export scenario to lab failed, status: {scenario_info.scenario.status}. Error details: {error}"
+        try:
+            response = ExternalLabApiService.send_scenario_to_lab(
+                request_dto, credentials, CurrentUserService.get_and_check_current_user().id
             )
 
-        return {}
+            self.log_success_message(
+                f"Import of scenario started, follow progress in destination lab : {response.scenario_url}"
+            )
+
+            scenario_waiter = ScenarioWaiterExternalLab(
+                response.scenario.id, credentials, CurrentUserService.get_and_check_current_user().id
+            )
+
+            # refresh every 30 seconds, max 2 hours
+            scenario_info = scenario_waiter.wait_until_finished(
+                refresh_interval=30,
+                refresh_interval_max_count=240,
+                message_dispatcher=self.message_dispatcher,
+            )
+
+            if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
+                error = (
+                    scenario_info.progress.last_message.text
+                    if scenario_info.progress and scenario_info.progress.has_last_message()
+                    else "Unknown error"
+                )
+                raise Exception(
+                    f"Export scenario to lab failed, status: {scenario_info.scenario.status}. Error details: {error}"
+                )
+
+            return {}
+        finally:
+            # Re-fetch and unlock the scenario, deriving status from the protocol model
+            scenario = scenario.refresh()
+            scenario.unmark_running_in_external_lab()
 
     @classmethod
     def build_config(
