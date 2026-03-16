@@ -1,4 +1,5 @@
 from fastapi import Depends
+from fastapi.responses import FileResponse
 
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_auth import ExternalLabAuth
@@ -10,6 +11,7 @@ from gws_core.external_lab.external_lab_dto import (
 from gws_core.external_lab.external_lab_service import ExternalLabService
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.lab_dto import LabDTO
+from gws_core.share.shared_dto import ShareResourceZippedResponseDTO, ShareScenarioInfoReponseDTO
 from gws_core.user.user_dto import UserDTO
 
 external_lab_app = ApiRegistry.register_api(
@@ -82,11 +84,49 @@ def get_current_lab_info(
 
 
 @external_lab_app.get("/user/{user_id}", summary="Get user information")
-def get_user_info(
-    user_id: str, _=Depends(ExternalLabAuth.check_auth)
-) -> UserDTO:
+def get_user_info(user_id: str, _=Depends(ExternalLabAuth.check_auth)) -> UserDTO:
     """
     Get user information by id. If the user doesn't exist locally,
     imports them from Constellab as inactive.
     """
     return ExternalLabService.get_user_info(user_id)
+
+
+@external_lab_app.get(
+    "/scenario/{id_}/export-info",
+    summary="Get scenario export info for downloading",
+)
+def get_scenario_export_info(
+    id_: str, _=Depends(ExternalLabAuth.check_auth)
+) -> ShareScenarioInfoReponseDTO:
+    """
+    Get scenario export info for credential-based downloading.
+    Returns the scenario export package and resource routes.
+    """
+    return ExternalLabService.get_scenario_export_info(id_)
+
+
+@external_lab_app.post(
+    "/scenario/{id_}/resource/{resource_id}/zip",
+    summary="Zip a resource of a scenario for download",
+)
+def zip_scenario_resource(
+    id_: str, resource_id: str, _=Depends(ExternalLabAuth.check_auth)
+) -> ShareResourceZippedResponseDTO:
+    """
+    Zip a resource belonging to a scenario for credential-based download.
+    """
+    return ExternalLabService.zip_scenario_resource(id_, resource_id)
+
+
+@external_lab_app.get(
+    "/scenario/{id_}/resource/{resource_id}/download",
+    summary="Download a zipped resource of a scenario",
+)
+def download_scenario_resource(
+    id_: str, resource_id: str, _=Depends(ExternalLabAuth.check_auth)
+) -> FileResponse:
+    """
+    Download a zipped resource of a scenario using credentials.
+    """
+    return ExternalLabService.download_scenario_resource(id_, resource_id)

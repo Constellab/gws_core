@@ -11,7 +11,7 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabWithUserInfo,
 )
 from gws_core.lab.lab_model import LabModel
-from gws_core.share.shared_dto import ShareLinkEntityType
+from gws_core.share.shared_dto import ShareLinkEntityType, ShareScenarioInfoReponseDTO
 from gws_core.user.user import User
 
 
@@ -91,6 +91,19 @@ class ExternalLabApiService:
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
 
     @classmethod
+    def get_scenario_export_info(
+        cls, scenario_id: str, credentials: CredentialsDataLab, user_id: str
+    ) -> ShareScenarioInfoReponseDTO:
+        """Get scenario export info from an external lab using credentials."""
+        headers = cls._get_external_lab_auth(credentials.api_key, user_id)
+
+        url = cls.get_full_route(credentials, f"scenario/{scenario_id}/export-info")
+
+        response = ExternalApiService.get(url, headers=headers, raise_exception_if_error=True)
+
+        return ShareScenarioInfoReponseDTO.from_json(response.json())
+
+    @classmethod
     def get_full_route(cls, credentials: CredentialsDataLab, route: str) -> str:
         """Get the full route"""
         if Settings.get_instance().is_test:
@@ -117,6 +130,4 @@ class ExternalLabApiService:
     @classmethod
     def get_current_lab_route(cls, route: str) -> str:
         """Get the current lab route"""
-        return (
-            f"{Settings.get_instance().get_lab_api_url()}/{Settings.core_api_route_path()}/{route}"
-        )
+        return f"{Settings.get_instance().get_lab_api_url()}/{route}"

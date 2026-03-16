@@ -6,6 +6,7 @@ from gws_core.community.community_service import CommunityService
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator import EntityNavigatorScenario
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
@@ -128,7 +129,7 @@ class ShareService:
             entity_object.extend([resource_model.to_dto() for resource_model in resource_models])
 
         zip_url: str = ExternalLabApiService.get_current_lab_route(
-            f"share/resource/{shared_entity_link.token}/zip"
+            f"{Settings.core_api_route_path()}/share/resource/{shared_entity_link.token}/zip"
         )
         return ShareResourceInfoReponseDTO(
             version=cls.VERSION,
@@ -143,13 +144,13 @@ class ShareService:
         if shared_entity_link.entity_type != ShareLinkEntityType.RESOURCE:
             raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
 
-        zipped_resource: ResourceModel = cls._zip_resource(
+        zipped_resource: ResourceModel = cls.zip_resource(
             shared_entity_link.entity_id, shared_entity_link.created_by
         )
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabApiService.get_current_lab_route(
-            f"share/resource/{shared_entity_link.token}/download"
+            f"{Settings.core_api_route_path()}/share/resource/{shared_entity_link.token}/download"
         )
         return ShareResourceZippedResponseDTO(
             version=cls.VERSION,
@@ -160,7 +161,7 @@ class ShareService:
         )
 
     @classmethod
-    def _zip_resource(cls, resource_model_id: str, shared_by: User) -> ResourceModel:
+    def zip_resource(cls, resource_model_id: str, shared_by: User) -> ResourceModel:
         with AuthenticateUser(shared_by):
             return cls.run_zip_resource_scenario(resource_model_id, shared_by)
 
@@ -171,7 +172,7 @@ class ShareService:
         return Tag(key, value, origins=origins)
 
     @classmethod
-    def _find_existing_zipped_resource(cls, resource_model_id: str) -> ResourceModel | None:
+    def find_existing_zipped_resource(cls, resource_model_id: str) -> ResourceModel | None:
         """Search for an existing successful zip scenario for the given resource
         and current task version, and return the zipped resource output."""
         search_builder = ScenarioSearchBuilder()
@@ -203,7 +204,7 @@ class ShareService:
         """
 
         # Check if a zip scenario already exists for this resource
-        existing_zipped_resource = cls._find_existing_zipped_resource(id_)
+        existing_zipped_resource = cls.find_existing_zipped_resource(id_)
         if existing_zipped_resource:
             Logger.info(
                 f"Resource {id_} was already zipped to resource {existing_zipped_resource.id}, reusing the output."
@@ -247,7 +248,7 @@ class ShareService:
         if shared_entity_link.entity_type != ShareLinkEntityType.RESOURCE:
             raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
 
-        zipped_resource = cls._find_existing_zipped_resource(shared_entity_link.entity_id)
+        zipped_resource = cls.find_existing_zipped_resource(shared_entity_link.entity_id)
 
         if not zipped_resource:
             raise Exception("The resource was not zipped")
@@ -322,7 +323,7 @@ class ShareService:
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabApiService.get_current_lab_route(
-            f"share/scenario/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip"
+            f"{Settings.core_api_route_path()}/share/scenario/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip"
         )
         return ShareScenarioInfoReponseDTO(
             version=cls.VERSION,
@@ -341,15 +342,15 @@ class ShareService:
         if shared_entity_link.entity_type != ShareLinkEntityType.SCENARIO:
             raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
 
-        cls._check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
+        cls.check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
 
-        zipped_resource: ResourceModel = cls._zip_resource(
+        zipped_resource: ResourceModel = cls.zip_resource(
             resource_id, shared_entity_link.created_by
         )
 
         # generate the link to download the zipped resource
         download_url: str = ExternalLabApiService.get_current_lab_route(
-            f"share/scenario/{shared_entity_link.token}/resource/{resource_id}/download"
+            f"{Settings.core_api_route_path()}/share/scenario/{shared_entity_link.token}/resource/{resource_id}/download"
         )
         return ShareResourceZippedResponseDTO(
             version=cls.VERSION,
@@ -366,10 +367,10 @@ class ShareService:
         if shared_entity_link.entity_type != ShareLinkEntityType.SCENARIO:
             raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
 
-        cls._check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
+        cls.check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
 
         # retrieve the zipped resource from the zip scenario
-        zipped_resource = cls._find_existing_zipped_resource(resource_id)
+        zipped_resource = cls.find_existing_zipped_resource(resource_id)
 
         if not zipped_resource:
             raise Exception("The resource was not zipped")
@@ -382,7 +383,7 @@ class ShareService:
         return zip_file.path
 
     @classmethod
-    def _check_resource_is_in_scenario(cls, scenario_id: str, resource_id: str) -> None:
+    def check_resource_is_in_scenario(cls, scenario_id: str, resource_id: str) -> None:
         # check that the resource was generated by the scenario or used as input of the scenario
 
         scenario = ScenarioService.get_by_id_and_check(scenario_id)

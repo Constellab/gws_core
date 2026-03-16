@@ -147,17 +147,26 @@ class LabShareZipRouteDownloader(ResourceDownloader):
     """
     Downloader for lab share zip route URLs (skips compatibility checking).
     Use when you already have the zip entity route URL, not the resource info URL.
+
+    Optional ``headers`` allow credential-based downloads (e.g. via ExternalLabAuth)
+    instead of share-link authentication.
     """
 
     zip_route_url: str
+    headers: dict | None
 
     def __init__(
-        self, zip_route_url: str, message_dispatcher: MessageDispatcher | None = None
+        self,
+        zip_route_url: str,
+        message_dispatcher: MessageDispatcher | None = None,
+        headers: dict | None = None,
     ) -> None:
         super().__init__(message_dispatcher)
-        if not ShareLink.is_lab_share_resource_link(zip_route_url):
+        # Only validate share-link pattern when no custom headers are provided
+        if headers is None and not ShareLink.is_lab_share_resource_link(zip_route_url):
             raise ValueError("The provided URL is not a valid lab share resource link.")
         self.zip_route_url = zip_route_url
+        self.headers = headers
 
     def download(self) -> str:
         """
@@ -167,7 +176,9 @@ class LabShareZipRouteDownloader(ResourceDownloader):
         """
         download_url = self._call_zip_resource(self.zip_route_url)
         # Delegate the actual download to DirectUrlResourceDownloader
-        direct_downloader = DirectUrlResourceDownloader(download_url, self.message_dispatcher)
+        direct_downloader = DirectUrlResourceDownloader(
+            download_url, self.message_dispatcher, headers=self.headers
+        )
         return direct_downloader.download()
 
     def _call_zip_resource(self, url: str) -> str:
@@ -179,7 +190,7 @@ class LabShareZipRouteDownloader(ResourceDownloader):
         """
         self.message_dispatcher.notify_info_message("Zipping the resource")
 
-        response = requests.post(url, timeout=60 * 30)
+        response = requests.post(url, headers=self.headers, timeout=60 * 30)
 
         if response.status_code != 200:
             raise Exception("Error while zipping the resource: " + response.text)
@@ -193,15 +204,22 @@ class LabShareZipRouteDownloader(ResourceDownloader):
 class DirectUrlResourceDownloader(ResourceDownloader):
     """
     Downloader for direct HTTP/HTTPS URLs without compatibility checking.
+
+    Optional ``headers`` allow credential-based downloads.
     """
 
     download_url: str
+    headers: dict | None
 
     def __init__(
-        self, download_url: str, message_dispatcher: MessageDispatcher | None = None
+        self,
+        download_url: str,
+        message_dispatcher: MessageDispatcher | None = None,
+        headers: dict | None = None,
     ) -> None:
         super().__init__(message_dispatcher)
         self.download_url = download_url
+        self.headers = headers
 
     def download(self) -> str:
         """
@@ -212,4 +230,4 @@ class DirectUrlResourceDownloader(ResourceDownloader):
         file_downloader = FileDownloader(
             Settings.get_instance().make_temp_dir(), self.message_dispatcher
         )
-        return file_downloader.download_file(self.download_url)
+        return file_downloader.download_file(self.download_url, headers=self.headers)

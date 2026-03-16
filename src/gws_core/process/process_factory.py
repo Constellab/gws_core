@@ -12,6 +12,7 @@ from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
 from ..config.config import Config
+from ..config.config_exceptions import ProcessConfigException
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
@@ -103,7 +104,13 @@ class ProcessFactory:
         config: Config = Config()
         config.set_specs(config_specs if config_specs is not None else task_type.config_specs)
         if config_params:
-            config.set_values(config_params)
+            try:
+                config.set_values(config_params)
+            except BadRequestException as e:
+                raise ProcessConfigException(
+                    process_type=task_type.get_typing_name(),
+                    original_exception=e,
+                ) from e
 
         cls._init_process_model(
             process_model=task_model,
@@ -128,9 +135,7 @@ class ProcessFactory:
         )
 
     @classmethod
-    def create_task_model_from_config_dto(
-        cls, task_config_dto: ProcessConfigDTO
-    ) -> TaskModel:
+    def create_task_model_from_config_dto(cls, task_config_dto: ProcessConfigDTO) -> TaskModel:
         """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
         the process type is not used. It can create a task where the type does not exist in the system.
 
@@ -140,9 +145,7 @@ class ProcessFactory:
         :rtype: TaskModel
         """
         task_model: TaskModel = TaskModel()
-        return cast(
-            TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto)
-        )
+        return cast(TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto))
 
     ############################################### PROTOCOL FROM TYPE #################################################
 

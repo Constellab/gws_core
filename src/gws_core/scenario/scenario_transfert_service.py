@@ -3,9 +3,11 @@ from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
+from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
+from gws_core.scenario.task.wait_external_scenario import WaitExternalScenario
 from gws_core.task.plug.output_task import OutputTask
 
 
@@ -34,15 +36,21 @@ class ScenarioTransfertService:
 
     @classmethod
     def _build_import_from_lab(cls, values: ConfigParamsDict) -> ScenarioProxy:
-        # Create a scenario containing 1 scenario downloader , 1 output task
+        # Create a scenario containing 1 scenario downloader, 1 output task
         scenario: ScenarioProxy = ScenarioProxy(title="Import scenario")
         protocol = scenario.get_protocol()
 
-        # Add the importer and the connector
-        downloader = protocol.add_process(ScenarioDownloader, "downloader", values)
+        # Use credential-based downloader when credentials are provided,
+        # otherwise use share-link downloader (legacy / manual import)
+        if "credentials" in values:
+            downloader_type = ScenarioDownloaderFromLab
+        else:
+            downloader_type = ScenarioDownloader
+
+        downloader = protocol.add_process(downloader_type, "downloader", values)
 
         # Add output and connect it
-        protocol.add_output("output", downloader >> ScenarioDownloader.OUTPUT_NAME, False)
+        protocol.add_output("output", downloader >> downloader_type.OUTPUT_NAME, False)
 
         return scenario
 
@@ -91,6 +99,34 @@ class ScenarioTransfertService:
             select_scenario.get_output_port(SelectScenario.OUTPUT_NAME),
             send.get_input_port(SendScenarioToLab.INPUT_NAME),
         )
+
+        auto_run = values.get("auto_run", False)
+
+        if auto_run:
+            # When auto_run is enabled, add wait + download tasks
+            wait = protocol.add_process(
+                WaitExternalScenario,
+                "waiter",
+                {"credentials": values["credentials"]},
+            )
+            protocol.add_connector(
+                send.get_output_port(SendScenarioToLab.OUTPUT_NAME),
+                wait.get_input_port(WaitExternalScenario.INPUT_NAME),
+            )
+
+            downloader = protocol.add_process(
+                ScenarioDownloaderFromLab,
+                "downloader",
+                {"credentials": values["credentials"], "resource_mode": "Outputs only"},
+            )
+            protocol.add_connector(
+                wait.get_output_port(WaitExternalScenario.OUTPUT_NAME),
+                downloader.get_input_port(ScenarioDownloaderFromLab.INPUT_NAME),
+            )
+
+            protocol.add_output(
+                "output", downloader >> ScenarioDownloaderFromLab.OUTPUT_NAME, False
+            )
 
         return scenario
 

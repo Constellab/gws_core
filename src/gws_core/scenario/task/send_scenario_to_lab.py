@@ -1,26 +1,21 @@
-from datetime import timedelta
-
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import IntParam
-from gws_core.core.utils.date_helper import DateHelper
+from gws_core.config.param.param_spec import BoolParam
 from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_type import CredentialsDataLab, CredentialsType
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
-from gws_core.io.io_spec import InputSpec
-from gws_core.io.io_specs import InputSpecs
+from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.task.scenario_downloader import (
-    ScenarioDownloader,
     ScenarioDownloaderCreateOption,
     ScenarioDownloaderResourceMode,
 )
+from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
 from gws_core.scenario.task.scenario_resource import ScenarioResource
-from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkEntityType
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -30,19 +25,23 @@ from gws_core.user.current_user_service import CurrentUserService
 @task_decorator(
     unique_name="SendScenarioToLab",
     human_name="Send a scenario to a lab",
-    short_description="Send a scenario to another lab using a share link",
+    short_description="Send a scenario to another lab using lab credentials",
     style=TypingStyle.material_icon("cloud_upload"),
 )
 class SendScenarioToLab(Task):
     """
-    Task to send a scenario to another lab using a share link.
+    Task to send a scenario to another lab using lab credentials.
 
-    This task creates a share link for the scenario.
-
-    Then it call the external lab API to import the scenario in the external lab using the share link.
+    This task instructs the destination lab to import the scenario from the source lab
+    using credential-based authentication.
 
     A credentials of type lab are required in both labs to be able to send and receive scenarios. It
     needs to be the same api_key in both labs.
+
+    When `auto_run` is enabled, the create_option is forced to "Update if exists" so the
+    scenario keeps the same ID. The auto_run flag is passed to the destination's downloader
+    which will automatically run the scenario after import. The task does NOT unmark the
+    scenario — downstream tasks (WaitExternalScenario) handle unmarking.
 
     The following documentation explain how to configure the lab credentials:
     https://constellab.community/bricks/gws_academy/latest/doc/data-lab/scenario/f4453296-ccc5-4b54-8e46-2d1c2f830a0c#send-a-scenario-to-another-lab-(e.g.-a-datahub)
@@ -58,6 +57,8 @@ class SendScenarioToLab(Task):
         }
     )
 
+    output_specs = OutputSpecs({"scenario": OutputSpec(ScenarioResource, human_name="Scenario")})
+
     config_specs = ConfigSpecs(
         {
             "credentials": CredentialsParam(
@@ -65,23 +66,20 @@ class SendScenarioToLab(Task):
                 human_name="Lab credentials",
                 short_description="The credentials must exist in destination lab",
             ),
-            "link_duration": IntParam(
-                human_name="Share link duration in days",
-                short_description="The share link is not created if a share link already exists for the resource",
-                min_value=1,
-                max_value=365,
-                default_value=1,
+            "resource_mode": ScenarioDownloaderFromLab.config_specs.get_spec("resource_mode"),
+            "create_option": ScenarioDownloaderFromLab.config_specs.get_spec("create_option"),
+            "auto_run": BoolParam(
+                default_value=False,
+                human_name="Auto run in destination lab",
+                short_description="If true, the scenario will be automatically run in the destination lab",
             ),
-            "resource_mode": ScenarioDownloader.config_specs.get_spec("resource_mode"),
-            "create_option": ScenarioDownloader.config_specs.get_spec("create_option"),
         }
     )
 
     INPUT_NAME = "scenario"
+    OUTPUT_NAME = "scenario"
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        current_day = DateHelper.now_utc()
-
         scenario_resource: ScenarioResource = inputs["scenario"]
 
         scenario = scenario_resource.get_scenario()
@@ -91,29 +89,34 @@ class SendScenarioToLab(Task):
         if scenario.is_running_in_external_lab:
             raise ValueError("The scenario is already running in an external lab")
 
-        generate_share_link = GenerateShareLinkDTO(
-            entity_id=scenario.id,
-            entity_type=ShareLinkEntityType.SCENARIO,
-            valid_until=current_day + timedelta(days=params.get_value("link_duration")),
-        )
-
-        self.log_info_message("Generate share link for the scenario if not exists")
-        share_link = ShareLinkService.get_or_create_valid_public_share_link(generate_share_link)
-
-        # Call the external lab API to import the current scenario
+        auto_run: bool = params.get_value("auto_run")
         credentials: CredentialsDataLab = params.get_value("credentials")
+        create_option = params["create_option"]
+
+        # When auto_run is enabled, force "Update if exists" so scenario keeps same ID
+        if auto_run:
+            create_option = "Update if exists"
+
         self.log_info_message(
             f"Send the scenario to the lab {ExternalLabApiService.get_full_route(credentials, '')}"
         )
+
+        # Pass the credential name (not the resolved object) so the destination
+        # lab can resolve it locally with its own credentials store.
+        credentials: CredentialsDataLab = params["credentials"]
         request_dto = ExternalLabImportRequestDTO(
-            # convert to ScenarioDownloader config because ScenarioDownloader is used to download the scenario
-            params=ScenarioDownloader.build_config(
-                share_link.get_download_link(), params["resource_mode"], params["create_option"]
+            params=ScenarioDownloaderFromLab.build_config(
+                credentials=credentials.meta.name,
+                scenario_id=scenario_resource.scenario_id,
+                resource_mode=params["resource_mode"],
+                create_option=create_option,
+                auto_run=auto_run,
             ),
         )
 
-        # Lock the scenario while it's being processed externally
-        scenario.mark_as_running_in_external_lab()
+        if auto_run:
+            # Lock the scenario while it's being processed externally
+            scenario.mark_as_running_in_external_lab()
 
         try:
             response = ExternalLabApiService.send_scenario_to_lab(
@@ -125,7 +128,9 @@ class SendScenarioToLab(Task):
             )
 
             scenario_waiter = ScenarioWaiterExternalLab(
-                response.scenario.id, credentials, CurrentUserService.get_and_check_current_user().id
+                response.scenario.id,
+                credentials,
+                CurrentUserService.get_and_check_current_user().id,
             )
 
             # refresh every 30 seconds, max 2 hours
@@ -145,23 +150,24 @@ class SendScenarioToLab(Task):
                     f"Export scenario to lab failed, status: {scenario_info.scenario.status}. Error details: {error}"
                 )
 
-            return {}
+            return {"scenario": scenario_resource}
         finally:
-            # Re-fetch and unlock the scenario, deriving status from the protocol model
-            scenario = scenario.refresh()
-            scenario.unmark_running_in_external_lab()
+            if auto_run:
+                # When auto_run, downstream WaitExternalScenario handles unmarking
+                scenario = scenario.refresh()
+                scenario.unmark_running_in_external_lab()
 
     @classmethod
     def build_config(
         cls,
         credentials: CredentialsDataLab | str,
-        link_duration: int,
         resource_mode: ScenarioDownloaderResourceMode,
         create_option: ScenarioDownloaderCreateOption,
+        auto_run: bool = False,
     ) -> ConfigParamsDict:
         return {
             "credentials": credentials,
-            "link_duration": link_duration,
             "resource_mode": resource_mode,
             "create_option": create_option,
+            "auto_run": auto_run,
         }

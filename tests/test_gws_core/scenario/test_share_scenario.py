@@ -18,7 +18,6 @@ from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
-from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -539,9 +538,12 @@ class TestShareScenario(BaseTestCase):
 
         scenario = ScenarioTransfertService.export_scenario_to_lab(
             scenario.get_model().id,
-            SendScenarioToLab.build_config(lab_credentials.name, 1, "None", "Force new scenario"),
+            SendScenarioToLab.build_config(
+                lab_credentials.name, "Outputs only", "Force new scenario"
+            ),
         )
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
-        # there should 3 more scenario, the send, the import scenario and the new copied scenario
-        self.assertEqual(Scenario.select().count(), scenario_count + 3)
+        # there should 4 more scenario, the send, the import scenario, the new copied scenario and
+        # the zip resource scenario
+        self.assertEqual(Scenario.select().count(), scenario_count + 4)
