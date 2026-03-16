@@ -17,6 +17,7 @@ from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_builder import ScenarioBuilder
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_dto import (
@@ -32,7 +33,7 @@ from gws_core.user.current_user_service import CurrentUserService
 ScenarioDownloaderResourceMode = Literal[
     "Inputs and outputs", "Inputs only", "Outputs only", "All", "None"
 ]
-ScenarioDownloaderCreateOption = Literal["Skip if exists", "Force new scenario", "Update if exists"]
+ScenarioDownloaderCreateOption = Literal["Update if exists", "Skip if exists", "Force new scenario"]
 
 
 @task_decorator(
@@ -64,7 +65,12 @@ class ScenarioDownloader(Task):
                 human_name="Create option",
                 short_description="This applies for the scenario and the resources",
                 allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
-                default_value="Skip if exists",
+                default_value="Update if exists",
+            ),
+            "auto_run": BoolParam(
+                default_value=False,
+                human_name="Run scenario after download",
+                short_description="If true, the scenario will be automatically run after download",
             ),
             "skip_scenario_tags": BoolParam(
                 default_value=False,
@@ -96,6 +102,13 @@ class ScenarioDownloader(Task):
             raise Exception(
                 "Invalid link, are you sure this a link of a share scenario from a lab ?"
             )
+
+        # verify that param are correct if we auto run
+        auto_run = params["auto_run"]
+        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
+        # If we auto run we need to download input resource or all resource
+        if auto_run and resource_mode not in ["Inputs only", "All"]:
+            raise Exception("Auto run requires downloading input resources or all resources.")
 
         self.share_entity = self._get_scenario_info(link)
 
@@ -140,7 +153,7 @@ class ScenarioDownloader(Task):
 
         # Download and fill resource content after the scenario is built
         resource_ids = self._get_resource_to_download(
-            scenario_info.protocol.data.graph, params["resource_mode"]
+            scenario_info.protocol.data.graph, resource_mode
         )
 
         zip_paths = self._download_resource_zips(resource_ids, self.share_entity, create_mode)
@@ -150,6 +163,11 @@ class ScenarioDownloader(Task):
         )
 
         self._builder.fill_zip_resources(zip_paths)
+
+        if auto_run:
+            self.log_info_message("Auto running the scenario")
+            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
+            scenario_proxy.add_to_queue()
 
         return {"scenario": ScenarioResource(scenario.id)}
 

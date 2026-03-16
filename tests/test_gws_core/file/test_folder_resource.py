@@ -21,7 +21,7 @@ from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.scenario_service import ScenarioService
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_runner import TaskRunner
 
@@ -124,7 +124,7 @@ class TestFolderResource(BaseTestCase):
         self.assertEqual(sub_file.read(), "test")
 
         # Delete the scenario and resource and check that the file still exists (because it is a symbolic link)
-        ScenarioService.reset_scenario(sub_file_model.scenario)
+        EntityNavigatorService.reset_scenario(sub_file_model.scenario.id)
 
         self.assertFalse(ResourceModel.get_by_id(sub_file_model.id))
         # reload the folder

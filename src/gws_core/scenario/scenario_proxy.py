@@ -4,6 +4,7 @@ from time import sleep
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
@@ -151,7 +152,6 @@ class ScenarioProxy:
         return ScenarioWaiterBasic(self._scenario.id)
 
     def add_to_queue(self) -> None:
-        from gws_core.scenario.queue.queue_service import QueueService
 
         QueueService.add_scenario_to_queue(self._scenario.id)
 
@@ -159,7 +159,7 @@ class ScenarioProxy:
         ScenarioRunService.stop_scenario(self._scenario.id)
 
     def delete(self) -> None:
-        ScenarioService.delete_scenario(self._scenario.id)
+        EntityNavigatorService.delete_scenario(self._scenario.id)
 
     def get_model(self) -> Scenario:
         return self._scenario

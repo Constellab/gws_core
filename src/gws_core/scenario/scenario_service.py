@@ -6,13 +6,10 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigatorResource
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
-from gws_core.protocol import protocol_model
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.scenario_zipper import ScenarioExportDTO, ScenarioExportPackage
+from gws_core.scenario.scenario_zipper import ScenarioExportPackage
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
-from gws_core.tag.entity_tag_list import EntityTagList
-from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
@@ -233,6 +230,9 @@ class ScenarioService:
 
     @classmethod
     def reset_scenario(cls, scenario: Scenario) -> Scenario:
+        """Low-level reset of a scenario. This does not handle the impact chain (next scenarios/notes).
+        Use EntityNavigatorService.reset_scenario instead.
+        """
         scenario = scenario.reset()
 
         ActivityService.add_or_update_async(
@@ -476,7 +476,15 @@ class ScenarioService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def delete_scenario(cls, scenario_id: str) -> None:
+        """Delete a scenario. The scenario must be in DRAFT status.
+        Use EntityNavigatorService.delete_scenario for the full delete with impact handling.
+        """
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
+
+        if not scenario.is_draft:
+            raise BadRequestException(
+                "Cannot delete a scenario that is not in draft status. Please reset the scenario first."
+            )
 
         scenario.delete_instance()
 

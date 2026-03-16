@@ -73,7 +73,7 @@ class NavigableEntitySet:
         return set(self._entities)
 
     def get_entities(self) -> set[NavigableEntity]:
-        return set([entity.entity for entity in self._entities])
+        return {entity.entity for entity in self._entities}
 
     def get_as_list(self) -> list[NavigableEntityDeep]:
         return list(self._entities)
@@ -124,9 +124,7 @@ class NavigableEntitySet:
         self._entities = self._entities - entity
 
     def remove_deep(self, deep_level: int):
-        self._entities = set(
-            [entity for entity in self._entities if entity.deep_level != deep_level]
-        )
+        self._entities = {entity for entity in self._entities if entity.deep_level != deep_level}
 
     def get_entities_from_deepest_level(
         self, entity_type: NavigableEntityType

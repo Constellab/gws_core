@@ -59,6 +59,28 @@ class EntityNavigatorService:
         ScenarioService.delete_scenario(scenario_id)
 
     @classmethod
+    @GwsCoreDbManager.transaction()
+    def delete_standalone_scenario(cls, scenario_id: str) -> None:
+        """Delete a scenario only if it has no next dependencies (scenarios or notes using its outputs).
+        Raises an exception if dependencies exist. Resets the scenario before deleting.
+        """
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
+
+        scenario.check_is_updatable()
+
+        exp_nav = EntityNavigatorScenario(scenario)
+        next_entities = exp_nav.get_next_entities_recursive(
+            [NavigableEntityType.SCENARIO, NavigableEntityType.NOTE],
+        )
+
+        if not next_entities.is_empty():
+            raise BadRequestException(
+                "Cannot delete this scenario because other scenarios or notes depend on its outputs."
+            )
+
+        cls.delete_scenario(scenario_id)
+
+    @classmethod
     def _calculate_scenario_reset_impact(cls, scenario: Scenario) -> ImpactResult:
         """Method to calculate the impact of the reset of a scenario.
 
@@ -220,7 +242,7 @@ class EntityNavigatorService:
 
         scenarios = entities.get_entities_from_deepest_level(NavigableEntityType.SCENARIO)
         for scenario in scenarios:
-            ScenarioService.delete_scenario(scenario.id)
+            cls.delete_scenario(scenario.id)
 
     @classmethod
     def _check_validated_entities(
