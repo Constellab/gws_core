@@ -35,6 +35,8 @@ class ResourceZipperTask(Task):
     If you want to zip a folder, you might want to use the FolderExporter task instead.
     """
 
+    VERSION = "1"
+
     input_name = "source"
     output_name = "target"
 

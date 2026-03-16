@@ -1,8 +1,6 @@
 import threading
 from typing import cast
 
-from peewee import JOIN
-
 from gws_core.apps.app_resource import AppResource
 from gws_core.community.community_service import CommunityService
 from gws_core.core.classes.paginator import Paginator
@@ -12,9 +10,7 @@ from gws_core.entity_navigator.entity_navigator import EntityNavigatorScenario
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.impl.file.file import File
-from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process_proxy import ProcessProxy
-from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_controller import CallViewParams
@@ -24,7 +20,9 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.task.resource_zipper_task import ResourceZipperTask
 from gws_core.resource.view.view_result import CallViewResult
+from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.scenario_search_builder import ScenarioSearchBuilder
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.shared_dto import (
     SharedEntityMode,
@@ -36,9 +34,9 @@ from gws_core.share.shared_dto import (
 from gws_core.share.shared_entity_info import SharedEntityInfo
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
+from gws_core.tag.tag import Tag, TagOrigins
+from gws_core.tag.tag_dto import TagOriginType
 from gws_core.task.plug.output_task import OutputTask
-from gws_core.task.task_input_model import TaskInputModel
-from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
 
@@ -50,6 +48,12 @@ class ShareService:
 
     # version of the share service
     VERSION = 2
+
+    # Tag keys used to identify zip scenarios
+    TAG_KEY_ZIP_SCENARIO = "zip-scenario"
+    TAG_KEY_ZIP_SCENARIO_VALUE = "true"
+    TAG_KEY_ZIP_RESOURCE_ID = "zip-resource-id"
+    TAG_KEY_ZIP_TASK_VERSION = "zip-task-version"
 
     @classmethod
     def get_shared_to_list(
@@ -157,50 +161,68 @@ class ShareService:
 
     @classmethod
     def _zip_resource(cls, resource_model_id: str, shared_by: User) -> ResourceModel:
-        zippped_resource = cls._find_zipped_resource_from_origin_resource(resource_model_id)
-
-        if zippped_resource:
-            Logger.info(
-                f"Resource {resource_model_id} was already zipped to resource {zippped_resource.id}, using the same zip file."
-            )
-            return zippped_resource
-
         with AuthenticateUser(shared_by):
-            return cls.run_zip_resource_exp(resource_model_id, shared_by)
+            return cls.run_zip_resource_scenario(resource_model_id, shared_by)
 
     @classmethod
-    def _find_zipped_resource_from_origin_resource(
-        cls, resource_model_id: str
-    ) -> ResourceModel | None:
-        """Method that find the zipped resource from the origin resource"""
-        # check if the resource was already zipped in this lab for the current version of ResourceZipperTask
-        typing = TypingManager.get_typing_from_name_and_check(ResourceZipperTask.get_typing_name())
-        task_model: TaskModel = (
-            TaskModel.select()
-            .where(
-                (TaskModel.process_typing_name == typing.typing_name)
-                & (TaskModel.status == ProcessStatus.SUCCESS)
-                & (TaskModel.brick_version_on_run == typing.brick_version)
-                & (TaskInputModel.resource_model == resource_model_id)
-            )
-            .join(TaskInputModel, JOIN.LEFT_OUTER)
-            .first()
-        )
+    def _create_system_tag(cls, key: str, value: str) -> Tag:
+        """Create a tag with system origin."""
+        origins = TagOrigins(TagOriginType.SYSTEM, User.get_and_check_sysuser().id)
+        return Tag(key, value, origins=origins)
 
-        # if the resource was already zipped
-        if task_model:
-            return task_model.outputs.get_resource_model(ResourceZipperTask.output_name)
+    @classmethod
+    def _find_existing_zipped_resource(cls, resource_model_id: str) -> ResourceModel | None:
+        """Search for an existing successful zip scenario for the given resource
+        and current task version, and return the zipped resource output."""
+        search_builder = ScenarioSearchBuilder()
+        search_builder.add_tag_filter(
+            cls._create_system_tag(cls.TAG_KEY_ZIP_SCENARIO, cls.TAG_KEY_ZIP_SCENARIO_VALUE)
+        )
+        search_builder.add_tag_filter(
+            cls._create_system_tag(cls.TAG_KEY_ZIP_RESOURCE_ID, resource_model_id)
+        )
+        search_builder.add_tag_filter(
+            cls._create_system_tag(cls.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION)
+        )
+        search_builder.add_status_filter(ScenarioStatus.SUCCESS)
+
+        scenario = search_builder.search_first()
+
+        if scenario:
+            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
+            protocol = scenario_proxy.get_protocol()
+            output_task = protocol.get_process("output")
+            return output_task.get_input_resource_model(OutputTask.input_name)
 
         return None
 
     @classmethod
-    def run_zip_resource_exp(cls, id_: str, shared_by: User) -> ResourceModel:
-        """Method that zip a resource ands return the new resource"""
+    def run_zip_resource_scenario(cls, id_: str, shared_by: User) -> ResourceModel:
+        """Method that zip a resource and return the new resource.
+        If a successful zip scenario already exists for this resource and task version, reuse it.
+        """
+
+        # Check if a zip scenario already exists for this resource
+        existing_zipped_resource = cls._find_existing_zipped_resource(id_)
+        if existing_zipped_resource:
+            Logger.info(
+                f"Resource {id_} was already zipped to resource {existing_zipped_resource.id}, reusing the output."
+            )
+            return existing_zipped_resource
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id_)
 
         scenario: ScenarioProxy = ScenarioProxy(None, title=f"{resource_model.name} zipper")
         protocol: ProtocolProxy = scenario.get_protocol()
+
+        # Tag the scenario for later lookup
+        scenario.add_tags(
+            [
+                cls._create_system_tag(cls.TAG_KEY_ZIP_SCENARIO, cls.TAG_KEY_ZIP_SCENARIO_VALUE),
+                cls._create_system_tag(cls.TAG_KEY_ZIP_RESOURCE_ID, id_),
+                cls._create_system_tag(cls.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION),
+            ]
+        )
 
         # Add the importer and the connector
         zipper: ProcessProxy = protocol.add_process(
@@ -225,9 +247,7 @@ class ShareService:
         if shared_entity_link.entity_type != ShareLinkEntityType.RESOURCE:
             raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
 
-        zipped_resource = cls._find_zipped_resource_from_origin_resource(
-            shared_entity_link.entity_id
-        )
+        zipped_resource = cls._find_existing_zipped_resource(shared_entity_link.entity_id)
 
         if not zipped_resource:
             raise Exception("The resource was not zipped")
@@ -348,8 +368,8 @@ class ShareService:
 
         cls._check_resource_is_in_scenario(shared_entity_link.entity_id, resource_id)
 
-        # retrieve the zipped resource
-        zipped_resource = cls._find_zipped_resource_from_origin_resource(resource_id)
+        # retrieve the zipped resource from the zip scenario
+        zipped_resource = cls._find_existing_zipped_resource(resource_id)
 
         if not zipped_resource:
             raise Exception("The resource was not zipped")
