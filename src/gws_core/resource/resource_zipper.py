@@ -2,11 +2,10 @@ import os
 from json import dump
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.compress.zip_compress import ZipCompress
+from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
@@ -51,13 +50,13 @@ class ResourceExportPackage(BaseModelDTO):
 class ResourceZipper:
     """Class to generate a zip file containing everythinga needed to recreate a resource"""
 
-    ZIP_FILE_NAME = "resource.zip"
+    ZIP_FILE_NAME = "resource.tar"
     INFO_JSON_FILE_NAME = "info.json"
-    COMPRESS_EXTENSION = "zip"
+    COMPRESS_EXTENSION = "tar"
 
     temp_dir: str
 
-    zip: ZipCompress
+    zip: TarCompress
 
     resource_info: ResourceExportPackage
 
@@ -68,7 +67,7 @@ class ResourceZipper:
     def __init__(self, shared_by: User):
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
-        self.zip = ZipCompress(self.get_zip_file_path())
+        self.zip = TarCompress(self.get_zip_file_path())
         self.resource_info = ResourceExportPackage(
             zip_version=self.EXPORT_VERSION,
             resource=None,
