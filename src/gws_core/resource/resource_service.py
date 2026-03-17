@@ -99,11 +99,6 @@ class ResourceService:
     @classmethod
     def update_flagged(cls, view_config_id: str, flagged: bool) -> ResourceModel:
         resource_model: ResourceModel = cls.get_by_id_and_check(view_config_id)
-
-        if resource_model.content_is_deleted:
-            raise BadRequestException(
-                "Can't update the flagged status if the content of the resource is deleted"
-            )
         resource_model.flagged = flagged
         return resource_model.save()
 

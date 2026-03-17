@@ -39,7 +39,7 @@ class ExceptionHandler:
         )
 
     @classmethod
-    def handle_exception(cls, request: Request, exception: Exception) -> ExceptionResponse:
+    def handle_exception(cls, request: Request | None, exception: Exception) -> ExceptionResponse:
         if isinstance(exception, BaseHTTPException):
             return cls._handle_expected_exception(request, exception)
         elif isinstance(exception, HTTPException):
@@ -51,7 +51,7 @@ class ExceptionHandler:
 
     @classmethod
     def _handle_expected_exception(
-        cls, request: Request, exception: BaseHTTPException
+        cls, request: Request | None, exception: BaseHTTPException
     ) -> ExceptionResponse:
         """Handle the expected exception raised by the developper
 
@@ -82,7 +82,7 @@ class ExceptionHandler:
 
     @classmethod
     def _handle_http_exception(
-        cls, request: Request, exception: HTTPException
+        cls, request: Request | None, exception: HTTPException
     ) -> ExceptionResponse:
         """Handle the HTTP scarlett exceptions
 
@@ -107,7 +107,7 @@ class ExceptionHandler:
 
     @classmethod
     def _handle_validation_exception(
-        cls, request: Request, exception: ValidationError
+        cls, request: Request | None, exception: ValidationError
     ) -> ExceptionResponse:
         """Handle the validation exception (error 422) it logs the stack trace and return a formated object
 
@@ -149,7 +149,7 @@ class ExceptionHandler:
 
     @classmethod
     def _handle_unexcepted_exception(
-        cls, request: Request, exception: Exception
+        cls, request: Request | None, exception: Exception
     ) -> ExceptionResponse:
         """Handle the unexcepted exception (error 500) it logs the stack trace and return a formated object
 

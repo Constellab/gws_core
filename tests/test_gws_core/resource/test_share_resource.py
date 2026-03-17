@@ -175,7 +175,6 @@ class ShareResourceTestSetup:
             resource_loader=resource_loader,
             origin=origin,
             id_mapper=IdMapper(self.create_mode),
-            create_mode=self.create_mode,
         )
         try:
             return builder.save()
