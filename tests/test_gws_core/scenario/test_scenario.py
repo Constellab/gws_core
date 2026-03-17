@@ -20,7 +20,7 @@ from gws_core.impl.robot.robot_service import RobotService
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_service import ProtocolService
 from gws_core.scenario.scenario_proxy import ScenarioProxy

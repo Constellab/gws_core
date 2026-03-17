@@ -15,6 +15,7 @@ from gws_core import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
@@ -547,12 +548,17 @@ class TestShareScenario(BaseTestCase):
 
         lab_credentials = TestHelper.create_lab_credentials()
 
+        # Create a LabModel with credentials linked
+        lab = LabModel.get_or_create_current_lab()
+        lab.credentials = lab_credentials
+        lab.save()
+
         scenario_count = Scenario.select().count()
 
         scenario = ScenarioTransfertService.export_scenario_to_lab(
             scenario.get_model().id,
             SendScenarioToLab.build_config(
-                lab_credentials.name, "Outputs only", "Force new scenario"
+                lab.id, "Outputs only", "Force new scenario"
             ),
         )
 

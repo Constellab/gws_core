@@ -12,7 +12,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecs
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle

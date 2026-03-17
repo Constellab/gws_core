@@ -5,7 +5,6 @@ from numpy import Infinity
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.credentials.credentials_type import CredentialsDataLab
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportScenarioResponseDTO
 from gws_core.scenario.scenario import Scenario
@@ -111,23 +110,19 @@ class ScenarioWaiterBasic(ScenarioWaiter):
 
 class ScenarioWaiterExternalLab(ScenarioWaiter):
     scenario_id: str
-    lab_credentials: CredentialsDataLab
-    user_id: str
+    _external_lab_service: ExternalLabApiService
 
-    def __init__(self, scenario_id: str, lab_credentials: CredentialsDataLab, user_id: str):
+    def __init__(self, external_lab_service: ExternalLabApiService, scenario_id: str):
         """Waiter to check a scenario of an external lab
 
+        :param external_lab_service: external lab API service instance
+        :type external_lab_service: ExternalLabApiService
         :param scenario_id: scenario id
         :type scenario_id: str
-        :param lab_credentials: credentials to access the lab
-        :type lab_credentials: CredentialsDataLab
-        :param user_id: current user id
-        :type user_id: str
         """
         super().__init__()
+        self._external_lab_service = external_lab_service
         self.scenario_id = scenario_id
-        self.lab_credentials = lab_credentials
-        self.user_id = user_id
 
     def get_scenario_dto(self) -> ScenarioWaitInfoDTO:
         scenario_import = self.get_scenario_import_info()
@@ -137,6 +132,4 @@ class ScenarioWaiterExternalLab(ScenarioWaiter):
         )
 
     def get_scenario_import_info(self) -> ExternalLabImportScenarioResponseDTO:
-        return ExternalLabApiService.get_scenario(
-            self.scenario_id, self.lab_credentials, self.user_id
-        )
+        return self._external_lab_service.get_scenario(self.scenario_id)

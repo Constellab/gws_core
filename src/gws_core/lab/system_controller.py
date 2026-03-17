@@ -1,12 +1,12 @@
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.settings_dto import SettingsDTO
 from gws_core.lab.system_dto import (
     LabStartLogFileObject,
     LabStatusDTO,
     LabSystemConfig,
     LabSystemInfoDTO,
-    SettingsDTO,
 )
 
 from ..core.service.settings_service import SettingsService

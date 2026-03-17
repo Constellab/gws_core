@@ -7,14 +7,14 @@ from typing import Any, Optional
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
 from gws_core.core.utils.logger import Logger
-from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.lab_dto import LabEnvironment, LabMode
-from gws_core.lab.system_dto import (
+from gws_core.core.utils.settings_dto import (
     BrickMigrationsLogs,
     ModuleInfo,
     PipPackage,
     SettingsDTO,
 )
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 from gws_core.user.user_dto import SpaceDict
 
 from .string_helper import StringHelper

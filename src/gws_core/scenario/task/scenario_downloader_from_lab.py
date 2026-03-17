@@ -1,11 +1,11 @@
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataLab, CredentialsType
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
+from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderBase
 from gws_core.scenario.task.scenario_resource import ScenarioResource
@@ -48,10 +48,9 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
 
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(
-                credentials_type=CredentialsType.LAB,
-                human_name="Lab credentials",
-                short_description="Credentials of the external lab to download from",
+            "lab": LabModelParam(
+                human_name="Source lab",
+                short_description="The lab to download the scenario from (must have credentials configured)",
             ),
             "scenario_id": StrParam(
                 human_name="Scenario ID",
@@ -65,13 +64,13 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
 
     INPUT_NAME = "source_scenario"
 
-    _credentials: CredentialsDataLab
-    _user_id: str
+    _external_lab_service: ExternalLabApiService
     _scenario_id: str
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        self._credentials = params.get_value("credentials")
-        self._user_id = CurrentUserService.get_and_check_current_user().id
+        lab_dto: LabDTOWithCredentials = params.get_value("lab")
+        user_id = CurrentUserService.get_and_check_current_user().id
+        self._external_lab_service = ExternalLabApiService(lab_dto, user_id)
 
         # Get scenario_id from input or config
         scenario_resource: ScenarioResource | None = inputs.get(self.INPUT_NAME)
@@ -91,27 +90,23 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     def _get_scenario_info(self) -> ShareScenarioInfoReponseDTO:
         """Fetch scenario metadata from the external lab using credentials."""
         self.log_info_message("Fetching scenario export info from external lab using credentials")
-        return ExternalLabApiService.get_scenario_export_info(
-            self._scenario_id, self._credentials, self._user_id
-        )
+        return self._external_lab_service.get_scenario_export_info(self._scenario_id)
 
     def _get_request_headers(self) -> dict | None:
         """Return auth headers for credential-based requests."""
-        return ExternalLabApiService._get_external_lab_auth(
-            self._credentials.api_key, self._user_id
-        )
+        return self._external_lab_service._get_auth_headers()
 
     @classmethod
     def build_config(
         cls,
-        credentials: str,
+        lab: str,
         scenario_id: str = "",
         resource_mode: str = "Outputs only",
         create_option: str = "Update if exists",
         auto_run: bool = False,
     ) -> ConfigParamsDict:
         return {
-            "credentials": credentials,
+            "lab": lab,
             "scenario_id": scenario_id,
             "resource_mode": resource_mode,
             "create_option": create_option,

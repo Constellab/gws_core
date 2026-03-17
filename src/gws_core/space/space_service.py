@@ -5,7 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.brick.brick_log_service import BrickLogService
-from gws_core.lab.lab_dto import LabEnvironment
+from gws_core.lab.lab_model.lab_enums import LabEnvironment
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO

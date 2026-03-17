@@ -23,6 +23,7 @@ from gws_core import (
 )
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.id_mapper import IdMapper
@@ -569,10 +570,15 @@ class TestShareResource(BaseTestCase):
 
         lab_credentials = TestHelper.create_lab_credentials()
 
+        # Create a LabModel with credentials linked
+        lab = LabModel.get_or_create_current_lab()
+        lab.credentials = lab_credentials
+        lab.save()
+
         # Call the external lab API to import the resource
         scenario = ResourceTransfertService.export_resource_to_lab(
             original_resource_model.id,
-            SendResourceToLab.build_config(lab_credentials.name, 1, "Force new resource"),
+            SendResourceToLab.build_config(lab.id, 1, "Force new resource"),
         )
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)

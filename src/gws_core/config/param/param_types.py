@@ -39,6 +39,7 @@ class ParamSpecTypeStr(Enum):
     NOTE = "note_param"
     NOTE_TEMPLATE = "note_template_param"
     SCENARIO = "scenario_param"
+    LAB_MODEL = "lab_model_param"
 
 
 class ParamSpecSimpleDTO(BaseModelDTO):

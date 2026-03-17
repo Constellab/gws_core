@@ -4,12 +4,12 @@ from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataLab, CredentialsType
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
+from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
 from gws_core.resource.task.resource_downloader_http import (
@@ -55,10 +55,9 @@ class SendResourceToLab(Task):
 
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(
-                credentials_type=CredentialsType.LAB,
-                human_name="Lab credentials",
-                short_description="The credentials must exist in destination lab",
+            "lab": LabModelParam(
+                human_name="Destination lab",
+                short_description="The lab to send the resource to (must have credentials configured)",
             ),
             "link_duration": IntParam(
                 human_name="Share link duration in days",
@@ -90,9 +89,10 @@ class SendResourceToLab(Task):
         share_link = ShareLinkService.get_or_create_valid_public_share_link(generate_share_link)
 
         # Call the external lab API to import the resource
-        credentials: CredentialsDataLab = params.get_value("credentials")
+        lab_dto: LabDTOWithCredentials = params.get_value("lab")
+        external_lab_service = ExternalLabApiService(lab_dto, CurrentUserService.get_and_check_current_user().id)
         self.log_info_message(
-            f"Send the resource to the lab {ExternalLabApiService.get_full_route(credentials, '')}"
+            f"Send the resource to the lab {external_lab_service.get_full_route('')}"
         )
         request_dto = ExternalLabImportRequestDTO(
             # convert to ResourceDownloaderHttp config because ResourceDownloaderHttp is used to download the resource
@@ -103,17 +103,13 @@ class SendResourceToLab(Task):
             )
         )
 
-        response = ExternalLabApiService.send_resource_to_lab(
-            request_dto, credentials, CurrentUserService.get_and_check_current_user().id
-        )
+        response = external_lab_service.send_resource_to_lab(request_dto)
 
         self.log_success_message(
             f"Import of resource started, follow progress in destination lab : {response.scenario_url}"
         )
 
-        scenario_waiter = ScenarioWaiterExternalLab(
-            response.scenario.id, credentials, CurrentUserService.get_and_check_current_user().id
-        )
+        scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, response.scenario.id)
 
         # refresh every 30 seconds, max 2 hours
         scenario_info = scenario_waiter.wait_until_finished(
@@ -134,8 +130,8 @@ class SendResourceToLab(Task):
 
         self.log_success_message("Resource imported in the lab, retrieve resource info")
 
-        resource_info = ExternalLabApiService.get_imported_resource_from_scenario(
-            response.scenario.id, credentials, CurrentUserService.get_and_check_current_user().id
+        resource_info = external_lab_service.get_imported_resource_from_scenario(
+            response.scenario.id
         )
 
         self.log_success_message(f"Imported resource url: {resource_info.resource_url}")
@@ -145,13 +141,13 @@ class SendResourceToLab(Task):
     @classmethod
     def build_config(
         cls,
-        credentials: CredentialsDataLab | str,
+        lab: LabDTOWithCredentials | str,
         link_duration: int,
         create_option: ResourceDownloaderCreateOption,
     ) -> ConfigParamsDict:
         return ConfigParams(
             {
-                "credentials": credentials,
+                "lab": lab,
                 "link_duration": link_duration,
                 "create_option": create_option,
             }

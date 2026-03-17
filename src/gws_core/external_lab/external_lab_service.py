@@ -10,8 +10,8 @@ from gws_core.external_lab.external_lab_dto import (
 )
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.lab_dto import LabDTO
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.scenario.scenario import Scenario

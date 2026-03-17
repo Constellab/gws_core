@@ -10,7 +10,7 @@ from gws_core.external_lab.external_lab_dto import (
 )
 from gws_core.external_lab.external_lab_service import ExternalLabService
 from gws_core.lab.api_registry import ApiRegistry
-from gws_core.lab.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.share.shared_dto import ShareResourceZippedResponseDTO, ShareScenarioInfoReponseDTO
 from gws_core.user.user_dto import UserDTO
 

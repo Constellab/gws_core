@@ -423,6 +423,7 @@ from .io.port import Port as Port
 
 # Lab
 from .lab.api_registry import ApiRegistry as ApiRegistry
+from .lab.lab_model.lab_model_param import LabModelParam as LabModelParam
 from .lab.monitor.monitor import Monitor as Monitor
 from .lab.monitor.monitor_service import MonitorService as MonitorService
 

@@ -4,8 +4,8 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.lab.lab_dto import LabDTO
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
 from gws_core.user.user_service import UserService

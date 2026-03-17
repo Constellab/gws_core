@@ -1,12 +1,12 @@
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam
-from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataLab, CredentialsType
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
@@ -61,10 +61,9 @@ class SendScenarioToLab(Task):
 
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(
-                credentials_type=CredentialsType.LAB,
-                human_name="Lab credentials",
-                short_description="The credentials must exist in destination lab",
+            "lab": LabModelParam(
+                human_name="Destination lab",
+                short_description="The lab to send the scenario to (must have credentials configured)",
             ),
             "resource_mode": ScenarioDownloaderFromLab.config_specs.get_spec("resource_mode"),
             "create_option": ScenarioDownloaderFromLab.config_specs.get_spec("create_option"),
@@ -90,23 +89,23 @@ class SendScenarioToLab(Task):
             raise ValueError("The scenario is already running in an external lab")
 
         auto_run: bool = params.get_value("auto_run")
-        credentials: CredentialsDataLab = params.get_value("credentials")
+        lab_dto: LabDTOWithCredentials = params.get_value("lab")
         create_option = params["create_option"]
 
         # When auto_run is enabled, force "Update if exists" so scenario keeps same ID
         if auto_run:
             create_option = "Update if exists"
 
+        external_lab_service = ExternalLabApiService(lab_dto, CurrentUserService.get_and_check_current_user().id)
         self.log_info_message(
-            f"Send the scenario to the lab {ExternalLabApiService.get_full_route(credentials, '')}"
+            f"Send the scenario to the lab {external_lab_service.get_full_route('')}"
         )
 
-        # Pass the credential name (not the resolved object) so the destination
-        # lab can resolve it locally with its own credentials store.
-        credentials: CredentialsDataLab = params["credentials"]
+        # Pass the lab id so the destination lab can resolve
+        # the lab model and its credentials locally.
         request_dto = ExternalLabImportRequestDTO(
             params=ScenarioDownloaderFromLab.build_config(
-                credentials=credentials.meta.name,
+                lab=lab_dto.id,
                 scenario_id=scenario_resource.scenario_id,
                 resource_mode=params["resource_mode"],
                 create_option=create_option,
@@ -119,19 +118,13 @@ class SendScenarioToLab(Task):
             scenario.mark_as_running_in_external_lab()
 
         try:
-            response = ExternalLabApiService.send_scenario_to_lab(
-                request_dto, credentials, CurrentUserService.get_and_check_current_user().id
-            )
+            response = external_lab_service.send_scenario_to_lab(request_dto)
 
             self.log_success_message(
                 f"Import of scenario started, follow progress in destination lab : {response.scenario_url}"
             )
 
-            scenario_waiter = ScenarioWaiterExternalLab(
-                response.scenario.id,
-                credentials,
-                CurrentUserService.get_and_check_current_user().id,
-            )
+            scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, response.scenario.id)
 
             # refresh every 30 seconds, max 2 hours
             scenario_info = scenario_waiter.wait_until_finished(
@@ -160,13 +153,13 @@ class SendScenarioToLab(Task):
     @classmethod
     def build_config(
         cls,
-        credentials: CredentialsDataLab | str,
+        lab: LabDTOWithCredentials | str,
         resource_mode: ScenarioDownloaderResourceMode,
         create_option: ScenarioDownloaderCreateOption,
         auto_run: bool = False,
     ) -> ConfigParamsDict:
         return {
-            "credentials": credentials,
+            "lab": lab,
             "resource_mode": resource_mode,
             "create_option": create_option,
             "auto_run": auto_run,

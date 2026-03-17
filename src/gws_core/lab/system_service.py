@@ -13,7 +13,7 @@ from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.lab.system_dto import (
     LabStartLogFileObject,

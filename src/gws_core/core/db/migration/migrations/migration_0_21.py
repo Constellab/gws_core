@@ -1,5 +1,5 @@
 from gws_core.core.db.migration.sql_migrator import SqlMigrator
-from gws_core.lab.lab_model import LabModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.share.shared_resource import SharedResource
@@ -50,10 +50,6 @@ class Migration0210(BrickMigration):
         # Add FK constraints for run_by_lab
         TaskModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
         ProtocolModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
-
-        # Add scenario_history_mode column to triggered job table
-        sql_migrator.add_column_if_not_exists(TriggeredJobModel, TriggeredJobModel.scenario_history_mode)
-        sql_migrator.migrate()
 
     @classmethod
     def _migrate_shared_table(cls, sql_migrator: SqlMigrator, shared_model: type) -> None:

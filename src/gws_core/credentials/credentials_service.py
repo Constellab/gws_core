@@ -164,6 +164,24 @@ class CredentialsService:
         return CredentialsDataSpecsDTO(data_specs=data_specs)
 
     @classmethod
+    def generate_unique_name(cls, name: str) -> str:
+        """Generate a unique credential name. If the name doesn't exist, return it as-is.
+        Otherwise, append ' 1', ' 2', etc. until a unique name is found.
+
+        :param name: The desired name
+        :return: A unique name
+        """
+        if not Credentials.find_by_name(name):
+            return name
+
+        index = 1
+        while True:
+            candidate = f"{name} {index}"
+            if not Credentials.find_by_name(candidate):
+                return candidate
+            index += 1
+
+    @classmethod
     def get_or_create_basic_credential(
         cls,
         name: str,

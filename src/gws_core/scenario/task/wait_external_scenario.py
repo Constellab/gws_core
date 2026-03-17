@@ -1,9 +1,9 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataLab, CredentialsType
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
@@ -47,10 +47,9 @@ class WaitExternalScenario(Task):
 
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(
-                credentials_type=CredentialsType.LAB,
-                human_name="Lab credentials",
-                short_description="Credentials to access the external lab",
+            "lab": LabModelParam(
+                human_name="External lab",
+                short_description="The external lab to check the scenario status (must have credentials configured)",
             ),
         }
     )
@@ -62,14 +61,14 @@ class WaitExternalScenario(Task):
         scenario_resource: ScenarioResource = inputs[self.INPUT_NAME]
         scenario_id = scenario_resource.scenario_id
 
-        credentials: CredentialsDataLab = params.get_value("credentials")
+        lab_dto: LabDTOWithCredentials = params.get_value("lab")
         user_id = CurrentUserService.get_and_check_current_user().id
 
         self.log_info_message(
             f"Waiting for scenario '{scenario_id}' to finish in external lab"
         )
 
-        scenario_waiter = ScenarioWaiterExternalLab(scenario_id, credentials, user_id)
+        scenario_waiter = ScenarioWaiterExternalLab(scenario_id, lab_dto, user_id)
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(

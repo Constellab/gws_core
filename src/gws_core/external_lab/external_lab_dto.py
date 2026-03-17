@@ -1,5 +1,5 @@
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.lab.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO
 from gws_core.user.user_dto import UserDTO

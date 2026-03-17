@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from gws_core.core.utils.settings import Settings
-from gws_core.lab.system_dto import SettingsDTO
+from gws_core.core.utils.settings_dto import SettingsDTO
 
 
 # test_settings

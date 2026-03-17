@@ -1,9 +1,11 @@
-from peewee import BooleanField, CharField
+from peewee import BooleanField, CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.model import Model
 from gws_core.core.utils.settings import Settings
-from gws_core.lab.lab_dto import LabDTO, LabEnvironment, LabMode
+from gws_core.credentials.credentials import Credentials
+from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 
 
 class LabModel(Model):
@@ -17,6 +19,9 @@ class LabModel(Model):
     domain: str | None = CharField(null=True)
     space_id: str | None = CharField(null=True)
     space_name: str | None = CharField(null=True)
+    credentials: Credentials | None = ForeignKeyField(
+        Credentials, null=True, index=True, backref="+"
+    )
 
     class Meta:
         table_name = "gws_lab"
@@ -35,6 +40,26 @@ class LabModel(Model):
             domain=self.domain,
             space_id=self.space_id,
             space_name=self.space_name,
+            credentials_id=self.credentials.id if self.credentials else None,
+        )
+
+    def to_dto_with_credentials(self) -> LabDTOWithCredentials:
+        """Convert the model to a DTO with resolved credentials data."""
+        credentials_data = None
+        if self.credentials:
+            credentials_data = self.credentials.get_data_object()
+        return LabDTOWithCredentials(
+            id=self.id,
+            lab_id=self.lab_id,
+            name=self.name,
+            is_current_lab=self.is_current_lab,
+            mode=self.mode,
+            environment=self.environment,
+            domain=self.domain,
+            space_id=self.space_id,
+            space_name=self.space_name,
+            credentials_id=self.credentials.id if self.credentials else None,
+            credentials_data=credentials_data,
         )
 
     @classmethod
@@ -64,19 +89,6 @@ class LabModel(Model):
     def get_by_lab_id_and_mode(cls, lab_id: str, mode: LabMode | None) -> "LabModel | None":
         """Get a lab entry by its logical lab_id and mode."""
         return cls.get_or_none((cls.lab_id == lab_id) & (cls.mode == mode))
-
-    def get_api_url(self) -> str:
-        """Build the API URL for this lab from its domain and mode.
-
-        Uses the prod or dev API sub-domain based on the lab's mode.
-        """
-        if not self.domain:
-            raise ValueError("Cannot build API URL: lab domain is not set")
-        if self.mode == LabMode.DEV:
-            sub_domain = Settings.dev_api_sub_domain()
-        else:
-            sub_domain = Settings.prod_api_sub_domain()
-        return f"https://{sub_domain}.{self.domain}"
 
     @classmethod
     def get_or_create_from_dto(cls, lab_dto: LabDTO) -> "LabModel":
