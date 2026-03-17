@@ -10,7 +10,7 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
-from gws_core.scenario.task.scenario_downloader import (
+from gws_core.scenario.task.scenario_downloader_base import (
     ScenarioDownloaderCreateOption,
     ScenarioDownloaderResourceMode,
 )

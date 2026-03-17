@@ -2,8 +2,8 @@ from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
-from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
 from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
+from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
@@ -45,7 +45,7 @@ class ScenarioTransfertService:
         if "credentials" in values:
             downloader_type = ScenarioDownloaderFromLab
         else:
-            downloader_type = ScenarioDownloader
+            downloader_type = ScenarioDownloaderShareLink
 
         downloader = protocol.add_process(downloader_type, "downloader", values)
 
@@ -56,7 +56,7 @@ class ScenarioTransfertService:
 
     @classmethod
     def get_import_scenario_config_specs(cls) -> dict[str, ParamSpecDTO]:
-        return ScenarioDownloader.config_specs.to_dto()
+        return ScenarioDownloaderShareLink.config_specs.to_dto()
 
     @classmethod
     def export_scenario_to_lab(cls, scenario_id: str, values: ConfigParamsDict) -> Scenario:

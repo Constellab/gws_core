@@ -1,35 +1,25 @@
 from abc import abstractmethod
 from typing import Literal
 
-import requests
-
-from gws_core.config.config_params import ConfigParams, ConfigParamsDict
+from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
-from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
-from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph import ProtocolGraph
 from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_builder import ScenarioBuilder
-from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_resource import ScenarioResource
-from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_dto import (
     ShareEntityCreateMode,
-    ShareLinkEntityType,
     ShareScenarioInfoReponseDTO,
 )
 from gws_core.task.task import Task
-from gws_core.task.task_decorator import task_decorator
-from gws_core.task.task_io import TaskInputs, TaskOutputs
-from gws_core.user.current_user_service import CurrentUserService
 
 ScenarioDownloaderResourceMode = Literal[
     "Inputs and outputs", "Inputs only", "Outputs only", "All", "None"
@@ -37,7 +27,7 @@ ScenarioDownloaderResourceMode = Literal[
 ScenarioDownloaderCreateOption = Literal["Update if exists", "Skip if exists", "Force new scenario"]
 
 
-class BaseScenarioDownloader(Task):
+class ScenarioDownloaderBase(Task):
     """
     Base class for scenario download tasks. Contains shared logic for building
     a scenario from exported data and downloading resources.
@@ -233,116 +223,3 @@ class BaseScenarioDownloader(Task):
         self._builder.fill_zip_resources(zip_paths)
 
         return scenario
-
-
-@task_decorator(
-    unique_name="ScenarioDownloader",
-    human_name="Download a scenario",
-    short_description="Download a scenario from another lab using a link",
-    style=TypingStyle.material_icon("scenario"),
-)
-class ScenarioDownloader(BaseScenarioDownloader):
-    """
-    Task to download a scenario from another lab using a share link.
-
-    This can be used between a dev and a prod environment of a lab.
-    """
-
-    config_specs = ConfigSpecs(
-        {
-            "link": StrParam(
-                human_name="Scenario link", short_description="Link to download the scenario"
-            ),
-            **BaseScenarioDownloader.config_specs.specs,
-        }
-    )
-
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        link = params["link"]
-
-        if not ShareLink.is_lab_share_scenario_link(link):
-            raise Exception(
-                "Invalid link, are you sure this a link of a share scenario from a lab ?"
-            )
-
-        # verify that param are correct if we auto run
-        auto_run = params["auto_run"]
-        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
-        # If we auto run we need to download input resource or all resource
-        if auto_run and resource_mode not in ["Inputs only", "All"]:
-            raise Exception("Auto run requires downloading input resources or all resources.")
-
-        self._link = link
-        self.share_entity = self._get_scenario_info()
-
-        scenario = self._build_and_download_scenario(params, self.share_entity)
-
-        if auto_run:
-            self.log_info_message("Auto running the scenario")
-            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
-            scenario_proxy.add_to_queue()
-
-        return {"scenario": ScenarioResource(scenario.id)}
-
-    def _get_scenario_info(self) -> ShareScenarioInfoReponseDTO:
-        """Fetch scenario metadata from a share link URL."""
-        self.log_info_message(
-            "Downloading the resource from a share link of another lab. Checking compatibility of the resource with the current lab"
-        )
-
-        response = requests.get(self._link, timeout=60)
-
-        if response.status_code != 200:
-            raise Exception("Error while getting information of the resource: " + response.text)
-
-        try:
-            return ShareScenarioInfoReponseDTO.from_json(response.json())
-        except Exception as e:
-            raise Exception(
-                f"Error while parsing the scenario information from the share link. "
-                f"The response format may be incompatible with this version of the lab. Details: {e}"
-            ) from e
-
-    def _get_request_headers(self) -> dict | None:
-        """Share link flow uses no auth headers."""
-        return None
-
-    def run_after_task(self) -> None:
-        super().run_after_task()
-
-        if self.share_entity:
-            self.log_info_message("Marking the resource as received in the origin lab")
-            current_lab_info = ExternalLabApiService.get_current_lab_info(
-                CurrentUserService.get_and_check_current_user()
-            )
-
-            response: requests.Response = ExternalLabApiService.mark_shared_object_as_received(
-                self.share_entity.origin.lab_api_url,
-                ShareLinkEntityType.SCENARIO,
-                self.share_entity.token,
-                current_lab_info,
-            )
-
-            if response.status_code != 200:
-                self.log_error_message(
-                    "Error while marking the resource as received: " + response.text
-                )
-
-    @classmethod
-    def build_config(
-        cls,
-        link: str,
-        mode: ScenarioDownloaderResourceMode,
-        create_option: ScenarioDownloaderCreateOption,
-        auto_run: bool = False,
-        skip_scenario_tags: bool = False,
-        skip_resource_tags: bool = False,
-    ) -> ConfigParamsDict:
-        return {
-            "link": link,
-            "resource_mode": mode,
-            "create_option": create_option,
-            "auto_run": auto_run,
-            "skip_scenario_tags": skip_scenario_tags,
-            "skip_resource_tags": skip_resource_tags,
-        }

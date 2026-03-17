@@ -29,7 +29,7 @@ from gws_core.scenario.scenario_enums import ScenarioCreationType, ScenarioStatu
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
-from gws_core.scenario.task.scenario_downloader import ScenarioDownloader
+from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (
@@ -217,6 +217,19 @@ class ShareScenarioTestSetup:
             new_protocol_model.progress_bar.get_elapsed_time(),
             self.initial_protocol_model.progress_bar.get_elapsed_time(),
         )
+
+        # Check process IDs
+        self._check_id(new_source.id, self.get_initial_source_process().id)
+        self._check_id(new_move.id, self.get_initial_move_process().id)
+        self._check_id(
+            new_protocol_model.get_process("generate").id,
+            self.get_initial_generate_process().id,
+        )
+        self._check_id(
+            new_protocol_model.get_process("output").id,
+            self.get_initial_output_process().id,
+        )
+
         self._tc.assertEqual(
             new_source.process_typing_name,
             self.get_initial_source_process().process_typing_name,
@@ -409,7 +422,7 @@ class TestShareScenario(BaseTestCase):
         )
 
         new_scenario = ScenarioTransfertService.import_from_lab_sync(
-            ScenarioDownloader.build_config(
+            ScenarioDownloaderShareLink.build_config(
                 share_link.get_download_link(), "All", "Force new scenario"
             )
         )
@@ -420,7 +433,7 @@ class TestShareScenario(BaseTestCase):
         setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
 
         new_scenario_outputs_only = ScenarioTransfertService.import_from_lab_sync(
-            ScenarioDownloader.build_config(
+            ScenarioDownloaderShareLink.build_config(
                 share_link.get_download_link(), "Outputs only", "Force new scenario"
             )
         )

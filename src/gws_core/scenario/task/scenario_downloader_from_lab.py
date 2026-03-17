@@ -7,7 +7,7 @@ from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.io.io_spec import InputSpec
 from gws_core.io.io_specs import InputSpecs
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.task.scenario_downloader import BaseScenarioDownloader
+from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderBase
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.shared_dto import ShareScenarioInfoReponseDTO
 from gws_core.task.task_decorator import task_decorator
@@ -21,7 +21,7 @@ from gws_core.user.current_user_service import CurrentUserService
     short_description="Download a scenario from another lab using lab credentials",
     style=TypingStyle.material_icon("scenario"),
 )
-class ScenarioDownloaderFromLab(BaseScenarioDownloader):
+class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     """
     Task to download a scenario from another lab using lab credentials.
 
@@ -59,7 +59,7 @@ class ScenarioDownloaderFromLab(BaseScenarioDownloader):
                 optional=True,
                 default_value="",
             ),
-            **BaseScenarioDownloader.config_specs.specs,
+            **ScenarioDownloaderBase.config_specs.specs,
         }
     )
 
