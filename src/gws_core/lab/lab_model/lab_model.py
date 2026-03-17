@@ -1,6 +1,8 @@
 from peewee import BooleanField, CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.model.model import Model
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
@@ -31,6 +33,17 @@ class LabModel(Model):
     def has_credentials(self) -> bool:
         """Check if the lab has credentials data."""
         return self.credentials is not None and self.credentials.get_data_object() is not None
+
+    def check_credentials_and_domain(self) -> None:
+        """Check that the lab has credentials and domain configured for external communication."""
+        if not self.domain:
+            raise BadRequestException(
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": self.name}
+            )
+        if not self.has_credentials():
+            raise BadRequestException(
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": self.name}
+            )
 
     def to_dto(self) -> LabDTO:
         """Convert the model to a DTO."""

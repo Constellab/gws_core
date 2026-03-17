@@ -43,6 +43,7 @@ from gws_core.share.share_service import ShareService
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
+    SharedEntityMode,
     ShareEntityCreateMode,
     ShareLinkEntityType,
     ShareLinkType,
@@ -604,6 +605,7 @@ class TestShareResource(BaseTestCase):
         # Create a LabModel with credentials linked
         lab = LabModel.get_or_create_current_lab()
         lab.credentials = lab_credentials
+        lab.domain = lab.domain or "localhost"
         lab.save()
 
         # Call the external lab API to import the resource
@@ -613,3 +615,34 @@ class TestShareResource(BaseTestCase):
         )
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
+
+        # --- Test download-content flow ---
+        # Ensure the lab has domain set (may have been reset by get_or_create_from_dto during export)
+        lab = lab.refresh()
+        lab.domain = lab.domain or "localhost"
+        lab.save()
+
+        # Find the imported resource (has a SharedResource RECEIVED record)
+        shared_received = SharedResource.select().where(
+            SharedResource.share_mode == SharedEntityMode.RECEIVED
+        ).order_by(SharedResource.created_at.desc()).first()
+        self.assertIsNotNone(shared_received)
+
+        imported_resource_model = ResourceModel.get_by_id_and_check(
+            shared_received.entity.id
+        )
+
+        # Delete the imported resource content
+        imported_resource_model.delete_resource_content()
+        imported_resource_model = imported_resource_model.refresh()
+        self.assertTrue(imported_resource_model.content_is_deleted)
+
+        # Re-download the content from the source lab
+        restored_resource_model = ResourceTransfertService.download_resource_content(
+            imported_resource_model.id
+        )
+
+        # Verify the content is restored
+        self.assertFalse(restored_resource_model.content_is_deleted)
+        restored_resource = restored_resource_model.get_resource()
+        self.assertIsNotNone(restored_resource)

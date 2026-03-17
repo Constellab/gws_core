@@ -107,26 +107,26 @@ def get_scenario_export_info(
 
 
 @external_lab_app.post(
-    "/scenario/{id_}/resource/{resource_id}/zip",
-    summary="Zip a resource of a scenario for download",
+    "/resource/{resource_id}/zip",
+    summary="Zip a resource for download",
 )
-def zip_scenario_resource(
-    id_: str, resource_id: str, _=Depends(ExternalLabAuth.check_auth)
+def zip_resource(
+    resource_id: str, _=Depends(ExternalLabAuth.check_auth)
 ) -> ShareResourceZippedResponseDTO:
     """
-    Zip a resource belonging to a scenario for credential-based download.
+    Zip a resource for credential-based download.
     """
-    return ExternalLabService.zip_scenario_resource(id_, resource_id)
+    return ExternalLabService.zip_resource(resource_id)
 
 
 @external_lab_app.get(
-    "/scenario/{id_}/resource/{resource_id}/download",
-    summary="Download a zipped resource of a scenario",
+    "/resource/{resource_id}/download",
+    summary="Download a zipped resource",
 )
-def download_scenario_resource(
-    id_: str, resource_id: str, _=Depends(ExternalLabAuth.check_auth)
+def download_resource(
+    resource_id: str, _=Depends(ExternalLabAuth.check_auth)
 ) -> FileResponse:
     """
-    Download a zipped resource of a scenario using credentials.
+    Download a zipped resource using credentials.
     """
-    return ExternalLabService.download_scenario_resource(id_, resource_id)
+    return ExternalLabService.download_resource(resource_id)

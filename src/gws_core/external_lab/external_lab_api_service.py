@@ -1,5 +1,7 @@
 from requests.models import Response
 
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_auth import ExternalLabAuth
@@ -29,8 +31,8 @@ class ExternalLabApiService:
 
     def __init__(self, lab_dto: LabDTOWithCredentials, user_id: str | None = None) -> None:
         if lab_dto.credentials_data is None:
-            raise ValueError(
-                f"The credentials are not defined for the lab {lab_dto.name}, please register the lab in Settings > Monitoring > Labs."
+            raise BadRequestException(
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": lab_dto.name}
             )
         self._lab_dto = lab_dto
         if user_id is None:
@@ -98,6 +100,10 @@ class ExternalLabApiService:
         response = ExternalApiService.get(url, headers=headers, raise_exception_if_error=True)
 
         return ShareScenarioInfoReponseDTO.from_json(response.json())
+
+    def get_resource_zip_route(self, resource_id: str) -> str:
+        """Get the full URL for the resource zip endpoint on the external lab."""
+        return self.get_full_route(f"resource/{resource_id}/zip")
 
     def get_full_route(self, route: str) -> str:
         """Get the full route for an external lab API call.

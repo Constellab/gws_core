@@ -13,6 +13,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
@@ -92,7 +93,7 @@ class ExternalLabService:
 
         # Build resource route pointing to the credential-based zip endpoint
         resource_route = ExternalLabApiService.get_current_lab_route(
-            f"{Settings.external_lab_api_route_path()}/scenario/{scenario_id}/resource/[RESOURCE_ID]/zip"
+            f"{Settings.external_lab_api_route_path()}/resource/[RESOURCE_ID]/zip"
         )
 
         origin = ExternalLabApiService.get_current_lab_info(
@@ -110,31 +111,28 @@ class ExternalLabService:
         )
 
     @classmethod
-    def zip_scenario_resource(
-        cls, scenario_id: str, resource_id: str
-    ) -> ShareResourceZippedResponseDTO:
-        """Zip a resource belonging to a scenario for credential-based download."""
-        ShareService.check_resource_is_in_scenario(scenario_id, resource_id)
+    def zip_resource(cls, resource_id: str) -> ShareResourceZippedResponseDTO:
+        """Zip a resource for credential-based download."""
+        ResourceModel.get_by_id_and_check(resource_id)
 
         current_user = CurrentUserService.get_and_check_current_user()
         zipped_resource = ShareService.zip_resource(resource_id, current_user)
 
         download_url = ExternalLabApiService.get_current_lab_route(
-            f"{Settings.external_lab_api_route_path()}/scenario/{scenario_id}/resource/{resource_id}/download"
+            f"{Settings.external_lab_api_route_path()}/resource/{resource_id}/download"
         )
 
         return ShareResourceZippedResponseDTO(
             version=ShareService.VERSION,
-            entity_type=ShareLinkEntityType.SCENARIO,
-            entity_id=scenario_id,
+            entity_type=ShareLinkEntityType.RESOURCE,
+            entity_id=resource_id,
             zipped_entity_resource_id=zipped_resource.id,
             download_entity_route=download_url,
         )
 
     @classmethod
-    def download_scenario_resource(cls, scenario_id: str, resource_id: str) -> FileResponse:
-        """Download a zipped resource of a scenario using credentials."""
-        ShareService.check_resource_is_in_scenario(scenario_id, resource_id)
+    def download_resource(cls, resource_id: str) -> FileResponse:
+        """Download a zipped resource using credentials."""
 
         zipped_resource = ShareService.find_existing_zipped_resource(resource_id)
 

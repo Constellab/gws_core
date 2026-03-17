@@ -327,6 +327,17 @@ def get_shared_resource_origin_info(
     return ResourceService.get_shared_resource_origin_info(id_).to_dto()
 
 
+@core_app.post(
+    "/resource/{id_}/download-content",
+    tags=["Resource"],
+    summary="Download resource content from source lab",
+)
+def download_resource_content(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> ResourceModelDTO:
+    return ResourceTransfertService.download_resource_content(id_).to_dto()
+
+
 ################################ RESOURCE ################################
 
 

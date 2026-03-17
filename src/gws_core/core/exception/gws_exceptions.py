@@ -76,4 +76,5 @@ class GWSException(Enum):
     RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP = 'Can\'t reset the scenario because one of the output resource is used in scenario \'<a href="{{scenario_url}}" target="_blank">{{scenario}}</a>\''
     RESET_ERROR_EXP_LINKED_TO_A_NOTE = 'Can\'t reset the scenario because one of the output resource is used in note \'<a href="{{note_url}}" target="_blank">{{note}}</a>\''
     IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR = "The {{ioface_type}} '{{ioface_name}}' is connected in the parent protocol '{{parent_protocol_name}}', please remove the link connected to this {{ioface_type}} in the parent protocol."
+    LAB_MISSING_CREDENTIALS_OR_DOMAIN = "The lab '{{lab_name}}' does not have credentials or domain configured. Please register the lab in Settings > Monitoring > Labs."
     TYPING_NOT_FOUND = "Can't find the typing '{{unique_name}}' for '{{object_type}}' in brick '{{brick_name}}'. Is the brick '{{brick_name}}' correctly loaded ?"
