@@ -295,6 +295,7 @@ class ResourceZipBuilder(ResourceBuilder):
             SharedEntityMode.RECEIVED,
             self._origin,
             CurrentUserService.get_and_check_current_user(),
+            external_id=old_resource_id,
         )
 
         return resource_model

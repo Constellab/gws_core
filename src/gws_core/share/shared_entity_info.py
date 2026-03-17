@@ -1,4 +1,4 @@
-from peewee import ForeignKeyField
+from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -28,6 +28,11 @@ class SharedEntityInfo(Model):
 
     # Current lab user who created the share link (SENT) or imported the entity (RECEIVED)
     created_by: User = ForeignKeyField(User, null=True, backref="+")
+
+    # The entity ID on the *other* lab:
+    # RECEIVED: original entity ID from the source lab (before local ID remapping)
+    # SENT: entity ID assigned by the receiving lab
+    external_id = CharField(max_length=36)
 
     # override on children classes
     entity: Model | None = None
@@ -78,6 +83,7 @@ class SharedEntityInfo(Model):
         mode: SharedEntityMode,
         lab_info: ExternalLabWithUserInfo,
         created_by: User,
+        external_id: str,
     ) -> None:
         """Method that log the resource origin for each imported resources"""
         lab = LabModel.get_or_create_from_dto(lab_info.lab)
@@ -89,6 +95,7 @@ class SharedEntityInfo(Model):
         shared_entity.lab = lab
         shared_entity.user = user
         shared_entity.created_by = created_by
+        shared_entity.external_id = external_id
         shared_entity.save()
 
     def to_dto(self) -> ShareEntityInfoDTO:
@@ -100,4 +107,5 @@ class SharedEntityInfo(Model):
             lab=self.lab.to_dto() if self.lab else None,
             user=self.user.to_dto() if self.user else None,
             created_by=self.created_by.to_dto() if self.created_by else None,
+            external_id=self.external_id,
         )

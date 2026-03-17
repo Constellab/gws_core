@@ -81,6 +81,7 @@ class ShareService:
         entity_type: ShareLinkEntityType,
         shared_entity_link: ShareLink,
         receiver_lab: ExternalLabWithUserInfo,
+        external_id: str,
     ) -> None:
         """Method called by an external lab after the an entity was successfully
         import in the external lab. This helps this lab to keep track of which lab downloaded the entity
@@ -98,6 +99,7 @@ class ShareService:
             SharedEntityMode.SENT,
             receiver_lab,
             shared_entity_link.created_by,
+            external_id=external_id,
         )
 
     @classmethod

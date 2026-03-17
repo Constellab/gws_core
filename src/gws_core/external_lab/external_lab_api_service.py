@@ -8,6 +8,7 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportResourceResponseDTO,
     ExternalLabImportScenarioResponseDTO,
     ExternalLabWithUserInfo,
+    MarkEntityAsSharedDTO,
 )
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
@@ -123,11 +124,13 @@ class ExternalLabApiService:
         entity_type: ShareLinkEntityType,
         token: str,
         current_lab_info: ExternalLabWithUserInfo,
+        external_id: str,
     ) -> Response:
         """Method that mark a shared object as received"""
+        body = MarkEntityAsSharedDTO(lab_info=current_lab_info, external_id=external_id)
         return ExternalApiService.post(
             f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",
-            current_lab_info.to_json_dict(),
+            body.to_json_dict(),
         )
 
     @classmethod

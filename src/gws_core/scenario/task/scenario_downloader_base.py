@@ -72,6 +72,7 @@ class ScenarioDownloaderBase(Task):
 
     share_entity: ShareScenarioInfoReponseDTO
     _builder: ScenarioBuilder | None
+    _built_scenario_id: str | None
 
     # define the percentage of the progress bar for each step
     INIT_EXP_PERCENT = 10
@@ -221,5 +222,7 @@ class ScenarioDownloaderBase(Task):
         )
 
         self._builder.fill_zip_resources(zip_paths)
+
+        self._built_scenario_id = scenario.id
 
         return scenario

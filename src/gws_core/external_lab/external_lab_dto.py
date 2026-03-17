@@ -13,6 +13,11 @@ class ExternalLabWithUserInfo(BaseModelDTO):
     user: UserDTO
 
 
+class MarkEntityAsSharedDTO(BaseModelDTO):
+    lab_info: ExternalLabWithUserInfo
+    external_id: str
+
+
 class ExternalLabImportRequestDTO(BaseModelDTO):
     params: dict
 

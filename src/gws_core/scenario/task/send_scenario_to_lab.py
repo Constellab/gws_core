@@ -96,7 +96,9 @@ class SendScenarioToLab(Task):
         if auto_run:
             create_option = "Update if exists"
 
-        external_lab_service = ExternalLabApiService(lab_dto, CurrentUserService.get_and_check_current_user().id)
+        external_lab_service = ExternalLabApiService(
+            lab_dto, CurrentUserService.get_and_check_current_user().id
+        )
         self.log_info_message(
             f"Send the scenario to the lab {external_lab_service.get_full_route('')}"
         )
@@ -153,7 +155,7 @@ class SendScenarioToLab(Task):
     @classmethod
     def build_config(
         cls,
-        lab: LabDTOWithCredentials | str,
+        lab: str,
         resource_mode: ScenarioDownloaderResourceMode,
         create_option: ScenarioDownloaderCreateOption,
         auto_run: bool = False,

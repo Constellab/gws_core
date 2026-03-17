@@ -15,10 +15,10 @@ from gws_core import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
-from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -354,8 +354,15 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(new_robot_2_model.generated_by_port_name, "set")
 
         self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
-        self._tc.assertIsNotNone(SharedScenario.get_and_check_entity_origin(new_scenario.id))
-        self._tc.assertIsNotNone(SharedResource.get_and_check_entity_origin(new_source_output.id))
+
+        # Test shared scenario and resource info
+        shared_scenario = SharedScenario.get_and_check_entity_origin(new_scenario.id)
+        self._tc.assertIsNotNone(shared_scenario)
+        self._tc.assertEqual(shared_scenario.external_id, self.initial_scenario_model.id)
+
+        shared_resource = SharedResource.get_and_check_entity_origin(new_source_output.id)
+        self._tc.assertIsNotNone(shared_resource)
+        self._tc.assertEqual(shared_resource.external_id, self.get_initial_source_resource().id)
 
         # check the task input model of the output process
         new_output_process = new_protocol_model.get_process("output")
@@ -557,9 +564,7 @@ class TestShareScenario(BaseTestCase):
 
         scenario = ScenarioTransfertService.export_scenario_to_lab(
             scenario.get_model().id,
-            SendScenarioToLab.build_config(
-                lab.id, "Outputs only", "Force new scenario"
-            ),
+            SendScenarioToLab.build_config(lab.id, "Outputs only", "Force new scenario"),
         )
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)

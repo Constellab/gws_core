@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
-from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.external_lab.external_lab_dto import MarkEntityAsSharedDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_controller import CallViewParams
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -29,12 +29,12 @@ from .share_service import ShareService
 )
 def mark_entity_as_shared(
     entity_type: ShareLinkEntityType,
-    receiver_lab: ExternalLabWithUserInfo,
+    body: MarkEntityAsSharedDTO,
     auth_context: AuthContextShareLink = Depends(
         ShareTokenAuth.get_and_check_share_link_token_from_url
     ),
 ) -> None:
-    ShareService.mark_entity_as_shared(entity_type, auth_context.get_share_link(), receiver_lab)
+    ShareService.mark_entity_as_shared(entity_type, auth_context.get_share_link(), body.lab_info, body.external_id)
 
 
 @core_app.get(

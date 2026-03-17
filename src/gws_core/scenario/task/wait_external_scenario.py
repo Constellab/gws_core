@@ -1,4 +1,4 @@
-from gws_core.config.config_params import ConfigParams
+from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
@@ -41,9 +41,7 @@ class WaitExternalScenario(Task):
         }
     )
 
-    output_specs = OutputSpecs(
-        {"scenario": OutputSpec(ScenarioResource, human_name="Scenario")}
-    )
+    output_specs = OutputSpecs({"scenario": OutputSpec(ScenarioResource, human_name="Scenario")})
 
     config_specs = ConfigSpecs(
         {
@@ -64,9 +62,7 @@ class WaitExternalScenario(Task):
         lab_dto: LabDTOWithCredentials = params.get_value("lab")
         user_id = CurrentUserService.get_and_check_current_user().id
 
-        self.log_info_message(
-            f"Waiting for scenario '{scenario_id}' to finish in external lab"
-        )
+        self.log_info_message(f"Waiting for scenario '{scenario_id}' to finish in external lab")
 
         scenario_waiter = ScenarioWaiterExternalLab(scenario_id, lab_dto, user_id)
 
@@ -88,12 +84,19 @@ class WaitExternalScenario(Task):
                 f"Error details: {error}"
             )
 
-        self.log_success_message(
-            f"Scenario '{scenario_id}' finished successfully in external lab"
-        )
+        self.log_success_message(f"Scenario '{scenario_id}' finished successfully in external lab")
 
         # Unmark the local scenario as running in external lab
         scenario = scenario_resource.get_scenario().refresh()
         scenario.unmark_running_in_external_lab()
 
         return {self.OUTPUT_NAME: scenario_resource}
+
+    @classmethod
+    def build_config(
+        cls,
+        lab: str,
+    ) -> ConfigParamsDict:
+        return {
+            "lab": lab,
+        }

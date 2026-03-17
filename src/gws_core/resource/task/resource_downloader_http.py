@@ -63,6 +63,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
     LINK_PARAM_NAME = "link"
 
     link: str
+    _local_resource_model_id: str | None = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.link = params["link"]
@@ -98,6 +99,8 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             skip_tags=params.get_value("skip_tags"),
         )
 
+        self._local_resource_model_id = resource.get_model_id()
+
         return {"resource": resource}
 
     def run_after_task(self) -> None:
@@ -119,6 +122,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 ShareLinkEntityType.RESOURCE,
                 share_token,
                 current_lab_info,
+                external_id=self._local_resource_model_id,
             )
 
             if response.status_code != 200:

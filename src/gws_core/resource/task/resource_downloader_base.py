@@ -142,10 +142,12 @@ class ResourceDownloaderBase(Task):
         # Create the shared entity info
         self.log_info_message("Storing the resource origin info")
         resources: list[Resource] = self.resource_loader.get_all_generated_resources()
-        for resource in resources:
+        zip_resources = self.resource_loader.get_all_zip_resources()
+        for resource, zip_dto in zip(resources, zip_resources):
             SharedResource.create_from_lab_info(
                 resource.get_model_id(),
                 SharedEntityMode.RECEIVED,
                 self.resource_loader.get_origin_info(),
                 CurrentUserService.get_and_check_current_user(),
+                external_id=zip_dto.resource_model_export.id,
             )

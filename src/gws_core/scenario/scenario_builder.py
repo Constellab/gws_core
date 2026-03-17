@@ -251,6 +251,7 @@ class ScenarioBuilder:
             SharedEntityMode.RECEIVED,
             self._origin,
             CurrentUserService.get_and_check_current_user(),
+            external_id=self._scenario_info.scenario.id,
         )
 
         return scenario

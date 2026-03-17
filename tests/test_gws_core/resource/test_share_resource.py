@@ -40,6 +40,7 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
+from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
     ShareEntityCreateMode,
@@ -255,6 +256,10 @@ class ShareResourceTestSetup:
         shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
         self._tc.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
+        # check the external_id points to the original resource
+        shared_resource_info = SharedResource.get_and_check_entity_origin(new_resource_model.id)
+        self._tc.assertEqual(shared_resource_info.external_id, self.original_resource_model.id)
+
     def setup_and_import_file_resource(self) -> ResourceModel:
         """Create a file resource, zip it, optionally delete original, and import via ResourceBuilder."""
         file = get_file()
@@ -354,6 +359,19 @@ class ShareResourceTestSetup:
         )
         self._tc.assertEqual("test", file.read())
 
+        # check SharedResource external_id for parent and children
+        shared_parent = SharedResource.get_and_check_entity_origin(new_resource_model.id)
+        self._tc.assertEqual(shared_parent.external_id, self.original_resource_model.id)
+
+        shared_robot = SharedResource.get_and_check_entity_origin(robot_model.id)
+        self._tc.assertEqual(shared_robot.external_id, self._children_resource_models["robot"].id)
+
+        shared_table = SharedResource.get_and_check_entity_origin(table_model.id)
+        self._tc.assertEqual(shared_table.external_id, self._children_resource_models["table"].id)
+
+        shared_file = SharedResource.get_and_check_entity_origin(file_model.id)
+        self._tc.assertEqual(shared_file.external_id, self._children_resource_models["file"].id)
+
     def setup_and_import_resource_list(self) -> ResourceModel:
         """Create a resource list via scenario, zip it, optionally delete original,
         and import via ResourceBuilder."""
@@ -426,6 +444,19 @@ class ShareResourceTestSetup:
             file_model, self._children_resource_models["file"], new_resource_model.id
         )
         self._tc.assertEqual("test", file.read())
+
+        # check SharedResource external_id for parent and children
+        shared_parent = SharedResource.get_and_check_entity_origin(new_resource_model.id)
+        self._tc.assertEqual(shared_parent.external_id, self.original_resource_model.id)
+
+        shared_robot = SharedResource.get_and_check_entity_origin(robot_model.id)
+        self._tc.assertEqual(shared_robot.external_id, self._children_resource_models["robot"].id)
+
+        shared_table = SharedResource.get_and_check_entity_origin(table_model.id)
+        self._tc.assertEqual(shared_table.external_id, self._children_resource_models["table"].id)
+
+        shared_file = SharedResource.get_and_check_entity_origin(file_model.id)
+        self._tc.assertEqual(shared_file.external_id, self._children_resource_models["file"].id)
 
 
 # test_share_resource

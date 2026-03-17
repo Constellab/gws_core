@@ -42,7 +42,7 @@ class ScenarioTransfertService:
 
         # Use credential-based downloader when credentials are provided,
         # otherwise use share-link downloader (legacy / manual import)
-        if "credentials" in values:
+        if "lab" in values:
             downloader_type = ScenarioDownloaderFromLab
         else:
             downloader_type = ScenarioDownloaderShareLink
@@ -107,7 +107,7 @@ class ScenarioTransfertService:
             wait = protocol.add_process(
                 WaitExternalScenario,
                 "waiter",
-                {"credentials": values["credentials"]},
+                WaitExternalScenario.build_config(lab=values["lab"]),
             )
             protocol.add_connector(
                 send.get_output_port(SendScenarioToLab.OUTPUT_NAME),
@@ -117,7 +117,9 @@ class ScenarioTransfertService:
             downloader = protocol.add_process(
                 ScenarioDownloaderFromLab,
                 "downloader",
-                {"credentials": values["credentials"], "resource_mode": "Outputs only"},
+                ScenarioDownloaderFromLab.build_config(
+                    lab=values["lab"], resource_mode="Outputs only"
+                ),
             )
             protocol.add_connector(
                 wait.get_output_port(WaitExternalScenario.OUTPUT_NAME),

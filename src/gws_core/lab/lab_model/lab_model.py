@@ -28,6 +28,10 @@ class LabModel(Model):
         is_table = True
         indexes = ((("lab_id", "mode"), True),)
 
+    def has_credentials(self) -> bool:
+        """Check if the lab has credentials data."""
+        return self.credentials is not None and self.credentials.get_data_object() is not None
+
     def to_dto(self) -> LabDTO:
         """Convert the model to a DTO."""
         return LabDTO(

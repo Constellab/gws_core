@@ -66,6 +66,7 @@ class ShareEntityInfoDTO(ModelDTO):
     lab: LabDTO | None = None
     user: UserDTO | None = None
     created_by: UserDTO | None = None
+    external_id: str
 
 
 class ShareEntityInfoReponseDTO(BaseModelDTO):

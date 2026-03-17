@@ -108,6 +108,7 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
                 ShareLinkEntityType.SCENARIO,
                 self.share_entity.token,
                 current_lab_info,
+                external_id=self._built_scenario_id,
             )
 
             if response.status_code != 200:
