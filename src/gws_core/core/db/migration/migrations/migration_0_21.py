@@ -56,6 +56,21 @@ class Migration0210(BrickMigration):
     def _migrate_shared_table(cls, sql_migrator: SqlMigrator, shared_model: type) -> None:
         table_name = shared_model.get_table_name()
 
+        # Add external_id column and fill with entity_id
+        sql_migrator.add_column_if_not_exists(
+            shared_model, CharField(max_length=36, null=True), "external_id"
+        )
+        sql_migrator.migrate()
+
+        shared_model.execute_sql(
+            f"UPDATE {table_name} SET external_id = entity_id WHERE external_id IS NULL"
+        )
+
+        # Set external_id column not null
+        sql_migrator.alter_column_type(
+            shared_model, "external_id", CharField(max_length=36, null=False)
+        )
+
         # Check if old columns exist (migration may have already run)
         if not shared_model.column_exists("lab_name"):
             return
@@ -136,18 +151,3 @@ class Migration0210(BrickMigration):
         # Add FK constraints on lab_id and user_id
         shared_model.create_foreign_key_if_not_exist(shared_model.lab)
         shared_model.create_foreign_key_if_not_exist(shared_model.user)
-
-        # Add external_id column and fill with entity_id
-        sql_migrator.add_column_if_not_exists(
-            shared_model, CharField(max_length=36, null=True), "external_id"
-        )
-        sql_migrator.migrate()
-
-        shared_model.execute_sql(
-            f"UPDATE {table_name} SET external_id = entity_id WHERE external_id IS NULL"
-        )
-
-        # Set external_id column not null
-        sql_migrator.alter_column_type(
-            shared_model, "external_id", CharField(max_length=36, null=False)
-        )

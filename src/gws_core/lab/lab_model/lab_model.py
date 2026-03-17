@@ -38,11 +38,15 @@ class LabModel(Model):
         """Check that the lab has credentials and domain configured for external communication."""
         if not self.domain:
             raise BadRequestException(
-                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": self.name}
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
+                {"lab_name": self.name},
             )
         if not self.has_credentials():
             raise BadRequestException(
-                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": self.name}
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
+                {"lab_name": self.name},
             )
 
     def to_dto(self) -> LabDTO:

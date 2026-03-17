@@ -13,6 +13,7 @@ from peewee import (
 )
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.model.db_field import BaseDTOField, JSONField
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
@@ -293,9 +294,18 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         if new_instance, it forces to rebuild the resource
         """
         if self.content_is_deleted:
-            raise BadRequestException(
-                f"Intermediate resource '{self.name}' was deleted, can't get the resource data"
-            )
+            if self.origin == ResourceOrigin.IMPORTED_FROM_LAB:
+                raise BadRequestException(
+                    GWSException.IMPORTED_RESOURCE_CONTENT_NOT_AVAILABLE.value,
+                    GWSException.IMPORTED_RESOURCE_CONTENT_NOT_AVAILABLE.name,
+                    {"resource_name": self.name},
+                )
+            else:
+                raise BadRequestException(
+                    GWSException.RESOURCE_CONTENT_DELETED.value,
+                    GWSException.RESOURCE_CONTENT_DELETED.name,
+                    {"resource_name": self.name},
+                )
 
         if new_instance:
             return self._instantiate_resource()
@@ -678,6 +688,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             folder=self.folder.to_dto() if self.folder else None,
             style=self.style,
             is_application=self.is_application(),
+            content_is_deleted=self.content_is_deleted,
         )
 
     def to_export_dto(self) -> ResourceModelExportDTO:

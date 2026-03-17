@@ -78,3 +78,7 @@ class GWSException(Enum):
     IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR = "The {{ioface_type}} '{{ioface_name}}' is connected in the parent protocol '{{parent_protocol_name}}', please remove the link connected to this {{ioface_type}} in the parent protocol."
     LAB_MISSING_CREDENTIALS_OR_DOMAIN = "The lab '{{lab_name}}' does not have credentials or domain configured. Please register the lab in Settings > Monitoring > Labs."
     TYPING_NOT_FOUND = "Can't find the typing '{{unique_name}}' for '{{object_type}}' in brick '{{brick_name}}'. Is the brick '{{brick_name}}' correctly loaded ?"
+    RESOURCE_CONTENT_DELETED = (
+        "The content of resource '{{resource_name}}' has been deleted, it can't be viewed."
+    )
+    IMPORTED_RESOURCE_CONTENT_NOT_AVAILABLE = "The content of the imported resource '{{resource_name}}' is not available in this lab, you can import it from the source lab in the resource menu."

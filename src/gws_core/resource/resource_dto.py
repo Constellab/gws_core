@@ -35,6 +35,7 @@ class ResourceModelDTO(ModelWithUserDTO):
     folder: SpaceFolderDTO | None
     style: TypingStyle
     is_application: bool
+    content_is_deleted: bool
 
 
 class ResourceModelExportDTO(ResourceModelDTO):

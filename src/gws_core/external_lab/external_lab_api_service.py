@@ -32,7 +32,9 @@ class ExternalLabApiService:
     def __init__(self, lab_dto: LabDTOWithCredentials, user_id: str | None = None) -> None:
         if lab_dto.credentials_data is None:
             raise BadRequestException(
-                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value, {"lab_name": lab_dto.name}
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
+                {"lab_name": lab_dto.name},
             )
         self._lab_dto = lab_dto
         if user_id is None:
