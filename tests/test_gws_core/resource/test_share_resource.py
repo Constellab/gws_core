@@ -23,9 +23,9 @@ from gws_core import (
 )
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
-from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -40,7 +40,6 @@ from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.share_service import ShareService
-from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
     SharedEntityMode,
@@ -49,6 +48,7 @@ from gws_core.share.shared_dto import (
     ShareLinkType,
     ShareResourceInfoReponseDTO,
 )
+from gws_core.share.shared_resource import SharedResource
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
@@ -611,7 +611,10 @@ class TestShareResource(BaseTestCase):
         # Call the external lab API to import the resource
         scenario = ResourceTransfertService.export_resource_to_lab(
             original_resource_model.id,
-            SendResourceToLab.build_config(lab.id, 1, "Force new resource"),
+            SendResourceToLab.build_config(
+                lab.id,
+                create_option="Force new resource",
+            ),
         )
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
@@ -623,14 +626,15 @@ class TestShareResource(BaseTestCase):
         lab.save()
 
         # Find the imported resource (has a SharedResource RECEIVED record)
-        shared_received = SharedResource.select().where(
-            SharedResource.share_mode == SharedEntityMode.RECEIVED
-        ).order_by(SharedResource.created_at.desc()).first()
+        shared_received = (
+            SharedResource.select()
+            .where(SharedResource.share_mode == SharedEntityMode.RECEIVED)
+            .order_by(SharedResource.created_at.desc())
+            .first()
+        )
         self.assertIsNotNone(shared_received)
 
-        imported_resource_model = ResourceModel.get_by_id_and_check(
-            shared_received.entity.id
-        )
+        imported_resource_model = ResourceModel.get_by_id_and_check(shared_received.entity.id)
 
         # Delete the imported resource content
         imported_resource_model.delete_resource_content()

@@ -23,7 +23,7 @@ from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
 
-ResourceDownloaderCreateOption = Literal["Skip if exists", "Force new resource"]
+ResourceDownloaderCreateOption = Literal["Update if exists", "Skip if exists", "Force new resource"]
 
 
 @task_decorator(
@@ -76,10 +76,12 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
         resource_loader_mode: ShareEntityCreateMode
         # We keep the id only if option activated and uncompressed option is activated as well
-        if create_option == "Skip if exists" and uncompressed_option != "no":
-            resource_loader_mode = ShareEntityCreateMode.KEEP_ID
-        else:
+        if create_option == "Force new resource" or uncompressed_option == "no":
+            self.log_info_message("The resource will be imported with a new id")
             resource_loader_mode = ShareEntityCreateMode.NEW_ID
+        else:
+            self.log_info_message("The resource will be imported with the same id as the origin")
+            resource_loader_mode = ShareEntityCreateMode.KEEP_ID
 
         # download the resource file
         resource_file = resource_downloader.download()

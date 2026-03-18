@@ -35,8 +35,21 @@ class ExternalLabService:
     def import_resource(
         cls, import_resource: ExternalLabImportRequestDTO
     ) -> ExternalLabImportScenarioResponseDTO:
-        """Import resources from the lab"""
-        scenario = ResourceTransfertService.import_resource_from_link_async(import_resource.params)
+        """Import resources from the lab.
+
+        Resolves the source lab's LabModel from the auth context (set during
+        API key authentication) and injects its PK into the params so
+        ResourceDownloaderFromLab can authenticate back to the source.
+        """
+        params = import_resource.params
+
+        auth_context = CurrentUserService.get_auth_context()
+        if isinstance(auth_context, AuthContextExternalLab):
+            params["lab"] = auth_context.get_lab().id
+        else:
+            raise Exception("Invalid auth context, expected AuthContextExternalLab")
+
+        scenario = ResourceTransfertService.import_resource_from_lab_async(params)
 
         return cls._scenario_to_response_dto(scenario)
 

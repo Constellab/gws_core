@@ -1,9 +1,5 @@
-from datetime import timedelta
-
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import IntParam
-from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec
@@ -12,14 +8,9 @@ from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
-from gws_core.resource.task.resource_downloader_http import (
-    ResourceDownloaderCreateOption,
-    ResourceDownloaderHttp,
-)
+from gws_core.resource.task.resource_downloader_from_lab import ResourceDownloaderFromLab
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
-from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkEntityType
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
@@ -29,16 +20,15 @@ from gws_core.user.current_user_service import CurrentUserService
 @task_decorator(
     unique_name="SendResourceToLab",
     human_name="Send the resource to a lab",
-    short_description="Send a resource to another lab using a share link",
+    short_description="Send a resource to another lab using lab credentials",
     style=TypingStyle.material_icon("cloud_upload"),
 )
 class SendResourceToLab(Task):
     """
-    Task to send a resource to another lab using a share link.
+    Task to send a resource to another lab using lab credentials.
 
-    This task creates a share link for the resource. A import scenario is created in the destination lab.
-
-    Then it call the external lab API to import the resource in the external lab using the share link.
+    This task instructs the destination lab to import the resource from the source lab
+    using credential-based authentication.
 
     A credentials of type lab are required in both labs to be able to send and receive resources. It
     needs to be the same api_key in both labs.
@@ -59,14 +49,9 @@ class SendResourceToLab(Task):
                 human_name="Destination lab",
                 short_description="The lab to send the resource to (must have credentials configured)",
             ),
-            "link_duration": IntParam(
-                human_name="Share link duration in days",
-                short_description="The share link is not created if a share link already exists for the resource",
-                min_value=1,
-                max_value=365,
-                default_value=1,
-            ),
-            "create_option": ResourceDownloaderHttp.config_specs.get_spec("create_option"),
+            "uncompress": ResourceDownloaderFromLab.config_specs.get_spec("uncompress"),
+            "create_option": ResourceDownloaderFromLab.config_specs.get_spec("create_option"),
+            "skip_tags": ResourceDownloaderFromLab.config_specs.get_spec("skip_tags"),
         }
     )
 
@@ -75,31 +60,22 @@ class SendResourceToLab(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         resource: Resource = inputs.get("resource")
 
-        current_day = DateHelper.now_utc()
-
-        generate_share_link = GenerateShareLinkDTO(
-            entity_id=resource.get_model_id(),
-            entity_type=ShareLinkEntityType.RESOURCE,
-            valid_until=current_day + timedelta(days=params.get_value("link_duration")),
-        )
-
-        self.log_info_message(
-            f"Generate share link for resource {resource.get_model_id()} if not exists"
-        )
-        share_link = ShareLinkService.get_or_create_valid_public_share_link(generate_share_link)
-
         # Call the external lab API to import the resource
         lab_dto: LabDTOWithCredentials = params.get_value("lab")
         external_lab_service = ExternalLabApiService(lab_dto, CurrentUserService.get_and_check_current_user().id)
         self.log_info_message(
             f"Send the resource to the lab {external_lab_service.get_full_route('')}"
         )
+
+        # The destination lab resolves the source lab's LabModel from the
+        # auth context (set during API key authentication), so we don't
+        # need to pass the lab id in the params.
         request_dto = ExternalLabImportRequestDTO(
-            # convert to ResourceDownloaderHttp config because ResourceDownloaderHttp is used to download the resource
-            params=ResourceDownloaderHttp.build_config(
-                link=share_link.get_download_link(),
-                uncompress="yes",
+            params=ResourceDownloaderFromLab.build_config(
+                resource_id=resource.get_model_id(),
+                uncompress=params["uncompress"],
                 create_option=params["create_option"],
+                skip_tags=params["skip_tags"],
             )
         )
 
@@ -142,13 +118,13 @@ class SendResourceToLab(Task):
     def build_config(
         cls,
         lab: LabDTOWithCredentials | str,
-        link_duration: int,
-        create_option: ResourceDownloaderCreateOption,
+        uncompress: str = "auto",
+        create_option: str = "Update if exists",
+        skip_tags: bool = False,
     ) -> ConfigParamsDict:
-        return ConfigParams(
-            {
-                "lab": lab,
-                "link_duration": link_duration,
-                "create_option": create_option,
-            }
-        )
+        return {
+            "lab": lab,
+            "uncompress": uncompress,
+            "create_option": create_option,
+            "skip_tags": skip_tags,
+        }

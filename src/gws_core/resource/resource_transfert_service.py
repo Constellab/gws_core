@@ -49,6 +49,28 @@ class ResourceTransfertService:
         return scenario.get_model().refresh()
 
     @classmethod
+    def import_resource_from_lab_async(cls, values: ConfigParamsDict) -> Scenario:
+        """Run the import resource from lab asynchronously, return the running import scenario"""
+
+        scenario = cls._build_import_resource_from_lab_scenario(values)
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_import_resource_from_lab_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
+        """Build a scenario to import a resource from another lab using credentials."""
+        scenario: ScenarioProxy = ScenarioProxy(title="Import resource from lab")
+        protocol: ProtocolProxy = scenario.get_protocol()
+
+        downloader: ProcessProxy = protocol.add_process(
+            ResourceDownloaderFromLab, "downloader", values
+        )
+
+        protocol.add_output("output", downloader >> ResourceDownloaderFromLab.OUTPUT_NAME)
+
+        return scenario
+
+    @classmethod
     def _build_import_resource_from_link_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
         link: str = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
         file_name = link.split("/")[-1]
