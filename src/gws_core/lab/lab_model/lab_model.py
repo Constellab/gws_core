@@ -21,9 +21,7 @@ class LabModel(Model):
     domain: str | None = CharField(null=True)
     space_id: str | None = CharField(null=True)
     space_name: str | None = CharField(null=True)
-    credentials: Credentials | None = ForeignKeyField(
-        Credentials, null=True, index=True, backref="+"
-    )
+    credentials: Credentials | None = ForeignKeyField(Credentials, null=True, backref="+")
 
     class Meta:
         table_name = "gws_lab"

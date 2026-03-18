@@ -24,6 +24,7 @@ from gws_core.share.shared_dto import (
     ShareResourceZippedResponseDTO,
     ShareScenarioInfoReponseDTO,
 )
+from gws_core.user.auth_context import AuthContextExternalLab
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user_dto import UserDTO
 from gws_core.user.user_service import UserService
@@ -57,8 +58,21 @@ class ExternalLabService:
     def import_scenario(
         cls, import_scenario: ExternalLabImportRequestDTO
     ) -> ExternalLabImportScenarioResponseDTO:
-        """Import resources from the lab"""
-        scenario = ScenarioTransfertService.import_from_lab_async(import_scenario.params)
+        """Import scenario from the source lab.
+
+        Resolves the source lab's LabModel from the auth context (set during
+        API key authentication) and injects its PK into the params so
+        ScenarioDownloaderFromLab can authenticate back to the source.
+        """
+        params = import_scenario.params
+
+        auth_context = CurrentUserService.get_auth_context()
+        if isinstance(auth_context, AuthContextExternalLab):
+            params["lab"] = auth_context.get_lab().id
+        else:
+            raise Exception("Invalid auth context, expected AuthContextExternalLab")
+
+        scenario = ScenarioTransfertService.import_from_lab_async(params)
 
         return cls._scenario_to_response_dto(scenario)
 

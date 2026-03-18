@@ -103,11 +103,11 @@ class SendScenarioToLab(Task):
             f"Send the scenario to the lab {external_lab_service.get_full_route('')}"
         )
 
-        # Pass the lab id so the destination lab can resolve
-        # the lab model and its credentials locally.
+        # The destination lab resolves the source lab's LabModel from the
+        # auth context (set during API key authentication), so we don't
+        # need to pass the lab id in the params.
         request_dto = ExternalLabImportRequestDTO(
             params=ScenarioDownloaderFromLab.build_config(
-                lab=lab_dto.id,
                 scenario_id=scenario_resource.scenario_id,
                 resource_mode=params["resource_mode"],
                 create_option=create_option,

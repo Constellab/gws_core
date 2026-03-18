@@ -99,16 +99,16 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     @classmethod
     def build_config(
         cls,
-        lab: str,
-        scenario_id: str = "",
+        lab: str | None = None,
+        scenario_id: str | None = None,
         resource_mode: str = "Outputs only",
         create_option: str = "Update if exists",
         auto_run: bool = False,
     ) -> ConfigParamsDict:
         return {
-            "lab": lab,
             "scenario_id": scenario_id,
             "resource_mode": resource_mode,
             "create_option": create_option,
             "auto_run": auto_run,
+            "lab": lab,
         }
