@@ -72,7 +72,7 @@ class TestMigration(BaseTestCase):
         previous_version = Version("1.0.0")
 
         # check that the migration list is in order and without the 1.0.0
-        to_migrate = brick_migrator.get_to_migrate_list(db_manager, previous_version)
+        to_migrate = brick_migrator.get_to_migrate_list(previous_version)
         self.assertEqual(to_migrate[0].version, Version("1.0.1"))
         self.assertEqual(to_migrate[1].version, Version("1.2.0"))
         self.assertEqual(to_migrate[2].version, Version("2.0.1"))
@@ -82,5 +82,5 @@ class TestMigration(BaseTestCase):
             brick_migrator.append_migration(migration_v120)
 
         # Check that the migrate worked
-        migrated = brick_migrator.migrate(db_manager, previous_version)
+        migrated = brick_migrator.migrate(previous_version)
         self.assertTrue(migrated)

@@ -218,7 +218,7 @@ class Settings:
     @classmethod
     def get_community_api_url_and_check(cls) -> str:
         """Get the community API URL and check if it's set. Raise an error if it's not set."""
-        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
         # return "https://api.constellab.community"
         url = cls.get_community_api_url()
         if not url:
@@ -606,33 +606,12 @@ class Settings:
 
     # BRICK MIGRATION
 
-    GWS_CORE_DB_MANAGER_UNIQUE_NAME = "gws_core-db"
-
     def get_brick_migrations_logs(self) -> BrickMigrationsLogs:
         """Retrieve all brick migration logs.
-
         :return: BrickMigrationsLogs object containing all migration logs
         :rtype: BrickMigrationsLogs
         """
         raw = self.data.get("brick_migrations", {})
-
-        # Migrate old flat format to new nested format (keyed by db_manager_unique_name)
-        has_old_format = any("version" in value and "brick_name" in value for value in raw.values())
-        if has_old_format:
-            migrated: dict[str, dict] = {}
-            for brick_name, old_entry in raw.items():
-                if "brick_name" in old_entry and "version" in old_entry:
-                    new_entry = {
-                        "version": old_entry.get("version"),
-                        "last_date_check": old_entry.get("last_date_check"),
-                        "history": old_entry.get("history", []),
-                    }
-                    migrated[brick_name] = {self.GWS_CORE_DB_MANAGER_UNIQUE_NAME: new_entry}
-                else:
-                    migrated[brick_name] = old_entry
-            raw = migrated
-            self.data["brick_migrations"] = raw
-            self.save()
 
         return BrickMigrationsLogs(bricks=raw)
 

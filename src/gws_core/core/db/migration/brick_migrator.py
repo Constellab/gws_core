@@ -67,13 +67,9 @@ class MigrationObject:
         else:
             self.brick_migration.migrate(sql_migrator, from_version, self.version)
 
-    def get_db_unique_name(self) -> str:
-        return self.db_manager.get_unique_name()
-
     def to_dto(self) -> MigrationDTO:
         return MigrationDTO(
             version=str(self.version),
-            db_unique_name=self.get_db_unique_name(),
             short_description=self.short_description,
         )
 
@@ -98,34 +94,27 @@ class BrickMigrator:
 
     def append_migration(self, migration_obj: MigrationObject) -> None:
         """Append a migration object to the list of migrations for this brick."""
-        # Check if that version and db_manager was already added
-        if self.has_migration_version(migration_obj.version, migration_obj.get_db_unique_name()):
+        if self.has_migration_version(migration_obj.version):
             raise Exception(
-                f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(migration_obj.version)}' for db_manager '{migration_obj.get_db_unique_name()}' was already registered. "
+                f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(migration_obj.version)}' was already registered. "
             )
 
         self._migration_objects.append(migration_obj)
 
-    def migrate(
-        self, db_manager: AbstractDbManager, previous_version: Version
-    ) -> bool:
-        """Migrate the brick by calling all the migration scripts for the specified db_manager.
+    def migrate(self, previous_version: Version) -> bool:
+        """Migrate the brick by calling all the migration scripts.
 
-        :param db_manager: The AbstractDbManager instance to filter migrations
-        :type db_manager: AbstractDbManager
-        :param previous_version: The last migrated version for this brick+db_manager pair
+        :param previous_version: The last migrated version for this brick
         :type previous_version: Version
         :return: True if migrations were run, False otherwise
         :rtype: bool
         """
 
-        to_migrate_list: list[MigrationObject] = self.get_to_migrate_list(
-            db_manager, previous_version
-        )
+        to_migrate_list: list[MigrationObject] = self.get_to_migrate_list(previous_version)
 
         if len(to_migrate_list) == 0:
             Logger.debug(
-                f"Skipping migration for brick '{self.brick_name}' and DB '{db_manager.get_unique_name()}' because it is up to date"
+                f"Skipping migration for brick '{self.brick_name}' because it is up to date"
             )
             return False
 
@@ -136,14 +125,10 @@ class BrickMigrator:
 
         return True
 
-    def get_to_migrate_list(
-        self, db_manager: AbstractDbManager, previous_version: Version
-    ) -> list[MigrationObject]:
-        """Retrieve migration objects that need to be run for the specified db_manager.
+    def get_to_migrate_list(self, previous_version: Version) -> list[MigrationObject]:
+        """Retrieve migration objects that need to be run.
 
-        :param db_manager: The AbstractDbManager instance to filter migrations
-        :type db_manager: AbstractDbManager
-        :param previous_version: The last migrated version for this brick+db_manager pair
+        :param previous_version: The last migrated version for this brick
         :type previous_version: Version
         :return: Sorted list of migrations to run
         :rtype: list[MigrationObject]
@@ -152,7 +137,6 @@ class BrickMigrator:
             x
             for x in self._migration_objects
             if x.version > previous_version
-            and x.db_manager.get_unique_name() == db_manager.get_unique_name()
         ]
 
         # sort them to migrate in order
@@ -163,7 +147,7 @@ class BrickMigrator:
         self, migration_object: MigrationObject, from_version: Version
     ) -> None:
         Logger.info(
-            f"Start migrating '{self.brick_name}' from version '{from_version}' to version '{migration_object.version}' for DB '{migration_object.get_db_unique_name()}'. Description: {migration_object.short_description}"
+            f"Start migrating '{self.brick_name}' from version '{from_version}' to version '{migration_object.version}'. Description: {migration_object.short_description}"
         )
 
         try:
@@ -178,31 +162,27 @@ class BrickMigrator:
             f"Success migrating '{self.brick_name}' from version '{from_version}' to version '{migration_object.version}'"
         )
 
-    def call_migration_manually(self, version: Version, db_unique_name: str) -> None:
+    def call_migration_manually(self, version: Version) -> None:
         """Call migration manually for the version at any time."""
-        migration_object = self.get_migration_object(version, db_unique_name)
+        migration_object = self.get_migration_object(version)
 
         if not migration_object:
             raise BadRequestException(
-                f"The migration for version '{str(version)}' of db '{db_unique_name}' for brick '{self.brick_name}'  doesn't exist"
+                f"The migration for version '{str(version)}' for brick '{self.brick_name}' doesn't exist"
             )
 
         # For manual calls, use the current brick version as the from_version
         self._call_migration(migration_object, self.current_brick_version)
 
-    def has_migration_version(self, version: Version, db_unique_name: str) -> bool:
-        # Check if that version was already added
-        return self.get_migration_object(version, db_unique_name) is not None
+    def has_migration_version(self, version: Version) -> bool:
+        """Check if that version was already added."""
+        return self.get_migration_object(version) is not None
 
-    def get_migration_object(self, version: Version, db_unique_name: str) -> MigrationObject:
-        # Check if that version was already added
-        migration_objects = list(
-            [
-                x
-                for x in self._migration_objects
-                if x.version == version and x.db_manager.get_unique_name() == db_unique_name
-            ]
-        )
+    def get_migration_object(self, version: Version) -> MigrationObject | None:
+        """Get the migration object for the specified version."""
+        migration_objects = [
+            x for x in self._migration_objects if x.version == version
+        ]
         return migration_objects[0] if len(migration_objects) > 0 else None
 
     def get_migration_versions(self, version: Version) -> list[MigrationObject]:

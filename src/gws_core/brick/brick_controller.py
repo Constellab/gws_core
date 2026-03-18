@@ -45,17 +45,16 @@ def export_technical_doc(
 
 
 @core_app.post(
-    "/brick/{brick_name}/call-migration/{version}/{db_unique_name}",
+    "/brick/{brick_name}/call-migration/{version}",
     tags=["Bricks"],
     summary="Call a specific migration",
 )
 def call_migration(
     brick_name: str,
     version: str,
-    db_unique_name: str,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> None:
-    DbMigrationService.call_migration_manually(brick_name, version, db_unique_name)
+    DbMigrationService.call_migration_manually(brick_name, version)
 
 
 @core_app.get(

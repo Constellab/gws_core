@@ -40,40 +40,31 @@ class BrickMigrationLog(BaseModelDTO):
 
 
 class BrickMigrationsLogs(BaseModelDTO):
-    """Container for all brick migration logs, keyed by brick_name then db_manager_unique_name."""
+    """Container for all brick migration logs, keyed by brick_name."""
 
-    # dict[brick_name, dict[db_manager_unique_name, BrickMigrationLog]]
-    bricks: dict[str, dict[str, BrickMigrationLog]] = {}
+    # dict[brick_name, BrickMigrationLog]
+    bricks: dict[str, BrickMigrationLog] = {}
 
-    def get_brick_migration_log(
-        self, brick_name: str, db_manager_unique_name: str
-    ) -> BrickMigrationLog | None:
-        """Get a brick migration log for the specified brick and db_manager.
+    def get_brick_migration_log(self, brick_name: str) -> BrickMigrationLog | None:
+        """Get a brick migration log for the specified brick.
 
         :param brick_name: Name of the brick
         :type brick_name: str
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
         :return: The brick migration log or None
         :rtype: BrickMigrationLog | None
         """
-        brick_logs = self.bricks.get(brick_name)
-        if brick_logs is None:
-            return None
-        return brick_logs.get(db_manager_unique_name)
+        return self.bricks.get(brick_name)
 
-    def has_any_migration_log_for_db_manager(self, db_manager_unique_name: str) -> bool:
-        """Check if any brick has a migration log for the specified db_manager.
+    def has_any_migration_log(self) -> bool:
+        """Check if any brick has a migration log.
 
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
-        :return: True if at least one brick has a log for this db_manager
+        :return: True if at least one brick has a log
         :rtype: bool
         """
-        return any(db_manager_unique_name in brick_logs for brick_logs in self.bricks.values())
+        return len(self.bricks) > 0
 
-    def set_brick_version(self, brick_name: str, version: str, db_manager_unique_name: str) -> None:
-        """Set the current version and last_date_check for a brick+db_manager pair.
+    def set_brick_version(self, brick_name: str, version: str) -> None:
+        """Set the current version and last_date_check for a brick.
         Does not add a history entry. Use this to record the current state without
         indicating an actual migration was run.
 
@@ -81,29 +72,23 @@ class BrickMigrationsLogs(BaseModelDTO):
         :type brick_name: str
         :param version: Version of the brick
         :type version: str
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
         """
-        brick_migration = self._get_or_create_log(brick_name, db_manager_unique_name)
+        brick_migration = self._get_or_create_log(brick_name)
         date = datetime.now(timezone.utc).isoformat()
 
         brick_migration.last_date_check = date
         brick_migration.version = version
 
-    def add_migration_history(
-        self, brick_name: str, version: str, db_manager_unique_name: str
-    ) -> None:
-        """Record that an actual migration was run for a brick+db_manager pair.
+    def add_migration_history(self, brick_name: str, version: str) -> None:
+        """Record that an actual migration was run for a brick.
         Updates the version, last_date_check and appends a history entry.
 
         :param brick_name: Name of the brick
         :type brick_name: str
         :param version: Version migrated to
         :type version: str
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
         """
-        brick_migration = self._get_or_create_log(brick_name, db_manager_unique_name)
+        brick_migration = self._get_or_create_log(brick_name)
         date = datetime.now(timezone.utc).isoformat()
 
         brick_migration.last_date_check = date
@@ -112,21 +97,16 @@ class BrickMigrationsLogs(BaseModelDTO):
             BrickMigrationLogHistory(version=version, migration_date=date)
         )
 
-    def _get_or_create_log(self, brick_name: str, db_manager_unique_name: str) -> BrickMigrationLog:
-        """Get or create a BrickMigrationLog for the specified brick+db_manager pair."""
+    def _get_or_create_log(self, brick_name: str) -> BrickMigrationLog:
+        """Get or create a BrickMigrationLog for the specified brick."""
         if brick_name not in self.bricks:
-            self.bricks[brick_name] = {}
-
-        brick_db_logs = self.bricks[brick_name]
-
-        if db_manager_unique_name not in brick_db_logs:
-            brick_db_logs[db_manager_unique_name] = BrickMigrationLog(
+            self.bricks[brick_name] = BrickMigrationLog(
                 version=None,
                 history=[],
                 last_date_check=None,
             )
 
-        return brick_db_logs[db_manager_unique_name]
+        return self.bricks[brick_name]
 
     def save_as_json(self) -> dict:
         """Get the migration logs in a JSON-serializable format."""
