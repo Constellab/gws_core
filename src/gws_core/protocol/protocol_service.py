@@ -128,15 +128,8 @@ class ProtocolService:
 
         duplicate_process_model: ProcessModel | None = None
         if isinstance(process_model, TaskModel):
-            duplicate_process_model = ProcessFactory.create_task_model_from_type(
-                task_type=cast(type[Task], process_model.get_process_type()),
-                config_params=process_model.config.get_values(),
-                inputs_dto=process_model.to_config_dto().inputs,
-                outputs_dto=process_model.to_config_dto().outputs,
-                style=process_model.style,
-                community_agent_version_id=process_model.community_agent_version_id,
-                name=process_model.name + " (copy)",
-                config_specs=process_model.config.get_specs(),
+            duplicate_process_model = ProcessFactory.create_task_model_from_config_dto(
+                process_model.to_config_dto(), copy_id=False
             )
         elif isinstance(process_model, ProtocolModel):
             factory = ProtocolGraphFactoryFromType(process_model.to_protocol_config_dto())
@@ -145,6 +138,7 @@ class ProtocolService:
         if duplicate_process_model is None:
             raise BadRequestException("The process does not exist in the protocol")
 
+        duplicate_process_model.name = process_model.name + " (copy)"
         return cls.add_process_model_to_protocol(
             protocol_model=protocol_model, process_model=duplicate_process_model
         )

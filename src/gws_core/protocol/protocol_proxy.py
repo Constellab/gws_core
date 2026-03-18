@@ -12,7 +12,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 
-from ..config.param.param_types import ParamValue
+from ..config.param.param_types import ParamSpecDTO, ParamValue
 from ..process.process import Process
 from ..process.process_model import ProcessModel
 from ..process.process_proxy import ProcessProxy, ProcessWithPort
@@ -380,10 +380,14 @@ class ProtocolProxy(ProcessProxy):
         self, process_instance_name: str, port_spec_dto: IOSpecDTO | None = None
     ) -> ProcessWithPort:
         """Add a dynamic input port to the process.
-        The method is here because it update the protocol model.
+        The method is here because it updates the protocol model.
 
-        :param port_name: Name of the port to add
-        :type port_name: str
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_spec_dto: Optional specification for the new port
+        :type port_spec_dto: IOSpecDTO | None
+        :return: The newly added port
+        :rtype: ProcessWithPort
         """
         process = self.get_process(process_instance_name)
         if not process.has_dynamic_inputs():
@@ -399,6 +403,171 @@ class ProtocolProxy(ProcessProxy):
         input_ports = process.get_input_ports()
         # return the last added port
         return input_ports[-1]
+
+    def update_process_dynamic_input_port(
+        self, process_instance_name: str, port_name: str, port_spec_dto: IOSpecDTO
+    ) -> None:
+        """Update the specification of a dynamic input port of a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_name: Name of the port to update
+        :type port_name: str
+        :param port_spec_dto: New specification for the port
+        :type port_spec_dto: IOSpecDTO
+        """
+        update = ProtocolService.update_dynamic_input_port_of_process(
+            self.get_model_id(), process_instance_name, port_name, port_spec_dto
+        )
+
+        self._process_model = update.protocol
+
+    def delete_process_dynamic_input_port(
+        self, process_instance_name: str, port_name: str
+    ) -> None:
+        """Delete a dynamic input port from a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_name: Name of the port to delete
+        :type port_name: str
+        """
+        update = ProtocolService.delete_dynamic_input_port_of_process(
+            self.get_model_id(), process_instance_name, port_name
+        )
+
+        self._process_model = update.protocol
+
+    def add_process_dynamic_output_port(
+        self, process_instance_name: str, port_spec_dto: IOSpecDTO | None = None
+    ) -> ProcessWithPort:
+        """Add a dynamic output port to a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_spec_dto: Optional specification for the new port
+        :type port_spec_dto: IOSpecDTO | None
+        :return: The newly added port
+        :rtype: ProcessWithPort
+        """
+        process = self.get_process(process_instance_name)
+        if not process.has_dynamic_outputs():
+            raise Exception(
+                f"The process '{process_instance_name}' does not have dynamic outputs"
+            )
+
+        update = ProtocolService.add_dynamic_output_port_to_process(
+            self.get_model_id(), process_instance_name, port_spec_dto
+        )
+
+        self._process_model = update.protocol
+        process.refresh()
+
+        output_ports = process.get_output_ports()
+        # return the last added port
+        return output_ports[-1]
+
+    def update_process_dynamic_output_port(
+        self, process_instance_name: str, port_name: str, port_spec_dto: IOSpecDTO
+    ) -> None:
+        """Update the specification of a dynamic output port of a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_name: Name of the port to update
+        :type port_name: str
+        :param port_spec_dto: New specification for the port
+        :type port_spec_dto: IOSpecDTO
+        """
+        update = ProtocolService.update_dynamic_output_port_of_process(
+            self.get_model_id(), process_instance_name, port_name, port_spec_dto
+        )
+
+        self._process_model = update.protocol
+
+    def delete_process_dynamic_output_port(
+        self, process_instance_name: str, port_name: str
+    ) -> None:
+        """Delete a dynamic output port from a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param port_name: Name of the port to delete
+        :type port_name: str
+        """
+        update = ProtocolService.delete_dynamic_output_port_of_process(
+            self.get_model_id(), process_instance_name, port_name
+        )
+
+        self._process_model = update.protocol
+
+    ############################################### Dynamic Config ####################################
+
+    def add_process_dynamic_param(
+        self,
+        process_instance_name: str,
+        config_spec_name: str,
+        param_name: str,
+        spec_dto: ParamSpecDTO,
+    ) -> None:
+        """Add a dynamic parameter specification to a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param config_spec_name: Name of the dynamic config spec (e.g. 'params')
+        :type config_spec_name: str
+        :param param_name: Name of the parameter to add
+        :type param_name: str
+        :param spec_dto: Specification of the parameter
+        :type spec_dto: ParamSpecDTO
+        """
+        update = ProtocolService.add_dynamic_param_spec_of_process(
+            self.get_model_id(), process_instance_name, config_spec_name, param_name, spec_dto
+        )
+
+        self._process_model = update.protocol
+
+    def update_process_dynamic_param(
+        self,
+        process_instance_name: str,
+        config_spec_name: str,
+        param_name: str,
+        spec_dto: ParamSpecDTO,
+    ) -> None:
+        """Update a dynamic parameter specification of a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param config_spec_name: Name of the dynamic config spec (e.g. 'params')
+        :type config_spec_name: str
+        :param param_name: Name of the parameter to update
+        :type param_name: str
+        :param spec_dto: New specification of the parameter
+        :type spec_dto: ParamSpecDTO
+        """
+        update = ProtocolService.update_dynamic_param_spec_of_process(
+            self.get_model_id(), process_instance_name, config_spec_name, param_name, spec_dto
+        )
+
+        self._process_model = update.protocol
+
+    def remove_process_dynamic_param(
+        self, process_instance_name: str, config_spec_name: str, param_name: str
+    ) -> None:
+        """Remove a dynamic parameter specification from a process.
+
+        :param process_instance_name: Name of the process
+        :type process_instance_name: str
+        :param config_spec_name: Name of the dynamic config spec (e.g. 'params')
+        :type config_spec_name: str
+        :param param_name: Name of the parameter to remove
+        :type param_name: str
+        """
+        update = ProtocolService.remove_dynamic_param_spec_of_process(
+            self.get_model_id(), process_instance_name, config_spec_name, param_name
+        )
+
+        self._process_model = update.protocol
 
     ############################################### Config ####################################
     # Block config of the protocol because it does not transfer the config to the task

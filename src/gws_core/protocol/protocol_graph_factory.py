@@ -1,13 +1,7 @@
 from abc import abstractmethod
-from typing import cast
 
-from gws_core.config.config_params import ConfigParamsDict
-from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_manager import TypingManager
 from gws_core.process.process import Process
 from gws_core.process.process_factory import ProcessFactory
@@ -30,9 +24,7 @@ class ProtocolGraphFactory:
         pass
 
     @abstractmethod
-    def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
-    ) -> ProcessModel:
+    def instantiate_process(self, process_dto: ProcessConfigDTO) -> ProcessModel:
         """Method to instantiate the processes of the protocol"""
 
     def _create_protocol_model_from_graph_recur(
@@ -45,8 +37,8 @@ class ProtocolGraphFactory:
         :rtype": Protocol
         """
 
-        for key, process_model in graph.nodes.items():
-            process_model = self.instantiate_process(process_dto=process_model, instance_name=key)
+        for key, process_model_config in graph.nodes.items():
+            process_model = self.instantiate_process(process_dto=process_model_config)
             # set the process model in the protocol
             protocol.add_process_model(process_model, instance_name=key)
 
@@ -92,77 +84,31 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
             Logger.log_exception_stack_trace(err)
             raise BadRequestException(
                 f"The template is not compatible with the current version. {err}"
-            )
+            ) from err
 
-    def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
-    ) -> ProcessModel:
+    def instantiate_process(self, process_dto: ProcessConfigDTO) -> ProcessModel:
         process_type_str: str = process_dto.process_typing_name
         process_type: type[Process] = TypingManager.get_and_check_type_from_name(process_type_str)
 
-        return self._create_new_process(
-            process_type=process_type, instance_name=instance_name, process_dto=process_dto
-        )
+        return self._create_new_process(process_type=process_type, process_dto=process_dto)
 
     def _create_new_process(
-        self, process_type: type[Process], instance_name: str, process_dto: ProcessConfigDTO
+        self, process_type: type[Process], process_dto: ProcessConfigDTO
     ) -> ProcessModel:
         """Method to instantiate a new process and configure it"""
-        config_params: ConfigParamsDict = {}
-        config_specs: ConfigSpecs | None = None
-        # Configure the process
-        if process_dto.config:
-            config_params = process_dto.config.values
-            config_specs = self._build_config_specs_with_dynamic_params(
-                process_type, process_dto.config.specs
-            )
 
         if issubclass(process_type, Task):
-            return ProcessFactory.create_task_model_from_type(
-                task_type=process_type,
-                config_params=config_params,
-                instance_name=instance_name,
-                inputs_dto=process_dto.inputs if process_dto.inputs.type == "dynamic" else None,
-                outputs_dto=process_dto.outputs if process_dto.outputs.type == "dynamic" else None,
-                name=process_dto.name,
-                config_specs=config_specs,
-            )
+            return ProcessFactory.create_task_model_from_config_dto(process_dto, copy_id=False)
         elif issubclass(process_type, Protocol):
             # create protocol from dto, not from type
-            return ProcessFactory.create_empty_protocol_model_from_config_dto(process_dto)
+            return ProcessFactory.create_empty_protocol_model_from_config_dto(
+                process_dto, copy_id=False
+            )
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(process_type)
             raise BadRequestException(
                 f"The type {name} is not a Process nor a Protocol. It must extend the on of the classes"
             )
-
-    @staticmethod
-    def _build_config_specs_with_dynamic_params(
-        process_type: type[Process],
-        specs_dto: dict[str, ParamSpecDTO],
-    ) -> ConfigSpecs | None:
-        """Build config specs by taking the task type's default specs and overriding
-        only the dynamic param specs from the template DTO.
-        Returns None if no dynamic param specs are found.
-        """
-        if not Utils.issubclass(process_type, Task):
-            return None
-        has_dynamic = any(
-            spec_dto.type == ParamSpecTypeStr.DYNAMIC_PARAM for spec_dto in specs_dto.values()
-        )
-
-        if not has_dynamic:
-            return None
-
-        task_type = cast(type[Task], process_type)
-        config_specs = ConfigSpecs(dict(task_type.config_specs.specs))
-        for key, spec_dto in specs_dto.items():
-            if spec_dto.type == ParamSpecTypeStr.DYNAMIC_PARAM:
-                config_specs.add_or_update_spec(
-                    key, ParamSpecHelper.create_param_spec_from_dto(spec_dto)
-                )
-
-        return config_specs
 
 
 class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
@@ -191,9 +137,7 @@ class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
             protocol, self.protocol_config_dto.graph
         )
 
-    def instantiate_process(
-        self, process_dto: ProcessConfigDTO, instance_name: str | None = None
-    ) -> ProcessModel:
+    def instantiate_process(self, process_dto: ProcessConfigDTO) -> ProcessModel:
         return self._create_new_process(process_dto=process_dto)
 
     def _create_new_process(self, process_dto: ProcessConfigDTO) -> ProcessModel:
