@@ -15,12 +15,12 @@ from gws_core.user.current_user_service import CurrentUserService
 
 
 @task_decorator(
-    unique_name="WaitExternalScenario",
+    unique_name="ScenarioWaiterTask",
     human_name="Wait for external scenario",
     short_description="Wait for a scenario running in an external lab to finish",
     style=TypingStyle.material_icon("hourglass_empty"),
 )
-class WaitExternalScenario(Task):
+class ScenarioWaiterTask(Task):
     """
     Task that waits for a scenario running in an external lab to finish.
 
@@ -68,7 +68,7 @@ class WaitExternalScenario(Task):
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(
-            refresh_interval=30,
+            refresh_interval=60,
             refresh_interval_max_count=-1,
             message_dispatcher=self.message_dispatcher,
         )

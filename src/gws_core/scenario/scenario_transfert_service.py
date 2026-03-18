@@ -5,9 +5,9 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
 from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
 from gws_core.scenario.task.scenario_resource import ScenarioResource
+from gws_core.scenario.task.scenario_waiter_task import ScenarioWaiterTask
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
-from gws_core.scenario.task.wait_external_scenario import WaitExternalScenario
 from gws_core.task.plug.output_task import OutputTask
 
 
@@ -105,13 +105,13 @@ class ScenarioTransfertService:
         if auto_run:
             # When auto_run is enabled, add wait + download tasks
             wait = protocol.add_process(
-                WaitExternalScenario,
+                ScenarioWaiterTask,
                 "waiter",
-                WaitExternalScenario.build_config(lab=values["lab"]),
+                ScenarioWaiterTask.build_config(lab=values["lab"]),
             )
             protocol.add_connector(
                 send.get_output_port(SendScenarioToLab.OUTPUT_NAME),
-                wait.get_input_port(WaitExternalScenario.INPUT_NAME),
+                wait.get_input_port(ScenarioWaiterTask.INPUT_NAME),
             )
 
             downloader = protocol.add_process(
@@ -122,7 +122,7 @@ class ScenarioTransfertService:
                 ),
             )
             protocol.add_connector(
-                wait.get_output_port(WaitExternalScenario.OUTPUT_NAME),
+                wait.get_output_port(ScenarioWaiterTask.OUTPUT_NAME),
                 downloader.get_input_port(ScenarioDownloaderFromLab.INPUT_NAME),
             )
 

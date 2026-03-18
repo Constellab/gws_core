@@ -41,7 +41,7 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
                 ScenarioResource,
                 human_name="Source scenario",
                 short_description="The scenario that was sent to the external lab",
-                is_optional=True,
+                optional=True,
             ),
         }
     )

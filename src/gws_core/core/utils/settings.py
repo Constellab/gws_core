@@ -606,6 +606,8 @@ class Settings:
 
     # BRICK MIGRATION
 
+    GWS_CORE_DB_MANAGER_UNIQUE_NAME = "gws_core-db"
+
     def get_brick_migrations_logs(self) -> BrickMigrationsLogs:
         """Retrieve all brick migration logs.
 
@@ -614,10 +616,21 @@ class Settings:
         """
         raw = self.data.get("brick_migrations", {})
 
-        # Backward compatibility: clear old flat format entries
+        # Migrate old flat format to new nested format (keyed by db_manager_unique_name)
         has_old_format = any("version" in value and "brick_name" in value for value in raw.values())
         if has_old_format:
-            raw = {}
+            migrated: dict[str, dict] = {}
+            for brick_name, old_entry in raw.items():
+                if "brick_name" in old_entry and "version" in old_entry:
+                    new_entry = {
+                        "version": old_entry.get("version"),
+                        "last_date_check": old_entry.get("last_date_check"),
+                        "history": old_entry.get("history", []),
+                    }
+                    migrated[brick_name] = {self.GWS_CORE_DB_MANAGER_UNIQUE_NAME: new_entry}
+                else:
+                    migrated[brick_name] = old_entry
+            raw = migrated
             self.data["brick_migrations"] = raw
             self.save()
 
