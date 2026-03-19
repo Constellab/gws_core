@@ -258,6 +258,7 @@ class ShareScenarioTestSetup:
         new_protocol_model: ProtocolModel,
         new_source: TaskModel,
         new_move: TaskModel,
+        output_only: bool = False,
     ) -> None:
         # Check the source resource
         new_source_output = new_source.out_port(InputTask.output_name).get_resource_model()
@@ -308,7 +309,13 @@ class ShareScenarioTestSetup:
         self._tc.assertIsNotNone(new_resource_set_model)
         self._check_id(new_resource_set_model.id, initial_resource_set_model.id)
         self._tc.assertTrue(new_resource_set_model.flagged)
-        new_resource_set: ResourceSet = new_resource_set_model.get_resource()
+
+        # Retrieve resource content only for the output resource
+        new_output_process = new_protocol_model.get_process("output")
+        output_resource_set_model = new_output_process.in_port(
+            OutputTask.input_name
+        ).get_resource_model()
+        new_resource_set: ResourceSet = output_resource_set_model.get_resource()
         self._tc.assertIsInstance(new_resource_set, ResourceSet)
         self._tc.assertEqual(len(new_resource_set.get_resources()), 2)
 
@@ -355,6 +362,40 @@ class ShareScenarioTestSetup:
 
         self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
 
+        if not output_only:
+            self._assert_imported_shared_resources(
+                new_scenario,
+                new_source_output,
+                new_move_resource_1,
+                new_resource_set_model,
+                initial_resource_set_model,
+                initial_resource_set,
+                new_robot_1_model,
+                new_robot_2_model,
+            )
+        self._tc.assertTrue(
+            TaskInputModel.select()
+            .where(
+                (TaskInputModel.scenario == new_scenario.id)
+                & (TaskInputModel.task_model == new_output_process.id)
+                & (TaskInputModel.port_name == OutputTask.input_name)
+                & (TaskInputModel.resource_model == new_resource_set_model.id)
+            )
+            .exists()
+        )
+
+    def _assert_imported_shared_resources(
+        self,
+        new_scenario: Scenario,
+        new_source_output: ResourceModel,
+        new_move_resource_1: ResourceModel,
+        new_resource_set_model: ResourceModel,
+        initial_resource_set_model: ResourceModel,
+        initial_resource_set: ResourceSet,
+        new_robot_1_model: ResourceModel,
+        new_robot_2_model: ResourceModel,
+    ) -> None:
+        """Check shared scenario and resource entries."""
         # Test shared scenario and resource info
         shared_scenario = SharedScenario.get_and_check_entity_origin(new_scenario.id)
         self._tc.assertIsNotNone(shared_scenario)
@@ -385,19 +426,6 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(
             shared_resource.external_id,
             initial_resource_set.get_resource("Robot 2").get_model_id(),
-        )
-
-        # check the task input model of the output process
-        new_output_process = new_protocol_model.get_process("output")
-        self._tc.assertTrue(
-            TaskInputModel.select()
-            .where(
-                (TaskInputModel.scenario == new_scenario.id)
-                & (TaskInputModel.task_model == new_output_process.id)
-                & (TaskInputModel.port_name == OutputTask.input_name)
-                & (TaskInputModel.resource_model == new_resource_set_model.id)
-            )
-            .exists()
         )
 
     def assert_imported_outputs_only(self, new_scenario: Scenario) -> None:
@@ -463,13 +491,24 @@ class TestShareScenario(BaseTestCase):
         new_move = cast(TaskModel, new_protocol_model.get_process("move"))
         setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)
 
+        # Test output only mode
         new_scenario_outputs_only = ScenarioTransfertService.import_from_lab_sync(
             ScenarioDownloaderShareLink.build_config(
                 share_link.get_download_link(), "Outputs only", "Force new scenario"
             )
         )
+        new_protocol_model_outputs_only = new_scenario_outputs_only.protocol_model
+        new_source_outputs_only = cast(
+            TaskModel, new_protocol_model_outputs_only.get_process("source")
+        )
+        new_move_outputs_only = cast(TaskModel, new_protocol_model_outputs_only.get_process("move"))
 
-        setup.assert_imported_outputs_only(new_scenario_outputs_only)
+        setup.assert_imported_scenario(
+            new_scenario_outputs_only,
+            new_protocol_model_outputs_only,
+            new_source_outputs_only,
+            new_move_outputs_only,
+        )
 
     def test_keep_id_exists(self):
         """Test ScenarioBuilder with KEEP_ID: deletes the scenario then rebuilds it from a
@@ -532,7 +571,17 @@ class TestShareScenario(BaseTestCase):
         )
         new_scenario_outputs_only = builder_outputs.build()
         builder_outputs.fill_zip_resources(output_zip_paths)
-        setup.assert_imported_outputs_only(new_scenario_outputs_only)
+        new_protocol_model_outputs_only = new_scenario_outputs_only.protocol_model
+        new_source_outputs_only = cast(
+            TaskModel, new_protocol_model_outputs_only.get_process("source")
+        )
+        new_move_outputs_only = cast(TaskModel, new_protocol_model_outputs_only.get_process("move"))
+        setup.assert_imported_scenario(
+            new_scenario_outputs_only,
+            new_protocol_model_outputs_only,
+            new_source_outputs_only,
+            new_move_outputs_only,
+        )
 
         # Step 3: Rebuild with ALL resources without deleting the scenario.
         # KEEP_ID mode should handle the case where the scenario already exists.

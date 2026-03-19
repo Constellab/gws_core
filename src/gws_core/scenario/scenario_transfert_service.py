@@ -2,6 +2,7 @@ from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
 from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
 from gws_core.scenario.task.scenario_resource import ScenarioResource
@@ -84,8 +85,11 @@ class ScenarioTransfertService:
     def _build_export_scenario_to_lab(
         cls, scenario_id: str, values: ConfigParamsDict
     ) -> ScenarioProxy:
+        scenario_to_send = ScenarioService.get_by_id_and_check(scenario_id)
+
         # Create a scenario containing 1 scenario downloader , 1 output task
-        scenario: ScenarioProxy = ScenarioProxy(title="Send scenario")
+        title = f"Send scenario '{scenario_to_send.title}'"
+        scenario: ScenarioProxy = ScenarioProxy(title=title)
         protocol = scenario.get_protocol()
 
         # Select the scenario > Send it to the lab
@@ -101,7 +105,6 @@ class ScenarioTransfertService:
         )
 
         auto_run = values.get("auto_run", False)
-
         if auto_run:
             # When auto_run is enabled, add wait + download tasks
             wait = protocol.add_process(

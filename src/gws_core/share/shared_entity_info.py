@@ -77,15 +77,58 @@ class SharedEntityInfo(Model):
         )
 
     @classmethod
-    def create_from_lab_info(
+    def mark_as_received(
+        cls,
+        entity_id: str,
+        lab_info: ExternalLabWithUserInfo,
+        created_by: User,
+        external_id: str,
+    ) -> "SharedEntityInfo":
+        """Mark an entity as received from an external lab.
+
+        If the entity is already marked as received, return the existing record.
+        """
+        existing = cls.get_or_none(
+            (cls.entity == entity_id) & (cls.share_mode == SharedEntityMode.RECEIVED)
+        )
+        if existing is not None:
+            return existing
+
+        return cls._create_from_lab_info(
+            entity_id=entity_id,
+            mode=SharedEntityMode.RECEIVED,
+            lab_info=lab_info,
+            created_by=created_by,
+            external_id=external_id,
+        )
+
+    @classmethod
+    def mark_as_sent(
+        cls,
+        entity_id: str,
+        lab_info: ExternalLabWithUserInfo,
+        created_by: User,
+        external_id: str,
+    ) -> "SharedEntityInfo":
+        """Mark an entity as sent to an external lab."""
+        return cls._create_from_lab_info(
+            entity_id=entity_id,
+            mode=SharedEntityMode.SENT,
+            lab_info=lab_info,
+            created_by=created_by,
+            external_id=external_id,
+        )
+
+    @classmethod
+    def _create_from_lab_info(
         cls,
         entity_id: str,
         mode: SharedEntityMode,
         lab_info: ExternalLabWithUserInfo,
         created_by: User,
         external_id: str,
-    ) -> None:
-        """Method that log the resource origin for each imported resources"""
+    ) -> "SharedEntityInfo":
+        """Internal method to create a shared entity info record."""
         lab = LabModel.get_or_create_from_dto(lab_info.lab)
         user = UserService.get_or_import_user_info(lab_info.user.id)
 
@@ -97,6 +140,7 @@ class SharedEntityInfo(Model):
         shared_entity.created_by = created_by
         shared_entity.external_id = external_id
         shared_entity.save()
+        return shared_entity
 
     def to_dto(self) -> ShareEntityInfoDTO:
         return ShareEntityInfoDTO(

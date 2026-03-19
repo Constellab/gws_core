@@ -26,7 +26,6 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_search_builder import ScenarioSearchBuilder
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.shared_dto import (
-    SharedEntityMode,
     ShareLinkEntityType,
     ShareResourceInfoReponseDTO,
     ShareResourceZippedResponseDTO,
@@ -94,9 +93,8 @@ class ShareService:
         ):
             return
 
-        share_entity_info.create_from_lab_info(
+        share_entity_info.mark_as_sent(
             shared_entity_link.entity_id,
-            SharedEntityMode.SENT,
             receiver_lab,
             shared_entity_link.created_by,
             external_id=external_id,

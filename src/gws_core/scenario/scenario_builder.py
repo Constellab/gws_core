@@ -14,7 +14,7 @@ from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_id_mapper import ScenarioIdMapper
 from gws_core.scenario.scenario_loader import ScenarioLoader
 from gws_core.scenario.scenario_zipper import ScenarioExportPackage
-from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
+from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag
@@ -246,9 +246,8 @@ class ScenarioBuilder:
 
         # Create the shared entity info
         self._log_info("Storing the scenario origin info")
-        SharedScenario.create_from_lab_info(
+        SharedScenario.mark_as_received(
             scenario.id,
-            SharedEntityMode.RECEIVED,
             self._origin,
             CurrentUserService.get_and_check_current_user(),
             external_id=self._scenario_info.scenario.id,
