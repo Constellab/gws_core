@@ -261,6 +261,10 @@ class ShareResourceTestSetup:
         shared_resource_info = SharedResource.get_and_check_entity_origin(new_resource_model.id)
         self._tc.assertEqual(shared_resource_info.external_id, self.original_resource_model.id)
 
+        # It should also be marked as sent
+        # shared_resource_sent = SharedResource.get_sents(new_resource_model.id).count()
+        # self._tc.assertEqual(shared_resource_sent, 1)
+
     def setup_and_import_file_resource(self) -> ResourceModel:
         """Create a file resource, zip it, optionally delete original, and import via ResourceBuilder."""
         file = get_file()

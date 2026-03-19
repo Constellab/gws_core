@@ -19,7 +19,7 @@ from ..brick_migrator import BrickMigration
 @brick_migration(
     "0.21.0",
     short_description="Migrate SharedResource and SharedScenario to use LabModel and User. "
-    "Add run_by_lab column to TaskModel and ProtocolModel.",
+    "Add run_by_lab column to TaskModel and ProtocolModel. Refactor queue tables.",
 )
 class Migration0210(BrickMigration):
     @classmethod
@@ -160,20 +160,3 @@ class Migration0210(BrickMigration):
         # Add FK constraints on lab_id and user_id
         shared_model.create_foreign_key_if_not_exist(shared_model.lab)
         shared_model.create_foreign_key_if_not_exist(shared_model.user)
-
-
-@brick_migration(
-    "0.21.1",
-    short_description="Remove Queue singleton table, simplify Job model",
-    authenticate_sys_user=False,
-)
-class Migration0211(BrickMigration):
-    @classmethod
-    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
-        # Only run column drop if the Job table already exists (skip on fresh DB)
-        if Job.table_exists():
-            sql_migrator.drop_column_if_exists(Job, "queue_id")
-            sql_migrator.migrate()
-
-        # Drop the Queue table
-        Job.execute_sql("DROP TABLE IF EXISTS gws_queue")

@@ -1,4 +1,4 @@
-from peewee import CharField, ForeignKeyField
+from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -68,7 +68,7 @@ class SharedEntityInfo(Model):
         )
 
     @classmethod
-    def get_sents(cls, entity_id: str) -> "SharedEntityInfo":
+    def get_sents(cls, entity_id: str) -> ModelSelect:
         """Method that return the receivers of the entity"""
         return (
             cls.select()

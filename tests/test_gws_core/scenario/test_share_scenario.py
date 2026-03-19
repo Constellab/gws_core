@@ -360,9 +360,32 @@ class ShareScenarioTestSetup:
         self._tc.assertIsNotNone(shared_scenario)
         self._tc.assertEqual(shared_scenario.external_id, self.initial_scenario_model.id)
 
+        # Check that all resources have a SharedResource entry with the correct external_id
         shared_resource = SharedResource.get_and_check_entity_origin(new_source_output.id)
         self._tc.assertIsNotNone(shared_resource)
         self._tc.assertEqual(shared_resource.external_id, self.get_initial_source_resource().id)
+
+        shared_resource = SharedResource.get_and_check_entity_origin(new_move_resource_1.id)
+        self._tc.assertIsNotNone(shared_resource)
+        self._tc.assertEqual(shared_resource.external_id, self.get_initial_move_resource().id)
+
+        shared_resource = SharedResource.get_and_check_entity_origin(new_resource_set_model.id)
+        self._tc.assertIsNotNone(shared_resource)
+        self._tc.assertEqual(shared_resource.external_id, initial_resource_set_model.id)
+
+        shared_resource = SharedResource.get_and_check_entity_origin(new_robot_1_model.id)
+        self._tc.assertIsNotNone(shared_resource)
+        self._tc.assertEqual(
+            shared_resource.external_id,
+            initial_resource_set.get_resource("Robot 1").get_model_id(),
+        )
+
+        shared_resource = SharedResource.get_and_check_entity_origin(new_robot_2_model.id)
+        self._tc.assertIsNotNone(shared_resource)
+        self._tc.assertEqual(
+            shared_resource.external_id,
+            initial_resource_set.get_resource("Robot 2").get_model_id(),
+        )
 
         # check the task input model of the output process
         new_output_process = new_protocol_model.get_process("output")

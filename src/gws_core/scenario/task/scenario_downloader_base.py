@@ -131,10 +131,10 @@ class ScenarioDownloaderBase(Task):
         for resource_id in resource_ids:
             sub_dispatcher = message_dispatcher.create_sub_dispatcher(prefix=f"[Resource n°{i}] ")
 
-            # In KEEP_ID mode skip download if the resource is already in the DB
+            # In KEEP_ID mode skip download if the resource is already in the DB and has content
             if create_mode == ShareEntityCreateMode.KEEP_ID:
                 resource_model = ResourceModel.get_by_id(resource_id)
-                if resource_model:
+                if resource_model and not resource_model.content_is_deleted:
                     sub_dispatcher.notify_info_message(
                         f"Resource with id '{resource_id}' already exists in the current lab, skipping the download"
                     )
