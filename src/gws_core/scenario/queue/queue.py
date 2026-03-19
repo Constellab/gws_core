@@ -1,118 +1,15 @@
 from typing import Optional, Union
 
-from peewee import BooleanField, ForeignKeyField, IntegerField, ModelSelect
+from peewee import ForeignKeyField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions import BadRequestException
 from gws_core.core.model.model import Model
-from gws_core.core.utils.logger import Logger
 from gws_core.scenario.queue.queue_dto import JobDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.user.user import User
 
-
-class Queue(Model):
-    """
-    Singleton Class representing scenario queue
-
-    :property is_active: True is the queue is active; False otherwise. Defaults to False.
-    The queue is automatically set to True on init.
-    :type is_active: `bool`
-    :property max_length: The maximum length of the queue. Defaults to 10.
-    :type max_length: `int`
-    """
-
-    is_active = BooleanField(default=False)
-    max_length = IntegerField(default=10)
-
-    @classmethod
-    def get_current_queue(cls) -> Optional["Queue"]:
-        return Queue.select().first()
-
-    @classmethod
-    @GwsCoreDbManager.transaction(nested_transaction=True)  # force new transaction to commit anyway
-    def _get_or_create_instance(cls) -> "Queue":
-        queue = Queue.select().first()
-        if queue is not None:
-            return queue
-        return Queue().save()
-
-    @classmethod
-    def init(cls) -> "Queue":
-        queue = cls._get_or_create_instance()
-        if not queue.is_active:
-            queue.is_active = True
-            queue.save()
-            Logger.info("The queue is initialized and active")
-
-        return queue
-
-    @classmethod
-    def deinit(cls):
-        if not cls.table_exists():
-            return
-        queue = cls.get_current_queue()
-
-        if queue is not None:
-            cls.delete_by_id(queue.id)
-
-    @classmethod
-    @GwsCoreDbManager.transaction(
-        nested_transaction=True
-    )  # use nested to prevent transaction block in queue tick (from parent call)
-    def add_job(cls, user: User, scenario: Scenario) -> "Queue":
-        if Job.scenario_in_queue(scenario.id):
-            raise BadRequestException("The scenario already is in the queue")
-
-        queue = cls._get_or_create_instance()
-        if Job.count_scenario_in_queue(queue.id) > queue.max_length:
-            raise BadRequestException("The maximum number of jobs is reached")
-
-        scenario.mark_as_in_queue()
-        job = Job(user=user, scenario=scenario, queue=queue)
-        job.save()
-
-        return queue
-
-    @classmethod
-    @GwsCoreDbManager.transaction(
-        nested_transaction=True
-    )  # use nested to prevent transaction block in queue tick (from parent call)
-    def remove_scenario(cls, scenario_id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
-
-        if scenario.status != scenario.status.IN_QUEUE:
-            raise BadRequestException("The scenario does not have the queued status")
-
-        scenario.mark_as_draft()
-        Job.remove_scenario_from_queue(scenario_id)
-        return scenario
-
-    @classmethod
-    def length(cls) -> int:
-        return Job.select().count()
-
-    @classmethod
-    def pop_first(cls) -> Optional["Job"]:
-        queue = cls.get_current_queue()
-
-        if not queue:
-            return None
-
-        return Job.pop_first_job(queue.id)
-
-    @classmethod
-    def get_jobs(cls) -> list["Job"]:
-        queue = cls.get_current_queue()
-
-        if not queue:
-            return []
-
-        return Job.get_queue_jobs(queue.id)
-
-    class Meta:
-        table_name = "gws_queue"
-        is_table = True
+MAX_QUEUE_LENGTH = 10
 
 
 class Job(Model):
@@ -127,39 +24,70 @@ class Job(Model):
 
     user: User = ForeignKeyField(User, null=False, backref="+")
     scenario: Scenario = ForeignKeyField(Scenario, null=False, backref="+", unique=True)
-    queue: Queue = ForeignKeyField(Queue, null=False, backref="+")
 
     @classmethod
-    def pop_first_job(cls, queue_id: str) -> Union["Job", None]:
-        job = cls.get_first_job(queue_id)
+    @GwsCoreDbManager.transaction(
+        nested_transaction=True
+    )  # use nested to prevent transaction block in queue tick (from parent call)
+    def add_job(cls, user: User, scenario: Scenario) -> "Job":
+        """Validate and add a job to the queue."""
+        if cls.scenario_in_queue(scenario.id):
+            raise BadRequestException("The scenario already is in the queue")
 
-        if job is not None:
-            cls.delete_by_id(job.id)
+        if cls.queue_length() >= MAX_QUEUE_LENGTH:
+            raise BadRequestException("The maximum number of jobs is reached")
+
+        scenario.mark_as_in_queue()
+        job = Job(user=user, scenario=scenario)
+        job.save()
 
         return job
 
     @classmethod
-    def get_first_job(cls, queue_id: str) -> Union["Job", None]:
-        return cls._get_job_in_orders(queue_id).first()
+    @GwsCoreDbManager.transaction(
+        nested_transaction=True
+    )  # use nested to prevent transaction block in queue tick (from parent call)
+    def remove_scenario(cls, scenario_id: str) -> Scenario:
+        """Remove a scenario from the queue and reset to DRAFT."""
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
+
+        if scenario.status != scenario.status.IN_QUEUE:
+            raise BadRequestException("The scenario does not have the queued status")
+
+        scenario.mark_as_draft()
+        cls.remove_scenario_from_queue(scenario_id)
+        return scenario
 
     @classmethod
-    def get_queue_jobs(cls, queue_id: str) -> list["Job"]:
-        return list(cls._get_job_in_orders(queue_id))
+    def pop_first(cls) -> Optional["Job"]:
+        """Pop the first job from the queue."""
+        job = cls._get_jobs_in_order().first()
+        if job is not None:
+            cls.delete_by_id(job.id)
+        return job
 
     @classmethod
-    def _get_job_in_orders(cls, queue_id: str) -> ModelSelect:
-        return Job.select().where(cls.queue == queue_id).order_by(cls.created_at.asc())
+    def get_all_jobs(cls) -> list["Job"]:
+        """Get all jobs in the queue ordered by creation time."""
+        return list(cls._get_jobs_in_order())
 
     @classmethod
-    def count_scenario_in_queue(cls, queue_id: str) -> int:
-        return Job.select().where(cls.queue == queue_id).count()
+    def _get_jobs_in_order(cls) -> ModelSelect:
+        return Job.select().order_by(cls.created_at.asc())
+
+    @classmethod
+    def queue_length(cls) -> int:
+        """Get the number of jobs in the queue."""
+        return Job.select().count()
 
     @classmethod
     def scenario_in_queue(cls, scenario_id: str) -> bool:
+        """Check if a scenario is already in the queue."""
         return Job.select().where(cls.scenario == scenario_id).count() > 0
 
     @classmethod
     def remove_scenario_from_queue(cls, scenario_id: str) -> None:
+        """Remove a scenario's job entry from the queue."""
         return Job.delete().where(cls.scenario == scenario_id).execute()
 
     def to_dto(self) -> JobDTO:

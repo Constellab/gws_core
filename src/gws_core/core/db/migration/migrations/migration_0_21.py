@@ -4,6 +4,7 @@ from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.scenario.queue.queue import Job
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.task_model import TaskModel
@@ -25,6 +26,14 @@ class Migration0210(BrickMigration):
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
 
         LabModel.create_table()
+
+        # Only run column drop if the Job table already exists (skip on fresh DB)
+        if Job.table_exists():
+            sql_migrator.drop_column_if_exists(Job, "queue_id")
+            sql_migrator.migrate()
+
+        # Drop the Queue table
+        Job.execute_sql("DROP TABLE IF EXISTS gws_queue")
 
         # Migrate data and drop old columns for both shared tables
         for shared_model in [SharedResource, SharedScenario]:
@@ -151,3 +160,20 @@ class Migration0210(BrickMigration):
         # Add FK constraints on lab_id and user_id
         shared_model.create_foreign_key_if_not_exist(shared_model.lab)
         shared_model.create_foreign_key_if_not_exist(shared_model.user)
+
+
+@brick_migration(
+    "0.21.1",
+    short_description="Remove Queue singleton table, simplify Job model",
+    authenticate_sys_user=False,
+)
+class Migration0211(BrickMigration):
+    @classmethod
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        # Only run column drop if the Job table already exists (skip on fresh DB)
+        if Job.table_exists():
+            sql_migrator.drop_column_if_exists(Job, "queue_id")
+            sql_migrator.migrate()
+
+        # Drop the Queue table
+        Job.execute_sql("DROP TABLE IF EXISTS gws_queue")

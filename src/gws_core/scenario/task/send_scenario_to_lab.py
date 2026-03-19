@@ -126,31 +126,37 @@ class SendScenarioToLab(Task):
                 f"Import of scenario started, follow progress in destination lab : {response.scenario_url}"
             )
 
-            scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, response.scenario.id)
+            # This waits for the import scenario to finish
+            import_scenario_waiter = ScenarioWaiterExternalLab(
+                external_lab_service, response.scenario.id
+            )
 
             # refresh every 30 seconds, max 2 hours
-            scenario_info = scenario_waiter.wait_until_finished(
+            import_scenario_info = import_scenario_waiter.wait_until_finished(
                 refresh_interval=30,
                 refresh_interval_max_count=240,
                 message_dispatcher=self.message_dispatcher,
             )
 
-            if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
+            if import_scenario_info.scenario.status != ScenarioStatus.SUCCESS:
                 error = (
-                    scenario_info.progress.last_message.text
-                    if scenario_info.progress and scenario_info.progress.has_last_message()
+                    import_scenario_info.progress.last_message.text
+                    if import_scenario_info.progress
+                    and import_scenario_info.progress.has_last_message()
                     else "Unknown error"
                 )
                 raise Exception(
-                    f"Export scenario to lab failed, status: {scenario_info.scenario.status}. Error details: {error}"
+                    f"Export scenario to lab failed, status: {import_scenario_info.scenario.status}. Error details: {error}"
                 )
 
             return {"scenario": scenario_resource}
-        finally:
+        except Exception as err:
             if auto_run:
-                # When auto_run, downstream WaitExternalScenario handles unmarking
+                # When auto_run, only unmark as running if there is an error
+                # the next task (WaitExternalScenario) is responsible for unmarking when the scenario finishes running in the external lab
                 scenario = scenario.refresh()
                 scenario.unmark_running_in_external_lab()
+            raise err
 
     @classmethod
     def build_config(

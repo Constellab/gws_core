@@ -1,4 +1,4 @@
-from gws_core.scenario.queue.queue_service import QueueService
+from gws_core.scenario.queue.queue_runner import QueueRunner
 
 from .base_test_case_light import BaseTestCaseLight
 from .test_helper import TestHelper
@@ -19,6 +19,6 @@ class BaseTestCase(BaseTestCaseLight):
 
     @classmethod
     def clear_after_test(cls):
-        QueueService.deinit()
+        QueueRunner.deinit()
         TestHelper.drop_tables()
         TestHelper.delete_data_and_temp_folder()

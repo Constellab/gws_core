@@ -526,7 +526,7 @@ from .resource.view_config.view_config import ViewConfig as ViewConfig
 
 # Scenario
 from .scenario.queue.queue import Job as Job
-from .scenario.queue.queue import Queue as Queue
+from .scenario.queue.queue_runner import QueueRunner as QueueRunner
 from .scenario.queue.queue_service import QueueService as QueueService
 from .scenario.scenario import Scenario as Scenario
 from .scenario.scenario_dto import ScenarioSaveDTO as ScenarioSaveDTO

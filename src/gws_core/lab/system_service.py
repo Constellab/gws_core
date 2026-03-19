@@ -25,7 +25,7 @@ from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.scenario.queue.queue_service import QueueService
+from gws_core.scenario.queue.queue_runner import QueueRunner
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
@@ -108,7 +108,7 @@ class SystemService:
         MonitorService.init()
 
         try:
-            QueueService.init(daemon=True)
+            QueueRunner.init(daemon=True)
         except Exception as err:
             Logger.error(f"[SystemService] Error while initializing the queue: {err}")
             Logger.log_exception_stack_trace(err)
@@ -154,7 +154,7 @@ class SystemService:
     @classmethod
     def deinit_queue_and_monitor(cls) -> None:
         MonitorService.deinit()
-        QueueService.deinit()
+        QueueRunner.deinit()
         TriggeredJobScheduler.stop()
 
     @classmethod

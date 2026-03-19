@@ -1,113 +1,27 @@
-import threading
-
 from gws_core.core.exception.exceptions import BadRequestException, NotFoundException
-from gws_core.core.model.sys_proc import SysProc
-from gws_core.core.utils.logger import Logger
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
-from gws_core.scenario.queue.queue import Job, Queue
+from gws_core.scenario.queue.queue import Job
+from gws_core.scenario.queue.queue_runner import QueueRunner
 from gws_core.scenario.scenario import Scenario, ScenarioStatus
-from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.user.current_user_service import AuthenticateUser, CurrentUserService
-from gws_core.user.user import User
-
-TICK_INTERVAL_SECONDS = 60  # 60 sec
+from gws_core.user.current_user_service import CurrentUserService
 
 
 class QueueService:
-    # Bool to true during the tick method (used to prevent concurrent ticks)
-    tick_is_running: bool = False
-    # True if this process owns the queue tick loop and is responsible for running scenarios
-    is_queue_runner = False
+    """Pure queue operations service.
 
-    @classmethod
-    def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, daemon=False) -> None:
-        queue: Queue = Queue.init()
-        if not cls.is_queue_runner or not queue.is_active:
-            cls._queue_tick(tick_interval, daemon)
-        cls.is_queue_runner = True
-
-    @classmethod
-    def deinit(cls) -> None:
-        if not cls.is_queue_runner:
-            return
-        Queue.deinit()
-        cls.is_queue_runner = False
-
-    @classmethod
-    def _queue_tick(cls, tick_interval, daemon):
-        queue = Queue.get_current_queue()
-        if not queue or not queue.is_active:
-            return
-        try:
-            cls._tick()
-        finally:
-            thread = threading.Timer(tick_interval, cls._queue_tick, [tick_interval, daemon])
-            thread.daemon = daemon
-            thread.start()
-
-    @classmethod
-    def _tick(cls):
-        """Method called a each tick to run scenario from the queue
-
-        :param verbose: [description], defaults to False
-        :type verbose: bool, optional
-        """
-        if cls.tick_is_running:
-            Logger.debug("Skipping queue tick, because previous one is running")
-            return
-
-        cls.tick_is_running = True
-
-        try:
-            cls._check_and_run_queue()
-        finally:
-            cls.tick_is_running = False
-
-    @classmethod
-    def _check_and_run_queue(cls):
-        """Get the first scenario from the queue and run it if possible
-
-        :param verbose: [description]
-        :type verbose: [type]
-        :raises BadRequestException: [description]
-        """
-        Logger.debug("Checking scenario queue ...")
-        if Scenario.count_running_scenarios() > 0:
-            # -> busy: we will test later!
-            Logger.debug("The lab is busy! Retry later")
-            return
-
-        job = Queue.pop_first()
-        if not job:
-            return
-
-        # tester que l'scenario est bien à jour
-        scenario: Scenario = job.scenario
-
-        Logger.debug(f"Scenario {scenario.id}, is_running = {scenario.is_running}")
-
-        try:
-            with AuthenticateUser(job.user):
-                sproc = ScenarioRunService.create_cli_for_scenario(scenario=scenario, user=job.user)
-
-            if sproc:
-                # wait for the scenario to finish in a separate thread
-                thread = threading.Thread(target=cls._wait_scenario_finish, args=(sproc,))
-                thread.start()
-        except Exception as err:
-            Logger.error(f"An error occured while runnig the scenario. Error: {err}.")
-            raise err
+    Handles adding/removing jobs. Can be called from any process (main or sub).
+    No process awareness, no tick loop, no threading.
+    """
 
     @classmethod
     def add_scenario_to_queue(cls, scenario_id: str) -> Scenario:
-        """Add the scenario to the queue and run it when ready
+        """Validate and add scenario to queue.
 
-
-        :param id: [description]
-        :type id: [type]
-        :raises NotFoundException: [description]
-        :raises BadRequestException: [description]
-        :return: [description]
+        :param scenario_id: The scenario id to add to the queue
+        :type scenario_id: str
+        :raises NotFoundException: If scenario not found
+        :raises BadRequestException: If scenario is already running or in queue
+        :return: The scenario
         :rtype: Scenario
         """
 
@@ -130,30 +44,24 @@ class QueueService:
         EntityNavigatorService.reset_error_processes_of_protocol(scenario.protocol_model)
 
         user = CurrentUserService.get_and_check_current_user()
-        cls._add_job(user=user, scenario=scenario, auto_start=True)
+        Job.add_job(user=user, scenario=scenario)
+
+        # Try to run immediately instead of waiting for the next tick
+        QueueRunner.try_run_next()
+
         return scenario
 
     @classmethod
-    def _add_job(cls, user: User, scenario: Scenario, auto_start: bool = False):
-        queue: Queue = Queue.add_job(user=user, scenario=scenario)
-        if auto_start and cls.is_queue_runner and queue.is_active and not Scenario.count_running_scenarios():
-            # manually trigger the scenario if possible
-            cls._tick()
+    def remove_scenario_from_queue(cls, scenario_id: str) -> Scenario:
+        """Remove scenario from queue and reset to DRAFT."""
+        return Job.remove_scenario(scenario_id)
 
     @classmethod
     def get_queue_jobs(cls) -> list[Job]:
-        return Queue.get_jobs()
-
-    @classmethod
-    def _wait_scenario_finish(cls, proc: SysProc):
-        proc.wait()
-        # force a tick to run the next scenario if possible
-        cls._tick()
+        """Get all jobs in queue."""
+        return Job.get_all_jobs()
 
     @classmethod
     def scenario_is_in_queue(cls, scenario_id: str) -> bool:
+        """Check if scenario is in queue."""
         return Job.scenario_in_queue(scenario_id)
-
-    @classmethod
-    def remove_scenario_from_queue(cls, scenario_id: str) -> Scenario:
-        return Queue.remove_scenario(scenario_id)
