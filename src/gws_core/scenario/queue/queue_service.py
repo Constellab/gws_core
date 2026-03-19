@@ -16,21 +16,22 @@ TICK_INTERVAL_SECONDS = 60  # 60 sec
 class QueueService:
     # Bool to true during the tick method (used to prevent concurrent ticks)
     tick_is_running: bool = False
-    is_init = False
+    # True if this process owns the queue tick loop and is responsible for running scenarios
+    is_queue_runner = False
 
     @classmethod
     def init(cls, tick_interval: int = TICK_INTERVAL_SECONDS, daemon=False) -> None:
         queue: Queue = Queue.init()
-        if not cls.is_init or not queue.is_active:
+        if not cls.is_queue_runner or not queue.is_active:
             cls._queue_tick(tick_interval, daemon)
-        cls.is_init = True
+        cls.is_queue_runner = True
 
     @classmethod
     def deinit(cls) -> None:
-        if not cls.is_init:
+        if not cls.is_queue_runner:
             return
         Queue.deinit()
-        cls.is_init = False
+        cls.is_queue_runner = False
 
     @classmethod
     def _queue_tick(cls, tick_interval, daemon):
@@ -135,13 +136,9 @@ class QueueService:
     @classmethod
     def _add_job(cls, user: User, scenario: Scenario, auto_start: bool = False):
         queue: Queue = Queue.add_job(user=user, scenario=scenario)
-        if auto_start:
-            if queue.is_active:
-                # > manally trigger the scenario if possible!
-                if not Scenario.count_running_scenarios():
-                    cls._tick()
-            else:
-                cls.init()
+        if auto_start and cls.is_queue_runner and queue.is_active and not Scenario.count_running_scenarios():
+            # manually trigger the scenario if possible
+            cls._tick()
 
     @classmethod
     def get_queue_jobs(cls) -> list[Job]:

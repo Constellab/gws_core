@@ -52,22 +52,10 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
                 "Invalid link, are you sure this a link of a share scenario from a lab ?"
             )
 
-        # verify that param are correct if we auto run
-        auto_run = params["auto_run"]
-        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
-        # If we auto run we need to download input resource or all resource
-        if auto_run and resource_mode not in ["Inputs only", "All"]:
-            raise Exception("Auto run requires downloading input resources or all resources.")
-
         self._link = link
         self.share_entity = self._get_scenario_info()
 
         scenario = self._build_and_download_scenario(params, self.share_entity)
-
-        if auto_run:
-            self.log_info_message("Auto running the scenario")
-            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
-            scenario_proxy.add_to_queue()
 
         return {"scenario": ScenarioResource(scenario.id)}
 

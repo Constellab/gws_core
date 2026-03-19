@@ -14,6 +14,7 @@ from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_builder import ScenarioBuilder
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.shared_dto import (
     ShareEntityCreateMode,
@@ -170,6 +171,13 @@ class ScenarioDownloaderBase(Task):
 
         Returns the built Scenario model.
         """
+        auto_run = params["auto_run"]
+        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
+
+        # If we auto run we need to download input resource or all resource
+        if auto_run and resource_mode not in ["Inputs only", "Inputs and outputs", "All"]:
+            raise Exception("Auto run requires downloading input resources or all resources.")
+
         create_option = params["create_option"]
         create_mode: ShareEntityCreateMode = (
             ShareEntityCreateMode.NEW_ID
@@ -210,7 +218,6 @@ class ScenarioDownloaderBase(Task):
         scenario = self._builder.build()
 
         # Download and fill resource content after the scenario is built
-        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
         resource_ids = self._get_resource_to_download(
             scenario_info.protocol.data.graph, resource_mode
         )
@@ -224,5 +231,10 @@ class ScenarioDownloaderBase(Task):
         self._builder.fill_zip_resources(zip_paths)
 
         self._built_scenario_id = scenario.id
+
+        if auto_run:
+            self.log_info_message("Auto running the scenario")
+            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
+            scenario_proxy.add_to_queue()
 
         return scenario

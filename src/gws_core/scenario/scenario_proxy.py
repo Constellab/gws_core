@@ -152,7 +152,6 @@ class ScenarioProxy:
         return ScenarioWaiterBasic(self._scenario.id)
 
     def add_to_queue(self) -> None:
-
         QueueService.add_scenario_to_queue(self._scenario.id)
 
     def stop(self) -> None:

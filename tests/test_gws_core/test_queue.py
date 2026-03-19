@@ -37,7 +37,7 @@ class TestQueue(BaseTestCase):
 
     def test_queue_run(self):
         # init the ticking, tick each second
-        QueueService.init(tick_interval=3)
+        QueueService.init(tick_interval=3, daemon=True)
 
         scenario2: Scenario = ScenarioService.create_scenario_from_protocol_type(RobotSimpleTravel)
 
@@ -54,6 +54,31 @@ class TestQueue(BaseTestCase):
         scenario3 = scenario3.refresh()
         self.assertEqual(scenario2.status, ScenarioStatus.SUCCESS)
         self.assertEqual(scenario3.status, ScenarioStatus.SUCCESS)
+
+        # Stop the tick loop to prevent background threads from querying dropped tables
+        QueueService.deinit()
+
+    def test_add_job_without_queue_runner(self):
+        """Test that adding a job when this process is not the queue runner
+        only adds the job to the DB without triggering execution.
+        """
+        # Ensure the queue service is not the queue runner
+        QueueService.is_queue_runner = False
+
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_type(RobotSimpleTravel)
+
+        QueueService._add_job(user=TestHelper.user, scenario=scenario, auto_start=True)
+
+        # The job should be in the queue DB
+        self.assertEqual(Queue.length(), 1)
+        self.assertTrue(QueueService.scenario_is_in_queue(scenario.id))
+
+        # The scenario should be marked as in queue, not running or success
+        scenario = scenario.refresh()
+        self.assertEqual(scenario.status, ScenarioStatus.IN_QUEUE)
+
+        # Clean up
+        Queue.remove_scenario(scenario.id)
 
     def _wait_for_scenarios(self) -> None:
         wait_count = 0

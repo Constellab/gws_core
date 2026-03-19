@@ -1,5 +1,6 @@
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
@@ -60,11 +61,13 @@ class ScenarioWaiterTask(Task):
         scenario_id = scenario_resource.scenario_id
 
         lab_dto: LabDTOWithCredentials = params.get_value("lab")
-        user_id = CurrentUserService.get_and_check_current_user().id
 
         self.log_info_message(f"Waiting for scenario '{scenario_id}' to finish in external lab")
 
-        scenario_waiter = ScenarioWaiterExternalLab(scenario_id, lab_dto, user_id)
+        external_lab_service = ExternalLabApiService(
+            lab_dto, CurrentUserService.get_and_check_current_user().id
+        )
+        scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, scenario_id)
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(
