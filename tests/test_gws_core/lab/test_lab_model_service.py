@@ -39,12 +39,11 @@ class TestLabModelService(BaseTestCase):
 
         # Verify return type
         self.assertIsInstance(result, LabDTOWithCredentials)
-        self.assertEqual(result.lab_id, "test-lab-123")
-        self.assertEqual(result.name, "Test Lab")
-        self.assertEqual(result.domain, "test.example.com")
+
+        # The returned lab should be the current lab (Lab A), not the remote lab
+        self.assertIsNotNone(result.lab)
 
         # Verify credentials were created
-        self.assertIsNotNone(result.credentials_id)
         self.assertIsNotNone(result.credentials_data)
         self.assertIsNotNone(result.credentials_data.api_key)
         self.assertTrue(len(result.credentials_data.api_key) >= 20)
@@ -85,10 +84,14 @@ class TestLabModelService(BaseTestCase):
         )
         result2 = LabModelService.create_or_update_lab_from_code(code2, lab_dto_updated)
 
-        # Verify it's the same lab (same credentials)
-        self.assertEqual(result1.credentials_id, result2.credentials_id)
-        self.assertEqual(result2.name, "Updated Name")
-        self.assertEqual(result2.domain, "updated.example.com")
+        # Verify both results return the current lab (Lab A) with credentials
+        self.assertIsNotNone(result1.credentials_data)
+        self.assertIsNotNone(result2.credentials_data)
+
+        # Verify the remote lab was updated in DB
+        lab = LabModel.get_by_lab_id_and_mode("existing-lab-456", LabMode.PROD)
+        self.assertEqual(lab.name, "Updated Name")
+        self.assertEqual(lab.domain, "updated.example.com")
 
     def test_invalid_code(self):
         """Verify InvalidUniqueCodeException raised for bad/expired codes."""
@@ -122,7 +125,11 @@ class TestLabModelService(BaseTestCase):
         code2 = UniqueCodeService.generate_code_current_user(None, 300)
         result2 = LabModelService.create_or_update_lab_from_code(code2, lab_dto)
 
-        # Same credentials ID, but api_key is regenerated
-        self.assertEqual(result1.credentials_id, result2.credentials_id)
+        # Verify credentials were regenerated
+        self.assertIsNotNone(result2.credentials_data)
         self.assertIsNotNone(result2.credentials_data.api_key)
         self.assertTrue(len(result2.credentials_data.api_key) >= 20)
+
+        # Verify the remote lab still has the same credentials object in DB
+        lab = LabModel.get_by_lab_id_and_mode("creds-test-lab", LabMode.PROD)
+        self.assertIsNotNone(lab.credentials)

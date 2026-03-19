@@ -1,5 +1,3 @@
-from urllib.parse import parse_qs, urlparse
-
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
 from gws_core.core.service.external_api_service import ExternalApiService
@@ -8,12 +6,11 @@ from gws_core.core.utils.string_helper import StringHelper
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (
-    CredentialsDataBase,
     CredentialsDataLab,
     CredentialsType,
     SaveCredentialsDTO,
 )
-from gws_core.lab.lab_model.lab_dto import CreateLabFromCodeDTO, LabDTO, LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.lab.lab_model.lab_model_search_builder import LabModelSearchBuilder
 from gws_core.user.current_user_service import AuthenticateUser
@@ -60,7 +57,7 @@ class LabModelService:
         lab_with_creds = LabDTOWithCredentials.from_json(response.json())
 
         return cls._create_or_update_lab_with_credentials(
-            lab_with_creds, lab_with_creds.credentials_data
+            lab_with_creds.lab, lab_with_creds.credentials_data
         ).to_dto()
 
     @classmethod
@@ -83,8 +80,16 @@ class LabModelService:
         user = User.get_by_id_and_check(code_object.user_id)
 
         with AuthenticateUser(user):
-            # Create or update the lab and its credentials
-            return cls._create_or_update_lab_with_credentials(lab_dto).to_dto_with_credentials()
+            # Create or update the remote lab (Lab B) and its credentials on this lab (Lab A)
+            remote_lab = cls._create_or_update_lab_with_credentials(lab_dto)
+
+            # Return this lab's (Lab A) info with the credentials that the remote lab (Lab B)
+            # should use to communicate with this lab
+            current_lab = LabModel.get_or_create_current_lab()
+            return LabDTOWithCredentials(
+                lab=current_lab.to_dto(),
+                credentials_data=remote_lab.get_credentials_data(),
+            )
 
     @classmethod
     def _create_or_update_lab_with_credentials(

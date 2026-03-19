@@ -4,8 +4,10 @@ from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.model.model import Model
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
+from gws_core.credentials.credentials_type import CredentialsDataLab
 from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 
@@ -21,7 +23,9 @@ class LabModel(Model):
     domain: str | None = CharField(null=True)
     space_id: str | None = CharField(null=True)
     space_name: str | None = CharField(null=True)
-    credentials: Credentials | None = ForeignKeyField(Credentials, null=True, backref="+")
+    credentials: Credentials | None = ForeignKeyField(
+        Credentials, null=True, backref="+", on_delete="SET NULL"
+    )
 
     class Meta:
         table_name = "gws_lab"
@@ -30,7 +34,7 @@ class LabModel(Model):
 
     def has_credentials(self) -> bool:
         """Check if the lab has credentials data."""
-        return self.credentials is not None and self.credentials.get_data_object() is not None
+        return self.get_credentials_data() is not None
 
     def check_credentials_and_domain(self) -> None:
         """Check that the lab has credentials and domain configured for external communication."""
@@ -46,6 +50,18 @@ class LabModel(Model):
                 GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
                 {"lab_name": self.name},
             )
+
+    def get_credentials_data(self) -> CredentialsDataLab | None:
+        """Get the lab's credentials data as a CredentialsDataLab object, or None if not available."""
+        if not self.credentials:
+            return None
+        data_object = self.credentials.get_data_object()
+        if not isinstance(data_object, CredentialsDataLab):
+            Logger.error(
+                f"Lab {self.name} has credentials with invalid data type: expected CredentialsDataLab, got {type(data_object)}"
+            )
+            return None
+        return data_object
 
     def to_dto(self) -> LabDTO:
         """Convert the model to a DTO."""
@@ -64,21 +80,9 @@ class LabModel(Model):
 
     def to_dto_with_credentials(self) -> LabDTOWithCredentials:
         """Convert the model to a DTO with resolved credentials data."""
-        credentials_data = None
-        if self.credentials:
-            credentials_data = self.credentials.get_data_object()
         return LabDTOWithCredentials(
-            id=self.id,
-            lab_id=self.lab_id,
-            name=self.name,
-            is_current_lab=self.is_current_lab,
-            mode=self.mode,
-            environment=self.environment,
-            domain=self.domain,
-            space_id=self.space_id,
-            space_name=self.space_name,
-            credentials_id=self.credentials.id if self.credentials else None,
-            credentials_data=credentials_data,
+            lab=self.to_dto(),
+            credentials_data=self.get_credentials_data(),
         )
 
     @classmethod

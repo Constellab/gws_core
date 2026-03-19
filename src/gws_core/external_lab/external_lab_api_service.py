@@ -34,7 +34,7 @@ class ExternalLabApiService:
             raise BadRequestException(
                 GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
                 GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
-                {"lab_name": lab_dto.name},
+                {"lab_name": lab_dto.lab.name},
             )
         self._lab_dto = lab_dto
         if user_id is None:
@@ -114,7 +114,7 @@ class ExternalLabApiService:
         """
         if Settings.get_instance().is_test:
             return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
-        api_url = self._lab_dto.get_api_url()
+        api_url = self._lab_dto.lab.get_api_url()
         return f"{api_url}/{Settings.external_lab_api_route_path()}/{route}"
 
     def _get_auth_headers(self) -> dict:

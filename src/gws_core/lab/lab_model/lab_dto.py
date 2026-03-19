@@ -32,9 +32,10 @@ class LabDTO(BaseModelDTO):
         return f"https://{sub_domain}.{self.domain}"
 
 
-class LabDTOWithCredentials(LabDTO):
-    """LabDTO extended with resolved credentials data."""
+class LabDTOWithCredentials(BaseModelDTO):
+    """DTO containing a lab and its resolved credentials data."""
 
+    lab: LabDTO
     credentials_data: CredentialsDataLab | None = None
 
 
