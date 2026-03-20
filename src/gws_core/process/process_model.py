@@ -169,8 +169,8 @@ class ProcessModel(ModelWithUser):
         self.set_outputs_from_dto(other.outputs.to_dto())
 
         # Lab reference
-        if other.run_by_lab:
-            self.run_by_lab = other.run_by_lab
+        self.run_by = other.run_by
+        self.run_by_lab = other.run_by_lab
 
         # Progress bar
         self.progress_bar.copy_from_and_save(other.progress_bar)
@@ -622,6 +622,7 @@ class ProcessModel(ModelWithUser):
             process_type=process_typing.to_simple_dto(),
             style=self.style,
             progress_bar=self.progress_bar.to_config_dto(),
+            run_by=self.run_by.to_dto() if self.run_by else None,
             run_by_lab=self.run_by_lab.to_dto() if self.run_by_lab else None,
         )
 

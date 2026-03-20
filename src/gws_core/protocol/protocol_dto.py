@@ -10,6 +10,7 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class ConnectorPartDict(BaseModelDTO):
@@ -56,6 +57,7 @@ class ProcessConfigDTO(BaseModelDTO):
     # for sub protocol, recursive graph
     graph: ProtocolGraphConfigDTO | None = None
     # lab that ran this process
+    run_by: UserDTO | None = None
     run_by_lab: LabDTO | None = None
 
 

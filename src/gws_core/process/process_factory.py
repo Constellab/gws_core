@@ -4,12 +4,14 @@ from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_dto import IODTO
 from gws_core.io.ioface import IOface
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.user.user_service import UserService
 
 from ..config.config import Config
 from ..config.config_exceptions import ProcessConfigException
@@ -363,6 +365,16 @@ class ProcessFactory:
         process_model.set_outputs_from_dto(process_config_dto.outputs)
         process_model.brick_version_on_create = process_config_dto.brick_version_on_create
         process_model.brick_version_on_run = process_config_dto.brick_version_on_run
+        process_model.run_by = (
+            UserService.get_or_import_user_info(process_config_dto.run_by.id)
+            if process_config_dto.run_by
+            else None
+        )
+        process_model.run_by_lab = (
+            LabModel.get_or_create_from_dto(process_config_dto.run_by_lab)
+            if process_config_dto.run_by_lab
+            else None
+        )
 
         cls._init_process_model(
             process_model=process_model,
