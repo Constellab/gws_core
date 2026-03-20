@@ -398,7 +398,11 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         """Copy metadata fields from another Scenario and save."""
         self.title = other.title
         self.description = other.description
-        self.status = other.status
+        # Don't update status if the scenario is running in an external lab
+        # and the other scenario is not finished,
+        # so in this case we keep the RUNNING_IN_EXTERNAL_LAB
+        if not self.is_running_in_external_lab or not other.is_running_or_waiting:
+            self.status = other.status
         self.error_info = other.error_info
         if other.folder:
             self.folder = other.folder

@@ -194,12 +194,11 @@ class SendScenarioToLab(Task):
             external_lab_service,
             scenario_id,
             lab_model_id=lab_model_id,
-            message_dispatcher=self.message_dispatcher,
         )
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(
-            refresh_interval=60,
+            refresh_interval=20,
             refresh_interval_max_count=-1,
         )
 
