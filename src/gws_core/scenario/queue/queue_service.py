@@ -1,3 +1,4 @@
+from bricks.gws_core.tests.test_gws_core import scenario
 from gws_core.core.exception.exceptions import BadRequestException, NotFoundException
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.scenario.queue.queue import Job
@@ -25,11 +26,9 @@ class QueueService:
         :rtype: Scenario
         """
 
-        scenario: Scenario | None = None
-        try:
-            scenario = Scenario.get(Scenario.id == scenario_id)
-        except Exception as err:
-            raise NotFoundException(detail=f"Scenario '{scenario_id}' is not found") from err
+        scenario = Scenario.get_by_id(scenario_id)
+        if not scenario:
+            raise NotFoundException(detail=f"Scenario '{scenario_id}' is not found")
 
         if Job.scenario_in_queue(scenario.id):
             raise BadRequestException("The scenario already is in the queue")

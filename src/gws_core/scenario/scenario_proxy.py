@@ -254,5 +254,11 @@ class ScenarioProxy:
         self.refresh()
         return self
 
+    def reset_error_processes(self) -> "ScenarioProxy":
+        """Reset all processes in error of the scenario"""
+        EntityNavigatorService.reset_error_processes_of_protocol(self._scenario.protocol_model)
+        self.refresh()
+        return self
+
     def get_url(self) -> str:
         return FrontService.get_scenario_url(self._scenario.id)

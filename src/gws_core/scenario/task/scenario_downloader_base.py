@@ -279,6 +279,8 @@ class ScenarioDownloaderBase(Task):
         if auto_run:
             self.log_info_message("Auto running the scenario")
             scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
+            # Force reset the scenario so it is not marked as running
+            scenario_proxy.reset_error_processes()
             scenario_proxy.add_to_queue()
 
         return scenario
