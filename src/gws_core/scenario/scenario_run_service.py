@@ -187,7 +187,12 @@ class ScenarioRunService:
     @classmethod
     def _check_scenario_before_start(cls, scenario: Scenario) -> None:
         # check scenario status
-        scenario.check_is_runnable()
+        if scenario.is_archived:
+            raise BadRequestException("The scenario is archived")
+        if scenario.is_validated:
+            raise BadRequestException("The scenario is validated")
+        if scenario.is_finished:
+            raise BadRequestException("The scenario is already finished")
 
     @classmethod
     def create_cli_for_scenario(cls, scenario: Scenario, user: User) -> SysProc:

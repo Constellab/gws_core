@@ -33,10 +33,14 @@ class QueueService:
             raise BadRequestException("The scenario already is in the queue")
 
         # check scenario status
-        scenario.check_is_runnable()
-
-        if scenario.is_running or scenario.status == ScenarioStatus.IN_QUEUE:
-            raise BadRequestException("The scenario is already running or in the queue")
+        if scenario.is_archived:
+            raise BadRequestException("The scenario is archived, cannot add to queue")
+        if scenario.is_validated:
+            raise BadRequestException("The scenario is validated, cannot add to queue")
+        if scenario.is_running:
+            raise BadRequestException("The scenario is already running, cannot add to queue")
+        if scenario.is_success:
+            raise BadRequestException("The scenario is already finished, cannot add to queue")
 
         # reset the processes that are in error
         EntityNavigatorService.reset_error_processes_of_protocol(scenario.protocol_model)

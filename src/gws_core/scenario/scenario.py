@@ -376,19 +376,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def set_error_info(self, error_info: ProcessErrorInfo | None) -> None:
         self.error_info = error_info.to_json_dict() if error_info else None
 
-    def check_is_runnable(self) -> None:
-        """Throw an error if the scenario is not runnable"""
-
-        # check scenario status
-        if self.is_archived:
-            raise BadRequestException("The scenario is archived")
-        if self.is_validated:
-            raise BadRequestException("The scenario is validated")
-        if self.is_running:
-            raise BadRequestException("The scenario is already running")
-        if self.is_success:
-            raise BadRequestException("The scenario is already finished")
-
     def check_is_stopable(self) -> None:
         """Throw an error if the scenario is not stopable"""
 
