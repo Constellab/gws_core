@@ -1,0 +1,9 @@
+[tool.pytest.ini_options]
+testpaths = ["bricks"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+# Filter out warnings from classes named Test* that aren't actual test classes
+filterwarnings = [
+    "ignore::pytest.PytestCollectionWarning",
+]

@@ -63,6 +63,9 @@ class AppManager:
         is_test: bool = False,
         auth_context_loader: AuthContextLoader | None = None,
     ) -> Settings:
+        if cls.gws_env_initialized:
+            return Settings.get_instance()
+
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)

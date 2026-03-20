@@ -86,6 +86,13 @@ class DevEnvCliService:
             if os.path.exists(notebook_template_dir):
                 typer.echo(f"Deleting {notebook_template_dir}...")
                 shutil.rmtree(notebook_template_dir)
+            # Delete pytest config files
+            user_folder = Settings.get_user_folder()
+            for pytest_file in ["conftest.py", "pyproject.toml"]:
+                pytest_file_path = os.path.join(user_folder, pytest_file)
+                if os.path.exists(pytest_file_path):
+                    typer.echo(f"Deleting {pytest_file_path}...")
+                    os.remove(pytest_file_path)
 
         if not os.path.exists(vs_code_folder):
             os.mkdir(vs_code_folder)
@@ -108,6 +115,7 @@ class DevEnvCliService:
 
         cls.config_vs_code_settings_json()
         cls.install_notebook_template()
+        cls.install_pytest_config()
         cls._install_vscode_extensions(extensions_dest)
 
         typer.echo("VS Code configured successfully!")
@@ -212,6 +220,26 @@ class DevEnvCliService:
         # Load the settings file into a dict
         with open(settings_path, encoding="UTF-8") as file:
             return json.load(file)
+
+    @classmethod
+    def install_pytest_config(cls) -> None:
+        """Install pytest configuration files (conftest.py and pyproject.toml) to the user folder.
+
+        These files enable running tests from VSCode's Test Explorer.
+        """
+        typer.echo("Installing pytest configuration...")
+
+        user_folder = Settings.get_user_folder()
+
+        # Always override conftest.py and pyproject.toml
+        shutil.copyfile(
+            os.path.join(cls.TEMPLATE_DIR, "conftest.py"),
+            os.path.join(user_folder, "conftest.py"),
+        )
+        shutil.copyfile(
+            os.path.join(cls.TEMPLATE_DIR, "pyproject.toml"),
+            os.path.join(user_folder, "pyproject.toml"),
+        )
 
     @classmethod
     def install_notebook_template(cls):
