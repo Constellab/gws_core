@@ -9,6 +9,8 @@ from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.scenario.task.scenario_waiter_task import ScenarioWaiterTask
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
+from gws_core.tag.tag import Tag
+from gws_core.tag.tag_system import TagSystem
 from gws_core.task.plug.output_task import OutputTask
 
 
@@ -90,6 +92,7 @@ class ScenarioTransfertService:
         # Create a scenario containing 1 scenario downloader , 1 output task
         title = f"Send scenario '{scenario_to_send.title}'"
         scenario: ScenarioProxy = ScenarioProxy(title=title)
+        scenario.add_tag(Tag(TagSystem.SCENARIO_IMPORTER_TAG_KEY, scenario_id))
         protocol = scenario.get_protocol()
 
         # Select the scenario > Send it to the lab

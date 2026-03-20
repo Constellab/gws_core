@@ -6,9 +6,12 @@ from gws_core.external_lab.external_lab_dto import ExternalLabImportRequestDTO
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
+from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.scenario.scenario_enums import ScenarioStatus
+from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.task.scenario_downloader_base import (
     ScenarioDownloaderCreateOption,
@@ -85,8 +88,6 @@ class SendScenarioToLab(Task):
 
         if scenario.is_running:
             raise ValueError("The scenario is running, it cannot be sent to the lab")
-        if scenario.is_running_in_external_lab:
-            raise ValueError("The scenario is already running in an external lab")
 
         auto_run: bool = params.get_value("auto_run")
         lab_dto: LabDTOWithCredentials = params.get_value("lab")
@@ -117,7 +118,8 @@ class SendScenarioToLab(Task):
 
         if auto_run:
             # Lock the scenario while it's being processed externally
-            scenario.mark_as_running_in_external_lab()
+            lab_model: LabModel = LabModel.get_by_id_and_check(lab_dto.lab.id)
+            scenario.mark_as_running_in_external_lab(lab_model)
 
         try:
             response = external_lab_service.send_scenario_to_lab(request_dto)
@@ -152,10 +154,16 @@ class SendScenarioToLab(Task):
             return {"scenario": scenario_resource}
         except Exception as err:
             if auto_run:
-                # When auto_run, only unmark as running if there is an error
-                # the next task (WaitExternalScenario) is responsible for unmarking when the scenario finishes running in the external lab
                 scenario = scenario.refresh()
-                scenario.unmark_running_in_external_lab()
+                if scenario.is_running_in_external_lab:
+                    error_info = ProcessErrorInfo(
+                        detail=f"Error while sending scenario to external lab: {str(err)}. Scenario marked as stopped.",
+                        unique_code="SCENARIO_STOPPED_DUE_TO_IMPORT_ERROR",
+                        context=None,
+                        instance_id=None,
+                    )
+                    # If there was an error, mark the current scenario as error too
+                    ScenarioRunService.stop_scenario(scenario.id, error_info=error_info)
             raise err
 
     @classmethod

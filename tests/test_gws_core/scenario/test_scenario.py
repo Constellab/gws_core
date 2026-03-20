@@ -97,7 +97,7 @@ class TestScenario(BaseTestCase):
         self.assertEqual(
             ResourceModel.get_by_scenario(scenario.id).count(), RobotSimpleTravel.resources_count
         )
-        self.assertIsNone(scenario.pid)
+        self.assertIsNone(scenario.running_process_pid)
 
         # Check that all processes were run and have run_by and run_by_lab set
         current_lab = LabModel.get_or_create_current_lab()
@@ -149,7 +149,7 @@ class TestScenario(BaseTestCase):
 
         ScenarioRunService.create_cli_for_scenario(scenario=scenario, user=TestHelper.user)
         self.assertEqual(scenario.status, ScenarioStatus.WAITING_FOR_CLI_PROCESS)
-        self.assertTrue(scenario.pid > 0)
+        self.assertTrue(scenario.running_process_pid > 0)
 
         scenario = Scenario.get_by_id_and_check(scenario.id)
 
@@ -163,7 +163,7 @@ class TestScenario(BaseTestCase):
         self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
         scenario = Scenario.get_by_id_and_check(scenario.id)
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
-        self.assertIsNone(scenario.pid)
+        self.assertIsNone(scenario.running_process_pid)
         self.assertEqual(scenario.lab_config.id, LabConfigModel.id)
 
         self.assertEqual(

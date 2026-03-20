@@ -92,6 +92,16 @@ def get_user_info(user_id: str, _=Depends(ExternalLabAuth.check_auth)) -> UserDT
     return ExternalLabService.get_user_info(user_id)
 
 
+@external_lab_app.put("/scenario/{id_}/stop", summary="Stop a running scenario")
+def stop_scenario(
+    id_: str, _=Depends(ExternalLabAuth.check_auth)
+) -> ExternalLabImportScenarioResponseDTO:
+    """
+    Stop a running scenario
+    """
+    return ExternalLabService.stop_scenario(id_)
+
+
 @external_lab_app.get(
     "/scenario/{id_}/export-info",
     summary="Get scenario export info for downloading",

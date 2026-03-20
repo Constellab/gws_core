@@ -16,6 +16,7 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
 from gws_core.share.share_service import ShareService
@@ -88,6 +89,14 @@ class ExternalLabService:
         scenario = ScenarioTransfertService.import_from_lab_async(params)
 
         return cls._scenario_to_response_dto(scenario)
+
+    @classmethod
+    def stop_scenario(cls, id_: str) -> ExternalLabImportScenarioResponseDTO:
+        """Stop a running scenario or remove it from queue."""
+        proxy = ScenarioProxy.from_existing_scenario(id_)
+        proxy.stop_or_remove_from_queue()
+
+        return cls._scenario_to_response_dto(proxy.get_model())
 
     @classmethod
     def get_scenario(cls, id_: str) -> ExternalLabImportScenarioResponseDTO:

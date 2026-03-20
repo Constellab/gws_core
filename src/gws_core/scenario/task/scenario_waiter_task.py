@@ -6,6 +6,7 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
+from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.task.scenario_resource import ScenarioResource
@@ -76,22 +77,9 @@ class ScenarioWaiterTask(Task):
             message_dispatcher=self.message_dispatcher,
         )
 
-        if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
-            error = (
-                scenario_info.progress.last_message.text
-                if scenario_info.progress and scenario_info.progress.has_last_message()
-                else "Unknown error"
-            )
-            raise Exception(
-                f"External scenario failed, status: {scenario_info.scenario.status}. "
-                f"Error details: {error}"
-            )
-
-        self.log_success_message(f"Scenario '{scenario_id}' finished successfully in external lab")
-
-        # Unmark the local scenario as running in external lab
-        scenario = scenario_resource.get_scenario().refresh()
-        scenario.unmark_running_in_external_lab()
+        self.log_info_message(
+            f"External scenario finished with status: {scenario_info.scenario.status}"
+        )
 
         return {self.OUTPUT_NAME: scenario_resource}
 

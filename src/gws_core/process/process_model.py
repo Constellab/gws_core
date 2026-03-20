@@ -66,7 +66,7 @@ class ProcessModel(ModelWithUser):
     # version of the brick when the process was run
     brick_version_on_run = CharField(null=True, max_length=50)
     run_by = ForeignKeyField(User, null=True, backref="+")
-    run_by_lab: LabModel = ForeignKeyField(LabModel, null=True, backref="+")
+    run_by_lab: LabModel | None = ForeignKeyField(LabModel, null=True, backref="+")
     status: ProcessStatus = EnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
 

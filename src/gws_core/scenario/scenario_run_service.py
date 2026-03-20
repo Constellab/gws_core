@@ -322,7 +322,7 @@ class ScenarioRunService:
 
         Logger.info(f"Scenario process run_through_cli {str(cmd)}")
         Logger.info(
-            f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.pid}).
+            f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.running_process_pid}).
             To view them check the logs in the today's log file : {Logger.get_file_path()}"""
         )
         return sproc
@@ -343,20 +343,20 @@ class ScenarioRunService:
             raise BadRequestException(error)
 
     @classmethod
-    def stop_scenario(cls, id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def stop_scenario(cls, id_: str, error_info: ProcessErrorInfo | None = None) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         scenario.check_is_stopable()
 
         # try to kill the pid if possible
         try:
-            if scenario.pid is not None:
-                cls._kill_scenario_pid(scenario.pid)
+            if scenario.running_process_pid is not None:
+                cls._kill_scenario_pid(scenario.running_process_pid)
         except Exception as err:
             Logger.error(str(err))
 
         # mark the scenario as error
-        error = ProcessErrorInfo(
+        error = error_info or ProcessErrorInfo(
             detail=f"Scenario manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
             unique_code="SCENARIO_STOPPED_MANUALLY",
             context=None,

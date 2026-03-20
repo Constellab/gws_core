@@ -4,19 +4,22 @@ from time import sleep
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_service import TagService
+from gws_core.tag.tag_system import TagSystem
 
 from ..folder.space_folder import SpaceFolder
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_proxy import ProtocolProxy
 from .scenario import Scenario
-from .scenario_enums import ScenarioCreationType
+from .scenario_enums import ScenarioCreationType, ScenarioStatus
 from .scenario_run_service import ScenarioRunService
+from .scenario_search_builder import ScenarioSearchBuilder
 from .scenario_service import ScenarioService
 
 
@@ -153,6 +156,64 @@ class ScenarioProxy:
 
     def add_to_queue(self) -> None:
         QueueService.add_scenario_to_queue(self._scenario.id)
+
+    def stop_or_remove_from_queue(self) -> "ScenarioProxy":
+        """Stop the scenario or remove it from the queue depending on its current status.
+
+        - If the scenario is running in an external lab, stop all running importing scenarios.
+        - If the scenario is running locally, stop it.
+        - If the scenario is in queue, remove it from the queue.
+
+        :return: the updated scenario
+        :rtype: ScenarioProxy
+        """
+        self.refresh()
+
+        if self._scenario.is_running_in_external_lab:
+            self._stop_running_in_external_lab()
+        elif self._scenario.is_running:
+            ScenarioRunService.stop_scenario(self._scenario.id)
+        elif self._scenario.status == ScenarioStatus.IN_QUEUE:
+            QueueService.remove_scenario_from_queue(self._scenario.id)
+        else:
+            raise Exception("The scenario is not running or in queue, it cannot be stopped")
+
+        return self.refresh()
+
+    def _stop_running_in_external_lab(self) -> None:
+        """Stop the scenario if it's running in an external lab.
+
+        If the external lab reference is not available or if an error occurs
+        while communicating with the external lab, unmark the scenario as running
+        and stop all running importing scenarios.
+        """
+        if not self._scenario.is_running_in_external_lab:
+            return
+
+        if self._scenario.running_in_external_lab is None:
+            self._stop_all_running_importing_scenarios()
+            ScenarioRunService.stop_scenario(self._scenario.id)
+            return
+
+        try:
+            ExternalLabApiService(
+                self._scenario.running_in_external_lab.to_dto_with_credentials()
+            ).stop_scenario(self._scenario.id)
+            # Refresh the scenario to update its status after stopping it in the external lab
+        except Exception:
+            self._stop_all_running_importing_scenarios()
+            ScenarioRunService.stop_scenario(self._scenario.id)
+
+    def _stop_all_running_importing_scenarios(self) -> None:
+        """Stop all currently running scenarios that are importing the current scenario."""
+        search_builder = ScenarioSearchBuilder()
+        search_builder.add_tag_filter(Tag(TagSystem.SCENARIO_IMPORTER_TAG_KEY, self.get_model_id()))
+        search_builder.add_running_filter()
+
+        running_scenarios: list[Scenario] = search_builder.search_all()
+
+        for scenario in running_scenarios:
+            ScenarioRunService.stop_scenario(scenario.id)
 
     def stop(self) -> None:
         ScenarioRunService.stop_scenario(self._scenario.id)

@@ -1,4 +1,3 @@
-
 from peewee import Expression
 
 from gws_core.core.classes.search_builder import SearchFilterCriteria
@@ -17,7 +16,7 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
             Scenario, TagEntityType.SCENARIO, default_orders=[Scenario.last_modified_at.desc()]
         )
 
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression | None:
         if filter_.key == "process_typing_name":
             self.add_contains_process_filter(filter_.value)
 
@@ -33,6 +32,19 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
     def add_status_filter(self, status: ScenarioStatus) -> "ScenarioSearchBuilder":
         """Filter the search query by a specific status"""
         self.add_expression(Scenario.status == status)
+        return self
+
+    def add_running_filter(self) -> "ScenarioSearchBuilder":
+        """Filter the search query by running scenarios"""
+        self.add_expression(
+            Scenario.status.in_(
+                [
+                    ScenarioStatus.RUNNING,
+                    ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
+                    ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
+                ]
+            )
+        )
         return self
 
     def add_folder_filter(self, folder_id: str) -> "ScenarioSearchBuilder":

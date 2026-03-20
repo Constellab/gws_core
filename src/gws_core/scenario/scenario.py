@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, final
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+from peewee import BooleanField, CharField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
@@ -13,6 +13,7 @@ from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO, ScenarioSimpleDTO
@@ -59,25 +60,13 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
-    data: dict[str, Any] = JSONField(null=True)
+    running_process_pid: int | None = IntegerField(null=True)
+    running_in_external_lab: LabModel | None = ForeignKeyField(
+        LabModel, null=True, backref="+", on_delete="SET NULL"
+    )
 
     # cache of the _protocol
     _protocol: ProtocolModel | None = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.is_saved() and not self.data:
-            self.data = {}
-
-    @property
-    def pid(self) -> int | None:
-        if "pid" not in self.data:
-            return None
-        return self.data["pid"]
-
-    @pid.setter
-    def pid(self, value: int | None) -> None:
-        self.data["pid"] = value
 
     @property
     def protocol_model(self) -> ProtocolModel:
@@ -211,10 +200,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
-        # Allow reset when running in external lab (user escape hatch for stuck scenarios)
-        if not self.is_running_in_external_lab:
-            self.check_is_updatable()
-
         if not self.is_saved():
             raise BadRequestException("Can't reset a scenario not saved before")
 
@@ -239,10 +224,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException(
                 GWSException.SCENARIO_VALIDATE_RUNNING.value,
                 unique_code=GWSException.SCENARIO_VALIDATE_RUNNING.name,
-            )
-        if self.is_running_in_external_lab:
-            raise BadRequestException(
-                "The scenario is currently running in an external lab, it cannot be validated"
             )
 
         if self.folder is None:
@@ -298,7 +279,11 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_running(self) -> bool:
         """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
-        return self.status in (ScenarioStatus.RUNNING, ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+        return self.status in (
+            ScenarioStatus.RUNNING,
+            ScenarioStatus.WAITING_FOR_CLI_PROCESS,
+            ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
+        )
 
     @property
     def is_running_or_waiting(self) -> bool:
@@ -333,22 +318,22 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :type pid: int
         """
         self.status = ScenarioStatus.WAITING_FOR_CLI_PROCESS
-        self.pid = pid
+        self.running_process_pid = pid
         self.save()
 
     def mark_as_started(self, pid: int):
         self.status = ScenarioStatus.RUNNING
         self.lab_config = LabConfigModel.get_current_config()
-        self.pid = pid
+        self.running_process_pid = pid
         self.save()
 
     def mark_as_success(self):
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.SUCCESS
         self.save()
 
     def mark_as_draft(self):
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.DRAFT
         self.lab_config = None
         self.set_error_info(None)
@@ -357,7 +342,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
         if self.is_error:
             return
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.ERROR
         self.set_error_info(error_info)
         self.save()
@@ -368,28 +353,20 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def mark_as_partially_run(self) -> None:
         self.status = ScenarioStatus.PARTIALLY_RUN
+        self._clear_running_info()
         self.set_error_info(None)
         self.save()
 
-    def mark_as_running_in_external_lab(self) -> None:
+    def mark_as_running_in_external_lab(self, lab: LabModel) -> None:
         """Mark the scenario as being processed in an external lab."""
         self.status = ScenarioStatus.RUNNING_IN_EXTERNAL_LAB
+        self.running_in_external_lab = lab
         self.save()
 
-    def unmark_running_in_external_lab(self) -> None:
-        """Remove the RUNNING_IN_EXTERNAL_LAB lock by computing the correct
-        status from the protocol model's current ProcessStatus."""
-        if not self.is_running_in_external_lab:
-            return
-        protocol_status = self.protocol_model.status
-        status_map = {
-            ProcessStatus.DRAFT: ScenarioStatus.DRAFT,
-            ProcessStatus.SUCCESS: ScenarioStatus.SUCCESS,
-            ProcessStatus.ERROR: ScenarioStatus.ERROR,
-            ProcessStatus.PARTIALLY_RUN: ScenarioStatus.PARTIALLY_RUN,
-        }
-        self.status = status_map.get(protocol_status, ScenarioStatus.DRAFT)
-        self.save()
+    def _clear_running_info(self) -> None:
+        """Clear the running info of the scenario (used when the scenario is stopped or when an error occurs)"""
+        self.running_process_pid = None
+        self.running_in_external_lab = None
 
     def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
@@ -405,12 +382,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException("The scenario is archived")
         if self.is_validated:
             raise BadRequestException("The scenario is validated")
-        if self.status == ScenarioStatus.RUNNING:
+        if self.is_running:
             raise BadRequestException("The scenario is already running")
         if self.is_success:
             raise BadRequestException("The scenario is already finished")
-        if self.is_running_in_external_lab:
-            raise BadRequestException("The scenario is currently running in an external lab")
 
     def check_is_stopable(self) -> None:
         """Throw an error if the scenario is not stopable"""
@@ -429,10 +404,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             raise BadRequestException(
                 detail="The scenario is archived, please unachived it to update it"
             )
-        if self.is_running_in_external_lab:
-            raise BadRequestException(
-                detail="The scenario is currently running in an external lab, you can't update it"
-            )
 
     def copy_from_and_save(self, other: Scenario) -> None:
         """Copy metadata fields from another Scenario and save."""
@@ -445,10 +416,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         self.save()
 
     def get_process_status(self) -> ScenarioProcessStatus:
-        if self.pid is None or not self.is_running:
+        if self.running_process_pid is None or not self.is_running:
             return ScenarioProcessStatus.NONE
         try:
-            process = SysProc.from_pid(self.pid)
+            process = SysProc.from_pid(self.running_process_pid)
             if process.is_alive():
                 return ScenarioProcessStatus.RUNNING
             else:

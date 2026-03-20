@@ -1,10 +1,11 @@
-from peewee import CharField
+from peewee import CharField, IntegerField
 
 from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.scenario.queue.queue import Job
+from gws_core.scenario.scenario import Scenario
 from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.task.task_model import TaskModel
@@ -60,6 +61,16 @@ class Migration0210(BrickMigration):
         # Add FK constraints for run_by_lab
         TaskModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
         ProtocolModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
+
+        # Migrate Scenario.data JSON column to a dedicated pid integer column
+        sql_migrator.add_column_if_not_exists(
+            Scenario, IntegerField(null=True), "running_process_pid"
+        )
+        sql_migrator.add_column_if_not_exists(Scenario, Scenario.running_in_external_lab)
+        sql_migrator.drop_column_if_exists(Scenario, "data")
+        sql_migrator.migrate()
+
+        Scenario.create_foreign_key_if_not_exist(Scenario.running_in_external_lab)
 
     @classmethod
     def _migrate_shared_table(cls, sql_migrator: SqlMigrator, shared_model: type) -> None:

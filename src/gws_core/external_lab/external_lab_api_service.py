@@ -93,6 +93,16 @@ class ExternalLabApiService:
 
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
 
+    def stop_scenario(self, id_: str) -> ExternalLabImportScenarioResponseDTO:
+        """Stop a running scenario on the external lab."""
+        headers = self._get_auth_headers()
+
+        url = self.get_full_route(f"scenario/{id_}/stop")
+
+        response = ExternalApiService.put(url, headers=headers, raise_exception_if_error=True)
+
+        return ExternalLabImportScenarioResponseDTO.from_json(response.json())
+
     def get_scenario_export_info(self, scenario_id: str) -> ShareScenarioInfoReponseDTO:
         """Get scenario export info from an external lab using credentials."""
         headers = self._get_auth_headers()
