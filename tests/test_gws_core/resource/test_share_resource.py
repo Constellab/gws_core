@@ -254,11 +254,15 @@ class ShareResourceTestSetup:
         # Check the tags
 
         # test that the origin of the resource exist
-        shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        shared_resource = ShareService.get_shared_entity_origin_info(
+            ShareLinkEntityType.RESOURCE, new_resource_model.id
+        )
         self._tc.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
         # check the external_id points to the original resource
-        shared_resource_info = SharedResource.get_and_check_entity_origin(new_resource_model.id)
+        shared_resource_info = ShareService.get_shared_entity_origin_info(
+            ShareLinkEntityType.RESOURCE, new_resource_model.id
+        )
         self._tc.assertEqual(shared_resource_info.external_id, self.original_resource_model.id)
 
         # It should also be marked as sent
@@ -529,7 +533,9 @@ class TestShareResource(BaseTestCase):
         self.assertIsNotNone(tag.origins.get_origins()[0].external_lab_origin_id)
 
         # test that the origin of the resource exist
-        shared_resource = ResourceService.get_shared_resource_origin_info(new_resource_model.id)
+        shared_resource = ShareService.get_shared_entity_origin_info(
+            ShareLinkEntityType.RESOURCE, new_resource_model.id
+        )
         self.assertEqual(shared_resource.entity.id, new_resource_model.id)
 
     def test_share_basic_resource_with_builder(self):

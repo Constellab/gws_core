@@ -110,6 +110,14 @@ class ShareService:
         else:
             raise Exception(f"Entity type {entity_type} is not supported")
 
+    @classmethod
+    def get_shared_entity_origin_info(
+        cls, entity_type: ShareLinkEntityType, entity_id: str
+    ) -> SharedEntityInfo:
+        """Get the origin information of an imported entity (resource or scenario)."""
+        shared_entity_class: type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
+        return shared_entity_class.get_and_check_entity_origin(entity_id)
+
     #################################### RESOURCE ####################################
 
     @classmethod

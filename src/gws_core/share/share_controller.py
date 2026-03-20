@@ -51,6 +51,20 @@ def get_shared_to_list(
     return ShareService.get_shared_to_list(entity_type, entity_id).to_dto()
 
 
+@core_app.get(
+    "/share/{entity_type}/{entity_id}/shared-origin",
+    tags=["Share"],
+    summary="Get origin of this imported entity (resource or scenario)",
+    response_model=None,
+)
+def get_shared_entity_origin_info(
+    entity_type: ShareLinkEntityType,
+    entity_id: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ShareEntityInfoDTO:
+    return ShareService.get_shared_entity_origin_info(entity_type, entity_id).to_dto()
+
+
 #################################### ROUTE WITH TOKEN IN URL ####################################
 ################################ RESOURCE ################################
 # Open route to get info about a shared entity

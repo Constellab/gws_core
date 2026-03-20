@@ -315,18 +315,6 @@ def get_view_specs_from_type(
 ############################# SHARED RESOURCE ###########################
 
 
-@core_app.get(
-    "/resource/{id_}/shared-origin",
-    tags=["Resource"],
-    summary="Get origin of this imported resource",
-    response_model=None,
-)
-def get_shared_resource_origin_info(
-    id_: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> ShareEntityInfoDTO:
-    return ResourceService.get_shared_resource_origin_info(id_).to_dto()
-
-
 @core_app.post(
     "/resource/{id_}/download-content",
     tags=["Resource"],

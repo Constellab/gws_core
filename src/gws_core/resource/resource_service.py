@@ -412,9 +412,3 @@ class ResourceService:
                 return False
 
         return True
-
-    ############################# SHARED RESOURCE ###########################
-
-    @classmethod
-    def get_shared_resource_origin_info(cls, resource_model_id: str) -> SharedResource:
-        return SharedResource.get_and_check_entity_origin(resource_model_id)
