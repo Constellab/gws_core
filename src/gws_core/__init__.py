@@ -470,7 +470,6 @@ from .process.process_proxy import ProcessProxy as ProcessProxy
 
 # Progress Bar
 from .progress_bar.progress_bar import ProgressBar as ProgressBar
-from .progress_bar.progress_bar_service import ProgressBarService as ProgressBarService
 
 # Protocol
 from .protocol.protocol import Protocol as Protocol

@@ -64,12 +64,12 @@ def login_from_temp_token(unique_code: str) -> Response:
         auth_context = AuthorizationService.check_unique_code(unique_code)
 
         response = RedirectResponse(
-            FrontService.get_auto_login_url(JWTService.get_token_duration_in_milliseconds())
+            FrontService().get_auto_login_url(JWTService.get_token_duration_in_milliseconds())
         )
         return AuthenticationService.log_user(auth_context.get_user(), response=response)
     except Exception:
         # if there is any problem redirect to the front base url (login)
-        return RedirectResponse(FrontService.get_front_url())
+        return RedirectResponse(FrontService().get_front_url())
 
 
 @core_app.post(

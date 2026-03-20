@@ -17,6 +17,7 @@ class LabDTO(BaseModelDTO):
     space_id: str | None = None
     space_name: str | None = None
     credentials_id: str | None = None
+    front_url: str | None = None
 
     def get_api_url(self) -> str:
         """Build the API URL for this lab from its domain and mode.

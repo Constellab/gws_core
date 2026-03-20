@@ -242,7 +242,7 @@ class ScenarioDownloaderBase(Task):
                 else:
                     raise Exception(
                         "The scenario already exists in the current lab."
-                        + f' <a href="{FrontService.get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.'
+                        + f' <a href="{FrontService().get_scenario_url(scenario_model.id)}">Click here to view the existing scenario</a>.'
                     )
 
         self.update_progress_value(self.INIT_EXP_PERCENT, "Scenario information retrieved")

@@ -66,6 +66,15 @@ class LabModel(Model):
             return None
         return data_object
 
+    def get_front_url(self) -> str | None:
+        if not self.domain:
+            return None
+        if self.mode == LabMode.DEV:
+            sub_domain = Settings.dev_front_sub_domain()
+        else:
+            sub_domain = Settings.prod_front_sub_domain()
+        return f"https://{sub_domain}.{self.domain}"
+
     def to_dto(self) -> LabDTO:
         """Convert the model to a DTO."""
         return LabDTO(
@@ -79,6 +88,7 @@ class LabModel(Model):
             space_id=self.space_id,
             space_name=self.space_name,
             credentials_id=self.credentials.id if self.credentials else None,
+            front_url=self.get_front_url(),
         )
 
     def to_dto_with_credentials(self) -> LabDTOWithCredentials:

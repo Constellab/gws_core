@@ -159,6 +159,14 @@ class Settings:
         return "glab-dev"
 
     @classmethod
+    def prod_front_sub_domain(cls) -> str:
+        return "lab"
+
+    @classmethod
+    def dev_front_sub_domain(cls) -> str:
+        return "dev-lab"
+
+    @classmethod
     def get_lab_environment(cls) -> LabEnvironment:
         """Return the environment where the lab run
         ON_CLOUD : the lab is running on the cloud

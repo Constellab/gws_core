@@ -1,6 +1,7 @@
 from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 
 
@@ -42,107 +43,93 @@ class FrontTheme(BaseModelDTO):
 
 
 class FrontService:
-    @staticmethod
-    def get_scenarios_list_url() -> str:
-        return FrontService.get_app_url() + "/scenario"
 
-    @staticmethod
-    def get_scenario_url(scenario_id: str) -> str:
-        return FrontService.get_scenarios_list_url() + "/" + scenario_id
+    _lab_url: str
 
-    @staticmethod
-    def get_resources_list_url() -> str:
-        return FrontService.get_app_url() + "/resource"
+    def __init__(self, lab_url: str | None = None) -> None:
+        if lab_url is not None:
+            self._lab_url = lab_url
+        else:
+            self._lab_url = Settings.get_front_url()
 
-    @staticmethod
-    def get_resource_url(resource_id: str) -> str:
-        return FrontService.get_resources_list_url() + "/" + resource_id
+    def get_scenarios_list_url(self) -> str:
+        return self.get_app_url() + "/scenario"
 
-    @staticmethod
-    def get_views_list_url() -> str:
-        return FrontService.get_app_url() + "/view"
+    def get_scenario_url(self, scenario_id: str) -> str:
+        return self.get_scenarios_list_url() + "/" + scenario_id
 
-    @staticmethod
-    def get_view_url(view_id: str) -> str:
-        return FrontService.get_views_list_url() + "/" + view_id
+    def get_resources_list_url(self) -> str:
+        return self.get_app_url() + "/resource"
 
-    @staticmethod
-    def get_scenario_templates_list_url() -> str:
-        return FrontService.get_app_url() + "/scenario-template"
+    def get_resource_url(self, resource_id: str) -> str:
+        return self.get_resources_list_url() + "/" + resource_id
 
-    @staticmethod
-    def get_scenario_template_url(template_id: str) -> str:
-        return FrontService.get_scenario_templates_list_url() + "/" + template_id
+    def get_views_list_url(self) -> str:
+        return self.get_app_url() + "/view"
+
+    def get_view_url(self, view_id: str) -> str:
+        return self.get_views_list_url() + "/" + view_id
+
+    def get_scenario_templates_list_url(self) -> str:
+        return self.get_app_url() + "/scenario-template"
+
+    def get_scenario_template_url(self, template_id: str) -> str:
+        return self.get_scenario_templates_list_url() + "/" + template_id
 
     ############################################### NOTE ###############################################
 
-    @staticmethod
-    def get_notes_list_url() -> str:
-        return FrontService.get_app_url() + "/note"
+    def get_notes_list_url(self) -> str:
+        return self.get_app_url() + "/note"
 
-    @staticmethod
-    def get_note_url(note_id: str) -> str:
-        return FrontService.get_notes_list_url() + "/" + note_id
+    def get_note_url(self, note_id: str) -> str:
+        return self.get_notes_list_url() + "/" + note_id
 
-    @staticmethod
-    def get_note_templates_list_url() -> str:
-        return FrontService.get_app_url() + "/note-template"
+    def get_note_templates_list_url(self) -> str:
+        return self.get_app_url() + "/note-template"
 
-    @staticmethod
-    def get_note_template_url(template_id: str) -> str:
-        return FrontService.get_note_templates_list_url() + "/" + template_id
+    def get_note_template_url(self, template_id: str) -> str:
+        return self.get_note_templates_list_url() + "/" + template_id
 
     ############################################### MONITORING ###############################################
 
-    @staticmethod
-    def get_monitoring_dashboard_url() -> str:
-        return FrontService.get_app_url() + "/monitoring"
+    def get_monitoring_dashboard_url(self) -> str:
+        return self.get_app_url() + "/monitoring"
 
-    @staticmethod
-    def get_monitoring_lab_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/usage"
+    def get_monitoring_lab_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/usage"
 
-    @staticmethod
-    def get_monitoring_tags_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/tags"
+    def get_monitoring_tags_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/tags"
 
-    @staticmethod
-    def get_monitoring_virtual_envs_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/virtual-envs"
+    def get_monitoring_virtual_envs_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/virtual-envs"
 
-    @staticmethod
-    def get_monitoring_logs_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/logs"
+    def get_monitoring_logs_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/logs"
 
-    @staticmethod
-    def get_monitoring_credentials_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/credentials"
+    def get_monitoring_credentials_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/credentials"
 
-    @staticmethod
-    def get_monitoring_activity_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/activity"
+    def get_monitoring_activity_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/activity"
 
-    @staticmethod
-    def get_monitoring_other_url() -> str:
-        return FrontService.get_monitoring_dashboard_url() + "/other"
+    def get_monitoring_other_url(self) -> str:
+        return self.get_monitoring_dashboard_url() + "/other"
 
     ############################################### OPEN URLS ###############################################
 
-    @staticmethod
-    def get_app_open_url() -> str:
-        return Settings.get_front_url() + "/open"
+    def get_app_open_url(self) -> str:
+        return self._lab_url + "/open"
 
-    @staticmethod
-    def get_resource_open_url(token: str) -> str:
-        return FrontService.get_app_open_url() + "/resource/" + token
+    def get_resource_open_url(self, token: str) -> str:
+        return self.get_app_open_url() + "/resource/" + token
 
-    @staticmethod
-    def get_resource_open_space_url(token: str, user_access_token: str) -> str:
+    def get_resource_open_space_url(self, token: str, user_access_token: str) -> str:
         """Open route to access the resource but the user needs to be authenticated
         via the user_access_token
         """
         return (
-            FrontService.get_resource_open_url(token)
+            self.get_resource_open_url(token)
             + "?gws_user_access_token="
             + user_access_token
             + "&hide_header=true"
@@ -150,17 +137,16 @@ class FrontService:
 
     ############################################### OTHER URLS ###############################################
 
-    @staticmethod
-    def get_auto_login_url(expires_in: int) -> str:
-        return Settings.get_front_url() + "/auto-login?expiresIn=" + str(expires_in)
+    def get_auto_login_url(self, expires_in: int) -> str:
+        return self._lab_url + "/auto-login?expiresIn=" + str(expires_in)
 
-    @staticmethod
-    def get_app_url() -> str:
-        return Settings.get_front_url() + "/app"
+    def get_app_url(self) -> str:
+        return self._lab_url + "/app"
 
-    @staticmethod
-    def get_front_url() -> str:
-        return Settings.get_front_url()
+    def get_front_url(self) -> str:
+        return self._lab_url
+
+    ############################################### STATIC THEME METHODS ###############################################
 
     @staticmethod
     def get_light_theme() -> FrontTheme:
@@ -193,3 +179,161 @@ class FrontService:
             warn_color="#F991C3",
             warn_contrast_color="#222222",
         )
+
+    ############################################### DEPRECATED STATIC METHODS ###############################################
+
+    @staticmethod
+    def get_scenarios_list_url_static() -> str:
+        """Deprecated: use FrontService().get_scenarios_list_url() instead."""
+        Logger.warning("FrontService.get_scenarios_list_url_static is deprecated, use FrontService().get_scenarios_list_url() instead")
+        return FrontService().get_scenarios_list_url()
+
+    @staticmethod
+    def get_scenario_url_static(scenario_id: str) -> str:
+        """Deprecated: use FrontService().get_scenario_url() instead."""
+        Logger.warning("FrontService.get_scenario_url_static is deprecated, use FrontService().get_scenario_url() instead")
+        return FrontService().get_scenario_url(scenario_id)
+
+    @staticmethod
+    def get_resources_list_url_static() -> str:
+        """Deprecated: use FrontService().get_resources_list_url() instead."""
+        Logger.warning("FrontService.get_resources_list_url_static is deprecated, use FrontService().get_resources_list_url() instead")
+        return FrontService().get_resources_list_url()
+
+    @staticmethod
+    def get_resource_url_static(resource_id: str) -> str:
+        """Deprecated: use FrontService().get_resource_url() instead."""
+        Logger.warning("FrontService.get_resource_url_static is deprecated, use FrontService().get_resource_url() instead")
+        return FrontService().get_resource_url(resource_id)
+
+    @staticmethod
+    def get_views_list_url_static() -> str:
+        """Deprecated: use FrontService().get_views_list_url() instead."""
+        Logger.warning("FrontService.get_views_list_url_static is deprecated, use FrontService().get_views_list_url() instead")
+        return FrontService().get_views_list_url()
+
+    @staticmethod
+    def get_view_url_static(view_id: str) -> str:
+        """Deprecated: use FrontService().get_view_url() instead."""
+        Logger.warning("FrontService.get_view_url_static is deprecated, use FrontService().get_view_url() instead")
+        return FrontService().get_view_url(view_id)
+
+    @staticmethod
+    def get_scenario_templates_list_url_static() -> str:
+        """Deprecated: use FrontService().get_scenario_templates_list_url() instead."""
+        Logger.warning("FrontService.get_scenario_templates_list_url_static is deprecated, use FrontService().get_scenario_templates_list_url() instead")
+        return FrontService().get_scenario_templates_list_url()
+
+    @staticmethod
+    def get_scenario_template_url_static(template_id: str) -> str:
+        """Deprecated: use FrontService().get_scenario_template_url() instead."""
+        Logger.warning("FrontService.get_scenario_template_url_static is deprecated, use FrontService().get_scenario_template_url() instead")
+        return FrontService().get_scenario_template_url(template_id)
+
+    @staticmethod
+    def get_notes_list_url_static() -> str:
+        """Deprecated: use FrontService().get_notes_list_url() instead."""
+        Logger.warning("FrontService.get_notes_list_url_static is deprecated, use FrontService().get_notes_list_url() instead")
+        return FrontService().get_notes_list_url()
+
+    @staticmethod
+    def get_note_url_static(note_id: str) -> str:
+        """Deprecated: use FrontService().get_note_url() instead."""
+        Logger.warning("FrontService.get_note_url_static is deprecated, use FrontService().get_note_url() instead")
+        return FrontService().get_note_url(note_id)
+
+    @staticmethod
+    def get_note_templates_list_url_static() -> str:
+        """Deprecated: use FrontService().get_note_templates_list_url() instead."""
+        Logger.warning("FrontService.get_note_templates_list_url_static is deprecated, use FrontService().get_note_templates_list_url() instead")
+        return FrontService().get_note_templates_list_url()
+
+    @staticmethod
+    def get_note_template_url_static(template_id: str) -> str:
+        """Deprecated: use FrontService().get_note_template_url() instead."""
+        Logger.warning("FrontService.get_note_template_url_static is deprecated, use FrontService().get_note_template_url() instead")
+        return FrontService().get_note_template_url(template_id)
+
+    @staticmethod
+    def get_monitoring_dashboard_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_dashboard_url() instead."""
+        Logger.warning("FrontService.get_monitoring_dashboard_url_static is deprecated, use FrontService().get_monitoring_dashboard_url() instead")
+        return FrontService().get_monitoring_dashboard_url()
+
+    @staticmethod
+    def get_monitoring_lab_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_lab_url() instead."""
+        Logger.warning("FrontService.get_monitoring_lab_url_static is deprecated, use FrontService().get_monitoring_lab_url() instead")
+        return FrontService().get_monitoring_lab_url()
+
+    @staticmethod
+    def get_monitoring_tags_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_tags_url() instead."""
+        Logger.warning("FrontService.get_monitoring_tags_url_static is deprecated, use FrontService().get_monitoring_tags_url() instead")
+        return FrontService().get_monitoring_tags_url()
+
+    @staticmethod
+    def get_monitoring_virtual_envs_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_virtual_envs_url() instead."""
+        Logger.warning("FrontService.get_monitoring_virtual_envs_url_static is deprecated, use FrontService().get_monitoring_virtual_envs_url() instead")
+        return FrontService().get_monitoring_virtual_envs_url()
+
+    @staticmethod
+    def get_monitoring_logs_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_logs_url() instead."""
+        Logger.warning("FrontService.get_monitoring_logs_url_static is deprecated, use FrontService().get_monitoring_logs_url() instead")
+        return FrontService().get_monitoring_logs_url()
+
+    @staticmethod
+    def get_monitoring_credentials_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_credentials_url() instead."""
+        Logger.warning("FrontService.get_monitoring_credentials_url_static is deprecated, use FrontService().get_monitoring_credentials_url() instead")
+        return FrontService().get_monitoring_credentials_url()
+
+    @staticmethod
+    def get_monitoring_activity_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_activity_url() instead."""
+        Logger.warning("FrontService.get_monitoring_activity_url_static is deprecated, use FrontService().get_monitoring_activity_url() instead")
+        return FrontService().get_monitoring_activity_url()
+
+    @staticmethod
+    def get_monitoring_other_url_static() -> str:
+        """Deprecated: use FrontService().get_monitoring_other_url() instead."""
+        Logger.warning("FrontService.get_monitoring_other_url_static is deprecated, use FrontService().get_monitoring_other_url() instead")
+        return FrontService().get_monitoring_other_url()
+
+    @staticmethod
+    def get_app_open_url_static() -> str:
+        """Deprecated: use FrontService().get_app_open_url() instead."""
+        Logger.warning("FrontService.get_app_open_url_static is deprecated, use FrontService().get_app_open_url() instead")
+        return FrontService().get_app_open_url()
+
+    @staticmethod
+    def get_resource_open_url_static(token: str) -> str:
+        """Deprecated: use FrontService().get_resource_open_url() instead."""
+        Logger.warning("FrontService.get_resource_open_url_static is deprecated, use FrontService().get_resource_open_url() instead")
+        return FrontService().get_resource_open_url(token)
+
+    @staticmethod
+    def get_resource_open_space_url_static(token: str, user_access_token: str) -> str:
+        """Deprecated: use FrontService().get_resource_open_space_url() instead."""
+        Logger.warning("FrontService.get_resource_open_space_url_static is deprecated, use FrontService().get_resource_open_space_url() instead")
+        return FrontService().get_resource_open_space_url(token, user_access_token)
+
+    @staticmethod
+    def get_auto_login_url_static(expires_in: int) -> str:
+        """Deprecated: use FrontService().get_auto_login_url() instead."""
+        Logger.warning("FrontService.get_auto_login_url_static is deprecated, use FrontService().get_auto_login_url() instead")
+        return FrontService().get_auto_login_url(expires_in)
+
+    @staticmethod
+    def get_app_url_static() -> str:
+        """Deprecated: use FrontService().get_app_url() instead."""
+        Logger.warning("FrontService.get_app_url_static is deprecated, use FrontService().get_app_url() instead")
+        return FrontService().get_app_url()
+
+    @staticmethod
+    def get_front_url_static() -> str:
+        """Deprecated: use FrontService().get_front_url() instead."""
+        Logger.warning("FrontService.get_front_url_static is deprecated, use FrontService().get_front_url() instead")
+        return FrontService().get_front_url()

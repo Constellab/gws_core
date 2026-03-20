@@ -142,6 +142,12 @@ class SharedEntityInfo(Model):
         shared_entity.save()
         return shared_entity
 
+    def get_external_object_url(self) -> str | None:
+        """Build the URL of the external object on the other lab.
+        Must be overridden by subclasses to provide the entity-specific URL.
+        """
+        return None
+
     def to_dto(self) -> ShareEntityInfoDTO:
         return ShareEntityInfoDTO(
             id=self.id,
@@ -152,4 +158,5 @@ class SharedEntityInfo(Model):
             user=self.user.to_dto() if self.user else None,
             created_by=self.created_by.to_dto() if self.created_by else None,
             external_id=self.external_id,
+            external_object_url=self.get_external_object_url(),
         )

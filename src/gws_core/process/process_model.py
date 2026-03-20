@@ -528,6 +528,13 @@ class ProcessModel(ModelWithUser):
 
         return self.progress_bar.current_value
 
+    def get_external_lab_id(self) -> str | None:
+        """Return the id of the external lab model if the process was run or is running
+        in an external lab, None otherwise."""
+        if self.run_by_lab is not None and not self.run_by_lab.is_current_lab():
+            return self.run_by_lab.id
+        return None
+
     ########################### JSON #################################
 
     def to_minimum_dto(self) -> ProcessMinimumDTO:
@@ -582,6 +589,7 @@ class ProcessModel(ModelWithUser):
             name=self.name,
             style=self.style,
             is_agent=is_agent,
+            external_lab_id=self.get_external_lab_id(),
         )
 
     def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:

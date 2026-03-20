@@ -8,20 +8,21 @@ from gws_core.core_controller import core_app
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
 from gws_core.lab.monitor.monitor_dto import GetMonitorTimezoneDTO, MonitorBetweenDateGraphicsDTO
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessagesBetweenDatesDTO
 from gws_core.user.authorization_service import AuthorizationService
 
 from .process_service import ProcessService, ProcessType
 
 
 @core_app.get(
-    "/process/{process_type}/{id}/logs",
+    "/process/{process_type}/{_id}/logs",
     tags=["Process"],
     summary="Get the log of a process",
     response_model=None,
 )
 def get_process_logs(
     process_type: ProcessType,
-    id: str,
+    _id: str,
     from_page_date: datetime | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> LogsBetweenDatesDTO:
@@ -29,36 +30,36 @@ def get_process_logs(
     Retrieve a list of running scenarios.
     """
 
-    return ProcessService.get_logs_of_process(process_type, id, from_page_date).to_dto()
+    return ProcessService.get_logs_of_process(process_type, _id, from_page_date).to_dto()
 
 
 @core_app.get(
-    "/process/{process_type}/{id}/logs/download",
+    "/process/{process_type}/{_id}/logs/download",
     tags=["Process"],
     summary="Download the log of a process",
     response_model=None,
 )
 def download_process_logs(
-    process_type: ProcessType, id: str, _=Depends(AuthorizationService.check_user_access_token)
+    process_type: ProcessType, _id: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> StreamingResponse:
     """
     Retrieve a list of running scenarios.
     """
 
-    logs: LogsBetweenDates = ProcessService.get_logs_of_process(process_type, id)
+    logs: LogsBetweenDates = ProcessService.get_logs_of_process(process_type, _id)
 
     return ResponseHelper.create_file_response_from_str(logs.to_str(), "logs.txt")
 
 
 @core_app.post(
-    "/process/{process_type}/{id}/monitor",
+    "/process/{process_type}/{_id}/monitor",
     tags=["Process"],
     summary="Get the monitoring data of a process",
     response_model=None,
 )
 def get_process_monitors(
     process_type: ProcessType,
-    id: str,
+    _id: str,
     body: GetMonitorTimezoneDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> MonitorBetweenDateGraphicsDTO:
@@ -66,4 +67,57 @@ def get_process_monitors(
     Retrieve a list of running scenarios.
     """
     timezone_number = body.timezone_number if body.timezone_number else 0
-    return ProcessService.get_monitor_of_process(process_type, id, timezone_number)
+    return ProcessService.get_monitor_of_process(process_type, _id, timezone_number)
+
+
+################################################## PROGRESS BAR ##################################################
+
+
+@core_app.get(
+    "/process/{process_type}/{_id}/progress-bar/download",
+    tags=["Process"],
+    summary="Download a progress bar",
+)
+def download_progress_bar(
+    process_type: ProcessType,
+    _id: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> StreamingResponse:
+    logs = ProcessService.download_progress_bar(process_type, _id)
+
+    return ResponseHelper.create_file_response_from_str(logs, "messages.txt")
+
+
+@core_app.get(
+    "/process/{process_type}/{_id}/progress-bar/messages",
+    tags=["Process"],
+    summary="Get messages of a progress bar",
+)
+def get_messages(
+    process_type: ProcessType,
+    _id: str,
+    nb_of_messages: int | None = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ProgressBarMessagesBetweenDatesDTO:
+    """Get last progress bar messages"""
+
+    return ProcessService.get_progress_bar_messages(process_type, _id, nb_of_messages=nb_of_messages)
+
+
+@core_app.get(
+    "/process/{process_type}/{_id}/progress-bar/messages/{from_datetime}",
+    tags=["Process"],
+    summary="Get messages of a progress bar",
+)
+def get_messages_from_date(
+    process_type: ProcessType,
+    _id: str,
+    from_datetime: datetime | None,
+    nb_of_messages: int | None = 20,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ProgressBarMessagesBetweenDatesDTO:
+    """Get progress bar messages older than a given date"""
+
+    return ProcessService.get_progress_bar_messages(
+        process_type, _id, nb_of_messages=nb_of_messages, from_datetime=from_datetime
+    )

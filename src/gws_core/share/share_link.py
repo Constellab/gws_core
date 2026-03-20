@@ -128,13 +128,13 @@ class ShareLink(ModelWithUser):
 
     def get_public_link(self) -> str | None:
         if self.entity_type == ShareLinkEntityType.RESOURCE:
-            return FrontService.get_resource_open_url(self.token)
+            return FrontService().get_resource_open_url(self.token)
         elif self.entity_type == ShareLinkEntityType.SCENARIO:
             return None
 
     def get_space_link(self, user_access_token: str) -> str | None:
         if self.entity_type == ShareLinkEntityType.RESOURCE:
-            return FrontService.get_resource_open_space_url(self.token, user_access_token)
+            return FrontService().get_resource_open_space_url(self.token, user_access_token)
         else:
             raise BadRequestException("Space link is not supported for this entity type")
 

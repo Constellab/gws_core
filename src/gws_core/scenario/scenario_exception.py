@@ -37,7 +37,7 @@ class ScenarioRunException(BadRequestException):
         detail_arg: dict = {
             "error": exception_detail,
             "scenario": scenario.title,
-            "scenario_url": FrontService.get_scenario_url(scenario.id),
+            "scenario_url": FrontService().get_scenario_url(scenario.id),
         }
         super().__init__(
             GWSException.SCENARIO_RUN_EXCEPTION.value,
@@ -77,9 +77,9 @@ class ResourceUsedInAnotherScenarioException(BadRequestException):
             unique_code=GWSException.RESET_ERROR_RESOURCE_USED_IN_ANOTHER_SCENARIO.name,
             detail_args={
                 "resource_model_name": resource_model_name,
-                "resource_url": FrontService.get_resource_url(resource_id),
+                "resource_url": FrontService().get_resource_url(resource_id),
                 "scenario": scenario_name,
-                "scenario_url": FrontService.get_scenario_url(scenario_id),
+                "scenario_url": FrontService().get_scenario_url(scenario_id),
             },
         )
 
@@ -91,7 +91,7 @@ class ResourceUnknownUsedInAnotherScenarioException(BadRequestException):
             unique_code=GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.name,
             detail_args={
                 "scenario": scenario_name,
-                "scenario_url": FrontService.get_scenario_url(scenario_id),
+                "scenario_url": FrontService().get_scenario_url(scenario_id),
             },
         )
 
@@ -101,5 +101,5 @@ class ResourceUnknownUsedInNoteException(BadRequestException):
         super().__init__(
             GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.value,
             unique_code=GWSException.RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP.name,
-            detail_args={"scenario": note_name, "scenario_url": FrontService.get_note_url(note_id)},
+            detail_args={"scenario": note_name, "scenario_url": FrontService().get_note_url(note_id)},
         )

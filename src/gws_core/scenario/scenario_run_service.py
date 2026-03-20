@@ -443,7 +443,7 @@ class ScenarioRunService:
             scenario_dto = SendScenarioFinishMailData(
                 title=scenario.title,
                 status=scenario.status.value,
-                scenario_link=FrontService.get_scenario_url(scenario_id=scenario.id),
+                scenario_link=FrontService().get_scenario_url(scenario_id=scenario.id),
             )
 
             MailService.send_scenario_finished_mail(user.id, scenario_dto)

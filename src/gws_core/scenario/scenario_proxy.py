@@ -258,4 +258,4 @@ class ScenarioProxy:
         return self
 
     def get_url(self) -> str:
-        return FrontService.get_scenario_url(self._scenario.id)
+        return FrontService().get_scenario_url(self._scenario.id)

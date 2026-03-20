@@ -63,7 +63,7 @@ class ExternalLabService:
         resource_model = ResourceTransfertService.get_imported_resource_from_scenario(scenario_id)
         return ExternalLabImportResourceResponseDTO(
             resource_model=resource_model.to_dto(),
-            resource_url=FrontService.get_resource_url(resource_model.id),
+            resource_url=FrontService().get_resource_url(resource_model.id),
             lab_info=ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user()
             ),
@@ -185,7 +185,7 @@ class ExternalLabService:
     def _scenario_to_response_dto(cls, scenario: Scenario) -> ExternalLabImportScenarioResponseDTO:
         return ExternalLabImportScenarioResponseDTO(
             scenario=scenario.to_dto(),
-            scenario_url=FrontService.get_scenario_url(scenario.id),
+            scenario_url=FrontService().get_scenario_url(scenario.id),
             lab_info=ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user()
             ),
