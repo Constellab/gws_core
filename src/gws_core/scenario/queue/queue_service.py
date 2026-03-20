@@ -1,4 +1,3 @@
-from bricks.gws_core.tests.test_gws_core import scenario
 from gws_core.core.exception.exceptions import BadRequestException, NotFoundException
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.scenario.queue.queue import Job
