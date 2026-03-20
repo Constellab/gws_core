@@ -1,4 +1,4 @@
-from peewee import BooleanField, CharField, ForeignKeyField
+from peewee import CharField, ForeignKeyField
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -17,7 +17,6 @@ class LabModel(Model):
 
     lab_id: str = CharField(max_length=36)
     name: str = CharField()
-    is_current_lab: bool = BooleanField(default=False)
     mode: LabMode = EnumField(choices=LabMode, null=False)
     environment: LabEnvironment = EnumField(choices=LabEnvironment, null=False)
     domain: str | None = CharField(null=True)
@@ -35,6 +34,10 @@ class LabModel(Model):
     def has_credentials(self) -> bool:
         """Check if the lab has credentials data."""
         return self.get_credentials_data() is not None
+
+    def is_current_lab(self) -> bool:
+        """Check if this lab matches the current lab from Settings."""
+        return self.lab_id == Settings.get_lab_id() and self.mode == Settings.get_lab_mode()
 
     def check_credentials_and_domain(self) -> None:
         """Check that the lab has credentials and domain configured for external communication."""
@@ -69,7 +72,7 @@ class LabModel(Model):
             id=self.id,
             lab_id=self.lab_id,
             name=self.name,
-            is_current_lab=self.is_current_lab,
+            is_current_lab=self.is_current_lab(),
             mode=self.mode,
             environment=self.environment,
             domain=self.domain,
@@ -98,7 +101,6 @@ class LabModel(Model):
             id="",
             lab_id=Settings.get_lab_id(),
             name=Settings.get_lab_name(),
-            is_current_lab=True,
             mode=Settings.get_lab_mode(),
             environment=Settings.get_lab_environment(),
             domain=Settings.get_virtual_host(),
@@ -127,7 +129,6 @@ class LabModel(Model):
             lab = cls()
             lab.lab_id = lab_dto.lab_id
             lab.name = lab_dto.name
-            lab.is_current_lab = lab_dto.is_current_lab
             lab.mode = lab_dto.mode
             lab.environment = lab_dto.environment
             lab.domain = lab_dto.domain
@@ -138,9 +139,6 @@ class LabModel(Model):
             updated = False
             if lab.name != lab_dto.name:
                 lab.name = lab_dto.name
-                updated = True
-            if lab.is_current_lab != lab_dto.is_current_lab:
-                lab.is_current_lab = lab_dto.is_current_lab
                 updated = True
             if lab.environment != lab_dto.environment:
                 lab.environment = lab_dto.environment
@@ -162,4 +160,4 @@ class LabModel(Model):
     @classmethod
     def get_current_lab(cls) -> "LabModel | None":
         """Get the current lab entry for the current mode, or None if not yet created."""
-        return cls.get_or_none((cls.is_current_lab == True) & (cls.mode == Settings.get_lab_mode()))
+        return cls.get_by_lab_id_and_mode(Settings.get_lab_id(), Settings.get_lab_mode())

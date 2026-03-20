@@ -10,7 +10,7 @@ class LabDTO(BaseModelDTO):
     id: str
     lab_id: str
     name: str
-    is_current_lab: bool
+    is_current_lab: bool = False
     mode: LabMode
     environment: LabEnvironment
     domain: str | None = None

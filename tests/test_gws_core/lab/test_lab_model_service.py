@@ -29,7 +29,7 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="test-lab-123",
             name="Test Lab",
-            is_current_lab=False,
+
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="test.example.com",
@@ -64,7 +64,7 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="existing-lab-456",
             name="Original Name",
-            is_current_lab=False,
+
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="original.example.com",
@@ -77,7 +77,7 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="existing-lab-456",
             name="Updated Name",
-            is_current_lab=False,
+
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="updated.example.com",
@@ -99,7 +99,7 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="test-lab-789",
             name="Test Lab",
-            is_current_lab=False,
+
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
         )
@@ -115,7 +115,7 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="creds-test-lab",
             name="Creds Test Lab",
-            is_current_lab=False,
+
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
         )
