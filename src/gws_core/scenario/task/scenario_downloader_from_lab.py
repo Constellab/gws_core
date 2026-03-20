@@ -137,6 +137,8 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
         resource_mode: str = "Outputs only",
         create_option: str = "Update if exists",
         auto_run: bool = False,
+        skip_scenario_tags: bool = False,
+        skip_resource_tags: bool = False,
     ) -> ConfigParamsDict:
         return {
             "scenario_id": scenario_id,
@@ -144,4 +146,6 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
             "create_option": create_option,
             "auto_run": auto_run,
             "lab": lab,
+            "skip_scenario_tags": skip_scenario_tags,
+            "skip_resource_tags": skip_resource_tags,
         }

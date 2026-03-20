@@ -21,6 +21,15 @@ class ScenarioWaiter:
     # Number of consecutive get error before raising an exception
     CONSECUTIVE_GET_ERROR_THRESHOLD = 2
 
+    _message_dispatcher: MessageDispatcher | None
+
+    def __init__(self, message_dispatcher: MessageDispatcher | None = None):
+        """
+        :param message_dispatcher: message dispatcher to send messages, defaults to None
+        :type message_dispatcher: MessageDispatcher, optional
+        """
+        self._message_dispatcher = message_dispatcher
+
     @abstractmethod
     def get_scenario_dto(self) -> ScenarioWaitInfoDTO:
         pass
@@ -29,7 +38,6 @@ class ScenarioWaiter:
         self,
         refresh_interval: int = 30,
         refresh_interval_max_count: int = 10,
-        message_dispatcher: MessageDispatcher | None = None,
     ) -> ScenarioWaitInfoDTO:
         """Wait until the scenario is finished.
         If the scenario is in draft mode, it will raise an exception
@@ -39,9 +47,6 @@ class ScenarioWaiter:
         :param refresh_interval_max_count: maximum number of refresh, if reached, it will raise an exception
                                             set -1 to wait indefinitely, defaults to 10
         :type refresh_interval_max_count: int, optional
-        :param message_dispatcher: message dispatcher to send messages. If provided, the progress
-                                of scenario is emitted in message_dispatcher, defaults to None
-        :type message_dispatcher: MessageDispatcher, optional
         :return: the scenario
         :rtype: ScenarioDTO
         """
@@ -60,8 +65,8 @@ class ScenarioWaiter:
                 consecutive_get_error += 1
                 if consecutive_get_error >= self.CONSECUTIVE_GET_ERROR_THRESHOLD:
                     raise e
-                if message_dispatcher:
-                    message_dispatcher.notify_error_message(
+                if self._message_dispatcher:
+                    self._message_dispatcher.notify_error_message(
                         f"Error while getting scenario. Error : {str(e)}"
                     )
                 continue
@@ -77,9 +82,9 @@ class ScenarioWaiter:
             ]:
                 return scenario
 
-            if message_dispatcher and scenario.progress:
+            if self._message_dispatcher and scenario.progress:
                 message = scenario.progress.get_last_message_content() or "Update progress"
-                message_dispatcher.notify_progress_value(scenario.progress.progress, message)
+                self._message_dispatcher.notify_progress_value(scenario.progress.progress, message)
             time.sleep(refresh_interval)
 
         raise Exception("Scenario is taking too long to finish, max refresh reached")
@@ -88,13 +93,15 @@ class ScenarioWaiter:
 class ScenarioWaiterBasic(ScenarioWaiter):
     scenario_id: str
 
-    def __init__(self, scenario_id: str):
+    def __init__(self, scenario_id: str, message_dispatcher: MessageDispatcher | None = None):
         """Waiter to check a scenario
 
         :param scenario_id: scenario id
         :type scenario_id: str
+        :param message_dispatcher: message dispatcher to send messages, defaults to None
+        :type message_dispatcher: MessageDispatcher, optional
         """
-        super().__init__()
+        super().__init__(message_dispatcher)
         self.scenario_id = scenario_id
 
     def get_scenario_dto(self) -> ScenarioWaitInfoDTO:
@@ -112,15 +119,22 @@ class ScenarioWaiterExternalLab(ScenarioWaiter):
     scenario_id: str
     _external_lab_service: ExternalLabApiService
 
-    def __init__(self, external_lab_service: ExternalLabApiService, scenario_id: str):
+    def __init__(
+        self,
+        external_lab_service: ExternalLabApiService,
+        scenario_id: str,
+        message_dispatcher: MessageDispatcher | None = None,
+    ):
         """Waiter to check a scenario of an external lab
 
         :param external_lab_service: external lab API service instance
         :type external_lab_service: ExternalLabApiService
         :param scenario_id: scenario id
         :type scenario_id: str
+        :param message_dispatcher: message dispatcher to send messages, defaults to None
+        :type message_dispatcher: MessageDispatcher, optional
         """
-        super().__init__()
+        super().__init__(message_dispatcher)
         self._external_lab_service = external_lab_service
         self.scenario_id = scenario_id
 
@@ -133,3 +147,5 @@ class ScenarioWaiterExternalLab(ScenarioWaiter):
 
     def get_scenario_import_info(self) -> ExternalLabImportScenarioResponseDTO:
         return self._external_lab_service.get_scenario(self.scenario_id)
+
+

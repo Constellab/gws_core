@@ -85,13 +85,14 @@ class SendResourceToLab(Task):
             f"Import of resource started, follow progress in destination lab : {response.scenario_url}"
         )
 
-        scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, response.scenario.id)
+        scenario_waiter = ScenarioWaiterExternalLab(
+            external_lab_service, response.scenario.id, message_dispatcher=self.message_dispatcher
+        )
 
         # refresh every 30 seconds, max 2 hours
         scenario_info = scenario_waiter.wait_until_finished(
             refresh_interval=30,
             refresh_interval_max_count=240,
-            message_dispatcher=self.message_dispatcher,
         )
 
         if scenario_info.scenario.status != ScenarioStatus.SUCCESS:

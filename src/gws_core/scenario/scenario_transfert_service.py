@@ -6,7 +6,6 @@ from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
 from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
 from gws_core.scenario.task.scenario_resource import ScenarioResource
-from gws_core.scenario.task.scenario_waiter_task import ScenarioWaiterTask
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
 from gws_core.tag.tag import Tag
@@ -106,35 +105,6 @@ class ScenarioTransfertService:
             select_scenario.get_output_port(SelectScenario.OUTPUT_NAME),
             send.get_input_port(SendScenarioToLab.INPUT_NAME),
         )
-
-        auto_run = values.get("auto_run", False)
-        if auto_run:
-            # When auto_run is enabled, add wait + download tasks
-            wait = protocol.add_process(
-                ScenarioWaiterTask,
-                "waiter",
-                ScenarioWaiterTask.build_config(lab=values["lab"]),
-            )
-            protocol.add_connector(
-                send.get_output_port(SendScenarioToLab.OUTPUT_NAME),
-                wait.get_input_port(ScenarioWaiterTask.INPUT_NAME),
-            )
-
-            downloader = protocol.add_process(
-                ScenarioDownloaderFromLab,
-                "downloader",
-                ScenarioDownloaderFromLab.build_config(
-                    lab=values["lab"], resource_mode="Outputs only"
-                ),
-            )
-            protocol.add_connector(
-                wait.get_output_port(ScenarioWaiterTask.OUTPUT_NAME),
-                downloader.get_input_port(ScenarioDownloaderFromLab.INPUT_NAME),
-            )
-
-            protocol.add_output(
-                "output", downloader >> ScenarioDownloaderFromLab.OUTPUT_NAME, False
-            )
 
         return scenario
 

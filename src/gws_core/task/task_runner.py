@@ -60,6 +60,7 @@ class TaskRunner:
         config_specs: ConfigSpecs | None = None,
         task_id: str | None = None,
         scenario_id: str | None = None,
+        message_dispatcher: MessageDispatcher | None = None,
     ):
         self._task_type = task_type
 
@@ -73,8 +74,11 @@ class TaskRunner:
         self._config_params = None
         self._config_model_id = config_model_id
 
-        self._message_dispatcher = MessageDispatcher()
-        self.add_observer(LoggerMessageObserver())
+        if message_dispatcher is not None:
+            self._message_dispatcher = message_dispatcher
+        else:
+            self._message_dispatcher = MessageDispatcher()
+            self.add_observer(LoggerMessageObserver())
 
         self._input_specs = input_specs or self._task_type.input_specs
         self._output_specs = output_specs or self._task_type.output_specs

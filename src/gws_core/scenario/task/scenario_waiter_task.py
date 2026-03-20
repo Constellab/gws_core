@@ -68,13 +68,14 @@ class ScenarioWaiterTask(Task):
         external_lab_service = ExternalLabApiService(
             lab_dto, CurrentUserService.get_and_check_current_user().id
         )
-        scenario_waiter = ScenarioWaiterExternalLab(external_lab_service, scenario_id)
+        scenario_waiter = ScenarioWaiterExternalLab(
+            external_lab_service, scenario_id, message_dispatcher=self.message_dispatcher
+        )
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(
             refresh_interval=60,
             refresh_interval_max_count=-1,
-            message_dispatcher=self.message_dispatcher,
         )
 
         self.log_info_message(

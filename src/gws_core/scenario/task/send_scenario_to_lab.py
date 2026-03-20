@@ -13,6 +13,9 @@ from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
+from gws_core.scenario.scenario_waiter_external_lab_with_sync import (
+    ScenarioWaiterExternalLabWithSync,
+)
 from gws_core.scenario.task.scenario_downloader_base import (
     ScenarioDownloaderCreateOption,
     ScenarioDownloaderResourceMode,
@@ -22,6 +25,7 @@ from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
+from gws_core.task.task_runner import TaskRunner
 from gws_core.user.current_user_service import CurrentUserService
 
 
@@ -130,14 +134,15 @@ class SendScenarioToLab(Task):
 
             # This waits for the import scenario to finish
             import_scenario_waiter = ScenarioWaiterExternalLab(
-                external_lab_service, response.scenario.id
+                external_lab_service,
+                response.scenario.id,
+                message_dispatcher=self.message_dispatcher,
             )
 
             # refresh every 30 seconds, max 2 hours
             import_scenario_info = import_scenario_waiter.wait_until_finished(
                 refresh_interval=30,
                 refresh_interval_max_count=240,
-                message_dispatcher=self.message_dispatcher,
             )
 
             if import_scenario_info.scenario.status != ScenarioStatus.SUCCESS:
@@ -149,6 +154,11 @@ class SendScenarioToLab(Task):
                 )
                 raise Exception(
                     f"Export scenario to lab failed, status: {import_scenario_info.scenario.status}. Error details: {error}"
+                )
+
+            if auto_run:
+                self._wait_and_download_auto_run(
+                    external_lab_service, scenario_resource.scenario_id, lab_dto.lab.id
                 )
 
             return {"scenario": scenario_resource}
@@ -165,6 +175,58 @@ class SendScenarioToLab(Task):
                     # If there was an error, mark the current scenario as error too
                     ScenarioRunService.stop_scenario(scenario.id, error_info=error_info)
             raise err
+
+    def _wait_and_download_auto_run(
+        self,
+        external_lab_service: ExternalLabApiService,
+        scenario_id: str,
+        lab_model_id: str,
+    ) -> None:
+        """Wait for the scenario to finish running in the external lab, then download outputs with tags.
+
+        Uses ``ScenarioWaiterExternalLabWithSync`` to poll the external lab and
+        download the scenario structure on each poll. Once the scenario reaches a
+        terminal state, performs a final download with "Outputs only" mode and tags.
+        """
+        self.log_info_message("Waiting for scenario to finish running in external lab")
+
+        scenario_waiter = ScenarioWaiterExternalLabWithSync(
+            external_lab_service,
+            scenario_id,
+            lab_model_id=lab_model_id,
+            message_dispatcher=self.message_dispatcher,
+        )
+
+        # Wait indefinitely (max_count=-1) since run time is unpredictable
+        scenario_info = scenario_waiter.wait_until_finished(
+            refresh_interval=60,
+            refresh_interval_max_count=-1,
+        )
+
+        self.log_info_message(
+            f"External scenario finished with status: {scenario_info.scenario.status}"
+        )
+
+        # Final download with "Outputs only" mode and tags
+        self.log_info_message("Downloading scenario outputs with tags from external lab")
+        final_download_params = ScenarioDownloaderFromLab.build_config(
+            lab=lab_model_id,
+            scenario_id=scenario_id,
+            resource_mode="Outputs only",
+            create_option="Update if exists",
+            auto_run=False,
+            skip_scenario_tags=False,
+            skip_resource_tags=False,
+        )
+
+        task_runner = TaskRunner(
+            task_type=ScenarioDownloaderFromLab,
+            params=final_download_params,
+            message_dispatcher=self.message_dispatcher,
+        )
+        task_runner.run()
+
+        self.log_success_message("Scenario outputs downloaded successfully")
 
     @classmethod
     def build_config(
