@@ -1,5 +1,6 @@
 from fastapi.responses import FileResponse
 
+from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
@@ -48,7 +49,7 @@ class ExternalLabService:
         if isinstance(auth_context, AuthContextExternalLab):
             params["lab"] = auth_context.get_lab().id
         else:
-            raise Exception("Invalid auth context, expected AuthContextExternalLab")
+            raise UnauthorizedException("Invalid auth context, expected lab auth context")
 
         scenario = ResourceTransfertService.import_resource_from_lab_async(params)
 
@@ -84,7 +85,7 @@ class ExternalLabService:
         if isinstance(auth_context, AuthContextExternalLab):
             params["lab"] = auth_context.get_lab().id
         else:
-            raise Exception("Invalid auth context, expected AuthContextExternalLab")
+            raise UnauthorizedException("Invalid auth context, expected lab auth context")
 
         scenario = ScenarioTransfertService.import_from_lab_async(params)
 
@@ -120,10 +121,8 @@ class ExternalLabService:
     @classmethod
     def get_scenario_export_info(cls, scenario_id: str) -> ShareScenarioInfoReponseDTO:
         """Get scenario export info for credential-based downloading."""
-        scenario = ScenarioService.get_by_id_and_check(scenario_id)
-
-        if scenario.is_running:
-            raise Exception("The scenario is running, please wait for the end of the scenario")
+        # verify scenario exists and is accessible before exporting it
+        ScenarioService.get_by_id_and_check(scenario_id)
 
         export_package = ScenarioService.export_scenario(scenario_id)
 
