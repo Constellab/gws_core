@@ -121,7 +121,7 @@ class ScenarioDownloaderBase(Task):
         return mode_methods.get(mode, protocol_graph.get_input_and_output_resource_ids)()
 
     def _resolve_auto_resource_mode(
-        self, share_entity: ShareScenarioInfoReponseDTO
+        self, share_entity: ShareScenarioInfoReponseDTO, auto_run: bool
     ) -> ScenarioDownloaderResourceMode:
         """Resolve the 'Auto' resource mode based on the scenario status.
 
@@ -131,6 +131,10 @@ class ScenarioDownloaderBase(Task):
         - PARTIALLY_RUN: download inputs of draft tasks (only tasks not yet run need their inputs)
         - Other statuses: download inputs and outputs as a safe default
         """
+        if auto_run:
+            return (
+                "Inputs of draft tasks"  # If we auto run we need at least the input of draft tasks
+            )
         scenario_status = share_entity.entity_object.scenario.status
 
         status_to_mode: dict[ScenarioStatus, ScenarioDownloaderResourceMode] = {
@@ -211,7 +215,7 @@ class ScenarioDownloaderBase(Task):
 
         # Resolve "Auto" mode based on the scenario status
         if resource_mode == "Auto":
-            resource_mode = self._resolve_auto_resource_mode(share_entity)
+            resource_mode = self._resolve_auto_resource_mode(share_entity, auto_run)
 
         # If we auto run we need to download input resource or all resource
         if auto_run and resource_mode not in [
@@ -220,7 +224,9 @@ class ScenarioDownloaderBase(Task):
             "All",
             "Inputs of draft tasks",
         ]:
-            raise Exception("Auto run requires downloading input resources or all resources.")
+            raise Exception(
+                f"Auto run requires downloading input resources or all resources. Current mode: '{resource_mode}'."
+            )
 
         create_option = params["create_option"]
         create_mode: ShareEntityCreateMode = (
@@ -279,8 +285,11 @@ class ScenarioDownloaderBase(Task):
         if auto_run:
             self.log_info_message("Auto running the scenario")
             scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
-            # Force reset the scenario so it is not marked as running
-            scenario_proxy.reset_error_processes()
+            if scenario_proxy.is_running():
+                scenario_proxy.stop_or_remove_from_queue()  # Force stop the scenario in case it's marked as running
+            if scenario_proxy.is_finished():
+                # Force reset the scenario so it is not marked as running
+                scenario_proxy.reset_error_processes()
             scenario_proxy.add_to_queue()
 
         return scenario

@@ -346,7 +346,8 @@ class ScenarioBuilder:
             new_port = new_process.outputs.ports.get(port_name)
             if new_port is None:
                 continue
-            if existing_port.get_resource_model_id() != new_port.get_resource_model_id():
+            existing_resource_id = existing_port.get_resource_model_id()
+            if existing_resource_id and existing_resource_id != new_port.get_resource_model_id():
                 return True
         return False
 
