@@ -14,6 +14,7 @@ from gws_core.resource.resource_downloader import LabShareZipRouteDownloader
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_builder import ScenarioBuilder
+from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.shared_dto import (
@@ -23,7 +24,13 @@ from gws_core.share.shared_dto import (
 from gws_core.task.task import Task
 
 ScenarioDownloaderResourceMode = Literal[
-    "Inputs and outputs", "Inputs only", "Outputs only", "All", "None"
+    "Auto",
+    "Inputs and outputs",
+    "Inputs only",
+    "Outputs only",
+    "Inputs of draft tasks",
+    "All",
+    "None",
 ]
 ScenarioDownloaderCreateOption = Literal["Update if exists", "Skip if exists", "Force new scenario"]
 
@@ -46,6 +53,7 @@ class ScenarioDownloaderBase(Task):
                 human_name="Resource mode",
                 short_description="Mode for downloading resource of the scenario",
                 allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode),
+                default_value="Auto",
             ),
             "create_option": StrParam(
                 human_name="Create option",
@@ -102,14 +110,41 @@ class ScenarioDownloaderBase(Task):
 
         protocol_graph = ProtocolGraph(protocol_graph_dto)
 
-        if mode == "All":
-            return protocol_graph.get_all_resource_ids()
-        elif mode == "Inputs only":
-            return protocol_graph.get_input_resource_ids()
-        elif mode == "Outputs only":
-            return protocol_graph.get_output_resource_ids()
-        else:
-            return protocol_graph.get_input_and_output_resource_ids()
+        mode_methods = {
+            "All": protocol_graph.get_all_resource_ids,
+            "Inputs only": protocol_graph.get_input_resource_ids,
+            "Outputs only": protocol_graph.get_output_resource_ids,
+            "Inputs and outputs": protocol_graph.get_input_and_output_resource_ids,
+            "Inputs of draft tasks": protocol_graph.get_input_resource_ids_of_draft_tasks,
+        }
+
+        return mode_methods.get(mode, protocol_graph.get_input_and_output_resource_ids)()
+
+    def _resolve_auto_resource_mode(
+        self, share_entity: ShareScenarioInfoReponseDTO
+    ) -> ScenarioDownloaderResourceMode:
+        """Resolve the 'Auto' resource mode based on the scenario status.
+
+        - DRAFT: download inputs only (scenario hasn't been run yet)
+        - SUCCESS: download outputs only (scenario finished successfully)
+        - RUNNING: download outputs only (grab available outputs)
+        - PARTIALLY_RUN: download inputs of draft tasks (only tasks not yet run need their inputs)
+        - Other statuses: download inputs and outputs as a safe default
+        """
+        scenario_status = share_entity.entity_object.scenario.status
+
+        status_to_mode: dict[ScenarioStatus, ScenarioDownloaderResourceMode] = {
+            ScenarioStatus.DRAFT: "Inputs only",
+            ScenarioStatus.SUCCESS: "Outputs only",
+            ScenarioStatus.RUNNING: "Outputs only",
+            ScenarioStatus.PARTIALLY_RUN: "Inputs of draft tasks",
+        }
+
+        resolved_mode = status_to_mode.get(scenario_status, "Inputs and outputs")
+        self.log_info_message(
+            f"Auto resource mode resolved to '{resolved_mode}' based on scenario status '{scenario_status.value}'"
+        )
+        return resolved_mode
 
     def _download_resource_zips(
         self,
@@ -174,8 +209,17 @@ class ScenarioDownloaderBase(Task):
         auto_run = params["auto_run"]
         resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
 
+        # Resolve "Auto" mode based on the scenario status
+        if resource_mode == "Auto":
+            resource_mode = self._resolve_auto_resource_mode(share_entity)
+
         # If we auto run we need to download input resource or all resource
-        if auto_run and resource_mode not in ["Inputs only", "Inputs and outputs", "All"]:
+        if auto_run and resource_mode not in [
+            "Inputs only",
+            "Inputs and outputs",
+            "All",
+            "Inputs of draft tasks",
+        ]:
             raise Exception("Auto run requires downloading input resources or all resources.")
 
         create_option = params["create_option"]

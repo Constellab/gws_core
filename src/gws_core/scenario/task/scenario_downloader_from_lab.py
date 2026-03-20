@@ -23,16 +23,49 @@ from gws_core.user.current_user_service import CurrentUserService
 )
 class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     """
-    Task to download a scenario from another lab using lab credentials.
+    Download a scenario from another lab using lab credentials.
 
-    Unlike ScenarioDownloader which uses share links, this task authenticates
-    directly with the external lab via credentials.
+    This task retrieves a scenario (its protocol structure, tasks, and optionally its resources)
+    from an external lab by authenticating with pre-configured lab credentials, without requiring
+    a share link.
 
-    The scenario_id can come from either:
-    - An input ScenarioResource (when used in the source lab's export pipeline
-      to download outputs back from the destination)
-    - A config parameter `scenario_id` (when used in the destination lab's
-      import flow to pull the scenario from the source)
+    The scenario to download is identified by its ID, which can be provided in two ways:
+    - Via the **source_scenario** input: useful when the current lab previously sent a scenario
+      to the external lab and wants to download the results back.
+    - Via the **scenario_id** config parameter: useful when pulling a scenario directly
+      from the external lab by its known ID.
+
+    ## Inputs
+
+    - **source_scenario** *(optional)*: A `ScenarioResource` referencing the scenario to download.
+      When provided, its scenario ID is used and the `scenario_id` config parameter is ignored.
+
+    ## Parameters
+
+    - **lab**: The external lab to connect to. Must have credentials configured in the current lab.
+    - **scenario_id** *(optional)*: The ID of the scenario to download. Required when no input is provided.
+    - **resource_mode**: Controls which resources are downloaded along with the scenario:
+      - `Auto`: Automatically selects the best mode based on the scenario status
+        (e.g. inputs for draft scenarios, outputs for finished ones, inputs of draft tasks for partially run scenarios).
+      - `Inputs and outputs`: Downloads both input and output resources.
+      - `Inputs only`: Downloads only the input resources.
+      - `Outputs only`: Downloads only the output resources.
+      - `All`: Downloads all resources (inputs, outputs, and intermediate results).
+      - `Inputs of draft tasks`: Downloads only the input resources of tasks that have not been run yet (DRAFT status).
+        Useful for partially run scenarios where only the remaining tasks need their inputs.
+      - `None`: Downloads only the scenario structure without any resource content.
+    - **create_option**: Determines how to handle an existing scenario with the same ID:
+      - `Update if exists`: Updates the existing scenario in place.
+      - `Skip if exists`: Raises an error if the scenario already exists.
+      - `Force new scenario`: Creates a new scenario with a new ID, even if one already exists.
+    - **auto_run**: If enabled, the scenario is automatically queued for execution after download.
+      Requires the resource mode to include input resources.
+    - **skip_scenario_tags**: If enabled, scenario-level tags from the source are not applied.
+    - **skip_resource_tags**: If enabled, resource-level tags from the source are not applied.
+
+    ## Output
+
+    - **scenario**: A `ScenarioResource` referencing the downloaded scenario.
     """
 
     input_specs = InputSpecs(

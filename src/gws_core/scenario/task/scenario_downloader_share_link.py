@@ -5,7 +5,6 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.task.scenario_downloader_base import (
     ScenarioDownloaderBase,
     ScenarioDownloaderCreateOption,
@@ -30,9 +29,39 @@ from gws_core.user.current_user_service import CurrentUserService
 )
 class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
     """
-    Task to download a scenario from another lab using a share link.
+    Download a scenario from another lab using a share link.
 
-    This can be used between a dev and a prod environment of a lab.
+    This task retrieves a scenario (its protocol structure, tasks, and optionally its resources)
+    from another lab using a public or space-scoped share link. It is commonly used to transfer
+    scenarios between a development and a production environment.
+
+    After a successful download, the task notifies the origin lab that the scenario has been received.
+
+    ## Parameters
+
+    - **link**: The share link URL of the scenario to download. Must be a valid lab share scenario link.
+    - **resource_mode**: Controls which resources are downloaded along with the scenario:
+      - `Auto`: Automatically selects the best mode based on the scenario status
+        (e.g. inputs for draft scenarios, outputs for finished ones, inputs of draft tasks for partially run scenarios).
+      - `Inputs and outputs`: Downloads both input and output resources.
+      - `Inputs only`: Downloads only the input resources.
+      - `Outputs only`: Downloads only the output resources.
+      - `All`: Downloads all resources (inputs, outputs, and intermediate results).
+      - `Inputs of draft tasks`: Downloads only the input resources of tasks that have not been run yet (DRAFT status).
+        Useful for partially run scenarios where only the remaining tasks need their inputs.
+      - `None`: Downloads only the scenario structure without any resource content.
+    - **create_option**: Determines how to handle an existing scenario with the same ID:
+      - `Update if exists`: Updates the existing scenario in place.
+      - `Skip if exists`: Raises an error if the scenario already exists.
+      - `Force new scenario`: Creates a new scenario with a new ID, even if one already exists.
+    - **auto_run**: If enabled, the scenario is automatically queued for execution after download.
+      Requires the resource mode to include input resources.
+    - **skip_scenario_tags**: If enabled, scenario-level tags from the source are not applied.
+    - **skip_resource_tags**: If enabled, resource-level tags from the source are not applied.
+
+    ## Output
+
+    - **scenario**: A `ScenarioResource` referencing the downloaded scenario.
     """
 
     config_specs = ConfigSpecs(
