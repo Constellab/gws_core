@@ -109,7 +109,7 @@ class ProgressBar(Model):
         :return: Returns the last execution time in milliseconds
         :rtype: `datetime`
         """
-        if self.ended_at is None:
+        if self.ended_at is None or self.started_at is None:
             return 0
 
         if self.second_start is not None:
