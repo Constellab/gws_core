@@ -174,6 +174,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return Scenario.select().where(
             (Scenario.status == ScenarioStatus.RUNNING)
             | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+            | (Scenario.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB)
         )
 
     @classmethod
@@ -182,8 +183,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             Scenario.select()
             .where(
                 (Scenario.status == ScenarioStatus.RUNNING)
-                | (Scenario.status == ScenarioStatus.IN_QUEUE)
                 | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+                | (Scenario.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB)
+                | (Scenario.status == ScenarioStatus.IN_QUEUE)
             )
             .count()
         )

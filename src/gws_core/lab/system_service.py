@@ -29,6 +29,7 @@ from gws_core.scenario.queue.queue_runner import QueueRunner
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
 from gws_core.triggered_job.triggered_job_scheduler import TriggeredJobScheduler
@@ -127,26 +128,15 @@ class SystemService:
                         Logger.info(
                             f"Marking scenario {scenario.id} as stopped because the process is not running"
                         )
-                        running_process = scenario.protocol_model.get_running_task()
 
-                        error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
-                        if running_process is not None:
-                            running_process.mark_as_error_and_parent(
-                                ProcessRunException.from_exception(
-                                    process_model=running_process,
-                                    exception=Exception(error_text),
-                                    error_prefix="Lab init",
-                                )
-                            )
-                        else:
-                            scenario.mark_as_error(
-                                ProcessErrorInfo(
-                                    detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
-                                    unique_code="LAB_STOPPED_WHILE_RUNNING",
-                                    context=None,
-                                    instance_id=None,
-                                )
-                            )
+                        error_info = ProcessErrorInfo(
+                            detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
+                            unique_code="LAB_STOPPED_WHILE_RUNNING",
+                            context=None,
+                            instance_id=None,
+                        )
+
+                        ScenarioRunService.stop_scenario(scenario.id, error_info=error_info)
             except Exception as err:
                 Logger.error(f"[SystemService] Error while checking running scenarios: {err}")
                 Logger.log_exception_stack_trace(err)
