@@ -50,6 +50,17 @@ class SharedEntityInfo(Model):
         return shared_resource
 
     @classmethod
+    def get_received_entity(cls, entity_id: str) -> "SharedEntityInfo | None":
+        """Get the SharedEntityInfo record for an entity that was received from another lab.
+
+        :param entity_id: the local entity ID
+        :return: the SharedEntityInfo record or None if not found
+        """
+        return cls.get_or_none(
+            (cls.entity == entity_id) & (cls.share_mode == SharedEntityMode.RECEIVED)
+        )
+
+    @classmethod
     def already_shared_with_lab(cls, entity_id: str, lab_dto: LabDTO) -> bool:
         """Method that check if the entity is already shared with the lab.
 

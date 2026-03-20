@@ -15,7 +15,6 @@ from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
-    SharedEntityMode,
     ShareLinkEntityType,
     ShareLinkType,
 )
@@ -140,10 +139,7 @@ class ResourceTransfertService:
             )
 
         # Find the SharedResource record for this resource
-        shared_resource: SharedResource | None = SharedResource.get_or_none(
-            (SharedResource.entity == resource_id)
-            & (SharedResource.share_mode == SharedEntityMode.RECEIVED)
-        )
+        shared_resource: SharedResource | None = SharedResource.get_received_entity(resource_id)
         if shared_resource is None:
             raise BadRequestException(
                 "This resource was not imported from another lab, cannot download content"

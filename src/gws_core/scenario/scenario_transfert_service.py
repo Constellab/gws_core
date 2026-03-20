@@ -1,5 +1,6 @@
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.scenario.scenario_proxy import ScenarioProxy
@@ -9,6 +10,7 @@ from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownlo
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.scenario.task.select_scenario import SelectScenario
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
+from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_system import TagSystem
 from gws_core.task.plug.output_task import OutputTask
@@ -131,11 +133,19 @@ class ScenarioTransfertService:
         if not scenario.is_running_in_external_lab:
             raise Exception("The scenario is not running in an external lab")
 
+        # Find the SharedScenario record to get the external ID on the source lab
+        shared_scenario: SharedScenario | None = SharedScenario.get_received_entity(scenario_id)
+        if shared_scenario is None:
+            raise BadRequestException(
+                "This scenario was not imported from another lab, cannot update from external lab"
+            )
+
         lab_model_id = scenario.running_in_external_lab.id
+        external_scenario_id = shared_scenario.external_id
 
         params = ScenarioDownloaderFromLab.build_config(
             lab=lab_model_id,
-            scenario_id=scenario_id,
+            scenario_id=external_scenario_id,
             resource_mode="None",
             create_option="Update if exists",
             auto_run=False,
