@@ -174,7 +174,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return Scenario.select().where(
             (Scenario.status == ScenarioStatus.RUNNING)
             | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
-            | (Scenario.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB)
         )
 
     @classmethod
@@ -184,7 +183,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             .where(
                 (Scenario.status == ScenarioStatus.RUNNING)
                 | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
-                | (Scenario.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB)
                 | (Scenario.status == ScenarioStatus.IN_QUEUE)
             )
             .count()
@@ -284,7 +282,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.status in (
             ScenarioStatus.RUNNING,
             ScenarioStatus.WAITING_FOR_CLI_PROCESS,
-            ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
         )
 
     @property
@@ -307,7 +304,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     @property
     def is_running_in_external_lab(self) -> bool:
-        return self.status == ScenarioStatus.RUNNING_IN_EXTERNAL_LAB
+        return self.running_in_external_lab is not None
 
     def mark_as_in_queue(self):
         self.status = ScenarioStatus.IN_QUEUE
@@ -361,7 +358,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def mark_as_running_in_external_lab(self, lab: LabModel) -> None:
         """Mark the scenario as being processed in an external lab."""
-        self.status = ScenarioStatus.RUNNING_IN_EXTERNAL_LAB
+        self.status = ScenarioStatus.RUNNING
         self.running_in_external_lab = lab
         self.save()
 
@@ -398,11 +395,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         """Copy metadata fields from another Scenario and save."""
         self.title = other.title
         self.description = other.description
-        # Don't update status if the scenario is running in an external lab
-        # and the other scenario is not finished,
-        # so in this case we keep the RUNNING_IN_EXTERNAL_LAB
-        if not self.is_running_in_external_lab or not other.is_running_or_waiting:
-            self.status = other.status
+        self.status = other.status
         self.error_info = other.error_info
         if other.folder:
             self.folder = other.folder
@@ -440,6 +433,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             last_sync_at=self.last_sync_at,
             is_archived=self.is_archived,
+            is_running_in_external_lab=self.is_running_in_external_lab,
             folder=self.folder.to_dto() if self.folder else None,
             pid_status=self.get_process_status(),
         )
@@ -448,25 +442,11 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.id)
         tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
 
-        # Derive status from protocol model when locked, so the destination lab
-        # doesn't inherit RUNNING_IN_EXTERNAL_LAB
-        if self.is_running_in_external_lab:
-            protocol_status = self.protocol_model.status
-            status_map = {
-                ProcessStatus.DRAFT: ScenarioStatus.DRAFT,
-                ProcessStatus.SUCCESS: ScenarioStatus.SUCCESS,
-                ProcessStatus.ERROR: ScenarioStatus.ERROR,
-                ProcessStatus.PARTIALLY_RUN: ScenarioStatus.PARTIALLY_RUN,
-            }
-            export_status = status_map.get(protocol_status, ScenarioStatus.DRAFT)
-        else:
-            export_status = self.status
-
         return ScenarioExportDTO(
             id=self.id,
             title=self.title,
             description=self.description,
-            status=export_status,
+            status=self.status,
             folder=self.folder.to_dto() if self.folder else None,
             error_info=self.get_error_info(),
             tags=tags_dtos,

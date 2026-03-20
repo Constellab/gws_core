@@ -11,6 +11,7 @@ from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.scenario.scenario_enums import ScenarioStatus
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.scenario_waiter_external_lab_with_sync import (
@@ -123,6 +124,11 @@ class SendScenarioToLab(Task):
         if auto_run:
             # Lock the scenario while it's being processed externally
             lab_model: LabModel = LabModel.get_by_id_and_check(lab_dto.lab.id)
+            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
+            # because it will be run in the external lab, we need to reset all error
+            # processes so the scenario is ready to be run
+            scenario_proxy.reset_error_processes()
+            scenario = scenario_proxy.get_model()
             scenario.mark_as_running_in_external_lab(lab_model)
 
         try:
@@ -198,7 +204,7 @@ class SendScenarioToLab(Task):
 
         # Wait indefinitely (max_count=-1) since run time is unpredictable
         scenario_info = scenario_waiter.wait_until_finished(
-            refresh_interval=20,
+            refresh_interval=60,
             refresh_interval_max_count=-1,
         )
 

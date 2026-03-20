@@ -40,8 +40,6 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
             Scenario.status.in_(
                 [
                     ScenarioStatus.RUNNING,
-                    ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
-                    ScenarioStatus.RUNNING_IN_EXTERNAL_LAB,
                 ]
             )
         )

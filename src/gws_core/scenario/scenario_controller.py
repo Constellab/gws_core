@@ -320,3 +320,21 @@ def get_export_to_lab_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()
+
+
+@core_app.put(
+    "/scenario/{id_}/update-from-external-lab",
+    tags=["Scenario"],
+    summary="Update a scenario from the external lab",
+)
+def update_scenario_from_external_lab(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> ScenarioDTO:
+    """
+    Update a scenario that is running in an external lab by downloading
+    its current state. Only works if the scenario is running in an external lab.
+
+    - **id_**: the id_ of the scenario
+    """
+
+    return ScenarioTransfertService.update_scenario_from_external_lab(id_)

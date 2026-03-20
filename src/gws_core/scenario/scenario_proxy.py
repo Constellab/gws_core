@@ -187,9 +187,6 @@ class ScenarioProxy:
         while communicating with the external lab, unmark the scenario as running
         and stop all running importing scenarios.
         """
-        if not self._scenario.is_running_in_external_lab:
-            return
-
         if self._scenario.running_in_external_lab is None:
             self._stop_all_running_importing_scenarios()
             ScenarioRunService.stop_scenario(self._scenario.id)

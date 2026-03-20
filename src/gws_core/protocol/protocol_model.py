@@ -1342,7 +1342,7 @@ class ProtocolModel(ProcessModel):
         if self.scenario:
             self.scenario.check_is_updatable()
 
-            if self.scenario.is_running_or_waiting:
+            if not self.scenario.is_running_in_external_lab and self.scenario.is_running_or_waiting:
                 raise BadRequestException(
                     detail="The scenario is running or in queue, you can't update it"
                 )
