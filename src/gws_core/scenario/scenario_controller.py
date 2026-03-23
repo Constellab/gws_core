@@ -308,7 +308,7 @@ def get_import_scenario_config_specs(
 def export_to_lab(
     id_: str, values: ConfigParamsDict, _=Depends(AuthorizationService.check_user_access_token)
 ) -> ScenarioDTO:
-    return ScenarioTransfertService.export_scenario_to_lab(id_, values).to_dto()
+    return ScenarioTransfertService.export_scenario_to_lab_async(id_, values).to_dto()
 
 
 @core_app.get(

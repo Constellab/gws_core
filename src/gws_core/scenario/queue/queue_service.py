@@ -2,7 +2,7 @@ from gws_core.core.exception.exceptions import BadRequestException, NotFoundExce
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.scenario.queue.queue import Job
 from gws_core.scenario.queue.queue_runner import QueueRunner
-from gws_core.scenario.scenario import Scenario, ScenarioStatus
+from gws_core.scenario.scenario import Scenario
 from gws_core.user.current_user_service import CurrentUserService
 
 
