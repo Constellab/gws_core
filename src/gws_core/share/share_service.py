@@ -75,28 +75,25 @@ class ShareService:
         return paginator
 
     @classmethod
-    def mark_entity_as_shared(
+    def mark_entity_as_sent(
         cls,
         entity_type: ShareLinkEntityType,
-        shared_entity_link: ShareLink,
+        created_by: User,
+        entity_id: str,
         receiver_lab: ExternalLabWithUserInfo,
         external_id: str,
     ) -> None:
-        """Method called by an external lab after the an entity was successfully
-        import in the external lab. This helps this lab to keep track of which lab downloaded the entity
+        """Mark an entity as sent to an external lab.
+
+        Called by an external lab after it has successfully imported an entity.
+        This helps this lab keep track of which labs downloaded the entity.
         """
         share_entity_info: type[SharedEntityInfo] = cls._get_shared_entity_type(entity_type)
 
-        # check if this resource was already downloaded by this lab
-        if share_entity_info.already_shared_with_lab(
-            shared_entity_link.entity_id, receiver_lab.lab
-        ):
-            return
-
         share_entity_info.mark_as_sent(
-            shared_entity_link.entity_id,
+            entity_id,
             receiver_lab,
-            shared_entity_link.created_by,
+            created_by,
             external_id=external_id,
         )
 
@@ -333,12 +330,19 @@ class ShareService:
         download_url: str = ExternalLabApiService.get_current_lab_route(
             f"{Settings.core_api_route_path()}/share/scenario/{shared_entity_link.token}/resource/[RESOURCE_ID]/zip"
         )
+
+        # generate the link to mark individual resources as shared
+        mark_as_shared_url: str = ExternalLabApiService.get_current_lab_route(
+            f"{Settings.core_api_route_path()}/share/{ShareLinkEntityType.RESOURCE.value}/mark-as-shared/{shared_entity_link.token}"
+        )
+
         return ShareScenarioInfoReponseDTO(
             version=cls.VERSION,
             entity_type=shared_entity_link.entity_type,
             entity_id=shared_entity_link.entity_id,
             entity_object=ScenarioService.export_scenario(shared_entity_link.entity_id),
             resource_route=download_url,
+            mark_as_shared_route=mark_as_shared_url,
             token=shared_entity_link.token,
             origin=ExternalLabApiService.get_current_lab_info(shared_entity_link.created_by),
         )

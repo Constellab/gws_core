@@ -61,24 +61,6 @@ class SharedEntityInfo(Model):
         )
 
     @classmethod
-    def already_shared_with_lab(cls, entity_id: str, lab_dto: LabDTO) -> bool:
-        """Method that check if the entity is already shared with the lab.
-
-        Resolves the lab by (lab_id, mode) to find the local LabModel row.
-        """
-        lab = LabModel.get_by_lab_id_and_mode(lab_dto.lab_id, lab_dto.mode)
-        if lab is None:
-            return False
-        return (
-            cls.get_or_none(
-                (cls.entity == entity_id)
-                & (cls.share_mode == SharedEntityMode.SENT)
-                & (cls.lab == lab.id)
-            )
-            is not None
-        )
-
-    @classmethod
     def get_sents(cls, entity_id: str) -> ModelSelect:
         """Method that return the receivers of the entity"""
         return (
@@ -121,7 +103,19 @@ class SharedEntityInfo(Model):
         created_by: User,
         external_id: str,
     ) -> "SharedEntityInfo":
-        """Mark an entity as sent to an external lab."""
+        """Mark an entity as sent to an external lab.
+
+        If the entity is already marked as sent to the same lab, return the existing record.
+        """
+        lab = LabModel.get_or_create_from_dto(lab_info.lab)
+        existing = cls.get_or_none(
+            (cls.entity == entity_id)
+            & (cls.share_mode == SharedEntityMode.SENT)
+            & (cls.lab == lab.id)
+        )
+        if existing is not None:
+            return existing
+
         return cls._create_from_lab_info(
             entity_id=entity_id,
             mode=SharedEntityMode.SENT,

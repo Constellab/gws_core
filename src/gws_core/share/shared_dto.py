@@ -85,11 +85,15 @@ class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
 class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
     entity_object: ScenarioExportPackage
     resource_route: str
+    mark_as_shared_route: str
     token: str
     origin: ExternalLabWithUserInfo
 
     def get_resource_route(self, resource_id: str) -> str:
         return self.resource_route.replace("[RESOURCE_ID]", resource_id)
+
+    def get_mark_as_shared_route(self, resource_id: str) -> str:
+        return self.mark_as_shared_route.replace("[RESOURCE_ID]", resource_id)
 
 
 class ShareResourceZippedResponseDTO(BaseModelDTO):

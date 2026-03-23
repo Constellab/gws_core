@@ -8,6 +8,7 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportRequestDTO,
     ExternalLabImportResourceResponseDTO,
     ExternalLabImportScenarioResponseDTO,
+    MarkEntityAsSharedDTO,
 )
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -70,11 +71,12 @@ class ExternalLabService:
         )
 
     @classmethod
-    def import_scenario(
+    def trigger_scenario_download(
         cls, import_scenario: ExternalLabImportRequestDTO
     ) -> ExternalLabImportScenarioResponseDTO:
-        """Import scenario from the source lab.
+        """Trigger the download of an external scenario.
 
+        Called when an external lab asks this lab to download a scenario.
         Resolves the source lab's LabModel from the auth context (set during
         API key authentication) and injects its PK into the params so
         ScenarioDownloaderFromLab can authenticate back to the source.
@@ -131,6 +133,11 @@ class ExternalLabService:
             f"{Settings.external_lab_api_route_path()}/resource/[RESOURCE_ID]/zip"
         )
 
+        # Build route to mark individual resources as shared
+        mark_as_shared_route = ExternalLabApiService.get_current_lab_route(
+            f"{Settings.external_lab_api_route_path()}/{ShareLinkEntityType.RESOURCE.value}/mark-as-shared/[RESOURCE_ID]"
+        )
+
         origin = ExternalLabApiService.get_current_lab_info(
             CurrentUserService.get_and_check_current_user()
         )
@@ -141,6 +148,7 @@ class ExternalLabService:
             entity_id=scenario_id,
             entity_object=export_package,
             resource_route=resource_route,
+            mark_as_shared_route=mark_as_shared_route,
             token="",
             origin=origin,
         )
@@ -180,6 +188,27 @@ class ExternalLabService:
             raise Exception("Zip file is not a file")
 
         return FileHelper.create_file_response(zip_file.path)
+
+    @classmethod
+    def mark_entity_as_shared(
+        cls,
+        entity_type: ShareLinkEntityType,
+        entity_id: str,
+        body: MarkEntityAsSharedDTO,
+    ) -> None:
+        """Mark an entity as sent to the requesting external lab.
+
+        Called by an external lab after it has successfully imported an entity
+        via credential-based sharing. This helps this lab keep track of which
+        labs downloaded the entity.
+        """
+        ShareService.mark_entity_as_sent(
+            entity_type=entity_type,
+            created_by=CurrentUserService.get_and_check_current_user(),
+            entity_id=entity_id,
+            receiver_lab=body.lab_info,
+            external_id=body.external_id,
+        )
 
     @classmethod
     def _scenario_to_response_dto(cls, scenario: Scenario) -> ExternalLabImportScenarioResponseDTO:

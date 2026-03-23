@@ -4,8 +4,11 @@ from typing import Literal
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.external_lab.external_lab_dto import MarkEntityAsSharedDTO
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
@@ -22,6 +25,7 @@ from gws_core.share.shared_dto import (
     ShareScenarioInfoReponseDTO,
 )
 from gws_core.task.task import Task
+from gws_core.user.current_user_service import CurrentUserService
 
 ScenarioDownloaderResourceMode = Literal[
     "Auto",
@@ -282,6 +286,9 @@ class ScenarioDownloaderBase(Task):
 
         self._built_scenario_id = scenario.id
 
+        # Mark each downloaded resource as shared in the origin lab
+        self._mark_resources_as_shared(share_entity, zip_paths)
+
         if auto_run:
             self.log_info_message("Auto running the scenario")
             scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
@@ -293,3 +300,38 @@ class ScenarioDownloaderBase(Task):
             scenario_proxy.add_to_queue()
 
         return scenario
+
+    def _mark_resources_as_shared(
+        self,
+        share_entity: ShareScenarioInfoReponseDTO,
+        resource_zip_paths: dict[str, str],
+    ) -> None:
+        """Mark each downloaded resource as shared in the origin lab."""
+        if not resource_zip_paths:
+            return
+
+        self.log_info_message("Marking resources as shared in the origin lab")
+
+        current_lab_info = ExternalLabApiService.get_current_lab_info(
+            CurrentUserService.get_and_check_current_user()
+        )
+        headers = self._get_request_headers()
+
+        for resource_id in resource_zip_paths:
+            body = MarkEntityAsSharedDTO(
+                lab_info=current_lab_info,
+                external_id=resource_id,
+            )
+            url = share_entity.get_mark_as_shared_route(resource_id)
+
+            try:
+                ExternalApiService.post(
+                    url,
+                    body=body.to_json_dict(),
+                    headers=headers,
+                    raise_exception_if_error=True,
+                )
+            except Exception as e:
+                self.log_error_message(
+                    f"Error while marking resource '{resource_id}' as shared: {e}"
+                )

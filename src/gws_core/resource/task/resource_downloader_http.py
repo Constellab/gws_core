@@ -119,12 +119,14 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
 
             # retrieve the token which is the last part of the link
             share_token = self.link.split("/")[-1]
-            response: Response = ExternalLabApiService.mark_shared_object_as_received(
-                self.resource_loader.get_origin_info().lab_api_url,
-                ShareLinkEntityType.RESOURCE,
-                share_token,
-                current_lab_info,
-                external_id=self._local_resource_model_id,
+            response: Response = (
+                ExternalLabApiService.mark_shared_object_as_shared_from_shared_link(
+                    self.resource_loader.get_origin_info().lab_api_url,
+                    ShareLinkEntityType.RESOURCE,
+                    share_token,
+                    current_lab_info,
+                    external_id=self._local_resource_model_id,
+                )
             )
 
             if response.status_code != 200:

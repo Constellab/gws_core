@@ -12,10 +12,7 @@ from gws_core.scenario.task.scenario_downloader_base import (
 )
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.share.share_link import ShareLink
-from gws_core.share.shared_dto import (
-    ShareLinkEntityType,
-    ShareScenarioInfoReponseDTO,
-)
+from gws_core.share.shared_dto import ShareLinkEntityType, ShareScenarioInfoReponseDTO
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -120,12 +117,14 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
                 CurrentUserService.get_and_check_current_user()
             )
 
-            response: requests.Response = ExternalLabApiService.mark_shared_object_as_received(
-                self.share_entity.origin.lab_api_url,
-                ShareLinkEntityType.SCENARIO,
-                self.share_entity.token,
-                current_lab_info,
-                external_id=self._built_scenario_id,
+            response: requests.Response = (
+                ExternalLabApiService.mark_shared_object_as_shared_from_shared_link(
+                    self.share_entity.origin.lab_api_url,
+                    ShareLinkEntityType.SCENARIO,
+                    self.share_entity.token,
+                    current_lab_info,
+                    external_id=self._built_scenario_id,
+                )
             )
 
             if response.status_code != 200:

@@ -9,7 +9,7 @@ from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
 from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderBase
 from gws_core.scenario.task.scenario_resource import ScenarioResource
-from gws_core.share.shared_dto import ShareScenarioInfoReponseDTO
+from gws_core.share.shared_dto import ShareLinkEntityType, ShareScenarioInfoReponseDTO
 from gws_core.task.task_decorator import task_decorator
 from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.user.current_user_service import CurrentUserService
@@ -128,6 +128,27 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     def _get_request_headers(self) -> dict | None:
         """Return auth headers for credential-based requests."""
         return self._external_lab_service._get_auth_headers()
+
+    def run_after_task(self) -> None:
+        super().run_after_task()
+
+        if self.share_entity:
+            self.log_info_message("Marking the scenario as received in the origin lab")
+            current_lab_info = ExternalLabApiService.get_current_lab_info(
+                CurrentUserService.get_and_check_current_user()
+            )
+
+            try:
+                self._external_lab_service.mark_entity_as_shared(
+                    ShareLinkEntityType.SCENARIO,
+                    self._scenario_id,
+                    current_lab_info,
+                    external_id=self._built_scenario_id,
+                )
+            except Exception as e:
+                self.log_error_message(
+                    f"Error while marking the scenario as received: {e}"
+                )
 
     @classmethod
     def build_config(

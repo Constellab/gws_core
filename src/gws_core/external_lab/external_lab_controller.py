@@ -7,11 +7,16 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabImportRequestDTO,
     ExternalLabImportResourceResponseDTO,
     ExternalLabImportScenarioResponseDTO,
+    MarkEntityAsSharedDTO,
 )
 from gws_core.external_lab.external_lab_service import ExternalLabService
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.lab_model.lab_dto import LabDTO
-from gws_core.share.shared_dto import ShareResourceZippedResponseDTO, ShareScenarioInfoReponseDTO
+from gws_core.share.shared_dto import (
+    ShareLinkEntityType,
+    ShareResourceZippedResponseDTO,
+    ShareScenarioInfoReponseDTO,
+)
 from gws_core.user.user_dto import UserDTO
 
 external_lab_app = ApiRegistry.register_api(
@@ -63,14 +68,16 @@ def get_scenario(
     return ExternalLabService.get_scenario(id_)
 
 
-@external_lab_app.post("/scenario/import", summary="Import scenario from the lab")
-def import_scenario(
+@external_lab_app.post("/scenario/trigger-download", summary="Trigger download of an external scenario")
+def trigger_scenario_download(
     import_dto: ExternalLabImportRequestDTO, _=Depends(ExternalLabAuth.check_auth)
 ) -> ExternalLabImportScenarioResponseDTO:
     """
-    Import scenario from the lab
+    Called by an external lab (Lab A) to trigger this lab (Lab B) to download
+    a scenario from Lab A. Lab B will then make requests back to Lab A to
+    fetch the scenario data.
     """
-    return ExternalLabService.import_scenario(import_dto)
+    return ExternalLabService.trigger_scenario_download(import_dto)
 
 
 @external_lab_app.get("/lab-info", summary="Get current lab information")
@@ -140,3 +147,21 @@ def download_resource(
     Download a zipped resource using credentials.
     """
     return ExternalLabService.download_resource(resource_id)
+
+
+@external_lab_app.post(
+    "/{entity_type}/mark-as-shared/{entity_id}",
+    summary="Mark an entity as downloaded by another lab",
+)
+def mark_entity_as_shared(
+    entity_type: ShareLinkEntityType,
+    entity_id: str,
+    body: MarkEntityAsSharedDTO,
+    _=Depends(ExternalLabAuth.check_auth),
+) -> None:
+    """
+    Called by an external lab after it has successfully imported an entity
+    via credential-based sharing. This marks the entity as sent to the
+    requesting lab.
+    """
+    ExternalLabService.mark_entity_as_shared(entity_type, entity_id, body)

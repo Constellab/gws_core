@@ -75,7 +75,7 @@ class ExternalLabApiService:
 
         headers = self._get_auth_headers()
 
-        url = self.get_full_route("scenario/import")
+        url = self.get_full_route("scenario/trigger-download")
 
         response = ExternalApiService.post(
             url, body=request_dto.to_json_dict(), headers=headers, raise_exception_if_error=True
@@ -117,6 +117,23 @@ class ExternalLabApiService:
         """Get the full URL for the resource zip endpoint on the external lab."""
         return self.get_full_route(f"resource/{resource_id}/zip")
 
+    def mark_entity_as_shared(
+        self,
+        entity_type: ShareLinkEntityType,
+        entity_id: str,
+        current_lab_info: ExternalLabWithUserInfo,
+        external_id: str,
+    ) -> Response:
+        """Mark an entity as shared on the external lab using credentials."""
+        body = MarkEntityAsSharedDTO(lab_info=current_lab_info, external_id=external_id)
+        headers = self._get_auth_headers()
+
+        url = self.get_full_route(f"{entity_type.value}/mark-as-shared/{entity_id}")
+
+        return ExternalApiService.post(
+            url, body=body.to_json_dict(), headers=headers, raise_exception_if_error=True
+        )
+
     def get_full_route(self, route: str) -> str:
         """Get the full route for an external lab API call.
 
@@ -136,7 +153,7 @@ class ExternalLabApiService:
     ######################## CLASS METHODS #########################
 
     @classmethod
-    def mark_shared_object_as_received(
+    def mark_shared_object_as_shared_from_shared_link(
         cls,
         lab_api_url: str,
         entity_type: ShareLinkEntityType,
@@ -144,7 +161,7 @@ class ExternalLabApiService:
         current_lab_info: ExternalLabWithUserInfo,
         external_id: str,
     ) -> Response:
-        """Method that mark a shared object as received"""
+        """Method that mark a shared object as sent in origin lab"""
         body = MarkEntityAsSharedDTO(lab_info=current_lab_info, external_id=external_id)
         return ExternalApiService.post(
             f"{lab_api_url}/{Settings.core_api_route_path()}/share/{entity_type.value}/mark-as-shared/{token}",

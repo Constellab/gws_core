@@ -34,7 +34,10 @@ def mark_entity_as_shared(
         ShareTokenAuth.get_and_check_share_link_token_from_url
     ),
 ) -> None:
-    ShareService.mark_entity_as_shared(entity_type, auth_context.get_share_link(), body.lab_info, body.external_id)
+    share_link = auth_context.get_share_link()
+    ShareService.mark_entity_as_sent(
+        entity_type, share_link.created_by, share_link.entity_id, body.lab_info, body.external_id
+    )
 
 
 @core_app.get(
