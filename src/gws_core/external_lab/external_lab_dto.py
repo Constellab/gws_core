@@ -1,22 +1,21 @@
-
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class ExternalLabWithUserInfo(BaseModelDTO):
-    """Class that contains information a lab when 2 labs communicate with each other"""
+    """Class that contains information about a lab when 2 labs communicate with each other"""
 
-    lab_id: str
-    lab_name: str
+    lab: LabDTO
     lab_api_url: str
+    user: UserDTO
 
-    user_id: str
-    user_firstname: str
-    user_lastname: str
 
-    space_id: str | None
-    space_name: str | None
+class MarkEntityAsSharedDTO(BaseModelDTO):
+    lab_info: ExternalLabWithUserInfo
+    external_id: str
 
 
 class ExternalLabImportRequestDTO(BaseModelDTO):

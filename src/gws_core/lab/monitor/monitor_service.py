@@ -1,3 +1,5 @@
+import asyncio
+import os
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -12,7 +14,13 @@ from gws_core.impl.plotly.plotly_r_field import PlotlyRField
 from gws_core.impl.plotly.plotly_resource import PlotlyResource
 
 from .monitor import Monitor
-from .monitor_dto import CurrentMonitorDTO, MonitorBetweenDateGraphicsDTO, MonitorFreeDiskDTO
+from .monitor_dto import (
+    CurrentMonitorDTO,
+    DiskFolderSizesDTO,
+    FolderSizeDTO,
+    MonitorBetweenDateGraphicsDTO,
+    MonitorFreeDiskDTO,
+)
 
 
 class MonitorService:
@@ -231,6 +239,88 @@ class MonitorService:
             return
         # Delete all record older
         Monitor.delete().where(Monitor.created_at <= monitor.created_at).execute()
+
+    @classmethod
+    def get_folder_sizes(cls) -> DiskFolderSizesDTO:
+        """Get the size of important system folders.
+
+        Uses 'du -sb' via subprocess for efficiency on large directories (>100GB).
+        All folder sizes are computed in parallel using asyncio.
+        """
+        settings = Settings.get_instance()
+
+        # Define folders to measure: (name, pretty_name, path)
+        # Start with data subfolders, then system folders
+        folders_to_measure: list[tuple[str, str, str]] = []
+
+        # Add each subfolder inside /data first
+        data_dir = settings.get_data_dir()
+        if os.path.isdir(data_dir):
+            for entry in sorted(os.listdir(data_dir)):
+                entry_path = os.path.join(data_dir, entry)
+                if os.path.isdir(entry_path):
+                    folders_to_measure.append(
+                        (f"data/{entry}", f"Data - {entry.capitalize()}", entry_path)
+                    )
+
+        # Then add system folders
+        folders_to_measure.extend([
+            ("env", "Virtual Environments", Settings.get_global_env_dir()),
+            ("tmp", "Temporary Files", Settings.get_root_temp_dir()),
+            ("logs", "Logs", Settings.build_log_dir(is_test=False)),
+            ("brick-data", "Brick Data", settings.get_brick_data_main_dir()),
+            ("sys-bricks", "System Bricks", Settings.get_sys_bricks_folder()),
+            ("user", "User Folder", Settings.get_user_folder()),
+        ])
+
+        # Run all du commands in parallel using asyncio
+        folder_dtos = asyncio.run(cls._measure_folders_async(folders_to_measure))
+
+        total_size = sum(f.size for f in folder_dtos if f.size is not None)
+
+        return DiskFolderSizesDTO(folders=folder_dtos, total_size=total_size)
+
+    @staticmethod
+    async def _measure_folders_async(
+        folders: list[tuple[str, str, str]],
+    ) -> list[FolderSizeDTO]:
+        """Measure folder sizes in parallel using async subprocesses."""
+
+        async def measure_one(name: str, pretty_name: str, path: str) -> FolderSizeDTO:
+            if not os.path.isdir(path):
+                return FolderSizeDTO(
+                    path=path,
+                    name=name,
+                    pretty_name=pretty_name,
+                    size=None,
+                    error="Folder does not exist",
+                )
+            try:
+                proc = await asyncio.create_subprocess_exec(
+                    "du",
+                    "-sb",
+                    path,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+                stdout, stderr = await proc.communicate()
+                if proc.returncode != 0:
+                    return FolderSizeDTO(
+                        path=path,
+                        name=name,
+                        pretty_name=pretty_name,
+                        size=None,
+                        error=stderr.decode().strip() or f"du exited with code {proc.returncode}",
+                    )
+                size = int(stdout.decode().split("\t")[0])
+                return FolderSizeDTO(path=path, name=name, pretty_name=pretty_name, size=size)
+            except Exception as e:
+                return FolderSizeDTO(
+                    path=path, name=name, pretty_name=pretty_name, size=None, error=str(e)
+                )
+
+        tasks = [measure_one(name, pretty_name, path) for name, pretty_name, path in folders]
+        return await asyncio.gather(*tasks)
 
     @classmethod
     def get_free_disk_info(cls) -> MonitorFreeDiskDTO:

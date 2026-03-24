@@ -1,15 +1,16 @@
-
 from pydantic import Field
 
 from gws_core.config.config_dto import ConfigSimpleDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecsDTO
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingFullDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
 from gws_core.progress_bar.progress_bar_dto import ProgressBarConfigDTO
 from gws_core.protocol.protocol_layout import ProtocolLayoutDTO
+from gws_core.user.user_dto import UserDTO
 
 
 class ConnectorPartDict(BaseModelDTO):
@@ -55,6 +56,9 @@ class ProcessConfigDTO(BaseModelDTO):
     progress_bar: ProgressBarConfigDTO | None = None
     # for sub protocol, recursive graph
     graph: ProtocolGraphConfigDTO | None = None
+    # lab that ran this process
+    run_by: UserDTO | None = None
+    run_by_lab: LabDTO | None = None
 
 
 # call this method to set the type of the recursive graph
@@ -80,7 +84,7 @@ class ProtocolDTO(ProcessDTO):
 
 
 class ScenarioProtocolDTO(BaseModelDTO):
-    version: int
+    version: int = 3
     data: ProcessConfigDTO
 
 

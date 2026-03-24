@@ -4,8 +4,6 @@ from gws_core.credentials.credentials_type import CredentialsDataS3, Credentials
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.task.resource_downloader_base import ResourceDownloaderBase
-from gws_core.share.shared_dto import ShareEntityCreateMode
-
 from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...task.task_decorator import task_decorator
@@ -67,7 +65,6 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         resource = self.create_resource_from_file(
             resource_file,
             params["uncompress"],
-            ShareEntityCreateMode.NEW_ID,
             skip_tags=params.get_value("skip_tags"),
         )
         return {"resource": resource}

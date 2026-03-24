@@ -47,6 +47,7 @@ class ScenarioDTO(ModelWithUserDTO):
     last_sync_by: UserDTO | None
     last_sync_at: datetime | None
     is_archived: bool
+    is_running_in_external_lab: bool
     folder: SpaceFolderDTO | None
     pid_status: ScenarioProcessStatus
 
@@ -69,3 +70,8 @@ class ScenarioProgressDTO(BaseModelDTO):
 
     def has_last_message(self) -> bool:
         return self.last_message is not None
+
+
+class ExportScenarioToLabResponseDTO(BaseModelDTO):
+    exported_scenario: ScenarioDTO
+    export_scenario: ScenarioDTO

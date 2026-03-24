@@ -125,6 +125,7 @@ class Model(BaseModel, PeeweeModel):
         :type data: dict
         :raises Exception: If the input data is not a `dict`
         """
+
         # set the force insert value
         # if define in params, use the value
         # otherwise true if the object was not created
@@ -156,7 +157,9 @@ class Model(BaseModel, PeeweeModel):
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def save_all(cls: type[ModelType], model_list: list[ModelType] | None = None) -> list[ModelType]:
+    def save_all(
+        cls: type[ModelType], model_list: list[ModelType] | None = None
+    ) -> list[ModelType]:
         """
         Automically and safely save a list of models in the database. If an error occurs
         during the operation, the whole transactions is rolled back.

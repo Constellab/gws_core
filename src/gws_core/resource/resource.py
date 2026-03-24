@@ -54,6 +54,12 @@ class Resource(BaseTyping):
     # //!\\ Do not modify theses values
     __is_exportable__: bool = False
 
+    # When True, indicates this resource is a reference to an existing saved resource.
+    # The system will reuse the existing resource model from the database instead of creating a new one.
+    # This is used for pass-through resources (e.g., when a task returns an input resource unchanged)
+    # or when adding an existing resource to a ResourceSet/ResourceList without duplicating it.
+    __is_reference__: bool = False
+
     def __init__(self):
         """
         Constructor, please do not overwrite this method, use the init method instead
@@ -315,6 +321,22 @@ class Resource(BaseTyping):
         :type origin: ResourceOrigin
         """
         self.__origin__ = origin
+
+    def set_as_reference(self) -> None:
+        """Mark this resource as a reference to an existing saved resource.
+
+        When set, the system will not create a new resource on save but will reuse the existing one.
+        Use this in a task's run() method before returning an input resource unchanged,
+        or use create_new_resource=False in ResourceSet/ResourceList.add_resource().
+        """
+        self.__is_reference__ = True
+
+    @final
+    def __prepare_for_task_run__(self) -> None:
+        """Reset runtime flags to prepare this resource for use as a task input.
+        Called by the system before passing the resource to a task's run() method.
+        """
+        self.__is_reference__ = False
 
     @final
     @classmethod

@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
-from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.external_lab.external_lab_dto import MarkEntityAsSharedDTO
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.resource.resource_controller import CallViewParams
 from gws_core.resource.view.view_dto import CallViewResultDTO
@@ -29,12 +29,15 @@ from .share_service import ShareService
 )
 def mark_entity_as_shared(
     entity_type: ShareLinkEntityType,
-    receiver_lab: ExternalLabWithUserInfo,
+    body: MarkEntityAsSharedDTO,
     auth_context: AuthContextShareLink = Depends(
         ShareTokenAuth.get_and_check_share_link_token_from_url
     ),
 ) -> None:
-    ShareService.mark_entity_as_shared(entity_type, auth_context.get_share_link(), receiver_lab)
+    share_link = auth_context.get_share_link()
+    ShareService.mark_entity_as_sent(
+        entity_type, share_link.created_by, share_link.entity_id, body.lab_info, body.external_id
+    )
 
 
 @core_app.get(
@@ -49,6 +52,20 @@ def get_shared_to_list(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ShareEntityInfoDTO]:
     return ShareService.get_shared_to_list(entity_type, entity_id).to_dto()
+
+
+@core_app.get(
+    "/share/{entity_type}/{entity_id}/shared-origin",
+    tags=["Share"],
+    summary="Get origin of this imported entity (resource or scenario)",
+    response_model=None,
+)
+def get_shared_entity_origin_info(
+    entity_type: ShareLinkEntityType,
+    entity_id: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ShareEntityInfoDTO:
+    return ShareService.get_shared_entity_origin_info(entity_type, entity_id).to_dto()
 
 
 #################################### ROUTE WITH TOKEN IN URL ####################################

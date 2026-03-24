@@ -1,5 +1,5 @@
-
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.process.process_types import ProcessStatus
 from gws_core.protocol.protocol_dto import ProcessConfigDTO, ProtocolGraphConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
@@ -60,23 +60,33 @@ class ProtocolGraph:
 
         return resource_ids
 
-    def get_process_by_instance_path(self, instance_path: str) -> ProcessConfigDTO | None:
-        return self._get_process_by_instance_path_recursive(instance_path, self.graph)
+    def get_input_resource_ids_of_draft_tasks(self) -> set[str]:
+        """Get input resource IDs of tasks that are in DRAFT status.
 
-    def _get_process_by_instance_path_recursive(
-        self, instance_path: str, graph: ProtocolGraphConfigDTO
-    ) -> ProcessConfigDTO | None:
-        instance_names = instance_path.split(".")
+        For each task node in DRAFT status, collect the resource IDs from its input ports.
+        This is useful for partially run scenarios where only the draft tasks need their inputs downloaded.
+        """
+        resource_ids: set[str] = set()
+        self._collect_input_resource_ids_of_draft_tasks(resource_ids, self.graph)
+        return resource_ids
 
-        process = graph.nodes[instance_names[0]]
+    def _collect_input_resource_ids_of_draft_tasks(
+        self, resource_ids: set[str], graph: ProtocolGraphConfigDTO
+    ) -> None:
+        for node in graph.nodes.values():
+            # Skip InputTask and OutputTask nodes
+            if node.process_typing_name in (
+                InputTask.get_typing_name(),
+                OutputTask.get_typing_name(),
+            ):
+                continue
 
-        if len(instance_names) == 1:
-            return process
+            if node.status == ProcessStatus.DRAFT.value:
+                # Collect resource IDs from input ports of this draft task
+                for port in node.inputs.ports.values():
+                    if port.resource_id:
+                        resource_ids.add(port.resource_id)
 
-        # if we need to get a sub process
-        if process.graph is None:
-            raise Exception(f"Process '{process.instance_name}' is not a protocol")
-
-        return self._get_process_by_instance_path_recursive(
-            ".".join(instance_names[1:]), process.graph
-        )
+            # Recurse into sub-protocols
+            if node.graph:
+                self._collect_input_resource_ids_of_draft_tasks(resource_ids, node.graph)

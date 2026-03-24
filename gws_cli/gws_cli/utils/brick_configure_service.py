@@ -9,14 +9,14 @@ from gws_cli.ai_code.ai_code_service import AICodeService
 class BrickConfigureService:
     """Service for configuring a brick with AI code instruction files."""
 
-    BRICK_SPECIFIC_DIR = AICodeService.SOURCE_COMMANDS_DIR / "brick-specific"
-    COMMANDS_DIR = AICodeService.SOURCE_COMMANDS_DIR
+    BRICK_SPECIFIC_DIR = AICodeService.SOURCE_SKILLS_DIR / "brick-specific"
+    SKILLS_DIR = AICodeService.SOURCE_SKILLS_DIR
 
     # Files from brick-specific/ copied directly (no prefix)
     COPILOT_INSTRUCTIONS = "copilot-instructions.md"
 
-    # Files from commands/ copied with gws- prefix
-    COMMAND_FILES_WITH_PREFIX = [
+    # Files from skills/ copied with gws- prefix
+    SKILL_FILES_WITH_PREFIX = [
         "code-review-instructions.md",
         "reflex-app-developer.md",
         "streamlit-app-developer.md",
@@ -45,10 +45,10 @@ class BrickConfigureService:
             force=force,
         )
 
-        # Copy command files with gws- prefix
-        for filename in cls.COMMAND_FILES_WITH_PREFIX:
+        # Copy skill files with gws- prefix
+        for filename in cls.SKILL_FILES_WITH_PREFIX:
             cls._copy_file(
-                src=os.path.join(cls.COMMANDS_DIR, filename),
+                src=os.path.join(cls.SKILLS_DIR, filename),
                 dest=os.path.join(github_dir, f"gws-{filename}"),
                 force=force,
             )

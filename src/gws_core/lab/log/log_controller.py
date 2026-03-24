@@ -44,3 +44,10 @@ def download_log_json(
         file_name=log.log_info.name + ".json",
         media_type="application/json",
     )
+
+
+@core_app.post("/log/{request_id}/send-to-support", tags=["Log"], summary="Send log to support by email")
+def send_log_to_support(
+    request_id: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> bool:
+    return LogService.send_log_to_support(request_id)

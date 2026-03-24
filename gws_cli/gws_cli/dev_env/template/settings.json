@@ -20,5 +20,8 @@
   "python.analysis.autoImportCompletions": true,
   "python.analysis.importFormat": "absolute",
   "python.autoComplete.extraPaths": [],
-  "python.analysis.extraPaths": []
+  "python.analysis.extraPaths": [],
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": ["-v"]
 }

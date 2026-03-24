@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from mypy_boto3_s3.type_defs import ListObjectsV2OutputTypeDef
 
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.abstract_s3_service import AbstractS3Service
 from gws_core.impl.s3.s3_server_dto import S3GetTagResponse, S3UpdateTagRequest
@@ -19,21 +20,32 @@ from gws_core.impl.s3.s3_server_exception import S3ServerNoSuchKey
 class LocalS3ServerService(AbstractS3Service):
     """Local S3 service that stores files in a local directory"""
 
+    _CLEANUP_INTERVAL_SECONDS = 60
+
     bucket_path: str
+    _bucket_ensured: bool
 
     def __init__(self, bucket_name: str, bucket_path: str):
         """Initialize the service with a bucket name"""
         super().__init__(bucket_name)
         self.bucket_path = bucket_path
+        self._bucket_ensured = False
 
     def create_bucket(self) -> None:
         """Create a bucket (directory) in the local filesystem"""
-        os.makedirs(self.bucket_path, exist_ok=True)
+        if not self._bucket_ensured:
+            os.makedirs(self.bucket_path, exist_ok=True)
+            self._bucket_ensured = True
+
+    @property
+    def _multipart_dir(self) -> str:
+        """Path to multipart upload temp directory, stored in system temp to avoid permission issues"""
+        return path.join(Settings.get_root_temp_dir(), ".s3_multipart", self.bucket_name)
 
     @property
     def _multipart_state_file(self) -> str:
         """Path to multipart upload state file"""
-        return path.join(self.bucket_path, ".multipart", "state.json")
+        return path.join(self._multipart_dir, "state.json")
 
     def _load_multipart_state(self) -> dict[str, Any]:
         """Load multipart upload state from disk"""
@@ -102,32 +114,22 @@ class LocalS3ServerService(AbstractS3Service):
                 },
             }
 
-        objects: list[Any] = []
         common_prefixes = set()
 
-        # Get all files in the bucket
-        all_keys = []
-        for root, _, files in os.walk(self.bucket_path):
-            for file in files:
-                file_path = path.join(root, file)
-                relative_path = path.relpath(file_path, self.bucket_path)
-                key = relative_path.replace(os.sep, "/")
-                all_keys.append((key, file_path))
-
-        # Filter by prefix if provided
-        if prefix:
-            all_keys = [(key, file_path) for key, file_path in all_keys if key.startswith(prefix)]
+        # When delimiter is used (e.g. rclone with "/"), only scan the prefix directory
+        # instead of walking the entire bucket tree
+        if delimiter and delimiter == "/":
+            all_keys = self._list_objects_shallow(prefix)
+        else:
+            all_keys = self._list_objects_deep(prefix)
 
         # Sort keys for consistent pagination
         all_keys.sort(key=lambda x: x[0])
 
         # Apply start_after filter
-        if start_after:
-            all_keys = [(key, file_path) for key, file_path in all_keys if key > start_after]
-
-        # Apply continuation_token filter (continuation_token is the last key from previous page)
-        if continuation_token:
-            all_keys = [(key, file_path) for key, file_path in all_keys if key > continuation_token]
+        skip_after = continuation_token or start_after
+        if skip_after:
+            all_keys = [(key, fp) for key, fp in all_keys if key > skip_after]
 
         # Process keys based on delimiter and collect results
         processed_objects = []
@@ -143,7 +145,10 @@ class LocalS3ServerService(AbstractS3Service):
                     common_prefixes.add(common_prefix)
                     continue
 
-            # Add as regular object
+            # Only stat files we will actually return (up to max_keys + 1 for truncation check)
+            if len(processed_objects) > max_keys:
+                break
+
             stat = os.stat(file_path)
             last_modified = DateHelper.from_utc_milliseconds(int(stat.st_mtime * 1000))
             processed_objects.append(
@@ -190,6 +195,65 @@ class LocalS3ServerService(AbstractS3Service):
             },
         }
 
+    def _list_objects_shallow(self, prefix: str | None) -> list[tuple[str, str]]:
+        """List objects using scandir for a single directory level (optimized for delimiter='/').
+
+        Instead of walking the entire bucket tree, only scans the directory
+        corresponding to the prefix. Much faster for buckets with many nested files.
+        """
+        if prefix:
+            scan_dir = path.join(self.bucket_path, prefix.replace("/", os.sep))
+        else:
+            scan_dir = self.bucket_path
+
+        if not path.isdir(scan_dir):
+            return []
+
+        all_keys: list[tuple[str, str]] = []
+        try:
+            with os.scandir(scan_dir) as entries:
+                for entry in entries:
+                    if entry.is_file(follow_symlinks=False):
+                        relative_path = path.relpath(entry.path, self.bucket_path)
+                        key = relative_path.replace(os.sep, "/")
+                        all_keys.append((key, entry.path))
+                    elif entry.is_dir(follow_symlinks=False):
+                        # Directories become common prefixes, handled by the caller
+                        relative_path = path.relpath(entry.path, self.bucket_path)
+                        key = relative_path.replace(os.sep, "/") + "/"
+                        # Add a placeholder so the caller can detect common prefixes
+                        all_keys.append((key, entry.path))
+        except OSError:
+            pass
+
+        return all_keys
+
+    def _list_objects_deep(self, prefix: str | None) -> list[tuple[str, str]]:
+        """List all objects recursively using os.walk (full tree scan)."""
+        all_keys: list[tuple[str, str]] = []
+
+        # Narrow the walk to the prefix directory when possible
+        if prefix:
+            # The prefix may be a partial filename, so walk from its parent directory
+            prefix_path = prefix.replace("/", os.sep)
+            walk_root = path.join(self.bucket_path, path.dirname(prefix_path))
+        else:
+            walk_root = self.bucket_path
+
+        if not path.isdir(walk_root):
+            return []
+
+        for root, _, files in os.walk(walk_root):
+            for file in files:
+                file_path = path.join(root, file)
+                relative_path = path.relpath(file_path, self.bucket_path)
+                key = relative_path.replace(os.sep, "/")
+                if prefix and not key.startswith(prefix):
+                    continue
+                all_keys.append((key, file_path))
+
+        return all_keys
+
     def upload_object(
         self, key: str, data: ByteString, tags: dict[str, str] | None = None, last_modified: float | None = None
     ) -> dict:
@@ -198,13 +262,16 @@ class LocalS3ServerService(AbstractS3Service):
         self.create_bucket()
 
         file_path = path.join(self.bucket_path, key)
-        os.makedirs(path.dirname(file_path), exist_ok=True)
+        parent_dir = path.dirname(file_path)
+
+        # Only call makedirs if the parent directory doesn't exist yet
+        if not path.isdir(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
 
         with open(file_path, "wb") as f:
             f.write(data)
 
         if last_modified:
-            # Set the modification time if provided
             os.utime(file_path, (last_modified, last_modified))
 
         return {
@@ -269,13 +336,16 @@ class LocalS3ServerService(AbstractS3Service):
 
     def initiate_multipart_upload(self, key: str, last_modified: float | None = None) -> str:
         """Initiate a multipart upload and return upload ID"""
-        # Clean up old uploads before starting new one
-        self._cleanup_abandoned_uploads()
+        # Throttle cleanup: only run every 60 seconds
+        current_time = time.time()
+        if not hasattr(self, '_last_cleanup_time') or current_time - self._last_cleanup_time > self._CLEANUP_INTERVAL_SECONDS:
+            self._cleanup_abandoned_uploads()
+            self._last_cleanup_time = current_time
 
         upload_id = str(uuid.uuid4())
 
         # Create temp directory for parts
-        temp_dir = path.join(self.bucket_path, ".multipart", upload_id)
+        temp_dir = path.join(self._multipart_dir, upload_id)
         os.makedirs(temp_dir, exist_ok=True)
 
         # Load current state and add new upload
@@ -285,7 +355,7 @@ class LocalS3ServerService(AbstractS3Service):
             "parts": {},
             "temp_dir": temp_dir,
             "last_modified": last_modified,
-            "created_at": time.time(),
+            "created_at": current_time,
         }
         self._save_multipart_state(state)
 
@@ -301,15 +371,13 @@ class LocalS3ServerService(AbstractS3Service):
         if upload_info["key"] != key:
             raise ValueError(f"Key mismatch for upload ID {upload_id}")
 
-        # Save part to temp file
+        # Save part to temp file — this is the critical I/O, state update is secondary
         part_file = path.join(upload_info["temp_dir"], f"part_{part_number:05d}")
         with open(part_file, "wb") as f:
             f.write(data)
 
-        # Store part info
+        # Store part info and save state
         upload_info["parts"][str(part_number)] = {"etag": "", "file": part_file, "size": len(data)}
-
-        # Save updated state
         self._save_multipart_state(state)
 
     def complete_multipart_upload(self, key: str, upload_id: str, parts: list[dict]) -> None:
@@ -328,9 +396,11 @@ class LocalS3ServerService(AbstractS3Service):
         # Create final file
         self.create_bucket()
         file_path = path.join(self.bucket_path, key)
-        os.makedirs(path.dirname(file_path), exist_ok=True)
+        parent_dir = path.dirname(file_path)
+        if not path.isdir(parent_dir):
+            os.makedirs(parent_dir, exist_ok=True)
 
-        # Combine all parts and calculate MD5 hash incrementally
+        # Combine all parts with larger buffer for better throughput
         with open(file_path, "wb") as final_file:
             for part in sorted_parts:
                 part_number = str(part["PartNumber"])
@@ -339,16 +409,14 @@ class LocalS3ServerService(AbstractS3Service):
 
                 part_file = upload_info["parts"][part_number]["file"]
                 with open(part_file, "rb") as pf:
-                    # Read and write in chunks to avoid memory issues
                     while True:
-                        chunk = pf.read(8192)  # 8KB chunks
+                        chunk = pf.read(65536)  # 64KB chunks for better throughput
                         if not chunk:
                             break
                         final_file.write(chunk)
 
         # Apply modification time if provided
         if upload_info.get("last_modified"):
-            # Set the modification time if provided
             os.utime(file_path, (upload_info["last_modified"], upload_info["last_modified"]))
 
         # Clean up temp files using helper method

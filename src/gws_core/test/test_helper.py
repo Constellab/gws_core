@@ -106,7 +106,7 @@ class TestHelper:
         """
         Create lab credentials that reference itself
         """
-        lab_credentials = CredentialsDataLab(lab_domain="http://localhost", api_key="test")
+        lab_credentials = CredentialsDataLab(api_key="test_api_key_minimum_20_chars")
         return CredentialsService.create(
             SaveCredentialsDTO(
                 name="test", type=CredentialsType.LAB, data=lab_credentials.to_json_dict()

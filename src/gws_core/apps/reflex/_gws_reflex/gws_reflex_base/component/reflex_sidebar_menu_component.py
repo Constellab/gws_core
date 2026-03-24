@@ -116,16 +116,14 @@ def menu_item_component(
     return rx.link(
         rx.hstack(
             rx.icon(icon, size=20),
-            rx.text(label, font_weight=rx.cond(is_active, "650", "inherit")),
-            rx.cond(
-                is_active,
-                rx.box(
-                    width="6px",
-                    height="6px",
-                    border_radius="50%",
-                    background="var(--accent-9)",
-                    margin_left="auto",
-                ),
+            rx.text(label, font_weight=rx.cond(is_active, "650", "inherit"), line_height="1.1em"),
+            rx.box(
+                width="6px",
+                height="6px",
+                border_radius="50%",
+                background=rx.cond(is_active, "var(--accent-9)", "transparent"),
+                margin_left="auto",
+                flex_shrink="0",
             ),
             spacing="2",
             align="center",

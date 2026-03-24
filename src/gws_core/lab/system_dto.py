@@ -1,65 +1,21 @@
-from typing import Literal
+from datetime import datetime, timezone
 
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.settings_dto import PipPackage
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.lab.monitor.monitor_dto import MonitorFreeDiskDTO
-from gws_core.user.user_dto import SpaceDict
-
-LabEnvironment = Literal["ON_CLOUD", "DESKTOP", "LOCAL"]
 
 
-class LabInfoDTO(BaseModelDTO):
-    id: str
-    lab_name: str
+class LabSystemInfoDTO(BaseModelDTO):
+    lab: LabDTO
     front_version: str
-    space: SpaceDict | None
 
 
 class LabStatusDTO(BaseModelDTO):
     free_disk: MonitorFreeDiskDTO
     has_start_error: bool
-
-
-class SettingsDTO(BaseModelDTO):
-    lab_id: str
-    lab_name: str
-    space_api_url: str | None
-    lab_prod_api_url: str
-    lab_dev_api_url: str
-    lab_environment: str
-    virtual_host: str
-    main_settings_file_path: str
-    log_dir: str
-    data_dir: str
-    file_store_dir: str
-    kv_store_dir: str
-    data: dict
-
-
-class ModuleInfo(TypedDict):
-    path: str
-    name: str
-    source: str
-    error: str | None
-
-
-class BrickMigrationLogHistory(TypedDict):
-    version: str
-    migration_date: str
-
-
-class BrickMigrationLog(TypedDict):
-    brick_name: str
-    version: str | None
-    last_date_check: str | None
-    history: list[BrickMigrationLogHistory]
-    db_manager_unique_name: str
-
-
-class PipPackage(BaseModelDTO):
-    name: str
-    version: str
 
 
 class LabSystemConfig(BaseModelDTO):

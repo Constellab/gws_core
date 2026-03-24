@@ -1,12 +1,12 @@
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.utils.settings_dto import SettingsDTO
 from gws_core.lab.system_dto import (
-    LabInfoDTO,
     LabStartLogFileObject,
     LabStatusDTO,
     LabSystemConfig,
-    SettingsDTO,
+    LabSystemInfoDTO,
 )
 
 from ..core.service.settings_service import SettingsService
@@ -16,8 +16,8 @@ from .system_service import SystemService
 
 
 @core_app.get("/system/info", tags=["System"], summary="Get system info")
-def system_info(_=Depends(AuthorizationService.check_user_access_token)) -> LabInfoDTO:
-    return SystemService.get_lab_info()
+def system_info(_=Depends(AuthorizationService.check_user_access_token)) -> LabSystemInfoDTO:
+    return SystemService.get_system_info()
 
 
 @core_app.get("/system/status", tags=["System"], summary="Get system status")

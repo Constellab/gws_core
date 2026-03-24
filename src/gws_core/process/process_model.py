@@ -12,6 +12,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.io.io_dto import IODTO
 from gws_core.io.io_specs import IOSpecs
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
@@ -19,6 +20,7 @@ from gws_core.process.process_dto import ProcessDTO
 from gws_core.process_run_stat.process_run_stat_model import ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import CurrentUserService
@@ -64,6 +66,7 @@ class ProcessModel(ModelWithUser):
     # version of the brick when the process was run
     brick_version_on_run = CharField(null=True, max_length=50)
     run_by = ForeignKeyField(User, null=True, backref="+")
+    run_by_lab: LabModel | None = ForeignKeyField(LabModel, null=True, backref="+")
     status: ProcessStatus = EnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
     error_info: ProcessErrorInfo = JSONField(null=True)
 
@@ -144,6 +147,36 @@ class ProcessModel(ModelWithUser):
         process_model = self.save()
         return process_model
 
+    def copy_from_and_save(self, other: ProcessModel) -> None:
+        """Copy metadata, config, I/O, and progress bar from another ProcessModel and save."""
+        self.process_typing_name = other.process_typing_name
+        self.name = other.name
+        self.instance_name = other.instance_name
+        self.style = other.style
+        self.brick_version_on_create = other.brick_version_on_create
+        self.brick_version_on_run = other.brick_version_on_run
+        self.status = other.status
+        self.error_info = other.error_info
+        self.started_at = other.started_at
+        self.ended_at = other.ended_at
+
+        # Config
+        self.set_config_values(other.config.get_values())
+        self.config.save()
+
+        # I/O
+        self.set_inputs_from_dto(other.inputs.to_dto())
+        self.set_outputs_from_dto(other.outputs.to_dto())
+
+        # Lab reference
+        self.run_by = other.run_by
+        self.run_by_lab = other.run_by_lab
+
+        # Progress bar
+        self.progress_bar.copy_from_and_save(other.progress_bar)
+
+        self.save()
+
     def _reset_io(self):
         self.inputs.reset()
         self.outputs.reset()
@@ -162,7 +195,7 @@ class ProcessModel(ModelWithUser):
             self.data["outputs"] = self.outputs.to_json()
         return super().save(*args, **kwargs)
 
-    def save_full(self) -> ProcessModel:
+    def save_full(self, *args, **kwargs) -> ProcessModel:
         """Function to run overrided by the sub classes"""
         pass
 
@@ -292,6 +325,31 @@ class ProcessModel(ModelWithUser):
         """
         return self.outputs.get_port(port_name)
 
+    ################################# RESOURCES  #########################
+    def get_input_and_output_resource_models(self) -> set[ResourceModel]:
+        """Return all the resource models used as input or output of the task"""
+
+        ports = list(self.inputs.ports.values()) + list(self.outputs.ports.values())
+        resource_models = set()
+        for port in ports:
+            resource_model = port.get_resource_model()
+            if resource_model is not None:
+                resource_models.add(resource_model)
+
+        return resource_models
+
+    def get_output_resource_models(self) -> set[ResourceModel]:
+        """Return all the resource models used as output of the task"""
+
+        ports = list(self.outputs.ports.values())
+        resource_models = set()
+        for port in ports:
+            resource_model = port.get_resource_model()
+            if resource_model is not None:
+                resource_models.add(resource_model)
+
+        return resource_models
+
     ################################# RUN #########################
 
     @final
@@ -333,6 +391,9 @@ class ProcessModel(ModelWithUser):
 
         # Set the run by user
         self.run_by = CurrentUserService().get_and_check_current_user()
+
+        # Set the run by lab
+        self.run_by_lab = LabModel.get_or_create_current_lab()
 
         self.save()
 
@@ -467,6 +528,13 @@ class ProcessModel(ModelWithUser):
 
         return self.progress_bar.current_value
 
+    def get_external_lab_id(self) -> str | None:
+        """Return the id of the external lab model if the process was run or is running
+        in an external lab, None otherwise."""
+        if self.run_by_lab is not None and not self.run_by_lab.is_current_lab():
+            return self.run_by_lab.id
+        return None
+
     ########################### JSON #################################
 
     def to_minimum_dto(self) -> ProcessMinimumDTO:
@@ -521,6 +589,7 @@ class ProcessModel(ModelWithUser):
             name=self.name,
             style=self.style,
             is_agent=is_agent,
+            external_lab_id=self.get_external_lab_id(),
         )
 
     def to_config_dto(self, ignore_input_task_config: bool = False) -> ProcessConfigDTO:
@@ -553,6 +622,8 @@ class ProcessModel(ModelWithUser):
             process_type=process_typing.to_simple_dto(),
             style=self.style,
             progress_bar=self.progress_bar.to_config_dto(),
+            run_by=self.run_by.to_dto() if self.run_by else None,
+            run_by_lab=self.run_by_lab.to_dto() if self.run_by_lab else None,
         )
 
     @abstractmethod
@@ -652,10 +723,13 @@ class ProcessModel(ModelWithUser):
         self.set_error_info(None)
         self.brick_version_on_run = None
         self.run_by = None
+        self.run_by_lab = None
         self.save()
         self.progress_bar.reset()
 
-    def mark_as_error_and_parent(self, process_error: ProcessRunException, context: str | None = None):
+    def mark_as_error_and_parent(
+        self, process_error: ProcessRunException, context: str | None = None
+    ):
         self.mark_as_error(
             ProcessErrorInfo(
                 detail=process_error.get_error_message(context),

@@ -3,6 +3,7 @@ from typing import Any
 from gws_core.space.space_dto import (
     SendScenarioFinishMailData,
     SpaceSendMailTemplate,
+    SpaceSendMailToSupportDTO,
     SpaceSendMailToUsersDTO,
 )
 from gws_core.space.space_service import SpaceService
@@ -79,6 +80,35 @@ class MailService:
         )
 
         SpaceService.get_instance().send_mail(mail_dto)
+
+        return True
+
+    @classmethod
+    def send_mail_to_support(
+        cls, content: str, subject: str, data: dict[str, Any] | None = None
+    ) -> bool:
+        """Send an email to support.
+
+        :param content: content of the mail
+        :type content: str
+        :param subject: subject of the mail
+        :type subject: str
+        :param data: additional data, defaults to None
+        :type data: dict[str, Any], optional
+        :return: True if the mail was sent successfully
+        :rtype: bool
+        """
+        if not subject:
+            raise ValueError("Subject must be provided")
+
+        if not content:
+            raise ValueError("Mail content must be provided")
+
+        mail_dto = SpaceSendMailToSupportDTO(
+            content=content, subject=subject, data=data
+        )
+
+        SpaceService.get_instance().send_mail_to_support(mail_dto)
 
         return True
 

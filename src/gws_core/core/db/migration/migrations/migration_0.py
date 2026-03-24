@@ -45,7 +45,7 @@ from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.view_config.view_config import ViewConfig
-from gws_core.scenario.queue import Job
+from gws_core.scenario.queue.queue import Job
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory

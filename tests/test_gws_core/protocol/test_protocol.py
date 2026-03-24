@@ -1,4 +1,3 @@
-
 from gws_core import (
     BaseTestCase,
     ProtocolModel,
@@ -39,7 +38,7 @@ class TestProtocol(BaseTestCase):
 
         scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
-        self.assertEqual(len(scenario.task_models), 7)
+        self.assertEqual(len(scenario.get_task_models()), 7)
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
 
     def test_advanced_protocol(self):

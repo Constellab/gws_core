@@ -4,7 +4,7 @@ This guide explains how to configure AI coding assistants (Claude Code and GitHu
 
 ## Overview
 
-The GWS Core environment provides specialized commands and instructions that help AI coding assistants understand the unique architecture of this platform. These commands enable AI assistants to:
+The GWS Core environment provides specialized skills and instructions that help AI coding assistants understand the unique architecture of this platform. These skills enable AI assistants to:
 
 - Generate Constellab Tasks (data processing components)
 - Create Streamlit web applications
@@ -23,20 +23,20 @@ AI coding tools like Claude Code and GitHub Copilot are AI assistants that help 
 
 ---
 
-## Custom Commands & Instructions
+## Custom Skills & Instructions
 
-### What are Custom Commands?
+### What are Custom Skills?
 
-Custom commands are specialized instructions that teach AI assistants about your project's specific requirements, architecture, and best practices. They act as expert guides that help the AI:
+Custom skills are specialized instructions that teach AI assistants about your project's specific requirements, architecture, and best practices. They act as expert guides that help the AI:
 
 1. **Understand your environment** - GWS Core architecture, file structure, and conventions
 2. **Generate correct code** - Following established patterns and best practices
 3. **Use the right tools** - CLI commands, testing frameworks, and development workflows
 4. **Avoid common mistakes** - By encoding domain expertise into reusable prompts
 
-### How Commands Work
+### How Skills Work
 
-When you invoke a command (e.g., `/gws-task-expert Create a table transformer`), the AI assistant:
+When you invoke a skill (e.g., `/gws-commands:gws-task-expert Create a table transformer`), the AI assistant:
 
 1. Loads the specialized instruction file
 2. Receives context about GWS Core architecture
@@ -44,7 +44,7 @@ When you invoke a command (e.g., `/gws-task-expert Create a table transformer`),
 4. Generates code following best practices
 5. Knows how to test and validate the result
 
-### Benefits of Using Custom Commands
+### Benefits of Using Custom Skills
 
 - **Faster development** - No need to explain GWS Core concepts every time
 - **Consistent code quality** - AI follows the same patterns across your codebase
@@ -64,19 +64,19 @@ When you invoke a command (e.g., `/gws-task-expert Create a table transformer`),
 
 ### Installation
 
-To install Claude Code and configure it with all available GWS commands: `gws claude init`
+To install Claude Code and configure it with all available GWS skills: `gws claude init`
 
-This command installs Claude Code and configures it with the available commands.
+This command installs Claude Code and configures it with the available skills as a plugin.
 
 ### Using Claude Code
 
 Open claude code in your terminal (`claude`) or claude code extension in your editor.
 
-Use the `/` prefix to invoke commands: `/gws-<command-name> [your detailed description]`
+Use the `/` prefix to invoke skills: `/gws-commands:gws-<skill-name> [your detailed description]`
 
 ### Verifying Installation
 
-Check installed commands: `gws claude commands --list`
+Check installed skills: `gws claude skills --list`
 
 Check Claude Code version: `claude --version`
 
@@ -93,22 +93,22 @@ Check Claude Code version: `claude --version`
 
 ### Installation
 
-Pull GWS commands to the global GitHub Copilot prompts folder: `gws copilot commands --pull`
+Pull GWS skills to the global GitHub Copilot prompts folder: `gws copilot skills --pull`
 
-This command will copy GWS commands to `/lab/user/.github/prompts/`.
+This command will copy GWS skills to `/lab/user/.github/prompts/`.
 
 
 ### Using GitHub Copilot
 
-In the Copilot chat window, use the `/` prefix to invoke commands: `/gws-<command-name> [your detailed description]`
+In the Copilot chat window, use the `/` prefix to invoke skills: `/gws-<skill-name> [your detailed description]`
 
-⚠️ Note: ensure that VsCode is opened in folder `/lab/user` to allow Copilot to have access to commands.
+⚠️ Note: ensure that VsCode is opened in folder `/lab/user` to allow Copilot to have access to skills.
 
 ### Verifying Installation
 
-List available GWS commands: `gws copilot commands --list`
+List available GWS skills: `gws copilot skills --list`
 
-## Available Commands
+## Available Skills
 
 ### 1. Task Expert (`/gws-task-expert`)
 
@@ -122,7 +122,7 @@ List available GWS commands: `gws copilot commands --list`
 
 **Example:**
 ```
-/gws-task-expert Create a TableTransposer task that takes a Table as input and returns the transposed Table as output
+/gws-commands:gws-task-expert Create a TableTransposer task that takes a Table as input and returns the transposed Table as output
 ```
 
 **What it provides:**
@@ -146,7 +146,7 @@ List available GWS commands: `gws copilot commands --list`
 
 **Example:**
 ```
-/gws-streamlit-app-developer Create an app that allows users to upload a CSV file, display it in a table, and generate basic statistics
+/gws-commands:gws-streamlit-app-developer Create an app that allows users to upload a CSV file, display it in a table, and generate basic statistics
 ```
 
 **What it provides:**
@@ -169,7 +169,7 @@ List available GWS commands: `gws copilot commands --list`
 
 **Example:**
 ```
-/gws-reflex-app-developer Create a multi-page app with a home page, data upload page, and visualization page
+/gws-commands:gws-reflex-app-developer Create a multi-page app with a home page, data upload page, and visualization page
 ```
 
 **What it provides:**
@@ -192,7 +192,7 @@ List available GWS commands: `gws copilot commands --list`
 
 **Example:**
 ```
-/gws-agent-expert Create a Python agent that reads a CSV file, filters rows where sales > 1000, and outputs the result
+/gws-commands:gws-agent-expert Create a Python agent that reads a CSV file, filters rows where sales > 1000, and outputs the result
 ```
 
 **What it provides:**
@@ -215,7 +215,7 @@ List available GWS commands: `gws copilot commands --list`
 
 **Example:**
 ```
-/gws-nextflow-to-task Convert the nextflow/main.nf pipeline to Constellab tasks
+/gws-commands:gws-nextflow-to-constellab Convert the nextflow/main.nf pipeline to Constellab tasks
 ```
 
 **What it provides:**
@@ -256,9 +256,9 @@ List available GWS commands: `gws copilot commands --list`
    - Request explanations for unclear parts
 
 
-### Keeping Commands Up to Date
+### Keeping Skills Up to Date
 
-Commands are automatically updated on lab startup.
+Skills are automatically updated on lab startup.
 You can manually update them as needed.
 
 ```bash

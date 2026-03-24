@@ -24,7 +24,7 @@ class Switch2(Task):
         }
     )
     output_specs: OutputSpecs = OutputSpecs(
-        {"resource": OutputSpec(resource_types=Resource, sub_class=True, constant=True)}
+        {"resource": OutputSpec(resource_types=Resource, sub_class=True)}
     )
     config_specs = ConfigSpecs(
         {
@@ -48,4 +48,5 @@ class Switch2(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         index = params.get_value("index")
         resource = inputs[f"resource_{index}"]
+        resource.set_as_reference()
         return {"resource": resource}

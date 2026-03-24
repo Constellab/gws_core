@@ -1,3 +1,4 @@
+from typing import cast
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -56,6 +57,28 @@ class EntityNavigatorService:
         cls.reset_scenario(scenario_id)
 
         ScenarioService.delete_scenario(scenario_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def delete_standalone_scenario(cls, scenario_id: str) -> None:
+        """Delete a scenario only if it has no next dependencies (scenarios or notes using its outputs).
+        Raises an exception if dependencies exist. Resets the scenario before deleting.
+        """
+        scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
+
+        scenario.check_is_updatable()
+
+        exp_nav = EntityNavigatorScenario(scenario)
+        next_entities = exp_nav.get_next_entities_recursive(
+            [NavigableEntityType.SCENARIO, NavigableEntityType.NOTE],
+        )
+
+        if not next_entities.is_empty():
+            raise BadRequestException(
+                "Cannot delete this scenario because other scenarios or notes depend on its outputs."
+            )
+
+        cls.delete_scenario(scenario_id)
 
     @classmethod
     def _calculate_scenario_reset_impact(cls, scenario: Scenario) -> ImpactResult:
@@ -120,8 +143,9 @@ class EntityNavigatorService:
 
         # if yes, raise an error, no force reset for this mode
         if reset_result.has_entities():
-            scenarios: list[Scenario] = reset_result.impacted_entities.get_entity_by_type(
-                NavigableEntityType.SCENARIO
+            scenarios = cast(
+                list[Scenario],
+                reset_result.impacted_entities.get_entity_by_type(NavigableEntityType.SCENARIO),
             )
 
             if len(scenarios) > 0:
@@ -129,8 +153,9 @@ class EntityNavigatorService:
                     scenarios[0].get_short_name(), scenarios[0].id
                 )
 
-            notes: list[Note] = reset_result.impacted_entities.get_entity_by_type(
-                NavigableEntityType.NOTE
+            notes = cast(
+                list[Note],
+                reset_result.impacted_entities.get_entity_by_type(NavigableEntityType.NOTE),
             )
             if len(notes) > 0:
                 raise ResourceUnknownUsedInNoteException(notes[0].title, notes[0].id)
@@ -215,14 +240,9 @@ class EntityNavigatorService:
         for note in notes:
             NoteService.delete(note.id)
 
-        # TODO to improve because this is not perfect if I have 3 scenario.
-        # Exp 1: output --> A
-        # Exp 2: input --> A, output --> B
-        # Exp 3: input --> A, B
-        # In this case the Exp 3 will have the same deep level as the Exp 2
         scenarios = entities.get_entities_from_deepest_level(NavigableEntityType.SCENARIO)
         for scenario in scenarios:
-            ScenarioService.delete_scenario(scenario.id)
+            cls.delete_scenario(scenario.id)
 
     @classmethod
     def _check_validated_entities(

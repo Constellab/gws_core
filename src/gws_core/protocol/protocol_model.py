@@ -17,6 +17,7 @@ from gws_core.protocol.protocol_dto import (
 )
 from gws_core.protocol.protocol_exception import IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_dto import ScenarioProgressDTO
 from gws_core.task.plug.input_task import InputTask
 
@@ -53,15 +54,15 @@ class ProtocolModel(ProcessModel):
     ############################### MODEL METHODS #################################
 
     @GwsCoreDbManager.transaction()
-    def save_full(self) -> "ProtocolModel":
+    def save_full(self, *args, **kwargs) -> "ProtocolModel":
         """Save the protocol, its progress bar, its config and all its processes"""
-        self.config.save()
-        self.progress_bar.save()
+        self.config.save(*args, **kwargs)
+        self.progress_bar.save(*args, **kwargs)
         self.save_graph()
 
         for process in self.processes.values():
             process.set_parent_protocol(self)
-            process.save_full()
+            process.save_full(*args, **kwargs)
 
         return self
 
@@ -104,9 +105,22 @@ class ProtocolModel(ProcessModel):
 
         return self.save_graph()
 
-    def save_graph(self) -> "ProtocolModel":
+    def save_graph(self, *args, **kwargs) -> "ProtocolModel":
         self.refresh_graph_from_dump()
-        return self.save()
+        return self.save(*args, **kwargs)
+
+    def reload_graph(self) -> None:
+        """Force reload the graph (processes, connectors, interfaces, outerfaces) from DB."""
+        self._is_loaded = False
+        self._load_from_graph()
+
+    def copy_graph_from_and_save(self, other: "ProtocolModel") -> None:
+        """Copy the graph structure (connectors, interfaces, outerfaces, layout) from another protocol and save."""
+        self._connectors = list(other.connectors)
+        self._interfaces = dict(other.interfaces)
+        self._outerfaces = dict(other.outerfaces)
+        self.layout = other.layout
+        self.save_graph()
 
     def set_scenario(self, scenario):
         super().set_scenario(scenario)
@@ -441,6 +455,21 @@ class ProtocolModel(ProcessModel):
 
         return process.get_process_by_instance_path(".".join(instance_names[1:]))
 
+    def get_process_by_id(self, process_id: str) -> ProcessModel | None:
+        """Returns a process by its id, searching recursively through sub protocols.
+
+        :param process_id: the id of the process to find
+        :return: the process if found, None otherwise
+        """
+        for process in self.processes.values():
+            if process.id == process_id:
+                return process
+            if isinstance(process, ProtocolModel):
+                found = process.get_process_by_id(process_id)
+                if found:
+                    return found
+        return None
+
     def remove_process(self, name: str) -> None:
         self._check_instance_name(name)
         self._delete_connectors_by_process(self.processes[name])
@@ -665,10 +694,9 @@ class ProtocolModel(ProcessModel):
         """
         process_typing = process_type.get_typing_name()
         all_processes = self.get_all_processes_flatten_sort_by_start_date()
-        
+
         return [
-            process for process in all_processes
-            if process.process_typing_name == process_typing
+            process for process in all_processes if process.process_typing_name == process_typing
         ]
 
     def _check_instance_name(self, instance_name: str) -> None:
@@ -884,6 +912,31 @@ class ProtocolModel(ProcessModel):
         # save processes to update inputs and outputs
         for process in affected_processes:
             process.save()
+
+    ############################### RESOURCES #################################
+
+    def get_input_and_output_resource_models(self) -> set[ResourceModel]:
+        """Return the resource models of the inputs and outputs of
+        the protocol including intermediate resources"""
+        resource_models = super().get_input_and_output_resource_models()
+
+        for process in self.processes.values():
+            resource_models.update(process.get_input_and_output_resource_models())
+
+        return resource_models
+
+    def get_input_resource_model_ids(self) -> set[str]:
+        """
+        :return: return all the resource ids configured as input of this protocol
+        :rtype: Set[str]
+        """
+        resources = set()
+        for process in self.processes.values():
+            if process.is_input_task():
+                resource = process.out_port(InputTask.output_name).get_resource_model_id()
+                if resource:
+                    resources.add(resource)
+        return resources
 
     ############################### INTERFACE #################################
 
@@ -1289,23 +1342,10 @@ class ProtocolModel(ProcessModel):
         if self.scenario:
             self.scenario.check_is_updatable()
 
-            if self.scenario.is_running_or_waiting:
+            if not self.scenario.is_running_in_external_lab and self.scenario.is_running_or_waiting:
                 raise BadRequestException(
                     detail="The scenario is running or in queue, you can't update it"
                 )
-
-    def get_input_resource_model_ids(self) -> set[str]:
-        """
-        :return: return all the resource ids configured as input of this protocol
-        :rtype: Set[str]
-        """
-        resource_ids: set[str] = set()
-        for process in self.processes.values():
-            if process.is_input_task():
-                resource_id = InputTask.get_resource_id_from_config(process.config.get_values())
-                if resource_id:
-                    resource_ids.add(resource_id)
-        return resource_ids
 
     def replace_io_process_with_ioface(self):
         """Method to replace each Input process with an interface

@@ -43,6 +43,6 @@ class ScenarioResource(Resource):
             {
                 "id": self.scenario_id,
                 "title": self.get_scenario().title,
-                "url": FrontService.get_scenario_url(self.scenario_id),
+                "url": FrontService().get_scenario_url(self.scenario_id),
             }
         )

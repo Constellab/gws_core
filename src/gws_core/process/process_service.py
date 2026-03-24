@@ -17,6 +17,8 @@ from gws_core.lab.monitor.monitor_service import MonitorService
 from gws_core.process.process_model import ProcessModel
 from gws_core.process.process_types import ProcessStatus
 from gws_core.process_run_stat.process_run_stat_model import ProcessRunStatModel
+from gws_core.progress_bar.progress_bar import ProgressBar
+from gws_core.progress_bar.progress_bar_dto import ProgressBarMessagesBetweenDatesDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.task.task_model import TaskModel
 
@@ -28,11 +30,22 @@ class ProcessService:
     LOG_SECOND_MARGIN = 2
 
     @classmethod
+    def check_process_run_by_current_lab(cls, process_model: ProcessModel) -> None:
+        """Check that the process was run by the current lab.
+        Raises an error if the process was run by an external lab.
+        """
+        if process_model.run_by_lab and not process_model.run_by_lab.is_current_lab():
+            raise BadRequestException(
+                f"This process was run by an external lab '{process_model.run_by_lab.name}', cannot access its data from the current lab"
+            )
+
+    @classmethod
     def get_logs_of_process(
         cls, process_type: ProcessType, process_id: str, from_page_date: datetime | None = None
     ) -> LogsBetweenDates:
         """Read the server log on filtered by the process start and end date"""
         process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)
+        cls.check_process_run_by_current_lab(process_model)
 
         if process_model.status == ProcessStatus.DRAFT:
             raise BadRequestException("Can't get logs of a process in draft status")
@@ -58,6 +71,7 @@ class ProcessService:
         cls, process_type: ProcessType, process_id: str, timezone_number: float = 0.0
     ) -> MonitorBetweenDateGraphicsDTO:
         process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)
+        cls.check_process_run_by_current_lab(process_model)
 
         if process_model.status == ProcessStatus.DRAFT:
             raise BadRequestException("Can't get monitor of a process in draft status")
@@ -83,6 +97,41 @@ class ProcessService:
             return ProtocolModel
         else:
             raise BadRequestException(f"Process type {process_type} does not exist")
+
+    @classmethod
+    def _get_process_progress_bar(cls, process_type: ProcessType, process_id: str) -> ProgressBar:
+        """Get the progress bar of a process and check that it was run by the current lab."""
+        process_model: ProcessModel = cls.get_and_check_process_model(process_type, process_id)
+        cls.check_process_run_by_current_lab(process_model)
+
+        if process_model.progress_bar is None:
+            raise BadRequestException("This process does not have a progress bar")
+
+        return process_model.progress_bar
+
+    @classmethod
+    def download_progress_bar(cls, process_type: ProcessType, process_id: str) -> str:
+        """Download a progress bar's messages as a string."""
+        progress_bar = cls._get_process_progress_bar(process_type, process_id)
+        return progress_bar.get_messages_as_str()
+
+    @classmethod
+    def get_progress_bar_messages(
+        cls, process_type: ProcessType, process_id: str, nb_of_messages: int,
+        from_datetime: datetime | None = None,
+    ) -> ProgressBarMessagesBetweenDatesDTO:
+        """Get progress bar messages with pagination."""
+        progress_bar = cls._get_process_progress_bar(process_type, process_id)
+
+        messages = progress_bar.get_messages_paginated(nb_of_messages=20, before_date=from_datetime)
+
+        return ProgressBarMessagesBetweenDatesDTO(
+            from_datatime=messages[-1].datetime if messages else None,
+            to_datatime=messages[0].datetime if messages else None,
+            messages=progress_bar.get_messages_paginated(
+                nb_of_messages=nb_of_messages, before_date=from_datetime
+            ),
+        )
 
     @classmethod
     def init_cron_thread_run_stats(cls) -> None:

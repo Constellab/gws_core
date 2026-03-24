@@ -6,8 +6,9 @@ from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
-from gws_core.scenario.scenario_zipper import ZipScenarioInfo
+from gws_core.scenario.scenario_zipper import ScenarioExportPackage
 from gws_core.user.user_dto import UserDTO
 
 
@@ -62,14 +63,11 @@ class UpdateShareLinkDTO(BaseModelDTO):
 
 class ShareEntityInfoDTO(ModelDTO):
     share_mode: SharedEntityMode
-    lab_id: str
-    lab_name: str
-    user_id: str
-    user_firstname: str
-    user_lastname: str
-    space_id: str | None = None
-    space_name: str | None = None
-    created_by: UserDTO
+    lab: LabDTO | None = None
+    user: UserDTO | None = None
+    created_by: UserDTO | None = None
+    external_id: str
+    external_object_url: str | None = None
 
 
 class ShareEntityInfoReponseDTO(BaseModelDTO):
@@ -85,13 +83,17 @@ class ShareResourceInfoReponseDTO(ShareEntityInfoReponseDTO):
 
 
 class ShareScenarioInfoReponseDTO(ShareEntityInfoReponseDTO):
-    entity_object: ZipScenarioInfo
+    entity_object: ScenarioExportPackage
     resource_route: str
+    mark_as_shared_route: str
     token: str
     origin: ExternalLabWithUserInfo
 
     def get_resource_route(self, resource_id: str) -> str:
         return self.resource_route.replace("[RESOURCE_ID]", resource_id)
+
+    def get_mark_as_shared_route(self, resource_id: str) -> str:
+        return self.mark_as_shared_route.replace("[RESOURCE_ID]", resource_id)
 
 
 class ShareResourceZippedResponseDTO(BaseModelDTO):

@@ -14,7 +14,7 @@ app = typer.Typer(help="Community commands (documentation, chatbot)")
 def login(
     force: Annotated[
         bool,
-        typer.Option("--force", help="Re-authenticate even if already logged in."),
+        typer.Option("--force", "-f", help="Re-authenticate even if already logged in."),
     ] = False,
 ):
     try:

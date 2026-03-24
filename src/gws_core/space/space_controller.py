@@ -2,11 +2,11 @@ from fastapi import Depends
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
+from gws_core.core.utils.settings_dto import SettingsDTO
 from gws_core.folder.space_folder_dto import ExternalSpaceFolder, ExternalSpaceFolders
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.dev_env_service import DevEnvService
-from gws_core.lab.system_dto import SettingsDTO
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import GenerateUserAccessTokenForSpaceResponse

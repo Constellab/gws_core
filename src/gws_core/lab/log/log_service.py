@@ -7,6 +7,8 @@ from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.lab.log.log_dto import LogInfo, LogsStatusDTO
+from gws_core.space.mail_service import MailService
+from gws_core.user.current_user_service import CurrentUserService
 
 from .log import LogCompleteInfo, LogLine, LogsBetweenDates
 
@@ -45,7 +47,7 @@ class LogService:
         return LogCompleteInfo(log_info, content)
 
     @classmethod
-    def get_log_info(cls, node_name: str) -> LogInfo:
+    def get_log_info(cls, node_name: str) -> LogInfo | None:
         log_folder = Settings.get_instance().get_log_dir()
 
         if not node_name.startswith("log"):
@@ -141,6 +143,71 @@ class LogService:
         return log_complete_info.get_log_lines_by_time(
             from_date, to_date, context, context_id, nb_of_lines
         )
+
+    @classmethod
+    def send_log_to_support(cls, request_id: str) -> bool:
+        """Retrieve all log lines for the request_id from today's log and send them to support via email.
+
+        :param request_id: the request ID to look up in today's logs
+        :type request_id: str
+        :raises BadRequestException: if no request_id is provided or no log found for the request_id
+        :return: True if the mail was sent successfully
+        :rtype: bool
+        """
+        if not request_id:
+            raise BadRequestException("A request_id is required to send logs to support")
+
+        today_log_file_name = Logger.date_to_file_name(DateHelper.now_utc())
+        log_complete_info = cls.get_log_complete_info(today_log_file_name)
+
+        log_lines = log_complete_info.get_log_lines_by_request_id(request_id)
+
+        if not log_lines:
+            raise BadRequestException(
+                f"No log lines found today for request_id '{request_id}'"
+            )
+
+        # Find the first error log line to use as main context
+        error_line = next(
+            (line for line in log_lines if line.level in ("ERROR", "EXCEPTION")),
+            None,
+        )
+
+        # Retrieve current user info
+        current_user = CurrentUserService.get_and_check_current_user()
+
+        # Retrieve lab info
+        lab_id = Settings.get_lab_id()
+        lab_name = Settings.get_lab_name()
+
+        log_lines_str = "\n".join([line.to_str() for line in log_lines])
+
+        subject = f"Log report for request {request_id}"
+
+        # Build header context
+        content = "<h3>Log Report</h3>"
+
+        if error_line and error_line.message:
+            content += f"<p><strong>Error:</strong> {error_line.message}</p>"
+
+        content += (
+            f"<p><strong>Request ID:</strong> {request_id}</p>"
+            f"<p><strong>Lab:</strong> {lab_name} (ID: {lab_id})</p>"
+            f"<p><strong>User:</strong> {current_user.first_name} {current_user.last_name} "
+            f"(ID: {current_user.id}, Email: {current_user.email})</p>"
+        )
+
+        if error_line and error_line.instance_id:
+            content += f"<p><strong>Instance ID:</strong> {error_line.instance_id}</p>"
+
+        # Complete log lines
+        content += (
+            f"<p><strong>Number of log lines:</strong> {len(log_lines)}</p>"
+            f"<h4>Complete log lines for this request:</h4>"
+            f"<pre>{log_lines_str}</pre>"
+        )
+
+        return MailService.send_mail_to_support(content=content, subject=subject)
 
     @classmethod
     def get_log_file_path(cls, node_name: str) -> str:

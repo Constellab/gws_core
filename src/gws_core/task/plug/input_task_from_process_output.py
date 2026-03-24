@@ -38,7 +38,6 @@ class InputTaskFromProcessOutput(Task):
             "resource": OutputSpec(
                 Resource,
                 sub_class=True,
-                constant=True,
                 human_name="Resource",
                 short_description="Loaded resource",
             )
@@ -89,4 +88,5 @@ class InputTaskFromProcessOutput(Task):
                 f"Output port of the process '{process_model.name}' is empty, no resource was provided."
             )
 
+        resource.set_as_reference()
         return {"resource": resource}

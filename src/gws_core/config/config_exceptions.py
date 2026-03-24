@@ -1,6 +1,7 @@
 from typing import Any
 
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
+from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from ..core.exception.gws_exceptions import GWSException
 
 
@@ -58,4 +59,23 @@ class InvalidParamValueException(BadRequestException):
             detail=GWSException.INVALID_PARAM_VALUE.value,
             unique_code=GWSException.INVALID_PARAM_VALUE.name,
             detail_args={"param_name": param_name, "param_value": str(param_value), "error": error},
+        )
+
+
+class ProcessConfigException(BadRequestException):
+    """Exception raised when a config error occurs in the context of a process.
+    Wraps the original config exception and adds process information (type).
+    """
+
+    original_exception: Exception
+
+    def __init__(self, process_type: str, original_exception: BaseHTTPException) -> None:
+        self.original_exception = original_exception
+        super().__init__(
+            detail=GWSException.PROCESS_CONFIG_EXCEPTION.value,
+            unique_code=GWSException.PROCESS_CONFIG_EXCEPTION.name,
+            detail_args={
+                "error": original_exception.get_detail_with_args(),
+                "process_type": process_type,
+            },
         )

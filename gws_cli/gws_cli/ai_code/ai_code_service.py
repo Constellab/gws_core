@@ -1,3 +1,4 @@
+import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -6,8 +7,8 @@ import typer
 
 
 @dataclass
-class CommandFrontmatter:
-    """Configuration for command file frontmatter"""
+class SkillFrontmatter:
+    """Configuration for skill file frontmatter"""
 
     filename: str
     description: str
@@ -15,8 +16,8 @@ class CommandFrontmatter:
 
 
 @dataclass
-class CommandInfo:
-    """Information about an installed command"""
+class SkillInfo:
+    """Information about an installed skill"""
 
     name: str
     description: str | None
@@ -24,52 +25,53 @@ class CommandInfo:
 
 
 class AICodeService(ABC):
-    """Base service for managing AI code assistant commands (Claude Code, GitHub Copilot, etc.)"""
+    """Base service for managing AI code assistant skills (Claude Code, GitHub Copilot, etc.)"""
 
-    SOURCE_COMMANDS_DIR = Path(__file__).parent / "commands"
-    # Frontmatter configuration for each command file
-    COMMAND_FRONTMATTER: list[CommandFrontmatter] = [
-        CommandFrontmatter(
+    SOURCE_SKILLS_DIR = Path(__file__).parent / "skills"
+
+    # Plugin metadata
+    PLUGIN_NAME = "gws-commands"
+    PLUGIN_DESCRIPTION = "GWS-specific development skills for Constellab platform"
+    PLUGIN_VERSION = "1.0.0"
+
+    # Frontmatter configuration for each skill file
+    SKILL_FRONTMATTER: list[SkillFrontmatter] = [
+        SkillFrontmatter(
             filename="reflex-app-developer.md",
             description="Create, develop, modify, or debug a Reflex web application",
             argument_hint="description of what to build",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="streamlit-app-developer.md",
             description="Create, develop, modify, or debug a Streamlit web application",
             argument_hint="description of what to build",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="task-expert.md",
-            description="Create or modify a Constellab Task that processes data resources",
+            description="Create, modify or document a Constellab Task that processes data resources",
             argument_hint="task description or modification request",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="agent-expert.md",
-            description="Create or modify a Constellab Agent that processes data resources",
+            description="Create, modify or document a Constellab Agent that processes data resources",
             argument_hint="agent description or modification request",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="nextflow-to-constellab.md",
             description="Convert a Nextflow pipeline or process to Constellab Tasks",
             argument_hint="path to Nextflow file or description of pipeline to convert",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="snakemake-to-constellab.md",
             description="Convert a Snakemake workflow or rule to Constellab Tasks",
             argument_hint="path to Snakefile or description of workflow to convert",
         ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="code-review-instructions.md",
             description="Instructions for reviewing code",
             argument_hint="description of code review request",
         ),
-        # CommandFrontmatter(
-        #     filename="update-doc.md",
-        #     description="Update a developer documentation file to match current source code",
-        #     argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
-        # ),
-        CommandFrontmatter(
+        SkillFrontmatter(
             filename="update-doc-json.md",
             description="Update a developer documentation file to match current source code using JSON input",
             argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
@@ -85,7 +87,7 @@ class AICodeService(ABC):
         self.ai_tool_name = ai_tool_name
 
     @abstractmethod
-    def format_frontmatter(self, frontmatter: CommandFrontmatter) -> str:
+    def format_frontmatter(self, frontmatter: SkillFrontmatter) -> str:
         """Format frontmatter for the specific AI tool
 
         Args:
@@ -97,38 +99,37 @@ class AICodeService(ABC):
 
     @abstractmethod
     def get_target_dir(self) -> Path:
-        """Get the base directory for the AI tool's commands/instructions
+        """Get the base directory for the AI tool's skills/instructions
 
         Returns:
-            Path to the base directory (e.g., ~/.claude/commands or ~/.github/copilot/instructions)
+            Path to the base directory (e.g., plugin root dir or prompts dir)
         """
 
     @abstractmethod
-    def format_filename(self, base_filename: str) -> str:
-        """Format the filename for the specific AI tool
+    def get_skill_dir_name(self, base_filename: str) -> str:
+        """Get the skill directory name for the specific AI tool
 
         Args:
             base_filename: The base filename (e.g., 'streamlit-app-developer.md')
 
         Returns:
-            Formatted filename (e.g., 'streamlit-app-developer.md' for Claude,
-                               'streamlit-app-developer.prompt.md' for Copilot)
+            Directory or file name for the skill
         """
 
     @abstractmethod
-    def get_file_pattern(self) -> str:
-        """Get the glob pattern to match command files in the target directory
+    def get_skill_pattern(self) -> str:
+        """Get the glob pattern to match skill files in the target directory
 
         Returns:
-            Glob pattern (e.g., 'gws-*.md' for Claude, 'gws-*.prompt.md' for Copilot)
+            Glob pattern for skill files/directories
         """
 
     @abstractmethod
     def get_install_command(self) -> str:
-        """Get the command to install/pull commands for this AI tool
+        """Get the command to install/pull skills for this AI tool
 
         Returns:
-            Command string (e.g., 'gws claude init' or 'gws copilot pull')
+            Command string (e.g., 'gws claude update' or 'gws copilot update')
         """
 
     @abstractmethod
@@ -141,26 +142,26 @@ class AICodeService(ABC):
 
     @abstractmethod
     def update(self) -> int:
-        """Update AI tool configuration (commands and instructions)
+        """Update AI tool configuration (skills and instructions)
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
 
-    def pull_commands_to_global(self) -> int:
-        """Pull commands from source to global AI tool commands folder
+    def pull_skills_to_global(self) -> int:
+        """Pull skills from source to global AI tool skills folder
 
-        This is a generic method that copies commands from a source directory to the
-        appropriate global commands folder for different AI code assistants.
+        This is a generic method that copies skills from a source directory to the
+        appropriate global skills folder for different AI code assistants.
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
         try:
             # Validate source directory exists
-            if not self.SOURCE_COMMANDS_DIR.exists():
+            if not self.SOURCE_SKILLS_DIR.exists():
                 typer.echo(
-                    f"Error: Source commands directory not found at {self.SOURCE_COMMANDS_DIR}",
+                    f"Error: Source skills directory not found at {self.SOURCE_SKILLS_DIR}",
                     err=True,
                 )
                 return 1
@@ -171,80 +172,117 @@ class AICodeService(ABC):
             # Create target directory if it doesn't exist
             target_dir.mkdir(parents=True, exist_ok=True)
 
-            # Remove existing GWS files (files starting with 'gws-')
-            if target_dir.exists():
-                gws_files = list(target_dir.glob("gws-*"))
-                if gws_files:
-                    for gws_file in gws_files:
-                        if gws_file.is_file():
-                            gws_file.unlink()
+            # Clean up existing skills
+            self._clean_existing_skills(target_dir)
 
-            # Process each command from COMMAND_FRONTMATTER
-            for frontmatter_config in AICodeService.COMMAND_FRONTMATTER:
-                # Source file
-                source_file = self.SOURCE_COMMANDS_DIR / frontmatter_config.filename
+            # Generate plugin manifest if supported
+            self._generate_plugin_manifest(target_dir)
 
-                if not source_file.exists():
-                    typer.echo(f"Warning: Source file not found: {source_file}")
-                    continue
-
-                # Target file with formatted filename (prefixed with 'gws-')
-                formatted_filename = self.format_filename(frontmatter_config.filename)
-                target_filename = f"gws-{formatted_filename}"
-                target_file = target_dir / target_filename
-
-                # Read the source file
-                content = source_file.read_text(encoding="utf-8")
-
-                # Check if frontmatter already exists
-                if not content.startswith("---"):
-                    # Add frontmatter using the abstract method
-                    frontmatter = self.format_frontmatter(frontmatter_config)
-                    content = frontmatter + content
-
-                # Write to target file
-                target_file.write_text(content, encoding="utf-8")
+            # Process each skill from SKILL_FRONTMATTER
+            for frontmatter_config in AICodeService.SKILL_FRONTMATTER:
+                self._write_skill(target_dir, frontmatter_config)
 
             typer.echo(
-                f"GWS commands successfully pulled to global {self.ai_tool_name} commands folder! Location: {target_dir}."
+                f"GWS skills successfully pulled to global {self.ai_tool_name} skills folder! Location: {target_dir}."
             )
             return 0
 
         except OSError as e:
-            typer.echo(f"Error pulling commands: {e}", err=True)
+            typer.echo(f"Error pulling skills: {e}", err=True)
             return 1
 
-    def get_commands_list(self) -> list[CommandInfo]:
-        """Get a structured list of all available GWS commands for the AI tool
+    def _clean_existing_skills(self, target_dir: Path) -> None:
+        """Clean up existing GWS skill files/directories in the target directory
+
+        Args:
+            target_dir: The target directory to clean
+        """
+        # Remove existing gws- files (legacy flat format)
+        for gws_file in target_dir.glob("gws-*"):
+            if gws_file.is_file():
+                gws_file.unlink()
+            elif gws_file.is_dir():
+                shutil.rmtree(gws_file)
+
+        # Remove existing gws- skill directories in skills/ subdirectory (legacy plugin format)
+        skills_dir = target_dir / "skills"
+        if skills_dir.exists():
+            for skill_dir in skills_dir.glob("gws-*"):
+                if skill_dir.is_dir():
+                    shutil.rmtree(skill_dir)
+
+    def _generate_plugin_manifest(self, target_dir: Path) -> None:
+        """Generate plugin manifest file. Override in subclasses that support plugins.
+
+        Args:
+            target_dir: The plugin root directory
+        """
+
+    def _write_skill(self, target_dir: Path, frontmatter_config: SkillFrontmatter) -> None:
+        """Write a single skill to the target directory
+
+        Args:
+            target_dir: The target directory
+            frontmatter_config: The skill frontmatter configuration
+        """
+        # Source file
+        source_file = self.SOURCE_SKILLS_DIR / frontmatter_config.filename
+
+        if not source_file.exists():
+            typer.echo(f"Warning: Source file not found: {source_file}")
+            return
+
+        # Read the source file
+        content = source_file.read_text(encoding="utf-8")
+
+        # Check if frontmatter already exists
+        if not content.startswith("---"):
+            frontmatter = self.format_frontmatter(frontmatter_config)
+            content = frontmatter + content
+
+        # Get skill directory/file name and write
+        skill_dir_name = self.get_skill_dir_name(frontmatter_config.filename)
+        self._write_skill_file(target_dir, skill_dir_name, content)
+
+    def _write_skill_file(self, target_dir: Path, skill_name: str, content: str) -> None:
+        """Write a skill file. Override in subclasses for different structures.
+
+        Default: writes as a flat file (legacy behavior for Copilot).
+
+        Args:
+            target_dir: The target directory
+            skill_name: The skill name/filename
+            content: The skill content with frontmatter
+        """
+        target_file = target_dir / skill_name
+        target_file.write_text(content, encoding="utf-8")
+
+    def get_skills_list(self) -> list[SkillInfo]:
+        """Get a structured list of all available GWS skills for the AI tool
 
         Returns:
-            List[CommandInfo]: List of command information objects
+            List[SkillInfo]: List of skill information objects
         """
-        commands = []
+        skills = []
         try:
             target_dir = self.get_target_dir()
 
             if not target_dir.exists():
-                return commands
+                return skills
 
-            # Find all GWS command files using the pattern from child class
-            file_pattern = self.get_file_pattern()
-            gws_files = sorted(target_dir.glob(file_pattern))
+            # Find all GWS skill files using the pattern from child class
+            skill_pattern = self.get_skill_pattern()
+            gws_files = sorted(target_dir.glob(skill_pattern))
 
             for gws_file in gws_files:
-                # Extract command name (remove 'gws-' prefix and any extension)
-                command_name = gws_file.name
-                if command_name.endswith(".prompt.md"):
-                    command_name = command_name.replace(".prompt.md", "")
-                elif command_name.endswith(".md"):
-                    command_name = command_name.replace(".md", "")
+                # Extract skill name
+                skill_name = self._extract_skill_name(gws_file)
 
                 # Try to read description from frontmatter
                 description = None
                 try:
                     content = gws_file.read_text(encoding="utf-8")
                     if content.startswith("---"):
-                        # Extract frontmatter
                         end_frontmatter = content.find("---", 3)
                         if end_frontmatter > 0:
                             frontmatter = content[3:end_frontmatter].strip()
@@ -255,17 +293,35 @@ class AICodeService(ABC):
                 except Exception:
                     pass
 
-                commands.append(
-                    CommandInfo(name=command_name, description=description, file_path=gws_file)
+                skills.append(
+                    SkillInfo(name=skill_name, description=description, file_path=gws_file)
                 )
 
         except Exception:
             pass
 
-        return commands
+        return skills
 
-    def print_commands(self) -> int:
-        """Print all available GWS commands for the AI tool in a user-friendly format
+    def _extract_skill_name(self, skill_file: Path) -> str:
+        """Extract the skill name from a skill file path
+
+        Args:
+            skill_file: Path to the skill file
+
+        Returns:
+            The skill name
+        """
+        name = skill_file.name
+        if name.endswith(".prompt.md"):
+            name = name.replace(".prompt.md", "")
+        elif name == "SKILL.md":
+            name = skill_file.parent.name
+        elif name.endswith(".md"):
+            name = name.replace(".md", "")
+        return name
+
+    def print_skills(self) -> int:
+        """Print all available GWS skills for the AI tool in a user-friendly format
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -274,39 +330,39 @@ class AICodeService(ABC):
             target_dir = self.get_target_dir()
 
             typer.echo("\n" + "=" * 70)
-            typer.echo(f"Available GWS commands for {self.ai_tool_name}:")
+            typer.echo(f"Available GWS skills for {self.ai_tool_name}:")
             typer.echo("=" * 70)
 
             if not target_dir.exists():
                 typer.echo(
-                    f"\nNo commands folder found. Run '{self.get_install_command()}' to install commands."
+                    f"\nNo skills folder found. Run '{self.get_install_command()}' to install skills."
                 )
                 return 0
 
-            commands = self.get_commands_list()
+            skills = self.get_skills_list()
 
-            if not commands:
+            if not skills:
                 typer.echo(
-                    f"\nNo GWS commands found. Run '{self.get_install_command()}' to install commands."
+                    f"\nNo GWS skills found. Run '{self.get_install_command()}' to install skills."
                 )
                 return 0
 
             typer.echo(f"\nLocation: {target_dir}\n")
 
-            for command in commands:
-                typer.echo(f"  /{command.name}")
-                if command.description:
-                    typer.echo(f"    {command.description}")
+            for skill in skills:
+                typer.echo(f"  /{skill.name}")
+                if skill.description:
+                    typer.echo(f"    {skill.description}")
                 typer.echo()
 
-            typer.echo("Usage: /gws-<command-name> [your task description]")
+            typer.echo("Usage: /<skill-name> [your task description]")
             typer.echo("Example: /gws-streamlit-app-developer Create a dashboard")
             typer.echo("=" * 70)
 
             return 0
 
         except Exception as e:
-            typer.echo(f"Error printing commands: {e}", err=True)
+            typer.echo(f"Error printing skills: {e}", err=True)
             return 1
 
     def generate_main_instructions(self) -> int:
@@ -392,7 +448,7 @@ class AICodeService(ABC):
             typer.echo(f"{self.ai_tool_name} configuration updated successfully.")
 
     def is_configured(self) -> bool:
-        """Check if the AI tool is configured (i.e., if the target commands directory exists)
+        """Check if the AI tool is configured (i.e., if the target skills directory exists)
 
         Returns:
             bool: True if configured, False otherwise
@@ -402,5 +458,5 @@ class AICodeService(ABC):
         if not target_dir.exists():
             return False
 
-        commands = self.get_commands_list()
-        return len(commands) > 0
+        skills = self.get_skills_list()
+        return len(skills) > 0

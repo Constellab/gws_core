@@ -5,6 +5,7 @@ from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.brick.brick_log_service import BrickLogService
+from gws_core.lab.lab_model.lab_enums import LabEnvironment
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
@@ -19,6 +20,7 @@ from gws_core.space.space_dto import (
     SpaceGroupDTO,
     SpaceHierarchyObjectDTO,
     SpaceSendMailToMailsDTO,
+    SpaceSendMailToSupportDTO,
     SpaceSendMailToUsersDTO,
     SpaceSendNotificationDTO,
     SpaceSyncObjectDTO,
@@ -57,7 +59,7 @@ class SpaceService(SpaceServiceBase):
 
     def check_api_key(self, api_key: str) -> bool:
         # In local env, we don't check the api key
-        if Settings.get_lab_environment() == "LOCAL":
+        if Settings.get_lab_environment() == LabEnvironment.LOCAL:
             return True
 
         if Settings.is_dev_mode():
@@ -931,6 +933,25 @@ class SpaceService(SpaceServiceBase):
         return ExternalApiService.post(
             space_api_url,
             send_mail_to_mails_dto,
+            self._get_request_header(),
+            raise_exception_if_error=True,
+        )
+
+    def send_mail_to_support(self, send_mail_to_support_dto: SpaceSendMailToSupportDTO) -> Response:
+        """Send a mail to support.
+
+        :param send_mail_to_support_dto: mail information
+        :type send_mail_to_support_dto: SpaceSendMailToSupportDTO
+        :return: http response
+        :rtype: Response
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/send-mail-to-support"
+        )
+        return ExternalApiService.post(
+            space_api_url,
+            send_mail_to_support_dto,
             self._get_request_header(),
             raise_exception_if_error=True,
         )

@@ -2,15 +2,14 @@ import os
 from json import dump
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.compress.zip_compress import ZipCompress
+from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model import FSNodeModel
-from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_dto import ResourceModelExportDTO
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagDTO
@@ -20,53 +19,57 @@ from gws_core.user.user import User
 from .resource_model import ResourceModel
 
 
-class ZipResource(BaseModelDTO):
-    id: str
-    name: str
-    resource_typing_name: str
-    brick_version: str
+class ResourceExportDTO(BaseModelDTO):
+    resource_model_export: ResourceModelExportDTO
     data: dict
-    parent_resource_id: str | None = None
-    kvstore_dir_name: str | None = None
     tags: list[TagDTO]
-    style: TypingStyle | None = None
 
-    # Name of the file or directory if the resource is a FsNode
-    fs_node_name: str | None
+    # True if the resource has a kvstore
+    has_kvstore: bool = False
+
+    def get_fs_node_name(self) -> str | None:
+        if not self.resource_model_export.fs_node:
+            return None
+        return (
+            f"filestore_{self.resource_model_export.id}_{self.resource_model_export.fs_node.name}"
+        )
+
+    def get_kvstore_dir_name(self) -> str:
+        return f"kvstore_{self.resource_model_export.id}"
 
 
-class ZipResourceInfo(BaseModelDTO):
+class ResourceExportPackage(BaseModelDTO):
     """Content of the info.json file in the zip file when a resource is zipped"""
 
     zip_version: int
-    resource: ZipResource | None
-    children_resources: list[ZipResource]
+    resource: ResourceExportDTO | None
+    children_resources: list[ResourceExportDTO]
     origin: ExternalLabWithUserInfo
 
 
 class ResourceZipper:
     """Class to generate a zip file containing everythinga needed to recreate a resource"""
 
-    ZIP_FILE_NAME = "resource.zip"
-    KV_STORE_FILE_NAME = "kvstore"
-    FS_NODE_FILE_NAME = "filestore"
+    ZIP_FILE_NAME = "resource.tar"
     INFO_JSON_FILE_NAME = "info.json"
-    COMPRESS_EXTENSION = "zip"
+    COMPRESS_EXTENSION = "tar"
 
     temp_dir: str
 
-    zip: ZipCompress
+    zip: TarCompress
 
-    resource_info: ZipResourceInfo
+    resource_info: ResourceExportPackage
 
     shared_by: User
+
+    EXPORT_VERSION = 2
 
     def __init__(self, shared_by: User):
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
-        self.zip = ZipCompress(self.get_zip_file_path())
-        self.resource_info = ZipResourceInfo(
-            zip_version=1,
+        self.zip = TarCompress(self.get_zip_file_path())
+        self.resource_info = ResourceExportPackage(
+            zip_version=self.EXPORT_VERSION,
             resource=None,
             children_resources=[],
             origin=ExternalLabApiService.get_current_lab_info(self.shared_by),
@@ -83,39 +86,25 @@ class ResourceZipper:
         resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_id)
         tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
 
-        resource_zip = ZipResource(
-            id=resource_model.id,
-            name=resource_model.name,
-            resource_typing_name=resource_model.resource_typing_name,
-            brick_version=resource_model.brick_version,
-            data=resource_model.data,
-            parent_resource_id=parent_resource_id,
-            kvstore_dir_name=None,
-            fs_node_name=None,
-            tags=tags_dict,
-            style=resource_model.style,
-        )
+        resource_model_export = resource_model.to_export_dto()
 
-        resource_index = self._get_next_resource_index()
+        resource_zip = ResourceExportDTO(
+            resource_model_export=resource_model_export,
+            data=resource_model.data,
+            tags=tags_dict,
+        )
 
         # add the kvstore
         kvstore: KVStore = resource_model.get_kv_store()
         if kvstore is not None:
-            kvstore_file_name = f"{self.KV_STORE_FILE_NAME}_{resource_index}"
             # add the kvstore folder in the zip and name this folder kvstore
-            self.zip.add_dir(kvstore.full_file_dir, dir_name=kvstore_file_name)
-            resource_zip.kvstore_dir_name = kvstore_file_name
+            self.zip.add_dir(kvstore.full_file_dir, dir_name=resource_zip.get_kvstore_dir_name())
+            resource_zip.has_kvstore = True
 
         # add the fs_node
         fs_node_model: FSNodeModel = resource_model.fs_node_model
         if fs_node_model is not None:
-            if FileHelper.is_dir(fs_node_model.path):
-                fs_node_file_name = f"{self.FS_NODE_FILE_NAME}_{resource_index}"
-            else:
-                fs_node_file_name = f"{self.FS_NODE_FILE_NAME}_{resource_index}.{FileHelper.get_normalized_extension(fs_node_model.path)}"
-
-            self.zip.add_fs_node(fs_node_model.path, fs_node_name=fs_node_file_name)
-            resource_zip.fs_node_name = fs_node_file_name
+            self.zip.add_fs_node(fs_node_model.path, fs_node_name=resource_zip.get_fs_node_name())
 
         # add the resource info
         if parent_resource_id is None:
@@ -128,11 +117,6 @@ class ResourceZipper:
         if isinstance(resource, ResourceListBase):
             for child_id in resource.get_resource_model_ids():
                 self.add_resource_model(child_id, resource_id)
-
-    def _get_next_resource_index(self) -> int:
-        return len(self.resource_info.children_resources) + (
-            0 if self.resource_info.resource is None else 1
-        )
 
     def get_zip_file_path(self):
         return os.path.join(self.temp_dir, self.ZIP_FILE_NAME)

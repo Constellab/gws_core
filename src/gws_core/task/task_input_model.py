@@ -98,6 +98,21 @@ class TaskInputModel(BaseModel):
         """
         return super().save(*args, force_insert=True, **kwargs)
 
+    def save_if_not_exists(self) -> "TaskInputModel":
+        """Save the task input model only if it doesn't already exist (based on composite key task_model + port_name).
+        If it already exists, returns the existing record.
+        """
+        existing = TaskInputModel.select().where(
+            (TaskInputModel.task_model == self.task_model)
+            & (TaskInputModel.port_name == self.port_name)
+        ).first()
+
+        if existing is not None:
+            return existing
+
+        self.save()
+        return self
+
     class Meta:
         table_name = "gws_task_inputs"
         is_table = True

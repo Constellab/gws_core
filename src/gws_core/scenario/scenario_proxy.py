@@ -4,18 +4,23 @@ from time import sleep
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_waiter import ScenarioWaiterBasic
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_service import TagService
+from gws_core.tag.tag_system import TagSystem
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..folder.space_folder import SpaceFolder
 from ..protocol.protocol import Protocol
 from ..protocol.protocol_proxy import ProtocolProxy
 from .scenario import Scenario
-from .scenario_enums import ScenarioCreationType
+from .scenario_enums import ScenarioCreationType, ScenarioStatus
 from .scenario_run_service import ScenarioRunService
+from .scenario_search_builder import ScenarioSearchBuilder
 from .scenario_service import ScenarioService
 
 
@@ -123,17 +128,17 @@ class ScenarioProxy:
             )
 
     def run_async(self) -> ScenarioWaiterBasic:
-        """Run the scenario in a separate process but don't wait for it to finish
+        """Run the scenario in a separate CLI process but don't wait for it to finish.
+
+        Uses a CLI subprocess (like the queue runner) instead of fork to avoid
+        inheriting the parent's server socket and event loop state, which can
+        block other HTTP requests.
 
         :return: the scenario waiter
         :rtype: ScenarioWaiterBasic
         """
-        # Pass only the scenario ID to avoid Peewee connection issues across processes
-        scenario_id = self._scenario.id
-
-        # Create and start a background process with clean db connection
-        process = ProcessDb(target=ScenarioRunService.run_scenario_by_id, args=(scenario_id,))
-        process.start()
+        user = CurrentUserService.get_and_check_current_user()
+        ScenarioRunService.create_cli_for_scenario(self._scenario, user)
 
         # Wait for scenario to start running
         count = 0
@@ -151,15 +156,68 @@ class ScenarioProxy:
         return ScenarioWaiterBasic(self._scenario.id)
 
     def add_to_queue(self) -> None:
-        from gws_core.scenario.queue_service import QueueService
-
         QueueService.add_scenario_to_queue(self._scenario.id)
+
+    def stop_or_remove_from_queue(self) -> "ScenarioProxy":
+        """Stop the scenario or remove it from the queue depending on its current status.
+
+        - If the scenario is running in an external lab, stop all running importing scenarios.
+        - If the scenario is running locally, stop it.
+        - If the scenario is in queue, remove it from the queue.
+
+        :return: the updated scenario
+        :rtype: ScenarioProxy
+        """
+        self.refresh()
+
+        if self._scenario.is_running_in_external_lab:
+            self._stop_running_in_external_lab()
+        elif self._scenario.is_running:
+            ScenarioRunService.stop_scenario(self._scenario.id)
+        elif self._scenario.status == ScenarioStatus.IN_QUEUE:
+            QueueService.remove_scenario_from_queue(self._scenario.id)
+        else:
+            raise Exception("The scenario is not running or in queue, it cannot be stopped")
+
+        return self.refresh()
+
+    def _stop_running_in_external_lab(self) -> None:
+        """Stop the scenario if it's running in an external lab.
+
+        If the external lab reference is not available or if an error occurs
+        while communicating with the external lab, unmark the scenario as running
+        and stop all running importing scenarios.
+        """
+        if self._scenario.running_in_external_lab is None:
+            self._stop_all_running_importing_scenarios()
+            ScenarioRunService.stop_scenario(self._scenario.id)
+            return
+
+        try:
+            ExternalLabApiService(
+                self._scenario.running_in_external_lab.to_dto_with_credentials()
+            ).stop_scenario(self._scenario.id)
+            # Refresh the scenario to update its status after stopping it in the external lab
+        except Exception:
+            self._stop_all_running_importing_scenarios()
+            ScenarioRunService.stop_scenario(self._scenario.id)
+
+    def _stop_all_running_importing_scenarios(self) -> None:
+        """Stop all currently running scenarios that are importing the current scenario."""
+        search_builder = ScenarioSearchBuilder()
+        search_builder.add_tag_filter(Tag(TagSystem.SCENARIO_IMPORTER_TAG_KEY, self.get_model_id()))
+        search_builder.add_running_filter()
+
+        running_scenarios: list[Scenario] = search_builder.search_all()
+
+        for scenario in running_scenarios:
+            ScenarioRunService.stop_scenario(scenario.id)
 
     def stop(self) -> None:
         ScenarioRunService.stop_scenario(self._scenario.id)
 
     def delete(self) -> None:
-        ScenarioService.delete_scenario(self._scenario.id)
+        EntityNavigatorService.delete_scenario(self._scenario.id)
 
     def get_model(self) -> Scenario:
         return self._scenario
@@ -194,5 +252,11 @@ class ScenarioProxy:
         self.refresh()
         return self
 
+    def reset_error_processes(self) -> "ScenarioProxy":
+        """Reset all processes in error of the scenario"""
+        EntityNavigatorService.reset_error_processes_of_protocol(self._scenario.protocol_model)
+        self.refresh()
+        return self
+
     def get_url(self) -> str:
-        return FrontService.get_scenario_url(self._scenario.id)
+        return FrontService().get_scenario_url(self._scenario.id)

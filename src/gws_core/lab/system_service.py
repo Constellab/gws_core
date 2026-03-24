@@ -13,15 +13,23 @@ from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.lab.monitor.monitor_service import MonitorService
-from gws_core.lab.system_dto import LabInfoDTO, LabStartLogFileObject, LabStatusDTO, LabSystemConfig
+from gws_core.lab.system_dto import (
+    LabStartLogFileObject,
+    LabStatusDTO,
+    LabSystemConfig,
+    LabSystemInfoDTO,
+)
 from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.scenario.queue.queue_runner import QueueRunner
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
+from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
 from gws_core.triggered_job.triggered_job_scheduler import TriggeredJobScheduler
@@ -36,7 +44,6 @@ from ..core.utils.settings import Settings
 from ..impl.file.file_helper import FileHelper
 from ..model.model_service import ModelService
 from ..process.process_service import ProcessService
-from ..scenario.queue_service import QueueService
 from ..user.current_user_service import AuthenticateUser, CurrentUserService
 from ..user.user import User
 from ..user.user_service import UserService
@@ -59,6 +66,9 @@ class SystemService:
 
         BrickService.init()
         LabConfigModel.save_current_config()
+
+        # Create or update the current lab entry
+        LabModel.get_or_create_current_lab()
 
         # Init data folder
         cls.init_data_folder()
@@ -97,7 +107,12 @@ class SystemService:
     def init_queue_and_monitor(cls) -> None:
         cls._check_running_scenarios()
         MonitorService.init()
-        QueueService.init(daemon=True)
+
+        try:
+            QueueRunner.init(daemon=True)
+        except Exception as err:
+            Logger.error(f"[SystemService] Error while initializing the queue: {err}")
+            Logger.log_exception_stack_trace(err)
 
     @classmethod
     def _check_running_scenarios(cls):
@@ -113,26 +128,15 @@ class SystemService:
                         Logger.info(
                             f"Marking scenario {scenario.id} as stopped because the process is not running"
                         )
-                        running_process = scenario.protocol_model.get_running_task()
 
-                        error_text = "The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped."
-                        if running_process is not None:
-                            running_process.mark_as_error_and_parent(
-                                ProcessRunException.from_exception(
-                                    process_model=running_process,
-                                    exception=Exception(error_text),
-                                    error_prefix="Lab init",
-                                )
-                            )
-                        else:
-                            scenario.mark_as_error(
-                                ProcessErrorInfo(
-                                    detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
-                                    unique_code="LAB_STOPPED_WHILE_RUNNING",
-                                    context=None,
-                                    instance_id=None,
-                                )
-                            )
+                        error_info = ProcessErrorInfo(
+                            detail="The lab was stopped while the scenario was running. It killed the scenario's process. Marking the scenario as stopped.",
+                            unique_code="LAB_STOPPED_WHILE_RUNNING",
+                            context=None,
+                            instance_id=None,
+                        )
+
+                        ScenarioRunService.stop_scenario(scenario.id, error_info=error_info)
             except Exception as err:
                 Logger.error(f"[SystemService] Error while checking running scenarios: {err}")
                 Logger.log_exception_stack_trace(err)
@@ -140,7 +144,7 @@ class SystemService:
     @classmethod
     def deinit_queue_and_monitor(cls) -> None:
         MonitorService.deinit()
-        QueueService.deinit()
+        QueueRunner.deinit()
         TriggeredJobScheduler.stop()
 
     @classmethod
@@ -235,13 +239,11 @@ class SystemService:
             Logger.log_exception_stack_trace(err)
 
     @classmethod
-    def get_lab_info(cls) -> LabInfoDTO:
-        settings = Settings.get_instance()
-        return LabInfoDTO(
-            lab_name=settings.get_lab_name(),
-            front_version=settings.get_front_version(),
-            space=settings.get_space(),
-            id=settings.get_lab_id(),
+    def get_system_info(cls) -> LabSystemInfoDTO:
+        lab = LabModel.get_or_create_current_lab()
+        return LabSystemInfoDTO(
+            lab=lab.to_dto(),
+            front_version=Settings.get_front_version(),
         )
 
     @classmethod

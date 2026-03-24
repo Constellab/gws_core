@@ -1,5 +1,11 @@
 import reflex as rx
-from gws_reflex_main import register_gws_reflex_app
+from gws_reflex_main import (
+    main_component,
+    menu_item_component,
+    page_sidebar_component,
+    register_gws_reflex_app,
+    sidebar_menu_component,
+)
 
 from .pages import (
     dialog_page,
@@ -16,62 +22,32 @@ from .pages import (
 app = register_gws_reflex_app()
 
 
-def sidebar_link(text: str, url: str, emoji: str) -> rx.Component:
-    """Create a sidebar navigation link."""
-    return rx.link(
-        rx.hstack(
-            rx.text(emoji, size="5"),
-            rx.text(text, size="3"),
-            width="100%",
-            padding_y="0.5em",
-            padding_x="1em",
-            border_radius="0.5em",
-            _hover={
-                "bg": rx.color("accent", 3),
-            },
-        ),
-        href=url,
-        underline="none",
-        width="100%",
-    )
-
-
-def sidebar() -> rx.Component:
-    """Create the sidebar with navigation links."""
-    return rx.box(
-        rx.vstack(
-            # Navigation links
-            sidebar_link("Home", "/", "🏠"),
-            sidebar_link("Rich Text", "/rich-text", "✏️"),
-            sidebar_link("User Components", "/user-components", "👤"),
-            sidebar_link("Resource Components", "/resource-components", "📁"),
-            sidebar_link("Dialogs", "/dialogs", "💬"),
-            sidebar_link("Layout Components", "/layout", "📐"),
-            sidebar_link("Doc Component", "/doc-component", "📄"),
-            sidebar_link("Input search", "/input-search", "🔎"),
-            width="100%",
-            spacing="2",
-        ),
-        width="250px",
-        padding="1.5em",
-        bg="var(--accent-2)",
-        height="100vh",
-        position="fixed",
-        left="0",
-        top="0",
+def _sidebar_content() -> rx.Component:
+    """Create the sidebar content with navigation menu."""
+    return sidebar_menu_component(
+        title="Showcase",
+        subtitle="Reflex Components",
+        logo_src="/constellab-logo.svg",
+        menu_items=[
+            menu_item_component("home", "Home", "/"),
+            menu_item_component("pen-line", "Rich Text", "/rich-text"),
+            menu_item_component("user", "User Components", "/user-components"),
+            menu_item_component("folder", "Resource Components", "/resource-components"),
+            menu_item_component("message-square", "Dialogs", "/dialogs"),
+            menu_item_component("layout-grid", "Layout Components", "/layout"),
+            menu_item_component("file-text", "Doc Component", "/doc-component"),
+            menu_item_component("search", "Input search", "/input-search"),
+        ],
     )
 
 
 def layout(content: rx.Component) -> rx.Component:
     """Create the main layout with sidebar and content."""
-    return rx.box(
-        sidebar(),
-        rx.box(
-            content,
-            margin_left="250px",
-            width="calc(100% - 250px)",
-            min_height="100vh",
-        ),
+    return main_component(
+        page_sidebar_component(
+            sidebar_content=_sidebar_content(),
+            content=content,
+        )
     )
 
 

@@ -64,6 +64,21 @@ class MonitorBetweenDateGraphicsDTO(BaseModelDTO):
     gpu_figure: dict | None
 
 
+class FolderSizeDTO(BaseModelDTO):
+    """DTO for a single folder size measurement."""
+    path: str
+    name: str
+    pretty_name: str
+    size: int | None  # size in bytes, None if folder doesn't exist or error
+    error: str | None = None
+
+
+class DiskFolderSizesDTO(BaseModelDTO):
+    """DTO for all folder size measurements."""
+    folders: list[FolderSizeDTO]
+    total_size: int  # sum of all valid folder sizes in bytes
+
+
 class GetMonitorTimezoneDTO(BaseModelDTO):
     timezone_number: float | None
 

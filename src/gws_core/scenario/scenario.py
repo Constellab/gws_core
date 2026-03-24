@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, final
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+from peewee import BooleanField, CharField, ForeignKeyField, IntegerField, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
@@ -13,9 +13,11 @@ from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioProgressDTO, ScenarioSimpleDTO
+from gws_core.scenario.scenario_zipper import ScenarioExportDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
@@ -40,43 +42,31 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
 
     status: ScenarioStatus = EnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
-    error_info = JSONField(null=True)
+    error_info: dict[str, Any] | None = JSONField(null=True)
     creation_type: ScenarioCreationType = EnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
     title = CharField(max_length=50)
     description: RichTextDTO = RichTextDbField(null=True)
-    lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
+    lab_config: LabConfigModel | None = ForeignKeyField(LabConfigModel, null=True)
 
     is_validated: bool = BooleanField(default=False)
-    validated_at: datetime = DateTimeUTC(null=True)
+    validated_at: datetime | None = DateTimeUTC(null=True)
     validated_by = ForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = DateTimeUTC(null=True)
+    last_sync_at: datetime | None = DateTimeUTC(null=True)
     last_sync_by = ForeignKeyField(User, null=True, backref="+")
 
     is_archived = BooleanField(default=False, index=True)
-    data: dict[str, Any] = JSONField(null=True)
+    running_process_pid: int | None = IntegerField(null=True)
+    running_in_external_lab: LabModel | None = ForeignKeyField(
+        LabModel, null=True, backref="+", on_delete="SET NULL"
+    )
 
     # cache of the _protocol
     _protocol: ProtocolModel | None = None
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if not self.is_saved() and not self.data:
-            self.data = {}
-
-    @property
-    def pid(self) -> int:
-        if "pid" not in self.data:
-            return None
-        return self.data["pid"]
-
-    @pid.setter
-    def pid(self, value: int):
-        self.data["pid"] = value
 
     @property
     def protocol_model(self) -> ProtocolModel:
@@ -92,8 +82,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return self._protocol
 
-    @property
-    def task_models(self) -> list[TaskModel]:
+    def get_task_models(self) -> list[TaskModel]:
         """
         Returns child process models.
         """
@@ -104,8 +93,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
         return list(TaskModel.select().where(TaskModel.scenario == self))
 
-    @property
-    def resources(self) -> list[ResourceModel]:
+    def get_generated_resources(self) -> list[ResourceModel]:
         """
         Returns child resources.
         """
@@ -194,8 +182,8 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             Scenario.select()
             .where(
                 (Scenario.status == ScenarioStatus.RUNNING)
-                | (Scenario.status == ScenarioStatus.IN_QUEUE)
                 | (Scenario.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS)
+                | (Scenario.status == ScenarioStatus.IN_QUEUE)
             )
             .count()
         )
@@ -212,8 +200,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :return: True if it is reset, False otherwise
         :rtype: `bool`
         """
-        self.check_is_updatable()
-
         if not self.is_saved():
             raise BadRequestException("Can't reset a scenario not saved before")
 
@@ -293,9 +279,9 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def is_running(self) -> bool:
         """Consider running if the Scenario status is RUNNING or WAITING_FOR_CLI_PROCESS"""
-        return (
-            self.status == ScenarioStatus.RUNNING
-            or self.status == ScenarioStatus.WAITING_FOR_CLI_PROCESS
+        return self.status in (
+            ScenarioStatus.RUNNING,
+            ScenarioStatus.WAITING_FOR_CLI_PROCESS,
         )
 
     @property
@@ -316,6 +302,10 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def is_partially_run(self) -> bool:
         return self.status == ScenarioStatus.PARTIALLY_RUN
 
+    @property
+    def is_running_in_external_lab(self) -> bool:
+        return self.running_in_external_lab is not None
+
     def mark_as_in_queue(self):
         self.status = ScenarioStatus.IN_QUEUE
         self.save()
@@ -327,22 +317,22 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         :type pid: int
         """
         self.status = ScenarioStatus.WAITING_FOR_CLI_PROCESS
-        self.pid = pid
+        self.running_process_pid = pid
         self.save()
 
     def mark_as_started(self, pid: int):
         self.status = ScenarioStatus.RUNNING
         self.lab_config = LabConfigModel.get_current_config()
-        self.pid = pid
+        self.running_process_pid = pid
         self.save()
 
     def mark_as_success(self):
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.SUCCESS
         self.save()
 
     def mark_as_draft(self):
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.DRAFT
         self.lab_config = None
         self.set_error_info(None)
@@ -351,7 +341,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     def mark_as_error(self, error_info: ProcessErrorInfo) -> None:
         if self.is_error:
             return
-        self.pid = None
+        self._clear_running_info()
         self.status = ScenarioStatus.ERROR
         self.set_error_info(error_info)
         self.save()
@@ -362,27 +352,26 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def mark_as_partially_run(self) -> None:
         self.status = ScenarioStatus.PARTIALLY_RUN
+        self._clear_running_info()
         self.set_error_info(None)
         self.save()
+
+    def mark_as_running_in_external_lab(self, lab: LabModel) -> None:
+        """Mark the scenario as being processed in an external lab."""
+        self.status = ScenarioStatus.RUNNING
+        self.running_in_external_lab = lab
+        self.save()
+
+    def _clear_running_info(self) -> None:
+        """Clear the running info of the scenario (used when the scenario is stopped or when an error occurs)"""
+        self.running_process_pid = None
+        self.running_in_external_lab = None
 
     def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
 
-    def set_error_info(self, error_info: ProcessErrorInfo) -> None:
+    def set_error_info(self, error_info: ProcessErrorInfo | None) -> None:
         self.error_info = error_info.to_json_dict() if error_info else None
-
-    def check_is_runnable(self) -> None:
-        """Throw an error if the scenario is not runnable"""
-
-        # check scenario status
-        if self.is_archived:
-            raise BadRequestException("The scenario is archived")
-        if self.is_validated:
-            raise BadRequestException("The scenario is validated")
-        if self.status == ScenarioStatus.RUNNING:
-            raise BadRequestException("The scenario is already running")
-        if self.is_success:
-            raise BadRequestException("The scenario is already finished")
 
     def check_is_stopable(self) -> None:
         """Throw an error if the scenario is not stopable"""
@@ -402,11 +391,21 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
                 detail="The scenario is archived, please unachived it to update it"
             )
 
+    def copy_from_and_save(self, other: Scenario) -> None:
+        """Copy metadata fields from another Scenario and save."""
+        self.title = other.title
+        self.description = other.description
+        self.status = other.status
+        self.error_info = other.error_info
+        if other.folder:
+            self.folder = other.folder
+        self.save()
+
     def get_process_status(self) -> ScenarioProcessStatus:
-        if self.pid == None or not self.is_running:
+        if self.running_process_pid is None or not self.is_running:
             return ScenarioProcessStatus.NONE
         try:
-            process = SysProc.from_pid(self.pid)
+            process = SysProc.from_pid(self.running_process_pid)
             if process.is_alive():
                 return ScenarioProcessStatus.RUNNING
             else:
@@ -434,8 +433,23 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             last_sync_at=self.last_sync_at,
             is_archived=self.is_archived,
+            is_running_in_external_lab=self.is_running_in_external_lab,
             folder=self.folder.to_dto() if self.folder else None,
             pid_status=self.get_process_status(),
+        )
+
+    def to_scenario_export_dto(self) -> ScenarioExportDTO:
+        scenario_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, self.id)
+        tags_dtos = [tag.to_simple_tag().to_dto() for tag in scenario_tags.get_tags()]
+
+        return ScenarioExportDTO(
+            id=self.id,
+            title=self.title,
+            description=self.description,
+            status=self.status,
+            folder=self.folder.to_dto() if self.folder else None,
+            error_info=self.get_error_info(),
+            tags=tags_dtos,
         )
 
     def to_simple_dto(self) -> ScenarioSimpleDTO:
@@ -443,7 +457,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def export_protocol(self) -> ScenarioProtocolDTO:
         return ScenarioProtocolDTO(
-            version=3,  # version of the protocol json format
             data=self.protocol_model.to_config_dto(),
         )
 

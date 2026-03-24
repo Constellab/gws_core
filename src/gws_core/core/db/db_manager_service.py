@@ -12,7 +12,12 @@ class DbManagerService:
     @classmethod
     def init_all_db(cls, full_init: bool = True) -> None:
         """
-        Initialize the databases of all DbManagers that inherit the  AbstractDbManager
+        Initialize the databases of all DbManagers that inherit the AbstractDbManager.
+
+        The initialization flow is:
+        1. Connect all databases
+        2. Run migrations once (across all bricks)
+        3. Create tables for all databases
 
         :param full_init: If true, the migration and table creation will be done. If false, only the connection to the DB will be done. Defaults to True.
         :type full_init: bool, optional
@@ -26,8 +31,19 @@ class DbManagerService:
         # sort the db_managers to have the lazy db at the end of the list
         db_managers.sort(key=lambda x: x.is_lazy_init())
 
+        # Step 1: Connect all databases
+        connected_managers: list[AbstractDbManager] = []
         for manager in db_managers:
-            cls._init_db_with_error_handling(manager, mode, full_init=full_init)
+            if cls._connect_db_with_error_handling(manager, mode):
+                connected_managers.append(manager)
+
+        if full_init:
+            # Step 2: Run migrations once for all bricks
+            DbMigrationService.migrate()
+
+            # Step 3: Create tables for all connected databases
+            for manager in connected_managers:
+                BaseModelService.create_database_tables(manager)
 
     @classmethod
     def init_db(
@@ -36,7 +52,7 @@ class DbManagerService:
         full_init: bool = True,
     ) -> bool:
         """
-        Initialize the database of the provided DbManager
+        Initialize the database of the provided DbManager.
 
         :param db_manager: The DbManager instance to initialize
         :type db_manager: AbstractDbManager
@@ -45,18 +61,24 @@ class DbManagerService:
         """
 
         mode: DbMode = cls.get_db_mode()
-        return cls._init_db_with_error_handling(db_manager, mode, full_init=full_init)
+        if not cls._connect_db_with_error_handling(db_manager, mode):
+            return False
+
+        if full_init:
+            DbMigrationService.migrate()
+            BaseModelService.create_database_tables(db_manager)
+
+        return True
 
     @classmethod
-    def _init_db_with_error_handling(
+    def _connect_db_with_error_handling(
         cls,
         db_manager: AbstractDbManager,
         mode: DbMode,
-        full_init: bool,
     ) -> bool:
-        """Wrapper that calls _init_db with error handling and logging."""
+        """Connect to the database with error handling and logging."""
         try:
-            cls._init_db(db_manager, mode, full_init)
+            db_manager.init(mode)
         except Exception as err:
             if db_manager.ignore_error_on_init():
                 return False
@@ -70,26 +92,10 @@ class DbManagerService:
                 )
                 return False
             else:
-                raise Exception(error_message)
+                raise Exception(error_message) from err
 
+        Logger.debug(f"Db manager '{db_manager.get_unique_name()}' initialized in '{mode}' mode")
         return True
-
-    @classmethod
-    def _init_db(cls, db_manager: AbstractDbManager, mode: DbMode, full_init: bool) -> None:
-        """Core initialization logic that raises exceptions directly."""
-        unique_name = db_manager.get_unique_name()
-
-        # initialize the db manager and connect to the db
-        db_manager.init(mode)
-
-        if full_init:
-            # call the migration for that db manager
-            DbMigrationService.migrate(db_manager)
-
-            # create the tables for the models of this db manager
-            BaseModelService.create_database_tables(db_manager)
-
-        Logger.debug(f"Db manager '{unique_name}' initialized in '{mode}' mode")
 
     @classmethod
     def _get_db_manager_classes(cls) -> list[AbstractDbManager]:

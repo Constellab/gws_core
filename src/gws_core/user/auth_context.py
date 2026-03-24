@@ -4,15 +4,16 @@ from abc import abstractmethod
 from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
+    from gws_core.lab.lab_model.lab_model import LabModel
     from gws_core.share.share_link import ShareLink
 
 from gws_core.user.user import User
 
 
 class AuthContextBase:
-    context_type: Literal["user", "app", "share-link"]
+    context_type: Literal["user", "app", "share-link", "external-lab"]
 
-    def __init__(self, context_type: Literal["user", "app", "share-link"]) -> None:
+    def __init__(self, context_type: Literal["user", "app", "share-link", "external-lab"]) -> None:
         self.context_type = context_type
 
     @abstractmethod
@@ -66,4 +67,21 @@ class AuthContextShareLink(AuthContextBase):
         return self.user
 
 
-AuthContext = AuthContextUser | AuthContextApp | AuthContextShareLink
+class AuthContextExternalLab(AuthContextBase):
+    context_type: Literal["external-lab"] = "external-lab"
+    user: User
+    lab: LabModel
+
+    def __init__(self, user: User, lab: LabModel) -> None:
+        super().__init__("external-lab")
+        self.user = user
+        self.lab = lab
+
+    def get_user(self) -> User:
+        return self.user
+
+    def get_lab(self) -> LabModel:
+        return self.lab
+
+
+AuthContext = AuthContextUser | AuthContextApp | AuthContextShareLink | AuthContextExternalLab

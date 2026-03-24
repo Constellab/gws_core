@@ -1,45 +1,38 @@
-from peewee import CharField, ForeignKeyField
+from peewee import CharField, ForeignKeyField, ModelSelect
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
+from gws_core.lab.lab_model.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
 from gws_core.user.user import User
+from gws_core.user.user_service import UserService
 
 
 class SharedEntityInfo(Model):
-    """Class to store information about an shared entity.
-    It stored the origin of the entity if the entity was imported from an external source.
-    It store the destination of the entity if the entity was exported to an external source.
-
-    :param Model: _description_
-    :type Model: _type_
-    :raises ValueError: _description_
-    :return: _description_
-    :rtype: _type_
+    """Class to store information about a shared entity.
+    It stores the origin of the entity if the entity was imported from an external source.
+    It stores the destination of the entity if the entity was exported to an external source.
     """
 
     share_mode: SharedEntityMode = EnumField(choices=SharedEntityMode)
 
-    lab_id: str = CharField()
+    # FK to LabModel — replaces lab_id, lab_name, space_id, space_name
+    lab: LabModel = ForeignKeyField(LabModel, null=True, backref="+")
 
-    lab_name: str = CharField()
+    # FK to User — the user from the external lab who shared/received the entity.
+    # If the user doesn't exist locally, import them as inactive.
+    user: User = ForeignKeyField(User, null=True, backref="+")
 
-    user_id: str = CharField()
-
-    user_firstname: str = CharField()
-
-    user_lastname: str = CharField()
-
-    space_id: str = CharField(null=True)
-
-    space_name: str = CharField(null=True)
-
-    # current lab user that
-    # In SENT mode is the one who created the share link
-    # In RECEIVED mode, is the one that imported the entity
+    # Current lab user who created the share link (SENT) or imported the entity (RECEIVED)
     created_by: User = ForeignKeyField(User, null=True, backref="+")
+
+    # The entity ID on the *other* lab:
+    # RECEIVED: original entity ID from the source lab (before local ID remapping)
+    # SENT: entity ID assigned by the receiving lab
+    external_id = CharField(max_length=36)
 
     # override on children classes
     entity: Model | None = None
@@ -57,19 +50,18 @@ class SharedEntityInfo(Model):
         return shared_resource
 
     @classmethod
-    def already_shared_with_lab(cls, entity_id: str, lab_id: str) -> bool:
-        """Method that check if the entity is already shared with the lab"""
-        return (
-            cls.get_or_none(
-                (cls.entity == entity_id)
-                & (cls.share_mode == SharedEntityMode.SENT)
-                & (cls.lab_id == lab_id)
-            )
-            is not None
+    def get_received_entity(cls, entity_id: str) -> "SharedEntityInfo | None":
+        """Get the SharedEntityInfo record for an entity that was received from another lab.
+
+        :param entity_id: the local entity ID
+        :return: the SharedEntityInfo record or None if not found
+        """
+        return cls.get_or_none(
+            (cls.entity == entity_id) & (cls.share_mode == SharedEntityMode.RECEIVED)
         )
 
     @classmethod
-    def get_sents(cls, entity_id: str) -> "SharedEntityInfo":
+    def get_sents(cls, entity_id: str) -> ModelSelect:
         """Method that return the receivers of the entity"""
         return (
             cls.select()
@@ -78,27 +70,88 @@ class SharedEntityInfo(Model):
         )
 
     @classmethod
-    def create_from_lab_info(
+    def mark_as_received(
+        cls,
+        entity_id: str,
+        lab_info: ExternalLabWithUserInfo,
+        created_by: User,
+        external_id: str,
+    ) -> "SharedEntityInfo":
+        """Mark an entity as received from an external lab.
+
+        If the entity is already marked as received, return the existing record.
+        """
+        existing = cls.get_or_none(
+            (cls.entity == entity_id) & (cls.share_mode == SharedEntityMode.RECEIVED)
+        )
+        if existing is not None:
+            return existing
+
+        return cls._create_from_lab_info(
+            entity_id=entity_id,
+            mode=SharedEntityMode.RECEIVED,
+            lab_info=lab_info,
+            created_by=created_by,
+            external_id=external_id,
+        )
+
+    @classmethod
+    def mark_as_sent(
+        cls,
+        entity_id: str,
+        lab_info: ExternalLabWithUserInfo,
+        created_by: User,
+        external_id: str,
+    ) -> "SharedEntityInfo":
+        """Mark an entity as sent to an external lab.
+
+        If the entity is already marked as sent to the same lab, return the existing record.
+        """
+        lab = LabModel.get_or_create_from_dto(lab_info.lab)
+        existing = cls.get_or_none(
+            (cls.entity == entity_id)
+            & (cls.share_mode == SharedEntityMode.SENT)
+            & (cls.lab == lab.id)
+        )
+        if existing is not None:
+            return existing
+
+        return cls._create_from_lab_info(
+            entity_id=entity_id,
+            mode=SharedEntityMode.SENT,
+            lab_info=lab_info,
+            created_by=created_by,
+            external_id=external_id,
+        )
+
+    @classmethod
+    def _create_from_lab_info(
         cls,
         entity_id: str,
         mode: SharedEntityMode,
         lab_info: ExternalLabWithUserInfo,
         created_by: User,
-    ) -> None:
-        """Method that log the resource origin for each imported resources"""
+        external_id: str,
+    ) -> "SharedEntityInfo":
+        """Internal method to create a shared entity info record."""
+        lab = LabModel.get_or_create_from_dto(lab_info.lab)
+        user = UserService.get_or_import_user_info(lab_info.user.id)
 
         shared_entity = cls()
         shared_entity.entity = entity_id
         shared_entity.share_mode = mode
-        shared_entity.lab_id = lab_info.lab_id
-        shared_entity.lab_name = lab_info.lab_name
-        shared_entity.user_id = lab_info.user_id
-        shared_entity.user_firstname = lab_info.user_firstname
-        shared_entity.user_lastname = lab_info.user_lastname
-        shared_entity.space_id = lab_info.space_id
-        shared_entity.space_name = lab_info.space_name
+        shared_entity.lab = lab
+        shared_entity.user = user
         shared_entity.created_by = created_by
+        shared_entity.external_id = external_id
         shared_entity.save()
+        return shared_entity
+
+    def get_external_object_url(self) -> str | None:
+        """Build the URL of the external object on the other lab.
+        Must be overridden by subclasses to provide the entity-specific URL.
+        """
+        return None
 
     def to_dto(self) -> ShareEntityInfoDTO:
         return ShareEntityInfoDTO(
@@ -106,12 +159,9 @@ class SharedEntityInfo(Model):
             created_at=self.created_at,
             last_modified_at=self.last_modified_at,
             share_mode=self.share_mode,
-            lab_id=self.lab_id,
-            lab_name=self.lab_name,
-            user_id=self.user_id,
-            user_firstname=self.user_firstname,
-            user_lastname=self.user_lastname,
-            space_id=self.space_id,
-            space_name=self.space_name,
+            lab=self.lab.to_dto() if self.lab else None,
+            user=self.user.to_dto() if self.user else None,
             created_by=self.created_by.to_dto() if self.created_by else None,
+            external_id=self.external_id,
+            external_object_url=self.get_external_object_url(),
         )

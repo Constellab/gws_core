@@ -11,6 +11,8 @@ class LogDTO(BaseModelDTO):
     context: LogContext
     context_id: str | None = None
     stack_trace: str | None = None
+    instance_id: str | None = None
+    request_id: str | None = None
 
 
 class LogInfo(BaseModelDTO):

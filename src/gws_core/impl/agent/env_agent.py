@@ -146,46 +146,48 @@ class EnvAgent(Task):
                 "the target file path was not generated. Did you write paths in the targets_paths variable ?"
             )
 
-        target_paths: list[str]
+        target_paths: list[str | None]
         try:
             with open(target_path_file, encoding="utf-8") as file_path:
                 target_paths = json.load(file_path)
         except Exception as err:
             raise BadRequestException(f"Cannot parse the target paths file : {err}") from err
 
+        if target_paths is None:
+            self.log_warning_message("The target paths file is empty. No output will be generated.")
+            target_paths = []
+
         # check if the target paths are valid
         if not isinstance(target_paths, list):
             raise BadRequestException("The target_paths variable does not contain a list of paths.")
 
-        if len(target_paths) == 0:
-            raise BadRequestException(
-                "The code snippet did not generate any output file or folder. Did you forget to write path result in target_paths variable ?"
-            )
-
         resource_list = ResourceList()
         for path in target_paths:
-            if not isinstance(path, str):
-                raise Exception(
-                    f"The path {path} in target_path variable is not a string. It will be ignored."
-                )
-
-            clear_path = path
-
-            # check if path is absolute
-            if not os.path.isabs(path):
-                clear_path = os.path.join(working_dir, path)
-
-            if not os.path.exists(clear_path):
-                raise Exception(
-                    f"The path {clear_path} in target_path variable does not exist. It will be ignored."
-                )
-
-            if os.path.isdir(clear_path):
-                resource_list.add_resource(Folder(clear_path))
-            else:
-                resource_list.add_resource(File(clear_path))
+            resource_list.add_resource(self._resolve_target_path(path, working_dir))
 
         return resource_list
+
+    def _resolve_target_path(self, path: Any, working_dir: str) -> FSNode | None:
+        """Resolve a single target path to a File, Folder, or None."""
+        # support null or empty target path as output
+        if path is None or (isinstance(path, str) and path.strip() == ""):
+            return None
+
+        if not isinstance(path, str):
+            raise Exception(f"The path '{path}' in target_path variable is not a string.")
+
+        clear_path = path
+
+        # check if path is absolute
+        if not os.path.isabs(path):
+            clear_path = os.path.join(working_dir, path)
+
+        if not os.path.exists(clear_path):
+            raise Exception(f"The path '{path}' in target_path variable does not exist.")
+
+        if os.path.isdir(clear_path):
+            return Folder(clear_path)
+        return File(clear_path)
 
     @abstractmethod
     def _format_command(self, code_file_path: str) -> list:

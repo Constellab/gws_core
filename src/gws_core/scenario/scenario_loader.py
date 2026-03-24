@@ -1,13 +1,12 @@
-
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.protocol.protocol_dto import ScenarioProtocolDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactoryFromConfig
 from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.resource.resource_dto import ResourceModelExportDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioCreationType
-from gws_core.scenario.scenario_zipper import ZipScenario, ZipScenarioInfo
-from gws_core.share.shared_dto import ShareEntityCreateMode
+from gws_core.scenario.scenario_zipper import ScenarioExportDTO, ScenarioExportPackage
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_helper import TagHelper
 
@@ -16,19 +15,16 @@ from gws_core.tag.tag_helper import TagHelper
 # available in the lab. Or if we download a resource that uses a typing not
 # available in the lab.
 class ScenarioLoader:
-    exp_info: ZipScenarioInfo
+    exp_info: ScenarioExportPackage
 
     _scenario: Scenario
     _protocol_model: ProtocolModel
 
     _message_dispatcher: MessageDispatcher
 
-    _mode: ShareEntityCreateMode
-
     def __init__(
         self,
-        scenario_info: ZipScenarioInfo,
-        mode: ShareEntityCreateMode,
+        scenario_info: ScenarioExportPackage,
         message_dispatcher: MessageDispatcher | None = None,
     ) -> None:
         self.exp_info = scenario_info
@@ -37,8 +33,6 @@ class ScenarioLoader:
             self._message_dispatcher = MessageDispatcher()
         else:
             self._message_dispatcher = message_dispatcher
-
-        self._mode = mode
 
     def load_scenario(self) -> Scenario:
         self._scenario = self._load_scenario(self.exp_info.scenario)
@@ -50,12 +44,11 @@ class ScenarioLoader:
 
         return self._scenario
 
-    def _load_scenario(self, zip_scenario: ZipScenario) -> Scenario:
+    def _load_scenario(self, zip_scenario: ScenarioExportDTO) -> Scenario:
         # create the scenario and load the info
         scenario = Scenario()
 
-        if self._mode == ShareEntityCreateMode.KEEP_ID:
-            scenario.id = zip_scenario.id
+        scenario.id = zip_scenario.id
         scenario.title = zip_scenario.title
         scenario.creation_type = ScenarioCreationType.IMPORTED
         scenario.description = zip_scenario.description
@@ -77,8 +70,7 @@ class ScenarioLoader:
         return scenario
 
     def _load_protocol_model(self, protocol: ScenarioProtocolDTO) -> ProtocolModel:
-        copy_ids: bool = self._mode == ShareEntityCreateMode.KEEP_ID
-        protocol_factory = ProtocolGraphFactoryFromConfig(protocol.data, copy_ids)
+        protocol_factory = ProtocolGraphFactoryFromConfig(protocol.data)
         return protocol_factory.create_protocol_model()
 
     def get_scenario(self) -> Scenario:
@@ -91,6 +83,13 @@ class ScenarioLoader:
             raise Exception("Protocol model not loaded, call load_scenario first")
 
         return self._protocol_model
+
+    def get_main_resource_model_dtos(self) -> list[ResourceModelExportDTO]:
+        """Return the list of root resource model export DTOs from the export package.
+
+        :return: list of ResourceModelExportDTO (may be empty)
+        """
+        return self.exp_info.main_resource_models or []
 
     def get_tags(self) -> list[Tag]:
         return TagHelper.tags_dto_to_list(self.exp_info.scenario.tags)

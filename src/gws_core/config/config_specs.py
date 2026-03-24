@@ -9,7 +9,7 @@ from .param.param_types import ParamSpecDTO
 
 
 class ConfigSpecs:
-    specs: dict[str, ParamSpec] | None = None
+    specs: dict[str, ParamSpec]
 
     def __init__(self, specs: dict[str, ParamSpec] | None = None) -> None:
         """Define the spec of a task or a view
@@ -57,6 +57,17 @@ class ConfigSpecs:
         self.check_spec_exists(spec_name)
         del self.specs[spec_name]
 
+    def get_specs_as_dict(self) -> dict[str, ParamSpec]:
+        """Return a copy of the specs dictionary.
+
+        Useful for unpacking specs into a new ConfigSpecs, e.g.:
+            ConfigSpecs({
+                "my_param": StrParam(...),
+                **other_config_specs.get_specs_as_dict(),
+            })
+        """
+        return dict(self.specs)
+
     def merge_specs(self, specs2: "ConfigSpecs") -> "ConfigSpecs":
         """Merge two ConfigSpecs objects"""
         for key, spec in specs2.specs.items():
@@ -81,19 +92,11 @@ class ConfigSpecs:
 
     def all_config_are_optional(self) -> bool:
         """Check if all the config are optional"""
-        for spec in self.specs.values():
-            if not spec.optional:
-                return False
-
-        return True
+        return all(spec.optional for spec in self.specs.values())
 
     def has_visible_config_specs(self) -> bool:
         """Check if the config has visible specs"""
-        for spec in self.specs.values():
-            if spec.visibility != "private":
-                return True
-
-        return False
+        return any(spec.visibility != "private" for spec in self.specs.values())
 
     def mandatory_values_are_set(self, param_values: ConfigParamsDict) -> bool:
         """

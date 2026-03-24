@@ -1,23 +1,22 @@
 import os
-import shutil
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
-from typing import Any, Optional, cast
+from typing import Any, Optional
 
 from gws_core.brick.brick_dto import BrickInfo
 from gws_core.core.db.db_config import DbConfig
-from gws_core.impl.file.file_helper import FileHelper
-from gws_core.lab.system_dto import (
-    BrickMigrationLog,
-    LabEnvironment,
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings_dto import (
+    BrickMigrationsLogs,
     ModuleInfo,
     PipPackage,
     SettingsDTO,
 )
+from gws_core.impl.file.file_helper import FileHelper
+from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 from gws_core.user.user_dto import SpaceDict
 
-from .date_helper import DateHelper
 from .string_helper import StringHelper
 
 
@@ -35,14 +34,7 @@ class Settings:
 
     _setting_instance: Optional["Settings"] = None
 
-    OLD_SETTINGS_DIR = "/conf/settings"
     SETTINGS_NAME = "settings.json"
-
-    DEFAULT_SETTINGS = {
-        "app_dir": os.path.dirname(os.path.abspath(__file__)),
-        "app_host": "0.0.0.0",
-        "app_port": 3000,
-    }
 
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
@@ -86,28 +78,8 @@ class Settings:
         return os.path.join(cls.get_system_folder(), cls.SETTINGS_NAME)
 
     @classmethod
-    def _get_old_setting_file_path(cls) -> str:
-        """Returns the old settings file path for migration purposes"""
-        return os.path.join(cls.OLD_SETTINGS_DIR, cls.SETTINGS_NAME)
-
-    @classmethod
     def _setting_file_exists(cls) -> bool:
         return FileHelper.exists_on_os(cls._get_setting_file_path())
-
-    @classmethod
-    def _old_setting_file_exists(cls) -> bool:
-        """Check if the old settings file exists"""
-        return FileHelper.exists_on_os(cls._get_old_setting_file_path())
-
-    @classmethod
-    def _migrate_settings_file(cls) -> None:
-        """Migrate settings file from old location to new location if it exists"""
-        if cls._old_setting_file_exists() and not cls._setting_file_exists():
-            old_path = cls._get_old_setting_file_path()
-            new_path = cls._get_setting_file_path()
-
-            # Move the file
-            shutil.move(old_path, new_path)
 
     @classmethod
     def get_os_environ(cls, key: str, error_message: str | None = None) -> str:
@@ -130,11 +102,21 @@ class Settings:
 
     @classmethod
     def is_prod_mode(cls) -> bool:
-        return os.environ.get("LAB_MODE", "dev") == "prod"
+        return os.environ.get("LAB_MODE", "dev") == LabMode.PROD.value
 
     @classmethod
     def is_dev_mode(cls) -> bool:
         return not cls.is_prod_mode()
+
+    @classmethod
+    def get_lab_mode(cls) -> LabMode:
+        mode_str = os.environ.get("LAB_MODE", LabMode.PROD.value)
+        try:
+            return LabMode(mode_str)
+        except ValueError as e:
+            raise ValueError(
+                f"Invalid LAB_MODE '{mode_str}'. Valid values are: {[mode.value for mode in LabMode]}"
+            ) from e
 
     @classmethod
     def get_lab_prod_api_url(cls) -> str:
@@ -177,6 +159,14 @@ class Settings:
         return "glab-dev"
 
     @classmethod
+    def prod_front_sub_domain(cls) -> str:
+        return "lab"
+
+    @classmethod
+    def dev_front_sub_domain(cls) -> str:
+        return "dev-lab"
+
+    @classmethod
     def get_lab_environment(cls) -> LabEnvironment:
         """Return the environment where the lab run
         ON_CLOUD : the lab is running on the cloud
@@ -186,11 +176,15 @@ class Settings:
         :return: [description]
         :rtype: [type]
         """
-        return cast(LabEnvironment, os.environ.get("LAB_ENVIRONMENT", "ON_CLOUD"))
+        env_str = os.environ.get("LAB_ENVIRONMENT", "ON_CLOUD")
+        try:
+            return LabEnvironment(env_str)
+        except ValueError:
+            return LabEnvironment.ON_CLOUD
 
     @classmethod
     def is_cloud_env(cls) -> bool:
-        return cls.get_lab_environment() == "ON_CLOUD"
+        return cls.get_lab_environment() == LabEnvironment.ON_CLOUD
 
     @classmethod
     def is_desktop_env(cls) -> bool:
@@ -199,11 +193,11 @@ class Settings:
         :return: _description_
         :rtype: bool
         """
-        return cls.get_lab_environment() == "DESKTOP"
+        return cls.get_lab_environment() == LabEnvironment.DESKTOP
 
     @classmethod
     def is_local_env(cls) -> bool:
-        return cls.get_lab_environment() == "LOCAL"
+        return cls.get_lab_environment() == LabEnvironment.LOCAL
 
     @classmethod
     def is_local_or_desktop_env(cls) -> bool:
@@ -232,6 +226,8 @@ class Settings:
     @classmethod
     def get_community_api_url_and_check(cls) -> str:
         """Get the community API URL and check if it's set. Raise an error if it's not set."""
+        return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        # return "https://api.constellab.community"
         url = cls.get_community_api_url()
         if not url:
             raise ValueError("Environment variable 'COMMUNITY_API_URL' is not set")
@@ -618,63 +614,22 @@ class Settings:
 
     # BRICK MIGRATION
 
-    def get_brick_migrations_logs(self) -> dict[str, BrickMigrationLog]:
-        """Retrieve the list of all brick migrations"""
-        return self.data.get("brick_migrations", {})
-
-    def get_brick_migration_log(self, brick_name: str) -> BrickMigrationLog | None:
-        """Get a brick migration log for the specified brick and db_manager
-
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param db_manager_unique_name: Unique name of the database manager. If None, will try the old key format for backward compatibility.
-        :type db_manager_unique_name: str
-        :return: The brick migration log or None
-        :rtype: Union[BrickMigrationLog, None]
+    def get_brick_migrations_logs(self) -> BrickMigrationsLogs:
+        """Retrieve all brick migration logs.
+        :return: BrickMigrationsLogs object containing all migration logs
+        :rtype: BrickMigrationsLogs
         """
-        brick_migrations = self.get_brick_migrations_logs()
-        return brick_migrations.get(brick_name)
+        raw = self.data.get("brick_migrations", {})
 
-    def update_brick_migration_log(
-        self, brick_name: str, version: str, db_manager_unique_name: str
-    ) -> None:
-        """Add a new brick migration log and update last migration version
+        return BrickMigrationsLogs(bricks=raw)
 
-        :param brick_name: Name of the brick
-        :type brick_name: str
-        :param version: Version of the brick
-        :type version: str
-        :param db_manager_unique_name: Unique name of the database manager
-        :type db_manager_unique_name: str
+    def save_brick_migrations_logs(self, logs: BrickMigrationsLogs) -> None:
+        """Save brick migration logs to settings.
+
+        :param logs: The BrickMigrationsLogs object to save
+        :type logs: BrickMigrationsLogs
         """
-        brick_migrations: dict[str, BrickMigrationLog] = self.get_brick_migrations_logs()
-        brick_migration: BrickMigrationLog
-
-        # if this is the first time the migration is executed for this brick and db_manager
-        if brick_name not in brick_migrations:
-            brick_migration = {
-                "brick_name": brick_name,
-                "version": None,
-                "history": [],
-                "last_date_check": None,
-                "db_manager_unique_name": db_manager_unique_name,
-            }
-            # add the new migration to the list of migration and save it in data
-            brick_migrations[brick_name] = brick_migration
-
-        brick_migration = brick_migrations[brick_name]
-        date = DateHelper.now_utc().isoformat()
-
-        # Update the date check
-        brick_migration["last_date_check"] = date
-
-        # update the version and history only if this is a new version
-        if brick_migration["version"] != version:
-            # udpate the brick version
-            brick_migration["version"] = version
-            # add the history
-            brick_migration["history"].append({"version": version, "migration_date": date})
-        self.data["brick_migrations"] = brick_migrations
+        self.data["brick_migrations"] = logs.save_as_json()
         self.save()
 
     def get_variable(self, brick_name: str, key: str) -> str | None:
@@ -706,9 +661,6 @@ class Settings:
     @classmethod
     def get_instance(cls) -> "Settings":
         if cls._setting_instance is None:
-            # Migrate settings file from old location if needed
-            cls._migrate_settings_file()
-
             settings_json = None
 
             # try to read the settings file
@@ -716,25 +668,21 @@ class Settings:
                 with open(cls._get_setting_file_path(), encoding="UTF-8") as file:
                     try:
                         settings_json = load(file)
-                    except JSONDecodeError as err:
-                        print(
-                            f"Error while reading settings file at '{cls._get_setting_file_path()}'. Please check the syntax of the file. Here is the file content"
+                    except JSONDecodeError:
+                        Logger.error(
+                            f"Error while reading settings file at '{cls._get_setting_file_path()}'. "
+                            "The JSON is invalid, using default settings. "
+                            "The migrations will be skiped as will be considered as first run. "
                         )
-                        print(file.read())
-                        raise err
+                        settings_json = {}
             # use default settings if no file exists
             else:
-                settings_json = cls.DEFAULT_SETTINGS
+                settings_json = {}
 
             # set the setting instance
             cls._setting_instance = Settings(settings_json)
 
         return cls._setting_instance
-
-    @classmethod
-    def retrieve(cls) -> "Settings":
-        print("[SETTINGS] Method 'retrieve' deprecated, please use 'get_instance'")
-        return cls.get_instance()
 
     def set_data(self, key: str, val: Any) -> None:
         self.data[key] = val

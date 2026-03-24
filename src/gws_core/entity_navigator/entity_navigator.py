@@ -37,7 +37,9 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         else:
             self._entities = set([entities])
 
-    def has_next_entities(self, requested_entities: list[NavigableEntityType] | None = None) -> bool:
+    def has_next_entities(
+        self, requested_entities: list[NavigableEntityType] | None = None
+    ) -> bool:
         if requested_entities is None:
             requested_entities = self._all_entity_types
         return len(self.get_next_entities(requested_entities)) > 0
@@ -152,9 +154,15 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         nav_class: type["EntityNavigator"],
         deep_level: int,
     ) -> NavigableEntitySet:
-        new_entities: set[NavigableEntity] = (
-            entity_nav.get_entities_as_set() - loaded_entities.get_entities()
-        )
+        all_next_entities = entity_nav.get_entities_as_set()
+        already_loaded_entities = all_next_entities & loaded_entities.get_entities()
+        new_entities = all_next_entities - already_loaded_entities
+
+        # Update deep_level for already loaded entities found at a deeper level.
+        # This ensures correct deletion ordering when an entity is reachable
+        # from multiple paths at different depths.
+        for entity in already_loaded_entities:
+            loaded_entities.add(entity, deep_level)
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities, deep_level)
@@ -247,9 +255,13 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         nav_class: type["EntityNavigator"],
         deep_level: int,
     ) -> NavigableEntitySet:
-        new_entities: set[NavigableEntity] = (
-            entity_nav.get_entities_as_set() - loaded_entities.get_entities()
-        )
+        all_prev_entities = entity_nav.get_entities_as_set()
+        already_loaded_entities = all_prev_entities & loaded_entities.get_entities()
+        new_entities = all_prev_entities - already_loaded_entities
+
+        # Update deep_level for already loaded entities found at a deeper level
+        for entity in already_loaded_entities:
+            loaded_entities.add(entity, deep_level)
 
         if len(new_entities) > 0:
             loaded_entities.update(new_entities, deep_level)
@@ -490,7 +502,13 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return {task_input.task_model for task_input in task_input_models}
 
     def get_next_scenarios(self) -> "EntityNavigatorScenario":
-        """Return all the scenarios that use the resource in a source task or as input of a task"""
+        """Return all the scenarios that use the resource in a source task or as input of a task
+
+        A scenario is considered a "next" scenario if it consumes (uses as input) any resource
+        from this set. Scenarios that only produced resources in this set are excluded, unless
+        they also consume resources produced by a different scenario in the set (which happens
+        when resources from multiple scenarios are batched together).
+        """
         return EntityNavigatorScenario(list(self.get_next_scenarios_select_model()))
 
     def get_next_scenarios_select_model(self) -> ModelSelect:
@@ -499,12 +517,26 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
             TaskModel.source_config_id.in_(self._get_entities_ids())
         )
 
-        resource_exp_ids = {
-            resource.scenario.id for resource in self._entities if resource.scenario is not None
-        }
-        # Exclude the scenario that generated the resource from the select
-        if len(resource_exp_ids) > 0:
-            expression = expression & (Scenario.id.not_in(resource_exp_ids))
+        # Build a map of scenario_id -> resource_ids it produced in this set
+        scenario_resource_map: dict[str, set[str]] = {}
+        for resource in self._entities:
+            if resource.scenario is not None:
+                scenario_resource_map.setdefault(resource.scenario.id, set()).add(resource.id)
+
+        # Exclude scenarios that only produced resources in this set but don't consume
+        # any other resources from the set. A scenario that both produces AND consumes
+        # resources in this set should not be excluded.
+        resource_ids_set = set(self._get_entities_ids())
+        exclude_scenario_ids: set[str] = set()
+        for scenario_id, produced_ids in scenario_resource_map.items():
+            # Resources in the set that this scenario did NOT produce
+            consumed_ids = resource_ids_set - produced_ids
+            if len(consumed_ids) == 0:
+                # This scenario only produced resources in the set, exclude it
+                exclude_scenario_ids.add(scenario_id)
+
+        if len(exclude_scenario_ids) > 0:
+            expression = expression & (Scenario.id.not_in(exclude_scenario_ids))
 
         # Search scenario where an input task is configured with the resource and where a task takes the resource as input
         # with this, all case are managed

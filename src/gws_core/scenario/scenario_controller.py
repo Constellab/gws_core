@@ -7,12 +7,13 @@ from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
 
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
-from .queue_service import QueueService
 from .scenario_dto import (
+    ExportScenarioToLabResponseDTO,
     RunningScenarioInfoDTO,
     ScenarioCountByTitleResultDTO,
     ScenarioDTO,
@@ -307,8 +308,8 @@ def get_import_scenario_config_specs(
 )
 def export_to_lab(
     id_: str, values: ConfigParamsDict, _=Depends(AuthorizationService.check_user_access_token)
-) -> ScenarioDTO:
-    return ScenarioTransfertService.export_scenario_to_lab(id_, values).to_dto()
+) -> ExportScenarioToLabResponseDTO:
+    return ScenarioTransfertService.export_scenario_to_lab_async(id_, values)
 
 
 @core_app.get(
@@ -320,3 +321,21 @@ def get_export_to_lab_config_specs(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> dict[str, ParamSpecDTO]:
     return ScenarioTransfertService.get_export_scenario_to_lab_config_specs()
+
+
+@core_app.put(
+    "/scenario/{id_}/update-from-external-lab",
+    tags=["Scenario"],
+    summary="Update a scenario from the external lab",
+)
+def update_scenario_from_external_lab(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> ScenarioDTO:
+    """
+    Update a scenario that is running in an external lab by downloading
+    its current state. Only works if the scenario is running in an external lab.
+
+    - **id_**: the id_ of the scenario
+    """
+
+    return ScenarioTransfertService.update_scenario_from_external_lab(id_)

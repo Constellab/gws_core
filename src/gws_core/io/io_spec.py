@@ -156,10 +156,6 @@ class IOSpec:
         )
 
     @abstractmethod
-    def constant_out(self) -> bool:
-        pass
-
-    @abstractmethod
     def subclass_out(self) -> bool:
         pass
 
@@ -254,9 +250,6 @@ class InputSpec(IOSpec):
 
     _name: str = "InputSpec"
 
-    def constant_out(self) -> bool:
-        return False
-
     def subclass_out(self) -> bool:
         return False
 
@@ -267,58 +260,35 @@ class OutputSpec(IOSpec):
     _name: str = "OutputSpec"
 
     _sub_class: bool
-    _is_constant: bool
 
     def __init__(
         self,
         resource_types: ResourceTypes,
         optional: bool = False,
-        is_optional: bool = False,
         sub_class: bool = False,
-        constant: bool = False,
-        is_constant: bool = False,
         human_name: str | None = None,
         short_description: str | None = None,
     ) -> None:
-        """_summary_
-
-        :param resource_types: _description_
+        """
+        :param resource_types: the resource types accepted by this output port
         :type resource_types: ResourceTypes
         :param optional: tell that this output may return None or not being provided, defaults to False
         :type optional: bool, optional
-        :param is_optional: Deprecated, use optional instead, defaults to False
-        :type is_optional: bool, optional
         :param sub_class: When true, it tells that the resource_types
                 are compatible with any child class of the provided resource type, defaults to False
-        :param constant: When true, this tells the system that the output resource was not modified from the input resource
-              and it does not need to create a new resource after the task, defaults to False
-        :type constant: bool, optional
-        :param is_constant: Deprecated, use constant instead, defaults to False
-        :type is_constant: bool, optional
-        :param human_name: _description_, defaults to None
+        :param human_name: human readable name for this port, defaults to None
         :type human_name: Optional[str], optional
-        :param short_description: _description_, defaults to None
+        :param short_description: short description for this port, defaults to None
         :type short_description: Optional[str], optional
         """
 
         super().__init__(
             resource_types=resource_types,
             optional=optional,
-            is_optional=is_optional,
             human_name=human_name,
             short_description=short_description,
         )
         self._sub_class = sub_class
-
-        if is_constant:
-            Logger.warning(
-                "[OutputSpec] 'is_constant' parameter is deprecated, please use 'constant' instead"
-            )
-            constant = is_constant
-        self._is_constant = constant
-
-    def constant_out(self) -> bool:
-        return self._is_constant
 
     def subclass_out(self) -> bool:
         return self._sub_class
@@ -327,7 +297,6 @@ class OutputSpec(IOSpec):
         spec_dto = super().to_dto()
 
         spec_dto.sub_class = self._sub_class
-        spec_dto.constant = self._is_constant
 
         return spec_dto
 
@@ -336,6 +305,5 @@ class OutputSpec(IOSpec):
         output_spec: OutputSpec = super().from_dto(dto)
 
         output_spec._sub_class = dto.sub_class or False
-        output_spec._is_constant = dto.constant or False
 
         return output_spec

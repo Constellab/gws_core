@@ -13,17 +13,17 @@ class BaseModelDTO(BaseModel):
     ModelDTO class.
     """
 
-    def to_json_dict(self) -> dict:
+    def to_json_dict(self, exclude_none: bool = False) -> dict:
         """
         Convert a ModelDTO to a json dictionary. This dict can be serialized.
         """
-        return jsonable_encoder(self)
+        return jsonable_encoder(self, exclude_none=exclude_none)
 
-    def to_json_str(self) -> str:
+    def to_json_str(self, exclude_none: bool = False) -> str:
         """
         Convert a ModelDTO to a json string.
         """
-        return dumps(self.to_json_dict())
+        return dumps(self.to_json_dict(exclude_none=exclude_none))
 
     @classmethod
     def to_json_list(

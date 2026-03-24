@@ -109,7 +109,7 @@ class ProgressBar(Model):
         :return: Returns the last execution time in milliseconds
         :rtype: `datetime`
         """
-        if self.ended_at is None:
+        if self.ended_at is None or self.started_at is None:
             return 0
 
         if self.second_start is not None:
@@ -275,6 +275,15 @@ class ProgressBar(Model):
         return (self.ended_at - self.started_at).total_seconds()
 
     ################################################## TO JSON #################################################
+
+    def copy_from_and_save(self, other: "ProgressBar") -> None:
+        """Copy timing and progress fields from another ProgressBar and save."""
+        self.started_at = other.started_at
+        self.ended_at = other.ended_at
+        self.current_value = other.current_value
+        self.elapsed_time = other.elapsed_time
+        self.second_start = other.second_start
+        self.save()
 
     def to_dto(self) -> ProgressBarDTO:
         return ProgressBarDTO(

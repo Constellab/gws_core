@@ -111,7 +111,7 @@ class ScenarioRunService:
             raise exception from err
 
     @classmethod
-    def run_scenario_process_in_cli(
+    def run_scenario_process_from_cli(
         cls, scenario_id: str, protocol_model_id: str, process_name: str
     ) -> None:
         """Method called by the cli sub process to run the scenario"""
@@ -187,7 +187,12 @@ class ScenarioRunService:
     @classmethod
     def _check_scenario_before_start(cls, scenario: Scenario) -> None:
         # check scenario status
-        scenario.check_is_runnable()
+        if scenario.is_archived:
+            raise BadRequestException("The scenario is archived")
+        if scenario.is_validated:
+            raise BadRequestException("The scenario is validated")
+        if scenario.is_finished:
+            raise BadRequestException("The scenario is already finished")
 
     @classmethod
     def create_cli_for_scenario(cls, scenario: Scenario, user: User) -> SysProc:
@@ -322,7 +327,7 @@ class ScenarioRunService:
 
         Logger.info(f"Scenario process run_through_cli {str(cmd)}")
         Logger.info(
-            f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.pid}).
+            f"""The scenario logs are not shown in the console, because it is run in another linux process ({scenario.running_process_pid}).
             To view them check the logs in the today's log file : {Logger.get_file_path()}"""
         )
         return sproc
@@ -343,20 +348,20 @@ class ScenarioRunService:
             raise BadRequestException(error)
 
     @classmethod
-    def stop_scenario(cls, id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def stop_scenario(cls, id_: str, error_info: ProcessErrorInfo | None = None) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         scenario.check_is_stopable()
 
         # try to kill the pid if possible
         try:
-            if scenario.pid is not None:
-                cls._kill_scenario_pid(scenario.pid)
+            if scenario.running_process_pid is not None:
+                cls._kill_scenario_pid(scenario.running_process_pid)
         except Exception as err:
             Logger.error(str(err))
 
         # mark the scenario as error
-        error = ProcessErrorInfo(
+        error = error_info or ProcessErrorInfo(
             detail=f"Scenario manually stopped by {CurrentUserService.get_and_check_current_user().full_name}",
             unique_code="SCENARIO_STOPPED_MANUALLY",
             context=None,
@@ -438,7 +443,7 @@ class ScenarioRunService:
             scenario_dto = SendScenarioFinishMailData(
                 title=scenario.title,
                 status=scenario.status.value,
-                scenario_link=FrontService.get_scenario_url(scenario_id=scenario.id),
+                scenario_link=FrontService().get_scenario_url(scenario_id=scenario.id),
             )
 
             MailService.send_scenario_finished_mail(user.id, scenario_dto)

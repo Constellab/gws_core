@@ -1,18 +1,24 @@
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.process.process_proxy import ProcessProxy
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.resource.resource_dto import ShareResourceWithSpaceRequestDTO
 from gws_core.resource.resource_service import ResourceService
+from gws_core.resource.task.resource_downloader_from_lab import ResourceDownloaderFromLab
 from gws_core.resource.task.resource_downloader_http import ResourceDownloaderHttp
 from gws_core.resource.task.send_resource_to_lab import SendResourceToLab
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.share.share_link import ShareLink
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateShareLinkDTO, ShareLinkEntityType, ShareLinkType
+from gws_core.share.shared_dto import (
+    GenerateShareLinkDTO,
+    ShareLinkEntityType,
+    ShareLinkType,
+)
+from gws_core.share.shared_resource import SharedResource
 from gws_core.space.space_dto import ShareResourceWithSpaceDTO
 from gws_core.space.space_service import SpaceService
 from gws_core.task.plug.output_task import OutputTask
@@ -40,6 +46,28 @@ class ResourceTransfertService:
         scenario = cls._build_import_resource_from_link_scenario(values)
         scenario.run_async()
         return scenario.get_model().refresh()
+
+    @classmethod
+    def import_resource_from_lab_async(cls, values: ConfigParamsDict) -> Scenario:
+        """Run the import resource from lab asynchronously, return the running import scenario"""
+
+        scenario = cls._build_import_resource_from_lab_scenario(values)
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_import_resource_from_lab_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
+        """Build a scenario to import a resource from another lab using credentials."""
+        scenario: ScenarioProxy = ScenarioProxy(title="Import resource from lab")
+        protocol: ProtocolProxy = scenario.get_protocol()
+
+        downloader: ProcessProxy = protocol.add_process(
+            ResourceDownloaderFromLab, "downloader", values
+        )
+
+        protocol.add_output("output", downloader >> ResourceDownloaderFromLab.OUTPUT_NAME)
+
+        return scenario
 
     @classmethod
     def _build_import_resource_from_link_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
@@ -95,6 +123,57 @@ class ResourceTransfertService:
     @classmethod
     def get_export_resource_to_lab_config_specs(cls) -> dict[str, ParamSpecDTO]:
         return SendResourceToLab.config_specs.to_dto()
+
+    @classmethod
+    def download_resource_content(cls, resource_id: str) -> ResourceModel:
+        """Download resource content from the source lab for a content-deleted resource.
+
+        The resource must have its content deleted and must have been imported from
+        another lab (has a SharedResource RECEIVED record).
+        """
+        resource_model = ResourceModel.get_by_id_and_check(resource_id)
+
+        if not resource_model.content_is_deleted:
+            raise BadRequestException(
+                "The resource content is not deleted, no need to re-download it"
+            )
+
+        # Find the SharedResource record for this resource
+        shared_resource: SharedResource | None = SharedResource.get_received_entity(resource_id)
+        if shared_resource is None:
+            raise BadRequestException(
+                "This resource was not imported from another lab, cannot download content"
+            )
+
+        # Check the source lab has credentials and domain
+        lab = shared_resource.lab
+        lab.check_credentials_and_domain()
+
+        # The external_id is the resource ID on the source lab
+        external_resource_id = shared_resource.external_id
+
+        # Build a scenario with ResourceDownloaderFromLab to download the resource
+        scenario: ScenarioProxy = ScenarioProxy(title="Download resource content")
+        protocol: ProtocolProxy = scenario.get_protocol()
+
+        downloader: ProcessProxy = protocol.add_process(
+            ResourceDownloaderFromLab,
+            "downloader",
+            {
+                "lab": lab.id,
+                "resource_id": external_resource_id,
+                "uncompress": "auto",
+                "skip_tags": True,
+            },
+        )
+
+        protocol.add_output("output", downloader >> ResourceDownloaderFromLab.OUTPUT_NAME)
+
+        scenario.run()
+
+        # Get the output resource model
+        output_task = scenario.get_protocol().get_process("output").refresh()
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
     @classmethod
     @GwsCoreDbManager.transaction()

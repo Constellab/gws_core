@@ -32,6 +32,7 @@ class GWSException(Enum):
         "{{error}} | Scenario : '<a href=\"{{scenario_url}}\">{{scenario}}</a>'"
     )
     TASK_BUILD_EXCEPTION = "{{error}} | Task : '{{instance_name}}'"
+    PROCESS_CONFIG_EXCEPTION = "{{error}} | Process : '{{process_type}}'"
     PROTOCOL_BUILD_EXCEPTION = "{{error}} | Protocol : '{{instance_name}}'"
     MISSING_INPUT_RESOURCES = "The inputs '{{port_names}}' were not provided but are mandatory"
     IMCOMPATIBLE_PORT = "Invalid connection, port are imcompatible. The output '{{out_port_name}}' types {{out_port_types}} can't be converted to input '{{in_port_name}}' types {{in_port_types}}"
@@ -75,4 +76,9 @@ class GWSException(Enum):
     RESET_ERROR_EXP_LINKED_TO_IN_ANOTHER_EXP = 'Can\'t reset the scenario because one of the output resource is used in scenario \'<a href="{{scenario_url}}" target="_blank">{{scenario}}</a>\''
     RESET_ERROR_EXP_LINKED_TO_A_NOTE = 'Can\'t reset the scenario because one of the output resource is used in note \'<a href="{{note_url}}" target="_blank">{{note}}</a>\''
     IOFACE_CONNECTED_TO_PARENT_DELETE_ERROR = "The {{ioface_type}} '{{ioface_name}}' is connected in the parent protocol '{{parent_protocol_name}}', please remove the link connected to this {{ioface_type}} in the parent protocol."
+    LAB_MISSING_CREDENTIALS_OR_DOMAIN = "The lab '{{lab_name}}' does not have credentials or domain configured. Please register the lab in Settings > Monitoring > Labs."
     TYPING_NOT_FOUND = "Can't find the typing '{{unique_name}}' for '{{object_type}}' in brick '{{brick_name}}'. Is the brick '{{brick_name}}' correctly loaded ?"
+    RESOURCE_CONTENT_DELETED = (
+        "The content of resource '{{resource_name}}' has been deleted, it can't be viewed."
+    )
+    IMPORTED_RESOURCE_CONTENT_NOT_AVAILABLE = "The content of the imported resource '{{resource_name}}' is not available in this lab, you can import it from the source lab in the resource menu."

@@ -63,6 +63,9 @@ class AppManager:
         is_test: bool = False,
         auth_context_loader: AuthContextLoader | None = None,
     ) -> Settings:
+        if cls.gws_env_initialized:
+            return Settings.get_instance()
+
         log_dir = Settings.build_log_dir(is_test=is_test)
 
         logger_level = Logger.check_log_level(log_level)
@@ -215,7 +218,7 @@ class AppManager:
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         with AuthenticateUser(user):
-            ScenarioRunService.run_scenario_process_in_cli(
+            ScenarioRunService.run_scenario_process_from_cli(
                 scenario_id, protocol_model_id, process_instance_name
             )
 

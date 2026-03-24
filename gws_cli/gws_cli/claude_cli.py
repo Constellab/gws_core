@@ -17,7 +17,7 @@ def install():
 
 @app.command("update", help="Update Claude Code configuration")
 def update():
-    """Update Claude Code configuration for GWS (commands and settings)
+    """Update Claude Code configuration for GWS (skills and settings)
 
     Only runs if Claude Code is already installed. Does nothing if not installed.
     """
@@ -27,33 +27,58 @@ def update():
         raise typer.Exit(exit_code)
 
 
-@app.command("commands", help="Manage Claude Code commands")
-def commands(
+@app.command("skills", help="Manage Claude Code skills")
+def skills(
     pull: bool = typer.Option(
-        False, "--pull", help="Pull GWS commands to global Claude commands folder"
+        False, "--pull", help="Pull GWS skills to Claude plugin folder"
     ),
-    list_commands: bool = typer.Option(False, "--list", help="List all available GWS commands"),
+    list_skills: bool = typer.Option(False, "--list", help="List all available GWS skills"),
 ):
-    """Manage Claude Code commands
+    """Manage Claude Code skills
 
-    Use --pull to copy GWS commands to ~/.claude/commands/gws-commands
-    Use --list to show all available GWS commands
+    Use --pull to copy GWS skills to ~/.claude/plugins/gws-commands
+    Use --list to show all available GWS skills
     """
     service = ClaudeService()
 
     if pull:
-        exit_code = service.pull_claude_commands()
+        exit_code = service.pull_claude_skills()
         if exit_code != 0:
             raise typer.Exit(exit_code)
-    elif list_commands:
-        exit_code = service.print_commands()
+    elif list_skills:
+        exit_code = service.print_skills()
         if exit_code != 0:
             raise typer.Exit(exit_code)
     else:
-        typer.echo("Use --pull to copy GWS commands to global Claude commands folder")
-        typer.echo("Use --list to show all available GWS commands")
-        typer.echo("Example: gws claude commands --pull")
-        typer.echo("Example: gws claude commands --list")
+        typer.echo("Use --pull to copy GWS skills to Claude plugin folder")
+        typer.echo("Use --list to show all available GWS skills")
+        typer.echo("Example: gws claude skills --pull")
+        typer.echo("Example: gws claude skills --list")
+
+
+@app.command("commands", help="Manage Claude Code commands (alias for skills)", hidden=True)
+def commands(
+    pull: bool = typer.Option(
+        False, "--pull", help="Pull GWS skills to Claude plugin folder"
+    ),
+    list_skills: bool = typer.Option(False, "--list", help="List all available GWS skills"),
+):
+    """Alias for 'skills' command for backwards compatibility"""
+    service = ClaudeService()
+
+    if pull:
+        exit_code = service.pull_claude_skills()
+        if exit_code != 0:
+            raise typer.Exit(exit_code)
+    elif list_skills:
+        exit_code = service.print_skills()
+        if exit_code != 0:
+            raise typer.Exit(exit_code)
+    else:
+        typer.echo("Use --pull to copy GWS skills to Claude plugin folder")
+        typer.echo("Use --list to show all available GWS skills")
+        typer.echo("Example: gws claude skills --pull")
+        typer.echo("Example: gws claude skills --list")
 
 
 @app.command("statusline", help="Configure Claude Code statusline")

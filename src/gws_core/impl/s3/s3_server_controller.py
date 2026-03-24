@@ -1,4 +1,3 @@
-
 from fastapi import Depends, Request
 from fastapi.params import Query
 from fastapi.responses import Response
@@ -28,11 +27,6 @@ def health_check() -> bool:
     return True
 
 
-@s3_server_app.get("v1/health-check")
-def health_check_v1() -> bool:
-    return True
-
-
 # Route call for multiple command. The x_id content the command.
 # the trailing slash is important to make the route work
 @s3_server_app.post("/v1/{bucket}/")
@@ -56,10 +50,7 @@ async def _delete_object(request: Request, service: AbstractS3Service) -> Respon
     dict_ = XMLHelper.xml_to_dict(str_xml)
     objects: dict | list[dict] = dict_["Delete"]["Object"]
     keys: list[str]
-    if not isinstance(objects, list):
-        keys = [objects["Key"]]
-    else:
-        keys = [obj["Key"] for obj in objects]
+    keys = [objects["Key"]] if not isinstance(objects, list) else [obj["Key"] for obj in objects]
     service.delete_objects(keys)
     return Response(status_code=204)
 

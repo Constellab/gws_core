@@ -4,14 +4,17 @@ from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.io.io_dto import IODTO
 from gws_core.io.ioface import IOface
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.model.typing_style import TypingStyle
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec, InterfaceSpec
 from gws_core.resource.view.viewer import Viewer
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.user.user_service import UserService
 
 from ..config.config import Config
+from ..config.config_exceptions import ProcessConfigException
 from ..core.exception.exceptions.bad_request_exception import BadRequestException
 from ..model.typing_manager import TypingManager
 from ..progress_bar.progress_bar import ProgressBar
@@ -103,7 +106,13 @@ class ProcessFactory:
         config: Config = Config()
         config.set_specs(config_specs if config_specs is not None else task_type.config_specs)
         if config_params:
-            config.set_values(config_params)
+            try:
+                config.set_values(config_params)
+            except BadRequestException as e:
+                raise ProcessConfigException(
+                    process_type=task_type.get_typing_name(),
+                    original_exception=e,
+                ) from e
 
         cls._init_process_model(
             process_model=task_model,
@@ -129,7 +138,7 @@ class ProcessFactory:
 
     @classmethod
     def create_task_model_from_config_dto(
-        cls, task_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, task_config_dto: ProcessConfigDTO, copy_id: bool = True
     ) -> TaskModel:
         """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
         the process type is not used. It can create a task where the type does not exist in the system.
@@ -141,7 +150,8 @@ class ProcessFactory:
         """
         task_model: TaskModel = TaskModel()
         return cast(
-            TaskModel, cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id)
+            TaskModel,
+            cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id=copy_id),
         )
 
     ############################################### PROTOCOL FROM TYPE #################################################
@@ -253,7 +263,7 @@ class ProcessFactory:
 
     @classmethod
     def create_empty_protocol_model_from_config_dto(
-        cls, protocol_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, protocol_config_dto: ProcessConfigDTO, copy_id: bool = True
     ) -> ProtocolModel:
         """Create a protocol model from a ProcessConfigDTO. The protocol is fully created from the dto and
         the process type is not used. It can create a protocol where the type does not exist in the system.
@@ -266,7 +276,9 @@ class ProcessFactory:
         """
         protocol_model: ProtocolModel = cast(
             ProtocolModel,
-            cls._init_process_model_from_config_dto(ProtocolModel(), protocol_config_dto, copy_id),
+            cls._init_process_model_from_config_dto(
+                ProtocolModel(), protocol_config_dto, copy_id=copy_id
+            ),
         )
 
         # force the interface and outerface from DTO
@@ -344,7 +356,7 @@ class ProcessFactory:
 
     @classmethod
     def _init_process_model_from_config_dto(
-        cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO, copy_id: bool
+        cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO, copy_id: bool = True
     ) -> ProcessModel:
         if copy_id and process_config_dto.id is not None:
             process_model.id = process_config_dto.id
@@ -353,6 +365,16 @@ class ProcessFactory:
         process_model.set_outputs_from_dto(process_config_dto.outputs)
         process_model.brick_version_on_create = process_config_dto.brick_version_on_create
         process_model.brick_version_on_run = process_config_dto.brick_version_on_run
+        process_model.run_by = (
+            UserService.get_or_import_user_info(process_config_dto.run_by.id)
+            if process_config_dto.run_by
+            else None
+        )
+        process_model.run_by_lab = (
+            LabModel.get_or_create_from_dto(process_config_dto.run_by_lab)
+            if process_config_dto.run_by_lab
+            else None
+        )
 
         cls._init_process_model(
             process_model=process_model,
@@ -416,8 +438,8 @@ class ProcessFactory:
     ############################################### SPECIFIC #################################################
 
     @classmethod
-    def create_source(cls, resouce_id: str) -> TaskModel:
-        return cls.create_task_model_from_type(InputTask, {InputTask.config_name: resouce_id})
+    def create_source(cls, resource_id: str) -> TaskModel:
+        return cls.create_task_model_from_type(InputTask, {InputTask.config_name: resource_id})
 
     @classmethod
     def create_output_task(cls) -> TaskModel:

@@ -70,15 +70,6 @@ class Port(Base):
         return self._resource_id is None
 
     @property
-    def constant_out(self) -> bool:
-        """return true if the port type is ConstantOut
-
-        :return: [description]
-        :rtype: bool
-        """
-        return self.resource_spec.constant_out()
-
-    @property
     def resource_provided(self) -> bool:
         """
         Returns True if the resource of the port was provided

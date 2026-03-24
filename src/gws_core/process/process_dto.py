@@ -35,3 +35,4 @@ class ProcessDTO(ModelWithUserDTO):
     community_agent_version_modified: bool | None = None
     style: TypingStyle | None = None
     is_agent: bool = False
+    external_lab_id: str | None = None

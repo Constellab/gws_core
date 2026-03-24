@@ -101,10 +101,10 @@ class ResourceSet(ResourceListBase):
         if name in resources:
             raise Exception(f"Resource with name '{name}' already exists in the ResourceSet")
 
-        # if the resource already exist, add it to the constant list so
+        # if the resource already exists, mark it as reference so
         # the system will not create a new resource on save
         if not create_new_resource:
-            self._mark_resource_as_constant(resource)
+            resource.set_as_reference()
 
         self._resources[name] = resource
 
@@ -156,7 +156,6 @@ class ResourceSet(ResourceListBase):
         """
         self._resources = {}
         self._resource_ids = {}
-        self.__constant_resource_uid__ = set()
 
     def replace_resources_by_model_id(self, resources: dict[str, Resource]) -> None:
         """

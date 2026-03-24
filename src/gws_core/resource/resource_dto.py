@@ -35,6 +35,13 @@ class ResourceModelDTO(ModelWithUserDTO):
     folder: SpaceFolderDTO | None
     style: TypingStyle
     is_application: bool
+    content_is_deleted: bool
+
+
+class ResourceModelExportDTO(ResourceModelDTO):
+    parent_resource_id: str | None = None
+    generated_by_port_name: str | None = None
+    task_model_id: str | None = None
 
 
 class ResourceSimpleDTO(BaseModelDTO):

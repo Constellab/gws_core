@@ -9,7 +9,9 @@ from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource import Resource
+from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
@@ -47,6 +49,7 @@ class ResourceDownloaderBase(Task):
     )
 
     resource_loader: ResourceLoader | None = None
+    _resource_builder: ResourceZipBuilder | None = None
 
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
@@ -76,8 +79,9 @@ class ResourceDownloaderBase(Task):
         # Convert the zip file to a resource
         try:
             self.log_info_message("Uncompressing the file")
+            id_mapper = IdMapper(resource_loader_mode)
             self.resource_loader = ResourceLoader.from_compress_file(
-                resource_file, resource_loader_mode, resource_origin, skip_tags
+                resource_file, id_mapper, resource_origin, skip_tags
             )
         except Exception as err:
             if uncompress_option == "yes":
@@ -92,6 +96,27 @@ class ResourceDownloaderBase(Task):
         self.log_info_message("Loading the resource")
         resource = self.resource_loader.load_resource()
 
+        # If it's a resource zip, directly save ResourceModels preserving original metadata
+        if self.resource_loader.is_resource_zip():
+            builder = ResourceZipBuilder(
+                resource_loader=self.resource_loader,
+                origin=self.resource_loader.get_origin_info(),
+                id_mapper=self.resource_loader.id_mapper,
+                skip_resource_tags=skip_tags,
+                message_dispatcher=self.message_dispatcher,
+            )
+            resource_model = builder.save()
+            self._resource_builder = builder
+
+            # Return resource marked as reference so TaskModel._save_outputs uses existing model
+            result_resource = resource_model.get_resource()
+            result_resource.__set_model_id__(resource_model.id)
+            result_resource.set_as_reference()
+
+            # Delete the compressed file
+            FileHelper.delete_file(resource_file)
+            return result_resource
+
         # delete the compressed file
         FileHelper.delete_file(resource_file)
 
@@ -99,23 +124,6 @@ class ResourceDownloaderBase(Task):
 
     def run_after_task(self) -> None:
         """Save share info, clean temp files, etc"""
-        if not self.resource_loader:
-            return
-
-        # clear temps files
-        self.log_info_message("Cleaning the temp files")
-        self.resource_loader.delete_resource_folder()
-
-        if not self.resource_loader.is_resource_zip():
-            return
-
-        # Create the shared entity info
-        self.log_info_message("Storing the resource origin info")
-        resources: list[Resource] = self.resource_loader.get_all_generated_resources()
-        for resource in resources:
-            SharedResource.create_from_lab_info(
-                resource.get_model_id(),
-                SharedEntityMode.RECEIVED,
-                self.resource_loader.get_origin_info(),
-                CurrentUserService.get_and_check_current_user(),
-            )
+        if self._resource_builder:
+            self.log_info_message("Cleaning the temp files")
+            self._resource_builder.cleanup()
