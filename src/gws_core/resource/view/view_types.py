@@ -26,7 +26,6 @@ class ViewType(Enum):
     MULTI_VIEWS = "multi-view"
     NETWORK = "network-view"
     IMAGE = "image-view"
-    HTML = "html-view"
     MARKDOWN = "markdown-view"
     PLOTLY = "plotly-view"
     RICH_TEXT = "rich-text-view"
@@ -70,7 +69,7 @@ class ViewType(Enum):
             style = TypingStyle.material_icon("hub", background_color="#627254")
         elif self == ViewType.IMAGE:
             style = TypingStyle.material_icon("image")
-        elif self == ViewType.HTML or self == ViewType.MARKDOWN:
+        elif self == ViewType.MARKDOWN:
             style = TypingStyle.material_icon("computer")
         elif self == ViewType.PLOTLY:
             style = TypingStyle.material_icon("analytics", background_color="#496989")
@@ -126,8 +125,6 @@ class ViewType(Enum):
             return "Network"
         elif self == ViewType.IMAGE:
             return "Image"
-        elif self == ViewType.HTML:
-            return "HTML"
         elif self == ViewType.IFRAME:
             return "Iframe"
         elif self == ViewType.MARKDOWN:
