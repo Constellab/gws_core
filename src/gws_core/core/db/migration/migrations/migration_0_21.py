@@ -156,9 +156,17 @@ class Migration0210(BrickMigration):
             """
         )
 
-        # Set empty strings to NULL for FK compatibility
-        shared_model.execute_sql(f"UPDATE {table_name} SET lab_id = NULL WHERE lab_id = ''")
-        shared_model.execute_sql(f"UPDATE {table_name} SET user_id = NULL WHERE user_id = ''")
+        # Delete rows with NULL lab_id or user_id (orphan records that can't be resolved)
+        shared_model.execute_sql(
+            f"DELETE FROM {table_name} WHERE lab_id IS NULL OR user_id IS NULL or user_id = '' or lab_id = ''"
+        )
+
+        # Set lab_id and user_id columns to NOT NULL
+        sql_migrator.alter_column_type(shared_model, "lab_id", CharField(max_length=36, null=False))
+        sql_migrator.alter_column_type(
+            shared_model, "user_id", CharField(max_length=36, null=False)
+        )
+        sql_migrator.migrate()
 
         # Drop old columns that are no longer needed
         sql_migrator.drop_column_if_exists(shared_model, "lab_name")
