@@ -38,17 +38,96 @@ class ScenarioWaiter:
         self,
         refresh_interval: int = 30,
         refresh_interval_max_count: int = 10,
+        raise_on_excluded: bool = True,
     ) -> ScenarioWaitInfoDTO:
         """Wait until the scenario is finished.
-        If the scenario is in draft mode, it will raise an exception
+        If the scenario is in draft mode, it will raise an exception (unless raise_on_excluded is False).
 
         :param refresh_interval: interval in seconds between each refresh, defaults to 30
         :type refresh_interval: int, optional
         :param refresh_interval_max_count: maximum number of refresh, if reached, it will raise an exception
                                             set -1 to wait indefinitely, defaults to 10
         :type refresh_interval_max_count: int, optional
+        :param raise_on_excluded: if True, raise an exception when an excluded status is reached.
+                                   If False, return the scenario instead, defaults to True
+        :type raise_on_excluded: bool, optional
         :return: the scenario
-        :rtype: ScenarioDTO
+        :rtype: ScenarioWaitInfoDTO
+        """
+        return self.wait_until_status(
+            target_statuses=[
+                ScenarioStatus.SUCCESS,
+                ScenarioStatus.ERROR,
+                ScenarioStatus.PARTIALLY_RUN,
+            ],
+            excluded_statuses=[ScenarioStatus.DRAFT],
+            raise_on_excluded=raise_on_excluded,
+            refresh_interval=refresh_interval,
+            refresh_interval_max_count=refresh_interval_max_count,
+        )
+
+    def wait_for_scenario_to_start(
+        self,
+        refresh_interval: int = 30,
+        refresh_interval_max_count: int = 10,
+        raise_on_excluded: bool = True,
+    ) -> ScenarioWaitInfoDTO:
+        """Wait until the scenario is running.
+        This should be called when the scenario is in the queue or running async.
+        If the scenario reaches an excluded status (draft or already finished),
+        it will raise an exception (unless raise_on_excluded is False).
+
+        :param refresh_interval: interval in seconds between each refresh, defaults to 30
+        :type refresh_interval: int, optional
+        :param refresh_interval_max_count: maximum number of refresh, if reached, it will raise an exception
+                                            set -1 to wait indefinitely, defaults to 10
+        :type refresh_interval_max_count: int, optional
+        :param raise_on_excluded: if True, raise an exception when an excluded status is reached.
+                                   If False, return the scenario instead, defaults to True
+        :type raise_on_excluded: bool, optional
+        :return: the scenario
+        :rtype: ScenarioWaitInfoDTO
+        """
+
+        return self.wait_until_status(
+            target_statuses=[ScenarioStatus.RUNNING],
+            excluded_statuses=[
+                ScenarioStatus.DRAFT,
+                ScenarioStatus.SUCCESS,
+                ScenarioStatus.ERROR,
+                ScenarioStatus.PARTIALLY_RUN,
+            ],
+            raise_on_excluded=raise_on_excluded,
+            refresh_interval=refresh_interval,
+            refresh_interval_max_count=refresh_interval_max_count,
+        )
+
+    def wait_until_status(
+        self,
+        target_statuses: list[ScenarioStatus],
+        excluded_statuses: list[ScenarioStatus] | None = None,
+        raise_on_excluded: bool = True,
+        refresh_interval: int = 30,
+        refresh_interval_max_count: int = 10,
+    ) -> ScenarioWaitInfoDTO:
+        """Wait until the scenario reaches one of the target statuses.
+        If the scenario reaches an excluded status, it will either raise an exception
+        or return the scenario depending on raise_on_excluded.
+
+        :param target_statuses: list of statuses to wait for
+        :type target_statuses: list[ScenarioStatus]
+        :param excluded_statuses: list of statuses that should stop the wait if reached, defaults to None
+        :type excluded_statuses: list[ScenarioStatus] | None, optional
+        :param raise_on_excluded: if True, raise an exception when an excluded status is reached.
+                                   If False, return the scenario instead, defaults to True
+        :type raise_on_excluded: bool, optional
+        :param refresh_interval: interval in seconds between each refresh, defaults to 30
+        :type refresh_interval: int, optional
+        :param refresh_interval_max_count: maximum number of refresh, if reached, it will raise an exception
+                                            set -1 to wait indefinitely, defaults to 10
+        :type refresh_interval_max_count: int, optional
+        :return: the scenario
+        :rtype: ScenarioWaitInfoDTO
         """
 
         count = 0
@@ -73,13 +152,14 @@ class ScenarioWaiter:
 
             consecutive_get_error = 0
 
-            if scenario.scenario.status == ScenarioStatus.DRAFT:
-                raise Exception("Scenario is in draft mode")
-            if scenario.scenario.status in [
-                ScenarioStatus.SUCCESS,
-                ScenarioStatus.ERROR,
-                ScenarioStatus.PARTIALLY_RUN,
-            ]:
+            if scenario.scenario.status in target_statuses:
+                return scenario
+
+            if excluded_statuses and scenario.scenario.status in excluded_statuses:
+                if raise_on_excluded:
+                    raise Exception(
+                        f"Scenario reached an unexpected status: {scenario.scenario.status.value}"
+                    )
                 return scenario
 
             if self._message_dispatcher and scenario.progress:
@@ -87,7 +167,9 @@ class ScenarioWaiter:
                 self._message_dispatcher.notify_progress_value(scenario.progress.progress, message)
             time.sleep(refresh_interval)
 
-        raise Exception("Scenario is taking too long to finish, max refresh reached")
+        raise Exception(
+            "Scenario is taking too long to reach the expected status, max refresh reached"
+        )
 
 
 class ScenarioWaiterBasic(ScenarioWaiter):
@@ -147,5 +229,3 @@ class ScenarioWaiterExternalLab(ScenarioWaiter):
 
     def get_scenario_import_info(self) -> ExternalLabImportScenarioResponseDTO:
         return self._external_lab_service.get_scenario(self.scenario_id)
-
-

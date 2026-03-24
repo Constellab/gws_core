@@ -70,3 +70,8 @@ class ScenarioProgressDTO(BaseModelDTO):
 
     def has_last_message(self) -> bool:
         return self.last_message is not None
+
+
+class ExportScenarioToLabResponseDTO(BaseModelDTO):
+    exported_scenario: ScenarioDTO
+    export_scenario: ScenarioDTO

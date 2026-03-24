@@ -1,8 +1,10 @@
+from time import sleep
+
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.scenario.scenario import Scenario
-from gws_core.scenario.scenario_dto import ScenarioDTO
+from gws_core.scenario.scenario_dto import ExportScenarioToLabResponseDTO, ScenarioDTO
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.task.scenario_downloader_from_lab import ScenarioDownloaderFromLab
@@ -76,15 +78,25 @@ class ScenarioTransfertService:
         return scenario.get_model().refresh()
 
     @classmethod
-    def export_scenario_to_lab_async(cls, scenario_id: str, values: ConfigParamsDict) -> Scenario:
+    def export_scenario_to_lab_async(
+        cls, scenario_id: str, values: ConfigParamsDict
+    ) -> ExportScenarioToLabResponseDTO:
         """Export a scenario to a lab asynchronously and return the newly created scenario that
         exports the scenario to the lab
         """
         scenario = cls._build_export_scenario_to_lab(scenario_id, values)
 
-        scenario.run_async()
+        scenario_waiter = scenario.run_async()
 
-        return scenario.get_model().refresh()
+        # wait for the send scenario to start
+        # so when the front receives the response the original scenario will be already
+        # marked as running in external lab and the front will be able to display the correct status
+        scenario_waiter.wait_for_scenario_to_start(refresh_interval=15, raise_on_excluded=False)
+
+        return ExportScenarioToLabResponseDTO(
+            exported_scenario=ScenarioService.get_by_id_and_check(scenario_id).to_dto(),
+            export_scenario=scenario.get_model().refresh().to_dto(),
+        )
 
     @classmethod
     def _build_export_scenario_to_lab(

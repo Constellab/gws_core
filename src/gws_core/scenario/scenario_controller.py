@@ -13,6 +13,7 @@ from gws_core.scenario.scenario_transfert_service import ScenarioTransfertServic
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
 from .scenario_dto import (
+    ExportScenarioToLabResponseDTO,
     RunningScenarioInfoDTO,
     ScenarioCountByTitleResultDTO,
     ScenarioDTO,
@@ -307,8 +308,8 @@ def get_import_scenario_config_specs(
 )
 def export_to_lab(
     id_: str, values: ConfigParamsDict, _=Depends(AuthorizationService.check_user_access_token)
-) -> ScenarioDTO:
-    return ScenarioTransfertService.export_scenario_to_lab_async(id_, values).to_dto()
+) -> ExportScenarioToLabResponseDTO:
+    return ScenarioTransfertService.export_scenario_to_lab_async(id_, values)
 
 
 @core_app.get(
