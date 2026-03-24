@@ -1,6 +1,14 @@
 import time
 
-from gws_core import BaseTestCase, Job, QueueRunner, QueueService, Scenario, ScenarioService, ScenarioStatus
+from gws_core import (
+    BaseTestCase,
+    Job,
+    QueueRunner,
+    QueueService,
+    Scenario,
+    ScenarioService,
+    ScenarioStatus,
+)
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_service import RobotService
 from gws_core.test.test_helper import TestHelper
@@ -58,7 +66,7 @@ class TestQueue(BaseTestCase):
         QueueRunner.deinit()
 
     def test_add_job_without_queue_runner(self):
-        """Test that adding a job via QueueService writes to DB without triggering execution."""
+        """Test that adding a job via Job writes to DB without triggering execution."""
         scenario: Scenario = ScenarioService.create_scenario_from_protocol_type(RobotSimpleTravel)
 
         Job.add_job(user=TestHelper.user, scenario=scenario)

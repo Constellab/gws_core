@@ -159,9 +159,9 @@ class TaskRunner:
 
             try:
                 self._task.init()
-            except Exception as exception:
+            except Exception:
                 self.force_dispatch_waiting_messages()
-                raise exception
+                raise
 
         return self._task
 
@@ -243,7 +243,7 @@ class TaskRunner:
                 f"Error when executing task method : {str(exception)}", exception=exception
             )
             self.force_dispatch_waiting_messages()
-            raise exception
+            raise
 
     def force_dispatch_waiting_messages(self) -> None:
         self._message_dispatcher.force_dispatch_waiting_messages()

@@ -7,6 +7,7 @@ from gws_core.core.exception.exceptions import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.scenario.queue.queue_dto import JobDTO
 from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.user.user import User
 
 MAX_QUEUE_LENGTH = 10
@@ -51,10 +52,9 @@ class Job(Model):
         """Remove a scenario from the queue and reset to DRAFT."""
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
-        if scenario.status != scenario.status.IN_QUEUE:
-            raise BadRequestException("The scenario does not have the queued status")
+        if scenario.status == ScenarioStatus.IN_QUEUE:
+            scenario.mark_as_draft()
 
-        scenario.mark_as_draft()
         cls.remove_scenario_from_queue(scenario_id)
         return scenario
 
