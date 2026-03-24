@@ -218,7 +218,7 @@ class AppManager:
         # Authenticate the user
         user: User = User.get_by_id_and_check(user_id)
         with AuthenticateUser(user):
-            ScenarioRunService.run_scenario_process_in_cli(
+            ScenarioRunService.run_scenario_process_from_cli(
                 scenario_id, protocol_model_id, process_instance_name
             )
 

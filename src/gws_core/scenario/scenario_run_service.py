@@ -111,7 +111,7 @@ class ScenarioRunService:
             raise exception from err
 
     @classmethod
-    def run_scenario_process_in_cli(
+    def run_scenario_process_from_cli(
         cls, scenario_id: str, protocol_model_id: str, process_name: str
     ) -> None:
         """Method called by the cli sub process to run the scenario"""

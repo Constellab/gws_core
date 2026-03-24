@@ -12,6 +12,7 @@ from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_service import TagService
 from gws_core.tag.tag_system import TagSystem
+from gws_core.user.current_user_service import CurrentUserService
 
 from ..folder.space_folder import SpaceFolder
 from ..protocol.protocol import Protocol
@@ -127,17 +128,17 @@ class ScenarioProxy:
             )
 
     def run_async(self) -> ScenarioWaiterBasic:
-        """Run the scenario in a separate process but don't wait for it to finish
+        """Run the scenario in a separate CLI process but don't wait for it to finish.
+
+        Uses a CLI subprocess (like the queue runner) instead of fork to avoid
+        inheriting the parent's server socket and event loop state, which can
+        block other HTTP requests.
 
         :return: the scenario waiter
         :rtype: ScenarioWaiterBasic
         """
-        # Pass only the scenario ID to avoid Peewee connection issues across processes
-        scenario_id = self._scenario.id
-
-        # Create and start a background process with clean db connection
-        process = ProcessDb(target=ScenarioRunService.run_scenario_by_id, args=(scenario_id,))
-        process.start()
+        user = CurrentUserService.get_and_check_current_user()
+        ScenarioRunService.create_cli_for_scenario(self._scenario, user)
 
         # Wait for scenario to start running
         count = 0
