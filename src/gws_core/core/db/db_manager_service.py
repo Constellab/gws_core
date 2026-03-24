@@ -16,8 +16,8 @@ class DbManagerService:
 
         The initialization flow is:
         1. Connect all databases
-        2. Run migrations once (across all bricks)
-        3. Create tables for all databases
+        2. Create tables for all databases
+        3. Run migrations once (across all bricks)
 
         :param full_init: If true, the migration and table creation will be done. If false, only the connection to the DB will be done. Defaults to True.
         :type full_init: bool, optional
@@ -38,12 +38,12 @@ class DbManagerService:
                 connected_managers.append(manager)
 
         if full_init:
-            # Step 2: Run migrations once for all bricks
-            DbMigrationService.migrate()
-
-            # Step 3: Create tables for all connected databases
+            # Step 2: Create tables for all connected databases
             for manager in connected_managers:
                 BaseModelService.create_database_tables(manager)
+
+            # Step 3: Run migrations once for all bricks
+            DbMigrationService.migrate()
 
     @classmethod
     def init_db(
@@ -65,8 +65,8 @@ class DbManagerService:
             return False
 
         if full_init:
-            DbMigrationService.migrate()
             BaseModelService.create_database_tables(db_manager)
+            DbMigrationService.migrate()
 
         return True
 
