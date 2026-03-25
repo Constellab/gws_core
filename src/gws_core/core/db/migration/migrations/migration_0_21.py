@@ -26,26 +26,32 @@ class Migration0210(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
 
+        Logger.info("Migration 0.21.0: Creating LabModel table")
         LabModel.create_table()
 
         # Only run column drop if the Job table already exists (skip on fresh DB)
         if Job.table_exists():
+            Logger.info("Migration 0.21.0: Dropping queue_id column from Job table")
             sql_migrator.drop_column_if_exists(Job, "queue_id")
             sql_migrator.migrate()
 
         # Drop the Queue table
+        Logger.info("Migration 0.21.0: Dropping gws_queue table")
         Job.execute_sql("DROP TABLE IF EXISTS gws_queue")
 
         # Migrate data and drop old columns for both shared tables
         for shared_model in [SharedResource, SharedScenario]:
+            Logger.info(f"Migration 0.21.0: Migrating shared table '{shared_model.get_table_name()}'")
             cls._migrate_shared_table(sql_migrator, shared_model)
 
         # Add run_by_lab_id column to both task and protocol tables
+        Logger.info("Migration 0.21.0: Adding run_by_lab column to TaskModel and ProtocolModel")
         sql_migrator.add_column_if_not_exists(TaskModel, ProcessModel.run_by_lab)
         sql_migrator.add_column_if_not_exists(ProtocolModel, ProcessModel.run_by_lab)
         sql_migrator.migrate()
 
         # Get or create the current lab entry and fill run_by_lab for executed processes
+        Logger.info("Migration 0.21.0: Backfilling run_by_lab for executed processes")
         current_lab = LabModel.get_or_create_current_lab()
         for model in [TaskModel, ProtocolModel]:
             table_name = model.get_table_name()
@@ -59,10 +65,12 @@ class Migration0210(BrickMigration):
             )
 
         # Add FK constraints for run_by_lab
+        Logger.info("Migration 0.21.0: Adding foreign key constraints for run_by_lab")
         TaskModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
         ProtocolModel.create_foreign_key_if_not_exist(ProcessModel.run_by_lab)
 
         # Migrate Scenario.data JSON column to a dedicated pid integer column
+        Logger.info("Migration 0.21.0: Migrating Scenario columns (pid, running_in_external_lab)")
         sql_migrator.add_column_if_not_exists(
             Scenario, IntegerField(null=True), "running_process_pid"
         )
@@ -70,6 +78,7 @@ class Migration0210(BrickMigration):
         sql_migrator.drop_column_if_exists(Scenario, "data")
         sql_migrator.migrate()
 
+        Logger.info("Migration 0.21.0: Adding foreign key constraint for Scenario.running_in_external_lab")
         Scenario.create_foreign_key_if_not_exist(Scenario.running_in_external_lab)
 
     @classmethod
@@ -77,30 +86,35 @@ class Migration0210(BrickMigration):
         table_name = shared_model.get_table_name()
 
         # Add external_id column and fill with entity_id
+        Logger.info(f"Migration 0.21.0: Adding external_id column to {table_name}")
         sql_migrator.add_column_if_not_exists(
             shared_model, CharField(max_length=36, null=True), "external_id"
         )
         sql_migrator.migrate()
 
+        Logger.info(f"Migration 0.21.0: Backfilling external_id from entity_id in {table_name}")
         shared_model.execute_sql(
             f"UPDATE {table_name} SET external_id = entity_id WHERE external_id IS NULL"
         )
 
         # Set external_id column not null
+        Logger.info(f"Migration 0.21.0: Setting external_id to NOT NULL in {table_name}")
         sql_migrator.alter_column_type(
             shared_model, "external_id", CharField(max_length=36, null=False)
         )
 
         # Check if old columns exist (migration may have already run)
         if not shared_model.column_exists("lab_name"):
+            Logger.info(f"Migration 0.21.0: Old columns already removed from {table_name}, skipping")
             return
 
         # Insert distinct labs from old columns into gws_lab (ignore duplicates on lab_id+mode)
         # Since old data doesn't have mode info, we default to prod mode
+        Logger.info(f"Migration 0.21.0: Inserting distinct labs from {table_name} into gws_lab")
         shared_model.execute_sql(
             f"""
-            INSERT IGNORE INTO gws_lab (id, lab_id, name, is_current_lab, mode, environment, space_id, space_name, created_at, last_modified_at)
-            SELECT DISTINCT UUID(), lab_id, lab_name, 0, 'prod', 'ON_CLOUD', space_id, space_name, NOW(), NOW()
+            INSERT IGNORE INTO gws_lab (id, lab_id, name, mode, environment, space_id, space_name, created_at, last_modified_at)
+            SELECT DISTINCT UUID(), lab_id, lab_name, 'prod', 'ON_CLOUD', space_id, space_name, NOW(), NOW()
             FROM {table_name}
             WHERE lab_id IS NOT NULL AND lab_id != ''
               AND lab_id NOT IN (SELECT gws_lab.lab_id FROM gws_lab)
@@ -108,6 +122,7 @@ class Migration0210(BrickMigration):
         )
 
         # Resolve user_id: import from Constellab if missing locally, fallback to system user
+        Logger.info(f"Migration 0.21.0: Resolving missing user references in {table_name}")
         sys_user = UserService.get_sysuser()
         # Get distinct user_ids that don't exist locally
         rows = (
@@ -136,6 +151,7 @@ class Migration0210(BrickMigration):
                 )
 
         # Remap lab_id from the logical lab ID to the new gws_lab UUID PK
+        Logger.info(f"Migration 0.21.0: Remapping lab_id to gws_lab UUID in {table_name}")
         shared_model.execute_sql(
             f"""
             UPDATE {table_name} t
@@ -157,11 +173,13 @@ class Migration0210(BrickMigration):
         )
 
         # Delete rows with NULL lab_id or user_id (orphan records that can't be resolved)
+        Logger.info(f"Migration 0.21.0: Cleaning up orphan records in {table_name}")
         shared_model.execute_sql(
             f"DELETE FROM {table_name} WHERE lab_id IS NULL OR user_id IS NULL or user_id = '' or lab_id = ''"
         )
 
         # Set lab_id and user_id columns to NOT NULL
+        Logger.info(f"Migration 0.21.0: Setting lab_id and user_id to NOT NULL in {table_name}")
         sql_migrator.alter_column_type(shared_model, "lab_id", CharField(max_length=36, null=False))
         sql_migrator.alter_column_type(
             shared_model, "user_id", CharField(max_length=36, null=False)
@@ -169,6 +187,7 @@ class Migration0210(BrickMigration):
         sql_migrator.migrate()
 
         # Drop old columns that are no longer needed
+        Logger.info(f"Migration 0.21.0: Dropping old columns from {table_name}")
         sql_migrator.drop_column_if_exists(shared_model, "lab_name")
         sql_migrator.drop_column_if_exists(shared_model, "user_firstname")
         sql_migrator.drop_column_if_exists(shared_model, "user_lastname")
@@ -177,5 +196,6 @@ class Migration0210(BrickMigration):
         sql_migrator.migrate()
 
         # Add FK constraints on lab_id and user_id
+        Logger.info(f"Migration 0.21.0: Adding foreign key constraints on {table_name}")
         shared_model.create_foreign_key_if_not_exist(shared_model.lab)
         shared_model.create_foreign_key_if_not_exist(shared_model.user)
