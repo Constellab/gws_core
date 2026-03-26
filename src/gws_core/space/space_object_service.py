@@ -24,7 +24,7 @@ class SpaceObjectService:
 
     @classmethod
     def sync_notes_from_space(cls) -> None:
-        space_notes = SpaceService.get_instance().get_synced_notes()
+        space_notes = SpaceService.get_instance().get_synced_lab_notes()
 
         cls._sync_objects_from_space(space_notes, Note, "note")
 

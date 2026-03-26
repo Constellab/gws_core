@@ -120,7 +120,7 @@ class TestMockSpaceService(SpaceService):
 
     # ==================== NOTE ====================
 
-    def save_note(
+    def save_lab_note(
         self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData
     ) -> SpaceHierarchyObjectDTO:
         """Mock save_note"""
@@ -128,15 +128,17 @@ class TestMockSpaceService(SpaceService):
             id=note.note.id, name=note.note.title, objectType="NOTE", parentId=folder_id
         )
 
-    def delete_note(self, folder_id: str, note_id: str) -> None:
+    def delete_lab_note(self, folder_id: str, note_id: str) -> None:
         """Mock delete_note"""
         pass
 
-    def update_note_folder(self, current_folder_id: str, note_id: str, new_folder_id: str) -> None:
+    def update_lab_note_folder(
+        self, current_folder_id: str, note_id: str, new_folder_id: str
+    ) -> None:
         """Mock update_note_folder"""
         pass
 
-    def get_modifications(
+    def get_rich_text_modifications(
         self,
         old_content: RichTextDTO,
         new_content: RichTextDTO,
@@ -145,13 +147,13 @@ class TestMockSpaceService(SpaceService):
         """Mock get_modifications"""
         return RichTextModificationsDTO(version=1, modifications=[])
 
-    def get_undo_content(
+    def get_rich_text_undo_content(
         self, content: RichTextDTO, modifications: RichTextModificationsDTO, modification_id: str
     ) -> RichTextDTO:
         """Mock get_undo_content"""
         return content
 
-    def get_synced_notes(self) -> list[SpaceSyncObjectDTO]:
+    def get_synced_lab_notes(self) -> list[SpaceSyncObjectDTO]:
         """Mock get_synced_notes - returns empty list"""
         return []
 

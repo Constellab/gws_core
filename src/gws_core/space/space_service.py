@@ -5,12 +5,12 @@ from fastapi.encoders import jsonable_encoder
 from requests.models import Response
 
 from gws_core.brick.brick_log_service import BrickLogService
-from gws_core.lab.lab_model.lab_enums import LabEnvironment
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
+from gws_core.lab.lab_model.lab_enums import LabEnvironment
 from gws_core.space.space_dto import (
     DocumentUploadOverrideMode,
     LabStartDTO,
@@ -176,9 +176,9 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "get scenario sync")
 
-    #################################### NOTE ####################################
+    #################################### LAB NOTE ####################################
 
-    def save_note(
+    def save_lab_note(
         self, folder_id: str, note: SaveNoteToSpaceDTO, form_data: FormData
     ) -> SpaceHierarchyObjectDTO:
         space_api_url: str = self._get_space_api_url(
@@ -198,7 +198,7 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "save the note in space")
 
-    def delete_note(self, folder_id: str, note_id: str) -> None:
+    def delete_lab_note(self, folder_id: str, note_id: str) -> None:
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/note/{note_id}"
         )
@@ -209,7 +209,9 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "delete the note in space")
 
-    def update_note_folder(self, current_folder_id: str, note_id: str, new_folder_id: str) -> None:
+    def update_lab_note_folder(
+        self, current_folder_id: str, note_id: str, new_folder_id: str
+    ) -> None:
         space_api_url: str = self._get_space_api_url(
             f"{self._EXTERNAL_LABS_ROUTE}/folder/{current_folder_id}/note/{note_id}/folder/{new_folder_id}"
         )
@@ -221,7 +223,47 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "update the note folder in space")
 
-    def get_modifications(
+    def get_synced_lab_notes(self) -> list[SpaceSyncObjectDTO]:
+        """Get the list of notes synced with space"""
+        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/note/sync")
+
+        try:
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
+            return SpaceSyncObjectDTO.from_json_list(response.json())
+        except Exception as err:
+            self.handle_error(err, "get lab note sync")
+
+    #################################### SPACE NOTE ####################################
+
+    def create_constellab_document(self, folder_id: str, name: str) -> SpaceHierarchyObjectDTO:
+        """Create a Constellab document in a folder in space
+
+        :param folder_id: id of the parent folder
+        :type folder_id: str
+        :param name: name of the document
+        :type name: str
+        :return: the created Constellab document with its content
+        :rtype: SpaceHierarchyObjectDTO
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/folder/{folder_id}/constellab-document"
+        )
+
+        try:
+            response = ExternalApiService.post(
+                space_api_url,
+                {"name": name},
+                self._get_request_header(),
+                raise_exception_if_error=True,
+            )
+            return SpaceHierarchyObjectDTO.from_json(response.json())
+        except Exception as err:
+            self.handle_error(err, "create constellab document in space")
+
+    #################################### RICH TEXT ####################################
+    def get_rich_text_modifications(
         self,
         old_content: RichTextDTO,
         new_content: RichTextDTO,
@@ -246,9 +288,9 @@ class SpaceService(SpaceServiceBase):
             )
             return RichTextModificationsDTO.from_json(response.json())
         except Exception as err:
-            self.handle_error(err, "get note modifications")
+            self.handle_error(err, "get rich text modifications")
 
-    def get_undo_content(
+    def get_rich_text_undo_content(
         self, content: RichTextDTO, modifications: RichTextModificationsDTO, modification_id: str
     ) -> RichTextDTO:
         space_api_url: str = self._get_space_api_url(
@@ -267,19 +309,7 @@ class SpaceService(SpaceServiceBase):
             )
             return RichTextDTO.from_json(response.json())
         except Exception as err:
-            self.handle_error(err, "get note modifications")
-
-    def get_synced_notes(self) -> list[SpaceSyncObjectDTO]:
-        """Get the list of notes synced with space"""
-        space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/note/sync")
-
-        try:
-            response = ExternalApiService.get(
-                space_api_url, self._get_request_header(), raise_exception_if_error=True
-            )
-            return SpaceSyncObjectDTO.from_json_list(response.json())
-        except Exception as err:
-            self.handle_error(err, "get note sync")
+            self.handle_error(err, "get rich text undo content")
 
     #################################### DOCUMENT ####################################
 

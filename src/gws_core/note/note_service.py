@@ -3,8 +3,6 @@ from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
-from gws_core.model.event.event_dispatcher import EventDispatcher
-from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
@@ -17,6 +15,8 @@ from gws_core.impl.rich_text.rich_text_modification import (
 )
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO, RichTextObjectType
 from gws_core.lab.lab_config_model import LabConfigModel
+from gws_core.model.event.event_dispatcher import EventDispatcher
+from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.note_template.note_template import NoteTemplate
 from gws_core.resource.resource_model import ResourceModel
@@ -156,7 +156,7 @@ class NoteService:
                     raise BadRequestException(
                         "The note is synchronized with the space, you can't move it to another root folder. Please unsync it first by removing it from the folder."
                     )
-                SpaceService.get_instance().update_note_folder(
+                SpaceService.get_instance().update_lab_note_folder(
                     note.folder.id, note.id, new_folder.id
                 )
             note.folder = new_folder
@@ -194,7 +194,7 @@ class NoteService:
         )
 
         if not Settings.get_instance().is_test and not Settings.get_instance().is_local_env():
-            note.modifications = SpaceService.get_instance().get_modifications(
+            note.modifications = SpaceService.get_instance().get_rich_text_modifications(
                 note.content, note_content, note.modifications
             )
         note.content = note_content
@@ -278,7 +278,7 @@ class NoteService:
 
         # if the note was sync with space, delete it in space too
         if note.last_sync_at is not None and note.folder is not None:
-            SpaceService.get_instance().delete_note(note.folder.id, note.id)
+            SpaceService.get_instance().delete_lab_note(note.folder.id, note.id)
 
         ActivityService.add(
             ActivityType.DELETE, object_type=ActivityObjectType.NOTE, object_id=note_id
@@ -443,14 +443,14 @@ class NoteService:
             )
 
         # Save the scenario in space
-        SpaceService.get_instance().save_note(note.folder.id, save_note_dto, form_data)
+        SpaceService.get_instance().save_lab_note(note.folder.id, save_note_dto, form_data)
 
         return note
 
     @classmethod
     def _unsynchronize_with_space(cls, note: Note, folder_id: str) -> Note:
         # delete the note in space
-        SpaceService.get_instance().delete_note(folder_id=folder_id, note_id=note.id)
+        SpaceService.get_instance().delete_lab_note(folder_id=folder_id, note_id=note.id)
 
         note.last_sync_at = None
         note.last_sync_by = None
@@ -756,7 +756,7 @@ class NoteService:
     def get_undo_content(cls, note_id: str, modification_id: str) -> RichTextDTO:
         note: Note = Note.get_by_id_and_check(note_id)
 
-        return SpaceService.get_instance().get_undo_content(
+        return SpaceService.get_instance().get_rich_text_undo_content(
             note.content, note.modifications, modification_id
         )
 
@@ -804,7 +804,7 @@ class NoteService:
         Logger.info("Syncing notes from space")
 
         try:
-            notes = SpaceService.get_instance().get_synced_notes()
+            notes = SpaceService.get_instance().get_synced_lab_notes()
 
             for note in notes:
                 # check if the note is already in the lab
