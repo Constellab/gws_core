@@ -2,7 +2,7 @@
 from peewee import ModelSelect
 
 from gws_core.community.community_dto import CommunityTagKeyDTO, CommunityTagValueDTO
-from gws_core.community.community_service import CommunityService
+from gws_core.community.community_service import CommunityLabApiService
 from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
@@ -334,7 +334,7 @@ class TagService:
                 current_tag_key: TagKeyModel = cls.get_by_key(tag.key)
                 if not current_tag_key:
                     # get Community Tag Key and create it if not exists
-                    community_tag_key = CommunityService.get_community_tag_key(tag.key)
+                    community_tag_key = CommunityLabApiService.get_community_tag_key(tag.key)
                     if not community_tag_key:
                         raise BadRequestException(
                             f"The community tag key '{tag.key}' does not exists. Please create it first."
@@ -564,7 +564,7 @@ class TagService:
         new_community_tag_values = cls.get_new_community_tag_values(tag_key_model)
 
         # share the tag key to the community
-        shared_community_tag = CommunityService.share_tag_to_community(
+        shared_community_tag = CommunityLabApiService.share_tag_to_community(
             new_community_tag_key, new_community_tag_values, publish_mode, space_selected
         )
 
@@ -592,7 +592,7 @@ class TagService:
         """Get the community available tags"""
         try:
             community_tags_keys: PageDTO[CommunityTagKeyDTO] = (
-                CommunityService.get_available_community_tags(
+                CommunityLabApiService.get_available_community_tags(
                     spaces_filter, "", title_filter, personal_only, page, number_of_items_per_page
                 )
             )
@@ -620,7 +620,7 @@ class TagService:
     ) -> PageDTO[TagValueModelDTO]:
         """Get the community tags"""
         try:
-            community_tags = CommunityService.get_community_tag_values(
+            community_tags = CommunityLabApiService.get_community_tag_values(
                 community_tag_key, page=page, number_of_items_per_page=number_of_items_per_page
             )
         except Exception as e:
@@ -717,7 +717,7 @@ class TagService:
     ) -> PageDTO[TagKeyModelDTO]:
         """Get the community tags by key"""
         try:
-            community_tags_keys = CommunityService.get_available_community_tags(
+            community_tags_keys = CommunityLabApiService.get_available_community_tags(
                 key_filter=tag_key,
                 label_filter=None,
                 number_of_items_per_page=number_of_items_per_page,
@@ -781,7 +781,7 @@ class TagService:
 
         for imported_community_tag_key in imported_community_tag_keys:
             current_community_tag_key_dto: CommunityTagKeyDTO = (
-                CommunityService.get_community_tag_key(imported_community_tag_key.key)
+                CommunityLabApiService.get_community_tag_key(imported_community_tag_key.key)
             )
             current_community_tag_key = (
                 TagKeyModel.from_community_tag_key(current_community_tag_key_dto, new_only=True)
@@ -812,7 +812,7 @@ class TagService:
 
             not_sync_values: list[TagValueNotSynchronizedFieldsDTO] = []
 
-            current_values = CommunityService.get_all_community_tag_values(
+            current_values = CommunityLabApiService.get_all_community_tag_values(
                 imported_community_tag_key.key
             )
             for current_value in current_values:
@@ -1092,7 +1092,7 @@ class TagService:
     def import_all_community_tag_key_values(cls, tag_key_model: TagKeyModel) -> None:
         """Import all community tag key values for a given key"""
 
-        community_tag_values = CommunityService.get_all_community_tag_values(tag_key_model.key)
+        community_tag_values = CommunityLabApiService.get_all_community_tag_values(tag_key_model.key)
         for community_tag_value in community_tag_values:
             # create the tag value model for each community tag value
             if cls.get_tag_value_by_id(community_tag_value.id):

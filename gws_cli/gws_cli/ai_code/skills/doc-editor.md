@@ -219,28 +219,23 @@ Wait for the answer.
 - DTO/dataclass fields and their types
 - Imports that reveal what classes are part of the public API
 
-**Fetch the current documentation using the `gws community get-doc` CLI command**, passing the `remote_doc_id` from the manifest entry as the `documentation_id` parameter. This command retrieves a Constellab documentation page by its ID and writes the content as a JSON file (EditorJs rich text format) to the specified output path. The JSON includes a `blocks` array where each block has a `type` (header, paragraph, code, list, table) and associated `data`. Do **not** use the local file (it may be outdated).
+**Fetch the current documentation using the `rich-text-editor` MCP server.** Call the `load_remote_document` tool with the `remote_doc_id` from the manifest entry. This loads the document into the MCP server's memory and writes a markdown representation to a file.
 
-Usage:
-```bash
-gws community get-doc <documentation_id> <output_file_path>
-```
+After loading, read the markdown file. The file contains:
+- A header line with the block count (e.g., `> 42 blocks`)
+- Each block preceded by an HTML comment: `<!-- block_id | type -->`
+- The markdown rendering of each block for easy reading
 
-Example:
-```bash
-gws community get-doc "abc-123-uuid" "/lab/user/tmp/doc_current.json"
-```
+For complex blocks (tables, lists, hints, etc.), the markdown may not capture all data fields. Before updating such blocks, call **`get_block_data`** with the block ID to get the exact JSON data dict — then modify it and pass it to `update_block`.
 
-After running the command, read the output JSON file to access the document content and parse it to understand the document structure.
-
-If the command fails (e.g., the `remote_doc_id` is empty or the API is unreachable), warn the user and **stop**.
+If the tool call fails (e.g., the `remote_doc_id` is empty or the API is unreachable), warn the user and **stop**.
 
 Understand the fetched doc's structure, tone, and style:
 
 - Block ordering and section hierarchy (header levels)
 - Code example style (imports shown, variable naming)
 - How concepts are explained (overview first, then details)
-- Existing block IDs (preserve them for unchanged blocks)
+- Block IDs from the comments (you'll reference these when making changes)
 
 ### Step B4: Analyze and summarize changes
 
@@ -278,40 +273,48 @@ Ask the user to confirm before proceeding with the update. **Wait for confirmati
 
 ### Step B5: Update the documentation
 
-Apply changes to the EditorJS JSON, producing the updated `blocks` array. Write the updated JSON to the local documentation file.
+Apply changes using the `rich-text-editor` MCP tools. The MCP server holds the document in memory — you modify it through tool calls, not by writing JSON files.
 
-**Rules for editing blocks:**
+**Choose the right tool for each change:**
 
-- **Updated blocks** — keep the **same `id`** and the same `type`, only change the `data` content. You MUST preserve the original block ID when updating a block.
-- **New blocks** — generate a fresh random 10-character alphanumeric ID. Only generate a new ID for blocks that did not exist before, or if you need to change a block's `type` (which requires replacing the block entirely).
-- **Removed blocks** — simply omit them from the output array.
-- **Unchanged blocks** — keep them exactly as they are (same `id`, same `type`, same `data`).
-- **Unknown block types** — if you encounter a block with a `type` you do not recognize, you MUST leave it completely untouched. Do not modify, move, or remove it. Preserve it exactly as-is in its original position.
+- **`get_block_data`** — Get the raw JSON data of a block by its ID. **Call this before updating complex blocks** (tables, lists, hints, etc.) to get their exact data dict — then modify it and pass it to `update_block` or `batch_operations`. For simple blocks (paragraphs, headers, code), you can construct the data dict directly.
+
+- **`update_block`** — Update a single block's data by its ID. The block's `id` and `type` are preserved automatically. Use for small, isolated changes (fix a paragraph, update a code example).
+
+- **`batch_operations`** — Execute multiple operations in one call. Each operation is a dict with an `"op"` key:
+  - `{"op": "update", "block_id": "...", "data": {...}}` — update a block
+  - `{"op": "insert", "after_block_id": "..." or null, "blocks": [{type, data}, ...]}` — insert new blocks
+  - `{"op": "remove", "block_id": "..."}` — remove a block
+
+  **Prefer `batch_operations`** over multiple individual tool calls when you have several changes to make. This is more efficient and avoids excessive round-trips.
+
+- **`replace_section`** — Replace an entire section (a header block and all blocks up to the next header of equal or higher level). Provide the header's block ID and a list of new `{type, data}` blocks. Use when rewriting a whole section (e.g., a method's documentation that has significantly changed).
+
+- **`insert_blocks`** — Insert new blocks after a given block ID (or at the beginning if `after_block_id` is null). Use for adding new sections or content.
+
+- **`remove_block`** — Remove a single block by ID.
+
+- **`move_block`** — Move a block to a new position.
+
+**Rules:**
+- **Unchanged blocks** — leave them alone. Do not call update_block on blocks that haven't changed.
+- **Unknown block types** — do not modify, move, or remove blocks with types you don't recognize.
+- For complex blocks (tables, lists, hints), call `get_block_data` first to get the current data, then modify it.
+- When providing `data` dicts in tool calls, use the EditorJS data format (see the "EditorJS JSON format" section above for schemas).
 
 ### Step B6: Verify
 
-After updating, do a final review:
+After applying all changes, read the updated markdown file (the MCP server updates it after each operation) and do a final review:
 - Every public method in the source files should be documented or intentionally excluded (private methods starting with `_` are excluded)
-- Every code example in `code` blocks should use the current API signatures
+- Every code example should use the current API signatures
 - The API Reference Summary table (if present) should match the actual methods
-- The JSON is valid and well-formed
-- All block IDs are unique within the document
+- The document structure looks correct
 
 ### Step B7: Upload the updated documentation
 
-After verification, **upload the updated documentation using the `gws community update-doc` CLI command**. This command reads a JSON file (EditorJs rich text format) from the given path and uploads it as the new content for the specified documentation page.
+After verification, **upload the document using the `upload_document` MCP tool**, passing the `remote_doc_id`. This pushes the in-memory document state to the Constellab platform.
 
-Usage:
-```bash
-gws community update-doc <documentation_id> <json_file_path>
-```
-
-Example:
-```bash
-gws community update-doc "abc-123-uuid" "/lab/user/tmp/updated_doc.json"
-```
-
-If the command fails, warn the user and **stop**.
+If the tool call fails, warn the user and **stop**.
 
 ---
 
@@ -354,7 +357,8 @@ If the command fails, warn the user and **stop**.
 - When in doubt about intent, ask the user rather than guessing.
 - If a method is clearly internal (prefixed with `_`), do not add it to the documentation.
 - Always wait for user input at each interactive step. Never skip ahead.
-- The output file must be valid JSON parseable by any standard JSON parser.
+- **Mode A (create):** The output file must be valid JSON parseable by any standard JSON parser.
+- **Mode B (update):** Use the `rich-text-editor` MCP tools — do NOT generate the full JSON manually. The MCP server handles serialization, ID preservation, and upload.
 
 ## Task
 

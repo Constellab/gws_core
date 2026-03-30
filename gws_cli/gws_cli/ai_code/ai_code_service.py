@@ -72,8 +72,8 @@ class AICodeService(ABC):
             argument_hint="description of code review request",
         ),
         SkillFrontmatter(
-            filename="update-doc-json.md",
-            description="Update a developer documentation file to match current source code using JSON input",
+            filename="doc-editor.md",
+            description="Create or update a developer documentation page using the rich-text-editor MCP",
             argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
         ),
     ]

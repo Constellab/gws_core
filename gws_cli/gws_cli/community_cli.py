@@ -3,10 +3,11 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 import typer
+from gws_core.community.community_auth_service import CommunityAuthService
+from gws_core.community.community_credential_service import CommunityCredentialService
+from gws_core.community.community_user_service import CommunityUserApiService, TokenExpiredError
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
-
-from .utils.community_cli_service import CommunityCliService, TokenExpiredError
 
 app = typer.Typer(help="Community commands (documentation, chatbot)")
 
@@ -19,7 +20,7 @@ def login(
     ] = False,
 ):
     try:
-        CommunityCliService.run_login_flow(force=force)
+        CommunityAuthService.run_login_flow(force=force)
     except KeyboardInterrupt:
         typer.echo("\nLogin cancelled.")
         raise typer.Exit(0)
@@ -33,27 +34,30 @@ def logout(
     ] = False,
 ):
     if all_domains:
-        domains = CommunityCliService.get_stored_domains()
+        domains = CommunityCredentialService.get_stored_domains()
         if not domains:
             typer.echo("No stored credentials found.")
             return
-        CommunityCliService.delete_all_credentials()
+        CommunityCredentialService.delete_all_credentials()
         typer.echo(f"Logged out from all domains ({len(domains)}).")
         return
 
-    if not CommunityCliService.has_credentials() and not CommunityCliService.is_token_expired():
+    if (
+        not CommunityCredentialService.has_credentials()
+        and not CommunityCredentialService.is_token_expired()
+    ):
         typer.echo("You are not logged in.")
         return
 
-    domain = CommunityCliService._get_current_api_domain()
-    CommunityCliService.delete_credentials()
+    domain = CommunityCredentialService.get_current_api_domain()
+    CommunityCredentialService.delete_credentials()
     typer.echo(f"You have been logged out from {domain}.")
 
 
 @app.command("status", help="Show current authentication status")
 def status():
-    domain = CommunityCliService._get_current_api_domain()
-    access_token, expires_at = CommunityCliService.load_credentials(domain)
+    domain = CommunityCredentialService.get_current_api_domain()
+    access_token, expires_at = CommunityCredentialService.load_credentials(domain)
 
     typer.echo(f"Domain: {domain}")
 
@@ -64,17 +68,38 @@ def status():
     if expires_at is not None:
         expires_dt = datetime.fromtimestamp(expires_at, tz=timezone.utc)
         if datetime.now(tz=timezone.utc) >= expires_dt:
-            typer.echo(f"Status: Expired (expired on {expires_dt.strftime('%Y-%m-%d %H:%M:%S UTC')})")
+            typer.echo(
+                f"Status: Expired (expired on {expires_dt.strftime('%Y-%m-%d %H:%M:%S UTC')})"
+            )
         else:
-            typer.echo(f"Status: Logged in (expires on {expires_dt.strftime('%Y-%m-%d %H:%M:%S UTC')})")
+            typer.echo(
+                f"Status: Logged in (expires on {expires_dt.strftime('%Y-%m-%d %H:%M:%S UTC')})"
+            )
     else:
         typer.echo("Status: Logged in (no expiration info)")
 
     # Show other stored domains
-    all_domains = CommunityCliService.get_stored_domains()
+    all_domains = CommunityCredentialService.get_stored_domains()
     other_domains = [d for d in all_domains if d != domain]
     if other_domains:
         typer.echo(f"\nOther stored domains: {', '.join(other_domains)}")
+
+
+@app.command("ask-chatbot", help="Ask a question to the Ragflow chatbot")
+def ask_ragflow_chatbot(
+    message: Annotated[str, typer.Argument(help="The question to ask the chatbot.")],
+    session_id: Annotated[
+        str, typer.Option("--session-id", help="Optional session ID to continue a conversation.")
+    ]
+    | None = None,
+):
+    result = CommunityUserApiService().ask_ragflow_chatbot(
+        message, session_id=session_id
+    )
+    typer.echo(f"Answer: {result.answer}")
+    typer.echo(f"Session ID: {result.session_id}")
+    # if result.references:
+    #     typer.echo(f"References: {json.dumps(result.references, indent=2)}")
 
 
 # Command to update a documentation's content from a JSON file
@@ -95,7 +120,7 @@ def update_documentation(
 
     content = RichTextDTO.from_json(content_dict)
     try:
-        result = CommunityCliService.get_community_service(
+        result = CommunityUserApiService(
             requires_authentication=True
         ).update_documentation_content(documentation_id, content)
     except TokenExpiredError as e:
@@ -104,24 +129,9 @@ def update_documentation(
     typer.echo(f"Documentation '{result.title}' (id={result.id}) updated successfully.")
 
 
-@app.command("ask-chatbot", help="Ask a question to the Ragflow chatbot")
-def ask_ragflow_chatbot(
-    message: Annotated[str, typer.Argument(help="The question to ask the chatbot.")],
-    session_id: Annotated[
-        str, typer.Option("--session-id", help="Optional session ID to continue a conversation.")
-    ]
-    | None = None,
-):
-    result = CommunityCliService.get_community_service().ask_ragflow_chatbot(
-        message, session_id=session_id
-    )
-    typer.echo(f"Answer: {result.answer}")
-    typer.echo(f"Session ID: {result.session_id}")
-    # if result.references:
-    #     typer.echo(f"References: {json.dumps(result.references, indent=2)}")
-
-
-@app.command("get-doc", help="Retrieve a documentation page and write it to a file")
+@app.command(
+    "get-doc", help="Retrieve a documentation page and write it to a file in markdown format"
+)
 def get_documentation(
     documentation_id: Annotated[
         str, typer.Argument(help="ID of the documentation page to retrieve.")
@@ -129,11 +139,11 @@ def get_documentation(
     output_file_path: Annotated[
         str,
         typer.Argument(
-            help="Path to the output file where the documentation JSON will be written."
+            help="Path to the output file where the documentation markdown will be written."
         ),
     ],
 ):
-    result = CommunityCliService.get_community_service().get_documentation(documentation_id)
+    result = CommunityUserApiService().get_documentation(documentation_id)
 
     rich_text = RichText(result.content)
     markdown = rich_text.to_markdown(include_block_comments=True)

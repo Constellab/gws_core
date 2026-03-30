@@ -2,7 +2,7 @@ import threading
 from typing import cast
 
 from gws_core.apps.app_resource import AppResource
-from gws_core.community.community_service import CommunityService
+from gws_core.community.community_service import CommunityLabApiService
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.logger import Logger
@@ -309,7 +309,7 @@ class ShareService:
     @classmethod
     def _send_resource_app_stat_to_community(cls, app_url: str):
         try:
-            CommunityService.send_app_stat(app_url)
+            CommunityLabApiService.send_app_stat(app_url)
         except Exception as err:
             Logger.error(f"Error sending app statistics to the Community. Error: {str(err)}")
 

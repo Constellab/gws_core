@@ -1,7 +1,7 @@
-from typing import Any
+from typing import Any, TypeVar
 
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
-from gws_core.core.model.model_dto import PageDTO
+from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.agent.helper.agent_factory import AgentFactory
 from gws_core.tag.tag_dto import ShareTagMode
@@ -20,8 +20,16 @@ from .community_dto import (
     CommunityTagValueDTO,
 )
 
+T = TypeVar("T", bound=BaseModelDTO)
 
-class CommunityService:
+
+class CommunityLabApiService:
+    """Service for lab-to-community API calls.
+
+    Authenticates using the lab's API key (+ optional user ID header).
+    Used server-side for agent, tag, space, and stats operations.
+    """
+
     api_key_header_key: str = "Authorization"
     api_key_header_prefix: str = "api-key"
     # Key to set the user in the request
@@ -78,20 +86,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
-        res_parsed = response.json()
-        return PageDTO(
-            is_first_page=res_parsed["first"],
-            is_last_page=res_parsed["last"],
-            page=res_parsed["currentPage"],
-            prev_page=res_parsed["currentPage"] - 1,
-            next_page=res_parsed["currentPage"] + 1,
-            last_page=(res_parsed["totalElements"] % res_parsed["pageSize"]),
-            total_number_of_items=res_parsed["totalElements"],
-            total_number_of_pages=(res_parsed["totalElements"] % res_parsed["pageSize"]) + 1,
-            number_of_items_per_page=res_parsed["pageSize"],
-            objects=[CommunityAgentDTO.from_json(agent) for agent in res_parsed["objects"]],
-            total_is_approximate=False,
-        )
+        return cls._community_page_to_page_dto(response.json(), CommunityAgentDTO, number_of_items_per_page)
 
     @classmethod
     def get_community_agent(cls, agent_version_id: str) -> CommunityAgentDTO:
@@ -271,34 +266,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't retrieve community tags for the lab. Error : {err.detail}"
             raise err
-        res_parsed = response.json()
-        if res_parsed["pageSize"] == 0:
-            return PageDTO(
-                is_first_page=True,
-                is_last_page=True,
-                page=0,
-                prev_page=0,
-                next_page=0,
-                last_page=0,
-                total_number_of_items=0,
-                total_number_of_pages=1,
-                number_of_items_per_page=number_of_items_per_page,
-                objects=[],
-                total_is_approximate=False,
-            )
-        return PageDTO(
-            is_first_page=res_parsed["first"],
-            is_last_page=res_parsed["last"],
-            page=res_parsed["currentPage"],
-            prev_page=res_parsed["currentPage"] - 1,
-            next_page=res_parsed["currentPage"] + 1,
-            last_page=(res_parsed["totalElements"] % res_parsed["pageSize"]),
-            total_number_of_items=res_parsed["totalElements"],
-            total_number_of_pages=(res_parsed["totalElements"] % res_parsed["pageSize"]) + 1,
-            number_of_items_per_page=res_parsed["pageSize"],
-            objects=[CommunityTagKeyDTO.from_json(tag) for tag in res_parsed["objects"]],
-            total_is_approximate=False,
-        )
+        return cls._community_page_to_page_dto(response.json(), CommunityTagKeyDTO, number_of_items_per_page)
 
     @classmethod
     def get_community_tag_values(
@@ -312,34 +280,7 @@ class CommunityService:
         except BaseHTTPException as err:
             err.detail = f"Can't retrieve community tag values for the lab. Error : {err.detail}"
             raise err
-        res_parsed = response.json()
-        if res_parsed["pageSize"] == 0:
-            return PageDTO(
-                is_first_page=True,
-                is_last_page=True,
-                page=0,
-                prev_page=0,
-                next_page=0,
-                last_page=0,
-                total_number_of_items=0,
-                total_number_of_pages=1,
-                number_of_items_per_page=number_of_items_per_page,
-                objects=[],
-                total_is_approximate=False,
-            )
-        return PageDTO(
-            is_first_page=res_parsed["first"],
-            is_last_page=res_parsed["last"],
-            page=res_parsed["currentPage"],
-            prev_page=res_parsed["currentPage"] - 1,
-            next_page=res_parsed["currentPage"] + 1,
-            last_page=(res_parsed["totalElements"] % res_parsed["pageSize"]),
-            total_number_of_items=res_parsed["totalElements"],
-            total_number_of_pages=(res_parsed["totalElements"] % res_parsed["pageSize"]) + 1,
-            number_of_items_per_page=res_parsed["pageSize"],
-            objects=[CommunityTagValueDTO.from_json(tag) for tag in res_parsed["objects"]],
-            total_is_approximate=False,
-        )
+        return cls._community_page_to_page_dto(response.json(), CommunityTagValueDTO, number_of_items_per_page)
 
     @classmethod
     def get_all_community_tag_values(cls, key: str) -> list[CommunityTagValueDTO]:
@@ -386,12 +327,44 @@ class CommunityService:
             raise err
         return CommunityTagKeyDTO.from_json(response.json())
 
+    @staticmethod
+    def _community_page_to_page_dto(
+        res_parsed: dict,
+        object_type: type[T],
+        number_of_items_per_page: int,
+    ) -> PageDTO[T]:
+        """Convert a community paginated response to a PageDTO."""
+        if res_parsed["pageSize"] == 0:
+            return PageDTO(
+                is_first_page=True,
+                is_last_page=True,
+                page=0,
+                prev_page=0,
+                next_page=0,
+                last_page=0,
+                total_number_of_items=0,
+                total_number_of_pages=1,
+                number_of_items_per_page=number_of_items_per_page,
+                objects=[],
+                total_is_approximate=False,
+            )
+        return PageDTO(
+            is_first_page=res_parsed["first"],
+            is_last_page=res_parsed["last"],
+            page=res_parsed["currentPage"],
+            prev_page=res_parsed["currentPage"] - 1,
+            next_page=res_parsed["currentPage"] + 1,
+            last_page=(res_parsed["totalElements"] % res_parsed["pageSize"]),
+            total_number_of_items=res_parsed["totalElements"],
+            total_number_of_pages=(res_parsed["totalElements"] % res_parsed["pageSize"]) + 1,
+            number_of_items_per_page=res_parsed["pageSize"],
+            objects=[object_type.from_json(obj) for obj in res_parsed["objects"]],
+            total_is_approximate=False,
+        )
+
     @classmethod
     def get_community_api_url(cls) -> str:
-        community_api_url = Settings.get_community_api_url()
-        if community_api_url is None:
-            raise Exception("Environment variable 'COMMUNITY_API_URL' is not set")
-        return community_api_url
+        return Settings.get_community_api_url_and_check()
 
     @classmethod
     def _get_request_header(cls) -> dict[str, str]:

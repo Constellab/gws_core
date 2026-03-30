@@ -47,7 +47,7 @@ from ..community.community_dto import (
     CommunityAgentVersionDTO,
     CommunityCreateAgentDTO,
 )
-from ..community.community_service import CommunityService
+from ..community.community_service import CommunityLabApiService
 from ..config.param.param_types import ParamSpecVisibilty
 from ..core.exception.exceptions import BadRequestException
 from ..impl.agent.helper.agent_factory import AgentFactory
@@ -1059,7 +1059,7 @@ class ProtocolService:
         cls, protocol_id: str, agent_version_id: str
     ) -> ProtocolUpdate:
         community_agent_version: CommunityAgentVersionDTO = (
-            CommunityService.get_community_agent_version(agent_version_id)
+            CommunityLabApiService.get_community_agent_version(agent_version_id)
         )
 
         return cls.add_community_agent_version_to_protocol_id(protocol_id, community_agent_version)
@@ -1179,7 +1179,7 @@ class ProtocolService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def get_community_available_space(cls) -> Any:
-        return CommunityService.get_community_available_space()
+        return CommunityLabApiService.get_community_available_space()
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -1191,19 +1191,19 @@ class ProtocolService:
         page: int,
         number_of_items_per_page: int,
     ) -> PageDTO[CommunityAgentDTO]:
-        return CommunityService.get_community_available_agents(
+        return CommunityLabApiService.get_community_available_agents(
             spaces_filter, title_filter, personal_only, page, number_of_items_per_page
         )
 
     @classmethod
     def get_community_agent(cls, agent_version_id: str) -> CommunityAgentDTO:
-        return CommunityService.get_community_agent(agent_version_id)
+        return CommunityLabApiService.get_community_agent(agent_version_id)
 
     @classmethod
     def get_community_agent_and_check_rights(
         cls, agent_version_id: str
     ) -> CommunityAgentDTO | None:
-        return CommunityService.get_community_agent_and_check_rights(agent_version_id)
+        return CommunityLabApiService.get_community_agent_and_check_rights(agent_version_id)
 
     @classmethod
     def create_community_agent(
@@ -1212,7 +1212,7 @@ class ProtocolService:
         version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(
             process_id
         )
-        return CommunityService.create_community_agent(version_file, form_data)
+        return CommunityLabApiService.create_community_agent(version_file, form_data)
 
     @classmethod
     def fork_community_agent(
@@ -1221,7 +1221,7 @@ class ProtocolService:
         version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(
             process_id
         )
-        return CommunityService.fork_community_agent(version_file, form_data, agent_version_id)
+        return CommunityLabApiService.fork_community_agent(version_file, form_data, agent_version_id)
 
     @classmethod
     def create_community_agent_version(
@@ -1230,7 +1230,7 @@ class ProtocolService:
         version_file: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(
             process_id
         )
-        return CommunityService.create_community_agent_version(version_file, agent_id)
+        return CommunityLabApiService.create_community_agent_version(version_file, agent_id)
 
     ########################## DYNAMIC PARAM #####################
     @classmethod

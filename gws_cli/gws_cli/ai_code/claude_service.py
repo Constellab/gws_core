@@ -14,12 +14,10 @@ from gws_cli.ai_code.ai_code_service import AICodeService, SkillFrontmatter
 class ClaudeService(AICodeService):
     """Service for managing Claude Code installation and related operations"""
 
-    MCP_DIR = Path(__file__).parent / ".." / "mcp"
-
-    # List of MCP servers to configure: (name, script filename)
+    # List of MCP servers to configure: (name, module path)
     MCP_SERVERS: list[tuple[str, str]] = [
-        # ("gws-mcp", "rag_mcp.py"),
-        ("rich-text-editor", "rich_text_mcp.py"),
+        # ("gws-mcp", "gws_cli.mcp.rag_mcp"),
+        ("rich-text-editor", "gws_cli.mcp.rich_text_mcp"),
     ]
 
     def __init__(self):
@@ -239,7 +237,7 @@ argument-hint: [{frontmatter.argument_hint}]
             typer.echo(f"Error initializing settings: {e}", err=True)
             return 1
 
-    def _configure_single_mcp(self, mcp_name: str, script_filename: str) -> int:
+    def _configure_single_mcp(self, mcp_name: str, module_path: str) -> int:
         """Configure a single MCP server for Claude Code.
 
         Adds (or refreshes) the MCP server by running the claude mcp add command.
@@ -247,17 +245,11 @@ argument-hint: [{frontmatter.argument_hint}]
 
         Args:
             mcp_name: The MCP server name (e.g. 'rich-text-editor')
-            script_filename: The script filename inside the mcp/ directory
+            module_path: The Python module path (e.g. 'gws_cli.mcp.rich_text_mcp')
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
         """
-        mcp_script = (self.MCP_DIR / script_filename).resolve()
-
-        if not mcp_script.exists():
-            typer.echo(f"Error: MCP script not found at {mcp_script}", err=True)
-            return 1
-
         try:
             # Check if the MCP server already exists
             result = subprocess.run(
@@ -277,7 +269,7 @@ argument-hint: [{frontmatter.argument_hint}]
 
             typer.echo(f"Adding MCP server '{mcp_name}'...")
             subprocess.run(
-                ["claude", "mcp", "add", "--scope", "user", mcp_name, "--", "python", str(mcp_script)],
+                ["claude", "mcp", "add", "--scope", "user", mcp_name, "--", "python", "-m", module_path],
                 check=True,
                 capture_output=True,
             )

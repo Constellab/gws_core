@@ -10,7 +10,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.impl.shell.shell_proxy import ShellProxy
 
 from gws_cli.utils.cli_utils import CLIUtils
-from gws_cli.utils.community_cli_service import CommunityCliService
+from gws_core.community.community_user_service import CommunityUserApiService
 
 
 class BrickDirectoryWithVersionDTO:
@@ -123,7 +123,7 @@ class BrickCliService:
                 "Please create the tag before publishing a new version."
             )
 
-        community_user_service = CommunityCliService.get_community_service(
+        community_user_service = CommunityUserApiService(
             requires_authentication=True
         )
 

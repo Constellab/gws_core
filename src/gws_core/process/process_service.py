@@ -5,7 +5,7 @@ from typing import Literal
 
 import schedule
 
-from gws_core.community.community_service import CommunityService
+from gws_core.community.community_service import CommunityLabApiService
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import LogContext, Logger
@@ -170,7 +170,7 @@ class ProcessService:
                     run_stats: list[dict] = []
                     for stat in stats:
                         run_stats.append(stat.to_dto().to_json_dict())
-                    CommunityService.send_process_run_stats(run_stats)
+                    CommunityLabApiService.send_process_run_stats(run_stats)
                 except Exception:
                     # Revert the sync flag if the HTTP call fails so they are retried next time
                     ProcessRunStatModel.update(sync_with_community=False).where(

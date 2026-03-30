@@ -4,19 +4,45 @@ from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPExcep
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..impl.rich_text.rich_text_types import RichTextDTO
+from .community_credential_service import CommunityCredentialService
 from .community_dto import (
     CommunityDocumentationDTO,
     CommunityRagflowAskResponseDTO,
 )
 
 
-class CommunityUserService:
-    """Service to make requests to the community API using a Bearer access token for authentication"""
+class TokenExpiredError(Exception):
+    pass
+
+
+class CommunityUserApiService:
+    """Service for user-authenticated community API calls.
+
+    Authenticates using a Bearer token (user access token).
+    Used from CLI/MCP for documentation, chatbot, and brick publishing operations.
+    """
 
     _access_token: str | None
 
-    def __init__(self, access_token: str | None = None):
-        self._access_token = access_token
+    def __init__(self, requires_authentication: bool = False):
+        """Initialize the service.
+
+        :param requires_authentication: If True and no access_token is provided,
+            load the token from stored credentials and raise if unavailable or expired.
+        """
+        if requires_authentication:
+            domain = CommunityCredentialService.get_current_api_domain()
+            self._access_token = CommunityCredentialService.load_access_token(domain)
+            if not self._access_token:
+                if CommunityCredentialService.is_token_expired(domain):
+                    raise TokenExpiredError(
+                        "Your session has expired. Please run 'gws community login' to re-authenticate."
+                    )
+                raise Exception(
+                    "You are not authenticated. Please run 'gws community login' first."
+                )
+        else:
+            self._access_token = None
 
     def ask_ragflow_chatbot(
         self, message: str, session_id: str | None = None
