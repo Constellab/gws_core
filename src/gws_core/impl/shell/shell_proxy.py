@@ -1,6 +1,7 @@
 import os
 import select
 import subprocess
+import threading
 from collections.abc import Callable
 from enum import Enum
 from typing import IO, Any
@@ -273,10 +274,11 @@ class ShellProxy(BaseTyping):
         env: dict | None = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool | None = None,
+        dispatch_stdout: bool = False,
+        dispatch_stderr: bool = False,
     ) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
-        The logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
@@ -287,8 +289,14 @@ class ShellProxy(BaseTyping):
         :param shell_mode: if True, the command is run in a shell. If False, run without shell.
                           If None (default), automatically detect from cmd type (string -> True, list -> False)
         :type shell_mode: bool | None, optional
-        :return: Thread running the command
-        :rtype: threading.Thread
+        :param dispatch_stdout: if True, stdout is dispatched to the message dispatcher
+                            in a background thread, defaults to False
+        :type dispatch_stdout: bool, optional
+        :param dispatch_stderr: if True, stderr is dispatched to the message dispatcher
+                            in a background thread, defaults to False
+        :type dispatch_stderr: bool, optional
+        :return: The running process
+        :rtype: SysProc
         """
         shell_mode = self._check_shell_mode(cmd, shell_mode)
 
@@ -298,7 +306,32 @@ class ShellProxy(BaseTyping):
 
         self._message_dispatcher.notify_info_message(f"[ShellProxy] Running command: {cmd}")
 
-        return SysProc.popen(cmd, cwd=self.working_dir, env=env, shell=shell_mode)
+        stdout_arg = subprocess.PIPE if dispatch_stdout else None
+        stderr_arg = subprocess.PIPE if dispatch_stderr else None
+
+        sys_proc = SysProc.popen(
+            cmd, cwd=self.working_dir, env=env, shell=shell_mode,
+            stdout=stdout_arg, stderr=stderr_arg,
+        )
+
+        # Start a daemon thread to read and dispatch stdout/stderr
+        if dispatch_stdout or dispatch_stderr:
+            proc = sys_proc.get_process()
+            shell_io: list[ShellIO] = []
+            if dispatch_stdout and proc.stdout is not None:
+                shell_io.append(ShellIO(io=proc.stdout, dispatch=self._self_dispatch_stdout))
+            if dispatch_stderr and proc.stderr is not None:
+                shell_io.append(ShellIO(io=proc.stderr, dispatch=self._self_dispatch_stderr))
+
+            if shell_io:
+                output_thread = threading.Thread(
+                    target=self._manage_run_output,
+                    args=(proc, shell_io),
+                    daemon=True,
+                )
+                output_thread.start()
+
+        return sys_proc
 
     def check_output(
         self,

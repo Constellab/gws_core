@@ -166,18 +166,18 @@ class AppProcess:
         try:
             self._save_config()
 
-            thread = Thread(target=self._start_app_and_watch, args=(self._app,))
+            thread = Thread(target=self._start_app_and_watch)
             thread.start()
         except Exception as e:
             Logger.error("Error while starting app, killing the process")
             self.stop_process()
             raise e
 
-    def _start_app_and_watch(self, app: AppInstance) -> None:
+    def _start_app_and_watch(self) -> None:
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
-            result = self._start_process(app)
+            result = self._start_process(self._app)
             self._process = result.process
             self._services = result.services
 
@@ -193,7 +193,7 @@ class AppProcess:
 
             self.start_check_running()
         except Exception as e:
-            Logger.error(f"Error while starting app {app.resource_model_id}: {e}")
+            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}")
             self.stop_process()
             raise e
 
@@ -547,11 +547,11 @@ class AppProcess:
 
         return FrontService.get_light_theme()
 
-    def _get_and_check_shell_proxy(self, app_instance: AppInstance) -> ShellProxy:
+    def _get_and_check_shell_proxy(self) -> ShellProxy:
         # check if the env is installed
         # if should be installed by the task that generated the app
         # otherwise the env would installed when the user open the app, leading to a long loading time
-        shell_proxy = app_instance.get_shell_proxy()
+        shell_proxy = self._app.get_shell_proxy()
         if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
             self.set_status(
                 AppProcessStatus.STARTING, "Installing virtual environment (it may take a while)..."

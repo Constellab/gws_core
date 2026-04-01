@@ -176,10 +176,11 @@ class BaseEnvShell(ShellProxy):
         env: dict | None = None,
         env_mode: ShellProxyEnvVariableMode = ShellProxyEnvVariableMode.MERGE,
         shell_mode: bool | None = None,
+        dispatch_stdout: bool = False,
+        dispatch_stderr: bool = False,
     ) -> SysProc:
         """
         Run a command in a shell without blocking the thread.
-        There logs of the command are ignored.
 
         :param cmd: command to run
         :type cmd: Union[list, str]
@@ -190,15 +191,22 @@ class BaseEnvShell(ShellProxy):
         :param shell_mode: if True, the command is run in a shell. If False, run without shell.
                           If None (default), automatically detect from cmd type (string -> True, list -> False)
         :type shell_mode: bool | None, optional
-        :return: Thread running the command
-        :rtype: threading.Thread
+        :param dispatch_stdout: if True, stdout is dispatched to the message dispatcher, defaults to False
+        :type dispatch_stdout: bool, optional
+        :param dispatch_stderr: if True, stderr is dispatched to the message dispatcher, defaults to False
+        :type dispatch_stderr: bool, optional
+        :return: The running process
+        :rtype: SysProc
         """
         formatted_cmd = self.format_command(cmd)
 
         # install env if not installed
         self.install_env()
 
-        return super().run_in_new_thread(formatted_cmd, env, env_mode, shell_mode)
+        return super().run_in_new_thread(
+            formatted_cmd, env, env_mode, shell_mode,
+            dispatch_stdout=dispatch_stdout, dispatch_stderr=dispatch_stderr,
+        )
 
     @final
     def check_output(
