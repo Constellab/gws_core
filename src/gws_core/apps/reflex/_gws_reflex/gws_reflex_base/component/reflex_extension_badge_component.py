@@ -73,6 +73,10 @@ def extension_badge_component(extension: rx.Var[str]) -> rx.Component:
             weight="bold",
             color="white",
             trim="both",
+            white_space="nowrap",
+            overflow="hidden",
+            text_overflow="ellipsis",
+            max_width="100%",
             style={"font_size": "10px"},
         ),
         width="36px",
@@ -83,4 +87,5 @@ def extension_badge_component(extension: rx.Var[str]) -> rx.Component:
         align_items="center",
         justify_content="center",
         flex_shrink="0",
+        overflow="hidden",
     )
