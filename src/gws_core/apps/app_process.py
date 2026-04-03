@@ -1,3 +1,4 @@
+import contextlib
 import os
 import time
 from abc import abstractmethod
@@ -238,6 +239,8 @@ class AppProcess:
         Logger.debug("Killing the app")
         if self._process is not None:
             self._process.kill_with_children()
+            with contextlib.suppress(Exception):
+                self._process.wait(timeout=5)
             self._process = None
 
         self._current_no_connection_check = 0

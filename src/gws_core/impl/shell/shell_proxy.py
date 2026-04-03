@@ -312,6 +312,7 @@ class ShellProxy(BaseTyping):
         sys_proc = SysProc.popen(
             cmd, cwd=self.working_dir, env=env, shell=shell_mode,
             stdout=stdout_arg, stderr=stderr_arg,
+            start_new_session=True,
         )
 
         # Start a daemon thread to read and dispatch stdout/stderr
