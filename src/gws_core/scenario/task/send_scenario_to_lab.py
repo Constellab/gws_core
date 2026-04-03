@@ -236,13 +236,13 @@ class SendScenarioToLab(Task):
     @classmethod
     def build_config(
         cls,
-        lab: str,
+        lab_model_id: str,
         resource_mode: ScenarioDownloaderResourceMode,
         create_option: ScenarioDownloaderCreateOption,
         auto_run: bool = False,
     ) -> ConfigParamsDict:
         return {
-            "lab": lab,
+            "lab": lab_model_id,
             "resource_mode": resource_mode,
             "create_option": create_option,
             "auto_run": auto_run,
