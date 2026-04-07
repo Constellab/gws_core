@@ -104,6 +104,34 @@ version_app = typer.Typer(help="Manage brick versions")
 app.add_typer(version_app, name="version")
 
 
+def _ensure_git_tag(brick_dir: str, version: str, yes: bool) -> None:
+    """Check that the git tag exists, prompting the user to create it if needed."""
+    if BrickCliService.git_tag_exists(brick_dir, version):
+        return
+
+    typer.echo(f"Git tag '{version}' does not exist in the repository.")
+    if not yes:
+        create_tag = typer.confirm(
+            f"Would you like to create the tag '{version}'?",
+            default=False,
+        )
+        if not create_tag:
+            typer.echo("Aborted. Please create the tag manually before pushing the version.")
+            raise typer.Exit(1)
+
+    push_tag = yes or typer.confirm(
+        f"Push the tag '{version}' to origin?",
+        default=True,
+    )
+
+    try:
+        BrickCliService.create_git_tag(brick_dir, version, push=push_tag)
+        typer.echo(f"Created tag '{version}'" + (" and pushed to origin" if push_tag else ""))
+    except Exception as e:
+        typer.echo(f"Error creating tag: {e}", err=True)
+        raise typer.Exit(1) from e
+
+
 @version_app.command("push", help="Push a new brick version to the Constellab community")
 def version_push(
     brick_path: Annotated[
@@ -118,6 +146,12 @@ def version_push(
         "-y",
         help="Skip confirmation prompt",
     ),
+    technical_doc: bool = typer.Option(
+        False,
+        "--technical-doc",
+        "-td",
+        help="Skip technical documentation confirmation and push it automatically",
+    ),
 ):
     """Read the brick settings, verify a matching git tag exists, and publish the version."""
 
@@ -131,39 +165,12 @@ def version_push(
     typer.echo(f"Brick: {settings.name}")
     typer.echo(f"Version: {settings.version}")
 
-    # Check if git tag exists before proceeding
     version = settings.version
     if not version:
         typer.echo("Error: Brick settings do not contain a version", err=True)
         raise typer.Exit(1)
 
-    if not BrickCliService.git_tag_exists(brick_dir, version):
-        typer.echo(f"Git tag '{version}' does not exist in the repository.")
-        if yes:
-            create_tag = True
-        else:
-            create_tag = typer.confirm(
-                f"Would you like to create the tag '{version}'?",
-                default=False,
-            )
-        if not create_tag:
-            typer.echo("Aborted. Please create the tag manually before pushing the version.")
-            raise typer.Exit(1)
-
-        if yes:
-            push_tag = True
-        else:
-            push_tag = typer.confirm(
-                f"Push the tag '{version}' to origin?",
-                default=True,
-            )
-
-        try:
-            BrickCliService.create_git_tag(brick_dir, version, push=push_tag)
-            typer.echo(f"Created tag '{version}'" + (" and pushed to origin" if push_tag else ""))
-        except Exception as e:
-            typer.echo(f"Error creating tag: {e}", err=True)
-            raise typer.Exit(1) from e
+    _ensure_git_tag(brick_dir, version, yes)
 
     if not yes:
         typer.confirm("Do you want to push this version?", abort=True)
@@ -175,3 +182,18 @@ def version_push(
         raise typer.Exit(1) from e
 
     typer.echo(f"Successfully pushed version {version} of brick {settings.name}")
+
+    # Ask if the user wants to push the technical documentation
+    push_doc = technical_doc or typer.confirm(
+        "Do you also want to push the technical documentation?",
+        default=False,
+    )
+
+    if push_doc:
+        typer.echo("Pushing technical documentation...")
+        try:
+            BrickCliService.push_technical_doc(brick_dir)
+        except Exception as e:
+            typer.echo(f"Error pushing technical documentation: {e}", err=True)
+            raise typer.Exit(1) from e
+        typer.echo("Successfully pushed technical documentation")

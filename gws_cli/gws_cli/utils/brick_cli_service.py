@@ -5,6 +5,7 @@ import os
 import typer
 from gws_core.brick.brick_service import BrickService
 from gws_core.brick.brick_settings import BrickSettings
+from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -128,6 +129,36 @@ class BrickCliService:
         )
 
         return community_user_service.create_new_brick_version(brick_settings)
+
+    @classmethod
+    def push_technical_doc(cls, brick_path: str) -> None:
+        """Generate and push the technical documentation of a brick to the community.
+
+        :param brick_path: Path to the brick folder
+        :type brick_path: str
+        """
+        from gws_core.core.db.db_manager_service import DbManagerService
+        from gws_core.model.typing_manager import TypingManager
+
+        brick_settings = BrickService.read_brick_settings(brick_path)
+        if brick_settings is None:
+            raise BadRequestException(f"Could not read brick settings from path: {brick_path}")
+
+        brick_name = brick_settings.name
+        if not brick_name:
+            raise BadRequestException("Brick settings do not contain a name")
+
+        # Connect the database and init typings (required for querying typings with brick_version)
+        DbManagerService.init_all_db(full_init=False)
+        TypingManager.init_typings()
+
+        technical_doc = TechnicalDocService.generate_technical_doc(brick_name)
+
+        community_user_service = CommunityCliService.get_community_service(
+            requires_authentication=True
+        )
+
+        community_user_service.create_technical_doc(brick_name, technical_doc)
 
     @classmethod
     def git_tag_exists(cls, repo_path: str, tag_name: str) -> bool:

@@ -219,14 +219,13 @@ class Settings:
 
     @classmethod
     def get_community_api_url(cls) -> str | None:
-        # if cls.is_local_env():
-        #     return "http://host.docker.internal:3333"
+        if cls.is_local_env():
+            return "http://host.docker.internal:3333"
         return cls.get_os_environ("COMMUNITY_API_URL")
 
     @classmethod
     def get_community_api_url_and_check(cls) -> str:
         """Get the community API URL and check if it's set. Raise an error if it's not set."""
-        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
         # return "https://api.constellab.community"
         url = cls.get_community_api_url()
         if not url:

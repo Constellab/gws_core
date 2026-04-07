@@ -1,4 +1,5 @@
 from gws_core.brick.brick_settings import BrickSettings
+from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 
 from ..core.service.external_api_service import ExternalApiService
@@ -96,6 +97,26 @@ class CommunityUserService:
             raise err
 
         return BrickSettings.from_json_dict(response.json())
+
+    def create_technical_doc(self, brick_name: str, technical_doc: TechnicalDocDTO) -> None:
+        """Push the technical documentation of a brick to the community."""
+        url = f"{self.get_community_api_url()}/brick/create-technical-doc"
+
+        payload = {
+            "brickName": brick_name,
+            "importFile": technical_doc.to_json_dict(),
+        }
+
+        try:
+            ExternalApiService.post(
+                url,
+                payload,
+                headers=self._get_request_headers(),
+                raise_exception_if_error=True,
+            )
+        except BaseHTTPException as err:
+            err.detail = f"Can't push technical documentation. Error : {err.detail}"
+            raise err
 
     @classmethod
     def get_community_api_url(cls) -> str:
