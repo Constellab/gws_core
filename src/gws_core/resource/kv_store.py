@@ -191,14 +191,14 @@ class KVStore(dict[str, Any]):
         self._check_key(key=key)
         if self._lock:
             self._copy_file(self._lock_copy_full_file_path)
-            self._unlock()
+            self.unlock()
 
     def check_before_read(self) -> None:
         if not self.file_exists():
             self._copy_file(self._lock_copy_full_file_path)
-            self._unlock()
+            self.unlock()
 
-    def _unlock(self) -> None:
+    def unlock(self) -> None:
         """Remove lock and update file path,"""
         self._lock = False
         self._full_file_path = self._lock_copy_full_file_path

@@ -594,6 +594,33 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             elif r_field.storage == RFieldStorage.KV_STORE:
                 kv_store[key] = value
 
+    def update_resource_fields(self, resource: Resource) -> ResourceModel:
+        """Update the resource model fields from a modified resource.
+
+        This method is used to persist changes made to RFields of an existing resource
+        (e.g., after modifying disable_auto_stop on an AppResource).
+        It unlocks the existing kv_store, clears all its keys, and recreates them
+        by calling _receive_fields_from_resource.
+
+        :param resource: the resource with updated fields
+        :return: the updated and saved resource model
+        """
+        kv_store: KVStore | None = self.get_kv_store()
+
+        if kv_store is not None:
+            # Unlock the kv_store so it can be modified
+            kv_store.unlock()
+
+            # Clear all existing keys
+            kv_data = kv_store._open_shelve()
+            kv_data.clear()
+            kv_data.close()
+
+        # Recreate the fields from the resource
+        self._receive_fields_from_resource(resource)
+
+        return self.save()
+
     def _get_resource_r_fields(self, resource_type: type[Resource]) -> dict[str, BaseRField]:
         """Get the list of resource's r_fields,
         the key is the property name, the value is the BaseRField object

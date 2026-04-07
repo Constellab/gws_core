@@ -20,6 +20,9 @@ class AppInstance:
     # If True, the user must be authenticated to access the app
     requires_authentication: bool = True
 
+    # If True, the app will not be automatically stopped when no connections are detected
+    disable_auto_stop: bool = False
+
     _shell_proxy: ShellProxy
 
     _dev_mode: bool = False
@@ -62,6 +65,15 @@ class AppInstance:
         : type requires_authentication: bool
         """
         self.requires_authentication = requires_authentication
+
+    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
+        """Set if the app should not be automatically stopped when no connections are detected.
+        By default, the app is automatically stopped when no connections are detected.
+
+        :param disable_auto_stop: True to disable automatic stop
+        :type disable_auto_stop: bool
+        """
+        self.disable_auto_stop = disable_auto_stop
 
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
         """Return true if the app was generated from the given resource model id"""

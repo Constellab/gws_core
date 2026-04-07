@@ -5,7 +5,6 @@ from typing import Any
 from gws_core.apps.app_config import AppConfig
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_view import AppView
-from gws_core.apps.apps_manager import AppsManager
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
@@ -51,6 +50,8 @@ class AppResource(ResourceList):
     _code_folder_sub_resource_name: str = StrRField()
 
     _requires_authentification: bool = BoolRField(default_value=True)
+
+    _disable_auto_stop: bool = BoolRField(default_value=False)
 
     _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
 
@@ -146,6 +147,16 @@ class AppResource(ResourceList):
         :type requires_authentication: bool
         """
         self._requires_authentification = requires_authentication
+
+    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
+        """
+        Set if the app should not be automatically stopped when no connections are detected.
+        By default, the app is automatically stopped when no connections are detected.
+
+        :param disable_auto_stop: True to disable automatic stop
+        :type disable_auto_stop: bool
+        """
+        self._disable_auto_stop = disable_auto_stop
 
     def _check_folder(self, folder_path: str) -> None:
         if not FileHelper.exists_on_os(folder_path) or not FileHelper.is_dir(folder_path):
@@ -320,6 +331,7 @@ class AppResource(ResourceList):
     )
     def default_view(self, _: ConfigParams) -> AppView:
         """This view generates the app and returns a AppView."""
+        from gws_core.apps.apps_manager import AppsManager
 
         shell_proxy = self._get_shell_proxy()
         shell_proxy.attach_observer(LoggerMessageObserver())
@@ -333,6 +345,9 @@ class AppResource(ResourceList):
 
         # add the params
         app.set_params(self._params)
+
+        # set the auto stop option
+        app.set_disable_auto_stop(self._disable_auto_stop)
 
         # create the app asynchronously and return the instance ID
         result = AppsManager.create_or_get_app_async(app)
