@@ -78,7 +78,7 @@ class LazyAbstractDbManager(AbstractDbManager):
         except Exception as err:
             # If the lab manager failed to start the docker, we try to get the credentials to connect
             Logger.info(
-                f"Cannot start the {self.get_brick_name()} db compose, skipping startup."
+                f"Cannot start the {self.get_brick_name()} db compose, skipping startup. Error: {str(err)}."
             )
 
             if not Settings.is_local_dev_env():
