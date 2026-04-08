@@ -37,7 +37,7 @@ def default_gws_backend_handler(
 
     Logger.log_exception_stack_trace(exception)
 
-    if not ReflexMainState.is_dev_mode():
+    if ReflexMainState.is_dev_mode():
         # In dev mode, show the full error message
         return rx.toast.error(
             f"An unexpected error occurred: {str(exception)}", position="top-center"
