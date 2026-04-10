@@ -104,11 +104,14 @@ class ScenarioDownloaderBase(Task):
         Returns None for share link flow, auth headers for credential flow.
         """
 
-    def _get_resource_to_download(
-        self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode
+    @staticmethod
+    def get_resource_ids_for_mode(
+        protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode
     ) -> set[str]:
-        self.log_info_message(f"Getting the resources to download with option '{mode}'")
+        """Resolve a resource mode to the set of resource IDs that should be included.
 
+        Can be called without instantiating a task.
+        """
         if mode == "None":
             return set()
 
@@ -124,22 +127,28 @@ class ScenarioDownloaderBase(Task):
 
         return mode_methods.get(mode, protocol_graph.get_input_and_output_resource_ids)()
 
-    def _resolve_auto_resource_mode(
-        self, share_entity: ShareScenarioInfoReponseDTO, auto_run: bool
+    def _get_resource_to_download(
+        self, protocol_graph_dto: ProtocolGraphConfigDTO, mode: ScenarioDownloaderResourceMode
+    ) -> set[str]:
+        self.log_info_message(f"Getting the resources to download with option '{mode}'")
+        return self.get_resource_ids_for_mode(protocol_graph_dto, mode)
+
+    @staticmethod
+    def resolve_auto_resource_mode(
+        scenario_status: ScenarioStatus, auto_run: bool
     ) -> ScenarioDownloaderResourceMode:
         """Resolve the 'Auto' resource mode based on the scenario status.
 
-        - DRAFT: download inputs only (scenario hasn't been run yet)
-        - SUCCESS: download outputs only (scenario finished successfully)
-        - RUNNING: download outputs only (grab available outputs)
-        - PARTIALLY_RUN: download inputs of draft tasks (only tasks not yet run need their inputs)
-        - Other statuses: download inputs and outputs as a safe default
+        Can be called without instantiating a task.
+
+        - DRAFT: inputs only (scenario hasn't been run yet)
+        - SUCCESS: outputs only (scenario finished successfully)
+        - RUNNING: outputs only (grab available outputs)
+        - PARTIALLY_RUN: inputs of draft tasks (only tasks not yet run need their inputs)
+        - Other statuses: inputs and outputs as a safe default
         """
         if auto_run:
-            return (
-                "Inputs of draft tasks"  # If we auto run we need at least the input of draft tasks
-            )
-        scenario_status = share_entity.entity_object.scenario.status
+            return "Inputs of draft tasks"
 
         status_to_mode: dict[ScenarioStatus, ScenarioDownloaderResourceMode] = {
             ScenarioStatus.DRAFT: "Inputs only",
@@ -148,7 +157,14 @@ class ScenarioDownloaderBase(Task):
             ScenarioStatus.PARTIALLY_RUN: "Inputs of draft tasks",
         }
 
-        resolved_mode = status_to_mode.get(scenario_status, "Inputs and outputs")
+        return status_to_mode.get(scenario_status, "Inputs and outputs")
+
+    def _resolve_auto_resource_mode(
+        self, share_entity: ShareScenarioInfoReponseDTO, auto_run: bool
+    ) -> ScenarioDownloaderResourceMode:
+        """Instance wrapper that logs and delegates to the static method."""
+        scenario_status = share_entity.entity_object.scenario.status
+        resolved_mode = self.resolve_auto_resource_mode(scenario_status, auto_run)
         self.log_info_message(
             f"Auto resource mode resolved to '{resolved_mode}' based on scenario status '{scenario_status.value}'"
         )
