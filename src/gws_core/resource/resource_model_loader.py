@@ -5,7 +5,7 @@ from gws_core.resource.resource_dto import ResourceModelExportDTO, ResourceOrigi
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.task.task_model import TaskModel
-from gws_core.user.user import User
+from gws_core.user.user_service import UserService
 
 
 class ResourceModelLoader:
@@ -57,9 +57,13 @@ class ResourceModelLoader:
         resource_model = ResourceModel()
         resource_model.id = dto.id
         resource_model.created_at = dto.created_at
-        resource_model.created_by = User.get_by_id_and_check(dto.created_by.id)
+        resource_model.created_by = UserService.get_or_import_user_info(
+            dto.created_by.id, fallback_to_sysuser=True
+        )
         resource_model.last_modified_at = dto.last_modified_at
-        resource_model.last_modified_by = User.get_by_id_and_check(dto.last_modified_by.id)
+        resource_model.last_modified_by = UserService.get_or_import_user_info(
+            dto.last_modified_by.id, fallback_to_sysuser=True
+        )
         resource_model.parent_resource_id = dto.parent_resource_id
         resource_model.content_is_deleted = True
 

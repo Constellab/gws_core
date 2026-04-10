@@ -134,7 +134,7 @@ class SharedEntityInfo(Model):
     ) -> "SharedEntityInfo":
         """Internal method to create a shared entity info record."""
         lab = LabModel.get_or_create_from_dto(lab_info.lab)
-        user = UserService.get_or_import_user_info(lab_info.user.id)
+        user = UserService.get_or_import_user_info(lab_info.user.id, fallback_to_sysuser=True)
 
         shared_entity = cls()
         shared_entity.entity = entity_id
