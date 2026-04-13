@@ -501,6 +501,9 @@ from .resource.resource import Resource as Resource
 from .resource.resource_decorator import resource_decorator as resource_decorator
 from .resource.resource_dto import ResourceModelDTO as ResourceModelDTO
 from .resource.resource_dto import ResourceOrigin as ResourceOrigin
+from .resource.resource_front_search_filters import (
+    ResourceFrontSearchFilters as ResourceFrontSearchFilters,
+)
 from .resource.resource_model import ResourceModel as ResourceModel
 from .resource.resource_r_field import ResourceRField as ResourceRField
 from .resource.resource_search_builder import ResourceSearchBuilder as ResourceSearchBuilder

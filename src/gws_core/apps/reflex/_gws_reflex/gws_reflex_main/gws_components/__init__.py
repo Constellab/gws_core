@@ -12,6 +12,15 @@ from .reflex_rich_text_component.reflex_rich_text_component import (
 from .reflex_rich_text_component.reflex_rich_text_component import (
     rich_text_component as rich_text_component,
 )
+from .reflex_select_resource_2_component.reflex_select_resource_2_component import (
+    ReflexResourceSelect as ReflexResourceSelect,
+)
+from .reflex_select_resource_2_component.reflex_select_resource_2_component import (
+    SelectResourceInputDTO as SelectResourceInputDTO,
+)
+from .reflex_select_resource_2_component.reflex_select_resource_2_component import (
+    select_resource_2_component as select_resource_2_component,
+)
 
 
 def __load_plugins__():
