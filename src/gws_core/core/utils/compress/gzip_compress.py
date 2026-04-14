@@ -1,6 +1,5 @@
-import gzip
 import os
-import shutil
+import subprocess
 
 from gws_core.impl.file.file_helper import FileHelper
 
@@ -8,11 +7,7 @@ from .compress import Compress
 
 
 class GzipCompress(Compress):
-    """Class to compress and uncompress gz file.
-
-    :return: _description_
-    :rtype: _type_
-    """
+    """Class to compress and uncompress .gz file using system `pigz` (parallel gzip)."""
 
     file_path: str | None = None
 
@@ -28,28 +23,21 @@ class GzipCompress(Compress):
         if self.file_path is None:
             raise Exception("No file added to the GzipCompress")
 
-        with open(self.file_path, "rb") as input_file:
-            with gzip.open(self.destination_file_path, "wb") as gzipped_file:
-                gzipped_file.writelines(input_file)
+        with open(self.file_path, "rb") as input_file, open(self.destination_file_path, "wb") as output_file:
+            subprocess.run(["pigz", "-c"], stdin=input_file, stdout=output_file, check=True)
 
         return self.destination_file_path
 
     @classmethod
     def decompress(cls, file_path: str, destination_folder: str) -> None:
-        """
-        Uncompress a gz into a txt file.
-
-        :param tar_gz_file_path: Path of the tar.gz file to uncompress
-        :param tar_gz_file_path: `str`
-        """
+        """Uncompress a .gz file into destination_folder as a .txt file."""
         file_name = FileHelper.get_name_without_extension(file_path) + ".txt"
         decompress_file_path = os.path.join(destination_folder, file_name)
 
-        # create destination folder if not exist
         FileHelper.create_dir_if_not_exist(destination_folder)
 
-        with gzip.open(file_path, "rb") as f_in, open(decompress_file_path, "wb") as f_out:
-            shutil.copyfileobj(f_in, f_out)
+        with open(file_path, "rb") as f_in, open(decompress_file_path, "wb") as f_out:
+            subprocess.run(["pigz", "-d", "-c"], stdin=f_in, stdout=f_out, check=True)
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
