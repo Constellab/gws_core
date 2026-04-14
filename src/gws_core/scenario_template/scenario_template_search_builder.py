@@ -4,7 +4,7 @@ from gws_core.tag.tag_entity_type import TagEntityType
 from .scenario_template import ScenarioTemplate
 
 
-class ScenarioTemplateSearchBuilder(EntityWithTagSearchBuilder):
+class ScenarioTemplateSearchBuilder(EntityWithTagSearchBuilder[ScenarioTemplate]):
     def __init__(self) -> None:
         super().__init__(
             ScenarioTemplate,

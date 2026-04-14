@@ -1,4 +1,5 @@
 from peewee import Expression
+from typing_extensions import Self
 
 from gws_core.core.classes.search_builder import SearchFilterCriteria
 from gws_core.model.typing_name import TypingNameObj
@@ -10,7 +11,7 @@ from .scenario import Scenario
 from .scenario_enums import ScenarioStatus
 
 
-class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
+class ScenarioSearchBuilder(EntityWithTagSearchBuilder[Scenario]):
     def __init__(self) -> None:
         super().__init__(
             Scenario, TagEntityType.SCENARIO, default_orders=[Scenario.last_modified_at.desc()]
@@ -24,17 +25,17 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
 
         return super().convert_filter_to_expression(filter_)
 
-    def add_title_filter(self, title: str) -> "ScenarioSearchBuilder":
+    def add_title_filter(self, title: str) -> Self:
         """Filter the search query where title contains the name"""
         self.add_expression(Scenario.title.contains(title))
         return self
 
-    def add_status_filter(self, status: ScenarioStatus) -> "ScenarioSearchBuilder":
+    def add_status_filter(self, status: ScenarioStatus) -> Self:
         """Filter the search query by a specific status"""
         self.add_expression(Scenario.status == status)
         return self
 
-    def add_running_filter(self) -> "ScenarioSearchBuilder":
+    def add_running_filter(self) -> Self:
         """Filter the search query by running scenarios"""
         self.add_expression(
             Scenario.status.in_(
@@ -45,12 +46,12 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
         )
         return self
 
-    def add_folder_filter(self, folder_id: str) -> "ScenarioSearchBuilder":
+    def add_folder_filter(self, folder_id: str) -> Self:
         """Filter the search query by a specific folder"""
         self.add_expression(Scenario.folder == folder_id)
         return self
 
-    def add_contains_process_filter(self, process_typing_name: str) -> "ScenarioSearchBuilder":
+    def add_contains_process_filter(self, process_typing_name: str) -> Self:
         """Filter the search query to scenarios that contains a specific process"""
         typing_name = TypingNameObj.from_typing_name(process_typing_name)
 
@@ -65,7 +66,7 @@ class ScenarioSearchBuilder(EntityWithTagSearchBuilder):
         )
         return self
 
-    def add_is_archived_filter(self, is_archived: bool) -> "ScenarioSearchBuilder":
+    def add_is_archived_filter(self, is_archived: bool) -> Self:
         """Filter the search query by a specific archived status"""
         self.add_expression(Scenario.is_archived == is_archived)
         return self

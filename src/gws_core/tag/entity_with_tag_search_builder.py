@@ -1,19 +1,20 @@
 from peewee import Expression
+from typing_extensions import Self
 
-from gws_core.core.model.model import Model
 from gws_core.tag.entity_tag import EntityTag
 from gws_core.tag.tag import Tag
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_key_model import TagKeyModel
 
 from ..core.classes.search_builder import (
+    ModelType,
     SearchBuilder,
     SearchFilterCriteria,
     SearchOperator,
 )
 
 
-class EntityWithTagSearchBuilder(SearchBuilder):
+class EntityWithTagSearchBuilder(SearchBuilder[ModelType]):
     """Search builder that support search on tags
 
     :param SearchBuilder: _description_
@@ -23,7 +24,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
     entity_type: TagEntityType
 
     def __init__(
-        self, model_type: type[Model], entity_type: TagEntityType, default_orders=None
+        self, model_type: type[ModelType], entity_type: TagEntityType, default_orders=None
     ) -> None:
         super().__init__(model_type, default_orders=default_orders)
         self.entity_type = entity_type
@@ -60,7 +61,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
         tag: Tag,
         value_operator: SearchOperator = SearchOperator.EQ,
         error_if_key_not_exists: bool = False,
-    ) -> "EntityWithTagSearchBuilder":
+    ) -> Self:
         # value_format: TagValueFormat = tag.get_value_format()
         if error_if_key_not_exists:
             tag_model = TagKeyModel.find_by_key(tag.key)
@@ -91,7 +92,7 @@ class EntityWithTagSearchBuilder(SearchBuilder):
 
         return self
 
-    def add_tag_key_filter(self, tag_key: str) -> "EntityWithTagSearchBuilder":
+    def add_tag_key_filter(self, tag_key: str) -> Self:
         """Add a tag key filter to the search builder"""
         entity_alias: type[EntityTag] = EntityTag.alias()
         self.add_join(
