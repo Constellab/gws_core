@@ -5,8 +5,8 @@ from gws_core.impl.file.file import File
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingIconType
-from gws_core.resource.resource import Resource
 from gws_core.resource.id_mapper import IdMapper
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_loader import ResourceLoader
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.resource.technical_info import TechnicalInfo
@@ -70,7 +70,7 @@ class ResourceZipperTask(Task):
             shared_by = CurrentUserService.get_and_check_current_user()
 
         origin_entity_id = inputs["source"].get_model_id()
-        resource_zipper = ResourceZipper(shared_by)
+        resource_zipper = ResourceZipper(shared_by, message_dispatcher=self.message_dispatcher)
         resource_zipper.add_resource_model(origin_entity_id)
         resource_zipper.close_zip()
 

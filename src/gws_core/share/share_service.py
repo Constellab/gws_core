@@ -36,6 +36,7 @@ from gws_core.share.shared_resource import SharedResource
 from gws_core.share.shared_scenario import SharedScenario
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
+from gws_core.tag.tag_system import TagSystem
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.user import User
@@ -48,12 +49,6 @@ class ShareService:
 
     # version of the share service
     VERSION = 2
-
-    # Tag keys used to identify zip scenarios
-    TAG_KEY_ZIP_SCENARIO = "zip-scenario"
-    TAG_KEY_ZIP_SCENARIO_VALUE = "true"
-    TAG_KEY_ZIP_RESOURCE_ID = "zip-resource-id"
-    TAG_KEY_ZIP_TASK_VERSION = "zip-task-version"
 
     @classmethod
     def get_shared_to_list(
@@ -182,13 +177,10 @@ class ShareService:
         and current task version, and return the zipped resource output."""
         search_builder = ScenarioSearchBuilder()
         search_builder.add_tag_filter(
-            cls._create_system_tag(cls.TAG_KEY_ZIP_SCENARIO, cls.TAG_KEY_ZIP_SCENARIO_VALUE)
+            cls._create_system_tag(TagSystem.TAG_KEY_ZIP_RESOURCE_ID, resource_model_id)
         )
         search_builder.add_tag_filter(
-            cls._create_system_tag(cls.TAG_KEY_ZIP_RESOURCE_ID, resource_model_id)
-        )
-        search_builder.add_tag_filter(
-            cls._create_system_tag(cls.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION)
+            cls._create_system_tag(TagSystem.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION)
         )
         search_builder.add_status_filter(ScenarioStatus.SUCCESS)
 
@@ -224,9 +216,8 @@ class ShareService:
         # Tag the scenario for later lookup
         scenario.add_tags(
             [
-                cls._create_system_tag(cls.TAG_KEY_ZIP_SCENARIO, cls.TAG_KEY_ZIP_SCENARIO_VALUE),
-                cls._create_system_tag(cls.TAG_KEY_ZIP_RESOURCE_ID, id_),
-                cls._create_system_tag(cls.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION),
+                cls._create_system_tag(TagSystem.TAG_KEY_ZIP_RESOURCE_ID, id_),
+                cls._create_system_tag(TagSystem.TAG_KEY_ZIP_TASK_VERSION, ResourceZipperTask.VERSION),
             ]
         )
 

@@ -14,8 +14,8 @@ from gws_core import (
     task_decorator,
 )
 import os
-import tarfile
 
+from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.folder.space_folder import SpaceFolder
@@ -677,13 +677,12 @@ class TestShareScenario(BaseTestCase):
         archive_file: File = zip_outputs["archive"]
         self.assertIsInstance(archive_file, File)
         self.assertTrue(os.path.exists(archive_file.path))
-        self.assertTrue(tarfile.is_tarfile(archive_file.path))
+        self.assertTrue(TarCompress.is_tar_file(archive_file.path))
 
-        with tarfile.open(archive_file.path, "r") as tar:
-            names = tar.getnames()
-            self.assertIn(ScenarioArchiveZipper.INFO_JSON_FILE_NAME, names)
-            resource_files = [n for n in names if n.startswith("resources/") and n.endswith(".tar")]
-            self.assertGreater(len(resource_files), 0)
+        names = TarCompress.get_names(archive_file.path)
+        self.assertIn(ScenarioArchiveZipper.INFO_JSON_FILE_NAME, names)
+        resource_files = [n for n in names if n.startswith("resources/") and n.endswith(".tar")]
+        self.assertGreater(len(resource_files), 0)
 
         # Load the scenario from the archive using the loader task
         load_runner = TaskRunner(
