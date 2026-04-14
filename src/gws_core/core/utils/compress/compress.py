@@ -103,7 +103,7 @@ class Compress:
     @staticmethod
     def smart_decompress(file_path: str, destination_folder: str) -> None:
         """Detect the extension of the compressed file and use the right decompress method."""
-        compress: type[Compress] = Compress._get_compress_class_from_extension(file_path)
+        compress = Compress._get_compress_class_from_extension(file_path)
 
         if compress is None:
             raise Exception(
@@ -115,7 +115,7 @@ class Compress:
     @staticmethod
     def is_compressed_file(file_path: str) -> bool:
         """Check if the file is a compressed file."""
-        compress: type[Compress] = Compress._get_compress_class_from_extension(file_path)
+        compress = Compress._get_compress_class_from_extension(file_path)
         return compress is not None
 
     @staticmethod

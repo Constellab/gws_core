@@ -4,6 +4,18 @@ from gws_reflex_base import *
 from .components.reflex_doc_component import doc_component as doc_component
 from .components.reflex_group_component import group_inline_component as group_inline_component
 from .components.reflex_group_component import group_select as group_select
+from .components.reflex_paginated_table_component.paginated_table_component import (
+    paginated_table_component as paginated_table_component,
+)
+from .components.reflex_paginated_table_component.paginated_table_component import (
+    pagination_controls as pagination_controls,
+)
+from .components.reflex_paginated_table_component.paginated_table_state import (
+    PAGE_SIZE_OPTIONS as PAGE_SIZE_OPTIONS,
+)
+from .components.reflex_paginated_table_component.paginated_table_state import (
+    PaginatedTableState as PaginatedTableState,
+)
 from .components.reflex_select_resource_component.resource_select_component import (
     resource_select_button as resource_select_button,
 )
