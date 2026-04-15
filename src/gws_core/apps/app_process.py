@@ -1,3 +1,4 @@
+import contextlib
 import os
 import time
 from abc import abstractmethod
@@ -166,18 +167,18 @@ class AppProcess:
         try:
             self._save_config()
 
-            thread = Thread(target=self._start_app_and_watch, args=(self._app,))
+            thread = Thread(target=self._start_app_and_watch)
             thread.start()
         except Exception as e:
             Logger.error("Error while starting app, killing the process")
             self.stop_process()
             raise e
 
-    def _start_app_and_watch(self, app: AppInstance) -> None:
+    def _start_app_and_watch(self) -> None:
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
-            result = self._start_process(app)
+            result = self._start_process(self._app)
             self._process = result.process
             self._services = result.services
 
@@ -193,7 +194,7 @@ class AppProcess:
 
             self.start_check_running()
         except Exception as e:
-            Logger.error(f"Error while starting app {app.resource_model_id}: {e}")
+            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}")
             self.stop_process()
             raise e
 
@@ -238,6 +239,8 @@ class AppProcess:
         Logger.debug("Killing the app")
         if self._process is not None:
             self._process.kill_with_children()
+            with contextlib.suppress(Exception):
+                self._process.wait(timeout=5)
             self._process = None
 
         self._current_no_connection_check = 0
@@ -473,8 +476,8 @@ class AppProcess:
                     self.stop_process()
                     return
                 # if there is not more connection to the app, we stop it
-                # In dev mode, we do not stop the app even if there is no connection
-                if not self._app.is_dev_mode() and not self._check_running():
+                # In dev mode or when auto stop is disabled, we do not stop the app even if there is no connection
+                if not self._app.is_dev_mode() and not self._app.disable_auto_stop and not self._check_running():
                     Logger.debug("No more connection to the app, stopping the app")
                     self.stop_process()
                     return
@@ -525,6 +528,10 @@ class AppProcess:
     def get_id(self) -> str:
         return self._app.resource_model_id
 
+    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
+        """Update the auto-stop flag on the underlying app instance."""
+        self._app.set_disable_auto_stop(disable_auto_stop)
+
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
             id=self.get_id(),
@@ -547,11 +554,11 @@ class AppProcess:
 
         return FrontService.get_light_theme()
 
-    def _get_and_check_shell_proxy(self, app_instance: AppInstance) -> ShellProxy:
+    def _get_and_check_shell_proxy(self) -> ShellProxy:
         # check if the env is installed
         # if should be installed by the task that generated the app
         # otherwise the env would installed when the user open the app, leading to a long loading time
-        shell_proxy = app_instance.get_shell_proxy()
+        shell_proxy = self._app.get_shell_proxy()
         if isinstance(shell_proxy, BaseEnvShell) and not shell_proxy.env_is_installed():
             self.set_status(
                 AppProcessStatus.STARTING, "Installing virtual environment (it may take a while)..."

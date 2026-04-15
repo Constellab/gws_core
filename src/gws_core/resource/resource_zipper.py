@@ -1,6 +1,7 @@
 import os
 from json import dump
 
+from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.settings import Settings
@@ -48,7 +49,7 @@ class ResourceExportPackage(BaseModelDTO):
 
 
 class ResourceZipper:
-    """Class to generate a zip file containing everythinga needed to recreate a resource"""
+    """Class to generate a zip file containing everything needed to recreate a resource"""
 
     ZIP_FILE_NAME = "resource.tar"
     INFO_JSON_FILE_NAME = "info.json"
@@ -62,9 +63,11 @@ class ResourceZipper:
 
     shared_by: User
 
+    _message_dispatcher: MessageDispatcher
+
     EXPORT_VERSION = 2
 
-    def __init__(self, shared_by: User):
+    def __init__(self, shared_by: User, message_dispatcher: MessageDispatcher | None = None):
         self.shared_by = shared_by
         self.temp_dir = Settings.get_instance().make_temp_dir()
         self.zip = TarCompress(self.get_zip_file_path())
@@ -75,6 +78,11 @@ class ResourceZipper:
             origin=ExternalLabApiService.get_current_lab_info(self.shared_by),
         )
 
+        if message_dispatcher is None:
+            self._message_dispatcher = MessageDispatcher()
+        else:
+            self._message_dispatcher = message_dispatcher
+
     def add_resource(self, resource: Resource) -> None:
         if not resource.get_model_id():
             raise Exception("Resource must have a model id")
@@ -82,6 +90,10 @@ class ResourceZipper:
 
     def add_resource_model(self, resource_id: str, parent_resource_id: str | None = None) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
+
+        self._message_dispatcher.notify_info_message(
+            f"Adding resource '{resource_model.name}' (id: {resource_id}) to the zip."
+        )
 
         resource_tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, resource_id)
         tags_dict = [tag.to_simple_tag().to_dto() for tag in resource_tags.get_tags()]
@@ -97,6 +109,9 @@ class ResourceZipper:
         # add the kvstore
         kvstore: KVStore = resource_model.get_kv_store()
         if kvstore is not None:
+            self._message_dispatcher.notify_info_message(
+                f"Adding kvstore for resource '{resource_model.name}'."
+            )
             # add the kvstore folder in the zip and name this folder kvstore
             self.zip.add_dir(kvstore.full_file_dir, dir_name=resource_zip.get_kvstore_dir_name())
             resource_zip.has_kvstore = True
@@ -104,6 +119,9 @@ class ResourceZipper:
         # add the fs_node
         fs_node_model: FSNodeModel = resource_model.fs_node_model
         if fs_node_model is not None:
+            self._message_dispatcher.notify_info_message(
+                f"Adding file/folder for resource '{resource_model.name}'."
+            )
             self.zip.add_fs_node(fs_node_model.path, fs_node_name=resource_zip.get_fs_node_name())
 
         # add the resource info
@@ -122,6 +140,7 @@ class ResourceZipper:
         return os.path.join(self.temp_dir, self.ZIP_FILE_NAME)
 
     def close_zip(self) -> str:
+        self._message_dispatcher.notify_info_message("Finalizing zip file.")
         # add the info.json file
         info_json = os.path.join(self.temp_dir, self.INFO_JSON_FILE_NAME)
         with open(info_json, "w", encoding="UTF-8") as file:

@@ -6,6 +6,10 @@ from gws_reflex_main import (
     ResourceSelectState,
     resource_select_button,
 )
+from gws_reflex_main.gws_components import (
+    SelectResourceInputDTO,
+    select_resource_2_component,
+)
 
 from ..components import example_tabs, page_layout
 
@@ -14,6 +18,20 @@ class ResourceComponentsPageState(rx.State):
     """State for the resource components page."""
 
     selected_resource_name: str = ""
+    selected_resource_2_id: str = ""
+    selected_resource_2_name: str = ""
+
+    @rx.event
+    async def handle_resource_2_selected(self, event_data: dict):
+        """Handle selection from select_resource_2_component."""
+        resource_id = event_data.get("resourceId")
+        if not resource_id:
+            self.selected_resource_2_id = ""
+            self.selected_resource_2_name = ""
+            return
+        self.selected_resource_2_id = resource_id
+        resource_model = ResourceModel.get_by_id_and_check(resource_id)
+        self.selected_resource_2_name = resource_model.name
 
 
 class DemoResourceSelectState(ResourceSelectState, ResourceComponentsPageState):
@@ -46,7 +64,8 @@ def resource_components_page() -> rx.Component:
     # Example 1: Basic resource_select_button
     example1_component = rx.vstack(
         rx.text(
-            "Click the button below to open the resource selection dialog:", margin_bottom="0.5em"
+            "Click the button below to open the resource selection dialog !!!:",
+            margin_bottom="0.5em",
         ),
         resource_select_button(state=DemoResourceSelectState),
         rx.cond(
@@ -110,6 +129,69 @@ class FilteredResourceSelectState(ResourceSelectState):
 # Display filtered resource select button
 resource_select_button(state=FilteredResourceSelectState)"""
 
+    # Example 3: select_resource_2_component (dc-select-resource web component)
+    example3_component = rx.vstack(
+        rx.text(
+            "Search and select a resource using the embedded dc-select-resource web component:",
+            margin_bottom="0.5em",
+        ),
+        select_resource_2_component(
+            input_data=SelectResourceInputDTO(
+                placeholder="Search for a resource...",
+            ),
+            output_event=ResourceComponentsPageState.handle_resource_2_selected,
+        ),
+        rx.cond(
+            ResourceComponentsPageState.selected_resource_2_name != "",
+            rx.box(
+                rx.text(
+                    f"Selected Resource: {ResourceComponentsPageState.selected_resource_2_name}",
+                ),
+                rx.text(
+                    f"Resource ID: {ResourceComponentsPageState.selected_resource_2_id}",
+                    size="2",
+                    color="gray",
+                ),
+                margin_top="1em",
+                padding="1em",
+                border_radius="0.5em",
+                bg=rx.color("accent", 2),
+            ),
+        ),
+        align="start",
+        width="100%",
+    )
+
+    code3 = """from gws_reflex_main.gws_components import (
+    SelectResourceInputDTO,
+    select_resource_2_component,
+)
+from gws_core.resource.resource_model import ResourceModel
+import reflex as rx
+
+class MyState(rx.State):
+    selected_resource_id: str = ""
+    selected_resource_name: str = ""
+
+    @rx.event
+    async def handle_resource_selected(self, event_data: dict):
+        resource_id = event_data.get("resourceId")
+        if not resource_id:
+            self.selected_resource_id = ""
+            self.selected_resource_name = ""
+            return
+        self.selected_resource_id = resource_id
+        resource_model = ResourceModel.get_by_id_and_check(resource_id)
+        self.selected_resource_name = resource_model.name
+
+# Display the embedded resource select component
+select_resource_2_component(
+    input_data=SelectResourceInputDTO(
+        placeholder="Search for a resource...",
+    ),
+    output_event=MyState.handle_resource_selected,
+)"""
+
     return page_layout(
         "Resource Components",
         "This page demonstrates resource selection components for searching and selecting resources from the database.",
@@ -131,5 +213,16 @@ resource_select_button(state=FilteredResourceSelectState)"""
             description="Extend ResourceSelectState and override create_search_builder() to add custom "
             "filters such as filtering by specific resource types.",
             func=resource_select_button,
+        ),
+        # select_resource_2_component example
+        example_tabs(
+            example_component=example3_component,
+            code=code3,
+            title="select_resource_2_component",
+            description="An embedded resource selector wrapping the dc-select-resource web component. "
+            "Unlike resource_select_button, it is rendered inline and emits the selected resource id "
+            "via an output event. Supports default filters and disabled filters through "
+            "SelectResourceInputDTO.",
+            func=select_resource_2_component,
         ),
     )

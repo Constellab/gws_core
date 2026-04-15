@@ -41,6 +41,22 @@ def stop_process(id_: str, _=Depends(AuthorizationService.check_user_access_toke
     return AppsManager.stop_process(id_)
 
 
+@core_app.put(
+    "/apps/{id_}/disable-auto-stop/{disable_auto_stop}",
+    tags=["App"],
+    summary="Set disable auto stop for an app",
+)
+def set_disable_auto_stop(
+    id_: str, disable_auto_stop: bool, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
+    """
+    Set the disable_auto_stop option on an app.
+    When enabled, the app will not be automatically stopped when no connections are detected.
+    """
+
+    return AppsManager.set_disable_auto_stop(id_, disable_auto_stop)
+
+
 @core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
 def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
     """

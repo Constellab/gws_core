@@ -6,6 +6,7 @@ from gws_core.user.user_events import UserActivatedEvent, UserCreatedEvent, User
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from .user import User
 from .user_group import UserGroup
 
@@ -178,21 +179,32 @@ class UserService:
         return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
     @classmethod
-    def get_or_import_user_info(cls, user_id: str) -> User:
+    def get_or_import_user_info(cls, user_id: str, fallback_to_sysuser: bool = False) -> User:
         """Get the user info from the database.
-         If he doesn"t exist, get it from the space (this might import a user that is not active in the lab)
+        If the user doesn't exist locally, try to import from the space server.
 
-        :param user_id: _description_
-        :type user_id: str
-        :raises BadRequestException: _description_
-        :return: _description_
-        :rtype: User
+        :param user_id: ID of the user to find or import.
+        :param fallback_to_sysuser: If True, return the system user when the user
+            cannot be found or imported (e.g. space server unreachable). Defaults to False.
+        :return: The resolved User instance.
         """
         user = cls.get_user_by_id(user_id)
         if user is not None:
             return user
 
-        user_dto = SpaceService.get_instance().get_user_info(user_id)
-        if user_dto is None:
-            raise BadRequestException("The user does not exist in Constellab")
-        return cls.create_or_update_user_dto(user_dto)
+        try:
+            user_dto = SpaceService.get_instance().get_user_info(user_id)
+            if user_dto is not None:
+                return cls.create_or_update_user_dto(user_dto)
+        except (BadRequestException, BaseHTTPException) as err:
+            if not fallback_to_sysuser:
+                raise
+            Logger.error(
+                f"Failed to import user '{user_id}' from space, falling back to sysuser: {err}"
+            )
+            Logger.log_exception_stack_trace(err)
+
+        if fallback_to_sysuser:
+            return User.get_and_check_sysuser()
+
+        raise BadRequestException("The user does not exist in Constellab")

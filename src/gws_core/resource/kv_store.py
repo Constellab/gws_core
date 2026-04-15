@@ -183,6 +183,12 @@ class KVStore(dict[str, Any]):
 
         return shelve_open(self.get_full_path_without_extension())
 
+    def clear_all(self) -> None:
+        """Clear all the data in the store, but keep the file"""
+        kv_data = self._open_shelve()
+        kv_data.clear()
+        kv_data.close()
+
     def _create_dir(self) -> None:
         if not FileHelper.exists_on_os(self.full_file_dir):
             os.makedirs(self.full_file_dir)
@@ -191,14 +197,14 @@ class KVStore(dict[str, Any]):
         self._check_key(key=key)
         if self._lock:
             self._copy_file(self._lock_copy_full_file_path)
-            self._unlock()
+            self.unlock()
 
     def check_before_read(self) -> None:
         if not self.file_exists():
             self._copy_file(self._lock_copy_full_file_path)
-            self._unlock()
+            self.unlock()
 
-    def _unlock(self) -> None:
+    def unlock(self) -> None:
         """Remove lock and update file path,"""
         self._lock = False
         self._full_file_path = self._lock_copy_full_file_path

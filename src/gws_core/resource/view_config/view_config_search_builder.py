@@ -10,7 +10,7 @@ from gws_core.tag.tag_entity_type import TagEntityType
 from .view_config import ViewConfig
 
 
-class ViewConfigSearchBuilder(EntityWithTagSearchBuilder):
+class ViewConfigSearchBuilder(EntityWithTagSearchBuilder[ViewConfig]):
     """Search build for the view cofnig
 
     :param SearchBuilder: [description]

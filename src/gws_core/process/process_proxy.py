@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, TypeVar, overload
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -14,6 +14,8 @@ from ..config.param.param_types import ParamValue
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from .process_model import ProcessModel
+
+ResourceType = TypeVar("ResourceType", bound="Resource")
 
 if TYPE_CHECKING:
     from ..protocol.protocol_proxy import ProtocolProxy
@@ -82,18 +84,40 @@ class ProcessProxy:
 
     ############################################### INPUTS & OUTPUTS #########################################
 
-    def get_input(self, name: str) -> Resource | None:
-        """retrieve the resource of the input
+    @overload
+    def get_input(self, name: str) -> Resource | None: ...
+
+    @overload
+    def get_input(self, name: str, resource_type: type[ResourceType]) -> ResourceType: ...
+
+    def get_input(
+        self, name: str, resource_type: type[ResourceType] | None = None
+    ) -> Resource | ResourceType | None:
+        """Retrieve the resource of the input.
 
         :param name: name of the input port
         :type name: str
+        :param resource_type: if provided, check that the resource is of this type and return it as this type
+        :type resource_type: type[Resource] | None
         :return: resource of the input
         :rtype: Resource | None
         """
         resource_model = self.get_input_resource_model(name)
         if resource_model is None:
+            if resource_type is not None:
+                raise Exception(
+                    f"The input '{name}' of process '{self.instance_name}' is empty, expected a resource of type '{resource_type.__name__}'"
+                )
             return None
-        return resource_model.get_resource()
+
+        resource = resource_model.get_resource()
+
+        if resource_type is not None and not isinstance(resource, resource_type):
+            raise Exception(
+                f"The input '{name}' of process '{self.instance_name}' is of type '{type(resource).__name__}', expected '{resource_type.__name__}'"
+            )
+
+        return resource
 
     def get_input_resource_model(self, name: str) -> ResourceModel | None:
         """retrieve the resource model of the input
@@ -103,20 +127,43 @@ class ProcessProxy:
         :return: resource model of the input
         :rtype: ResourceModel | None
         """
+        self.get_input_port(name)  # check that the port exists, will raise an exception if not
         return self._process_model.inputs.get_resource_model(name)
 
-    def get_output(self, name: str) -> Resource | None:
-        """retrieve the resource of the output
+    @overload
+    def get_output(self, name: str) -> Resource | None: ...
+
+    @overload
+    def get_output(self, name: str, resource_type: type[ResourceType]) -> ResourceType: ...
+
+    def get_output(
+        self, name: str, resource_type: type[ResourceType] | None = None
+    ) -> Resource | ResourceType | None:
+        """Retrieve the resource of the output.
 
         :param name: name of the output port
         :type name: str
+        :param resource_type: if provided, check that the resource is of this type and return it as this type
+        :type resource_type: type[Resource] | None
         :return: resource of the output
         :rtype: Resource | None
         """
         resource_model = self.get_output_resource_model(name)
         if resource_model is None:
+            if resource_type is not None:
+                raise Exception(
+                    f"The output '{name}' of process '{self.instance_name}' is empty, expected a resource of type '{resource_type.__name__}'"
+                )
             return None
-        return resource_model.get_resource()
+
+        resource = resource_model.get_resource()
+
+        if resource_type is not None and not isinstance(resource, resource_type):
+            raise Exception(
+                f"The output '{name}' of process '{self.instance_name}' is of type '{type(resource).__name__}', expected '{resource_type.__name__}'"
+            )
+
+        return resource
 
     def get_output_resource_model(self, name: str) -> ResourceModel | None:
         """retrieve the resource model of the output
@@ -126,6 +173,7 @@ class ProcessProxy:
         :return: resource model of the output
         :rtype: ResourceModel | None
         """
+        self.get_output_port(name)  # check that the port exists, will raise an exception if not
         return self._process_model.outputs.get_resource_model(name)
 
     def has_dynamic_inputs(self) -> bool:

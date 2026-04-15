@@ -13,6 +13,7 @@ from .pages import (
     home_page,
     input_search_page,
     layout_page,
+    paginated_table_page,
     resource_components_page,
     rich_text_page,
     user_components_page,
@@ -37,6 +38,7 @@ def _sidebar_content() -> rx.Component:
             menu_item_component("layout-grid", "Layout Components", "/layout"),
             menu_item_component("file-text", "Doc Component", "/doc-component"),
             menu_item_component("search", "Input search", "/input-search"),
+            menu_item_component("table", "Paginated Table", "/paginated-table"),
         ],
     )
 
@@ -97,3 +99,9 @@ def resource_components():
 def input_search():
     """Input search component demo page."""
     return layout(input_search_page.input_search_page())
+
+
+@rx.page(route="/paginated-table")
+def paginated_table():
+    """Paginated table component demo page."""
+    return layout(paginated_table_page.paginated_table_page())

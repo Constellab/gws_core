@@ -12,12 +12,14 @@ class TagEntityType(Enum):
     VIEW = "VIEW"
     NOTE = "NOTE"
     SCENARIO_TEMPLATE = "SCENARIO_TEMPLATE"
+    NOTE_TEMPLATE = "NOTE_TEMPLATE"
 
     def get_entity_model_type(self) -> type[Model]:
         from gws_core.note.note import Note
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig
         from gws_core.scenario.scenario import Scenario
+        from gws_core.note_template.note_template import NoteTemplate
         from gws_core.scenario_template.scenario_template import ScenarioTemplate
 
         if self == TagEntityType.SCENARIO:
@@ -30,6 +32,8 @@ class TagEntityType(Enum):
             return Note
         elif self == TagEntityType.SCENARIO_TEMPLATE:
             return ScenarioTemplate
+        elif self == TagEntityType.NOTE_TEMPLATE:
+            return NoteTemplate
 
         raise Exception(f"Unknown entity type {self}")
 

@@ -1,4 +1,5 @@
 import logging
+import sys
 from datetime import datetime
 from enum import Enum
 from logging import Logger as PythonLogger
@@ -118,14 +119,27 @@ class Logger:
         # Create the logger
         self._logger = logging.getLogger(LOGGER_NAME)
 
+        # Remove any pre-existing handlers (e.g. from a prior init in the same
+        # interpreter, or handlers attached by uvicorn/Reflex) so messages are
+        # not emitted multiple times with different formatters.
+        self._logger.handlers.clear()
+
+        # Don't propagate to the root logger: uvicorn/Reflex configure root
+        # handlers that would re-emit our already-formatted message as a new
+        # record (showing INFO lines as ERROR, dropping tracebacks, etc.).
+        self._logger.propagate = False
+
         # Set the logger level
         self._logger.setLevel(level)
 
         # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
         formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
 
-        # Configure the console logger
-        console_logger = logging.StreamHandler()
+        # Write to sys.stdout rather than sys.stderr because Reflex/uvicorn
+        # replace sys.stderr with a line-based interceptor that re-emits each
+        # line as its own ERROR record and drops everything after the first
+        # newline — which is why multi-line tracebacks don't reach the console.
+        console_logger = logging.StreamHandler(sys.stdout)
         console_logger.setFormatter(formatter)
         self._logger.addHandler(console_logger)
 

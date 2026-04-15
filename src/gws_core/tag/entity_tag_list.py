@@ -52,9 +52,7 @@ class EntityTagList:
 
     def get_tags_by_key(self, tag_key: str) -> list[EntityTag]:
         """return the tags with the given key"""
-        return [
-            entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key
-        ]
+        return [entity_tag for entity_tag in self._tags if entity_tag.tag_key == tag_key]
 
     def get_first_tag_by_key(self, tag_key: str) -> EntityTag | None:
         """return the first tag with the given key or None if it does not exist"""
@@ -64,6 +62,13 @@ class EntityTagList:
             return tags[0]
 
         return None
+
+    def get_tag_value(self, tag_key: str, default: str = "") -> str:
+        """Return the value of the first tag with the given key, or default if not found."""
+        tag = self.get_first_tag_by_key(tag_key)
+        if tag is not None:
+            return tag.get_tag_value()
+        return default
 
     def has_tag_key(self, tag_key: str) -> bool:
         """return true if the tag key already exist in the model"""
@@ -78,14 +83,9 @@ class EntityTagList:
     def get_propagable_tags(self) -> list[EntityTag]:
         return [tag for tag in self._tags if tag.is_propagable]
 
-    def build_tags_propagated(
-        self, origin_type: TagOriginType, origin_id: str
-    ) -> list[Tag]:
+    def build_tags_propagated(self, origin_type: TagOriginType, origin_id: str) -> list[Tag]:
         """Propagate the tags to the entity"""
-        return [
-            tag.propagate_tag(origin_type, origin_id)
-            for tag in self.get_propagable_tags()
-        ]
+        return [tag.propagate_tag(origin_type, origin_id) for tag in self.get_propagable_tags()]
 
     def is_empty(self) -> bool:
         return len(self._tags) == 0

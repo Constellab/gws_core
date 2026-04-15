@@ -13,6 +13,9 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
+import os
+
+from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.folder.space_folder import SpaceFolder
@@ -23,7 +26,11 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
+from gws_core.impl.file.file import File
 from gws_core.resource.resource_zipper import ResourceZipper
+from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
+from gws_core.scenario.task.scenario_archive_zipper_task import ScenarioArchiveZipperTask
+from gws_core.scenario.task.scenario_loader_from_archive import ScenarioLoaderFromArchive
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_builder import ScenarioBuilder
 from gws_core.scenario.scenario_enums import ScenarioCreationType, ScenarioStatus
@@ -45,10 +52,12 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
+from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
+from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.test_helper import TestHelper
 from gws_core.test.test_start_unvicorn_app import TestStartUvicornApp
@@ -643,3 +652,51 @@ class TestShareScenario(BaseTestCase):
         # there should 4 more scenario, the send, the import scenario, the new copied scenario and
         # the zip resource scenario
         self.assertEqual(Scenario.select().count(), scenario_count + 4)
+
+    def test_archive_round_trip(self):
+        """Export a scenario to archive via ScenarioArchiveZipperTask,
+        then load it via ScenarioLoaderFromArchive task."""
+        setup = ShareScenarioTestSetup(
+            self,
+            "Archive round trip",
+            "archive_tag",
+            "archive_value",
+            ShareEntityCreateMode.NEW_ID,
+        )
+
+        # Export the scenario to a single archive using the zipper task
+        scenario_resource = ScenarioResource(setup.initial_scenario_model.id)
+
+        zip_runner = TaskRunner(
+            ScenarioArchiveZipperTask,
+            params={"resource_mode": "All"},
+            inputs={"scenario": scenario_resource},
+        )
+        zip_outputs = zip_runner.run()
+
+        archive_file: File = zip_outputs["archive"]
+        self.assertIsInstance(archive_file, File)
+        self.assertTrue(os.path.exists(archive_file.path))
+        self.assertTrue(TarCompress.is_tar_file(archive_file.path))
+
+        names = TarCompress.get_names(archive_file.path)
+        self.assertIn(ScenarioArchiveZipper.INFO_JSON_FILE_NAME, names)
+        resource_files = [n for n in names if n.startswith("resources/") and n.endswith(".tar")]
+        self.assertGreater(len(resource_files), 0)
+
+        # Load the scenario from the archive using the loader task
+        load_runner = TaskRunner(
+            ScenarioLoaderFromArchive,
+            params={"create_option": "Force new scenario"},
+            inputs={"archive": archive_file},
+        )
+        load_outputs = load_runner.run()
+
+        loaded_scenario_resource: ScenarioResource = load_outputs["scenario"]
+        self.assertIsInstance(loaded_scenario_resource, ScenarioResource)
+
+        new_scenario = loaded_scenario_resource.get_scenario()
+        new_protocol_model = new_scenario.protocol_model
+        new_source = cast(TaskModel, new_protocol_model.get_process("source"))
+        new_move = cast(TaskModel, new_protocol_model.get_process("move"))
+        setup.assert_imported_scenario(new_scenario, new_protocol_model, new_source, new_move)

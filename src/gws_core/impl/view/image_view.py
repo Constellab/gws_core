@@ -1,7 +1,7 @@
-from base64 import b64encode
+from urllib.parse import quote
 
 from gws_core.config.config_params import ConfigParams
-from gws_core.impl.file.file_helper import FileHelper
+from gws_core.core.utils.settings import Settings
 from gws_core.resource.view.view import View
 from gws_core.resource.view.view_types import ViewType
 
@@ -9,44 +9,51 @@ from gws_core.resource.view.view_types import ViewType
 class ImageView(View):
     """Image view.
 
-    Use static method from_local_file to create an ImageView from a local file.
-
-    :param base_64_img: The base 64 encoded image
-    :type base_64_img: bytes
-    :param _mime_type: The mime type of the image
-    :type _mime_type: str
-
+    Serves the image via a URL route, avoiding large base64 payloads.
+    Use ``from_file_model_id`` to create an instance.
     """
 
-    _base_64_img: bytes | None = None
-    _mime_type: str
+    _src: str
 
     _type: ViewType = ViewType.IMAGE
     _title: str = "Image"
 
-    def __init__(self, base_64_img: bytes, _mime_type: str):
+    def __init__(self, src: str):
         super().__init__()
-        self._base_64_img = base_64_img
-        self._mime_type = _mime_type
+        self._src = src
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        return {"base_64_img": self._base_64_img, "mime_type": self._mime_type}
+        return {"src": self._src}
+
+    UNSUPPORTED_EXTENSIONS = ["tiff", "tif"]
 
     @staticmethod
-    def from_local_file(file_path: str) -> "ImageView":
-        """Create an ImageView from a local file path
+    def from_file_model_id(
+        file_model_id: str, file_name: str, resource_model_id: str
+    ) -> "ImageView":
+        """Create an ImageView that serves the image via a URL route.
 
-        :param file_path: The path of the file
-        :type file_path: str
+        Uses the same preview route as IFrameView.
+
+        :param file_model_id: The file model id
+        :type file_model_id: str
+        :param file_name: The file name
+        :type file_name: str
+        :param resource_model_id: The resource model id
+        :type resource_model_id: str
         :return: The ImageView
         :rtype: ImageView
+        :raises Exception: If the image format is not supported by browsers
         """
-        if not FileHelper.exists_on_os(file_path):
-            raise Exception(f"The file '{file_path}' does not exist")
+        extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
+        if extension in ImageView.UNSUPPORTED_EXTENSIONS:
+            raise Exception(
+                f"Image format '{extension}' is not supported for browser display. "
+                "Please convert the image to a supported format (e.g., PNG, JPEG)."
+            )
 
-        if not FileHelper.is_file(file_path):
-            raise Exception(f"The path '{file_path}' is not a file")
-
-        with open(file_path, "rb") as image_file:
-            encoded_string = b64encode(image_file.read())
-        return ImageView(encoded_string, FileHelper.get_mime(file_path))
+        base_url = Settings.get_lab_api_url().rstrip("/")
+        api_route = Settings.core_api_route_path().strip("/")
+        encoded_file_name = quote(file_name, safe="")
+        url = f"{base_url}/{api_route}/fs-node/{file_model_id}/resource/{resource_model_id}/preview/{encoded_file_name}"
+        return ImageView(src=url)

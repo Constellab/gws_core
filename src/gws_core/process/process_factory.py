@@ -366,7 +366,7 @@ class ProcessFactory:
         process_model.brick_version_on_create = process_config_dto.brick_version_on_create
         process_model.brick_version_on_run = process_config_dto.brick_version_on_run
         process_model.run_by = (
-            UserService.get_or_import_user_info(process_config_dto.run_by.id)
+            UserService.get_or_import_user_info(process_config_dto.run_by.id, fallback_to_sysuser=True)
             if process_config_dto.run_by
             else None
         )

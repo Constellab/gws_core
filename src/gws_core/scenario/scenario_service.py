@@ -576,3 +576,21 @@ class ScenarioService:
                 resource_model.to_export_dto() for resource_model in resource_models
             ],
         )
+
+    @classmethod
+    def export_scenario_to_archive(
+        cls,
+        scenario_id: str,
+        resource_mode: str = "Inputs and outputs",
+    ) -> str:
+        """Export a scenario and its selected resources into a single tar archive.
+
+        :param scenario_id: ID of the scenario to export.
+        :param resource_mode: Which resources to include (e.g. "Auto", "Inputs and outputs", "All").
+        :return: Path to the generated archive tar file.
+        """
+        from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
+
+        user = CurrentUserService.get_and_check_current_user()
+        zipper = ScenarioArchiveZipper(scenario_id, resource_mode, user)
+        return zipper.zip()

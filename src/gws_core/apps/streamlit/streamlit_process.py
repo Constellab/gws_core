@@ -87,13 +87,17 @@ class StreamlitProcess(AppProcess):
                 debug_msg = f"Running streamlit in dev mode: {' '.join(cmd)}"
 
             Logger.debug(debug_msg)
-            shell_proxy = self._get_and_check_shell_proxy(app)
-            process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
+            shell_proxy = self._get_and_check_shell_proxy()
+            process = shell_proxy.run_in_new_thread(
+                cmd, shell_mode=False, env=env, dispatch_stderr=True
+            )
         else:
-            shell_proxy = self._get_and_check_shell_proxy(app)
+            shell_proxy = self._get_and_check_shell_proxy()
             # Run user's main.py directly
             cmd = ["streamlit", "run", app.get_user_main_file_path()] + options
-            process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
+            process = shell_proxy.run_in_new_thread(
+                cmd, shell_mode=False, env=env, dispatch_stderr=True
+            )
 
         return AppProcessStartResult(
             process=process,

@@ -6,3 +6,7 @@ class TagSystem:
     # Tag to identify scenarios that were created for importing a scenario in an external lab
     # Value is the id of the scenario that was imported
     SCENARIO_IMPORTER_TAG_KEY = "gws_import_scenario_id"
+
+    # Tag keys used to identify zip scenarios
+    TAG_KEY_ZIP_RESOURCE_ID = "zip-resource-id"
+    TAG_KEY_ZIP_TASK_VERSION = "zip-task-version"

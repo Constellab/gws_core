@@ -7,6 +7,8 @@ from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note_template.note_template_dto import NoteTemplateDTO
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_entity_type import TagEntityType
 
 
 @final
@@ -20,6 +22,10 @@ class NoteTemplate(ModelWithUser):
 
     def update_content_rich_text(self, rich_text: RichText) -> None:
         self.content = rich_text.to_dto()
+
+    def delete_instance(self, *args, **kwargs):
+        super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(TagEntityType.NOTE_TEMPLATE, self.id)
 
     def to_dto(self) -> NoteTemplateDTO:
         return NoteTemplateDTO(

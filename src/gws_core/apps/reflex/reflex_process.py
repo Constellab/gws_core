@@ -11,6 +11,7 @@ from gws_core.apps.app_nginx_service import (
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.classes.observer.message_observer import BasicMessageObserver
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.execution_context import ExecutionContext
@@ -62,7 +63,7 @@ class ReflexProcess(AppProcess):
             f"Starting reflex process for front port {self.front_port} and back port {self.back_port}"
         )
 
-        shell_proxy = self._get_and_check_shell_proxy(app)
+        shell_proxy = self._get_and_check_shell_proxy()
         shell_proxy.working_dir = app.get_app_folder()
 
         if app.is_dev_mode():
@@ -85,7 +86,9 @@ class ReflexProcess(AppProcess):
 
         env = self._get_base_env(app)
 
-        process = shell_proxy.run_in_new_thread(cmd, shell_mode=False, env=env)
+        process = shell_proxy.run_in_new_thread(
+            cmd, shell_mode=False, env=env, dispatch_stderr=True
+        )
         services = self._get_dev_nginx_services()
 
         return AppProcessStartResult(
@@ -132,7 +135,9 @@ class ReflexProcess(AppProcess):
             #    '--env=prod'
         ]
 
-        process = shell_proxy.run_in_new_thread(backend_cmd, shell_mode=False, env=env)
+        process = shell_proxy.run_in_new_thread(
+            backend_cmd, shell_mode=False, env=env, dispatch_stderr=True
+        )
 
         services = self._get_prod_nginx_services(front_build_path)
 
@@ -289,7 +294,7 @@ class ReflexProcess(AppProcess):
 
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
-        return self.front_port == port or self.back_port == port
+        return port in (self.front_port, self.back_port)
 
     def _get_log_level_option(self) -> str:
         return f"--loglevel={Logger.get_instance().level.lower()}"

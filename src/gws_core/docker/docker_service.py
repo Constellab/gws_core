@@ -200,9 +200,11 @@ class DockerService(LabManagerServiceBase):
                 credentials=credentials_data,
             )
 
-        except BaseHTTPException as err:
-            err.detail = f"Can't register SQL DB compose. Error: {err.detail}"
-            raise err
+        except Exception as err:
+            error = (
+                f"An unexpected error occurred while registering SQL DB compose. Error: {str(err)}"
+            )
+            raise Exception(error) from err
 
     def unregister_compose(
         self,

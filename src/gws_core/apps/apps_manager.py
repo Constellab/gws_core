@@ -6,6 +6,7 @@ from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncR
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_process import AppProcess
+from gws_core.apps.app_resource import AppResource
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.apps.streamlit.streamlit_app import StreamlitApp
@@ -16,6 +17,7 @@ from gws_core.core.utils.logger import LogContext
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
+from gws_core.resource.resource_model import ResourceModel
 
 
 class AppsManager:
@@ -206,6 +208,28 @@ class AppsManager:
     def find_app_by_resource_model_id(cls, resource_model_id: str) -> AppProcess | None:
         """Find the streamlit app that was generated from the given resource model id"""
         return cls.running_processes.get(resource_model_id)
+
+    @classmethod
+    def set_disable_auto_stop(cls, app_id: str, disable_auto_stop: bool) -> None:
+        """Set the disable_auto_stop option on an app resource and update the running process if any.
+
+        :param app_id: the resource model id of the app
+        :param disable_auto_stop: True to disable automatic stop when no connections are detected
+        """
+
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
+        resource: AppResource = resource_model.get_resource()
+
+        if not isinstance(resource, AppResource):
+            raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
+
+        resource.set_disable_auto_stop(disable_auto_stop)
+        resource_model.update_resource_fields(resource)
+
+        # Update the running process if the app is currently running
+        app_process = cls.find_app_by_resource_model_id(app_id)
+        if app_process is not None:
+            app_process.set_disable_auto_stop(disable_auto_stop)
 
     @classmethod
     def get_logs_of_app(

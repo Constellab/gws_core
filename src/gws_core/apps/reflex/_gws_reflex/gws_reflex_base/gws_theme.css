@@ -223,6 +223,10 @@ a[href="https://reflex.dev"] {
 }
 
 /* Component overrides */
+.radix-themes {
+  display: flex;
+  flex-direction: column;
+}
 
 .AccordionTrigger {
   cursor: pointer;

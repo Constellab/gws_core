@@ -251,7 +251,7 @@ class BrickService:
         if spec is not None:
             return os.path.dirname(spec.origin)
         else:
-            raise Exception(f"Cannot find brick {brick_name}")
+            raise Exception(f"Cannot find brick '{brick_name}'")
 
     @classmethod
     def find_brick_folder(cls, brick_name: str) -> str:
@@ -267,7 +267,7 @@ class BrickService:
             brick_path = os.path.join(sys_bricks_folder, brick_name)
         else:
             raise Exception(
-                f"Cannot find brick {brick_name} in bricks folder : '{user_bricks_folder}' or '{sys_bricks_folder}'"
+                f"Cannot find brick '{brick_name}' in bricks folder : '{user_bricks_folder}' or '{sys_bricks_folder}'"
             )
 
         if not cls.folder_is_brick(brick_path):

@@ -1,10 +1,10 @@
 from collections.abc import Callable
 from enum import Enum
-from typing import Any
+from typing import Any, Generic
 
 from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
-from typing_extensions import TypeVar
+from typing_extensions import Self, TypeVar
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.paginator import Paginator
@@ -116,10 +116,10 @@ class SearchParams(BaseModelDTO):
         self.filtersCriteria = filters
 
 
-SearchBuilderType = TypeVar("SearchBuilderType", bound="SearchBuilder")
+ModelType = TypeVar("ModelType", bound=Model, default=Model)
 
 
-class SearchBuilder:
+class SearchBuilder(Generic[ModelType]):
     """Builder to make dynamic search query with And operator
 
     :raises BadRequestException: [description]
@@ -128,7 +128,7 @@ class SearchBuilder:
     :rtype: [type]
     """
 
-    _model_type: type[Model]
+    _model_type: type[ModelType]
 
     _query_builder: ExpressionBuilder
     _joins: list[SearchJoin]
@@ -137,7 +137,7 @@ class SearchBuilder:
     _default_orders: list[Ordering]
 
     def __init__(
-        self, model_type: type[Model], default_orders: list[Ordering] | None = None
+        self, model_type: type[ModelType], default_orders: list[Ordering] | None = None
     ) -> None:
         """Create a search build to make dynamic search
 
@@ -178,7 +178,7 @@ class SearchBuilder:
 
         return model_select
 
-    def search_all(self) -> list[Model]:
+    def search_all(self) -> list[ModelType]:
         return list(self.build_search())
 
     def search_page(
@@ -186,42 +186,34 @@ class SearchBuilder:
     ) -> Paginator:
         return Paginator(self.build_search(), page, number_of_items_per_page)
 
-    def search_first(self) -> Model | None:
+    def search_first(self) -> ModelType | None:
         """Search the first element of the search
 
         :return: [description]
-        :rtype: Optional[Model]
+        :rtype: Optional[ModelType]
         """
         return self.build_search().first()
 
-    def add_search_params(
-        self: SearchBuilderType, search: SearchParams
-    ) -> SearchBuilderType:
+    def add_search_params(self, search: SearchParams) -> Self:
         self._add_search_filter_query(search.filtersCriteria)
 
         self._add_search_ordering(search.sortsCriteria)
 
         return self
 
-    def add_expression(
-        self: SearchBuilderType, expression: Expression
-    ) -> SearchBuilderType:
+    def add_expression(self, expression: Expression) -> Self:
         self._query_builder.add_expression(expression)
         return self
 
-    def add_ordering(self: SearchBuilderType, order: Ordering) -> SearchBuilderType:
+    def add_ordering(self, order: Ordering) -> Self:
         self._orderings.append(order)
         return self
 
-    def set_ordering(
-        self: SearchBuilderType, orders: list[Ordering]
-    ) -> SearchBuilderType:
+    def set_ordering(self, orders: list[Ordering]) -> Self:
         self._orderings = orders
         return self
 
-    def add_join(
-        self: SearchBuilderType, table: type[Model], on: Expression
-    ) -> SearchBuilderType:
+    def add_join(self, table: type[Model], on: Expression) -> Self:
         self._joins.append(SearchJoin(table_type=table, on=on))
         return self
 

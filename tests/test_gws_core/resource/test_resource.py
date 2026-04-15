@@ -85,6 +85,40 @@ class TestResource(BaseTestCase):
         self.assertEqual(resource.age, new_resource.age)
         self.assertEqual(resource.long_str, new_resource.long_str)
 
+    def test_update_resource_fields(self):
+        """Test that update_resource_fields persists modified RFields"""
+        resource = TestResourceFields()
+        resource.position = [5, 2]
+        resource.age = 12
+        resource.long_str = "Hello world"
+
+        # Save the resource model
+        resource_model: ResourceModel = ResourceModel.save_from_resource(
+            resource, origin=ResourceOrigin.UPLOADED
+        )
+
+        # Reload the resource from the model
+        saved_resource: TestResourceFields = resource_model.get_resource(new_instance=True)
+        self.assertEqual(saved_resource.age, 12)
+        self.assertEqual(saved_resource.long_str, "Hello world")
+        self.assertEqual(saved_resource.position, [5, 2])
+
+        # Modify the resource fields
+        saved_resource.age = 99
+        saved_resource.long_str = "Updated value"
+        saved_resource.position = [10, 20]
+
+        # Update the resource model with the modified resource
+        resource_model.update_resource_fields(saved_resource)
+
+        # Reload from DB to verify persistence
+        db_resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
+        reloaded_resource: TestResourceFields = db_resource_model.get_resource(new_instance=True)
+
+        self.assertEqual(reloaded_resource.age, 99)
+        self.assertEqual(reloaded_resource.long_str, "Updated value")
+        self.assertEqual(reloaded_resource.position, [10, 20])
+
     def test_technical_info(self):
         robot = Robot()
         robot.add_technical_info(TechnicalInfo("key", "value", "description"))
