@@ -48,7 +48,7 @@ class SettingsLoader:
     def load_settings(self) -> None:
         self.settings = Settings.init()
         self.settings.set_main_settings_file_path(self.main_settings_file_path)
-        self.settings.set_data("is_test", self.is_test)
+        self.settings.set_is_test(self.is_test)
         self._init()
 
         self.settings.set_pip_freeze(self.pip_freeze().split())

@@ -103,6 +103,37 @@ def configure(
 version_app = typer.Typer(help="Manage brick versions")
 app.add_typer(version_app, name="version")
 
+technical_doc_app = typer.Typer(help="Manage brick technical documentation")
+app.add_typer(technical_doc_app, name="technical-doc")
+
+
+@technical_doc_app.command("push", help="Push the technical documentation of a brick to the Constellab community")
+def technical_doc_push(
+    brick_path: Annotated[
+        str | None,
+        typer.Argument(
+            help="Path to the brick folder. If not provided, uses the current directory."
+        ),
+    ] = None,
+):
+    """Push the technical documentation of a brick without pushing a new version."""
+
+    brick_dir = BrickCliService.resolve_brick_dir(brick_path)
+
+    settings = BrickCliService.get_brick_settings(brick_dir)
+    if not settings:
+        typer.echo("Error: Could not read brick settings", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Brick: {settings.name}")
+    typer.echo("Pushing technical documentation...")
+    try:
+        BrickCliService.push_technical_doc(brick_dir)
+    except Exception as e:
+        typer.echo(f"Error pushing technical documentation: {e}", err=True)
+        raise typer.Exit(1) from e
+    typer.echo("Successfully pushed technical documentation")
+
 
 def _ensure_git_tag(brick_dir: str, version: str, yes: bool) -> None:
     """Check that the git tag exists, prompting the user to create it if needed."""

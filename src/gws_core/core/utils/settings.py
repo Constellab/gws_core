@@ -32,6 +32,10 @@ class Settings:
 
     data: dict[str, Any]
 
+    # Runtime-only flag set explicitly by SettingsLoader at process startup.
+    # Not persisted to disk: it describes the current invocation, not config.
+    _is_test: bool = False
+
     _setting_instance: Optional["Settings"] = None
 
     SETTINGS_NAME = "settings.json"
@@ -647,7 +651,10 @@ class Settings:
 
     @property
     def is_test(self) -> bool:
-        return self.data.get("is_test", False)
+        return self._is_test
+
+    def set_is_test(self, is_test: bool) -> None:
+        self._is_test = is_test
 
     @property
     def name(self):
