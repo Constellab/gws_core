@@ -184,7 +184,7 @@ def version_push(
     typer.echo(f"Successfully pushed version {version} of brick {settings.name}")
 
     # Ask if the user wants to push the technical documentation
-    push_doc = technical_doc or typer.confirm(
+    push_doc = technical_doc or yes or typer.confirm(
         "Do you also want to push the technical documentation?",
         default=False,
     )

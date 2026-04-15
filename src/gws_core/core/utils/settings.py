@@ -219,8 +219,8 @@ class Settings:
 
     @classmethod
     def get_community_api_url(cls) -> str | None:
-        if cls.is_local_env():
-            return "http://host.docker.internal:3333"
+        # if cls.is_local_env():
+        #     return "http://host.docker.internal:3333"
         return cls.get_os_environ("COMMUNITY_API_URL")
 
     @classmethod
