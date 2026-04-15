@@ -183,6 +183,12 @@ class KVStore(dict[str, Any]):
 
         return shelve_open(self.get_full_path_without_extension())
 
+    def clear_all(self) -> None:
+        """Clear all the data in the store, but keep the file"""
+        kv_data = self._open_shelve()
+        kv_data.clear()
+        kv_data.close()
+
     def _create_dir(self) -> None:
         if not FileHelper.exists_on_os(self.full_file_dir):
             os.makedirs(self.full_file_dir)

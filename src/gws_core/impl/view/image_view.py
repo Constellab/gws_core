@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.settings import Settings
 from gws_core.resource.view.view import View
@@ -50,5 +52,8 @@ class ImageView(View):
                 "Please convert the image to a supported format (e.g., PNG, JPEG)."
             )
 
-        url = f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/fs-node/{file_model_id}/resource/{resource_model_id}/preview/{file_name}"
+        base_url = Settings.get_lab_api_url().rstrip("/")
+        api_route = Settings.core_api_route_path().strip("/")
+        encoded_file_name = quote(file_name, safe="")
+        url = f"{base_url}/{api_route}/fs-node/{file_model_id}/resource/{resource_model_id}/preview/{encoded_file_name}"
         return ImageView(src=url)

@@ -6,6 +6,7 @@ from gws_core.user.user_events import UserActivatedEvent, UserCreatedEvent, User
 
 from ..core.classes.paginator import Paginator
 from ..core.exception.exceptions import BadRequestException
+from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from .user import User
 from .user_group import UserGroup
 
@@ -195,9 +196,13 @@ class UserService:
             user_dto = SpaceService.get_instance().get_user_info(user_id)
             if user_dto is not None:
                 return cls.create_or_update_user_dto(user_dto)
-        except Exception:
+        except (BadRequestException, BaseHTTPException) as err:
             if not fallback_to_sysuser:
                 raise
+            Logger.error(
+                f"Failed to import user '{user_id}' from space, falling back to sysuser: {err}"
+            )
+            Logger.log_exception_stack_trace(err)
 
         if fallback_to_sysuser:
             return User.get_and_check_sysuser()

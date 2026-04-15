@@ -135,8 +135,7 @@ class Logger:
         # Format of the logs, format date like : 2024-06-24T14:18:07.442618+00:00
         formatter = logging.Formatter("%(levelname)s - %(asctime)s - %(message)s")
 
-        # Configure the console logger. Write to the *original* stderr
-        # (sys.__stderr__) rather than sys.stderr, because Reflex/uvicorn
+        # Write to sys.stdout rather than sys.stderr because Reflex/uvicorn
         # replace sys.stderr with a line-based interceptor that re-emits each
         # line as its own ERROR record and drops everything after the first
         # newline — which is why multi-line tracebacks don't reach the console.

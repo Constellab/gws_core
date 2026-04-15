@@ -29,7 +29,17 @@ class ZipCompress(Compress):
         self._stage(file_path, file_name)
 
     def _stage(self, source_path: str, arcname: str) -> None:
-        link_path = os.path.join(self._staging_dir, arcname)
+        safe_arcname = self.sanitize_arcname(arcname)
+        link_path = os.path.join(self._staging_dir, safe_arcname)
+        staging_root = os.path.realpath(self._staging_dir)
+        resolved_parent = os.path.realpath(os.path.dirname(link_path))
+        if (
+            resolved_parent != staging_root
+            and not resolved_parent.startswith(staging_root + os.sep)
+        ):
+            raise ValueError(
+                f"Invalid arcname '{arcname}': resolves outside the staging directory."
+            )
         parent = os.path.dirname(link_path)
         if parent and parent != self._staging_dir:
             os.makedirs(parent, exist_ok=True)

@@ -612,9 +612,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             kv_store.unlock()
 
             # Clear all existing keys
-            kv_data = kv_store._open_shelve()
-            kv_data.clear()
-            kv_data.close()
+            kv_store.clear_all()
 
         # Recreate the fields from the resource
         self._receive_fields_from_resource(resource)

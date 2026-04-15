@@ -229,7 +229,7 @@ class AppsManager:
         # Update the running process if the app is currently running
         app_process = cls.find_app_by_resource_model_id(app_id)
         if app_process is not None:
-            app_process._app.set_disable_auto_stop(disable_auto_stop)
+            app_process.set_disable_auto_stop(disable_auto_stop)
 
     @classmethod
     def get_logs_of_app(

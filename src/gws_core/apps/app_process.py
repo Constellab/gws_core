@@ -528,6 +528,10 @@ class AppProcess:
     def get_id(self) -> str:
         return self._app.resource_model_id
 
+    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
+        """Update the auto-stop flag on the underlying app instance."""
+        self._app.set_disable_auto_stop(disable_auto_stop)
+
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
             id=self.get_id(),

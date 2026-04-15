@@ -47,6 +47,27 @@ class Compress:
         self._fs_node_names.append(fs_node_name)
         return fs_node_name
 
+    @staticmethod
+    def sanitize_arcname(arcname: str) -> str:
+        """Validate and normalize an archive entry name to a safe relative path.
+
+        Rejects empty names, absolute paths, and any segment that would escape
+        the archive root via ``..``. Returned value is suitable for joining
+        with a staging directory.
+        """
+        if not arcname:
+            raise ValueError("arcname must not be empty.")
+        if os.path.isabs(arcname) or arcname.startswith(("/", "\\")):
+            raise ValueError(f"Invalid arcname '{arcname}': absolute paths are not allowed.")
+        normalized = os.path.normpath(arcname)
+        if normalized.startswith("..") or os.sep + ".." in os.sep + normalized:
+            raise ValueError(
+                f"Invalid arcname '{arcname}': path traversal segments are not allowed."
+            )
+        if os.path.isabs(normalized):
+            raise ValueError(f"Invalid arcname '{arcname}': must be a relative path.")
+        return normalized
+
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
         """Return true if the file can be uncompressed by this class"""
