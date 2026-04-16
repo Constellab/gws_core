@@ -12,6 +12,7 @@ echo "Cli installed successfully"
 
 # Install pigz (parallel gzip) for faster compression in resource sharing
 echo "Installing pigz"
+sudo apt-get update
 if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get install -y pigz || apt-get install -y pigz
 else

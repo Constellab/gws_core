@@ -120,8 +120,6 @@ class CommunityUserService:
 
     @classmethod
     def get_community_api_url(cls) -> str:
-        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
-        # return "https://api.constellab.community"
         return Settings.get_community_api_url_and_check()
 
     def _get_request_headers(self) -> dict[str, str]:
