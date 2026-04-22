@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from pydantic import ConfigDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
@@ -13,8 +15,7 @@ class NoteSaveDTO(BaseModelDTO):
     folder_id: str | None = None
     template_id: str | None = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class NoteDTO(ModelWithUserDTO):

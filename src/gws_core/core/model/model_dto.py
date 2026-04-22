@@ -3,7 +3,7 @@ from json import dumps
 from typing import Generic, TypeVar
 
 from fastapi.encoders import jsonable_encoder
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 BaseModelDTOType = TypeVar("BaseModelDTOType", bound="BaseModelDTO")
 
@@ -108,5 +108,4 @@ class PageDTO(BaseModelDTO, Generic[PageDTOType]):
             objects=[],
         )
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)

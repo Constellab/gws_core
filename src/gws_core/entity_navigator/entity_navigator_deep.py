@@ -1,5 +1,7 @@
 from collections.abc import Iterable
 
+from pydantic import ConfigDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.entity_navigator.entity_navigator_type import (
     EntityNavGroupDTO,
@@ -14,8 +16,7 @@ class NavigableEntityDeep(BaseModelDTO):
     entity: NavigableEntity
     deep_level: int
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def __hash__(self) -> int:
         return self.entity.__hash__()
