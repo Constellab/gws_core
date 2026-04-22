@@ -138,7 +138,7 @@ class ProcessService:
         """
         Init CRON Thread to send process runs stats to community
         """
-        x = threading.Thread(target=cls._thread_send_process_run_stats_to_community)
+        x = threading.Thread(target=cls._thread_send_process_run_stats_to_community, daemon=True)
         x.start()
 
     @classmethod
