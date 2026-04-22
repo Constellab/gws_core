@@ -1,5 +1,3 @@
-import signal
-import sys
 from datetime import datetime, timedelta
 
 from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
@@ -136,16 +134,6 @@ class AppsManager:
 
     @classmethod
     def init(cls):
-        """Register signal handlers to gracefully stop all processes on exit"""
-
-        def signal_handler(sig, frame):
-            cls.stop_all_processes()
-            sys.exit(0)
-
-        # Register handlers for common termination signals
-        signal.signal(signal.SIGINT, signal_handler)  # CTRL+C
-        signal.signal(signal.SIGTERM, signal_handler)  # Termination request
-
         AppNginxManager.init()
 
     @classmethod
