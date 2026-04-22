@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 from json import load
@@ -36,6 +37,11 @@ class AppPluginDownloader:
 
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
+
+    # Shared plugin file layout
+    ASSETS_FOLDER_NAME = "assets"
+    INDEX_HTML_FILE_NAME = "index.html"
+    ENVIRONMENT_JSON_FILE_NAME = "environment.json"
 
     RELEASE_BASE_URL = "https://github.com/Constellab/dashboard-components/releases/download/"
 
@@ -223,6 +229,44 @@ class AppPluginDownloader:
         By default, this method does nothing.
         """
         pass
+
+    def get_base_href(self) -> str:
+        """Relative path at which the plugin assets are served by the host app.
+        Written to environment.json so the frontend can resolve asset URLs.
+        Subclasses must override.
+        """
+        raise NotImplementedError(
+            f"{type(self).__name__} must override get_base_href()"
+        )
+
+    def get_plugin_assets_folder_path(self) -> str:
+        """Path to the plugin's inner assets folder (<destination>/assets)."""
+        return os.path.join(self.destination_folder, self.ASSETS_FOLDER_NAME)
+
+    def get_plugin_index_html_path(self) -> str:
+        """Path to the plugin's index.html file."""
+        return os.path.join(self.destination_folder, self.INDEX_HTML_FILE_NAME)
+
+    def create_environment_json_file(self) -> None:
+        """Create the environment.json file in the plugin's assets folder.
+        The file contains lab-specific URLs resolved from Settings so the
+        frontend plugin can call back into this lab.
+        """
+        dict_ = {
+            "apiBaseUrl": Settings.get_lab_api_url(),
+            "baseHref": self.get_base_href(),
+            "spaceApiUrl": Settings.get_space_api_url(),
+            "communityFrontUrl": Settings.get_community_front_url(),
+            "communityApiUrl": Settings.get_community_api_url(),
+        }
+
+        json_dir = self.get_plugin_assets_folder_path()
+        if not os.path.exists(json_dir):
+            raise FileNotFoundError(f"The folder for json env {json_dir} does not exist.")
+
+        json_file_path = os.path.join(json_dir, self.ENVIRONMENT_JSON_FILE_NAME)
+        with open(json_file_path, "w", encoding="utf-8") as json_file:
+            json.dump(dict_, json_file, indent=4)
 
     def uninstall_package(self) -> None:
         """Uninstall the package. This method can be overridden by subclasses to add custom cleanup logic.

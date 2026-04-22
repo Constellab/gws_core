@@ -10,9 +10,7 @@ class ReflexPlugin(AppPluginDownloader):
     The plugin is used to generate custom components from gws library for Reflex apps.
     """
 
-    ASSETS_FOLDER_NAME = "assets"
     GWS_PLUGIN_FOLDER_NAME = os.path.join("external", "gws_plugin")
-    INDEX_HTML_FILE_NAME = "index.html"
 
     def __init__(self):
         """Initialize the ReflexComponent.
@@ -25,23 +23,23 @@ class ReflexPlugin(AppPluginDownloader):
             destination_folder=self._get_asset_plugin_folder_path(),
         )
 
-    def _get_assets_folder_path(self) -> str:
-        """Get the path to the assets folder in the destination folder.
+    def post_install(self) -> None:
+        """Create the environment.json file after the plugin package is downloaded."""
+        self.create_environment_json_file()
+
+    def get_base_href(self) -> str:
+        return self.GWS_PLUGIN_FOLDER_NAME
+
+    def _get_reflex_assets_folder_path(self) -> str:
+        """Get the path to the Reflex app's root assets folder.
 
         :return: Path to assets folder
         """
         return os.path.join(os.getcwd(), self.ASSETS_FOLDER_NAME)
 
     def _get_asset_plugin_folder_path(self) -> str:
-        """Get the path to the gws_plugin folder in the assets folder.
+        """Get the path to the gws_plugin folder in the Reflex app's assets folder.
 
         :return: Path to gws_plugin folder
         """
-        return os.path.join(self._get_assets_folder_path(), self.GWS_PLUGIN_FOLDER_NAME)
-
-    def _get_index_html_path(self) -> str:
-        """Get the path to the index.html file in the destination folder.
-
-        :return: Path to index.html
-        """
-        return os.path.join(self._get_asset_plugin_folder_path(), self.INDEX_HTML_FILE_NAME)
+        return os.path.join(self._get_reflex_assets_folder_path(), self.GWS_PLUGIN_FOLDER_NAME)
