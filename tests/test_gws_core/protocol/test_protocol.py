@@ -13,10 +13,10 @@ from gws_core.process.process_types import ProcessStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 
 from ..protocol_examples import (
-    TestNestedProtocol,
-    TestRobotWithSugarProtocol,
-    TestSimpleProtocol,
-    TestSubProtocol,
+    SimpleProtocolTest,
+    NestedProtocolTest,
+    RobotWithSugarProtocolTest,
+    SubProtocolTest,
 )
 
 
@@ -27,7 +27,7 @@ class TestProtocol(BaseTestCase):
         count = len(query)
 
         # create a chain
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(SimpleProtocolTest)
 
         query = ProtocolModel.select()
         self.assertEqual(len(query), count + 1)
@@ -46,7 +46,7 @@ class TestProtocol(BaseTestCase):
         count = len(query)
 
         super_proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(
-            TestNestedProtocol
+            NestedProtocolTest
         )
 
         query = ProtocolModel.select()
@@ -86,7 +86,7 @@ class TestProtocol(BaseTestCase):
         3. It is connected but not provided (None)
         """
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
-            TestRobotWithSugarProtocol
+            RobotWithSugarProtocolTest
         )
 
         scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
@@ -116,7 +116,7 @@ class TestProtocol(BaseTestCase):
 
     def test_processes(self):
         protocol: ProtocolModel = ProtocolService.create_protocol_model_from_type(
-            TestNestedProtocol
+            NestedProtocolTest
         )
 
         mini_proto: ProtocolModel = protocol.get_process("mini_proto")
@@ -127,15 +127,15 @@ class TestProtocol(BaseTestCase):
 
         # test get next process
         next_processes = mini_proto.get_direct_next_processes("p2")
-        self._check_process_set(next_processes, TestSubProtocol.p2_direct_next)
+        self._check_process_set(next_processes, SubProtocolTest.p2_direct_next)
 
         # test get all next processes
         next_processes = mini_proto.get_all_next_processes("p2")
-        self._check_process_set(next_processes, TestNestedProtocol.p2_next)
+        self._check_process_set(next_processes, NestedProtocolTest.p2_next)
 
         # test get previous processes
         previous_processes = mini_proto.get_direct_previous_processes("p2")
-        self._check_process_set(previous_processes, TestSubProtocol.p2_direct_previous)
+        self._check_process_set(previous_processes, SubProtocolTest.p2_direct_previous)
 
         # test get error process
         p2.status = ProcessStatus.ERROR

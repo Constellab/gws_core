@@ -24,11 +24,11 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 
-from ..protocol_examples import TestNestedProtocol
+from ..protocol_examples import NestedProtocolTest
 
 
-@task_decorator("TestScenarioTemplateDynamic")
-class TestScenarioTemplateDynamic(Task):
+@task_decorator("ScenarioTemplateDynamicTest")
+class ScenarioTemplateDynamicTest(Task):
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
     config_specs = ConfigSpecs({})
@@ -37,8 +37,8 @@ class TestScenarioTemplateDynamic(Task):
         return {}
 
 
-@task_decorator("TestScenarioTemplateDynamicConfig")
-class TestScenarioTemplateDynamicConfig(Task):
+@task_decorator("ScenarioTemplateDynamicConfigTest")
+class ScenarioTemplateDynamicConfigTest(Task):
     input_specs: InputSpecs = InputSpecs()
     output_specs: OutputSpecs = OutputSpecs()
     config_specs = ConfigSpecs(
@@ -56,8 +56,8 @@ class TestScenarioTemplateDynamicConfig(Task):
         return {}
 
 
-@task_decorator("TestGenerator")
-class TestGenerator(Task):
+@task_decorator("GeneratorTest")
+class GeneratorTest(Task):
     output_specs: OutputSpecs = OutputSpecs({"resource": OutputSpec(Resource)})
     config_specs = ConfigSpecs({})
 
@@ -72,7 +72,7 @@ class TestScenarioTemplate(BaseTestCase):
         init_count_task = TaskModel.select().count()
 
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(TestNestedProtocol)
+        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
 
         # configure the process to check config in template
         ProtocolService.configure_process(proto.id, "p5", {"food_weight": 1000})
@@ -152,9 +152,9 @@ class TestScenarioTemplate(BaseTestCase):
 
         protocol = scenario.get_protocol()
 
-        process = protocol.add_process(TestScenarioTemplateDynamic, "dynamic")
-        source_1 = protocol.add_process(TestGenerator, "source_1")
-        source_2 = protocol.add_process(TestGenerator, "source_2")
+        process = protocol.add_process(ScenarioTemplateDynamicTest, "dynamic")
+        source_1 = protocol.add_process(GeneratorTest, "source_1")
+        source_2 = protocol.add_process(GeneratorTest, "source_2")
 
         ProtocolService.add_dynamic_input_port_to_process(
             protocol.get_model().id, process.get_model().instance_name
@@ -203,7 +203,7 @@ class TestScenarioTemplate(BaseTestCase):
 
     def test_serialization(self):
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(TestNestedProtocol)
+        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
 
         # create a template
         template = ProtocolService.create_scenario_template_from_id(
@@ -399,7 +399,7 @@ class TestScenarioTemplate(BaseTestCase):
 
         protocol = scenario.get_protocol()
 
-        process = protocol.add_process(TestScenarioTemplateDynamicConfig, "dynamic_config")
+        process = protocol.add_process(ScenarioTemplateDynamicConfigTest, "dynamic_config")
 
         protocol_id = protocol.get_model().id
         process_name = process.get_model().instance_name

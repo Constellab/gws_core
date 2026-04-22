@@ -11,7 +11,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 @dataclass
-class TestEvent(BaseEvent):
+class EventTest(BaseEvent):
     type: Literal["test"] = "test"
     action: Literal["run"] = "run"
 
@@ -38,7 +38,7 @@ class TestEventDispatcher(BaseTestCase):
 
         dispatcher = EventDispatcher.get_instance()
         dispatcher.register(SyncListener())
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Should be immediate — no need to wait
         self.assertEqual(results, ["sync_handled"])
@@ -56,7 +56,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher.register(FailingSyncListener())
 
         with self.assertRaises(ValueError) as ctx:
-            dispatcher.dispatch(TestEvent())
+            dispatcher.dispatch(EventTest())
         self.assertIn("Sync listener error", str(ctx.exception))
 
     def test_async_listener_exception_does_not_propagate(self):
@@ -76,7 +76,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher.register(SuccessAsyncListener())
 
         # Should NOT raise
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Wait for async processing
         time.sleep(0.5)
@@ -99,7 +99,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher = EventDispatcher.get_instance()
         dispatcher.register(AsyncListener())
         dispatcher.register(SyncListener())
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Sync should already be in the list
         self.assertEqual(order[0], "sync")

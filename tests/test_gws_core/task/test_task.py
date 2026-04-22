@@ -23,7 +23,7 @@ from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug.input_task import InputTask
 from gws_core.test.test_helper import TestHelper
 
-from ..protocol_examples import TestSimpleProtocol
+from ..protocol_examples import SimpleProtocolTest
 
 
 @task_decorator(unique_name="RunAfterTask")
@@ -48,7 +48,7 @@ class TestTask(BaseTestCase):
         self.assertTrue(p0.id != p1.id)
 
     def test_process(self):
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(TestSimpleProtocol)
+        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(SimpleProtocolTest)
 
         p0: TaskModel = proto.get_process("p0")
         p1: TaskModel = proto.get_process("p1")

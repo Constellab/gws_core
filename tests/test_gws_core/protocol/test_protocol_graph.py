@@ -7,7 +7,7 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.test_helper import TestHelper
 
-from ..protocol_examples import TestSubProtocol
+from ..protocol_examples import SubProtocolTest
 
 
 # test_protocol_graph
@@ -22,7 +22,7 @@ class TestProtocolGraph(BaseTestCase):
         protocol = scenario.get_protocol()
 
         p0 = protocol.add_process(RobotMove, "p0")
-        sub_proto = protocol.add_process(TestSubProtocol, "sub_proto")
+        sub_proto = protocol.add_process(SubProtocolTest, "sub_proto")
 
         # Input > Move > SubProtocol > Output
         protocol.add_resource("source", resource_model.id, p0 << "robot")
@@ -57,7 +57,7 @@ class TestProtocolGraph(BaseTestCase):
         protocol = scenario.get_protocol()
 
         p0 = protocol.add_process(RobotMove, "p0")
-        sub_proto = protocol.add_process(TestSubProtocol, "sub_proto")
+        sub_proto = protocol.add_process(SubProtocolTest, "sub_proto")
 
         protocol.add_resource("source", resource_model.id, p0 << "robot")
         protocol.add_connector(p0 >> "robot", sub_proto << "robot")

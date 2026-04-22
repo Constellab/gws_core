@@ -21,7 +21,7 @@ from gws_core.task.plug.output_task import OutputTask
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..protocol_examples import TestNestedProtocol
+from ..protocol_examples import NestedProtocolTest
 
 
 # test_protocol_service
@@ -139,7 +139,7 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(len(protocol_model.connectors), 0)
 
     def test_reset_process(self):
-        scenario = ScenarioProxy(TestNestedProtocol)
+        scenario = ScenarioProxy(NestedProtocolTest)
         scenario.run()
         self.assertTrue(scenario.get_model().is_success)
 

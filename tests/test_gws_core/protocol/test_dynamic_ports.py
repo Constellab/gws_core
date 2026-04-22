@@ -23,8 +23,8 @@ from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-@task_decorator("TestDynamicIO")
-class TestDynamicIO(Task):
+@task_decorator("DynamicIOTest")
+class DynamicIOTest(Task):
     input_specs = DynamicInputs(
         {
             "table": InputSpec(Table),
@@ -54,7 +54,7 @@ class TestDynamicPorts(BaseTestCase):
         protocol: ProtocolModel = ScenarioService.create_scenario().protocol_model
         # add a process with a dynamic port
         process_model: ProcessModel = ProtocolService.add_process_to_protocol(
-            protocol, TestDynamicIO, "p1"
+            protocol, DynamicIOTest, "p1"
         ).process
 
         # Check that it has 1 input and 1 output

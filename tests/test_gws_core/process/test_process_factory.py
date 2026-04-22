@@ -18,7 +18,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 
-from ..protocol_examples import TestNestedProtocol, TestSimpleProtocol
+from ..protocol_examples import SimpleProtocolTest, NestedProtocolTest
 
 
 # test_process_factory
@@ -88,7 +88,7 @@ class TestProcessFactory(BaseTestCase):
         """Test creating a protocol model from a protocol type."""
         # Default parameters
         protocol_model = ProcessFactory.create_protocol_model_from_type(
-            protocol_type=TestSimpleProtocol
+            protocol_type=SimpleProtocolTest
         )
         self.assertIsInstance(protocol_model, ProtocolModel)
         self.assertIsNotNone(protocol_model.id)
@@ -101,7 +101,7 @@ class TestProcessFactory(BaseTestCase):
 
         # With instance_name and name
         protocol_model = ProcessFactory.create_protocol_model_from_type(
-            protocol_type=TestSimpleProtocol, instance_name="my_protocol", name="My Protocol"
+            protocol_type=SimpleProtocolTest, instance_name="my_protocol", name="My Protocol"
         )
         self.assertEqual(protocol_model.instance_name, "my_protocol")
         self.assertEqual(protocol_model.name, "My Protocol")
@@ -109,7 +109,7 @@ class TestProcessFactory(BaseTestCase):
     def test_create_nested_protocol(self):
         """Test creating a protocol that contains a sub-protocol."""
         protocol_model = ProcessFactory.create_protocol_model_from_type(
-            protocol_type=TestNestedProtocol
+            protocol_type=NestedProtocolTest
         )
         self.assertIsInstance(protocol_model, ProtocolModel)
         process_names = set(protocol_model.processes.keys())
@@ -143,7 +143,7 @@ class TestProcessFactory(BaseTestCase):
     def test_create_process_model_from_type_protocol(self):
         """Test that create_process_model_from_type dispatches correctly for Protocol types."""
         process_model = ProcessFactory.create_process_model_from_type(
-            process_type=TestSimpleProtocol
+            process_type=SimpleProtocolTest
         )
         self.assertIsNotNone(process_model)
 
@@ -185,14 +185,20 @@ class TestProcessFactory(BaseTestCase):
 
         # Add dynamic input (Table) and output (Robot) ports
         table_typing = Typing.get_by_model_type(Table)
-        new_input_port = agent.add_dynamic_input_port(port_spec_dto=IOSpecDTO(
-            resource_types=[table_typing.to_ref_dto()], optional=False,
-        ))
+        new_input_port = agent.add_dynamic_input_port(
+            port_spec_dto=IOSpecDTO(
+                resource_types=[table_typing.to_ref_dto()],
+                optional=False,
+            )
+        )
 
         robot_typing = Typing.get_by_model_type(Robot)
-        new_output_port = agent.add_dynamic_output_port(port_spec_dto=IOSpecDTO(
-            resource_types=[robot_typing.to_ref_dto()], optional=False,
-        ))
+        new_output_port = agent.add_dynamic_output_port(
+            port_spec_dto=IOSpecDTO(
+                resource_types=[robot_typing.to_ref_dto()],
+                optional=False,
+            )
+        )
 
         # Export to ProcessConfigDTO and recreate via factory
         agent_model = agent.get_model()
@@ -231,6 +237,4 @@ class TestProcessFactory(BaseTestCase):
         dynamic_param: DynamicParam = recreated_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
         self.assertIsInstance(dynamic_param, DynamicParam)
         self.assertTrue(dynamic_param.specs.has_spec("my_int"))
-        self.assertEqual(
-            recreated_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)["my_int"], 10
-        )
+        self.assertEqual(recreated_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)["my_int"], 10)

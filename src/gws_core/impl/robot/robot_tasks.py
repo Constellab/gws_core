@@ -165,7 +165,7 @@ class RobotAddOnCreate(Task):
 )
 class RobotSugarCreate(Task):
     """Task that create a sugar type of food and wait 3 secondes for it
-    used in TestRobotWithSugarProtocol
+    used in RobotWithSugarProtocolTest
     """
 
     output_specs = OutputSpecs({"sugar": OutputSpec(RobotFood)})
