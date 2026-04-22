@@ -214,7 +214,7 @@ class FileHelper:
         if cls.exists_on_os(path):
             return path
 
-        os.makedirs(path)
+        os.makedirs(path, exist_ok=True)
         return path
 
     @classmethod

@@ -389,23 +389,31 @@ class Settings:
     def get_test_db_config(cls) -> DbConfig:
         return DbConfig(
             host=cls.get_os_environ("GWS_TEST_DB_HOST"),
-            user=cls.get_os_environ("GWS_TEST_DB_USER"),
+            user="root",
             password=cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
             port=int(cls.get_os_environ("GWS_TEST_DB_PORT")),
-            db_name=cls.get_os_environ("GWS_TEST_DB_NAME"),
+            db_name=cls.get_test_db_name(),
             engine="mariadb",
         )
 
     @classmethod
-    def get_root_temp_dir(cls) -> str:
-        """Return the root temp dir"""
+    def get_test_db_name(cls) -> str:
+        """Return the test DB name, suffixed with the current worker id when present.
 
-        return os.path.join(cls.get_system_folder(), "tmp")
+        Set by pytest-xdist (PYTEST_XDIST_WORKER=gw0, gw1, ...) or manually via
+        GWS_TEST_WORKER_ID. Each worker gets its own schema so parallel tests
+        don't stomp on each other when truncating tables.
+        """
+        base = cls.get_os_environ("GWS_TEST_DB_NAME")
+        worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+        if worker:
+            return f"{base}_{worker}"
+        return base
 
     @classmethod
     def make_temp_dir(cls) -> str:
         """Make a unique temp dir"""
-        dir_ = cls.get_root_temp_dir()
+        dir_ = cls.get_instance().get_root_temp_dir()
 
         if not os.path.exists(dir_):
             os.makedirs(dir_)
@@ -416,8 +424,15 @@ class Settings:
 
     @classmethod
     def get_test_folder(cls) -> str:
-        """Return the test dir"""
-        return os.path.join(cls.get_system_folder(), "test")
+        """Return the test dir, suffixed with the worker id for parallel test isolation.
+
+        Each pytest-xdist worker (or any caller setting GWS_TEST_WORKER_ID) gets
+        its own directory so concurrent tests don't stomp on each other's data,
+        kvstore, filestore, logs, etc.
+        """
+        worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+        folder_name = f"test-{worker}" if worker else "test"
+        return os.path.join(cls.get_system_folder(), folder_name)
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
@@ -523,6 +538,13 @@ class Settings:
         else:
             return self.data.get(k, default)
 
+    def get_root_temp_dir(self) -> str:
+        """Return the root temp dir. Isolated per worker when running parallel tests."""
+
+        if self.is_test:
+            return os.path.join(self.get_test_folder(), "tmp")
+        return os.path.join(self.get_system_folder(), "tmp")
+
     def get_log_dir(self) -> str:
         """
         Get the log directory
@@ -566,7 +588,8 @@ class Settings:
         :rtype: `str`
         """
         if self.is_test:
-            return os.path.join(self.get_system_folder(), "brick-data-test")
+            # Isolate brick data per worker to avoid cross-talk in parallel runs.
+            return os.path.join(self.get_test_folder(), "brick-data")
         else:
             return os.path.join(self.get_system_folder(), "brick-data")
 

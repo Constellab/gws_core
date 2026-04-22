@@ -1,4 +1,5 @@
 import os
+import re
 from multiprocessing import Process
 from time import sleep
 
@@ -35,6 +36,13 @@ class TestS3Server(BaseTestCase):
 
     CURRENT_FILE_ABSPATH = os.path.abspath(__file__)
     CURRENT_FILE_NAME = os.path.basename(CURRENT_FILE_ABSPATH)
+
+    # Per-worker S3 port so parallel runs don't fight for the same socket.
+    # Offset from 4000 to avoid collision with uvicorn on 300N (same worker).
+    _worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+    _worker_num = int(re.search(r"(\d+)$", _worker).group(1)) if re.search(r"(\d+)$", _worker) else 0
+    S3_PORT = 4000 + _worker_num
+    S3_BASE_URL = f"http://localhost:{S3_PORT}"
 
     def test_datahub_s3(self):
         folder: SpaceFolder = SpaceFolder(code="S3", title="S3").save()
@@ -201,7 +209,7 @@ class TestS3Server(BaseTestCase):
         return boto3.client(
             "s3",
             region_name="us-east-1",
-            endpoint_url="http://localhost:3000/v1",
+            endpoint_url=f"{self.S3_BASE_URL}/v1",
             aws_access_key_id=access_key_id,
             aws_secret_access_key=secret_key,
         )
@@ -261,7 +269,7 @@ class TestS3Server(BaseTestCase):
         return CredentialsService.create(credentials_dto)
 
     def _start_s3_server(self) -> Process:
-        config = Config(app=s3_server_app, host="0.0.0.0", port=3000)
+        config = Config(app=s3_server_app, host="0.0.0.0", port=self.S3_PORT)
         server = Server(config)
 
         proc = Process(target=server.run)
@@ -276,7 +284,7 @@ class TestS3Server(BaseTestCase):
 
             # make an http request to the server
             try:
-                response = requests.get("http://localhost:3000/health-check", timeout=1000)
+                response = requests.get(f"{self.S3_BASE_URL}/health-check", timeout=1000)
                 if response.status_code == 200:
                     break
             except Exception as err:

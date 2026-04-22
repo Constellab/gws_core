@@ -125,6 +125,63 @@ def _reexec_with_importtime() -> None:
     os.execvp(sys.executable, [sys.executable, "-X", "importtime", *argv])
 
 
+@app.command(
+    "test-parallel",
+    help="Run tests in parallel via pytest-xdist. Each worker gets its own test DB schema.",
+)
+def test_parallel(
+    test_name: Annotated[
+        list[str],
+        typer.Argument(
+            help="Test file name(s) to run (without .py). Use 'all' for the whole suite."
+        ),
+    ],
+    brick_name: Annotated[
+        str,
+        typer.Option(
+            "--brick-name",
+            help="Name of the brick to test. If not provided, use brick of current folder.",
+        ),
+    ]
+    | None = None,
+    workers: Annotated[
+        str,
+        typer.Option(
+            "--workers",
+            "-n",
+            help="Number of parallel workers. 'auto' uses one per CPU.",
+        ),
+    ] = "auto",
+    durations: Annotated[
+        int,
+        typer.Option("--durations", help="Print the N slowest tests after the run."),
+    ] = 0,
+):
+    brick_dir: str
+    if brick_name:
+        brick_dir = BrickService.find_brick_folder(brick_name)
+        typer.echo(f"Running parallel tests for brick '{brick_dir}'")
+    else:
+        typer.echo("No brick dir provided. Using current directory.")
+        brick_dir = CLIUtils.get_and_check_current_brick_dir()
+
+    pytest_args = [sys.executable, "-m", "pytest", "-n", workers]
+    if durations > 0:
+        pytest_args += [f"--durations={durations}"]
+
+    if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
+        for name in test_name:
+            filename = name if name.endswith(".py") else f"{name}.py"
+            pytest_args += ["-k", os.path.splitext(filename)[0]]
+
+    # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
+    # spawned by tests (conda, pipenv, mamba) whose interpreters have different
+    # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at
+    # the brick root adds src/ to sys.path for the master and every worker.
+    os.chdir(brick_dir)
+    os.execvp(pytest_args[0], pytest_args)
+
+
 @app.command("run-scenario", help="Execute a specific scenario by ID")
 def run_scenario(
     ctx: typer.Context,

@@ -1,3 +1,4 @@
+import os
 from multiprocessing import Process
 from time import sleep
 
@@ -21,8 +22,10 @@ class TestStartUvicornApp:
         self.__exit__(exc_type, exc_value, traceback)
 
     def __enter__(self):
-        # Registrer the lab start. Use a new thread to prevent blocking the start
-        self.process = Process(target=App.start_uvicorn_app)
+        # Per-worker port so parallel pytest-xdist runs don't fight for 3000.
+        # Set by conftest.py; defaults to 3000 for single-process runs.
+        port = int(os.environ.get("GWS_TEST_API_PORT", 3000))
+        self.process = Process(target=App.start_uvicorn_app, args=(port,))
         self.process.start()
 
         health_check_route = (

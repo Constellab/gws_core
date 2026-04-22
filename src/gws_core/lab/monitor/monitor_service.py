@@ -264,14 +264,16 @@ class MonitorService:
                     )
 
         # Then add system folders
-        folders_to_measure.extend([
-            ("env", "Virtual Environments", Settings.get_global_env_dir()),
-            ("tmp", "Temporary Files", Settings.get_root_temp_dir()),
-            ("logs", "Logs", Settings.build_log_dir(is_test=False)),
-            ("brick-data", "Brick Data", settings.get_brick_data_main_dir()),
-            ("sys-bricks", "System Bricks", Settings.get_sys_bricks_folder()),
-            ("user", "User Folder", Settings.get_user_folder()),
-        ])
+        folders_to_measure.extend(
+            [
+                ("env", "Virtual Environments", Settings.get_global_env_dir()),
+                ("tmp", "Temporary Files", Settings.get_instance().get_root_temp_dir()),
+                ("logs", "Logs", Settings.build_log_dir(is_test=False)),
+                ("brick-data", "Brick Data", settings.get_brick_data_main_dir()),
+                ("sys-bricks", "System Bricks", Settings.get_sys_bricks_folder()),
+                ("user", "User Folder", Settings.get_user_folder()),
+            ]
+        )
 
         # Run all du commands in parallel using asyncio
         folder_dtos = asyncio.run(cls._measure_folders_async(folders_to_measure))
