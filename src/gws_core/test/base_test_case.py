@@ -11,14 +11,24 @@ class BaseTestCase(BaseTestCaseLight):
     If you do not need the database, use BaseTestCaseLight
     """
 
+    # True once the heavy DB init has run at least once in this process.
+    # After that we TRUNCATE between classes instead of dropping + recreating tables.
+    _db_ever_initialized: bool = False
+
     @classmethod
     def init_before_test(cls):
         TestHelper.delete_data_and_temp_folder()
-        TestHelper.drop_tables()
+        if BaseTestCase._db_ever_initialized:
+            # Schema already exists; just wipe data. Avoids DDL round-trips.
+            TestHelper.truncate_tables()
+        else:
+            TestHelper.drop_tables()
         TestHelper.init_complete()
+        BaseTestCase._db_ever_initialized = True
 
     @classmethod
     def clear_after_test(cls):
+        # Intentionally skip drop_tables here: the next heavy class's setUp
+        # will TRUNCATE before running, so a symmetric teardown is wasted DDL.
         QueueRunner.deinit()
-        TestHelper.drop_tables()
         TestHelper.delete_data_and_temp_folder()

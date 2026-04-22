@@ -123,7 +123,14 @@ class AppManager:
         App.start(port=int(port))
 
     @classmethod
-    def run_test(cls, brick_dir: str, tests: list[str], log_level: str, show_sql: bool) -> None:
+    def run_test(
+        cls,
+        brick_dir: str,
+        tests: list[str],
+        log_level: str,
+        show_sql: bool,
+        durations: int = 0,
+    ) -> None:
         if not tests:
             raise BadRequestException("Please provide a test to run.")
 
@@ -167,7 +174,12 @@ class AppManager:
                 f"No tests discovered for input '{tests}' in brick '{brick_dir}'. Please verify that you provided the name of the tests file (not the path). The test file must start with 'test'."
             )
 
-        test_runner = unittest.TextTestRunner()
+        if durations and durations > 0:
+            from gws_core.test.timing_test_runner import TimingTextTestRunner
+
+            test_runner = TimingTextTestRunner(durations=durations)
+        else:
+            test_runner = unittest.TextTestRunner()
         test_runner.run(test_suite)
 
     @classmethod

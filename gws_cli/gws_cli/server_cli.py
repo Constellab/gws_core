@@ -1,3 +1,5 @@
+import os
+import sys
 from enum import Enum
 from typing import Annotated
 
@@ -80,7 +82,26 @@ def test(
     ]
     | None = None,
     show_sql: ShowSqlAnnotation = False,
+    durations: Annotated[
+        int,
+        typer.Option(
+            "--durations",
+            help="Print the N slowest tests after the run. 0 disables the report.",
+        ),
+    ] = 0,
+    import_time: Annotated[
+        bool,
+        typer.Option(
+            "--import-time",
+            help="Re-exec the test command with python -X importtime to profile import costs.",
+            is_flag=True,
+        ),
+    ] = False,
 ):
+    if import_time:
+        _reexec_with_importtime()
+        return
+
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)
@@ -94,7 +115,14 @@ def test(
         tests=test_name,
         log_level=CLIUtils.get_global_option_log_level(ctx),
         show_sql=show_sql,
+        durations=durations,
     )
+
+
+def _reexec_with_importtime() -> None:
+    """Re-exec the current process with python -X importtime, stripping --import-time from argv."""
+    argv = [arg for arg in sys.argv if arg != "--import-time"]
+    os.execvp(sys.executable, [sys.executable, "-X", "importtime", *argv])
 
 
 @app.command("run-scenario", help="Execute a specific scenario by ID")
