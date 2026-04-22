@@ -1,4 +1,5 @@
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserFullDTO
@@ -191,6 +192,10 @@ class UserService:
         user = cls.get_user_by_id(user_id)
         if user is not None:
             return user
+
+        # In test environmen, always fallback to sysuser to avoid external calls and simplify testing
+        if Settings.get_instance().is_test:
+            return User.get_and_check_sysuser()
 
         try:
             user_dto = SpaceService.get_instance().get_user_info(user_id)
