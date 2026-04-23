@@ -348,7 +348,7 @@ class Settings:
 
     @classmethod
     def get_lab_folder(cls) -> str:
-        return "/lab"
+        return os.environ.get("LAB_FOLDER", "/lab")
 
     @classmethod
     def get_user_folder(cls) -> str:
@@ -375,6 +375,10 @@ class Settings:
         return os.path.join(cls.get_system_folder(), "bricks")
 
     @classmethod
+    def get_external_lib_folder(cls) -> str:
+        return os.path.join(cls.get_system_folder(), "lib")
+
+    @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
         return DbConfig(
             host=cls.get_os_environ("GWS_CORE_DB_HOST"),
@@ -389,7 +393,7 @@ class Settings:
     def get_test_db_config(cls) -> DbConfig:
         return DbConfig(
             host=cls.get_os_environ("GWS_TEST_DB_HOST"),
-            user="root",
+            user=cls.get_os_environ("GWS_TEST_DB_USER"),
             password=cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
             port=int(cls.get_os_environ("GWS_TEST_DB_PORT")),
             db_name=cls.get_test_db_name(),
@@ -565,7 +569,7 @@ class Settings:
         if self.is_test:
             return os.path.join(self.get_test_folder(), "test")
         else:
-            return "/data"
+            return os.environ.get("DATA_FOLDER", "/data")
 
     def get_data_extensions_dir(self) -> str:
         """

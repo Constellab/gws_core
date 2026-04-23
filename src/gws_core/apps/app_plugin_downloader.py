@@ -33,7 +33,7 @@ class AppPluginDownloader:
     IS_RELEASE = True
 
     # Path to the local plugin folder (already unzipped) used when IS_RELEASE is True
-    LOCAL_PLUGIN_PATH = "/lab/user/bricks/gws_core/.data/browser"
+    LOCAL_PLUGIN_PATH = os.path.join(Settings.get_user_bricks_folder(), ".data", "browser")
 
     VERSION_FILE_NAME = "version.json"
     VERSION_KEY = "version"
@@ -235,9 +235,7 @@ class AppPluginDownloader:
         Written to environment.json so the frontend can resolve asset URLs.
         Subclasses must override.
         """
-        raise NotImplementedError(
-            f"{type(self).__name__} must override get_base_href()"
-        )
+        raise NotImplementedError(f"{type(self).__name__} must override get_base_href()")
 
     def get_plugin_assets_folder_path(self) -> str:
         """Path to the plugin's inner assets folder (<destination>/assets)."""

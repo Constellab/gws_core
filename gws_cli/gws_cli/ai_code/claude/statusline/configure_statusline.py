@@ -5,6 +5,7 @@ import shutil
 from pathlib import Path
 
 import typer
+from gws_core.core.utils.settings import Settings
 
 
 class StatuslineService:
@@ -33,7 +34,7 @@ class StatuslineService:
             typer.echo(f"Statusline configured in {cls.USER_CLAUDE_DIR / 'settings.json'}")
 
             # Remove project-level statusLine overrides so the user-level one is used
-            project_settings = Path("/lab/user/.claude/settings.json")
+            project_settings = Path(Settings.get_user_folder()) / ".claude" / "settings.json"
             if cls._remove_statusline_from_settings(project_settings):
                 typer.echo(f"Removed project-level statusLine override from {project_settings}")
 

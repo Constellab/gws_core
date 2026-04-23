@@ -9,11 +9,11 @@ from gws_core.brick.brick_settings import (
     BrickSettingsEnvironment,
     BrickSettingsPipSource,
 )
+from gws_core.core.utils.settings import Settings
 
 __cdir__ = os.path.dirname(os.path.abspath(__file__))
 
 skeleton_name = "brick_skeleton"
-user_bricks_folder = "/lab/user/bricks"
 
 DEFAULT_VERSION = "0.1.0"
 
@@ -22,7 +22,7 @@ def generate_brick(name: str):
     name = name.lower().replace(" ", "_").replace("-", "_")
 
     skeleton_dir = os.path.join(__cdir__, skeleton_name)
-    brick_folder = os.path.join(user_bricks_folder, name)
+    brick_folder = os.path.join(Settings.get_user_bricks_folder(), name)
 
     if os.path.exists(brick_folder):
         typer.echo(

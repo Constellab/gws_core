@@ -246,7 +246,7 @@ class AppManager:
         SystemService.reset_dev_envionment(check_user=False)
 
 
-def start_notebook(
-    main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = "INFO"
-) -> None:
+def start_notebook(main_settings_path: str | None = None, log_level: str = "INFO") -> None:
+    if not main_settings_path:
+        main_settings_path = os.path.join(Settings.get_system_folder(), "app", "settings.json")
     AppManager.run_notebook(main_settings_path=main_settings_path, log_level=log_level)

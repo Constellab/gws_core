@@ -22,15 +22,6 @@ class SettingsLoader:
     Add these bricks to Python path to have them available in the Application
     """
 
-    LAB_WORKSPACE_DIR = "/lab"
-
-    SYS_WORKSPACE_DIR: str = os.path.join(LAB_WORKSPACE_DIR, ".sys")
-    USER_WORKSPACE_DIR: str = os.path.join(LAB_WORKSPACE_DIR, "user")
-
-    USER_BRICKS_FOLDER = os.path.join(USER_WORKSPACE_DIR, "bricks")
-    SYS_BRICKS_FOLDER = os.path.join(SYS_WORKSPACE_DIR, "bricks")
-    EXTERNAL_LIB_FOLDER = os.path.join(SYS_WORKSPACE_DIR, "lib")
-
     SOURCE_FOLDER_NAME = "src"
 
     GIT_INSTALLATION_FILE = ".gws-git-installation.json"
@@ -122,10 +113,11 @@ class SettingsLoader:
     def load_brick(self, brick_name: str, parent_name: str | None = None) -> None:
         # repo dir is the path to the brick folder
         # if the brick is not found in the user workspace, we look for it in the system workspace
+        user_brick_path = os.path.join(Settings.get_user_bricks_folder(), brick_name)
         brick_path = (
-            os.path.join(self.USER_BRICKS_FOLDER, brick_name)
-            if os.path.exists(os.path.join(self.USER_BRICKS_FOLDER, brick_name))
-            else os.path.join(self.SYS_BRICKS_FOLDER, brick_name)
+            user_brick_path
+            if os.path.exists(user_brick_path)
+            else os.path.join(Settings.get_sys_bricks_folder(), brick_name)
         )
 
         # if the package is already loaded, skip it
@@ -235,7 +227,7 @@ class SettingsLoader:
             channel_source = channel["source"]
             for package in channel.get("packages", []):
                 module_name = package["name"]
-                repo_dir = os.path.join(self.EXTERNAL_LIB_FOLDER, module_name)
+                repo_dir = os.path.join(Settings.get_external_lib_folder(), module_name)
                 self._load_package(
                     package_name=module_name,
                     package_path=repo_dir,

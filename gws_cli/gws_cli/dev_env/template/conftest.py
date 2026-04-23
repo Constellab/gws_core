@@ -3,7 +3,7 @@ import sys
 
 # Add all brick src/ folders to sys.path BEFORE any gws_core import.
 # This mirrors what SettingsLoader.load_brick() does.
-BRICKS_DIR = "/lab/user/bricks"
+BRICKS_DIR = os.path.join(os.environ.get("LAB_FOLDER", "/lab"), "user", "bricks")
 for brick_name in os.listdir(BRICKS_DIR):
     src_path = os.path.join(BRICKS_DIR, brick_name, "src")
     if os.path.isdir(src_path) and src_path not in sys.path:
@@ -23,7 +23,7 @@ def pytest_configure(config):
         return
 
     # Determine which brick's settings.json to use as entry point.
-    # In dev mode, SettingsLoader auto-discovers all bricks in /lab/user/bricks/,
+    # In dev mode, SettingsLoader auto-discovers all bricks in user brick folder,
     # so using any brick's settings.json loads everything.
     settings_file = os.path.join(BRICKS_DIR, "gws_core", "settings.json")
 
@@ -50,4 +50,5 @@ def pytest_configure(config):
     env_test_file = os.path.join(brick_dir, ".env.test")
     if os.path.exists(env_test_file):
         from dotenv import load_dotenv
+
         load_dotenv(env_test_file)

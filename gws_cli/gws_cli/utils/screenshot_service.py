@@ -4,13 +4,14 @@ import sys
 from pathlib import Path
 
 import typer
+from gws_core.core.utils.settings import Settings
 
 
 class ScreenshotService:
     """Service to take screenshots of web applications using Playwright"""
 
     # Default paths
-    DEFAULT_OUTPUT_DIR = "/lab/user"
+    DEFAULT_OUTPUT_DIR = Settings.get_user_folder()
     DEFAULT_SCREENSHOT_FILENAME = "app_screenshot.png"
     DEFAULT_CONSOLE_LOG_FILENAME = "console_logs.txt"
 
