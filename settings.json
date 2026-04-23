@@ -1,7 +1,7 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.22.0-beta.2",
+    "version": "0.22.0-beta.3",
     "variables": {
         "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
@@ -172,6 +172,11 @@
                         "name": "pytest",
                         "version": "9.0.3",
                         "comment": "For the VsCode test extension."
+                    },
+                    {
+                        "name": "pytest-xdist",
+                        "version": "3.8.0",
+                        "comment": "For test parallelization."
                     }
                 ]
             }
