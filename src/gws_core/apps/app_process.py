@@ -168,6 +168,8 @@ class AppProcess:
 
         self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
+        self._kill_process_on_ports()
+
         try:
             self._save_config()
 
@@ -178,21 +180,20 @@ class AppProcess:
             self.stop_process()
             raise e
 
+    def _kill_process_on_ports(self) -> None:
+        """Kill the process that uses the ports of the app. This is used to free the ports before starting the app."""
+        for port in self.get_ports():
+            if self.uses_port(port):
+                killed = SysProc.kill_process_on_port(port)
+                if killed:
+                    Logger.warning(
+                        f"Killed process(es) {killed} using port {port} for app {self._app.resource_model_id}"
+                    )
+
     def _start_app_and_watch(self) -> None:
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
-
-            # Ensure the ports are free before launching: an orphan process from a
-            # previous crashed/unclean app may still hold them, which would make
-            # the subprocess fail silently (health check times out).
-            for port in self.get_ports():
-                killed = SysProc.kill_process_on_port(port)
-                if killed:
-                    Logger.warning(
-                        f"Port {port} was in use by orphan process(es) {killed} before starting "
-                        f"app {self._app.resource_model_id} — freed before launch"
-                    )
 
             result = self._start_process(self._app)
             self._process = result.process
@@ -493,7 +494,11 @@ class AppProcess:
                     return
                 # if there is not more connection to the app, we stop it
                 # In dev mode or when auto stop is disabled, we do not stop the app even if there is no connection
-                if not self._app.is_dev_mode() and not self._app.disable_auto_stop and not self._check_running():
+                if (
+                    not self._app.is_dev_mode()
+                    and not self._app.disable_auto_stop
+                    and not self._check_running()
+                ):
                     Logger.debug("No more connection to the app, stopping the app")
                     self.stop_process()
                     return
