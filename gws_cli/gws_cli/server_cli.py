@@ -1,4 +1,5 @@
 import os
+import subprocess
 import sys
 from enum import Enum
 from typing import Annotated
@@ -64,7 +65,7 @@ def run(
     )
 
 
-@app.command("test", help="Run tests for a specific brick or all bricks")
+@app.command("test", help="Run tests for a specific brick. Use --parallel for xdist parallel execution.")
 def test(
     ctx: typer.Context,
     test_name: Annotated[
@@ -81,27 +82,31 @@ def test(
         ),
     ]
     | None = None,
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel",
+            help="Run tests in parallel via pytest-xdist. Each worker gets its own test DB schema.",
+            is_flag=True,
+        ),
+    ] = False,
+    workers: Annotated[
+        str,
+        typer.Option(
+            "--workers",
+            "-n",
+            help="Number of parallel workers. 'auto' uses one per CPU. Only with --parallel.",
+        ),
+    ] = "auto",
     show_sql: ShowSqlAnnotation = False,
     durations: Annotated[
         int,
         typer.Option(
             "--durations",
-            help="Print the N slowest tests after the run. 0 disables the report.",
+            help="Print the N slowest tests after the run. Only with --parallel.",
         ),
     ] = 0,
-    import_time: Annotated[
-        bool,
-        typer.Option(
-            "--import-time",
-            help="Re-exec the test command with python -X importtime to profile import costs.",
-            is_flag=True,
-        ),
-    ] = False,
 ):
-    if import_time:
-        _reexec_with_importtime()
-        return
-
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)
@@ -110,76 +115,104 @@ def test(
         typer.echo("No brick dir provided. Using current directory.")
         brick_dir = CLIUtils.get_and_check_current_brick_dir()
 
+    if parallel:
+        pytest_args = [sys.executable, "-m", "pytest", "-n", workers]
+        if durations > 0:
+            pytest_args += [f"--durations={durations}"]
+
+        if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
+            for name in test_name:
+                filename = name if name.endswith(".py") else f"{name}.py"
+                pytest_args += ["-k", os.path.splitext(filename)[0]]
+
+        # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
+        # spawned by tests (conda, pipenv, mamba) whose interpreters have different
+        # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at
+        # the brick root adds src/ to sys.path for the master and every worker.
+        os.chdir(brick_dir)
+        os.execvp(pytest_args[0], pytest_args)
+
     AppManager.run_test(
         brick_dir=brick_dir,
         tests=test_name,
         log_level=CLIUtils.get_global_option_log_level(ctx),
         show_sql=show_sql,
-        durations=durations,
     )
 
 
-def _reexec_with_importtime() -> None:
-    """Re-exec the current process with python -X importtime, stripping --import-time from argv."""
-    argv = [arg for arg in sys.argv if arg != "--import-time"]
-    os.execvp(sys.executable, [sys.executable, "-X", "importtime", *argv])
+def _resolve_brick_dirs(brick_names: list[str]) -> list[str]:
+    dirs: list[str] = []
+    seen: set[str] = set()
+    for name in brick_names:
+        path = BrickService.find_brick_folder(name)
+        if path not in seen:
+            dirs.append(path)
+            seen.add(path)
+    return dirs
+
+
+def _summarize_and_exit(results: list[tuple[str, int]]) -> None:
+    typer.echo("\n=== test-all summary ===")
+    any_failed = False
+    for brick_dir, code in results:
+        status = "PASS" if code == 0 else f"FAIL (exit {code})"
+        typer.echo(f"  {os.path.basename(brick_dir)}: {status}")
+        if code != 0:
+            any_failed = True
+    if any_failed:
+        raise typer.Exit(code=1)
 
 
 @app.command(
-    "test-parallel",
-    help="Run tests in parallel via pytest-xdist. Each worker gets its own test DB schema.",
+    "test-all",
+    help="Run tests across multiple bricks sequentially. Each brick runs in a fresh subprocess.",
 )
-def test_parallel(
-    test_name: Annotated[
-        list[str],
-        typer.Argument(
-            help="Test file name(s) to run (without .py). Use 'all' for the whole suite."
-        ),
-    ],
+def test_all(
+    ctx: typer.Context,
     brick_name: Annotated[
-        str,
+        list[str],
         typer.Option(
             "--brick-name",
-            help="Name of the brick to test. If not provided, use brick of current folder.",
+            help="Brick to test. Repeat the flag for multiple bricks.",
         ),
-    ]
-    | None = None,
+    ],
+    parallel: Annotated[
+        bool,
+        typer.Option(
+            "--parallel",
+            help="Use test-parallel (xdist) for each brick.",
+            is_flag=True,
+        ),
+    ] = False,
     workers: Annotated[
         str,
         typer.Option(
             "--workers",
             "-n",
-            help="Number of parallel workers. 'auto' uses one per CPU.",
+            help="Parallel workers per brick. Only with --parallel.",
         ),
     ] = "auto",
     durations: Annotated[
         int,
-        typer.Option("--durations", help="Print the N slowest tests after the run."),
+        typer.Option("--durations", help="Print the N slowest tests per brick."),
     ] = 0,
 ):
-    brick_dir: str
-    if brick_name:
-        brick_dir = BrickService.find_brick_folder(brick_name)
-        typer.echo(f"Running parallel tests for brick '{brick_dir}'")
-    else:
-        typer.echo("No brick dir provided. Using current directory.")
-        brick_dir = CLIUtils.get_and_check_current_brick_dir()
+    brick_dirs = _resolve_brick_dirs(brick_name)
+    log_level = CLIUtils.get_global_option_log_level(ctx)
+    results: list[tuple[str, int]] = []
 
-    pytest_args = [sys.executable, "-m", "pytest", "-n", workers]
-    if durations > 0:
-        pytest_args += [f"--durations={durations}"]
+    for brick_dir in brick_dirs:
+        typer.echo(f"\n=== Running tests for brick '{os.path.basename(brick_dir)}' ===")
+        sub_cmd = ["gws", "--log-level", log_level, "server", "test", "all"]
+        sub_cmd += ["--brick-name", os.path.basename(brick_dir)]
+        if durations > 0:
+            sub_cmd += ["--durations", str(durations)]
+        if parallel:
+            sub_cmd += ["--parallel", "-n", workers]
+        proc = subprocess.run(sub_cmd, check=False)
+        results.append((brick_dir, proc.returncode))
 
-    if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
-        for name in test_name:
-            filename = name if name.endswith(".py") else f"{name}.py"
-            pytest_args += ["-k", os.path.splitext(filename)[0]]
-
-    # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
-    # spawned by tests (conda, pipenv, mamba) whose interpreters have different
-    # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at
-    # the brick root adds src/ to sys.path for the master and every worker.
-    os.chdir(brick_dir)
-    os.execvp(pytest_args[0], pytest_args)
+    _summarize_and_exit(results)
 
 
 @app.command("run-scenario", help="Execute a specific scenario by ID")
