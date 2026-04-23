@@ -21,6 +21,9 @@ class DbMigrationService:
         """Migrate all bricks. Called once at startup after all databases are connected."""
 
         settings: Settings = Settings.get_instance()
+        if settings.is_test:
+            return
+
         migrations_logs = settings.get_brick_migrations_logs()
 
         brick_migrators = cls._get_brick_migrators()
