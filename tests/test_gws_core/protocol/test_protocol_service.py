@@ -279,6 +279,39 @@ class TestProtocolService(BaseTestCase):
             duplicated_process.to_config_dto().outputs, process_model.to_config_dto().outputs
         )
 
+    def test_duplicate_run_process_to_protocol_id(self):
+        scenario = ScenarioProxy()
+        i_protocol = scenario.get_protocol()
+        protocol_id = i_protocol.get_model().id
+        p0 = i_protocol.add_process(RobotCreate)
+        process_model: ProcessModel = p0.get_model()
+
+        # Run the process p0
+        ProtocolService.run_process(protocol_id, process_model.instance_name)
+
+        count = 0
+        while count < 30:
+            p0.refresh()
+            if p0.get_model().is_finished:
+                break
+            sleep(1)
+            count += 1
+        p0.refresh()
+        self.assertTrue(p0.get_model().is_success)
+
+        # Duplicate the process that has been already run
+        ProtocolService.duplicate_process_to_protocol_id(protocol_id, process_model.instance_name)
+
+        protocol_model = i_protocol.get_model().refresh()
+
+        duplicated_process = protocol_model.get_process(process_model.instance_name + "_1")
+
+        self.assertEqual(len(protocol_model.processes), 2)
+        self.assertIsNotNone(duplicated_process)
+        self.assertEqual(duplicated_process.get_process_type(), RobotCreate)
+        # The duplicated process should be in draft state (not run)
+        self.assertTrue(duplicated_process.is_draft)
+
     def test_add_streamlite_community_agent_version_to_protocol(self):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
 

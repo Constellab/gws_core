@@ -129,10 +129,12 @@ class ProtocolService:
         duplicate_process_model: ProcessModel | None = None
         if isinstance(process_model, TaskModel):
             duplicate_process_model = ProcessFactory.create_task_model_from_config_dto(
-                process_model.to_config_dto(), copy_id=False
+                process_model.to_config_dto(), copy_id=False, as_draft=True
             )
         elif isinstance(process_model, ProtocolModel):
-            factory = ProtocolGraphFactoryFromType(process_model.to_protocol_config_dto())
+            factory = ProtocolGraphFactoryFromType(
+                process_model.to_protocol_config_dto(), as_draft=True
+            )
             duplicate_process_model = factory.create_protocol_model()
 
         if duplicate_process_model is None:

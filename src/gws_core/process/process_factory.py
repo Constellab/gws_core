@@ -138,20 +138,31 @@ class ProcessFactory:
 
     @classmethod
     def create_task_model_from_config_dto(
-        cls, task_config_dto: ProcessConfigDTO, copy_id: bool = True
+        cls,
+        task_config_dto: ProcessConfigDTO,
+        copy_id: bool = True,
+        as_draft: bool = False,
     ) -> TaskModel:
         """Create a task model from a ProcessConfigDTO. The task is fully created from the dto and
         the process type is not used. It can create a task where the type does not exist in the system.
 
         :param task_config_dto: object containing the task configuration
         :type task_config_dto: ProcessConfigDTO
+        :param copy_id: copy the id from the dto, defaults to True
+        :type copy_id: bool
+        :param as_draft: when True, the run-state fields (status, run_by, run_by_lab,
+            brick_version_on_run, progress_bar) are not copied from the dto so the resulting
+            task model starts in a fresh DRAFT state. Use this when duplicating a process.
+        :type as_draft: bool
         :return: The task model
         :rtype: TaskModel
         """
         task_model: TaskModel = TaskModel()
         return cast(
             TaskModel,
-            cls._init_process_model_from_config_dto(task_model, task_config_dto, copy_id=copy_id),
+            cls._init_process_model_from_config_dto(
+                task_model, task_config_dto, copy_id=copy_id, as_draft=as_draft
+            ),
         )
 
     ############################################### PROTOCOL FROM TYPE #################################################
@@ -263,7 +274,10 @@ class ProcessFactory:
 
     @classmethod
     def create_empty_protocol_model_from_config_dto(
-        cls, protocol_config_dto: ProcessConfigDTO, copy_id: bool = True
+        cls,
+        protocol_config_dto: ProcessConfigDTO,
+        copy_id: bool = True,
+        as_draft: bool = False,
     ) -> ProtocolModel:
         """Create a protocol model from a ProcessConfigDTO. The protocol is fully created from the dto and
         the process type is not used. It can create a protocol where the type does not exist in the system.
@@ -271,13 +285,22 @@ class ProcessFactory:
         Warning, it does not initialize the graph.
         :param task_config_dto: object containing the task configuration
         :type task_config_dto: ProcessConfigDTO
+        :param copy_id: copy the id from the dto, defaults to True
+        :type copy_id: bool
+        :param as_draft: when True, the run-state fields (status, run_by, run_by_lab,
+            brick_version_on_run, progress_bar) are not copied from the dto so the resulting
+            protocol model starts in a fresh DRAFT state. Use this when duplicating a protocol.
+        :type as_draft: bool
         :return: The task model
         :rtype: TaskModel
         """
         protocol_model: ProtocolModel = cast(
             ProtocolModel,
             cls._init_process_model_from_config_dto(
-                ProtocolModel(), protocol_config_dto, copy_id=copy_id
+                ProtocolModel(),
+                protocol_config_dto,
+                copy_id=copy_id,
+                as_draft=as_draft,
             ),
         )
 
@@ -356,7 +379,11 @@ class ProcessFactory:
 
     @classmethod
     def _init_process_model_from_config_dto(
-        cls, process_model: ProcessModel, process_config_dto: ProcessConfigDTO, copy_id: bool = True
+        cls,
+        process_model: ProcessModel,
+        process_config_dto: ProcessConfigDTO,
+        copy_id: bool = True,
+        as_draft: bool = False,
     ) -> ProcessModel:
         if copy_id and process_config_dto.id is not None:
             process_model.id = process_config_dto.id
@@ -364,28 +391,42 @@ class ProcessFactory:
         process_model.set_inputs_from_dto(process_config_dto.inputs)
         process_model.set_outputs_from_dto(process_config_dto.outputs)
         process_model.brick_version_on_create = process_config_dto.brick_version_on_create
-        process_model.brick_version_on_run = process_config_dto.brick_version_on_run
-        process_model.run_by = (
-            UserService.get_or_import_user_info(process_config_dto.run_by.id, fallback_to_sysuser=True)
-            if process_config_dto.run_by
-            else None
-        )
-        process_model.run_by_lab = (
-            LabModel.get_or_create_from_dto(process_config_dto.run_by_lab)
-            if process_config_dto.run_by_lab
-            else None
-        )
+
+        if as_draft:
+            process_model.brick_version_on_run = None
+            process_model.run_by = None
+            process_model.run_by_lab = None
+            status = None
+            progress_bar = None
+        else:
+            process_model.brick_version_on_run = process_config_dto.brick_version_on_run
+            process_model.run_by = (
+                UserService.get_or_import_user_info(
+                    process_config_dto.run_by.id, fallback_to_sysuser=True
+                )
+                if process_config_dto.run_by
+                else None
+            )
+            process_model.run_by_lab = (
+                LabModel.get_or_create_from_dto(process_config_dto.run_by_lab)
+                if process_config_dto.run_by_lab
+                else None
+            )
+            status = ProcessStatus.from_str(process_config_dto.status)
+            progress_bar = (
+                ProgressBar.from_config_dto(process_config_dto.progress_bar)
+                if process_config_dto.progress_bar
+                else None
+            )
 
         cls._init_process_model(
             process_model=process_model,
             config=Config.from_simple_dto(process_config_dto.config),
-            status=ProcessStatus.from_str(process_config_dto.status),
+            status=status,
             instance_name=process_config_dto.instance_name,
             name=process_config_dto.name,
             style=process_config_dto.style,
-            progress_bar=ProgressBar.from_config_dto(process_config_dto.progress_bar)
-            if process_config_dto.progress_bar
-            else None,
+            progress_bar=progress_bar,
         )
 
         return process_model
