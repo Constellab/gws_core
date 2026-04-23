@@ -295,6 +295,9 @@ class ReflexProcess(AppProcess):
         """Check if the process uses the given port"""
         return port in (self.front_port, self.back_port)
 
+    def get_ports(self) -> list[int]:
+        return [self.front_port, self.back_port]
+
     def _get_log_level_option(self) -> str:
         return f"--loglevel={Logger.get_instance().level.lower()}"
 

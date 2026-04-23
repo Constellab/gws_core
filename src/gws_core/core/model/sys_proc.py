@@ -3,9 +3,11 @@ import os
 import signal
 import time
 
+import psutil
 from psutil import Popen, Process
 
 from ..exception.exceptions import BadRequestException
+from ..utils.logger import Logger
 
 
 class SysProc:
@@ -114,3 +116,58 @@ class SysProc:
     @staticmethod
     def from_pid(pid) -> "SysProc":
         return SysProc(Process(pid))
+
+    @staticmethod
+    def kill_process_on_port(port: int) -> list[int]:
+        """Find any process with a LISTEN socket on `port` and kill it (and its children).
+
+        Returns the list of PIDs that were targeted (may be empty).
+        Logs a warning per offender before killing so the event is traceable
+        without relying on the caller to log.
+
+        If the OS denies access to enumerate sockets (e.g. non-root on some systems),
+        logs a warning and returns an empty list — the subprocess will then fail
+        to bind on its own as before.
+        """
+        try:
+            connections = psutil.net_connections(kind="inet")
+        except psutil.AccessDenied:
+            Logger.warning(
+                "Cannot enumerate listening sockets (permission denied) — skipping port pre-clean"
+            )
+            return []
+
+        offender_pids: list[int] = []
+        for conn in connections:
+            if (
+                conn.status == psutil.CONN_LISTEN
+                and conn.laddr
+                and conn.laddr.port == port
+                and conn.pid is not None
+                and conn.pid not in offender_pids
+            ):
+                offender_pids.append(conn.pid)
+
+        killed_pids: list[int] = []
+        for pid in offender_pids:
+            with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
+                proc = Process(pid)
+                try:
+                    proc_name = proc.name()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    proc_name = "<unknown>"
+                try:
+                    proc_cmdline = proc.cmdline()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    proc_cmdline = []
+
+                Logger.warning(
+                    f"Port {port} is held by orphan process pid={pid} name={proc_name} "
+                    f"cmdline={proc_cmdline!r} — killing it"
+                )
+
+                SysProc(proc).kill_with_children()
+                killed_pids.append(pid)
+                Logger.info(f"Freed port {port} (killed pid={pid})")
+
+        return killed_pids

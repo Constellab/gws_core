@@ -116,6 +116,10 @@ class AppProcess:
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
 
+    @abstractmethod
+    def get_ports(self) -> list[int]:
+        """Return all local ports this process will bind to."""
+
     def get_status(self) -> AppProcessStatus:
         """Get the current status of the app process"""
         return self._status
@@ -178,6 +182,18 @@ class AppProcess:
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
+
+            # Ensure the ports are free before launching: an orphan process from a
+            # previous crashed/unclean app may still hold them, which would make
+            # the subprocess fail silently (health check times out).
+            for port in self.get_ports():
+                killed = SysProc.kill_process_on_port(port)
+                if killed:
+                    Logger.warning(
+                        f"Port {port} was in use by orphan process(es) {killed} before starting "
+                        f"app {self._app.resource_model_id} — freed before launch"
+                    )
+
             result = self._start_process(self._app)
             self._process = result.process
             self._services = result.services
@@ -512,14 +528,18 @@ class AppProcess:
             return True
 
     def count_connections(self) -> int:
-        if not self._process:
+        if not self._process or not self._process.is_alive():
             return 0
+
+        try:
+            pid_with_children = [child.pid for child in self._process.get_all_children()]
+        except psutil.NoSuchProcess:
+            # The process died between is_alive() and children() — treat as no connections.
+            return 0
+        pid_with_children.append(self._process.pid)
 
         # get the list of the connections
         connections = psutil.net_connections(kind="inet")
-
-        pid_with_children = [child.pid for child in self._process.get_all_children()]
-        pid_with_children.append(self._process.pid)
 
         return len(
             [x for x in connections if x.pid in pid_with_children and x.status == "ESTABLISHED"]
