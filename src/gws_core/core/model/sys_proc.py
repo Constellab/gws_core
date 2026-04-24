@@ -119,15 +119,15 @@ class SysProc:
 
     @staticmethod
     def kill_process_on_port(port: int) -> list[int]:
-        """Find any process with a LISTEN socket on `port` and kill it (and its children).
+        """Find any process with a LISTEN socket on `port` and kill its entire process group.
+
+        Killing the process group (SIGKILL via killpg) takes down the listener
+        plus its supervisor and siblings atomically — necessary for runners like
+        Reflex where the listener's parent would otherwise respawn a replacement
+        between our kill and the next bind attempt.
 
         Returns the list of PIDs that were targeted (may be empty).
-        Logs a warning per offender before killing so the event is traceable
-        without relying on the caller to log.
-
-        If the OS denies access to enumerate sockets (e.g. non-root on some systems),
-        logs a warning and returns an empty list — the subprocess will then fail
-        to bind on its own as before.
+        If the OS denies access to enumerate sockets, logs a warning and returns [].
         """
         try:
             connections = psutil.net_connections(kind="inet")
@@ -148,6 +148,7 @@ class SysProc:
             ):
                 offender_pids.append(conn.pid)
 
+        killed_pgids: set[int] = set()
         killed_pids: list[int] = []
         for pid in offender_pids:
             with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
@@ -161,13 +162,24 @@ class SysProc:
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     proc_cmdline = []
 
+                try:
+                    pgid = os.getpgid(pid)
+                except (ProcessLookupError, OSError):
+                    continue
+
                 Logger.warning(
-                    f"Port {port} is held by orphan process pid={pid} name={proc_name} "
-                    f"cmdline={proc_cmdline!r} — killing it"
+                    f"Port {port} is held by orphan process pid={pid} pgid={pgid} "
+                    f"name={proc_name} cmdline={proc_cmdline!r} — killing process group"
                 )
 
-                SysProc(proc).kill_with_children()
+                if pgid not in killed_pgids:
+                    # SIGKILL the whole group atomically — no window for a
+                    # supervisor (e.g. `reflex run`) to respawn the listener.
+                    with contextlib.suppress(ProcessLookupError, OSError):
+                        os.killpg(pgid, signal.SIGKILL)
+                    killed_pgids.add(pgid)
+
                 killed_pids.append(pid)
-                Logger.info(f"Freed port {port} (killed pid={pid})")
+                Logger.info(f"Freed port {port} (killed pid={pid} in pgid={pgid})")
 
         return killed_pids

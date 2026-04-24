@@ -183,12 +183,11 @@ class AppProcess:
     def _kill_process_on_ports(self) -> None:
         """Kill the process that uses the ports of the app. This is used to free the ports before starting the app."""
         for port in self.get_ports():
-            if self.uses_port(port):
-                killed = SysProc.kill_process_on_port(port)
-                if killed:
-                    Logger.warning(
-                        f"Killed process(es) {killed} using port {port} for app {self._app.resource_model_id}"
-                    )
+            killed = SysProc.kill_process_on_port(port)
+            if killed:
+                Logger.warning(
+                    f"Killed process(es) {killed} using port {port} for app {self._app.resource_model_id}"
+                )
 
     def _start_app_and_watch(self) -> None:
         try:

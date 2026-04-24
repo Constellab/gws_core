@@ -1,3 +1,5 @@
+import os
+import signal
 from datetime import datetime, timedelta
 
 from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
@@ -134,7 +136,46 @@ class AppsManager:
 
     @classmethod
     def init(cls):
+        cls._register_signal_handlers()
         AppNginxManager.init()
+
+    @classmethod
+    def _register_signal_handlers(cls) -> None:
+        """Register SIGINT/SIGTERM handlers as a safety net to stop child app
+        processes even when graceful shutdown hooks (e.g. FastAPI lifespan)
+        do not run — notably the dev CLIs (`gws reflex run`, `gws streamlit run`)
+        which never start a FastAPI server, and abrupt server terminations.
+
+        The handler chains to the previous handler so uvicorn's own graceful
+        shutdown path still runs in server mode.
+        """
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous = signal.getsignal(sig)
+
+            # Only chain to previous handler if it's a real custom handler
+            # (e.g. uvicorn's graceful-shutdown handler). Skip Python defaults
+            # (SIG_DFL, SIG_IGN, default_int_handler) — chaining to
+            # default_int_handler would raise KeyboardInterrupt during
+            # interpreter shutdown and print an "Exception ignored" traceback.
+            should_chain = (
+                callable(previous)
+                and previous not in (signal.SIG_DFL, signal.SIG_IGN)
+                and previous is not signal.default_int_handler
+            )
+
+            def handler(signum, frame, previous=previous, should_chain=should_chain):
+                try:
+                    cls.stop_all_processes()
+                finally:
+                    if should_chain:
+                        previous(signum, frame)
+                    else:
+                        # os._exit skips interpreter finalizers; safer than
+                        # sys.exit when the handler may fire during
+                        # threading._shutdown (cleanup is already done above).
+                        os._exit(0)
+
+            signal.signal(sig, handler)
 
     @classmethod
     def stop_all_processes(cls) -> None:
