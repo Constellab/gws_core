@@ -117,6 +117,36 @@ from gws_reflex_main.gws_components import rich_text_component
 
 ---
 
+## Download Service
+
+### `ReflexDownloadService`
+Generic one-shot download service for serving files over HTTP instead of through the Reflex websocket event channel. Large payloads sent through the websocket freeze the UI; this service streams them from disk via a FastAPI route. It also works around `rx.download(url=...)` resolving against the frontend origin — the service builds an absolute backend URL and triggers the download via a scripted `<a>` click.
+
+**Three-step usage:**
+
+1. Mount the API once in your app entrypoint:
+   ```python
+   app = register_gws_reflex_app(rxe.App(...))
+   app.api_transformer = ReflexDownloadService.build_api()
+   ```
+   If your app already composes its own FastAPI sub-app, use `ReflexDownloadService.register_routes(api)` to attach the download route alongside yours.
+
+2. In a background event, write your file and register it:
+   ```python
+   path = ReflexDownloadService.make_temp_path(suffix=".xlsx")
+   df.to_excel(path)
+   token = ReflexDownloadService.register(path, "results.xlsx", XLSX_MEDIA_TYPE)
+   ```
+
+3. Yield the download event:
+   ```python
+   yield ReflexDownloadService.trigger_download(token, "results.xlsx")
+   ```
+
+Tokens are single-use (the first GET consumes the entry). Files are NOT auto-deleted — caller owns the lifecycle. `make_temp_path()` places files under the lab's managed tmp dir (`Settings.make_temp_dir()`), not `/tmp`, so they share the lab's storage volume and cleanup policies.
+
+---
+
 ## Example
 
 Example implementations can be found in the Reflex showcase applications.

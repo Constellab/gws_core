@@ -29,6 +29,7 @@ from .components.reflex_user_components import user_select as user_select
 from .components.reflex_user_components import user_with_date_component as user_with_date_component
 
 # Others
+from .gws_reflex_download_service import ReflexDownloadService as ReflexDownloadService
 from .reflex_app_factory import default_gws_backend_handler as default_gws_backend_handler
 from .reflex_app_factory import default_gws_frontend_handler as default_gws_frontend_handler
 from .reflex_app_factory import register_gws_reflex_app as register_gws_reflex_app
