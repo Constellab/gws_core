@@ -225,7 +225,7 @@ class Settings:
     def get_community_api_url(cls) -> str | None:
         # if cls.is_local_env():
         #     return "http://host.docker.internal:3333"
-        #  return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
         # return "https://api.constellab.community"
         return cls.get_os_environ("COMMUNITY_API_URL")
 
@@ -241,6 +241,8 @@ class Settings:
     def get_community_front_url(cls) -> str | None:
         # if cls.is_local_env() and not os.environ.get("COMMUNITY_FRONT_URL"):
         #     return "http://localhost:4200"
+        # return "https://community-pre-prod.gencovery.com"
+        # return "https://constellab.community"
         return cls.get_os_environ("COMMUNITY_FRONT_URL")
 
     @classmethod

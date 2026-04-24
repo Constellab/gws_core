@@ -16,6 +16,32 @@ class FileHelper:
     Class containing only classmethod to simplify file management
     """
 
+    NON_READABLE_MIMES = {
+        "application/zip",
+        "application/x-tar",
+        "application/gzip",
+        "application/x-gzip",
+        "application/x-bzip2",
+        "application/x-xz",
+        "application/x-7z-compressed",
+        "application/x-rar-compressed",
+        "application/vnd.rar",
+        "application/pdf",
+        "application/msword",
+        "application/vnd.ms-excel",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        "application/vnd.oasis.opendocument.text",
+        "application/vnd.oasis.opendocument.spreadsheet",
+        "application/vnd.oasis.opendocument.presentation",
+        "application/x-executable",
+        "application/x-sharedlib",
+        "application/x-mach-binary",
+        "application/x-msdownload",
+    }
+
     @classmethod
     def get_dir(cls, path: PathType) -> Path:
         """
@@ -501,6 +527,37 @@ class FileHelper:
             name = name[:255]
 
         return name
+
+    @classmethod
+    def is_binary_content(cls, file_path: PathType, sample_size: int = 8192) -> bool:
+        """
+        Detect whether a file contains binary content by inspecting its first bytes.
+        A file is considered binary if the sample contains a NUL byte or a high
+        ratio of non-text bytes. Empty files are treated as non-binary.
+
+        :param file_path: path to the file
+        :type file_path: PathType
+        :param sample_size: number of bytes to read from the start of the file, defaults to 8192
+        :type sample_size: int, optional
+        :return: True if the file looks binary, False otherwise
+        :rtype: bool
+        """
+        if not cls.exists_on_os(file_path) or not cls.is_file(file_path):
+            return False
+
+        with open(file_path, "rb") as fp:
+            sample = fp.read(sample_size)
+
+        if not sample:
+            return False
+
+        if b"\x00" in sample:
+            return True
+
+        # Bytes that are typically found in text files: printable ASCII + common whitespace
+        text_bytes = bytes(range(32, 127)) + b"\n\r\t\f\b"
+        non_text = sum(1 for byte in sample if byte not in text_bytes)
+        return (non_text / len(sample)) > 0.30
 
     @classmethod
     def detect_file_encoding(cls, file_path: PathType, default_encoding: str = "utf-8") -> str:

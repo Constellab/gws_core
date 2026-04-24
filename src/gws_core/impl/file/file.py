@@ -86,20 +86,12 @@ class File(FSNode):
         return self.get_size() == 0
 
     def is_readable(self) -> bool:
-        return self.extension not in [
-            "exe",
-            "dll",
-            "so",
-            "pyc",
-            "pyo",
-            "xlsx",
-            "xls",
-            "doc",
-            "docx",
-            "pdf",
-            "zip",
-            "gz",
-        ]
+        mime = self.mime or ""
+        if mime.startswith(("image/", "audio/", "video/", "font/")):
+            return False
+        if mime in FileHelper.NON_READABLE_MIMES:
+            return False
+        return not FileHelper.is_binary_content(self.path)
 
     def is_audio(self):
         return FileHelper.is_audio(self.path)
