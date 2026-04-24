@@ -55,17 +55,29 @@ class ScenarioArchiveZipperTask(Task):
                 allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode),
                 default_value="Auto",
             ),
+            "compress_format": StrParam(
+                human_name="Archive format",
+                short_description=(
+                    "Archive format to use. Compressed formats (tar.gz, zip) may take a "
+                    "long time if the scenario contains big resources."
+                ),
+                allowed_values=sorted(ScenarioArchiveZipper.COMPRESS_FORMATS.keys()),
+                default_value="tar",
+            ),
         }
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         scenario_resource: ScenarioResource = inputs["scenario"]
         resource_mode: str = params["resource_mode"]
+        compress_format: str = params["compress_format"]
         user = CurrentUserService.get_and_check_current_user()
 
         self.log_info_message(f"Exporting scenario '{scenario_resource.scenario_id}' to archive")
 
-        zipper = ScenarioArchiveZipper(scenario_resource.scenario_id, resource_mode, user)
+        zipper = ScenarioArchiveZipper(
+            scenario_resource.scenario_id, resource_mode, user, compress_format
+        )
         archive_path = zipper.zip()
 
         self.log_info_message("Scenario archive created successfully")

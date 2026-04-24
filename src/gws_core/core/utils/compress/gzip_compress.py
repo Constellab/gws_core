@@ -9,6 +9,8 @@ from .compress import Compress
 class GzipCompress(Compress):
     """Class to compress and uncompress .gz file using system `pigz` (parallel gzip)."""
 
+    supports_multiple_entries: bool = False
+
     file_path: str | None = None
 
     def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:

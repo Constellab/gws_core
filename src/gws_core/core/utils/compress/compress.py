@@ -7,6 +7,11 @@ from gws_core.impl.file.file_helper import FileHelper
 class Compress:
     """Abstract class for compress class"""
 
+    # True if the compressor can bundle multiple files and/or directories into
+    # a single archive. False for stream compressors that wrap a single file
+    # (e.g. GzipCompress).
+    supports_multiple_entries: bool = True
+
     destination_file_path: str
 
     # list of the fs node name added to the zip
@@ -151,6 +156,23 @@ class Compress:
         return extensions
 
     @staticmethod
+    def get_compress_class_by_extension(
+        multi_entry_only: bool = False,
+    ) -> dict[str, type["Compress"]]:
+        """Return a mapping of supported extension (without leading dot) to its
+        Compress class. Built dynamically from child classes so new compressors
+        are picked up automatically.
+
+        :param multi_entry_only: If True, exclude compressors that cannot bundle
+            multiple files/directories (e.g. GzipCompress).
+        """
+        mapping: dict[str, type[Compress]] = {}
+        for compress_class in Compress._get_child_classes(multi_entry_only=multi_entry_only):
+            for extension in compress_class.get_supported_extensions():
+                mapping[extension] = compress_class
+        return mapping
+
+    @staticmethod
     def _get_compress_class_from_extension(file_path: str) -> type["Compress"] | None:
         """Get the compress class from the file extension."""
         compress: list[type[Compress]] = Compress._get_child_classes()
@@ -162,10 +184,17 @@ class Compress:
         return None
 
     @staticmethod
-    def _get_child_classes() -> list[type["Compress"]]:
-        """Get the child classes of the compress class."""
+    def _get_child_classes(multi_entry_only: bool = False) -> list[type["Compress"]]:
+        """Get the child classes of the compress class.
+
+        :param multi_entry_only: If True, exclude compressors that cannot bundle
+            multiple files/directories (e.g. GzipCompress).
+        """
         from .gzip_compress import GzipCompress
         from .tar_compress import TarCompress, TarGzCompress
         from .zip_compress import ZipCompress
 
-        return [TarGzCompress, TarCompress, ZipCompress, GzipCompress]
+        classes: list[type[Compress]] = [TarGzCompress, TarCompress, ZipCompress, GzipCompress]
+        if multi_entry_only:
+            classes = [cls for cls in classes if cls.supports_multiple_entries]
+        return classes
