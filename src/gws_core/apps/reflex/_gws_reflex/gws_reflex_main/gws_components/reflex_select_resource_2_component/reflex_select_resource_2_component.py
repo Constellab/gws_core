@@ -45,7 +45,7 @@ class SelectResource2Component(rx.Component):
     library = public_js_path
     tag = "SelectResource2Component"
 
-    input_data: Var[dict | None]
+    input_data: Var[SelectResourceInputDTO | None]
     """Input data matching the DcSelectResourceInput interface."""
 
     authentication_info: Var[ReflexUserAuthInfo | None]
@@ -57,7 +57,7 @@ class SelectResource2Component(rx.Component):
 
 
 def select_resource_2_component(
-    input_data: SelectResourceInputDTO | Var[dict],
+    input_data: SelectResourceInputDTO | Var[SelectResourceInputDTO],
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
     **kwargs,
 ):
@@ -70,22 +70,18 @@ def select_resource_2_component(
     - Optional input: DcAuthenticationInfo (provided automatically from ReflexMainState)
     - Output event: DcSelectResourceOutput (``{"resourceId": str | None}``)
 
-    :param input_data: Input configuration for the component (required). Can be a
-        SelectResourceInputDTO instance or a reflex Var of a dict with matching shape.
-    :type input_data: SelectResourceInputDTO | Var[dict]
+    :param input_data: Input configuration for the component (required). Either a
+        ``SelectResourceInputDTO`` instance or a reflex ``Var`` of one (returned by an
+        ``@rx.var`` that depends on reactive state).
+    :type input_data: SelectResourceInputDTO | Var[SelectResourceInputDTO]
     :param output_event: Event handler called when the selection changes. Receives a
         dict ``{"resourceId": str | None}``, defaults to None
     :type output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]], optional
     :return: Instance of SelectResource2Component
     :rtype: SelectResource2Component
     """
-    if isinstance(input_data, SelectResourceInputDTO):
-        input_data_value = input_data.to_json_dict()
-    else:
-        input_data_value = input_data
-
     return SelectResource2Component.create(
-        input_data=input_data_value,
+        input_data=input_data,
         authentication_info=ReflexMainState.get_reflex_user_auth_info,
         output_event=output_event,
         **kwargs,

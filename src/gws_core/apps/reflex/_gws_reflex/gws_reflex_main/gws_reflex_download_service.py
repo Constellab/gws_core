@@ -130,6 +130,7 @@ class ReflexDownloadService:
         @api.get(f"{cls.ROUTE_PREFIX}/{{token}}")
         def download_token(token: str) -> FileResponse:
             entry = cls._pop(token)
+            print(f"Download requested: {token} -> {entry.path if entry else 'NOT FOUND'}")
             if entry is None or not os.path.isfile(entry.path):
                 raise HTTPException(status_code=404, detail="Download expired or not found")
             return FileResponse(
