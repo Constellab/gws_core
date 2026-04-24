@@ -7,7 +7,7 @@ echo "Installing gws cli"
 # use to get the directory of the script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-pip install -e $SCRIPT_DIR/../gws_cli
+uv pip install -e "$SCRIPT_DIR/../gws_cli"
 echo "Cli installed successfully"
 
 # Update Claude Code configuration if in dev mode
