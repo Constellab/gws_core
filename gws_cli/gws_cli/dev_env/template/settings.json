@@ -4,7 +4,7 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "workbench.editor.revealIfOpen": true,
   "editor.minimap.enabled": false,
-  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "python.defaultInterpreterPath": "/home/labuser/.venv/bin/python3",
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
@@ -23,5 +23,7 @@
   "python.analysis.extraPaths": [],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
-  "python.testing.pytestArgs": ["-v"]
+  "python.testing.pytestArgs": [
+    "-v"
+  ]
 }
