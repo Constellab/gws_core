@@ -45,10 +45,11 @@ class NavigableEntitySet:
     ):
         self._entities = set()
 
-        if isinstance(entities, Iterable):
-            self.update(entities, deep_level)
-        else:
-            self.add(entities, deep_level)
+        if entities is not None:
+            if isinstance(entities, Iterable):
+                self.update(entities, deep_level)
+            else:
+                self.add(entities, deep_level)
 
     def get_entity_navs(self) -> list[BaseModelDTO]:
         return [entity.to_entity_dto() for entity in self._entities]
@@ -117,12 +118,13 @@ class NavigableEntitySet:
                 return entity_deep
         return None
 
-    def update(self, entity: Iterable[NavigableEntity], deep_level: int = 0):
-        for e in entity:
+    def update(self, entities: Iterable[NavigableEntity], deep_level: int = 0):
+        for e in entities:
             self.add(e, deep_level)
 
-    def remove(self, entity: Iterable[NavigableEntity]):
-        self._entities = self._entities - entity
+    def remove(self, entities: Iterable[NavigableEntity]):
+        to_remove = {NavigableEntityDeep(entity=e, deep_level=0) for e in entities}
+        self._entities = self._entities - to_remove
 
     def remove_deep(self, deep_level: int):
         self._entities = {entity for entity in self._entities if entity.deep_level != deep_level}

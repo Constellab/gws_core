@@ -20,6 +20,29 @@ GenericNavigableEntity = TypeVar("GenericNavigableEntity", bound=NavigableEntity
 
 
 class EntityNavigator(Generic[GenericNavigableEntity]):
+    """Navigate the lineage graph of scenarios, resources, views and notes.
+
+    A navigator wraps a set of entities of one type and exposes traversals to
+    their direct and transitive neighbors (next/previous), plus tag propagation
+    over the same graph.
+
+    Two traversal flavors coexist and are intentionally separate:
+
+    - ``get_next_entities_recursive`` / ``get_previous_entities_recursive`` collect
+      every reachable entity into a flat ``NavigableEntitySet`` (with depth info)
+      and discard edge information. Use these for "what's impacted" queries.
+    - ``propagate_tags`` / ``delete_propagated_tags`` walk the same graph but must
+      preserve per-edge provenance: each propagated tag carries an origin
+      (``TagOrigin``) describing the immediate upstream entity that caused it.
+      Because the origin depends on the edge kind (e.g. resource->view vs.
+      resource->resource), these methods cannot be expressed on top of the
+      flat-set recursion without losing attribution.
+
+    Both flavors apply the same two performance rules: hoist
+    ``get_next_*()``/``get_previous_*()`` queries out of per-entity loops, and
+    skip already-visited entities so reconverging paths don't re-walk subgraphs.
+    """
+
     _entities: set[GenericNavigableEntity]
 
     _all_entity_types = [
@@ -35,11 +58,16 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         elif isinstance(entities, Iterable):
             self._entities = set(entities)
         else:
-            self._entities = set([entities])
+            self._entities = {entities}
 
     def has_next_entities(
         self, requested_entities: list[NavigableEntityType] | None = None
     ) -> bool:
+        """Return True if any direct downstream neighbor exists.
+
+        :param requested_entities: entity types to consider as neighbors.
+            Defaults to all four navigable types.
+        """
         if requested_entities is None:
             requested_entities = self._all_entity_types
         return len(self.get_next_entities(requested_entities)) > 0
@@ -47,12 +75,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
     def get_next_entities(
         self, requested_entities: list[NavigableEntityType]
     ) -> NavigableEntitySet:
-        """Return all the entities that are linked to the current entities
+        """Return the direct downstream neighbors of the wrapped entities.
 
-        :param requested_entities: [description]
-        :type requested_entities: List[EntityType]
-        :return: [description]
-        :rtype: NavigableEntitySet
+        Only one hop is followed (no recursion). Entities of any type listed in
+        ``requested_entities`` are merged into a single ``NavigableEntitySet``.
         """
         if self.is_empty():
             return NavigableEntitySet()
@@ -78,12 +104,20 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         requested_entities: list[NavigableEntityType] | None = None,
         include_current_entities: bool = False,
     ) -> NavigableEntitySet:
-        """Return all the entities that are linked to the current entities
+        """Return every entity transitively reachable downstream.
 
-        :param requested_entities: [description]
-        :type requested_entities: List[EntityType]
-        :return: [description]
-        :rtype: NavigableEntitySet
+        Traverses the lineage graph breadth-first. Each entity is visited once,
+        annotated with its depth in the returned ``NavigableEntitySet``. Use this
+        for impact analysis ("what entities would be affected"). Edge-level
+        provenance is not preserved -- if you need to know which immediate
+        upstream caused a given downstream to be reached, use ``propagate_tags``
+        instead.
+
+        :param requested_entities: entity types to consider during traversal.
+            Defaults to all four navigable types.
+        :param include_current_entities: if True, the wrapped entities are kept
+            in the result at depth 0; otherwise only their descendants are
+            returned.
         """
         if self.is_empty():
             return NavigableEntitySet()
@@ -179,12 +213,16 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         requested_entities: list[NavigableEntityType] | None = None,
         include_current_entities: bool = False,
     ) -> NavigableEntitySet:
-        """Return all the entities that are linked to the current entities
+        """Return every entity transitively reachable upstream.
 
-        :param requested_entities: [description]
-        :type requested_entities: List[EntityType]
-        :return: [description]
-        :rtype: List[NavigableEntity]
+        Mirror of ``get_next_entities_recursive`` but walks the lineage graph in
+        the opposite direction (towards ancestors).
+
+        :param requested_entities: entity types to consider during traversal.
+            Defaults to all four navigable types.
+        :param include_current_entities: if True, the wrapped entities are kept
+            in the result at depth 0; otherwise only their ancestors are
+            returned.
         """
         if self.is_empty():
             return NavigableEntitySet()
@@ -274,58 +312,111 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         return loaded_entities
 
     def get_next_notes(self) -> "EntityNavigatorNote":
+        """Return the direct downstream notes. Empty by default; overridden by subclasses
+        whose entity type has a notes-edge in the lineage graph."""
         return EntityNavigatorNote(set())
 
     def get_next_views(self) -> "EntityNavigatorView":
+        """Return the direct downstream views. Empty by default; overridden by subclasses."""
         return EntityNavigatorView(set())
 
     def get_next_resources(self) -> "EntityNavigatorResource":
+        """Return the direct downstream resources. Empty by default; overridden by subclasses."""
         return EntityNavigatorResource(set())
 
     def get_next_scenarios(self) -> "EntityNavigatorScenario":
+        """Return the direct downstream scenarios. Empty by default; overridden by subclasses."""
         return EntityNavigatorScenario(set())
 
     def get_previous_notes(self) -> "EntityNavigatorNote":
+        """Return the direct upstream notes. Empty by default; overridden by subclasses."""
         return EntityNavigatorNote(set())
 
     def get_previous_views(self) -> "EntityNavigatorView":
+        """Return the direct upstream views. Empty by default; overridden by subclasses."""
         return EntityNavigatorView(set())
 
     def get_previous_resources(self) -> "EntityNavigatorResource":
+        """Return the direct upstream resources. Empty by default; overridden by subclasses."""
         return EntityNavigatorResource(set())
 
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
+        """Return the direct upstream scenarios. Empty by default; overridden by subclasses."""
         return EntityNavigatorScenario(set())
 
     def get_as_nav_set(self) -> NavigableEntitySet:
+        """Wrap the current entities as a depth-0 ``NavigableEntitySet``."""
         return NavigableEntitySet(self._entities, 0)
 
     def get_entities_as_set(self) -> set[GenericNavigableEntity]:
+        """Return the wrapped entities as a set."""
         return self._entities
 
     def get_entities_list(self) -> list[GenericNavigableEntity]:
+        """Return the wrapped entities as a list. Order is not guaranteed (the
+        underlying storage is a set)."""
         return list(self._entities)
 
     def has_entities(self) -> bool:
+        """Return True if at least one entity is wrapped."""
         return len(self._entities) > 0
 
     def get_first_entity(self) -> GenericNavigableEntity | None:
+        """Return an arbitrary entity from the set, or ``None`` if empty.
+
+        Useful when the caller knows the navigator wraps a single entity.
+        """
         entities = self.get_entities_list()
         return entities[0] if len(entities) > 0 else None
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ) -> None:
+        """Propagate the given tags to every transitively reachable downstream entity.
+
+        Each propagated tag carries an origin (``TagOrigin``) describing the
+        immediate upstream entity that caused it -- this is why we cannot reuse
+        ``get_next_entities_recursive`` here: that method flattens the graph
+        and discards edge information, while propagation needs per-edge
+        attribution. The origin's type and id depend on the edge kind:
+        scenario->resource yields ``SCENARIO_PROPAGATED``, resource->next-resource
+        yields ``TASK_PROPAGATED``, resource->view yields ``RESOURCE_PROPAGATED``,
+        view->note yields ``VIEW_PROPAGATED``.
+
+        Performance: ``get_next_*()`` queries are hoisted out of the per-entity
+        loop, and ``visited`` tracks entities whose downstream has already been
+        walked so reconverging paths in the DAG don't re-walk subgraphs.
+
+        :param tags: tags to propagate. Their origin is set per edge during the walk.
+        :param entity_tags_cache: shared cache mapping entity to its tag list,
+            populated as the walk progresses. Pass ``None`` for top-level calls;
+            recursive calls thread the same cache through.
+        :param visited: shared set of entities whose downstream has already been
+            walked. Pass ``None`` for top-level calls; recursive calls thread the
+            same set through. Distinct from ``entity_tags_cache`` because an
+            entity being tagged by a parent is not the same as that entity's own
+            downstream having been traversed.
+        """
         pass
 
     def _propagate_tags(
         self,
         tags: list[Tag],
-        entity: GenericNavigableEntity,
+        entity: NavigableEntity,
         new_origin_type: TagOriginType,
         new_origin_id: str,
         entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
     ):
+        """Add ``tags`` to a single ``entity`` with the given origin, using the cache.
+
+        ``entity`` is typed as ``NavigableEntity`` (not the navigator's own
+        ``GenericNavigableEntity``) because propagation crosses entity types --
+        e.g. an ``EntityNavigatorScenario`` writes tags onto downstream resources
+        and notes, not just scenarios.
+        """
         if entity_tags_cache is None:
             entity_tags_cache = {}
 
@@ -339,18 +430,39 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity_tags.add_tags(new_tags)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ):
+        """Remove previously propagated copies of ``tags`` from every reachable downstream entity.
+
+        Inverse of ``propagate_tags`` -- traverses the same graph with the same
+        per-edge origin attribution and deletes the matching tag entries.
+        See ``propagate_tags`` for why this cannot be expressed on top of
+        ``get_next_entities_recursive``.
+
+        :param tags: tags whose propagated copies should be removed.
+        :param entity_tags_cache: shared cache mapping entity to its tag list,
+            populated as the walk progresses.
+        :param visited: shared set of entities whose downstream has already been
+            walked.
+        """
         pass
 
     def _delete_propagated_tags(
         self,
         tags: list[Tag],
-        entity: GenericNavigableEntity,
+        entity: NavigableEntity,
         origin_type: TagOriginType,
         origin_id: str,
         entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
     ):
+        """Remove a propagated copy of ``tags`` from a single ``entity``, populating the cache.
+
+        ``entity`` is typed as ``NavigableEntity`` for the same reason as
+        ``_propagate_tags``: deletion crosses entity types.
+        """
         if entity_tags_cache is None:
             entity_tags_cache = {}
 
@@ -364,6 +476,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         entity_tags.delete_tags(new_tags)
 
     def is_empty(self) -> bool:
+        """Return True if no entities are wrapped."""
         return len(self._entities) == 0
 
     def _get_entities_ids(self) -> list[str]:
@@ -371,12 +484,16 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
     @classmethod
     def from_entity_id(cls, entity_type: NavigableEntityType, entity_id: str) -> "EntityNavigator":
+        """Build the appropriate concrete navigator for a single entity, by type and id.
+
+        Raises if the entity does not exist or if ``entity_type`` is unknown.
+        """
         if entity_type == NavigableEntityType.SCENARIO:
             return EntityNavigatorScenario(Scenario.get_by_id_and_check(entity_id))
         elif entity_type == NavigableEntityType.NOTE:
-            return EntityNavigatorView(Note.get_by_id_and_check(entity_id))
+            return EntityNavigatorNote(Note.get_by_id_and_check(entity_id))
         elif entity_type == NavigableEntityType.VIEW:
-            return EntityNavigatorNote(ViewConfig.get_by_id_and_check(entity_id))
+            return EntityNavigatorView(ViewConfig.get_by_id_and_check(entity_id))
         elif entity_type == NavigableEntityType.RESOURCE:
             return EntityNavigatorResource(ResourceModel.get_by_id_and_check(entity_id))
 
@@ -384,22 +501,31 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
 
 class EntityNavigatorScenario(EntityNavigator[Scenario]):
+    """Navigator over scenarios. Edges: scenario -> resources it produces and notes attached to it."""
+
     def get_next_notes(self) -> "EntityNavigatorNote":
+        """Return notes attached to the wrapped scenarios via ``NoteScenario``."""
         notes = set(NoteScenario.find_notes_by_scenarios(self._get_entities_ids()))
         return EntityNavigatorNote(notes)
 
     def get_next_views(self) -> "EntityNavigatorView":
+        """Return views of the resources produced by the wrapped scenarios."""
         return self.get_next_resources().get_next_views()
 
     def get_next_resources(self) -> "EntityNavigatorResource":
-        """Return all the resources generated by the scenarios"""
+        """Return all the resources generated by the wrapped scenarios."""
         resources = set(ResourceModel.get_by_scenarios(self._get_entities_ids()))
         return EntityNavigatorResource(resources)
 
     def get_next_scenarios(self) -> "EntityNavigatorScenario":
+        """Return scenarios that consume any resource produced by the wrapped scenarios."""
         return self.get_next_resources().get_next_scenarios()
 
     def get_previous_resources(self) -> "EntityNavigatorResource":
+        """Return resources consumed by the wrapped scenarios via input tasks.
+
+        Walks ``TaskModel.source_config_id`` of the scenarios' input tasks.
+        """
         task_models: list[TaskModel] = list(
             TaskModel.get_scenario_input_tasks(self._get_entities_ids())
         )
@@ -411,14 +537,31 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
         return EntityNavigatorResource(ResourceModel.get_by_ids(resource_ids))
 
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
+        """Return scenarios that produced any resource consumed by the wrapped scenarios."""
         return self.get_previous_resources().get_previous_scenarios()
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ) -> None:
-        for scenario in self._entities:
-            # Propagate to resources
-            next_resources = self.get_next_resources()
+        """Propagate tags from each wrapped scenario to its produced resources and attached notes,
+        then recurse downstream. Origin is ``SCENARIO_PROPAGATED`` with the upstream scenario's id.
+        See ``EntityNavigator.propagate_tags`` for the cache/visited contract."""
+        if visited is None:
+            visited = set()
+
+        scenarios_to_walk = [s for s in self._entities if s not in visited]
+        if not scenarios_to_walk:
+            return
+        visited.update(scenarios_to_walk)
+
+        walker = EntityNavigatorScenario(scenarios_to_walk)
+
+        # Propagate to resources (computed once for the whole batch)
+        next_resources = walker.get_next_resources()
+        for scenario in scenarios_to_walk:
             for resource in next_resources.get_entities_list():
                 self._propagate_tags(
                     tags=tags,
@@ -427,10 +570,11 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
                     new_origin_id=scenario.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_resources.propagate_tags(tags, entity_tags_cache)
+        next_resources.propagate_tags(tags, entity_tags_cache, visited)
 
-            # Propagate to notes
-            next_notes = self.get_next_notes()
+        # Propagate to notes (computed once for the whole batch)
+        next_notes = walker.get_next_notes()
+        for scenario in scenarios_to_walk:
             for note in next_notes.get_entities_list():
                 self._propagate_tags(
                     tags=tags,
@@ -439,14 +583,28 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
                     new_origin_id=scenario.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_notes.propagate_tags(tags, entity_tags_cache)
+        next_notes.propagate_tags(tags, entity_tags_cache, visited)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ):
-        for scenario in self._entities:
-            # Propagate to resources
-            next_resources = self.get_next_resources()
+        """Inverse of ``propagate_tags`` for scenario edges: remove ``SCENARIO_PROPAGATED``
+        copies from produced resources and attached notes, then recurse downstream."""
+        if visited is None:
+            visited = set()
+
+        scenarios_to_walk = [s for s in self._entities if s not in visited]
+        if not scenarios_to_walk:
+            return
+        visited.update(scenarios_to_walk)
+
+        walker = EntityNavigatorScenario(scenarios_to_walk)
+
+        next_resources = walker.get_next_resources()
+        for scenario in scenarios_to_walk:
             for resource in next_resources.get_entities_list():
                 self._delete_propagated_tags(
                     tags=tags,
@@ -455,10 +613,10 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
                     origin_id=scenario.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_resources.delete_propagated_tags(tags, entity_tags_cache)
+        next_resources.delete_propagated_tags(tags, entity_tags_cache, visited)
 
-            # Propagate to notes
-            next_notes = self.get_next_notes()
+        next_notes = walker.get_next_notes()
+        for scenario in scenarios_to_walk:
             for note in next_notes.get_entities_list():
                 self._delete_propagated_tags(
                     tags=tags,
@@ -467,23 +625,24 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
                     origin_id=scenario.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_notes.delete_propagated_tags(tags, entity_tags_cache)
+        next_notes.delete_propagated_tags(tags, entity_tags_cache, visited)
 
 
 class EntityNavigatorResource(EntityNavigator[ResourceModel]):
+    """Navigator over resources. Edges: resource -> views built from it,
+    resource -> next resources via consuming tasks, resource -> consuming scenarios."""
+
     def get_next_notes(self) -> "EntityNavigatorNote":
+        """Return notes attached to the views of the wrapped resources."""
         return self.get_next_views().get_next_notes()
 
     def get_next_views(self) -> "EntityNavigatorView":
+        """Return views configured against the wrapped resources."""
         views = set(ViewConfig.get_by_resources(self._get_entities_ids()))
         return EntityNavigatorView(views)
 
     def get_next_resources(self) -> "EntityNavigatorResource":
-        """Return all the output resources of tasks that use the resource as input
-
-        :return: _description_
-        :rtype: EntityNavigatorResource
-        """
+        """Return resources produced by tasks that consume the wrapped resources as input."""
         tasks_model = self._get_next_tasks()
 
         task_model_ids = [task.id for task in tasks_model]
@@ -549,6 +708,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         )
 
     def get_previous_resources(self) -> "EntityNavigatorResource":
+        """Return resources consumed as input by the tasks that produced the wrapped resources."""
         # retrieve the tasks that generated the current resources
         task_model_ids = [
             resource.task_model.id for resource in self._entities if resource.task_model is not None
@@ -564,8 +724,7 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return EntityNavigatorResource(resources)
 
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
-        """Return all the scenarios that generated the current resources"""
-
+        """Return the scenarios that generated the wrapped resources."""
         scenario_ids: list[str] = [
             resource.scenario.id for resource in self._entities if resource.scenario is not None
         ]
@@ -575,11 +734,31 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         return EntityNavigatorScenario(scenarios)
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ) -> None:
-        for resource in self._entities:
-            # Propagate to next views
-            next_views = self.get_next_views()
+        """Propagate tags along two edge kinds and recurse:
+
+        - resource -> view, with origin ``RESOURCE_PROPAGATED`` carrying the upstream resource's id;
+        - resource -> next resource, with origin ``TASK_PROPAGATED`` carrying the producing task's id.
+
+        See ``EntityNavigator.propagate_tags`` for the cache/visited contract.
+        """
+        if visited is None:
+            visited = set()
+
+        resources_to_walk = [r for r in self._entities if r not in visited]
+        if not resources_to_walk:
+            return
+        visited.update(resources_to_walk)
+
+        walker = EntityNavigatorResource(resources_to_walk)
+
+        # Propagate to next views (computed once for the whole batch)
+        next_views = walker.get_next_views()
+        for resource in resources_to_walk:
             for view in next_views.get_entities_list():
                 self._propagate_tags(
                     tags=tags,
@@ -588,27 +767,41 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
                     new_origin_id=resource.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_views.propagate_tags(tags, entity_tags_cache)
+        next_views.propagate_tags(tags, entity_tags_cache, visited)
 
-            # Propagate to next resources
-            next_resources = self.get_next_resources()
-            for next_resource in next_resources.get_entities_list():
-                if next_resource.task_model:
-                    self._propagate_tags(
-                        tags=tags,
-                        entity=next_resource,
-                        new_origin_type=TagOriginType.TASK_PROPAGATED,
-                        new_origin_id=next_resource.task_model.id,
-                        entity_tags_cache=entity_tags_cache,
-                    )
-            next_resources.propagate_tags(tags, entity_tags_cache)
+        # Propagate to next resources (computed once for the whole batch)
+        next_resources = walker.get_next_resources()
+        for next_resource in next_resources.get_entities_list():
+            if next_resource.task_model:
+                self._propagate_tags(
+                    tags=tags,
+                    entity=next_resource,
+                    new_origin_type=TagOriginType.TASK_PROPAGATED,
+                    new_origin_id=next_resource.task_model.id,
+                    entity_tags_cache=entity_tags_cache,
+                )
+        next_resources.propagate_tags(tags, entity_tags_cache, visited)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ):
-        for resource in self._entities:
-            # Propagate to next views
-            next_views = self.get_next_views()
+        """Inverse of ``propagate_tags`` for resource edges: remove ``RESOURCE_PROPAGATED`` copies
+        from views and ``TASK_PROPAGATED`` copies from next resources, then recurse downstream."""
+        if visited is None:
+            visited = set()
+
+        resources_to_walk = [r for r in self._entities if r not in visited]
+        if not resources_to_walk:
+            return
+        visited.update(resources_to_walk)
+
+        walker = EntityNavigatorResource(resources_to_walk)
+
+        next_views = walker.get_next_views()
+        for resource in resources_to_walk:
             for view in next_views.get_entities_list():
                 self._delete_propagated_tags(
                     tags=tags,
@@ -617,31 +810,34 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
                     origin_id=resource.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_views.delete_propagated_tags(tags, entity_tags_cache)
+        next_views.delete_propagated_tags(tags, entity_tags_cache, visited)
 
-            # Propagate to next resources
-            next_resources = self.get_next_resources()
-            for next_resource in next_resources.get_entities_list():
-                if next_resource.task_model:
-                    self._delete_propagated_tags(
-                        tags=tags,
-                        entity=next_resource,
-                        origin_type=TagOriginType.TASK_PROPAGATED,
-                        origin_id=resource.task_model.id,
-                        entity_tags_cache=entity_tags_cache,
-                    )
-            next_resources.delete_propagated_tags(tags, entity_tags_cache)
+        next_resources = walker.get_next_resources()
+        for next_resource in next_resources.get_entities_list():
+            if next_resource.task_model:
+                self._delete_propagated_tags(
+                    tags=tags,
+                    entity=next_resource,
+                    origin_type=TagOriginType.TASK_PROPAGATED,
+                    origin_id=next_resource.task_model.id,
+                    entity_tags_cache=entity_tags_cache,
+                )
+        next_resources.delete_propagated_tags(tags, entity_tags_cache, visited)
 
 
 class EntityNavigatorView(EntityNavigator[ViewConfig]):
+    """Navigator over views. Edges: view -> notes embedding it; upstream is the view's resource."""
+
     def get_next_notes(self) -> "EntityNavigatorNote":
+        """Return notes that embed any of the wrapped views via ``NoteViewModel``."""
         note_views: list[NoteViewModel] = list(NoteViewModel.get_by_views(self._get_entities_ids()))
 
-        notes = set([note_view.note for note_view in note_views])
+        notes = {note_view.note for note_view in note_views}
 
         return EntityNavigatorNote(notes)
 
     def get_previous_resources(self) -> "EntityNavigatorResource":
+        """Return the resources that the wrapped views are configured against."""
         resource_ids: list[str] = [
             view.resource_model.id for view in self._entities if view.resource_model is not None
         ]
@@ -651,17 +847,33 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
         return EntityNavigatorResource(resources)
 
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
+        """Return the scenarios that produced the resources of the wrapped views."""
         return self.get_previous_resources().get_previous_scenarios()
 
     def _get_resources(self) -> list[ResourceModel]:
         return [view.resource_model for view in self._entities]
 
     def propagate_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ) -> None:
-        for view in self._entities:
-            # Propagate to next notes
-            next_notes = self.get_next_notes()
+        """Propagate tags from each wrapped view to the notes embedding it, then recurse.
+        Origin is ``VIEW_PROPAGATED`` carrying the upstream view's id.
+        See ``EntityNavigator.propagate_tags`` for the cache/visited contract."""
+        if visited is None:
+            visited = set()
+
+        views_to_walk = [v for v in self._entities if v not in visited]
+        if not views_to_walk:
+            return
+        visited.update(views_to_walk)
+
+        walker = EntityNavigatorView(views_to_walk)
+
+        next_notes = walker.get_next_notes()
+        for view in views_to_walk:
             for note in next_notes.get_entities_list():
                 self._propagate_tags(
                     tags=tags,
@@ -670,14 +882,28 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
                     new_origin_id=view.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_notes.propagate_tags(tags, entity_tags_cache)
+        next_notes.propagate_tags(tags, entity_tags_cache, visited)
 
     def delete_propagated_tags(
-        self, tags: list[Tag], entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
     ):
-        for view in self._entities:
-            # Propagate to next notes
-            next_notes = self.get_next_notes()
+        """Inverse of ``propagate_tags`` for view edges: remove ``VIEW_PROPAGATED`` copies
+        from notes embedding the wrapped views."""
+        if visited is None:
+            visited = set()
+
+        views_to_walk = [v for v in self._entities if v not in visited]
+        if not views_to_walk:
+            return
+        visited.update(views_to_walk)
+
+        walker = EntityNavigatorView(views_to_walk)
+
+        next_notes = walker.get_next_notes()
+        for view in views_to_walk:
             for note in next_notes.get_entities_list():
                 self._delete_propagated_tags(
                     tags=tags,
@@ -686,17 +912,24 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
                     origin_id=view.id,
                     entity_tags_cache=entity_tags_cache,
                 )
-            next_notes.delete_propagated_tags(tags, entity_tags_cache)
+        next_notes.delete_propagated_tags(tags, entity_tags_cache, visited)
 
 
 class EntityNavigatorNote(EntityNavigator[Note]):
+    """Navigator over notes. Notes are leaves of the lineage graph -- they have
+    no downstream entities and therefore inherit the no-op ``propagate_tags``
+    from the base class."""
+
     def get_previous_views(self) -> "EntityNavigatorView":
+        """Return the views embedded in the wrapped notes via ``NoteViewModel``."""
         note_views: list[NoteViewModel] = list(NoteViewModel.get_by_notes(self._get_entities_ids()))
 
         return EntityNavigatorView({note_view.view for note_view in note_views})
 
     def get_previous_resources(self) -> "EntityNavigatorResource":
+        """Return the resources backing the views embedded in the wrapped notes."""
         return self.get_previous_views().get_previous_resources()
 
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
+        """Return the scenarios that produced the resources of the views in the wrapped notes."""
         return self.get_previous_resources().get_previous_scenarios()
