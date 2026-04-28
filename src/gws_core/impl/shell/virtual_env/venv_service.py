@@ -54,8 +54,8 @@ class VEnvService:
             try:
                 env_info = cls.get_venv_basic_info(node_name)
                 venv_status.envs.append(env_info)
-            except:
-                Logger.error(f"Error while getting the env info of env {folder_path}")
+            except Exception as e:
+                Logger.error(f"Error while getting the env info of env {folder_path}: {e}")
 
         return venv_status
 
