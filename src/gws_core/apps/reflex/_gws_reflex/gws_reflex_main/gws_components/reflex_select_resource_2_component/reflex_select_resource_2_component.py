@@ -1,12 +1,10 @@
-from typing import Any
-
 import reflex as rx
 from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
 from reflex.vars import Var
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.resource_front_search_filters import ResourceFrontSearchFilters
-from gws_core.resource.resource_model import ResourceModel
 
 from ...reflex_main_state import ReflexMainState
 
@@ -20,7 +18,7 @@ class SelectResourceInputDTO(BaseModelDTO):
     :param placeholder: Placeholder text displayed in the input field when empty.
     :type placeholder: str
     :param default_resource: Optional default resource to pre-select.
-    :type default_resource: Any | None
+    :type default_resource: ResourceModelDTO | None
     :param default_filters: Optional default filters to apply to the resource search
         (matches Partial<LiResourceSearchFields>).
     :type default_filters: dict | None
@@ -30,7 +28,7 @@ class SelectResourceInputDTO(BaseModelDTO):
     """
 
     placeholder: str
-    default_resource: Any | None = None
+    default_resource: ResourceModelDTO | None = None
     default_filters: dict | None = None
     disabled_filters: dict | None = None
 
@@ -88,47 +86,44 @@ def select_resource_2_component(
     )
 
 
-class ReflexResourceSelect:
-    """Reflex component to select a resource.
+class SelectResourceInput:
+    """Python-side configuration for the resource select component.
 
-    This component is a wrapper around the GWS resource search component.
-    It allows the user to search and select a resource.
+    Mirrors :class:`SelectResourceInputDTO` but accepts a
+    :class:`ResourceFrontSearchFilters` instance instead of the raw filter
+    dictionaries. Use :meth:`to_dto` to produce the DTO consumed by the
+    underlying component.
+
+    :ivar placeholder: Placeholder text displayed in the input field when empty.
+    :vartype placeholder: str
+    :ivar default_resource: Optional default resource to pre-select.
+    :vartype default_resource: ResourceModelDTO | None
+    :ivar search_filters: Optional ``ResourceFrontSearchFilters`` instance holding
+        the default and disabled filter configuration.
+    :vartype search_filters: ResourceFrontSearchFilters | None
     """
 
-    def select_resource(
+    placeholder: str
+    default_resource: ResourceModelDTO | None
+    search_filters: ResourceFrontSearchFilters | None
+
+    def __init__(
         self,
         placeholder: str = "Search for resource",
-        default_resource: ResourceModel | None = None,
-        output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+        default_resource: ResourceModelDTO | None = None,
         search_filters: ResourceFrontSearchFilters | None = None,
-        **kwargs,
-    ) -> rx.Component:
-        """Render the resource select component using the configured filters.
+    ) -> None:
+        self.placeholder = placeholder
+        self.default_resource = default_resource
+        self.search_filters = search_filters
 
-        :param placeholder: Placeholder text shown within the component for empty searches,
-            defaults to 'Search for resource'
-        :type placeholder: str, optional
-        :param default_resource: Default resource to show, defaults to None
-        :type default_resource: ResourceModel | None, optional
-        :param output_event: Event handler called when the selection changes. Receives a
-            dict ``{"resourceId": str | None}``, defaults to None
-        :type output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]], optional
-        :param search_filters: Optional ``ResourceFrontSearchFilters`` instance holding the
-            default and disabled filter configuration. When None, no filter is applied,
-            defaults to None
-        :type search_filters: ResourceFrontSearchFilters | None, optional
-        :return: The rendered reflex component
-        :rtype: rx.Component
-        """
-        input_data = SelectResourceInputDTO(
-            placeholder=placeholder,
-            default_resource=default_resource.to_dto() if default_resource is not None else None,
-            default_filters=search_filters.filters if search_filters is not None else None,
-            disabled_filters=search_filters.disabled_filters if search_filters is not None else None,
-        )
-
-        return select_resource_2_component(
-            input_data=input_data,
-            output_event=output_event,
-            **kwargs,
+    def to_dto(self) -> SelectResourceInputDTO:
+        """Convert this input into the DTO consumed by the component."""
+        return SelectResourceInputDTO(
+            placeholder=self.placeholder,
+            default_resource=self.default_resource,
+            default_filters=self.search_filters.filters if self.search_filters is not None else None,
+            disabled_filters=self.search_filters.disabled_filters
+            if self.search_filters is not None
+            else None,
         )

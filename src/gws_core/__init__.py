@@ -197,6 +197,7 @@ from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
 
 # Impl > File
 from .impl.file.file import File as File
+from .impl.file.file_decompress_task import FileDecompressTask as FileDecompressTask
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
 from .impl.file.file_tasks import FsNodeExtractor as FsNodeExtractor
@@ -530,6 +531,8 @@ from .scenario.queue.queue import Job as Job
 from .scenario.queue.queue_runner import QueueRunner as QueueRunner
 from .scenario.queue.queue_service import QueueService as QueueService
 from .scenario.scenario import Scenario as Scenario
+from .scenario.scenario_archive_zipper import ScenarioArchiveZipper as ScenarioArchiveZipper
+from .scenario.scenario_builder import ScenarioBuilder as ScenarioBuilder
 from .scenario.scenario_dto import ScenarioSaveDTO as ScenarioSaveDTO
 from .scenario.scenario_enums import ScenarioCreationType as ScenarioCreationType
 from .scenario.scenario_enums import ScenarioProcessStatus as ScenarioProcessStatus
@@ -544,6 +547,7 @@ from .scenario.scenario_transfert_service import (
 from .scenario.scenario_waiter import ScenarioWaiter as ScenarioWaiter
 from .scenario.scenario_waiter import ScenarioWaiterBasic as ScenarioWaiterBasic
 from .scenario.scenario_waiter import ScenarioWaiterExternalLab as ScenarioWaiterExternalLab
+from .scenario.task.scenario_param import ScenarioParam as ScenarioParam
 from .scenario.task.send_scenario_to_lab import SendScenarioToLab as SendScenarioToLab
 
 # Scenario template
@@ -556,6 +560,7 @@ from .share.share_link import ShareLink as ShareLink
 # Share
 from .share.share_link_service import ShareLinkService as ShareLinkService
 from .share.shared_dto import GenerateShareLinkDTO as GenerateShareLinkDTO
+from .share.shared_dto import ShareEntityCreateMode as ShareEntityCreateMode
 from .share.shared_dto import ShareLinkEntityType as ShareLinkEntityType
 from .share.shared_dto import ShareLinkType as ShareLinkType
 from .share.shared_dto import UpdateShareLinkDTO as UpdateShareLinkDTO
