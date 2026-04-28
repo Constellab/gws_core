@@ -321,7 +321,7 @@ class SettingsLoader:
 
     def pip_freeze(self):
         return subprocess.check_output(
-            ["python3", "-m", "pip", "freeze"], stderr=subprocess.DEVNULL, text=True
+            ["uv", "pip", "freeze"], stderr=subprocess.DEVNULL, text=True
         )
 
     def _get_git_commit(self, cwd) -> str | None:

@@ -29,7 +29,7 @@ class ScreenshotService:
             typer.echo("Playwright not found. Installing playwright...")
             try:
                 # Install playwright package
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
+                subprocess.check_call(["uv", "pip", "install", "playwright"])
                 typer.echo("Playwright package installed successfully.")
             except subprocess.CalledProcessError as e:
                 typer.echo(f"Failed to install playwright: {e}", err=True)
