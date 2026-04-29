@@ -1,7 +1,5 @@
 import os
-import subprocess
 import sys
-from enum import Enum
 from typing import Annotated
 
 import typer
@@ -12,16 +10,11 @@ from gws_core.manage import AppManager
 from gws_core.user.authorization_service import AuthorizationService
 
 from gws_cli.utils.cli_utils import CLIUtils
+from gws_cli.utils.test_runner import run_test_all
 
 app = typer.Typer(
     help="Manage server operations - run server, execute tests, run scenarios and processes"
 )
-
-
-class LogLevel(str, Enum):
-    INFO = "INFO"
-    DEBUG = "DEBUG"
-    ERROR = "ERROR"
 
 
 MainSettingFilePathAnnotation = Annotated[
@@ -65,13 +58,12 @@ def run(
     )
 
 
-@app.command("test", help="Run tests for a specific brick. Use --parallel for xdist parallel execution.")
+@app.command("test", help="Run brick tests via pytest. Use --parallel for xdist parallel execution.")
 def test(
-    ctx: typer.Context,
     test_name: Annotated[
         list[str],
         typer.Argument(
-            help="The name test file to launch (regular expression). Enter 'all' to launch all the tests."
+            help="Test file name(s) to launch. Enter 'all' to launch all the tests."
         ),
     ],
     brick_name: Annotated[
@@ -98,14 +90,20 @@ def test(
             help="Number of parallel workers. 'auto' uses one per CPU. Only with --parallel.",
         ),
     ] = "auto",
-    show_sql: ShowSqlAnnotation = False,
     durations: Annotated[
         int,
-        typer.Option(
-            "--durations",
-            help="Print the N slowest tests after the run. Only with --parallel.",
-        ),
+        typer.Option("--durations", help="Print the N slowest tests after the run."),
     ] = 0,
+    junit_xml: Annotated[
+        str,
+        typer.Option(
+            "--junit-xml",
+            help=(
+                "Write a JUnit XML report to this path (consumed by `test-all` to assemble its "
+                "JSON report)."
+            ),
+        ),
+    ] = "",
 ):
     brick_dir: str
     if brick_name:
@@ -115,29 +113,25 @@ def test(
         typer.echo("No brick dir provided. Using current directory.")
         brick_dir = CLIUtils.get_and_check_current_brick_dir()
 
+    pytest_args = [sys.executable, "-m", "pytest"]
     if parallel:
-        pytest_args = [sys.executable, "-m", "pytest", "-n", workers]
-        if durations > 0:
-            pytest_args += [f"--durations={durations}"]
+        pytest_args += ["-n", workers]
+    if durations > 0:
+        pytest_args += [f"--durations={durations}"]
+    if junit_xml:
+        pytest_args += [f"--junitxml={junit_xml}"]
 
-        if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
-            for name in test_name:
-                filename = name if name.endswith(".py") else f"{name}.py"
-                pytest_args += ["-k", os.path.splitext(filename)[0]]
+    if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
+        for name in test_name:
+            filename = name if name.endswith(".py") else f"{name}.py"
+            pytest_args += ["-k", os.path.splitext(filename)[0]]
 
-        # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
-        # spawned by tests (conda, pipenv, mamba) whose interpreters have different
-        # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at
-        # the brick root adds src/ to sys.path for the master and every worker.
-        os.chdir(brick_dir)
-        os.execvp(pytest_args[0], pytest_args)
-
-    AppManager.run_test(
-        brick_dir=brick_dir,
-        tests=test_name,
-        log_level=CLIUtils.get_global_option_log_level(ctx),
-        show_sql=show_sql,
-    )
+    # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
+    # spawned by tests (conda, pipenv, mamba) whose interpreters have different
+    # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at
+    # the brick root adds src/ to sys.path for the master and every worker.
+    os.chdir(brick_dir)
+    os.execvp(pytest_args[0], pytest_args)
 
 
 def _resolve_brick_dirs(brick_names: list[str]) -> list[str]:
@@ -149,18 +143,6 @@ def _resolve_brick_dirs(brick_names: list[str]) -> list[str]:
             dirs.append(path)
             seen.add(path)
     return dirs
-
-
-def _summarize_and_exit(results: list[tuple[str, int]]) -> None:
-    typer.echo("\n=== test-all summary ===")
-    any_failed = False
-    for brick_dir, code in results:
-        status = "PASS" if code == 0 else f"FAIL (exit {code})"
-        typer.echo(f"  {os.path.basename(brick_dir)}: {status}")
-        if code != 0:
-            any_failed = True
-    if any_failed:
-        raise typer.Exit(code=1)
 
 
 @app.command(
@@ -196,23 +178,27 @@ def test_all(
         int,
         typer.Option("--durations", help="Print the N slowest tests per brick."),
     ] = 0,
+    junit_dir: Annotated[
+        str,
+        typer.Option(
+            "--junit-dir",
+            help=(
+                "Folder to write per-brick JUnit XML reports into. Defaults to env var "
+                "GWS_TEST_JUNIT_DIR. If unset, XMLs go to a temp dir and are deleted at the end."
+            ),
+        ),
+    ] = "",
 ):
-    brick_dirs = _resolve_brick_dirs(brick_name)
-    log_level = CLIUtils.get_global_option_log_level(ctx)
-    results: list[tuple[str, int]] = []
-
-    for brick_dir in brick_dirs:
-        typer.echo(f"\n=== Running tests for brick '{os.path.basename(brick_dir)}' ===")
-        sub_cmd = ["gws", "--log-level", log_level, "server", "test", "all"]
-        sub_cmd += ["--brick-name", os.path.basename(brick_dir)]
-        if durations > 0:
-            sub_cmd += ["--durations", str(durations)]
-        if parallel:
-            sub_cmd += ["--parallel", "-n", workers]
-        proc = subprocess.run(sub_cmd, check=False)
-        results.append((brick_dir, proc.returncode))
-
-    _summarize_and_exit(results)
+    results = run_test_all(
+        brick_dirs=_resolve_brick_dirs(brick_name),
+        log_level=CLIUtils.get_global_option_log_level(ctx),
+        parallel=parallel,
+        workers=workers,
+        durations=durations,
+        junit_dir=junit_dir or os.environ.get("GWS_TEST_JUNIT_DIR", ""),
+    )
+    if any(not r.is_success for r in results):
+        raise typer.Exit(code=1)
 
 
 @app.command("run-scenario", help="Execute a specific scenario by ID")
