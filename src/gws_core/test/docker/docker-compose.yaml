@@ -1,0 +1,39 @@
+services:
+  glab-test:
+    image: constellab/glab:${GLAB_VERSION}
+    environment:
+      - LAB_NAME=BrickTestRunner
+      - LAB_ID=1
+      - LAB_MODE=dev
+      - LAB_ENVIRONMENT=LOCAL
+      - LAB_FOLDER=/lab
+      - DATA_FOLDER=/data
+      - RUN_MODE=test
+      - TEST_BRICK_NAME=${TEST_BRICK_NAME}
+      - TEST_PARALLEL=${TEST_PARALLEL}
+      - TEST_OUTPUT_DIR =/output
+      - GWS_TEST_DB_HOST=test_gws_dev_db
+      - GWS_TEST_DB_PORT=3306
+      - GWS_TEST_DB_USER=root
+      - GWS_TEST_DB_PASSWORD=gencovery
+      - GWS_TEST_DB_NAME=gws_test
+    volumes:
+      - ${LAB_VOLUME_HOST}/${RUN_ID}/config.json:/conf/config.json:ro
+      - ${LAB_VOLUME_HOST}/${RUN_ID}/output:/output
+    depends_on:
+      - test_gws_dev_db
+
+  test_gws_dev_db:
+    image: mariadb:10.7.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=gencovery
+    tmpfs:
+      - /var/lib/mysql:rw,size=2g
+    command:
+      - --max_allowed_packet=256M
+      - --innodb-flush-log-at-trx-commit=0
+      - --innodb-doublewrite=0
+      - --sync-binlog=0
+      - --skip-log-bin
+      - --innodb-flush-method=nosync
+      - --innodb-buffer-pool-size=512M

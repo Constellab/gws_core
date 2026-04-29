@@ -58,13 +58,13 @@ def run(
     )
 
 
-@app.command("test", help="Run brick tests via pytest. Use --parallel for xdist parallel execution.")
+@app.command(
+    "test", help="Run brick tests via pytest. Use --parallel for xdist parallel execution."
+)
 def test(
     test_name: Annotated[
         list[str],
-        typer.Argument(
-            help="Test file name(s) to launch. Enter 'all' to launch all the tests."
-        ),
+        typer.Argument(help="Test file name(s) to launch. Enter 'all' to launch all the tests."),
     ],
     brick_name: Annotated[
         str,
@@ -178,13 +178,14 @@ def test_all(
         int,
         typer.Option("--durations", help="Print the N slowest tests per brick."),
     ] = 0,
-    junit_dir: Annotated[
+    output_dir: Annotated[
         str,
         typer.Option(
-            "--junit-dir",
+            "--output-dir",
             help=(
-                "Folder to write per-brick JUnit XML reports into. Defaults to env var "
-                "GWS_TEST_JUNIT_DIR. If unset, XMLs go to a temp dir and are deleted at the end."
+                "Folder to write per-brick test outputs (JUnit XML reports) into. "
+                "Defaults to env var TEST_OUTPUT_DIR. If unset, outputs go to a "
+                "temp dir and are deleted at the end."
             ),
         ),
     ] = "",
@@ -195,7 +196,7 @@ def test_all(
         parallel=parallel,
         workers=workers,
         durations=durations,
-        junit_dir=junit_dir or os.environ.get("GWS_TEST_JUNIT_DIR", ""),
+        junit_dir=output_dir or os.environ.get("TEST_OUTPUT_DIR", ""),
     )
     if any(not r.is_success for r in results):
         raise typer.Exit(code=1)
