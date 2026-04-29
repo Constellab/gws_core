@@ -1304,6 +1304,11 @@ class ProtocolModel(ProcessModel):
         self.status = ProcessStatus.RUNNING
         self.save()
 
+        # Propagate to ancestors so partial re-runs of a sub-protocol correctly
+        # update parent progress bars (timing semantics + status).
+        if self.parent_protocol:
+            self.parent_protocol.mark_as_started()
+
     def refresh_status(self, refresh_parent: bool = True):
         """Refresh the status of the protocol based on the status of its processes"""
 
@@ -1317,7 +1322,9 @@ class ProtocolModel(ProcessModel):
 
         if refresh_parent:
             if self.parent_protocol and (
-                self.parent_protocol.is_finished or self.parent_protocol.is_partially_run
+                self.parent_protocol.is_finished
+                or self.parent_protocol.is_partially_run
+                or self.parent_protocol.is_running
             ):
                 self.parent_protocol.refresh_status()
 

@@ -1,3 +1,4 @@
+import os
 from time import sleep
 
 from gws_core import ResourceModel
@@ -253,6 +254,73 @@ class TestProtocolService(BaseTestCase):
         # Test run process p4 which shoud not be runable
         with self.assertRaises(Exception):
             ProtocolService.run_process(protocol_id, "p3")
+
+    def test_run_protocol_propagates_started_to_parent(self):
+        """Regression test: when running tasks one-by-one inside a sub-protocol,
+        the parent protocol's progress bar must also receive started_at and
+        second_start so its timing reflects the full run window minus idle gaps.
+
+        Runs the partial process synchronously via ``protocol_model.run_process``
+        rather than the CLI-based ``ProtocolService.run_process`` to keep the
+        test deterministic.
+        """
+        scenario = ScenarioProxy()
+        root_protocol = scenario.get_protocol()
+        root_protocol_id = root_protocol.get_model().id
+
+        # Create a sub-protocol inside the root protocol via the service API
+        sub_update = ProtocolService.add_empty_protocol_to_protocol_id(root_protocol_id)
+        sub_protocol_id = sub_update.process.id
+        sub_protocol = root_protocol.get_protocol(sub_update.process.instance_name)
+
+        # Add two tasks A and B inside the sub-protocol
+        p_a = sub_protocol.add_process(RobotCreate, "A")
+        p_b = sub_protocol.add_process(RobotMove, "B")
+        sub_protocol.add_connector(p_a >> "robot", p_b << "robot")
+
+        # Run task A synchronously in-process
+        scenario.get_model().mark_as_started(os.getpid())
+        sub_model = ProtocolModel.get_by_id_and_check(sub_protocol_id)
+        sub_model.run_process("A")
+        ProtocolModel.get_by_id_and_check(sub_protocol_id).refresh_status()
+
+        p_a.refresh()
+        self.assertTrue(p_a.get_model().is_success)
+
+        sub_model_after_a = ProtocolModel.get_by_id_and_check(sub_protocol_id)
+        root_model_after_a = ProtocolModel.get_by_id_and_check(root_protocol_id)
+
+        # Sub-protocol's progress bar is started (already works)
+        self.assertIsNotNone(sub_model_after_a.progress_bar.started_at)
+        # Bug check: root protocol's progress bar must also be started
+        self.assertIsNotNone(root_model_after_a.progress_bar.started_at)
+
+        # Wait so the gap before running B is observable
+        sleep(3)
+
+        # Run task B synchronously in-process
+        sub_model = ProtocolModel.get_by_id_and_check(sub_protocol_id)
+        sub_model.run_process("B")
+        ProtocolModel.get_by_id_and_check(sub_protocol_id).refresh_status()
+
+        p_b.refresh()
+        self.assertTrue(p_b.get_model().is_success)
+
+        sub_model_after_b = ProtocolModel.get_by_id_and_check(sub_protocol_id)
+        root_model_after_b = ProtocolModel.get_by_id_and_check(root_protocol_id)
+
+        # Sub-protocol second_start is set (already works)
+        self.assertIsNotNone(sub_model_after_b.progress_bar.second_start)
+        # Bug check: root protocol's second_start must also be set
+        self.assertIsNotNone(root_model_after_b.progress_bar.second_start)
+
+        # The 3s idle gap must be excluded from the "last execution" window
+        # on both the sub-protocol and the root protocol
+        sub_last = sub_model_after_b.progress_bar.get_last_execution_time()
+        root_last = root_model_after_b.progress_bar.get_last_execution_time()
+        gap_threshold_ms = 3000
+        self.assertLess(sub_last, gap_threshold_ms)
+        self.assertLess(root_last, gap_threshold_ms)
 
     def test_duplicate_process_to_protocol_id(self):
         protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
