@@ -1,13 +1,13 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.22.0-beta.5",
+    "version": "0.22.0-beta.6",
     "variables": {
         "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
         "FRONT_VERSION": "2.8.1",
-        "GLAB_VERSION": "2.18.0"
+        "GLAB_VERSION": "2.17.0"
     },
     "environment": {
         "pip": [
