@@ -110,7 +110,7 @@ Each row is a frozen schema snapshot once `PUBLISHED`.
 | `status` | enum `FormStatus` | `DRAFT` (editable) or `SUBMITTED` (locked). |
 | `submitted_at` | datetime (nullable) | Set on `DRAFT → SUBMITTED`. |
 | `submitted_by` | FK → `User` (nullable) | |
-| `values` | JSON | Current field values keyed by spec key. ParamSet items carry stable `__item_id` (see §7). |
+| `values` | JSON | Current field values keyed by spec key — union of user-input values and computed values (see §6.7). ParamSet items carry stable `__item_id` (see §7). |
 | `is_archived` | bool, default `False` | Soft-archive flag. Independent of status. |
 | `created_at`, `last_modified_at` | datetime | |
 | `created_by`, `last_modified_by` | FK → `User` | |
@@ -364,7 +364,8 @@ Computed at every form save (and on read) over the current `values`. Errors per 
 
 - Missing referenced field, type mismatch, division by zero, empty aggregate input → that single computed result is `None` and an error message is returned alongside the field. Other computed fields keep evaluating.
 - Errors do not block save and do not affect mandatory-field validation (computed fields are skipped in mandatory-check anyway).
-- Computed values are **not** stored in `Form.values`. They're recomputed on read and returned in the API response next to the form values.
+- Computed values **are stored** in `Form.values` alongside user-input values, keyed by the same spec key. They're recomputed on every save, then merged into the union dict that gets persisted. This keeps computed fields searchable through the same JSON-key filters that user fields use, and matches the user's mental model ("a form value is a form value"). Reads return the stored values directly; the recompute-on-read property is preserved as a correctness invariant (assert `stored == recompute(values)` in dev/test).
+- Client-submitted values for computed keys are stripped from `dto.values` before validation. Storage is the union of validated user values + freshly-computed values; clients never write to computed keys directly.
 
 ### 6.8 Allowing `ComputedParam` in tasks
 
@@ -421,10 +422,10 @@ POST /form/{id}/save  body = { name?, values, status_transition? }
 2. Load `FormTemplateVersion.content` → `ConfigSpecs` (includes any `ComputedParam` entries).
 3. Reconcile `__item_id`s in incoming ParamSet values (assign new ones for new items). Strip any client-submitted values for computed keys defensively.
 4. **Type/range validation always runs** (per C10): each provided value is run through its `ParamSpec.validate(...)`. `ComputedParam` entries are skipped on the input pass (per §6.3). Missing mandatory values do NOT fail this step in `DRAFT`.
-5. If the request includes `status_transition: "SUBMITTED"` → run full `ConfigSpecs.get_and_check_values(...)` to enforce all mandatory non-computed fields. Failure → 422 with the list of missing fields. Success → set `status=SUBMITTED`, `submitted_at`, `submitted_by`, and append a `STATUS_CHANGED` entry to the save event built in step 6.
-6. Diff old `values` vs new `values` and build a single `FormSaveEvent` row whose `changes` list contains one entry per changed leaf path, one entry per ParamSet item add/remove, plus the `STATUS_CHANGED` entry from step 5 if any. A reorder of a ParamSet item produces a `PARAMSET_ITEM_REMOVED` entry followed by a `PARAMSET_ITEM_ADDED` entry for the same `__item_id` — there is no dedicated `MOVED` action. If `changes` is empty (no diff and no status transition), skip writing the row entirely. Computed values are not part of the diff (they aren't stored).
-7. Persist new `values`.
-8. Call `ConfigSpecs.compute_values(values, evaluator)` to produce the read-only computed results. Return form + values + computed values + per-computed-field errors.
+5. If the request includes `status_transition: "SUBMITTED"` → run full `ConfigSpecs.get_and_check_values(...)` to enforce all mandatory non-computed fields. Failure → 422 with the list of missing fields. Success → set `status=SUBMITTED`, `submitted_at`, `submitted_by`, and append a `STATUS_CHANGED` entry to the save event built in step 7.
+6. Call `ConfigSpecs.compute_values(values, evaluator)` to produce the computed results, then merge them into the user values to form a single union dict. Per-computed-field errors are collected separately for the response (errors do not block save).
+7. Diff old `values` vs the new union dict (user keys + computed keys) and build a single `FormSaveEvent` row whose `changes` list contains one entry per changed leaf path, one entry per ParamSet item add/remove, plus the `STATUS_CHANGED` entry from step 5 if any. A reorder of a ParamSet item produces a `PARAMSET_ITEM_REMOVED` entry followed by a `PARAMSET_ITEM_ADDED` entry for the same `__item_id` — there is no dedicated `MOVED` action. If `changes` is empty (no diff and no status transition), skip writing the row entirely. Computed-value changes ARE part of the diff and produce regular `FIELD_CREATED` / `FIELD_UPDATED` / `FIELD_DELETED` entries — useful for the audit trail.
+8. Persist the union dict to `Form.values`. Return form + values + per-computed-field errors.
 
 A separate `POST /form/{id}/submit` endpoint is sugar for "save + transition to SUBMITTED" in one call.
 

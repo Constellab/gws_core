@@ -7,6 +7,8 @@ from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.form.form_dto import FormDTO, FormFullDTO, FormStatus
 from gws_core.form_template.form_template_version import FormTemplateVersion
+from gws_core.tag.entity_tag_list import EntityTagList
+from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.user import User
 
 
@@ -48,6 +50,10 @@ class Form(ModelWithUser):
     @classmethod
     def count_for_version(cls, version_id: str) -> int:
         return cls.select().where(cls.template_version == version_id).count()
+
+    def delete_instance(self, *args, **kwargs):
+        super().delete_instance(*args, **kwargs)
+        EntityTagList.delete_by_entity(TagEntityType.FORM, self.id)
 
     def to_dto(self) -> FormDTO:
         return FormDTO(
