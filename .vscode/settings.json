@@ -4,7 +4,7 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "workbench.editor.revealIfOpen": true,
   "editor.minimap.enabled": false,
-  "python.defaultInterpreterPath": "/usr/bin/python3",
+  "python.defaultInterpreterPath": "/home/labuser/.venv/bin/python",
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
