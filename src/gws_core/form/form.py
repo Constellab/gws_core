@@ -35,6 +35,20 @@ class Form(ModelWithUser):
 
     is_archived = BooleanField(default=False, index=True)
 
+    @classmethod
+    def count_for_template(cls, template_id: str) -> int:
+        """Count forms across all versions of the given template."""
+        return (
+            cls.select()
+            .join(FormTemplateVersion)
+            .where(FormTemplateVersion.template_id == template_id)
+            .count()
+        )
+
+    @classmethod
+    def count_for_version(cls, version_id: str) -> int:
+        return cls.select().where(cls.template_version == version_id).count()
+
     def to_dto(self) -> FormDTO:
         return FormDTO(
             id=self.id,

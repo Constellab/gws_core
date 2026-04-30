@@ -1,6 +1,6 @@
 from typing import Any, final
 
-from peewee import ForeignKeyField, IntegerField
+from peewee import ForeignKeyField, IntegerField, fn
 
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
@@ -37,6 +37,37 @@ class FormTemplateVersion(ModelWithUser):
 
     published_at = DateTimeUTC(null=True)
     published_by = ForeignKeyField(User, null=True, backref="+")
+
+    @classmethod
+    def has_draft_for_template(cls, template_id: str) -> bool:
+        return (
+            cls.select()
+            .where(
+                (cls.template == template_id)
+                & (cls.status == FormTemplateVersionStatus.DRAFT)
+            )
+            .exists()
+        )
+
+    @classmethod
+    def get_max_published_or_archived_version(cls, template_id: str) -> int:
+        """Return the highest version number across PUBLISHED + ARCHIVED rows for
+        the template, or 0 if none exist."""
+        return (
+            cls.select(fn.MAX(cls.version))
+            .where(
+                (cls.template_id == template_id)
+                & (
+                    cls.status.in_(
+                        [
+                            FormTemplateVersionStatus.PUBLISHED,
+                            FormTemplateVersionStatus.ARCHIVED,
+                        ]
+                    )
+                )
+            )
+            .scalar()
+        ) or 0
 
     def to_dto(self) -> FormTemplateVersionDTO:
         return FormTemplateVersionDTO(
