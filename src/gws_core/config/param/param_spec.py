@@ -86,6 +86,16 @@ class ParamSpec:
     def get_default_value(self) -> Any:
         return self.default_value
 
+    @property
+    def accepts_user_input(self) -> bool:
+        """Whether this param expects a value supplied by the user.
+
+        False means the value is determined by the system (currently: ComputedParam).
+        Consumers should skip such entries when prompting users, when running
+        mandatory-field checks, and when validating user-submitted input.
+        """
+        return True
+
     def to_dto(self) -> ParamSpecDTO:
         return ParamSpecDTO(
             type=self.get_str_type(),
@@ -95,6 +105,7 @@ class ParamSpec:
             default_value=self.get_default_value(),
             human_name=self.human_name,
             short_description=self.short_description,
+            accepts_user_input=self.accepts_user_input,
         )
 
     def to_simple_dto(self) -> ParamSpecSimpleDTO:
@@ -104,6 +115,7 @@ class ParamSpec:
             visibility=self.visibility,
             additional_info=self.additional_info or {},
             default_value=self.get_default_value(),
+            accepts_user_input=self.accepts_user_input,
         )
 
     def validate(self, value: Any) -> Any:

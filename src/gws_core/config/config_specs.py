@@ -106,13 +106,20 @@ class ConfigSpecs:
             return True
 
         for key, spec in self.specs.items():
+            # System-derived params (e.g. ComputedParam) are never required from the user.
+            if not spec.accepts_user_input:
+                continue
             if not spec.optional and param_values.get(key, None) is None:
                 return False
 
         return True
 
     def check_config_specs(self) -> None:
-        """Check that the config specs are valid"""
+        """Check that the config specs are valid.
+
+        Validates spec types and delegates to ComputedParam for cycle detection
+        and reference validation across computed expressions.
+        """
         if not self.specs:
             return
 
@@ -125,12 +132,19 @@ class ConfigSpecs:
                     f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}"
                 )
 
+        from gws_core.config.param.computed.computed_param import ComputedParam
+
+        ComputedParam.check_graph(self)
+
     def build_config_params(self, param_values: ConfigParamsDict) -> ConfigParams:
         """
         Build the ConfigParams from the param_specs and param_values.
         ConfigParam is supposed to be used directly not stored.
         Check the param_values with params_specs and return ConfigParams if ok.
-        ConfigParams contains all value and default value if not provided
+        ConfigParams contains all value and default value if not provided.
+
+        Computed params (accepts_user_input=False) are evaluated after
+        validation and merged into the returned ConfigParams.
 
         :param param_specs: [description]
         :type param_specs: ConfigSpecs
@@ -144,6 +158,12 @@ class ConfigSpecs:
         # apply transform function of specs if needed
         for key, spec in self.specs.items():
             values[key] = spec.build(values[key])
+
+        # compute_values is best-effort: errors on individual fields surface as
+        # None values with a per-field error in the result dict, so they don't
+        # break task/view runs. Form save will read and surface the errors.
+        computed, _errors = self.compute_values(values)
+        values.update(computed)
 
         return ConfigParams(values)
 
@@ -165,6 +185,13 @@ class ConfigSpecs:
         missing_params: list[str] = []
 
         for key, spec in self.specs.items():
+            # System-derived params (e.g. ComputedParam) are never validated
+            # from user input. They get None on the input pass; their real
+            # value comes from compute_values(...).
+            if not spec.accepts_user_input:
+                full_values[key] = None
+                continue
+
             # if the config was not set
             if key not in param_values or param_values[key] is None:
                 if spec.optional:
@@ -184,8 +211,27 @@ class ConfigSpecs:
     def get_default_values(self) -> ConfigParamsDict:
         default_values = {}
         for key, spec in self.specs.items():
+            # Computed entries don't have a "default" — they're evaluated.
+            if not spec.accepts_user_input:
+                default_values[key] = None
+                continue
             default_values[key] = spec.get_default_value()
         return default_values
+
+    def compute_values(
+        self,
+        values: ConfigParamsDict,
+        evaluator: Any = None,
+    ) -> tuple[ConfigParamsDict, dict[str, str]]:
+        """Evaluate all entries with accepts_user_input=False over the provided
+        values and return (computed_values, errors_by_key).
+
+        Thin delegator to ComputedParam.compute_all — see that method for the
+        full contract.
+        """
+        from gws_core.config.param.computed.computed_param import ComputedParam
+
+        return ComputedParam.compute_all(self, values, evaluator)
 
     def __len__(self) -> int:
         return len(self.specs)

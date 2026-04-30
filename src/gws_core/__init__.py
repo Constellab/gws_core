@@ -47,6 +47,7 @@ from .config.param.code_param.r_code_param import RCodeParam as RCodeParam
 from .config.param.code_param.yaml_code_param import YamlCodeParam as YamlCodeParam
 
 # from .config.param_spec import DictParam as DictParam
+from .config.param.computed.computed_param import ComputedParam as ComputedParam
 from .config.param.param_set import ParamSet as ParamSet
 from .config.param.param_spec import BoolParam as BoolParam
 from .config.param.param_spec import DictParam as DictParam

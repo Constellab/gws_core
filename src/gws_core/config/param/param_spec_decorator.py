@@ -16,11 +16,14 @@ NESTED_PARAM_SPEC_TYPES_LIST: list[type[ParamSpec]] = []
 
 LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST: list[type[ParamSpec]] = []
 
+COMPUTED_PARAM_SPEC_TYPES_LIST: list[type[ParamSpec]] = []
+
 
 class ParamSpecType(Enum):
     SIMPLE = "simple"
     NESTED = "nested"
     LAB_SPECIFIC = "lab_specific"
+    COMPUTED = "computed"
 
 
 def param_spec_decorator(type_: ParamSpecType = ParamSpecType.SIMPLE) -> Callable:
@@ -38,6 +41,8 @@ def param_spec_decorator(type_: ParamSpecType = ParamSpecType.SIMPLE) -> Callabl
             NESTED_PARAM_SPEC_TYPES_LIST.append(param_class)
         elif type_ == ParamSpecType.LAB_SPECIFIC:
             LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST.append(param_class)
+        elif type_ == ParamSpecType.COMPUTED:
+            COMPUTED_PARAM_SPEC_TYPES_LIST.append(param_class)
         return param_class
 
     return decorator
