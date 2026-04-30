@@ -1,0 +1,62 @@
+from typing import Any, final
+
+from peewee import ForeignKeyField, IntegerField
+
+from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.model.db_field import DateTimeUTC, JSONField
+from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.form_template.form_template import FormTemplate
+from gws_core.form_template.form_template_dto import (
+    FormTemplateVersionDTO,
+    FormTemplateVersionStatus,
+)
+from gws_core.user.user import User
+
+
+@final
+class FormTemplateVersion(ModelWithUser):
+    """Frozen schema snapshot of a FormTemplate at a given version."""
+
+    template: FormTemplate = ForeignKeyField(
+        FormTemplate, backref="versions", on_delete="CASCADE", null=False
+    )
+
+    # Monotonic per template. Assigned at publish time as max(version)+1.
+    # Drafts may carry version=0 until published; the column is non-null to keep
+    # the (template_id, version) unique index simple.
+    version = IntegerField(null=False, default=0)
+
+    status: FormTemplateVersionStatus = EnumField(
+        choices=FormTemplateVersionStatus,
+        default=FormTemplateVersionStatus.DRAFT,
+        index=True,
+    )
+
+    # Serialized ConfigSpecs (via ConfigSpecs.to_dto()).
+    content: dict[str, Any] = JSONField(null=True)
+
+    published_at = DateTimeUTC(null=True)
+    published_by = ForeignKeyField(User, null=True, backref="+")
+
+    def to_dto(self) -> FormTemplateVersionDTO:
+        return FormTemplateVersionDTO(
+            id=self.id,
+            created_at=self.created_at,
+            last_modified_at=self.last_modified_at,
+            created_by=self.created_by.to_dto(),
+            last_modified_by=self.last_modified_by.to_dto(),
+            template_id=self.template_id,
+            version=self.version,
+            status=self.status,
+            content=self.content,
+            published_at=self.published_at,
+            published_by=self.published_by.to_dto() if self.published_by else None,
+        )
+
+    class Meta:
+        table_name = "gws_form_template_version"
+        is_table = True
+        indexes = (
+            # Version numbers are unique per template.
+            (("template", "version"), True),
+        )
