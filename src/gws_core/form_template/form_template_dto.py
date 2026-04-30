@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
+from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.user.user_dto import UserDTO
 
@@ -30,3 +31,21 @@ class FormTemplateFullDTO(FormTemplateDTO):
     """FormTemplate plus the list of its versions (summary)."""
 
     versions: list[FormTemplateVersionDTO]
+
+
+class CreateFormTemplateDTO(BaseModelDTO):
+    name: str
+    description: str | None = None
+
+
+class UpdateFormTemplateDTO(BaseModelDTO):
+    name: str | None = None
+    description: str | None = None
+
+
+class CreateDraftVersionDTO(BaseModelDTO):
+    copy_from_version_id: str | None = None
+
+
+class UpdateDraftVersionDTO(BaseModelDTO):
+    content: dict

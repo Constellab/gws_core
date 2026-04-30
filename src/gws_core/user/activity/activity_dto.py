@@ -25,6 +25,8 @@ class ActivityObjectType(Enum):
     USER = "USER"
     NOTE = "NOTE"
     NOTE_TEMPLATE = "NOTE_TEMPLATE"
+    FORM_TEMPLATE = "FORM_TEMPLATE"
+    FORM = "FORM"
 
 
 class ActivityDTO(ModelDTO):
