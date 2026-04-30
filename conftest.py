@@ -12,7 +12,6 @@ import sys
 
 from dotenv import load_dotenv
 
-
 TEST_API_BASE_PORT = 3000
 
 
@@ -23,14 +22,15 @@ def _worker_port_offset() -> int:
     return int(match.group(1)) if match else 0
 
 
-def _override_api_url_port(env_var: str, port: int) -> None:
-    """Rewrite the port in an API URL env var. Leaves host/scheme intact."""
-    url = os.environ.get(env_var)
-    if not url:
-        return
-    # Replace any existing :port segment after the host, or append if absent.
-    new_url = re.sub(r"(://[^/:]+)(?::\d+)?", rf"\g<1>:{port}", url, count=1)
-    os.environ[env_var] = new_url
+def _force_local_api_url(env_var: str, port: int) -> None:
+    """Pin an API URL env var to http://localhost:<port>.
+
+    Tests spawn a local uvicorn (see TestStartUvicornApp); any code that
+    builds URLs from these env vars (share links, get_current_lab_route,
+    ResourceDownloaderHttp, etc.) must hit that local server, not the
+    real public hostname configured in .env.test.
+    """
+    os.environ[env_var] = f"http://localhost:{port}"
 
 
 def _init_gws_env_for_tests() -> None:
@@ -50,8 +50,13 @@ def _init_gws_env_for_tests() -> None:
     # (share scenario, streamlit, reflex) don't fight for port 3000.
     port = TEST_API_BASE_PORT + _worker_port_offset()
     os.environ["GWS_TEST_API_PORT"] = str(port)
-    _override_api_url_port("LAB_DEV_API_URL", port)
-    _override_api_url_port("LAB_PROD_API_URL", port)
+    _force_local_api_url("LAB_DEV_API_URL", port)
+    _force_local_api_url("LAB_PROD_API_URL", port)
+
+    # Force LOCAL so ShareLink.is_lab_share_resource_link accepts the
+    # localhost URLs above; otherwise the share-resource downloader
+    # silently falls back to DirectUrlResourceDownloader.
+    os.environ["LAB_ENVIRONMENT"] = "LOCAL"
 
     # Import lazily so dotenv vars are applied before gws_core reads them.
     from gws_core.manage import AppManager
@@ -60,7 +65,7 @@ def _init_gws_env_for_tests() -> None:
     settings_file = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
     AppManager.init_gws_env_and_db(
         main_setting_file_path=settings_file,
-        log_level="ERROR",
+        log_level=os.environ.get("GWS_TEST_LOG_LEVEL", "ERROR"),
         show_sql=False,
         is_test=True,
     )

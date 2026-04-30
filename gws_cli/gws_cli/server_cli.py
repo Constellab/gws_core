@@ -62,6 +62,7 @@ def run(
     "test", help="Run brick tests via pytest. Use --parallel for xdist parallel execution."
 )
 def test(
+    ctx: typer.Context,
     test_name: Annotated[
         list[str],
         typer.Argument(help="Test file name(s) to launch. Enter 'all' to launch all the tests."),
@@ -105,6 +106,7 @@ def test(
         ),
     ] = "",
 ):
+    Logger.error("AAAAAAAAAAAAAAAAAAAAAAAAAAA")
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)
@@ -125,6 +127,10 @@ def test(
         for name in test_name:
             filename = name if name.endswith(".py") else f"{name}.py"
             pytest_args += ["-k", os.path.splitext(filename)[0]]
+
+    log_level = CLIUtils.get_global_option_log_level(ctx)
+    if log_level:
+        os.environ["GWS_TEST_LOG_LEVEL"] = log_level
 
     # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
     # spawned by tests (conda, pipenv, mamba) whose interpreters have different
