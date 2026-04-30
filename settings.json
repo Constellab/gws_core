@@ -177,6 +177,11 @@
                         "name": "pytest-xdist",
                         "version": "3.8.0",
                         "comment": "For test parallelization."
+                    },
+                    {
+                        "name": "simpleeval",
+                        "version": "1.0.3",
+                        "comment": "Safe expression evaluator used by ComputedParam."
                     }
                 ]
             }

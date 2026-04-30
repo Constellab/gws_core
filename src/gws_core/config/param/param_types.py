@@ -40,6 +40,7 @@ class ParamSpecTypeStr(Enum):
     NOTE_TEMPLATE = "note_template_param"
     SCENARIO = "scenario_param"
     LAB_MODEL = "lab_model_param"
+    COMPUTED = "computed_param"
 
 
 class ParamSpecSimpleDTO(BaseModelDTO):
@@ -48,6 +49,10 @@ class ParamSpecSimpleDTO(BaseModelDTO):
     visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
     additional_info: dict | None = {}
+    # Whether this param expects a value supplied by the user. When False the value
+    # is system-determined (e.g. a ComputedParam) and consumers must skip it for
+    # mandatory checks, user-input validation, and UI prompts.
+    accepts_user_input: bool = True
 
 
 class ParamSpecDTO(ParamSpecSimpleDTO):

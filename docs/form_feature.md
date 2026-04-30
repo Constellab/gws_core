@@ -119,27 +119,44 @@ Tags attach via `EntityTag` with `TagEntityType.FORM`. Tags from the source `For
 
 **Invariants:**
 - A `Form` can only be created from a `PUBLISHED` `FormTemplateVersion`.
-- A `SUBMITTED` form can be re-edited (status stays `SUBMITTED`, but every edit is logged in `FormModification`). This matches the C9 decision: re-edit allowed, status sticks. *Implementation note:* if we later want a stricter "lock", we can gate edits on a separate flag without changing status semantics.
+- A `SUBMITTED` form can be re-edited (status stays `SUBMITTED`, but every edit is logged in `FormSaveEvent`). This matches the C9 decision: re-edit allowed, status sticks. *Implementation note:* if we later want a stricter "lock", we can gate edits on a separate flag without changing status semantics.
 - Archive is orthogonal to status (per C8 / G24): there is no `ARCHIVED` status; there's an `is_archived` boolean and a dedicated archive/unarchive route.
 
-### 3.4 `FormModification`
+### 3.4 `FormSaveEvent`
 
-Audit table — one row per committed field change at save time.
+Audit table — **one row per save event** (not per field). All changes that resulted from a single save call live in a JSON list inside the row. This matches the existing `Note.modifications` pattern and keeps row counts proportional to user activity, not to form size.
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | str (UUID, PK) | |
 | `form_id` | FK → `Form` (indexed) | |
-| `field_path` | str | E.g. `weight` or `samples[item_id=ab12].mass`. See §7. |
-| `action` | enum `FormModificationAction` | `FIELD_CREATED`, `FIELD_UPDATED`, `FIELD_DELETED`, `PARAMSET_ITEM_ADDED`, `PARAMSET_ITEM_REMOVED`, `STATUS_CHANGED`. |
-| `old_value` | JSON (nullable) | For `STATUS_CHANGED`: the previous status (e.g. `"DRAFT"`). |
-| `new_value` | JSON (nullable) | For `STATUS_CHANGED`: the new status (e.g. `"SUBMITTED"`). |
 | `user_id` | FK → `User` | The user that committed the save. |
-| `created_at` | datetime | |
+| `created_at` | datetime | Save timestamp. |
+| `changes` | JSON (list of `FormChangeEntry`) | Flat list of every leaf-level change in this save. See shape below. |
 
-Indexed on `form_id` and `(form_id, created_at)` for fast history queries.
+`FormChangeEntry` shape (one entry per change in `changes`):
 
-Entries are **only** appended on Form save (per F19): we diff the saved `values` against the previous `values` and emit one row per changed leaf path. No row is emitted for fields the user briefly touched then reverted before saving.
+```jsonc
+{
+  "field_path": "samples[item_id=ab12].mass",   // see §7
+  "action": "FIELD_UPDATED",                    // see action enum below
+  "old_value": 1.4,                             // JSON-serializable, nullable
+  "new_value": 1.5                              // JSON-serializable, nullable
+}
+```
+
+`action` enum (`FormChangeAction`): `FIELD_CREATED`, `FIELD_UPDATED`, `FIELD_DELETED`, `PARAMSET_ITEM_ADDED`, `PARAMSET_ITEM_REMOVED`, `STATUS_CHANGED`.
+
+For `STATUS_CHANGED` entries the `field_path` is the literal string `"__status"` (reserved; cannot collide with a real `ConfigSpecs` key thanks to the leading underscores), `old_value` is the previous status, `new_value` is the new status. Status transitions are recorded as a regular entry in `changes` for uniformity rather than as a dedicated row.
+
+Indexes:
+- `(form_id, created_at DESC)` — main history query (paginated form timeline).
+- `(user_id, created_at DESC)` — "what did user X do recently".
+- A GIN/JSON index on `changes` is **not** added in v1. If field-path filter queries become hot, add `CREATE INDEX ... USING GIN ((changes jsonb_path_ops))` (Postgres) without a schema change.
+
+Rows are **only** appended on Form save (per F19): we diff the saved `values` against the previous `values` and append one entry per changed leaf path / ParamSet item add-or-remove / status transition. If a save resulted in zero changes (the user clicked Save with no edits), no row is written. No entry is emitted for fields the user briefly touched then reverted before saving.
+
+Compression note: a save changing N fields is now 1 row × N JSON entries instead of N rows. Per-row overhead (id, FKs, timestamp) is paid once per save; the JSON list scales linearly with the diff size. Realistic forms see 10–50× row reduction vs. one-row-per-change.
 
 ---
 
@@ -163,7 +180,7 @@ This keeps the form module from reimplementing tag inheritance and means the exi
 ## 4. Relationships & cascade rules
 
 ```
-FormTemplate 1───* FormTemplateVersion 1───* Form 1───* FormModification
+FormTemplate 1───* FormTemplateVersion 1───* Form 1───* FormSaveEvent
 ```
 
 - Hard-deleting a `FormTemplate` is rejected if any `Form` references any of its versions (including across versions). Archive instead.
@@ -171,7 +188,7 @@ FormTemplate 1───* FormTemplateVersion 1───* Form 1───* FormMo
   - `DRAFT`: always allowed.
   - `PUBLISHED`: not allowed; must be archived first.
   - `ARCHIVED`: allowed iff no `Form` references it.
-- Deleting a `Form` cascade-deletes its `FormModification` rows.
+- Deleting a `Form` cascade-deletes its `FormSaveEvent` rows.
 - Note ↔ Form ownership cascade: see §5.4.
 
 ---
@@ -237,14 +254,14 @@ The same `Form` may appear in many notes via reference blocks. Edits are visible
 When a `Note` is hard-deleted:
 
 - For each `FORM` block in its content:
-  - If `is_owner=true` **and** no other `Note` references the same `form_id` via a `FORM` block → delete the `Form` (cascade-deletes `FormModification`).
+  - If `is_owner=true` **and** no other `Note` references the same `form_id` via a `FORM` block → delete the `Form` (cascade-deletes `FormSaveEvent`).
   - Otherwise → leave the `Form` in place. If we removed the only owner block but a non-owner reference remains, the form is now "orphaned of owner"; that's allowed.
 
 The "no other Note references it" check is necessary because §5.5 lets users reference a form before its owning note is deleted.
 
 ### 5.7 Note rich-text modifications interaction
 
-The existing `Note.modifications` field tracks block-level edits. Adding/removing a `FORM` block produces a standard `RichTextBlockModificationDTO` entry (CREATED / DELETED) — no change there. Edits to the *form's contents* are tracked separately in `FormModification`, not in the note's rich text modifications.
+The existing `Note.modifications` field tracks block-level edits. Adding/removing a `FORM` block produces a standard `RichTextBlockModificationDTO` entry (CREATED / DELETED) — no change there. Edits to the *form's contents* are tracked separately in `FormSaveEvent`, not in the note's rich text modifications.
 
 ---
 
@@ -384,7 +401,7 @@ The migration is mechanical: each call site chooses one of `skip entries where !
 - The id is preserved on edit/move. It's regenerated only if the client submits a value with no `__item_id` (which we treat as a brand-new item — the server fills it in).
 - `__item_id` is stripped from any user-facing validation: `ConfigSpecs.get_and_check_values` is fed the dict minus `__item_id`. Item-id management is handled by the form-save service before validation.
 
-Field paths used in `FormModification.field_path`:
+Field paths used in `FormChangeEntry.field_path` (inside `FormSaveEvent.changes`):
 
 - Top-level field: `mass`
 - ParamSet item field: `samples[item_id=<uuid>].mass`
@@ -404,8 +421,8 @@ POST /form/{id}/save  body = { name?, values, status_transition? }
 2. Load `FormTemplateVersion.content` → `ConfigSpecs` (includes any `ComputedParam` entries).
 3. Reconcile `__item_id`s in incoming ParamSet values (assign new ones for new items). Strip any client-submitted values for computed keys defensively.
 4. **Type/range validation always runs** (per C10): each provided value is run through its `ParamSpec.validate(...)`. `ComputedParam` entries are skipped on the input pass (per §6.3). Missing mandatory values do NOT fail this step in `DRAFT`.
-5. If the request includes `status_transition: "SUBMITTED"` → run full `ConfigSpecs.get_and_check_values(...)` to enforce all mandatory non-computed fields. Failure → 422 with the list of missing fields. Success → set `status=SUBMITTED`, `submitted_at`, `submitted_by`, write a `STATUS_CHANGED` modification row.
-6. Diff old `values` vs new `values` and emit `FormModification` rows (one per changed leaf path; one per ParamSet item add/remove). A reorder of a ParamSet item is logged as `PARAMSET_ITEM_REMOVED` followed by `PARAMSET_ITEM_ADDED` for the same `__item_id` — there is no dedicated `MOVED` action. Computed values are not part of the diff (they aren't stored).
+5. If the request includes `status_transition: "SUBMITTED"` → run full `ConfigSpecs.get_and_check_values(...)` to enforce all mandatory non-computed fields. Failure → 422 with the list of missing fields. Success → set `status=SUBMITTED`, `submitted_at`, `submitted_by`, and append a `STATUS_CHANGED` entry to the save event built in step 6.
+6. Diff old `values` vs new `values` and build a single `FormSaveEvent` row whose `changes` list contains one entry per changed leaf path, one entry per ParamSet item add/remove, plus the `STATUS_CHANGED` entry from step 5 if any. A reorder of a ParamSet item produces a `PARAMSET_ITEM_REMOVED` entry followed by a `PARAMSET_ITEM_ADDED` entry for the same `__item_id` — there is no dedicated `MOVED` action. If `changes` is empty (no diff and no status transition), skip writing the row entirely. Computed values are not part of the diff (they aren't stored).
 7. Persist new `values`.
 8. Call `ConfigSpecs.compute_values(values, evaluator)` to produce the read-only computed results. Return form + values + computed values + per-computed-field errors.
 
@@ -444,20 +461,20 @@ All routes live under `src/gws_core/form_template/form_template_controller.py` a
 | `PUT` | `/form/{id}` | Update name/tags only. |
 | `POST` | `/form/{id}/save` | Save values (see §8). Body: `{values, status_transition?}`. |
 | `POST` | `/form/{id}/submit` | Sugar for save + SUBMITTED. |
-| `DELETE` | `/form/{id}` | Hard delete. Cascade to FormModification. Application-layer guard: rejected if any Note references this form via a FORM block (frontend should detach references first). |
+| `DELETE` | `/form/{id}` | Hard delete. Cascade to FormSaveEvent. Application-layer guard: rejected if any Note references this form via a FORM block (frontend should detach references first). |
 | `POST` | `/form/search` | Paginated search. Filters: name, tags, status, template_id, created_by, date range, is_archived. |
 | `PUT` | `/form/{id}/archive` | Set `is_archived=true`. |
 | `PUT` | `/form/{id}/unarchive` | Set `is_archived=false`. |
-| `GET` | `/form/{id}/modifications` | Paginated audit log. Filters: user_id, field_path prefix, date range, action. |
+| `GET` | `/form/{id}/history` | Paginated save-event log (one item per save). Filters: user_id, date range. Each item returns the full `changes` list — clients filter by field path / action client-side, or via a dedicated query param that pushes a JSON-path filter into the DB once we add the GIN index. |
 
 ---
 
 ## 10. Services
 
 - `FormTemplateService` — CRUD, version lifecycle, schema validation (delegates to `ConfigSpecs.check_config_specs()` which now includes cycle detection), archive guards, hard-delete usage check.
-- `FormService` — create from version, save with diffing, submit, archive, modification log queries. Calls `ConfigSpecs.compute_values(...)` for read-only computed results.
+- `FormService` — create from version, save with diffing, submit, archive, history queries. Builds one `FormSaveEvent` per save with the diff list. Calls `ConfigSpecs.compute_values(...)` for read-only computed results.
 - `ConfigSpecsEvaluator` (in `config/param/computed/`) — generic, not form-specific. Wraps `simpleeval` with the whitelisted function table and the `samples[].mass` aggregate sugar. Cycle detection lives in `ConfigSpecs.check_config_specs()`.
-- `FormParamSetItemIdentityService` — assigns/preserves `__item_id`, computes the diff used to emit `FormModification` rows.
+- `FormParamSetItemIdentityService` — assigns/preserves `__item_id`, computes the diff used to build the `FormSaveEvent.changes` list.
 
 ---
 
@@ -476,7 +493,7 @@ src/gws_core/
   form/
     __init__.py
     form.py                             # Form model
-    form_modification.py                # FormModification model
+    form_save_event.py                  # FormSaveEvent model + FormChangeEntry DTO
     form_dto.py
     form_service.py
     form_search_builder.py
@@ -497,7 +514,7 @@ tests/test_gws_core/
   form/
     test_form_crud.py
     test_form_save_and_submit.py
-    test_form_modifications.py
+    test_form_save_events.py
     test_form_paramset_identity.py
   config/param/
     test_computed_param.py              # evaluator, scoping, errors, cycles
@@ -519,7 +536,7 @@ A single migration adds:
 - Table `gws_form_template` with FKs to user.
 - Table `gws_form_template_version` with FK to `gws_form_template`, unique constraint `(template_id, version)`, and a partial unique constraint enforcing at most one `DRAFT` per template (`UNIQUE (template_id) WHERE status = 'DRAFT'`).
 - Table `gws_form` with FK to `gws_form_template_version`.
-- Table `gws_form_modification` with FK to `gws_form` (cascade) + index `(form_id, created_at)`.
+- Table `gws_form_save_event` with FK to `gws_form` (cascade), JSON `changes` column, indexes `(form_id, created_at DESC)` and `(user_id, created_at DESC)`. No GIN index on `changes` in v1; add later if field-path filter queries become hot.
 - Two new entries in the `TagEntityType` enum: `FORM_TEMPLATE`, `FORM` (no schema change — string column).
 - One new entry in the `TagOriginType` enum: `FORM_TEMPLATE_PROPAGATED` (no schema change — string column).
 
@@ -545,9 +562,10 @@ Existing notes and note templates need no migration; the new block types are add
 - Version lifecycle: create-template-creates-draft, publish-assigns-version, only-one-draft, publish-an-already-published-rejected, archive-published, draft-deletable, archived-deletable-only-without-refs.
 - `Form` create rejects `DRAFT` and `ARCHIVED` template versions.
 - Save in `DRAFT`: type validation runs, missing mandatories don't block.
-- Submit: missing mandatories block with 422; success transitions and writes `STATUS_CHANGED`.
-- Re-edit a `SUBMITTED` form: status sticks, modifications are logged.
-- ParamSet identity: add/edit/reorder/remove items across multiple saves; audit paths stay stable; reordering produces a `PARAMSET_ITEM_REMOVED` + `PARAMSET_ITEM_ADDED` pair for the same `__item_id`.
+- Submit: missing mandatories block with 422; success transitions and writes a `FormSaveEvent` whose `changes` list contains a `STATUS_CHANGED` entry.
+- Re-edit a `SUBMITTED` form: status sticks, edits are logged in subsequent `FormSaveEvent` rows.
+- `FormSaveEvent` shape: a save changing N fields produces exactly one row with N entries in `changes`; a no-op save (no diff, no transition) produces zero rows.
+- ParamSet identity: add/edit/reorder/remove items across multiple saves; audit paths stay stable; reordering produces a `PARAMSET_ITEM_REMOVED` + `PARAMSET_ITEM_ADDED` pair for the same `__item_id` inside a single save event's `changes`.
 - `ComputedParam`: each operator/function (including `concat` with scalars, with a list, and with a separator); missing field → null with error; division by zero → null with error; cycle → rejected by `check_config_specs()` at template publish AND at task class registration.
 - `ComputedParam` per-row inside a `ParamSet` (e.g. `density = mass / volume`) and at outer scope (e.g. `total_mass = sum(samples[].mass)`).
 - `ComputedParam` write defense: client-submitted value for a computed key is silently stripped; `validate(non_null)` raises.
