@@ -47,3 +47,30 @@ class FormSaveEventDTO(ModelDTO):
     form_id: str
     user: UserDTO
     changes: list[FormChangeEntry]
+
+
+class CreateFormDTO(BaseModelDTO):
+    template_version_id: str
+    name: str | None = None
+
+
+class UpdateFormDTO(BaseModelDTO):
+    name: str | None = None
+
+
+class SaveFormDTO(BaseModelDTO):
+    values: dict[str, Any]
+    name: str | None = None
+    status_transition: FormStatus | None = None
+
+
+class FormSaveResultDTO(BaseModelDTO):
+    """Result of a form save / submit / read.
+
+    `form.values` is the union of user-input values and computed values
+    (see form_feature.md §6.7). `errors` carries per-computed-field error
+    messages keyed by spec key (or `<paramset_key>[].<field>` for per-row).
+    """
+
+    form: FormFullDTO
+    errors: dict[str, str]
