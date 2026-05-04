@@ -12,6 +12,8 @@ class NavigableEntityType(Enum):
     RESOURCE = "RESOURCE"
     VIEW = "VIEW"
     NOTE = "NOTE"
+    FORM_TEMPLATE = "FORM_TEMPLATE"
+    FORM = "FORM"
 
     def get_human_name(self, capitalize: bool = False, plurial: bool = False) -> str:
         human_name: str | None = None
@@ -23,6 +25,10 @@ class NavigableEntityType(Enum):
             human_name = "View"
         elif self == NavigableEntityType.NOTE:
             human_name = "Note"
+        elif self == NavigableEntityType.FORM_TEMPLATE:
+            human_name = "Form template"
+        elif self == NavigableEntityType.FORM:
+            human_name = "Form"
         else:
             human_name = "Unknown"
 
@@ -43,6 +49,10 @@ class NavigableEntityType(Enum):
             return TagEntityType.VIEW
         elif self == NavigableEntityType.NOTE:
             return TagEntityType.NOTE
+        elif self == NavigableEntityType.FORM_TEMPLATE:
+            return TagEntityType.FORM_TEMPLATE
+        elif self == NavigableEntityType.FORM:
+            return TagEntityType.FORM
         else:
             raise Exception(
                 f"The navigable entity type {self} does not have a tag entity type corresponding to it"
