@@ -307,6 +307,20 @@ class BrickService:
             f"UPDATE gws_scenario_template SET data = REPLACE(data, '.{old_brick_name}.', '.{new_brick_name}.')"
         )
 
+    @classmethod
+    def get_brick_data_dir(cls, brick_name: str) -> str:
+        """Get the data directory for a specific brick.
+        You can store data of the brick in this folder.
+        This folder is backup during backup process.
+
+        :param brick_name: The name of the brick
+        :type brick_name: `str`
+        :return: The data directory for the brick
+        :rtype: `str`
+        """
+        settings = Settings.get_instance()
+        return settings.get_brick_data_dir(brick_name)
+
     ################################ EXTENSIONS ################################
 
     @classmethod
