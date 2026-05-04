@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
@@ -43,6 +44,11 @@ class Settings:
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
     DEFAULT_GWS_MONITOR_LOG_MAX_LINES = 86400  # 1 month of log with 1 log every 30 seconds
+
+    APP_EXTERNAL_PORT_DEFAULT = 8510
+    # Width of the per-worker port band for parallel tests (front/back fit in 2 ports;
+    # 10 leaves headroom for future per-app ports without colliding with the next worker).
+    APP_EXTERNAL_PORT_WORKER_STRIDE = 10
 
     def __init__(self, data: dict):
         self.data = data
@@ -403,15 +409,29 @@ class Settings:
         )
 
     @classmethod
+    def get_test_worker_id(cls) -> str:
+        """Return the current pytest-xdist worker id (e.g. "gw0"), or "" outside xdist.
+
+        Set by pytest-xdist (PYTEST_XDIST_WORKER=gw0, gw1, ...) or manually via
+        GWS_TEST_WORKER_ID.
+        """
+        return os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+
+    @classmethod
+    def get_test_worker_offset(cls) -> int:
+        """Return the numeric suffix of the current worker id (gw0 → 0, gw1 → 1), 0 outside xdist."""
+        match = re.search(r"(\d+)$", cls.get_test_worker_id())
+        return int(match.group(1)) if match else 0
+
+    @classmethod
     def get_test_db_name(cls) -> str:
         """Return the test DB name, suffixed with the current worker id when present.
 
-        Set by pytest-xdist (PYTEST_XDIST_WORKER=gw0, gw1, ...) or manually via
-        GWS_TEST_WORKER_ID. Each worker gets its own schema so parallel tests
-        don't stomp on each other when truncating tables.
+        Each worker gets its own schema so parallel tests don't stomp on each
+        other when truncating tables.
         """
         base = cls.get_os_environ("GWS_TEST_DB_NAME")
-        worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+        worker = cls.get_test_worker_id()
         if worker:
             return f"{base}_{worker}"
         return base
@@ -436,7 +456,7 @@ class Settings:
         its own directory so concurrent tests don't stomp on each other's data,
         kvstore, filestore, logs, etc.
         """
-        worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+        worker = cls.get_test_worker_id()
         folder_name = f"test-{worker}" if worker else "test"
         return os.path.join(cls.get_system_folder(), folder_name)
 
@@ -457,12 +477,18 @@ class Settings:
 
     @classmethod
     def get_app_external_port(cls) -> int:
-        """Returns the port where all the external request to app are sent."""
+        """Returns the port where all the external request to app are sent.
+
+        Under pytest-xdist, each worker is assigned its own port band so parallel
+        reflex/streamlit tests don't fight for the same nginx + app ports.
+        """
         external_port = os.environ.get("APP_EXTERNAL_PORT")
         if external_port is not None:
             return int(external_port)
-        else:
-            return 8510
+        return (
+            cls.APP_EXTERNAL_PORT_DEFAULT
+            + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
+        )
 
     @classmethod
     def get_app_sub_domain(cls) -> str:

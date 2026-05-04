@@ -282,9 +282,19 @@ http {
         return os.path.join(self.get_nginx_config_dir(), "error.log")
 
     def get_nginx_config_dir(self) -> str:
-        """Get the nginx config directory"""
+        """Get the nginx config directory.
+
+        Under tests, scope the dir to the current pytest-xdist worker so parallel
+        workers don't share the same nginx config + PID and tear down each other's
+        running app servers.
+        """
+        if Settings.get_instance().is_test:
+            return os.path.join(Settings.get_test_folder(), "nginx")
         return os.path.join(Settings.get_system_folder(), "nginx")
 
     def get_nginx_tmp_dir(self) -> str:
         """Get the nginx temp directory"""
+        worker = Settings.get_test_worker_id()
+        if worker:
+            return os.path.join("/tmp", f"nginx-{worker}")
         return os.path.join("/tmp", "nginx")

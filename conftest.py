@@ -7,19 +7,11 @@ module-level state stays isolated across workers).
 """
 
 import os
-import re
 import sys
 
 from dotenv import load_dotenv
 
 TEST_API_BASE_PORT = 3000
-
-
-def _worker_port_offset() -> int:
-    """Return a port offset derived from PYTEST_XDIST_WORKER (gw0 → 0, gw1 → 1, ...)."""
-    worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
-    match = re.search(r"(\d+)$", worker)
-    return int(match.group(1)) if match else 0
 
 
 def _force_local_api_url(env_var: str, port: int) -> None:
@@ -46,9 +38,14 @@ def _init_gws_env_for_tests() -> None:
     if os.path.exists(env_test_file):
         load_dotenv(env_test_file)
 
+    # Import lazily so dotenv vars are applied before gws_core reads them.
+    from gws_core.core.utils.settings import Settings
+    from gws_core.manage import AppManager
+    from gws_core.settings_loader import SettingsLoader
+
     # Each worker binds its own uvicorn port so integration tests
     # (share scenario, streamlit, reflex) don't fight for port 3000.
-    port = TEST_API_BASE_PORT + _worker_port_offset()
+    port = TEST_API_BASE_PORT + Settings.get_test_worker_offset()
     os.environ["GWS_TEST_API_PORT"] = str(port)
     _force_local_api_url("LAB_DEV_API_URL", port)
     _force_local_api_url("LAB_PROD_API_URL", port)
@@ -57,10 +54,6 @@ def _init_gws_env_for_tests() -> None:
     # localhost URLs above; otherwise the share-resource downloader
     # silently falls back to DirectUrlResourceDownloader.
     os.environ["LAB_ENVIRONMENT"] = "LOCAL"
-
-    # Import lazily so dotenv vars are applied before gws_core reads them.
-    from gws_core.manage import AppManager
-    from gws_core.settings_loader import SettingsLoader
 
     settings_file = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
     AppManager.init_gws_env_and_db(

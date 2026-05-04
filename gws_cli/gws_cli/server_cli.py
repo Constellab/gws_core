@@ -106,7 +106,6 @@ def test(
         ),
     ] = "",
 ):
-    Logger.error("AAAAAAAAAAAAAAAAAAAAAAAAAAA")
     brick_dir: str
     if brick_name:
         brick_dir = BrickService.find_brick_folder(brick_name)

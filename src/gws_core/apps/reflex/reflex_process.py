@@ -36,8 +36,8 @@ class ReflexProcess(AppProcess):
     back_port: int
 
     # timeout in second to wait for the main app to start
-    # increase it to 90 to allow the app to start as it compiles the front and back
-    START_APP_TIMEOUT = 90
+    # increase it to 120 to allow the app to start as it compiles the front and back
+    START_APP_TIMEOUT = 120
 
     REFLEX_MODULES_PATH = "_gws_reflex"
     ZIP_FILE_NAME = "frontend.zip"
