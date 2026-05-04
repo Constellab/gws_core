@@ -248,6 +248,10 @@ from .impl.rich_text.block.rich_text_block_decorator import (
 )
 from .impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure as RichTextBlockFigure
 from .impl.rich_text.block.rich_text_block_file import RichTextBlockFile as RichTextBlockFile
+from .impl.rich_text.block.rich_text_block_form import RichTextBlockForm as RichTextBlockForm
+from .impl.rich_text.block.rich_text_block_form_template import (
+    RichTextBlockFormTemplate as RichTextBlockFormTemplate,
+)
 from .impl.rich_text.block.rich_text_block_formula import (
     RichTextBlockFormula as RichTextBlockFormula,
 )
