@@ -5,6 +5,8 @@ from peewee import JOIN, ModelSelect
 
 from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
+from gws_core.form.form import Form
+from gws_core.form_template.form_template import FormTemplate
 from gws_core.note.note import Note, NoteScenario
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.resource.resource_model import ResourceModel
@@ -496,6 +498,10 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             return EntityNavigatorView(ViewConfig.get_by_id_and_check(entity_id))
         elif entity_type == NavigableEntityType.RESOURCE:
             return EntityNavigatorResource(ResourceModel.get_by_id_and_check(entity_id))
+        elif entity_type == NavigableEntityType.FORM_TEMPLATE:
+            return EntityNavigatorFormTemplate(FormTemplate.get_by_id_and_check(entity_id))
+        elif entity_type == NavigableEntityType.FORM:
+            return EntityNavigatorForm(Form.get_by_id_and_check(entity_id))
 
         raise Exception(f"Entity type {entity_type} not supported")
 
@@ -933,3 +939,101 @@ class EntityNavigatorNote(EntityNavigator[Note]):
     def get_previous_scenarios(self) -> "EntityNavigatorScenario":
         """Return the scenarios that produced the resources of the views in the wrapped notes."""
         return self.get_previous_resources().get_previous_scenarios()
+
+
+class EntityNavigatorFormTemplate(EntityNavigator[FormTemplate]):
+    """Navigator over form templates. Single edge: template -> forms bound via
+    FormTemplateVersion.
+
+    Not part of the lineage DAG used by ``get_next_entities_recursive`` and the
+    other multi-type traversals -- forms are a separate template-binding edge.
+    Reachable only via ``EntityNavigator.from_entity_id``.
+
+    Filters on ``Tag.is_propagable`` internally: only propagable tags reach
+    Forms, regardless of caller. This is stricter than ``EntityNavigatorScenario``
+    & friends (which trust the caller) and matches the spec invariant:
+    "non-propagable tags don't copy" (form_implementation_plan.md Phase 4).
+    """
+
+    def get_next_forms(self) -> "EntityNavigatorForm":
+        """Return all Forms bound to any version of the wrapped templates."""
+        forms: set[Form] = set()
+        for template in self._entities:
+            forms.update(Form.find_by_template(template.id))
+        return EntityNavigatorForm(forms)
+
+    def propagate_tags(
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
+    ) -> None:
+        """Propagate tags to every Form bound to the wrapped templates with
+        origin ``FORM_TEMPLATE_PROPAGATED`` (origin_id = template.id). Forms
+        are leaves -- recursion bottoms out at ``EntityNavigatorForm``.
+
+        Only propagable tags are forwarded; non-propagable tags are dropped
+        per the Phase 4 spec invariant."""
+        if visited is None:
+            visited = set()
+
+        templates_to_walk = [t for t in self._entities if t not in visited]
+        if not templates_to_walk:
+            return
+        visited.update(templates_to_walk)
+
+        propagable = [t for t in tags if t.is_propagable]
+        if not propagable:
+            return
+
+        for template in templates_to_walk:
+            forms = Form.find_by_template(template.id)
+            for form in forms:
+                self._propagate_tags(
+                    tags=propagable,
+                    entity=form,
+                    new_origin_type=TagOriginType.FORM_TEMPLATE_PROPAGATED,
+                    new_origin_id=template.id,
+                    entity_tags_cache=entity_tags_cache,
+                )
+            EntityNavigatorForm(forms).propagate_tags(
+                propagable, entity_tags_cache, visited
+            )
+
+    def delete_propagated_tags(
+        self,
+        tags: list[Tag],
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
+        visited: set[NavigableEntity] | None = None,
+    ):
+        """Inverse of ``propagate_tags`` for the template->form edge: remove
+        ``FORM_TEMPLATE_PROPAGATED`` copies from every Form bound to the
+        wrapped templates."""
+        if visited is None:
+            visited = set()
+
+        templates_to_walk = [t for t in self._entities if t not in visited]
+        if not templates_to_walk:
+            return
+        visited.update(templates_to_walk)
+
+        for template in templates_to_walk:
+            forms = Form.find_by_template(template.id)
+            for form in forms:
+                self._delete_propagated_tags(
+                    tags=tags,
+                    entity=form,
+                    origin_type=TagOriginType.FORM_TEMPLATE_PROPAGATED,
+                    origin_id=template.id,
+                    entity_tags_cache=entity_tags_cache,
+                )
+            EntityNavigatorForm(forms).delete_propagated_tags(
+                tags, entity_tags_cache, visited
+            )
+
+
+class EntityNavigatorForm(EntityNavigator[Form]):
+    """Navigator over forms. Forms are leaves of the template->form edge --
+    they have no downstream entities and therefore inherit the no-op
+    ``propagate_tags`` / ``delete_propagated_tags`` from the base class
+    (same shape as ``EntityNavigatorNote``)."""

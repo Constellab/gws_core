@@ -5,6 +5,10 @@ from peewee import BooleanField, CharField, ForeignKeyField
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity,
+    NavigableEntityType,
+)
 from gws_core.form.form_dto import FormDTO, FormFullDTO, FormStatus
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -13,7 +17,7 @@ from gws_core.user.user import User
 
 
 @final
-class Form(ModelWithUser):
+class Form(ModelWithUser, NavigableEntity):
     """An instance of a FormTemplateVersion filled (or being filled) with values."""
 
     name = CharField(max_length=255, null=False)
@@ -50,6 +54,21 @@ class Form(ModelWithUser):
     @classmethod
     def count_for_version(cls, version_id: str) -> int:
         return cls.select().where(cls.template_version == version_id).count()
+
+    @classmethod
+    def find_by_template(cls, template_id: str) -> list["Form"]:
+        """Return every Form bound to any version of the given template."""
+        return list(
+            cls.select()
+            .join(FormTemplateVersion)
+            .where(FormTemplateVersion.template_id == template_id)
+        )
+
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.FORM
+
+    def get_navigable_entity_name(self) -> str:
+        return self.name
 
     def delete_instance(self, *args, **kwargs):
         super().delete_instance(*args, **kwargs)

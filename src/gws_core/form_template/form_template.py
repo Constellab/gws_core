@@ -3,6 +3,10 @@ from typing import final
 from peewee import BooleanField, CharField, TextField
 
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.entity_navigator.entity_navigator_type import (
+    NavigableEntity,
+    NavigableEntityType,
+)
 from gws_core.form_template.form_template_dto import (
     FormTemplateDTO,
     FormTemplateFullDTO,
@@ -13,7 +17,7 @@ from gws_core.tag.tag_entity_type import TagEntityType
 
 
 @final
-class FormTemplate(ModelWithUser):
+class FormTemplate(ModelWithUser, NavigableEntity):
     """Family record for a versioned form schema. Tags and high-level metadata
     live here; schema content lives in FormTemplateVersion."""
 
@@ -26,6 +30,12 @@ class FormTemplate(ModelWithUser):
             return self
         self.is_archived = archive
         return self.save()
+
+    def get_navigable_entity_type(self) -> NavigableEntityType:
+        return NavigableEntityType.FORM_TEMPLATE
+
+    def get_navigable_entity_name(self) -> str:
+        return self.name
 
     def delete_instance(self, *args, **kwargs):
         super().delete_instance(*args, **kwargs)

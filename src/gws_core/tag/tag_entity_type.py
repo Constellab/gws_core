@@ -54,6 +54,10 @@ class TagEntityType(Enum):
             return NavigableEntityType.VIEW
         elif self == TagEntityType.NOTE:
             return NavigableEntityType.NOTE
+        elif self == TagEntityType.FORM_TEMPLATE:
+            return NavigableEntityType.FORM_TEMPLATE
+        elif self == TagEntityType.FORM:
+            return NavigableEntityType.FORM
         else:
             raise Exception(
                 f"The tag entity type {self} does not have a navigable entity type corresponding to it"
