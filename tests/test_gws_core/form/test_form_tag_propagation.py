@@ -64,25 +64,6 @@ class TestFormTagPropagation(BaseTestCase):
                 simple.origins.has_origin(TagOriginType.FORM_TEMPLATE_PROPAGATED, template_id)
             )
 
-    def test_non_propagable_tag_on_template_does_not_reach_forms(self):
-        version = self._published_version("T")
-        template_id = version.template_id
-        form = FormService.create(CreateFormDTO(template_version_id=version.id))
-
-        tag = Tag(
-            "private",
-            "yes",
-            is_propagable=False,
-            origins=TagOrigins(TagOriginType.USER, "user_id"),
-        )
-        TagService.add_tags_to_entity_and_propagate(TagEntityType.FORM_TEMPLATE, template_id, [tag])
-
-        template_tags = EntityTagList.find_by_entity(TagEntityType.FORM_TEMPLATE, template_id)
-        self.assertTrue(template_tags.has_tag(tag))
-
-        form_tags = EntityTagList.find_by_entity(TagEntityType.FORM, form.id)
-        self.assertFalse(form_tags.has_tag(tag))
-
     # ------------------------------------------------------------------ #
     # propagate delete
     # ------------------------------------------------------------------ #

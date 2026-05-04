@@ -1,5 +1,6 @@
-from collections.abc import Iterable
-from typing import Generic, TypeVar
+from collections.abc import Callable, Iterable
+from dataclasses import dataclass
+from typing import Generic, Literal, TypeVar
 
 from peewee import JOIN, ModelSelect
 
@@ -19,6 +20,35 @@ from gws_core.task.task_input_model import TaskInputModel
 from gws_core.task.task_model import TaskModel
 
 GenericNavigableEntity = TypeVar("GenericNavigableEntity", bound=NavigableEntity)
+
+PropagationAction = Literal["add", "delete"]
+
+
+@dataclass
+class PropagationEdge:
+    """Describes a single outgoing propagation edge for a navigator.
+
+    ``downstream`` is the navigator wrapping the direct neighbors reached over
+    this edge (computed once for the whole batch). ``origin_type`` is the
+    ``TagOriginType`` to attach to tags propagated along this edge.
+
+    ``origin_id_fn`` derives the origin id from the (upstream, downstream)
+    pair. When omitted, the upstream entity's id is used -- this covers the
+    common case (scenario->resource, view->note, etc.). The resource->resource
+    edge overrides it to derive the origin from the downstream's producing
+    task; returning ``None`` from the override skips the downstream entity
+    (used when the producing task is missing).
+
+    Redundant writes (same downstream reached from multiple upstreams with
+    the same resulting origin) are filtered inside ``_apply_tags`` via the
+    in-memory tag cache, so this struct does not need a per-downstream flag.
+    """
+
+    downstream: "EntityNavigator"
+    origin_type: TagOriginType
+    origin_id_fn: Callable[[NavigableEntity, NavigableEntity], str | None] = (
+        lambda upstream, downstream: upstream.id
+    )
 
 
 class EntityNavigator(Generic[GenericNavigableEntity]):
@@ -330,6 +360,13 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         """Return the direct downstream scenarios. Empty by default; overridden by subclasses."""
         return EntityNavigatorScenario(set())
 
+    def get_next_forms(self) -> "EntityNavigatorForm":
+        """Return the direct downstream forms. Empty by default; only
+        ``EntityNavigatorFormTemplate`` overrides this -- forms sit on a
+        separate template-binding edge that's not part of the four-type
+        lineage DAG."""
+        return EntityNavigatorForm(set())
+
     def get_previous_notes(self) -> "EntityNavigatorNote":
         """Return the direct upstream notes. Empty by default; overridden by subclasses."""
         return EntityNavigatorNote(set())
@@ -402,34 +439,7 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
             entity being tagged by a parent is not the same as that entity's own
             downstream having been traversed.
         """
-        pass
-
-    def _propagate_tags(
-        self,
-        tags: list[Tag],
-        entity: NavigableEntity,
-        new_origin_type: TagOriginType,
-        new_origin_id: str,
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-    ):
-        """Add ``tags`` to a single ``entity`` with the given origin, using the cache.
-
-        ``entity`` is typed as ``NavigableEntity`` (not the navigator's own
-        ``GenericNavigableEntity``) because propagation crosses entity types --
-        e.g. an ``EntityNavigatorScenario`` writes tags onto downstream resources
-        and notes, not just scenarios.
-        """
-        if entity_tags_cache is None:
-            entity_tags_cache = {}
-
-        if entity not in entity_tags_cache:
-            tag_type = entity.get_navigable_entity_type().convert_to_tag_entity_type()
-            entity_tags_cache[entity] = EntityTagList.find_by_entity(tag_type, entity.id)
-
-        entity_tags = entity_tags_cache[entity]
-
-        new_tags = [tag.propagate(new_origin_type, new_origin_id) for tag in tags]
-        entity_tags.add_tags(new_tags)
+        self._walk_propagation(tags, "add", entity_tags_cache, visited)
 
     def delete_propagated_tags(
         self,
@@ -450,20 +460,91 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
         :param visited: shared set of entities whose downstream has already been
             walked.
         """
-        pass
+        self._walk_propagation(tags, "delete", entity_tags_cache, visited)
 
-    def _delete_propagated_tags(
+    def _iter_propagation_edges(
+        self, walker: "EntityNavigator"
+    ) -> Iterable[PropagationEdge]:
+        """Yield the outgoing propagation edges for this navigator type.
+
+        Each subclass overrides this to declare its edges. The default is no
+        edges, which makes leaf navigators (notes, forms) no-op for propagation.
+
+        ``walker`` is the navigator wrapping the not-yet-visited subset of
+        ``self._entities`` -- subclasses use it to compute downstream sets
+        once for the whole batch (``walker.get_next_resources()`` etc.).
+        """
+        return ()
+
+    def _walk_propagation(
+        self,
+        tags: list[Tag],
+        action: PropagationAction,
+        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None,
+        visited: set[NavigableEntity] | None,
+    ) -> None:
+        """Template method: walk outgoing edges, apply ``action`` per edge, recurse.
+
+        Shared skeleton between propagation and deletion. Subclasses customize
+        only the edge list via ``_iter_propagation_edges``.
+        """
+        if visited is None:
+            visited = set()
+
+        to_walk = [e for e in self._entities if e not in visited]
+        if not to_walk:
+            return
+        visited.update(to_walk)
+
+        walker = self.__class__(to_walk)
+
+        for edge in self._iter_propagation_edges(walker):
+            downstream_list = edge.downstream.get_entities_list()
+            for upstream in to_walk:
+                for downstream in downstream_list:
+                    origin_id = edge.origin_id_fn(upstream, downstream)
+                    if origin_id is None:
+                        continue
+                    self._apply_tags(
+                        tags=tags,
+                        entity=downstream,
+                        origin_type=edge.origin_type,
+                        origin_id=origin_id,
+                        action=action,
+                        entity_tags_cache=entity_tags_cache,
+                    )
+            edge.downstream._walk_propagation(
+                tags, action, entity_tags_cache, visited
+            )
+
+    def _apply_tags(
         self,
         tags: list[Tag],
         entity: NavigableEntity,
         origin_type: TagOriginType,
         origin_id: str,
+        action: PropagationAction,
         entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
     ):
-        """Remove a propagated copy of ``tags`` from a single ``entity``, populating the cache.
+        """Add or delete a propagated copy of ``tags`` on a single ``entity``.
 
-        ``entity`` is typed as ``NavigableEntity`` for the same reason as
-        ``_propagate_tags``: deletion crosses entity types.
+        Filters out tags that are no-ops against the in-memory ``EntityTagList``
+        before touching the DB:
+
+        - ``add``: skip tags already present on ``entity`` whose origin already
+          contains ``(origin_type, origin_id)``. Both the lookup and the
+          ``add_tag`` short-circuit at the application layer return early on a
+          duplicate, but ``add_tags`` still opens a DB transaction per call --
+          filtering here avoids that. For multi-origin entities (notes), an
+          existing tag without this origin is *not* skipped, so origin merging
+          via ``EntityTag.merge_tag`` still happens.
+        - ``delete``: skip tags absent from ``entity``, or present but without
+          this specific origin. Same rationale.
+
+        ``entity`` is typed as ``NavigableEntity`` (not ``GenericNavigableEntity``)
+        because propagation crosses entity types -- e.g. an
+        ``EntityNavigatorScenario`` writes tags onto downstream resources and
+        notes, not just scenarios.
         """
         if entity_tags_cache is None:
             entity_tags_cache = {}
@@ -474,8 +555,44 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         entity_tags = entity_tags_cache[entity]
 
-        new_tags = [tag.propagate(origin_type, origin_id) for tag in tags]
-        entity_tags.delete_tags(new_tags)
+        propagated_tags = [tag.propagate(origin_type, origin_id) for tag in tags]
+        effective_tags = [
+            t for t in propagated_tags
+            if self._needs_apply(entity_tags, t, origin_type, origin_id, action)
+        ]
+        if not effective_tags:
+            return
+
+        if action == "add":
+            entity_tags.add_tags(effective_tags)
+        else:
+            entity_tags.delete_tags(effective_tags)
+
+    @staticmethod
+    def _needs_apply(
+        entity_tags: EntityTagList,
+        tag: Tag,
+        origin_type: TagOriginType,
+        origin_id: str,
+        action: PropagationAction,
+    ) -> bool:
+        """Return True if applying ``action`` to ``tag`` on ``entity_tags`` would
+        change state. Skips redundant DB writes when the same upstream-origin pair
+        is reached more than once during a walk.
+
+        For ``add``: the tag must either be missing, or present but missing this
+        specific origin (so multi-origin merging still fires for notes).
+        For ``delete``: the tag must be present *with* this specific origin.
+        """
+        existing = entity_tags.get_tag(tag)
+        if action == "add":
+            if existing is None:
+                return True
+            return not existing.get_origins().has_origin(origin_type, origin_id)
+        # delete
+        if existing is None:
+            return False
+        return existing.get_origins().has_origin(origin_type, origin_id)
 
     def is_empty(self) -> bool:
         """Return True if no entities are wrapped."""
@@ -546,92 +663,21 @@ class EntityNavigatorScenario(EntityNavigator[Scenario]):
         """Return scenarios that produced any resource consumed by the wrapped scenarios."""
         return self.get_previous_resources().get_previous_scenarios()
 
-    def propagate_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ) -> None:
-        """Propagate tags from each wrapped scenario to its produced resources and attached notes,
-        then recurse downstream. Origin is ``SCENARIO_PROPAGATED`` with the upstream scenario's id.
-        See ``EntityNavigator.propagate_tags`` for the cache/visited contract."""
-        if visited is None:
-            visited = set()
-
-        scenarios_to_walk = [s for s in self._entities if s not in visited]
-        if not scenarios_to_walk:
-            return
-        visited.update(scenarios_to_walk)
-
-        walker = EntityNavigatorScenario(scenarios_to_walk)
-
-        # Propagate to resources (computed once for the whole batch)
-        next_resources = walker.get_next_resources()
-        for scenario in scenarios_to_walk:
-            for resource in next_resources.get_entities_list():
-                self._propagate_tags(
-                    tags=tags,
-                    entity=resource,
-                    new_origin_type=TagOriginType.SCENARIO_PROPAGATED,
-                    new_origin_id=scenario.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_resources.propagate_tags(tags, entity_tags_cache, visited)
-
-        # Propagate to notes (computed once for the whole batch)
-        next_notes = walker.get_next_notes()
-        for scenario in scenarios_to_walk:
-            for note in next_notes.get_entities_list():
-                self._propagate_tags(
-                    tags=tags,
-                    entity=note,
-                    new_origin_type=TagOriginType.SCENARIO_PROPAGATED,
-                    new_origin_id=scenario.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_notes.propagate_tags(tags, entity_tags_cache, visited)
-
-    def delete_propagated_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ):
-        """Inverse of ``propagate_tags`` for scenario edges: remove ``SCENARIO_PROPAGATED``
-        copies from produced resources and attached notes, then recurse downstream."""
-        if visited is None:
-            visited = set()
-
-        scenarios_to_walk = [s for s in self._entities if s not in visited]
-        if not scenarios_to_walk:
-            return
-        visited.update(scenarios_to_walk)
-
-        walker = EntityNavigatorScenario(scenarios_to_walk)
-
-        next_resources = walker.get_next_resources()
-        for scenario in scenarios_to_walk:
-            for resource in next_resources.get_entities_list():
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=resource,
-                    origin_type=TagOriginType.SCENARIO_PROPAGATED,
-                    origin_id=scenario.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_resources.delete_propagated_tags(tags, entity_tags_cache, visited)
-
-        next_notes = walker.get_next_notes()
-        for scenario in scenarios_to_walk:
-            for note in next_notes.get_entities_list():
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=note,
-                    origin_type=TagOriginType.SCENARIO_PROPAGATED,
-                    origin_id=scenario.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_notes.delete_propagated_tags(tags, entity_tags_cache, visited)
+    def _iter_propagation_edges(
+        self, walker: "EntityNavigator"
+    ) -> Iterable[PropagationEdge]:
+        """scenario -> produced resources and attached notes, both with
+        ``SCENARIO_PROPAGATED`` origin carrying the upstream scenario's id."""
+        return [
+            PropagationEdge(
+                downstream=walker.get_next_resources(),
+                origin_type=TagOriginType.SCENARIO_PROPAGATED,
+            ),
+            PropagationEdge(
+                downstream=walker.get_next_notes(),
+                origin_type=TagOriginType.SCENARIO_PROPAGATED,
+            ),
+        ]
 
 
 class EntityNavigatorResource(EntityNavigator[ResourceModel]):
@@ -739,96 +785,49 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
 
         return EntityNavigatorScenario(scenarios)
 
-    def propagate_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ) -> None:
-        """Propagate tags along two edge kinds and recurse:
+    def _iter_propagation_edges(
+        self, walker: "EntityNavigator"
+    ) -> Iterable[PropagationEdge]:
+        """Two outgoing edges:
 
-        - resource -> view, with origin ``RESOURCE_PROPAGATED`` carrying the upstream resource's id;
-        - resource -> next resource, with origin ``TASK_PROPAGATED`` carrying the producing task's id.
+        - resource -> view: ``RESOURCE_PROPAGATED`` carrying the upstream resource's id.
+        - resource -> next resource: ``TASK_PROPAGATED`` carrying the *producing*
+          task's id (derived from the downstream's ``task_model``). Returns
+          ``None`` for downstream resources without a task model so they are
+          skipped.
 
-        See ``EntityNavigator.propagate_tags`` for the cache/visited contract.
+        Multiple upstreams can produce the same downstream over the
+        resource->resource edge (e.g. a task with two input resources both
+        in the walk). The base ``_apply_tags`` filters out duplicate writes
+        via the in-memory tag cache, so the doubly-nested loop is safe.
         """
-        if visited is None:
-            visited = set()
+        return [
+            PropagationEdge(
+                downstream=walker.get_next_views(),
+                origin_type=TagOriginType.RESOURCE_PROPAGATED,
+            ),
+            PropagationEdge(
+                downstream=walker.get_next_resources(),
+                origin_type=TagOriginType.TASK_PROPAGATED,
+                origin_id_fn=self._task_propagation_origin_id,
+            ),
+        ]
 
-        resources_to_walk = [r for r in self._entities if r not in visited]
-        if not resources_to_walk:
-            return
-        visited.update(resources_to_walk)
-
-        walker = EntityNavigatorResource(resources_to_walk)
-
-        # Propagate to next views (computed once for the whole batch)
-        next_views = walker.get_next_views()
-        for resource in resources_to_walk:
-            for view in next_views.get_entities_list():
-                self._propagate_tags(
-                    tags=tags,
-                    entity=view,
-                    new_origin_type=TagOriginType.RESOURCE_PROPAGATED,
-                    new_origin_id=resource.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_views.propagate_tags(tags, entity_tags_cache, visited)
-
-        # Propagate to next resources (computed once for the whole batch)
-        next_resources = walker.get_next_resources()
-        for next_resource in next_resources.get_entities_list():
-            if next_resource.task_model:
-                self._propagate_tags(
-                    tags=tags,
-                    entity=next_resource,
-                    new_origin_type=TagOriginType.TASK_PROPAGATED,
-                    new_origin_id=next_resource.task_model.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_resources.propagate_tags(tags, entity_tags_cache, visited)
-
-    def delete_propagated_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ):
-        """Inverse of ``propagate_tags`` for resource edges: remove ``RESOURCE_PROPAGATED`` copies
-        from views and ``TASK_PROPAGATED`` copies from next resources, then recurse downstream."""
-        if visited is None:
-            visited = set()
-
-        resources_to_walk = [r for r in self._entities if r not in visited]
-        if not resources_to_walk:
-            return
-        visited.update(resources_to_walk)
-
-        walker = EntityNavigatorResource(resources_to_walk)
-
-        next_views = walker.get_next_views()
-        for resource in resources_to_walk:
-            for view in next_views.get_entities_list():
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=view,
-                    origin_type=TagOriginType.RESOURCE_PROPAGATED,
-                    origin_id=resource.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_views.delete_propagated_tags(tags, entity_tags_cache, visited)
-
-        next_resources = walker.get_next_resources()
-        for next_resource in next_resources.get_entities_list():
-            if next_resource.task_model:
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=next_resource,
-                    origin_type=TagOriginType.TASK_PROPAGATED,
-                    origin_id=next_resource.task_model.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_resources.delete_propagated_tags(tags, entity_tags_cache, visited)
+    @staticmethod
+    def _task_propagation_origin_id(
+        upstream: NavigableEntity, downstream: NavigableEntity
+    ) -> str | None:
+        """Origin id for the resource->resource edge: the *downstream*'s
+        producing task. Skip downstream entities that are not resources, or
+        whose ``task_model`` is missing. ``upstream`` is unused -- when multiple
+        upstreams produce the same ``(downstream, origin)`` triple, the
+        in-memory cache check in ``_apply_tags`` short-circuits the redundant
+        DB writes."""
+        if not isinstance(downstream, ResourceModel):
+            return None
+        if downstream.task_model is None:
+            return None
+        return downstream.task_model.id
 
 
 class EntityNavigatorView(EntityNavigator[ViewConfig]):
@@ -859,66 +858,17 @@ class EntityNavigatorView(EntityNavigator[ViewConfig]):
     def _get_resources(self) -> list[ResourceModel]:
         return [view.resource_model for view in self._entities]
 
-    def propagate_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ) -> None:
-        """Propagate tags from each wrapped view to the notes embedding it, then recurse.
-        Origin is ``VIEW_PROPAGATED`` carrying the upstream view's id.
-        See ``EntityNavigator.propagate_tags`` for the cache/visited contract."""
-        if visited is None:
-            visited = set()
-
-        views_to_walk = [v for v in self._entities if v not in visited]
-        if not views_to_walk:
-            return
-        visited.update(views_to_walk)
-
-        walker = EntityNavigatorView(views_to_walk)
-
-        next_notes = walker.get_next_notes()
-        for view in views_to_walk:
-            for note in next_notes.get_entities_list():
-                self._propagate_tags(
-                    tags=tags,
-                    entity=note,
-                    new_origin_type=TagOriginType.VIEW_PROPAGATED,
-                    new_origin_id=view.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_notes.propagate_tags(tags, entity_tags_cache, visited)
-
-    def delete_propagated_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ):
-        """Inverse of ``propagate_tags`` for view edges: remove ``VIEW_PROPAGATED`` copies
-        from notes embedding the wrapped views."""
-        if visited is None:
-            visited = set()
-
-        views_to_walk = [v for v in self._entities if v not in visited]
-        if not views_to_walk:
-            return
-        visited.update(views_to_walk)
-
-        walker = EntityNavigatorView(views_to_walk)
-
-        next_notes = walker.get_next_notes()
-        for view in views_to_walk:
-            for note in next_notes.get_entities_list():
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=note,
-                    origin_type=TagOriginType.VIEW_PROPAGATED,
-                    origin_id=view.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-        next_notes.delete_propagated_tags(tags, entity_tags_cache, visited)
+    def _iter_propagation_edges(
+        self, walker: "EntityNavigator"
+    ) -> Iterable[PropagationEdge]:
+        """view -> notes embedding it, with ``VIEW_PROPAGATED`` origin
+        carrying the upstream view's id."""
+        return [
+            PropagationEdge(
+                downstream=walker.get_next_notes(),
+                origin_type=TagOriginType.VIEW_PROPAGATED,
+            ),
+        ]
 
 
 class EntityNavigatorNote(EntityNavigator[Note]):
@@ -949,10 +899,10 @@ class EntityNavigatorFormTemplate(EntityNavigator[FormTemplate]):
     other multi-type traversals -- forms are a separate template-binding edge.
     Reachable only via ``EntityNavigator.from_entity_id``.
 
-    Filters on ``Tag.is_propagable`` internally: only propagable tags reach
-    Forms, regardless of caller. This is stricter than ``EntityNavigatorScenario``
-    & friends (which trust the caller) and matches the spec invariant:
-    "non-propagable tags don't copy" (form_implementation_plan.md Phase 4).
+    Caller convention (matches ``EntityNavigatorScenario`` & friends): the
+    caller -- typically ``TagService.add_tags_to_entity_and_propagate`` --
+    is responsible for ensuring propagation only fires for propagable tags.
+    The navigator does not re-filter.
     """
 
     def get_next_forms(self) -> "EntityNavigatorForm":
@@ -962,74 +912,17 @@ class EntityNavigatorFormTemplate(EntityNavigator[FormTemplate]):
             forms.update(Form.find_by_template(template.id))
         return EntityNavigatorForm(forms)
 
-    def propagate_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ) -> None:
-        """Propagate tags to every Form bound to the wrapped templates with
-        origin ``FORM_TEMPLATE_PROPAGATED`` (origin_id = template.id). Forms
-        are leaves -- recursion bottoms out at ``EntityNavigatorForm``.
-
-        Only propagable tags are forwarded; non-propagable tags are dropped
-        per the Phase 4 spec invariant."""
-        if visited is None:
-            visited = set()
-
-        templates_to_walk = [t for t in self._entities if t not in visited]
-        if not templates_to_walk:
-            return
-        visited.update(templates_to_walk)
-
-        propagable = [t for t in tags if t.is_propagable]
-        if not propagable:
-            return
-
-        for template in templates_to_walk:
-            forms = Form.find_by_template(template.id)
-            for form in forms:
-                self._propagate_tags(
-                    tags=propagable,
-                    entity=form,
-                    new_origin_type=TagOriginType.FORM_TEMPLATE_PROPAGATED,
-                    new_origin_id=template.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-            EntityNavigatorForm(forms).propagate_tags(
-                propagable, entity_tags_cache, visited
-            )
-
-    def delete_propagated_tags(
-        self,
-        tags: list[Tag],
-        entity_tags_cache: dict[NavigableEntity, EntityTagList] | None = None,
-        visited: set[NavigableEntity] | None = None,
-    ):
-        """Inverse of ``propagate_tags`` for the template->form edge: remove
-        ``FORM_TEMPLATE_PROPAGATED`` copies from every Form bound to the
-        wrapped templates."""
-        if visited is None:
-            visited = set()
-
-        templates_to_walk = [t for t in self._entities if t not in visited]
-        if not templates_to_walk:
-            return
-        visited.update(templates_to_walk)
-
-        for template in templates_to_walk:
-            forms = Form.find_by_template(template.id)
-            for form in forms:
-                self._delete_propagated_tags(
-                    tags=tags,
-                    entity=form,
-                    origin_type=TagOriginType.FORM_TEMPLATE_PROPAGATED,
-                    origin_id=template.id,
-                    entity_tags_cache=entity_tags_cache,
-                )
-            EntityNavigatorForm(forms).delete_propagated_tags(
-                tags, entity_tags_cache, visited
-            )
+    def _iter_propagation_edges(
+        self, walker: "EntityNavigator"
+    ) -> Iterable[PropagationEdge]:
+        """template -> forms bound to any of its versions, with
+        ``FORM_TEMPLATE_PROPAGATED`` origin carrying the upstream template's id."""
+        return [
+            PropagationEdge(
+                downstream=walker.get_next_forms(),
+                origin_type=TagOriginType.FORM_TEMPLATE_PROPAGATED,
+            ),
+        ]
 
 
 class EntityNavigatorForm(EntityNavigator[Form]):

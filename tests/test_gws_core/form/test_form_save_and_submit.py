@@ -102,6 +102,30 @@ class TestFormSaveAndSubmit(BaseTestCase):
             Form.get_by_id(form.id).status, FormStatus.DRAFT
         )
 
+    def test_submit_gate_does_not_block_on_unset_computed_param(self):
+        # Mandatory user field + a ComputedParam. Set the user field, then
+        # submit. The submit gate must skip computed entries (they are never
+        # accepted from the user) — so it succeeds even though the computed
+        # field's value comes from evaluation, not from dto.values.
+        specs = ConfigSpecs(
+            {
+                "name": StrParam(human_name="Name"),  # mandatory
+                "shouted_name": ComputedParam(
+                    expression='concat(name, "!")', result_type="str"
+                ),
+            }
+        )
+        form = self._make_form_from_specs(specs)
+        result = FormService.save(
+            form.id,
+            SaveFormDTO(
+                values={"name": "Alice"},
+                status_transition=FormStatus.SUBMITTED,
+            ),
+        )
+        self.assertEqual(result.form.status, FormStatus.SUBMITTED)
+        self.assertEqual(result.form.values["shouted_name"], "Alice!")
+
     def test_submit_sugar_endpoint(self):
         form = self._scalar_form()
         FormService.save(

@@ -1,4 +1,5 @@
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.computed.computed_param import ComputedParam
 from gws_core.config.param.param_spec import StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
@@ -106,6 +107,25 @@ class TestFormTemplateVersioning(BaseTestCase):
         draft.content = {"oops": {"not": "a real param spec"}}
         draft.save()
 
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.publish_version(template.id, draft.id)
+
+    def test_publish_rejects_cyclic_computed_param(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        cyclic = ConfigSpecs(
+            {
+                "a": ComputedParam(expression="b + 1", result_type="float"),
+                "b": ComputedParam(expression="a + 1", result_type="float"),
+            }
+        )
+        FormTemplateService.update_draft(
+            template.id,
+            draft.id,
+            UpdateDraftVersionDTO(
+                content={k: v.to_json_dict() for k, v in cyclic.to_dto().items()}
+            ),
+        )
         with self.assertRaises(BadRequestException):
             FormTemplateService.publish_version(template.id, draft.id)
 
