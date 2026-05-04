@@ -6,6 +6,7 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note_template.note_template_dto import (
     CreateNoteTemplateDTO,
     CreateNoteTemplateFromNoteDTO,
+    InsertFormTemplateBlockDTO,
     NoteTemplateDTO,
 )
 from gws_core.note_template.note_template_service import NoteTemplateService
@@ -53,6 +54,19 @@ def update_content(
     doc_id: str, content: RichTextDTO, _=Depends(AuthorizationService.check_user_access_token)
 ) -> RichTextDTO:
     return NoteTemplateService.update_content(doc_id, content).content
+
+
+@core_app.post(
+    "/note-template/{doc_id}/block/form-template",
+    tags=["Note template"],
+    summary="Insert a form-template block referencing a published version",
+)
+def insert_form_template_block(
+    doc_id: str,
+    data: InsertFormTemplateBlockDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> NoteTemplateDTO:
+    return NoteTemplateService.insert_form_template_block(doc_id, data).to_dto()
 
 
 @core_app.delete(

@@ -4,16 +4,27 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.form.form import Form
+from gws_core.form.form_dto import CreateFormDTO
+from gws_core.form.form_service import FormService
+from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_form_validator import (
+    RichTextFormBlockValidator,
+)
 from gws_core.impl.rich_text.rich_text_modification import (
     RichTextBlockModificationWithUserDTO,
     RichTextModificationType,
     RichTextModificationUserDTO,
 )
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO, RichTextObjectType
+from gws_core.impl.rich_text.rich_text_types import (
+    RichTextBlock,
+    RichTextDTO,
+    RichTextObjectType,
+)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
@@ -42,7 +53,12 @@ from ..core.exception.gws_exceptions import GWSException
 from ..scenario.scenario import Scenario
 from ..space.space_service import SpaceService
 from .note import Note, NoteScenario
-from .note_dto import NoteInsertTemplateDTO, NoteSaveDTO
+from .note_dto import (
+    InsertFormReferenceBlockDTO,
+    InsertNewFormBlockDTO,
+    NoteInsertTemplateDTO,
+    NoteSaveDTO,
+)
 from .note_search_builder import NoteSearchBuilder
 
 
@@ -183,6 +199,10 @@ class NoteService:
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
+        # Reject FORM_TEMPLATE blocks; reject newly-introduced FORM blocks
+        # whose form_id does not exist (spec §5.1).
+        RichTextFormBlockValidator.validate_for_note(note_content, note.content)
+
         # Dispatch event BEFORE saving — sync listeners can mutate note_content
         # or raise exceptions to abort the save
         EventDispatcher.get_instance().dispatch(
@@ -232,6 +252,81 @@ class NoteService:
             RichTextObjectType.NOTE_TEMPLATE, template.id, RichTextObjectType.NOTE, note.id
         )
         return note
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def insert_form_block_new(
+        cls,
+        note_id: str,
+        dto: InsertNewFormBlockDTO,
+    ) -> Note:
+        """Create a brand-new Form from a PUBLISHED template version and
+        insert a FORM block in the note with ``is_owner=True``.
+
+        See spec §5.5.
+        """
+        form = FormService.create(CreateFormDTO(template_version_id=dto.template_version_id))
+        return cls._insert_form_block(
+            note_id,
+            form_id=form.id,
+            is_owner=True,
+            display_name=dto.display_name,
+            position=dto.position,
+        )
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def insert_form_block_reference(
+        cls,
+        note_id: str,
+        dto: InsertFormReferenceBlockDTO,
+    ) -> Note:
+        """Insert a FORM block in the note that references an existing Form.
+        ``is_owner=False``.
+
+        See spec §5.5.
+        """
+        # Validate the form exists up-front for a clear 404, even though the
+        # validator would also catch this. The lookup is cheap.
+        Form.get_by_id_and_check(dto.form_id)
+        return cls._insert_form_block(
+            note_id,
+            form_id=dto.form_id,
+            is_owner=False,
+            display_name=dto.display_name,
+            position=dto.position,
+        )
+
+    @classmethod
+    def _insert_form_block(
+        cls,
+        note_id: str,
+        *,
+        form_id: str,
+        is_owner: bool,
+        display_name: str | None,
+        position: int | None,
+    ) -> Note:
+        """Build a FORM block and insert it into the note's content at
+        ``position`` (or append when None), then route through update_content
+        so the validator runs."""
+        note: Note = cls._get_and_check_before_update(note_id)
+
+        block = RichTextBlock.from_data(
+            RichTextBlockForm(
+                form_id=form_id,
+                is_owner=is_owner,
+                display_name=display_name,
+            )
+        )
+
+        rich_text = note.get_content_as_rich_text()
+        if position is None:
+            rich_text.append_block(block)
+        else:
+            rich_text.insert_block_at_index(position, block)
+
+        return cls.update_content(note_id, rich_text.to_dto())
 
     @classmethod
     @GwsCoreDbManager.transaction()

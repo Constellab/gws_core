@@ -37,3 +37,23 @@ class NoteFullDTO(NoteDTO):
 class NoteInsertTemplateDTO(BaseModelDTO):
     block_index: int
     note_template_id: str
+
+
+class InsertNewFormBlockDTO(BaseModelDTO):
+    """Insert a FORM block in a Note by creating a brand-new Form from a
+    PUBLISHED FormTemplateVersion. ``is_owner`` is implicitly true.
+    """
+
+    template_version_id: str
+    position: int | None = None
+    display_name: str | None = None
+
+
+class InsertFormReferenceBlockDTO(BaseModelDTO):
+    """Insert a FORM block in a Note that references an existing Form.
+    ``is_owner`` is implicitly false.
+    """
+
+    form_id: str
+    position: int | None = None
+    display_name: str | None = None
