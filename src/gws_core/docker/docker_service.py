@@ -3,6 +3,7 @@ import tempfile
 import time
 from typing import cast
 
+from gws_core.brick.brick_service import BrickService
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.exception.exceptions.base_http_exception import BaseHTTPException
 from gws_core.core.service.external_api_service import ExternalApiService, FormData
@@ -584,6 +585,34 @@ class DockerService(LabManagerServiceBase):
         credentials_name = self.get_basic_credentials_name(brick_name, unique_name)
 
         return CredentialsService.find_by_name(credentials_name)
+
+    def get_volume_local_path(
+        self,
+        brick_name: str,
+        unique_name: str,
+        include_in_backup: bool = True,
+    ) -> str:
+        """
+        Get the local path of the docker volume.
+
+        If ``include_in_backup`` is True, the path is built from the brick extension
+        directory (which is included in the backup process). Otherwise, the path is
+        built from the brick data directory.
+
+        :param brick_name: Name of the brick
+        :type brick_name: str
+        :param unique_name: Unique name for the compose
+        :type unique_name: str
+        :param include_in_backup: Whether the volume should be included in the backup (default: True)
+        :type include_in_backup: bool
+        :return: The local path of the docker volume
+        :rtype: str
+        """
+        if include_in_backup:
+            return BrickService.get_brick_extension_dir(brick_name, unique_name)
+
+        brick_data_dir = BrickService.get_brick_data_dir(brick_name)
+        return os.path.join(brick_data_dir, unique_name)
 
     def get_basic_credentials_name(self, brick_name: str, unique_name: str) -> str:
         """
