@@ -73,6 +73,7 @@ class NavigableEntity:
     def navigable_entity_is_validated(self) -> bool:
         return False
 
+    @abstractmethod
     def to_dto(self) -> BaseModelDTO:
         pass
 
