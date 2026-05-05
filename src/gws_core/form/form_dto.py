@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.user.user_dto import UserDTO
@@ -13,21 +14,30 @@ class FormStatus(Enum):
 
 
 class FormChangeAction(Enum):
-    FIELD_CREATED = "FIELD_CREATED"
-    FIELD_UPDATED = "FIELD_UPDATED"
-    FIELD_DELETED = "FIELD_DELETED"
-    PARAMSET_ITEM_ADDED = "PARAMSET_ITEM_ADDED"
-    PARAMSET_ITEM_REMOVED = "PARAMSET_ITEM_REMOVED"
+    """Form-specific change actions. The first five members mirror
+    ``ConfigChangeAction`` by string value — persisted JSON in
+    ``FormSaveEvent.changes`` is identical regardless of which enum the
+    Python value came from. ``STATUS_CHANGED`` is form-only (it tracks the
+    DRAFT→SUBMITTED workflow transition, not a value diff).
+    """
+
+    FIELD_CREATED = ConfigChangeAction.FIELD_CREATED.value
+    FIELD_UPDATED = ConfigChangeAction.FIELD_UPDATED.value
+    FIELD_DELETED = ConfigChangeAction.FIELD_DELETED.value
+    PARAMSET_ITEM_ADDED = ConfigChangeAction.PARAMSET_ITEM_ADDED.value
+    PARAMSET_ITEM_REMOVED = ConfigChangeAction.PARAMSET_ITEM_REMOVED.value
     STATUS_CHANGED = "STATUS_CHANGED"
 
 
-class FormChangeEntry(BaseModelDTO):
-    """One change inside a FormSaveEvent.changes list. See form_feature.md §3.4."""
+class FormChangeEntry(ConfigChangeEntry):
+    """One change inside a FormSaveEvent.changes list. See form_feature.md §3.4.
 
-    field_path: str
+    Inherits ``field_path``, ``old_value``, ``new_value`` from
+    ``ConfigChangeEntry``; widens ``action`` to allow form-only members
+    (``STATUS_CHANGED``).
+    """
+
     action: FormChangeAction
-    old_value: Any | None = None
-    new_value: Any | None = None
 
 
 class FormDTO(ModelWithUserDTO):

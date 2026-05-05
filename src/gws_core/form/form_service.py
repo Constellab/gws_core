@@ -18,7 +18,6 @@ from gws_core.form.form_dto import (
 )
 from gws_core.form.form_save_event import FormSaveEvent
 from gws_core.form.form_search_builder import FormSearchBuilder
-from gws_core.form.form_values_service import FormValuesService
 from gws_core.form_template.form_template_dto import FormTemplateVersionStatus
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.note.note_form_model import NoteFormModel
@@ -140,25 +139,20 @@ class FormService:
         form = cls.get_by_id_and_check(form_id)
         specs = ConfigSpecs.from_json(form.template_version.content or {})
 
-        # 3. Reconcile __item_id, defensively strip computed-key submissions.
-        new_values = FormValuesService.assign_item_ids(
-            specs, dto.values or {}, previous=form.values or {}
-        )
-        new_values = FormValuesService.strip_computed_keys(specs, new_values)
+        # 3. Strip computed-key submissions then validate. ParamSet.validate
+        #    mints/preserves __item_id per row, so the returned dict carries
+        #    stable identity ready for diffing and persistence.
+        new_values = specs.strip_computed_keys(dto.values or {})
+        new_values = specs.validate_values(new_values)
 
-        # 4. Type/range validation.
-        FormValuesService.validate_with_specs(specs, new_values)
-
-        # 5. Submit gate.
+        # 4. Submit gate.
         status_changed = False
         old_status = form.status
         if (
             dto.status_transition == FormStatus.SUBMITTED
             and form.status != FormStatus.SUBMITTED
         ):
-            if not specs.mandatory_values_are_set(
-                cls._strip_item_ids_recursively(new_values)
-            ):
+            if not specs.mandatory_values_are_set(new_values):
                 raise BadRequestException(
                     "Cannot submit: at least one mandatory field is empty."
                 )
@@ -167,17 +161,14 @@ class FormService:
             form.submitted_by = CurrentUserService.get_and_check_current_user()
             status_changed = True
 
-        # 6. Compute and merge into the union dict.
-        scope = cls._strip_item_ids_recursively(new_values)
-        computed, errors = specs.compute_values(scope)
-        # compute_values mutates ParamSet rows in `scope` for per-row
-        # computed cells, but `scope` is a fresh dict (without __item_ids).
-        # Pull those per-row values back into new_values by item_id.
-        cls._propagate_per_row_computed(specs, new_values, scope)
-        new_values = FormValuesService.merge_computed(specs, new_values, computed)
+        # 5. Compute and merge into the union dict. compute_values mutates
+        #    ParamSet rows in place for per-row computed cells; __item_id is
+        #    untouched (the evaluator only reads/writes referenced spec keys).
+        computed, errors = specs.compute_values(new_values)
+        new_values = specs.merge_computed(new_values, computed)
 
-        # 7. Diff and build change list.
-        changes = FormValuesService.diff_values(form.values or {}, new_values)
+        # 6. Diff and build change list.
+        changes = ConfigSpecs.diff_values(form.values or {}, new_values)
         if status_changed:
             changes.append(
                 FormChangeEntry(
@@ -321,60 +312,3 @@ class FormService:
         )
         return Paginator(query, page, number_of_items_per_page)
 
-    # ------------------------------------------------------------------ #
-    # Helpers
-    # ------------------------------------------------------------------ #
-
-    @classmethod
-    def _strip_item_ids_recursively(cls, values: dict) -> dict:
-        """Return a deep-ish copy of ``values`` with every ``__item_id`` key
-        removed from inside ParamSet rows. Used before handing values to
-        ConfigSpecs methods, which would otherwise reject the reserved key
-        as unknown.
-        """
-        if not values:
-            return {}
-        out: dict = {}
-        for key, value in values.items():
-            if isinstance(value, list) and value and all(isinstance(x, dict) for x in value):
-                out[key] = [
-                    {k: v for k, v in row.items() if k != FormValuesService.ITEM_ID_KEY}
-                    for row in value
-                ]
-            else:
-                out[key] = value
-        return out
-
-    @classmethod
-    def _propagate_per_row_computed(
-        cls,
-        specs: ConfigSpecs,
-        new_values: dict,
-        scope: dict,
-    ) -> None:
-        """Copy per-row computed values from `scope` back into `new_values`,
-        matching rows by ``__item_id``.
-
-        ``ConfigSpecs.compute_values`` populates inner ComputedParam cells
-        on the rows it sees. We pass it ``scope`` (item_ids stripped) for
-        validation cleanliness, so we have to bring the freshly-computed
-        per-row cells back to the id-bearing dict.
-        """
-        for key, spec in specs.specs.items():
-            from gws_core.config.param.computed.computed_param import ComputedParam
-            from gws_core.config.param.param_set import ParamSet
-
-            if not isinstance(spec, ParamSet) or spec.param_set is None:
-                continue
-            inner_computed_keys = [
-                k for k, s in spec.param_set.specs.items() if isinstance(s, ComputedParam)
-            ]
-            if not inner_computed_keys:
-                continue
-            new_rows = new_values.get(key) or []
-            scope_rows = scope.get(key) or []
-            # Rows are paired index-wise: assign_item_ids+strip preserves order.
-            for new_row, scope_row in zip(new_rows, scope_rows):
-                for inner_key in inner_computed_keys:
-                    if inner_key in scope_row:
-                        new_row[inner_key] = scope_row[inner_key]

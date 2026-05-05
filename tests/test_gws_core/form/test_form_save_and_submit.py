@@ -14,7 +14,6 @@ from gws_core.form.form_dto import (
 )
 from gws_core.form.form_save_event import FormSaveEvent
 from gws_core.form.form_service import FormService
-from gws_core.form.form_values_service import FormValuesService
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
