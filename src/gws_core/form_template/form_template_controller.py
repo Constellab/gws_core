@@ -1,5 +1,7 @@
 from fastapi.param_functions import Depends
 
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_types import CompleteDynamicParamAllowedSpecsDict
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
@@ -182,3 +184,15 @@ def archive_version(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.archive_version(id_, version_id).to_dto()
+
+
+########################## DYNAMIC PARAM #####################
+@core_app.get(
+    "/form-template/get-param-spec-types",
+    tags=["Form template"],
+    summary="Get param spec types",
+)
+def get_param_spec_types(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> CompleteDynamicParamAllowedSpecsDict:
+    return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types(True)
