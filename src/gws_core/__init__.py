@@ -457,16 +457,6 @@ from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder
 from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
 
-# Form ↔ Note / NoteTemplate listeners (side-effect imports register
-# the @event_listener decorated classes with the EventDispatcher).
-from .form import form_note_cascade_listener as _form_note_cascade_listener  # noqa: F401
-from .form import form_note_join_listener as _form_note_join_listener  # noqa: F401
-from .form import form_note_template_join_listener as _form_note_template_join_listener  # noqa: F401
-
-# Form rich-text block rules (side-effect import registers the rules
-# with RichTextContentValidator).
-from .form import form_rich_text_block_rules as _form_rich_text_block_rules  # noqa: F401
-
 # Note task
 from .note.task.note_param import NoteParam as NoteParam
 

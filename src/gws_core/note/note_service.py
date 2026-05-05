@@ -238,8 +238,8 @@ class NoteService:
             )
         note.content = note_content
 
-        # refresh NoteResource table
-        cls._refresh_note_views_and_tags(note)
+        # NoteViewJoinListener handles the views/tags/scenarios refresh
+        # via the dispatched event above.
 
         note = note.save()
         ActivityService.add_or_update_async(
@@ -421,9 +421,6 @@ class NoteService:
             raise BadRequestException(
                 "The scenario must be associated with a leaf folder (folder with no children)"
             )
-
-        # refresh the associated views and scenario (for precaution)
-        cls._refresh_note_views_and_tags(note)
 
         # check that all linked scenario are validated and are in same folder
         scenarios: list[Scenario] = cls.get_scenarios_by_note(note_id)
@@ -742,69 +739,6 @@ class NoteService:
         resources = ResourceService.get_scenarios_resources(scenario_ids)
         return resources
 
-    @classmethod
-    def _refresh_note_views_and_tags(cls, note: Note) -> None:
-        """Method to refresh the associated views of a note. It will remove unassociated resources and
-        add the new ones.
-        It also refresh the tags of the note based on the tags of the associated views
-        It also refresh the associated scenarios of the note
-        """
-
-        note_views: list[NoteViewModel] = NoteViewModel.get_by_note(note.id)
-
-        # extract the views id from the rich text
-        rich_text_views: list[RichTextBlockResourceView] = (
-            note.get_content_as_rich_text().get_resource_views_data()
-        )
-
-        note_tags: EntityTagList = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
-
-        rich_text_view_ids = {
-            rich_text_view.view_config_id
-            for rich_text_view in rich_text_views
-            if rich_text_view.view_config_id is not None
-        }
-
-        # detect which views were removed and unassociate resource
-        for note_view in note_views:
-            if note_view.view.id not in rich_text_view_ids:
-                note_view.delete_instance()
-                # remove the tags of the view from the note
-                view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, note_view.view.id)
-                propagated_tags = view_tags.build_tags_propagated(
-                    TagOriginType.VIEW_PROPAGATED, note_view.view.id
-                )
-                note_tags.delete_tags(propagated_tags)
-
-        # detect which views were added
-        note_view_ids = {note_view.view.id for note_view in note_views}
-        for rich_text_view in rich_text_views:
-            if rich_text_view.view_config_id is None:
-                continue
-            if rich_text_view.view_config_id not in note_view_ids:
-                # create the link in DB
-                view_config = ViewConfig.get_by_id(rich_text_view.view_config_id)
-
-                if view_config:
-                    NoteViewModel(note=note, view=view_config).save()
-                    # add the tags of the view to the note
-                    view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_config.id)
-                    propagated_tags = view_tags.build_tags_propagated(
-                        TagOriginType.VIEW_PROPAGATED, view_config.id
-                    )
-                    note_tags.add_tags(propagated_tags)
-                    note_view_ids.add(view_config.id)
-
-        # refresh the associated scenarios
-        new_note_views: list[NoteViewModel] = NoteViewModel.get_by_note(note.id)
-        associated_scenario = NoteScenario.find_scenarios_by_note(note.id)
-
-        # detect which scenario were added
-        for new_view in new_note_views:
-            if new_view.view.scenario and new_view.view.scenario not in associated_scenario:
-                NoteScenario.create_obj(new_view.view.scenario, note).save()
-                associated_scenario.append(new_view.view.scenario)
-
     ################################################# ARCHIVE ########################################
 
     @classmethod
@@ -905,9 +839,27 @@ class NoteService:
             modification_index = modification_index + 1
 
         note.modifications.modifications = note.modifications.modifications[:modification_index]
+
+        # Dispatch the same event update_content uses so join-row
+        # listeners (e.g. NoteFormJoinListener) reconcile against the
+        # rolled-back content. The validator does NOT run on this path:
+        # rollback may legitimately resurrect a block whose target was
+        # hard-deleted in the meantime, and rejecting that would block
+        # the user from rolling back through history. Content is the
+        # source of truth; joins follow; broken references render as
+        # broken blocks rather than refusing the rollback.
+        EventDispatcher.get_instance().dispatch(
+            NoteContentUpdatedEvent(
+                note_id=note.id,
+                old_content=note.content,
+                new_content=rollbacked_content,
+            )
+        )
+
         note.content = rollbacked_content
 
-        cls._refresh_note_views_and_tags(note)
+        # NoteViewJoinListener handles the views/tags/scenarios refresh
+        # via the dispatched event above.
 
         note = note.save()
         ActivityService.add_or_update_async(
