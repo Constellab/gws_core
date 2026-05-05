@@ -1,4 +1,5 @@
 import os
+import shutil
 import tempfile
 import time
 from typing import cast
@@ -101,11 +102,12 @@ class DockerService(LabManagerServiceBase):
             f"{self._DOCKER_ROUTE}/{brick_name}/{unique_name}/register-from-zip"
         )
 
+        # Use a temp dir (not NamedTemporaryFile) so the zip path doesn't exist
+        # yet when ZipCompress runs — the system `zip` command rejects an
+        # existing destination.
+        temp_dir = tempfile.mkdtemp(prefix="compose_zip_")
+        zip_file_path = os.path.join(temp_dir, "compose.zip")
         try:
-            # Create zip file in temporary location
-            with tempfile.NamedTemporaryFile(suffix=".zip", delete=False) as temp_file:
-                zip_file_path = temp_file.name
-
             ZipCompress.compress_dir_content(folder_path, zip_file_path)
 
             # Create form data with the zip file
@@ -123,12 +125,11 @@ class DockerService(LabManagerServiceBase):
                 raise_exception_if_error=True,
             )
 
-            # Clean up temporary file
-            os.unlink(zip_file_path)
-
         except BaseHTTPException as err:
             err.detail = f"Can't register compose from zip. Error: {err.detail}"
             raise err
+        finally:
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
     def register_sqldb_compose(
         self,

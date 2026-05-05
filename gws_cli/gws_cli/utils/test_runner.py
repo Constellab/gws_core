@@ -34,10 +34,10 @@ class BrickRunResult:
         return self.exit_code == 0
 
 
-def _run_and_tee(cmd: list[str]) -> int:
+def _run_and_tee(cmd: list[str], env: dict[str, str] | None = None) -> int:
     """Run cmd, stream stdout/stderr to console, return the exit code."""
     proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1, env=env
     )
     # Tail buffers used to keep the threads simple (and to drop stale output if
     # subprocess is chatty); we don't surface them right now.
@@ -75,6 +75,7 @@ def _run_brick(
     workers: str,
     durations: int,
     junit_path: str,
+    log_dir: str | None,
 ) -> BrickRunResult:
     name = os.path.basename(brick_dir)
     typer.echo(f"\n=== Running tests for brick '{name}' ===")
@@ -86,8 +87,16 @@ def _run_brick(
         cmd += ["--parallel", "-n", workers]
     cmd += ["--junit-xml", junit_path]
 
+    # Per-brick log dir so concurrent xdist workers within a brick share one
+    # `log` file (FileHandler append is atomic) but bricks don't clobber
+    # each other.
+    env = os.environ.copy()
+    if log_dir:
+        os.makedirs(log_dir, exist_ok=True)
+        env["GWS_TEST_LOG_DIR"] = log_dir
+
     started = time.monotonic()
-    code = _run_and_tee(cmd)
+    code = _run_and_tee(cmd, env=env)
     return BrickRunResult(
         name=name,
         exit_code=code,
@@ -117,9 +126,16 @@ def run_test_all(
     results: list[BrickRunResult] = []
     try:
         for brick_dir in brick_dirs:
-            junit_path = os.path.join(out_dir, f"{os.path.basename(brick_dir)}.xml")
+            brick_name = os.path.basename(brick_dir)
+            junit_path = os.path.join(out_dir, f"{brick_name}.xml")
+            # Only emit log files when the user asked for a real output dir;
+            # don't litter the system test logs folder when out_dir is the
+            # throwaway temp dir.
+            log_dir = os.path.join(out_dir, brick_name) if keep_dir else None
             results.append(
-                _run_brick(brick_dir, log_level, parallel, workers, durations, junit_path)
+                _run_brick(
+                    brick_dir, log_level, parallel, workers, durations, junit_path, log_dir
+                )
             )
     finally:
         if not keep_dir:

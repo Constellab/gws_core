@@ -46,6 +46,12 @@ class ZipCompress(Compress):
         os.symlink(os.path.abspath(source_path), link_path)
 
     def close(self) -> str:
+        # `zip` treats an existing destination as an archive to update; an
+        # empty/garbage file there causes a "severe error" (exit 3).
+        if os.path.exists(self.destination_file_path):
+            raise FileExistsError(
+                f"Destination file already exists: {self.destination_file_path}"
+            )
         try:
             entries = sorted(os.listdir(self._staging_dir))
             # -r recursive, -y store symlinks? no, we want to follow them: default `zip` follows symlinks to files,

@@ -462,8 +462,16 @@ class Settings:
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
-        """Return the log dir"""
+        """Return the log dir.
+
+        In test mode, GWS_TEST_LOG_DIR overrides the default location so
+        `gws server test-all --output-dir` (or TEST_OUTPUT_DIR) can collect
+        log files alongside JUnit XML reports.
+        """
         if is_test:
+            override = os.environ.get("GWS_TEST_LOG_DIR")
+            if override:
+                return override
             return os.path.join(cls.get_test_folder(), "logs")
         else:
             return os.path.join(cls.get_system_folder(), "logs")

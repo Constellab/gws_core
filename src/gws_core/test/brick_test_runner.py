@@ -1,6 +1,5 @@
 import json
 import os
-import shutil
 import time
 from typing import Any
 
@@ -13,11 +12,12 @@ from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.docker.docker_dto import (
+    DockerComposeStatus,
     DockerContainerStatus,
     RegisterComposeOptionsRequestDTO,
+    SubComposeProcessStatus,
 )
 from gws_core.docker.docker_service import DockerService
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.json.json_dict import JSONDict
 from gws_core.io.io_spec import OutputSpec
@@ -43,7 +43,9 @@ class BrickTestRunner(Task):
     to learn whether the underlying tests actually passed.
 
     ## Inputs / Outputs
-    - **results** (Folder): folder containing the per-brick `*.xml` JUnit reports.
+    - **results** (Folder): folder containing the per-brick `*.xml` JUnit reports
+      at the top level, plus a `<brick>/log` file per brick with the JSON log
+      output of that brick's test run.
     - **summary** (JSONDict): aggregated counts (totals + per-brick breakdown)
       and the list of test failures.
 
@@ -59,6 +61,9 @@ class BrickTestRunner(Task):
     # Name of the test container in docker/docker-compose.yaml — used to poll
     # for completion via DockerService.get_sub_compose_service_status.
     _SERVICE_NAME = "glab-test"
+    # Subfolder of the extension dir where the container writes JUnit XML;
+    # mounted as /output inside the compose service.
+    _OUTPUT_DIR_NAME = "output"
 
     input_specs: InputSpecs = InputSpecs({})
     output_specs: OutputSpecs = OutputSpecs(
@@ -122,9 +127,9 @@ class BrickTestRunner(Task):
         # --- Working directory ----------------------------------------------
         # The extension dir is mirrored on the docker host under LAB_VOLUME_HOST,
         # so the compose can mount /conf/config.json and /output from there.
-        run_id = StringHelper.generate_uuid()
+        run_id = StringHelper.generate_uuid().replace("-", "")[:8]
         ext_root = BrickService.get_brick_extension_dir(self._BRICK_NAME, run_id)
-        output_dir = os.path.join(ext_root, "output")
+        output_dir = os.path.join(ext_root, self._OUTPUT_DIR_NAME)
         os.makedirs(output_dir, exist_ok=True)
 
         self._write_config_json(ext_root, bricks)
@@ -162,7 +167,10 @@ class BrickTestRunner(Task):
                     description=f"BrickTestRunner {run_id}",
                     auto_start=True,
                     environment_variables={
-                        "RUN_ID": run_id,
+                        "COMMUNITY_API_URL": Settings.get_community_api_url_and_check(),
+                        "COMMUNITY_FRONT_URL": Settings.get_community_front_url_and_check(),
+                        "OPENAI_API_KEY": Settings.get_open_ai_api_key() or "",
+                        "REFLEX_ACCESS_TOKEN": Settings.get_reflex_access_token() or "",
                         "GLAB_VERSION": glab_version,
                         "TEST_BRICK_NAME": bricks_to_test,
                         "TEST_PARALLEL": "true" if parallel else "false",
@@ -206,7 +214,7 @@ class BrickTestRunner(Task):
 
         except Exception as exc:
             warnings.append(f"Compose start failed: {exc}")
-            self.log_error_message(str(exc))
+            self.log_error_message("Compose start failed", exception=exc)
 
         # --- Collect results ------------------------------------------------
         # JUnitXmlReportSet is tolerant to a missing/empty folder, so this is
@@ -214,20 +222,32 @@ class BrickTestRunner(Task):
         report_set = JUnitXmlReportSet(output_dir)
         summary = self._build_summary(bricks, report_set, run_id, warnings)
 
-        # Copy the XMLs out of the extension dir (which we are about to delete)
-        # so the Folder resource keeps pointing at a valid path.
-        results_dir = self._copy_to_temp(output_dir)
-        out_folder = Folder(results_dir)
+        out_folder = Folder(output_dir)
+        out_folder.name = f"brick_test_results_{run_id}"
         summary_dict = JSONDict(summary)
 
-        # --- Cleanup --------------------------------------------------------
+        # --- Compose status check -------------------------------------------
+        # Surface lab-manager-side errors (failed register, compose in ERROR
+        # state) before tearing the compose down — otherwise the cleanup
+        # exception would mask the real cause.
         if started:
-            try:
-                docker.unregister_compose(self._BRICK_NAME, run_id)
-            except Exception as cleanup_exc:
-                self.log_warning_message(f"Cleanup failed: {cleanup_exc}")
+            self._log_compose_errors(docker, run_id)
 
-        FileHelper.delete_dir(ext_root)
+        # --- Cleanup --------------------------------------------------------
+        # if started:
+        #     try:
+        #         docker.unregister_compose(self._BRICK_NAME, run_id)
+        #     except Exception as cleanup_exc:
+        #         self.log_warning_message(f"Cleanup failed: {cleanup_exc}")
+
+        # FileHelper.delete_dir(ext_root)
+
+        # Fail the task if no JUnit reports were produced — otherwise an early
+        # compose failure would silently return an empty summary.
+        if report_set.reports_total == 0:
+            raise Exception(
+                f"No tests were run (no JUnit XML reports produced). Warnings: {warnings or 'none'}"
+            )
 
         return {"results": out_folder, "summary": summary_dict}
 
@@ -267,27 +287,31 @@ class BrickTestRunner(Task):
 
         return normalized
 
+    def _log_compose_errors(self, docker: DockerService, run_id: str) -> None:
+        """Fetch the sub-compose status and log any error-state details."""
+        try:
+            status = docker.get_compose_status(self._BRICK_NAME, run_id)
+        except Exception as status_exc:
+            self.log_warning_message(f"Could not fetch compose status: {status_exc}")
+            return
+
+        if status.composeStatus.status == DockerComposeStatus.ERROR:
+            self.log_error_message(
+                f"Compose in ERROR state: {status.composeStatus.info or 'no details'}"
+            )
+
+        process = status.subComposeProcess
+        if process is not None and process.status == SubComposeProcessStatus.ERROR:
+            self.log_error_message(
+                f"Compose {process.processType.value} process failed: {process.message}"
+            )
+
     def _resolve_glab_version(self, gws_core_version: str) -> str:
         info = CommunityService.get_brick_version_info("gws_core", gws_core_version)
         glab_version = (info.technicalInfo or {}).get("GLAB_VERSION")
         if not glab_version:
-            raise Exception(
-                f"Community returned no GLAB_VERSION for gws_core@{gws_core_version}."
-            )
+            raise Exception(f"Community returned no GLAB_VERSION for gws_core@{gws_core_version}.")
         return glab_version
-
-    def _copy_to_temp(self, source_dir: str) -> str:
-        results_dir = Settings.make_temp_dir()
-        if not os.path.isdir(source_dir):
-            return results_dir
-        for entry in os.listdir(source_dir):
-            src = os.path.join(source_dir, entry)
-            dst = os.path.join(results_dir, entry)
-            if os.path.isdir(src):
-                shutil.copytree(src, dst)
-            else:
-                shutil.copy2(src, dst)
-        return results_dir
 
     def _write_config_json(self, ext_root: str, bricks: list[dict[str, Any]]) -> None:
         """Write the GPM brick-list config.json the glab container reads from /conf."""

@@ -8,20 +8,28 @@ services:
       - LAB_ENVIRONMENT=LOCAL
       - LAB_FOLDER=/lab
       - DATA_FOLDER=/data
+      - COMMUNITY_API_URL=${COMMUNITY_API_URL}
+      - COMMUNITY_FRONT_URL=${COMMUNITY_FRONT_URL}
       - RUN_MODE=test
+      - VIRTUAL_HOST=
       - TEST_BRICK_NAME=${TEST_BRICK_NAME}
       - TEST_PARALLEL=${TEST_PARALLEL}
-      - TEST_OUTPUT_DIR =/output
-      - GWS_TEST_DB_HOST=test_gws_dev_db
+      - TEST_OUTPUT_DIR=/output
+      - GWS_TEST_DB_HOST=${CONTAINER_PREFIX}-test-gws-dev-db
       - GWS_TEST_DB_PORT=3306
       - GWS_TEST_DB_USER=root
       - GWS_TEST_DB_PASSWORD=gencovery
       - GWS_TEST_DB_NAME=gws_test
+      # Other
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - REFLEX_ACCESS_TOKEN=${REFLEX_ACCESS_TOKEN}
+      - APP_EXTERNAL_PORT=8510
     volumes:
-      - ${LAB_VOLUME_HOST}/${RUN_ID}/config.json:/conf/config.json:ro
-      - ${LAB_VOLUME_HOST}/${RUN_ID}/output:/output
+      - ${LAB_VOLUME_HOST}/config.json:/conf/config.json:ro
+      - ${LAB_VOLUME_HOST}/output:/output
     depends_on:
       - test_gws_dev_db
+    container_name: ${CONTAINER_PREFIX}-glab-test
 
   test_gws_dev_db:
     image: mariadb:10.7.4
@@ -37,3 +45,4 @@ services:
       - --skip-log-bin
       - --innodb-flush-method=nosync
       - --innodb-buffer-pool-size=512M
+    container_name: ${CONTAINER_PREFIX}-test-gws-dev-db

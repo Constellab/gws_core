@@ -131,6 +131,12 @@ def test(
     if log_level:
         os.environ["GWS_TEST_LOG_LEVEL"] = log_level
 
+    # If GWS_TEST_LOG_DIR isn't already set by a parent (e.g. test-all per-brick
+    # subfolder), fall back to TEST_OUTPUT_DIR so direct `gws server test`
+    # invocations also drop the log file alongside JUnit XML.
+    if not os.environ.get("GWS_TEST_LOG_DIR") and os.environ.get("TEST_OUTPUT_DIR"):
+        os.environ["GWS_TEST_LOG_DIR"] = os.environ["TEST_OUTPUT_DIR"]
+
     # Don't propagate sys.path via PYTHONPATH: it leaks into child subprocesses
     # spawned by tests (conda, pipenv, mamba) whose interpreters have different
     # stdlib versions, producing "SRE module mismatch" crashes. conftest.py at

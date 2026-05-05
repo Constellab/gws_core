@@ -65,7 +65,11 @@ class AppManager:
 
         logger_level = Logger.check_log_level(log_level)
         logger = Logger.build_main_logger(
-            log_dir=log_dir, level=logger_level, context=log_context, context_id=log_context_id
+            log_dir=log_dir,
+            level=logger_level,
+            context=log_context,
+            context_id=log_context_id,
+            is_test=is_test,
         )
         if log_context == LogContext.MAIN:
             Logger.info(f"Logger configured with log level: {logger.level}")

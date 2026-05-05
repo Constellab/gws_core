@@ -91,6 +91,7 @@ class Logger:
         level: LoggerLevel = "INFO",
         context: LogContext = LogContext.MAIN,
         context_id: str | None = None,
+        is_test: bool = False,
     ) -> None:
         """Create the Gencovery logger, it logs into the console and into a file
 
@@ -149,9 +150,18 @@ class Logger:
         self._file_path = path.join(log_dir, LOGGER_FILE_NAME)
         # file_handler = logging.FileHandler(Logger._file_path)
 
-        # define a TimeRotating file to create a new file each day à 00:00
-        # this write the log in a file with a json format
-        file_handler = TimedRotatingFileHandler(self._file_path, when="midnight")
+        if is_test:
+            # Under pytest-xdist, every worker initializes its own logger but
+            # they all share this file. Use a plain append-mode FileHandler:
+            # POSIX guarantees small writes to an O_APPEND fd are atomic, so
+            # JSON log lines from concurrent workers don't interleave.
+            # TimedRotatingFileHandler is not multi-process safe (workers
+            # would race on the rotation rename).
+            file_handler: logging.Handler = logging.FileHandler(self._file_path, mode="a")
+        else:
+            # define a TimeRotating file to create a new file each day à 00:00
+            # this write the log in a file with a json format
+            file_handler = TimedRotatingFileHandler(self._file_path, when="midnight")
         file_handler.setFormatter(JSONFormatter(context=context, context_id=context_id))
         # formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
         # file_handler.setFormatter(formatter)
@@ -164,9 +174,10 @@ class Logger:
         level: LoggerLevel = "INFO",
         context: LogContext = LogContext.MAIN,
         context_id: str | None = None,
+        is_test: bool = False,
     ) -> "Logger":
         cls.clear_logger()
-        logger = Logger(log_dir, level, context, context_id)
+        logger = Logger(log_dir, level, context, context_id, is_test=is_test)
         cls._logger_instance = logger
 
         cls._log_waiting_message()
