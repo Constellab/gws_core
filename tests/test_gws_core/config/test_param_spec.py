@@ -45,9 +45,14 @@ class TestParamSpec(TestCase):
         # check the default value
         Utils.assert_json_equals(param_2.get_default_value(), [{"str": None, "int": 12}])
 
+        # ParamSet.validate mints a __item_id per row; assert on the inner
+        # fields rather than full-dict equality.
         value = [{"str": "Hello", "int": "10"}]
-        expected_value = [{"str": "Hello", "int": 10}]
-        self.assertEqual(param.validate(value), expected_value)
+        validated = param.validate(value)
+        self.assertEqual(len(validated), 1)
+        self.assertEqual(validated[0]["str"], "Hello")
+        self.assertEqual(validated[0]["int"], 10)
+        self.assertIn(ConfigSpecs.ITEM_ID_KEY, validated[0])
 
     def test_json_param(self):
         param = JsonCodeParam()

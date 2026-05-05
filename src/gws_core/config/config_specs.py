@@ -1,5 +1,7 @@
-from typing import Any
+import copy
+from typing import Any, ClassVar
 
+from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.config.config_exceptions import MissingConfigsException, UnkownParamException
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
@@ -9,6 +11,17 @@ from .param.param_types import ParamSpecDTO
 
 
 class ConfigSpecs:
+    """A typed schema (dict of ParamSpec) plus value-management helpers.
+
+    The helpers (strip_computed_keys, validate_values, merge_computed,
+    diff_values) operate on a values dict shaped by these specs.
+
+    ITEM_ID_KEY is the reserved per-row key on ParamSet items. ParamSet.validate
+    mints, preserves, and restores it; nothing else in ConfigSpecs writes it.
+    """
+
+    ITEM_ID_KEY: ClassVar[str] = "__item_id"
+
     specs: dict[str, ParamSpec]
 
     def __init__(self, specs: dict[str, ParamSpec] | None = None) -> None:
@@ -232,6 +245,178 @@ class ConfigSpecs:
         from gws_core.config.param.computed.computed_param import ComputedParam
 
         return ComputedParam.compute_all(self, values, evaluator)
+
+    # ------------------------------------------------------------------ #
+    # Values-layer helpers
+    # ------------------------------------------------------------------ #
+
+    def strip_computed_keys(self, values: ConfigParamsDict) -> ConfigParamsDict:
+        """Drop keys whose ``spec.accepts_user_input is False`` (currently
+        ``ComputedParam``). Recurses into ParamSet rows.
+
+        Defensive input-side strip: clients must not write to computed keys;
+        the evaluator owns those values.
+        """
+        # ParamSet imported lazily: param_set.py imports ConfigSpecs at its
+        # module top, so a top-level import here would form a cycle.
+        from .param.param_set import ParamSet
+
+        if not values:
+            return {} if values is None else values
+        result: ConfigParamsDict = {}
+        for key, value in values.items():
+            spec = self.specs.get(key)
+            if spec is not None and not spec.accepts_user_input:
+                continue
+            if (
+                isinstance(spec, ParamSet)
+                and spec.param_set is not None
+                and isinstance(value, list)
+            ):
+                # Recurse into each row using the inner ConfigSpecs. __item_id
+                # is not a spec so it falls into the unknown-key branch and is
+                # preserved naturally.
+                result[key] = [
+                    spec.param_set.strip_computed_keys(row)
+                    for row in value
+                    if isinstance(row, dict)
+                ]
+            else:
+                result[key] = value
+        return result
+
+    def validate_values(self, values: ConfigParamsDict) -> ConfigParamsDict:
+        """Run leaf-level ``ParamSpec.validate(...)`` on every provided value.
+
+        Lenient: missing mandatories DO NOT raise (use ``mandatory_values_are_set``
+        as a separate gate when required). Returns the reshaped dict — for
+        ParamSets, ``ParamSet.validate`` mints ``__item_id`` per row and the
+        result carries it back.
+
+        ParamSet rows are re-validated through the spec to keep identity
+        reconciliation in one place; non-ParamSet specs validate in place.
+        """
+        if not values:
+            return {} if values is None else values
+
+        result: ConfigParamsDict = {}
+        for key, value in values.items():
+            spec = self.specs.get(key)
+            if spec is None or not spec.accepts_user_input:
+                result[key] = value
+                continue
+            if value is None:
+                result[key] = None
+                continue
+            # ParamSet.validate strips/mints/restores __item_id per row; other
+            # specs validate the value as-is. No type discrimination needed.
+            result[key] = spec.validate(value)
+        return result
+
+    def merge_computed(
+        self,
+        user_values: ConfigParamsDict,
+        computed: ConfigParamsDict,
+    ) -> ConfigParamsDict:
+        """Merge the outer-scope computed dict into ``user_values`` and return
+        the union.
+
+        Per-row ParamSet computed cells are populated in-place by
+        ``compute_values`` itself, so this only needs to handle outer-scope
+        keys. The result is the single dict the caller persists.
+        """
+        result = copy.deepcopy(user_values) if user_values else {}
+        for key, value in (computed or {}).items():
+            spec = self.specs.get(key)
+            if spec is None or spec.accepts_user_input:
+                continue
+            result[key] = value
+        return result
+
+    @staticmethod
+    def diff_values(
+        old: dict[str, Any] | None,
+        new: dict[str, Any] | None,
+    ) -> list[ConfigChangeEntry]:
+        """Recursive diff producing one ConfigChangeEntry per leaf change.
+
+        Field-path shape:
+        - top-level scalar:        ``mass``
+        - ParamSet item field:     ``samples[item_id=<uuid>].mass``
+        - whole item add/remove:   ``samples[item_id=<uuid>]``
+
+        Reorder = REMOVED + ADDED for the same ``__item_id``. Pure reorders
+        (no inner field changes) produce no entries. Workflow-level events
+        like form status transitions are appended by the caller.
+
+        ParamSet diffing is delegated to ``ParamSet.diff_values`` (it owns the
+        per-row identity model). This entry point only handles dispatch.
+        """
+        # ParamSet imported lazily: param_set.py imports ConfigSpecs at its
+        # module top, so a top-level import here would form a cycle.
+        from .param.param_set import ParamSet
+
+        old = old or {}
+        new = new or {}
+        changes: list[ConfigChangeEntry] = []
+        keys = set(old.keys()) | set(new.keys())
+        for key in sorted(keys):
+            old_val = old.get(key)
+            new_val = new.get(key)
+            if ConfigSpecs._is_paramset_value(old_val) or ConfigSpecs._is_paramset_value(new_val):
+                changes.extend(ParamSet.diff_values(key, old_val, new_val))
+            else:
+                changes.extend(
+                    ConfigSpecs.diff_scalar(key, old_val, new_val, key in old, key in new)
+                )
+        return changes
+
+    @staticmethod
+    def _is_paramset_value(value: Any) -> bool:
+        if not isinstance(value, list) or not value:
+            return False
+        return all(isinstance(item, dict) for item in value)
+
+    @staticmethod
+    def diff_scalar(
+        path: str,
+        old_val: Any,
+        new_val: Any,
+        in_old: bool,
+        in_new: bool,
+    ) -> list[ConfigChangeEntry]:
+        """Diff a single non-ParamSet value into 0 or 1 ConfigChangeEntry.
+
+        Public so ParamSet.diff_values can reuse it for inner-field diffing.
+        """
+        if not in_old and in_new:
+            return [
+                ConfigChangeEntry(
+                    field_path=path,
+                    action=ConfigChangeAction.FIELD_CREATED,
+                    old_value=None,
+                    new_value=new_val,
+                )
+            ]
+        if in_old and not in_new:
+            return [
+                ConfigChangeEntry(
+                    field_path=path,
+                    action=ConfigChangeAction.FIELD_DELETED,
+                    old_value=old_val,
+                    new_value=None,
+                )
+            ]
+        if old_val != new_val:
+            return [
+                ConfigChangeEntry(
+                    field_path=path,
+                    action=ConfigChangeAction.FIELD_UPDATED,
+                    old_value=old_val,
+                    new_value=new_val,
+                )
+            ]
+        return []
 
     def __len__(self) -> int:
         return len(self.specs)

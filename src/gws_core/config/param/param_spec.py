@@ -179,7 +179,7 @@ class ParamSpec:
 
     @classmethod
     @abstractmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         pass
 
     @classmethod
