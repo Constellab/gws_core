@@ -452,15 +452,32 @@ from .note.note_dto import NoteDTO as NoteDTO
 from .note.note_dto import NoteSaveDTO as NoteSaveDTO
 from .note.note_events import NoteContentUpdatedEvent as NoteContentUpdatedEvent
 from .note.note_events import NoteDeletedEvent as NoteDeletedEvent
+from .note.note_form_model import NoteFormModel as NoteFormModel
 from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder
 from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
+
+# Form ↔ Note / NoteTemplate listeners (side-effect imports register
+# the @event_listener decorated classes with the EventDispatcher).
+from .form import form_note_cascade_listener as _form_note_cascade_listener  # noqa: F401
+from .form import form_note_join_listener as _form_note_join_listener  # noqa: F401
+from .form import form_note_template_join_listener as _form_note_template_join_listener  # noqa: F401
+
+# Form rich-text block rules (side-effect import registers the rules
+# with RichTextContentValidator).
+from .form import form_rich_text_block_rules as _form_rich_text_block_rules  # noqa: F401
 
 # Note task
 from .note.task.note_param import NoteParam as NoteParam
 
 # Note template
 from .note_template.note_template import NoteTemplate as NoteTemplate
+from .note_template.note_template_events import (
+    NoteTemplateContentUpdatedEvent as NoteTemplateContentUpdatedEvent,
+)
+from .note_template.note_template_form_template_model import (
+    NoteTemplateFormTemplateModel as NoteTemplateFormTemplateModel,
+)
 from .note_template.note_template_service import NoteTemplateService as NoteTemplateService
 
 # Note template > task

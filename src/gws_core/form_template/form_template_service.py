@@ -20,6 +20,9 @@ from gws_core.form_template.form_template_search_builder import (
     FormTemplateSearchBuilder,
 )
 from gws_core.form_template.form_template_version import FormTemplateVersion
+from gws_core.note_template.note_template_form_template_model import (
+    NoteTemplateFormTemplateModel,
+)
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
@@ -114,6 +117,19 @@ class FormTemplateService:
         if form_count > 0:
             raise BadRequestException(
                 f"Cannot delete form template: {form_count} form(s) reference it. Archive instead."
+            )
+
+        # Spec §5.6 dual: any NoteTemplate that still pins a version of this
+        # template family blocks the delete (RESTRICT FK on the join would
+        # also catch it, but a friendly error is nicer).
+        note_template_ref_count = (
+            NoteTemplateFormTemplateModel.get_by_form_template(template.id).count()
+        )
+        if note_template_ref_count > 0:
+            raise BadRequestException(
+                f"Cannot delete form template: {note_template_ref_count} "
+                "note template(s) still embed a version of it. Remove the "
+                "FORM_TEMPLATE blocks from those note templates first."
             )
 
         template.delete_instance()
@@ -278,6 +294,15 @@ class FormTemplateService:
             if form_count > 0:
                 raise BadRequestException(
                     f"Cannot delete archived version: {form_count} form(s) reference it."
+                )
+            note_template_ref_count = (
+                NoteTemplateFormTemplateModel.count_by_form_template_version(version.id)
+            )
+            if note_template_ref_count > 0:
+                raise BadRequestException(
+                    "Cannot delete archived version: "
+                    f"{note_template_ref_count} note template(s) still pin "
+                    "it via FORM_TEMPLATE blocks."
                 )
 
         version.delete_instance()

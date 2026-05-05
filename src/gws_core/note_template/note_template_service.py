@@ -10,17 +10,21 @@ from gws_core.impl.rich_text.block.rich_text_block_form_template import (
 )
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
-from gws_core.impl.rich_text.rich_text_form_validator import (
-    RichTextFormBlockValidator,
+from gws_core.impl.rich_text.rich_text_content_validator import (
+    RichTextContentValidator,
 )
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock,
     RichTextDTO,
     RichTextObjectType,
 )
+from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.note.note import Note
 from gws_core.note_template.note_template import NoteTemplate
 from gws_core.note_template.note_template_dto import InsertFormTemplateBlockDTO
+from gws_core.note_template.note_template_events import (
+    NoteTemplateContentUpdatedEvent,
+)
 from gws_core.note_template.note_template_search_builder import NoteTemplateSearchBuilder
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
@@ -84,8 +88,18 @@ class NoteTemplateService:
 
         # Reject FORM blocks; reject newly-introduced FORM_TEMPLATE blocks
         # whose pinned version is not PUBLISHED (spec §5.1).
-        RichTextFormBlockValidator.validate_for_note_template(
+        RichTextContentValidator.validate_for_note_template(
             note_content, document.content
+        )
+
+        # Dispatch event BEFORE saving — sync listeners can mutate
+        # note_content or raise exceptions to abort the save.
+        EventDispatcher.get_instance().dispatch(
+            NoteTemplateContentUpdatedEvent(
+                note_template_id=doc_id,
+                old_content=document.content,
+                new_content=note_content,
+            )
         )
 
         document.content = note_content

@@ -177,6 +177,62 @@ This keeps the form module from reimplementing tag inheritance and means the exi
 
 ---
 
+### 3.6 Note ↔ Form / NoteTemplate ↔ FormTemplateVersion join models
+
+The relationship between a `Note` and the `Form`s it embeds (and between a `NoteTemplate` and the `FormTemplateVersion`s its `FORM_TEMPLATE` blocks pin) is encoded in rich-text JSON (§5.2, §5.3). That makes the *write* path natural — the editor manipulates blocks — but it makes the *read* path expensive: any code that needs to answer "which notes embed form X?" or "is anyone still pinning archived version Y?" would have to scan every `Note.content` / `NoteTemplate.content` row.
+
+To keep these queries cheap, we add two queryable join models that mirror the rich-text content. They are projections, not the source of truth: the rich-text block payload is authoritative at write time, and the join row is reconciled inside the same transaction whenever content changes (the same pattern used by `NoteViewModel` to track resource views — see [note_view_model.py](bricks/gws_core/src/gws_core/note/note_view_model.py) and the `_refresh_note_views_and_tags` reconciliation at [note_service.py:724](bricks/gws_core/src/gws_core/note/note_service.py#L724)).
+
+#### `NoteFormModel`
+
+| Column | Type | Notes |
+|---|---|---|
+| `note` | FK → `Note` (composite PK part, indexed, `on_delete=CASCADE`) | Cascade so deleting a note drops its join rows automatically. |
+| `form` | FK → `Form` (composite PK part, indexed, `on_delete=RESTRICT`) | RESTRICT so the DB rejects hard-deleting a `Form` that any note still embeds — a belt-and-braces guard layered under the application-level check. |
+| `is_owner` | bool | Mirrors the `is_owner` flag on the `FORM` block payload (§5.3). Stored on the join so cascade and ownership queries are direct SQL, no JSON parsing. |
+
+Composite primary key on `(note, form)` — at most one `NoteFormModel` row per (note, form) pair, even if the same form is referenced by multiple `FORM` blocks within one note (treat that as redundant; the join collapses it).
+
+Table name: `gws_note_form` (consistent with `gws_note_view`).
+
+#### `NoteTemplateFormTemplateModel`
+
+| Column | Type | Notes |
+|---|---|---|
+| `note_template` | FK → `NoteTemplate` (composite PK part, indexed, `on_delete=CASCADE`) | |
+| `form_template_version` | FK → `FormTemplateVersion` (composite PK part, indexed, `on_delete=RESTRICT`) | RESTRICT so the DB rejects deleting a `FormTemplateVersion` while any note template still pins it. The pinned-version granularity (rather than family-level `FormTemplate`) matches the §5.4 archived-fallback flow, where we need to ask "is anyone still pinning *this exact archived version*?". |
+| `form_template` | FK → `FormTemplate` (indexed) | Denormalized for cheap "find note templates using template family X" without joining through `FormTemplateVersion`. Always equals `form_template_version.template_id`; reconciled at write. |
+
+Composite primary key on `(note_template, form_template_version)`.
+
+Table name: `gws_note_template_form_template`.
+
+#### Reconciliation
+
+Reconciliation is event-driven. The form module owns two synchronous `@event_listener`s — one for `Note` content changes, one for `NoteTemplate` content changes — that diff the new rich-text content against the join table and apply inserts / deletes / `is_owner` updates. The `note` and `note_template` modules are unaware of the form module's existence; they just dispatch the events they already would dispatch for any content mutation. This keeps the dependency one-way (form → note, never note → form) and avoids inlining form-specific reconciliation calls inside `NoteService` / `NoteTemplateService`.
+
+Events:
+
+- `NoteContentUpdatedEvent` ([note_events.py:16](bricks/gws_core/src/gws_core/note/note_events.py#L16)) — already exists, dispatched synchronously inside `NoteService.update_content` ([note_service.py:208](bricks/gws_core/src/gws_core/note/note_service.py#L208)) before the content is written. The form module's listener subscribes here.
+- `NoteTemplateContentUpdatedEvent` — new in Phase 7, mirrors the Note event. Dispatched synchronously inside `NoteTemplateService.update_content` ([note_template_service.py:82](bricks/gws_core/src/gws_core/note_template/note_template_service.py#L82)). `NoteTemplateService.insert_form_template_block` ([note_template_service.py:97](bricks/gws_core/src/gws_core/note_template/note_template_service.py#L97)) already routes through `update_content`, so it covers that path automatically.
+
+`NoteService.create` ([note_service.py:65](bricks/gws_core/src/gws_core/note/note_service.py#L65)) currently writes `note.content = template.content` directly without going through `update_content` — bypassing both the validator and the event. Phase 7 routes this path through the same dispatch, so the create-from-template flow gets join reconciliation (and validator coverage) for free. The `FORM_TEMPLATE → FORM` conversion (§5.4) runs explicitly *before* the dispatch — it is a content transformation owned by the form module, not a listener concern, and keeping it explicit avoids a fragile "listener-A-runs-before-listener-B" ordering assumption.
+
+Listeners are synchronous, so they execute in the caller's transaction. If a listener raises, the surrounding content update rolls back — matching the existing `NoteContentUpdatedEvent` contract.
+
+#### Query paths
+
+- "Which notes embed form X?" → `NoteFormModel.select().where(NoteFormModel.form == X)`. Used by the §5.6 cascade and by `FormService.hard_delete`'s usage guard.
+- "Which note templates pin version V?" → `NoteTemplateFormTemplateModel.select().where(NoteTemplateFormTemplateModel.form_template_version == V)`. Used by `FormTemplateService.hard_delete` of an `ARCHIVED` version.
+- "Which notes own form X?" → `NoteFormModel.select().where((NoteFormModel.form == X) & (NoteFormModel.is_owner == True))`. Used by the §5.6 cascade to identify owner blocks without parsing JSON.
+- Reverse navigation ("which forms does this note embed?") → `NoteFormModel.get_by_note(note_id)`. Useful for the cascade listener and for any future "show all forms in this note" UI.
+
+#### Why this is layered safety, not duplication
+
+The rich-text block payload remains the source of truth for *write semantics* (what the user sees, what the editor manipulates, what the validator gates). The join tables are an *index* maintained in lockstep — they make reads cheap and add a DB-level guard against breaking referential integrity. If the join and the rich-text content ever drift, the content wins; a maintenance task can rebuild the join from content. The `RESTRICT` FKs catch the most damaging class of bug (a stale form id in rich text pointing at a deleted form) at the schema layer.
+
+---
+
 ## 4. Relationships & cascade rules
 
 ```
@@ -188,8 +244,9 @@ FormTemplate 1───* FormTemplateVersion 1───* Form 1───* FormSa
   - `DRAFT`: always allowed.
   - `PUBLISHED`: not allowed; must be archived first.
   - `ARCHIVED`: allowed iff no `Form` references it.
-- Deleting a `Form` cascade-deletes its `FormSaveEvent` rows.
-- Note ↔ Form ownership cascade: see §5.4.
+- Deleting a `Form` cascade-deletes its `FormSaveEvent` rows. Hard-delete is rejected (DB-level via `NoteFormModel.form` `on_delete=RESTRICT` + an application-level guard with a friendly message) if any `Note` still embeds the form. See §3.6.
+- Note ↔ Form ownership cascade: see §5.4. The cascade walks `NoteFormModel` rather than parsing rich text — see §3.6.
+- Hard-deleting an `ARCHIVED` `FormTemplateVersion` is rejected (DB-level via `NoteTemplateFormTemplateModel.form_template_version` `on_delete=RESTRICT` + application-level guard) if any `NoteTemplate` still pins it via a `FORM_TEMPLATE` block. See §3.6.
 
 ---
 
@@ -538,10 +595,12 @@ A single migration adds:
 - Table `gws_form_template_version` with FK to `gws_form_template`, unique constraint `(template_id, version)`, and a partial unique constraint enforcing at most one `DRAFT` per template (`UNIQUE (template_id) WHERE status = 'DRAFT'`).
 - Table `gws_form` with FK to `gws_form_template_version`.
 - Table `gws_form_save_event` with FK to `gws_form` (cascade), JSON `changes` column, indexes `(form_id, created_at DESC)` and `(user_id, created_at DESC)`. No GIN index on `changes` in v1; add later if field-path filter queries become hot.
+- Table `gws_note_form` (§3.6) with composite PK `(note, form)`, `note` FK `on_delete=CASCADE`, `form` FK `on_delete=RESTRICT`, `is_owner` bool. Both FK columns indexed.
+- Table `gws_note_template_form_template` (§3.6) with composite PK `(note_template, form_template_version)`, `note_template` FK `on_delete=CASCADE`, `form_template_version` FK `on_delete=RESTRICT`, denormalized `form_template` FK (indexed). All three FK columns indexed.
 - Two new entries in the `TagEntityType` enum: `FORM_TEMPLATE`, `FORM` (no schema change — string column).
 - One new entry in the `TagOriginType` enum: `FORM_TEMPLATE_PROPAGATED` (no schema change — string column).
 
-Existing notes and note templates need no migration; the new block types are additive and old content keeps parsing.
+Existing notes and note templates need no migration; the new block types are additive and old content keeps parsing. The two new join tables (§3.6) ship empty — the Phase 7 migration may include a one-shot backfill that walks existing `Note.content` / `NoteTemplate.content` rows and populates the join, but realistically by the time Phase 7 lands no production rich text references forms (Phase 6 is the first version where blocks even exist), so a backfill is only needed if dev/staging environments have manually inserted blocks.
 
 ---
 
