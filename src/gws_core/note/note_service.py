@@ -12,8 +12,8 @@ from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHe
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
-from gws_core.impl.rich_text.rich_text_form_validator import (
-    RichTextFormBlockValidator,
+from gws_core.impl.rich_text.rich_text_content_validator import (
+    RichTextContentValidator,
 )
 from gws_core.impl.rich_text.rich_text_modification import (
     RichTextBlockModificationWithUserDTO,
@@ -30,6 +30,9 @@ from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.note_template.note_template import NoteTemplate
+from gws_core.note_template.note_template_content_converter import (
+    NoteTemplateContentConverter,
+)
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_note
@@ -73,7 +76,9 @@ class NoteService:
 
         if note_dto.template_id:
             template: NoteTemplate = NoteTemplate.get_by_id_and_check(note_dto.template_id)
-            note.content = template.content
+            # Apply NoteTemplate→Note content transforms (FORM_TEMPLATE →
+            # FORM, etc.) before assigning to the note. Phase 7 / spec §5.4.
+            note.content = NoteTemplateContentConverter.convert(template.content)
 
             # copy the storage of the note template to the note
             RichTextFileService.copy_object_dir(
@@ -102,6 +107,20 @@ class NoteService:
             )
 
         note.save()
+
+        # Validate and dispatch a content-updated event so the form-join
+        # listener reconciles NoteFormModel rows for any FORM blocks that
+        # arrived via template instantiation. Mirrors update_content's
+        # contract; old_content is None because this is a fresh note.
+        if note.content is not None:
+            RichTextContentValidator.validate_for_note(note.content, None)
+            EventDispatcher.get_instance().dispatch(
+                NoteContentUpdatedEvent(
+                    note_id=note.id,
+                    old_content=None,
+                    new_content=note.content,
+                )
+            )
 
         if scenario_ids is not None:
             # Create the NoteScenario
@@ -201,7 +220,7 @@ class NoteService:
 
         # Reject FORM_TEMPLATE blocks; reject newly-introduced FORM blocks
         # whose form_id does not exist (spec §5.1).
-        RichTextFormBlockValidator.validate_for_note(note_content, note.content)
+        RichTextContentValidator.validate_for_note(note_content, note.content)
 
         # Dispatch event BEFORE saving — sync listeners can mutate note_content
         # or raise exceptions to abort the save
@@ -236,8 +255,11 @@ class NoteService:
 
         template: NoteTemplate = NoteTemplate.get_by_id_and_check(data.note_template_id)
 
+        # Apply NoteTemplate→Note content transforms before merging the
+        # template's blocks into the note. Phase 7 / spec §5.4.
+        converted_template_content = NoteTemplateContentConverter.convert(template.content)
         note_rich_text = note.get_content_as_rich_text()
-        template_rich_text = template.get_content_as_rich_text()
+        template_rich_text = RichText(converted_template_content)
 
         index = data.block_index
         for block in template_rich_text.get_blocks():

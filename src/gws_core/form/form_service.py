@@ -21,6 +21,7 @@ from gws_core.form.form_search_builder import FormSearchBuilder
 from gws_core.form.form_values_service import FormValuesService
 from gws_core.form_template.form_template_dto import FormTemplateVersionStatus
 from gws_core.form_template.form_template_version import FormTemplateVersion
+from gws_core.note.note_form_model import NoteFormModel
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -261,10 +262,24 @@ class FormService:
         """Hard-delete a Form. Cascade-deletes its FormSaveEvent rows via
         the FK on_delete=CASCADE.
 
-        TODO Phase 6: reject if any Note references this form via a FORM
-        rich-text block (spec §5.6 / §9.2). Until that block type lands,
-        no Note can hold a reference, so the guard is a no-op.
+        Rejected if any Note still embeds this form via a FORM rich-text
+        block (spec §5.6 / §9.2). The DB-level RESTRICT FK on
+        NoteFormModel.form is the underlying guarantee; the application
+        check produces a friendly error naming up to 5 referencing notes.
         """
+        referencing_rows = list(NoteFormModel.get_by_form(form_id))
+        if referencing_rows:
+            note_titles = [row.note.title for row in referencing_rows[:5]]
+            suffix = (
+                f" (and {len(referencing_rows) - 5} more)"
+                if len(referencing_rows) > 5
+                else ""
+            )
+            raise BadRequestException(
+                "Cannot delete form: still referenced by note(s): "
+                f"{', '.join(note_titles)}{suffix}. "
+                "Remove the form block from these notes first."
+            )
         form = cls.get_by_id_and_check(form_id)
         form.delete_instance()
         ActivityService.add(

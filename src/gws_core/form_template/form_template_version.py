@@ -53,6 +53,24 @@ class FormTemplateVersion(ModelWithUser):
         )
 
     @classmethod
+    def get_current_published_version(cls, template_id: str) -> "FormTemplateVersion | None":
+        """Return the latest PUBLISHED row for the template, or None.
+
+        Backs the §3.1 "current published version" derived lookup, used at
+        NoteTemplate→Note instantiation when a pinned version is ARCHIVED
+        and we need to fall back to the family's current published version.
+        """
+        return (
+            cls.select()
+            .where(
+                (cls.template_id == template_id)
+                & (cls.status == FormTemplateVersionStatus.PUBLISHED)
+            )
+            .order_by(cls.version.desc())
+            .first()
+        )
+
+    @classmethod
     def get_max_published_or_archived_version(cls, template_id: str) -> int:
         """Return the highest version number across PUBLISHED + ARCHIVED rows for
         the template, or 0 if none exist."""
