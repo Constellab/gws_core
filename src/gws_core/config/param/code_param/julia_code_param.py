@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(label="Julia code", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class JuliaCodeParam(TextParam):
     """Param for julia code. It shows a simple julia IDE
       in the interface to provide code for julia.

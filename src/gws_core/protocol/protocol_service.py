@@ -4,6 +4,7 @@ from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.apps.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (
     ParamSpecDTO,
@@ -1423,7 +1424,8 @@ class ProtocolService:
 
         process_model = protocol_model.get_process(process_name)
 
+        categories = [ParamSpecCategory.SIMPLE]
         if process_model.process_typing_name == PyAgent.get_typing_name():
-            return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types(True)
+            categories.append(ParamSpecCategory.LAB_SPECIFIC)
 
-        return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types()
+        return ParamSpecHelper.get_param_spec_types_info(categories)

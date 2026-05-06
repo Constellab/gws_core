@@ -212,7 +212,6 @@ class TestComputedParamSpec(TestCase):
         )
         dto = spec.to_dto()
         self.assertEqual(dto.type, ParamSpecCategory.COMPUTED)
-        self.assertFalse(dto.accepts_user_input)
         self.assertEqual(dto.additional_info["expression"], "mass / volume")
         self.assertEqual(dto.additional_info["result_type"], "float")
 
@@ -495,11 +494,6 @@ class TestConfigSpecsConsumerAudit(TestCase):
         defaults = self.specs.get_default_values()
         self.assertIsNone(defaults["computed"])
 
-    def test_to_dto_carries_accepts_user_input_flag(self) -> None:
-        dto = self.specs.to_dto()
-        self.assertFalse(dto["computed"].accepts_user_input)
-        self.assertTrue(dto["a"].accepts_user_input)
-
     def test_build_config_params_evaluates_computed_entries(self) -> None:
         params = self.specs.build_config_params({"a": 1.0, "b": 2.0})
         self.assertEqual(params["computed"], 3.0)
@@ -507,6 +501,3 @@ class TestConfigSpecsConsumerAudit(TestCase):
     def test_existing_param_specs_default_to_accepts_user_input_true(self) -> None:
         spec = IntParam(default_value=1)
         self.assertTrue(spec.accepts_user_input)
-        # DTO round-trip preserves the flag.
-        loaded_dto = spec.to_dto()
-        self.assertTrue(loaded_dto.accepts_user_input)

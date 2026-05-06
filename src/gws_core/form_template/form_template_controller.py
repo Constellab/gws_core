@@ -1,6 +1,5 @@
 from fastapi.param_functions import Depends
 
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeInfo
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
@@ -257,4 +256,4 @@ def unarchive_version(
 def get_param_spec_types(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> list[ParamSpecTypeInfo]:
-    return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types(True)
+    return FormTemplateService.get_allowed_param_spec_types()

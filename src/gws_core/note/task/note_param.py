@@ -5,7 +5,7 @@ from gws_core.core.model.model import Model
 from gws_core.note.note import Note
 
 
-@param_spec_decorator(label="Note", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class NoteParam(ModelParam):
     """Note params spec. When used, the end user will be able to select a note
     from the list of note available in the lab.

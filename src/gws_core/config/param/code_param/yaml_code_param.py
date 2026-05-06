@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(label="YAML code", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class YamlCodeParam(TextParam):
     """Param for yaml code. It shows a simple yaml IDE
       in the interface to provide code for yaml.

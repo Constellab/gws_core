@@ -50,10 +50,6 @@ class ParamSpecSimpleDTO(BaseModelDTO):
     visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
     additional_info: dict | None = {}
-    # Whether this param expects a value supplied by the user. When False the value
-    # is system-determined (e.g. a ComputedParam) and consumers must skip it for
-    # mandatory checks, user-input validation, and UI prompts.
-    accepts_user_input: bool = True
 
 
 class ParamSpecDTO(ParamSpecSimpleDTO):
@@ -85,6 +81,5 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
 
 class ParamSpecTypeInfo(BaseModelDTO):
     type: ParamSpecType
-    label: str
     category: ParamSpecCategory
     additional_info: dict[str, ParamSpecDTO] | None = None

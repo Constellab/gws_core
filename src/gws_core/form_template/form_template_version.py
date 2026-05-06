@@ -89,13 +89,12 @@ class FormTemplateVersion(ModelWithUser):
 
     def set_specs(self, specs: ConfigSpecs) -> "FormTemplateVersion":
         """Set the content field from the given specs without persisting."""
-        self.content = specs.to_json_dict(skip_private=True)
+        self.content = specs.to_json_dict()
         return self
 
     def update_specs(self, specs: ConfigSpecs) -> "FormTemplateVersion":
         """Set the content field from the given specs and save."""
         return self.set_specs(specs).save()
-
 
     def to_dto(self) -> FormTemplateVersionDTO:
         return FormTemplateVersionDTO(
