@@ -45,7 +45,7 @@ class FormTemplateService:
         draft = FormTemplateVersion()
         draft.template = template
         draft.status = FormTemplateVersionStatus.DRAFT
-        draft.version = 0
+        draft.version = 1
         draft.content = None
         draft.save()
 
@@ -189,11 +189,17 @@ class FormTemplateService:
         if dto is not None and dto.copy_from_version_id:
             source = cls.get_version(template_id, dto.copy_from_version_id)
             content = source.content
+        else:
+            latest_published = FormTemplateVersion.get_current_published_version(template.id)
+            if latest_published is not None:
+                content = latest_published.content
+
+        max_version = FormTemplateVersion.get_max_published_or_archived_version(template.id)
 
         draft = FormTemplateVersion()
         draft.template = template
         draft.status = FormTemplateVersionStatus.DRAFT
-        draft.version = 0
+        draft.version = max_version + 1
         draft.content = content
         draft.save()
 
@@ -233,8 +239,8 @@ class FormTemplateService:
     def publish_version(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         """DRAFT → PUBLISHED.
 
-        Validates schema, assigns version = max(version)+1 over published and
-        archived versions of this template, sets published_at / published_by.
+        Validates schema and sets published_at / published_by. The version
+        number was already assigned (max+1) at draft creation.
         """
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:
@@ -248,11 +254,6 @@ class FormTemplateService:
         except Exception as err:
             raise BadRequestException(f"Cannot publish: schema is invalid ({err})") from err
 
-        max_version = FormTemplateVersion.get_max_published_or_archived_version(
-            template_id
-        )
-
-        version.version = max_version + 1
         version.status = FormTemplateVersionStatus.PUBLISHED
         version.published_at = DateHelper.now_utc()
         version.published_by = CurrentUserService.get_and_check_current_user()
@@ -276,6 +277,22 @@ class FormTemplateService:
 
         ActivityService.add(
             ActivityType.ARCHIVE,
+            object_type=ActivityObjectType.FORM_TEMPLATE,
+            object_id=template_id,
+        )
+        return version
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def unarchive_version(cls, template_id: str, version_id: str) -> FormTemplateVersion:
+        version = cls.get_version(template_id, version_id)
+        if version.status != FormTemplateVersionStatus.ARCHIVED:
+            raise BadRequestException("Only ARCHIVED versions can be unarchived.")
+        version.status = FormTemplateVersionStatus.PUBLISHED
+        version.save()
+
+        ActivityService.add(
+            ActivityType.UNARCHIVE,
             object_type=ActivityObjectType.FORM_TEMPLATE,
             object_id=template_id,
         )
