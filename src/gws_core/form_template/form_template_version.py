@@ -2,6 +2,7 @@ from typing import Any, final
 
 from peewee import ForeignKeyField, IntegerField, fn
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
@@ -44,10 +45,7 @@ class FormTemplateVersion(ModelWithUser):
     def has_draft_for_template(cls, template_id: str) -> bool:
         return (
             cls.select()
-            .where(
-                (cls.template == template_id)
-                & (cls.status == FormTemplateVersionStatus.DRAFT)
-            )
+            .where((cls.template == template_id) & (cls.status == FormTemplateVersionStatus.DRAFT))
             .exists()
         )
 
@@ -88,6 +86,16 @@ class FormTemplateVersion(ModelWithUser):
             )
             .scalar()
         ) or 0
+
+    def set_specs(self, specs: ConfigSpecs) -> "FormTemplateVersion":
+        """Set the content field from the given specs without persisting."""
+        self.content = specs.to_json_dict(skip_private=True)
+        return self
+
+    def update_specs(self, specs: ConfigSpecs) -> "FormTemplateVersion":
+        """Set the content field from the given specs and save."""
+        return self.set_specs(specs).save()
+
 
     def to_dto(self) -> FormTemplateVersionDTO:
         return FormTemplateVersionDTO(

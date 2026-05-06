@@ -12,7 +12,6 @@ from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
@@ -26,9 +25,8 @@ from gws_core.note_template.note_template_service import NoteTemplateService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-def _spec_dict() -> dict:
-    spec = ConfigSpecs({"name": StrParam(human_name="name", optional=True)}).to_dto()
-    return {k: v.to_json_dict() for k, v in spec.items()}
+def _name_specs() -> ConfigSpecs:
+    return ConfigSpecs({"name": StrParam(human_name="name", optional=True)})
 
 
 class TestFormHardDeleteGuard(BaseTestCase):
@@ -83,9 +81,7 @@ class TestFormHardDeleteGuard(BaseTestCase):
             )
             .get()
         )
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict())
-        )
+        draft.update_specs(_name_specs())
         return FormTemplateService.publish_version(template.id, draft.id)
 
     def _make_form(self):

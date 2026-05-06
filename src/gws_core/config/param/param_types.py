@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, Literal
 
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.core.model.model_dto import BaseModelDTO
 
 ParamValue = Any
@@ -14,7 +15,7 @@ ParamValueType = type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
-class ParamSpecTypeStr(Enum):
+class ParamSpecType(Enum):
     STRING = "str"
     TEXT = "text"
     BOOL = "bool"
@@ -44,7 +45,7 @@ class ParamSpecTypeStr(Enum):
 
 
 class ParamSpecSimpleDTO(BaseModelDTO):
-    type: ParamSpecTypeStr
+    type: ParamSpecType
     optional: bool
     visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
@@ -70,28 +71,20 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
 
         # write the default value (only for basic types)
         basic_types = [
-            ParamSpecTypeStr.STRING,
-            ParamSpecTypeStr.TEXT,
-            ParamSpecTypeStr.BOOL,
-            ParamSpecTypeStr.INT,
-            ParamSpecTypeStr.FLOAT,
+            ParamSpecType.STRING,
+            ParamSpecType.TEXT,
+            ParamSpecType.BOOL,
+            ParamSpecType.INT,
+            ParamSpecType.FLOAT,
         ]
-        if self.type in [basic_types] and self.default_value:
+        if self.type in basic_types and self.default_value:
             markdown += f", default to '{self.default_value}'"
 
         return markdown
 
 
-class ParamSpecInfoSpecs(BaseModelDTO):
-    optional: ParamSpecDTO
-    # visibility: ParamSpecDTO
-    name: ParamSpecDTO
-    short_description: ParamSpecDTO
-    human_name: ParamSpecDTO | None = None
-    default_value: ParamSpecDTO | None = None
+class ParamSpecTypeInfo(BaseModelDTO):
+    type: ParamSpecType
+    label: str
+    category: ParamSpecCategory
     additional_info: dict[str, ParamSpecDTO] | None = None
-
-
-DynamicParamAllowedSpecsDict = dict[str, ParamSpecInfoSpecs]
-
-CompleteDynamicParamAllowedSpecsDict = dict[str, DynamicParamAllowedSpecsDict]

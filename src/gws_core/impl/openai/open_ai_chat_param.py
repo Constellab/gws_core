@@ -1,13 +1,13 @@
 from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(label="OpenAI chat", type_=ParamSpecCategory.LAB_SPECIFIC)
 class OpenAiChatParam(ParamSpec):
     """Special param for config that create a chat with open ai similar
     to ChatGPT.
@@ -68,8 +68,8 @@ class OpenAiChatParam(ParamSpec):
         return OpenAiChat.from_json(value, system_prompt=self.context)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.OPEN_AI_CHAT
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.OPEN_AI_CHAT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "OpenAiChatParam":

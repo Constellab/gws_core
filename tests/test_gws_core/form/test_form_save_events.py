@@ -16,15 +16,10 @@ from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.test.base_test_case import BaseTestCase
-
-
-def _serialize(specs: ConfigSpecs) -> dict:
-    return {k: v.to_json_dict() for k, v in specs.to_dto().items()}
 
 
 class TestFormSaveEvents(BaseTestCase):
@@ -189,9 +184,7 @@ class TestFormSaveEvents(BaseTestCase):
     def _make_form_from_specs(self, specs: ConfigSpecs) -> Form:
         template = FormTemplateService.create(CreateFormTemplateDTO(name="T"))
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_serialize(specs))
-        )
+        draft.update_specs(specs)
         published = FormTemplateService.publish_version(template.id, draft.id)
         return FormService.create(CreateFormDTO(template_version_id=published.id))
 

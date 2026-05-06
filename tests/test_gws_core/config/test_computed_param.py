@@ -21,7 +21,7 @@ from gws_core.config.param.computed.computed_param_evaluator import (
     ConfigSpecsEvaluator,
 )
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import ParamSpecTypeStr
+from gws_core.config.param.param_types import ParamSpecCategory
 
 
 @task_decorator("ComputedParamTask")
@@ -147,9 +147,7 @@ class TestComputedParamEvaluator(TestCase):
 
     def test_stddev_with_one_value_raises(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            self.ev.evaluate(
-                "stddev(samples[].x)", {}, paramset_rows={"samples": [{"x": 1.0}]}
-            )
+            self.ev.evaluate("stddev(samples[].x)", {}, paramset_rows={"samples": [{"x": 1.0}]})
 
     def test_unknown_paramset_key(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
@@ -213,7 +211,7 @@ class TestComputedParamSpec(TestCase):
             short_description="Computed density",
         )
         dto = spec.to_dto()
-        self.assertEqual(dto.type, ParamSpecTypeStr.COMPUTED)
+        self.assertEqual(dto.type, ParamSpecCategory.COMPUTED)
         self.assertFalse(dto.accepts_user_input)
         self.assertEqual(dto.additional_info["expression"], "mass / volume")
         self.assertEqual(dto.additional_info["result_type"], "float")
@@ -269,9 +267,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
-                "total_mass": ComputedParam(
-                    expression="sum(samples[].mass)", result_type="float"
-                ),
+                "total_mass": ComputedParam(expression="sum(samples[].mass)", result_type="float"),
             }
         )
         params = specs.build_config_params(

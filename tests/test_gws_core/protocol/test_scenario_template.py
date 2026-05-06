@@ -4,7 +4,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import StrParam
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
+from gws_core.config.param.param_types import ParamSpecCategory, ParamSpecDTO
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -406,7 +406,7 @@ class TestScenarioTemplate(BaseTestCase):
 
         # Add dynamic param specs
         str_spec_dto = ParamSpecDTO(
-            type=ParamSpecTypeStr.STRING,
+            type=ParamSpecCategory.STRING,
             optional=True,
             default_value="hello",
             human_name="My string param",
@@ -417,7 +417,7 @@ class TestScenarioTemplate(BaseTestCase):
         )
 
         int_spec_dto = ParamSpecDTO(
-            type=ParamSpecTypeStr.INT,
+            type=ParamSpecCategory.INT,
             optional=True,
             default_value=42,
             human_name="My int param",

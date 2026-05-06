@@ -3,7 +3,10 @@ from typing import Any
 
 from typing_extensions import TypedDict
 
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from gws_core.config.param.param_spec_decorator import (
+    ParamSpecCategory,
+    param_spec_decorator,
+)
 
 from ...core.classes.validator import (
     BoolValidator,
@@ -16,9 +19,9 @@ from ...core.classes.validator import (
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .param_types import (
     ParamSpecDTO,
-    ParamSpecInfoSpecs,
     ParamSpecSimpleDTO,
-    ParamSpecTypeStr,
+    ParamSpecType,
+    ParamSpecTypeInfo,
     ParamSpecVisibilty,
 )
 
@@ -47,6 +50,12 @@ class ParamSpec:
     PUBLIC_VISIBILITY: ParamSpecVisibilty = "public"
     PROTECTED_VISIBILITY: ParamSpecVisibilty = "protected"
     PRIVATE_VISIBILITY: ParamSpecVisibilty = "private"
+
+    # Category of the param spec, set by the @param_spec_decorator
+    __category__: ParamSpecCategory
+
+    # Human-readable label of the param spec, set by the @param_spec_decorator
+    __label__: str
 
     def __init__(
         self,
@@ -98,7 +107,7 @@ class ParamSpec:
 
     def to_dto(self) -> ParamSpecDTO:
         return ParamSpecDTO(
-            type=self.get_str_type(),
+            type=self.get_param_spec_type(),
             optional=self.optional,
             visibility=self.visibility,
             additional_info=self.additional_info or {},
@@ -110,7 +119,7 @@ class ParamSpec:
 
     def to_simple_dto(self) -> ParamSpecSimpleDTO:
         return ParamSpecSimpleDTO(
-            type=self.get_str_type(),
+            type=self.get_param_spec_type(),
             optional=self.optional,
             visibility=self.visibility,
             additional_info=self.additional_info or {},
@@ -141,20 +150,20 @@ class ParamSpec:
         ]
         if visibility not in allowed_visibility:
             raise BadRequestException(
-                f"The visibilty '{visibility}' of the '{self.get_str_type()}' param is incorrect. It must be one of the following values : {str(allowed_visibility)}"
+                f"The visibilty '{visibility}' of the '{self.get_param_spec_type()}' param is incorrect. It must be one of the following values : {str(allowed_visibility)}"
             )
 
         # If the visibility is not public, the param must have a default value
         if self.visibility != "public" and not self.optional:
             raise BadRequestException(
-                f"The '{self.get_str_type()}' param visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
+                f"The '{self.get_param_spec_type()}' param visibility is set to {self.visibility} but the param is mandatory. It must have a default value of be optional if the visiblity is not public"
             )
 
     ################################# CLASS METHODS ###############################
 
     @classmethod
     @abstractmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
+    def get_param_spec_type(cls) -> ParamSpecType:
         pass
 
     @classmethod
@@ -162,7 +171,7 @@ class ParamSpec:
         return cls()
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSpec":
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSpec":
         param_spec = cls.empty()
         param_spec.default_value = spec_dto.default_value
         param_spec.optional = spec_dto.optional
@@ -170,6 +179,13 @@ class ParamSpec:
         param_spec.short_description = spec_dto.short_description
         param_spec.visibility = spec_dto.visibility
         param_spec.additional_info = spec_dto.additional_info or {}
+        if validate and param_spec.default_value is not None:
+            try:
+                param_spec.validate(param_spec.default_value)
+            except Exception as err:
+                raise BadRequestException(
+                    f"Invalid default value for field '{param_spec.human_name}': {err}"
+                ) from err
         return param_spec
 
     @classmethod
@@ -183,28 +199,13 @@ class ParamSpec:
         pass
 
     @classmethod
-    def to_param_spec_info_specs(cls) -> ParamSpecInfoSpecs:
-        default_value_param = cls.get_default_value_param_spec()
-        default_value_param.optional = True
-        default_value_param.human_name = "Default Value"
-
-        infos: ParamSpecInfoSpecs = ParamSpecInfoSpecs(
-            optional=BoolParam(False, False, human_name="Optional").to_dto(),
-            name=StrParam(optional=False, human_name="Name").to_dto(),
-            # comment visibility because not supported yet in dynamic param sub specs
-            # visibility=StrParam(
-            #     default_value='public', human_name='Visibility',
-            #     allowed_values=['public', 'protected', 'private']).to_dto(),
-            short_description=StrParam(optional=True, human_name="Short description").to_dto(),
-            human_name=StrParam(optional=True, human_name="Human name").to_dto(),
-            default_value=default_value_param.to_dto(),
+    def to_param_spec_info_specs(cls) -> ParamSpecTypeInfo:
+        return ParamSpecTypeInfo(
+            type=cls.get_param_spec_type(),
+            label=cls.__label__,
+            category=cls.__category__,
+            additional_info=cls.get_additional_infos(),
         )
-
-        additional_info = cls.get_additional_infos()
-        if additional_info is not None:
-            infos.additional_info = additional_info
-
-        return infos
 
 
 class StrParamAdditionalInfo(TypedDict):
@@ -215,7 +216,7 @@ class StrParamAdditionalInfo(TypedDict):
     allowed_values: list[str] | None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Short text")
 class StrParam(ParamSpec):
     """String param"""
 
@@ -273,8 +274,8 @@ class StrParam(ParamSpec):
         return str_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.STRING
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.STRING
 
     @classmethod
     def get_default_value_param_spec(cls) -> "StrParam":
@@ -302,7 +303,7 @@ class StrParam(ParamSpec):
             self.additional_info["allowed_values"] = None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Long text")
 class TextParam(ParamSpec):
     """Text param used for long string (like multi line text)
     If you want a short string param, use the StrParam.
@@ -346,8 +347,8 @@ class TextParam(ParamSpec):
         return str_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.TEXT
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.TEXT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "TextParam":
@@ -358,7 +359,7 @@ class TextParam(ParamSpec):
         return None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Boolean")
 class BoolParam(ParamSpec):
     """Boolean param"""
 
@@ -401,8 +402,8 @@ class BoolParam(ParamSpec):
         return bool_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.BOOL
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.BOOL
 
     @classmethod
     def get_default_value_param_spec(cls) -> "BoolParam":
@@ -413,7 +414,7 @@ class BoolParam(ParamSpec):
         return None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Dictionary")
 class DictParam(ParamSpec):
     """Any json dict param"""
 
@@ -455,8 +456,8 @@ class DictParam(ParamSpec):
         return dict_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.DICT
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.DICT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "DictParam":
@@ -467,7 +468,7 @@ class DictParam(ParamSpec):
         return None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="List")
 class ListParam(ParamSpec):
     """Any list param"""
 
@@ -509,8 +510,8 @@ class ListParam(ParamSpec):
         return list_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.LIST
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.LIST
 
     @classmethod
     def get_default_value_param_spec(cls) -> "ListParam":
@@ -584,26 +585,26 @@ class NumericParam(ParamSpec):
 
     @classmethod
     @abstractmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
+    def get_param_spec_type(cls) -> ParamSpecType:
         pass
 
     def _check_allowed_values(self, allowed_values: list[Any] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
                 raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in '{self.get_str_type()}' param, it must be an list or a tuple"
+                    f"Invalid allowed values '{allowed_values}' in '{self.get_param_spec_type()}' param, it must be an list or a tuple"
                 )
 
             if self.additional_info is not None and self.additional_info["allowed_values"] is None:
                 raise BadRequestException(
-                    f"Allowed values are not allowed in the '{self.get_str_type()}' param"
+                    f"Allowed values are not allowed in the '{self.get_param_spec_type()}' param"
                 )
             self.additional_info["allowed_values"] = allowed_values
         else:
             self.additional_info["allowed_values"] = None
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Integer")
 class IntParam(NumericParam):
     """int param"""
 
@@ -619,8 +620,8 @@ class IntParam(NumericParam):
         return int_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.INT
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.INT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "IntParam":
@@ -635,7 +636,7 @@ class IntParam(NumericParam):
         }
 
 
-@param_spec_decorator()
+@param_spec_decorator(label="Float")
 class FloatParam(NumericParam):
     """float param"""
 
@@ -651,8 +652,8 @@ class FloatParam(NumericParam):
         return float_validator.validate(value)
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.FLOAT
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.FLOAT
 
     @classmethod
     def get_default_value_param_spec(cls) -> "FloatParam":

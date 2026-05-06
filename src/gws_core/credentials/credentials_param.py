@@ -1,8 +1,8 @@
 from typing import Any, TypedDict
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
 from .credentials import Credentials
@@ -15,7 +15,7 @@ class CredentialsParamAdditionalInfo(TypedDict):
     credentials_type: str | None
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(label="Credentials", type_=ParamSpecCategory.LAB_SPECIFIC)
 class CredentialsParam(ParamSpec):
     """Credentials params spec. When used, the end user will be able to select a credentials
     from the list of credentials available in the lab. The config stores only the credentials name
@@ -69,8 +69,8 @@ class CredentialsParam(ParamSpec):
         self.credentials_type = credentials_type
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.CREDENTIALS
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.CREDENTIALS
 
     def build(self, value: Any) -> CredentialsDataBase:
         if not value:

@@ -3,15 +3,15 @@ from typing import Any
 
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec
-from .param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
-@param_spec_decorator(type_=ParamSpecType.NESTED)
+@param_spec_decorator(label="Param set", type_=ParamSpecCategory.NESTED)
 class ParamSet(ParamSpec):
     """ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
@@ -195,14 +195,14 @@ class ParamSet(ParamSpec):
         return json_
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.PARAM_SET
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.PARAM_SET
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "ParamSet":
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSet":
         from .param_spec_helper import ParamSpecHelper
 
-        param_set: ParamSet = super().load_from_dto(spec_dto)
+        param_set: ParamSet = super().load_from_dto(spec_dto, validate=validate)
 
         # load info from additional info
         param_set.max_number_of_occurrences = spec_dto.additional_info.get(
@@ -212,7 +212,9 @@ class ParamSet(ParamSpec):
         specs = ConfigSpecs()
 
         for key, param in spec_dto.additional_info.get("param_set").items():
-            specs.add_spec(key, ParamSpecHelper.create_param_spec_from_json(param))
+            specs.add_spec(
+                key, ParamSpecHelper.create_param_spec_from_json(param, validate=validate)
+            )
 
         param_set.param_set = specs
 

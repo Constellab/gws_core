@@ -11,7 +11,6 @@ from gws_core.form.form_dto import FormStatus
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
@@ -30,9 +29,8 @@ from gws_core.note_template.note_template_service import NoteTemplateService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-def _spec_dict() -> dict:
-    spec = ConfigSpecs({"name": StrParam(human_name="name", optional=True)}).to_dto()
-    return {k: v.to_json_dict() for k, v in spec.items()}
+def _name_specs() -> ConfigSpecs:
+    return ConfigSpecs({"name": StrParam(human_name="name", optional=True)})
 
 
 class TestNoteTemplateFormInstantiation(BaseTestCase):
@@ -143,9 +141,7 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
         )
         # Ship v2.
         v2_draft = FormTemplateService.create_draft(template_id)
-        FormTemplateService.update_draft(
-            template_id, v2_draft.id, UpdateDraftVersionDTO(content=_spec_dict())
-        )
+        v2_draft.update_specs(_name_specs())
         v2 = FormTemplateService.publish_version(template_id, v2_draft.id)
         # Archive v1. The NoteTemplateFormTemplateModel join still points
         # at v1 (the block payload didn't change), but RESTRICT FK on the
@@ -199,7 +195,5 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
             )
             .get()
         )
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict())
-        )
+        draft.update_specs(_name_specs())
         return FormTemplateService.publish_version(template.id, draft.id)

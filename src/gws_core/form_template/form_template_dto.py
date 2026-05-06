@@ -45,7 +45,3 @@ class UpdateFormTemplateDTO(BaseModelDTO):
 
 class CreateDraftVersionDTO(BaseModelDTO):
     copy_from_version_id: str | None = None
-
-
-class UpdateDraftVersionDTO(BaseModelDTO):
-    content: dict

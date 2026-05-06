@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from gws_core.config.param.param_types import CompleteDynamicParamAllowedSpecsDict, ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeInfo
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
@@ -758,7 +758,7 @@ def download_template(
 )
 def get_dynamic_param_allowed_param_spec_types(
     id_: str, process_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> CompleteDynamicParamAllowedSpecsDict:
+) -> list[ParamSpecTypeInfo]:
     return ProtocolService.get_dynamic_param_allowed_param_spec_types(
         protocol_id=id_, process_name=process_name
     )
