@@ -24,10 +24,9 @@ class FormTemplateVersion(ModelWithUser):
     # checkers see the raw-id accessor (avoids loading the related row).
     template_id: str
 
-    # Monotonic per template. Assigned at publish time as max(version)+1.
-    # Drafts may carry version=0 until published; the column is non-null to keep
-    # the (template_id, version) unique index simple.
-    version = IntegerField(null=False, default=0)
+    # Monotonic per template. Assigned at draft creation as max(version)+1
+    # over PUBLISHED + ARCHIVED rows, then preserved through publish.
+    version = IntegerField(null=False, default=1)
 
     status: FormTemplateVersionStatus = EnumField(
         choices=FormTemplateVersionStatus,

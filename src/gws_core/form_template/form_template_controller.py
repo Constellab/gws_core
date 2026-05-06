@@ -186,9 +186,22 @@ def archive_version(
     return FormTemplateService.archive_version(id_, version_id).to_dto()
 
 
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/unarchive",
+    tags=["Form template"],
+    summary="Unarchive an ARCHIVED version",
+)
+def unarchive_version(
+    id_: str,
+    version_id: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.unarchive_version(id_, version_id).to_dto()
+
+
 ########################## DYNAMIC PARAM #####################
 @core_app.get(
-    "/form-template/get-param-spec-types",
+    "/form-template/config/get-param-spec-types",
     tags=["Form template"],
     summary="Get param spec types",
 )
