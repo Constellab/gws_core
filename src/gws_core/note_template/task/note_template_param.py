@@ -5,7 +5,7 @@ from gws_core.core.model.model import Model
 from gws_core.note_template.note_template import NoteTemplate
 
 
-@param_spec_decorator(label="Note template", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class NoteTemplateParam(ModelParam):
     """Note template params spec. When used, the end user will be able to select a note template
     from the list of note template available in the lab.

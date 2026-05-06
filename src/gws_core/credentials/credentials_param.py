@@ -15,7 +15,7 @@ class CredentialsParamAdditionalInfo(TypedDict):
     credentials_type: str | None
 
 
-@param_spec_decorator(label="Credentials", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class CredentialsParam(ParamSpec):
     """Credentials params spec. When used, the end user will be able to select a credentials
     from the list of credentials available in the lab. The config stores only the credentials name

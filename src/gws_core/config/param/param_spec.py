@@ -54,9 +54,6 @@ class ParamSpec:
     # Category of the param spec, set by the @param_spec_decorator
     __category__: ParamSpecCategory
 
-    # Human-readable label of the param spec, set by the @param_spec_decorator
-    __label__: str
-
     def __init__(
         self,
         default_value: Any | None = None,
@@ -114,7 +111,6 @@ class ParamSpec:
             default_value=self.get_default_value(),
             human_name=self.human_name,
             short_description=self.short_description,
-            accepts_user_input=self.accepts_user_input,
         )
 
     def to_simple_dto(self) -> ParamSpecSimpleDTO:
@@ -124,7 +120,6 @@ class ParamSpec:
             visibility=self.visibility,
             additional_info=self.additional_info or {},
             default_value=self.get_default_value(),
-            accepts_user_input=self.accepts_user_input,
         )
 
     def validate(self, value: Any) -> Any:
@@ -202,7 +197,6 @@ class ParamSpec:
     def to_param_spec_info_specs(cls) -> ParamSpecTypeInfo:
         return ParamSpecTypeInfo(
             type=cls.get_param_spec_type(),
-            label=cls.__label__,
             category=cls.__category__,
             additional_info=cls.get_additional_infos(),
         )
@@ -216,7 +210,7 @@ class StrParamAdditionalInfo(TypedDict):
     allowed_values: list[str] | None
 
 
-@param_spec_decorator(label="Short text")
+@param_spec_decorator()
 class StrParam(ParamSpec):
     """String param"""
 
@@ -303,7 +297,7 @@ class StrParam(ParamSpec):
             self.additional_info["allowed_values"] = None
 
 
-@param_spec_decorator(label="Long text")
+@param_spec_decorator()
 class TextParam(ParamSpec):
     """Text param used for long string (like multi line text)
     If you want a short string param, use the StrParam.
@@ -359,7 +353,7 @@ class TextParam(ParamSpec):
         return None
 
 
-@param_spec_decorator(label="Boolean")
+@param_spec_decorator()
 class BoolParam(ParamSpec):
     """Boolean param"""
 
@@ -414,7 +408,7 @@ class BoolParam(ParamSpec):
         return None
 
 
-@param_spec_decorator(label="Dictionary")
+@param_spec_decorator()
 class DictParam(ParamSpec):
     """Any json dict param"""
 
@@ -468,7 +462,7 @@ class DictParam(ParamSpec):
         return None
 
 
-@param_spec_decorator(label="List")
+@param_spec_decorator()
 class ListParam(ParamSpec):
     """Any list param"""
 
@@ -604,7 +598,7 @@ class NumericParam(ParamSpec):
             self.additional_info["allowed_values"] = None
 
 
-@param_spec_decorator(label="Integer")
+@param_spec_decorator()
 class IntParam(NumericParam):
     """int param"""
 
@@ -636,7 +630,7 @@ class IntParam(NumericParam):
         }
 
 
-@param_spec_decorator(label="Float")
+@param_spec_decorator()
 class FloatParam(NumericParam):
     """float param"""
 

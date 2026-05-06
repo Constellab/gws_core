@@ -11,7 +11,7 @@ from .param_spec import ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
-@param_spec_decorator(label="Param set", type_=ParamSpecCategory.NESTED)
+@param_spec_decorator(type_=ParamSpecCategory.NESTED)
 class ParamSet(ParamSpec):
     """ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]

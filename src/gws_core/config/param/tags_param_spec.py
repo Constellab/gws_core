@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from .param_spec import DictParam
 
 
-@param_spec_decorator(label="Tags", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class TagsParam(DictParam):
     """TagsParam. Use to define a param for tags
 

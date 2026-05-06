@@ -1,6 +1,7 @@
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeInfo
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -404,4 +405,18 @@ class FormTemplateService:
             ActivityType.UPDATE,
             object_type=ActivityObjectType.FORM_TEMPLATE,
             object_id=template_id,
+        )
+
+    # ------------------------------------------------------------------ #
+    # Allowed param spec types
+    # ------------------------------------------------------------------ #
+
+    @classmethod
+    def get_allowed_param_spec_types(cls) -> list[ParamSpecTypeInfo]:
+        return ParamSpecHelper.get_param_spec_types_info(
+            [
+                ParamSpecCategory.SIMPLE,
+                ParamSpecCategory.LAB_SPECIFIC,
+                ParamSpecCategory.COMPUTED,
+            ]
         )

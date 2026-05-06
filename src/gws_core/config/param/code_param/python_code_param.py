@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(label="Python code", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class PythonCodeParam(TextParam):
     """Param for python code. It shows a simple python IDE
       in the interface to provide code for python.

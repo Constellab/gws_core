@@ -7,7 +7,7 @@ from gws_core.config.param.param_spec_decorator import param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 
 
-@param_spec_decorator(label="JSON code")
+@param_spec_decorator()
 class JsonCodeParam(ParamSpec):
     """Param for json code. It shows a simple json IDE
     in the interface to provide code for json.

@@ -7,7 +7,7 @@ from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
 
-@param_spec_decorator(label="OpenAI chat", type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class OpenAiChatParam(ParamSpec):
     """Special param for config that create a chat with open ai similar
     to ChatGPT.

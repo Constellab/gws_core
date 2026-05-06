@@ -1,3 +1,4 @@
+from itertools import chain
 from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -5,10 +6,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 
 from .param_spec import ParamSpec
 from .param_spec_decorator import (
-    LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST,
-    NESTED_PARAM_SPEC_TYPES_LIST,
-    PARAM_SPEC_TYPES_LIST,
-    SIMPLE_PARAM_SPEC_TYPES_LIST,
+    PARAM_SPEC_TYPES_BY_CATEGORY,
+    ParamSpecCategory,
 )
 from .param_types import (
     ParamSpecType,
@@ -31,49 +30,33 @@ class ParamSpecHelper:
 
     @staticmethod
     def get_param_spec_type_from_str(type_: ParamSpecType) -> type[ParamSpec]:
-        param_spec_types = ParamSpecHelper._get_param_spec_types()
-        for param_spec_type in param_spec_types:
+        for param_spec_type in ParamSpecHelper.get_param_spec_types():
             if param_spec_type.get_param_spec_type() == type_:
                 return param_spec_type
 
         raise BadRequestException(f"Invalid param spec str type '{type_}'")
 
     @staticmethod
-    def _get_param_spec_types() -> list[type[ParamSpec]]:
-        return PARAM_SPEC_TYPES_LIST
+    def get_param_spec_types() -> list[type[ParamSpec]]:
+        return list(chain.from_iterable(PARAM_SPEC_TYPES_BY_CATEGORY.values()))
 
     @staticmethod
-    def get_simple_param_spec_types() -> list[type[ParamSpec]]:
-        return SIMPLE_PARAM_SPEC_TYPES_LIST
+    def get_param_spec_types_by_category(
+        category: ParamSpecCategory,
+    ) -> list[type[ParamSpec]]:
+        return PARAM_SPEC_TYPES_BY_CATEGORY[category]
 
     @staticmethod
-    def get_lab_specific_param_spec_types() -> list[type[ParamSpec]]:
-        return LAB_SPECIFIC_PARAM_SPEC_TYPES_LIST
-
-    @staticmethod
-    def get_nested_param_spec_types() -> list[type[ParamSpec]]:
-        return NESTED_PARAM_SPEC_TYPES_LIST
-
-    @staticmethod
-    def get_dynamic_param_allowed_param_spec_types(
-        lab_allowed: bool = False,
+    def get_param_spec_types_info(
+        categories: list[ParamSpecCategory],
     ) -> list[ParamSpecTypeInfo]:
-        """Return the list of param spec types allowed in a dynamic param.
+        """Return the param spec type infos for the given categories.
 
-        :param lab_allowed: if True, lab-specific param spec types are included, defaults to False
-        :type lab_allowed: bool, optional
-        :return: list of allowed param spec info specs
-        :rtype: list[ParamSpecInfoSpecs]
+        :param categories: categories whose spec types should be included.
+        :return: list of param spec info specs.
         """
-        res: list[ParamSpecTypeInfo] = [
+        return [
             spec_type.to_param_spec_info_specs()
-            for spec_type in ParamSpecHelper.get_simple_param_spec_types()
+            for category in categories
+            for spec_type in PARAM_SPEC_TYPES_BY_CATEGORY[category]
         ]
-
-        if lab_allowed:
-            res.extend(
-                spec_type.to_param_spec_info_specs()
-                for spec_type in ParamSpecHelper.get_lab_specific_param_spec_types()
-            )
-
-        return res

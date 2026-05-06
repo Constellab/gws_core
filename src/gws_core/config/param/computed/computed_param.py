@@ -30,7 +30,7 @@ class ComputedParamAdditionalInfo(TypedDict):
     result_type: ComputedParamResultType
 
 
-@param_spec_decorator(label="Computed", type_=ParamSpecCategory.COMPUTED)
+@param_spec_decorator(type_=ParamSpecCategory.COMPUTED)
 class ComputedParam(ParamSpec):
     """Read-only param whose value is derived from other params via an expression.
 

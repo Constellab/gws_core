@@ -6,7 +6,7 @@ from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from gws_core.impl.rich_text.rich_text import RichText
 
 
-@param_spec_decorator(label="Rich text")
+@param_spec_decorator()
 class RichTextParam(DictParam):
     def build(self, value: Any) -> Any:
         if value is None:

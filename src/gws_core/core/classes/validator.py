@@ -1,6 +1,7 @@
 import json
 import math
 import re
+import sys
 from typing import Any, Literal
 
 from gws_core.core.utils.utils import Utils
@@ -317,8 +318,8 @@ class StrValidator(Validator):
             * `validator.validate(True) -> ValueError`
     """
 
-    _min_length: float = -1
-    _max_length: float = math.inf
+    _min_length: int = -1
+    _max_length: int = sys.maxsize
 
     def __init__(
         self,
@@ -336,14 +337,14 @@ class StrValidator(Validator):
                 min_length = int(min_length)
             if not isinstance(min_length, (int, float)):
                 raise BadRequestException("The min_length must be a numeric")
-            self._min_length = max(-1, float(min_length))
+            self._min_length = max(-1, int(min_length))
 
         if max_length is not None:
             if isinstance(max_length, str):
                 max_length = int(max_length)
             if not isinstance(max_length, (int, float)):
                 raise BadRequestException("The max_length must be a numeric")
-            self._max_length = min(math.inf, float(max_length))
+            self._max_length = int(max_length)
 
         if self._min_length > self._max_length:
             raise BadRequestException(
