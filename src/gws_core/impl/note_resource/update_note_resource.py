@@ -33,7 +33,7 @@ class UpdatNoteResource(Task):
 
     config_specs = ConfigSpecs(
         {
-            "section-title": StrParam(
+            "section_title": StrParam(
                 optional=True,
                 human_name="Section title",
                 short_description="Title of the new section",
@@ -47,7 +47,7 @@ class UpdatNoteResource(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         note_resource: NoteResource = inputs["note"]
-        section_title: str = params["section-title"]
+        section_title: str = params["section_title"]
         note_param: RichText = params["note"]
 
         if section_title is not None:

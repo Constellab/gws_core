@@ -1,12 +1,11 @@
-
 from gws_core.config.param.model_param import ModelParam
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 from gws_core.core.model.model import Model
 from gws_core.note.note import Note
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(label="Note", type_=ParamSpecCategory.LAB_SPECIFIC)
 class NoteParam(ModelParam):
     """Note params spec. When used, the end user will be able to select a note
     from the list of note available in the lab.
@@ -42,8 +41,8 @@ class NoteParam(ModelParam):
         )
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.NOTE
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.NOTE
 
     def get_model_type(self) -> type[Model]:
         """Override this method to return the model type to use
@@ -58,5 +57,5 @@ class NoteParam(ModelParam):
         return NoteParam()
 
     @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
+    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
         return None

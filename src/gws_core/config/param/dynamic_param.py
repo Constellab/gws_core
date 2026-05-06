@@ -12,20 +12,20 @@ from gws_core.config.param.param_spec import (
     StrParam,
     TextParam,
 )
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
-from .param_types import ParamSpecDTO, ParamSpecTypeStr
+from .param_types import ParamSpecDTO, ParamSpecType
 
 
-@param_spec_decorator(type_=ParamSpecType.NESTED)
+@param_spec_decorator(label="Dynamic", type_=ParamSpecCategory.NESTED)
 class DynamicParam(ParamSpec):
     """Dynamic param"""
 
-    specs: ConfigSpecs | None = None
+    specs: ConfigSpecs
 
-    edition_mode: bool | None = None
+    edition_mode: bool
 
     def __init__(
         self,
@@ -94,12 +94,12 @@ class DynamicParam(ParamSpec):
         return json_
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.DYNAMIC_PARAM
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.DYNAMIC_PARAM
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> "DynamicParam":
-        dynamic_param: DynamicParam = super().load_from_dto(spec_dto)
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "DynamicParam":
+        dynamic_param: DynamicParam = super().load_from_dto(spec_dto, validate=validate)
 
         specs = ConfigSpecs()
 
@@ -110,7 +110,7 @@ class DynamicParam(ParamSpec):
             sub_spec_dto = ParamSpecDTO.from_json(spec)
             param_spec: ParamSpec = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type
-            ).load_from_dto(sub_spec_dto)
+            ).load_from_dto(sub_spec_dto, validate=validate)
             specs.add_spec(key, param_spec)
 
         dynamic_param.edition_mode = spec_dto.additional_info.get("edition_mode", True)

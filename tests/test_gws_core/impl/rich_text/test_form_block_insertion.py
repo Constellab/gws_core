@@ -16,7 +16,6 @@ from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
@@ -37,9 +36,8 @@ from gws_core.note_template.note_template_service import NoteTemplateService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-def _spec_dict() -> dict:
-    specs = ConfigSpecs({"name": StrParam(human_name="Name")}).to_dto()
-    return {k: v.to_json_dict() for k, v in specs.items()}
+def _name_specs() -> ConfigSpecs:
+    return ConfigSpecs({"name": StrParam(human_name="Name")})
 
 
 class TestFormBlockInsertion(BaseTestCase):
@@ -256,9 +254,7 @@ class TestFormBlockInsertion(BaseTestCase):
             CreateFormTemplateDTO(name="t")
         )
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict())
-        )
+        draft.update_specs(_name_specs())
         return FormTemplateService.publish_version(template.id, draft.id)
 
     def _get_draft(self, template: FormTemplate) -> FormTemplateVersion:

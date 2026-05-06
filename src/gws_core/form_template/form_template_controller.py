@@ -1,7 +1,7 @@
 from fastapi.param_functions import Depends
 
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import CompleteDynamicParamAllowedSpecsDict
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeInfo
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
@@ -11,7 +11,6 @@ from gws_core.form_template.form_template_dto import (
     FormTemplateDTO,
     FormTemplateFullDTO,
     FormTemplateVersionDTO,
-    UpdateDraftVersionDTO,
     UpdateFormTemplateDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
@@ -75,9 +74,7 @@ def search(
     number_of_items_per_page: int | None = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[FormTemplateDTO]:
-    return FormTemplateService.search(
-        search_dict, page, number_of_items_per_page
-    ).to_dto()
+    return FormTemplateService.search(search_dict, page, number_of_items_per_page).to_dto()
 
 
 @core_app.put(
@@ -133,18 +130,70 @@ def get_version(
     return FormTemplateService.get_version(id_, version_id).to_dto()
 
 
-@core_app.put(
-    "/form-template/{id_}/version/{version_id}",
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/field/{field_name}",
     tags=["Form template"],
-    summary="Update a DRAFT version's content",
+    summary="Add a field to a DRAFT version",
 )
-def update_draft(
+def create_draft_field(
     id_: str,
     version_id: str,
-    body: UpdateDraftVersionDTO,
+    field_name: str,
+    spec_dto: ParamSpecDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
-    return FormTemplateService.update_draft(id_, version_id, body).to_dto()
+    return FormTemplateService.create_draft_field(
+        id_, version_id, field_name, spec_dto
+    ).to_dto()
+
+
+@core_app.put(
+    "/form-template/{id_}/version/{version_id}/field/{field_name}",
+    tags=["Form template"],
+    summary="Update a field of a DRAFT version",
+)
+def update_draft_field(
+    id_: str,
+    version_id: str,
+    field_name: str,
+    spec_dto: ParamSpecDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.update_draft_field(
+        id_, version_id, field_name, spec_dto
+    ).to_dto()
+
+
+@core_app.put(
+    "/form-template/{id_}/version/{version_id}/field/{field_name}/rename-and-update/{new_field_name}",
+    tags=["Form template"],
+    summary="Rename and update a field of a DRAFT version",
+)
+def rename_and_update_draft_field(
+    id_: str,
+    version_id: str,
+    field_name: str,
+    new_field_name: str,
+    spec_dto: ParamSpecDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.rename_and_update_draft_field(
+        id_, version_id, field_name, new_field_name, spec_dto
+    ).to_dto()
+
+
+@core_app.delete(
+    "/form-template/{id_}/version/{version_id}/field/{field_name}",
+    tags=["Form template"],
+    summary="Delete a field from a DRAFT version",
+)
+def delete_draft_field(
+    id_: str,
+    version_id: str,
+    field_name: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.delete_draft_field(id_, version_id, field_name).to_dto()
 
 
 @core_app.delete(
@@ -207,5 +256,5 @@ def unarchive_version(
 )
 def get_param_spec_types(
     _=Depends(AuthorizationService.check_user_access_token),
-) -> CompleteDynamicParamAllowedSpecsDict:
+) -> list[ParamSpecTypeInfo]:
     return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types(True)

@@ -1,4 +1,6 @@
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -13,7 +15,6 @@ from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateFullDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
     UpdateFormTemplateDTO,
 )
 from gws_core.form_template.form_template_search_builder import (
@@ -122,9 +123,9 @@ class FormTemplateService:
         # Spec §5.6 dual: any NoteTemplate that still pins a version of this
         # template family blocks the delete (RESTRICT FK on the join would
         # also catch it, but a friendly error is nicer).
-        note_template_ref_count = (
-            NoteTemplateFormTemplateModel.get_by_form_template(template.id).count()
-        )
+        note_template_ref_count = NoteTemplateFormTemplateModel.get_by_form_template(
+            template.id
+        ).count()
         if note_template_ref_count > 0:
             raise BadRequestException(
                 f"Cannot delete form template: {note_template_ref_count} "
@@ -210,22 +211,97 @@ class FormTemplateService:
         )
         return draft
 
+    # ------------------------------------------------------------------ #
+    # Draft field-level edits
+    # ------------------------------------------------------------------ #
+
     @classmethod
     @GwsCoreDbManager.transaction()
-    def update_draft(
+    def create_draft_field(
         cls,
         template_id: str,
         version_id: str,
-        dto: UpdateDraftVersionDTO,
+        field_name: str,
+        spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = ConfigSpecs.from_json(version.content or {})
+        specs.add_spec(
+            field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
+        )
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def update_draft_field(
+        cls,
+        template_id: str,
+        version_id: str,
+        field_name: str,
+        spec_dto: ParamSpecDTO,
+    ) -> FormTemplateVersion:
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = ConfigSpecs.from_json(version.content or {})
+        specs.update_spec(
+            field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
+        )
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def rename_and_update_draft_field(
+        cls,
+        template_id: str,
+        version_id: str,
+        field_name: str,
+        new_field_name: str,
+        spec_dto: ParamSpecDTO,
+    ) -> FormTemplateVersion:
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = ConfigSpecs.from_json(version.content or {})
+        specs.check_spec_exists(field_name)
+        if new_field_name != field_name and specs.has_spec(new_field_name):
+            raise BadRequestException(
+                f"A field named '{new_field_name}' already exists in this draft."
+            )
+        specs.remove_spec(field_name)
+        specs.add_spec(
+            new_field_name,
+            ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True),
+        )
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def delete_draft_field(
+        cls,
+        template_id: str,
+        version_id: str,
+        field_name: str,
+    ) -> FormTemplateVersion:
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = ConfigSpecs.from_json(version.content or {})
+        specs.remove_spec(field_name)
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    def _get_draft_version_and_check(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:
             raise BadRequestException(
                 "Only DRAFT versions can be edited. "
                 "Create a new draft to change a published schema."
             )
-        version.content = dto.content
-        version.save()
+        return version
+
+    @classmethod
+    def _save_draft_specs(
+        cls,
+        version: FormTemplateVersion,
+        specs: ConfigSpecs,
+        template_id: str,
+    ) -> FormTemplateVersion:
+        version.update_specs(specs)
 
         ActivityService.add(
             ActivityType.UPDATE,
@@ -312,8 +388,8 @@ class FormTemplateService:
                 raise BadRequestException(
                     f"Cannot delete archived version: {form_count} form(s) reference it."
                 )
-            note_template_ref_count = (
-                NoteTemplateFormTemplateModel.count_by_form_template_version(version.id)
+            note_template_ref_count = NoteTemplateFormTemplateModel.count_by_form_template_version(
+                version.id
             )
             if note_template_ref_count > 0:
                 raise BadRequestException(

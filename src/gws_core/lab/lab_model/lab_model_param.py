@@ -1,14 +1,14 @@
 from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(label="Lab", type_=ParamSpecCategory.LAB_SPECIFIC)
 class LabModelParam(ParamSpec):
     """Lab model param spec. When used, the end user will be able to select a lab
     from the list of labs available in the system. The config stores only the lab model id.
@@ -45,8 +45,8 @@ class LabModelParam(ParamSpec):
         )
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.LAB_MODEL
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.LAB_MODEL
 
     def build(self, value: Any) -> LabDTOWithCredentials | None:
         """Retrieve the LabModel by id and return its DTO with credentials."""

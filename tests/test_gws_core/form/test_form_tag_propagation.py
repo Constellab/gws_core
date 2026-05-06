@@ -19,7 +19,6 @@ from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
@@ -31,9 +30,8 @@ from gws_core.tag.tag_service import TagService
 from gws_core.test.base_test_case import BaseTestCase
 
 
-def _spec_dict_with_str(*keys: str) -> dict:
-    spec = ConfigSpecs({k: StrParam(human_name=k, optional=True) for k in keys}).to_dto()
-    return {k: v.to_json_dict() for k, v in spec.items()}
+def _str_specs(*keys: str) -> ConfigSpecs:
+    return ConfigSpecs({k: StrParam(human_name=k, optional=True) for k in keys})
 
 
 class TestFormTagPropagation(BaseTestCase):
@@ -218,20 +216,12 @@ class TestFormTagPropagation(BaseTestCase):
 
     def _publish_draft(self, template) -> FormTemplateVersion:
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id,
-            draft.id,
-            UpdateDraftVersionDTO(content=_spec_dict_with_str("name")),
-        )
+        draft.update_specs(_str_specs("name"))
         return FormTemplateService.publish_version(template.id, draft.id)
 
     def _add_and_publish_new_version(self, template) -> FormTemplateVersion:
         draft = FormTemplateService.create_draft(template.id)
-        FormTemplateService.update_draft(
-            template.id,
-            draft.id,
-            UpdateDraftVersionDTO(content=_spec_dict_with_str("name")),
-        )
+        draft.update_specs(_str_specs("name"))
         return FormTemplateService.publish_version(template.id, draft.id)
 
     def _get_draft(self, template) -> FormTemplateVersion:

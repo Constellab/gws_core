@@ -24,7 +24,11 @@ class ConfigSpecs:
 
     specs: dict[str, ParamSpec]
 
-    def __init__(self, specs: dict[str, ParamSpec] | None = None) -> None:
+    def __init__(
+        self,
+        specs: dict[str, ParamSpec] | None = None,
+        _skip_key_validation: bool = False,
+    ) -> None:
         """Define the spec of a task or a view
         Example:
         ConfigSpecs({
@@ -34,11 +38,30 @@ class ConfigSpecs:
 
         :param specs: _description_, defaults to None
         :type specs: Dict[str, ParamSpec], optional
+        :param _skip_key_validation: internal flag used by from_json/from_dto
+            to rehydrate persisted specs without re-validating their keys.
+            Do not set from user code.
         """
         if specs is None:
             specs = {}
 
+        if not _skip_key_validation:
+            for key in specs:
+                self._validate_spec_key(key)
+
         self.specs = specs
+
+    @staticmethod
+    def _validate_spec_key(key: str) -> None:
+        """Reject keys that contain anything other than letters, digits, and
+        underscores, or that start with a digit. Keeps spec keys readable as
+        variable-like tokens.
+        """
+        if not isinstance(key, str) or not key.isidentifier():
+            raise Exception(
+                f"Invalid param key '{key}': must contain only letters, digits, "
+                f"and underscores, and cannot start with a digit."
+            )
 
     def has_spec(self, spec_name: str) -> bool:
         return spec_name in self.specs
@@ -59,11 +82,13 @@ class ConfigSpecs:
         self.specs[spec_name] = spec
 
     def add_spec(self, spec_name: str, spec: ParamSpec) -> None:
+        self._validate_spec_key(spec_name)
         if spec_name in self.specs:
             raise Exception(f"The spec {spec_name} already exists")
         self.specs[spec_name] = spec
 
     def add_or_update_spec(self, spec_name: str, spec: ParamSpec) -> None:
+        self._validate_spec_key(spec_name)
         self.specs[spec_name] = spec
 
     def remove_spec(self, spec_name: str) -> None:
@@ -427,7 +452,7 @@ class ConfigSpecs:
         config_specs: dict[str, ParamSpec] = {}
         for key, value in dict_.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_json(value)
-        return cls(config_specs)
+        return cls(config_specs, _skip_key_validation=True)
 
     @classmethod
     def from_dto(cls, dict_: dict[str, ParamSpecDTO]) -> "ConfigSpecs":
@@ -435,4 +460,4 @@ class ConfigSpecs:
         config_specs: dict[str, ParamSpec] = {}
         for key, value in dict_.items():
             config_specs[key] = ParamSpecHelper.create_param_spec_from_dto(value)
-        return cls(config_specs)
+        return cls(config_specs, _skip_key_validation=True)

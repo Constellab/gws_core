@@ -1,6 +1,7 @@
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.computed.computed_param import ComputedParam
 from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -11,19 +12,15 @@ from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    UpdateDraftVersionDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.test.base_test_case import BaseTestCase
 
 
-def _spec_dict(spec_keys: list[str]) -> dict:
-    """Helper: build a serialized ConfigSpecs dict with one StrParam per key."""
-    specs = ConfigSpecs(
-        {k: StrParam(human_name=k) for k in spec_keys}
-    ).to_dto()
-    return {k: v.to_json_dict() for k, v in specs.items()}
+def _str_specs(spec_keys: list[str]) -> ConfigSpecs:
+    """Helper: build a ConfigSpecs with one StrParam per key."""
+    return ConfigSpecs({k: StrParam(human_name=k) for k in spec_keys})
 
 
 # test_form_template_versioning
@@ -38,9 +35,7 @@ class TestFormTemplateVersioning(BaseTestCase):
     def test_create_draft_copies_content(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict(["a"]))
-        )
+        draft.update_specs(_str_specs(["a"]))
         published = FormTemplateService.publish_version(template.id, draft.id)
 
         new_draft = FormTemplateService.create_draft(
@@ -50,34 +45,36 @@ class TestFormTemplateVersioning(BaseTestCase):
         self.assertEqual(new_draft.status, FormTemplateVersionStatus.DRAFT)
         self.assertEqual(new_draft.version, 0)
 
-    def test_update_draft_mutates_content(self):
+    def test_create_draft_field_mutates_content(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
-        new_content = _spec_dict(["foo"])
-        updated = FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=new_content)
+        FormTemplateService.create_draft_field(
+            template.id,
+            draft.id,
+            "foo",
+            ParamSpecDTO.from_json(StrParam(human_name="foo").to_dto().to_json_dict()),
         )
-        self.assertEqual(updated.content, new_content)
+        updated = FormTemplateService.get_version(template.id, draft.id)
+        self.assertIn("foo", updated.content)
 
     def test_update_rejected_on_non_draft(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict(["a"]))
-        )
+        draft.update_specs(_str_specs(["a"]))
         published = FormTemplateService.publish_version(template.id, draft.id)
 
         with self.assertRaises(BadRequestException):
-            FormTemplateService.update_draft(
-                template.id, published.id, UpdateDraftVersionDTO(content=_spec_dict(["b"]))
+            FormTemplateService.create_draft_field(
+                template.id,
+                published.id,
+                "b",
+                ParamSpecDTO.from_json(StrParam(human_name="b").to_dto().to_json_dict()),
             )
 
     def test_publish_assigns_incrementing_versions(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
-        FormTemplateService.update_draft(
-            template.id, draft.id, UpdateDraftVersionDTO(content=_spec_dict(["a"]))
-        )
+        draft.update_specs(_str_specs(["a"]))
         v1 = FormTemplateService.publish_version(template.id, draft.id)
         self.assertEqual(v1.status, FormTemplateVersionStatus.PUBLISHED)
         self.assertEqual(v1.version, 1)
@@ -86,9 +83,7 @@ class TestFormTemplateVersioning(BaseTestCase):
 
         # second draft → second publish
         draft_2 = FormTemplateService.create_draft(template.id, CreateDraftVersionDTO())
-        FormTemplateService.update_draft(
-            template.id, draft_2.id, UpdateDraftVersionDTO(content=_spec_dict(["b"]))
-        )
+        draft_2.update_specs(_str_specs(["b"]))
         v2 = FormTemplateService.publish_version(template.id, draft_2.id)
         self.assertEqual(v2.version, 2)
 
@@ -113,18 +108,13 @@ class TestFormTemplateVersioning(BaseTestCase):
     def test_publish_rejects_cyclic_computed_param(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
-        cyclic = ConfigSpecs(
-            {
-                "a": ComputedParam(expression="b + 1", result_type="float"),
-                "b": ComputedParam(expression="a + 1", result_type="float"),
-            }
-        )
-        FormTemplateService.update_draft(
-            template.id,
-            draft.id,
-            UpdateDraftVersionDTO(
-                content={k: v.to_json_dict() for k, v in cyclic.to_dto().items()}
-            ),
+        draft.update_specs(
+            ConfigSpecs(
+                {
+                    "a": ComputedParam(expression="b + 1", result_type="float"),
+                    "b": ComputedParam(expression="a + 1", result_type="float"),
+                }
+            )
         )
         with self.assertRaises(BadRequestException):
             FormTemplateService.publish_version(template.id, draft.id)

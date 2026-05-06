@@ -1,8 +1,10 @@
-from gws_core.config.param.param_types import ParamSpecTypeStr
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecType
 
 from ..param_spec import TextParam
 
 
+@param_spec_decorator(label="Bash code", type_=ParamSpecCategory.LAB_SPECIFIC)
 class BashCodeParam(TextParam):
     """Param for bash code. It shows a simple bash IDE
       in the interface to provide code for bash.
@@ -14,5 +16,5 @@ class BashCodeParam(TextParam):
     """
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.BASH_CODE
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.BASH_CODE

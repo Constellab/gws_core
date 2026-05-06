@@ -11,10 +11,10 @@ from gws_core.config.param.computed.computed_param_evaluator import (
 )
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.config.param.param_types import (
     ParamSpecDTO,
-    ParamSpecTypeStr,
+    ParamSpecType,
     ParamSpecVisibilty,
 )
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
@@ -30,7 +30,7 @@ class ComputedParamAdditionalInfo(TypedDict):
     result_type: ComputedParamResultType
 
 
-@param_spec_decorator(type_=ParamSpecType.COMPUTED)
+@param_spec_decorator(label="Computed", type_=ParamSpecCategory.COMPUTED)
 class ComputedParam(ParamSpec):
     """Read-only param whose value is derived from other params via an expression.
 
@@ -93,8 +93,8 @@ class ComputedParam(ParamSpec):
         return self.additional_info["result_type"]
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.COMPUTED
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.COMPUTED
 
     @classmethod
     def empty(cls) -> ComputedParam:
@@ -110,8 +110,8 @@ class ComputedParam(ParamSpec):
         return instance
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO) -> ComputedParam:
-        param_spec: ComputedParam = super().load_from_dto(spec_dto)
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> ComputedParam:
+        param_spec: ComputedParam = super().load_from_dto(spec_dto, validate=validate)
         info = spec_dto.additional_info or {}
         if "expression" not in info or "result_type" not in info:
             raise BadRequestException(
@@ -239,9 +239,7 @@ class ComputedParam(ParamSpec):
             if not isinstance(spec, ParamSet) or spec.param_set is None:
                 continue
 
-            inner_computed = [
-                (k, s) for k, s in spec.param_set.specs.items() if isinstance(s, cls)
-            ]
+            inner_computed = [(k, s) for k, s in spec.param_set.specs.items() if isinstance(s, cls)]
             if not inner_computed:
                 continue
 
@@ -267,9 +265,7 @@ class ComputedParam(ParamSpec):
     ) -> None:
         """Resolve outer-scope ComputedParam keys in dependency order."""
         paramset_rows: dict[str, list[dict[str, Any]]] = {
-            k: (values.get(k) or [])
-            for k, s in specs.specs.items()
-            if isinstance(s, ParamSet)
+            k: (values.get(k) or []) for k, s in specs.specs.items() if isinstance(s, ParamSet)
         }
 
         # Scope starts with non-computed values; computed entries fill in as
@@ -290,9 +286,7 @@ class ComputedParam(ParamSpec):
                     continue
 
                 try:
-                    raw = evaluator.evaluate(
-                        spec.expression, scope, paramset_rows=paramset_rows
-                    )
+                    raw = evaluator.evaluate(spec.expression, scope, paramset_rows=paramset_rows)
                     value = ConfigSpecsEvaluator.coerce_result(raw, spec.result_type)
                 except ComputedParamEvaluationError as err:
                     value = None
