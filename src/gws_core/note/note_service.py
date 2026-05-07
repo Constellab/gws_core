@@ -292,7 +292,6 @@ class NoteService:
             note_id,
             form_id=form.id,
             is_owner=True,
-            display_name=dto.display_name,
             position=dto.position,
         )
 
@@ -315,7 +314,6 @@ class NoteService:
             note_id,
             form_id=dto.form_id,
             is_owner=False,
-            display_name=dto.display_name,
             position=dto.position,
         )
 
@@ -326,7 +324,6 @@ class NoteService:
         *,
         form_id: str,
         is_owner: bool,
-        display_name: str | None,
         position: int | None,
     ) -> Note:
         """Build a FORM block and insert it into the note's content at
@@ -338,7 +335,6 @@ class NoteService:
             RichTextBlockForm(
                 form_id=form_id,
                 is_owner=is_owner,
-                display_name=display_name,
             )
         )
 

@@ -52,7 +52,7 @@ class TestNoteRollbackFormReconciliation(BaseTestCase):
         self.assertEqual(NoteFormModel.get_by_note(note.id), [])
 
         block = RichTextBlock.from_data(
-            RichTextBlockForm(form_id=form.id, is_owner=False, display_name=None)
+            RichTextBlockForm(form_id=form.id, is_owner=False)
         )
         rolled_back = RichText.create_rich_text_dto([block])
 
@@ -109,7 +109,6 @@ class TestNoteRollbackFormReconciliation(BaseTestCase):
             RichTextBlockForm(
                 form_id="never-existed",
                 is_owner=False,
-                display_name=None,
             )
         )
         rolled_back = RichText.create_rich_text_dto([block])

@@ -252,7 +252,7 @@ class TestFormBlockRules(BaseTestCase):
             [
                 RichTextBlock.from_data(
                     RichTextBlockForm(
-                        form_id=form.id, is_owner=False, display_name=None
+                        form_id=form.id, is_owner=False
                     )
                 )
             ]
@@ -267,7 +267,6 @@ class TestFormBlockRules(BaseTestCase):
                     RichTextBlockForm(
                         form_id="not-a-real-form-id",
                         is_owner=False,
-                        display_name=None,
                     )
                 )
             ]
@@ -282,7 +281,7 @@ class TestFormBlockRules(BaseTestCase):
             [
                 RichTextBlock.from_data(
                     RichTextBlockForm(
-                        form_id=form.id, is_owner=False, display_name=None
+                        form_id=form.id, is_owner=False
                     )
                 )
             ]

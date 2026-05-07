@@ -62,12 +62,10 @@ class TestFormBlocks(BaseTestCase):
         data = RichTextBlockForm(
             form_id="form-1",
             is_owner=True,
-            display_name="My form",
         )
         round_tripped = RichTextBlockForm.from_json(data.to_json_dict())
         self.assertEqual(round_tripped.form_id, "form-1")
         self.assertTrue(round_tripped.is_owner)
-        self.assertEqual(round_tripped.display_name, "My form")
 
     def test_form_block_is_owner_required(self):
         # is_owner has no default — both true and false must be explicit.
@@ -77,13 +75,8 @@ class TestFormBlocks(BaseTestCase):
         self.assertFalse(ref.is_owner)
 
     def test_form_block_to_markdown(self):
-        with_name = RichTextBlockForm(
-            form_id="form-1", is_owner=False, display_name="My form"
-        )
-        self.assertIn("My form", with_name.to_markdown())
-
-        without_name = RichTextBlockForm(form_id="form-1", is_owner=True)
-        self.assertIn("form-1", without_name.to_markdown())
+        block = RichTextBlockForm(form_id="form-1", is_owner=True)
+        self.assertIn("form-1", block.to_markdown())
 
     def test_form_block_dispatches_via_get_data(self):
         data = RichTextBlockForm(form_id="form-1", is_owner=True)

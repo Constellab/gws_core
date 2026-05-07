@@ -77,7 +77,6 @@ class NoteTemplateContentConverter:
                 RichTextBlockForm(
                     form_id=form.id,
                     is_owner=True,
-                    display_name=ft_data.display_name,
                 ),
                 id_=block.id,
             )

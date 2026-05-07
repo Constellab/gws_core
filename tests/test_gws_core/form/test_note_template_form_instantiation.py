@@ -57,7 +57,6 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
 
         data: RichTextBlockForm = form_blocks[0].get_data()
         self.assertTrue(data.is_owner)
-        self.assertEqual(data.display_name, "Pinned")
         new_form = Form.get_by_id_and_check(data.form_id)
         self.assertEqual(new_form.status, FormStatus.DRAFT)
         self.assertEqual(new_form.name, version.template.name)

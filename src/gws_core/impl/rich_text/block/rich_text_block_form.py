@@ -1,8 +1,18 @@
+from enum import Enum
+
 from gws_core.impl.rich_text.block.rich_text_block import (
     RichTextBlockDataBase,
     RichTextBlockTypeStandard,
 )
 from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_block_decorator
+
+
+class RichTextBlockFormDisplayMode(Enum):
+    """Defines how a Form block is rendered inside a rich text note."""
+
+    FORM = "form"
+    JSON = "json"
+    TABLE = "table"
 
 
 @rich_text_block_decorator(RichTextBlockTypeStandard.FORM.value)
@@ -16,7 +26,7 @@ class RichTextBlockForm(RichTextBlockDataBase):
 
     form_id: str
     is_owner: bool
-    display_name: str | None = None
+    display_mode: RichTextBlockFormDisplayMode = RichTextBlockFormDisplayMode.FORM
 
     def to_markdown(self) -> str:
-        return f"[Form: {self.display_name or self.form_id}]"
+        return f"[Form: {self.form_id}]"

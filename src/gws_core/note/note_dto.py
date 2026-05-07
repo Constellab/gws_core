@@ -46,7 +46,6 @@ class InsertNewFormBlockDTO(BaseModelDTO):
 
     template_version_id: str
     position: int | None = None
-    display_name: str | None = None
 
 
 class InsertFormReferenceBlockDTO(BaseModelDTO):
@@ -56,4 +55,3 @@ class InsertFormReferenceBlockDTO(BaseModelDTO):
 
     form_id: str
     position: int | None = None
-    display_name: str | None = None
