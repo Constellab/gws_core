@@ -32,9 +32,9 @@ class TestFormSaveAndSubmit(BaseTestCase):
     def test_save_partial_values_in_draft_succeeds(self):
         form = self._scalar_form()
         result = FormService.save(form.id, SaveFormDTO(values={"name": "Alice"}))
-        self.assertEqual(result.form.values["name"], "Alice")
+        self.assertEqual(result.values["name"], "Alice")
         # mass is mandatory but unset — DRAFT save still passes.
-        self.assertEqual(result.form.status, FormStatus.DRAFT)
+        self.assertEqual(Form.get_by_id(form.id).status, FormStatus.DRAFT)
 
     def test_save_assigns_item_ids_to_paramset_rows(self):
         form = self._paramset_form()
@@ -42,7 +42,7 @@ class TestFormSaveAndSubmit(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
-        rows = result.form.values["samples"]
+        rows = result.values["samples"]
         self.assertEqual(len(rows), 1)
         self.assertIn("__item_id", rows[0])
 
@@ -71,16 +71,17 @@ class TestFormSaveAndSubmit(BaseTestCase):
 
     def test_submit_with_all_mandatories_set(self):
         form = self._scalar_form()
-        result = FormService.save(
+        FormService.save(
             form.id,
             SaveFormDTO(
                 values={"name": "Alice", "mass": 1.5},
                 status_transition=FormStatus.SUBMITTED,
             ),
         )
-        self.assertEqual(result.form.status, FormStatus.SUBMITTED)
-        self.assertIsNotNone(result.form.submitted_at)
-        self.assertIsNotNone(result.form.submitted_by)
+        reloaded = Form.get_by_id(form.id)
+        self.assertEqual(reloaded.status, FormStatus.SUBMITTED)
+        self.assertIsNotNone(reloaded.submitted_at)
+        self.assertIsNotNone(reloaded.submitted_by)
 
     def test_submit_with_missing_mandatories_rejects(self):
         form = self._scalar_form()
@@ -117,8 +118,8 @@ class TestFormSaveAndSubmit(BaseTestCase):
                 status_transition=FormStatus.SUBMITTED,
             ),
         )
-        self.assertEqual(result.form.status, FormStatus.SUBMITTED)
-        self.assertEqual(result.form.values["shouted_name"], "Alice!")
+        self.assertEqual(Form.get_by_id(form.id).status, FormStatus.SUBMITTED)
+        self.assertEqual(result.values["shouted_name"], "Alice!")
 
     def test_submit_sugar_endpoint(self):
         form = self._scalar_form()
@@ -126,8 +127,8 @@ class TestFormSaveAndSubmit(BaseTestCase):
             form.id,
             SaveFormDTO(values={"name": "Alice", "mass": 1.5}),
         )
-        result = FormService.submit(form.id)
-        self.assertEqual(result.form.status, FormStatus.SUBMITTED)
+        FormService.submit(form.id)
+        self.assertEqual(Form.get_by_id(form.id).status, FormStatus.SUBMITTED)
 
     def test_resubmit_already_submitted_is_no_status_change(self):
         form = self._scalar_form()
@@ -196,11 +197,11 @@ class TestFormSaveAndSubmit(BaseTestCase):
             ),
         )
         # Per-row computed values appear inside each row.
-        rows = result.form.values["samples"]
+        rows = result.values["samples"]
         self.assertEqual(rows[0]["density"], 2.0)
         self.assertEqual(rows[1]["density"], 2.0)
         # Outer-scope computed value is in the same dict.
-        self.assertEqual(result.form.values["total_mass"], 3.0)
+        self.assertEqual(result.values["total_mass"], 3.0)
         self.assertEqual(result.errors, {})
 
     def test_division_by_zero_returns_error_does_not_block_save(self):
@@ -214,17 +215,20 @@ class TestFormSaveAndSubmit(BaseTestCase):
         # density failed; error key uses the per-row "<paramset>[].<field>" path.
         self.assertIn("samples[].density", result.errors)
         # density value in the row is None (failed evaluation).
-        self.assertIsNone(result.form.values["samples"][0]["density"])
+        self.assertIsNone(result.values["samples"][0]["density"])
 
-    def test_get_full_returns_stored_union(self):
+    def test_get_content_returns_stored_union(self):
         form = self._computed_form()
         FormService.save(
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
-        result = FormService.get_full(form.id)
-        self.assertEqual(result.form.values["samples"][0]["density"], 2.0)
-        self.assertEqual(result.form.values["total_mass"], 1.0)
+        result = FormService.get_content(form.id)
+        self.assertEqual(result.values["samples"][0]["density"], 2.0)
+        self.assertEqual(result.values["total_mass"], 1.0)
+        # specs are now part of the read payload (renderable content)
+        self.assertIn("samples", result.specs)
+        self.assertIn("total_mass", result.specs)
 
     def test_client_submitted_computed_value_is_stripped(self):
         form = self._computed_form()
@@ -239,7 +243,7 @@ class TestFormSaveAndSubmit(BaseTestCase):
             ),
         )
         # The evaluator wins — total_mass is recomputed from sum(samples[].mass).
-        self.assertEqual(result.form.values["total_mass"], 1.0)
+        self.assertEqual(result.values["total_mass"], 1.0)
 
     # ------------------------------------------------------------------ #
     # helpers

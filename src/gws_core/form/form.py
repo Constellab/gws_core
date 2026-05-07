@@ -9,7 +9,7 @@ from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity,
     NavigableEntityType,
 )
-from gws_core.form.form_dto import FormDTO, FormFullDTO, FormStatus
+from gws_core.form.form_dto import FormDTO, FormStatus, FormTemplateRefDTO
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -75,6 +75,8 @@ class Form(ModelWithUser, NavigableEntity):
         EntityTagList.delete_by_entity(TagEntityType.FORM, self.id)
 
     def to_dto(self) -> FormDTO:
+        version = self.template_version
+        template = version.template
         return FormDTO(
             id=self.id,
             created_at=self.created_at,
@@ -82,27 +84,16 @@ class Form(ModelWithUser, NavigableEntity):
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
             name=self.name,
-            template_version_id=self.template_version_id,
+            template=FormTemplateRefDTO(
+                template_id=template.id,
+                template_name=template.name,
+                version_id=version.id,
+                version_number=version.version,
+            ),
             status=self.status,
             submitted_at=self.submitted_at,
             submitted_by=self.submitted_by.to_dto() if self.submitted_by else None,
             is_archived=self.is_archived,
-        )
-
-    def to_full_dto(self) -> FormFullDTO:
-        return FormFullDTO(
-            id=self.id,
-            created_at=self.created_at,
-            last_modified_at=self.last_modified_at,
-            created_by=self.created_by.to_dto(),
-            last_modified_by=self.last_modified_by.to_dto(),
-            name=self.name,
-            template_version_id=self.template_version_id,
-            status=self.status,
-            submitted_at=self.submitted_at,
-            submitted_by=self.submitted_by.to_dto() if self.submitted_by else None,
-            is_archived=self.is_archived,
-            values=self.values,
         )
 
     class Meta:

@@ -8,7 +8,6 @@ from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateDTO,
-    FormTemplateFullDTO,
     FormTemplateVersionDTO,
     UpdateFormTemplateDTO,
 )
@@ -27,14 +26,13 @@ def create(
 @core_app.get(
     "/form-template/{id_}",
     tags=["Form template"],
-    summary="Get a form template with its versions",
-    response_model=None,
+    summary="Get a form template",
 )
-def get_full(
+def get(
     id_: str,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> FormTemplateFullDTO:
-    return FormTemplateService.get_full(id_)
+) -> FormTemplateDTO:
+    return FormTemplateService.get_by_id_and_check(id_).to_dto()
 
 
 @core_app.put(
@@ -114,6 +112,18 @@ def create_draft(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.create_draft(id_, body).to_dto()
+
+
+@core_app.get(
+    "/form-template/{id_}/version",
+    tags=["Form template"],
+    summary="List versions of a form template",
+)
+def list_versions(
+    id_: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> list[FormTemplateVersionDTO]:
+    return [v.to_dto() for v in FormTemplateService.list_versions(id_)]
 
 
 @core_app.get(

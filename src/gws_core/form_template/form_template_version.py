@@ -87,6 +87,14 @@ class FormTemplateVersion(ModelWithUser):
             .scalar()
         ) or 0
 
+    def get_content(self) -> ConfigSpecs:
+        """Deserialize ``content`` into a ConfigSpecs instance.
+
+        Inverse of ``set_specs`` / ``update_specs``. Returns an empty
+        ConfigSpecs if ``content`` is null (e.g. a freshly-created draft).
+        """
+        return ConfigSpecs.from_json(self.content or {})
+
     def set_specs(self, specs: ConfigSpecs) -> "FormTemplateVersion":
         """Set the content field from the given specs without persisting."""
         self.content = specs.to_json_dict()

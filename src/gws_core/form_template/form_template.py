@@ -7,11 +7,7 @@ from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity,
     NavigableEntityType,
 )
-from gws_core.form_template.form_template_dto import (
-    FormTemplateDTO,
-    FormTemplateFullDTO,
-    FormTemplateVersionStatus,
-)
+from gws_core.form_template.form_template_dto import FormTemplateDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 
@@ -51,29 +47,6 @@ class FormTemplate(ModelWithUser, NavigableEntity):
             name=self.name,
             description=self.description,
             is_archived=self.is_archived,
-        )
-
-    def to_full_dto(self) -> FormTemplateFullDTO:
-        # DRAFT first, then PUBLISHED newest-first, then ARCHIVED newest-first.
-        status_rank = {
-            FormTemplateVersionStatus.DRAFT: 0,
-            FormTemplateVersionStatus.PUBLISHED: 1,
-            FormTemplateVersionStatus.ARCHIVED: 2,
-        }
-        versions = sorted(
-            self.versions,
-            key=lambda v: (status_rank[v.status], -v.version),
-        )
-        return FormTemplateFullDTO(
-            id=self.id,
-            created_at=self.created_at,
-            last_modified_at=self.last_modified_at,
-            created_by=self.created_by.to_dto(),
-            last_modified_by=self.last_modified_by.to_dto(),
-            name=self.name,
-            description=self.description,
-            is_archived=self.is_archived,
-            versions=[v.to_dto() for v in versions],
         )
 
     class Meta:

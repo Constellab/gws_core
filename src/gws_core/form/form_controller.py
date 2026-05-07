@@ -28,14 +28,26 @@ def create(
 @core_app.get(
     "/form/{id_}",
     tags=["Form"],
-    summary="Get a form with its values and per-computed-field errors",
+    summary="Get a form's metadata (no values, no specs)",
+)
+def get(
+    id_: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormDTO:
+    return FormService.get_by_id_and_check(id_).to_dto()
+
+
+@core_app.get(
+    "/form/{id_}/content",
+    tags=["Form"],
+    summary="Get the form's specs, current values, and per-computed-field errors",
     response_model=None,
 )
-def get_full(
+def get_content(
     id_: str,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormSaveResultDTO:
-    return FormService.get_full(id_)
+    return FormService.get_content(id_)
 
 
 @core_app.put(

@@ -14,7 +14,6 @@ from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
-    FormTemplateFullDTO,
     FormTemplateVersionStatus,
     UpdateFormTemplateDTO,
 )
@@ -62,10 +61,6 @@ class FormTemplateService:
     def get_by_id_and_check(cls, template_id: str) -> FormTemplate:
         return FormTemplate.get_by_id_and_check(template_id)
 
-    @classmethod
-    def get_full(cls, template_id: str) -> FormTemplateFullDTO:
-        template = cls.get_by_id_and_check(template_id)
-        return template.to_full_dto()
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -168,6 +163,15 @@ class FormTemplateService:
         return version
 
     @classmethod
+    def list_versions(cls, template_id: str) -> list[FormTemplateVersion]:
+        cls.get_by_id_and_check(template_id)
+        return list(
+            FormTemplateVersion.select()
+            .where(FormTemplateVersion.template_id == template_id)
+            .order_by(FormTemplateVersion.version.desc())
+        )
+
+    @classmethod
     @GwsCoreDbManager.transaction()
     def create_draft(
         cls,
@@ -226,7 +230,7 @@ class FormTemplateService:
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
-        specs = ConfigSpecs.from_json(version.content or {})
+        specs = version.get_content()
         specs.add_spec(
             field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
         )
@@ -242,7 +246,7 @@ class FormTemplateService:
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
-        specs = ConfigSpecs.from_json(version.content or {})
+        specs = version.get_content()
         specs.update_spec(
             field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
         )
@@ -259,7 +263,7 @@ class FormTemplateService:
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
-        specs = ConfigSpecs.from_json(version.content or {})
+        specs = version.get_content()
         specs.check_spec_exists(field_name)
         if new_field_name != field_name and specs.has_spec(new_field_name):
             raise BadRequestException(
@@ -281,7 +285,7 @@ class FormTemplateService:
         field_name: str,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
-        specs = ConfigSpecs.from_json(version.content or {})
+        specs = version.get_content()
         specs.remove_spec(field_name)
         return cls._save_draft_specs(version, specs, template_id)
 
@@ -326,7 +330,7 @@ class FormTemplateService:
         # Schema validation. Empty content is allowed (a form with no fields
         # is valid; from_json({}) gives an empty ConfigSpecs).
         try:
-            specs = ConfigSpecs.from_json(version.content or {})
+            specs = version.get_content()
             specs.check_config_specs()
         except Exception as err:
             raise BadRequestException(f"Cannot publish: schema is invalid ({err})") from err

@@ -27,12 +27,6 @@ class FormTemplateVersionDTO(ModelWithUserDTO):
     published_by: UserDTO | None
 
 
-class FormTemplateFullDTO(FormTemplateDTO):
-    """FormTemplate plus the list of its versions (summary)."""
-
-    versions: list[FormTemplateVersionDTO]
-
-
 class CreateFormTemplateDTO(BaseModelDTO):
     name: str
     description: str | None = None

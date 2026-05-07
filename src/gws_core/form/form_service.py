@@ -9,8 +9,6 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.form.form import Form
 from gws_core.form.form_dto import (
     CreateFormDTO,
-    FormChangeAction,
-    FormChangeEntry,
     FormSaveResultDTO,
     FormStatus,
     SaveFormDTO,
@@ -27,11 +25,6 @@ from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
-
-# Reserved field path used in FormChangeEntry for status transitions.
-# Underscores guarantee no collision with a real ConfigSpecs key
-# (spec keys are validated identifiers).
-_STATUS_FIELD_PATH = "__status"
 
 
 class FormService:
@@ -91,19 +84,23 @@ class FormService:
         return Form.get_by_id_and_check(form_id)
 
     @classmethod
-    def get_full(cls, form_id: str) -> FormSaveResultDTO:
-        """Return the form with its stored values plus per-computed-field
-        errors recomputed against the current values.
+    def get_content(cls, form_id: str) -> FormSaveResultDTO:
+        """Return the renderable payload: specs + stored values + per-
+        computed-field errors recomputed against the current values.
 
         Storage is the union (user keys + computed keys) so reads return
         ``form.values`` directly. Recompute is run for the errors dict only
         — values themselves come from storage.
         """
         form = cls.get_by_id_and_check(form_id)
-        specs = ConfigSpecs.from_json(form.template_version.content or {})
+        specs = form.template_version.get_content()
         # Drive errors only; we don't overwrite stored values on read.
         _, errors = specs.compute_values(form.values or {})
-        return FormSaveResultDTO(form=form.to_full_dto(), errors=errors)
+        return FormSaveResultDTO(
+            values=form.values,
+            specs=specs.to_dto(),
+            errors=errors,
+        )
 
     # ------------------------------------------------------------------ #
     # Update / save / submit
@@ -137,7 +134,7 @@ class FormService:
         in `changes`); zero rows if nothing changed and no transition.
         """
         form = cls.get_by_id_and_check(form_id)
-        specs = ConfigSpecs.from_json(form.template_version.content or {})
+        specs = form.template_version.get_content()
 
         # 3. Strip computed-key submissions then validate. ParamSet.validate
         #    mints/preserves __item_id per row, so the returned dict carries
@@ -147,7 +144,6 @@ class FormService:
 
         # 4. Submit gate.
         status_changed = False
-        old_status = form.status
         if (
             dto.status_transition == FormStatus.SUBMITTED
             and form.status != FormStatus.SUBMITTED
@@ -169,15 +165,6 @@ class FormService:
 
         # 6. Diff and build change list.
         changes = ConfigSpecs.diff_values(form.values or {}, new_values)
-        if status_changed:
-            changes.append(
-                FormChangeEntry(
-                    field_path=_STATUS_FIELD_PATH,
-                    action=FormChangeAction.STATUS_CHANGED,
-                    old_value=old_status.value,
-                    new_value=FormStatus.SUBMITTED.value,
-                )
-            )
 
         # 8. Persist union.
         form.values = new_values
@@ -192,13 +179,18 @@ class FormService:
             event.user = CurrentUserService.get_and_check_current_user()
             event.set_changes(changes)
             event.save()
+        if changes or status_changed:
             ActivityService.add(
                 ActivityType.UPDATE,
                 object_type=ActivityObjectType.FORM,
                 object_id=form.id,
             )
 
-        return FormSaveResultDTO(form=form.to_full_dto(), errors=errors)
+        return FormSaveResultDTO(
+            values=form.values,
+            specs=specs.to_dto(),
+            errors=errors,
+        )
 
     @classmethod
     @GwsCoreDbManager.transaction()

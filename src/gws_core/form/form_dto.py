@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any
 
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.user.user_dto import UserDTO
@@ -40,17 +41,27 @@ class FormChangeEntry(ConfigChangeEntry):
     action: FormChangeAction
 
 
+class FormTemplateRefDTO(BaseModelDTO):
+    """Lightweight reference to a Form's pinned FormTemplateVersion.
+
+    Carries just enough to display the source template (e.g. a "My Form
+    (v3)" header) without a separate fetch. For the full template or
+    version content, hit the form_template endpoints.
+    """
+
+    template_id: str
+    template_name: str
+    version_id: str
+    version_number: int
+
+
 class FormDTO(ModelWithUserDTO):
     name: str
-    template_version_id: str
+    template: FormTemplateRefDTO
     status: FormStatus
     submitted_at: datetime | None
     submitted_by: UserDTO | None
     is_archived: bool
-
-
-class FormFullDTO(FormDTO):
-    values: dict[str, Any] | None
 
 
 class FormSaveEventDTO(ModelDTO):
@@ -75,12 +86,19 @@ class SaveFormDTO(BaseModelDTO):
 
 
 class FormSaveResultDTO(BaseModelDTO):
-    """Result of a form save / submit / read.
+    """Renderable content of a form (returned by save / submit / get-content).
 
-    `form.values` is the union of user-input values and computed values
-    (see form_feature.md §6.7). `errors` carries per-computed-field error
-    messages keyed by spec key (or `<paramset_key>[].<field>` for per-row).
+    Carries only the data needed to render and edit the form — no Form
+    record metadata. Clients that need status/submitted_at/etc. should
+    call ``GET /form/{id_}`` separately.
+
+    `values` is the union of user-input values and computed values (see
+    form_feature.md §6.7). `specs` is the form's ConfigSpecs serialized
+    so the client can render fields without a separate template fetch.
+    `errors` carries per-computed-field error messages keyed by spec key
+    (or `<paramset_key>[].<field>` for per-row).
     """
 
-    form: FormFullDTO
+    values: dict[str, Any] | None
+    specs: dict[str, ParamSpecDTO]
     errors: dict[str, str]

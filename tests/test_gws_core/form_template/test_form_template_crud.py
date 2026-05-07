@@ -40,12 +40,11 @@ class TestFormTemplateCrud(BaseTestCase):
         self.assertEqual(len(drafts), 1)
         self.assertEqual(drafts[0].version, 0)
 
-    def test_get_full_returns_versions(self):
+    def test_list_versions(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
-        full = FormTemplateService.get_full(template.id)
-        self.assertEqual(full.name, "X")
-        self.assertEqual(len(full.versions), 1)
-        self.assertEqual(full.versions[0].status, FormTemplateVersionStatus.DRAFT)
+        versions = FormTemplateService.list_versions(template.id)
+        self.assertEqual(len(versions), 1)
+        self.assertEqual(versions[0].status, FormTemplateVersionStatus.DRAFT)
 
     def test_update_name_and_description(self):
         template = FormTemplateService.create(

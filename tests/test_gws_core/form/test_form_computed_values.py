@@ -51,7 +51,7 @@ class TestFormComputedValues(BaseTestCase):
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.0}]}),
         )
         self.assertIn("samples[].density", result.errors)
-        self.assertIsNone(result.form.values["samples"][0]["density"])
+        self.assertIsNone(result.values["samples"][0]["density"])
 
     def test_error_key_for_outer_scope_unknown_reference(self):
         # Outer formula references a key that doesn't exist in the spec.
@@ -71,7 +71,7 @@ class TestFormComputedValues(BaseTestCase):
         # error key "doubled".
         result = FormService.save(form.id, SaveFormDTO(values={}))
         self.assertIn("doubled", result.errors)
-        self.assertIsNone(result.form.values.get("doubled"))
+        self.assertIsNone(result.values.get("doubled"))
 
     def test_error_key_for_per_row_missing_sibling(self):
         # density references mass and volume; submit a row missing volume.
@@ -81,7 +81,7 @@ class TestFormComputedValues(BaseTestCase):
             SaveFormDTO(values={"samples": [{"mass": 1.0}]}),
         )
         self.assertIn("samples[].density", result.errors)
-        self.assertIsNone(result.form.values["samples"][0]["density"])
+        self.assertIsNone(result.values["samples"][0]["density"])
 
     def test_error_key_for_outer_aggregate_over_empty_paramset(self):
         # mean() of an empty list raises in the evaluator (test_computed_param
@@ -104,7 +104,7 @@ class TestFormComputedValues(BaseTestCase):
         form = self._make_form_from_specs(specs)
         result = FormService.save(form.id, SaveFormDTO(values={"samples": []}))
         self.assertIn("avg_mass", result.errors)
-        self.assertIsNone(result.form.values.get("avg_mass"))
+        self.assertIsNone(result.values.get("avg_mass"))
 
     def test_error_key_for_outer_type_mismatch(self):
         # User field is a StrParam but the formula does arithmetic on it.
@@ -123,7 +123,7 @@ class TestFormComputedValues(BaseTestCase):
         # `"not a number" * 2` evaluates to a string under simpleeval; coercion
         # to float fails and surfaces an error at the outer-scope key.
         self.assertIn("doubled_label", result.errors)
-        self.assertIsNone(result.form.values.get("doubled_label"))
+        self.assertIsNone(result.values.get("doubled_label"))
 
     def test_no_errors_on_clean_save(self):
         form = self._density_form()
@@ -134,8 +134,8 @@ class TestFormComputedValues(BaseTestCase):
             ),
         )
         self.assertEqual(result.errors, {})
-        self.assertEqual(result.form.values["samples"][0]["density"], 2.0)
-        self.assertEqual(result.form.values["total_mass"], 2.0)
+        self.assertEqual(result.values["samples"][0]["density"], 2.0)
+        self.assertEqual(result.values["total_mass"], 2.0)
 
     # ------------------------------------------------------------------ #
     # Computed values appear in FormSaveEvent.changes (spec §8 step 7)
@@ -196,7 +196,7 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
-        rows = result.form.values["samples"]
+        rows = result.values["samples"]
         item_id = rows[0]["__item_id"]
 
         # First save: row added as a unit; density rides along inside the
@@ -254,8 +254,8 @@ class TestFormComputedValues(BaseTestCase):
         # Status sticks (Phase 3 invariant) AND computed values are fresh.
         reloaded = Form.get_by_id(form.id)
         self.assertEqual(reloaded.status, FormStatus.SUBMITTED)
-        self.assertEqual(result.form.values["samples"][0]["density"], 8.0)
-        self.assertEqual(result.form.values["total_mass"], 4.0)
+        self.assertEqual(result.values["samples"][0]["density"], 8.0)
+        self.assertEqual(result.values["total_mass"], 4.0)
         # Storage matches the response.
         self.assertEqual(reloaded.values["samples"][0]["density"], 8.0)
         self.assertEqual(reloaded.values["total_mass"], 4.0)

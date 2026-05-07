@@ -87,7 +87,7 @@ class TestFormSaveEvents(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0}, {"mass": 2.0}]}),
         )
-        rows = result.form.values["samples"]
+        rows = result.values["samples"]
         # remove the first row
         FormService.save(
             form.id,
