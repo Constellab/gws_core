@@ -85,6 +85,19 @@ class SaveFormDTO(BaseModelDTO):
     status_transition: FormStatus | None = None
 
 
+class ComputedParamValueDTO(BaseModelDTO):
+    """Wire shape for a single ComputedParam cell in a save/read response.
+
+    Wraps the evaluated scalar with its per-cell error message so the client
+    can render value + error inline without consulting a separate errors
+    map. ``errors`` is None on success, a human-readable string on failure
+    (in which case ``value`` is None).
+    """
+
+    value: Any
+    errors: str | None
+
+
 class FormSaveResultDTO(BaseModelDTO):
     """Renderable content of a form (returned by save / submit / get-content).
 
@@ -93,12 +106,12 @@ class FormSaveResultDTO(BaseModelDTO):
     call ``GET /form/{id_}`` separately.
 
     `values` is the union of user-input values and computed values (see
-    form_feature.md §6.7). `specs` is the form's ConfigSpecs serialized
-    so the client can render fields without a separate template fetch.
-    `errors` carries per-computed-field error messages keyed by spec key
-    (or `<paramset_key>[].<field>` for per-row).
+    form_feature.md §6.7). User-input cells carry the raw scalar; computed
+    cells carry a ``ComputedParamValueDTO``-shaped dict ``{"value", "errors"}``
+    inline (outer-scope keys and per-row ParamSet cells alike). `specs` is
+    the form's ConfigSpecs serialized so the client can render fields
+    without a separate template fetch.
     """
 
     values: dict[str, Any] | None
     specs: dict[str, ParamSpecDTO]
-    errors: dict[str, str]

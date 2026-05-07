@@ -1,4 +1,8 @@
+import copy
+from typing import Any
+
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.param_set import ParamSet
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -97,10 +101,52 @@ class FormService:
         # Drive errors only; we don't overwrite stored values on read.
         _, errors = specs.compute_values(form.values or {})
         return FormSaveResultDTO(
-            values=form.values,
+            values=cls._wrap_computed_for_response(form.values, specs, errors),
             specs=specs.to_dto(),
-            errors=errors,
         )
+
+    @classmethod
+    def _wrap_computed_for_response(
+        cls,
+        values: dict[str, Any] | None,
+        specs: ConfigSpecs,
+        errors: dict[str, str],
+    ) -> dict[str, Any] | None:
+        """Wire-shape the union dict for save/read responses.
+
+        Each ComputedParam cell becomes ``{"value": <scalar>, "errors": <msg|None>}``
+        — outer-scope keys keyed in ``errors`` by spec key, per-row ParamSet
+        cells keyed by ``<paramset_key>[].<field>``. User-input cells are left
+        untouched. Storage and task execution still see bare scalars; only the
+        response payload carries the wrapper.
+        """
+        if values is None:
+            return None
+        result = copy.deepcopy(values)
+        for key, spec in specs.specs.items():
+            if not spec.accepts_user_input:
+                result[key] = {"value": result.get(key), "errors": errors.get(key)}
+                continue
+            if isinstance(spec, ParamSet) and spec.param_set is not None:
+                inner_computed = [
+                    (k, s)
+                    for k, s in spec.param_set.specs.items()
+                    if not s.accepts_user_input
+                ]
+                if not inner_computed:
+                    continue
+                rows = result.get(key)
+                if not isinstance(rows, list):
+                    continue
+                for row in rows:
+                    if not isinstance(row, dict):
+                        continue
+                    for inner_key, _ in inner_computed:
+                        row[inner_key] = {
+                            "value": row.get(inner_key),
+                            "errors": errors.get(f"{key}[].{inner_key}"),
+                        }
+        return result
 
     # ------------------------------------------------------------------ #
     # Update / save / submit
@@ -187,9 +233,8 @@ class FormService:
             )
 
         return FormSaveResultDTO(
-            values=form.values,
+            values=cls._wrap_computed_for_response(form.values, specs, errors),
             specs=specs.to_dto(),
-            errors=errors,
         )
 
     @classmethod

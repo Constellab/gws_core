@@ -119,7 +119,9 @@ class TestFormSaveAndSubmit(BaseTestCase):
             ),
         )
         self.assertEqual(Form.get_by_id(form.id).status, FormStatus.SUBMITTED)
-        self.assertEqual(result.values["shouted_name"], "Alice!")
+        self.assertEqual(
+            result.values["shouted_name"], {"value": "Alice!", "errors": None}
+        )
 
     def test_submit_sugar_endpoint(self):
         form = self._scalar_form()
@@ -196,13 +198,15 @@ class TestFormSaveAndSubmit(BaseTestCase):
                 }
             ),
         )
-        # Per-row computed values appear inside each row.
+        # Per-row computed values appear inside each row, wrapped with their
+        # per-cell error (None on success).
         rows = result.values["samples"]
-        self.assertEqual(rows[0]["density"], 2.0)
-        self.assertEqual(rows[1]["density"], 2.0)
-        # Outer-scope computed value is in the same dict.
-        self.assertEqual(result.values["total_mass"], 3.0)
-        self.assertEqual(result.errors, {})
+        self.assertEqual(rows[0]["density"], {"value": 2.0, "errors": None})
+        self.assertEqual(rows[1]["density"], {"value": 2.0, "errors": None})
+        # Outer-scope computed value is in the same dict, same wrapper shape.
+        self.assertEqual(
+            result.values["total_mass"], {"value": 3.0, "errors": None}
+        )
 
     def test_division_by_zero_returns_error_does_not_block_save(self):
         form = self._computed_form()
@@ -212,10 +216,11 @@ class TestFormSaveAndSubmit(BaseTestCase):
         )
         # The save succeeded.
         self.assertIsNotNone(Form.get_by_id(form.id).values)
-        # density failed; error key uses the per-row "<paramset>[].<field>" path.
-        self.assertIn("samples[].density", result.errors)
-        # density value in the row is None (failed evaluation).
-        self.assertIsNone(result.values["samples"][0]["density"])
+        # density failed; the per-row computed cell carries value=None and a
+        # non-empty error message inline.
+        density_cell = result.values["samples"][0]["density"]
+        self.assertIsNone(density_cell["value"])
+        self.assertIsNotNone(density_cell["errors"])
 
     def test_get_content_returns_stored_union(self):
         form = self._computed_form()
@@ -224,8 +229,13 @@ class TestFormSaveAndSubmit(BaseTestCase):
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
         result = FormService.get_content(form.id)
-        self.assertEqual(result.values["samples"][0]["density"], 2.0)
-        self.assertEqual(result.values["total_mass"], 1.0)
+        self.assertEqual(
+            result.values["samples"][0]["density"],
+            {"value": 2.0, "errors": None},
+        )
+        self.assertEqual(
+            result.values["total_mass"], {"value": 1.0, "errors": None}
+        )
         # specs are now part of the read payload (renderable content)
         self.assertIn("samples", result.specs)
         self.assertIn("total_mass", result.specs)
@@ -243,7 +253,9 @@ class TestFormSaveAndSubmit(BaseTestCase):
             ),
         )
         # The evaluator wins — total_mass is recomputed from sum(samples[].mass).
-        self.assertEqual(result.values["total_mass"], 1.0)
+        self.assertEqual(
+            result.values["total_mass"], {"value": 1.0, "errors": None}
+        )
 
     # ------------------------------------------------------------------ #
     # helpers

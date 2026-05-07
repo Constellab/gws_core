@@ -50,8 +50,9 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.0}]}),
         )
-        self.assertIn("samples[].density", result.errors)
-        self.assertIsNone(result.values["samples"][0]["density"])
+        density_cell = result.values["samples"][0]["density"]
+        self.assertIsNone(density_cell["value"])
+        self.assertIsNotNone(density_cell["errors"])
 
     def test_error_key_for_outer_scope_unknown_reference(self):
         # Outer formula references a key that doesn't exist in the spec.
@@ -67,11 +68,12 @@ class TestFormComputedValues(BaseTestCase):
             }
         )
         form = self._make_form_from_specs(specs)
-        # No mass provided: missing-reference error surfaces at outer-scope
-        # error key "doubled".
+        # No mass provided: missing-reference error surfaces inline on the
+        # computed cell.
         result = FormService.save(form.id, SaveFormDTO(values={}))
-        self.assertIn("doubled", result.errors)
-        self.assertIsNone(result.values.get("doubled"))
+        doubled = result.values["doubled"]
+        self.assertIsNone(doubled["value"])
+        self.assertIsNotNone(doubled["errors"])
 
     def test_error_key_for_per_row_missing_sibling(self):
         # density references mass and volume; submit a row missing volume.
@@ -80,8 +82,9 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0}]}),
         )
-        self.assertIn("samples[].density", result.errors)
-        self.assertIsNone(result.values["samples"][0]["density"])
+        density_cell = result.values["samples"][0]["density"]
+        self.assertIsNone(density_cell["value"])
+        self.assertIsNotNone(density_cell["errors"])
 
     def test_error_key_for_outer_aggregate_over_empty_paramset(self):
         # mean() of an empty list raises in the evaluator (test_computed_param
@@ -103,8 +106,9 @@ class TestFormComputedValues(BaseTestCase):
         )
         form = self._make_form_from_specs(specs)
         result = FormService.save(form.id, SaveFormDTO(values={"samples": []}))
-        self.assertIn("avg_mass", result.errors)
-        self.assertIsNone(result.values.get("avg_mass"))
+        avg = result.values["avg_mass"]
+        self.assertIsNone(avg["value"])
+        self.assertIsNotNone(avg["errors"])
 
     def test_error_key_for_outer_type_mismatch(self):
         # User field is a StrParam but the formula does arithmetic on it.
@@ -121,9 +125,10 @@ class TestFormComputedValues(BaseTestCase):
             form.id, SaveFormDTO(values={"label": "not a number"})
         )
         # `"not a number" * 2` evaluates to a string under simpleeval; coercion
-        # to float fails and surfaces an error at the outer-scope key.
-        self.assertIn("doubled_label", result.errors)
-        self.assertIsNone(result.values.get("doubled_label"))
+        # to float fails and surfaces inline on the computed cell.
+        doubled = result.values["doubled_label"]
+        self.assertIsNone(doubled["value"])
+        self.assertIsNotNone(doubled["errors"])
 
     def test_no_errors_on_clean_save(self):
         form = self._density_form()
@@ -133,9 +138,13 @@ class TestFormComputedValues(BaseTestCase):
                 values={"samples": [{"mass": 2.0, "volume": 1.0}]}
             ),
         )
-        self.assertEqual(result.errors, {})
-        self.assertEqual(result.values["samples"][0]["density"], 2.0)
-        self.assertEqual(result.values["total_mass"], 2.0)
+        self.assertEqual(
+            result.values["samples"][0]["density"],
+            {"value": 2.0, "errors": None},
+        )
+        self.assertEqual(
+            result.values["total_mass"], {"value": 2.0, "errors": None}
+        )
 
     # ------------------------------------------------------------------ #
     # Computed values appear in FormSaveEvent.changes (spec §8 step 7)
@@ -192,11 +201,13 @@ class TestFormComputedValues(BaseTestCase):
         # on the same row emits FIELD_UPDATED for both mass and density on
         # the per-row path.
         form = self._density_form()
-        result = FormService.save(
+        FormService.save(
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
-        rows = result.values["samples"]
+        # Re-read storage (scalar shape) for the next save — the response
+        # wraps computed cells, but storage stays scalar.
+        rows = Form.get_by_id(form.id).values["samples"]
         item_id = rows[0]["__item_id"]
 
         # First save: row added as a unit; density rides along inside the
@@ -254,9 +265,14 @@ class TestFormComputedValues(BaseTestCase):
         # Status sticks (Phase 3 invariant) AND computed values are fresh.
         reloaded = Form.get_by_id(form.id)
         self.assertEqual(reloaded.status, FormStatus.SUBMITTED)
-        self.assertEqual(result.values["samples"][0]["density"], 8.0)
-        self.assertEqual(result.values["total_mass"], 4.0)
-        # Storage matches the response.
+        self.assertEqual(
+            result.values["samples"][0]["density"],
+            {"value": 8.0, "errors": None},
+        )
+        self.assertEqual(
+            result.values["total_mass"], {"value": 4.0, "errors": None}
+        )
+        # Storage stays scalar (the wrapper is response-only).
         self.assertEqual(reloaded.values["samples"][0]["density"], 8.0)
         self.assertEqual(reloaded.values["total_mass"], 4.0)
 
