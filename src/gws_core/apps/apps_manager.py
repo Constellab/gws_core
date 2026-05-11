@@ -1,5 +1,6 @@
 import os
 import signal
+import socket
 from datetime import datetime, timedelta
 
 from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
@@ -118,11 +119,17 @@ class AppsManager:
     def _get_next_available_port(cls, start_port: int | None = None) -> int:
         """Get the next available port for an app.
         This is used to find a port for the env apps.
+
+        A port is considered usable only if it is neither tracked by one of
+        this process's running app processes *nor* actually bound at the OS
+        level — under parallel tests (pytest-xdist) a previous app on this
+        worker may still be shutting down, or a neighbouring worker may hold a
+        port in our band.
         """
         if start_port is None:
             start_port = Settings.get_app_external_port() + 1
 
-        while cls._port_is_used(start_port):
+        while cls._port_is_used(start_port) or cls._port_is_bound(start_port):
             start_port += 1
 
         return start_port
@@ -133,6 +140,12 @@ class AppsManager:
             if running_process.uses_port(port):
                 return True
         return False
+
+    @classmethod
+    def _port_is_bound(cls, port: int) -> bool:
+        """Return True if something is currently listening on ``port`` (OS-level)."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            return sock.connect_ex(("localhost", port)) == 0
 
     @classmethod
     def init(cls):

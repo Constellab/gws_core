@@ -488,15 +488,14 @@ class Settings:
         """Returns the port where all the external request to app are sent.
 
         Under pytest-xdist, each worker is assigned its own port band so parallel
-        reflex/streamlit tests don't fight for the same nginx + app ports.
+        reflex/streamlit tests don't fight for the same nginx + app ports. The
+        ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
+        the first worker (``gw0``) / non-xdist runs — the per-worker stride is
+        still applied on top, otherwise every worker would collide on it.
         """
         external_port = os.environ.get("APP_EXTERNAL_PORT")
-        if external_port is not None:
-            return int(external_port)
-        return (
-            cls.APP_EXTERNAL_PORT_DEFAULT
-            + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
-        )
+        base_port = int(external_port) if external_port is not None else cls.APP_EXTERNAL_PORT_DEFAULT
+        return base_port + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
 
     @classmethod
     def get_app_sub_domain(cls) -> str:

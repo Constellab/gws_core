@@ -1,7 +1,8 @@
 import os
 import re
+import socket
 from multiprocessing import Process
-from time import sleep
+from time import sleep, time
 
 import boto3
 import requests
@@ -64,7 +65,7 @@ class TestS3Server(BaseTestCase):
 
         finally:
             # stop the server
-            proc.terminate()  # send
+            self._stop_s3_server(proc)
 
     def test_lab_s3_server(self):
         proc = self._start_s3_server()
@@ -81,7 +82,7 @@ class TestS3Server(BaseTestCase):
 
         finally:
             # stop the server
-            proc.terminate()  # send
+            self._stop_s3_server(proc)
             FileHelper.delete_dir(tmp_dir)
 
     def _test_auth(self, access_key: str, secret_key: str, bucket_name: str):
@@ -268,7 +269,22 @@ class TestS3Server(BaseTestCase):
 
         return CredentialsService.create(credentials_dto)
 
+    def _wait_for_port_free(self, port: int, timeout: float = 15) -> None:
+        """Block until nothing is listening on ``port`` (a previous server
+        from another test on this same worker may still be shutting down)."""
+        deadline = time() + timeout
+        while time() < deadline:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+                if sock.connect_ex(("localhost", port)) != 0:
+                    return  # connection refused -> port is free
+            sleep(0.5)
+        raise Exception(f"Port {port} still in use after {timeout}s")
+
     def _start_s3_server(self) -> Process:
+        # Another test on this worker may have just stopped its server; make
+        # sure the socket is actually released before we bind it again.
+        self._wait_for_port_free(self.S3_PORT)
+
         config = Config(app=s3_server_app, host="0.0.0.0", port=self.S3_PORT)
         server = Server(config)
 
@@ -293,7 +309,16 @@ class TestS3Server(BaseTestCase):
             count += 1
 
             if count >= 15:
-                proc.terminate()
+                self._stop_s3_server(proc)
                 raise Exception("Timeout while starting s3 server")
 
         return proc
+
+    def _stop_s3_server(self, proc: Process) -> None:
+        """Terminate the server process and *wait* for it to exit so the port
+        is released before the next test (on this worker) tries to bind it."""
+        proc.terminate()
+        proc.join(timeout=10)
+        if proc.is_alive():
+            proc.kill()
+            proc.join(timeout=5)
