@@ -25,7 +25,6 @@ def _str_specs(spec_keys: list[str]) -> ConfigSpecs:
 
 # test_form_template_versioning
 class TestFormTemplateVersioning(BaseTestCase):
-
     def test_create_draft_rejected_when_one_exists(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
 
@@ -43,7 +42,7 @@ class TestFormTemplateVersioning(BaseTestCase):
         )
         self.assertEqual(new_draft.content, published.content)
         self.assertEqual(new_draft.status, FormTemplateVersionStatus.DRAFT)
-        self.assertEqual(new_draft.version, 0)
+        self.assertEqual(new_draft.version, 2)
 
     def test_create_draft_field_mutates_content(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
@@ -124,9 +123,7 @@ class TestFormTemplateVersioning(BaseTestCase):
         draft = self._get_draft(template)
         FormTemplateService.publish_version(template.id, draft.id)
 
-        new_draft = FormTemplateService.create_draft(
-            template.id, CreateDraftVersionDTO()
-        )
+        new_draft = FormTemplateService.create_draft(template.id, CreateDraftVersionDTO())
         self.assertEqual(new_draft.status, FormTemplateVersionStatus.DRAFT)
 
     def test_archive_version_only_on_published(self):

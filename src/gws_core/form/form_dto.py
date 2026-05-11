@@ -27,7 +27,6 @@ class FormChangeAction(Enum):
     FIELD_DELETED = ConfigChangeAction.FIELD_DELETED.value
     PARAMSET_ITEM_ADDED = ConfigChangeAction.PARAMSET_ITEM_ADDED.value
     PARAMSET_ITEM_REMOVED = ConfigChangeAction.PARAMSET_ITEM_REMOVED.value
-    STATUS_CHANGED = "STATUS_CHANGED"
 
 
 class FormChangeEntry(ConfigChangeEntry):

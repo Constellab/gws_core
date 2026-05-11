@@ -13,6 +13,7 @@ evaluator-level coverage and Phase 3's happy-path coverage:
 - search by a computed-field value (spec §14) — currently unsupported by the
   search infra; tests document and skip until JSON-key filtering exists.
 """
+
 import unittest
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -39,7 +40,6 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestFormComputedValues(BaseTestCase):
-
     # ------------------------------------------------------------------ #
     # Per-field error key shape matrix (spec §6.7)
     # ------------------------------------------------------------------ #
@@ -62,9 +62,7 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "mass": FloatParam(human_name="Mass", optional=True),
-                "doubled": ComputedParam(
-                    expression="mass * 2", result_type="float"
-                ),
+                "doubled": ComputedParam(expression="mass * 2", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -94,14 +92,10 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "samples": ParamSet(
-                    ConfigSpecs(
-                        {"mass": FloatParam(human_name="Mass", optional=True)}
-                    ),
+                    ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
                     optional=True,
                 ),
-                "avg_mass": ComputedParam(
-                    expression="mean(samples[].mass)", result_type="float"
-                ),
+                "avg_mass": ComputedParam(expression="mean(samples[].mass)", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -115,15 +109,11 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "label": StrParam(human_name="Label", optional=True),
-                "doubled_label": ComputedParam(
-                    expression="label * 2", result_type="float"
-                ),
+                "doubled_label": ComputedParam(expression="label * 2", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
-        result = FormService.save(
-            form.id, SaveFormDTO(values={"label": "not a number"})
-        )
+        result = FormService.save(form.id, SaveFormDTO(values={"label": "not a number"}))
         # `"not a number" * 2` evaluates to a string under simpleeval; coercion
         # to float fails and surfaces inline on the computed cell.
         doubled = result.values["doubled_label"]
@@ -134,17 +124,13 @@ class TestFormComputedValues(BaseTestCase):
         form = self._density_form()
         result = FormService.save(
             form.id,
-            SaveFormDTO(
-                values={"samples": [{"mass": 2.0, "volume": 1.0}]}
-            ),
+            SaveFormDTO(values={"samples": [{"mass": 2.0, "volume": 1.0}]}),
         )
         self.assertEqual(
             result.values["samples"][0]["density"],
             {"value": 2.0, "errors": None},
         )
-        self.assertEqual(
-            result.values["total_mass"], {"value": 2.0, "errors": None}
-        )
+        self.assertEqual(result.values["total_mass"], {"value": 2.0, "errors": None})
 
     # ------------------------------------------------------------------ #
     # Computed values appear in FormSaveEvent.changes (spec §8 step 7)
@@ -181,10 +167,7 @@ class TestFormComputedValues(BaseTestCase):
         # Look at all entries across both events; total_mass must appear with
         # both CREATED (first save) and UPDATED (second save).
         total_mass_entries = [
-            c
-            for ev in events
-            for c in ev.get_changes()
-            if c.field_path == "total_mass"
+            c for ev in events for c in ev.get_changes() if c.field_path == "total_mass"
         ]
         actions = sorted(c.action.value for c in total_mass_entries)
         self.assertEqual(
@@ -212,9 +195,7 @@ class TestFormComputedValues(BaseTestCase):
 
         # First save: row added as a unit; density rides along inside the
         # row's payload (no separate FIELD_CREATED for density).
-        events_after_first = list(
-            FormSaveEvent.select().where(FormSaveEvent.form == form.id)
-        )
+        events_after_first = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         self.assertEqual(len(events_after_first), 1)
         added_entries = [
             c
@@ -236,8 +217,7 @@ class TestFormComputedValues(BaseTestCase):
             c
             for ev in events
             for c in ev.get_changes()
-            if c.field_path == per_row_path
-            and c.action == FormChangeAction.FIELD_UPDATED
+            if c.field_path == per_row_path and c.action == FormChangeAction.FIELD_UPDATED
         ]
         self.assertEqual(len(density_updates), 1)
         self.assertEqual(density_updates[0].old_value, 2.0)
@@ -269,37 +249,10 @@ class TestFormComputedValues(BaseTestCase):
             result.values["samples"][0]["density"],
             {"value": 8.0, "errors": None},
         )
-        self.assertEqual(
-            result.values["total_mass"], {"value": 4.0, "errors": None}
-        )
+        self.assertEqual(result.values["total_mass"], {"value": 4.0, "errors": None})
         # Storage stays scalar (the wrapper is response-only).
         self.assertEqual(reloaded.values["samples"][0]["density"], 8.0)
         self.assertEqual(reloaded.values["total_mass"], 4.0)
-
-    # ------------------------------------------------------------------ #
-    # Search by a computed-field value (spec §14)
-    # ------------------------------------------------------------------ #
-
-    @unittest.skip(
-        "Search by JSON-key path on Form.values is not supported by the "
-        "search infra (search_builder._get_model_field requires a model "
-        "column). Once JSON-key filtering lands, computed keys participate "
-        "for free since storage is the union — re-enable this test then."
-    )
-    def test_search_by_outer_computed_field_value(self):
-        # When JSON-key filtering exists: build three forms with
-        # total_mass = 1.0, 50.0, 200.0; assert that filtering on
-        # total_mass > 100 returns one form. The same machinery would work
-        # for user keys, so this test pins the parity.
-        pass
-
-    @unittest.skip(
-        "Per-row search on a paramset's nested computed value is not "
-        "supported by the search infra today. Same blocker as the outer "
-        "case — re-enable once JSON-path filtering lands."
-    )
-    def test_search_by_per_row_computed_value(self):
-        pass
 
     # ------------------------------------------------------------------ #
     # helpers
@@ -312,9 +265,7 @@ class TestFormComputedValues(BaseTestCase):
                     ConfigSpecs(
                         {
                             "mass": FloatParam(human_name="Mass", optional=True),
-                            "volume": FloatParam(
-                                human_name="Volume", optional=True
-                            ),
+                            "volume": FloatParam(human_name="Volume", optional=True),
                             "density": ComputedParam(
                                 expression="mass / volume", result_type="float"
                             ),
@@ -322,9 +273,7 @@ class TestFormComputedValues(BaseTestCase):
                     ),
                     optional=True,
                 ),
-                "total_mass": ComputedParam(
-                    expression="sum(samples[].mass)", result_type="float"
-                ),
+                "total_mass": ComputedParam(expression="sum(samples[].mass)", result_type="float"),
             }
         )
         return self._make_form_from_specs(specs)

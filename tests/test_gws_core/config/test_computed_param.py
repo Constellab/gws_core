@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import (
@@ -21,7 +22,7 @@ from gws_core.config.param.computed.computed_param_evaluator import (
     ConfigSpecsEvaluator,
 )
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
-from gws_core.config.param.param_types import ParamSpecCategory
+from gws_core.config.param.param_types import ParamSpecType
 
 
 @task_decorator("ComputedParamTask")
@@ -211,11 +212,11 @@ class TestComputedParamSpec(TestCase):
             short_description="Computed density",
         )
         dto = spec.to_dto()
-        self.assertEqual(dto.type, ParamSpecCategory.COMPUTED)
+        self.assertEqual(dto.type, ParamSpecType.COMPUTED)
         self.assertEqual(dto.additional_info["expression"], "mass / volume")
         self.assertEqual(dto.additional_info["result_type"], "float")
 
-        loaded = ParamSpecHelper.create_param_spec_from_dto(dto)
+        loaded = cast(ComputedParam, ParamSpecHelper.create_param_spec_from_dto(dto))
         self.assertIsInstance(loaded, ComputedParam)
         self.assertEqual(loaded.expression, "mass / volume")
         self.assertEqual(loaded.result_type, "float")

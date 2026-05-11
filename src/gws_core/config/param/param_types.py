@@ -49,7 +49,7 @@ class ParamSpecSimpleDTO(BaseModelDTO):
     optional: bool
     visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
-    additional_info: dict | None = {}
+    additional_info: dict = {}
 
 
 class ParamSpecDTO(ParamSpecSimpleDTO):

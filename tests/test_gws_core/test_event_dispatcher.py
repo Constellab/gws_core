@@ -19,12 +19,20 @@ class EventTest(BaseEvent):
 class TestEventDispatcher(BaseTestCase):
 
     def setUp(self):
-        """Clear listeners before each test."""
-        EventDispatcher.get_instance().clear_listeners()
+        """Isolate the dispatcher: snapshot the app-wide listeners (registered
+        once at brick import time and never re-registered), then start from a
+        clean slate. Restored in tearDown so other test files on the same
+        worker process still see them."""
+        dispatcher = EventDispatcher.get_instance()
+        self._saved_listeners = dispatcher.get_registered_listeners()
+        dispatcher.clear_listeners()
 
     def tearDown(self):
-        """Clear listeners after each test."""
-        EventDispatcher.get_instance().clear_listeners()
+        """Restore the app-wide listeners snapshotted in setUp."""
+        dispatcher = EventDispatcher.get_instance()
+        dispatcher.clear_listeners()
+        for listener in self._saved_listeners:
+            dispatcher.register(listener)
 
     def test_sync_listener_runs_in_caller_thread(self):
         """Sync listener should execute immediately in the caller's thread."""

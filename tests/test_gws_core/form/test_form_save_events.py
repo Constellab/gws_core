@@ -1,5 +1,6 @@
 """FormSaveEvent shape: one row per save with a list of FormChangeEntry,
 plus get_history pagination."""
+
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import FloatParam, StrParam
@@ -29,9 +30,7 @@ class TestFormSaveEvents(BaseTestCase):
             form.id,
             SaveFormDTO(values={"name": "Alice", "mass": 1.5}),
         )
-        events = list(
-            FormSaveEvent.select().where(FormSaveEvent.form == form.id)
-        )
+        events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         self.assertEqual(len(events), 1)
         actions = [c.action for c in events[0].get_changes()]
         self.assertEqual(
@@ -62,15 +61,11 @@ class TestFormSaveEvents(BaseTestCase):
         # 1st save: name CREATED
         FormService.save(form.id, SaveFormDTO(values={"name": "Alice"}))
         # 2nd save: name UPDATED + mass CREATED
-        FormService.save(
-            form.id, SaveFormDTO(values={"name": "Bob", "mass": 1.0})
-        )
+        FormService.save(form.id, SaveFormDTO(values={"name": "Bob", "mass": 1.0}))
         # 3rd save: mass DELETED
         FormService.save(form.id, SaveFormDTO(values={"name": "Bob"}))
 
-        events = list(
-            FormSaveEvent.select().where(FormSaveEvent.form == form.id)
-        )
+        events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         self.assertEqual(len(events), 3)
 
         # Each FormChangeAction should appear at least once across the 3 saves.
@@ -97,37 +92,12 @@ class TestFormSaveEvents(BaseTestCase):
         # Aggregate across all events instead of relying on order — back-to-back
         # saves can land in the same second (DateTimeUTC has second precision)
         # and in-second ordering isn't stable.
-        events = list(
-            FormSaveEvent.select().where(FormSaveEvent.form == form.id)
-        )
+        events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         all_actions = []
         for ev in events:
             all_actions.extend(c.action for c in ev.get_changes())
-        self.assertEqual(
-            all_actions.count(FormChangeAction.PARAMSET_ITEM_ADDED), 2
-        )
-        self.assertEqual(
-            all_actions.count(FormChangeAction.PARAMSET_ITEM_REMOVED), 1
-        )
-
-    def test_status_changed_entry_on_submit(self):
-        form = self._scalar_form()
-        FormService.save(
-            form.id,
-            SaveFormDTO(
-                values={"name": "Alice"},
-                status_transition=FormStatus.SUBMITTED,
-            ),
-        )
-        events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
-        self.assertEqual(len(events), 1)
-        changes = events[0].get_changes()
-        actions = [c.action for c in changes]
-        self.assertIn(FormChangeAction.STATUS_CHANGED, actions)
-        status_entry = [c for c in changes if c.action == FormChangeAction.STATUS_CHANGED][0]
-        self.assertEqual(status_entry.field_path, "__status")
-        self.assertEqual(status_entry.old_value, FormStatus.DRAFT.value)
-        self.assertEqual(status_entry.new_value, FormStatus.SUBMITTED.value)
+        self.assertEqual(all_actions.count(FormChangeAction.PARAMSET_ITEM_ADDED), 2)
+        self.assertEqual(all_actions.count(FormChangeAction.PARAMSET_ITEM_REMOVED), 1)
 
     # ------------------------------------------------------------------ #
     # history pagination

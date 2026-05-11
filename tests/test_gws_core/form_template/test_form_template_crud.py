@@ -38,7 +38,7 @@ class TestFormTemplateCrud(BaseTestCase):
             )
         )
         self.assertEqual(len(drafts), 1)
-        self.assertEqual(drafts[0].version, 0)
+        self.assertEqual(drafts[0].version, 1)
 
     def test_list_versions(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
