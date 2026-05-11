@@ -137,9 +137,12 @@ class ComputedParam(ParamSpec):
         from gws_core.config.param.param_spec import StrParam
 
         return {
-            "expression": StrParam(human_name="Expression").to_dto(),
+            "expression": StrParam(
+                human_name="Expression", short_description="The expression to compute. Ex: 'a + b'"
+            ).to_dto(),
             "result_type": StrParam(
                 human_name="Result type",
+                short_description="The type of the computed result.",
                 allowed_values=["int", "float", "str", "bool"],
             ).to_dto(),
         }
@@ -151,14 +154,22 @@ class ComputedParam(ParamSpec):
     # so it does not need to know about expressions, evaluators, or graphs.
 
     @classmethod
-    def check_graph(cls, specs: ConfigSpecs) -> None:
+    def check_graph(cls, specs: ConfigSpecs, scope_label: str | None = None) -> None:
         """Validate ComputedParam references and reject cycles in `specs`.
 
         Builds the dependency graph across ComputedParam expressions, rejects
         references to keys not in `specs`, and runs Kahn's algorithm to detect
-        cycles. Called from ConfigSpecs.check_config_specs.
+        cycles. Recurses into ParamSet inner specs so per-row ComputedParams are
+        validated too. `scope_label` names the enclosing ParamSet (used to make
+        error messages point at the right place). Called from
+        ConfigSpecs.check_config_specs.
         """
-        deps = cls._build_dep_graph(specs)
+        # Validate per-row ComputedParams inside ParamSets first.
+        for key, spec in specs.specs.items():
+            if isinstance(spec, ParamSet) and spec.param_set is not None:
+                cls.check_graph(spec.param_set, scope_label=f"ParamSet '{key}'")
+
+        deps = cls._build_dep_graph(specs, scope_label)
         if not deps:
             return
 
@@ -178,12 +189,16 @@ class ComputedParam(ParamSpec):
 
         if len(resolved) != len(computed_only_deps):
             unresolved = sorted(set(computed_only_deps.keys()) - resolved)
+            location = f" inside {scope_label}" if scope_label else ""
             raise BadRequestException(
-                f"Cycle detected in ComputedParam expressions among keys: {', '.join(unresolved)}"
+                f"Cycle detected in ComputedParam expressions{location} "
+                f"among keys: {', '.join(unresolved)}"
             )
 
     @classmethod
-    def _build_dep_graph(cls, specs: ConfigSpecs) -> dict[str, set[str]]:
+    def _build_dep_graph(
+        cls, specs: ConfigSpecs, scope_label: str | None = None
+    ) -> dict[str, set[str]]:
         """Return computed_key -> referenced keys, raising on unknown refs."""
         deps: dict[str, set[str]] = {}
         for key, spec in specs.specs.items():
@@ -192,8 +207,9 @@ class ComputedParam(ParamSpec):
             refs = ConfigSpecsEvaluator.extract_referenced_keys(spec.expression)
             for ref in refs:
                 if ref not in specs.specs:
+                    location = f" inside {scope_label}" if scope_label else ""
                     raise BadRequestException(
-                        f"ComputedParam '{key}' references unknown key '{ref}'"
+                        f"ComputedParam '{key}'{location} references unknown key '{ref}'"
                     )
             deps[key] = refs
         return deps

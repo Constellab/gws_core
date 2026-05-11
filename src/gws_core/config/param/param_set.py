@@ -7,11 +7,11 @@ from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
-from .param_spec import ParamSpec
+from .param_spec import IntParam, ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
-@param_spec_decorator(type_=ParamSpecCategory.NESTED)
+@param_spec_decorator(type_=ParamSpecCategory.PARAM_SET)
 class ParamSet(ParamSpec):
     """ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
@@ -226,4 +226,10 @@ class ParamSet(ParamSpec):
 
     @classmethod
     def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None
+        return {
+            "max_number_of_occurrences": IntParam(
+                human_name="Max number of occurrences",
+                short_description=("Maximum number of occurrences of the param set."),
+                optional=True,
+            ).to_dto(),
+        }

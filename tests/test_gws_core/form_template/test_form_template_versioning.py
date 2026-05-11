@@ -1,5 +1,6 @@
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.computed.computed_param import ComputedParam
+from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import (
@@ -117,6 +118,28 @@ class TestFormTemplateVersioning(BaseTestCase):
         )
         with self.assertRaises(BadRequestException):
             FormTemplateService.publish_version(template.id, draft.id)
+
+    def test_publish_rejects_cyclic_computed_param_inside_param_set(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(
+            ConfigSpecs(
+                {
+                    "rows": ParamSet(
+                        ConfigSpecs(
+                            {
+                                "a": ComputedParam(expression="b + 1", result_type="float"),
+                                "b": ComputedParam(expression="a + 1", result_type="float"),
+                            }
+                        )
+                    ),
+                }
+            )
+        )
+        with self.assertRaises(BadRequestException) as ctx:
+            FormTemplateService.publish_version(template.id, draft.id)
+        # The ParamSet name should be in the error so the field is easy to find.
+        self.assertIn("rows", str(ctx.exception))
 
     def test_new_draft_allowed_after_publish(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))

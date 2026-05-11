@@ -61,7 +61,6 @@ class FormTemplateService:
     def get_by_id_and_check(cls, template_id: str) -> FormTemplate:
         return FormTemplate.get_by_id_and_check(template_id)
 
-
     @classmethod
     @GwsCoreDbManager.transaction()
     def update(cls, template_id: str, dto: UpdateFormTemplateDTO) -> FormTemplate:
@@ -422,5 +421,6 @@ class FormTemplateService:
                 ParamSpecCategory.SIMPLE,
                 ParamSpecCategory.LAB_SPECIFIC,
                 ParamSpecCategory.COMPUTED,
+                ParamSpecCategory.PARAM_SET,
             ]
         )

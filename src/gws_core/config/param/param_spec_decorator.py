@@ -10,8 +10,9 @@ if TYPE_CHECKING:
 
 class ParamSpecCategory(Enum):
     SIMPLE = "simple"
-    NESTED = "nested"
     LAB_SPECIFIC = "lab_specific"
+    PARAM_SET = "param_set"
+    DYNAMIC_PARAM = "dynamic_param"
     COMPUTED = "computed"
 
 
