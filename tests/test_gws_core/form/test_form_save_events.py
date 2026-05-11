@@ -33,10 +33,12 @@ class TestFormSaveEvents(BaseTestCase):
         events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         self.assertEqual(len(events), 1)
         actions = [c.action for c in events[0].get_changes()]
+        # create() seeds both keys as null, so giving them values is two
+        # FIELD_UPDATED entries (null -> value), not FIELD_CREATED.
         self.assertEqual(
             sorted(actions, key=lambda a: a.value),
             sorted(
-                [FormChangeAction.FIELD_CREATED, FormChangeAction.FIELD_CREATED],
+                [FormChangeAction.FIELD_UPDATED, FormChangeAction.FIELD_UPDATED],
                 key=lambda a: a.value,
             ),
         )

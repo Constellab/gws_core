@@ -519,6 +519,7 @@ All routes live under `src/gws_core/form_template/form_template_controller.py` a
 | `PUT` | `/form/{id}` | Update name/tags only. |
 | `POST` | `/form/{id}/save` | Save values (see §8). Body: `{values, status_transition?}`. |
 | `POST` | `/form/{id}/submit` | Sugar for save + SUBMITTED. |
+| `POST` | `/form/{id}/fill-from-text` | AI-assisted fill from a text instruction. Body: `{text, current_values?}`. Returns a renderable `FormSaveResultDTO` (same shape as `GET /form/{id}/content`); **does not persist** — the client reviews/edits then calls `/save`. For voice input, the client first calls `POST /ai/transcribe-audio` (generic) to get the text, then calls this endpoint with it. |
 | `DELETE` | `/form/{id}` | Hard delete. Cascade to FormSaveEvent. Application-layer guard: rejected if any Note references this form via a FORM block (frontend should detach references first). |
 | `POST` | `/form/search` | Paginated search. Filters: name, tags, status, template_id, created_by, date range, is_archived. |
 | `PUT` | `/form/{id}/archive` | Set `is_archived=true`. |
@@ -531,6 +532,8 @@ All routes live under `src/gws_core/form_template/form_template_controller.py` a
 
 - `FormTemplateService` — CRUD, version lifecycle, schema validation (delegates to `ConfigSpecs.check_config_specs()` which now includes cycle detection), archive guards, hard-delete usage check.
 - `FormService` — create from version, save with diffing, submit, archive, history queries. Builds one `FormSaveEvent` per save with the diff list. Calls `ConfigSpecs.compute_values(...)` for read-only computed results.
+- `FormAiFillService` — AI-assisted form filling from a free-text instruction. Builds a prompt from the form's `ConfigSpecs.to_json_dict()` plus the supplied current values, calls the OpenAI chat model (`gpt-4o`) to get the complete values dict, then runs the same `strip_computed_keys` → `validate_values` → `compute_values` → `merge_computed` pipeline as `FormService.save` and returns a `FormSaveResultDTO`. Does **not** write to the DB, emit a `FormSaveEvent`, or log an activity. Voice input is handled out-of-band via `OpenAiTranscriptionService` (`POST /ai/transcribe-audio`): the client transcribes audio → text, then calls `/form/{id}/fill-from-text`. Mirrors `RichTextTranscriptionService`.
+- `OpenAiTranscriptionService` (`impl/openai/`) — generic audio-to-text (OpenAI Whisper). Shared building block for any voice-input feature; owns the 10MB limit, temp-file handling, and Whisper config. Exposed at `POST /ai/transcribe-audio` → `{text}`. Consumed by `RichTextTranscriptionService` and (indirectly, client-side) by the form AI fill flow.
 - `ConfigSpecsEvaluator` (in `config/param/computed/`) — generic, not form-specific. Wraps `simpleeval` with the whitelisted function table and the `samples[].mass` aggregate sugar. Cycle detection lives in `ConfigSpecs.check_config_specs()`.
 - `FormParamSetItemIdentityService` — assigns/preserves `__item_id`, computes the diff used to build the `FormSaveEvent.changes` list.
 
@@ -554,8 +557,12 @@ src/gws_core/
     form_save_event.py                  # FormSaveEvent model + FormChangeEntry DTO
     form_dto.py
     form_service.py
+    form_ai_fill_service.py             # AI-assisted fill from a text instruction (no persistence)
     form_search_builder.py
     form_controller.py
+  impl/openai/
+    open_ai_transcription_service.py    # generic audio -> text (Whisper)
+    open_ai_transcription_controller.py # POST /ai/transcribe-audio
   config/param/computed/
     __init__.py
     computed_param.py                   # ComputedParam(ParamSpec) subclass

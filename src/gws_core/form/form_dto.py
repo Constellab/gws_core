@@ -84,6 +84,19 @@ class SaveFormDTO(BaseModelDTO):
     status_transition: FormStatus | None = None
 
 
+class FillFormFromTextDTO(BaseModelDTO):
+    """Request body for AI-assisted form filling from a text instruction.
+
+    ``current_values`` is the form's current values dict — it is sent to the
+    AI so it can keep / modify existing fields. The response is a
+    ``FormSaveResultDTO``; nothing is persisted (the client reviews then calls
+    ``POST /form/{id}/save``).
+    """
+
+    text: str
+    current_values: dict[str, Any] = {}
+
+
 class ComputedParamValueDTO(BaseModelDTO):
     """Wire shape for a single ComputedParam cell in a save/read response.
 

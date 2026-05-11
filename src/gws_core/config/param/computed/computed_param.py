@@ -226,6 +226,30 @@ class ComputedParam(ParamSpec):
 
         return computed, errors
 
+    @staticmethod
+    def _has_unset_dependency(
+        expression: str,
+        scope: dict[str, Any],
+        paramset_keys: set[str] | None = None,
+    ) -> bool:
+        """True if any non-ParamSet key referenced by `expression` is missing
+        from `scope` or resolves to None.
+
+        Used to skip evaluation of a ComputedParam whose inputs aren't filled in
+        yet: the result is "no value yet", not an error, so we leave the cell
+        None and record nothing in the errors dict. ParamSet keys (referenced via
+        the `samples[].field` aggregate sugar) are never treated as unset — an
+        empty list is a valid input that the aggregate helpers handle on their
+        own — so callers pass them in `paramset_keys` to be ignored here.
+        """
+        ignored = paramset_keys or set()
+        for ref in ConfigSpecsEvaluator.extract_referenced_keys(expression):
+            if ref in ignored:
+                continue
+            if ref not in scope or scope.get(ref) is None:
+                return True
+        return False
+
     @classmethod
     def _evaluate_paramset_rows(
         cls,
@@ -245,6 +269,9 @@ class ComputedParam(ParamSpec):
 
             for row in values.get(key) or []:
                 for inner_key, inner_spec in inner_computed:
+                    if cls._has_unset_dependency(inner_spec.expression, row):
+                        row[inner_key] = None
+                        continue
                     try:
                         raw = evaluator.evaluate(inner_spec.expression, row)
                         row[inner_key] = ConfigSpecsEvaluator.coerce_result(
@@ -276,6 +303,7 @@ class ComputedParam(ParamSpec):
             if k in specs.specs and not isinstance(specs.specs[k], cls)
         }
 
+        paramset_keys = set(paramset_rows)
         remaining = {k for k, s in specs.specs.items() if isinstance(s, cls)}
         while remaining:
             progressed = False
@@ -285,12 +313,19 @@ class ComputedParam(ParamSpec):
                 if {r for r in refs if r in remaining and r != key}:
                     continue
 
-                try:
-                    raw = evaluator.evaluate(spec.expression, scope, paramset_rows=paramset_rows)
-                    value = ConfigSpecsEvaluator.coerce_result(raw, spec.result_type)
-                except ComputedParamEvaluationError as err:
+                if cls._has_unset_dependency(spec.expression, scope, paramset_keys):
+                    # An input (or an upstream computed value) isn't filled in
+                    # yet — no value, but not an error either.
                     value = None
-                    errors[key] = str(err)
+                else:
+                    try:
+                        raw = evaluator.evaluate(
+                            spec.expression, scope, paramset_rows=paramset_rows
+                        )
+                        value = ConfigSpecsEvaluator.coerce_result(raw, spec.result_type)
+                    except ComputedParamEvaluationError as err:
+                        value = None
+                        errors[key] = str(err)
 
                 computed[key] = value
                 scope[key] = value

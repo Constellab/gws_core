@@ -54,11 +54,10 @@ class TestFormComputedValues(BaseTestCase):
         self.assertIsNone(density_cell["value"])
         self.assertIsNotNone(density_cell["errors"])
 
-    def test_error_key_for_outer_scope_unknown_reference(self):
-        # Outer formula references a key that doesn't exist in the spec.
-        # Phase 0's check_graph would normally reject this at publish time,
-        # so we go around it by stuffing a published version with hand-crafted
-        # serialized content.
+    def test_outer_scope_unset_input_yields_no_value_no_error(self):
+        # Outer formula references an input the user hasn't filled in yet. That
+        # is "no value yet", not an error: the computed cell is None with no
+        # error message (a freshly created, untouched form must not show errors).
         specs = ConfigSpecs(
             {
                 "mass": FloatParam(human_name="Mass", optional=True),
@@ -66,15 +65,15 @@ class TestFormComputedValues(BaseTestCase):
             }
         )
         form = self._make_form_from_specs(specs)
-        # No mass provided: missing-reference error surfaces inline on the
-        # computed cell.
         result = FormService.save(form.id, SaveFormDTO(values={}))
         doubled = result.values["doubled"]
         self.assertIsNone(doubled["value"])
-        self.assertIsNotNone(doubled["errors"])
+        self.assertIsNone(doubled["errors"])
 
-    def test_error_key_for_per_row_missing_sibling(self):
-        # density references mass and volume; submit a row missing volume.
+    def test_per_row_missing_sibling_yields_no_value_no_error(self):
+        # density references mass and volume; submit a row missing volume. An
+        # unfilled sibling input is "no value yet", not an error — the per-row
+        # computed cell is None with no error message.
         form = self._density_form()
         result = FormService.save(
             form.id,
@@ -82,7 +81,7 @@ class TestFormComputedValues(BaseTestCase):
         )
         density_cell = result.values["samples"][0]["density"]
         self.assertIsNone(density_cell["value"])
-        self.assertIsNotNone(density_cell["errors"])
+        self.assertIsNone(density_cell["errors"])
 
     def test_error_key_for_outer_aggregate_over_empty_paramset(self):
         # mean() of an empty list raises in the evaluator (test_computed_param
@@ -136,7 +135,11 @@ class TestFormComputedValues(BaseTestCase):
     # Computed values appear in FormSaveEvent.changes (spec §8 step 7)
     # ------------------------------------------------------------------ #
 
-    def test_first_save_emits_field_created_for_outer_computed(self):
+    def test_first_save_emits_field_updated_for_outer_computed(self):
+        # create() seeds form.values from spec defaults, so total_mass is
+        # already present as null at creation time. The first user save that
+        # gives it a value therefore emits FIELD_UPDATED (null -> 1.0), not
+        # FIELD_CREATED.
         form = self._density_form()
         FormService.save(
             form.id,
@@ -147,7 +150,7 @@ class TestFormComputedValues(BaseTestCase):
         changes = events[0].get_changes()
         outer = [c for c in changes if c.field_path == "total_mass"]
         self.assertEqual(len(outer), 1)
-        self.assertEqual(outer[0].action, FormChangeAction.FIELD_CREATED)
+        self.assertEqual(outer[0].action, FormChangeAction.FIELD_UPDATED)
         self.assertIsNone(outer[0].old_value)
         self.assertEqual(outer[0].new_value, 1.0)
 
@@ -164,19 +167,20 @@ class TestFormComputedValues(BaseTestCase):
 
         events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
         self.assertEqual(len(events), 2)
-        # Look at all entries across both events; total_mass must appear with
-        # both CREATED (first save) and UPDATED (second save).
+        # total_mass starts present-as-null (seeded by create), so both saves
+        # report it as FIELD_UPDATED: null -> 1.0, then 1.0 -> 3.0.
         total_mass_entries = [
             c for ev in events for c in ev.get_changes() if c.field_path == "total_mass"
         ]
-        actions = sorted(c.action.value for c in total_mass_entries)
         self.assertEqual(
-            actions,
-            sorted([FormChangeAction.FIELD_CREATED.value, FormChangeAction.FIELD_UPDATED.value]),
+            {c.action for c in total_mass_entries},
+            {FormChangeAction.FIELD_UPDATED},
         )
-        updated = [c for c in total_mass_entries if c.action == FormChangeAction.FIELD_UPDATED][0]
-        self.assertEqual(updated.old_value, 1.0)
-        self.assertEqual(updated.new_value, 3.0)
+        pairs = sorted(
+            ((c.old_value, c.new_value) for c in total_mass_entries),
+            key=lambda p: (p[0] is not None, p[0], p[1]),
+        )
+        self.assertEqual(pairs, [(None, 1.0), (1.0, 3.0)])
 
     def test_per_row_computed_appears_in_changes(self):
         # First save adds the whole row (PARAMSET_ITEM_ADDED carrying the

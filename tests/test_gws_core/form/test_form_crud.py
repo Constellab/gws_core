@@ -46,7 +46,9 @@ class TestFormCrud(BaseTestCase):
         self.assertEqual(form.status, FormStatus.DRAFT)
         self.assertEqual(form.name, "Demo")
         self.assertFalse(form.is_archived)
-        self.assertIsNone(form.values)
+        # values are seeded from spec defaults at creation; this spec has a
+        # single optional StrParam with no default, so the cell starts null.
+        self.assertEqual(form.values, {"name": None})
 
     def test_create_with_explicit_name_overrides_default(self):
         version = self._published_version("Default")

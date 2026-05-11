@@ -61,7 +61,8 @@ class FormService:
         form.name = dto.name if dto.name is not None else version.template.name
         form.template_version = version
         form.status = FormStatus.DRAFT
-        form.values = None
+        # Init values from spec defaults; non-user-input (computed) keys are null.
+        form.values = version.get_content().get_default_values()
         form.save()
 
         # Initial tag copy from parent template (mirrors note_service.py:497-502).

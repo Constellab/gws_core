@@ -4,8 +4,10 @@ from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
+from gws_core.form.form_ai_fill_service import FormAiFillService
 from gws_core.form.form_dto import (
     CreateFormDTO,
+    FillFormFromTextDTO,
     FormDTO,
     FormSaveEventDTO,
     FormSaveResultDTO,
@@ -88,6 +90,20 @@ def submit(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormSaveResultDTO:
     return FormService.submit(id_)
+
+
+@core_app.post(
+    "/form/{id_}/fill-from-text",
+    tags=["Form"],
+    summary="AI-fill form values from a text instruction (does not persist)",
+    response_model=None,
+)
+def fill_from_text(
+    id_: str,
+    body: FillFormFromTextDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormSaveResultDTO:
+    return FormAiFillService.fill_values_from_text(id_, body.text, body.current_values)
 
 
 @core_app.delete(
