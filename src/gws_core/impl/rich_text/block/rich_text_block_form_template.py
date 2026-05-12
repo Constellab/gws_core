@@ -15,7 +15,6 @@ class RichTextBlockFormTemplate(RichTextBlockDataBase):
 
     form_template_id: str
     form_template_version_id: str
-    display_name: str | None = None
 
     def to_markdown(self) -> str:
-        return f"[Form Template: {self.display_name or self.form_template_id}]"
+        return f"[Form Template: {self.form_template_id}]"

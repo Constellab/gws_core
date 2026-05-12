@@ -1,4 +1,3 @@
-
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
@@ -9,10 +8,10 @@ from gws_core.impl.rich_text.block.rich_text_block_form_template import (
     RichTextBlockFormTemplate,
 )
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_content_validator import (
     RichTextContentValidator,
 )
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import (
     RichTextBlock,
     RichTextDTO,
@@ -88,9 +87,7 @@ class NoteTemplateService:
 
         # Reject FORM blocks; reject newly-introduced FORM_TEMPLATE blocks
         # whose pinned version is not PUBLISHED (spec §5.1).
-        RichTextContentValidator.validate_for_note_template(
-            note_content, document.content
-        )
+        RichTextContentValidator.validate_for_note_template(note_content, document.content)
 
         # Dispatch event BEFORE saving — sync listeners can mutate
         # note_content or raise exceptions to abort the save.
@@ -109,7 +106,9 @@ class NoteTemplateService:
     @classmethod
     @GwsCoreDbManager.transaction()
     def insert_form_template_block(
-        cls, doc_id: str, dto: InsertFormTemplateBlockDTO,
+        cls,
+        doc_id: str,
+        dto: InsertFormTemplateBlockDTO,
     ) -> NoteTemplate:
         """Insert a FORM_TEMPLATE block referencing a PUBLISHED
         FormTemplateVersion. ``form_template_id`` is derived from the
@@ -128,7 +127,6 @@ class NoteTemplateService:
         ft_block_data = RichTextBlockFormTemplate(
             form_template_id=version.template_id,
             form_template_version_id=version.id,
-            display_name=dto.display_name,
         )
         block = RichTextBlock.from_data(ft_block_data)
 

@@ -10,35 +10,18 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestFormBlocks(BaseTestCase):
-
     # ---------------- RichTextBlockFormTemplate ---------------- #
 
     def test_form_template_block_round_trip(self):
         data = RichTextBlockFormTemplate(
             form_template_id="tpl-1",
             form_template_version_id="ver-1",
-            display_name="Sample collection",
         )
         round_tripped = RichTextBlockFormTemplate.from_json(data.to_json_dict())
         self.assertEqual(round_tripped.form_template_id, "tpl-1")
         self.assertEqual(round_tripped.form_template_version_id, "ver-1")
-        self.assertEqual(round_tripped.display_name, "Sample collection")
-
-    def test_form_template_block_display_name_optional(self):
-        data = RichTextBlockFormTemplate(
-            form_template_id="tpl-1",
-            form_template_version_id="ver-1",
-        )
-        self.assertIsNone(data.display_name)
 
     def test_form_template_block_to_markdown(self):
-        with_name = RichTextBlockFormTemplate(
-            form_template_id="tpl-1",
-            form_template_version_id="ver-1",
-            display_name="Sample collection",
-        )
-        self.assertIn("Sample collection", with_name.to_markdown())
-
         without_name = RichTextBlockFormTemplate(
             form_template_id="tpl-1",
             form_template_version_id="ver-1",

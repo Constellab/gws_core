@@ -199,11 +199,12 @@ Table name: `gws_note_form` (consistent with `gws_note_view`).
 
 | Column | Type | Notes |
 |---|---|---|
-| `note_template` | FK → `NoteTemplate` (composite PK part, indexed, `on_delete=CASCADE`) | |
-| `form_template_version` | FK → `FormTemplateVersion` (composite PK part, indexed, `on_delete=RESTRICT`) | RESTRICT so the DB rejects deleting a `FormTemplateVersion` while any note template still pins it. The pinned-version granularity (rather than family-level `FormTemplate`) matches the §5.4 archived-fallback flow, where we need to ask "is anyone still pinning *this exact archived version*?". |
-| `form_template` | FK → `FormTemplate` (indexed) | Denormalized for cheap "find note templates using template family X" without joining through `FormTemplateVersion`. Always equals `form_template_version.template_id`; reconciled at write. |
+| `id` | str (UUID, PK) | Surrogate PK — a NULL-able `form_template_version` can't sit in a composite PK (Postgres rejects NULLs in PK columns), so this table uses a surrogate key plus a uniqueness index (below) rather than a natural composite PK like its sibling `gws_note_form`. |
+| `note_template` | FK → `NoteTemplate` (indexed, `on_delete=CASCADE`) | Cascade so deleting a note template drops its join rows automatically. |
+| `form_template` | FK → `FormTemplate` (indexed, `on_delete=RESTRICT`) | RESTRICT so the DB rejects deleting a `FormTemplate` family while any note template still references it. Always present — every `FORM_TEMPLATE` block names a template family even when it doesn't pin a version. |
+| `form_template_version` | FK → `FormTemplateVersion` (indexed, **nullable**, `on_delete=RESTRICT`) | The pinned version, **or `NULL`** when the block leaves the version unset (use-latest-published-at-conversion-time — see §5.2). `RESTRICT` so the DB rejects deleting a pinned `FormTemplateVersion` while any note template still pins it. When `NULL`, only the `form_template` RESTRICT applies. Pinned-version granularity (rather than only family-level) matches the §5.4 archived-fallback flow, where we need to ask "is anyone still pinning *this exact archived version*?". |
 
-Composite primary key on `(note_template, form_template_version)`.
+Uniqueness: at most one row per `(note_template, form_template, form_template_version)` triple, where two rows with the same `(note_template, form_template)` and both `form_template_version IS NULL` count as duplicates (collapsed). Enforced by a unique index on `(note_template, form_template, COALESCE(form_template_version, ''))` (or equivalently a pair of indexes: one over the triple `WHERE form_template_version IS NOT NULL`, one over `(note_template, form_template) WHERE form_template_version IS NULL`). So two `FORM_TEMPLATE` blocks in the same note template — one pinning version 3, one unpinned, both for template family X — collapse to two distinct rows `(nt, X, v3)` and `(nt, X, NULL)`; a second unpinned block for X adds no further row.
 
 Table name: `gws_note_template_form_template`.
 
@@ -223,13 +224,14 @@ Listeners are synchronous, so they execute in the caller's transaction. If a lis
 #### Query paths
 
 - "Which notes embed form X?" → `NoteFormModel.select().where(NoteFormModel.form == X)`. Used by the §5.6 cascade and by `FormService.hard_delete`'s usage guard.
-- "Which note templates pin version V?" → `NoteTemplateFormTemplateModel.select().where(NoteTemplateFormTemplateModel.form_template_version == V)`. Used by `FormTemplateService.hard_delete` of an `ARCHIVED` version.
+- "Which note templates pin version V?" → `NoteTemplateFormTemplateModel.select().where(NoteTemplateFormTemplateModel.form_template_version == V)`. Used by `FormTemplateService.hard_delete` of an `ARCHIVED` version. (Unpinned rows have `form_template_version IS NULL` and never match — they don't block deletion of any specific version, only of the whole family.)
+- "Which note templates reference template family X?" → `NoteTemplateFormTemplateModel.select().where(NoteTemplateFormTemplateModel.form_template == X)`. Used by `FormTemplateService.hard_delete` of a `FormTemplate` (the family-level guard); catches both pinned and unpinned references.
 - "Which notes own form X?" → `NoteFormModel.select().where((NoteFormModel.form == X) & (NoteFormModel.is_owner == True))`. Used by the §5.6 cascade to identify owner blocks without parsing JSON.
 - Reverse navigation ("which forms does this note embed?") → `NoteFormModel.get_by_note(note_id)`. Useful for the cascade listener and for any future "show all forms in this note" UI.
 
 #### Why this is layered safety, not duplication
 
-The rich-text block payload remains the source of truth for *write semantics* (what the user sees, what the editor manipulates, what the validator gates). The join tables are an *index* maintained in lockstep — they make reads cheap and add a DB-level guard against breaking referential integrity. If the join and the rich-text content ever drift, the content wins; a maintenance task can rebuild the join from content. The `RESTRICT` FKs catch the most damaging class of bug (a stale form id in rich text pointing at a deleted form) at the schema layer.
+The rich-text block payload remains the source of truth for *write semantics* (what the user sees, what the editor manipulates, what the validator gates). The join tables are an *index* maintained in lockstep — they make reads cheap and add a DB-level guard against breaking referential integrity. If the join and the rich-text content ever drift, the content wins; a maintenance task can rebuild the join from content. The `RESTRICT` FKs catch the most damaging class of bug (a stale form id in rich text pointing at a deleted form, or a stale pinned version id) at the schema layer. A `NULL` `form_template_version` is the deliberate "no pin" state, not a dangling reference — it's still backed by a `RESTRICT` FK on `form_template`.
 
 ---
 
@@ -239,14 +241,14 @@ The rich-text block payload remains the source of truth for *write semantics* (w
 FormTemplate 1───* FormTemplateVersion 1───* Form 1───* FormSaveEvent
 ```
 
-- Hard-deleting a `FormTemplate` is rejected if any `Form` references any of its versions (including across versions). Archive instead.
+- Hard-deleting a `FormTemplate` is rejected if any `Form` references any of its versions (including across versions), or if any `NoteTemplate` references the family via a `FORM_TEMPLATE` block (pinned or unpinned — DB-level via `NoteTemplateFormTemplateModel.form_template` `on_delete=RESTRICT` + application-level guard). Archive instead.
 - Hard-deleting a `FormTemplateVersion`:
   - `DRAFT`: always allowed.
   - `PUBLISHED`: not allowed; must be archived first.
-  - `ARCHIVED`: allowed iff no `Form` references it.
+  - `ARCHIVED`: allowed iff no `Form` references it and no `NoteTemplate` pins this exact version.
 - Deleting a `Form` cascade-deletes its `FormSaveEvent` rows. Hard-delete is rejected (DB-level via `NoteFormModel.form` `on_delete=RESTRICT` + an application-level guard with a friendly message) if any `Note` still embeds the form. See §3.6.
 - Note ↔ Form ownership cascade: see §5.4. The cascade walks `NoteFormModel` rather than parsing rich text — see §3.6.
-- Hard-deleting an `ARCHIVED` `FormTemplateVersion` is rejected (DB-level via `NoteTemplateFormTemplateModel.form_template_version` `on_delete=RESTRICT` + application-level guard) if any `NoteTemplate` still pins it via a `FORM_TEMPLATE` block. See §3.6.
+- Hard-deleting an `ARCHIVED` `FormTemplateVersion` is rejected (DB-level via `NoteTemplateFormTemplateModel.form_template_version` `on_delete=RESTRICT` + application-level guard) if any `NoteTemplate` still pins it via a `FORM_TEMPLATE` block. Unpinned `FORM_TEMPLATE` blocks (no version set) do not block deletion of any individual version — only of the whole `FormTemplate` family. See §3.6.
 
 ---
 
@@ -266,12 +268,17 @@ Each block follows the existing pattern (`RichTextBlockDataBase` subclass + `@ri
 ```jsonc
 {
   "form_template_id": "uuid",
-  "form_template_version_id": "uuid",   // pinned version at insertion time
-  "display_name": "Sample collection"   // overridable label, defaults to template.name
+  "form_template_version_id": "uuid" | null,  // pinned version; null = use the latest published version at conversion time
+  "display_name": "Sample collection"         // overridable label, defaults to template.name
 }
 ```
 
-Validation: the version referenced must be `PUBLISHED` at the time of insertion. If the version is later `ARCHIVED`, the block remains valid (it's frozen).
+`form_template_version_id` is **optional**:
+
+- **Provided (pinned)** — the referenced version must be `PUBLISHED` at the time it is set on the block. The block freezes to that exact version. If the version is later `ARCHIVED`, the block remains valid (it's frozen), and §5.4 applies its archived-fallback rule.
+- **`null` / absent (unpinned)** — the block tracks the template family. The concrete version is resolved **lazily, at NoteTemplate → Note conversion time** (§5.4), to the template's then-current published version. This means a note template can be authored before the form template has any published version, and instances always pick up the latest schema. Validation at insertion only checks that `form_template_id` names an existing (non-archived) `FormTemplate`; it does **not** require a published version to exist yet.
+
+The pinned/unpinned choice is exposed in the editor when inserting or editing a `FORM_TEMPLATE` block (see §5.8). It is independent of `display_name`.
 
 ### 5.3 `FORM` block payload
 
@@ -292,8 +299,12 @@ A given `Form` has at most one owner block (DB-enforced at the application layer
 When a `NoteTemplate` is instantiated as a `Note`:
 
 1. For each `FORM_TEMPLATE` block in the template's content:
-   1. Resolve the `form_template_version_id`. If it's `ARCHIVED`, fall back to `current_published_version_id` of the same template; if none, abort instantiation with a clear error.
-   2. Create a new `Form` (status `DRAFT`, name = template.name) bound to that version.
+   1. Resolve the version to bind:
+      - If `form_template_version_id` is **set (pinned)** and that version is `PUBLISHED` → use it.
+      - If `form_template_version_id` is **set (pinned)** but that version is `ARCHIVED` → fall back to the current published version of the same template.
+      - If `form_template_version_id` is **null / absent (unpinned)** → use the current published version of the same template.
+      - In any of the fallback / unpinned cases, if the template has no published version, abort instantiation with a clear error ("form template *X* referenced by this note template has no published version").
+   2. Create a new `Form` (status `DRAFT`, name = template.name) bound to the resolved version.
    3. Replace the block in the new note's content with a `FORM` block carrying `form_id` of the new form and `is_owner=true`.
 2. All other blocks copy over unchanged.
 
@@ -319,6 +330,20 @@ The "no other Note references it" check is necessary because §5.5 lets users re
 ### 5.7 Note rich-text modifications interaction
 
 The existing `Note.modifications` field tracks block-level edits. Adding/removing a `FORM` block produces a standard `RichTextBlockModificationDTO` entry (CREATED / DELETED) — no change there. Edits to the *form's contents* are tracked separately in `FormSaveEvent`, not in the note's rich text modifications.
+
+### 5.8 Inserting / editing a `FORM_TEMPLATE` block (NoteTemplate editor)
+
+The block-insertion flow in the note-template editor:
+
+1. User picks a `FormTemplate` (search by name / tag). This sets `form_template_id`.
+2. User picks a **version mode**:
+   - **"Always use the latest published version"** (default) → `form_template_version_id = null`. Resolution happens at note creation (§5.4).
+   - **"Pin to a specific version"** → the editor shows the template's published versions; the chosen one sets `form_template_version_id`.
+3. User may override `display_name` (defaults to `template.name`).
+
+Editing an existing block lets the user switch modes (pin → unpin, unpin → pin, or re-pin to a different version) and change `display_name`. Switching mode just rewrites the block payload; the §3.6 reconciliation listener updates `NoteTemplateFormTemplateModel` accordingly (a row with the old `form_template_version` value — possibly `NULL` — is removed and the new one inserted within the same transaction).
+
+There is no published-version requirement to insert an unpinned block, so a note template can be authored alongside a still-draft form template; the requirement is only enforced at note-instantiation time (§5.4).
 
 ---
 
@@ -604,7 +629,7 @@ A single migration adds:
 - Table `gws_form` with FK to `gws_form_template_version`.
 - Table `gws_form_save_event` with FK to `gws_form` (cascade), JSON `changes` column, indexes `(form_id, created_at DESC)` and `(user_id, created_at DESC)`. No GIN index on `changes` in v1; add later if field-path filter queries become hot.
 - Table `gws_note_form` (§3.6) with composite PK `(note, form)`, `note` FK `on_delete=CASCADE`, `form` FK `on_delete=RESTRICT`, `is_owner` bool. Both FK columns indexed.
-- Table `gws_note_template_form_template` (§3.6) with composite PK `(note_template, form_template_version)`, `note_template` FK `on_delete=CASCADE`, `form_template_version` FK `on_delete=RESTRICT`, denormalized `form_template` FK (indexed). All three FK columns indexed.
+- Table `gws_note_template_form_template` (§3.6) with surrogate UUID PK, `note_template` FK `on_delete=CASCADE`, `form_template` FK `on_delete=RESTRICT`, `form_template_version` FK `on_delete=RESTRICT` and **nullable** (NULL = unpinned, "use latest published at conversion time"), plus the uniqueness index over `(note_template, form_template, COALESCE(form_template_version, ''))` described in §3.6. All three FK columns indexed.
 - Two new entries in the `TagEntityType` enum: `FORM_TEMPLATE`, `FORM` (no schema change — string column).
 - One new entry in the `TagOriginType` enum: `FORM_TEMPLATE_PROPAGATED` (no schema change — string column).
 

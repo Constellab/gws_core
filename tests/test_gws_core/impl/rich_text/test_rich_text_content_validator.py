@@ -10,6 +10,7 @@ rows via BaseTestCase to exercise reference validation.
 Registration footgun guards live in TestRichTextContentValidatorFrame so
 they run even without a DB.
 """
+
 import unittest
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -126,9 +127,7 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
 
     def test_block_forbidden_in_host_context_raises(self):
         # Rule allows NOTE_TEMPLATE only.
-        RichTextContentValidator.register(
-            _RecordingRule({RichTextHostContext.NOTE_TEMPLATE})
-        )
+        RichTextContentValidator.register(_RecordingRule({RichTextHostContext.NOTE_TEMPLATE}))
         new_content = _empty_dto([_raw_block(_TEST_BLOCK_TYPE, "a")])
         with self.assertRaises(BadRequestException):
             RichTextContentValidator.validate_for_note(new_content, None)
@@ -142,9 +141,7 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
         self.assertEqual(rule.validated_block_ids, ["a"])
 
     def test_rule_with_all_contexts_only_validates_references(self):
-        rule = _RecordingRule(
-            {RichTextHostContext.NOTE, RichTextHostContext.NOTE_TEMPLATE}
-        )
+        rule = _RecordingRule({RichTextHostContext.NOTE, RichTextHostContext.NOTE_TEMPLATE})
         RichTextContentValidator.register(rule)
         new_content = _empty_dto([_raw_block(_TEST_BLOCK_TYPE, "a")])
         # Both contexts pass.
@@ -169,18 +166,14 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
         rule = _RecordingRule({RichTextHostContext.NOTE})
         RichTextContentValidator.register(rule)
         old = _empty_dto([_raw_block(_TEST_BLOCK_TYPE, "old")])
-        new = _empty_dto(
-            [_raw_block(_TEST_BLOCK_TYPE, "old"), _raw_block(_TEST_BLOCK_TYPE, "new")]
-        )
+        new = _empty_dto([_raw_block(_TEST_BLOCK_TYPE, "old"), _raw_block(_TEST_BLOCK_TYPE, "new")])
         RichTextContentValidator.validate_for_note(new, old)
         # Only the new block id triggered the hook.
         self.assertEqual(rule.validated_block_ids, ["new"])
 
     def test_new_block_with_failing_reference_raises(self):
         RichTextContentValidator.register(
-            _RecordingRule(
-                {RichTextHostContext.NOTE}, raise_on_validate=True
-            )
+            _RecordingRule({RichTextHostContext.NOTE}, raise_on_validate=True)
         )
         new = _empty_dto([_raw_block(_TEST_BLOCK_TYPE, "x")])
         with self.assertRaises(BadRequestException):
@@ -190,14 +183,10 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
         # Same id present in old and new; the rule would reject if
         # called, but the frame must not call it.
         RichTextContentValidator.register(
-            _RecordingRule(
-                {RichTextHostContext.NOTE}, raise_on_validate=True
-            )
+            _RecordingRule({RichTextHostContext.NOTE}, raise_on_validate=True)
         )
         block = _raw_block(_TEST_BLOCK_TYPE, "x")
-        RichTextContentValidator.validate_for_note(
-            _empty_dto([block]), _empty_dto([block])
-        )
+        RichTextContentValidator.validate_for_note(_empty_dto([block]), _empty_dto([block]))
 
     # ---------------- Registration ----------------
 
@@ -205,13 +194,9 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
         # Footgun guard: the form module's side-effect import must have
         # registered both rules. Failing this test means the new
         # validator silently allows everything.
+        self.assertIsNotNone(RichTextContentValidator.get_rule(RichTextBlockTypeStandard.FORM))
         self.assertIsNotNone(
-            RichTextContentValidator.get_rule(RichTextBlockTypeStandard.FORM)
-        )
-        self.assertIsNotNone(
-            RichTextContentValidator.get_rule(
-                RichTextBlockTypeStandard.FORM_TEMPLATE
-            )
+            RichTextContentValidator.get_rule(RichTextBlockTypeStandard.FORM_TEMPLATE)
         )
 
     def test_register_replaces_existing_rule(self):
@@ -219,21 +204,13 @@ class TestRichTextContentValidatorFrame(unittest.TestCase):
         second = _RecordingRule({RichTextHostContext.NOTE})
         RichTextContentValidator.register(first)
         RichTextContentValidator.register(second)
-        self.assertIs(
-            RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE), second
-        )
+        self.assertIs(RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE), second)
 
     def test_unregister_drops_rule(self):
-        RichTextContentValidator.register(
-            _RecordingRule({RichTextHostContext.NOTE})
-        )
-        self.assertIsNotNone(
-            RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE)
-        )
+        RichTextContentValidator.register(_RecordingRule({RichTextHostContext.NOTE}))
+        self.assertIsNotNone(RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE))
         RichTextContentValidator.unregister(_TEST_BLOCK_TYPE)
-        self.assertIsNone(
-            RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE)
-        )
+        self.assertIsNone(RichTextContentValidator.get_rule(_TEST_BLOCK_TYPE))
 
     def test_unregister_unknown_type_is_noop(self):
         # Should not raise.
@@ -249,13 +226,7 @@ class TestFormBlockRules(BaseTestCase):
     def test_form_block_rejected_in_note_template(self):
         form = self._make_form()
         new = _empty_dto(
-            [
-                RichTextBlock.from_data(
-                    RichTextBlockForm(
-                        form_id=form.id, is_owner=False
-                    )
-                )
-            ]
+            [RichTextBlock.from_data(RichTextBlockForm(form_id=form.id, is_owner=False))]
         )
         with self.assertRaises(BadRequestException):
             RichTextContentValidator.validate_for_note_template(new, None)
@@ -278,13 +249,7 @@ class TestFormBlockRules(BaseTestCase):
     def test_form_block_with_known_form_id_passes(self):
         form = self._make_form()
         new = _empty_dto(
-            [
-                RichTextBlock.from_data(
-                    RichTextBlockForm(
-                        form_id=form.id, is_owner=False
-                    )
-                )
-            ]
+            [RichTextBlock.from_data(RichTextBlockForm(form_id=form.id, is_owner=False))]
         )
         RichTextContentValidator.validate_for_note(new, None)
 
@@ -298,7 +263,6 @@ class TestFormBlockRules(BaseTestCase):
                     RichTextBlockFormTemplate(
                         form_template_id=version.template_id,
                         form_template_version_id=version.id,
-                        display_name=None,
                     )
                 )
             ]
@@ -313,7 +277,6 @@ class TestFormBlockRules(BaseTestCase):
                     RichTextBlockFormTemplate(
                         form_template_id="any",
                         form_template_version_id="not-a-real-version-id",
-                        display_name=None,
                     )
                 )
             ]
@@ -324,16 +287,13 @@ class TestFormBlockRules(BaseTestCase):
 
     def test_form_template_block_with_archived_version_raises(self):
         version = self._published_version("FT")
-        archived = FormTemplateService.archive_version(
-            version.template_id, version.id
-        )
+        archived = FormTemplateService.archive_version(version.template_id, version.id)
         new = _empty_dto(
             [
                 RichTextBlock.from_data(
                     RichTextBlockFormTemplate(
                         form_template_id=archived.template_id,
                         form_template_version_id=archived.id,
-                        display_name=None,
                     )
                 )
             ]
@@ -352,7 +312,6 @@ class TestFormBlockRules(BaseTestCase):
                     RichTextBlockFormTemplate(
                         form_template_id=v2.template_id,  # mismatch
                         form_template_version_id=v1.id,
-                        display_name=None,
                     )
                 )
             ]
@@ -369,7 +328,6 @@ class TestFormBlockRules(BaseTestCase):
                     RichTextBlockFormTemplate(
                         form_template_id=version.template_id,
                         form_template_version_id=version.id,
-                        display_name=None,
                     )
                 )
             ]
