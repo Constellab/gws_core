@@ -7,12 +7,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from .param_spec import ParamSpec
 from .param_spec_decorator import (
     PARAM_SPEC_TYPES_BY_CATEGORY,
-    ParamSpecCategory,
 )
-from .param_types import (
-    ParamSpecType,
-    ParamSpecTypeInfo,
-)
+from .param_types import ParamSpecType
 
 
 class ParamSpecHelper:
@@ -39,24 +35,3 @@ class ParamSpecHelper:
     @staticmethod
     def get_param_spec_types() -> list[type[ParamSpec]]:
         return list(chain.from_iterable(PARAM_SPEC_TYPES_BY_CATEGORY.values()))
-
-    @staticmethod
-    def get_param_spec_types_by_category(
-        category: ParamSpecCategory,
-    ) -> list[type[ParamSpec]]:
-        return PARAM_SPEC_TYPES_BY_CATEGORY[category]
-
-    @staticmethod
-    def get_param_spec_types_info(
-        categories: list[ParamSpecCategory],
-    ) -> list[ParamSpecTypeInfo]:
-        """Return the param spec type infos for the given categories.
-
-        :param categories: categories whose spec types should be included.
-        :return: list of param spec info specs.
-        """
-        return [
-            spec_type.to_param_spec_info_specs()
-            for category in categories
-            for spec_type in PARAM_SPEC_TYPES_BY_CATEGORY[category]
-        ]

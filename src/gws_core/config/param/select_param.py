@@ -5,8 +5,8 @@ from typing_extensions import TypedDict
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
-from .param_spec import BoolParam, ListParam, ParamSpec
-from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
+from .param_spec import ParamSpec
+from .param_types import ParamSpecType, ParamSpecVisibilty
 
 
 class SelectParamOption(TypedDict):
@@ -159,14 +159,3 @@ class SelectParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.SELECT
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "SelectParam":
-        return SelectParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return {
-            "options": ListParam(human_name="Allowed values").to_dto(),
-            "multiple": BoolParam(default_value=False, human_name="Allow multiple").to_dto(),
-        }

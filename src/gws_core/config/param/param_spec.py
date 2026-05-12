@@ -23,7 +23,6 @@ from .param_types import (
     ParamSpecDTO,
     ParamSpecSimpleDTO,
     ParamSpecType,
-    ParamSpecTypeInfo,
     ParamSpecVisibilty,
 )
 
@@ -208,24 +207,6 @@ class ParamSpec:
                 ) from err
         return param_spec
 
-    @classmethod
-    @abstractmethod
-    def get_default_value_param_spec(cls) -> "ParamSpec":
-        pass
-
-    @classmethod
-    @abstractmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        pass
-
-    @classmethod
-    def to_param_spec_info_specs(cls) -> ParamSpecTypeInfo:
-        return ParamSpecTypeInfo(
-            type=cls.get_param_spec_type(),
-            category=cls.__category__,
-            additional_info=cls.get_additional_infos(),
-        )
-
 
 class StrParamAdditionalInfo(TypedDict):
     """Additional info for string param"""
@@ -301,18 +282,6 @@ class StrParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.STRING
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> "StrParam":
-        return StrParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return {
-            "min_length": IntParam(optional=True, human_name="Min length").to_dto(),
-            "max_length": IntParam(optional=True, human_name="Max length").to_dto(),
-            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
-        }
-
     def _check_allowed_values(self, allowed_values: list[str] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
@@ -374,14 +343,6 @@ class TextParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.TEXT
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> "TextParam":
-        return TextParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None
-
 
 @param_spec_decorator()
 class BoolParam(ParamSpec):
@@ -429,14 +390,6 @@ class BoolParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.BOOL
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> "BoolParam":
-        return BoolParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None
-
 
 @param_spec_decorator()
 class DictParam(ParamSpec):
@@ -483,14 +436,6 @@ class DictParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.DICT
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> "DictParam":
-        return DictParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None
-
 
 @param_spec_decorator()
 class ListParam(ParamSpec):
@@ -536,14 +481,6 @@ class ListParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.LIST
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "ListParam":
-        return ListParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None
 
 
 class NumericParamAdditionalInfo(TypedDict):
@@ -652,18 +589,6 @@ class IntParam(NumericParam):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.INT
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> "IntParam":
-        return IntParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return {
-            "min_value": IntParam(optional=True, human_name="Min value").to_dto(),
-            "max_value": IntParam(optional=True, human_name="Max value").to_dto(),
-            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
-        }
-
 
 @param_spec_decorator()
 class FloatParam(NumericParam):
@@ -683,15 +608,3 @@ class FloatParam(NumericParam):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.FLOAT
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "FloatParam":
-        return FloatParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return {
-            "min_value": FloatParam(optional=True, human_name="Min value").to_dto(),
-            "max_value": FloatParam(optional=True, human_name="Max value").to_dto(),
-            "allowed_values": ListParam(optional=True, human_name="Allowed values").to_dto(),
-        }

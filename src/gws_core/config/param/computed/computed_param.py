@@ -112,23 +112,6 @@ class ComputedParam(ParamSpec):
         param_spec.default_value = None
         return param_spec
 
-    @classmethod
-    def get_default_value_param_spec(cls) -> ParamSpec:
-        from gws_core.config.param.param_spec import StrParam
-
-        return StrParam(optional=True)
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        from gws_core.config.param.param_spec import StrParam
-
-        return {
-            "expression": StrParam(
-                human_name="Expression",
-                short_description="The expression to compute; field references use @. Ex: '@a + @b'",
-            ).to_dto(),
-        }
-
     # --------- ConfigSpecs integration ---------------------------------------
     #
     # The two class methods below own everything ComputedParam-specific in the

@@ -1,5 +1,5 @@
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
+from gws_core.config.param.param_types import ParamSpecType
 
 from ..param_spec import TextParam
 
@@ -18,11 +18,3 @@ class PythonCodeParam(TextParam):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.PYTHON_CODE
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "PythonCodeParam":
-        return PythonCodeParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None

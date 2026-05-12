@@ -183,16 +183,3 @@ class DynamicParam(ParamSpec):
             return ListParam()
 
         raise BadRequestException(f"Invalid type for dynamic param: {type_}")
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "DynamicParam":
-        return DynamicParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None
-
-
-a: DynamicParam = DynamicParam()
-
-# a is consider a ParamSpec

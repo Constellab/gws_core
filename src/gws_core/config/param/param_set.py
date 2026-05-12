@@ -7,7 +7,7 @@ from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
-from .param_spec import IntParam, ParamSpec
+from .param_spec import ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
@@ -219,17 +219,3 @@ class ParamSet(ParamSpec):
         param_set.param_set = specs
 
         return param_set
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "ParamSet":
-        return ParamSet()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return {
-            "max_number_of_occurrences": IntParam(
-                human_name="Max number of occurrences",
-                short_description=("Maximum number of occurrences of the param set."),
-                optional=True,
-            ).to_dto(),
-        }

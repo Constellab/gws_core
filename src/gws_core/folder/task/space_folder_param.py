@@ -2,7 +2,7 @@ from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
+from gws_core.config.param.param_types import ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 from gws_core.folder.space_folder import SpaceFolder
 
@@ -61,11 +61,3 @@ class SpaceFolderParam(ParamSpec):
 
         validator = StrValidator()
         return validator.validate(value)
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "SpaceFolderParam":
-        return SpaceFolderParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None

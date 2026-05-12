@@ -1,5 +1,5 @@
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
+from gws_core.config.param.param_types import ParamSpecType
 
 from ..param_spec import TextParam
 
@@ -18,11 +18,3 @@ class PerlCodeParam(TextParam):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.PERL_CODE
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "PerlCodeParam":
-        return PerlCodeParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None

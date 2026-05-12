@@ -1,6 +1,6 @@
 from gws_core.config.param.model_param import ModelParam
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
+from gws_core.config.param.param_types import ParamSpecType, ParamSpecVisibilty
 from gws_core.core.model.model import Model
 from gws_core.note.note import Note
 
@@ -51,11 +51,3 @@ class NoteParam(ModelParam):
         :rtype: Type[Model]
         """
         return Note
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "NoteParam":
-        return NoteParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None

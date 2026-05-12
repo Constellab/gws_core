@@ -2,7 +2,7 @@ from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
+from gws_core.config.param.param_types import ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import DictValidator
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 
@@ -70,11 +70,3 @@ class OpenAiChatParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.OPEN_AI_CHAT
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "OpenAiChatParam":
-        return OpenAiChatParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None

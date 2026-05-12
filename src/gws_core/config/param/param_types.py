@@ -1,7 +1,6 @@
 from enum import Enum
 from typing import Any, Literal
 
-from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.core.model.model_dto import BaseModelDTO
 
 ParamValue = Any
@@ -79,9 +78,3 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
             markdown += f", default to '{self.default_value}'"
 
         return markdown
-
-
-class ParamSpecTypeInfo(BaseModelDTO):
-    type: ParamSpecType
-    category: ParamSpecCategory
-    additional_info: dict[str, ParamSpecDTO] | None = None

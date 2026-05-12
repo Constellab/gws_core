@@ -3,7 +3,6 @@ from typing import Any
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.config.param.param_types import (
-    ParamSpecDTO,
     ParamSpecType,
     ParamSpecVisibilty,
 )
@@ -65,11 +64,3 @@ class ScenarioParam(ParamSpec):
 
         validator = StrValidator()
         return validator.validate(value)
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "ScenarioParam":
-        return ScenarioParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO] | None:
-        return None

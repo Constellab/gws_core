@@ -4,11 +4,8 @@ from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.apps.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
-from gws_core.config.param.param_spec_decorator import ParamSpecCategory
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (
     ParamSpecDTO,
-    ParamSpecTypeInfo,
     ParamValue,
 )
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -1415,17 +1412,3 @@ class ProtocolService:
             raise BadRequestException("The process does not support dynamic params")
 
         return dynamic_param_spec
-
-    @classmethod
-    def get_dynamic_param_allowed_param_spec_types(
-        cls, protocol_id: str, process_name: str
-    ) -> list[ParamSpecTypeInfo]:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
-
-        process_model = protocol_model.get_process(process_name)
-
-        categories = [ParamSpecCategory.SIMPLE]
-        if process_model.process_typing_name == PyAgent.get_typing_name():
-            categories.append(ParamSpecCategory.LAB_SPECIFIC)
-
-        return ParamSpecHelper.get_param_spec_types_info(categories)
