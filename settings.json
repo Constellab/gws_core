@@ -182,6 +182,11 @@
                         "name": "simpleeval",
                         "version": "1.0.3",
                         "comment": "Safe expression evaluator used by ComputedParam."
+                    },
+                    {
+                        "name": "libcst",
+                        "version": "1.8.6",
+                        "comment": "Concrete syntax tree library used by the CLI code-migration commands."
                     }
                 ]
             }

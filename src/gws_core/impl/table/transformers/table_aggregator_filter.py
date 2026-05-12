@@ -5,23 +5,24 @@ from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDat
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
 from ....config.param.param_set import ParamSet
-from ....config.param.param_spec import FloatParam, StrParam
+from ....config.param.param_spec import FloatParam
+from ....config.param.select_param import SelectParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
 
 
-def get_function_param(axis_name: str) -> StrParam:
-    return StrParam(
+def get_function_param(axis_name: str) -> SelectParam:
+    return SelectParam(
         human_name="Aggregation function",
-        allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
+        options=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
         short_description="Function applied on the " + axis_name,
     )
 
 
-comparator_param = StrParam(
+comparator_param = SelectParam(
     human_name="Comparator",
-    allowed_values=DataframeDataFilterHelper.NUMERIC_COMPARATORS,
+    options=DataframeDataFilterHelper.NUMERIC_COMPARATORS,
     short_description="Comparator",
 )
 

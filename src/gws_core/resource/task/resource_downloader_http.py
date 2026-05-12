@@ -5,6 +5,7 @@ from requests.models import Response
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.model.typing_style import TypingStyle
@@ -51,9 +52,9 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 human_name="Resource link", short_description="Link to download the resource"
             ),
             "uncompress": ResourceDownloaderBase.uncompress_config,
-            "create_option": StrParam(
+            "create_option": SelectParam(
                 human_name="Create option",
-                allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
+                options=Utils.get_literal_values(ResourceDownloaderCreateOption),
                 default_value="Skip if exists",
             ),
             "skip_tags": ResourceDownloaderBase.skip_tags_config,

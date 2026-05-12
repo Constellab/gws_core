@@ -102,6 +102,26 @@ Install pip dependencies from a brick's settings.json file.
 gws brick install-deps ./bricks/my_brick/settings.json
 ```
 
+#### brick code-migrate
+Apply gws_core code migrations (source-to-source refactors) to a brick. Each gws_core release that needs source changes ships a versioned migration (e.g. `0.22.0` rewrites the deprecated `allowed_values=` param argument to `SelectParam`). By default the command runs every migration newer than the gws_core version the brick targets (read from `settings.json`): it explains what each migration does, lists the impacted files, and asks a single confirmation before applying to all of them. Use `--dry-run` to see the full diffs first, `--yes` to skip the confirmation.
+
+**Arguments:**
+- `BRICK_PATH` - Path to the brick folder (defaults to the current directory)
+
+**Options:**
+- `--version, -v TEXT` - Run only the migration for this gws_core version (e.g. `0.22.0`)
+- `--list, -l` - List the available code migrations and exit
+- `--dry-run, -n` - Show the diffs without modifying any file
+- `--yes, -y` - Apply every change without prompting (CI use)
+
+**Examples:**
+```bash
+gws brick code-migrate --list
+gws brick code-migrate --dry-run
+gws brick code-migrate                       # interactive, runs all pending migrations
+gws brick code-migrate --version 0.22.0 -y   # run the 0.22 migration non-interactively
+```
+
 ---
 
 ### task - Task Generation

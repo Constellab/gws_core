@@ -3,6 +3,15 @@ from typing import Annotated
 
 import typer
 
+from gws_cli.code_migration.code_migration import (
+    get_all_code_migrations,
+    get_code_migration,
+    get_code_migrations_after,
+)
+from gws_cli.code_migration.code_migration_runner import (
+    get_brick_gws_core_version,
+    run_code_migration,
+)
 from gws_cli.generate_brick.generate_brick import generate_brick
 from gws_cli.utils.brick_cli_service import BrickCliService
 from gws_cli.utils.brick_configure_service import BrickConfigureService
@@ -105,6 +114,96 @@ app.add_typer(version_app, name="version")
 
 technical_doc_app = typer.Typer(help="Manage brick technical documentation")
 app.add_typer(technical_doc_app, name="technical-doc")
+
+
+@app.command(
+    "code-migrate",
+    help=(
+        "Apply gws_core code migrations (source-to-source refactors) to a brick. "
+        "By default runs every migration newer than the gws_core version the brick targets: "
+        "describes each migration, lists the impacted files, and asks one confirmation before "
+        "applying to all of them. Use --dry-run to see the diffs, --yes to skip the confirmation."
+    ),
+)
+def code_migrate(
+    brick_path: Annotated[
+        str | None,
+        typer.Argument(
+            help="Path to the brick folder. If not provided, uses the current directory."
+        ),
+    ] = None,
+    version: Annotated[
+        str | None,
+        typer.Option(
+            "--version",
+            "-v",
+            help="Run only the migration for this gws_core version (e.g. 0.22.0).",
+        ),
+    ] = None,
+    list_migrations: Annotated[
+        bool,
+        typer.Option("--list", "-l", help="List the available code migrations and exit."),
+    ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", "-n", help="Show the diffs without modifying any file."),
+    ] = False,
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Apply every change without prompting (CI use)."),
+    ] = False,
+):
+    """Run versioned code migrations over the brick's ``src`` directory."""
+    if list_migrations:
+        migrations = get_all_code_migrations()
+        if not migrations:
+            typer.echo("No code migrations are registered.")
+            return
+        typer.echo("Available code migrations:")
+        for migration in migrations:
+            typer.echo(f"  - {migration.version}: {migration.short_description}")
+        return
+
+    brick_dir = BrickCliService.resolve_brick_dir(brick_path)
+    settings = BrickCliService.get_brick_settings(brick_dir)
+    if not settings:
+        typer.echo(f"Error: could not read settings.json in {brick_dir}", err=True)
+        raise typer.Exit(1)
+
+    if version is not None:
+        migration = get_code_migration(version)
+        if migration is None:
+            available = ", ".join(str(m.version) for m in get_all_code_migrations()) or "(none)"
+            typer.echo(
+                f"Error: no code migration registered for version '{version}'. "
+                f"Available: {available}",
+                err=True,
+            )
+            raise typer.Exit(1)
+        to_run = [migration]
+    else:
+        current_version = get_brick_gws_core_version(settings)
+        if current_version is None:
+            typer.echo(
+                "Could not determine the gws_core version this brick targets "
+                "(no 'gws_core' dependency in settings.json). "
+                "Re-run with --version <x> to pick a specific migration, or --list to see them.",
+                err=True,
+            )
+            raise typer.Exit(1)
+        to_run = get_code_migrations_after(current_version)
+        if not to_run:
+            typer.echo(
+                f"Brick targets gws_core {current_version}; no newer code migration to run."
+            )
+            return
+        typer.echo(
+            f"Brick targets gws_core {current_version}. "
+            f"Running {len(to_run)} migration(s): {', '.join(str(m.version) for m in to_run)}"
+        )
+
+    for migration in to_run:
+        run_code_migration(brick_dir, migration, assume_yes=yes, dry_run=dry_run)
 
 
 @technical_doc_app.command("push", help="Push the technical documentation of a brick to the Constellab community")

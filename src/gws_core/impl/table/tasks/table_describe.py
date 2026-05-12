@@ -1,7 +1,8 @@
 import pandas as pd
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -38,11 +39,11 @@ class TableDescribe(Task):
 
     config_specs = ConfigSpecs(
         {
-            "percentiles": StrParam(
+            "percentiles": SelectParam(
                 default_value="quartiles",
                 optional=True,
                 human_name="percentiles",
-                allowed_values=["quartiles", "percentiles"],
+                options=["quartiles", "percentiles"],
                 short_description="The percentiles to include in the output. should be between 0 and 1. default= [.25, .5, .75]",
             ),
             "include_NaN": BoolParam(

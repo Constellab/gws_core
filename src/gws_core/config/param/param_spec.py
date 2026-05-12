@@ -1,3 +1,5 @@
+import sys
+import warnings
 from abc import abstractmethod
 from typing import Any
 
@@ -24,6 +26,29 @@ from .param_types import (
     ParamSpecTypeInfo,
     ParamSpecVisibilty,
 )
+
+# Caller locations already warned about - one DeprecationWarning per code location is enough,
+# so that importing modules that still pass `allowed_values` is not noisy.
+_ALLOWED_VALUES_WARNED_LOCATIONS: set[tuple[str, int]] = set()
+
+
+def _warn_allowed_values_deprecated(param_class_name: str) -> None:
+    """Emit a (deduped) ``DeprecationWarning`` for the deprecated ``allowed_values`` argument.
+
+    DEPRECATED(gws_core 0.22, remove in 0.24): the ``allowed_values`` argument of
+    StrParam/IntParam/FloatParam - use ``SelectParam`` instead.
+    """
+    caller = sys._getframe(2)  # 0: here, 1: the param __init__, 2: the actual caller
+    key = (caller.f_code.co_filename, caller.f_lineno)
+    if key in _ALLOWED_VALUES_WARNED_LOCATIONS:
+        return
+    _ALLOWED_VALUES_WARNED_LOCATIONS.add(key)
+    warnings.warn(
+        f"'allowed_values' on {param_class_name} is deprecated since gws_core 0.22 "
+        "and will be removed in 0.24 - use SelectParam instead.",
+        DeprecationWarning,
+        stacklevel=3,
+    )
 
 
 class ParamSpec:
@@ -239,9 +264,14 @@ class StrParam(ParamSpec):
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
-        :param allowed_values: If present, the param value must be in the array
+        :param allowed_values: DEPRECATED(gws_core 0.22, remove in 0.24): use SelectParam instead.
+                        If present, the param value must be in the array
         :type allowed_values: Optional[List[str]]
         """
+
+        if allowed_values is not None:
+            # DEPRECATED(gws_core 0.22, remove in 0.24): allowed_values -> use SelectParam
+            _warn_allowed_values_deprecated("StrParam")
 
         self.additional_info = {
             "min_length": min_length,
@@ -557,13 +587,18 @@ class NumericParam(ParamSpec):
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
-        :param allowed_values: If present, the param value must be in the array
+        :param allowed_values: DEPRECATED(gws_core 0.22, remove in 0.24): use SelectParam instead.
+                        If present, the param value must be in the array
         :type allowed_values: Optional[List[str]]
         :param min: # The minimum value allowed (including)
         :type min:  Optional[ConfigParamType]
         :param max: # The maximum value allowed (including)
         :type max:  Optional[ConfigParamType]
         """
+        if allowed_values is not None:
+            # DEPRECATED(gws_core 0.22, remove in 0.24): allowed_values -> use SelectParam
+            _warn_allowed_values_deprecated(type(self).__name__)
+
         self.additional_info = {
             "min_value": min_value,
             "max_value": max_value,

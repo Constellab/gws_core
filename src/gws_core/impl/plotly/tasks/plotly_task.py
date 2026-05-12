@@ -1,5 +1,6 @@
 
 from gws_core.config.param.param_spec import BoolParam, FloatParam, IntParam, ListParam, StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -214,13 +215,13 @@ class PlotlyTask(Task):
             human_name="X Axis Name",
             short_description="set the x axis name",
         ),
-        "template": StrParam(
+        "template": SelectParam(
             default_value=None,
             optional=True,
             human_name="Template",
             short_description="Plotly template to use",
             visibility="protected",
-            allowed_values=[
+            options=[
                 "ggplot2",
                 "seaborn",
                 "simple_white",
@@ -317,12 +318,12 @@ class PlotlyTask(Task):
         "color_discrete_map": StrParam(
             default_value=None, optional=True, human_name="color discrete map", visibility="private"
         ),
-        "orientation": StrParam(
+        "orientation": SelectParam(
             default_value="v",
             optional=True,
             human_name="Orientation",
             short_description="Orientation of the box plot ('v' for vertical, 'h' for horizontal)",
-            allowed_values=["v", "h"],
+            options=["v", "h"],
             visibility="protected",
         ),
     }
@@ -427,42 +428,42 @@ class PlotlyTask(Task):
         "symbol_map": StrParam(
             default_value=None, optional=True, human_name="symbol map", visibility="private"
         ),
-        "render_mode": StrParam(
+        "render_mode": SelectParam(
             default_value=None,
             optional=True,
             human_name="Render Mode",
-            allowed_values=["svg", "webgl", "auto"],
+            options=["svg", "webgl", "auto"],
             short_description="Controls the browser API used to draw marks. ",
             visibility="protected",
         ),
     }
     trendline = {  # scatter
-        "trendline": StrParam(
+        "trendline": SelectParam(
             default_value=None,
             optional=True,
             human_name="Trendline",
             short_description="Add a trendline to the plot, see the plotlydoc : plotly.express.trendline_functions",
             visibility="protected",
-            allowed_values=["ols", "lowess", "rolling", "expanding", "ewm"],
+            options=["ols", "lowess", "rolling", "expanding", "ewm"],
         ),
         "trendline_options": StrParam(
             default_value=None, optional=True, human_name="trendline options", visibility="private"
         ),
-        "trendline_color_override": StrParam(
+        "trendline_color_override": SelectParam(
             default_value=None,
             optional=True,
             visibility="protected",
             human_name="trendline color",
             short_description="all trendlines will be drawn in this color rather than in the same color as the traces from which they draw their inputs.",
-            allowed_values=css_colours,
+            options=css_colours,
         ),
-        "trendline_scope": StrParam(
+        "trendline_scope": SelectParam(
             default_value="trace",
             optional=True,
             visibility="protected",
             human_name="trendline scope",
             short_description="If 'trace', then one trendline is drawn per trace (i.e. per color, symbol, facet, animation frame etc) and if 'overall' then one trendline is computed for the entire dataset, and replicated across all facets.",
-            allowed_values=["trace", "overall"],
+            options=["trace", "overall"],
         ),
     }
     bar_opt = {  # bar, histogram
@@ -473,12 +474,12 @@ class PlotlyTask(Task):
             short_description="float:  Value between 0 and 1. Sets the opacity for markers.",
             visibility="protected",
         ),
-        "barmode": StrParam(
+        "barmode": SelectParam(
             default_value=None,
             optional=True,
             human_name="Bar Mode",
             short_description="Bar mode for stacked or grouped histograms",
-            allowed_values=["stack", "group", "overlay", "relative"],
+            options=["stack", "group", "overlay", "relative"],
             visibility="protected",
         ),
         "text_auto": BoolParam(

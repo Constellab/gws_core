@@ -2,7 +2,8 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
@@ -36,19 +37,19 @@ class PlotlyViolinplot(PlotlyTask):
             # base params
             **PlotlyTask.config_specs_d2,
             **PlotlyTask.custom_data,
-            "violinmode": StrParam(
+            "violinmode": SelectParam(
                 default_value="group",
                 optional=True,
                 human_name="Violin Mode",
-                allowed_values=["group", "overlay"],
+                options=["group", "overlay"],
                 short_description="violin mode ('group' or 'overlay')",
             ),
-            "points": StrParam(
+            "points": SelectParam(
                 default_value="outliers",
                 optional=True,
                 human_name="points",
                 short_description="shows outliers",
-                allowed_values=["outliers", "suspectoutliers", "all", False],
+                options=["outliers", "suspectoutliers", "all", False],
             ),
             "box": BoolParam(
                 default_value=False,

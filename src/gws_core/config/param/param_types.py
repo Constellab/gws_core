@@ -23,6 +23,7 @@ class ParamSpecType(Enum):
     FLOAT = "float"
     DICT = "dict"
     LIST = "list"
+    SELECT = "select_param"
     DYNAMIC_PARAM = "dynamic"
     PARAM_SET = "param_set"
     TAGS = "tags_param"
@@ -72,6 +73,7 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
             ParamSpecType.BOOL,
             ParamSpecType.INT,
             ParamSpecType.FLOAT,
+            ParamSpecType.SELECT,
         ]
         if self.type in basic_types and self.default_value:
             markdown += f", default to '{self.default_value}'"

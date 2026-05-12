@@ -3,7 +3,8 @@ from typing import Literal
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.utils import Utils
@@ -53,16 +54,16 @@ class ScenarioDownloaderBase(Task):
 
     config_specs = ConfigSpecs(
         {
-            "resource_mode": StrParam(
+            "resource_mode": SelectParam(
                 human_name="Resource mode",
                 short_description="Mode for downloading resource of the scenario",
-                allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode),
+                options=Utils.get_literal_values(ScenarioDownloaderResourceMode),
                 default_value="Auto",
             ),
-            "create_option": StrParam(
+            "create_option": SelectParam(
                 human_name="Create option",
                 short_description="This applies for the scenario and the resources",
-                allowed_values=Utils.get_literal_values(ScenarioDownloaderCreateOption),
+                options=Utils.get_literal_values(ScenarioDownloaderCreateOption),
                 default_value="Update if exists",
             ),
             "auto_run": BoolParam(

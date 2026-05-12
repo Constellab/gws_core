@@ -1,6 +1,6 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -49,19 +49,19 @@ class ScenarioArchiveZipperTask(Task):
 
     config_specs = ConfigSpecs(
         {
-            "resource_mode": StrParam(
+            "resource_mode": SelectParam(
                 human_name="Resource mode",
                 short_description="Which resources to include in the archive",
-                allowed_values=Utils.get_literal_values(ScenarioDownloaderResourceMode),
+                options=Utils.get_literal_values(ScenarioDownloaderResourceMode),
                 default_value="Auto",
             ),
-            "compress_format": StrParam(
+            "compress_format": SelectParam(
                 human_name="Archive format",
                 short_description=(
                     "Archive format to use. Compressed formats (tar.gz, zip) may take a "
                     "long time if the scenario contains big resources."
                 ),
-                allowed_values=sorted(ScenarioArchiveZipper.COMPRESS_FORMATS.keys()),
+                options=sorted(ScenarioArchiveZipper.COMPRESS_FORMATS.keys()),
                 default_value="tar",
             ),
         }

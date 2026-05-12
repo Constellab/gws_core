@@ -4,7 +4,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_style import TypingStyle
 
 from ...config.config_params import ConfigParams
-from ...config.param.param_spec import StrParam
+from ...config.param.select_param import SelectParam
 from ...resource.r_field.list_r_field import ListRField
 from ...resource.r_field.primitive_r_field import FloatRField, IntRField
 from ...resource.resource import Resource
@@ -49,8 +49,8 @@ class Robot(Resource):
         human_name="View position",
         specs=ConfigSpecs(
             {
-                "position": StrParam(
-                    default_value="latitude", allowed_values=["latitude", "longitude"]
+                "position": SelectParam(
+                    default_value="latitude", options=["latitude", "longitude"]
                 )
             }
         ),

@@ -17,6 +17,7 @@ from gws_core.config.param.param_types import (
     ParamSpecType,
     ParamSpecVisibilty,
 )
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 if TYPE_CHECKING:
@@ -141,10 +142,10 @@ class ComputedParam(ParamSpec):
                 human_name="Expression",
                 short_description="The expression to compute; field references use @. Ex: '@a + @b'",
             ).to_dto(),
-            "result_type": StrParam(
+            "result_type": SelectParam(
                 human_name="Result type",
                 short_description="The type of the computed result.",
-                allowed_values=["int", "float", "str", "bool"],
+                options=["int", "float", "str", "bool"],
             ).to_dto(),
         }
 
