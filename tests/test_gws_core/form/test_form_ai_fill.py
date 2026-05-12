@@ -176,7 +176,7 @@ class TestFormAiFill(BaseTestCase):
                             "mass": FloatParam(human_name="Mass"),
                             "volume": FloatParam(human_name="Volume"),
                             "density": ComputedParam(
-                                expression="mass / volume",
+                                expression="@mass / @volume",
                                 result_type="float",
                             ),
                         }
@@ -184,7 +184,7 @@ class TestFormAiFill(BaseTestCase):
                     optional=True,
                 ),
                 "total_mass": ComputedParam(
-                    expression="sum(samples[].mass)", result_type="float"
+                    expression="sum(@samples[].mass)", result_type="float"
                 ),
             }
         )

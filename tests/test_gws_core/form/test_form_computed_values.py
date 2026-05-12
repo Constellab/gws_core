@@ -61,7 +61,7 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "mass": FloatParam(human_name="Mass", optional=True),
-                "doubled": ComputedParam(expression="mass * 2", result_type="float"),
+                "doubled": ComputedParam(expression="@mass * 2", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -94,7 +94,7 @@ class TestFormComputedValues(BaseTestCase):
                     ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
                     optional=True,
                 ),
-                "avg_mass": ComputedParam(expression="mean(samples[].mass)", result_type="float"),
+                "avg_mass": ComputedParam(expression="mean(@samples[].mass)", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -108,7 +108,7 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "label": StrParam(human_name="Label", optional=True),
-                "doubled_label": ComputedParam(expression="label * 2", result_type="float"),
+                "doubled_label": ComputedParam(expression="@label * 2", result_type="float"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -271,13 +271,13 @@ class TestFormComputedValues(BaseTestCase):
                             "mass": FloatParam(human_name="Mass", optional=True),
                             "volume": FloatParam(human_name="Volume", optional=True),
                             "density": ComputedParam(
-                                expression="mass / volume", result_type="float"
+                                expression="@mass / @volume", result_type="float"
                             ),
                         }
                     ),
                     optional=True,
                 ),
-                "total_mass": ComputedParam(expression="sum(samples[].mass)", result_type="float"),
+                "total_mass": ComputedParam(expression="sum(@samples[].mass)", result_type="float"),
             }
         )
         return self._make_form_from_specs(specs)

@@ -10,6 +10,8 @@ from gws_core.form_template.form_template_dto import (
     FormTemplateDTO,
     FormTemplateVersionDTO,
     UpdateFormTemplateDTO,
+    ValidateComputedParamDTO,
+    ValidateComputedParamResultDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.user.authorization_service import AuthorizationService
@@ -189,6 +191,20 @@ def rename_and_update_draft_field(
     return FormTemplateService.rename_and_update_draft_field(
         id_, version_id, field_name, new_field_name, spec_dto
     ).to_dto()
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/computed-param/validate",
+    tags=["Form template"],
+    summary="Validate a candidate ComputedParam expression against a version's specs",
+)
+def validate_computed_param(
+    id_: str,
+    version_id: str,
+    body: ValidateComputedParamDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ValidateComputedParamResultDTO:
+    return FormTemplateService.validate_computed_param(id_, version_id, body)
 
 
 @core_app.delete(

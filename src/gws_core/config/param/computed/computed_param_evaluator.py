@@ -1,3 +1,4 @@
+import ast
 import re
 from collections.abc import Callable, Sequence
 from statistics import mean, median, stdev
@@ -11,19 +12,34 @@ from simpleeval import (
     SimpleEval,
 )
 
-# Sentinel used to detect references to a key that exists but has no value yet.
-# simpleeval surfaces this as a NameNotDefined; the evaluator turns it into a
-# clean error message.
+# Internal function names the rewriter injects; never written by users.
 _PARAMSET_AGG_FUNC_NAME = "__paramset_agg__"
 _IF_FUNC_NAME = "__cp_if__"
 
-# Matches `<identifier>[].<identifier>` aggregate sugar for ParamSets.
-# Replaced before evaluation with a call to the internal aggregate function.
-_PARAMSET_AGG_PATTERN = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\[\]\.([A-Za-z_][A-Za-z0-9_]*)")
+# Field references are written with a leading `@` so they can never be confused
+# with a (bare) function name. `@samples[].mass` is the ParamSet aggregate sugar
+# (the list of `mass` values across the `samples` ParamSet); `@weight` is a
+# plain field reference. Both are rewritten away before the expression reaches
+# simpleeval, which then sees only plain identifiers resolved from `names`.
+_PARAMSET_AGG_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)\[\]\.([A-Za-z_][A-Za-z0-9_]*)")
+_FIELD_REF_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
 
 # Matches `if(` since `if` is a Python keyword and would otherwise fail to parse.
 # Word boundary on the left, then literal `if(`. Rewritten to a non-keyword name.
 _IF_CALL_PATTERN = re.compile(r"\bif\s*\(")
+
+# Bare identifiers allowed in a (rewritten) expression: the whitelisted function
+# names plus the internal names the rewriter injects. Anything else bare is a
+# field reference missing its `@` (or an undefined name) and is rejected.
+_ALLOWED_BARE_NAMES = frozenset(
+    {
+        "sum", "mean", "median", "stddev", "min", "max", "count",
+        "abs", "round", "sqrt", "pow", "concat",
+        "if",  # written `if(...)`, rewritten away, but keep for clarity
+        _PARAMSET_AGG_FUNC_NAME,
+        _IF_FUNC_NAME,
+    }
+)
 
 
 class ComputedParamEvaluationError(Exception):
@@ -37,8 +53,9 @@ class ComputedParamEvaluationError(Exception):
 class ConfigSpecsEvaluator:
     """Evaluates ComputedParam expressions over a ConfigSpecs values dict.
 
-    Wraps simpleeval with a whitelisted function table and the `samples[].field`
-    aggregate sugar (rewritten to a function call before evaluation).
+    Wraps simpleeval with a whitelisted function table and the `@samples[].field`
+    aggregate sugar (rewritten to a function call before evaluation). Field
+    references are written `@field`; bare identifiers are function names.
 
     The evaluator is generic — not form-specific. It is injected into
     ConfigSpecs.compute_values so ConfigSpecs has no dependency on simpleeval.
@@ -57,14 +74,16 @@ class ConfigSpecsEvaluator:
     ) -> Any:
         """Evaluate a single expression against the provided scope.
 
-        :param expression: the expression source.
-        :param scope: identifier → value map. Bare identifiers in the expression
-            resolve from this dict.
+        :param expression: the expression source. Field references are written
+            with a leading `@` (e.g. `@weight`, `@samples[].mass`).
+        :param scope: identifier → value map. `@`-prefixed references in the
+            expression resolve (after the `@` is stripped) from this dict.
         :param paramset_rows: paramset_key → list of row dicts. Used to resolve
-            `samples[].field` aggregate sugar at the outer scope. None or empty
+            `@samples[].field` aggregate sugar at the outer scope. None or empty
             when evaluating per-row inside a ParamSet.
         :raises ComputedParamEvaluationError: on any evaluation failure.
         """
+        self._assert_only_sigil_field_refs(expression)
         rewritten = _rewrite_expression(expression)
 
         rows = paramset_rows or {}
@@ -89,8 +108,9 @@ class ConfigSpecsEvaluator:
         except ZeroDivisionError as err:
             raise ComputedParamEvaluationError("Division by zero") from err
         except NameNotDefined as err:
+            name = self._safe_name(err)
             raise ComputedParamEvaluationError(
-                f"Unknown reference: {self._safe_name(err)}"
+                f"Unknown name '{name}'. Field references must be written as @{name}."
             ) from err
         except FunctionNotDefined as err:
             raise ComputedParamEvaluationError(
@@ -130,37 +150,88 @@ class ConfigSpecsEvaluator:
 
     @staticmethod
     def extract_referenced_keys(expression: str) -> set[str]:
-        """Return the set of bare identifiers and ParamSet aggregate keys
-        referenced by the expression.
+        """Return the set of ConfigSpecs keys referenced by the expression.
 
-        Used by ConfigSpecs.check_config_specs() for cycle detection. Function
-        names from the whitelist are filtered out; ParamSet aggregate references
-        like `samples[].mass` contribute the ParamSet key (`samples`).
+        A reference is anything written with a leading `@`:
+        - `@weight` contributes the key `weight`.
+        - `@samples[].mass` (ParamSet aggregate sugar) contributes the ParamSet
+          key `samples` (not `mass`, which is an inner field of that ParamSet).
+
+        Bare identifiers are function names, never references, so there is no
+        whitelist to subtract and no ambiguity with a field named e.g. `sum`.
+        Used by ComputedParam.check_graph() for reference and cycle checks.
+        """
+        # ParamSet aggregate references must be matched first; otherwise the
+        # plain `@<name>` pattern would also match the `@samples` prefix and
+        # we could not tell them apart from a scalar `@samples` reference.
+        paramset_keys = ConfigSpecsEvaluator.referenced_paramset_keys(expression)
+        without_aggregates = _PARAMSET_AGG_PATTERN.sub(" ", expression)
+        scalar_keys = {m.group(1) for m in _FIELD_REF_PATTERN.finditer(without_aggregates)}
+        return scalar_keys | paramset_keys
+
+    @staticmethod
+    def referenced_paramset_keys(expression: str) -> set[str]:
+        """Return the ParamSet keys referenced via aggregate sugar
+        (``@key[].field`` → ``key``). Empty when the expression uses no
+        aggregates. Used to detect aggregate usage from outside the evaluator
+        (e.g. to reject it inside a ParamSet row, where it is not allowed)."""
+        return {m.group(1) for m in _PARAMSET_AGG_PATTERN.finditer(expression)}
+
+    @staticmethod
+    def _assert_only_sigil_field_refs(expression: str) -> None:
+        """Reject bare identifiers used as values (not function calls).
+
+        A value identifier in a ComputedParam expression must be `@`-prefixed.
+        A bare one is a field reference that forgot its `@` — a bug, because it
+        would not appear in the dependency graph (so it escapes cycle and
+        unset-input checks). We make it a hard error rather than letting
+        simpleeval silently resolve it from `names`. Function-call names are
+        left alone here; simpleeval reports unknown ones (`FunctionNotDefined`).
+
+        :raises ComputedParamEvaluationError: on a bare value reference or an
+            otherwise unparsable expression.
         """
         rewritten = _rewrite_expression(expression)
-
-        # Collect ParamSet keys referenced via aggregate sugar.
-        paramset_keys = {m.group(1) for m in _PARAMSET_AGG_PATTERN.finditer(expression)}
-
-        # Find bare identifiers in the rewritten expression. We walk the AST
-        # rather than regex-matching because regex can't tell `mass` (a ref)
-        # apart from `mass=` (a kwarg) reliably.
-        import ast
-
         try:
             tree = ast.parse(rewritten, mode="eval")
-        except SyntaxError:
-            # Defer the syntax error to evaluation time.
-            return paramset_keys
+        except SyntaxError as err:
+            raise ComputedParamEvaluationError(f"Invalid expression: {err.msg}") from err
 
-        whitelist = set(_BUILTIN_FUNCTION_NAMES) | {_PARAMSET_AGG_FUNC_NAME, _IF_FUNC_NAME}
-        names: set[str] = set()
+        # Names that appear as the callee of a Call are function names — skip.
+        call_func_names = {
+            node.func.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
+        }
+        allowed = _ALLOWED_BARE_NAMES | call_func_names | ConfigSpecsEvaluator.extract_referenced_keys(
+            expression
+        )
+        bare = sorted(
+            node.id
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Name) and node.id not in allowed
+        )
+        if bare:
+            names = ", ".join(f"'{n}'" for n in bare)
+            raise ComputedParamEvaluationError(
+                f"Unknown name(s): {names}. Field references must be written with a "
+                f"leading @ (e.g. @{bare[0]})."
+            )
 
-        for node in ast.walk(tree):
-            if isinstance(node, ast.Name) and node.id not in whitelist:
-                names.add(node.id)
+    @staticmethod
+    def check_expression_syntax(expression: str) -> None:
+        """Validate that the expression parses and uses only `@`-prefixed field
+        references, without evaluating it.
 
-        return names | paramset_keys
+        Lets the form-template editor lint a candidate expression before any
+        values exist to run it against.
+
+        :raises ComputedParamEvaluationError: if the expression is empty, does
+            not parse, or contains a bare (un-``@``-ed) field reference.
+        """
+        if not isinstance(expression, str) or not expression.strip():
+            raise ComputedParamEvaluationError("Expression must be a non-empty string")
+        ConfigSpecsEvaluator._assert_only_sigil_field_refs(expression)
 
     @staticmethod
     def _safe_name(err: Exception) -> str:
@@ -193,11 +264,24 @@ class ConfigSpecsEvaluator:
 
 
 def _rewrite_expression(expression: str) -> str:
-    """Apply both rewrites: paramset aggregate sugar and `if(...)` keyword guard."""
+    """Lower a ComputedParam expression to a plain simpleeval expression.
+
+    Three rewrites, in order:
+    1. `@key[].field` ParamSet aggregate sugar → a call to the internal
+       aggregate function.
+    2. remaining `@field` references → the bare identifier `field` (simpleeval
+       resolves it from the injected `names` dict).
+    3. `if(...)` → an internal function name (`if` is a Python keyword and would
+       otherwise fail to parse).
+
+    Step 1 must run before step 2 so the `@` of an aggregate is consumed there
+    and not by the plain-reference rewrite.
+    """
     rewritten = _PARAMSET_AGG_PATTERN.sub(
         lambda m: f"{_PARAMSET_AGG_FUNC_NAME}('{m.group(1)}', '{m.group(2)}')",
         expression,
     )
+    rewritten = _FIELD_REF_PATTERN.sub(lambda m: m.group(1), rewritten)
     rewritten = _IF_CALL_PATTERN.sub(f"{_IF_FUNC_NAME}(", rewritten)
     return rewritten
 
@@ -280,20 +364,3 @@ def _concat(*args: Any, sep: str = "") -> str:
     else:
         items = args
     return sep.join("" if v is None else str(v) for v in items)
-
-
-_BUILTIN_FUNCTION_NAMES = (
-    "sum",
-    "mean",
-    "median",
-    "stddev",
-    "min",
-    "max",
-    "count",
-    "abs",
-    "round",
-    "sqrt",
-    "pow",
-    "if",
-    "concat",
-)

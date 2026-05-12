@@ -34,7 +34,7 @@ class ComputedParamTask(Task):
         {
             "mass": FloatParam(),
             "volume": FloatParam(),
-            "density": ComputedParam(expression="mass / volume", result_type="float"),
+            "density": ComputedParam(expression="@mass / @volume", result_type="float"),
         }
     )
 
@@ -58,26 +58,41 @@ class TestComputedParamEvaluator(TestCase):
         self.assertEqual(self.ev.evaluate("2 ** 8", {}), 256)
 
     def test_comparisons_and_booleans(self) -> None:
-        self.assertTrue(self.ev.evaluate("a > b and c < d", {"a": 5, "b": 3, "c": 1, "d": 2}))
+        self.assertTrue(
+            self.ev.evaluate("@a > @b and @c < @d", {"a": 5, "b": 3, "c": 1, "d": 2})
+        )
         self.assertFalse(self.ev.evaluate("not (1 == 1)", {}))
-        self.assertTrue(self.ev.evaluate("a == 1 or b == 2", {"a": 0, "b": 2}))
+        self.assertTrue(self.ev.evaluate("@a == 1 or @b == 2", {"a": 0, "b": 2}))
 
     def test_field_reference(self) -> None:
-        self.assertEqual(self.ev.evaluate("mass / volume", {"mass": 6.0, "volume": 2.0}), 3.0)
+        self.assertEqual(self.ev.evaluate("@mass / @volume", {"mass": 6.0, "volume": 2.0}), 3.0)
+
+    def test_bare_identifier_is_not_a_field_reference(self) -> None:
+        # Without the leading `@`, `mass` is treated as a (non-existent) function
+        # name / undefined name, not as a field reference — the value in scope
+        # is ignored.
+        with self.assertRaises(ComputedParamEvaluationError) as ctx:
+            self.ev.evaluate("mass + 1", {"mass": 5})
+        self.assertIn("@mass", str(ctx.exception))
+
+    def test_field_named_like_a_function_resolves_via_sigil(self) -> None:
+        # A field literally named `sum`: `@sum` is the field; `sum(...)` the func.
+        self.assertEqual(self.ev.evaluate("@sum + 1", {"sum": 4}), 5)
+        self.assertEqual(self.ev.evaluate("sum(@values)", {"values": [1, 2, 3]}), 6)
 
     def test_division_by_zero(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError) as ctx:
-            self.ev.evaluate("a / b", {"a": 1, "b": 0})
+            self.ev.evaluate("@a / @b", {"a": 1, "b": 0})
         self.assertIn("Division by zero", str(ctx.exception))
 
     def test_unknown_reference(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError) as ctx:
-            self.ev.evaluate("xyz + 1", {})
-        self.assertIn("Unknown reference", str(ctx.exception))
+            self.ev.evaluate("@xyz + 1", {})
+        self.assertIn("xyz", str(ctx.exception))
 
     def test_attribute_access_disallowed(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            self.ev.evaluate("a.b", {"a": "value"})
+            self.ev.evaluate("@a.b", {"a": "value"})
 
     def test_function_not_in_whitelist(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError) as ctx:
@@ -90,87 +105,117 @@ class TestComputedParamEvaluator(TestCase):
 
     def test_numeric_functions(self) -> None:
         rows = {"samples": [{"x": 1.0}, {"x": 2.0}, {"x": 3.0}, {"x": 4.0}]}
-        self.assertEqual(self.ev.evaluate("sum(samples[].x)", {}, paramset_rows=rows), 10.0)
-        self.assertEqual(self.ev.evaluate("mean(samples[].x)", {}, paramset_rows=rows), 2.5)
-        self.assertEqual(self.ev.evaluate("median(samples[].x)", {}, paramset_rows=rows), 2.5)
-        self.assertEqual(self.ev.evaluate("min(samples[].x)", {}, paramset_rows=rows), 1.0)
-        self.assertEqual(self.ev.evaluate("max(samples[].x)", {}, paramset_rows=rows), 4.0)
-        self.assertEqual(self.ev.evaluate("count(samples[].x)", {}, paramset_rows=rows), 4)
+        self.assertEqual(self.ev.evaluate("sum(@samples[].x)", {}, paramset_rows=rows), 10.0)
+        self.assertEqual(self.ev.evaluate("mean(@samples[].x)", {}, paramset_rows=rows), 2.5)
+        self.assertEqual(self.ev.evaluate("median(@samples[].x)", {}, paramset_rows=rows), 2.5)
+        self.assertEqual(self.ev.evaluate("min(@samples[].x)", {}, paramset_rows=rows), 1.0)
+        self.assertEqual(self.ev.evaluate("max(@samples[].x)", {}, paramset_rows=rows), 4.0)
+        self.assertEqual(self.ev.evaluate("count(@samples[].x)", {}, paramset_rows=rows), 4)
         # stddev requires >=2
-        self.assertGreater(self.ev.evaluate("stddev(samples[].x)", {}, paramset_rows=rows), 0)
+        self.assertGreater(self.ev.evaluate("stddev(@samples[].x)", {}, paramset_rows=rows), 0)
         self.assertEqual(self.ev.evaluate("abs(-5)", {}), 5)
         self.assertEqual(self.ev.evaluate("round(1.2345, 2)", {}), 1.23)
         self.assertEqual(self.ev.evaluate("sqrt(9)", {}), 3.0)
         self.assertEqual(self.ev.evaluate("pow(2, 10)", {}), 1024)
 
     def test_if(self) -> None:
-        self.assertEqual(self.ev.evaluate("if(a > 0, a, -a)", {"a": -3}), 3)
-        self.assertEqual(self.ev.evaluate("if(a > 0, a, -a)", {"a": 3}), 3)
+        self.assertEqual(self.ev.evaluate("if(@a > 0, @a, -@a)", {"a": -3}), 3)
+        self.assertEqual(self.ev.evaluate("if(@a > 0, @a, -@a)", {"a": 3}), 3)
         # nested
         self.assertEqual(
-            self.ev.evaluate("if(a > 0, if(b > 0, 1, 2), 3)", {"a": 1, "b": -1}),
+            self.ev.evaluate("if(@a > 0, if(@b > 0, 1, 2), 3)", {"a": 1, "b": -1}),
             2,
         )
 
     def test_concat_scalars(self) -> None:
         self.assertEqual(
-            self.ev.evaluate('concat(first, " ", last)', {"first": "Bob", "last": "Lee"}),
+            self.ev.evaluate('concat(@first, " ", @last)', {"first": "Bob", "last": "Lee"}),
             "Bob Lee",
         )
 
     def test_concat_list(self) -> None:
         self.assertEqual(
-            self.ev.evaluate("concat(items)", {"items": ["a", "b", "c"]}),
+            self.ev.evaluate("concat(@items)", {"items": ["a", "b", "c"]}),
             "abc",
         )
 
     def test_concat_list_with_separator(self) -> None:
         self.assertEqual(
-            self.ev.evaluate('concat(items, sep=", ")', {"items": ["a", "b", "c"]}),
+            self.ev.evaluate('concat(@items, sep=", ")', {"items": ["a", "b", "c"]}),
             "a, b, c",
         )
 
     def test_concat_coerces_non_strings(self) -> None:
         self.assertEqual(
-            self.ev.evaluate('concat(items, sep="-")', {"items": [1, 2, 3]}),
+            self.ev.evaluate('concat(@items, sep="-")', {"items": [1, 2, 3]}),
             "1-2-3",
         )
 
     def test_concat_skips_none(self) -> None:
         self.assertEqual(
-            self.ev.evaluate('concat(items, sep="|")', {"items": ["a", None, "b"]}),
+            self.ev.evaluate('concat(@items, sep="|")', {"items": ["a", None, "b"]}),
             "a||b",
         )
 
     def test_aggregate_over_empty_paramset_raises(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            self.ev.evaluate("mean(samples[].x)", {}, paramset_rows={"samples": []})
+            self.ev.evaluate("mean(@samples[].x)", {}, paramset_rows={"samples": []})
 
     def test_stddev_with_one_value_raises(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            self.ev.evaluate("stddev(samples[].x)", {}, paramset_rows={"samples": [{"x": 1.0}]})
+            self.ev.evaluate("stddev(@samples[].x)", {}, paramset_rows={"samples": [{"x": 1.0}]})
 
     def test_unknown_paramset_key(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            self.ev.evaluate("sum(unknown[].x)", {}, paramset_rows={})
+            self.ev.evaluate("sum(@unknown[].x)", {}, paramset_rows={})
 
     def test_extract_referenced_keys(self) -> None:
         self.assertEqual(
-            ConfigSpecsEvaluator.extract_referenced_keys("mass / volume"),
+            ConfigSpecsEvaluator.extract_referenced_keys("@mass / @volume"),
             {"mass", "volume"},
         )
         self.assertEqual(
-            ConfigSpecsEvaluator.extract_referenced_keys("sum(samples[].mass)"),
+            ConfigSpecsEvaluator.extract_referenced_keys("sum(@samples[].mass)"),
             {"samples"},
         )
         self.assertEqual(
-            ConfigSpecsEvaluator.extract_referenced_keys('concat(first, " ", last)'),
+            ConfigSpecsEvaluator.extract_referenced_keys('concat(@first, " ", @last)'),
             {"first", "last"},
         )
         self.assertEqual(
-            ConfigSpecsEvaluator.extract_referenced_keys("if(a > 0, b, c)"),
+            ConfigSpecsEvaluator.extract_referenced_keys("if(@a > 0, @b, @c)"),
             {"a", "b", "c"},
         )
+        # Function names are never references.
+        self.assertEqual(
+            ConfigSpecsEvaluator.extract_referenced_keys("sum(@a, @b)"),
+            {"a", "b"},
+        )
+        # Aggregate key + a scalar sibling.
+        self.assertEqual(
+            ConfigSpecsEvaluator.extract_referenced_keys("sum(@samples[].mass) + @total"),
+            {"samples", "total"},
+        )
+
+    def test_referenced_paramset_keys(self) -> None:
+        self.assertEqual(
+            ConfigSpecsEvaluator.referenced_paramset_keys("sum(@samples[].mass) + @total"),
+            {"samples"},
+        )
+        self.assertEqual(
+            ConfigSpecsEvaluator.referenced_paramset_keys("@a + @b"),
+            set(),
+        )
+
+    def test_check_expression_syntax(self) -> None:
+        # Well-formed expressions parse.
+        ConfigSpecsEvaluator.check_expression_syntax("@a + sum(@b[].c)")
+        ConfigSpecsEvaluator.check_expression_syntax("if(@a > 0, 1, 2)")
+        # Empty / syntactically broken expressions raise.
+        with self.assertRaises(ComputedParamEvaluationError):
+            ConfigSpecsEvaluator.check_expression_syntax("  ")
+        with self.assertRaises(ComputedParamEvaluationError):
+            ConfigSpecsEvaluator.check_expression_syntax("@a +")
 
     def test_coerce_result_int(self) -> None:
         self.assertEqual(ConfigSpecsEvaluator.coerce_result(2.7, "int"), 2)
@@ -189,16 +234,16 @@ class TestComputedParamSpec(TestCase):
         with self.assertRaises(BadRequestException):
             ComputedParam(expression="", result_type="float")
         with self.assertRaises(BadRequestException):
-            ComputedParam(expression="a + b", result_type="bogus")  # type: ignore[arg-type]
+            ComputedParam(expression="@a + @b", result_type="bogus")  # type: ignore[arg-type]
 
     def test_accepts_user_input_is_false(self) -> None:
-        spec = ComputedParam(expression="a + b", result_type="float")
+        spec = ComputedParam(expression="@a + @b", result_type="float")
         self.assertFalse(spec.accepts_user_input)
         self.assertTrue(spec.optional)
         self.assertIsNone(spec.get_default_value())
 
     def test_validate_rejects_non_null_value(self) -> None:
-        spec = ComputedParam(expression="a + b", result_type="float")
+        spec = ComputedParam(expression="@a + @b", result_type="float")
         # None passes through (used as the input-pass placeholder).
         self.assertIsNone(spec.validate(None))
         with self.assertRaises(BadRequestException):
@@ -206,19 +251,19 @@ class TestComputedParamSpec(TestCase):
 
     def test_dto_round_trip(self) -> None:
         spec = ComputedParam(
-            expression="mass / volume",
+            expression="@mass / @volume",
             result_type="float",
             human_name="Density",
             short_description="Computed density",
         )
         dto = spec.to_dto()
         self.assertEqual(dto.type, ParamSpecType.COMPUTED)
-        self.assertEqual(dto.additional_info["expression"], "mass / volume")
+        self.assertEqual(dto.additional_info["expression"], "@mass / @volume")
         self.assertEqual(dto.additional_info["result_type"], "float")
 
         loaded = cast(ComputedParam, ParamSpecHelper.create_param_spec_from_dto(dto))
         self.assertIsInstance(loaded, ComputedParam)
-        self.assertEqual(loaded.expression, "mass / volume")
+        self.assertEqual(loaded.expression, "@mass / @volume")
         self.assertEqual(loaded.result_type, "float")
         self.assertFalse(loaded.accepts_user_input)
 
@@ -230,7 +275,7 @@ class TestComputedParamInConfigSpecs(TestCase):
             {
                 "mass": FloatParam(),
                 "volume": FloatParam(),
-                "density": ComputedParam(expression="mass / volume", result_type="float"),
+                "density": ComputedParam(expression="@mass / @volume", result_type="float"),
             }
         )
         params = specs.build_config_params({"mass": 6.0, "volume": 2.0})
@@ -245,7 +290,7 @@ class TestComputedParamInConfigSpecs(TestCase):
                             "mass": FloatParam(),
                             "volume": FloatParam(),
                             "density": ComputedParam(
-                                expression="mass / volume", result_type="float"
+                                expression="@mass / @volume", result_type="float"
                             ),
                         }
                     )
@@ -267,7 +312,9 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
-                "total_mass": ComputedParam(expression="sum(samples[].mass)", result_type="float"),
+                "total_mass": ComputedParam(
+                    expression="sum(@samples[].mass)", result_type="float"
+                ),
             }
         )
         params = specs.build_config_params(
@@ -275,13 +322,27 @@ class TestComputedParamInConfigSpecs(TestCase):
         )
         self.assertEqual(params["total_mass"], 6.0)
 
+    def test_field_named_like_a_function_is_not_a_blind_spot(self) -> None:
+        # A ConfigSpecs key that collides with a whitelisted function name
+        # (`sum`) is unambiguous now: `@sum` is the field. It is part of the
+        # dependency graph (so check_config_specs passes) and evaluates.
+        specs = ConfigSpecs(
+            {
+                "sum": FloatParam(),
+                "doubled_sum": ComputedParam(expression="@sum + @sum", result_type="float"),
+            }
+        )
+        specs.check_config_specs()
+        params = specs.build_config_params({"sum": 4.0})
+        self.assertEqual(params["doubled_sum"], 8.0)
+
     def test_evaluation_error_does_not_block_save(self) -> None:
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
                 "b": FloatParam(),
-                "ratio": ComputedParam(expression="a / b", result_type="float"),
-                "double_a": ComputedParam(expression="a * 2", result_type="float"),
+                "ratio": ComputedParam(expression="@a / @b", result_type="float"),
+                "double_a": ComputedParam(expression="@a * 2", result_type="float"),
             }
         )
         # b == 0 → ratio errors but double_a still evaluates.
@@ -295,7 +356,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "computed": ComputedParam(expression="a * 2", result_type="float"),
+                "computed": ComputedParam(expression="@a * 2", result_type="float"),
             }
         )
         # Client tries to inject a value for `computed`; build_config_params
@@ -307,8 +368,8 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "doubled": ComputedParam(expression="a * 2", result_type="float"),
-                "quadrupled": ComputedParam(expression="doubled * 2", result_type="float"),
+                "doubled": ComputedParam(expression="@a * 2", result_type="float"),
+                "quadrupled": ComputedParam(expression="@doubled * 2", result_type="float"),
             }
         )
         params = specs.build_config_params({"a": 3.0})
@@ -319,8 +380,8 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "x": ComputedParam(expression="y + 1", result_type="float"),
-                "y": ComputedParam(expression="x + 1", result_type="float"),
+                "x": ComputedParam(expression="@y + 1", result_type="float"),
+                "y": ComputedParam(expression="@x + 1", result_type="float"),
             }
         )
         with self.assertRaises(BadRequestException) as ctx:
@@ -331,7 +392,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "bad": ComputedParam(expression="a + missing", result_type="float"),
+                "bad": ComputedParam(expression="@a + @missing", result_type="float"),
             }
         )
         with self.assertRaises(BadRequestException) as ctx:
@@ -341,7 +402,7 @@ class TestComputedParamInConfigSpecs(TestCase):
     def test_self_reference_is_a_cycle(self) -> None:
         specs = ConfigSpecs(
             {
-                "x": ComputedParam(expression="x + 1", result_type="float"),
+                "x": ComputedParam(expression="@x + 1", result_type="float"),
             }
         )
         with self.assertRaises(BadRequestException):
@@ -351,9 +412,9 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "as_int": ComputedParam(expression="a", result_type="int"),
-                "as_str": ComputedParam(expression="a", result_type="str"),
-                "as_bool": ComputedParam(expression="a", result_type="bool"),
+                "as_int": ComputedParam(expression="@a", result_type="int"),
+                "as_str": ComputedParam(expression="@a", result_type="str"),
+                "as_bool": ComputedParam(expression="@a", result_type="bool"),
             }
         )
         params = specs.build_config_params({"a": 2.7})
@@ -369,7 +430,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "a": IntParam(),
-                "computed": ComputedParam(expression="a * 2", result_type="int"),
+                "computed": ComputedParam(expression="@a * 2", result_type="int"),
             }
         )
         with self.assertRaises(MissingConfigsException):
@@ -379,7 +440,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "a": IntParam(default_value=5),
-                "computed": ComputedParam(expression="a * 2", result_type="int"),
+                "computed": ComputedParam(expression="@a * 2", result_type="int"),
             }
         )
         params = specs.build_config_params({})
@@ -392,7 +453,7 @@ class TestComputedParamMisc(TestCase):
                 "first": StrParam(),
                 "last": StrParam(),
                 "full_name": ComputedParam(
-                    expression='concat(first, " ", last)', result_type="str"
+                    expression='concat(@first, " ", @last)', result_type="str"
                 ),
             }
         )
@@ -403,7 +464,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "x": IntParam(),
-                "is_positive": ComputedParam(expression="x > 0", result_type="bool"),
+                "is_positive": ComputedParam(expression="@x > 0", result_type="bool"),
             }
         )
         params = specs.build_config_params({"x": 5})
@@ -471,7 +532,7 @@ class TestConfigSpecsConsumerAudit(TestCase):
             {
                 "a": FloatParam(),
                 "b": FloatParam(),
-                "computed": ComputedParam(expression="a + b", result_type="float"),
+                "computed": ComputedParam(expression="@a + @b", result_type="float"),
             }
         )
 

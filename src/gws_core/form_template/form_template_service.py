@@ -1,4 +1,10 @@
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.computed.computed_param import ComputedParam
+from gws_core.config.param.computed.computed_param_evaluator import (
+    ComputedParamEvaluationError,
+    ConfigSpecsEvaluator,
+)
+from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeInfo
@@ -16,6 +22,8 @@ from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
     UpdateFormTemplateDTO,
+    ValidateComputedParamDTO,
+    ValidateComputedParamResultDTO,
 )
 from gws_core.form_template.form_template_search_builder import (
     FormTemplateSearchBuilder,
@@ -160,6 +168,100 @@ class FormTemplateService:
         if version.template_id != template_id:
             raise BadRequestException("The version does not belong to the given form template")
         return version
+
+    @classmethod
+    def validate_computed_param(
+        cls,
+        template_id: str,
+        version_id: str,
+        dto: ValidateComputedParamDTO,
+    ) -> ValidateComputedParamResultDTO:
+        """Lint a candidate ComputedParam expression against a version's specs.
+
+        The param need not already exist in the version. Returns a result
+        rather than raising for expression problems so the editor gets a 200
+        with the diagnostic; a missing template/version (or a bad
+        ``param_set_key``) still raises.
+
+        :param dto.param_set_key: when set, validates against that ParamSet's
+            inner ConfigSpecs (per-row formula). Outer-scope aggregate sugar
+            (``@key[].field``) is not allowed in that case.
+        """
+        version = cls.get_version(template_id, version_id)
+        target_specs = cls._resolve_computed_param_scope(version.get_content(), dto.param_set_key)
+        referenced = sorted(ConfigSpecsEvaluator.extract_referenced_keys(dto.expression))
+
+        error = cls._check_computed_param_expression(dto, target_specs)
+        return ValidateComputedParamResultDTO(
+            valid=error is None, referenced_keys=referenced, error=error
+        )
+
+    @staticmethod
+    def _resolve_computed_param_scope(
+        specs: ConfigSpecs, param_set_key: str | None
+    ) -> ConfigSpecs:
+        """The ConfigSpecs a computed param would be evaluated in: the version's
+        outer specs, or the inner specs of ``param_set_key`` when nesting."""
+        if param_set_key is None:
+            return specs
+        if not specs.has_spec(param_set_key):
+            raise BadRequestException(
+                f"No field named '{param_set_key}' in this form template version."
+            )
+        param_set_spec = specs.get_spec(param_set_key)
+        if not isinstance(param_set_spec, ParamSet) or param_set_spec.param_set is None:
+            raise BadRequestException(
+                f"Field '{param_set_key}' is not a ParamSet; "
+                "computed params can only be nested inside a ParamSet."
+            )
+        return param_set_spec.param_set
+
+    @staticmethod
+    def _check_computed_param_expression(
+        dto: ValidateComputedParamDTO, target_specs: ConfigSpecs
+    ) -> str | None:
+        """Run all expression checks; return None when valid, else the message."""
+        try:
+            candidate = ComputedParam(expression=dto.expression, result_type=dto.result_type)
+        except BadRequestException as err:
+            return str(err)
+
+        if dto.param_set_key is not None and ConfigSpecsEvaluator.referenced_paramset_keys(
+            dto.expression
+        ):
+            return (
+                "ParamSet aggregate sugar ('@key[].field') is only valid at the "
+                "scope containing the ParamSet, not inside a ParamSet row."
+            )
+
+        try:
+            ConfigSpecsEvaluator.check_expression_syntax(dto.expression)
+        except ComputedParamEvaluationError as err:
+            return str(err)
+
+        # Reference + cycle checks: build a throwaway ConfigSpecs that is the
+        # target scope plus this candidate, then reuse ComputedParam.check_graph.
+        # Use the caller-supplied key when given (so editing an existing computed
+        # param's expression catches a cycle through that key); otherwise a
+        # synthetic, collision-proof key.
+        existing = target_specs.get_specs_as_dict()
+        probe_key = dto.key
+        if probe_key is None:
+            probe_key = "__computed_param_probe__"
+            while probe_key in existing:
+                probe_key += "_"
+        probe_specs = ConfigSpecs(
+            {**existing, probe_key: candidate}, _skip_key_validation=True
+        )
+        try:
+            ComputedParam.check_graph(probe_specs)
+        except BadRequestException as err:
+            # When a synthetic key was used, hide it from the message.
+            message = str(err)
+            if dto.key is None:
+                message = message.replace(probe_key, "<this param>")
+            return message
+        return None
 
     @classmethod
     def list_versions(cls, template_id: str) -> list[FormTemplateVersion]:

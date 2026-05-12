@@ -138,7 +138,8 @@ class ComputedParam(ParamSpec):
 
         return {
             "expression": StrParam(
-                human_name="Expression", short_description="The expression to compute. Ex: 'a + b'"
+                human_name="Expression",
+                short_description="The expression to compute; field references use @. Ex: '@a + @b'",
             ).to_dto(),
             "result_type": StrParam(
                 human_name="Result type",
@@ -254,7 +255,7 @@ class ComputedParam(ParamSpec):
         Used to skip evaluation of a ComputedParam whose inputs aren't filled in
         yet: the result is "no value yet", not an error, so we leave the cell
         None and record nothing in the errors dict. ParamSet keys (referenced via
-        the `samples[].field` aggregate sugar) are never treated as unset — an
+        the `@samples[].field` aggregate sugar) are never treated as unset — an
         empty list is a valid input that the aggregate helpers handle on their
         own — so callers pass them in `paramset_keys` to be ignored here.
         """

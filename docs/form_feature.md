@@ -379,32 +379,32 @@ Two new methods, plus surgical edits to existing ones:
 
 ### 6.4 Expression language
 
-Implemented with `simpleeval` (per D13) — never `eval()`. Allowed:
+Implemented with `simpleeval` (per D13) — never `eval()`. **Field references are written with a leading `@`** (`@weight`, `@samples[].mass`); bare identifiers are only function names. This keeps the dependency analyzer unambiguous even when a `ConfigSpecs` key collides with a function name (a field named `sum` is `@sum`; `sum(...)` is still the aggregate). A bare value identifier (a forgotten `@`) is a hard error. Allowed:
 
 - Arithmetic: `+ - * / // % **`, parentheses.
 - Comparisons: `== != < <= > >=`.
 - Boolean: `and or not`.
 - Numeric functions: `sum`, `mean`, `median`, `stddev`, `min`, `max`, `count`, `abs`, `round(x, ndigits=0)`, `sqrt`, `pow`, `if(cond, a, b)`.
-- String functions: `concat(a, b, ...)` — concatenates string arguments. Accepts a list (so `concat(samples[].name)` joins all `name` values across a ParamSet) or any number of scalars (`concat(first_name, " ", last_name)`). Optional separator via `concat(values, sep=", ")` for the list form. Non-string arguments are coerced via `str()`.
-- Field references: a bare identifier (`weight`) resolves to the value of that `ConfigSpecs` key in the same scope.
-- ParamSet aggregates: `samples[].mass` resolves to the list of `mass` values across all items in the `samples` ParamSet, suitable for passing to `sum`/`mean`/`median`/`stddev`/`min`/`max`/`count`. Only valid at the scope *containing* the ParamSet (not from inside the ParamSet itself, which uses bare identifiers for sibling fields).
-- ComputedParam references: another `ComputedParam`'s key can be referenced; cycles are rejected at `check_config_specs()` time.
+- String functions: `concat(a, b, ...)` — concatenates string arguments. Accepts a list (so `concat(@samples[].name)` joins all `name` values across a ParamSet) or any number of scalars (`concat(@first_name, " ", @last_name)`). Optional separator via `concat(@values, sep=", ")` for the list form. Non-string arguments are coerced via `str()`.
+- Field references: `@<key>` (`@weight`) resolves to the value of that `ConfigSpecs` key in the same scope.
+- ParamSet aggregates: `@samples[].mass` resolves to the list of `mass` values across all items in the `samples` ParamSet, suitable for passing to `sum`/`mean`/`median`/`stddev`/`min`/`max`/`count`. Only valid at the scope *containing* the ParamSet (not from inside the ParamSet itself, which uses `@field` for sibling fields).
+- ComputedParam references: another `ComputedParam`'s key can be referenced the same way (`@subtotal`); cycles are rejected at `check_config_specs()` time.
 
-Disallowed: attribute access, subscripting beyond the `[]` aggregate sugar, function calls outside the whitelist, imports, lambdas.
+Disallowed: attribute access, subscripting beyond the `[]` aggregate sugar, function calls outside the whitelist, imports, lambdas, bare value identifiers.
 
 ### 6.5 Scoping inside `ParamSet`
 
-A `ComputedParam` placed inside a `ParamSet`'s inner `ConfigSpecs` evaluates per-row, with bare identifiers resolving to sibling fields in the same row. A `ComputedParam` at the outer scope cannot see individual ParamSet rows except via the `samples[].field` aggregate sugar.
+A `ComputedParam` placed inside a `ParamSet`'s inner `ConfigSpecs` evaluates per-row, with `@field` references resolving to sibling fields in the same row. A `ComputedParam` at the outer scope cannot see individual ParamSet rows except via the `@samples[].field` aggregate sugar.
 
 ```python
 ConfigSpecs({
     "samples": ParamSet(ConfigSpecs({
         "mass":     FloatParam(human_name="Mass (g)"),
         "volume":   FloatParam(human_name="Volume (mL)"),
-        "density":  ComputedParam(expression="mass / volume",
+        "density":  ComputedParam(expression="@mass / @volume",
                                   result_type="float"),   # per-row
     })),
-    "total_mass": ComputedParam(expression="sum(samples[].mass)",
+    "total_mass": ComputedParam(expression="sum(@samples[].mass)",
                                 result_type="float"),     # outer scope
 })
 ```
@@ -505,6 +505,7 @@ All routes live under `src/gws_core/form_template/form_template_controller.py` a
 | `PUT` | `/form-template/{id}/unarchive` | Set `is_archived=false`. |
 | `POST` | `/form-template/{id}/version` | Create a new DRAFT version. Rejected if a DRAFT already exists. Body may copy from latest published version. |
 | `GET` | `/form-template/{id}/version/{version_id}` | Get one version (content + formulas). |
+| `POST` | `/form-template/{id}/version/{version_id}/computed-param/validate` | Lint a candidate `ComputedParam` expression against the version's specs (param need not exist yet). Body: `{expression, result_type, param_set_key?, key?}`. Returns `{valid, referenced_keys, error}` (200 even on a bad expression — it's a linter). |
 | `PUT` | `/form-template/{id}/version/{version_id}` | Update DRAFT version content/formulas. Rejected if not DRAFT. |
 | `DELETE` | `/form-template/{id}/version/{version_id}` | Delete DRAFT (always) or ARCHIVED with no Form refs. |
 | `POST` | `/form-template/{id}/version/{version_id}/publish` | DRAFT → PUBLISHED. Validates schema, assigns version number. |
@@ -534,7 +535,7 @@ All routes live under `src/gws_core/form_template/form_template_controller.py` a
 - `FormService` — create from version, save with diffing, submit, archive, history queries. Builds one `FormSaveEvent` per save with the diff list. Calls `ConfigSpecs.compute_values(...)` for read-only computed results.
 - `FormAiFillService` — AI-assisted form filling from a free-text instruction. Builds a prompt from the form's `ConfigSpecs.to_json_dict()` plus the supplied current values, calls the OpenAI chat model (`gpt-4o`) to get the complete values dict, then runs the same `strip_computed_keys` → `validate_values` → `compute_values` → `merge_computed` pipeline as `FormService.save` and returns a `FormSaveResultDTO`. Does **not** write to the DB, emit a `FormSaveEvent`, or log an activity. Voice input is handled out-of-band via `OpenAiTranscriptionService` (`POST /ai/transcribe-audio`): the client transcribes audio → text, then calls `/form/{id}/fill-from-text`. Mirrors `RichTextTranscriptionService`.
 - `OpenAiTranscriptionService` (`impl/openai/`) — generic audio-to-text (OpenAI Whisper). Shared building block for any voice-input feature; owns the 10MB limit, temp-file handling, and Whisper config. Exposed at `POST /ai/transcribe-audio` → `{text}`. Consumed by `RichTextTranscriptionService` and (indirectly, client-side) by the form AI fill flow.
-- `ConfigSpecsEvaluator` (in `config/param/computed/`) — generic, not form-specific. Wraps `simpleeval` with the whitelisted function table and the `samples[].mass` aggregate sugar. Cycle detection lives in `ConfigSpecs.check_config_specs()`.
+- `ConfigSpecsEvaluator` (in `config/param/computed/`) — generic, not form-specific. Wraps `simpleeval` with the whitelisted function table and the `@samples[].mass` aggregate sugar (and rejects bare value identifiers). Cycle detection lives in `ConfigSpecs.check_config_specs()`.
 - `FormParamSetItemIdentityService` — assigns/preserves `__item_id`, computes the diff used to build the `FormSaveEvent.changes` list.
 
 ---
@@ -634,7 +635,7 @@ Existing notes and note templates need no migration; the new block types are add
 - `FormSaveEvent` shape: a save changing N fields produces exactly one row with N entries in `changes`; a no-op save (no diff, no transition) produces zero rows.
 - ParamSet identity: add/edit/reorder/remove items across multiple saves; audit paths stay stable; reordering produces a `PARAMSET_ITEM_REMOVED` + `PARAMSET_ITEM_ADDED` pair for the same `__item_id` inside a single save event's `changes`.
 - `ComputedParam`: each operator/function (including `concat` with scalars, with a list, and with a separator); missing field → null with error; division by zero → null with error; cycle → rejected by `check_config_specs()` at template publish AND at task class registration.
-- `ComputedParam` per-row inside a `ParamSet` (e.g. `density = mass / volume`) and at outer scope (e.g. `total_mass = sum(samples[].mass)`).
+- `ComputedParam` per-row inside a `ParamSet` (e.g. `density = @mass / @volume`) and at outer scope (e.g. `total_mass = sum(@samples[].mass)`).
 - `ComputedParam` write defense: client-submitted value for a computed key is silently stripped; `validate(non_null)` raises.
 - `ComputedParam` in a `Task`: declared in `config_specs`, recomputed by `task_runner` before `Task.run`, available in `params` like a normal key.
 - Cross-cutting consumers (`mandatory_values_are_set`, `get_and_check_values`, `to_dto`, view runners, agents) all skip computed entries correctly.
