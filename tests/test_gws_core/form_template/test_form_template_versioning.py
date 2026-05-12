@@ -111,8 +111,8 @@ class TestFormTemplateVersioning(BaseTestCase):
         draft.update_specs(
             ConfigSpecs(
                 {
-                    "a": ComputedParam(expression="@b + 1", result_type="float"),
-                    "b": ComputedParam(expression="@a + 1", result_type="float"),
+                    "a": ComputedParam(expression="@b + 1"),
+                    "b": ComputedParam(expression="@a + 1"),
                 }
             )
         )
@@ -128,8 +128,8 @@ class TestFormTemplateVersioning(BaseTestCase):
                     "rows": ParamSet(
                         ConfigSpecs(
                             {
-                                "a": ComputedParam(expression="@b + 1", result_type="float"),
-                                "b": ComputedParam(expression="@a + 1", result_type="float"),
+                                "a": ComputedParam(expression="@b + 1"),
+                                "b": ComputedParam(expression="@a + 1"),
                             }
                         )
                     ),

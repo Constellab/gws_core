@@ -1,6 +1,7 @@
 import pandas as pd
 
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.code_param.python_code_param import PythonCodeParam
 from gws_core.config.param.param_spec import BoolParam
 from gws_core.config.param.select_param import SelectParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -54,6 +55,7 @@ class TableDescribe(Task):
             Include non numeric data
             """,
             ),
+            "test": PythonCodeParam(),
         }
     )
 

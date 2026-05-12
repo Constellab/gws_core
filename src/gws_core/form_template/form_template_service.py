@@ -222,7 +222,7 @@ class FormTemplateService:
     ) -> str | None:
         """Run all expression checks; return None when valid, else the message."""
         try:
-            candidate = ComputedParam(expression=dto.expression, result_type=dto.result_type)
+            candidate = ComputedParam(expression=dto.expression)
         except BadRequestException as err:
             return str(err)
 

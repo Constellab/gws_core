@@ -34,7 +34,7 @@ class ComputedParamTask(Task):
         {
             "mass": FloatParam(),
             "volume": FloatParam(),
-            "density": ComputedParam(expression="@mass / @volume", result_type="float"),
+            "density": ComputedParam(expression="@mass / @volume"),
         }
     )
 
@@ -217,33 +217,36 @@ class TestComputedParamEvaluator(TestCase):
         with self.assertRaises(ComputedParamEvaluationError):
             ConfigSpecsEvaluator.check_expression_syntax("@a +")
 
-    def test_coerce_result_int(self) -> None:
-        self.assertEqual(ConfigSpecsEvaluator.coerce_result(2.7, "int"), 2)
+    def test_normalize_result_passes_supported_scalars(self) -> None:
+        self.assertEqual(ConfigSpecsEvaluator.normalize_result(2), 2)
+        self.assertEqual(ConfigSpecsEvaluator.normalize_result(2.5), 2.5)
+        self.assertEqual(ConfigSpecsEvaluator.normalize_result("x"), "x")
+        self.assertEqual(ConfigSpecsEvaluator.normalize_result(True), True)
 
-    def test_coerce_result_none(self) -> None:
-        self.assertIsNone(ConfigSpecsEvaluator.coerce_result(None, "float"))
+    def test_normalize_result_none(self) -> None:
+        self.assertIsNone(ConfigSpecsEvaluator.normalize_result(None))
 
-    def test_coerce_result_invalid(self) -> None:
+    def test_normalize_result_rejects_unsupported_type(self) -> None:
         with self.assertRaises(ComputedParamEvaluationError):
-            ConfigSpecsEvaluator.coerce_result("not_a_number", "int")
+            ConfigSpecsEvaluator.normalize_result([1, 2, 3])
 
 
 # test_computed_param
 class TestComputedParamSpec(TestCase):
     def test_constructor_validates_arguments(self) -> None:
         with self.assertRaises(BadRequestException):
-            ComputedParam(expression="", result_type="float")
+            ComputedParam(expression="")
         with self.assertRaises(BadRequestException):
-            ComputedParam(expression="@a + @b", result_type="bogus")  # type: ignore[arg-type]
+            ComputedParam(expression="   ")
 
     def test_accepts_user_input_is_false(self) -> None:
-        spec = ComputedParam(expression="@a + @b", result_type="float")
+        spec = ComputedParam(expression="@a + @b")
         self.assertFalse(spec.accepts_user_input)
         self.assertTrue(spec.optional)
         self.assertIsNone(spec.get_default_value())
 
     def test_validate_rejects_non_null_value(self) -> None:
-        spec = ComputedParam(expression="@a + @b", result_type="float")
+        spec = ComputedParam(expression="@a + @b")
         # None passes through (used as the input-pass placeholder).
         self.assertIsNone(spec.validate(None))
         with self.assertRaises(BadRequestException):
@@ -252,19 +255,16 @@ class TestComputedParamSpec(TestCase):
     def test_dto_round_trip(self) -> None:
         spec = ComputedParam(
             expression="@mass / @volume",
-            result_type="float",
             human_name="Density",
             short_description="Computed density",
         )
         dto = spec.to_dto()
         self.assertEqual(dto.type, ParamSpecType.COMPUTED)
         self.assertEqual(dto.additional_info["expression"], "@mass / @volume")
-        self.assertEqual(dto.additional_info["result_type"], "float")
 
         loaded = cast(ComputedParam, ParamSpecHelper.create_param_spec_from_dto(dto))
         self.assertIsInstance(loaded, ComputedParam)
         self.assertEqual(loaded.expression, "@mass / @volume")
-        self.assertEqual(loaded.result_type, "float")
         self.assertFalse(loaded.accepts_user_input)
 
 
@@ -275,7 +275,7 @@ class TestComputedParamInConfigSpecs(TestCase):
             {
                 "mass": FloatParam(),
                 "volume": FloatParam(),
-                "density": ComputedParam(expression="@mass / @volume", result_type="float"),
+                "density": ComputedParam(expression="@mass / @volume"),
             }
         )
         params = specs.build_config_params({"mass": 6.0, "volume": 2.0})
@@ -290,7 +290,7 @@ class TestComputedParamInConfigSpecs(TestCase):
                             "mass": FloatParam(),
                             "volume": FloatParam(),
                             "density": ComputedParam(
-                                expression="@mass / @volume", result_type="float"
+                                expression="@mass / @volume"
                             ),
                         }
                     )
@@ -313,7 +313,7 @@ class TestComputedParamInConfigSpecs(TestCase):
             {
                 "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
                 "total_mass": ComputedParam(
-                    expression="sum(@samples[].mass)", result_type="float"
+                    expression="sum(@samples[].mass)"
                 ),
             }
         )
@@ -329,7 +329,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "sum": FloatParam(),
-                "doubled_sum": ComputedParam(expression="@sum + @sum", result_type="float"),
+                "doubled_sum": ComputedParam(expression="@sum + @sum"),
             }
         )
         specs.check_config_specs()
@@ -341,8 +341,8 @@ class TestComputedParamInConfigSpecs(TestCase):
             {
                 "a": FloatParam(),
                 "b": FloatParam(),
-                "ratio": ComputedParam(expression="@a / @b", result_type="float"),
-                "double_a": ComputedParam(expression="@a * 2", result_type="float"),
+                "ratio": ComputedParam(expression="@a / @b"),
+                "double_a": ComputedParam(expression="@a * 2"),
             }
         )
         # b == 0 → ratio errors but double_a still evaluates.
@@ -356,7 +356,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "computed": ComputedParam(expression="@a * 2", result_type="float"),
+                "computed": ComputedParam(expression="@a * 2"),
             }
         )
         # Client tries to inject a value for `computed`; build_config_params
@@ -368,8 +368,8 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "doubled": ComputedParam(expression="@a * 2", result_type="float"),
-                "quadrupled": ComputedParam(expression="@doubled * 2", result_type="float"),
+                "doubled": ComputedParam(expression="@a * 2"),
+                "quadrupled": ComputedParam(expression="@doubled * 2"),
             }
         )
         params = specs.build_config_params({"a": 3.0})
@@ -380,8 +380,8 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "x": ComputedParam(expression="@y + 1", result_type="float"),
-                "y": ComputedParam(expression="@x + 1", result_type="float"),
+                "x": ComputedParam(expression="@y + 1"),
+                "y": ComputedParam(expression="@x + 1"),
             }
         )
         with self.assertRaises(BadRequestException) as ctx:
@@ -392,7 +392,7 @@ class TestComputedParamInConfigSpecs(TestCase):
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "bad": ComputedParam(expression="@a + @missing", result_type="float"),
+                "bad": ComputedParam(expression="@a + @missing"),
             }
         )
         with self.assertRaises(BadRequestException) as ctx:
@@ -402,25 +402,42 @@ class TestComputedParamInConfigSpecs(TestCase):
     def test_self_reference_is_a_cycle(self) -> None:
         specs = ConfigSpecs(
             {
-                "x": ComputedParam(expression="@x + 1", result_type="float"),
+                "x": ComputedParam(expression="@x + 1"),
             }
         )
         with self.assertRaises(BadRequestException):
             specs.check_config_specs()
 
-    def test_result_type_coercion(self) -> None:
+    def test_result_keeps_expression_natural_type(self) -> None:
+        # Like a spreadsheet cell, the value keeps whatever type the formula
+        # produces — no declared type, no coercion.
         specs = ConfigSpecs(
             {
                 "a": FloatParam(),
-                "as_int": ComputedParam(expression="@a", result_type="int"),
-                "as_str": ComputedParam(expression="@a", result_type="str"),
-                "as_bool": ComputedParam(expression="@a", result_type="bool"),
+                "as_is": ComputedParam(expression="@a"),
+                "as_int": ComputedParam(expression="round(@a)"),
+                "as_str": ComputedParam(expression="concat(@a)"),
+                "as_bool": ComputedParam(expression="@a > 0"),
             }
         )
         params = specs.build_config_params({"a": 2.7})
-        self.assertEqual(params["as_int"], 2)
+        self.assertEqual(params["as_is"], 2.7)
+        self.assertEqual(params["as_int"], 3)
         self.assertEqual(params["as_str"], "2.7")
         self.assertEqual(params["as_bool"], True)
+
+    def test_unsupported_result_type_surfaces_as_error(self) -> None:
+        specs = ConfigSpecs(
+            {
+                "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
+                # An aggregate reference without a reducer yields a list, which
+                # is not a supported computed result.
+                "bad": ComputedParam(expression="@samples[].mass"),
+            }
+        )
+        computed, errors = specs.compute_values({"samples": [{"mass": 1.0}]})
+        self.assertIsNone(computed["bad"])
+        self.assertIn("bad", errors)
 
 
 # test_computed_param
@@ -430,7 +447,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "a": IntParam(),
-                "computed": ComputedParam(expression="@a * 2", result_type="int"),
+                "computed": ComputedParam(expression="@a * 2"),
             }
         )
         with self.assertRaises(MissingConfigsException):
@@ -440,7 +457,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "a": IntParam(default_value=5),
-                "computed": ComputedParam(expression="@a * 2", result_type="int"),
+                "computed": ComputedParam(expression="@a * 2"),
             }
         )
         params = specs.build_config_params({})
@@ -453,7 +470,7 @@ class TestComputedParamMisc(TestCase):
                 "first": StrParam(),
                 "last": StrParam(),
                 "full_name": ComputedParam(
-                    expression='concat(@first, " ", @last)', result_type="str"
+                    expression='concat(@first, " ", @last)'
                 ),
             }
         )
@@ -464,7 +481,7 @@ class TestComputedParamMisc(TestCase):
         specs = ConfigSpecs(
             {
                 "x": IntParam(),
-                "is_positive": ComputedParam(expression="@x > 0", result_type="bool"),
+                "is_positive": ComputedParam(expression="@x > 0"),
             }
         )
         params = specs.build_config_params({"x": 5})
@@ -532,7 +549,7 @@ class TestConfigSpecsConsumerAudit(TestCase):
             {
                 "a": FloatParam(),
                 "b": FloatParam(),
-                "computed": ComputedParam(expression="@a + @b", result_type="float"),
+                "computed": ComputedParam(expression="@a + @b"),
             }
         )
 

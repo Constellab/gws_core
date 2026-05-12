@@ -19,7 +19,7 @@ import unittest
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.computed.computed_param import ComputedParam
 from gws_core.config.param.param_set import ParamSet
-from gws_core.config.param.param_spec import FloatParam, StrParam
+from gws_core.config.param.param_spec import FloatParam
 from gws_core.form.form import Form
 from gws_core.form.form_dto import (
     CreateFormDTO,
@@ -61,7 +61,7 @@ class TestFormComputedValues(BaseTestCase):
         specs = ConfigSpecs(
             {
                 "mass": FloatParam(human_name="Mass", optional=True),
-                "doubled": ComputedParam(expression="@mass * 2", result_type="float"),
+                "doubled": ComputedParam(expression="@mass * 2"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -94,7 +94,7 @@ class TestFormComputedValues(BaseTestCase):
                     ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
                     optional=True,
                 ),
-                "avg_mass": ComputedParam(expression="mean(@samples[].mass)", result_type="float"),
+                "avg_mass": ComputedParam(expression="mean(@samples[].mass)"),
             }
         )
         form = self._make_form_from_specs(specs)
@@ -103,21 +103,23 @@ class TestFormComputedValues(BaseTestCase):
         self.assertIsNone(avg["value"])
         self.assertIsNotNone(avg["errors"])
 
-    def test_error_key_for_outer_type_mismatch(self):
-        # User field is a StrParam but the formula does arithmetic on it.
+    def test_error_key_for_unsupported_result_type(self):
+        # An aggregate reference without a reducer evaluates to a list, which is
+        # not a supported computed result; this surfaces inline on the cell.
         specs = ConfigSpecs(
             {
-                "label": StrParam(human_name="Label", optional=True),
-                "doubled_label": ComputedParam(expression="@label * 2", result_type="float"),
+                "samples": ParamSet(
+                    ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
+                    optional=True,
+                ),
+                "all_masses": ComputedParam(expression="@samples[].mass"),
             }
         )
         form = self._make_form_from_specs(specs)
-        result = FormService.save(form.id, SaveFormDTO(values={"label": "not a number"}))
-        # `"not a number" * 2` evaluates to a string under simpleeval; coercion
-        # to float fails and surfaces inline on the computed cell.
-        doubled = result.values["doubled_label"]
-        self.assertIsNone(doubled["value"])
-        self.assertIsNotNone(doubled["errors"])
+        result = FormService.save(form.id, SaveFormDTO(values={"samples": [{"mass": 1.0}]}))
+        cell = result.values["all_masses"]
+        self.assertIsNone(cell["value"])
+        self.assertIsNotNone(cell["errors"])
 
     def test_no_errors_on_clean_save(self):
         form = self._density_form()
@@ -271,13 +273,13 @@ class TestFormComputedValues(BaseTestCase):
                             "mass": FloatParam(human_name="Mass", optional=True),
                             "volume": FloatParam(human_name="Volume", optional=True),
                             "density": ComputedParam(
-                                expression="@mass / @volume", result_type="float"
+                                expression="@mass / @volume"
                             ),
                         }
                     ),
                     optional=True,
                 ),
-                "total_mass": ComputedParam(expression="sum(@samples[].mass)", result_type="float"),
+                "total_mass": ComputedParam(expression="sum(@samples[].mass)"),
             }
         )
         return self._make_form_from_specs(specs)

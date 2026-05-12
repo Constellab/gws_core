@@ -48,11 +48,11 @@ def _paramset_with_computed_specs() -> ConfigSpecs:
                     {
                         "mass": FloatParam(human_name="Mass"),
                         "volume": FloatParam(human_name="Volume"),
-                        "density": ComputedParam(expression="@mass / @volume", result_type="float"),
+                        "density": ComputedParam(expression="@mass / @volume"),
                     }
                 ),
             ),
-            "total_mass": ComputedParam(expression="sum(@samples[].mass)", result_type="float"),
+            "total_mass": ComputedParam(expression="sum(@samples[].mass)"),
         }
     )
 

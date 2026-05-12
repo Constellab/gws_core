@@ -36,7 +36,6 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         template: FormTemplate,
         version_id: str,
         expression: str,
-        result_type: str = "float",
         param_set_key: str | None = None,
         key: str | None = None,
     ):
@@ -45,7 +44,6 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
             version_id,
             ValidateComputedParamDTO(
                 expression=expression,
-                result_type=result_type,
                 param_set_key=param_set_key,
                 key=key,
             ),
@@ -74,7 +72,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
             ConfigSpecs(
                 {
                     "mass": FloatParam(),
-                    "density": ComputedParam(expression="@mass", result_type="float"),
+                    "density": ComputedParam(expression="@mass"),
                 }
             )
         )
@@ -88,8 +86,8 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
             ConfigSpecs(
                 {
                     "mass": FloatParam(),
-                    "density": ComputedParam(expression="@mass", result_type="float"),
-                    "a": ComputedParam(expression="@density", result_type="float"),
+                    "density": ComputedParam(expression="@mass"),
+                    "a": ComputedParam(expression="@density"),
                 }
             )
         )
@@ -112,11 +110,12 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         result = self._validate(template, version_id, "   ")
         self.assertFalse(result.valid)
 
-    def test_bad_result_type_rejected_by_dto(self):
-        # result_type is a Literal on the DTO, so an invalid value is a request
-        # validation error (422), not a valid=False result.
-        with self.assertRaises(Exception):
-            ValidateComputedParamDTO(expression="@a", result_type="bogus")
+    def test_dto_needs_only_expression(self):
+        # No declared result type: the expression alone is enough.
+        dto = ValidateComputedParamDTO(expression="@a")
+        self.assertEqual(dto.expression, "@a")
+        self.assertIsNone(dto.param_set_key)
+        self.assertIsNone(dto.key)
 
     def test_field_named_like_a_function(self):
         # `@sum` resolves to the field; the dependency graph sees it.

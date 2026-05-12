@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 
 from typing_extensions import TypedDict
 
@@ -17,18 +17,14 @@ from gws_core.config.param.param_types import (
     ParamSpecType,
     ParamSpecVisibilty,
 )
-from gws_core.config.param.select_param import SelectParam
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 if TYPE_CHECKING:
     from gws_core.config.config_specs import ConfigSpecs
 
-ComputedParamResultType = Literal["int", "float", "str", "bool"]
-
 
 class ComputedParamAdditionalInfo(TypedDict):
     expression: str
-    result_type: ComputedParamResultType
 
 
 @param_spec_decorator(type_=ParamSpecCategory.COMPUTED)
@@ -44,21 +40,15 @@ class ComputedParam(ParamSpec):
     def __init__(
         self,
         expression: str,
-        result_type: ComputedParamResultType,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
     ) -> None:
         if not isinstance(expression, str) or not expression.strip():
             raise BadRequestException("ComputedParam.expression must be a non-empty string")
-        if result_type not in ("int", "float", "str", "bool"):
-            raise BadRequestException(
-                f"ComputedParam.result_type must be one of int|float|str|bool, got '{result_type}'"
-            )
 
         self.additional_info = {
             "expression": expression,
-            "result_type": result_type,
         }
         super().__init__(
             default_value=None,
@@ -89,10 +79,6 @@ class ComputedParam(ParamSpec):
     def expression(self) -> str:
         return self.additional_info["expression"]
 
-    @property
-    def result_type(self) -> ComputedParamResultType:
-        return self.additional_info["result_type"]
-
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.COMPUTED
@@ -100,9 +86,9 @@ class ComputedParam(ParamSpec):
     @classmethod
     def empty(cls) -> ComputedParam:
         # Placeholder used by load_from_dto before fields are populated. The real
-        # expression and result_type come from spec_dto.additional_info.
+        # expression comes from spec_dto.additional_info.
         instance = cls.__new__(cls)
-        instance.additional_info = {"expression": "0", "result_type": "float"}
+        instance.additional_info = {"expression": "0"}
         instance.default_value = None
         instance.optional = True
         instance.visibility = "public"
@@ -114,13 +100,12 @@ class ComputedParam(ParamSpec):
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> ComputedParam:
         param_spec: ComputedParam = super().load_from_dto(spec_dto, validate=validate)
         info = spec_dto.additional_info or {}
-        if "expression" not in info or "result_type" not in info:
+        if "expression" not in info:
             raise BadRequestException(
-                "ComputedParam DTO is missing 'expression' or 'result_type' in additional_info"
+                "ComputedParam DTO is missing 'expression' in additional_info"
             )
         param_spec.additional_info = {
             "expression": info["expression"],
-            "result_type": info["result_type"],
         }
         # ComputedParam is always optional and never accepts user input
         param_spec.optional = True
@@ -141,11 +126,6 @@ class ComputedParam(ParamSpec):
             "expression": StrParam(
                 human_name="Expression",
                 short_description="The expression to compute; field references use @. Ex: '@a + @b'",
-            ).to_dto(),
-            "result_type": SelectParam(
-                human_name="Result type",
-                short_description="The type of the computed result.",
-                options=["int", "float", "str", "bool"],
             ).to_dto(),
         }
 
@@ -292,9 +272,7 @@ class ComputedParam(ParamSpec):
                         continue
                     try:
                         raw = evaluator.evaluate(inner_spec.expression, row)
-                        row[inner_key] = ConfigSpecsEvaluator.coerce_result(
-                            raw, inner_spec.result_type
-                        )
+                        row[inner_key] = ConfigSpecsEvaluator.normalize_result(raw)
                     except ComputedParamEvaluationError as err:
                         row[inner_key] = None
                         errors[f"{key}[].{inner_key}"] = str(err)
@@ -340,7 +318,7 @@ class ComputedParam(ParamSpec):
                         raw = evaluator.evaluate(
                             spec.expression, scope, paramset_rows=paramset_rows
                         )
-                        value = ConfigSpecsEvaluator.coerce_result(raw, spec.result_type)
+                        value = ConfigSpecsEvaluator.normalize_result(raw)
                     except ComputedParamEvaluationError as err:
                         value = None
                         errors[key] = str(err)

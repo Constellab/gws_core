@@ -1,7 +1,6 @@
 from datetime import datetime
 from enum import Enum
 
-from gws_core.config.param.computed.computed_param import ComputedParamResultType
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.user.user_dto import UserDTO
@@ -58,7 +57,6 @@ class ValidateComputedParamDTO(BaseModelDTO):
     """
 
     expression: str
-    result_type: ComputedParamResultType
     param_set_key: str | None = None
     key: str | None = None
 

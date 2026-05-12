@@ -106,7 +106,7 @@ class TestFormSaveAndSubmit(BaseTestCase):
             {
                 "name": StrParam(human_name="Name"),  # mandatory
                 "shouted_name": ComputedParam(
-                    expression='concat(@name, "!")', result_type="str"
+                    expression='concat(@name, "!")'
                 ),
             }
         )
@@ -295,14 +295,13 @@ class TestFormSaveAndSubmit(BaseTestCase):
                             "volume": FloatParam(human_name="Volume"),
                             "density": ComputedParam(
                                 expression="@mass / @volume",
-                                result_type="float",
                             ),
                         }
                     ),
                     optional=True,
                 ),
                 "total_mass": ComputedParam(
-                    expression="sum(@samples[].mass)", result_type="float"
+                    expression="sum(@samples[].mass)"
                 ),
             }
         )

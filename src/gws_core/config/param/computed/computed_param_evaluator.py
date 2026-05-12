@@ -126,27 +126,24 @@ class ConfigSpecsEvaluator:
             raise ComputedParamEvaluationError(str(err)) from err
 
     @staticmethod
-    def coerce_result(value: Any, result_type: str) -> Any:
-        """Coerce an evaluated value into the declared result_type.
+    def normalize_result(value: Any) -> Any:
+        """Validate that an evaluated value is a supported scalar type.
 
-        None passes through. Coercion errors raise ComputedParamEvaluationError.
+        Like a spreadsheet cell, a ComputedParam takes whatever type the formula
+        produces — no declared type, no coercion. We only check the result is one
+        of int / float / str / bool (None passes through, meaning "no value yet").
+        Anything else (a list, dict, ...) is an error.
+
+        :raises ComputedParamEvaluationError: if the value is not a supported type.
         """
         if value is None:
             return None
-        try:
-            if result_type == "int":
-                return int(value)
-            if result_type == "float":
-                return float(value)
-            if result_type == "str":
-                return str(value)
-            if result_type == "bool":
-                return bool(value)
-        except (TypeError, ValueError) as err:
-            raise ComputedParamEvaluationError(
-                f"Cannot coerce result to {result_type}: {err}"
-            ) from err
-        raise ComputedParamEvaluationError(f"Unknown result_type '{result_type}'")
+        # bool is a subclass of int, so it is covered; list it for clarity.
+        if isinstance(value, (bool, int, float, str)):
+            return value
+        raise ComputedParamEvaluationError(
+            f"Result must be a number, string or boolean, got {type(value).__name__}"
+        )
 
     @staticmethod
     def extract_referenced_keys(expression: str) -> set[str]:
