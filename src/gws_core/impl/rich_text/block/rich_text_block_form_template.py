@@ -14,7 +14,7 @@ class RichTextBlockFormTemplate(RichTextBlockDataBase):
     """
 
     form_template_id: str
-    form_template_version_id: str
+    form_template_version_id: str | None
 
     def to_markdown(self) -> str:
         return f"[Form Template: {self.form_template_id}]"

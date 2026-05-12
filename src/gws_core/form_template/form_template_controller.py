@@ -4,11 +4,13 @@ from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
+from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
+    TestFormTemplateVersionDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
     ValidateComputedParamResultDTO,
@@ -139,6 +141,21 @@ def get_version(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.get_version(id_, version_id).to_dto()
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/test",
+    tags=["Form template"],
+    summary="Test/validate form values against a version (DRAFT allowed, no save)",
+    response_model=None,
+)
+def test_version(
+    id_: str,
+    version_id: str,
+    body: TestFormTemplateVersionDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormSaveResultDTO:
+    return FormTemplateService.test_version(id_, version_id, body)
 
 
 @core_app.post(

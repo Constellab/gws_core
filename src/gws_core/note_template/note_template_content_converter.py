@@ -86,9 +86,24 @@ class NoteTemplateContentConverter:
     def _resolve_form_template_version(
         cls, ft_data: RichTextBlockFormTemplate
     ) -> FormTemplateVersion:
-        """Return the version to bind a new Form to. Falls back to the
-        template's current published version if the pinned one is
-        ARCHIVED (spec §5.4 step 1.1)."""
+        """Return the version to bind a new Form to.
+
+        An unpinned block (``form_template_version_id is None``) resolves to
+        the template's current PUBLISHED version. A pinned block uses its
+        version directly, falling back to the current published version if
+        the pinned one is ARCHIVED (spec §5.4 step 1.1)."""
+        if ft_data.form_template_version_id is None:
+            fallback = FormTemplateVersion.get_current_published_version(
+                ft_data.form_template_id
+            )
+            if fallback is None:
+                raise BadRequestException(
+                    "FORM_TEMPLATE block has no pinned version and the form "
+                    f"template ({ft_data.form_template_id}) has no current "
+                    "PUBLISHED version. Cannot instantiate."
+                )
+            return fallback
+
         version = FormTemplateVersion.get_by_id(ft_data.form_template_version_id)
         if version is None:
             raise BadRequestException(

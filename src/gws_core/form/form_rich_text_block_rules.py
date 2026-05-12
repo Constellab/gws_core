@@ -9,6 +9,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
 from gws_core.form.form import Form
+from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import FormTemplateVersionStatus
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
@@ -57,6 +58,19 @@ class FormTemplateBlockRule(RichTextBlockRule):
 
     def validate_new_block(self, block: RichTextBlock) -> None:
         ft_block: RichTextBlockFormTemplate = block.get_data()
+
+        # Unpinned block: no version chosen yet. Only check the template
+        # exists; the concrete version is resolved at Note instantiation
+        # (NoteTemplateContentConverter), falling back to the template's
+        # current PUBLISHED version then.
+        if ft_block.form_template_version_id is None:
+            if FormTemplate.get_by_id(ft_block.form_template_id) is None:
+                raise BadRequestException(
+                    "FORM_TEMPLATE block references unknown form_template_id: "
+                    f"{ft_block.form_template_id}"
+                )
+            return
+
         version = FormTemplateVersion.get_by_id(ft_block.form_template_version_id)
         if version is None:
             raise BadRequestException(
