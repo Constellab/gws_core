@@ -22,6 +22,7 @@ from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
+    ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
@@ -397,6 +398,40 @@ class FormTemplateService:
             new_field_name,
             ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True),
         )
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def reorder_draft_fields(
+        cls,
+        template_id: str,
+        version_id: str,
+        field_names: list[str],
+    ) -> FormTemplateVersion:
+        """Reorder the fields of a DRAFT version.
+
+        ``field_names`` must be the full ordered list of current field keys.
+        The set must match exactly — any missing or unknown key (typically
+        from a concurrent add/delete) aborts the call so the frontend can
+        refetch and retry.
+        """
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = version.get_content()
+
+        current = list(specs.get_specs_as_dict().keys())
+        if len(field_names) != len(set(field_names)):
+            raise BadRequestException("Reorder list contains duplicate field names.")
+        if set(field_names) != set(current):
+            missing = sorted(set(current) - set(field_names))
+            unknown = sorted(set(field_names) - set(current))
+            raise BadRequestException(
+                "Reorder list does not match the current fields. "
+                f"missing={missing}, unknown={unknown}. "
+                "Refetch the version and retry."
+            )
+
+        reordered = {name: specs.get_spec(name) for name in field_names}
+        specs.specs = reordered
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod

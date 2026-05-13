@@ -56,6 +56,19 @@ class TestFormTemplateVersionDTO(BaseModelDTO):
     values: dict[str, Any] = {}
 
 
+class ReorderDraftFieldsDTO(BaseModelDTO):
+    """Request body for reordering the fields of a DRAFT version.
+
+    ``field_names`` is the full ordered list of field keys after the drag
+    operation. The set of names must exactly match the version's current
+    field set — no additions, no removals. Sending the complete order
+    (rather than a from/to index) keeps the call idempotent and safe
+    against concurrent edits.
+    """
+
+    field_names: list[str]
+
+
 class ValidateComputedParamDTO(BaseModelDTO):
     """Request body for linting a candidate ComputedParam expression against a
     form template version's specs (the param itself need not exist yet).

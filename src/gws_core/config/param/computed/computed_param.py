@@ -169,6 +169,13 @@ class ComputedParam(ParamSpec):
         for key, spec in specs.specs.items():
             if not isinstance(spec, cls):
                 continue
+            try:
+                ConfigSpecsEvaluator.check_expression_syntax(spec.expression)
+            except ComputedParamEvaluationError as err:
+                location = f" inside {scope_label}" if scope_label else ""
+                raise BadRequestException(
+                    f"ComputedParam '{key}'{location} has an invalid expression: {err}"
+                ) from err
             refs = ConfigSpecsEvaluator.extract_referenced_keys(spec.expression)
             for ref in refs:
                 if ref not in specs.specs:

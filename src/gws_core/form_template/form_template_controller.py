@@ -10,6 +10,7 @@ from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
+    ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
@@ -222,6 +223,22 @@ def validate_computed_param(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ValidateComputedParamResultDTO:
     return FormTemplateService.validate_computed_param(id_, version_id, body)
+
+
+@core_app.put(
+    "/form-template/{id_}/version/{version_id}/fields/reorder",
+    tags=["Form template"],
+    summary="Reorder fields of a DRAFT version",
+)
+def reorder_draft_fields(
+    id_: str,
+    version_id: str,
+    body: ReorderDraftFieldsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.reorder_draft_fields(
+        id_, version_id, body.field_names
+    ).to_dto()
 
 
 @core_app.delete(

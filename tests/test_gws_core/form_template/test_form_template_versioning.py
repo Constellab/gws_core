@@ -141,6 +141,27 @@ class TestFormTemplateVersioning(BaseTestCase):
         # The ParamSet name should be in the error so the field is easy to find.
         self.assertIn("rows", str(ctx.exception))
 
+    def test_publish_rejects_syntactically_invalid_computed_param(self):
+        """A ComputedParam whose expression does not parse must not publish.
+
+        Reproduces a bug where check_config_specs only validated references
+        and cycles, letting malformed expressions through publish and
+        blowing up later at compute time.
+        """
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(
+            ConfigSpecs(
+                {
+                    "a": StrParam(human_name="a"),
+                    # Trailing operator — not a parseable expression.
+                    "bad": ComputedParam(expression="@a +"),
+                }
+            )
+        )
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.publish_version(template.id, draft.id)
+
     def test_new_draft_allowed_after_publish(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
