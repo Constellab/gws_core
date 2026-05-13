@@ -10,6 +10,7 @@ from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_bl
 class RichTextBlockFormDisplayMode(Enum):
     """Defines how a Form block is rendered inside a rich text note."""
 
+    PREVIEW = "preview"
     FORM = "form"
     JSON = "json"
     TABLE = "table"
@@ -26,7 +27,8 @@ class RichTextBlockForm(RichTextBlockDataBase):
 
     form_id: str
     is_owner: bool
-    display_mode: RichTextBlockFormDisplayMode = RichTextBlockFormDisplayMode.FORM
+    # when None, show preview mode in DRAFT and form mode in PUBLISHED; when set, override this default behavior
+    display_mode: RichTextBlockFormDisplayMode | None = None
 
     def to_markdown(self) -> str:
         return f"[Form: {self.form_id}]"

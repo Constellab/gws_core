@@ -4,7 +4,6 @@ from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.form.form_dto import FormStatus
 from gws_core.user.user_dto import UserDTO
 
 
@@ -47,15 +46,14 @@ class TestFormTemplateVersionDTO(BaseModelDTO):
     """Request body for the "test a form" endpoint: validate a set of values
     against a form template version's specs without persisting anything.
 
-    Mirrors the input of ``POST /form/{id}/save`` (minus the form-record-only
-    ``name``). ``values`` are run through the version's ConfigSpecs exactly as
-    a real save would: computed keys stripped, type validation, computed-value
-    evaluation. When ``status_transition`` is ``SUBMITTED`` the mandatory-field
-    gate is also exercised. Works on DRAFT versions too — nothing is written.
+    ``values`` are run through the version's ConfigSpecs exactly as a plain
+    (non-submitting) save would: computed keys stripped, type validation,
+    computed-value evaluation. The mandatory-field gate is not exercised
+    (that only fires on a SUBMITTED transition, which has no meaning here).
+    Works on DRAFT versions too — nothing is written.
     """
 
     values: dict[str, Any] = {}
-    status_transition: FormStatus | None = None
 
 
 class ValidateComputedParamDTO(BaseModelDTO):

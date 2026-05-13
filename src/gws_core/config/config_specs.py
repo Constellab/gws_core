@@ -140,17 +140,46 @@ class ConfigSpecs:
         """
         check that all mandatory configs are provided
         """
-        if self.specs is None:
-            return True
+        return not self.get_missing_mandatory_paths(param_values)
 
+    def get_missing_mandatory_paths(self, param_values: ConfigParamsDict) -> list[str]:
+        """Return paths of every missing mandatory field, recursing into ParamSet rows.
+
+        Path format uses human_name (with spec key as fallback):
+        - top-level scalar:   ``Mass``
+        - ParamSet row field: ``Samples[0].Mass`` (0-based row index)
+
+        Empty list means all mandatories are set. Used by the form save flow
+        to surface a precise list of what is missing on the SUBMITTED gate.
+        """
+        from .param.param_set import ParamSet
+
+        if not self.specs:
+            return []
+
+        missing: list[str] = []
         for key, spec in self.specs.items():
             # System-derived params (e.g. ComputedParam) are never required from the user.
             if not spec.accepts_user_input:
                 continue
-            if not spec.optional and param_values.get(key, None) is None:
-                return False
+            value = (param_values or {}).get(key)
+            display_name = spec.human_name or key
+            if isinstance(spec, ParamSet) and spec.param_set is not None:
+                if not spec.optional and not value:
+                    missing.append(display_name)
+                    continue
+                if not isinstance(value, list):
+                    continue
+                for row_index, row in enumerate(value):
+                    if not isinstance(row, dict):
+                        continue
+                    for inner_missing in spec.param_set.get_missing_mandatory_paths(row):
+                        missing.append(f"{display_name}[{row_index}].{inner_missing}")
+                continue
+            if not spec.optional and value is None:
+                missing.append(display_name)
 
-        return True
+        return missing
 
     def check_config_specs(self) -> None:
         """Check that the config specs are valid.
@@ -324,6 +353,8 @@ class ConfigSpecs:
         if not values:
             return {} if values is None else values
 
+        from .param.param_set import ParamSet
+
         result: ConfigParamsDict = {}
         for key, value in values.items():
             spec = self.specs.get(key)
@@ -333,9 +364,13 @@ class ConfigSpecs:
             if value is None:
                 result[key] = None
                 continue
-            # ParamSet.validate strips/mints/restores __item_id per row; other
-            # specs validate the value as-is. No type discrimination needed.
-            result[key] = spec.validate(value)
+            # ParamSet uses a lenient row validator that mirrors this method's
+            # contract (missing inner mandatories don't raise — enforced by
+            # the SUBMITTED gate). Other specs validate the value as-is.
+            if isinstance(spec, ParamSet):
+                result[key] = spec.validate_lenient(value)
+            else:
+                result[key] = spec.validate(value)
         return result
 
     def merge_computed(

@@ -101,10 +101,7 @@ class FormService:
         specs = form.template_version.get_content()
         # Drive errors only; we don't overwrite stored values on read.
         _, errors = specs.compute_values(form.values or {})
-        return FormSaveResultDTO(
-            values=cls._wrap_computed_for_response(form.values, specs, errors),
-            specs=specs.to_dto(),
-        )
+        return cls.build_save_result(form.values, specs, errors)
 
     @classmethod
     def _wrap_computed_for_response(
@@ -170,6 +167,68 @@ class FormService:
         return form
 
     @classmethod
+    def validate_values_against_specs(
+        cls, specs: ConfigSpecs, raw_values: dict[str, Any] | None
+    ) -> tuple[dict[str, Any], dict[str, str]]:
+        """Run a raw values dict through a ConfigSpecs the way a save does,
+        without touching the DB.
+
+        Strips computed-key submissions, type-validates (ParamSet.validate
+        mints/preserves ``__item_id`` per row so the result carries stable
+        identity), evaluates computed params and merges them into the union
+        dict. Returns ``(validated_and_merged_values, errors_by_key)`` — the
+        errors map drives per-computed-field diagnostics; it does not block.
+
+        Mandatory-field enforcement is *not* done here — that is the
+        SUBMITTED-transition gate in :meth:`save`, not part of plain
+        validation.
+        """
+        new_values = specs.strip_computed_keys(raw_values or {})
+        new_values = specs.validate_values(new_values)
+        computed, errors = specs.compute_values(new_values)
+        new_values = specs.merge_computed(new_values, computed)
+        return new_values, errors
+
+    @classmethod
+    def _format_error_key(cls, specs: ConfigSpecs, error_key: str) -> str:
+        """Translate a computed-error key into a human-readable label.
+
+        Input keys come from ComputedParam.compute_all:
+        - ``"<key>"``               → outer-scope computed (e.g. total_mass)
+        - ``"<paramset>[].<key>"``  → inner ParamSet computed (e.g. samples[].density)
+
+        Output uses spec.human_name (falls back to the key) so the message reads
+        as ``Total mass`` / ``Samples[].Density``.
+        """
+        if "[]." in error_key:
+            outer_key, _, inner_key = error_key.partition("[].")
+            outer_spec = specs.specs.get(outer_key)
+            outer_name = (outer_spec.human_name if outer_spec else None) or outer_key
+            inner_spec = (
+                outer_spec.param_set.specs.get(inner_key)
+                if isinstance(outer_spec, ParamSet) and outer_spec.param_set is not None
+                else None
+            )
+            inner_name = (inner_spec.human_name if inner_spec else None) or inner_key
+            return f"{outer_name}[].{inner_name}"
+        spec = specs.specs.get(error_key)
+        return (spec.human_name if spec else None) or error_key
+
+    @classmethod
+    def build_save_result(
+        cls,
+        values: dict[str, Any] | None,
+        specs: ConfigSpecs,
+        errors: dict[str, str],
+    ) -> FormSaveResultDTO:
+        """Assemble the renderable payload returned by save / submit / test:
+        the union values (with computed cells wire-wrapped) plus serialized specs."""
+        return FormSaveResultDTO(
+            values=cls._wrap_computed_for_response(values, specs, errors),
+            specs=specs.to_dto(),
+        )
+
+    @classmethod
     @GwsCoreDbManager.transaction()
     def save(cls, form_id: str, dto: SaveFormDTO) -> FormSaveResultDTO:
         """Save flow per spec §8.
@@ -183,32 +242,34 @@ class FormService:
         form = cls.get_by_id_and_check(form_id)
         specs = form.template_version.get_content()
 
-        # 3. Strip computed-key submissions then validate. ParamSet.validate
-        #    mints/preserves __item_id per row, so the returned dict carries
-        #    stable identity ready for diffing and persistence.
-        new_values = specs.strip_computed_keys(dto.values or {})
-        new_values = specs.validate_values(new_values)
+        # 3 + 5. Strip computed keys, validate, evaluate + merge computed.
+        new_values, errors = cls.validate_values_against_specs(specs, dto.values)
 
-        # 4. Submit gate.
+        # 4. Submit gate. Mandatory check runs on the validated union dict
+        #    (computed keys never count as user input, so merge order is moot).
         status_changed = False
         if (
             dto.status_transition == FormStatus.SUBMITTED
             and form.status != FormStatus.SUBMITTED
         ):
-            if not specs.mandatory_values_are_set(new_values):
+            missing_paths = specs.get_missing_mandatory_paths(new_values)
+            if missing_paths:
                 raise BadRequestException(
-                    "Cannot submit: at least one mandatory field is empty."
+                    "Cannot submit: the mandatory fields "
+                    f"'{', '.join(missing_paths)}' are missing."
+                )
+            if errors:
+                error_names = sorted(
+                    cls._format_error_key(specs, key) for key in errors
+                )
+                raise BadRequestException(
+                    "Cannot submit: the computed fields "
+                    f"'{', '.join(error_names)}' have errors."
                 )
             form.status = FormStatus.SUBMITTED
             form.submitted_at = DateHelper.now_utc()
             form.submitted_by = CurrentUserService.get_and_check_current_user()
             status_changed = True
-
-        # 5. Compute and merge into the union dict. compute_values mutates
-        #    ParamSet rows in place for per-row computed cells; __item_id is
-        #    untouched (the evaluator only reads/writes referenced spec keys).
-        computed, errors = specs.compute_values(new_values)
-        new_values = specs.merge_computed(new_values, computed)
 
         # 6. Diff and build change list.
         changes = ConfigSpecs.diff_values(form.values or {}, new_values)
@@ -233,10 +294,7 @@ class FormService:
                 object_id=form.id,
             )
 
-        return FormSaveResultDTO(
-            values=cls._wrap_computed_for_response(form.values, specs, errors),
-            specs=specs.to_dto(),
-        )
+        return cls.build_save_result(form.values, specs, errors)
 
     @classmethod
     @GwsCoreDbManager.transaction()

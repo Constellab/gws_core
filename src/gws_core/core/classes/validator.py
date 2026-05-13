@@ -386,13 +386,13 @@ class ListValidator(Validator):
         * `validator.validate('{"foo":1.2}') -> ValueError`
     """
 
-    min_number_of_occurrences: int = -1
-    max_number_of_occurrences: int = -1
+    min_number_of_occurrences: int | None = -1
+    max_number_of_occurrences: int | None = -1
 
     def __init__(
         self,
-        min_number_of_occurrences: int = -1,
-        max_number_of_occurrences: int = -1,
+        min_number_of_occurrences: int | None = -1,
+        max_number_of_occurrences: int | None = -1,
         allowed_values: list | None = None,
     ):
         super().__init__(type_=list, allowed_values=allowed_values)
@@ -407,7 +407,8 @@ class ListValidator(Validator):
             raise BadRequestException(f"The value {validated_value} is not json like.")
 
         if (
-            self.min_number_of_occurrences >= 0
+            self.min_number_of_occurrences is not None
+            and self.min_number_of_occurrences >= 0
             and len(validated_value) < self.min_number_of_occurrences
         ):
             raise BadRequestException(
@@ -415,7 +416,8 @@ class ListValidator(Validator):
             )
 
         if (
-            self.max_number_of_occurrences >= 0
+            self.max_number_of_occurrences is not None
+            and self.max_number_of_occurrences >= 0
             and len(validated_value) > self.max_number_of_occurrences
         ):
             raise BadRequestException(

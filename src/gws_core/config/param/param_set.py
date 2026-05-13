@@ -19,7 +19,7 @@ class ParamSet(ParamSpec):
     """
 
     param_set: ConfigSpecs | None = None
-    max_number_of_occurrences: int
+    max_number_of_occurrences: int | None
 
     def __init__(
         self,
@@ -28,7 +28,7 @@ class ParamSet(ParamSpec):
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
-        max_number_of_occurrences: int = -1,
+        max_number_of_occurrences: int | None = -1,
     ):
         """
         :param optional: It true, the param_set can have 0 occurence, the value will then be an empty array [].
@@ -39,7 +39,7 @@ class ParamSet(ParamSpec):
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
-        :param max_number_of_occurrences: Nb max of occurence of values the params. If negative, there is no limit.
+        :param max_number_of_occurrences: Nb max of occurence of values the params. If negative or None, there is no limit.
         :type max_number_of_occurrences: Optional[str]
         """
 
@@ -82,6 +82,19 @@ class ParamSet(ParamSpec):
         ``ConfigSpecs.get_and_check_values`` (which would otherwise reject the
         unknown reserved key) and re-attached on the validated dict.
         """
+        return self._validate_rows(value, lenient=False)
+
+    def validate_lenient(self, value: list[dict[str, Any]]) -> Any:
+        """Lenient variant of ``validate`` — runs leaf-level validation on
+        provided values but does NOT raise on missing inner mandatories.
+
+        Used by the form-save flow, where missing mandatories only block on
+        the SUBMITTED transition (mirrors outer-scope behavior in
+        ``ConfigSpecs.validate_values``).
+        """
+        return self._validate_rows(value, lenient=True)
+
+    def _validate_rows(self, value: list[dict[str, Any]], lenient: bool) -> Any:
         if value is None:
             return []
         list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
@@ -101,9 +114,12 @@ class ParamSet(ParamSpec):
                 raise ValueError(f"Duplicate {ConfigSpecs.ITEM_ID_KEY} '{item_id}' in ParamSet")
             seen_ids.add(item_id)
 
-            # get_and_check_values iterates self.specs only, so __item_id is
-            # silently ignored by it; no need to strip the input.
-            validated_item = self.param_set.get_and_check_values(valid_dict)
+            if lenient:
+                validated_item = self.param_set.validate_values(valid_dict)
+            else:
+                # get_and_check_values iterates self.specs only, so __item_id is
+                # silently ignored by it; no need to strip the input.
+                validated_item = self.param_set.get_and_check_values(valid_dict)
             validated_item[ConfigSpecs.ITEM_ID_KEY] = item_id
             result_list.append(validated_item)
 

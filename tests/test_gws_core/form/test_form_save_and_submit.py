@@ -222,6 +222,23 @@ class TestFormSaveAndSubmit(BaseTestCase):
         self.assertIsNone(density_cell["value"])
         self.assertIsNotNone(density_cell["errors"])
 
+    def test_submit_blocked_when_computed_param_errors(self):
+        # Same divide-by-zero shape as the test above, but on the SUBMITTED
+        # transition: the gate must reject it. The error message names the
+        # offending field with its human_name path so the user can locate it.
+        form = self._computed_form()
+        with self.assertRaises(BadRequestException) as ctx:
+            FormService.save(
+                form.id,
+                SaveFormDTO(
+                    values={"samples": [{"mass": 1.0, "volume": 0.0}]},
+                    status_transition=FormStatus.SUBMITTED,
+                ),
+            )
+        self.assertIn("samples[].density", str(ctx.exception.detail))
+        # Status sticks at DRAFT — the transition was rejected.
+        self.assertEqual(Form.get_by_id(form.id).status, FormStatus.DRAFT)
+
     def test_get_content_returns_stored_union(self):
         form = self._computed_form()
         FormService.save(

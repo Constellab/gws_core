@@ -15,7 +15,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.form.form import Form
-from gws_core.form.form_dto import FormSaveResultDTO, FormStatus
+from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
@@ -274,32 +274,16 @@ class FormTemplateService:
     ) -> FormSaveResultDTO:
         """Validate a set of values against a version's specs without persisting.
 
-        Same processing pipeline as ``FormService.save`` (computed keys
-        stripped, type validation, computed-value evaluation, optional
-        mandatory-field gate when ``status_transition`` is SUBMITTED) and the
-        same ``FormSaveResultDTO`` payload — but no Form is created, no
-        FormSaveEvent is written, and the version may be DRAFT.
+        Runs the exact same validation pipeline as a (non-submitting)
+        ``FormService.save`` — computed keys stripped, type validation,
+        computed-value evaluation — and returns the same ``FormSaveResultDTO``
+        payload. No Form is created, no FormSaveEvent is written, and the
+        version may be DRAFT.
         """
         version = cls.get_version(template_id, version_id)
         specs = version.get_content()
-
-        new_values = specs.strip_computed_keys(dto.values or {})
-        new_values = specs.validate_values(new_values)
-
-        if dto.status_transition == FormStatus.SUBMITTED and not specs.mandatory_values_are_set(
-            new_values
-        ):
-            raise BadRequestException(
-                "Cannot submit: at least one mandatory field is empty."
-            )
-
-        computed, errors = specs.compute_values(new_values)
-        new_values = specs.merge_computed(new_values, computed)
-
-        return FormSaveResultDTO(
-            values=FormService._wrap_computed_for_response(new_values, specs, errors),
-            specs=specs.to_dto(),
-        )
+        new_values, errors = FormService.validate_values_against_specs(specs, dto.values)
+        return FormService.build_save_result(new_values, specs, errors)
 
     @classmethod
     def list_versions(cls, template_id: str) -> list[FormTemplateVersion]:
