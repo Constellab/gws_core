@@ -4,7 +4,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import StrParam
-from gws_core.config.param.param_types import ParamSpecCategory, ParamSpecDTO, ParamSpecType
+from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
