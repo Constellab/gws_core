@@ -105,19 +105,23 @@ class TestStripComputedKeys(unittest.TestCase):
 class TestValidateValues(unittest.TestCase):
     def test_valid_values_pass(self):
         specs = _scalar_specs()
-        result = specs.validate_values({"name": "x", "mass": 1.5})
-        self.assertEqual(result["name"], "x")
-        self.assertEqual(result["mass"], 1.5)
+        outcome = specs.validate_values({"name": "x", "mass": 1.5})
+        self.assertEqual(outcome.values["name"], "x")
+        self.assertEqual(outcome.values["mass"], 1.5)
+        self.assertEqual(outcome.errors, {})
 
-    def test_invalid_type_raises(self):
+    def test_invalid_type_collected_in_errors(self):
         specs = _scalar_specs()
-        with self.assertRaises(Exception):
-            specs.validate_values({"name": "x", "mass": "not a float"})
+        outcome = specs.validate_values({"name": "x", "mass": "not a float"})
+        # Bad value is dropped, good value preserved, error keyed by spec key.
+        self.assertEqual(outcome.values["name"], "x")
+        self.assertNotIn("mass", outcome.values)
+        self.assertIn("mass", outcome.errors)
 
     def test_paramset_row_validation_strips_item_id(self):
         specs = _paramset_specs()
         existing_id = str(uuid.uuid4())
-        result = specs.validate_values(
+        outcome = specs.validate_values(
             {
                 "samples": [
                     {"__item_id": existing_id, "mass": 1.0, "volume": 0.5},
@@ -125,22 +129,24 @@ class TestValidateValues(unittest.TestCase):
             },
         )
         # The id is preserved on the validated row (round-trip through ParamSet).
-        self.assertEqual(result["samples"][0]["__item_id"], existing_id)
-        self.assertEqual(result["samples"][0]["mass"], 1.0)
+        self.assertEqual(outcome.values["samples"][0]["__item_id"], existing_id)
+        self.assertEqual(outcome.values["samples"][0]["mass"], 1.0)
+        self.assertEqual(outcome.errors, {})
 
     def test_paramset_row_without_item_id_gets_one_minted(self):
         specs = _paramset_specs()
-        result = specs.validate_values(
+        outcome = specs.validate_values(
             {"samples": [{"mass": 1.0, "volume": 0.5}]},
         )
-        row = result["samples"][0]
+        row = outcome.values["samples"][0]
         self.assertIn("__item_id", row)
         uuid.UUID(row["__item_id"])  # raises if not a valid UUID
 
     def test_missing_mandatory_does_not_raise(self):
         specs = _scalar_specs()
         # name is mandatory but unset — DRAFT save allows this.
-        specs.validate_values({"mass": 1.5})
+        outcome = specs.validate_values({"mass": 1.5})
+        self.assertEqual(outcome.errors, {})
 
 
 class TestMergeComputed(unittest.TestCase):

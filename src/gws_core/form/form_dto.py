@@ -1,3 +1,4 @@
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any
@@ -7,6 +8,32 @@ from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.user.user_dto import UserDTO
+
+
+@dataclass
+class FormValidationResult:
+    """Outcome of :meth:`FormService.validate_values_against_specs`.
+
+    ``values`` is the validated + computed-merged union dict (invalid leaves
+    dropped). ``validation_errors`` maps user-input fields that failed leaf
+    validation (range, type, ...); ``computed_errors`` maps formula keys that
+    failed evaluation. They are kept separate because computed errors are
+    *also* surfaced inline per-cell in the response shape, while validation
+    errors are not (the cell is empty when validation fails).
+    """
+
+    values: dict[str, Any]
+    validation_errors: dict[str, str] = field(default_factory=dict)
+    computed_errors: dict[str, str] = field(default_factory=dict)
+
+    @property
+    def all_errors(self) -> dict[str, str]:
+        """Both error maps merged (validation keys win on collision —
+        a per-leaf failure is more directly actionable than a downstream
+        formula failure that depends on the same cell)."""
+        merged = dict(self.computed_errors)
+        merged.update(self.validation_errors)
+        return merged
 
 
 class FormStatus(Enum):

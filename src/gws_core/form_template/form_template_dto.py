@@ -63,13 +63,14 @@ class TestFormTemplateVersionResultDTO(BaseModelDTO):
     Mirrors what a SUBMITTED-transition save would surface, but without
     raising: the underlying ``FormSaveResultDTO`` (renderable values + specs,
     with computed cells already wrapped inline as ``{value, errors}``) plus
-    the two submit-gate error lists. Both lists are empty when the values
-    would pass a real submit.
+    a single flat ``errors`` list ready to display. The list is empty when
+    the values would pass a real submit; otherwise it contains one
+    human-readable string per failing check (missing mandatory, invalid
+    leaf value, or computed-formula error).
     """
 
     result: FormSaveResultDTO
-    missing_mandatory_paths: list[str]
-    computed_errors: list[str]
+    errors: list[str]
 
 
 class ReorderDraftFieldsDTO(BaseModelDTO):

@@ -284,14 +284,18 @@ class FormTemplateService:
         """
         version = cls.get_version(template_id, version_id)
         specs = version.get_content()
-        new_values, errors = FormService.validate_values_against_specs(specs, dto.values)
+        validation = FormService.validate_values_against_specs(specs, dto.values)
+        missing_paths = specs.get_missing_mandatory_paths(validation.values)
+        errors = [
+            *(f"Missing mandatory field: {path}" for path in missing_paths),
+            *specs.format_field_errors(validation.validation_errors),
+            *specs.format_field_errors(validation.computed_errors),
+        ]
         return TestFormTemplateVersionResultDTO(
-            result=FormService.build_save_result(new_values, specs, errors),
-            missing_mandatory_paths=specs.get_missing_mandatory_paths(new_values),
-            computed_errors=sorted(
-                f"{FormService._format_error_key(specs, key)}: {message}"
-                for key, message in errors.items()
+            result=FormService.build_save_result(
+                validation.values, specs, validation.computed_errors
             ),
+            errors=errors,
         )
 
     @classmethod

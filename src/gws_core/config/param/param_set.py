@@ -1,4 +1,5 @@
 import uuid
+from dataclasses import dataclass, field
 from typing import Any
 
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
@@ -9,6 +10,19 @@ from gws_core.core.utils.logger import Logger
 from ...core.classes.validator import DictValidator, ListValidator
 from .param_spec import ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
+
+
+@dataclass
+class ParamSetRowsValidationResult:
+    """Outcome of :meth:`ParamSet.validate_lenient`.
+
+    ``errors`` keys are ``"[<row_index>].<inner_key>"`` — the caller in
+    :meth:`ConfigSpecs.validate_values` prepends the ParamSet key to form
+    the final ``"<paramset>[<row>].<inner>"`` shape.
+    """
+
+    rows: list[dict[str, Any]]
+    errors: dict[str, str] = field(default_factory=dict)
 
 
 @param_spec_decorator(type_=ParamSpecCategory.PARAM_SET)
@@ -82,21 +96,28 @@ class ParamSet(ParamSpec):
         ``ConfigSpecs.get_and_check_values`` (which would otherwise reject the
         unknown reserved key) and re-attached on the validated dict.
         """
-        return self._validate_rows(value, lenient=False)
+        return self._validate_rows(value, lenient=False).rows
 
-    def validate_lenient(self, value: list[dict[str, Any]]) -> Any:
+    def validate_lenient(
+        self, value: list[dict[str, Any]]
+    ) -> ParamSetRowsValidationResult:
         """Lenient variant of ``validate`` — runs leaf-level validation on
-        provided values but does NOT raise on missing inner mandatories.
+        provided values but does NOT raise on missing inner mandatories or
+        on per-leaf validation failures.
 
-        Used by the form-save flow, where missing mandatories only block on
-        the SUBMITTED transition (mirrors outer-scope behavior in
-        ``ConfigSpecs.validate_values``).
+        Errors are returned alongside the validated rows; each key is
+        ``"[<row_index>].<inner_key>"`` (no leading ParamSet key — the
+        caller prepends it). Used by the form-save flow, where errors are
+        rendered per-field and missing mandatories only block on the
+        SUBMITTED transition.
         """
         return self._validate_rows(value, lenient=True)
 
-    def _validate_rows(self, value: list[dict[str, Any]], lenient: bool) -> Any:
+    def _validate_rows(
+        self, value: list[dict[str, Any]], lenient: bool
+    ) -> ParamSetRowsValidationResult:
         if value is None:
-            return []
+            return ParamSetRowsValidationResult(rows=[])
         list_validator = ListValidator(max_number_of_occurrences=self.max_number_of_occurrences)
         dict_validator = DictValidator()
 
@@ -104,8 +125,9 @@ class ParamSet(ParamSpec):
         list_: list[dict[str, Any]] = list_validator.validate(value)
 
         result_list = []
+        errors: dict[str, str] = {}
         seen_ids: set[str] = set()
-        for dict_ in list_:
+        for row_index, dict_ in enumerate(list_):
             # Valid on dict of param set
             valid_dict = dict_validator.validate(dict_)
 
@@ -115,7 +137,10 @@ class ParamSet(ParamSpec):
             seen_ids.add(item_id)
 
             if lenient:
-                validated_item = self.param_set.validate_values(valid_dict)
+                row_result = self.param_set.validate_values(valid_dict)
+                validated_item = row_result.values
+                for inner_key, message in row_result.errors.items():
+                    errors[f"[{row_index}].{inner_key}"] = message
             else:
                 # get_and_check_values iterates self.specs only, so __item_id is
                 # silently ignored by it; no need to strip the input.
@@ -123,7 +148,7 @@ class ParamSet(ParamSpec):
             validated_item[ConfigSpecs.ITEM_ID_KEY] = item_id
             result_list.append(validated_item)
 
-        return result_list
+        return ParamSetRowsValidationResult(rows=result_list, errors=errors)
 
     @staticmethod
     def diff_values(
