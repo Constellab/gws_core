@@ -1,8 +1,9 @@
 import json
 import os
+from datetime import datetime
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.compress.tar_compress import TarCompress
+from gws_core.core.utils.compress.compress import Compress
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
@@ -32,15 +33,29 @@ class ScenarioArchiveZipper:
             └── ...
     """
 
-    ARCHIVE_FILE_NAME = "scenario_archive.tar"
+    ARCHIVE_BASE_NAME = "scenario_archive"
     INFO_JSON_FILE_NAME = "scenario_info.json"
     RESOURCES_DIR_NAME = "resources"
     ARCHIVE_VERSION = 1
 
-    def __init__(self, scenario_id: str, resource_mode: str, user: User):
+    # Supported archive formats: built from Compress subclasses, keeping only
+    # those that can bundle multiple files/directories.
+    COMPRESS_FORMATS: dict[str, type[Compress]] = Compress.get_compress_class_by_extension(
+        multi_entry_only=True
+    )
+
+    def __init__(
+        self, scenario_id: str, resource_mode: str, user: User, compress_format: str = "tar"
+    ):
         self._scenario_id = scenario_id
         self._resource_mode = resource_mode
         self._user = user
+        if compress_format not in self.COMPRESS_FORMATS:
+            raise ValueError(
+                f"Unsupported compress format '{compress_format}'. "
+                f"Allowed: {sorted(self.COMPRESS_FORMATS)}"
+            )
+        self._compress_format = compress_format
 
     def zip(self) -> str:
         """Export the scenario and selected resources into a single tar archive.
@@ -95,12 +110,13 @@ class ScenarioArchiveZipper:
         with open(info_json_path, "w", encoding="UTF-8") as f:
             json.dump(archive_package.to_json_dict(), f)
 
-        # Create the outer tar archive
-        archive_path = os.path.join(temp_dir, self.ARCHIVE_FILE_NAME)
-        tar = TarCompress(archive_path)
-        tar.add_file(info_json_path, file_name=self.INFO_JSON_FILE_NAME)
-        tar.add_dir(resources_dir, dir_name=self.RESOURCES_DIR_NAME)
-        tar.close()
+        # Create the outer archive using the selected format
+        compress_class = self.COMPRESS_FORMATS[self._compress_format]
+        archive_path = os.path.join(temp_dir, f"{self.ARCHIVE_BASE_NAME}.{self._compress_format}")
+        archive = compress_class(archive_path)
+        archive.add_file(info_json_path, file_name=self.INFO_JSON_FILE_NAME)
+        archive.add_dir(resources_dir, dir_name=self.RESOURCES_DIR_NAME)
+        archive.close()
 
         return archive_path
 
@@ -112,7 +128,7 @@ class ScenarioArchiveZipper:
         :return: Tuple of (ScenarioArchivePackage, dict mapping resource_id to tar path).
         """
         temp_dir = Settings.get_instance().make_temp_dir()
-        TarCompress.decompress(archive_path, temp_dir)
+        Compress.smart_decompress(archive_path, temp_dir)
 
         # Read and validate scenario_info.json
         info_json_path = os.path.join(temp_dir, cls.INFO_JSON_FILE_NAME)

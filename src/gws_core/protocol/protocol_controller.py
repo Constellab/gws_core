@@ -4,7 +4,7 @@ from typing import Any
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from gws_core.config.param.param_types import CompleteDynamicParamAllowedSpecsDict, ParamSpecDTO
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
@@ -747,20 +747,6 @@ def download_template(
     template = ProtocolService.generate_scenario_template(id_)
     return ResponseHelper.create_file_response_from_str(
         template.to_export_dto().to_json_str(), template.name + ".json"
-    )
-
-
-########################## DYNAMIC PARAM #####################
-@core_app.get(
-    "/protocol/{id_}/process/{process_name}/get-param-spec-types",
-    tags=["Protocol"],
-    summary="Get param spec types",
-)
-def get_dynamic_param_allowed_param_spec_types(
-    id_: str, process_name: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> CompleteDynamicParamAllowedSpecsDict:
-    return ProtocolService.get_dynamic_param_allowed_param_spec_types(
-        protocol_id=id_, process_name=process_name
     )
 
 

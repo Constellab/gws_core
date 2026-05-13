@@ -18,6 +18,7 @@ from .community_dto import (
     CommunityCreateAgentDTO,
     CommunityTagKeyDTO,
     CommunityTagValueDTO,
+    HnBrickVersionInfoDTO,
 )
 
 
@@ -41,6 +42,27 @@ class CommunityService:
             err.detail = f"Can't retrieve community agents for the lab. Error : {err.detail}"
             raise err
         return CommunityAgentVersionDTO.from_json(response.json())
+
+    @classmethod
+    def get_brick_version_info(
+        cls, brick_name: str, brick_version: str
+    ) -> HnBrickVersionInfoDTO:
+        """
+        Get repository info for a brick at a given version, including the
+        matching GLAB_VERSION exposed under `technicalInfo`.
+        """
+        url = f"{cls.get_community_api_url()}/lab/brick/{brick_name}/{brick_version}"
+        try:
+            response = ExternalApiService.get(
+                url, cls._get_request_header(), raise_exception_if_error=True
+            )
+        except BaseHTTPException as err:
+            err.detail = (
+                f"Can't retrieve brick version info for '{brick_name}@{brick_version}'. "
+                f"Error : {err.detail}"
+            )
+            raise err
+        return HnBrickVersionInfoDTO.from_json(response.json())
 
     @classmethod
     def get_community_available_space(cls) -> Any:

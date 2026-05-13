@@ -1,3 +1,4 @@
+import traceback
 from abc import abstractmethod
 from typing import Literal, final
 
@@ -171,7 +172,15 @@ class Task(Process):
         self.log_message(message, MessageLevel.SUCCESS)
 
     @final
-    def log_error_message(self, message: str):
+    def log_error_message(self, message: str, exception: Exception | None = None):
+        """Log an error message, optionally appending the formatted traceback
+        of an exception.
+        """
+        if exception is not None:
+            formatted = "".join(
+                traceback.format_exception(type(exception), exception, exception.__traceback__)
+            )
+            message = f"{message}\n{formatted}"
         self.log_message(message, MessageLevel.ERROR)
 
     @final

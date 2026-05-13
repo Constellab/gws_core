@@ -1,12 +1,10 @@
-from typing import Any, Literal, cast
+from typing import Any, Literal
 
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.apps.streamlit.agents.streamlit_env_agent import StreamlitEnvAgent
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.dynamic_param import DynamicParam
-from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import (
-    CompleteDynamicParamAllowedSpecsDict,
     ParamSpecDTO,
     ParamValue,
 )
@@ -37,7 +35,6 @@ from gws_core.scenario_template.scenario_template_factory import ScenarioTemplat
 from gws_core.scenario_template.scenario_template_service import ScenarioTemplateService
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
-from gws_core.task.task import Task
 from gws_core.user.current_user_service import CurrentUserService
 
 from ..community.community_dto import (
@@ -129,10 +126,12 @@ class ProtocolService:
         duplicate_process_model: ProcessModel | None = None
         if isinstance(process_model, TaskModel):
             duplicate_process_model = ProcessFactory.create_task_model_from_config_dto(
-                process_model.to_config_dto(), copy_id=False
+                process_model.to_config_dto(), copy_id=False, as_draft=True
             )
         elif isinstance(process_model, ProtocolModel):
-            factory = ProtocolGraphFactoryFromType(process_model.to_protocol_config_dto())
+            factory = ProtocolGraphFactoryFromType(
+                process_model.to_protocol_config_dto(), as_draft=True
+            )
             duplicate_process_model = factory.create_protocol_model()
 
         if duplicate_process_model is None:
@@ -1327,7 +1326,7 @@ class ProtocolService:
             process_model=process_model, config_spec_name=config_spec_name
         )
 
-        if spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_str_type():
+        if spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_param_spec_type():
             value = process_model.config.get_value(config_spec_name)
             if param_name in value:
                 value[param_name] = spec_dto.default_value
@@ -1362,7 +1361,7 @@ class ProtocolService:
 
         values = process_model.config.get_value(config_spec_name)
         if (
-            spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_str_type()
+            spec_dto.type != dynamic_param_spec.specs.get_spec(param_name).get_param_spec_type()
             and param_name in values
         ):
             values[new_param_name] = spec_dto.default_value
@@ -1413,16 +1412,3 @@ class ProtocolService:
             raise BadRequestException("The process does not support dynamic params")
 
         return dynamic_param_spec
-
-    @classmethod
-    def get_dynamic_param_allowed_param_spec_types(
-        cls, protocol_id: str, process_name: str
-    ) -> CompleteDynamicParamAllowedSpecsDict:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
-
-        process_model = protocol_model.get_process(process_name)
-
-        if process_model.process_typing_name == PyAgent.get_typing_name():
-            return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types(True)
-
-        return ParamSpecHelper.get_dynamic_param_allowed_param_spec_types()

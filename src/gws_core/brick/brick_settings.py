@@ -69,14 +69,14 @@ class BrickSettingsPipSource(BaseModelDTO):
     def get_pip_install_command(self) -> list[str]:
         """Get the pip install command for this source.
 
-        :return: Command as list like ['pip', 'install', '-i', 'source_url', 'package1', 'package2']
+        :return: Command as list like ['uv', 'pip', 'install', '-i', 'source_url', 'package1', 'package2']
         :rtype: list[str]
         """
         package_specs = self.get_package_specs()
         if not package_specs:
             return []
 
-        return ["pip", "install", "-i", self.get_source_url()] + package_specs
+        return ["uv", "pip", "install", "-i", self.get_source_url()] + package_specs
 
 
 class BrickSettingsBrickDependency(BaseModelDTO):

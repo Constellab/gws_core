@@ -154,6 +154,9 @@ class StreamlitProcess(AppProcess):
         """Check if the process uses the given port"""
         return self.port == port
 
+    def get_ports(self) -> list[int]:
+        return [self.port]
+
     def _get_nginx_services(self) -> list[AppNginxServiceInfo]:
         return [
             AppNginxRedirectServiceInfo(

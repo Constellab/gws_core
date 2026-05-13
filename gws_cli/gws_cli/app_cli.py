@@ -172,7 +172,7 @@ class AppCli:
         )
         env_txt = "" if self._env_type == "NONE" else f" with env type '{self._env_type}'"
         typer.echo(
-            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}.{additional_message}"
+            f"Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}{additional_message}"
         )
         typer.echo(
             "-------------------------------------------------------------------------------------------------------------------------------------"

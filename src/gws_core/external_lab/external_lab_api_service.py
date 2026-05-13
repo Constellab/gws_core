@@ -140,7 +140,9 @@ class ExternalLabApiService:
         Builds the URL from the lab's domain and mode.
         """
         if Settings.get_instance().is_test:
-            return f"http://localhost:3000/{Settings.external_lab_api_route_path()}/{route}"
+            # Use the configured lab URL (honors the per-worker port set by the
+            # test bootstrap) rather than hardcoding :3000.
+            return f"{Settings.get_lab_api_url()}/{Settings.external_lab_api_route_path()}/{route}"
         api_url = self._lab_dto.lab.get_api_url()
         return f"{api_url}/{Settings.external_lab_api_route_path()}/{route}"
 

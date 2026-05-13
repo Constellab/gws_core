@@ -90,14 +90,15 @@ class ProgressBar(Model):
         if self.second_start is not None and self.ended_at is None:
             return (DateHelper.now_utc() - self.second_start).total_seconds() * 1000
 
-        if self.elapsed_time is not None:
-            return self.elapsed_time
-
         if self.started_at is None:
             return 0.0
 
+        # still running: compute live duration, ignoring any stale stored elapsed_time
         if self.ended_at is None:
             return (DateHelper.now_utc() - self.started_at).total_seconds() * 1000
+
+        if self.elapsed_time is not None:
+            return self.elapsed_time
 
         return (self.ended_at - self.started_at).total_seconds() * 1000
 
@@ -281,7 +282,8 @@ class ProgressBar(Model):
         self.started_at = other.started_at
         self.ended_at = other.ended_at
         self.current_value = other.current_value
-        self.elapsed_time = other.elapsed_time
+        # only carry elapsed_time for finished bars — otherwise it would shadow live computation
+        self.elapsed_time = other.elapsed_time if other.ended_at is not None else None
         self.second_start = other.second_start
         self.save()
 

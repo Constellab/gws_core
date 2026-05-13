@@ -1,13 +1,13 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.21.0",
+    "version": "0.22.0-beta.7",
     "variables": {
         "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-        "FRONT_VERSION": "2.8.0",
-        "GLAB_VERSION": "2.16.0"
+        "FRONT_VERSION": "2.8.1",
+        "GLAB_VERSION": "2.18.0"
     },
     "environment": {
         "pip": [
@@ -172,6 +172,21 @@
                         "name": "pytest",
                         "version": "9.0.3",
                         "comment": "For the VsCode test extension."
+                    },
+                    {
+                        "name": "pytest-xdist",
+                        "version": "3.8.0",
+                        "comment": "For test parallelization."
+                    },
+                    {
+                        "name": "simpleeval",
+                        "version": "1.0.3",
+                        "comment": "Safe expression evaluator used by ComputedParam."
+                    },
+                    {
+                        "name": "libcst",
+                        "version": "1.8.6",
+                        "comment": "Concrete syntax tree library used by the CLI code-migration commands."
                     }
                 ]
             }

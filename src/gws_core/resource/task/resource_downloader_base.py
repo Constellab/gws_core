@@ -3,7 +3,8 @@ from typing import Literal
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
@@ -35,9 +36,9 @@ class ResourceDownloaderBase(Task):
     )
     config_specs = ConfigSpecs({})
 
-    uncompress_config = StrParam(
+    uncompress_config = SelectParam(
         human_name="Uncompress file",
-        allowed_values=["auto", "yes", "no"],
+        options=["auto", "yes", "no"],
         default_value="auto",
         short_description="Option to uncompress the file if it is compresses.",
     )

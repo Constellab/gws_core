@@ -69,10 +69,12 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
     """
 
     graph: ProtocolGraphConfigDTO
+    as_draft: bool
 
-    def __init__(self, graph: ProtocolGraphConfigDTO):
+    def __init__(self, graph: ProtocolGraphConfigDTO, as_draft: bool = False):
         super().__init__(check_connector_compatiblity=True)
         self.graph = graph
+        self.as_draft = as_draft
 
     def create_protocol_model(self) -> ProtocolModel:
         try:
@@ -98,11 +100,13 @@ class ProtocolGraphFactoryFromType(ProtocolGraphFactory):
         """Method to instantiate a new process and configure it"""
 
         if issubclass(process_type, Task):
-            return ProcessFactory.create_task_model_from_config_dto(process_dto, copy_id=False)
+            return ProcessFactory.create_task_model_from_config_dto(
+                process_dto, copy_id=False, as_draft=self.as_draft
+            )
         elif issubclass(process_type, Protocol):
             # create protocol from dto, not from type
             return ProcessFactory.create_empty_protocol_model_from_config_dto(
-                process_dto, copy_id=False
+                process_dto, copy_id=False, as_draft=self.as_draft
             )
         else:
             name = process_type.__name__ if process_type.__name__ is not None else str(process_type)

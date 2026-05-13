@@ -113,7 +113,7 @@ class TestNoteResource(BaseTestCase):
 
         task_runner = TaskRunner(
             UpdatNoteResource,
-            params={"section-title": "New section", "note": rich_text.serialize()},
+            params={"section_title": "New section", "note": rich_text.serialize()},
             inputs={"note": base_note},
         )
 

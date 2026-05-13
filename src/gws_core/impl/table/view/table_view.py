@@ -6,6 +6,7 @@ from gws_core.config.config_specs import ConfigSpecs
 
 from ....config.config_params import ConfigParams
 from ....config.param.param_spec import IntParam, StrParam
+from ....config.param.select_param import SelectParam
 from ....resource.view.view_types import ViewType
 from ...view.tabular_view import TabularView
 from .base_table_view import BaseTableView
@@ -52,9 +53,9 @@ class TableView(BaseTableView):
                 human_name="Number of rows per page",
             ),
             "sort_column": StrParam(optional=True, human_name="Sort column"),
-            "sort_direction": StrParam(
+            "sort_direction": SelectParam(
                 default_value="Ascending",
-                allowed_values=["Ascending", "Descending"],
+                options=["Ascending", "Descending"],
                 human_name="Sort direction",
             ),
             "from_column": IntParam(
@@ -67,9 +68,9 @@ class TableView(BaseTableView):
                 human_name="Number of columns per page",
                 visibility=StrParam.PROTECTED_VISIBILITY,
             ),
-            "replace_nan_by": StrParam(
+            "replace_nan_by": SelectParam(
                 default_value="empty",
-                allowed_values=["empty", "NaN", "-"],
+                options=["empty", "NaN", "-"],
                 optional=True,
                 visibility=StrParam.PROTECTED_VISIBILITY,
                 human_name="Replace NaN by",

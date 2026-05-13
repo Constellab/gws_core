@@ -29,3 +29,10 @@ requires = [
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+# loadscope groups tests by module so BaseTestCase's per-class setUp/tearDown
+# runs once per file per worker, not per test.
+addopts = "--dist=loadscope"

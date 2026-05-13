@@ -2,11 +2,14 @@ import os
 
 import typer
 from gws_core import BrickService, Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.settings_loader import SettingsLoader
 
 
 class CLIUtils:
-    MAIN_SETTINGS_FILE_DEFAULT_PATH = "/lab/.sys/app/settings.json"
+    MAIN_SETTINGS_FILE_DEFAULT_PATH = os.path.join(
+        Settings.get_system_folder(), "app", "settings.json"
+    )
 
     @staticmethod
     def get_global_option_log_level(ctx: typer.Context) -> str:

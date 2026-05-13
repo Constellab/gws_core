@@ -4,7 +4,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import StrParam
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
+from gws_core.config.param.param_types import ParamSpecCategory, ParamSpecDTO, ParamSpecType
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -24,11 +24,11 @@ from gws_core.task.task_io import TaskInputs, TaskOutputs
 from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 
-from ..protocol_examples import TestNestedProtocol
+from ..protocol_examples import NestedProtocolTest
 
 
-@task_decorator("TestScenarioTemplateDynamic")
-class TestScenarioTemplateDynamic(Task):
+@task_decorator("ScenarioTemplateDynamicTest")
+class ScenarioTemplateDynamicTest(Task):
     input_specs: InputSpecs = DynamicInputs()
     output_specs: OutputSpecs = DynamicOutputs()
     config_specs = ConfigSpecs({})
@@ -37,8 +37,8 @@ class TestScenarioTemplateDynamic(Task):
         return {}
 
 
-@task_decorator("TestScenarioTemplateDynamicConfig")
-class TestScenarioTemplateDynamicConfig(Task):
+@task_decorator("ScenarioTemplateDynamicConfigTest")
+class ScenarioTemplateDynamicConfigTest(Task):
     input_specs: InputSpecs = InputSpecs()
     output_specs: OutputSpecs = OutputSpecs()
     config_specs = ConfigSpecs(
@@ -56,8 +56,8 @@ class TestScenarioTemplateDynamicConfig(Task):
         return {}
 
 
-@task_decorator("TestGenerator")
-class TestGenerator(Task):
+@task_decorator("GeneratorTest")
+class GeneratorTest(Task):
     output_specs: OutputSpecs = OutputSpecs({"resource": OutputSpec(Resource)})
     config_specs = ConfigSpecs({})
 
@@ -72,7 +72,7 @@ class TestScenarioTemplate(BaseTestCase):
         init_count_task = TaskModel.select().count()
 
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(TestNestedProtocol)
+        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
 
         # configure the process to check config in template
         ProtocolService.configure_process(proto.id, "p5", {"food_weight": 1000})
@@ -152,9 +152,9 @@ class TestScenarioTemplate(BaseTestCase):
 
         protocol = scenario.get_protocol()
 
-        process = protocol.add_process(TestScenarioTemplateDynamic, "dynamic")
-        source_1 = protocol.add_process(TestGenerator, "source_1")
-        source_2 = protocol.add_process(TestGenerator, "source_2")
+        process = protocol.add_process(ScenarioTemplateDynamicTest, "dynamic")
+        source_1 = protocol.add_process(GeneratorTest, "source_1")
+        source_2 = protocol.add_process(GeneratorTest, "source_2")
 
         ProtocolService.add_dynamic_input_port_to_process(
             protocol.get_model().id, process.get_model().instance_name
@@ -203,7 +203,7 @@ class TestScenarioTemplate(BaseTestCase):
 
     def test_serialization(self):
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(TestNestedProtocol)
+        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
 
         # create a template
         template = ProtocolService.create_scenario_template_from_id(
@@ -399,14 +399,14 @@ class TestScenarioTemplate(BaseTestCase):
 
         protocol = scenario.get_protocol()
 
-        process = protocol.add_process(TestScenarioTemplateDynamicConfig, "dynamic_config")
+        process = protocol.add_process(ScenarioTemplateDynamicConfigTest, "dynamic_config")
 
         protocol_id = protocol.get_model().id
         process_name = process.get_model().instance_name
 
         # Add dynamic param specs
         str_spec_dto = ParamSpecDTO(
-            type=ParamSpecTypeStr.STRING,
+            type=ParamSpecType.STRING,
             optional=True,
             default_value="hello",
             human_name="My string param",
@@ -417,7 +417,7 @@ class TestScenarioTemplate(BaseTestCase):
         )
 
         int_spec_dto = ParamSpecDTO(
-            type=ParamSpecTypeStr.INT,
+            type=ParamSpecType.INT,
             optional=True,
             default_value=42,
             human_name="My int param",

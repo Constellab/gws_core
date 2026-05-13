@@ -2,7 +2,8 @@ import pandas as pd
 import plotly.express as px
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, IntParam, StrParam
+from gws_core.config.param.param_spec import BoolParam, IntParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
@@ -36,36 +37,36 @@ class PlotlyHistogram(PlotlyTask):
             **PlotlyTask.config_specs_d2,
             **PlotlyTask.pattern_shape,
             **PlotlyTask.bar_opt,
-            "marginal": StrParam(
+            "marginal": SelectParam(
                 default_value=None,
                 optional=True,
                 visibility="protected",
                 human_name="marginal plot",
                 short_description="if set, a subplot is drawn alongside the main plot, visualising the distribution",
-                allowed_values=["rug", "box", "violin", "histogram"],
+                options=["rug", "box", "violin", "histogram"],
             ),
-            "barnorm": StrParam(
+            "barnorm": SelectParam(
                 default_value=None,
                 optional=True,
                 visibility="protected",
                 human_name="bar normalisation",
                 short_description="If 'fraction', the value of each bar is divided by the sum of all values at that location coordinate. 'percent' is the same but multiplied by 100 to show percentages. None will stack up all values at each location coordinate.",
-                allowed_values=["fraction", "percent"],
+                options=["fraction", "percent"],
             ),
-            "histnorm": StrParam(
+            "histnorm": SelectParam(
                 default_value=None,
                 optional=True,
                 human_name="Normalization",
                 short_description="Histogram normalization",
-                allowed_values=["percent", "probability", "density", "probability density"],
+                options=["percent", "probability", "density", "probability density"],
                 visibility="protected",
             ),
-            "histfunc": StrParam(
+            "histfunc": SelectParam(
                 default_value="count",
                 optional=True,
                 human_name="histogram function",
                 short_description="Function used to aggregate values for summarization",
-                allowed_values=["count", "sum", "avg", "min", "max"],
+                options=["count", "sum", "avg", "min", "max"],
             ),
             "cumulative": BoolParam(
                 default_value=False,

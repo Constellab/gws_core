@@ -10,16 +10,16 @@ from gws_core.resource.technical_info import TechnicalInfo
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 
 
-@resource_decorator(unique_name="TestResourceFields")
-class TestResourceFields(Resource):
+@resource_decorator(unique_name="ResourceFieldsTest")
+class ResourceFieldsTest(Resource):
     age: int = IntRField()
     position: list[float] = ListRField()
 
     long_str = StrRField()
 
 
-@resource_decorator(unique_name="TestResourceFieldsFile")
-class TestResourceFieldsFile(File):
+@resource_decorator(unique_name="ResourceFieldsFileTest")
+class ResourceFieldsFileTest(File):
     age: int = IntRField()
     position: list[float] = ListRField()
 
@@ -51,7 +51,7 @@ class TestResource(BaseTestCase):
 
     def test_resource_r_fields(self):
         """Test that RField are loaded and long field are lazy loaded"""
-        resource = TestResourceFields()
+        resource = ResourceFieldsTest()
         resource.position = [5, 2]
         resource.age = 12
         resource.long_str = "Hello world"
@@ -64,7 +64,7 @@ class TestResource(BaseTestCase):
         self.assertIsNotNone(resource_model.kv_store_path)
 
         # generate the resource from the resource model and check its values
-        new_resource: TestResourceFields = resource_model.get_resource(new_instance=True)
+        new_resource: ResourceFieldsTest = resource_model.get_resource(new_instance=True)
 
         self.assertEqual(new_resource.age, 12)
         self.assertEqual(new_resource.long_str, "Hello world")
@@ -73,7 +73,7 @@ class TestResource(BaseTestCase):
 
     def test_resource_clone(self):
         """Test that clone"""
-        resource = TestResourceFields()
+        resource = ResourceFieldsTest()
         resource.position = [5, 2]
         resource.age = 12
         resource.long_str = "Hello world"
@@ -87,7 +87,7 @@ class TestResource(BaseTestCase):
 
     def test_update_resource_fields(self):
         """Test that update_resource_fields persists modified RFields"""
-        resource = TestResourceFields()
+        resource = ResourceFieldsTest()
         resource.position = [5, 2]
         resource.age = 12
         resource.long_str = "Hello world"
@@ -98,7 +98,7 @@ class TestResource(BaseTestCase):
         )
 
         # Reload the resource from the model
-        saved_resource: TestResourceFields = resource_model.get_resource(new_instance=True)
+        saved_resource: ResourceFieldsTest = resource_model.get_resource(new_instance=True)
         self.assertEqual(saved_resource.age, 12)
         self.assertEqual(saved_resource.long_str, "Hello world")
         self.assertEqual(saved_resource.position, [5, 2])
@@ -113,7 +113,7 @@ class TestResource(BaseTestCase):
 
         # Reload from DB to verify persistence
         db_resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
-        reloaded_resource: TestResourceFields = db_resource_model.get_resource(new_instance=True)
+        reloaded_resource: ResourceFieldsTest = db_resource_model.get_resource(new_instance=True)
 
         self.assertEqual(reloaded_resource.age, 99)
         self.assertEqual(reloaded_resource.long_str, "Updated value")

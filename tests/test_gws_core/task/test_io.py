@@ -163,8 +163,8 @@ class Log(Task):
         return {"samePerson": same_person, "otherPerson": inputs.get("person")}
 
 
-@protocol_decorator("TestPersonProtocol")
-class TestPersonProtocol(Protocol):
+@protocol_decorator("PersonProtocolTest")
+class PersonProtocolTest(Protocol):
     def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(Create, "create")
         log: ProcessSpec = self.add_process(Log, "log")
@@ -199,8 +199,8 @@ class Skippable(Task):
         return {"resource": resource}
 
 
-@protocol_decorator("TestSkippable")
-class TestSkippable(Protocol):
+@protocol_decorator("SkippableTest")
+class SkippableTest(Protocol):
     def configure_protocol(self) -> None:
         create1: ProcessSpec = self.add_process(Create, "create1")
         create2: ProcessSpec = self.add_process(Create, "create2")
@@ -315,7 +315,7 @@ class TestIO(BaseTestCase):
         """Test the UnmodifiableOut type. It tests that this is the same resource
         on log input and log output
         """
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(TestPersonProtocol)
+        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(PersonProtocolTest)
         scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(protocol)
 
         scenario = ScenarioRunService.run_scenario(scenario)

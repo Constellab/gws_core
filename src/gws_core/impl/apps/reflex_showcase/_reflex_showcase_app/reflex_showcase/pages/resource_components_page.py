@@ -7,7 +7,7 @@ from gws_reflex_main import (
     resource_select_button,
 )
 from gws_reflex_main.gws_components import (
-    SelectResourceInputDTO,
+    SelectResourceInput,
     select_resource_2_component,
 )
 
@@ -136,9 +136,9 @@ resource_select_button(state=FilteredResourceSelectState)"""
             margin_bottom="0.5em",
         ),
         select_resource_2_component(
-            input_data=SelectResourceInputDTO(
+            input_data=SelectResourceInput(
                 placeholder="Search for a resource...",
-            ),
+            ).to_dto(),
             output_event=ResourceComponentsPageState.handle_resource_2_selected,
         ),
         rx.cond(
@@ -163,7 +163,7 @@ resource_select_button(state=FilteredResourceSelectState)"""
     )
 
     code3 = """from gws_reflex_main.gws_components import (
-    SelectResourceInputDTO,
+    SelectResourceInput,
     select_resource_2_component,
 )
 from gws_core.resource.resource_model import ResourceModel
@@ -186,9 +186,9 @@ class MyState(rx.State):
 
 # Display the embedded resource select component
 select_resource_2_component(
-    input_data=SelectResourceInputDTO(
+    input_data=SelectResourceInput(
         placeholder="Search for a resource...",
-    ),
+    ).to_dto(),
     output_event=MyState.handle_resource_selected,
 )"""
 
@@ -222,7 +222,7 @@ select_resource_2_component(
             description="An embedded resource selector wrapping the dc-select-resource web component. "
             "Unlike resource_select_button, it is rendered inline and emits the selected resource id "
             "via an output event. Supports default filters and disabled filters through "
-            "SelectResourceInputDTO.",
+            "SelectResourceInput.",
             func=select_resource_2_component,
         ),
     )

@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from pydantic import ConfigDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.folder.space_folder_dto import SpaceFolderDTO
@@ -13,8 +15,7 @@ class NoteSaveDTO(BaseModelDTO):
     folder_id: str | None = None
     template_id: str | None = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class NoteDTO(ModelWithUserDTO):
@@ -36,3 +37,21 @@ class NoteFullDTO(NoteDTO):
 class NoteInsertTemplateDTO(BaseModelDTO):
     block_index: int
     note_template_id: str
+
+
+class InsertNewFormBlockDTO(BaseModelDTO):
+    """Insert a FORM block in a Note by creating a brand-new Form from a
+    PUBLISHED FormTemplateVersion. ``is_owner`` is implicitly true.
+    """
+
+    template_version_id: str
+    position: int | None = None
+
+
+class InsertFormReferenceBlockDTO(BaseModelDTO):
+    """Insert a FORM block in a Note that references an existing Form.
+    ``is_owner`` is implicitly false.
+    """
+
+    form_id: str
+    position: int | None = None

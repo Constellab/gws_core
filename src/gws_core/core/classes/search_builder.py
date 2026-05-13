@@ -4,6 +4,7 @@ from typing import Any, Generic
 
 from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
+from pydantic import ConfigDict
 from typing_extensions import Self, TypeVar
 
 from gws_core.core.classes.enum_field import EnumField
@@ -59,8 +60,7 @@ class SearchJoin(BaseModelDTO):
     table_type: Any
     on: Expression
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class SearchParams(BaseModelDTO):

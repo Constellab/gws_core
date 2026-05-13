@@ -1,15 +1,12 @@
-import os
-import shutil
 from json import loads
 
 from fastapi import UploadFile
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
-from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
 from gws_core.impl.openai.open_ai_helper import OpenAiHelper
+from gws_core.impl.openai.open_ai_transcription_service import OpenAiTranscriptionService
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_list import RichTextBlockList
 from gws_core.impl.rich_text.rich_text import RichText
@@ -145,37 +142,24 @@ The generated JSON must validate this schema.
 
     @classmethod
     def transcribe_uploaded_audio_to_rich_text(cls, file: UploadFile) -> RichText:
-        """Transcribe an audio file to a rich text
+        """Transcribe an uploaded audio file to a rich text.
 
-        :param audio_file_path: path to the audio file
-        :type audio_file_path: str
-        :return: the transcription
-        :rtype: str
+        :param file: the uploaded audio file
+        :type file: UploadFile
+        :return: the rich text
+        :rtype: RichText
         """
-
-        # write the audio file to a temporary directory
-        tmp_dir = Settings.get_instance().make_temp_dir()
-        filename = "audio.wav"
-        # filename = 'audio' + FileHelper.get_extension_from_content_type(file.content_type)
-        audio_file_path = os.path.join(tmp_dir, filename)
-
-        with open(audio_file_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-        try:
-            rich_text = cls.transcribe_audio_file_to_rich_text(audio_file_path)
-        finally:
-            FileHelper.delete_dir(tmp_dir)
-
-        return rich_text
+        transcription_text = OpenAiTranscriptionService.transcribe_uploaded_audio(file)
+        return cls._transcription_text_to_rich_text(transcription_text)
 
     @classmethod
     def transcribe_audio_file_to_rich_text(cls, file_path: str) -> RichText:
-        # transcribe the audio file
         transcription_text = OpenAiHelper.call_whisper(file_path)
-
         Logger.debug(f"[RichTextTranscriptionService] Transcription text: {transcription_text}")
+        return cls._transcription_text_to_rich_text(transcription_text)
 
+    @classmethod
+    def _transcription_text_to_rich_text(cls, transcription_text: str) -> RichText:
         try:
             return cls.transcribe_text_to_rich_text(transcription_text)
         # if an error occurs, return a default paragraph block

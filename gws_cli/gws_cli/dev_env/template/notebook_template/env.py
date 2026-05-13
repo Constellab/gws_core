@@ -1,9 +1,9 @@
 import os
 import sys
 
-user_bricks_folder = os.path.join("/lab", "user", "bricks")
-sys_bricks_folder = os.path.join("/lab", ".sys", "bricks")
-app_folder = os.path.join("/lab", ".sys", "app")
+user_bricks_folder = os.path.join(os.environ.get("LAB_FOLDER", "/lab"), "user", "bricks")
+sys_bricks_folder = os.path.join(os.environ.get("LAB_FOLDER", "/lab"), ".sys", "bricks")
+app_folder = os.path.join(os.environ.get("LAB_FOLDER", "/lab"), ".sys", "app")
 
 
 def activate():

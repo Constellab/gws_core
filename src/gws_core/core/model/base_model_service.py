@@ -114,6 +114,30 @@ class BaseModelService:
                 db_with_models.db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=1")
 
     @classmethod
+    def truncate_tables(cls):
+        """
+        Truncate all existing tables. Faster than drop+create when the schema is unchanged,
+        used to clean state between test classes without paying DDL cost.
+        """
+
+        all_db_with_models = cls._get_all_db_and_model_types()
+        for db_with_models in all_db_with_models.values():
+            models: list[type[BaseModel]] = [t for t in db_with_models.models if t.table_exists()]
+
+            if len(models) == 0:
+                continue
+
+            db_manager = db_with_models.db_manager
+            is_mysql = models[0].is_mysql_engine()
+
+            if is_mysql:
+                db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=0")
+            for model in models:
+                db_manager.execute_sql(f"TRUNCATE TABLE `{model.get_table_name()}`")
+            if is_mysql:
+                db_manager.execute_sql("SET FOREIGN_KEY_CHECKS=1")
+
+    @classmethod
     def _get_all_db_and_model_types(cls) -> dict[str, DbWithModels]:
         db_with_models: dict[str, DbWithModels] = {}
         models = cls.get_base_model_types()

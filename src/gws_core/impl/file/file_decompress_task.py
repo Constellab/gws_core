@@ -1,7 +1,8 @@
 from typing import Literal
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.param_spec import BoolParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.compress.compress import Compress
 from gws_core.impl.file.folder import Folder
 from gws_core.resource.id_mapper import IdMapper
@@ -27,8 +28,8 @@ from .file import File
 class FileDecompressTask(ResourceImporter):
     config_specs = ConfigSpecs(
         {
-            "mode": StrParam(
-                allowed_values=["Auto", "Always to folder"],
+            "mode": SelectParam(
+                options=["Auto", "Always to folder"],
                 default_value="Auto",
                 human_name="Mode",
                 short_description="'Always to folder' will ignore zipped resource and just decompress file.",

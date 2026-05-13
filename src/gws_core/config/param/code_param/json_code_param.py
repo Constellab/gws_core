@@ -4,7 +4,7 @@ from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
+from gws_core.config.param.param_types import ParamSpecType
 
 
 @param_spec_decorator()
@@ -37,16 +37,8 @@ class JsonCodeParam(ParamSpec):
     """
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.JSON_CODE
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "JsonCodeParam":
-        return JsonCodeParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.JSON_CODE
 
     def validate(self, value: Any) -> Any:
         if value is None:

@@ -11,7 +11,6 @@ from gws_core.apps.app_nginx_service import (
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.brick.brick_helper import BrickHelper
-from gws_core.core.classes.observer.message_observer import BasicMessageObserver
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.core.utils.execution_context import ExecutionContext
@@ -37,8 +36,8 @@ class ReflexProcess(AppProcess):
     back_port: int
 
     # timeout in second to wait for the main app to start
-    # increase it to 90 to allow the app to start as it compiles the front and back
-    START_APP_TIMEOUT = 90
+    # increase it to 120 to allow the app to start as it compiles the front and back
+    START_APP_TIMEOUT = 120
 
     REFLEX_MODULES_PATH = "_gws_reflex"
     ZIP_FILE_NAME = "frontend.zip"
@@ -296,14 +295,19 @@ class ReflexProcess(AppProcess):
         """Check if the process uses the given port"""
         return port in (self.front_port, self.back_port)
 
+    def get_ports(self) -> list[int]:
+        return [self.front_port, self.back_port]
+
     def _get_log_level_option(self) -> str:
         return f"--loglevel={Logger.get_instance().level.lower()}"
 
     @classmethod
     def _get_cached_reflex_access_token(cls) -> str:
         """Get cached reflex access token if valid, otherwise retrieve and cache new one"""
+        Logger.debug("Retrieving reflex access token")
         reflex_access_token = Settings.get_reflex_access_token()
         if reflex_access_token:
+            Logger.debug("Using reflex access token from Settings")
             return reflex_access_token
 
         current_time = time.time()
@@ -314,11 +318,22 @@ class ReflexProcess(AppProcess):
             and cls._cache_timestamp is not None
             and current_time - cls._cache_timestamp < cls._cache_duration_seconds
         ):
+            cache_age = current_time - cls._cache_timestamp
+            Logger.debug(
+                f"Using cached reflex access token (age: {cache_age:.0f}s, "
+                f"ttl: {cls._cache_duration_seconds}s)"
+            )
             return cls._cached_access_token
 
         # Cache is invalid, retrieve new token
+        Logger.debug(
+            "Reflex access token cache invalid or missing, fetching new token from SpaceService"
+        )
         space_service = SpaceService.get_instance()
         new_token = space_service.get_reflex_access_token()
+        Logger.debug(
+            f"Fetched new reflex access token (length: {len(new_token) if new_token else 0})"
+        )
 
         # Update cache
         cls._cached_access_token = new_token

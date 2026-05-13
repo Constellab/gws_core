@@ -1,5 +1,7 @@
 from typing import Literal, cast
 
+from pydantic import ConfigDict
+
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
 from gws_core.io.io_exception import InvalidInputsException, MissingInputResourcesException
@@ -32,8 +34,7 @@ class OutputsCheckResult(BaseModelDTO):
     outputs: TaskOutputs | None
     auto_convert_messages: list[str]
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class OutputCheckResult(BaseModelDTO):
@@ -43,8 +44,7 @@ class OutputCheckResult(BaseModelDTO):
     resource: Resource | None
     auto_convert_message: str | None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class IOSpecs:

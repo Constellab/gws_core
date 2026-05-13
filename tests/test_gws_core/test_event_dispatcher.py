@@ -11,7 +11,7 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 @dataclass
-class TestEvent(BaseEvent):
+class EventTest(BaseEvent):
     type: Literal["test"] = "test"
     action: Literal["run"] = "run"
 
@@ -19,12 +19,20 @@ class TestEvent(BaseEvent):
 class TestEventDispatcher(BaseTestCase):
 
     def setUp(self):
-        """Clear listeners before each test."""
-        EventDispatcher.get_instance().clear_listeners()
+        """Isolate the dispatcher: snapshot the app-wide listeners (registered
+        once at brick import time and never re-registered), then start from a
+        clean slate. Restored in tearDown so other test files on the same
+        worker process still see them."""
+        dispatcher = EventDispatcher.get_instance()
+        self._saved_listeners = dispatcher.get_registered_listeners()
+        dispatcher.clear_listeners()
 
     def tearDown(self):
-        """Clear listeners after each test."""
-        EventDispatcher.get_instance().clear_listeners()
+        """Restore the app-wide listeners snapshotted in setUp."""
+        dispatcher = EventDispatcher.get_instance()
+        dispatcher.clear_listeners()
+        for listener in self._saved_listeners:
+            dispatcher.register(listener)
 
     def test_sync_listener_runs_in_caller_thread(self):
         """Sync listener should execute immediately in the caller's thread."""
@@ -38,7 +46,7 @@ class TestEventDispatcher(BaseTestCase):
 
         dispatcher = EventDispatcher.get_instance()
         dispatcher.register(SyncListener())
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Should be immediate — no need to wait
         self.assertEqual(results, ["sync_handled"])
@@ -56,7 +64,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher.register(FailingSyncListener())
 
         with self.assertRaises(ValueError) as ctx:
-            dispatcher.dispatch(TestEvent())
+            dispatcher.dispatch(EventTest())
         self.assertIn("Sync listener error", str(ctx.exception))
 
     def test_async_listener_exception_does_not_propagate(self):
@@ -76,7 +84,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher.register(SuccessAsyncListener())
 
         # Should NOT raise
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Wait for async processing
         time.sleep(0.5)
@@ -99,7 +107,7 @@ class TestEventDispatcher(BaseTestCase):
         dispatcher = EventDispatcher.get_instance()
         dispatcher.register(AsyncListener())
         dispatcher.register(SyncListener())
-        dispatcher.dispatch(TestEvent())
+        dispatcher.dispatch(EventTest())
 
         # Sync should already be in the list
         self.assertEqual(order[0], "sync")

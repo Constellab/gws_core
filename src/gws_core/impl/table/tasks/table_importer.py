@@ -7,6 +7,7 @@ from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
 from ....config.param.param_set import ParamSet
 from ....config.param.param_spec import BoolParam, IntParam, StrParam
+from ....config.param.select_param import SelectParam
 from ....core.exception.exceptions.bad_request_exception import BadRequestException
 from ....impl.file.file import File
 from ....task.converter.importer import ResourceImporter, importer_decorator
@@ -20,14 +21,14 @@ from ..table import Table
 class TableImporter(ResourceImporter):
     config_specs = ConfigSpecs(
         {
-            "file_format": StrParam(
-                allowed_values=["auto", *Table.ALLOWED_FILE_FORMATS],
+            "file_format": SelectParam(
+                options=["auto", *Table.ALLOWED_FILE_FORMATS],
                 default_value="auto",
                 human_name="File format",
                 short_description="File format",
             ),
-            "delimiter": StrParam(
-                allowed_values=Table.ALLOWED_DELIMITER,
+            "delimiter": SelectParam(
+                options=Table.ALLOWED_DELIMITER,
                 default_value=Table.DEFAULT_DELIMITER,
                 human_name="Delimiter",
                 short_description="Delimiter character. Only for parsing CSV files",

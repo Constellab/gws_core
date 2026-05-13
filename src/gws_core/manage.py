@@ -1,10 +1,6 @@
 import os
-import unittest
-from copy import Error
-from unittest.suite import TestSuite
 
 import plotly.express as px
-from dotenv import load_dotenv
 
 from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.lab.system_service import SystemService
@@ -21,7 +17,6 @@ from gws_core.user.user import User
 
 from .app import App
 from .core.db.db_manager_service import DbManagerService
-from .core.exception.exceptions import BadRequestException
 from .core.utils.settings import Settings
 
 
@@ -70,7 +65,11 @@ class AppManager:
 
         logger_level = Logger.check_log_level(log_level)
         logger = Logger.build_main_logger(
-            log_dir=log_dir, level=logger_level, context=log_context, context_id=log_context_id
+            log_dir=log_dir,
+            level=logger_level,
+            context=log_context,
+            context_id=log_context_id,
+            is_test=is_test,
         )
         if log_context == LogContext.MAIN:
             Logger.info(f"Logger configured with log level: {logger.level}")
@@ -121,54 +120,6 @@ class AppManager:
 
         # start app
         App.start(port=int(port))
-
-    @classmethod
-    def run_test(cls, brick_dir: str, tests: list[str], log_level: str, show_sql: bool) -> None:
-        if not tests:
-            raise BadRequestException("Please provide a test to run.")
-
-        settings_file = os.path.join(brick_dir, SettingsLoader.SETTINGS_JSON_FILE)
-
-        if not os.path.exists(settings_file):
-            raise BadRequestException(f"'settings.json' file not found in the brick '{brick_dir}'.")
-
-        cls.init_gws_env_and_db(
-            main_setting_file_path=settings_file,
-            log_level=log_level,
-            show_sql=show_sql,
-            is_test=True,
-            log_context=LogContext.MAIN,
-        )
-
-        if len(tests) == 1 and tests[0] in ["*", "all"]:
-            tests = ["test*"]
-
-        loader = unittest.TestLoader()
-        test_suite = TestSuite()
-
-        brick_test_folder = os.path.join(brick_dir, "tests")
-
-        if not os.path.exists(brick_test_folder):
-            raise Error(f"'tests' folder not found in brick '{brick_dir}'.")
-
-        # Check for .env.test file and load environment variables
-        env_test_file = os.path.join(brick_dir, ".env.test")
-        if os.path.exists(env_test_file):
-            load_dotenv(env_test_file)
-            Logger.info(f"Loaded environment variables from: {env_test_file}")
-
-        for test_file in tests:
-            pattern = test_file + ".py" if not test_file.endswith(".py") else test_file
-            test_suite.addTests(loader.discover(brick_test_folder, pattern=pattern))
-
-        # check if there are any tests discovered
-        if test_suite.countTestCases() == 0:
-            raise Error(
-                f"No tests discovered for input '{tests}' in brick '{brick_dir}'. Please verify that you provided the name of the tests file (not the path). The test file must start with 'test'."
-            )
-
-        test_runner = unittest.TextTestRunner()
-        test_runner.run(test_suite)
 
     @classmethod
     def run_scenario(
@@ -234,7 +185,7 @@ class AppManager:
         SystemService.reset_dev_envionment(check_user=False)
 
 
-def start_notebook(
-    main_settings_path: str = "/lab/.sys/app/settings.json", log_level: str = "INFO"
-) -> None:
+def start_notebook(main_settings_path: str | None = None, log_level: str = "INFO") -> None:
+    if not main_settings_path:
+        main_settings_path = os.path.join(Settings.get_system_folder(), "app", "settings.json")
     AppManager.run_notebook(main_settings_path=main_settings_path, log_level=log_level)

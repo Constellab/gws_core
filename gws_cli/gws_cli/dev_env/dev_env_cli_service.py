@@ -48,7 +48,7 @@ class DevEnvCliService:
     def configure_bricks(cls, force: bool = False) -> None:
         """Configure user bricks with AI code instruction files.
 
-        Only configures bricks in the user folder (/lab/user), not system bricks.
+        Only configures bricks in the user folder, not system bricks.
 
         Args:
             force: If True, overwrite existing generated files.

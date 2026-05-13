@@ -1,12 +1,11 @@
-
 from gws_core.config.param.model_param import ModelParam
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr, ParamSpecVisibilty
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecType, ParamSpecVisibilty
 from gws_core.core.model.model import Model
 from gws_core.note_template.note_template import NoteTemplate
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class NoteTemplateParam(ModelParam):
     """Note template params spec. When used, the end user will be able to select a note template
     from the list of note template available in the lab.
@@ -42,8 +41,8 @@ class NoteTemplateParam(ModelParam):
         )
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.NOTE_TEMPLATE
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.NOTE_TEMPLATE
 
     def get_model_type(self) -> type[Model]:
         """Override this method to return the model type to use
@@ -52,11 +51,3 @@ class NoteTemplateParam(ModelParam):
         :rtype: Type[Model]
         """
         return NoteTemplate
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "NoteTemplateParam":
-        return NoteTemplateParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None

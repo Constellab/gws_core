@@ -1,6 +1,7 @@
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.helper.table_operation_helper import (
     TableOperationHelper,
@@ -104,11 +105,11 @@ class TableColumnMassOperations(Task):
                 short_description="If true, the original columns of the Table will be added at the end of the Table. If false, only the calculcation columns are kept.",
                 visibility="protected",
             ),
-            "unknown_column_option": StrParam(
+            "unknown_column_option": SelectParam(
                 default_value=TableOperationUnknownColumnOption.SET_RESULT_TO_NAN.value,
                 human_name="Action on unknown column",
                 short_description="Option to apply when an unknown column is found in the operation table.",
-                allowed_values=StringHelper.get_enum_values(TableOperationUnknownColumnOption),
+                options=StringHelper.get_enum_values(TableOperationUnknownColumnOption),
                 visibility="protected",
             ),
         }

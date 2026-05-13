@@ -4,21 +4,35 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.form.form import Form
+from gws_core.form.form_dto import CreateFormDTO
+from gws_core.form.form_service import FormService
+from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
+from gws_core.impl.rich_text.rich_text_content_validator import (
+    RichTextContentValidator,
+)
 from gws_core.impl.rich_text.rich_text_modification import (
     RichTextBlockModificationWithUserDTO,
     RichTextModificationType,
     RichTextModificationUserDTO,
 )
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO, RichTextObjectType
+from gws_core.impl.rich_text.rich_text_types import (
+    RichTextBlock,
+    RichTextDTO,
+    RichTextObjectType,
+)
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.note.note_events import NoteContentUpdatedEvent, NoteDeletedEvent
 from gws_core.note.note_view_model import NoteViewModel
 from gws_core.note_template.note_template import NoteTemplate
+from gws_core.note_template.note_template_content_converter import (
+    NoteTemplateContentConverter,
+)
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view.view_types import exluded_views_in_note
@@ -42,7 +56,12 @@ from ..core.exception.gws_exceptions import GWSException
 from ..scenario.scenario import Scenario
 from ..space.space_service import SpaceService
 from .note import Note, NoteScenario
-from .note_dto import NoteInsertTemplateDTO, NoteSaveDTO
+from .note_dto import (
+    InsertFormReferenceBlockDTO,
+    InsertNewFormBlockDTO,
+    NoteInsertTemplateDTO,
+    NoteSaveDTO,
+)
 from .note_search_builder import NoteSearchBuilder
 
 
@@ -57,7 +76,9 @@ class NoteService:
 
         if note_dto.template_id:
             template: NoteTemplate = NoteTemplate.get_by_id_and_check(note_dto.template_id)
-            note.content = template.content
+            # Apply NoteTemplate→Note content transforms (FORM_TEMPLATE →
+            # FORM, etc.) before assigning to the note. Phase 7 / spec §5.4.
+            note.content = NoteTemplateContentConverter.convert(template.content)
 
             # copy the storage of the note template to the note
             RichTextFileService.copy_object_dir(
@@ -86,6 +107,20 @@ class NoteService:
             )
 
         note.save()
+
+        # Validate and dispatch a content-updated event so the form-join
+        # listener reconciles NoteFormModel rows for any FORM blocks that
+        # arrived via template instantiation. Mirrors update_content's
+        # contract; old_content is None because this is a fresh note.
+        if note.content is not None:
+            RichTextContentValidator.validate_for_note(note.content, None)
+            EventDispatcher.get_instance().dispatch(
+                NoteContentUpdatedEvent(
+                    note_id=note.id,
+                    old_content=None,
+                    new_content=note.content,
+                )
+            )
 
         if scenario_ids is not None:
             # Create the NoteScenario
@@ -183,6 +218,10 @@ class NoteService:
     def update_content(cls, note_id: str, note_content: RichTextDTO) -> Note:
         note: Note = cls._get_and_check_before_update(note_id)
 
+        # Reject FORM_TEMPLATE blocks; reject newly-introduced FORM blocks
+        # whose form_id does not exist (spec §5.1).
+        RichTextContentValidator.validate_for_note(note_content, note.content)
+
         # Dispatch event BEFORE saving — sync listeners can mutate note_content
         # or raise exceptions to abort the save
         EventDispatcher.get_instance().dispatch(
@@ -199,8 +238,8 @@ class NoteService:
             )
         note.content = note_content
 
-        # refresh NoteResource table
-        cls._refresh_note_views_and_tags(note)
+        # NoteViewJoinListener handles the views/tags/scenarios refresh
+        # via the dispatched event above.
 
         note = note.save()
         ActivityService.add_or_update_async(
@@ -216,8 +255,11 @@ class NoteService:
 
         template: NoteTemplate = NoteTemplate.get_by_id_and_check(data.note_template_id)
 
+        # Apply NoteTemplate→Note content transforms before merging the
+        # template's blocks into the note. Phase 7 / spec §5.4.
+        converted_template_content = NoteTemplateContentConverter.convert(template.content)
         note_rich_text = note.get_content_as_rich_text()
-        template_rich_text = template.get_content_as_rich_text()
+        template_rich_text = RichText(converted_template_content)
 
         index = data.block_index
         for block in template_rich_text.get_blocks():
@@ -232,6 +274,77 @@ class NoteService:
             RichTextObjectType.NOTE_TEMPLATE, template.id, RichTextObjectType.NOTE, note.id
         )
         return note
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def insert_form_block_new(
+        cls,
+        note_id: str,
+        dto: InsertNewFormBlockDTO,
+    ) -> Note:
+        """Create a brand-new Form from a PUBLISHED template version and
+        insert a FORM block in the note with ``is_owner=True``.
+
+        See spec §5.5.
+        """
+        form = FormService.create(CreateFormDTO(template_version_id=dto.template_version_id))
+        return cls._insert_form_block(
+            note_id,
+            form_id=form.id,
+            is_owner=True,
+            position=dto.position,
+        )
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def insert_form_block_reference(
+        cls,
+        note_id: str,
+        dto: InsertFormReferenceBlockDTO,
+    ) -> Note:
+        """Insert a FORM block in the note that references an existing Form.
+        ``is_owner=False``.
+
+        See spec §5.5.
+        """
+        # Validate the form exists up-front for a clear 404, even though the
+        # validator would also catch this. The lookup is cheap.
+        Form.get_by_id_and_check(dto.form_id)
+        return cls._insert_form_block(
+            note_id,
+            form_id=dto.form_id,
+            is_owner=False,
+            position=dto.position,
+        )
+
+    @classmethod
+    def _insert_form_block(
+        cls,
+        note_id: str,
+        *,
+        form_id: str,
+        is_owner: bool,
+        position: int | None,
+    ) -> Note:
+        """Build a FORM block and insert it into the note's content at
+        ``position`` (or append when None), then route through update_content
+        so the validator runs."""
+        note: Note = cls._get_and_check_before_update(note_id)
+
+        block = RichTextBlock.from_data(
+            RichTextBlockForm(
+                form_id=form_id,
+                is_owner=is_owner,
+            )
+        )
+
+        rich_text = note.get_content_as_rich_text()
+        if position is None:
+            rich_text.append_block(block)
+        else:
+            rich_text.insert_block_at_index(position, block)
+
+        return cls.update_content(note_id, rich_text.to_dto())
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -304,9 +417,6 @@ class NoteService:
             raise BadRequestException(
                 "The scenario must be associated with a leaf folder (folder with no children)"
             )
-
-        # refresh the associated views and scenario (for precaution)
-        cls._refresh_note_views_and_tags(note)
 
         # check that all linked scenario are validated and are in same folder
         scenarios: list[Scenario] = cls.get_scenarios_by_note(note_id)
@@ -625,69 +735,6 @@ class NoteService:
         resources = ResourceService.get_scenarios_resources(scenario_ids)
         return resources
 
-    @classmethod
-    def _refresh_note_views_and_tags(cls, note: Note) -> None:
-        """Method to refresh the associated views of a note. It will remove unassociated resources and
-        add the new ones.
-        It also refresh the tags of the note based on the tags of the associated views
-        It also refresh the associated scenarios of the note
-        """
-
-        note_views: list[NoteViewModel] = NoteViewModel.get_by_note(note.id)
-
-        # extract the views id from the rich text
-        rich_text_views: list[RichTextBlockResourceView] = (
-            note.get_content_as_rich_text().get_resource_views_data()
-        )
-
-        note_tags: EntityTagList = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
-
-        rich_text_view_ids = {
-            rich_text_view.view_config_id
-            for rich_text_view in rich_text_views
-            if rich_text_view.view_config_id is not None
-        }
-
-        # detect which views were removed and unassociate resource
-        for note_view in note_views:
-            if note_view.view.id not in rich_text_view_ids:
-                note_view.delete_instance()
-                # remove the tags of the view from the note
-                view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, note_view.view.id)
-                propagated_tags = view_tags.build_tags_propagated(
-                    TagOriginType.VIEW_PROPAGATED, note_view.view.id
-                )
-                note_tags.delete_tags(propagated_tags)
-
-        # detect which views were added
-        note_view_ids = {note_view.view.id for note_view in note_views}
-        for rich_text_view in rich_text_views:
-            if rich_text_view.view_config_id is None:
-                continue
-            if rich_text_view.view_config_id not in note_view_ids:
-                # create the link in DB
-                view_config = ViewConfig.get_by_id(rich_text_view.view_config_id)
-
-                if view_config:
-                    NoteViewModel(note=note, view=view_config).save()
-                    # add the tags of the view to the note
-                    view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_config.id)
-                    propagated_tags = view_tags.build_tags_propagated(
-                        TagOriginType.VIEW_PROPAGATED, view_config.id
-                    )
-                    note_tags.add_tags(propagated_tags)
-                    note_view_ids.add(view_config.id)
-
-        # refresh the associated scenarios
-        new_note_views: list[NoteViewModel] = NoteViewModel.get_by_note(note.id)
-        associated_scenario = NoteScenario.find_scenarios_by_note(note.id)
-
-        # detect which scenario were added
-        for new_view in new_note_views:
-            if new_view.view.scenario and new_view.view.scenario not in associated_scenario:
-                NoteScenario.create_obj(new_view.view.scenario, note).save()
-                associated_scenario.append(new_view.view.scenario)
-
     ################################################# ARCHIVE ########################################
 
     @classmethod
@@ -788,9 +835,27 @@ class NoteService:
             modification_index = modification_index + 1
 
         note.modifications.modifications = note.modifications.modifications[:modification_index]
+
+        # Dispatch the same event update_content uses so join-row
+        # listeners (e.g. NoteFormJoinListener) reconcile against the
+        # rolled-back content. The validator does NOT run on this path:
+        # rollback may legitimately resurrect a block whose target was
+        # hard-deleted in the meantime, and rejecting that would block
+        # the user from rolling back through history. Content is the
+        # source of truth; joins follow; broken references render as
+        # broken blocks rather than refusing the rollback.
+        EventDispatcher.get_instance().dispatch(
+            NoteContentUpdatedEvent(
+                note_id=note.id,
+                old_content=note.content,
+                new_content=rollbacked_content,
+            )
+        )
+
         note.content = rollbacked_content
 
-        cls._refresh_note_views_and_tags(note)
+        # NoteViewJoinListener handles the views/tags/scenarios refresh
+        # via the dispatched event above.
 
         note = note.save()
         ActivityService.add_or_update_async(

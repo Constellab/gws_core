@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any
 
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -7,6 +8,19 @@ from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.model.typing_style import TypingStyle
 from gws_core.tag.tag_dto import TagValueFormat
+
+
+class HnRepoType(str, Enum):
+    PIP = "PIP"
+    GIT = "GIT"
+
+
+class HnBrickVersionInfoDTO(BaseModelDTO):
+    brickName: str
+    brickVersion: str
+    repoType: HnRepoType
+    repositoryUrl: str
+    technicalInfo: dict[str, Any] | None = None
 
 
 class CommunitySpaceDTO(BaseModelDTO):

@@ -25,6 +25,8 @@ class RichTextBlockTypeStandard(Enum):
     FILE = "file"
     IFRAME = "iframe"
     HTML = "html"
+    FORM_TEMPLATE = "formTemplate"  # only valid in NoteTemplate content
+    FORM = "form"  # only valid in Note content
 
     @staticmethod
     def is_standard_type(block_type: str) -> bool:

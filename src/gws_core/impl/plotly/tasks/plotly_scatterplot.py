@@ -3,6 +3,7 @@ import plotly.express as px
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import FloatParam, IntParam, StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
@@ -53,21 +54,21 @@ class PlotlyScatterplot(PlotlyTask):
                 short_description="int: maximum size of the marks",
                 human_name="mark opacity",
             ),
-            "marginal_x": StrParam(
+            "marginal_x": SelectParam(
                 default_value=None,
                 optional=True,
                 human_name="Marginal X",
                 short_description="If set, a horizontal subplot is drawn above the main plot, visualizing the x-distribution.",
                 visibility="protected",
-                allowed_values=["rug", "box", "violin", "histogram"],
+                options=["rug", "box", "violin", "histogram"],
             ),
-            "marginal_y": StrParam(
+            "marginal_y": SelectParam(
                 default_value=None,
                 optional=True,
                 human_name="Marginal Y",
                 short_description="If set, a vertical subplot is drawn to the right of the main plot, visualizing the y-distribution.",
                 visibility="protected",
-                allowed_values=["rug", "box", "violin", "histogram"],
+                options=["rug", "box", "violin", "histogram"],
             ),
             **PlotlyTask.symbol,
             **PlotlyTask.errors,

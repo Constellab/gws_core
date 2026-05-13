@@ -19,7 +19,7 @@ from numpy import NaN
 from pandas.core.frame import DataFrame
 
 
-class TestJsonableObject(SerializableObjectJson):
+class JsonableObjectTest(SerializableObjectJson):
     name: str
 
     def __init__(self, name: str):
@@ -30,7 +30,7 @@ class TestJsonableObject(SerializableObjectJson):
 
     @classmethod
     def deserialize(cls, json_data: dict):
-        return TestJsonableObject(json_data["name"])
+        return JsonableObjectTest(json_data["name"])
 
 
 # test_r_field
@@ -158,10 +158,10 @@ class TestRField(BaseTestCase):
         self.assertEqual(robot.weight, resource_deserilized.weight)
 
     def test_jsonable_object_r_field(self):
-        r_field = SerializableRField(TestJsonableObject)
-        value = TestJsonableObject("test")
+        r_field = SerializableRField(JsonableObjectTest)
+        value = JsonableObjectTest("test")
         serialized = r_field.serialize(value)
-        deserialized: TestJsonableObject = r_field.deserialize(serialized)
+        deserialized: JsonableObjectTest = r_field.deserialize(serialized)
 
-        self.assertIsInstance(deserialized, TestJsonableObject)
+        self.assertIsInstance(deserialized, JsonableObjectTest)
         self.assertEqual(value.name, deserialized.name)

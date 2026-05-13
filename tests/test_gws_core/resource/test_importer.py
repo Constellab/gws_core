@@ -14,7 +14,7 @@ from gws_core.test.data_provider import DataProvider
 @importer_decorator(
     unique_name="TestImporterUnsued", target_type=Resource, supported_extensions=["weirdformatfile"]
 )
-class TestImporterResource(ResourceImporter):
+class ImporterResourceTest(ResourceImporter):
     pass
 
 
@@ -27,7 +27,7 @@ class TestImporter(BaseTestCase):
 
         self.assertEqual(len(importers.results), 1)
         self.assertTrue(
-            len([x for x in importers.results if x.get_type() == TestImporterResource]) == 1
+            len([x for x in importers.results if x.get_type() == ImporterResourceTest]) == 1
         )
 
         importers = TypingService.search_importers(

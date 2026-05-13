@@ -2,6 +2,7 @@ from pandas import DataFrame
 
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDataFilterHelper
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 
@@ -10,9 +11,9 @@ from ....config.config_specs import ConfigSpecs
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 
-comparator_param = StrParam(
+comparator_param = SelectParam(
     human_name="Comparator",
-    allowed_values=DataframeDataFilterHelper.TEXT_COMPARATORS,
+    options=DataframeDataFilterHelper.TEXT_COMPARATORS,
     short_description="Comparator",
 )
 

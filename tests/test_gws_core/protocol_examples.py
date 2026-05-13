@@ -27,8 +27,8 @@ from gws_core.impl.robot.robot_tasks import (
 # File for Tests containing examples of protocols
 
 
-@protocol_decorator("TestSimpleProtocol")
-class TestSimpleProtocol(Protocol):
+@protocol_decorator("SimpleProtocolTest")
+class SimpleProtocolTest(Protocol):
     def configure_protocol(self) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, "p0")
         p1: ProcessSpec = self.add_process(RobotMove, "p1")
@@ -50,8 +50,8 @@ class TestSimpleProtocol(Protocol):
         )
 
 
-@protocol_decorator("TestSubProtocol")
-class TestSubProtocol(Protocol):
+@protocol_decorator("SubProtocolTest")
+class SubProtocolTest(Protocol):
     # list of next tasks of p2
     p2_direct_next = {"p_wait", "p4"}
     p2_next = {"p_wait", "p4", "p3"}
@@ -78,16 +78,16 @@ class TestSubProtocol(Protocol):
         (self.add_outerface("robot", p2, "robot"),)
 
 
-@protocol_decorator("TestNestedProtocol")
-class TestNestedProtocol(Protocol):
+@protocol_decorator("NestedProtocolTest")
+class NestedProtocolTest(Protocol):
     # list of next tasks of p2 (in the nested protocol)
-    p2_next = {*TestSubProtocol.p2_next, "p5"}
+    p2_next = {*SubProtocolTest.p2_next, "p5"}
     connector_count = 2
 
     def configure_protocol(self) -> None:
         p0: ProcessSpec = self.add_process(RobotCreate, "p0")
         p5: ProcessSpec = self.add_process(RobotEat, "p5")
-        mini_proto: ProcessSpec = self.add_process(TestSubProtocol, "mini_proto")
+        mini_proto: ProcessSpec = self.add_process(SubProtocolTest, "mini_proto")
 
         self.add_connectors(
             [(p0 >> "robot", mini_proto << "robot"), (mini_proto >> "robot", p5 << "robot")]
@@ -121,8 +121,8 @@ class RobotEmptyFood(Task):
         return {}
 
 
-@protocol_decorator("TestRobotWithSugarProtocol")
-class TestRobotWithSugarProtocol(Protocol):
+@protocol_decorator("RobotWithSugarProtocolTest")
+class RobotWithSugarProtocolTest(Protocol):
     """This test protocol test that the Eat task works with 2 entries.
     It also test that the eat task will wait for the Food input even if it is optional
 

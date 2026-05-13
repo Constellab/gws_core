@@ -1,7 +1,8 @@
 import time
 
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import FloatParam, StrParam
+from gws_core.config.param.param_spec import FloatParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 
@@ -47,9 +48,9 @@ class RobotMove(Task):
             "moving_step": FloatParam(
                 default_value=0.1, short_description="The moving step of the robot"
             ),
-            "direction": StrParam(
+            "direction": SelectParam(
                 default_value="north",
-                allowed_values=["north", "south", "east", "west"],
+                options=["north", "south", "east", "west"],
                 short_description="The moving direction",
             ),
         }
@@ -119,9 +120,9 @@ class RobotFly(RobotMove):
     config_specs = ConfigSpecs(
         {
             "moving_step": FloatParam(default_value=1000.0),
-            "direction": StrParam(
+            "direction": SelectParam(
                 default_value="west",
-                allowed_values=["north", "south", "east", "west"],
+                options=["north", "south", "east", "west"],
                 short_description="The flying direction",
             ),
         }
@@ -165,7 +166,7 @@ class RobotAddOnCreate(Task):
 )
 class RobotSugarCreate(Task):
     """Task that create a sugar type of food and wait 3 secondes for it
-    used in TestRobotWithSugarProtocol
+    used in RobotWithSugarProtocolTest
     """
 
     output_specs = OutputSpecs({"sugar": OutputSpec(RobotFood)})

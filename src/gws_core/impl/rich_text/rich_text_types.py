@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import TypeVar, overload
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.string_helper import StringHelper
@@ -7,6 +8,8 @@ from gws_core.impl.rich_text.block.rich_text_block import (
     RichTextBlockTypeStandard,
 )
 from gws_core.model.typing_manager import TypingManager
+
+RichTextBlockDataT = TypeVar("RichTextBlockDataT", bound=RichTextBlockDataBase)
 
 RICH_TEXT_CURRENT_VERSION = 2
 RICH_TEXT_EDITORJS_VERSION = "2.31.0"
@@ -45,7 +48,15 @@ class RichTextBlock(BaseModelDTO):
             return self.type == block_type.value
         return self.type == block_type
 
-    def get_data(self) -> RichTextBlockDataBase:
+    @overload
+    def get_data(self) -> RichTextBlockDataBase: ...
+
+    @overload
+    def get_data(self, data_type: type[RichTextBlockDataT]) -> RichTextBlockDataT: ...
+    def get_data(
+        self,
+        data_type: type[RichTextBlockDataT] | None = None,
+    ) -> RichTextBlockDataT | RichTextBlockDataBase:
         # Get the block type string value
         block_typing_name = self.type
 
@@ -58,6 +69,11 @@ class RichTextBlock(BaseModelDTO):
 
         if not issubclass(data_class, RichTextBlockDataBase):
             raise TypeError(f"Typing {block_typing_name} is not a RichTextBlockDataBase")
+
+        if data_type is not None and not issubclass(data_class, data_type):
+            raise TypeError(
+                f"Block data type {data_class.__name__} is not a subclass of expected type {data_type.__name__}"
+            )
 
         if data_class is not None:
             return data_class.from_json(self.data)

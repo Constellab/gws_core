@@ -73,10 +73,10 @@ class CreateFolderFromFiles(Task):
         # get the folder name from the config or generate a temp folder
         folder_name = params.get_value("folder_name")
         if folder_name:
-            temp_dir = os.path.join(Settings.get_root_temp_dir(), folder_name)
+            temp_dir = os.path.join(Settings.get_instance().get_root_temp_dir(), folder_name)
             FileHelper.create_dir_if_not_exist(temp_dir)
         else:
-            temp_dir = Settings.get_root_temp_dir()
+            temp_dir = Settings.get_instance().get_root_temp_dir()
 
         configs: list[dict] = params.get_value("filenames")
 

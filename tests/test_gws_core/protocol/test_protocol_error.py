@@ -40,8 +40,8 @@ class ErrorTask(Task):
         raise Exception("This is the error task")
 
 
-@protocol_decorator("TestSubErrorProtocol", human_name="TestSurbErrorProtocol")
-class TestSubErrorProtocol(Protocol):
+@protocol_decorator("SubErrorProtocolTest", human_name="TestSurbErrorProtocol")
+class SubErrorProtocolTest(Protocol):
     def configure_protocol(self) -> None:
         create: ProcessSpec = self.add_process(RobotCreate, "create")
         error: ProcessSpec = self.add_process(ErrorTask, "error")
@@ -49,10 +49,10 @@ class TestSubErrorProtocol(Protocol):
         self.add_connector(create >> "robot", error << "robot")
 
 
-@protocol_decorator("TestErrorProtocol")
-class TestErrorProtocol(Protocol):
+@protocol_decorator("ErrorProtocolTest")
+class ErrorProtocolTest(Protocol):
     def configure_protocol(self) -> None:
-        self.add_process(TestSubErrorProtocol, "sub_proto")
+        self.add_process(SubErrorProtocolTest, "sub_proto")
 
 
 ############## Before task error ###################
@@ -90,8 +90,8 @@ class NotRobotCreate(Task):
         return {"not_robot": NotRobot()}
 
 
-@protocol_decorator("TestSubProtocolBuildError")
-class TestSubProtocolBuildError(Protocol):
+@protocol_decorator("SubProtocolBuildErrorTest")
+class SubProtocolBuildErrorTest(Protocol):
     def configure_protocol(self) -> None:
         not_robot: ProcessSpec = self.add_process(NotRobotCreate, "not_robot")
         move: ProcessSpec = self.add_process(RobotMove, "move")
@@ -99,10 +99,10 @@ class TestSubProtocolBuildError(Protocol):
         self.add_connectors([(not_robot >> "not_robot", move << "robot")])
 
 
-@protocol_decorator("TestProtocolBuildError")
-class TestProtocolBuildError(Protocol):
+@protocol_decorator("ProtocolBuildErrorTest")
+class ProtocolBuildErrorTest(Protocol):
     def configure_protocol(self) -> None:
-        self.add_process(TestSubProtocolBuildError, "sub_proto")
+        self.add_process(SubProtocolBuildErrorTest, "sub_proto")
 
 
 # test_protocol_error
@@ -110,7 +110,7 @@ class TestProtocolError(BaseTestCase):
     def test_error_on_task(self):
         """Test a scenario with a task that throws an exception"""
 
-        protocol = ProtocolService.create_protocol_model_from_type(TestErrorProtocol)
+        protocol = ProtocolService.create_protocol_model_from_type(ErrorProtocolTest)
 
         scenario = ScenarioService.create_scenario_from_protocol_model(protocol)
 
@@ -193,7 +193,7 @@ class TestProtocolError(BaseTestCase):
     def test_protocol_build_error(self):
         """Test an error happens during protocol build"""
         try:
-            ProcessFactory.create_protocol_model_from_type(TestProtocolBuildError)
+            ProcessFactory.create_protocol_model_from_type(ProtocolBuildErrorTest)
         except ProtocolBuildException:
             pass
         else:

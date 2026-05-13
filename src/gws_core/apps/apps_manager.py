@@ -1,5 +1,6 @@
+import os
 import signal
-import sys
+import socket
 from datetime import datetime, timedelta
 
 from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
@@ -118,11 +119,17 @@ class AppsManager:
     def _get_next_available_port(cls, start_port: int | None = None) -> int:
         """Get the next available port for an app.
         This is used to find a port for the env apps.
+
+        A port is considered usable only if it is neither tracked by one of
+        this process's running app processes *nor* actually bound at the OS
+        level — under parallel tests (pytest-xdist) a previous app on this
+        worker may still be shutting down, or a neighbouring worker may hold a
+        port in our band.
         """
         if start_port is None:
             start_port = Settings.get_app_external_port() + 1
 
-        while cls._port_is_used(start_port):
+        while cls._port_is_used(start_port) or cls._port_is_bound(start_port):
             start_port += 1
 
         return start_port
@@ -135,18 +142,53 @@ class AppsManager:
         return False
 
     @classmethod
+    def _port_is_bound(cls, port: int) -> bool:
+        """Return True if something is currently listening on ``port`` (OS-level)."""
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            return sock.connect_ex(("localhost", port)) == 0
+
+    @classmethod
     def init(cls):
-        """Register signal handlers to gracefully stop all processes on exit"""
-
-        def signal_handler(sig, frame):
-            cls.stop_all_processes()
-            sys.exit(0)
-
-        # Register handlers for common termination signals
-        signal.signal(signal.SIGINT, signal_handler)  # CTRL+C
-        signal.signal(signal.SIGTERM, signal_handler)  # Termination request
-
+        cls._register_signal_handlers()
         AppNginxManager.init()
+
+    @classmethod
+    def _register_signal_handlers(cls) -> None:
+        """Register SIGINT/SIGTERM handlers as a safety net to stop child app
+        processes even when graceful shutdown hooks (e.g. FastAPI lifespan)
+        do not run — notably the dev CLIs (`gws reflex run`, `gws streamlit run`)
+        which never start a FastAPI server, and abrupt server terminations.
+
+        The handler chains to the previous handler so uvicorn's own graceful
+        shutdown path still runs in server mode.
+        """
+        for sig in (signal.SIGINT, signal.SIGTERM):
+            previous = signal.getsignal(sig)
+
+            # Only chain to previous handler if it's a real custom handler
+            # (e.g. uvicorn's graceful-shutdown handler). Skip Python defaults
+            # (SIG_DFL, SIG_IGN, default_int_handler) — chaining to
+            # default_int_handler would raise KeyboardInterrupt during
+            # interpreter shutdown and print an "Exception ignored" traceback.
+            should_chain = (
+                callable(previous)
+                and previous not in (signal.SIG_DFL, signal.SIG_IGN)
+                and previous is not signal.default_int_handler
+            )
+
+            def handler(signum, frame, previous=previous, should_chain=should_chain):
+                try:
+                    cls.stop_all_processes()
+                finally:
+                    if should_chain:
+                        previous(signum, frame)
+                    else:
+                        # os._exit skips interpreter finalizers; safer than
+                        # sys.exit when the handler may fire during
+                        # threading._shutdown (cleanup is already done above).
+                        os._exit(0)
+
+            signal.signal(sig, handler)
 
     @classmethod
     def stop_all_processes(cls) -> None:

@@ -3,9 +3,11 @@ import os
 import signal
 import time
 
+import psutil
 from psutil import Popen, Process
 
 from ..exception.exceptions import BadRequestException
+from ..utils.logger import Logger
 
 
 class SysProc:
@@ -114,3 +116,70 @@ class SysProc:
     @staticmethod
     def from_pid(pid) -> "SysProc":
         return SysProc(Process(pid))
+
+    @staticmethod
+    def kill_process_on_port(port: int) -> list[int]:
+        """Find any process with a LISTEN socket on `port` and kill its entire process group.
+
+        Killing the process group (SIGKILL via killpg) takes down the listener
+        plus its supervisor and siblings atomically — necessary for runners like
+        Reflex where the listener's parent would otherwise respawn a replacement
+        between our kill and the next bind attempt.
+
+        Returns the list of PIDs that were targeted (may be empty).
+        If the OS denies access to enumerate sockets, logs a warning and returns [].
+        """
+        try:
+            connections = psutil.net_connections(kind="inet")
+        except psutil.AccessDenied:
+            Logger.warning(
+                "Cannot enumerate listening sockets (permission denied) — skipping port pre-clean"
+            )
+            return []
+
+        offender_pids: list[int] = []
+        for conn in connections:
+            if (
+                conn.status == psutil.CONN_LISTEN
+                and conn.laddr
+                and conn.laddr.port == port
+                and conn.pid is not None
+                and conn.pid not in offender_pids
+            ):
+                offender_pids.append(conn.pid)
+
+        killed_pgids: set[int] = set()
+        killed_pids: list[int] = []
+        for pid in offender_pids:
+            with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied):
+                proc = Process(pid)
+                try:
+                    proc_name = proc.name()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    proc_name = "<unknown>"
+                try:
+                    proc_cmdline = proc.cmdline()
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    proc_cmdline = []
+
+                try:
+                    pgid = os.getpgid(pid)
+                except (ProcessLookupError, OSError):
+                    continue
+
+                Logger.warning(
+                    f"Port {port} is held by orphan process pid={pid} pgid={pgid} "
+                    f"name={proc_name} cmdline={proc_cmdline!r} — killing process group"
+                )
+
+                if pgid not in killed_pgids:
+                    # SIGKILL the whole group atomically — no window for a
+                    # supervisor (e.g. `reflex run`) to respawn the listener.
+                    with contextlib.suppress(ProcessLookupError, OSError):
+                        os.killpg(pgid, signal.SIGKILL)
+                    killed_pgids.add(pgid)
+
+                killed_pids.append(pid)
+                Logger.info(f"Freed port {port} (killed pid={pid} in pgid={pgid})")
+
+        return killed_pids

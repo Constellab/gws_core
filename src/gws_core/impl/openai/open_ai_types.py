@@ -2,6 +2,7 @@ from typing import Literal
 
 import plotly.graph_objs as go
 from pandas import DataFrame
+from pydantic import ConfigDict
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -32,8 +33,7 @@ class AiChatMessageAdditionalInfo(BaseModelDTO):
     dataframes: list[DataFrame] | None = None
     plots: list[go.Figure] | None = None
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
 class AiChatMessage(BaseModelDTO):

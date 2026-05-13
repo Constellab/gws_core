@@ -11,6 +11,7 @@ from gws_core.model.event.event_dispatcher import EventDispatcher
 from .core.classes.cors_config import CorsConfig
 from .core.classes.request_id_middleware import RequestIdMiddleware
 from .core.classes.security_headers import SecurityHeadersMiddleware
+from .apps.apps_manager import AppsManager
 from .lab.api_registry import ApiRegistry
 from .lab.system_service import SystemService
 
@@ -54,6 +55,7 @@ class App:
         """
         Deinitialize the app
         """
+        AppsManager.stop_all_processes()
         SystemService.deinit_queue_and_monitor()
         # Dispatch the system stopped event
         EventDispatcher.get_instance().dispatch(SystemStoppedEvent())

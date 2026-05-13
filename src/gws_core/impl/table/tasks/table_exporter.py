@@ -6,6 +6,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
 from ....config.param.param_spec import BoolParam, StrParam
+from ....config.param.select_param import SelectParam
 from ....core.exception.exceptions.bad_request_exception import BadRequestException
 from ....task.converter.exporter import ResourceExporter, exporter_decorator
 from ..table import Table
@@ -20,14 +21,14 @@ class TableExporter(ResourceExporter):
                 human_name="File name",
                 short_description="File name (without extension)",
             ),
-            "file_format": StrParam(
+            "file_format": SelectParam(
                 optional=True,
                 default_value=Table.DEFAULT_FILE_FORMAT,
-                allowed_values=Table.ALLOWED_FILE_FORMATS,
+                options=Table.ALLOWED_FILE_FORMATS,
                 human_name="File format",
             ),
-            "delimiter": StrParam(
-                allowed_values=Table.ALLOWED_DELIMITER,
+            "delimiter": SelectParam(
+                options=Table.ALLOWED_DELIMITER,
                 default_value=Table.DEFAULT_DELIMITER,
                 human_name="Delimiter character",
                 short_description="Only for CSV files",

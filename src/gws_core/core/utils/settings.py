@@ -1,4 +1,5 @@
 import os
+import re
 import tempfile
 from copy import deepcopy
 from json import JSONDecodeError, dump, load
@@ -32,6 +33,10 @@ class Settings:
 
     data: dict[str, Any]
 
+    # Runtime-only flag set explicitly by SettingsLoader at process startup.
+    # Not persisted to disk: it describes the current invocation, not config.
+    _is_test: bool = False
+
     _setting_instance: Optional["Settings"] = None
 
     SETTINGS_NAME = "settings.json"
@@ -39,6 +44,11 @@ class Settings:
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
     DEFAULT_GWS_MONITOR_LOG_MAX_LINES = 86400  # 1 month of log with 1 log every 30 seconds
+
+    APP_EXTERNAL_PORT_DEFAULT = 8510
+    # Width of the per-worker port band for parallel tests (front/back fit in 2 ports;
+    # 10 leaves headroom for future per-app ports without colliding with the next worker).
+    APP_EXTERNAL_PORT_WORKER_STRIDE = 10
 
     def __init__(self, data: dict):
         self.data = data
@@ -219,14 +229,15 @@ class Settings:
 
     @classmethod
     def get_community_api_url(cls) -> str | None:
-        if cls.is_local_env():
-            return "http://host.docker.internal:3333"
+        # if cls.is_local_env():
+        #     return "http://host.docker.internal:3333"
+        # return "https://community-api-pre-prod.constellab-pre-prod.gencovery.com"
+        # return "https://api.constellab.community"
         return cls.get_os_environ("COMMUNITY_API_URL")
 
     @classmethod
     def get_community_api_url_and_check(cls) -> str:
         """Get the community API URL and check if it's set. Raise an error if it's not set."""
-        # return "https://api.constellab.community"
         url = cls.get_community_api_url()
         if not url:
             raise ValueError("Environment variable 'COMMUNITY_API_URL' is not set")
@@ -236,6 +247,8 @@ class Settings:
     def get_community_front_url(cls) -> str | None:
         # if cls.is_local_env() and not os.environ.get("COMMUNITY_FRONT_URL"):
         #     return "http://localhost:4200"
+        # return "https://community-pre-prod.gencovery.com"
+        # return "https://constellab.community"
         return cls.get_os_environ("COMMUNITY_FRONT_URL")
 
     @classmethod
@@ -343,7 +356,7 @@ class Settings:
 
     @classmethod
     def get_lab_folder(cls) -> str:
-        return "/lab"
+        return os.environ.get("LAB_FOLDER", "/lab")
 
     @classmethod
     def get_user_folder(cls) -> str:
@@ -370,6 +383,10 @@ class Settings:
         return os.path.join(cls.get_system_folder(), "bricks")
 
     @classmethod
+    def get_external_lib_folder(cls) -> str:
+        return os.path.join(cls.get_system_folder(), "lib")
+
+    @classmethod
     def get_gws_core_db_config(cls) -> DbConfig:
         return DbConfig(
             host=cls.get_os_environ("GWS_CORE_DB_HOST"),
@@ -387,20 +404,42 @@ class Settings:
             user=cls.get_os_environ("GWS_TEST_DB_USER"),
             password=cls.get_os_environ("GWS_TEST_DB_PASSWORD"),
             port=int(cls.get_os_environ("GWS_TEST_DB_PORT")),
-            db_name=cls.get_os_environ("GWS_TEST_DB_NAME"),
+            db_name=cls.get_test_db_name(),
             engine="mariadb",
         )
 
     @classmethod
-    def get_root_temp_dir(cls) -> str:
-        """Return the root temp dir"""
+    def get_test_worker_id(cls) -> str:
+        """Return the current pytest-xdist worker id (e.g. "gw0"), or "" outside xdist.
 
-        return os.path.join(cls.get_system_folder(), "tmp")
+        Set by pytest-xdist (PYTEST_XDIST_WORKER=gw0, gw1, ...) or manually via
+        GWS_TEST_WORKER_ID.
+        """
+        return os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
+
+    @classmethod
+    def get_test_worker_offset(cls) -> int:
+        """Return the numeric suffix of the current worker id (gw0 → 0, gw1 → 1), 0 outside xdist."""
+        match = re.search(r"(\d+)$", cls.get_test_worker_id())
+        return int(match.group(1)) if match else 0
+
+    @classmethod
+    def get_test_db_name(cls) -> str:
+        """Return the test DB name, suffixed with the current worker id when present.
+
+        Each worker gets its own schema so parallel tests don't stomp on each
+        other when truncating tables.
+        """
+        base = cls.get_os_environ("GWS_TEST_DB_NAME")
+        worker = cls.get_test_worker_id()
+        if worker:
+            return f"{base}_{worker}"
+        return base
 
     @classmethod
     def make_temp_dir(cls) -> str:
         """Make a unique temp dir"""
-        dir_ = cls.get_root_temp_dir()
+        dir_ = cls.get_instance().get_root_temp_dir()
 
         if not os.path.exists(dir_):
             os.makedirs(dir_)
@@ -411,13 +450,28 @@ class Settings:
 
     @classmethod
     def get_test_folder(cls) -> str:
-        """Return the test dir"""
-        return os.path.join(cls.get_system_folder(), "test")
+        """Return the test dir, suffixed with the worker id for parallel test isolation.
+
+        Each pytest-xdist worker (or any caller setting GWS_TEST_WORKER_ID) gets
+        its own directory so concurrent tests don't stomp on each other's data,
+        kvstore, filestore, logs, etc.
+        """
+        worker = cls.get_test_worker_id()
+        folder_name = f"test-{worker}" if worker else "test"
+        return os.path.join(cls.get_system_folder(), folder_name)
 
     @classmethod
     def build_log_dir(cls, is_test: bool) -> str:
-        """Return the log dir"""
+        """Return the log dir.
+
+        In test mode, GWS_TEST_LOG_DIR overrides the default location so
+        `gws server test-all --output-dir` (or TEST_OUTPUT_DIR) can collect
+        log files alongside JUnit XML reports.
+        """
         if is_test:
+            override = os.environ.get("GWS_TEST_LOG_DIR")
+            if override:
+                return override
             return os.path.join(cls.get_test_folder(), "logs")
         else:
             return os.path.join(cls.get_system_folder(), "logs")
@@ -431,12 +485,17 @@ class Settings:
 
     @classmethod
     def get_app_external_port(cls) -> int:
-        """Returns the port where all the external request to app are sent."""
+        """Returns the port where all the external request to app are sent.
+
+        Under pytest-xdist, each worker is assigned its own port band so parallel
+        reflex/streamlit tests don't fight for the same nginx + app ports. The
+        ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
+        the first worker (``gw0``) / non-xdist runs — the per-worker stride is
+        still applied on top, otherwise every worker would collide on it.
+        """
         external_port = os.environ.get("APP_EXTERNAL_PORT")
-        if external_port is not None:
-            return int(external_port)
-        else:
-            return 8510
+        base_port = int(external_port) if external_port is not None else cls.APP_EXTERNAL_PORT_DEFAULT
+        return base_port + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
 
     @classmethod
     def get_app_sub_domain(cls) -> str:
@@ -518,6 +577,13 @@ class Settings:
         else:
             return self.data.get(k, default)
 
+    def get_root_temp_dir(self) -> str:
+        """Return the root temp dir. Isolated per worker when running parallel tests."""
+
+        if self.is_test:
+            return os.path.join(self.get_test_folder(), "tmp")
+        return os.path.join(self.get_system_folder(), "tmp")
+
     def get_log_dir(self) -> str:
         """
         Get the log directory
@@ -538,7 +604,7 @@ class Settings:
         if self.is_test:
             return os.path.join(self.get_test_folder(), "test")
         else:
-            return "/data"
+            return os.environ.get("DATA_FOLDER", "/data")
 
     def get_data_extensions_dir(self) -> str:
         """
@@ -561,7 +627,8 @@ class Settings:
         :rtype: `str`
         """
         if self.is_test:
-            return os.path.join(self.get_system_folder(), "brick-data-test")
+            # Isolate brick data per worker to avoid cross-talk in parallel runs.
+            return os.path.join(self.get_test_folder(), "brick-data")
         else:
             return os.path.join(self.get_system_folder(), "brick-data")
 
@@ -647,7 +714,10 @@ class Settings:
 
     @property
     def is_test(self) -> bool:
-        return self.data.get("is_test", False)
+        return self._is_test
+
+    def set_is_test(self, is_test: bool) -> None:
+        self._is_test = is_test
 
     @property
     def name(self):

@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from collections.abc import Callable
 
+import pymysql
 from peewee import DatabaseProxy, MySQLDatabase
 from playhouse.shortcuts import ReconnectMixin
 
@@ -109,6 +110,10 @@ class AbstractDbManager:
                 f"Db engine '{db_config.engine}' is not valid",
             )
 
+        if mode == "test":
+            # Per-worker test schemas don't pre-exist; create on demand.
+            self._ensure_test_database_exists(db_config)
+
         _db = ReconnectMySQLDatabase(
             db_config.db_name,
             user=db_config.user,
@@ -123,6 +128,29 @@ class AbstractDbManager:
                 f"Could not connect to the database '{db_config.db_name}' at '{db_config.host}:{db_config.port}' with user '{db_config.user}'"
             )
         self._is_initialized = True
+
+    @staticmethod
+    def _ensure_test_database_exists(db_config: DbConfig) -> None:
+        """Connect to the MariaDB server without a schema and CREATE DATABASE IF NOT EXISTS.
+
+        Uses pymysql directly: peewee's MySQLDatabase requires a schema name at
+        construction time, which we don't have yet when bootstrapping the DB.
+        """
+        conn = pymysql.connect(
+            host=db_config.host,
+            port=db_config.port,
+            user=db_config.user,
+            password=db_config.password,
+        )
+        try:
+            with conn.cursor() as cur:
+                cur.execute(
+                    f"CREATE DATABASE IF NOT EXISTS `{db_config.db_name}` "
+                    "CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                )
+            conn.commit()
+        finally:
+            conn.close()
 
     def get_db(self) -> DatabaseProxy:
         """Get the db object"""

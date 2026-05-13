@@ -2,7 +2,7 @@ import os
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.compress.tar_compress import TarCompress, TarGzCompress
 from gws_core.core.utils.compress.zip_compress import ZipCompress
 from gws_core.impl.file.file import File
@@ -22,11 +22,11 @@ from gws_core.task.converter.exporter import ResourceExporter, exporter_decorato
 class FolderExporter(ResourceExporter):
     config_specs = ConfigSpecs(
         {
-            "compression": StrParam(
+            "compression": SelectParam(
                 optional=True,
                 human_name="Compression type",
                 default_value="zip",
-                allowed_values=["zip", "tar", "tar.gz"],
+                options=["zip", "tar", "tar.gz"],
             )
         }
     )

@@ -1,6 +1,7 @@
 from ....config.config_params import ConfigParams
 from ....config.config_specs import ConfigSpecs
-from ....config.param.param_spec import BoolParam, StrParam
+from ....config.param.param_spec import BoolParam
+from ....config.param.select_param import SelectParam
 from ....task.transformer.transformer import Transformer, transformer_decorator
 from ...table.table import Table
 from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
@@ -20,9 +21,9 @@ class TableColumnAggregator(Transformer):
 
     config_specs = ConfigSpecs(
         {
-            "function": StrParam(
+            "function": SelectParam(
                 human_name="Aggregation function",
-                allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
+                options=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
                 short_description="Function applied to aggregate values along the columns",
             ),
             "skip_nan": BoolParam(
@@ -59,9 +60,9 @@ class TableRowAggregator(Transformer):
 
     config_specs = ConfigSpecs(
         {
-            "function": StrParam(
+            "function": SelectParam(
                 human_name="Aggregation function",
-                allowed_values=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
+                options=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
                 short_description="Function applied to aggregate values along the rows",
             ),
             "skip_nan": BoolParam(

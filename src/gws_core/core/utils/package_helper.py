@@ -19,15 +19,15 @@ class PackageHelper:
 
     @staticmethod
     def install(package):
-        """Install a package using pip"""
+        """Install a package using uv pip"""
         proxy = ShellProxy()
-        proxy.run([sys.executable, "-m", "pip", "install", package])
+        proxy.run(["uv", "pip", "install", package])
 
     @staticmethod
     def uninstall(package):
-        """Uninstall a package using pip"""
+        """Uninstall a package using uv pip"""
         proxy = ShellProxy()
-        proxy.run([sys.executable, "-m", "pip", "uninstall", "-y", package])
+        proxy.run(["uv", "pip", "uninstall", package])
 
     @staticmethod
     def load_module_from_file(file_path, module_name=None):

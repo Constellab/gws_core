@@ -1,11 +1,10 @@
-
-from gws_core.config.param.param_spec_decorator import ParamSpecType, param_spec_decorator
-from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecTypeStr
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.config.param.param_types import ParamSpecType
 
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(type_=ParamSpecType.LAB_SPECIFIC)
+@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
 class PerlCodeParam(TextParam):
     """Param for perl code. It shows a simple perl IDE
       in the interface to provide code for perl.
@@ -17,13 +16,5 @@ class PerlCodeParam(TextParam):
     """
 
     @classmethod
-    def get_str_type(cls) -> ParamSpecTypeStr:
-        return ParamSpecTypeStr.PERL_CODE
-
-    @classmethod
-    def get_default_value_param_spec(cls) -> "PerlCodeParam":
-        return PerlCodeParam()
-
-    @classmethod
-    def get_additional_infos(cls) -> dict[str, ParamSpecDTO]:
-        return None
+    def get_param_spec_type(cls) -> ParamSpecType:
+        return ParamSpecType.PERL_CODE

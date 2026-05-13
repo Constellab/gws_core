@@ -116,6 +116,10 @@ class AppProcess:
     def uses_port(self, port: int) -> bool:
         """Check if the process uses the given port"""
 
+    @abstractmethod
+    def get_ports(self) -> list[int]:
+        """Return all local ports this process will bind to."""
+
     def get_status(self) -> AppProcessStatus:
         """Get the current status of the app process"""
         return self._status
@@ -164,6 +168,8 @@ class AppProcess:
 
         self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
+        self._kill_process_on_ports()
+
         try:
             self._save_config()
 
@@ -174,10 +180,20 @@ class AppProcess:
             self.stop_process()
             raise e
 
+    def _kill_process_on_ports(self) -> None:
+        """Kill the process that uses the ports of the app. This is used to free the ports before starting the app."""
+        for port in self.get_ports():
+            killed = SysProc.kill_process_on_port(port)
+            if killed:
+                Logger.warning(
+                    f"Killed process(es) {killed} using port {port} for app {self._app.resource_model_id}"
+                )
+
     def _start_app_and_watch(self) -> None:
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
+
             result = self._start_process(self._app)
             self._process = result.process
             self._services = result.services
@@ -477,7 +493,11 @@ class AppProcess:
                     return
                 # if there is not more connection to the app, we stop it
                 # In dev mode or when auto stop is disabled, we do not stop the app even if there is no connection
-                if not self._app.is_dev_mode() and not self._app.disable_auto_stop and not self._check_running():
+                if (
+                    not self._app.is_dev_mode()
+                    and not self._app.disable_auto_stop
+                    and not self._check_running()
+                ):
                     Logger.debug("No more connection to the app, stopping the app")
                     self.stop_process()
                     return
@@ -512,14 +532,18 @@ class AppProcess:
             return True
 
     def count_connections(self) -> int:
-        if not self._process:
+        if not self._process or not self._process.is_alive():
             return 0
+
+        try:
+            pid_with_children = [child.pid for child in self._process.get_all_children()]
+        except psutil.NoSuchProcess:
+            # The process died between is_alive() and children() — treat as no connections.
+            return 0
+        pid_with_children.append(self._process.pid)
 
         # get the list of the connections
         connections = psutil.net_connections(kind="inet")
-
-        pid_with_children = [child.pid for child in self._process.get_all_children()]
-        pid_with_children.append(self._process.pid)
 
         return len(
             [x for x in connections if x.pid in pid_with_children and x.status == "ESTABLISHED"]

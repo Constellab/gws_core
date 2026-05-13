@@ -7,16 +7,8 @@ echo "Installing gws cli"
 # use to get the directory of the script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-pip install -e $SCRIPT_DIR/../gws_cli
+uv pip install -e "$SCRIPT_DIR/../gws_cli"
 echo "Cli installed successfully"
-
-# Install pigz (parallel gzip) for faster compression in resource sharing
-echo "Installing pigz"
-if command -v apt-get >/dev/null 2>&1; then
-    sudo apt-get install -y pigz || apt-get install -y pigz
-else
-    echo "apt-get not found, skipping pigz install"
-fi
 
 # Update Claude Code configuration if in dev mode
 if [ "$LAB_MODE" = "dev" ]; then

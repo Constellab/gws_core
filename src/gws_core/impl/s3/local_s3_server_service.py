@@ -40,7 +40,9 @@ class LocalS3ServerService(AbstractS3Service):
     @property
     def _multipart_dir(self) -> str:
         """Path to multipart upload temp directory, stored in system temp to avoid permission issues"""
-        return path.join(Settings.get_root_temp_dir(), ".s3_multipart", self.bucket_name)
+        return path.join(
+            Settings.get_instance().get_root_temp_dir(), ".s3_multipart", self.bucket_name
+        )
 
     @property
     def _multipart_state_file(self) -> str:
@@ -255,7 +257,11 @@ class LocalS3ServerService(AbstractS3Service):
         return all_keys
 
     def upload_object(
-        self, key: str, data: ByteString, tags: dict[str, str] | None = None, last_modified: float | None = None
+        self,
+        key: str,
+        data: ByteString,
+        tags: dict[str, str] | None = None,
+        last_modified: float | None = None,
     ) -> dict:
         """Upload an object to the bucket"""
         del tags  # Unused parameter
@@ -338,7 +344,10 @@ class LocalS3ServerService(AbstractS3Service):
         """Initiate a multipart upload and return upload ID"""
         # Throttle cleanup: only run every 60 seconds
         current_time = time.time()
-        if not hasattr(self, '_last_cleanup_time') or current_time - self._last_cleanup_time > self._CLEANUP_INTERVAL_SECONDS:
+        if (
+            not hasattr(self, "_last_cleanup_time")
+            or current_time - self._last_cleanup_time > self._CLEANUP_INTERVAL_SECONDS
+        ):
             self._cleanup_abandoned_uploads()
             self._last_cleanup_time = current_time
 

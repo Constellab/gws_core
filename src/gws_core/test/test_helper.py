@@ -66,6 +66,13 @@ class TestHelper:
         BaseModelService.drop_tables()
 
     @classmethod
+    def truncate_tables(cls):
+        """
+        Truncate all tables. Faster than drop+create when the schema is unchanged.
+        """
+        BaseModelService.truncate_tables()
+
+    @classmethod
     def delete_data_and_temp_folder(cls):
         """
         Drops tables

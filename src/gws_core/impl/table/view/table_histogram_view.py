@@ -7,7 +7,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.utils.utils import Utils
 
 from ....config.config_params import ConfigParams
-from ....config.param.param_spec import IntParam, ListParam, StrParam
+from ....config.param.param_spec import IntParam, ListParam
+from ....config.param.select_param import SelectParam
 from ....resource.view.view_types import ViewType
 from ...view.histogram_view import HistogramMode, HistogramView
 from .base_table_view import BaseTableView
@@ -64,11 +65,11 @@ class TableHistogramView(BaseTableView):
                 human_name="Nbins",
                 short_description="The number of bins. Set zero (0) for auto.",
             ),
-            "mode": StrParam(
+            "mode": SelectParam(
                 default_value="FREQUENCY",
                 optional=True,
                 human_name="Mode",
-                allowed_values=Utils.get_literal_values(HistogramMode),
+                options=Utils.get_literal_values(HistogramMode),
             ),
         }
     ).merge_specs(BaseTableView._2d_axis_labels_specs)

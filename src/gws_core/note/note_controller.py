@@ -8,7 +8,13 @@ from gws_core.scenario.scenario_dto import ScenarioDTO
 from ..core.classes.search_builder import SearchParams
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
-from .note_dto import NoteDTO, NoteInsertTemplateDTO, NoteSaveDTO
+from .note_dto import (
+    InsertFormReferenceBlockDTO,
+    InsertNewFormBlockDTO,
+    NoteDTO,
+    NoteInsertTemplateDTO,
+    NoteSaveDTO,
+)
 from .note_service import NoteService
 
 
@@ -67,6 +73,32 @@ def insert_template(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> RichTextDTO:
     return NoteService.insert_template(note_id, data).content
+
+
+@core_app.post(
+    "/note/{note_id}/block/form/new",
+    tags=["Note"],
+    summary="Insert a new form block by creating a Form from a template version",
+)
+def insert_form_block_new(
+    note_id: str,
+    data: InsertNewFormBlockDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> NoteDTO:
+    return NoteService.insert_form_block_new(note_id, data).to_dto()
+
+
+@core_app.post(
+    "/note/{note_id}/block/form/reference",
+    tags=["Note"],
+    summary="Insert a form block referencing an existing Form",
+)
+def insert_form_block_reference(
+    note_id: str,
+    data: InsertFormReferenceBlockDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> NoteDTO:
+    return NoteService.insert_form_block_reference(note_id, data).to_dto()
 
 
 @core_app.put(

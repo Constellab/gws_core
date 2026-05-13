@@ -1,4 +1,4 @@
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.impl.table.helper.dataframe_scaler_helper import DataframeScalerHelper
 from gws_core.impl.table.helper.table_scaler_helper import TableScalerHelper
 
@@ -24,9 +24,9 @@ class TableScaler(Transformer):
 
     config_specs = ConfigSpecs(
         {
-            "scaling_function": StrParam(
+            "scaling_function": SelectParam(
                 human_name="Scaling function",
-                allowed_values=DataframeScalerHelper.SCALE_FUNCTIONS,
+                options=DataframeScalerHelper.SCALE_FUNCTIONS,
             )
         }
     )
@@ -35,9 +35,9 @@ class TableScaler(Transformer):
         return TableScalerHelper.scale(table=source, func=params["scaling_function"])
 
 
-axis_scale_param = StrParam(
+axis_scale_param = SelectParam(
     human_name="Scaling function",
-    allowed_values=DataframeScalerHelper.AXIS_SCALE_FUNCTIONS,
+    options=DataframeScalerHelper.AXIS_SCALE_FUNCTIONS,
 )
 
 

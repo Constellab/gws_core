@@ -47,6 +47,7 @@ from .config.param.code_param.r_code_param import RCodeParam as RCodeParam
 from .config.param.code_param.yaml_code_param import YamlCodeParam as YamlCodeParam
 
 # from .config.param_spec import DictParam as DictParam
+from .config.param.computed.computed_param import ComputedParam as ComputedParam
 from .config.param.param_set import ParamSet as ParamSet
 from .config.param.param_spec import BoolParam as BoolParam
 from .config.param.param_spec import DictParam as DictParam
@@ -58,6 +59,8 @@ from .config.param.param_spec import ParamSpec as ParamSpec
 from .config.param.param_spec import StrParam as StrParam
 from .config.param.param_spec import TextParam as TextParam
 from .config.param.param_types import ParamValue as ParamValue
+from .config.param.select_param import SelectParam as SelectParam
+from .config.param.select_param import SelectParamOption as SelectParamOption
 from .config.param.tags_param_spec import TagsParam as TagsParam
 
 # Core
@@ -197,6 +200,7 @@ from .impl.agent.r_mamba_agent import RMambaAgent as RMambaAgent
 
 # Impl > File
 from .impl.file.file import File as File
+from .impl.file.file_decompress_task import FileDecompressTask as FileDecompressTask
 from .impl.file.file_helper import FileHelper as FileHelper
 from .impl.file.file_r_field import FileRField as FileRField
 from .impl.file.file_tasks import FsNodeExtractor as FsNodeExtractor
@@ -246,6 +250,10 @@ from .impl.rich_text.block.rich_text_block_decorator import (
 )
 from .impl.rich_text.block.rich_text_block_figure import RichTextBlockFigure as RichTextBlockFigure
 from .impl.rich_text.block.rich_text_block_file import RichTextBlockFile as RichTextBlockFile
+from .impl.rich_text.block.rich_text_block_form import RichTextBlockForm as RichTextBlockForm
+from .impl.rich_text.block.rich_text_block_form_template import (
+    RichTextBlockFormTemplate as RichTextBlockFormTemplate,
+)
 from .impl.rich_text.block.rich_text_block_formula import (
     RichTextBlockFormula as RichTextBlockFormula,
 )
@@ -446,6 +454,7 @@ from .note.note_dto import NoteDTO as NoteDTO
 from .note.note_dto import NoteSaveDTO as NoteSaveDTO
 from .note.note_events import NoteContentUpdatedEvent as NoteContentUpdatedEvent
 from .note.note_events import NoteDeletedEvent as NoteDeletedEvent
+from .note.note_form_model import NoteFormModel as NoteFormModel
 from .note.note_search_builder import NoteSearchBuilder as NoteSearchBuilder
 from .note.note_service import NoteService as NoteService
 from .note.task.lab_note_resource import LabNoteResource as LabNoteResource
@@ -455,6 +464,12 @@ from .note.task.note_param import NoteParam as NoteParam
 
 # Note template
 from .note_template.note_template import NoteTemplate as NoteTemplate
+from .note_template.note_template_events import (
+    NoteTemplateContentUpdatedEvent as NoteTemplateContentUpdatedEvent,
+)
+from .note_template.note_template_form_template_model import (
+    NoteTemplateFormTemplateModel as NoteTemplateFormTemplateModel,
+)
 from .note_template.note_template_service import NoteTemplateService as NoteTemplateService
 
 # Note template > task
@@ -530,6 +545,8 @@ from .scenario.queue.queue import Job as Job
 from .scenario.queue.queue_runner import QueueRunner as QueueRunner
 from .scenario.queue.queue_service import QueueService as QueueService
 from .scenario.scenario import Scenario as Scenario
+from .scenario.scenario_archive_zipper import ScenarioArchiveZipper as ScenarioArchiveZipper
+from .scenario.scenario_builder import ScenarioBuilder as ScenarioBuilder
 from .scenario.scenario_dto import ScenarioSaveDTO as ScenarioSaveDTO
 from .scenario.scenario_enums import ScenarioCreationType as ScenarioCreationType
 from .scenario.scenario_enums import ScenarioProcessStatus as ScenarioProcessStatus
@@ -544,6 +561,7 @@ from .scenario.scenario_transfert_service import (
 from .scenario.scenario_waiter import ScenarioWaiter as ScenarioWaiter
 from .scenario.scenario_waiter import ScenarioWaiterBasic as ScenarioWaiterBasic
 from .scenario.scenario_waiter import ScenarioWaiterExternalLab as ScenarioWaiterExternalLab
+from .scenario.task.scenario_param import ScenarioParam as ScenarioParam
 from .scenario.task.send_scenario_to_lab import SendScenarioToLab as SendScenarioToLab
 
 # Scenario template
@@ -556,6 +574,7 @@ from .share.share_link import ShareLink as ShareLink
 # Share
 from .share.share_link_service import ShareLinkService as ShareLinkService
 from .share.shared_dto import GenerateShareLinkDTO as GenerateShareLinkDTO
+from .share.shared_dto import ShareEntityCreateMode as ShareEntityCreateMode
 from .share.shared_dto import ShareLinkEntityType as ShareLinkEntityType
 from .share.shared_dto import ShareLinkType as ShareLinkType
 from .share.shared_dto import UpdateShareLinkDTO as UpdateShareLinkDTO

@@ -4,13 +4,14 @@ import sys
 from pathlib import Path
 
 import typer
+from gws_core.core.utils.settings import Settings
 
 
 class ScreenshotService:
     """Service to take screenshots of web applications using Playwright"""
 
     # Default paths
-    DEFAULT_OUTPUT_DIR = "/lab/user"
+    DEFAULT_OUTPUT_DIR = Settings.get_user_folder()
     DEFAULT_SCREENSHOT_FILENAME = "app_screenshot.png"
     DEFAULT_CONSOLE_LOG_FILENAME = "console_logs.txt"
 
@@ -28,7 +29,7 @@ class ScreenshotService:
             typer.echo("Playwright not found. Installing playwright...")
             try:
                 # Install playwright package
-                subprocess.check_call([sys.executable, "-m", "pip", "install", "playwright"])
+                subprocess.check_call(["uv", "pip", "install", "playwright"])
                 typer.echo("Playwright package installed successfully.")
             except subprocess.CalledProcessError as e:
                 typer.echo(f"Failed to install playwright: {e}", err=True)

@@ -4,6 +4,7 @@ from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
@@ -41,10 +42,10 @@ class GenerateTechnicalDocMarkdown(Task):
                 human_name="Brick name",
                 short_description="The name of the brick to generate the technical documentation",
             ),
-            "object_type": StrParam(
+            "object_type": SelectParam(
                 human_name="Object type",
                 short_description="The object type to generate the technical documentation",
-                allowed_values=["Resource", "Task", "Protocol"],
+                options=["Resource", "Task", "Protocol"],
             ),
             "separator": StrParam(
                 human_name="Separator",

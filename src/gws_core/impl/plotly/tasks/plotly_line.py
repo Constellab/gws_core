@@ -3,6 +3,7 @@ import plotly.express as px
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import BoolParam, StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.model.typing_style import TypingStyle
 
 from ....config.config_params import ConfigParams
@@ -64,11 +65,11 @@ class PlotlyLine(PlotlyTask):
                 optional=True,
                 short_description="if ticked, markers are shown on line",
             ),
-            "line_shape": StrParam(
+            "line_shape": SelectParam(
                 default_value=None,
                 optional=True,
                 human_name="line shape",
-                allowed_values=["linear", "spline"],
+                options=["linear", "spline"],
                 visibility="protected",
                 short_description="",
             ),

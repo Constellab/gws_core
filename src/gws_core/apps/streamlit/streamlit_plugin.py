@@ -1,4 +1,3 @@
-import json
 import os
 import re
 
@@ -8,7 +7,6 @@ from bs4 import BeautifulSoup, Comment, Tag
 from gws_core.apps.app_plugin_downloader import AppPluginDownloader
 from gws_core.apps.app_plugin_html_parser import AppPluginHtmlParser
 from gws_core.core.utils.logger import Logger
-from gws_core.core.utils.settings import Settings
 
 
 class StreamlitPlugin(AppPluginDownloader):
@@ -28,13 +26,10 @@ class StreamlitPlugin(AppPluginDownloader):
 
     # Path of the index.html folder in the streamlit package
     INDEX_HTML_FOLDER = "static"
-    INDEX_HTML = "index.html"
     INDEX_HTML_STATIC_FOLDER = "static"
 
     # Path of the injected code relative to index.html
     PLUGIN_FOLDER_NAME = "gws_plugin"
-    PLUGIN_ENVIRONMENT_FOLDER = "assets"
-    PLUGIN_ENVIRONMENT_JSON = "environment.json"
     PLUGIN_VERSION_FILE = "version.json"
 
     def __init__(self):
@@ -81,13 +76,13 @@ class StreamlitPlugin(AppPluginDownloader):
         """
         Get the path to the streamlit HTML folder.
         """
-        return os.path.join(self.get_streamlit_html_folder_path(), self.INDEX_HTML)
+        return os.path.join(self.get_streamlit_html_folder_path(), self.INDEX_HTML_FILE_NAME)
 
     def get_plugin_html_file_path(self) -> str:
         """
         Get the path to the plugin HTML folder.
         """
-        return os.path.join(self.get_plugin_path(), self.INDEX_HTML)
+        return os.path.join(self.get_plugin_path(), self.INDEX_HTML_FILE_NAME)
 
     def get_plugin_relative_path(self) -> str:
         """
@@ -144,27 +139,8 @@ class StreamlitPlugin(AppPluginDownloader):
             if match:
                 return match.group(1)
 
-    def create_environment_json_file(self):
-        """Create the environment.json file for the plugin."""
-        dict_ = {
-            "apiBaseUrl": Settings.get_lab_api_url(),
-            "baseHref": self.get_plugin_relative_path(),
-            "spaceApiUrl": Settings.get_space_api_url(),
-            "communityFrontUrl": Settings.get_community_front_url(),
-            "communityApiUrl": Settings.get_community_api_url(),
-        }
-
-        # Define the path for the JSON file
-        json_dir = os.path.join(self.get_plugin_path(), self.PLUGIN_ENVIRONMENT_FOLDER)
-        # if the file doesn't exists, throw an error
-        if not os.path.exists(json_dir):
-            raise FileNotFoundError(f"The folder for json env {json_dir} does not exist.")
-
-        json_file_path = os.path.join(json_dir, self.PLUGIN_ENVIRONMENT_JSON)
-
-        # Write the dictionary to the JSON file
-        with open(json_file_path, "w", encoding="utf-8") as json_file:
-            json.dump(dict_, json_file, indent=4)
+    def get_base_href(self) -> str:
+        return self.get_plugin_relative_path()
 
     def modifiy_streamlit_index_html(self):
         """Modify the Streamlit index.html file to inject the plugin."""

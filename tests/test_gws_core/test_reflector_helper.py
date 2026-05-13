@@ -110,7 +110,7 @@ class NumpyStyleClass:
         return [[cell * scale for cell in row] for row in matrix]
 
 
-class TestClass:
+class ReflectorHelperClass:
     """A simple test class for various reflector tests."""
 
     property_str: str = "test"
@@ -148,7 +148,7 @@ class TestReflectorHelper(unittest.TestCase):
 
     def test_get_property_names_of_type(self):
         """Test get_property_names_of_type method."""
-        properties = ReflectorHelper.get_property_names_of_type(TestClass, str)
+        properties = ReflectorHelper.get_property_names_of_type(ReflectorHelperClass, str)
 
         self.assertIsInstance(properties, dict)
         self.assertIn("property_str", properties)
@@ -322,7 +322,7 @@ class TestReflectorHelper(unittest.TestCase):
 
     def test_get_all_public_args(self):
         """Test get_all_public_args method."""
-        variables = ReflectorHelper.get_all_public_args(TestClass)
+        variables = ReflectorHelper.get_all_public_args(ReflectorHelperClass)
 
         self.assertIsInstance(variables, dict)
         self.assertIn("property_str", variables)
@@ -346,7 +346,7 @@ class TestReflectorHelper(unittest.TestCase):
     def test_get_public_method_names(self):
         """Test get_public_method_names method."""
         # Without __init__
-        methods = ReflectorHelper.get_public_method_names(TestClass, include_init=False)
+        methods = ReflectorHelper.get_public_method_names(ReflectorHelperClass, include_init=False)
 
         self.assertIsInstance(methods, list)
         self.assertIn("public_method", methods)
@@ -354,7 +354,7 @@ class TestReflectorHelper(unittest.TestCase):
         self.assertNotIn("__init__", methods)
 
         # With __init__
-        methods_with_init = ReflectorHelper.get_public_method_names(TestClass, include_init=True)
+        methods_with_init = ReflectorHelper.get_public_method_names(ReflectorHelperClass, include_init=True)
         self.assertIn("__init__", methods_with_init)
         self.assertIn("public_method", methods_with_init)
 

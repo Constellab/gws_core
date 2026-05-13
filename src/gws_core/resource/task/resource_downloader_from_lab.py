@@ -3,6 +3,7 @@ from typing import cast
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
 from gws_core.core.utils.utils import Utils
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
@@ -43,9 +44,9 @@ class ResourceDownloaderFromLab(ResourceDownloaderBase):
                 short_description="ID of the resource to download on the source lab",
             ),
             "uncompress": ResourceDownloaderBase.uncompress_config,
-            "create_option": StrParam(
+            "create_option": SelectParam(
                 human_name="Create option",
-                allowed_values=Utils.get_literal_values(ResourceDownloaderCreateOption),
+                options=Utils.get_literal_values(ResourceDownloaderCreateOption),
                 default_value="Update if exists",
             ),
             "skip_tags": ResourceDownloaderBase.skip_tags_config,

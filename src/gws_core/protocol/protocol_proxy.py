@@ -118,6 +118,24 @@ class ProtocolProxy(ProcessProxy):
         else:
             return TaskProxy(process)
 
+    def get_protocol(self, instance_name: str) -> "ProtocolProxy":
+        """Retrieve a sub-protocol in this protocol. Raises if the process is a task."""
+        process = self.get_process(instance_name)
+        if not isinstance(process, ProtocolProxy):
+            raise BadRequestException(
+                f"Process '{instance_name}' is a task, not a protocol"
+            )
+        return process
+
+    def get_task(self, instance_name: str) -> TaskProxy:
+        """Retrieve a task in this protocol. Raises if the process is a sub-protocol."""
+        process = self.get_process(instance_name)
+        if not isinstance(process, TaskProxy):
+            raise BadRequestException(
+                f"Process '{instance_name}' is a protocol, not a task"
+            )
+        return process
+
     def get_process_by_id(self, process_id: str) -> ProcessProxy | None:
         """retreive a protocol or a task in this protocol by id
 

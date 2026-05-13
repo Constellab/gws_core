@@ -14,7 +14,7 @@ ParamValueType = type[ParamValue]
 ParamSpecVisibilty = Literal["public", "protected", "private"]
 
 
-class ParamSpecTypeStr(Enum):
+class ParamSpecType(Enum):
     STRING = "str"
     TEXT = "text"
     BOOL = "bool"
@@ -22,6 +22,7 @@ class ParamSpecTypeStr(Enum):
     FLOAT = "float"
     DICT = "dict"
     LIST = "list"
+    SELECT = "select_param"
     DYNAMIC_PARAM = "dynamic"
     PARAM_SET = "param_set"
     TAGS = "tags_param"
@@ -40,14 +41,15 @@ class ParamSpecTypeStr(Enum):
     NOTE_TEMPLATE = "note_template_param"
     SCENARIO = "scenario_param"
     LAB_MODEL = "lab_model_param"
+    COMPUTED = "computed_param"
 
 
 class ParamSpecSimpleDTO(BaseModelDTO):
-    type: ParamSpecTypeStr
+    type: ParamSpecType
     optional: bool
     visibility: ParamSpecVisibilty = "public"
     default_value: ParamValue | None = None
-    additional_info: dict | None = {}
+    additional_info: dict = {}
 
 
 class ParamSpecDTO(ParamSpecSimpleDTO):
@@ -65,28 +67,14 @@ class ParamSpecDTO(ParamSpecSimpleDTO):
 
         # write the default value (only for basic types)
         basic_types = [
-            ParamSpecTypeStr.STRING,
-            ParamSpecTypeStr.TEXT,
-            ParamSpecTypeStr.BOOL,
-            ParamSpecTypeStr.INT,
-            ParamSpecTypeStr.FLOAT,
+            ParamSpecType.STRING,
+            ParamSpecType.TEXT,
+            ParamSpecType.BOOL,
+            ParamSpecType.INT,
+            ParamSpecType.FLOAT,
+            ParamSpecType.SELECT,
         ]
-        if self.type in [basic_types] and self.default_value:
+        if self.type in basic_types and self.default_value:
             markdown += f", default to '{self.default_value}'"
 
         return markdown
-
-
-class ParamSpecInfoSpecs(BaseModelDTO):
-    optional: ParamSpecDTO
-    # visibility: ParamSpecDTO
-    name: ParamSpecDTO
-    short_description: ParamSpecDTO
-    human_name: ParamSpecDTO | None = None
-    default_value: ParamSpecDTO | None = None
-    additional_info: dict[str, ParamSpecDTO] | None = None
-
-
-DynamicParamAllowedSpecsDict = dict[str, ParamSpecInfoSpecs]
-
-CompleteDynamicParamAllowedSpecsDict = dict[str, DynamicParamAllowedSpecsDict]
