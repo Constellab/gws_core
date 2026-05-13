@@ -84,7 +84,7 @@ class ConfigSpecs:
     def add_spec(self, spec_name: str, spec: ParamSpec) -> None:
         self._validate_spec_key(spec_name)
         if spec_name in self.specs:
-            raise Exception(f"The spec {spec_name} already exists")
+            raise Exception(f"The spec '{spec_name}' already exists")
         self.specs[spec_name] = spec
 
     def add_or_update_spec(self, spec_name: str, spec: ParamSpec) -> None:

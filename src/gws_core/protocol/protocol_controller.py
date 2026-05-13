@@ -750,6 +750,35 @@ def download_template(
     )
 
 
+class ReorderDynamicParamSpecsDTO(BaseModelDTO):
+    """Full ordered list of dynamic-param names after a drag operation.
+
+    The set must match the current dynamic params exactly; the backend
+    rejects mismatches (typically caused by a concurrent add/remove) so
+    the frontend can refetch and retry.
+    """
+
+    param_names: list[str]
+
+
+@core_app.put(
+    "/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/reorder",
+    tags=["Protocol"],
+    summary="Reorder the dynamic params of a process",
+)
+def reorder_dynamic_param_specs_of_process(
+    id_: str,
+    process_name: str,
+    config_spec_name: str,
+    body: ReorderDynamicParamSpecsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ProtocolUpdateDTO:
+    with update_lock:
+        return ProtocolService.reorder_dynamic_param_specs_of_process(
+            id_, process_name, config_spec_name, body.param_names
+        ).to_dto()
+
+
 @core_app.post(
     "/protocol/{id_}/process/{process_name}/{config_spec_name}/dynamic-param-spec/{param_name}",
     tags=["Protocol"],

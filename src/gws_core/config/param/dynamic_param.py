@@ -148,6 +148,26 @@ class DynamicParam(ParamSpec):
     def remove_spec(self, param_name: str) -> None:
         self.specs.remove_spec(param_name)
 
+    def reorder_specs(self, param_names: list[str]) -> None:
+        """Reorder the contained specs to match ``param_names``.
+
+        The set of names must exactly match the current specs — no additions,
+        no removals. Sending the complete order (rather than a from/to index)
+        keeps the call idempotent and safe against concurrent edits.
+        """
+        current = list(self.specs.get_specs_as_dict().keys())
+        if len(param_names) != len(set(param_names)):
+            raise BadRequestException("Reorder list contains duplicate param names.")
+        if set(param_names) != set(current):
+            missing = sorted(set(current) - set(param_names))
+            unknown = sorted(set(param_names) - set(current))
+            raise BadRequestException(
+                "Reorder list does not match the current dynamic params. "
+                f"missing={missing}, unknown={unknown}. "
+                "Refetch and retry."
+            )
+        self.specs.specs = {name: self.specs.get_spec(name) for name in param_names}
+
     def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
         spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
         # TODO A VERIFIER

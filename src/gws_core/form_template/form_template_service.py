@@ -15,7 +15,6 @@ from gws_core.core.exception.exceptions.bad_request_exception import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.form.form import Form
-from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
@@ -24,6 +23,7 @@ from gws_core.form_template.form_template_dto import (
     FormTemplateVersionStatus,
     ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
+    TestFormTemplateVersionResultDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
     ValidateComputedParamResultDTO,
@@ -272,19 +272,27 @@ class FormTemplateService:
         template_id: str,
         version_id: str,
         dto: TestFormTemplateVersionDTO,
-    ) -> FormSaveResultDTO:
+    ) -> TestFormTemplateVersionResultDTO:
         """Validate a set of values against a version's specs without persisting.
 
-        Runs the exact same validation pipeline as a (non-submitting)
-        ``FormService.save`` — computed keys stripped, type validation,
-        computed-value evaluation — and returns the same ``FormSaveResultDTO``
-        payload. No Form is created, no FormSaveEvent is written, and the
-        version may be DRAFT.
+        Runs the same validation pipeline as a SUBMITTED-transition save
+        (computed keys stripped, type validation, computed-value evaluation,
+        mandatory-field check) but does not raise: the submit-gate failures
+        are returned alongside the renderable result so the front-end can
+        display them. No Form is created, no FormSaveEvent is written, and
+        the version may be DRAFT.
         """
         version = cls.get_version(template_id, version_id)
         specs = version.get_content()
         new_values, errors = FormService.validate_values_against_specs(specs, dto.values)
-        return FormService.build_save_result(new_values, specs, errors)
+        return TestFormTemplateVersionResultDTO(
+            result=FormService.build_save_result(new_values, specs, errors),
+            missing_mandatory_paths=specs.get_missing_mandatory_paths(new_values),
+            computed_errors=sorted(
+                f"{FormService._format_error_key(specs, key)}: {message}"
+                for key, message in errors.items()
+            ),
+        )
 
     @classmethod
     def list_versions(cls, template_id: str) -> list[FormTemplateVersion]:

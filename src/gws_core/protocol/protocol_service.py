@@ -1378,6 +1378,29 @@ class ProtocolService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
+    def reorder_dynamic_param_specs_of_process(
+        cls,
+        protocol_id: str,
+        process_name: str,
+        config_spec_name: str,
+        param_names: list[str],
+    ) -> ProtocolUpdate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_model = protocol_model.get_process(process_name)
+
+        dynamic_param_spec: DynamicParam = cls._get_and_check_dynamic_param(
+            process_model=process_model, config_spec_name=config_spec_name
+        )
+
+        dynamic_param_spec.reorder_specs(param_names)
+
+        return cls._update_dynamic_param_config_spec(
+            protocol_model, process_model, config_spec_name, dynamic_param_spec
+        )
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
     def remove_dynamic_param_spec_of_process(
         cls, protocol_id: str, process_name: str, config_spec_name: str, param_name: str
     ) -> ProtocolUpdate:

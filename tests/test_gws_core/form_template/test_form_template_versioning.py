@@ -141,6 +141,52 @@ class TestFormTemplateVersioning(BaseTestCase):
         # The ParamSet name should be in the error so the field is easy to find.
         self.assertIn("rows", str(ctx.exception))
 
+    def test_reorder_draft_fields(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a", "b", "c"]))
+
+        FormTemplateService.reorder_draft_fields(
+            template.id, draft.id, ["c", "a", "b"]
+        )
+
+        updated = FormTemplateService.get_version(template.id, draft.id)
+        self.assertEqual(list(updated.get_content().specs.keys()), ["c", "a", "b"])
+
+    def test_reorder_draft_fields_rejects_mismatched_set(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a", "b"]))
+
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.reorder_draft_fields(template.id, draft.id, ["a"])
+
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.reorder_draft_fields(
+                template.id, draft.id, ["a", "b", "ghost"]
+            )
+
+    def test_reorder_draft_fields_rejects_duplicates(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a", "b"]))
+
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.reorder_draft_fields(
+                template.id, draft.id, ["a", "a"]
+            )
+
+    def test_reorder_draft_fields_rejected_on_non_draft(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a", "b"]))
+        published = FormTemplateService.publish_version(template.id, draft.id)
+
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.reorder_draft_fields(
+                template.id, published.id, ["b", "a"]
+            )
+
     def test_publish_rejects_syntactically_invalid_computed_param(self):
         """A ComputedParam whose expression does not parse must not publish.
 

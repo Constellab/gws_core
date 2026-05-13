@@ -4,6 +4,7 @@ from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.user.user_dto import UserDTO
 
 
@@ -54,6 +55,21 @@ class TestFormTemplateVersionDTO(BaseModelDTO):
     """
 
     values: dict[str, Any] = {}
+
+
+class TestFormTemplateVersionResultDTO(BaseModelDTO):
+    """Result of testing a set of values against a form template version.
+
+    Mirrors what a SUBMITTED-transition save would surface, but without
+    raising: the underlying ``FormSaveResultDTO`` (renderable values + specs,
+    with computed cells already wrapped inline as ``{value, errors}``) plus
+    the two submit-gate error lists. Both lists are empty when the values
+    would pass a real submit.
+    """
+
+    result: FormSaveResultDTO
+    missing_mandatory_paths: list[str]
+    computed_errors: list[str]
 
 
 class ReorderDraftFieldsDTO(BaseModelDTO):
