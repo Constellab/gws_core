@@ -57,7 +57,13 @@ class ZipCompress(Compress):
             # -r recursive, -y store symlinks? no, we want to follow them: default `zip` follows symlinks to files,
             # and with -r it recurses into symlinked dirs as well.
             cmd = ["zip", "-r", "-q", self.destination_file_path, *entries]
-            subprocess.run(cmd, check=True, cwd=self._staging_dir)
+            try:
+                subprocess.run(cmd, check=True, cwd=self._staging_dir,
+                               capture_output=True, text=True)
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(
+                    f"zip failed (exit {e.returncode}): {e.stderr.strip()}"
+                ) from e
         finally:
             shutil.rmtree(self._staging_dir, ignore_errors=True)
         return self.destination_file_path
