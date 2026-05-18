@@ -4,13 +4,14 @@ from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
-from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
+    ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
+    TestFormTemplateVersionResultDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
     ValidateComputedParamResultDTO,
@@ -154,7 +155,7 @@ def test_version(
     version_id: str,
     body: TestFormTemplateVersionDTO,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> FormSaveResultDTO:
+) -> TestFormTemplateVersionResultDTO:
     return FormTemplateService.test_version(id_, version_id, body)
 
 
@@ -222,6 +223,22 @@ def validate_computed_param(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ValidateComputedParamResultDTO:
     return FormTemplateService.validate_computed_param(id_, version_id, body)
+
+
+@core_app.put(
+    "/form-template/{id_}/version/{version_id}/fields/reorder",
+    tags=["Form template"],
+    summary="Reorder fields of a DRAFT version",
+)
+def reorder_draft_fields(
+    id_: str,
+    version_id: str,
+    body: ReorderDraftFieldsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.reorder_draft_fields(
+        id_, version_id, body.field_names
+    ).to_dto()
 
 
 @core_app.delete(

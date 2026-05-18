@@ -42,6 +42,7 @@ class ParamSpecType(Enum):
     SCENARIO = "scenario_param"
     LAB_MODEL = "lab_model_param"
     COMPUTED = "computed_param"
+    DATE = "date_param"
 
 
 class ParamSpecSimpleDTO(BaseModelDTO):

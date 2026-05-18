@@ -4,6 +4,7 @@ from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
+from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.user.user_dto import UserDTO
 
 
@@ -54,6 +55,35 @@ class TestFormTemplateVersionDTO(BaseModelDTO):
     """
 
     values: dict[str, Any] = {}
+
+
+class TestFormTemplateVersionResultDTO(BaseModelDTO):
+    """Result of testing a set of values against a form template version.
+
+    Mirrors what a SUBMITTED-transition save would surface, but without
+    raising: the underlying ``FormSaveResultDTO`` (renderable values + specs,
+    with computed cells already wrapped inline as ``{value, errors}``) plus
+    a single flat ``errors`` list ready to display. The list is empty when
+    the values would pass a real submit; otherwise it contains one
+    human-readable string per failing check (missing mandatory, invalid
+    leaf value, or computed-formula error).
+    """
+
+    result: FormSaveResultDTO
+    errors: list[str]
+
+
+class ReorderDraftFieldsDTO(BaseModelDTO):
+    """Request body for reordering the fields of a DRAFT version.
+
+    ``field_names`` is the full ordered list of field keys after the drag
+    operation. The set of names must exactly match the version's current
+    field set — no additions, no removals. Sending the complete order
+    (rather than a from/to index) keeps the call idempotent and safe
+    against concurrent edits.
+    """
+
+    field_names: list[str]
 
 
 class ValidateComputedParamDTO(BaseModelDTO):

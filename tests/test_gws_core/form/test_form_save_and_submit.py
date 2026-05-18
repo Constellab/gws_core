@@ -58,12 +58,34 @@ class TestFormSaveAndSubmit(BaseTestCase):
 
         self.assertEqual(before, after)
 
-    def test_save_invalid_type_raises(self):
+    def test_save_invalid_type_drops_value_in_draft(self):
         form = self._scalar_form()
-        with self.assertRaises(Exception):
+        # DRAFT save no longer raises on bad leaf values — the offending
+        # field is dropped and the rest persists. The submit gate is what
+        # surfaces the error to the user.
+        FormService.save(
+            form.id, SaveFormDTO(values={"name": "x", "mass": "not a float"})
+        )
+        stored = Form.get_by_id(form.id).values
+        self.assertEqual(stored.get("name"), "x")
+        self.assertNotIn("mass", stored)
+
+    def test_submit_blocked_on_invalid_leaf(self):
+        form = self._scalar_form()
+        # A mandatory field with an invalid value must be reported as "invalid",
+        # not "missing" — invalid leaves are dropped from the validated dict,
+        # so without explicit handling the submit gate would mis-classify them.
+        with self.assertRaises(BadRequestException) as ctx:
             FormService.save(
-                form.id, SaveFormDTO(values={"mass": "not a float"})
+                form.id,
+                SaveFormDTO(
+                    values={"name": "x", "mass": "not a float"},
+                    status_transition=FormStatus.SUBMITTED,
+                ),
             )
+        message = str(ctx.exception)
+        self.assertIn("invalid values", message)
+        self.assertNotIn("missing", message)
 
     # ------------------------------------------------------------------ #
     # submit

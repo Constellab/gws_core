@@ -1,13 +1,30 @@
 import copy
+import re
+from dataclasses import dataclass, field
 from typing import Any, ClassVar
 
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.config.config_exceptions import MissingConfigsException, UnkownParamException
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 from .param.param_spec import ParamSpec
 from .param.param_types import ParamSpecDTO
+
+
+@dataclass
+class ValidateValuesResult:
+    """Outcome of :meth:`ConfigSpecs.validate_values`.
+
+    ``values`` is the reshaped value dict with invalid leaves dropped (so
+    downstream consumers never see bad data). ``errors`` keys mirror the
+    computed-error keying convention with row indices for ParamSet rows:
+    ``"<key>"`` outer-scope, ``"<paramset>[<row>].<inner>"`` inside a row.
+    """
+
+    values: ConfigParamsDict
+    errors: dict[str, str] = field(default_factory=dict)
 
 
 class ConfigSpecs:
@@ -21,6 +38,16 @@ class ConfigSpecs:
     """
 
     ITEM_ID_KEY: ClassVar[str] = "__item_id"
+
+    # Field-key shapes accepted by ``format_field_key``:
+    #   ``"<key>"``                       outer-scope leaf or computed
+    #   ``"<paramset>[].<inner>"``        ParamSet inner computed (formula
+    #                                     applies uniformly across rows, so
+    #                                     no row index)
+    #   ``"<paramset>[<row>].<inner>"``   ParamSet inner leaf (row-specific,
+    #                                     e.g. range failure on a single row)
+    # The middle group captures the row index (or empty for the [] case).
+    _FIELD_KEY_RE: ClassVar[re.Pattern] = re.compile(r"^([^\[]+)\[(\d*)\]\.(.+)$")
 
     specs: dict[str, ParamSpec]
 
@@ -84,7 +111,7 @@ class ConfigSpecs:
     def add_spec(self, spec_name: str, spec: ParamSpec) -> None:
         self._validate_spec_key(spec_name)
         if spec_name in self.specs:
-            raise Exception(f"The spec {spec_name} already exists")
+            raise Exception(f"The spec '{spec_name}' already exists")
         self.specs[spec_name] = spec
 
     def add_or_update_spec(self, spec_name: str, spec: ParamSpec) -> None:
@@ -339,23 +366,34 @@ class ConfigSpecs:
                 result[key] = value
         return result
 
-    def validate_values(self, values: ConfigParamsDict) -> ConfigParamsDict:
+    def validate_values(self, values: ConfigParamsDict) -> ValidateValuesResult:
         """Run leaf-level ``ParamSpec.validate(...)`` on every provided value.
 
-        Lenient: missing mandatories DO NOT raise (use ``mandatory_values_are_set``
-        as a separate gate when required). Returns the reshaped dict — for
-        ParamSets, ``ParamSet.validate`` mints ``__item_id`` per row and the
-        result carries it back.
+        Lenient on two axes:
+        - missing mandatories DO NOT raise (use ``mandatory_values_are_set``
+          as a separate gate when required);
+        - per-leaf ``ParamSpec.validate`` failures are *collected* into the
+          returned ``errors`` dict instead of aborting the whole pass. The
+          offending value is dropped from the result so downstream consumers
+          (computed evaluation, persistence) don't see invalid data.
 
-        ParamSet rows are re-validated through the spec to keep identity
-        reconciliation in one place; non-ParamSet specs validate in place.
+        Error keys mirror computed errors:
+        - ``"<key>"`` for outer-scope leaves;
+        - ``"<paramset>[<row_index>].<inner>"`` for ParamSet rows (row index
+          included because a range failure is per-row data, unlike computed
+          errors which apply uniformly across rows).
+
+        For ParamSets, ``ParamSet.validate_lenient`` mints ``__item_id`` per
+        row and the result carries it back. Callers that want the old
+        raise-on-error contract should use :meth:`validate_values_or_raise`.
         """
         if not values:
-            return {} if values is None else values
+            return ValidateValuesResult(values={} if values is None else values)
 
         from .param.param_set import ParamSet
 
         result: ConfigParamsDict = {}
+        errors: dict[str, str] = {}
         for key, value in values.items():
             spec = self.specs.get(key)
             if spec is None or not spec.accepts_user_input:
@@ -364,14 +402,78 @@ class ConfigSpecs:
             if value is None:
                 result[key] = None
                 continue
-            # ParamSet uses a lenient row validator that mirrors this method's
-            # contract (missing inner mandatories don't raise — enforced by
-            # the SUBMITTED gate). Other specs validate the value as-is.
             if isinstance(spec, ParamSet):
-                result[key] = spec.validate_lenient(value)
+                row_result = spec.validate_lenient(value)
+                result[key] = row_result.rows
+                for inner_key, message in row_result.errors.items():
+                    errors[f"{key}{inner_key}"] = message
             else:
-                result[key] = spec.validate(value)
-        return result
+                try:
+                    result[key] = spec.validate(value)
+                except BadRequestException as err:
+                    errors[key] = str(err)
+        return ValidateValuesResult(values=result, errors=errors)
+
+    def validate_values_or_raise(self, values: ConfigParamsDict) -> ConfigParamsDict:
+        """Raise-on-error wrapper around :meth:`validate_values`.
+
+        Aggregates every leaf-validation failure into a single
+        ``BadRequestException`` (rather than the old fail-fast behavior where
+        the first invalid field aborted). Use from non-form callers that want
+        the legacy raising contract; the form pipeline uses ``validate_values``
+        directly so it can render per-field diagnostics.
+        """
+        result = self.validate_values(values)
+        if result.errors:
+            raise BadRequestException(
+                "Invalid values: "
+                + "; ".join(f"{k}: {msg}" for k, msg in result.errors.items())
+            )
+        return result.values
+
+    def format_field_key(self, field_key: str) -> str:
+        """Translate an internal field-key into a human-readable label using
+        ``spec.human_name`` (falling back to the raw key when no human name
+        is set).
+
+        Outputs:
+        - ``"total_mass"``           → ``"Total mass"``
+        - ``"samples[].density"``    → ``"Samples[].Density"`` (formula on a
+          ParamSet inner key — applies to every row)
+        - ``"samples[2].mass"``      → ``"Samples[2].Mass"`` (a single row)
+
+        Used by save/test surfaces to turn validation- and computed-error
+        keys into messages a user can read; the same shape is also handy for
+        any other UI that needs a label for a stored field path.
+        """
+        from .param.param_set import ParamSet
+
+        match = self._FIELD_KEY_RE.match(field_key)
+        if match:
+            outer_key, row_index, inner_key = match.groups()
+            outer_spec = self.specs.get(outer_key)
+            outer_name = (outer_spec.human_name if outer_spec else None) or outer_key
+            inner_spec = (
+                outer_spec.param_set.specs.get(inner_key)
+                if isinstance(outer_spec, ParamSet) and outer_spec.param_set is not None
+                else None
+            )
+            inner_name = (inner_spec.human_name if inner_spec else None) or inner_key
+            return f"{outer_name}[{row_index}].{inner_name}"
+        spec = self.specs.get(field_key)
+        return (spec.human_name if spec else None) or field_key
+
+    def format_field_errors(self, errors: dict[str, str]) -> list[str]:
+        """Render a ``{field_key: message}`` map as a sorted list of
+        ``"Label: message"`` strings (labels via :meth:`format_field_key`).
+
+        Centralizes what every save/test surface used to do inline so the
+        order and format are consistent across them.
+        """
+        return sorted(
+            f"{self.format_field_key(key)}: {message}"
+            for key, message in errors.items()
+        )
 
     def merge_computed(
         self,

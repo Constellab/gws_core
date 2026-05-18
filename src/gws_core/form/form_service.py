@@ -15,6 +15,7 @@ from gws_core.form.form_dto import (
     CreateFormDTO,
     FormSaveResultDTO,
     FormStatus,
+    FormValidationResult,
     SaveFormDTO,
     UpdateFormDTO,
 )
@@ -67,9 +68,7 @@ class FormService:
 
         # Initial tag copy from parent template (mirrors note_service.py:497-502).
         template_id = version.template_id
-        template_tags = EntityTagList.find_by_entity(
-            TagEntityType.FORM_TEMPLATE, template_id
-        )
+        template_tags = EntityTagList.find_by_entity(TagEntityType.FORM_TEMPLATE, template_id)
         propagated = template_tags.build_tags_propagated(
             TagOriginType.FORM_TEMPLATE_PROPAGATED, template_id
         )
@@ -127,9 +126,7 @@ class FormService:
                 continue
             if isinstance(spec, ParamSet) and spec.param_set is not None:
                 inner_computed = [
-                    (k, s)
-                    for k, s in spec.param_set.specs.items()
-                    if not s.accepts_user_input
+                    (k, s) for k, s in spec.param_set.specs.items() if not s.accepts_user_input
                 ]
                 if not inner_computed:
                     continue
@@ -169,50 +166,31 @@ class FormService:
     @classmethod
     def validate_values_against_specs(
         cls, specs: ConfigSpecs, raw_values: dict[str, Any] | None
-    ) -> tuple[dict[str, Any], dict[str, str]]:
+    ) -> FormValidationResult:
         """Run a raw values dict through a ConfigSpecs the way a save does,
         without touching the DB.
 
         Strips computed-key submissions, type-validates (ParamSet.validate
         mints/preserves ``__item_id`` per row so the result carries stable
         identity), evaluates computed params and merges them into the union
-        dict. Returns ``(validated_and_merged_values, errors_by_key)`` — the
-        errors map drives per-computed-field diagnostics; it does not block.
+        dict. Returns the validated values plus the two error maps —
+        validation errors and computed errors are kept separate because they
+        flow into different parts of the response (validation: gate-only;
+        computed: gate + inline per-cell wrapping).
 
         Mandatory-field enforcement is *not* done here — that is the
         SUBMITTED-transition gate in :meth:`save`, not part of plain
         validation.
         """
         new_values = specs.strip_computed_keys(raw_values or {})
-        new_values = specs.validate_values(new_values)
-        computed, errors = specs.compute_values(new_values)
-        new_values = specs.merge_computed(new_values, computed)
-        return new_values, errors
-
-    @classmethod
-    def _format_error_key(cls, specs: ConfigSpecs, error_key: str) -> str:
-        """Translate a computed-error key into a human-readable label.
-
-        Input keys come from ComputedParam.compute_all:
-        - ``"<key>"``               → outer-scope computed (e.g. total_mass)
-        - ``"<paramset>[].<key>"``  → inner ParamSet computed (e.g. samples[].density)
-
-        Output uses spec.human_name (falls back to the key) so the message reads
-        as ``Total mass`` / ``Samples[].Density``.
-        """
-        if "[]." in error_key:
-            outer_key, _, inner_key = error_key.partition("[].")
-            outer_spec = specs.specs.get(outer_key)
-            outer_name = (outer_spec.human_name if outer_spec else None) or outer_key
-            inner_spec = (
-                outer_spec.param_set.specs.get(inner_key)
-                if isinstance(outer_spec, ParamSet) and outer_spec.param_set is not None
-                else None
-            )
-            inner_name = (inner_spec.human_name if inner_spec else None) or inner_key
-            return f"{outer_name}[].{inner_name}"
-        spec = specs.specs.get(error_key)
-        return (spec.human_name if spec else None) or error_key
+        validation = specs.validate_values(new_values)
+        computed, computed_errors = specs.compute_values(validation.values)
+        merged = specs.merge_computed(validation.values, computed)
+        return FormValidationResult(
+            values=merged,
+            validation_errors=validation.errors,
+            computed_errors=computed_errors,
+        )
 
     @classmethod
     def build_save_result(
@@ -243,29 +221,42 @@ class FormService:
         specs = form.template_version.get_content()
 
         # 3 + 5. Strip computed keys, validate, evaluate + merge computed.
-        new_values, errors = cls.validate_values_against_specs(specs, dto.values)
+        validation = cls.validate_values_against_specs(specs, dto.values)
+        new_values = validation.values
 
         # 4. Submit gate. Mandatory check runs on the validated union dict
         #    (computed keys never count as user input, so merge order is moot).
         status_changed = False
-        if (
-            dto.status_transition == FormStatus.SUBMITTED
-            and form.status != FormStatus.SUBMITTED
-        ):
-            missing_paths = specs.get_missing_mandatory_paths(new_values)
+        if dto.status_transition == FormStatus.SUBMITTED and form.status != FormStatus.SUBMITTED:
+            # Invalid leaves are dropped from new_values during validation, so they
+            # would otherwise show up as "missing"; exclude them so the more actionable
+            # "invalid value" error is what the user sees.
+            invalid_labels = {
+                specs.format_field_key(key) for key in validation.validation_errors
+            }
+            missing_paths = [
+                path for path in specs.get_missing_mandatory_paths(new_values)
+                if path not in invalid_labels
+            ]
+            problems: list[str] = []
             if missing_paths:
-                raise BadRequestException(
-                    "Cannot submit: the mandatory fields "
-                    f"'{', '.join(missing_paths)}' are missing."
+                problems.append(
+                    f"the mandatory fields '{', '.join(missing_paths)}' are missing"
                 )
-            if errors:
+            if validation.validation_errors:
+                error_names = sorted(invalid_labels)
+                problems.append(
+                    f"the fields '{', '.join(error_names)}' have invalid values"
+                )
+            if validation.computed_errors:
                 error_names = sorted(
-                    cls._format_error_key(specs, key) for key in errors
+                    specs.format_field_key(key) for key in validation.computed_errors
                 )
-                raise BadRequestException(
-                    "Cannot submit: the computed fields "
-                    f"'{', '.join(error_names)}' have errors."
+                problems.append(
+                    f"the computed fields '{', '.join(error_names)}' have errors"
                 )
+            if problems:
+                raise BadRequestException("Cannot submit: " + "; ".join(problems) + ".")
             form.status = FormStatus.SUBMITTED
             form.submitted_at = DateHelper.now_utc()
             form.submitted_by = CurrentUserService.get_and_check_current_user()
@@ -294,7 +285,7 @@ class FormService:
                 object_id=form.id,
             )
 
-        return cls.build_save_result(form.values, specs, errors)
+        return cls.build_save_result(form.values, specs, validation.computed_errors)
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -357,11 +348,7 @@ class FormService:
         referencing_rows = list(NoteFormModel.get_by_form(form_id))
         if referencing_rows:
             note_titles = [row.note.title for row in referencing_rows[:5]]
-            suffix = (
-                f" (and {len(referencing_rows) - 5} more)"
-                if len(referencing_rows) > 5
-                else ""
-            )
+            suffix = f" (and {len(referencing_rows) - 5} more)" if len(referencing_rows) > 5 else ""
             raise BadRequestException(
                 "Cannot delete form: still referenced by note(s): "
                 f"{', '.join(note_titles)}{suffix}. "
@@ -407,4 +394,3 @@ class FormService:
             .order_by(FormSaveEvent.created_at.desc())
         )
         return Paginator(query, page, number_of_items_per_page)
-

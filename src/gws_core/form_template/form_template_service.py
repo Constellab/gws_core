@@ -15,7 +15,6 @@ from gws_core.core.exception.exceptions.bad_request_exception import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.form.form import Form
-from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
@@ -23,6 +22,7 @@ from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
     TestFormTemplateVersionDTO,
+    TestFormTemplateVersionResultDTO,
     UpdateFormTemplateDTO,
     ValidateComputedParamDTO,
     ValidateComputedParamResultDTO,
@@ -271,19 +271,31 @@ class FormTemplateService:
         template_id: str,
         version_id: str,
         dto: TestFormTemplateVersionDTO,
-    ) -> FormSaveResultDTO:
+    ) -> TestFormTemplateVersionResultDTO:
         """Validate a set of values against a version's specs without persisting.
 
-        Runs the exact same validation pipeline as a (non-submitting)
-        ``FormService.save`` — computed keys stripped, type validation,
-        computed-value evaluation — and returns the same ``FormSaveResultDTO``
-        payload. No Form is created, no FormSaveEvent is written, and the
-        version may be DRAFT.
+        Runs the same validation pipeline as a SUBMITTED-transition save
+        (computed keys stripped, type validation, computed-value evaluation,
+        mandatory-field check) but does not raise: the submit-gate failures
+        are returned alongside the renderable result so the front-end can
+        display them. No Form is created, no FormSaveEvent is written, and
+        the version may be DRAFT.
         """
         version = cls.get_version(template_id, version_id)
         specs = version.get_content()
-        new_values, errors = FormService.validate_values_against_specs(specs, dto.values)
-        return FormService.build_save_result(new_values, specs, errors)
+        validation = FormService.validate_values_against_specs(specs, dto.values)
+        missing_paths = specs.get_missing_mandatory_paths(validation.values)
+        errors = [
+            *(f"Missing mandatory field: {path}" for path in missing_paths),
+            *specs.format_field_errors(validation.validation_errors),
+            *specs.format_field_errors(validation.computed_errors),
+        ]
+        return TestFormTemplateVersionResultDTO(
+            result=FormService.build_save_result(
+                validation.values, specs, validation.computed_errors
+            ),
+            errors=errors,
+        )
 
     @classmethod
     def list_versions(cls, template_id: str) -> list[FormTemplateVersion]:
@@ -397,6 +409,40 @@ class FormTemplateService:
             new_field_name,
             ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True),
         )
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def reorder_draft_fields(
+        cls,
+        template_id: str,
+        version_id: str,
+        field_names: list[str],
+    ) -> FormTemplateVersion:
+        """Reorder the fields of a DRAFT version.
+
+        ``field_names`` must be the full ordered list of current field keys.
+        The set must match exactly — any missing or unknown key (typically
+        from a concurrent add/delete) aborts the call so the frontend can
+        refetch and retry.
+        """
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        specs = version.get_content()
+
+        current = list(specs.get_specs_as_dict().keys())
+        if len(field_names) != len(set(field_names)):
+            raise BadRequestException("Reorder list contains duplicate field names.")
+        if set(field_names) != set(current):
+            missing = sorted(set(current) - set(field_names))
+            unknown = sorted(set(field_names) - set(current))
+            raise BadRequestException(
+                "Reorder list does not match the current fields. "
+                f"missing={missing}, unknown={unknown}. "
+                "Refetch the version and retry."
+            )
+
+        reordered = {name: specs.get_spec(name) for name in field_names}
+        specs.specs = reordered
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod

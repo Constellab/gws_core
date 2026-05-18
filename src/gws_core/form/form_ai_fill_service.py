@@ -127,7 +127,7 @@ Form field specification:
         """Run the same validate/compute pipeline as ``FormService.save`` — no DB write."""
         try:
             new_values = specs.strip_computed_keys(ai_values)
-            new_values = specs.validate_values(new_values)
+            new_values = specs.validate_values_or_raise(new_values)
             computed, errors = specs.compute_values(new_values)
             new_values = specs.merge_computed(new_values, computed)
         except BadRequestException:
