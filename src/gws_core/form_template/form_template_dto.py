@@ -119,3 +119,28 @@ class ValidateComputedParamResultDTO(BaseModelDTO):
     valid: bool
     referenced_keys: list[str]
     error: str | None = None
+
+
+class GenerateComputedParamDTO(BaseModelDTO):
+    """Request body for AI-assisted ComputedParam expression generation.
+
+    The AI is given the version's specs at the target scope (outer specs, or
+    the inner specs of ``param_set_key`` when nesting) along with the user's
+    free-text ``description``. It returns a single expression which is then
+    run through the standard validator.
+    """
+
+    description: str
+    param_set_key: str | None = None
+
+
+class GenerateComputedParamResultDTO(BaseModelDTO):
+    """Result of an AI-assisted ComputedParam expression generation.
+
+    The expression is always returned — even when invalid — so the editor can
+    display the suggestion alongside the validation error and let the user
+    fix it.
+    """
+
+    expression: str
+    validation: ValidateComputedParamResultDTO

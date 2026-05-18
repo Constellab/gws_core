@@ -4,11 +4,14 @@ from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
+from gws_core.form_template.form_template_ai_service import FormTemplateAiService
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
+    GenerateComputedParamDTO,
+    GenerateComputedParamResultDTO,
     ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
@@ -223,6 +226,20 @@ def validate_computed_param(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ValidateComputedParamResultDTO:
     return FormTemplateService.validate_computed_param(id_, version_id, body)
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/computed-param/generate-with-ai",
+    tags=["Form template"],
+    summary="Generate a ComputedParam expression from a natural-language description via AI",
+)
+def generate_computed_param_with_ai(
+    id_: str,
+    version_id: str,
+    body: GenerateComputedParamDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> GenerateComputedParamResultDTO:
+    return FormTemplateAiService.generate_computed_param_expression(id_, version_id, body)
 
 
 @core_app.put(

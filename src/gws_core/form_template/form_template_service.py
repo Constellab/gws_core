@@ -190,7 +190,7 @@ class FormTemplateService:
             (``@key[].field``) is not allowed in that case.
         """
         version = cls.get_version(template_id, version_id)
-        target_specs = cls._resolve_computed_param_scope(version.get_content(), dto.param_set_key)
+        target_specs = cls.resolve_computed_param_scope(version.get_content(), dto.param_set_key)
         referenced = sorted(ConfigSpecsEvaluator.extract_referenced_keys(dto.expression))
 
         error = cls._check_computed_param_expression(dto, target_specs)
@@ -199,7 +199,7 @@ class FormTemplateService:
         )
 
     @staticmethod
-    def _resolve_computed_param_scope(
+    def resolve_computed_param_scope(
         specs: ConfigSpecs, param_set_key: str | None
     ) -> ConfigSpecs:
         """The ConfigSpecs a computed param would be evaluated in: the version's
