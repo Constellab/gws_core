@@ -18,26 +18,64 @@ class Compress:
     _fs_node_names: list[str]
 
     def __init__(self, destination_file_path: str):
+        """Initialize the compressor with the path of the archive to create.
+
+        :param destination_file_path: Path of the archive file that will be
+            produced when :meth:`close` is called.
+        """
         self.destination_file_path = destination_file_path
         self._fs_node_names = []
 
     @abstractmethod
     def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
-        pass
+        """Add a directory (recursively) to the archive.
+
+        :param dir_path: Path of the directory to add.
+        :param dir_name: Optional name to use for the directory inside the
+            archive. Defaults to the directory's basename.
+        """
 
     @abstractmethod
     def add_file(self, file_path: str, file_name: str | None = None) -> None:
-        pass
+        """Add a single file to the archive.
+
+        :param file_path: Path of the file to add.
+        :param file_name: Optional name to use for the file inside the archive.
+            Defaults to the file's basename.
+        """
 
     @abstractmethod
     def close(self) -> str:
-        pass
+        """Finalize the archive and write it to ``destination_file_path``.
+
+        Must be called once all entries have been added.
+
+        :return: The path of the produced archive.
+        """
 
     def add_fs_node(self, fs_node_path: str, fs_node_name: str | None = None) -> None:
+        """Add a filesystem node (file or directory) to the archive.
+
+        Dispatches to :meth:`add_dir` or :meth:`add_file` based on the node type.
+
+        :param fs_node_path: Path of the file or directory to add.
+        :param fs_node_name: Optional name to use for the node inside the
+            archive. Defaults to the node's basename.
+        """
         if FileHelper.is_dir(fs_node_path):
             self.add_dir(fs_node_path, fs_node_name)
         else:
             self.add_file(fs_node_path, fs_node_name)
+
+    def add_dir_content(self, dir_path: str) -> None:
+        """Add the content of ``dir_path`` at the archive root.
+
+        Each top-level entry inside ``dir_path`` is added under its own name, so
+        the resulting archive does not contain ``dir_path`` itself as a wrapping
+        folder.
+        """
+        for item in os.listdir(dir_path):
+            self.add_fs_node(os.path.join(dir_path, item), item)
 
     def _generate_node_name(self, fs_node_path: str, fs_node_name: str | None = None) -> str:
         """Generate a unique name for the fs node. Use the node name if fs_node_name is None."""
@@ -121,9 +159,7 @@ class Compress:
         """
 
         compress = cls(destination_file_path)
-        for item in os.listdir(dir_path):
-            item_path = os.path.join(dir_path, item)
-            compress.add_fs_node(item_path, item)
+        compress.add_dir_content(dir_path)
         compress.close()
 
     @staticmethod
