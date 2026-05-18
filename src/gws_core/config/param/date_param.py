@@ -7,7 +7,7 @@ from gws_core.config.param.param_spec_decorator import param_spec_decorator
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .param_spec import ParamSpec
-from .param_types import ParamSpecType, ParamSpecVisibilty
+from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
 class DateParamAdditionalInfo(TypedDict):
@@ -74,16 +74,10 @@ class DateParam(ParamSpec):
         """
         self.additional_info = {
             "include_time": include_time,
-            "min_value": self._to_iso_or_none(min_value, include_time),
-            "max_value": self._to_iso_or_none(max_value, include_time),
+            "min_value": self._to_iso_or_none(min_value, include_time, "min_value"),
+            "max_value": self._to_iso_or_none(max_value, include_time, "max_value"),
         }
-
-        min_iso = self.additional_info["min_value"]
-        max_iso = self.additional_info["max_value"]
-        if min_iso is not None and max_iso is not None and min_iso > max_iso:
-            raise BadRequestException(
-                f"'min_value' ({min_iso}) must be less than or equal to 'max_value' ({max_iso}) in 'date' param"
-            )
+        self._check_min_max_order()
 
         super().__init__(
             default_value=default_value,
@@ -92,6 +86,28 @@ class DateParam(ParamSpec):
             human_name=human_name,
             short_description=short_description,
         )
+
+    def build(self, value: Any) -> date | datetime | None:
+        """Convert the stored ISO 8601 string back to a :class:`datetime.date`
+        (or :class:`datetime.datetime` when ``include_time`` is True) before the
+        value is used in a task.
+
+        The stored value is unchanged.
+        """
+        if value is None:
+            return None
+
+        # Already a date/datetime instance — nothing to do.
+        if isinstance(value, datetime):
+            return value if self.additional_info["include_time"] else value.date()
+        if isinstance(value, date):
+            if self.additional_info["include_time"]:
+                return datetime(value.year, value.month, value.day)
+            return value
+
+        if self.additional_info["include_time"]:
+            return datetime.fromisoformat(value)
+        return date.fromisoformat(value)
 
     def validate(self, value: Any) -> str | None:
         if value is None:
@@ -117,16 +133,52 @@ class DateParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.DATE
 
+    @classmethod
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "DateParam":
+        """Override to re-validate ``min_value`` / ``max_value`` carried in the DTO.
+
+        Strict-write, lenient-read: only re-validate the bounds when ``validate``
+        is True. When False (the default, used to load persisted content), copy
+        ``additional_info`` verbatim so that a previously-stored malformed bound
+        does not block read-modify-write operations like deleting the field.
+        """
+        param: DateParam = super().load_from_dto(spec_dto, validate=validate)  # type: ignore[assignment]
+        if not validate:
+            return param
+
+        include_time = bool(param.additional_info.get("include_time"))
+        param.additional_info = {
+            "include_time": include_time,
+            "min_value": cls._to_iso_or_none(
+                param.additional_info.get("min_value"), include_time, "min_value"
+            ),
+            "max_value": cls._to_iso_or_none(
+                param.additional_info.get("max_value"), include_time, "max_value"
+            ),
+        }
+        param._check_min_max_order()
+        return param
+
+    def _check_min_max_order(self) -> None:
+        min_iso = self.additional_info["min_value"]
+        max_iso = self.additional_info["max_value"]
+        if min_iso is not None and max_iso is not None and min_iso > max_iso:
+            raise BadRequestException(
+                f"'min_value' ({min_iso}) must be less than or equal to 'max_value' ({max_iso}) in 'date' param"
+            )
+
     @staticmethod
     def _to_iso_or_none(
-        value: str | date | datetime | None, include_time: bool
+        value: str | date | datetime | None,
+        include_time: bool,
+        field_name: str = "value",
     ) -> str | None:
         if value is None:
             return None
-        return DateParam._to_iso(value, include_time)
+        return DateParam._to_iso(value, include_time, field_name)
 
     @staticmethod
-    def _to_iso(value: Any, include_time: bool) -> str:
+    def _to_iso(value: Any, include_time: bool, field_name: str = "value") -> str:
         """Parse and normalize the value to an ISO 8601 string.
 
         Lexicographic comparison on ISO 8601 strings is order-preserving, so we
@@ -149,11 +201,11 @@ class DateParam(ParamSpec):
             except ValueError as err:
                 expected = "YYYY-MM-DDTHH:MM:SS" if include_time else "YYYY-MM-DD"
                 raise BadRequestException(
-                    f"Invalid value '{value}' in 'date' param, expected ISO 8601 format ({expected})"
+                    f"Invalid '{field_name}' '{value}' in 'date' param, expected ISO 8601 format ({expected})"
                 ) from err
         else:
             raise BadRequestException(
-                f"Invalid value '{value}' in 'date' param, it must be a string, a date or a datetime"
+                f"Invalid '{field_name}' '{value}' in 'date' param, it must be a string, a date or a datetime"
             )
 
         return parsed.isoformat()
