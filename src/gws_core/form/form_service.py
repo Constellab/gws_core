@@ -228,25 +228,35 @@ class FormService:
         #    (computed keys never count as user input, so merge order is moot).
         status_changed = False
         if dto.status_transition == FormStatus.SUBMITTED and form.status != FormStatus.SUBMITTED:
-            missing_paths = specs.get_missing_mandatory_paths(new_values)
+            # Invalid leaves are dropped from new_values during validation, so they
+            # would otherwise show up as "missing"; exclude them so the more actionable
+            # "invalid value" error is what the user sees.
+            invalid_labels = {
+                specs.format_field_key(key) for key in validation.validation_errors
+            }
+            missing_paths = [
+                path for path in specs.get_missing_mandatory_paths(new_values)
+                if path not in invalid_labels
+            ]
+            problems: list[str] = []
             if missing_paths:
-                raise BadRequestException(
-                    f"Cannot submit: the mandatory fields '{', '.join(missing_paths)}' are missing."
+                problems.append(
+                    f"the mandatory fields '{', '.join(missing_paths)}' are missing"
                 )
             if validation.validation_errors:
-                error_names = sorted(
-                    specs.format_field_key(key) for key in validation.validation_errors
-                )
-                raise BadRequestException(
-                    f"Cannot submit: the fields '{', '.join(error_names)}' have invalid values."
+                error_names = sorted(invalid_labels)
+                problems.append(
+                    f"the fields '{', '.join(error_names)}' have invalid values"
                 )
             if validation.computed_errors:
                 error_names = sorted(
                     specs.format_field_key(key) for key in validation.computed_errors
                 )
-                raise BadRequestException(
-                    f"Cannot submit: the computed fields '{', '.join(error_names)}' have errors."
+                problems.append(
+                    f"the computed fields '{', '.join(error_names)}' have errors"
                 )
+            if problems:
+                raise BadRequestException("Cannot submit: " + "; ".join(problems) + ".")
             form.status = FormStatus.SUBMITTED
             form.submitted_at = DateHelper.now_utc()
             form.submitted_by = CurrentUserService.get_and_check_current_user()

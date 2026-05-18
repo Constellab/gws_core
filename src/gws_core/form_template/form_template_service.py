@@ -21,7 +21,6 @@ from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
-    ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
     UpdateFormTemplateDTO,

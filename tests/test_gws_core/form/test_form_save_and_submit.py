@@ -72,7 +72,10 @@ class TestFormSaveAndSubmit(BaseTestCase):
 
     def test_submit_blocked_on_invalid_leaf(self):
         form = self._scalar_form()
-        with self.assertRaises(Exception):
+        # A mandatory field with an invalid value must be reported as "invalid",
+        # not "missing" — invalid leaves are dropped from the validated dict,
+        # so without explicit handling the submit gate would mis-classify them.
+        with self.assertRaises(BadRequestException) as ctx:
             FormService.save(
                 form.id,
                 SaveFormDTO(
@@ -80,6 +83,9 @@ class TestFormSaveAndSubmit(BaseTestCase):
                     status_transition=FormStatus.SUBMITTED,
                 ),
             )
+        message = str(ctx.exception)
+        self.assertIn("invalid values", message)
+        self.assertNotIn("missing", message)
 
     # ------------------------------------------------------------------ #
     # submit

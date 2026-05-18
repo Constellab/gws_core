@@ -5,6 +5,7 @@ from typing import Any
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
@@ -133,7 +134,7 @@ class ParamSet(ParamSpec):
 
             item_id = valid_dict.get(ConfigSpecs.ITEM_ID_KEY) or str(uuid.uuid4())
             if item_id in seen_ids:
-                raise ValueError(f"Duplicate {ConfigSpecs.ITEM_ID_KEY} '{item_id}' in ParamSet")
+                raise BadRequestException(f"Duplicate {ConfigSpecs.ITEM_ID_KEY} '{item_id}' in ParamSet")
             seen_ids.add(item_id)
 
             if lenient:
