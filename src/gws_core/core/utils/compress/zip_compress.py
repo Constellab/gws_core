@@ -15,10 +15,12 @@ class ZipCompress(Compress):
     """
 
     _staging_dir: str
+    _use_sudo: bool
 
-    def __init__(self, destination_file_path: str):
+    def __init__(self, destination_file_path: str, use_sudo: bool = False):
         super().__init__(destination_file_path)
         self._staging_dir = tempfile.mkdtemp(prefix="zip_stage_")
+        self._use_sudo = use_sudo
 
     def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
@@ -57,6 +59,11 @@ class ZipCompress(Compress):
             # -r recursive, -y store symlinks? no, we want to follow them: default `zip` follows symlinks to files,
             # and with -r it recurses into symlinked dirs as well.
             cmd = ["zip", "-r", "-q", self.destination_file_path, *entries]
+            if self._use_sudo:
+                # -n: never prompt for a password (fail fast if sudoers isn't configured).
+                # Symlinks are dereferenced by `zip` itself, so sudo reads the real
+                # source paths — which is the whole point of this flag.
+                cmd = ["sudo", "-n", *cmd]
             try:
                 subprocess.run(cmd, check=True, cwd=self._staging_dir,
                                capture_output=True, text=True)

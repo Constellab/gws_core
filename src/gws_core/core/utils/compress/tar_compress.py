@@ -18,10 +18,12 @@ class TarCompress(Compress):
     tar_extract_flags: list[str] = []
 
     _staging_dir: str
+    _use_sudo: bool
 
-    def __init__(self, destination_file_path: str):
+    def __init__(self, destination_file_path: str, use_sudo: bool = False):
         super().__init__(destination_file_path)
         self._staging_dir = tempfile.mkdtemp(prefix="tar_stage_")
+        self._use_sudo = use_sudo
 
     def add_dir(self, dir_path: str, dir_name: str | None = None) -> None:
         dir_name = self._generate_node_name(dir_path, dir_name)
@@ -62,6 +64,9 @@ class TarCompress(Compress):
                 self._staging_dir,
                 *entries,
             ]
+            if self._use_sudo:
+                # -n: never prompt for a password (fail fast if sudoers isn't configured).
+                cmd = ["sudo", "-n", *cmd]
             subprocess.run(cmd, check=True)
         finally:
             shutil.rmtree(self._staging_dir, ignore_errors=True)
