@@ -169,3 +169,53 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         with self.assertRaises(BadRequestException):
             self._validate(template, version_id, "@mass", param_set_key="nope")
+
+    def test_inside_param_set_outer_ref_valid(self):
+        template, version_id = self._new_template_with_specs(
+            ConfigSpecs(
+                {
+                    "factor": FloatParam(),
+                    "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
+                }
+            )
+        )
+        result = self._validate(
+            template,
+            version_id,
+            "@mass * @@factor",
+            param_set_key="samples",
+        )
+        self.assertTrue(result.valid)
+        self.assertEqual(result.referenced_keys, ["mass"])
+        self.assertIsNone(result.error)
+
+    def test_inside_param_set_outer_ref_unknown(self):
+        template, version_id = self._new_template_with_specs(
+            ConfigSpecs(
+                {
+                    "factor": FloatParam(),
+                    "samples": ParamSet(ConfigSpecs({"mass": FloatParam()})),
+                }
+            )
+        )
+        result = self._validate(
+            template,
+            version_id,
+            "@mass * @@nope",
+            param_set_key="samples",
+        )
+        self.assertFalse(result.valid)
+        self.assertIn("nope", result.error)
+
+    def test_outer_ref_rejected_at_outer_scope(self):
+        template, version_id = self._new_template_with_specs(
+            ConfigSpecs(
+                {
+                    "factor": FloatParam(),
+                    "other": FloatParam(),
+                }
+            )
+        )
+        result = self._validate(template, version_id, "@factor + @@other")
+        self.assertFalse(result.valid)
+        self.assertIn("@@", result.error)

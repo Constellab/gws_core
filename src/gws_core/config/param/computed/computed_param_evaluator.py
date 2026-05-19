@@ -15,14 +15,21 @@ from simpleeval import (
 # Internal function names the rewriter injects; never written by users.
 _PARAMSET_AGG_FUNC_NAME = "__paramset_agg__"
 _IF_FUNC_NAME = "__cp_if__"
+_OUTER_REF_FUNC_NAME = "__cp_outer__"
 
 # Field references are written with a leading `@` so they can never be confused
 # with a (bare) function name. `@samples[].mass` is the ParamSet aggregate sugar
 # (the list of `mass` values across the `samples` ParamSet); `@weight` is a
-# plain field reference. Both are rewritten away before the expression reaches
-# simpleeval, which then sees only plain identifiers resolved from `names`.
+# plain field reference. `@@factor` is the outer-scope sigil, only meaningful
+# from inside a ParamSet row (it reads `factor` from the enclosing ConfigSpecs).
+# All three are rewritten away before the expression reaches simpleeval, which
+# then sees only plain identifiers resolved from `names`.
+_OUTER_FIELD_REF_PATTERN = re.compile(r"@@([A-Za-z_][A-Za-z0-9_]*)")
 _PARAMSET_AGG_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)\[\]\.([A-Za-z_][A-Za-z0-9_]*)")
 _FIELD_REF_PATTERN = re.compile(r"@([A-Za-z_][A-Za-z0-9_]*)")
+
+# Reserved syntax (not supported in v1) — rejected up front in the rewriter.
+_OUTER_PARAMSET_AGG_PATTERN = re.compile(r"@@([A-Za-z_][A-Za-z0-9_]*)\[\]\.")
 
 # Matches `if(` since `if` is a Python keyword and would otherwise fail to parse.
 # Word boundary on the left, then literal `if(`. Rewritten to a non-keyword name.
@@ -33,11 +40,22 @@ _IF_CALL_PATTERN = re.compile(r"\bif\s*\(")
 # field reference missing its `@` (or an undefined name) and is rejected.
 _ALLOWED_BARE_NAMES = frozenset(
     {
-        "sum", "mean", "median", "stddev", "min", "max", "count",
-        "abs", "round", "sqrt", "pow", "concat",
+        "sum",
+        "mean",
+        "median",
+        "stddev",
+        "min",
+        "max",
+        "count",
+        "abs",
+        "round",
+        "sqrt",
+        "pow",
+        "concat",
         "if",  # written `if(...)`, rewritten away, but keep for clarity
         _PARAMSET_AGG_FUNC_NAME,
         _IF_FUNC_NAME,
+        _OUTER_REF_FUNC_NAME,
     }
 )
 
@@ -71,22 +89,29 @@ class ConfigSpecsEvaluator:
         expression: str,
         scope: dict[str, Any],
         paramset_rows: dict[str, list[dict[str, Any]]] | None = None,
+        outer_scope: dict[str, Any] | None = None,
     ) -> Any:
         """Evaluate a single expression against the provided scope.
 
         :param expression: the expression source. Field references are written
-            with a leading `@` (e.g. `@weight`, `@samples[].mass`).
+            with a leading `@` (e.g. `@weight`, `@samples[].mass`). From inside
+            a ParamSet row, `@@name` reads `name` from the enclosing scope.
         :param scope: identifier → value map. `@`-prefixed references in the
             expression resolve (after the `@` is stripped) from this dict.
         :param paramset_rows: paramset_key → list of row dicts. Used to resolve
             `@samples[].field` aggregate sugar at the outer scope. None or empty
             when evaluating per-row inside a ParamSet.
+        :param outer_scope: enclosing-scope identifier → value map used to
+            resolve `@@name` references. None when evaluating at the outer
+            scope; any `@@name` then raises (outer refs only make sense from
+            inside a ParamSet row).
         :raises ComputedParamEvaluationError: on any evaluation failure.
         """
         self._assert_only_sigil_field_refs(expression)
         rewritten = _rewrite_expression(expression)
 
         rows = paramset_rows or {}
+        outer = outer_scope or {}
 
         def _paramset_agg(paramset_key: str, field: str) -> list[Any]:
             if paramset_key not in rows:
@@ -95,10 +120,16 @@ class ConfigSpecsEvaluator:
                 )
             return [row.get(field) for row in rows[paramset_key]]
 
+        def _outer_ref(name: str) -> Any:
+            if name not in outer:
+                raise ComputedParamEvaluationError(f"Unknown outer field '@@{name}'")
+            return outer[name]
+
         functions = {
             **self._functions,
             _PARAMSET_AGG_FUNC_NAME: _paramset_agg,
             _IF_FUNC_NAME: _if,
+            _OUTER_REF_FUNC_NAME: _outer_ref,
         }
 
         evaluator = SimpleEval(names=scope, functions=functions)
@@ -117,9 +148,7 @@ class ConfigSpecsEvaluator:
                 f"Function not allowed: {self._safe_name(err)}"
             ) from err
         except InvalidExpression as err:
-            raise ComputedParamEvaluationError(
-                f"Invalid expression: {err}"
-            ) from err
+            raise ComputedParamEvaluationError(f"Invalid expression: {err}") from err
         except NumberTooHigh as err:
             raise ComputedParamEvaluationError(f"Number too high: {err}") from err
         except (TypeError, ValueError) as err:
@@ -147,24 +176,36 @@ class ConfigSpecsEvaluator:
 
     @staticmethod
     def extract_referenced_keys(expression: str) -> set[str]:
-        """Return the set of ConfigSpecs keys referenced by the expression.
+        """Return the set of same-scope ConfigSpecs keys referenced by the
+        expression. Outer-scope refs (`@@name`) are excluded — use
+        :meth:`extract_referenced_outer_keys` for those.
 
-        A reference is anything written with a leading `@`:
+        A same-scope reference is anything written with a single leading `@`:
         - `@weight` contributes the key `weight`.
         - `@samples[].mass` (ParamSet aggregate sugar) contributes the ParamSet
           key `samples` (not `mass`, which is an inner field of that ParamSet).
 
         Bare identifiers are function names, never references, so there is no
         whitelist to subtract and no ambiguity with a field named e.g. `sum`.
-        Used by ComputedParam.check_graph() for reference and cycle checks.
+        Used by ComputedParamGraphChecker for reference and cycle checks.
         """
-        # ParamSet aggregate references must be matched first; otherwise the
-        # plain `@<name>` pattern would also match the `@samples` prefix and
-        # we could not tell them apart from a scalar `@samples` reference.
-        paramset_keys = ConfigSpecsEvaluator.referenced_paramset_keys(expression)
-        without_aggregates = _PARAMSET_AGG_PATTERN.sub(" ", expression)
+        # Strip `@@name` outer refs first so the single-@ pattern below does
+        # not also see them. Then ParamSet aggregate references are matched
+        # before the plain single-@ pattern for the same reason.
+        cleaned = _OUTER_FIELD_REF_PATTERN.sub(" ", expression)
+        paramset_keys = ConfigSpecsEvaluator.referenced_paramset_keys(cleaned)
+        without_aggregates = _PARAMSET_AGG_PATTERN.sub(" ", cleaned)
         scalar_keys = {m.group(1) for m in _FIELD_REF_PATTERN.finditer(without_aggregates)}
         return scalar_keys | paramset_keys
+
+    @staticmethod
+    def extract_referenced_outer_keys(expression: str) -> set[str]:
+        """Return the outer-scope keys referenced via the `@@name` sigil.
+
+        Only meaningful from inside a ParamSet row; at the outer scope any
+        outer ref is a syntax error (caught by the graph checker).
+        """
+        return {m.group(1) for m in _OUTER_FIELD_REF_PATTERN.finditer(expression)}
 
     @staticmethod
     def referenced_paramset_keys(expression: str) -> set[str]:
@@ -200,8 +241,11 @@ class ConfigSpecsEvaluator:
             for node in ast.walk(tree)
             if isinstance(node, ast.Call) and isinstance(node.func, ast.Name)
         }
-        allowed = _ALLOWED_BARE_NAMES | call_func_names | ConfigSpecsEvaluator.extract_referenced_keys(
-            expression
+        allowed = (
+            _ALLOWED_BARE_NAMES
+            | call_func_names
+            | ConfigSpecsEvaluator.extract_referenced_keys(expression)
+            | ConfigSpecsEvaluator.extract_referenced_outer_keys(expression)
         )
         bare = sorted(
             node.id
@@ -259,24 +303,44 @@ class ConfigSpecsEvaluator:
             "concat": _concat,
         }
 
+    @classmethod
+    def get_allowed_function_names(cls) -> list[str]:
+        """Names of the user-callable functions, in declaration order.
+
+        Source of truth for any external surface that needs to advertise the
+        function whitelist (docs, AI prompts, editor autocomplete). Does NOT
+        include `if` (handled by the rewriter, not the function table) or the
+        internal `__cp_*__` rewrite targets.
+        """
+        return list(cls._build_function_table().keys())
+
 
 def _rewrite_expression(expression: str) -> str:
     """Lower a ComputedParam expression to a plain simpleeval expression.
 
-    Three rewrites, in order:
-    1. `@key[].field` ParamSet aggregate sugar → a call to the internal
+    Four rewrites, in order:
+    0. Reject `@@key[].field` (reserved syntax — not supported in v1).
+    1. `@@field` outer-scope refs → a call to the internal outer-ref function.
+       Must run before steps 2 and 3 so the double-`@` is consumed first; a
+       single `@` survives if a plain field is also named `field`.
+    2. `@key[].field` ParamSet aggregate sugar → a call to the internal
        aggregate function.
-    2. remaining `@field` references → the bare identifier `field` (simpleeval
+    3. remaining `@field` references → the bare identifier `field` (simpleeval
        resolves it from the injected `names` dict).
-    3. `if(...)` → an internal function name (`if` is a Python keyword and would
+    4. `if(...)` → an internal function name (`if` is a Python keyword and would
        otherwise fail to parse).
-
-    Step 1 must run before step 2 so the `@` of an aggregate is consumed there
-    and not by the plain-reference rewrite.
     """
+    if _OUTER_PARAMSET_AGG_PATTERN.search(expression):
+        raise ComputedParamEvaluationError(
+            "Outer ParamSet aggregate references ('@@key[].field') are not supported."
+        )
+    rewritten = _OUTER_FIELD_REF_PATTERN.sub(
+        lambda m: f"{_OUTER_REF_FUNC_NAME}('{m.group(1)}')",
+        expression,
+    )
     rewritten = _PARAMSET_AGG_PATTERN.sub(
         lambda m: f"{_PARAMSET_AGG_FUNC_NAME}('{m.group(1)}', '{m.group(2)}')",
-        expression,
+        rewritten,
     )
     rewritten = _FIELD_REF_PATTERN.sub(lambda m: m.group(1), rewritten)
     rewritten = _IF_CALL_PATTERN.sub(f"{_IF_FUNC_NAME}(", rewritten)
@@ -356,8 +420,5 @@ def _if(cond: Any, a: Any, b: Any) -> Any:
 
 
 def _concat(*args: Any, sep: str = "") -> str:
-    if len(args) == 1 and isinstance(args[0], (list, tuple)):
-        items = args[0]
-    else:
-        items = args
+    items = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
     return sep.join("" if v is None else str(v) for v in items)

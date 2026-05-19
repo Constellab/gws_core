@@ -211,8 +211,8 @@ class ConfigSpecs:
     def check_config_specs(self) -> None:
         """Check that the config specs are valid.
 
-        Validates spec types and delegates to ComputedParam for cycle detection
-        and reference validation across computed expressions.
+        Validates spec types and delegates to ComputedParamGraphChecker for
+        cycle detection and reference validation across computed expressions.
         """
         if not self.specs:
             return
@@ -226,9 +226,11 @@ class ConfigSpecs:
                     f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}"
                 )
 
-        from gws_core.config.param.computed.computed_param import ComputedParam
+        from gws_core.config.param.computed.computed_param_graph import (
+            ComputedParamGraphChecker,
+        )
 
-        ComputedParam.check_graph(self)
+        ComputedParamGraphChecker.check(self)
 
     def build_config_params(self, param_values: ConfigParamsDict) -> ConfigParams:
         """
@@ -320,12 +322,14 @@ class ConfigSpecs:
         """Evaluate all entries with accepts_user_input=False over the provided
         values and return (computed_values, errors_by_key).
 
-        Thin delegator to ComputedParam.compute_all — see that method for the
-        full contract.
+        Thin delegator to ComputedParamResolver.compute_all — see that method
+        for the full contract.
         """
-        from gws_core.config.param.computed.computed_param import ComputedParam
+        from gws_core.config.param.computed.computed_param_resolver import (
+            ComputedParamResolver,
+        )
 
-        return ComputedParam.compute_all(self, values, evaluator)
+        return ComputedParamResolver.compute_all(self, values, evaluator)
 
     # ------------------------------------------------------------------ #
     # Values-layer helpers

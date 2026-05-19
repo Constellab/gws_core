@@ -4,6 +4,9 @@ from gws_core.config.param.computed.computed_param_evaluator import (
     ComputedParamEvaluationError,
     ConfigSpecsEvaluator,
 )
+from gws_core.config.param.computed.computed_param_graph import (
+    ComputedParamGraphChecker,
+)
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecDTO
@@ -187,13 +190,16 @@ class FormTemplateService:
 
         :param dto.param_set_key: when set, validates against that ParamSet's
             inner ConfigSpecs (per-row formula). Outer-scope aggregate sugar
-            (``@key[].field``) is not allowed in that case.
+            (``@key[].field``) is not allowed in that case; outer references
+            via ``@@name`` are allowed and validated against the enclosing
+            scope.
         """
         version = cls.get_version(template_id, version_id)
-        target_specs = cls.resolve_computed_param_scope(version.get_content(), dto.param_set_key)
+        outer_specs = version.get_content()
+        target_specs = cls.resolve_computed_param_scope(outer_specs, dto.param_set_key)
         referenced = sorted(ConfigSpecsEvaluator.extract_referenced_keys(dto.expression))
 
-        error = cls._check_computed_param_expression(dto, target_specs)
+        error = cls._check_computed_param_expression(dto, target_specs, outer_specs)
         return ValidateComputedParamResultDTO(
             valid=error is None, referenced_keys=referenced, error=error
         )
@@ -220,9 +226,18 @@ class FormTemplateService:
 
     @staticmethod
     def _check_computed_param_expression(
-        dto: ValidateComputedParamDTO, target_specs: ConfigSpecs
+        dto: ValidateComputedParamDTO,
+        target_specs: ConfigSpecs,
+        outer_specs: ConfigSpecs,
     ) -> str | None:
-        """Run all expression checks; return None when valid, else the message."""
+        """Run all expression checks; return None when valid, else the message.
+
+        ``target_specs`` is the scope the candidate would live in (the version
+        outer specs, or a ParamSet's inner specs). ``outer_specs`` is always
+        the version's top-level specs — same as ``target_specs`` for an outer
+        param, the enclosing scope for an inner one. Used to validate `@@name`
+        references and to detect cross-scope cycles via the graph checker.
+        """
         try:
             candidate = ComputedParam(expression=dto.expression)
         except BadRequestException as err:
@@ -236,27 +251,59 @@ class FormTemplateService:
                 "scope containing the ParamSet, not inside a ParamSet row."
             )
 
+        if dto.param_set_key is None and ConfigSpecsEvaluator.extract_referenced_outer_keys(
+            dto.expression
+        ):
+            return (
+                "Outer references ('@@name') are only valid inside a ParamSet, "
+                "not at the top scope."
+            )
+
         try:
             ConfigSpecsEvaluator.check_expression_syntax(dto.expression)
         except ComputedParamEvaluationError as err:
             return str(err)
 
-        # Reference + cycle checks: build a throwaway ConfigSpecs that is the
-        # target scope plus this candidate, then reuse ComputedParam.check_graph.
-        # Use the caller-supplied key when given (so editing an existing computed
-        # param's expression catches a cycle through that key); otherwise a
-        # synthetic, collision-proof key.
-        existing = target_specs.get_specs_as_dict()
+        # Reference + cycle checks: build a throwaway ConfigSpecs mirroring the
+        # version structure with the candidate inserted at the right scope,
+        # then reuse ComputedParamGraphChecker. Caller-supplied key when given
+        # (so editing an existing computed param's expression catches a cycle
+        # through that key); otherwise a synthetic, collision-proof key.
+        target_existing = target_specs.get_specs_as_dict()
         probe_key = dto.key
         if probe_key is None:
             probe_key = "__computed_param_probe__"
-            while probe_key in existing:
+            while probe_key in target_existing:
                 probe_key += "_"
-        probe_specs = ConfigSpecs(
-            {**existing, probe_key: candidate}, _skip_key_validation=True
-        )
+
+        if dto.param_set_key is None:
+            # Candidate lives at the outer scope.
+            probe_specs = ConfigSpecs(
+                {**target_existing, probe_key: candidate}, _skip_key_validation=True
+            )
+        else:
+            # Candidate lives inside a ParamSet. Build a probe outer ConfigSpecs
+            # with that ParamSet's inner specs replaced so cross-scope cycle
+            # detection sees the candidate.
+            outer_existing = outer_specs.get_specs_as_dict()
+            probe_inner = ConfigSpecs(
+                {**target_existing, probe_key: candidate}, _skip_key_validation=True
+            )
+            original_paramset = outer_existing[dto.param_set_key]
+            probe_paramset = ParamSet(
+                param_set=probe_inner,
+                optional=original_paramset.optional,
+                visibility=original_paramset.visibility,
+                human_name=original_paramset.human_name,
+                short_description=original_paramset.short_description,
+                max_number_of_occurrences=original_paramset.max_number_of_occurrences,
+            )
+            probe_specs = ConfigSpecs(
+                {**outer_existing, dto.param_set_key: probe_paramset},
+                _skip_key_validation=True,
+            )
         try:
-            ComputedParam.check_graph(probe_specs)
+            ComputedParamGraphChecker.check(probe_specs)
         except BadRequestException as err:
             # When a synthetic key was used, hide it from the message.
             message = str(err)

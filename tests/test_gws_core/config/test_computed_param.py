@@ -441,6 +441,174 @@ class TestComputedParamInConfigSpecs(TestCase):
 
 
 # test_computed_param
+class TestComputedParamOuterRef(TestCase):
+    """`@@field` lets a per-row formula inside a ParamSet read a value from
+    the enclosing scope."""
+
+    def test_inner_reads_outer_plain_field(self) -> None:
+        specs = ConfigSpecs(
+            {
+                "factor": FloatParam(),
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "mass_g": ComputedParam(expression="@mass * @@factor"),
+                        }
+                    )
+                ),
+            }
+        )
+        params = specs.build_config_params(
+            {
+                "factor": 1000.0,
+                "samples": [{"mass": 2.0}, {"mass": 3.5}],
+            }
+        )
+        self.assertEqual(params["samples"][0]["mass_g"], 2000.0)
+        self.assertEqual(params["samples"][1]["mass_g"], 3500.0)
+
+    def test_inner_reads_outer_computed(self) -> None:
+        # Resolver must compute `factor_double` before any sample row.
+        specs = ConfigSpecs(
+            {
+                "factor": FloatParam(),
+                "factor_double": ComputedParam(expression="@factor * 2"),
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "mass_g": ComputedParam(
+                                expression="@mass * @@factor_double"
+                            ),
+                        }
+                    )
+                ),
+            }
+        )
+        params = specs.build_config_params(
+            {"factor": 10.0, "samples": [{"mass": 4.0}]}
+        )
+        self.assertEqual(params["factor_double"], 20.0)
+        self.assertEqual(params["samples"][0]["mass_g"], 80.0)
+
+    def test_outer_aggregate_over_inner_computed(self) -> None:
+        # The outer aggregate must wait for the inner ComputedParam to fill in.
+        specs = ConfigSpecs(
+            {
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "mass_g": ComputedParam(expression="@mass * 1000"),
+                        }
+                    )
+                ),
+                "total_g": ComputedParam(expression="sum(@samples[].mass_g)"),
+            }
+        )
+        params = specs.build_config_params(
+            {"samples": [{"mass": 1.0}, {"mass": 2.5}]}
+        )
+        self.assertEqual(params["total_g"], 3500.0)
+
+    def test_cross_scope_cycle_detected(self) -> None:
+        # outer.x aggregates samples[].y, which reads outer.x via @@x → cycle.
+        specs = ConfigSpecs(
+            {
+                "x": ComputedParam(expression="sum(@samples[].y)"),
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "y": ComputedParam(expression="@mass + @@x"),
+                        }
+                    )
+                ),
+            }
+        )
+        with self.assertRaises(BadRequestException) as ctx:
+            specs.check_config_specs()
+        message = str(ctx.exception)
+        self.assertIn("Cycle", message)
+        # Both ends of the cycle should be named in the error.
+        self.assertIn("x", message)
+        self.assertIn("samples[].y", message)
+
+    def test_unknown_outer_ref_rejected_at_check(self) -> None:
+        specs = ConfigSpecs(
+            {
+                "factor": FloatParam(),
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "bad": ComputedParam(expression="@mass * @@nope"),
+                        }
+                    )
+                ),
+            }
+        )
+        with self.assertRaises(BadRequestException) as ctx:
+            specs.check_config_specs()
+        self.assertIn("nope", str(ctx.exception))
+
+    def test_outer_ref_at_outer_scope_rejected(self) -> None:
+        specs = ConfigSpecs(
+            {
+                "a": FloatParam(),
+                "bad": ComputedParam(expression="@a + @@outer_thing"),
+            }
+        )
+        with self.assertRaises(BadRequestException) as ctx:
+            specs.check_config_specs()
+        self.assertIn("outer", str(ctx.exception).lower())
+
+    def test_outer_paramset_aggregate_syntax_is_reserved(self) -> None:
+        # @@key[].field is reserved; even the lexer should reject it before
+        # graph checks get a chance.
+        with self.assertRaises(ComputedParamEvaluationError) as ctx:
+            ConfigSpecsEvaluator.check_expression_syntax(
+                "sum(@@samples[].mass)"
+            )
+        self.assertIn("not supported", str(ctx.exception))
+
+    def test_unset_outer_dep_keeps_inner_as_none(self) -> None:
+        # `factor` is optional and not provided → inner row gets None, not an
+        # error. compute_values mutates the rows in `values` in-place.
+        specs = ConfigSpecs(
+            {
+                "factor": FloatParam(optional=True),
+                "samples": ParamSet(
+                    ConfigSpecs(
+                        {
+                            "mass": FloatParam(),
+                            "mass_g": ComputedParam(expression="@mass * @@factor"),
+                        }
+                    )
+                ),
+            }
+        )
+        values = {"factor": None, "samples": [{"mass": 1.0}]}
+        _, errors = specs.compute_values(values)
+        self.assertIsNone(values["samples"][0]["mass_g"])
+        self.assertNotIn("samples[].mass_g", errors)
+
+    def test_extract_referenced_keys_partitioning(self) -> None:
+        # `extract_referenced_keys` returns same-scope only; outer refs go via
+        # `extract_referenced_outer_keys`.
+        expr = "@mass * @@factor + sum(@samples[].x)"
+        self.assertEqual(
+            ConfigSpecsEvaluator.extract_referenced_keys(expr),
+            {"mass", "samples"},
+        )
+        self.assertEqual(
+            ConfigSpecsEvaluator.extract_referenced_outer_keys(expr),
+            {"factor"},
+        )
+
+
+# test_computed_param
 class TestComputedParamMisc(TestCase):
     def test_int_param_without_default_still_works_with_computed_sibling(self) -> None:
         # Regression: adding a ComputedParam should not change normal mandatory checks.
