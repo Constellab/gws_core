@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any
 
 from typing_extensions import TypedDict
@@ -41,13 +42,16 @@ class SelectParam(ParamSpec):
     This replaces the deprecated ``options`` argument of :class:`StrParam`,
     :class:`IntParam` and :class:`FloatParam`.
 
-    The ``options`` argument accepts two forms (they can be mixed in the
-    same list):
+    The ``options`` argument accepts three forms:
 
-    - a raw value (``"a"``, ``1``, ``2.5``, ...): the value is both the stored
-      value and the displayed label.
-    - a ``{"label": ..., "value": ...}`` dict (a :class:`SelectParamOption`): the
-      interface shows ``label`` but ``value`` is stored / returned.
+    - an :class:`~enum.Enum` class: one option per member, the member ``name`` is
+      the displayed label and the member ``value`` is stored / returned.
+    - a list mixing the two following forms:
+
+      - a raw value (``"a"``, ``1``, ``2.5``, ...): the value is both the stored
+        value and the displayed label.
+      - a ``{"label": ..., "value": ...}`` dict (a :class:`SelectParamOption`):
+        the interface shows ``label`` but ``value`` is stored / returned.
 
     When ``multiple`` is ``True``, several choices can be selected and the param
     value is a list of the selected ``value``s. In that case, if no
@@ -59,7 +63,7 @@ class SelectParam(ParamSpec):
 
     def __init__(
         self,
-        options: list[Any | SelectParamOption] | None = None,
+        options: type[Enum] | list[Any | SelectParamOption] | None = None,
         multiple: bool = False,
         default_value: Any | None = None,
         optional: bool = False,
@@ -68,14 +72,16 @@ class SelectParam(ParamSpec):
         short_description: str | None = None,
     ) -> None:
         """
-        :param options: The list of available choices. Each entry is either
-                        a raw value or a ``{"label": ..., "value": ...}`` dict.
-        :type options: List[Any | SelectParamOption]
+        :param options: The available choices. Either an Enum class (one option
+                        per member) or a list of raw values / ``{"label": ...,
+                        "value": ...}`` dicts.
+        :type options: type[Enum] | List[Any | SelectParamOption]
         :param multiple: If True, several choices can be selected and the value is
                         a list. Defaults to False.
         :type multiple: bool
         :param default_value: Default value, if None, and optional is false, the config is mandatory.
                         When multiple is True and no default is provided, it defaults to an empty list.
+                        An Enum member may be passed, its value is then used.
         :param optional: See default value
         :type optional: Optional[bool]
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -89,6 +95,10 @@ class SelectParam(ParamSpec):
             "options": self._normalize_allowed_values(options),
             "multiple": multiple,
         }
+
+        # accept an enum member as default value
+        if isinstance(default_value, Enum):
+            default_value = default_value.value
 
         # for a multiple select with no explicit default, default to an empty list
         if multiple and default_value is None:
@@ -104,10 +114,16 @@ class SelectParam(ParamSpec):
 
     @staticmethod
     def _normalize_allowed_values(
-        options: list[Any | SelectParamOption],
+        options: type[Enum] | list[Any | SelectParamOption] | None,
     ) -> list[SelectParamOption]:
         if options is None:
             return []
+
+        # an Enum class: one option per member (label = name, value = value)
+        if isinstance(options, type) and issubclass(options, Enum):
+            return [
+                {"label": member.name, "value": member.value} for member in options
+            ]
 
         if not isinstance(options, (list, tuple)):
             raise BadRequestException(

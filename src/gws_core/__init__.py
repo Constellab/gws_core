@@ -6,6 +6,7 @@
 from .apps.app_config import AppConfig as AppConfig
 from .apps.app_config import app_decorator as app_decorator
 from .apps.app_dto import AppInstanceUrl as AppInstanceUrl
+from .apps.app_dto import AppStopPolicy as AppStopPolicy
 from .apps.app_dto import AppType as AppType
 from .apps.app_instance import AppInstance as AppInstance
 from .apps.app_process import AppProcess as AppProcess
@@ -172,6 +173,20 @@ from .docker.docker_dto import StartComposeRequestDTO as StartComposeRequestDTO
 from .docker.docker_dto import SubComposeInfoDTO as SubComposeInfoDTO
 from .docker.docker_dto import SubComposeListDTO as SubComposeListDTO
 from .docker.docker_service import DockerService as DockerService
+
+# EntityAction
+from .entity_action.entity_action import EntityAction as EntityAction
+from .entity_action.entity_action import EntityActionKind as EntityActionKind
+from .entity_action.entity_action_decorator import (
+    entity_action_plugin as entity_action_plugin,
+)
+from .entity_action.entity_action_dto import (
+    EntityActionResultDTO as EntityActionResultDTO,
+)
+from .entity_action.entity_action_plugin import (
+    EntityActionPlugin as EntityActionPlugin,
+)
+from .entity_action.entity_action_type import EntityActionType as EntityActionType
 
 # EntityNavigator
 from .entity_navigator.entity_navigator import EntityNavigator as EntityNavigator
