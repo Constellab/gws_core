@@ -73,6 +73,7 @@ Each block in the `blocks` array has an `id`, a `type`, and a `data` object. The
   }
 }
 ```
+The `language` field must be one of the supported values: `python`, `json`, `shell`, `r`, `yaml`, `julia`, `perl`. Do not use any other value.
 
 ### `list`
 ```json
@@ -355,6 +356,21 @@ If the command fails, warn the user and **stop**.
 - If a method is clearly internal (prefixed with `_`), do not add it to the documentation.
 - Always wait for user input at each interactive step. Never skip ahead.
 - The output file must be valid JSON parseable by any standard JSON parser.
+
+## Ask the user when uncertain
+
+If you have any question about the domain, how a feature works, whether a
+particular section should be included, or anything else you are unsure about,
+**ask the user rather than guessing**. This includes (but is not limited to):
+
+- Domain or business concepts you do not fully understand from the source code
+- How a class, method, or workflow is meant to be used in practice
+- Whether a given section, topic, or example belongs in the documentation
+- Ambiguities about scope — what should or should not be documented
+- Any other decision where you would otherwise have to assume the user's intent
+
+It is always better to ask a clarifying question than to produce documentation
+based on an incorrect assumption.
 
 ## Task
 
