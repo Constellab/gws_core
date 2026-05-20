@@ -68,7 +68,7 @@ class File(FSNode):
         return FileHelper.is_csv(self.path)
 
     def is_csv_or_excel(self):
-        return FileHelper.is_csv(self.path) or self.extension in ["xls", "xlsx"]
+        return FileHelper.is_csv_or_excel(self.path)
 
     def is_txt(self):
         return FileHelper.is_txt(self.path)
