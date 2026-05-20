@@ -252,6 +252,14 @@ class FileHelper:
         return cls.get_normalized_extension(path) in ["csv", "tsv"]
 
     @classmethod
+    def is_excel(cls, path: PathType) -> bool:
+        return cls.get_normalized_extension(path) in ["xls", "xlsx"]
+
+    @classmethod
+    def is_csv_or_excel(cls, path: PathType) -> bool:
+        return cls.is_csv(path) or cls.is_excel(path)
+
+    @classmethod
     def is_txt(cls, path: PathType) -> bool:
         return cls.get_normalized_extension(path) in ["txt"]
 

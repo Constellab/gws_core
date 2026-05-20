@@ -126,6 +126,27 @@ class TestParamSpec(TestCase):
         self.assertIsInstance(param_2, SelectParam)
         self.assertTrue(param_2.additional_info["multiple"])
 
+    def test_select_param_from_enum(self):
+        from enum import Enum
+
+        class _Color(Enum):
+            RED = "red"
+            GREEN = "green"
+
+        # passing an Enum class as options: one option per member
+        # (label is the name, value is the value)
+        param = SelectParam(_Color, default_value=_Color.RED)
+        self.assertEqual(
+            param.additional_info["options"],
+            [{"label": "RED", "value": "red"}, {"label": "GREEN", "value": "green"}],
+        )
+        # an enum member passed as default is stored as its value
+        self.assertEqual(param.get_default_value(), "red")
+
+        self.assertEqual(param.validate("green"), "green")
+        with self.assertRaises(BadRequestException):
+            param.validate("blue")
+
     def test_date_param(self):
         param = DateParam(
             default_value="2026-05-13",
