@@ -143,10 +143,19 @@ class EntityAction:
         :param plugin_id: the globally unique id of the owning plugin, used to
             namespace the action name of button actions.
         :type plugin_id: str
+        :raises ValueError: if a field required by this action's kind is missing.
         :return: the menu item DTO matching this action's kind.
         :rtype: EntityActionMenuDTO
         """
+        if not self.text:
+            raise ValueError("An entity action must have a non-empty 'text'.")
+
         if self.kind == EntityActionKind.BUTTON:
+            if not self.action_name:
+                raise ValueError(
+                    f"Button entity action '{self.text}' must have a non-empty "
+                    "'action_name'."
+                )
             children = (
                 [child.to_dto(plugin_id) for child in self.children]
                 if self.children else None
@@ -161,6 +170,11 @@ class EntityAction:
                 children=children,
             )
         if self.kind == EntityActionKind.LINK:
+            if not self.link_url:
+                raise ValueError(
+                    f"Link entity action '{self.text}' must have a non-empty "
+                    "'link_url'."
+                )
             return EntityActionLinkDTO(
                 text=self.text, link=self.link_url, icon=self.icon,
                 divider=self.divider, color=self.color,

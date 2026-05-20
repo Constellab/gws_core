@@ -36,7 +36,8 @@ class EntityActionService:
             except Exception as exception:
                 Logger.error(
                     f"Entity action plugin '{plugin.__plugin_id__}' failed on "
-                    f"{entity_type.value} '{entity_id}': {exception}"
+                    f"{entity_type.value} '{entity_id}': {exception}",
+                    exception=exception,
                 )
         return actions
 
@@ -74,7 +75,7 @@ class EntityActionService:
         contains no dot, so the plugin id is everything before the last dot.
         """
         plugin_id, separator, local_name = action_name.rpartition(".")
-        if not separator:
+        if not separator or not plugin_id or not local_name:
             raise BadRequestException(
                 f"Invalid action name '{action_name}', expected "
                 f"'<brick_name>.<plugin_name>.<action>'."

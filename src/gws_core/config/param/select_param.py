@@ -63,7 +63,7 @@ class SelectParam(ParamSpec):
 
     def __init__(
         self,
-        options: type[Enum] | list[Any | SelectParamOption] | None = None,
+        options: type[Enum] | list[Any | SelectParamOption] | tuple[Any | SelectParamOption, ...] | None = None,
         multiple: bool = False,
         default_value: Any | None = None,
         optional: bool = False,
@@ -73,15 +73,16 @@ class SelectParam(ParamSpec):
     ) -> None:
         """
         :param options: The available choices. Either an Enum class (one option
-                        per member) or a list of raw values / ``{"label": ...,
-                        "value": ...}`` dicts.
-        :type options: type[Enum] | List[Any | SelectParamOption]
+                        per member) or a list / tuple of raw values /
+                        ``{"label": ..., "value": ...}`` dicts.
+        :type options: type[Enum] | List[Any | SelectParamOption] | Tuple[Any | SelectParamOption, ...]
         :param multiple: If True, several choices can be selected and the value is
                         a list. Defaults to False.
         :type multiple: bool
         :param default_value: Default value, if None, and optional is false, the config is mandatory.
                         When multiple is True and no default is provided, it defaults to an empty list.
-                        An Enum member may be passed, its value is then used.
+                        An Enum member may be passed, its value is then used. When multiple is True,
+                        a list / tuple of Enum members may be passed, each member's value is then used.
         :param optional: See default value
         :type optional: Optional[bool]
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -96,9 +97,15 @@ class SelectParam(ParamSpec):
             "multiple": multiple,
         }
 
-        # accept an enum member as default value
+        # accept an enum member as default value (or, for a multiple select, a
+        # list / tuple of enum members)
         if isinstance(default_value, Enum):
             default_value = default_value.value
+        elif multiple and isinstance(default_value, (list, tuple)):
+            default_value = [
+                item.value if isinstance(item, Enum) else item
+                for item in default_value
+            ]
 
         # for a multiple select with no explicit default, default to an empty list
         if multiple and default_value is None:
@@ -114,7 +121,7 @@ class SelectParam(ParamSpec):
 
     @staticmethod
     def _normalize_allowed_values(
-        options: type[Enum] | list[Any | SelectParamOption] | None,
+        options: type[Enum] | list[Any | SelectParamOption] | tuple[Any | SelectParamOption, ...] | None,
     ) -> list[SelectParamOption]:
         if options is None:
             return []
