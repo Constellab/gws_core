@@ -3,6 +3,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import (
 )
 from gws_core.core.model.model import Model
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.string_helper import StringHelper
+from gws_core.entity_action.entity_action import EntityAction, EntityActionKind
 from gws_core.entity_action.entity_action_dto import (
     EntityActionMenuDTO,
     EntityActionResultDTO,
@@ -29,6 +31,7 @@ class EntityActionService:
         for plugin in EntityActionRegistry.get_plugins(entity_type):
             try:
                 for action in plugin.get_actions(entity):
+                    cls._check_action_names(action, plugin.__plugin_id__)
                     actions.append(action.to_dto(plugin.__plugin_id__))
             except Exception as exception:
                 Logger.error(
@@ -36,6 +39,29 @@ class EntityActionService:
                     f"{entity_type.value} '{entity_id}': {exception}"
                 )
         return actions
+
+    @classmethod
+    def _check_action_names(cls, action: EntityAction, plugin_id: str) -> None:
+        """Validate the ``action_name`` of a button action (and its children).
+
+        The action name is namespaced and sent in the URL of the dispatch
+        endpoint, so it must be URL-safe: only alphanumeric characters and
+        underscores (same rule as a plugin name). A dot is forbidden because it
+        is the namespace separator. Raises so the faulty plugin is logged and
+        skipped by the caller.
+        """
+        if action.kind != EntityActionKind.BUTTON:
+            return
+
+        if not action.action_name or not StringHelper.is_alphanumeric(action.action_name):
+            raise BadRequestException(
+                f"The entity action name '{action.action_name}' of plugin "
+                f"'{plugin_id}' is not valid. It must contain only alphanumeric "
+                f"characters and underscores ('_') so it is safe to use in a URL."
+            )
+
+        for child in action.children or []:
+            cls._check_action_names(child, plugin_id)
 
     @classmethod
     def execute_entity_action(
