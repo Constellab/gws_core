@@ -113,6 +113,24 @@ The content of each list item can include HTML for formatting, just like the par
 When `withHeadings` is `true`, the first row is the header row. Use tables for field descriptions, option summaries, or comparison matrices. 
 The content of each cell can include HTML for formatting like the paragraph block.
 
+### `hint`
+```json
+{
+  "id": "unique-id",
+  "type": "hint",
+  "data": {
+    "hintType": "info",
+    "content": "Callout text with optional <b>bold</b> and <code>inline code</code>."
+  }
+}
+```
+A hint renders as a highlighted callout box. `hintType` must be one of:
+- `info` — a general note or tip (default).
+- `warning` — a caution about a risky or irreversible action.
+- `science` — a scientific or domain-specific remark.
+
+Use hints sparingly for short, important asides. The `content` field can include HTML for formatting like the paragraph block; use `\n` for line breaks within a hint.
+
 ### Block IDs
 
 Every block must have a unique `id` string. When updating existing documentation, **preserve the `id` of blocks you are not changing**. For new blocks, generate a random alphanumeric ID of 10 characters (e.g., `"aB3xK9mQ2p"`).
@@ -220,7 +238,7 @@ Wait for the answer.
 - DTO/dataclass fields and their types
 - Imports that reveal what classes are part of the public API
 
-**Fetch the current documentation using the `gws community get-doc` CLI command**, passing the `remote_doc_id` from the manifest entry as the `documentation_id` parameter. This command retrieves a Constellab documentation page by its ID and writes the content as a JSON file (EditorJs rich text format) to the specified output path. The JSON includes a `blocks` array where each block has a `type` (header, paragraph, code, list, table) and associated `data`. Do **not** use the local file (it may be outdated).
+**Fetch the current documentation using the `gws community get-doc` CLI command**, passing the `remote_doc_id` from the manifest entry as the `documentation_id` parameter. This command retrieves a Constellab documentation page by its ID and writes the content as a JSON file (EditorJs rich text format) to the specified output path. The JSON includes a `blocks` array where each block has a `type` (header, paragraph, code, list, table, hint) and associated `data`. Do **not** use the local file (it may be outdated).
 
 Usage:
 ```bash
