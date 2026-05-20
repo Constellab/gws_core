@@ -12,6 +12,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 from gws_core.model.typing import Typing
+from gws_core.model.typing_manager import TypingManager
 
 from ..core.utils.utils import Utils
 from .brick_helper import BrickHelper
@@ -188,6 +189,10 @@ class BrickService:
                     status="CRITICAL",
                 )
                 traceback.print_exc()
+                # the brick is only partially imported: decorators may have registered
+                # typings whose module never finished importing. Drop those orphaned
+                # typings so they don't break the later typing initialization.
+                TypingManager.unregister_unresolvable_typings(brick_name)
                 # stop the brick load and go to next brick
                 break
 

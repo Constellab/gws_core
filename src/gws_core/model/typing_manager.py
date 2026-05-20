@@ -99,6 +99,30 @@ class TypingManager:
             cls._save_object_type_in_db(typing)
 
     @classmethod
+    def unregister_unresolvable_typings(cls, brick_name: str) -> None:
+        """Remove from the cache the typings of a brick whose Python type can no longer
+        be resolved.
+
+        This happens when a brick is only partially imported (a module failed to load):
+        decorators register typings eagerly, so a typing can be registered while its
+        defining module never finished importing, leaving it orphaned.
+
+        :param brick_name: name of the brick whose typings should be checked
+        :type brick_name: str
+        """
+        orphaned: list[str] = []
+        for typing_name, typing in cls._typings_name_cache.items():
+            if typing.brick == brick_name and typing.get_type() is None:
+                orphaned.append(typing_name)
+
+        for typing_name in orphaned:
+            del cls._typings_name_cache[typing_name]
+            Logger.error(
+                f"Unregistering typing '{typing_name}' of brick '{brick_name}': "
+                f"its module failed to import so its type can't be resolved."
+            )
+
+    @classmethod
     def save_object_types_in_db(cls) -> None:
         # once this method is called, we considere the tables are ready
         cls._tables_are_created = True
@@ -127,7 +151,15 @@ class TypingManager:
                 typing.brick_version = brick_info.version
 
         # refresh the ancestor list once all the type are loaded
-        typing.refresh_ancestors()
+        # if the typing's module failed to import, its Python type can't be
+        # resolved: log and skip it instead of aborting the whole startup
+        try:
+            typing.refresh_ancestors()
+        except Exception as err:
+            Logger.error(
+                f"Can't refresh ancestors for typing '{typing.typing_name}'. "
+                f"Its module probably failed to import. Skipping the typing. Error: {err}"
+            )
 
     @classmethod
     def _save_object_type_in_db(cls, typing: Typing) -> None:
