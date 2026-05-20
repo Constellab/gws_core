@@ -19,6 +19,7 @@ from gws_core.impl.rich_text.rich_text_types import (
 )
 from gws_core.model.event.event_dispatcher import EventDispatcher
 from gws_core.note.note import Note
+from gws_core.note.note_content_converter import NoteContentConverter
 from gws_core.note_template.note_template import NoteTemplate
 from gws_core.note_template.note_template_dto import InsertFormTemplateBlockDTO
 from gws_core.note_template.note_template_events import (
@@ -43,7 +44,11 @@ class NoteTemplateService:
     def create_from_note(cls, note_id: str) -> NoteTemplate:
         note: Note = Note.get_by_id_and_check(note_id)
 
-        note_template = cls._create(note.title, note.content)
+        # Convert Note-only blocks (FORM -> FORM_TEMPLATE, etc.) before the
+        # content becomes template content. Reverse of NoteTemplateContentConverter.
+        converted_content = NoteContentConverter.convert(note.content)
+
+        note_template = cls._create(note.title, converted_content)
 
         # copy the storage of the note to the note template
         RichTextFileService.copy_object_dir(
