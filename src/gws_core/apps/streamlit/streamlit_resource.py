@@ -115,7 +115,7 @@ class StreamlitResource(AppResource):
             streamlit_app.set_streamlit_code(self.get_streamlit_app_code())
         else:
             raise Exception(
-                "The app config, code folder of streamlit code must be set to generate the app."
+                "The app config, code folder or streamlit code must be set to generate the app."
             )
 
         return streamlit_app

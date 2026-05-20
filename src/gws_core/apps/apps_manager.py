@@ -3,7 +3,12 @@ import signal
 import socket
 from datetime import datetime, timedelta
 
-from gws_core.apps.app_dto import AppInstanceUrl, AppsStatusDTO, CreateAppAsyncResultDTO
+from gws_core.apps.app_dto import (
+    AppInstanceUrl,
+    AppsStatusDTO,
+    AppStopPolicy,
+    CreateAppAsyncResultDTO,
+)
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_process import AppProcess
@@ -252,11 +257,11 @@ class AppsManager:
         return cls.running_processes.get(resource_model_id)
 
     @classmethod
-    def set_disable_auto_stop(cls, app_id: str, disable_auto_stop: bool) -> None:
-        """Set the disable_auto_stop option on an app resource and update the running process if any.
+    def set_stop_policy(cls, app_id: str, stop_policy: AppStopPolicy) -> None:
+        """Set the stop policy on an app resource and update the running process if any.
 
         :param app_id: the resource model id of the app
-        :param disable_auto_stop: True to disable automatic stop when no connections are detected
+        :param stop_policy: the stop policy to apply
         """
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
@@ -265,13 +270,13 @@ class AppsManager:
         if not isinstance(resource, AppResource):
             raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
 
-        resource.set_disable_auto_stop(disable_auto_stop)
+        resource.set_stop_policy(stop_policy)
         resource_model.update_resource_fields(resource)
 
         # Update the running process if the app is currently running
         app_process = cls.find_app_by_resource_model_id(app_id)
         if app_process is not None:
-            app_process.set_disable_auto_stop(disable_auto_stop)
+            app_process.set_stop_policy(stop_policy)
 
     @classmethod
     def get_logs_of_app(

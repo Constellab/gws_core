@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from gws_core.apps.app_dto import AppInstanceDTO, AppType
+from gws_core.apps.app_dto import AppInstanceDTO, AppStopPolicy, AppType
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.shell_proxy import ShellProxy
@@ -20,8 +20,8 @@ class AppInstance:
     # If True, the user must be authenticated to access the app
     requires_authentication: bool = True
 
-    # If True, the app will not be automatically stopped when no connections are detected
-    disable_auto_stop: bool = False
+    # Defines whether the app is automatically stopped when no connections are detected
+    stop_policy: AppStopPolicy = AppStopPolicy.AUTO
 
     _shell_proxy: ShellProxy
 
@@ -66,14 +66,14 @@ class AppInstance:
         """
         self.requires_authentication = requires_authentication
 
-    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
-        """Set if the app should not be automatically stopped when no connections are detected.
-        By default, the app is automatically stopped when no connections are detected.
+    def set_stop_policy(self, stop_policy: AppStopPolicy) -> None:
+        """Set how the app should be stopped when no connections are detected.
+        By default (AUTO), the app is automatically stopped when no connections are detected.
 
-        :param disable_auto_stop: True to disable automatic stop
-        :type disable_auto_stop: bool
+        :param stop_policy: the stop policy to apply
+        :type stop_policy: AppStopPolicy
         """
-        self.disable_auto_stop = disable_auto_stop
+        self.stop_policy = stop_policy
 
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
         """Return true if the app was generated from the given resource model id"""
@@ -115,6 +115,7 @@ class AppInstance:
             app_resource_id=self.resource_model_id,
             name=self.name,
             env_type="",
+            stop_policy=self.stop_policy,
             source_ids=self.get_source_ids(),
         )
 

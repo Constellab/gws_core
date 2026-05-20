@@ -598,13 +598,20 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         """Update the resource model fields from a modified resource.
 
         This method is used to persist changes made to RFields of an existing resource
-        (e.g., after modifying disable_auto_stop on an AppResource).
+        (e.g., after modifying the stop policy on an AppResource).
         It unlocks the existing kv_store, clears all its keys, and recreates them
         by calling _receive_fields_from_resource.
 
         :param resource: the resource with updated fields
         :return: the updated and saved resource model
         """
+        # Force-load all KV_STORE RFields before clearing the store.
+        # These fields are lazy-loaded on first access, so any field that was
+        # not yet read would otherwise be lost when the store is cleared below.
+        r_fields: dict[str, BaseRField] = resource.__get_resource_r_fields__()
+        for key in r_fields:
+            getattr(resource, key)
+
         kv_store: KVStore | None = self.get_kv_store()
 
         if kv_store is not None:

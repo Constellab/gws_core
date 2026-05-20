@@ -12,6 +12,7 @@ from gws_core.apps.app_dto import (
     AppInstanceUrl,
     AppProcessStatus,
     AppProcessStatusDTO,
+    AppStopPolicy,
 )
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
@@ -495,7 +496,7 @@ class AppProcess:
                 # In dev mode or when auto stop is disabled, we do not stop the app even if there is no connection
                 if (
                     not self._app.is_dev_mode()
-                    and not self._app.disable_auto_stop
+                    and self._app.stop_policy == AppStopPolicy.AUTO
                     and not self._check_running()
                 ):
                     Logger.debug("No more connection to the app, stopping the app")
@@ -552,9 +553,9 @@ class AppProcess:
     def get_id(self) -> str:
         return self._app.resource_model_id
 
-    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
-        """Update the auto-stop flag on the underlying app instance."""
-        self._app.set_disable_auto_stop(disable_auto_stop)
+    def set_stop_policy(self, stop_policy: AppStopPolicy) -> None:
+        """Update the stop policy on the underlying app instance."""
+        self._app.set_stop_policy(stop_policy)
 
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(

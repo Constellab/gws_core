@@ -3,6 +3,7 @@ from abc import abstractmethod
 from typing import Any
 
 from gws_core.apps.app_config import AppConfig
+from gws_core.apps.app_dto import AppStopPolicy
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_view import AppView
 from gws_core.config.config_params import ConfigParams
@@ -51,7 +52,8 @@ class AppResource(ResourceList):
 
     _requires_authentification: bool = BoolRField(default_value=True)
 
-    _disable_auto_stop: bool = BoolRField(default_value=False)
+    # Stores the AppStopPolicy value (see set_stop_policy / get_stop_policy)
+    _stop_policy: str = StrRField(default_value=AppStopPolicy.AUTO.value)
 
     _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
 
@@ -148,15 +150,25 @@ class AppResource(ResourceList):
         """
         self._requires_authentification = requires_authentication
 
-    def set_disable_auto_stop(self, disable_auto_stop: bool) -> None:
-        """
-        Set if the app should not be automatically stopped when no connections are detected.
-        By default, the app is automatically stopped when no connections are detected.
+    def get_stop_policy(self) -> AppStopPolicy:
+        """Return the stop policy of the app."""
+        return AppStopPolicy(self._stop_policy)
 
-        :param disable_auto_stop: True to disable automatic stop
-        :type disable_auto_stop: bool
+    def set_stop_policy(self, stop_policy: AppStopPolicy) -> None:
         """
-        self._disable_auto_stop = disable_auto_stop
+        Set how the app should be stopped when no connections are detected.
+        By default (AUTO), the app is automatically stopped when no connections are detected.
+
+        :param stop_policy: the stop policy to apply
+        :type stop_policy: AppStopPolicy
+        """
+        self._stop_policy = stop_policy.value
+
+    def disable_auto_stop(self) -> None:
+        """
+        Disable the automatic stop of the app when no connections are detected.
+        """
+        self.set_stop_policy(AppStopPolicy.MANUAL)
 
     def _check_folder(self, folder_path: str) -> None:
         if not FileHelper.exists_on_os(folder_path) or not FileHelper.is_dir(folder_path):
@@ -346,8 +358,8 @@ class AppResource(ResourceList):
         # add the params
         app.set_params(self._params)
 
-        # set the auto stop option
-        app.set_disable_auto_stop(self._disable_auto_stop)
+        # set the stop policy
+        app.set_stop_policy(self.get_stop_policy())
 
         # create the app asynchronously and return the instance ID
         result = AppsManager.create_or_get_app_async(app)

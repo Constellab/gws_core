@@ -10,6 +10,15 @@ class AppType(Enum):
     REFLEX = "REFLEX"
 
 
+class AppStopPolicy(Enum):
+    """Defines how an app process is stopped when no connections are detected."""
+
+    # The app is automatically stopped when no connections are detected (default).
+    AUTO = "AUTO"
+    # The app stays alive until it is explicitly stopped.
+    MANUAL = "MANUAL"
+
+
 class AppInstanceUrl(BaseModelDTO):
     host_url: str
 
@@ -34,6 +43,7 @@ class AppInstanceDTO(BaseModelDTO):
     app_resource_id: str
     name: str
     env_type: str
+    stop_policy: AppStopPolicy = AppStopPolicy.AUTO
     source_ids: list[str] | None = None
     env_file_path: str | None = None  # for env app
     env_file_content: str | None = None  # for env app

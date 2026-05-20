@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import Depends
 from fastapi.responses import StreamingResponse
 
-from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO
+from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO, AppStopPolicy
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.utils.response_helper import ResponseHelper
@@ -42,19 +42,19 @@ def stop_process(id_: str, _=Depends(AuthorizationService.check_user_access_toke
 
 
 @core_app.put(
-    "/apps/{id_}/disable-auto-stop/{disable_auto_stop}",
+    "/apps/{id_}/stop-policy/{stop_policy}",
     tags=["App"],
-    summary="Set disable auto stop for an app",
+    summary="Set the stop policy for an app",
 )
-def set_disable_auto_stop(
-    id_: str, disable_auto_stop: bool, _=Depends(AuthorizationService.check_user_access_token)
+def set_stop_policy(
+    id_: str, stop_policy: AppStopPolicy, _=Depends(AuthorizationService.check_user_access_token)
 ) -> None:
     """
-    Set the disable_auto_stop option on an app.
-    When enabled, the app will not be automatically stopped when no connections are detected.
+    Set the stop policy on an app.
+    With MANUAL, the app will not be automatically stopped when no connections are detected.
     """
 
-    return AppsManager.set_disable_auto_stop(id_, disable_auto_stop)
+    return AppsManager.set_stop_policy(id_, stop_policy)
 
 
 @core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
