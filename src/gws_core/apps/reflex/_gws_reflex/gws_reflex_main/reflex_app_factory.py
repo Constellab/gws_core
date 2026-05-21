@@ -3,7 +3,7 @@ Helper function to apply GWS standard configuration to Reflex applications.
 """
 
 import reflex as rx
-from gws_reflex_base import ReflexMainStateBaseFactory, get_theme
+from gws_reflex_base import ReflexAppException, ReflexMainStateBaseFactory, get_theme
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
 
@@ -27,12 +27,23 @@ def default_gws_backend_handler(
 ) -> rx.event.EventSpec | None:
     """Default backend exception handler for GWS apps.
 
+    Expected exceptions (``ReflexAppException`` raised by the base state, and
+    ``BaseHTTPException`` raised by gws_core code) are shown as a toast with their
+    message. Unexpected errors are logged and shown as a generic message.
+
     :param exception: The exception that occurred
     :type exception: Exception
     :return: Event spec to show error toast
     :rtype: Optional[rx.event.EventSpec]
     """
+    if isinstance(exception, ReflexAppException):
+        if exception.show_as == "info":
+            return rx.toast.info(exception.detail, position="top-center")
+        return rx.toast.error(exception.detail, position="top-center")
+
     if isinstance(exception, BaseHTTPException):
+        if exception.show_as == "info":
+            return rx.toast.info(exception.get_detail_with_args(), position="top-center")
         return rx.toast.error(exception.get_detail_with_args(), position="top-center")
 
     Logger.log_exception_stack_trace(exception)
@@ -60,7 +71,6 @@ def register_gws_reflex_app(
 
     Standard GWS defaults applied (if not already set):
     - theme: Teal accent color with light/dark mode based on environment
-    - stylesheets: ["/style.css"]
     - frontend_exception_handler: Logs exceptions using GWS Logger
     - backend_exception_handler: Shows toast notifications with error details
     - unauthorized_page: Adds the unauthorized route (if add_unauthorized_page=True)

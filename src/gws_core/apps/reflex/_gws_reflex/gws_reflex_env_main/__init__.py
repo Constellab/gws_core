@@ -3,3 +3,4 @@
 from gws_reflex_base import *
 
 from .reflex_env_app_factory import register_gws_reflex_env_app as register_gws_reflex_env_app
+from .reflex_main_state_env import ReflexMainStateEnv as ReflexMainStateEnv

@@ -1,5 +1,7 @@
 """State class for registering GWS Streamlit apps."""
 
+import warnings
+
 import streamlit as st
 from gws_streamlit_base import StreamlitMainStateBase
 from gws_streamlit_main.utils.streamlit_auth_context_loader import StreamlitAuthContextLoader
@@ -53,7 +55,10 @@ class StreamlitMainState(StreamlitMainStateBase):
 
     @classmethod
     def register_streamlit_app(cls) -> None:
-        """
+        """.. deprecated::
+            register_streamlit_app is deprecated and will be removed in a future version.
+            Use initialize() instead.
+
         Register and initialize a GWS Streamlit app.
 
         This calls StreamlitBootstrap.initialize() and loads resources from source_ids
@@ -72,6 +77,12 @@ class StreamlitMainState(StreamlitMainStateBase):
         Returns:
             Tuple of (sources, params) loaded from app config
         """
+        warnings.warn(
+            "register_streamlit_app is deprecated and will be removed in a future version. "
+            "Use initialize() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # Initialize bootstrap (no return value)
         cls.initialize()
 

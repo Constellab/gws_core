@@ -1,4 +1,4 @@
-from gws_streamlit_main import StreamlitMainState, StreamlitRouter
+from gws_streamlit_env_main import StreamlitEnvMainState, StreamlitRouter
 
 from {{folderAppName}}.app_pages import first_page, second_page
 
@@ -9,7 +9,9 @@ params: dict
 # from gws_core.streamlit import StreamlitHelper
 # StreamlitHelper.hide_sidebar_toggle()
 # Initialize GWS - MUST be at the top
-StreamlitMainState.initialize()
+# This app runs in a virtual environment and cannot load gws_core.
+# The env state exposes the input resources as file paths.
+StreamlitEnvMainState.initialize()
 
 router = StreamlitRouter.load_from_session()
 

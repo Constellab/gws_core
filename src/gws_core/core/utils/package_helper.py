@@ -1,4 +1,5 @@
 import importlib
+import importlib.metadata
 import pathlib
 import sys
 
@@ -8,14 +9,26 @@ from .string_helper import StringHelper
 
 
 class PackageHelper:
-    # @staticmethod
-    # def is_installed(package) -> bool:
-    #     output = subprocess.check_output([sys.executable, "-m", "pip", "list"])
-    #     return package in output
-
     @staticmethod
     def module_exists(module_name=None) -> bool:
         return module_name in sys.modules
+
+    @staticmethod
+    def get_package_version(package: str) -> str:
+        """Return the version of an installed pip package.
+
+        :param package: name of the pip package (e.g. "reflex", "streamlit")
+        :type package: str
+        :raises ValueError: if the package is not installed
+        :return: the installed version of the package
+        :rtype: str
+        """
+        try:
+            return importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError as exc:
+            raise ValueError(
+                f"The package '{package}' is not installed in the current environment."
+            ) from exc
 
     @staticmethod
     def install(package):

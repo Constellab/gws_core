@@ -1,10 +1,15 @@
 class GwsCorePackages:
-    """List of pip packages used by GWS Core"""
+    """List of pip packages used by GWS Core.
+
+    The packages and their order match the pip dependencies declared in
+    ``settings.json``.
+    """
 
     OPENPYXL = "openpyxl"
     AWESOME_SLUGIFY = "awesome-slugify"
     FASTAPI = "fastapi"
     PYDANTIC = "pydantic"
+    ANNOTATED_TYPES = "annotated-types"
     PEEWEE = "peewee"
     PSUTIL = "psutil"
     PYJWT = "pyjwt"
@@ -21,13 +26,24 @@ class GwsCorePackages:
     OPENAI = "openai"
     TYPING_EXTENSIONS = "typing_extensions"
     BOTO3 = "boto3"
+    BOTO3_STUBS_S3 = "boto3-stubs[s3]"
     PLOTLY = "plotly"
     SIMPLE_JSON = "simplejson"
     XML_TO_DICT = "xmltodict"
     STREAMLIT = "streamlit"
+    STREAMLIT_SEARCHBOX = "streamlit-searchbox"
     BEAUTIFUL_SOUP = "beautifulsoup4"
     GRPCIO = "grpcio"
     UJSON = "ujson"
     TYPER = "typer"
+    CLICK = "click"
     SCHEDULE = "schedule"
     REFLEX = "reflex"
+    DOCSTRING_PARSER = "docstring-parser"
+    PYTHON_DOTENV = "python-dotenv"
+    CRONITER = "croniter"
+    DILL = "dill"
+    PYTEST = "pytest"
+    PYTEST_XDIST = "pytest-xdist"
+    SIMPLEEVAL = "simpleeval"
+    LIBCST = "libcst"

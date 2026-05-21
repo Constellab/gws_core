@@ -18,7 +18,7 @@ See [gws_streamlit_base/CLAUDE.md](../gws_streamlit_base/CLAUDE.md) for full doc
 Main state class for Streamlit apps (non-virtual environment) with resource management capabilities. Extends `StreamlitStateBase` with GWS Core-specific functionality.
 
 **Key Methods:**
-- `register_streamlit_app()`: Register and initialize a GWS Streamlit app
+- `initialize()`: Initialize a GWS Streamlit app
 - `get_sources()`: Load resources from source IDs (cached with `@st.cache_data`)
 - `get_params()`: Return app parameters
 - `get_param(key, default)`: Return a specific app parameter by key with an optional default

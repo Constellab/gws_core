@@ -1,5 +1,7 @@
 """State class for registering GWS Streamlit virtual environment apps."""
 
+import warnings
+
 from gws_streamlit_base import StreamlitMainStateBase
 
 
@@ -13,7 +15,10 @@ class StreamlitEnvMainState(StreamlitMainStateBase):
 
     @classmethod
     def register_streamlit_env_app(cls) -> None:
-        """
+        """.. deprecated::
+            register_streamlit_env_app is deprecated and will be removed in a future version.
+            Use initialize() instead.
+
         Register and initialize a GWS Streamlit app running in a virtual environment.
 
         This calls StreamlitBootstrap.initialize() and returns source_paths (not loaded resources)
@@ -29,6 +34,12 @@ class StreamlitEnvMainState(StreamlitMainStateBase):
         st.title("My Virtual Env App")
         ```
         """
+        warnings.warn(
+            "register_streamlit_env_app is deprecated and will be removed in a future version. "
+            "Use initialize() instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # Initialize bootstrap (no return value)
         cls.initialize()
 

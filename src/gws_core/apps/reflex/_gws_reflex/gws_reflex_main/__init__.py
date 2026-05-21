@@ -16,6 +16,12 @@ from .components.reflex_paginated_table_component.paginated_table_state import (
 from .components.reflex_paginated_table_component.paginated_table_state import (
     PaginatedTableState as PaginatedTableState,
 )
+from .components.reflex_plotly_fullscreen_component import (
+    plotly_fullscreen_dialog as plotly_fullscreen_dialog,
+)
+from .components.reflex_plotly_fullscreen_component import (
+    plotly_with_fullscreen as plotly_with_fullscreen,
+)
 from .components.reflex_select_resource_component.resource_select_component import (
     resource_select_button as resource_select_button,
 )

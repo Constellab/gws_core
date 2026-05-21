@@ -26,7 +26,6 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.user.current_user_service import CurrentUserService
@@ -372,29 +371,18 @@ class AppProcess:
             # update the config with current user access tokens
             config.user_access_tokens = self._user_access_tokens
         else:
-            str_resources: list[str] = []
-
-            app_resources = self._app.resources or []
-            if self._app.is_virtual_env_app():
-                # for virtual env app, the resources are the file paths
-                str_resources = [
-                    resource.path for resource in app_resources if isinstance(resource, FSNode)
-                ]
-            else:
-                # for normal app, the resources are the model ids
-                str_resources: list[str] = []
-
-                # if the str_resources contains None, raise an exception
-                for res in app_resources:
-                    model_id = res.get_model_id()
-                    if model_id is None:
+            # for virtual env app, the source references are the file paths
+            # for normal app, they are the resource model ids
+            if not self._app.is_virtual_env_app():
+                # ensure every resource has a model id before generating the config
+                for res in self._app.resources or []:
+                    if res.get_model_id() is None:
                         raise Exception(
                             f"Resource in app {self._app.resource_model_id} does not have a model ID"
                         )
-                    str_resources.append(model_id)
 
             config = AppInstanceConfigDTO(
-                source_ids=str_resources,
+                source_ids=self._app.get_source_ids(),
                 params=self._app.params,
                 user_access_tokens=self._user_access_tokens,
             )

@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 from gws_core.apps.app_dto import AppInstanceDTO, AppStopPolicy, AppType
 from gws_core.core.utils.logger import Logger
+from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.resource.resource import Resource
@@ -98,9 +99,23 @@ class AppInstance:
         return self._dev_mode
 
     def get_source_ids(self) -> list[str]:
-        """Get the source ids of the app"""
+        """Get the source references passed to the app, stored in the config file.
+
+        For virtual environment apps, the app runs in an isolated env that cannot load
+        gws_core to resolve model ids to resources. So the file paths are passed instead.
+        Only FSNode resources are supported for virtual environment apps.
+
+        For normal apps, the resource model ids are passed.
+        """
         if not self.resources:
             return []
+
+        if self.is_virtual_env_app():
+            # for virtual env app, the resources are the file paths
+            return [
+                resource.path for resource in self.resources if isinstance(resource, FSNode)
+            ]
+
         source_ids = []
         for resource in self.resources:
             model_id = resource.get_model_id()

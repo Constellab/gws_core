@@ -20,17 +20,29 @@ class AppDevConfig(BaseModelDTO):
     dev_user_email: str | None = ""
 
 
-def create_dev_config_json(app_folder: str, is_reflex_enterprise: bool = False) -> None:
+def create_dev_config_json(
+    app_folder: str,
+    is_reflex_enterprise: bool = False,
+    is_streamlit_v2: bool = False,
+    env_type: str = "NONE",
+    env_file_path: str = "",
+) -> None:
     """
     Create a dev_config.json file at the specified app path.
 
     :param app_path: Path where the dev_config.json file should be created
     :param is_reflex_enterprise: Whether this is for a Reflex Enterprise app
+    :param is_streamlit_v2: Whether this app uses the Streamlit v2 app API
+    :param env_type: Virtual environment type ("NONE", "PIP", "CONDA" or "MAMBA")
+    :param env_file_path: Path to the environment file, relative to the app folder
     """
     # Create the dev config object
     dev_config = AppDevConfig(
         params={"param_name": "Value from dev_config.json"},
         is_reflex_enterprise=is_reflex_enterprise,
+        is_streamlit_v2=is_streamlit_v2,
+        env_type=env_type,
+        env_file_path=env_file_path,
     )
 
     # Write the JSON file

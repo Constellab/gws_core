@@ -12,12 +12,6 @@ from .component.reflex_page_sidebar import left_sidebar_open_button as left_side
 from .component.reflex_page_sidebar import page_sidebar_component as page_sidebar_component
 from .component.reflex_page_sidebar import right_sidebar_close_button as right_sidebar_close_button
 from .component.reflex_page_sidebar import right_sidebar_open_button as right_sidebar_open_button
-from .component.reflex_plotly_fullscreen_component import (
-    plotly_fullscreen_dialog as plotly_fullscreen_dialog,
-)
-from .component.reflex_plotly_fullscreen_component import (
-    plotly_with_fullscreen as plotly_with_fullscreen,
-)
 from .component.reflex_sidebar_menu_component import menu_item_component as menu_item_component
 from .component.reflex_sidebar_menu_component import (
     sidebar_header_component as sidebar_header_component,
@@ -25,12 +19,19 @@ from .component.reflex_sidebar_menu_component import (
 from .component.reflex_sidebar_menu_component import (
     sidebar_menu_component as sidebar_menu_component,
 )
+from .reflex_exception import ReflexAppException as ReflexAppException
+from .reflex_exception import ReflexExceptionShowMode as ReflexExceptionShowMode
 from .reflex_init import ReflexInit as ReflexInit
 from .reflex_main_state_base import ReflexConfigDTO as ReflexConfigDTO
 from .reflex_main_state_base import ReflexMainStateBase as ReflexMainStateBase
 from .reflex_main_state_base import ReflexMainStateBaseFactory as ReflexMainStateBaseFactory
-from .reflex_main_state_env import ReflexMainStateEnv as ReflexMainStateEnv
 from .reflex_main_utils import add_unauthorized_page as add_unauthorized_page
+from .reflex_main_utils import (
+    default_gws_env_backend_handler as default_gws_env_backend_handler,
+)
+from .reflex_main_utils import (
+    default_gws_env_frontend_handler as default_gws_env_frontend_handler,
+)
 from .reflex_main_utils import get_theme as get_theme
 from .reflex_main_utils import main_component as main_component
 from .reflex_type import ReflexDialogCloseEvent as ReflexDialogCloseEvent

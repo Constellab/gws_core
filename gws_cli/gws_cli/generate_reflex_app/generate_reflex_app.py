@@ -4,6 +4,8 @@ import shutil
 import typer
 from gws_core import FileHelper, ShellProxy
 
+from gws_cli.utils.app_env_generator import (build_env_template_vars,
+                                             copy_env_file, validate_env_type)
 from gws_cli.utils.app_generator import AppGenerator
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import create_dev_config_json
@@ -12,19 +14,50 @@ from gws_cli.utils.typer_message_observer import TyperMessageObserver
 APP_NAME_VAR = "APP_NAME"
 
 TEMPLATE_FOLDER = os.path.join(os.path.dirname(__file__), "_template")
+TEMPLATE_ENV_FOLDER = os.path.join(os.path.dirname(__file__), "_template_env")
+# App code files specific to virtual environment apps, they override the default app code
+TEMPLATE_ENV_APP_OVERLAY_FOLDER = os.path.join(TEMPLATE_ENV_FOLDER, "app_overlay")
+GENERATE_APP_TEMPLATE_NAME = "generate_app_template.txt"
 REFLEX_MAIN_FILE = "reflex_main.py"
 ASSETS_FOLDER = "assets"
 
 
-def generate_reflex_app(name: str, is_enterprise: bool) -> str:
+def _generate_reflex_app_task(snake_case_name: str, app_folder: str, env_type: str) -> None:
+    """Generate the ``generate_<name>.py`` task file from the reflex generate template.
+
+    :param snake_case_name: The snake_case name of the app
+    :param app_folder: The path to the app folder where the task file is created
+    :param env_type: Virtual environment type ("NONE", "PIP", "CONDA" or "MAMBA")
+    """
+    template_path = os.path.join(TEMPLATE_FOLDER, GENERATE_APP_TEMPLATE_NAME)
+    generate_task_path = os.path.join(app_folder, f"generate_{snake_case_name}.py")
+    shutil.copy2(template_path, generate_task_path)
+
+    # Replace the common app variables (app class names, folder name, ...)
+    AppGenerator.replace_vars_in_file(snake_case_name, generate_task_path, "reflex")
+
+    # Replace the env specific variables
+    CLIUtils.replace_vars_in_file(
+        generate_task_path,
+        build_env_template_vars("reflex", env_type, snake_case_name),
+    )
+
+
+def generate_reflex_app(name: str, is_enterprise: bool, env_type: str = "NONE") -> str:
     """Method to create a new reflex app with the given name.
 
-    :param name: _description_
+    :param name: name of the reflex app
     :type name: str
-    :raises ValueError: _description_
+    :param is_enterprise: whether to generate an enterprise Reflex app
+    :type is_enterprise: bool
+    :param env_type: virtual environment to run the app in. One of "NONE", "PIP",
+        "CONDA" or "MAMBA". Defaults to "NONE".
+    :type env_type: str
+    :raises ValueError: if the env type is not supported
     :return: path to the created reflex app
     :rtype: str
     """
+    env_type = validate_env_type(env_type)
     # Validate app name and check if folder already exists
     current_folder = os.getcwd()
     snake_case_name = AppGenerator.validate_app_name_and_folder(name, current_folder)
@@ -71,11 +104,30 @@ def generate_reflex_app(name: str, is_enterprise: bool) -> str:
         replace_variables = {APP_NAME_VAR: snake_case_name}
         CLIUtils.replace_vars_in_file(app_rxconfig_path, replace_variables)
 
-        # Create the dev_config.json file
-        create_dev_config_json(reflex_app_folder, is_reflex_enterprise=is_enterprise)
+        # Copy the env file inside the app code folder when a virtual env is requested
+        dev_env_file_path = ""
+        if env_type != "NONE":
+            dev_env_file_path = copy_env_file(
+                TEMPLATE_ENV_FOLDER, "reflex", env_type, reflex_app_folder
+            )
 
-        # Copy the reflex_main.py file, override the default one
-        reflex_main_template_path = os.path.join(TEMPLATE_FOLDER, REFLEX_MAIN_FILE)
+        # Create the dev_config.json file
+        create_dev_config_json(
+            reflex_app_folder,
+            is_reflex_enterprise=is_enterprise,
+            env_type=env_type,
+            env_file_path=dev_env_file_path,
+        )
+
+        # Copy the reflex_main.py file, override the default one. A virtual env app
+        # cannot load gws_core, so it uses the env variant which imports from
+        # gws_reflex_env_main instead.
+        if env_type != "NONE":
+            reflex_main_template_path = os.path.join(
+                TEMPLATE_ENV_APP_OVERLAY_FOLDER, REFLEX_MAIN_FILE
+            )
+        else:
+            reflex_main_template_path = os.path.join(TEMPLATE_FOLDER, REFLEX_MAIN_FILE)
         app_reflex_main_path = os.path.join(
             reflex_app_folder, snake_case_name, snake_case_name + ".py"
         )
@@ -90,8 +142,8 @@ def generate_reflex_app(name: str, is_enterprise: bool) -> str:
             typer.echo(f"Expected .gitignore not found at '{gitignore_path}'", err=True)
             raise typer.Abort()
 
-        # Create the generate task file
-        AppGenerator.generate_app_task(snake_case_name, app_folder, "reflex")
+        # Create the generate task file, injecting the virtual env if requested
+        _generate_reflex_app_task(snake_case_name, app_folder, env_type)
 
         # Copy the CSS file into assets folder
         assets_folder = os.path.join(reflex_app_folder, ASSETS_FOLDER)

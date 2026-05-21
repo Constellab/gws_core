@@ -1,10 +1,13 @@
 import os
+import traceback
 
 import reflex as rx
 
 from .component.reflex_confirm_dialog_component import confirm_dialog
+from .reflex_exception import ReflexAppException
 from .reflex_main_state_base import (
     UNAUTHORIZED_ROUTE,
+    ReflexMainStateBase,
     ReflexMainStateBaseFactory,
 )
 
@@ -57,3 +60,44 @@ def get_theme():
         appearance=os.environ.get("GWS_THEME", "light"),
         radius="large",
     )
+
+
+def default_gws_env_frontend_handler(exception: Exception) -> None:
+    """Default frontend exception handler for GWS virtual environment apps.
+
+    A virtual environment app cannot load ``gws_core``, so this handler logs the
+    exception with the standard library instead of the GWS Logger.
+
+    :param exception: The exception that occurred
+    :type exception: Exception
+    """
+    traceback.print_exception(type(exception), exception, exception.__traceback__)
+
+
+def default_gws_env_backend_handler(exception: Exception) -> rx.event.EventSpec | None:
+    """Default backend exception handler for GWS virtual environment apps.
+
+    Expected ``ReflexAppException`` errors are shown as a toast with their message.
+    Unexpected errors are logged and shown as a generic message (or the full message
+    in dev mode).
+
+    :param exception: The exception that occurred
+    :type exception: Exception
+    :return: Event spec to show an error toast
+    :rtype: rx.event.EventSpec | None
+    """
+    if isinstance(exception, ReflexAppException):
+        if exception.show_as == "info":
+            return rx.toast.info(exception.detail, position="top-center")
+        return rx.toast.error(exception.detail, position="top-center")
+
+    default_gws_env_frontend_handler(exception)
+
+    if ReflexMainStateBase.is_dev_mode():
+        # In dev mode, show the full error message
+        return rx.toast.error(
+            f"An unexpected error occurred: {str(exception)}", position="top-center"
+        )
+
+    # In production mode, show a generic error message
+    return rx.toast.error("An unexpected error occurred.", position="top-center")

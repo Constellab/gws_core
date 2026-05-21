@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
 import reflex as rx
-from gws_reflex_base.component.reflex_dialog_components import dialog_header
+from gws_reflex_base import dialog_header
 
 
 class PlotlyFullscreenState(rx.State):

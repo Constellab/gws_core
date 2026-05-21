@@ -5,7 +5,7 @@ This module provides extended utilities, components, and state management for bu
 All public components and states must be exported in the `__init__.py` file of the `gws_reflex_main` module. If you add new components or states, ensure they are properly documented here.
 
 **Note:** All elements from `gws_reflex_base` are automatically available when importing from `gws_reflex_main`, including:
-- `ReflexMainStateBase`, `ReflexMainStateEnv`, `ReflexConfigDTO`
+- `ReflexMainStateBase`, `ReflexConfigDTO`
 - `form_dialog_component()`, `FormDialogState`
 - `confirm_dialog2()`, `ConfirmDialogState2`, `ConfirmDialogAction`
 - `main_component()`, `add_unauthorized_page()`, `get_theme()`

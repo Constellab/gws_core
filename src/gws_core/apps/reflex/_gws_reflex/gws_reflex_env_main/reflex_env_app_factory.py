@@ -3,8 +3,16 @@ Helper function to apply GWS standard configuration to Reflex applications.
 """
 
 import reflex as rx
+from gws_reflex_base import (
+    ReflexMainStateBaseFactory,
+    default_gws_env_backend_handler,
+    default_gws_env_frontend_handler,
+    get_theme,
+)
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
-from gws_reflex_base import get_theme
+from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
+
+from .reflex_main_state_env import ReflexMainStateEnv
 
 
 def register_gws_reflex_env_app(
@@ -20,7 +28,8 @@ def register_gws_reflex_env_app(
 
     Standard GWS defaults applied (if not already set):
     - theme: Teal accent color with light/dark mode based on environment
-    - stylesheets: ["/style.css"]
+    - frontend_exception_handler: Logs exceptions
+    - backend_exception_handler: Shows toast notifications with error details
     - unauthorized_page: Adds the unauthorized route (if add_unauthorized_page=True)
 
     Example usage:
@@ -48,15 +57,24 @@ def register_gws_reflex_env_app(
     :return: The configured app instance
     :rtype: rx.App
     """
+
+    ReflexMainStateBaseFactory.set_main_state_class(ReflexMainStateEnv)
     # Create app if not provided
     if app is None:
-        app = rx.App()
+        app = rx.App(theme=get_theme())
 
-    # Apply GWS defaults
-    app.theme = get_theme()
+    # Register the exception handlers (only if still using the reflex defaults)
+    if (
+        not app.frontend_exception_handler
+        or app.frontend_exception_handler == default_frontend_exception_handler
+    ):
+        app.frontend_exception_handler = default_gws_env_frontend_handler
 
-    if not app.stylesheets:
-        app.stylesheets = ["/style.css"]
+    if (
+        not app.backend_exception_handler
+        or app.backend_exception_handler == default_backend_exception_handler
+    ):
+        app.backend_exception_handler = default_gws_env_backend_handler
 
     # Add unauthorized page if requested
     if add_unauthorized_page:

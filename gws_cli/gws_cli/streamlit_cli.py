@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Annotated
 
 import typer
@@ -8,6 +9,15 @@ from gws_cli.app_cli import AppCli
 from gws_cli.generate_streamlit_app.generate_streamlit_app import generate_streamlit_app
 
 app = typer.Typer(help="Generate and run Streamlit applications")
+
+
+class StreamlitEnvType(str, Enum):
+    """Virtual environment types supported when generating a Streamlit app."""
+
+    NONE = "NONE"
+    PIP = "PIP"
+    CONDA = "CONDA"
+    MAMBA = "MAMBA"
 
 
 @app.command("run", help="Run a Streamlit app in development mode")
@@ -35,7 +45,19 @@ def run_dev(
 
 
 @app.command("generate", help="Generate a new Streamlit app")
-def generate(name: Annotated[str, typer.Argument(help="Name of the Streamlit app (snake_case).")]):
+def generate(
+    name: Annotated[str, typer.Argument(help="Name of the Streamlit app (snake_case).")],
+    env: Annotated[
+        StreamlitEnvType,
+        typer.Option(
+            "--env",
+            help="Virtual environment to run the app in (PIP for pipenv, CONDA or MAMBA).",
+            case_sensitive=False,
+        ),
+    ] = StreamlitEnvType.NONE,
+):
     typer.echo(f"Generating streamlit app: '{name}'")
-    app_folder = generate_streamlit_app(name)
+    app_folder = generate_streamlit_app(name, env_type=env.value)
+    if env != StreamlitEnvType.NONE:
+        typer.echo(f"App configured to run in a '{env.value}' virtual environment.")
     typer.echo(f"Streamlit app '{name}' created successfully in '{app_folder}'.")

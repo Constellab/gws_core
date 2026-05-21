@@ -1,0 +1,6 @@
+name: .venv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - streamlit=={{packageVersion}}
