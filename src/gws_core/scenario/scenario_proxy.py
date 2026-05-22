@@ -122,9 +122,13 @@ class ScenarioProxy:
                     self._scenario, "Error during the execution of the scenario"
                 )
 
-        if exitcode != 0:
+        if exitcode != 0 and not self._scenario.is_finished:
+            # The subprocess exited abnormally before the scenario reached a
+            # terminal status (e.g. it was killed mid-run). A non-zero exit
+            # after a terminal status is a process-teardown artifact, not a
+            # scenario failure (a real failure is caught by is_error above).
             raise ScenarioRunException(
-                self._scenario, "Error in during the execution of the scenario"
+                self._scenario, "Error during the execution of the scenario"
             )
 
     def run_async(self) -> ScenarioWaiterBasic:
