@@ -7,7 +7,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import IOSpecs
 from gws_core.model.typing import Typing
-from gws_core.model.typing_dto import TypingObjectType, TypingStatus
+from gws_core.model.typing_dto import TypingObjectType
 from gws_core.model.typing_exception import TypingNotFoundException
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_name import TypingNameObj
@@ -183,8 +183,10 @@ class TypingService:
         else:
             typing_names = list(Typing.select())
 
+        # only drop typings whose Python type no longer resolves — not typings
+        # that merely have a definition error (their class still exists)
         unavailable_types: list[Typing] = [
-            x for x in typing_names if x.get_type_status() == TypingStatus.UNAVAILABLE
+            x for x in typing_names if not x.type_exists()
         ]
 
         for typing in unavailable_types:

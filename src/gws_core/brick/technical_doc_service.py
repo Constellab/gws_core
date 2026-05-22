@@ -108,7 +108,7 @@ class TechnicalDocService:
         markdown = f"# {title}\n\n"
 
         for obj in objects:
-            if obj.status == TypingStatus.UNAVAILABLE:
+            if obj.status == TypingStatus.ERROR:
                 continue
             if obj.hide:
                 continue

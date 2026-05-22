@@ -88,6 +88,11 @@ def _decorator_view(
         #             raise Exception(
         #                 f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' but there is not argument in the function called with the same name")
 
+        # ConfigSpecs construction never raises on an invalid param key; it
+        # records the problem instead. Surface it here so the view is skipped.
+        if not specs.is_valid:
+            raise Exception(specs.invalid_reason)
+
         specs.check_config_specs()
 
         # If method spec overides view spec, check the type

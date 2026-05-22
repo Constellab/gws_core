@@ -699,7 +699,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
                 has_children = True
         else:
-            type_status = TypingStatus.UNAVAILABLE
+            # no typing registered for this resource: the type is unavailable
+            type_status = TypingStatus.ERROR
 
         return ResourceModelDTO(
             id=self.id,

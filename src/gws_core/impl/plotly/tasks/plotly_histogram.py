@@ -75,6 +75,7 @@ class PlotlyHistogram(PlotlyTask):
                 short_description="cumulative or not",
             ),
             "nbins": IntParam(
+                min_value=1,
                 default_value=None,
                 optional=True,
                 visibility="protected",

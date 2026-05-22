@@ -7,13 +7,34 @@ from gws_core.model.typing_style import TypingStyle
 
 class TypingStatus(Enum):
     OK = "OK"
-    UNAVAILABLE = "UNAVAILABLE"
+    # the type cannot be used: either its Python type does not resolve, or it
+    # has an invalid definition (e.g. an invalid config spec). See
+    # TypingDTO.errors for the details.
+    ERROR = "ERROR"
 
 
 # different object typed store in the typing table
 TypingObjectType = Literal[
     "TASK", "RESOURCE", "PROTOCOL", "MODEL", "ACTION", "APP", "RICH_TEXT_BLOCK", "TRIGGERED_JOB"
 ]
+
+
+# Source of a typing error.
+#   config / input / output : an invalid definition spec (persisted)
+#   type                    : the Python type cannot be resolved (computed on the fly)
+TypingErrorSource = Literal["config", "input", "output", "type"]
+
+
+class TypingErrorDTO(BaseModelDTO):
+    """One error on a typing.
+
+    Definition errors (config/input/output) are persisted on
+    Typing.definition_errors; the 'type' error is computed on the fly when the
+    Python type does not resolve. A typing can carry several of these.
+    """
+
+    source: TypingErrorSource
+    message: str
 
 
 # Minimum object to reference another type
@@ -39,6 +60,7 @@ class TypingDTO(ModelDTO):
     status: TypingStatus
     hide: bool
     style: TypingStyle | None
+    errors: list[TypingErrorDTO] | None = None
 
 
 class TypingFullDTO(TypingDTO):

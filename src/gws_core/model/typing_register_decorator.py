@@ -10,7 +10,7 @@ from gws_core.model.typing_style import TypingStyle
 from ..brick.brick_helper import BrickHelper
 from ..brick.brick_log_service import BrickLogService
 from ..model.typing import Typing
-from ..model.typing_dto import TypingObjectType
+from ..model.typing_dto import TypingErrorDTO, TypingObjectType
 from .typing_manager import TypingManager
 
 
@@ -58,6 +58,7 @@ def register_typing_class(
     object_sub_type: str | None = None,
     related_model_typing_name: str | None = None,
     deprecated: TypingDeprecated | None = None,
+    definition_errors: list[TypingErrorDTO] | None = None,
 ) -> None:
     if not human_name:
         human_name = StringHelper.camel_case_to_sentence(unique_name)
@@ -92,6 +93,9 @@ def register_typing_class(
         related_model_typing_name=related_model_typing_name,
         deprecated_since=deprecated.deprecated_since if deprecated else None,
         deprecated_message=deprecated.deprecated_message if deprecated else None,
+        definition_errors=(
+            [error.to_json_dict() for error in definition_errors] if definition_errors else None
+        ),
     )
 
     TypingManager.register_typing(typing, object_class)
@@ -115,6 +119,7 @@ def register_gws_typing_class(
     object_sub_type: str | None = None,
     related_model_typing_name: str | None = None,
     deprecated: TypingDeprecated | None = None,
+    definition_errors: list[TypingErrorDTO] | None = None,
 ) -> None:
     # import the BrickLogService here and not in register_typing_class because it would create a cyclic error
 
@@ -143,4 +148,5 @@ def register_gws_typing_class(
         object_sub_type=object_sub_type,
         related_model_typing_name=related_model_typing_name,
         deprecated=deprecated,
+        definition_errors=definition_errors,
     )

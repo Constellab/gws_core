@@ -8,6 +8,8 @@ from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_dto import (
     SimpleTypingDTO,
     TypingDTO,
+    TypingErrorDTO,
+    TypingErrorSource,
     TypingFullDTO,
     TypingObjectType,
     TypingRefDTO,
@@ -52,6 +54,11 @@ class Typing(Model):
     related_model_typing_name: CharField = CharField(null=True, index=True)
 
     data: dict[str, Any] = JSONField(null=True)
+
+    # List of errors in the typing definition (invalid config/input/output spec).
+    # Stored as a JSON list of TypingErrorDTO dicts. A non-empty list
+    # means the type was registered but cannot be used.
+    definition_errors: list = JSONField(null=True)
 
     _object_type: TypingObjectType = "MODEL"
 
@@ -102,10 +109,52 @@ class Typing(Model):
     def typing_name(self) -> str:
         return TypingNameObj.typing_obj_to_str(self.object_type, self.brick, self.unique_name)
 
+    def add_definition_error(self, source: TypingErrorSource, message: str) -> None:
+        """Append a definition error (invalid config/input/output spec) to this
+        typing. Definition errors are persisted on the definition_errors column.
+        """
+        if self.definition_errors is None:
+            self.definition_errors = []
+        self.definition_errors.append(
+            TypingErrorDTO(source=source, message=message).to_json_dict()
+        )
+
+    def get_definition_errors(self) -> list[TypingErrorDTO]:
+        """Return the typing's persisted definition errors (empty list if none)."""
+        if not self.definition_errors:
+            return []
+        return [TypingErrorDTO.from_json(error) for error in self.definition_errors]
+
+    def get_errors(self) -> list[TypingErrorDTO]:
+        """Return all errors on this typing: the persisted definition errors plus,
+        computed on the fly, a 'type' error if the Python type cannot be resolved.
+        """
+        errors: list[TypingErrorDTO] = list(self.get_definition_errors())
+        if self.get_type() is None:
+            errors.append(
+                TypingErrorDTO(
+                    source="type",
+                    message=f"The type '{self.model_type}' of the typing "
+                    f"'{self.typing_name}' does not exist in the system.",
+                )
+            )
+        return errors
+
+    def has_error(self) -> bool:
+        """Return True if the typing has at least one error (definition or type)."""
+        return bool(self.get_errors())
+
+    def check_no_error(self) -> None:
+        """Raise if the typing has any error and therefore cannot be used."""
+        errors = self.get_errors()
+        if errors:
+            messages = "; ".join(f"[{error.source}] {error.message}" for error in errors)
+            raise Exception(
+                f"The typing '{self.typing_name}' cannot be used: {messages}"
+            )
+
     def get_type_status(self) -> TypingStatus:
-        # retrieve the task python type
-        model_t: type[Base] = self.get_type()
-        return TypingStatus.OK if model_t is not None else TypingStatus.UNAVAILABLE
+        return TypingStatus.ERROR if self.has_error() else TypingStatus.OK
 
     def to_dto(self) -> TypingDTO:
         return TypingDTO(
@@ -125,6 +174,7 @@ class Typing(Model):
             status=self.get_type_status(),
             hide=self.hide,
             style=self.style,
+            errors=self.get_errors() or None,
         )
 
     def to_simple_dto(self) -> SimpleTypingDTO:

@@ -3,6 +3,7 @@ from collections.abc import Callable
 from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
+from gws_core.model.typing_dto import TypingErrorDTO
 from gws_core.model.typing_manager import TypingManager
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.resource import Resource
@@ -94,6 +95,10 @@ def decorate_task(
         )
         return
 
+    # Definition errors are collected (not raised): the task is still
+    # registered, but marked as errored so it appears as broken and can't run.
+    definition_errors: list[TypingErrorDTO] = []
+
     # Check the input, output and config specs
     try:
         task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
@@ -110,7 +115,23 @@ def decorate_task(
             )
 
             task_class.config_specs = ConfigSpecs(task_class.config_specs)
-        task_class.config_specs.check_config_specs()
+
+        # ConfigSpecs construction never raises on an invalid param key; it
+        # records the problem instead. Register the task anyway, marked as
+        # errored, so a single bad config doesn't break the brick load.
+        if not task_class.config_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid config specs for task {task_class.__name__}: "
+                f"{task_class.config_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(
+                    source="config", message=task_class.config_specs.invalid_reason
+                )
+            )
+        else:
+            task_class.config_specs.check_config_specs()
 
     except Exception as err:
         BrickLogService.log_brick_error(
@@ -137,6 +158,7 @@ def decorate_task(
         style=style,
         related_model_typing_name=related_resource_typing_name,
         deprecated=deprecated,
+        definition_errors=definition_errors or None,
     )
 
 

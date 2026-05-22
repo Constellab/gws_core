@@ -559,7 +559,8 @@ class ProcessModel(ModelWithUser):
             if process_type is not None:
                 is_agent = process_type.__is_agent__
         else:
-            type_status = TypingStatus.UNAVAILABLE
+            # no typing registered for this process: the type is unavailable
+            type_status = TypingStatus.ERROR
 
         return ProcessDTO(
             id=self.id,

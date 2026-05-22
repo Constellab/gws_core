@@ -141,6 +141,13 @@ class TaskModel(ProcessModel):
         Run the task and save its state in the database.
         """
 
+        # Refuse to run a task whose typing has an error (e.g. an invalid
+        # config spec). A task model may have been saved before the task
+        # became errored, so the creation-time guard is not enough.
+        typing = self.get_process_typing()
+        if typing is not None:
+            typing.check_no_error()
+
         # build the task tester
         params: ConfigParamsDict = self.config.get_and_check_values()
         inputs: dict[str, Resource] = self.inputs.get_resources(new_instance=True)

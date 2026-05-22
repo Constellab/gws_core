@@ -33,6 +33,15 @@ class ProcessFactory:
     it only create th objects
     """
 
+    @classmethod
+    def _check_typing_definition(cls, typing_name: str) -> None:
+        """Raise if the typing has an error (e.g. an invalid config spec or an
+        unresolvable type) and therefore cannot be used.
+        """
+        typing = TypingManager.get_typing_from_name(typing_name)
+        if typing is not None:
+            typing.check_no_error()
+
     ############################################### TASK #################################################
 
     @classmethod
@@ -82,6 +91,9 @@ class ProcessFactory:
             raise BadRequestException(
                 f"The task {task_type.full_classname()} is not register. Did you add the @task_decorator decorator on your task class ?"
             )
+
+        # Refuse a task whose definition is invalid (e.g. an invalid config spec).
+        cls._check_typing_definition(task_type.get_typing_name())
 
         task_model: TaskModel = TaskModel()
         task_model.set_process_type(task_type)

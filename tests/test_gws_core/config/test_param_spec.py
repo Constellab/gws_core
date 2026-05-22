@@ -257,10 +257,13 @@ class TestParamSpec(TestCase):
         with self.assertRaises(BadRequestException):
             DateParam(min_value="2030-01-01", max_value="2020-01-01", optional=True)
 
-        # default_value out of range should fail at construction time
-        # (super().__init__ calls self.validate on the default)
-        with self.assertRaises(BadRequestException):
-            DateParam(default_value="2019-01-01", min_value="2020-01-01")
+        # an out-of-range default value does NOT raise: __init__ records the
+        # problem on is_valid so class-body evaluation can complete (the task
+        # is then registered but marked as errored).
+        param = DateParam(default_value="2019-01-01", min_value="2020-01-01")
+        self.assertFalse(param.is_valid)
+        self.assertIsNotNone(param.invalid_reason)
+        self.assertIsNone(param.default_value)
 
         # malformed min_value / max_value rejected at construction
         with self.assertRaises(BadRequestException):

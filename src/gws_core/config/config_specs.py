@@ -51,6 +51,15 @@ class ConfigSpecs:
 
     specs: dict[str, ParamSpec]
 
+    # Validity state recorded at construction. __init__ never raises on an
+    # invalid param key (a ConfigSpecs is built during class-body evaluation,
+    # before the task/view decorator runs — raising there would abort the
+    # whole module import). Instead the decorator checks is_valid and skips
+    # registering the task/view. Runtime callers that want loud failure call
+    # assert_valid().
+    is_valid: bool
+    invalid_reason: str | None
+
     def __init__(
         self,
         specs: dict[str, ParamSpec] | None = None,
@@ -72,23 +81,66 @@ class ConfigSpecs:
         if specs is None:
             specs = {}
 
-        if not _skip_key_validation:
-            for key in specs:
-                self._validate_spec_key(key)
+        self.is_valid = True
+        self.invalid_reason = None
+
+        for key, spec in specs.items():
+            # invalid param key (skipped when rehydrating persisted specs)
+            if not _skip_key_validation:
+                error = self._spec_key_error(key)
+                if error is not None:
+                    # Record the problem instead of raising: the task/view
+                    # decorator will see is_valid=False and mark the typing as
+                    # errored. specs is left empty so no consumer reads a
+                    # malformed key.
+                    self.is_valid = False
+                    self.invalid_reason = error
+                    self.specs = {}
+                    return
+
+            # a ParamSpec that failed to build (e.g. an invalid default value)
+            # propagates its invalidity to the whole ConfigSpecs
+            if isinstance(spec, ParamSpec) and not spec.is_valid:
+                self.is_valid = False
+                self.invalid_reason = f"Invalid spec '{key}': {spec.invalid_reason}"
+                self.specs = {}
+                return
 
         self.specs = specs
 
     @staticmethod
-    def _validate_spec_key(key: str) -> None:
-        """Reject keys that contain anything other than letters, digits, and
-        underscores, or that start with a digit. Keeps spec keys readable as
-        variable-like tokens.
+    def _spec_key_error(key: str) -> str | None:
+        """Return an error message if the key is invalid, None otherwise.
+
+        A valid key contains only letters, digits, and underscores, and does
+        not start with a digit. Keeps spec keys readable as variable-like
+        tokens.
         """
         if not isinstance(key, str) or not key.isidentifier():
-            raise Exception(
+            return (
                 f"Invalid param key '{key}': must contain only letters, digits, "
                 f"and underscores, and cannot start with a digit."
             )
+        return None
+
+    @classmethod
+    def _assert_spec_key(cls, key: str) -> None:
+        """Raising variant of :meth:`_spec_key_error`, used by the imperative
+        mutators (add_spec, add_or_update_spec) which run at runtime and should
+        fail loudly on a bad key.
+        """
+        error = cls._spec_key_error(key)
+        if error is not None:
+            raise Exception(error)
+
+    def assert_valid(self) -> None:
+        """Raise if this ConfigSpecs was built with an invalid definition.
+
+        Explicit fail-fast hook for runtime/non-class-body callers. The
+        constructor itself never raises (see is_valid).
+        """
+        if not self.is_valid:
+            raise Exception(self.invalid_reason)
 
     def has_spec(self, spec_name: str) -> bool:
         return spec_name in self.specs
@@ -109,13 +161,13 @@ class ConfigSpecs:
         self.specs[spec_name] = spec
 
     def add_spec(self, spec_name: str, spec: ParamSpec) -> None:
-        self._validate_spec_key(spec_name)
+        self._assert_spec_key(spec_name)
         if spec_name in self.specs:
             raise Exception(f"The spec '{spec_name}' already exists")
         self.specs[spec_name] = spec
 
     def add_or_update_spec(self, spec_name: str, spec: ParamSpec) -> None:
-        self._validate_spec_key(spec_name)
+        self._assert_spec_key(spec_name)
         self.specs[spec_name] = spec
 
     def remove_spec(self, spec_name: str) -> None:

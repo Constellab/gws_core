@@ -71,6 +71,14 @@ class ParamSpec:
     # additional info specific for the param
     additional_info: dict | None
 
+    # Validity state recorded at construction. __init__ never raises on an
+    # invalid default value (a ParamSpec is built during class-body evaluation,
+    # before the task/view decorator runs). Instead it records the problem here
+    # and ConfigSpecs propagates it, so the task is registered but marked as
+    # errored. invalid_reason is None when the spec is valid.
+    is_valid: bool
+    invalid_reason: str | None
+
     PUBLIC_VISIBILITY: ParamSpecVisibilty = "public"
     PROTECTED_VISIBILITY: ParamSpecVisibilty = "protected"
     PRIVATE_VISIBILITY: ParamSpecVisibilty = "private"
@@ -111,7 +119,18 @@ class ParamSpec:
         self.optional = default_value is not None or optional
         self._check_visibility(visibility)
 
-        self.default_value = self.validate(default_value)
+        self.is_valid = True
+        self.invalid_reason = None
+
+        # validate() raises on an invalid default; record the problem instead
+        # of raising so class-body evaluation can complete. ConfigSpecs reads
+        # is_valid and the task is registered but marked as errored.
+        try:
+            self.default_value = self.validate(default_value)
+        except Exception as err:
+            self.is_valid = False
+            self.invalid_reason = f"Invalid default value: {err}"
+            self.default_value = None
 
     def get_default_value(self) -> Any:
         return self.default_value
