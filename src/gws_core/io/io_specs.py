@@ -50,12 +50,27 @@ class OutputCheckResult(BaseModelDTO):
 class IOSpecs:
     _specs: dict[str, IOSpec] = {}
 
+    # Validity state. __init__ never raises on an invalid IOSpec; it records
+    # the problem here so the task decorator can register the task as errored.
+    is_valid: bool
+    invalid_reason: str | None
+
     def __init__(self, specs: dict[str, IOSpec] | None = None) -> None:
         if specs is None:
             specs = {}
         if not isinstance(specs, dict):
             raise Exception("The specs must be a dictionary")
         self._specs = specs
+
+        # an IOSpec that failed to build (e.g. an invalid resource type)
+        # propagates its invalidity to the whole IOSpecs
+        self.is_valid = True
+        self.invalid_reason = None
+        for key, spec in specs.items():
+            if isinstance(spec, IOSpec) and not spec.is_valid:
+                self.is_valid = False
+                self.invalid_reason = f"Invalid spec '{key}': {spec.invalid_reason}"
+                break
 
     def get_specs(self) -> dict[str, IOSpec]:
         return self._specs

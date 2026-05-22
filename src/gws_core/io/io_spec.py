@@ -58,6 +58,13 @@ class IOSpec:
 
     optional: bool = False
 
+    # Validity state recorded at construction. __init__ never raises on an
+    # invalid resource type (an IOSpec is built during class-body evaluation,
+    # before the task decorator runs). Instead it records the problem here and
+    # IOSpecs propagates it, so the task is registered but marked as errored.
+    is_valid: bool
+    invalid_reason: str | None
+
     # not activated yet
     validators: list[IOValidator] = []
 
@@ -101,21 +108,28 @@ class IOSpec:
             optional = is_optional
         self.optional = optional
 
-        self.check_resource_types()
+        self.is_valid = True
+        self.invalid_reason = None
 
-        default_type = self.get_default_resource_type()
+        # check_resource_types() raises on an invalid resource type; record the
+        # problem instead of raising so class-body evaluation can complete.
+        # IOSpecs reads is_valid and the task is registered but marked errored.
+        try:
+            self.check_resource_types()
+        except Exception as err:
+            self.is_valid = False
+            self.invalid_reason = str(err)
 
-        # set the human name with a default value
-        if human_name is not None:
-            self.human_name = human_name
-        else:
-            self.human_name = default_type.get_human_name()
-
-        # set the short description with a default value
-        if short_description is not None:
-            self.short_description = short_description
-        else:
-            self.short_description = default_type.get_short_description()
+        # the default-type lookup needs a usable resource type; skip it on an
+        # invalid spec and fall back to the passed values (or None)
+        self.human_name = human_name
+        self.short_description = short_description
+        if self.is_valid:
+            default_type = self.get_default_resource_type()
+            if human_name is None:
+                self.human_name = default_type.get_human_name()
+            if short_description is None:
+                self.short_description = default_type.get_short_description()
 
     def check_resource_types(self):
         for resource_type in self.resource_types:

@@ -37,12 +37,15 @@ class IOSpecsHelper:
         if not isinstance(io_specs.get_specs(), dict):
             raise Exception("The specs must be a dictionary")
 
+        # A non-IOSpec item is recorded as an invalidity on the IOSpecs instead
+        # of raising, so class-body evaluation completes and the task decorator
+        # can register the task as errored. Resource-type validity already ran
+        # (non-raising) in IOSpec.__init__ and is propagated to IOSpecs.is_valid.
         for key, item in io_specs.get_specs().items():
             if not isinstance(item, IOSpec):
                 error = f"The {param_type} specs '{key}' of task '{task_type.__name__}' is not a TypeIO, please use InputSpec or OutputSpec"
                 BrickLogService.log_brick_error(task_type, error)
-                raise Exception(error)
-
-            item.check_resource_types()
+                io_specs.is_valid = False
+                io_specs.invalid_reason = error
 
         return io_specs

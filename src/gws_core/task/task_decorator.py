@@ -106,6 +106,27 @@ def decorate_task(
             task_class.output_specs, task_class
         )
 
+        # IOSpecs construction never raises on an invalid spec; it records the
+        # problem instead. Register the task anyway, marked as errored.
+        if not task_class.input_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid input specs for task {task_class.__name__}: "
+                f"{task_class.input_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(source="input", message=task_class.input_specs.invalid_reason)
+            )
+        if not task_class.output_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid output specs for task {task_class.__name__}: "
+                f"{task_class.output_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(source="output", message=task_class.output_specs.invalid_reason)
+            )
+
         # check the config specs
         if isinstance(task_class.config_specs, dict):
             # TODO for now this is just a warning
@@ -165,11 +186,19 @@ def decorate_task(
 def get_task_default_style(task_class: type[Task]) -> TypingStyle:
     """Get the default style for a task, use the first input style or the first output style"""
     default_typing_name = None
-    first_input = task_class.input_specs.get_first_spec()
+    # only derive a style from a valid spec: an invalid IOSpec may carry a
+    # None / non-resource type, so get_default_resource_type() is not usable
+    first_input = (
+        task_class.input_specs.get_first_spec() if task_class.input_specs.is_valid else None
+    )
     if first_input:
         default_typing_name = first_input.get_default_resource_type().get_typing_name()
     else:
-        first_output = task_class.output_specs.get_first_spec()
+        first_output = (
+            task_class.output_specs.get_first_spec()
+            if task_class.output_specs.is_valid
+            else None
+        )
         if first_output:
             default_typing_name = first_output.get_default_resource_type().get_typing_name()
 

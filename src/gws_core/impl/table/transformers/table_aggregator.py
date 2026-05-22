@@ -21,7 +21,7 @@ class TableColumnAggregator(Transformer):
 
     config_specs = ConfigSpecs(
         {
-            "function": SelectParam(
+            "functi on": SelectParam(
                 human_name="Aggregation function",
                 options=DataframeAggregatorHelper.AGGREGATION_FUNCTIONS,
                 short_description="Function applied to aggregate values along the columns",
@@ -66,7 +66,7 @@ class TableRowAggregator(Transformer):
                 short_description="Function applied to aggregate values along the rows",
             ),
             "skip_nan": BoolParam(
-                default_value=True,
+                default_value="True",
                 human_name="Skip NaN",
                 short_description="If True, skip NaN values when aggregating. If False the result is NaN if one value is NaN.",
             ),
