@@ -14,6 +14,7 @@ from gws_core.form.form import Form
 from gws_core.form.form_dto import (
     CreateFormDTO,
     FormSaveResultDTO,
+    FormSpaceSnapshotDTO,
     FormStatus,
     FormValidationResult,
     SaveFormDTO,
@@ -101,6 +102,21 @@ class FormService:
         # Drive errors only; we don't overwrite stored values on read.
         _, errors = specs.compute_values(form.values or {})
         return cls.build_save_result(form.values, specs, errors)
+
+    @classmethod
+    def get_space_snapshot(cls, form_id: str) -> FormSpaceSnapshotDTO:
+        """Build a read-only snapshot of a Form for the note sync to space.
+
+        Combines the form record metadata (``to_dto``) with its renderable
+        content (``get_content``) so space can display the embedded form
+        without a callback to the lab. Sent as ``<block_id>.json`` in the
+        note sync multipart payload (see ``NoteService._synchronize_with_space``).
+        """
+        form = cls.get_by_id_and_check(form_id)
+        return FormSpaceSnapshotDTO(
+            form=form.to_dto(),
+            content=cls.get_content(form_id),
+        )
 
     @classmethod
     def _wrap_computed_for_response(

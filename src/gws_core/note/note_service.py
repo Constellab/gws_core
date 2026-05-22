@@ -7,14 +7,15 @@ from gws_core.folder.space_folder import SpaceFolder
 from gws_core.form.form import Form
 from gws_core.form.form_dto import CreateFormDTO
 from gws_core.form.form_service import FormService
+from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
 from gws_core.impl.rich_text.block.rich_text_block_header import RichTextBlockHeaderLevel
 from gws_core.impl.rich_text.block.rich_text_block_view import RichTextBlockResourceView
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_content_validator import (
     RichTextContentValidator,
 )
+from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_modification import (
     RichTextBlockModificationWithUserDTO,
     RichTextModificationType,
@@ -550,6 +551,24 @@ class NoteService:
             )
             form_data.add_file_from_json(
                 view_result_dto.to_json_dict(), "files", file_view_block.id + ".json"
+            )
+
+        # create temporary files for form blocks: a read-only snapshot of each
+        # embedded form (metadata + renderable values/specs) so space can
+        # display it without a callback. A block whose form snapshot fails to
+        # build is skipped with a warning rather than failing the whole sync.
+        for form_block in rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM):
+            form_data_block: RichTextBlockForm = form_block.get_data()
+            try:
+                snapshot = FormService.get_space_snapshot(form_data_block.form_id)
+            except Exception as err:
+                Logger.warning(
+                    f"Skipping form block {form_block.id} in note {note.id} "
+                    f"sync: could not load form {form_data_block.form_id} ({err})"
+                )
+                continue
+            form_data.add_file_from_json(
+                snapshot.to_json_dict(), "files", snapshot.form.id + ".json"
             )
 
         # Save the scenario in space

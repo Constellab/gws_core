@@ -154,3 +154,17 @@ class FormSaveResultDTO(BaseModelDTO):
 
     values: dict[str, Any] | None
     specs: dict[str, ParamSpecDTO]
+
+
+class FormSpaceSnapshotDTO(BaseModelDTO):
+    """Read-only snapshot of a Form embedded in a synced Note.
+
+    Sent to space as ``<block_id>.json`` in the note sync multipart payload,
+    mirroring how resource/file views are synced. Carries everything space
+    needs to render the form read-only without a callback to the lab:
+    ``form`` provides record metadata (id, name, status, template ref) and
+    ``content`` provides the renderable values + specs.
+    """
+
+    form: FormDTO
+    content: FormSaveResultDTO
