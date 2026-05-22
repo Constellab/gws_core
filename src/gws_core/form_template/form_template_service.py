@@ -408,13 +408,13 @@ class FormTemplateService:
         cls,
         template_id: str,
         version_id: str,
-        field_name: str,
+        field_key: str,
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
         specs = version.get_content()
         specs.add_spec(
-            field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
+            field_key, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
         )
         return cls._save_draft_specs(version, specs, template_id)
 
@@ -424,13 +424,13 @@ class FormTemplateService:
         cls,
         template_id: str,
         version_id: str,
-        field_name: str,
+        field_key: str,
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
         specs = version.get_content()
         specs.update_spec(
-            field_name, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
+            field_key, ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True)
         )
         return cls._save_draft_specs(version, specs, template_id)
 
@@ -440,20 +440,20 @@ class FormTemplateService:
         cls,
         template_id: str,
         version_id: str,
-        field_name: str,
-        new_field_name: str,
+        field_key: str,
+        new_field_key: str,
         spec_dto: ParamSpecDTO,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
         specs = version.get_content()
-        specs.check_spec_exists(field_name)
-        if new_field_name != field_name and specs.has_spec(new_field_name):
+        specs.check_spec_exists(field_key)
+        if new_field_key != field_key and specs.has_spec(new_field_key):
             raise BadRequestException(
-                f"A field named '{new_field_name}' already exists in this draft."
+                f"A field named '{new_field_key}' already exists in this draft."
             )
-        specs.remove_spec(field_name)
+        specs.remove_spec(field_key)
         specs.add_spec(
-            new_field_name,
+            new_field_key,
             ParamSpecHelper.create_param_spec_from_dto(spec_dto, validate=True),
         )
         return cls._save_draft_specs(version, specs, template_id)
@@ -464,11 +464,11 @@ class FormTemplateService:
         cls,
         template_id: str,
         version_id: str,
-        field_names: list[str],
+        field_keys: list[str],
     ) -> FormTemplateVersion:
         """Reorder the fields of a DRAFT version.
 
-        ``field_names`` must be the full ordered list of current field keys.
+        ``field_keys`` must be the full ordered list of current field keys.
         The set must match exactly — any missing or unknown key (typically
         from a concurrent add/delete) aborts the call so the frontend can
         refetch and retry.
@@ -477,18 +477,18 @@ class FormTemplateService:
         specs = version.get_content()
 
         current = list(specs.get_specs_as_dict().keys())
-        if len(field_names) != len(set(field_names)):
+        if len(field_keys) != len(set(field_keys)):
             raise BadRequestException("Reorder list contains duplicate field names.")
-        if set(field_names) != set(current):
-            missing = sorted(set(current) - set(field_names))
-            unknown = sorted(set(field_names) - set(current))
+        if set(field_keys) != set(current):
+            missing = sorted(set(current) - set(field_keys))
+            unknown = sorted(set(field_keys) - set(current))
             raise BadRequestException(
                 "Reorder list does not match the current fields. "
                 f"missing={missing}, unknown={unknown}. "
                 "Refetch the version and retry."
             )
 
-        reordered = {name: specs.get_spec(name) for name in field_names}
+        reordered = {key: specs.get_spec(key) for key in field_keys}
         specs.specs = reordered
         return cls._save_draft_specs(version, specs, template_id)
 
@@ -498,11 +498,11 @@ class FormTemplateService:
         cls,
         template_id: str,
         version_id: str,
-        field_name: str,
+        field_key: str,
     ) -> FormTemplateVersion:
         version = cls._get_draft_version_and_check(template_id, version_id)
         specs = version.get_content()
-        specs.remove_spec(field_name)
+        specs.remove_spec(field_key)
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod

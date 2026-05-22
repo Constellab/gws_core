@@ -163,54 +163,54 @@ def test_version(
 
 
 @core_app.post(
-    "/form-template/{id_}/version/{version_id}/field/{field_name}",
+    "/form-template/{id_}/version/{version_id}/field/{field_key}",
     tags=["Form template"],
     summary="Add a field to a DRAFT version",
 )
 def create_draft_field(
     id_: str,
     version_id: str,
-    field_name: str,
+    field_key: str,
     spec_dto: ParamSpecDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.create_draft_field(
-        id_, version_id, field_name, spec_dto
+        id_, version_id, field_key, spec_dto
     ).to_dto()
 
 
 @core_app.put(
-    "/form-template/{id_}/version/{version_id}/field/{field_name}",
+    "/form-template/{id_}/version/{version_id}/field/{field_key}",
     tags=["Form template"],
     summary="Update a field of a DRAFT version",
 )
 def update_draft_field(
     id_: str,
     version_id: str,
-    field_name: str,
+    field_key: str,
     spec_dto: ParamSpecDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.update_draft_field(
-        id_, version_id, field_name, spec_dto
+        id_, version_id, field_key, spec_dto
     ).to_dto()
 
 
 @core_app.put(
-    "/form-template/{id_}/version/{version_id}/field/{field_name}/rename-and-update/{new_field_name}",
+    "/form-template/{id_}/version/{version_id}/field/{field_key}/rename-and-update/{new_field_key}",
     tags=["Form template"],
     summary="Rename and update a field of a DRAFT version",
 )
 def rename_and_update_draft_field(
     id_: str,
     version_id: str,
-    field_name: str,
-    new_field_name: str,
+    field_key: str,
+    new_field_key: str,
     spec_dto: ParamSpecDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
     return FormTemplateService.rename_and_update_draft_field(
-        id_, version_id, field_name, new_field_name, spec_dto
+        id_, version_id, field_key, new_field_key, spec_dto
     ).to_dto()
 
 
@@ -259,17 +259,17 @@ def reorder_draft_fields(
 
 
 @core_app.delete(
-    "/form-template/{id_}/version/{version_id}/field/{field_name}",
+    "/form-template/{id_}/version/{version_id}/field/{field_key}",
     tags=["Form template"],
     summary="Delete a field from a DRAFT version",
 )
 def delete_draft_field(
     id_: str,
     version_id: str,
-    field_name: str,
+    field_key: str,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> FormTemplateVersionDTO:
-    return FormTemplateService.delete_draft_field(id_, version_id, field_name).to_dto()
+    return FormTemplateService.delete_draft_field(id_, version_id, field_key).to_dto()
 
 
 @core_app.delete(
