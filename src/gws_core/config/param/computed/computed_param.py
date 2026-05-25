@@ -85,6 +85,10 @@ class ComputedParam(ParamSpec):
         instance.visibility = "public"
         instance.human_name = None
         instance.short_description = None
+        # __init__ is bypassed via __new__, so initialize the validity state
+        # that ConfigSpecs / IOSpecs read when propagating is_valid.
+        instance.is_valid = True
+        instance.invalid_reason = None
         return instance
 
     @classmethod

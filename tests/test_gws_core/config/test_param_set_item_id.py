@@ -9,6 +9,7 @@ import uuid
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
 from gws_core.config.param.param_spec import FloatParam
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 
 
 def _paramset() -> ParamSet:
@@ -50,7 +51,7 @@ class TestParamSetItemId(unittest.TestCase):
     def test_rejects_duplicate_item_ids_within_paramset(self):
         ps = _paramset()
         dup = str(uuid.uuid4())
-        with self.assertRaises(ValueError):
+        with self.assertRaises(BadRequestException):
             ps.validate(
                 [
                     {ConfigSpecs.ITEM_ID_KEY: dup, "mass": 1.0, "volume": 0.5},

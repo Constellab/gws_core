@@ -5,6 +5,7 @@ A note containing a FORM block must push a read-only snapshot of the form
 multipart payload, mirroring how resource/file views are synced. A stale
 block referencing a deleted form must be skipped without failing the sync.
 """
+
 from unittest.mock import patch
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -27,7 +28,6 @@ from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestNoteSyncForm(BaseTestCase):
-
     def test_form_block_synced_as_snapshot(self):
         """A note with a FORM block sends a FormSpaceSnapshotDTO file."""
         form = self._make_form()
@@ -42,16 +42,13 @@ class TestNoteSyncForm(BaseTestCase):
         note.folder = folder
         note.save()
 
-        # Find the FORM block id to know the expected file name.
-        block_id = self._get_form_block_id(note.id)
-
         with patch.object(SpaceService, "save_lab_note") as mock_save:
             NoteService._synchronize_with_space(NoteService.get_by_id_and_check(note.id))
 
         form_data: FormData = mock_save.call_args[0][2]
         # The snapshot is added under the "files" key, named "<block_id>.json".
         filenames = {fname for key, _, fname in form_data.file_paths if key == "files"}
-        self.assertIn(block_id + ".json", filenames)
+        self.assertIn(form.id + ".json", filenames)
 
     def test_snapshot_dto_round_trip(self):
         """FormSpaceSnapshotDTO serializes and re-parses without loss."""
@@ -79,8 +76,9 @@ class TestNoteSyncForm(BaseTestCase):
         note.folder = folder
         note.save()
 
-        with patch.object(SpaceService, "save_lab_note") as mock_save, patch.object(
-            FormService, "get_space_snapshot", side_effect=RuntimeError("boom")
+        with (
+            patch.object(SpaceService, "save_lab_note") as mock_save,
+            patch.object(FormService, "get_space_snapshot", side_effect=RuntimeError("boom")),
         ):
             # Must not raise — the failing block is skipped with a warning.
             NoteService._synchronize_with_space(NoteService.get_by_id_and_check(note.id))
@@ -106,8 +104,6 @@ class TestNoteSyncForm(BaseTestCase):
             )
             .get()
         )
-        draft.update_specs(
-            ConfigSpecs({"name": StrParam(human_name="name", optional=True)})
-        )
+        draft.update_specs(ConfigSpecs({"name": StrParam(human_name="name", optional=True)}))
         version = FormTemplateService.publish_version(template.id, draft.id)
         return FormService.create(CreateFormDTO(template_version_id=version.id))
