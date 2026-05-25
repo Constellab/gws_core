@@ -34,8 +34,13 @@ class DbMigrationService:
                 migration_log = migrations_logs.get_brick_migration_log(migrator.brick_name)
 
                 if not migration_log or not migration_log.version:
-                    # New brick with no previous version, run all its migrations
-                    previous_version = Version("0.0.0")
+                    # New brick with no previous version, don't run migration
+                    BrickLogService.log_brick_message(
+                        brick_name=migrator.brick_name,
+                        message=f"No migration log found for brick {migrator.brick_name}. Assuming new brick, skipping migration.",
+                        status="INFO",
+                    )
+                    continue
                 else:
                     previous_version = Version(migration_log.version)
 
@@ -115,9 +120,7 @@ class DbMigrationService:
         cls._migration_objects.append(migration_object)
 
     @classmethod
-    def call_migration_manually(
-        cls, brick_name: str, version_str: str
-    ) -> None:
+    def call_migration_manually(cls, brick_name: str, version_str: str) -> None:
         version = Version(version_str)
 
         brick_migrators = cls._get_brick_migrators()
