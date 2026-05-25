@@ -193,9 +193,7 @@ def code_migrate(
             raise typer.Exit(1)
         to_run = get_code_migrations_after(current_version)
         if not to_run:
-            typer.echo(
-                f"Brick targets gws_core {current_version}; no newer code migration to run."
-            )
+            typer.echo(f"Brick targets gws_core {current_version}; no newer code migration to run.")
             return
         typer.echo(
             f"Brick targets gws_core {current_version}. "
@@ -206,7 +204,9 @@ def code_migrate(
         run_code_migration(brick_dir, migration, assume_yes=yes, dry_run=dry_run)
 
 
-@technical_doc_app.command("push", help="Push the technical documentation of a brick to the Constellab community")
+@technical_doc_app.command(
+    "push", help="Push the technical documentation of a brick to the Constellab community"
+)
 def technical_doc_push(
     brick_path: Annotated[
         str | None,
@@ -314,9 +314,13 @@ def version_push(
     typer.echo(f"Successfully pushed version {version} of brick {settings.name}")
 
     # Ask if the user wants to push the technical documentation
-    push_doc = technical_doc or yes or typer.confirm(
-        "Do you also want to push the technical documentation?",
-        default=False,
+    push_doc = (
+        technical_doc
+        or yes
+        or typer.confirm(
+            "Do you also want to push the technical documentation?",
+            default=False,
+        )
     )
 
     if push_doc:

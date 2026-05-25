@@ -9,6 +9,7 @@ from gws_core.brick.technical_doc_service import TechnicalDocService
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.shell.shell_proxy import ShellProxy
+from gws_core.settings_loader import SettingsLoader
 
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.community_cli_service import CommunityCliService
@@ -147,6 +148,12 @@ class BrickCliService:
         brick_name = brick_settings.name
         if not brick_name:
             raise BadRequestException("Brick settings do not contain a name")
+
+        # Run the full SettingsLoader so the brick AND all its brick dependencies
+        # are added to sys.path and imported — generate_technical_doc introspects
+        # the brick package, which may reference classes from dependencies.
+        settings_file_path = os.path.join(brick_path, SettingsLoader.SETTINGS_JSON_FILE)
+        SettingsLoader(main_settings_file_path=settings_file_path).load_settings()
 
         # Connect the database and init typings (required for querying typings with brick_version)
         DbManagerService.init_all_db(full_init=False)
