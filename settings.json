@@ -1,7 +1,7 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.22.0-beta.9",
+    "version": "0.22.0",
     "variables": {
         "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
@@ -116,11 +116,11 @@
                     },
                     {
                         "name": "streamlit",
-                        "version": "1.52.2"
+                        "version": "1.57.0"
                     },
                     {
                         "name": "streamlit-searchbox",
-                        "version": "0.1.23"
+                        "version": "0.1.24"
                     },
                     {
                         "name": "beautifulsoup4",
@@ -149,7 +149,7 @@
                     },
                     {
                         "name": "reflex",
-                        "version": "0.8.27"
+                        "version": "0.9.3"
                     },
                     {
                         "name": "docstring-parser",
