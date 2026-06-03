@@ -11,6 +11,7 @@ from .pages import (
     dialog_page,
     doc_component_page,
     home_page,
+    i18n_page,
     input_search_page,
     layout_page,
     paginated_table_page,
@@ -39,6 +40,7 @@ def _sidebar_content() -> rx.Component:
             menu_item_component("file-text", "Doc Component", "/doc-component"),
             menu_item_component("search", "Input search", "/input-search"),
             menu_item_component("table", "Paginated Table", "/paginated-table"),
+            menu_item_component("languages", "Internationalisation", "/i18n"),
         ],
     )
 
@@ -105,3 +107,9 @@ def input_search():
 def paginated_table():
     """Paginated table component demo page."""
     return layout(paginated_table_page.paginated_table_page())
+
+
+@rx.page(route="/i18n")
+def i18n():
+    """Internationalisation (i18n) demo page."""
+    return layout(i18n_page.i18n_page())

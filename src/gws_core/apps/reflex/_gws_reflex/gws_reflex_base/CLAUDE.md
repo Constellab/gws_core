@@ -21,6 +21,9 @@ This is the foundation for both `ReflexMainState` (in gws_reflex_main) and `Refl
 ### `ReflexConfigDTO`
 TypedDict defining the structure of app configuration including app directory path, source IDs, parameters, authentication requirements, and user access tokens.
 
+### `I18nState`
+Single standalone state holding the active language (`reflex_i18n_state.py`). Shared across the app — other states compose it via `await self.get_state(I18nState)`, they do **not** inherit it. See the i18n section below.
+
 ---
 
 ## Components
@@ -41,6 +44,11 @@ TypedDict defining the structure of app configuration including app directory pa
 - **reflex_sidebar_menu_component.py**
   - `sidebar_menu_component()`: Sidebar menu with logo, title, and navigation links (use with `page_sidebar_component`)
   - `menu_item_component()`: Individual menu item with icon and label for sidebar navigation
+- **component/i18n/** — internationalisation. Register strings with `register_translations({"fr": {...}, "en": {...}})`; texts may contain `{{name}}` placeholders filled from a `data` dict.
+  - `translate(key, data=None)`: reactive var for UI text, e.g. `rx.heading(translate("title"))` (re-renders on language switch).
+  - `toast_tr`: translating `rx.toast` (callable + `.success`/`.error`/`.info`/`.warning`); async and takes the calling state first: `yield await toast_tr.success(self, key, data=None, **kwargs)` (resolves the message server-side — a reactive var can't be used in a toast).
+  - `language_toggle_component()`: FR/EN switcher (no args; reads/sets `I18nState`).
+  - For a raw backend string: `(await self.get_state(I18nState)).tr(key, data=None)`.
 
 ---
 

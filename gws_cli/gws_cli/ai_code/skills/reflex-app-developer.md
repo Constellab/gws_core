@@ -65,6 +65,15 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 ### GWS Core custom Reflex Components
 - Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
 
+### Internationalisation (i18n)
+- The i18n layer is in `gws_reflex_base` (re-exported by `gws_reflex_main`). `I18nState` is a single shared standalone state holding the active `lang` (default `"fr"`); other states do **not** inherit it.
+- Register strings once with `register_translations({"fr": {...}, "en": {...}})`. Texts may contain `{{name}}` placeholders, filled from a `data` dict.
+- **UI text** — `translate(key, data=None)` returns a *reactive* var, so it re-renders on language switch. Use only in components: `rx.heading(translate("title"))`.
+- **Toasts** — `toast_tr` mirrors `rx.toast` (callable + `.success/.error/.info/.warning`) but is **async and takes the calling state first** (it resolves the message server-side to a plain string — a reactive var can't be used in a toast): `yield await toast_tr.success(self, "saved")`.
+- **Raw string** (e.g. exception message) — `(await self.get_state(I18nState)).tr(key, data=None)`.
+- Add the FR/EN switcher with `language_toggle_component()` (no args).
+- See the showcase i18n page for a full example: `${GWS_CORE_SRC}/impl/apps/reflex_showcase/_reflex_showcase_app/reflex_showcase/pages/i18n_page.py`.
+
 ### Main State Classes
 
 Any state can access `ReflexMainState` (from `gws_reflex_main`), which provides core functionality for resource, parameter and user management. 
