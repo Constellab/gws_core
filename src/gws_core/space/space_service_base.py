@@ -10,7 +10,6 @@ from gws_core.core.utils.execution_context import ExecutionContext
 
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User
 
 SpaceServiceBaseType = TypeVar("SpaceServiceBaseType", bound="SpaceServiceBase")
 T = TypeVar("T", bound=BaseModelDTO)
@@ -87,7 +86,7 @@ class SpaceServiceBase:
             + Settings.get_space_api_key()
         }
 
-        user: User = CurrentUserService.get_current_user()
+        user = CurrentUserService.get_current_user()
 
         if user:
             headers[self.USER_ID_HEADER_KEY] = user.id
