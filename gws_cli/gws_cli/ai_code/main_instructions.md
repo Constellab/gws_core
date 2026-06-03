@@ -28,6 +28,8 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 ### Development Apps
 - Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
 - Run Reflex app in dev mode: `gws reflex run [CONFIG_FILE_PATH]`
+- **When creating, modifying, or debugging any Reflex app code, FIRST invoke the `gws-reflex-app-developer` skill** to load the global Reflex rules.
+- **When creating, modifying, or debugging any Streamlit app code, FIRST invoke the `gws-streamlit-app-developer` skill** for the equivalent Streamlit rules.
 
 ### Brick Management
 - **Generate new brick**: `gws brick generate [NAME]`

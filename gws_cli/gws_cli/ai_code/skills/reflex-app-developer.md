@@ -55,6 +55,10 @@ Note: the `dev_config.json` simulate configuration values that would normally be
    - If you don't need to pass a custom argument, use `on_click=MyState.my_event` instead of `on_click=lambda: MyState.my_event()`
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
 - Do not use state_auto_setters, it is deprecated. Define setters explicitly for state attributes that need them.
+- Error handling: `register_gws_reflex_app` installs a global backend exception handler that turns any exception raised in an `@rx.event` into a toast. So most of the time, DO NOT wrap state logic in try/except just to display an error, and do not keep an error field in the state. Instead:
+   - For a user-facing error (validation, business rule), `raise ReflexAppException("message")` (from `gws_reflex_base`); it is shown as an error toast (use `ReflexAppException(msg, show_as="info")` for an info toast). gws_core `BaseHTTPException` is toasted the same way.
+   - For unexpected errors, let them propagate: the handler logs the stack trace and shows a generic toast (the full message in dev mode).
+   - Only use try/except when you genuinely need to recover and continue, not merely to surface the error.
 - Dialogs should close when clicking outside by default. Add `on_interact_outside=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`.
 - Dialogs should close on Escape key by default. Add `on_escape_key_down=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`. For `rx.alert_dialog`, this is already the default behavior.
 
