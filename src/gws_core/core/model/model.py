@@ -1,9 +1,10 @@
 import uuid
 from typing import TypeVar
 
-from peewee import CharField, DoesNotExist
+from peewee import DoesNotExist
 from peewee import Model as PeeweeModel
 
+from gws_core import TypedCharField, TypedDateTimeUTC
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
@@ -11,7 +12,6 @@ from gws_core.core.utils.date_helper import DateHelper
 
 from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
-from .db_field import DateTimeUTC
 
 ModelType = TypeVar("ModelType", bound="BaseModel")
 
@@ -32,9 +32,9 @@ class Model(BaseModel, PeeweeModel):
     :type last_modified_at: `datetime`
     """
 
-    id = CharField(primary_key=True, max_length=36)
-    created_at = DateTimeUTC(default=DateHelper.now_utc)
-    last_modified_at = DateTimeUTC(default=DateHelper.now_utc)
+    id: TypedCharField = TypedCharField(primary_key=True, max_length=36)
+    created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
+    last_modified_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
 
     _json_ignore_fields: list[str] = []
     _is_saved: bool = False
