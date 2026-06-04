@@ -37,6 +37,8 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Reflex app code must live in a folder prefixed with `_` (e.g. `/_reflex_app/`) to prevent it from being executed on lab startup.
 - Imports from `gws_reflex_main` and `gws_reflex_env_main` are only allowed inside Reflex app code.
 - Inside app code, use **relative imports** for modules within the same app folder (e.g. `from .utils import some_function`) and **absolute imports** for external bricks or packages (e.g. `from gws_core import some_function`).
+- For structured data passed to the frontend (state vars, items in a list rendered by `rx.foreach`, return types of `@rx.var`), prefer a **`@dataclass`** over `dict` / `TypedDict` whenever possible. Dataclasses are better typed (real attribute access `step.label_key` instead of `step["label_key"]`, IDE/type-checker support, defaults, methods), and Reflex serializes them to the frontend correctly. Only fall back to `TypedDict` / `dict` when a dataclass genuinely doesn't fit (e.g. dynamic/unknown keys).
+
 
 ### Reflex Best Practices
 - Implement reactive state management using Reflex's state system
