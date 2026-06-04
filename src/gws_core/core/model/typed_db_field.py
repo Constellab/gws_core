@@ -25,13 +25,16 @@ Use the ``Typed*`` variants for non-nullable columns and the ``Nullable*``
 variants for nullable ones (``null=True``).
 """
 
-from datetime import datetime
+from datetime import date, datetime
+from decimal import Decimal
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
+from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, overload
 
 from peewee import (
     BooleanField,
     CharField,
+    DateField,
+    DecimalField,
     FloatField,
     ForeignKeyField,
     IntegerField,
@@ -118,6 +121,22 @@ class NullableFloatField(TypedDbField[float | None], FloatField):
     """``FloatField`` (``null=True``) whose instance value is typed ``float | None``."""
 
 
+class TypedDateField(TypedDbField[date], DateField):
+    """``DateField`` whose instance value is typed ``date``."""
+
+
+class NullableDateField(TypedDbField[date | None], DateField):
+    """``DateField`` (``null=True``) whose instance value is typed ``date | None``."""
+
+
+class TypedDecimalField(TypedDbField[Decimal], DecimalField):
+    """``DecimalField`` whose instance value is typed ``Decimal``."""
+
+
+class NullableDecimalField(TypedDbField[Decimal | None], DecimalField):
+    """``DecimalField`` (``null=True``) whose instance value is typed ``Decimal | None``."""
+
+
 class TypedDateTimeUTC(TypedDbField[datetime], DateTimeUTC):
     """``DateTimeUTC`` whose instance value is typed ``datetime``."""
 
@@ -165,11 +184,23 @@ class TypedForeignKeyField(TypedDbField[ModelT], ForeignKeyField):
     The related model type is inferred from the constructor, no annotation needed:
 
         owner = TypedForeignKeyField(User)   # instance value typed User
+
+    For a self-reference, the model type cannot be inferred from the ``"self"``
+    string: specialize the generic explicitly (as a forward reference, since the
+    class is not defined yet inside its own body):
+
+        parent = TypedForeignKeyField["MyModel"]("self")   # -> MyModel
     """
 
     if TYPE_CHECKING:
 
+        @overload
         def __init__(self, model: type[ModelT], *args: Any, **kwargs: Any) -> None: ...
+
+        @overload
+        def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
+
+        def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None: ...
 
 
 class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
@@ -179,8 +210,20 @@ class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
     The related model type is inferred from the constructor, no annotation needed:
 
         owner = NullableForeignKeyField(User, null=True)   # -> User | None
+
+    For a self-reference, the model type cannot be inferred from the ``"self"``
+    string: specialize the generic explicitly (as a forward reference, since the
+    class is not defined yet inside its own body):
+
+        parent = NullableForeignKeyField["MyModel"]("self", null=True)   # -> MyModel | None
     """
 
     if TYPE_CHECKING:
 
+        @overload
         def __init__(self, model: type[ModelT], *args: Any, **kwargs: Any) -> None: ...
+
+        @overload
+        def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
+
+        def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None: ...

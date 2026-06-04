@@ -125,7 +125,9 @@ from .core.model.model_dto import PageDTO as PageDTO
 from .core.model.sys_proc import SysProc as SysProc
 from .core.model.typed_db_field import NullableBooleanField as NullableBooleanField
 from .core.model.typed_db_field import NullableCharField as NullableCharField
+from .core.model.typed_db_field import NullableDateField as NullableDateField
 from .core.model.typed_db_field import NullableDateTimeUTC as NullableDateTimeUTC
+from .core.model.typed_db_field import NullableDecimalField as NullableDecimalField
 from .core.model.typed_db_field import NullableEnumField as NullableEnumField
 from .core.model.typed_db_field import NullableFloatField as NullableFloatField
 from .core.model.typed_db_field import NullableForeignKeyField as NullableForeignKeyField
@@ -133,7 +135,9 @@ from .core.model.typed_db_field import NullableIntegerField as NullableIntegerFi
 from .core.model.typed_db_field import NullableTextField as NullableTextField
 from .core.model.typed_db_field import TypedBooleanField as TypedBooleanField
 from .core.model.typed_db_field import TypedCharField as TypedCharField
+from .core.model.typed_db_field import TypedDateField as TypedDateField
 from .core.model.typed_db_field import TypedDateTimeUTC as TypedDateTimeUTC
+from .core.model.typed_db_field import TypedDecimalField as TypedDecimalField
 from .core.model.typed_db_field import TypedEnumField as TypedEnumField
 from .core.model.typed_db_field import TypedFloatField as TypedFloatField
 from .core.model.typed_db_field import TypedForeignKeyField as TypedForeignKeyField
