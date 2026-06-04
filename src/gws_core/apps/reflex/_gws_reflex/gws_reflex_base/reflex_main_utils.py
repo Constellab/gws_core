@@ -54,7 +54,13 @@ def add_unauthorized_page(app: rx.App):
 
 
 def get_theme():
-    """Get the theme of the app."""
+    """Get the theme of the app.
+
+    Configured at compile time via ``rx.plugins.RadixThemesPlugin(theme=get_theme())``,
+    appended to ``config.plugins`` inside each app's ``rxconfig._init_reflex`` (after
+    ``ReflexInit.init()`` makes this module importable). This replaces the
+    ``App(theme=...)`` argument, deprecated in reflex 0.9.0 and removed in 1.0.
+    """
     return rx.theme(
         gray_color="sage",
         appearance=os.environ.get("GWS_THEME", "light"),

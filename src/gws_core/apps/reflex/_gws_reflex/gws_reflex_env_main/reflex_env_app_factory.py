@@ -7,7 +7,6 @@ from gws_reflex_base import (
     ReflexMainStateBaseFactory,
     default_gws_env_backend_handler,
     default_gws_env_frontend_handler,
-    get_theme,
 )
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
@@ -27,7 +26,8 @@ def register_gws_reflex_env_app(
     have full IDE support, then apply GWS standards with a simple function call.
 
     Standard GWS defaults applied (if not already set):
-    - theme: Teal accent color with light/dark mode based on environment
+    - theme: configured via ``RadixThemesPlugin(theme=get_theme())`` in the app's
+      ``rxconfig.py`` (light/dark mode based on environment)
     - frontend_exception_handler: Logs exceptions
     - backend_exception_handler: Shows toast notifications with error details
     - unauthorized_page: Adds the unauthorized route (if add_unauthorized_page=True)
@@ -59,9 +59,11 @@ def register_gws_reflex_env_app(
     """
 
     ReflexMainStateBaseFactory.set_main_state_class(ReflexMainStateEnv)
-    # Create app if not provided
+    # Create app if not provided. The theme is configured via
+    # RadixThemesPlugin(theme=get_theme()) in the app's rxconfig.py, not here
+    # (App(theme=...) was deprecated in reflex 0.9.0).
     if app is None:
-        app = rx.App(theme=get_theme())
+        app = rx.App()
 
     # Register the exception handlers (only if still using the reflex defaults)
     if (
