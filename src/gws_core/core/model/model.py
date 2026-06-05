@@ -4,10 +4,10 @@ from typing import TypeVar
 from peewee import DoesNotExist
 from peewee import Model as PeeweeModel
 
-from gws_core import TypedCharField, TypedDateTimeUTC
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.base_model import BaseModel
 from gws_core.core.model.model_dto import BaseModelDTO, ModelDTO
+from gws_core.core.model.typed_db_field import TypedCharField, TypedDateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
 
 from ..exception.exceptions import NotFoundException
