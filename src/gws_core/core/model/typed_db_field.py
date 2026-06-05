@@ -15,14 +15,15 @@ behavior and are drop-in replacements for their peewee counterparts.
 Usage in a model:
 
     class MyModel(Model):
-        name = TypedCharField(max_length=255, null=False)        # -> str
-        description = NullableTextField(null=True)               # -> str | None
-        count = TypedIntegerField(default=0)                     # -> int
-        status = TypedEnumField(choices=MyStatus)                # -> MyStatus
-        parent = NullableForeignKeyField(MyParent, null=True)    # -> MyParent | None
+        name = TypedCharField(max_length=255)        # -> str
+        description = NullableTextField()            # -> str | None
+        count = TypedIntegerField(default=0)         # -> int
+        status = TypedEnumField(choices=MyStatus)    # -> MyStatus
+        parent = NullableForeignKeyField(MyParent)   # -> MyParent | None
 
 Use the ``Typed*`` variants for non-nullable columns and the ``Nullable*``
-variants for nullable ones (``null=True``).
+variants for nullable ones. Each variant sets ``null`` itself, so you do not
+pass ``null=`` — any value you pass is overridden by the class.
 """
 
 from datetime import date, datetime
@@ -31,10 +32,12 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Generic, Literal, TypeVar, overload
 
 from peewee import (
+    BigIntegerField,
     BooleanField,
     CharField,
     DateField,
     DecimalField,
+    DeferredForeignKey,
     FloatField,
     ForeignKeyField,
     IntegerField,
@@ -43,7 +46,7 @@ from peewee import (
 from peewee import Model as PeeweeModel
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import DateTimeUTC
+from gws_core.core.model.db_field import DateTimeUTC, JSONField
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -82,83 +85,179 @@ class TypedDbField(Generic[T]):
 
 
 class TypedCharField(TypedDbField[str], CharField):
-    """``CharField`` whose instance value is typed ``str``."""
+    """``CharField`` (``null=False``) whose instance value is typed ``str``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableCharField(TypedDbField[str | None], CharField):
     """``CharField`` (``null=True``) whose instance value is typed ``str | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedTextField(TypedDbField[str], TextField):
-    """``TextField`` whose instance value is typed ``str``."""
+    """``TextField`` (``null=False``) whose instance value is typed ``str``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableTextField(TypedDbField[str | None], TextField):
     """``TextField`` (``null=True``) whose instance value is typed ``str | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedBooleanField(TypedDbField[bool], BooleanField):
-    """``BooleanField`` whose instance value is typed ``bool``."""
+    """``BooleanField`` (``null=False``) whose instance value is typed ``bool``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableBooleanField(TypedDbField[bool | None], BooleanField):
     """``BooleanField`` (``null=True``) whose instance value is typed ``bool | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedIntegerField(TypedDbField[int], IntegerField):
-    """``IntegerField`` whose instance value is typed ``int``."""
+    """``IntegerField`` (``null=False``) whose instance value is typed ``int``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableIntegerField(TypedDbField[int | None], IntegerField):
     """``IntegerField`` (``null=True``) whose instance value is typed ``int | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
+
+class TypedBigIntegerField(TypedDbField[int], BigIntegerField):
+    """``BigIntegerField`` (``null=False``) whose instance value is typed ``int``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
+
+
+class NullableBigIntegerField(TypedDbField[int | None], BigIntegerField):
+    """``BigIntegerField`` (``null=True``) whose instance value is typed ``int | None``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedFloatField(TypedDbField[float], FloatField):
-    """``FloatField`` whose instance value is typed ``float``."""
+    """``FloatField`` (``null=False``) whose instance value is typed ``float``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableFloatField(TypedDbField[float | None], FloatField):
     """``FloatField`` (``null=True``) whose instance value is typed ``float | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedDateField(TypedDbField[date], DateField):
-    """``DateField`` whose instance value is typed ``date``."""
+    """``DateField`` (``null=False``) whose instance value is typed ``date``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableDateField(TypedDbField[date | None], DateField):
     """``DateField`` (``null=True``) whose instance value is typed ``date | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedDecimalField(TypedDbField[Decimal], DecimalField):
-    """``DecimalField`` whose instance value is typed ``Decimal``."""
+    """``DecimalField`` (``null=False``) whose instance value is typed ``Decimal``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableDecimalField(TypedDbField[Decimal | None], DecimalField):
     """``DecimalField`` (``null=True``) whose instance value is typed ``Decimal | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedDateTimeUTC(TypedDbField[datetime], DateTimeUTC):
-    """``DateTimeUTC`` whose instance value is typed ``datetime``."""
+    """``DateTimeUTC`` (``null=False``) whose instance value is typed ``datetime``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
 
 
 class NullableDateTimeUTC(TypedDbField[datetime | None], DateTimeUTC):
     """``DateTimeUTC`` (``null=True``) whose instance value is typed ``datetime | None``."""
 
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
+
+class TypedJSONField(TypedDbField[Any], JSONField):
+    """``JSONField`` (``null=False``) whose instance value is typed ``Any`` (decoded JSON)."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
+
+
+class NullableJSONField(TypedDbField[Any | None], JSONField):
+    """``JSONField`` (``null=True``) whose instance value is typed ``Any | None``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)
+
 
 class TypedEnumField(TypedDbField[EnumT], EnumField):
     """
-    ``EnumField`` whose instance value is typed with the enum passed as ``choices``.
+    ``EnumField`` (``null=False``) whose instance value is typed with the enum passed as ``choices``.
 
     The enum type is inferred from the constructor, no annotation needed:
 
         status = TypedEnumField(choices=MyStatus)   # instance value typed MyStatus
     """
 
-    if TYPE_CHECKING:
-
-        def __init__(
-            self, *args: Any, choices: type[EnumT], max_length: int = 255, **kwargs: Any
-        ) -> None: ...
+    def __init__(
+        self, *args: Any, choices: type[EnumT], max_length: int = 255, **kwargs: Any
+    ) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, choices=choices, max_length=max_length, **kwargs)
 
 
 class NullableEnumField(TypedDbField[EnumT | None], EnumField):
@@ -167,14 +266,14 @@ class NullableEnumField(TypedDbField[EnumT | None], EnumField):
 
     The enum type is inferred from the constructor, no annotation needed:
 
-        status = NullableEnumField(choices=MyStatus, null=True)   # -> MyStatus | None
+        status = NullableEnumField(choices=MyStatus)   # -> MyStatus | None
     """
 
-    if TYPE_CHECKING:
-
-        def __init__(
-            self, *args: Any, choices: type[EnumT], max_length: int = 255, **kwargs: Any
-        ) -> None: ...
+    def __init__(
+        self, *args: Any, choices: type[EnumT], max_length: int = 255, **kwargs: Any
+    ) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, choices=choices, max_length=max_length, **kwargs)
 
 
 class TypedForeignKeyField(TypedDbField[ModelT], ForeignKeyField):
@@ -200,7 +299,9 @@ class TypedForeignKeyField(TypedDbField[ModelT], ForeignKeyField):
         @overload
         def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
 
-        def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(model, *args, **kwargs)
 
 
 class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
@@ -209,13 +310,13 @@ class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
 
     The related model type is inferred from the constructor, no annotation needed:
 
-        owner = NullableForeignKeyField(User, null=True)   # -> User | None
+        owner = NullableForeignKeyField(User)   # -> User | None
 
     For a self-reference, the model type cannot be inferred from the ``"self"``
     string: specialize the generic explicitly (as a forward reference, since the
     class is not defined yet inside its own body):
 
-        parent = NullableForeignKeyField["MyModel"]("self", null=True)   # -> MyModel | None
+        parent = NullableForeignKeyField["MyModel"]("self")   # -> MyModel | None
     """
 
     if TYPE_CHECKING:
@@ -226,4 +327,50 @@ class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
         @overload
         def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
 
-        def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None: ...
+    def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(model, *args, **kwargs)
+
+
+class TypedDeferredForeignKeyField(TypedDbField[ModelT], DeferredForeignKey):
+    """
+    ``DeferredForeignKey`` (``null=False``) whose instance value is typed with the related model.
+
+    The related model is referenced by string name (the FK is resolved later,
+    once all tables exist), so its type cannot be inferred from the argument:
+    specialize the generic explicitly. The related class is usually not
+    importable here — that is the reason the FK is deferred — so import it under
+    ``TYPE_CHECKING`` and use it as a forward reference:
+
+        if TYPE_CHECKING:
+            from ...other_model import OtherModel
+
+        ref = TypedDeferredForeignKeyField["OtherModel"]("OtherModel")   # -> OtherModel
+    """
+
+    def __init__(self, rel_model_name: str, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(rel_model_name, *args, **kwargs)
+
+
+class NullableDeferredForeignKeyField(TypedDbField[ModelT | None], DeferredForeignKey):
+    """
+    ``DeferredForeignKey`` (``null=True``) whose instance value is typed ``Model | None``.
+
+    The related model is referenced by string name (the FK is resolved later,
+    once all tables exist), so its type cannot be inferred from the argument:
+    specialize the generic explicitly. The related class is usually not
+    importable here — that is the reason the FK is deferred — so import it under
+    ``TYPE_CHECKING`` and use it as a forward reference:
+
+        if TYPE_CHECKING:
+            from ...other_model import OtherModel
+
+        ref = NullableDeferredForeignKeyField["OtherModel"](
+            "OtherModel", backref="+", lazy_load=False
+        )                                                        # -> OtherModel | None
+    """
+
+    def __init__(self, rel_model_name: str, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(rel_model_name, *args, **kwargs)

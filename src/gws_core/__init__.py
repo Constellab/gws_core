@@ -123,25 +123,33 @@ from .core.model.model import Model as Model
 from .core.model.model_dto import BaseModelDTO as BaseModelDTO
 from .core.model.model_dto import PageDTO as PageDTO
 from .core.model.sys_proc import SysProc as SysProc
+from .core.model.typed_db_field import NullableBigIntegerField as NullableBigIntegerField
 from .core.model.typed_db_field import NullableBooleanField as NullableBooleanField
 from .core.model.typed_db_field import NullableCharField as NullableCharField
 from .core.model.typed_db_field import NullableDateField as NullableDateField
 from .core.model.typed_db_field import NullableDateTimeUTC as NullableDateTimeUTC
 from .core.model.typed_db_field import NullableDecimalField as NullableDecimalField
+from .core.model.typed_db_field import (
+    NullableDeferredForeignKeyField as NullableDeferredForeignKeyField,
+)
 from .core.model.typed_db_field import NullableEnumField as NullableEnumField
 from .core.model.typed_db_field import NullableFloatField as NullableFloatField
 from .core.model.typed_db_field import NullableForeignKeyField as NullableForeignKeyField
 from .core.model.typed_db_field import NullableIntegerField as NullableIntegerField
+from .core.model.typed_db_field import NullableJSONField as NullableJSONField
 from .core.model.typed_db_field import NullableTextField as NullableTextField
+from .core.model.typed_db_field import TypedBigIntegerField as TypedBigIntegerField
 from .core.model.typed_db_field import TypedBooleanField as TypedBooleanField
 from .core.model.typed_db_field import TypedCharField as TypedCharField
 from .core.model.typed_db_field import TypedDateField as TypedDateField
 from .core.model.typed_db_field import TypedDateTimeUTC as TypedDateTimeUTC
 from .core.model.typed_db_field import TypedDecimalField as TypedDecimalField
+from .core.model.typed_db_field import TypedDeferredForeignKeyField as TypedDeferredForeignKeyField
 from .core.model.typed_db_field import TypedEnumField as TypedEnumField
 from .core.model.typed_db_field import TypedFloatField as TypedFloatField
 from .core.model.typed_db_field import TypedForeignKeyField as TypedForeignKeyField
 from .core.model.typed_db_field import TypedIntegerField as TypedIntegerField
+from .core.model.typed_db_field import TypedJSONField as TypedJSONField
 from .core.model.typed_db_field import TypedTextField as TypedTextField
 
 # Core > Service

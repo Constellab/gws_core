@@ -13,7 +13,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from ..exception.exceptions import NotFoundException
 from ..exception.gws_exceptions import GWSException
 
-ModelType = TypeVar("ModelType", bound="BaseModel")
+ModelType = TypeVar("ModelType", bound="Model")
 
 
 class Model(BaseModel, PeeweeModel):
@@ -32,9 +32,9 @@ class Model(BaseModel, PeeweeModel):
     :type last_modified_at: `datetime`
     """
 
-    id: TypedCharField = TypedCharField(primary_key=True, max_length=36)
+    id = TypedCharField(primary_key=True, max_length=36)
     created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    last_modified_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
+    last_modified_at = TypedDateTimeUTC(default=DateHelper.now_utc)
 
     _json_ignore_fields: list[str] = []
     _is_saved: bool = False
@@ -88,19 +88,19 @@ class Model(BaseModel, PeeweeModel):
     def get_by_id_and_check(cls: type[ModelType], id: str) -> ModelType:
         """Get by ID and throw 404 error if object not found
 
-        :param id: [description]
+        :param id: The ID of the model
         :type id: str
-        :return: [description]
-        :rtype: str
+        :return: The model instance
+        :rtype: ModelType
         """
         try:
             return cls.get(cls.id == id)
-        except DoesNotExist:
+        except DoesNotExist as e:
             raise NotFoundException(
                 detail=GWSException.OBJECT_ID_NOT_FOUND.value,
                 unique_code=GWSException.OBJECT_ID_NOT_FOUND.name,
                 detail_args={"objectName": cls.classname(), "id": id},
-            )
+            ) from e
 
     def is_saved(self) -> bool:
         """
@@ -129,7 +129,7 @@ class Model(BaseModel, PeeweeModel):
         # set the force insert value
         # if define in params, use the value
         # otherwise true if the object was not created
-        force_insert: bool = (
+        force_insert = (
             kwargs.get("force_insert")
             if kwargs.get("force_insert") is not None
             else not self.is_saved()
@@ -169,6 +169,8 @@ class Model(BaseModel, PeeweeModel):
         :return: True if all the model are successfully saved, False otherwise.
         :rtype: bool
         """
+        if not model_list:
+            return []
         for model in model_list:
             model.save()
 

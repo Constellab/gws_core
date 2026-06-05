@@ -1,8 +1,8 @@
+from typing import Any
 
 from peewee import (
     ColumnMetadata,
     DatabaseProxy,
-    ForeignKeyField,
     ForeignKeyMetadata,
     Metadata,
     ModelSelect,
@@ -24,6 +24,9 @@ class ModelMetadata(Metadata):
 
 class BaseModel(Base, PeeweeModel):
     """BaseModel that contains no column but management for Tables (create, delete, foreign key...)"""
+
+    _schema: Any
+    _meta: ModelMetadata
 
     @classmethod
     def create_table(cls, *args, **kwargs):
@@ -51,7 +54,10 @@ class BaseModel(Base, PeeweeModel):
         """
 
     @classmethod
-    def create_foreign_key_if_not_exist(cls, field: ForeignKeyField) -> None:
+    def create_foreign_key_if_not_exist(
+        cls,
+        field: Any,
+    ) -> None:
         """Create a foreign key for a Foreign key field only if the foreign key does not exists
 
         :param field: [description]
@@ -148,7 +154,10 @@ class BaseModel(Base, PeeweeModel):
         :param query: The query to execute
         :type query: `str`
         """
-        cls.get_db().execute_sql(query.replace("[TABLE_NAME]", cls.get_table_name()))
+        table_name = cls.get_table_name()
+        if table_name is not None:
+            query = query.replace("[TABLE_NAME]", table_name)
+        cls.get_db().execute_sql(query)
 
     @classmethod
     def get_db(cls) -> DatabaseProxy:
