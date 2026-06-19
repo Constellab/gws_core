@@ -130,6 +130,31 @@ class ExampleFormDialogState(FormDialogState, rx.State):
         yield rx.toast.success(f"Successfully updated entry for {name}")
 
 
+class NonDismissableFormDialogState(FormDialogState, rx.State):
+    """State for the non-dismissable form dialog example."""
+
+    form_note: str = ""
+
+    @rx.event
+    async def open_create_dialog(self):
+        """Open the dialog in create mode."""
+        self.is_update_mode = False
+        await self.open_dialog()
+
+    async def _clear_form_state(self) -> None:
+        """Clear the form state fields."""
+        self.form_note = ""
+        self.is_update_mode = False
+
+    async def _create(self, form_data: dict):
+        """Create a new item with the provided form data."""
+        yield rx.toast.success("Saved - the dialog only closes via its buttons")
+
+    async def _update(self, form_data: dict):
+        """Not used in this example (create only)."""
+        yield rx.toast.success("Updated")
+
+
 def dialog_page() -> rx.Component:
     """Render the dialog components demo page."""
 
@@ -451,6 +476,52 @@ form_dialog_component(
     form_content=my_form_content(),
 )'''
 
+    # Example 4: Non-dismissable Form Dialog
+    nondismissable_component = rx.vstack(
+        rx.button(
+            "Open Non-dismissable Form",
+            on_click=NonDismissableFormDialogState.open_create_dialog,
+        ),
+        form_dialog_component(
+            state=NonDismissableFormDialogState,
+            title="Non-dismissable Form",
+            description=(
+                "Try clicking outside the dialog or pressing Escape - nothing happens. "
+                "It only closes via Cancel/Save or the close icon."
+            ),
+            form_content=rx.vstack(
+                rx.text("Note", size="2", weight="bold"),
+                rx.input(
+                    name="note",
+                    placeholder="Type something, then try to click away",
+                    default_value=NonDismissableFormDialogState.form_note,
+                    width="100%",
+                ),
+                width="100%",
+                spacing="1",
+            ),
+            max_width="500px",
+            dismissable=False,
+        ),
+        align="start",
+    )
+
+    code4 = '''from gws_reflex_base import FormDialogState, form_dialog_component
+import reflex as rx
+
+# Same as form_dialog_component, but pass dismissable=False so the dialog
+# cannot be closed by clicking outside it or pressing Escape - only via its
+# Cancel/Save buttons (or the close icon). Useful to avoid losing form input
+# by accident on long or important forms.
+
+form_dialog_component(
+    state=MyFormState,
+    title="Important Form",
+    description="This dialog stays open until you Cancel or Save.",
+    form_content=my_form_content(),
+    dismissable=False,
+)'''
+
     return page_layout(
         "Dialog Components",
         "This page demonstrates various dialog components for user interactions, "
@@ -476,6 +547,15 @@ form_dialog_component(
             code=code3,
             title="form_dialog_component",
             description="A form dialog component supporting both create and update modes.",
+            func=form_dialog_component,
+        ),
+        # Non-dismissable form dialog example
+        example_tabs(
+            example_component=nondismissable_component,
+            code=code4,
+            title="form_dialog_component (non-dismissable)",
+            description="A form dialog that only closes via its buttons (dismissable=False); "
+            "outside-click and Escape are disabled to avoid losing input by accident.",
             func=form_dialog_component,
         ),
     )

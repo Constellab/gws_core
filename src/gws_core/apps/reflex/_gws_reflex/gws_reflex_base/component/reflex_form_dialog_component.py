@@ -123,6 +123,7 @@ def form_dialog_component(
     description: str | rx.Component | None = None,
     max_width: str = "500px",
     max_height: str = "90vh",
+    dismissable: bool = True,
 ) -> rx.Component:
     """Reusable form dialog component for create/update operations.
 
@@ -144,6 +145,11 @@ def form_dialog_component(
                     header and the Save/Cancel buttons stay fixed; only the form
                     fields area scrolls when the content is taller, so the page
                     itself never scrolls and the dialog stays centered.
+        dismissable: Whether the dialog can be closed by clicking outside it or
+                    pressing Escape (default: True). When False, those gestures are
+                    prevented and the dialog can only be closed via its Cancel/Save
+                    buttons (or close icon) - useful to avoid losing form input by
+                    accident.
 
     Returns:
         rx.Component: Dialog component with form
@@ -283,8 +289,14 @@ def form_dialog_component(
             max_height=max_height,
             display="flex",
             flex_direction="column",
-            on_interact_outside=state.close_dialog,
-            on_escape_key_down=state.close_dialog,
+            # When not dismissable, prevent the default close on outside-click /
+            # Escape so the dialog only closes via its Cancel/Save buttons.
+            on_interact_outside=(
+                state.close_dialog if dismissable else rx.prevent_default
+            ),
+            on_escape_key_down=(
+                state.close_dialog if dismissable else rx.prevent_default
+            ),
         ),
         open=state.dialog_opened,
     )
