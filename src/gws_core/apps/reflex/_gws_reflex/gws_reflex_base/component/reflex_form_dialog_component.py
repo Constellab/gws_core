@@ -122,6 +122,7 @@ def form_dialog_component(
     form_content: rx.Component,
     description: str | rx.Component | None = None,
     max_width: str = "500px",
+    max_height: str = "90vh",
 ) -> rx.Component:
     """Reusable form dialog component for create/update operations.
 
@@ -139,6 +140,10 @@ def form_dialog_component(
         form_content: The form content component containing form fields and buttons.
                      Should include form fields and submit/cancel buttons.
         max_width: Maximum width of the dialog (default: "500px")
+        max_height: Maximum height of the whole dialog (default: "90vh"). The
+                    header and the Save/Cancel buttons stay fixed; only the form
+                    fields area scrolls when the content is taller, so the page
+                    itself never scrolls and the dialog stays centered.
 
     Returns:
         rx.Component: Dialog component with form
@@ -234,7 +239,17 @@ def form_dialog_component(
                     rx.dialog.description(description, size="2", margin_bottom="1rem"),
                 ),
                 rx.form(
-                    form_content,
+                    # Only this region scrolls; header (above) and the buttons
+                    # (below) stay fixed. flex=1 + min_height=0 lets it shrink so
+                    # the scroll happens here instead of growing the page.
+                    rx.box(
+                        form_content,
+                        overflow_y="auto",
+                        flex="1",
+                        min_height="0",
+                        width="100%",
+                        padding_right="0.5rem",
+                    ),
                     rx.hstack(
                         rx.button(
                             "Cancel",
@@ -251,12 +266,23 @@ def form_dialog_component(
                             disabled=state.is_loading,
                         ),
                         margin_top="1em",
+                        flex_shrink="0",
                     ),
                     on_submit=state.submit_form,
+                    display="flex",
+                    flex_direction="column",
+                    flex="1",
+                    min_height="0",
+                    width="100%",
                 ),
                 width="100%",
+                flex="1",
+                min_height="0",
             ),
             max_width=max_width,
+            max_height=max_height,
+            display="flex",
+            flex_direction="column",
             on_interact_outside=state.close_dialog,
             on_escape_key_down=state.close_dialog,
         ),
