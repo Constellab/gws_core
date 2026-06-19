@@ -251,3 +251,12 @@ a[href="https://reflex.dev"] {
 .rt-Badge {
   border-radius: 50px
 }
+
+/* Remove Radix's outer top/bottom padding around dialogs to prevent page scroll.
+   Zeroing it lets a dialog's max-height act as a true fraction of the viewport:
+   the dialog never exceeds the screen, its content scrolls internally instead of
+   the page, and Radix's `margin: auto` still centers it. */
+.rt-BaseDialogScrollPadding {
+  padding-top: 0;
+  padding-bottom: 0;
+}
