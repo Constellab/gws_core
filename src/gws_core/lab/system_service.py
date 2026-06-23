@@ -82,8 +82,10 @@ class SystemService:
             # Initialize triggered jobs
             TriggeredJobScheduler.init()
 
-        # Init AppsManager
-        AppsManager.init()
+            # Init AppsManager (signal handlers + nginx reset).
+            # Skipped in test mode so running `gws server test` does not kill the
+            # developer's locally running apps / nginx.
+            AppsManager.init()
 
     @classmethod
     def register_start_activity(cls):
