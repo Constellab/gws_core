@@ -44,6 +44,7 @@ class AppInstanceDTO(BaseModelDTO):
     name: str
     env_type: str
     stop_policy: AppStopPolicy = AppStopPolicy.AUTO
+    custom_subdomain: str | None = None
     source_ids: list[str] | None = None
     env_file_path: str | None = None  # for env app
     env_file_content: str | None = None  # for env app

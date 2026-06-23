@@ -144,6 +144,7 @@ class AppInstance:
             name=self.name,
             env_type="",
             stop_policy=self.stop_policy,
+            custom_subdomain=self.custom_subdomain,
             source_ids=self.get_source_ids(),
         )
 
