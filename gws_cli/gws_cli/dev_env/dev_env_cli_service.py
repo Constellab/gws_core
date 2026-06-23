@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import sys
 
 import typer
 from gws_core.brick.brick_service import BrickService
@@ -86,13 +87,13 @@ class DevEnvCliService:
             if os.path.exists(notebook_template_dir):
                 typer.echo(f"Deleting {notebook_template_dir}...")
                 shutil.rmtree(notebook_template_dir)
-            # Delete pytest config files
+            # Delete pytest config files + the pyright config
             user_folder = Settings.get_user_folder()
-            for pytest_file in ["conftest.py", "pyproject.toml"]:
-                pytest_file_path = os.path.join(user_folder, pytest_file)
-                if os.path.exists(pytest_file_path):
-                    typer.echo(f"Deleting {pytest_file_path}...")
-                    os.remove(pytest_file_path)
+            for generated_file in ["conftest.py", "pyproject.toml", "pyrightconfig.json"]:
+                generated_file_path = os.path.join(user_folder, generated_file)
+                if os.path.exists(generated_file_path):
+                    typer.echo(f"Deleting {generated_file_path}...")
+                    os.remove(generated_file_path)
 
         if not os.path.exists(vs_code_folder):
             os.mkdir(vs_code_folder)
@@ -114,6 +115,7 @@ class DevEnvCliService:
         )
 
         cls.config_vs_code_settings_json()
+        cls.config_pyright_config_json()
         cls.install_notebook_template()
         cls.install_pytest_config()
         cls._install_vscode_extensions(extensions_dest)
@@ -170,10 +172,9 @@ class DevEnvCliService:
         ):
             settings["python.analysis.extraPaths"] = []
 
-        # Add the brick paths to the extra paths
+        # Remove all bricks paths from existing paths, then re-add the current
+        # brick src paths (kept in sync via the shared computation).
         existing_paths: list[str] = settings["python.autoComplete.extraPaths"]
-
-        # remove all bricks paths from existing paths
         user_folder = Settings.get_user_bricks_folder()
         system_folder = Settings.get_sys_bricks_folder()
         existing_paths = [
@@ -181,23 +182,7 @@ class DevEnvCliService:
             for path in existing_paths
             if not path.startswith(user_folder) and not path.startswith(system_folder)
         ]
-
-        # Set all the brick src paths in the extraPaths
-        brick_folders = BrickService.list_brick_directories(distinct=True)
-
-        for brick_folder in brick_folders:
-            brick_src_path = os.path.join(brick_folder.path, BrickService.SOURCE_FOLDER)
-            existing_paths.append(brick_src_path)
-
-            # Add special path for gws_core Streamlit and Reflex
-            if brick_folder.name == Settings.get_gws_core_brick_name():
-                streamlit_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_STREAMLIT_PATH)
-                if os.path.exists(streamlit_path):
-                    existing_paths.append(streamlit_path)
-
-                reflex_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_REFLEX_PATH)
-                if os.path.exists(reflex_path):
-                    existing_paths.append(reflex_path)
+        existing_paths.extend(cls.compute_brick_extra_paths())
 
         settings["python.autoComplete.extraPaths"] = existing_paths
         settings["python.analysis.extraPaths"] = existing_paths
@@ -220,6 +205,72 @@ class DevEnvCliService:
         # Load the settings file into a dict
         with open(settings_path, encoding="UTF-8") as file:
             return json.load(file)
+
+    @classmethod
+    def compute_brick_extra_paths(cls) -> list[str]:
+        """Compute the brick source paths to expose to the Python language server.
+
+        Shared source of truth for both the VS Code ``settings.json`` extraPaths
+        and the ``pyrightconfig.json`` extraPaths, so the editor (Pylance) and the
+        pyright CLI resolve imports identically. Returns each brick's ``src``
+        folder plus the special gws_core Streamlit / Reflex roots.
+        """
+        extra_paths: list[str] = []
+        brick_folders = BrickService.list_brick_directories(distinct=True)
+
+        for brick_folder in brick_folders:
+            brick_src_path = os.path.join(brick_folder.path, BrickService.SOURCE_FOLDER)
+            extra_paths.append(brick_src_path)
+
+            # Add special path for gws_core Streamlit and Reflex
+            if brick_folder.name == Settings.get_gws_core_brick_name():
+                streamlit_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_STREAMLIT_PATH)
+                if os.path.exists(streamlit_path):
+                    extra_paths.append(streamlit_path)
+
+                reflex_path = os.path.join(brick_src_path, cls.CUSTOM_GWS_CORE_REFLEX_PATH)
+                if os.path.exists(reflex_path):
+                    extra_paths.append(reflex_path)
+
+        return extra_paths
+
+    @classmethod
+    def get_pyright_config_file_path(cls) -> str:
+        """Get the pyrightconfig.json file path (user folder root)."""
+        return os.path.join(Settings.get_user_folder(), "pyrightconfig.json")
+
+    @classmethod
+    def config_pyright_config_json(cls) -> None:
+        """Generate the pyrightconfig.json file so the pyright CLI matches Pylance.
+
+        Pyright's CLI ignores ``.vscode/settings.json``; it reads its own
+        ``pyrightconfig.json``. We mirror the editor configuration: the same brick
+        ``extraPaths`` (so imports resolve identically) and the active virtual
+        environment, detected dynamically from the running interpreter
+        (``sys.prefix``), so the file stays correct across environments.
+        """
+        typer.echo("Configuring pyrightconfig.json file...")
+
+        config: dict = {
+            "typeCheckingMode": "basic",
+            "extraPaths": cls.compute_brick_extra_paths(),
+        }
+
+        # Detect the active virtual environment from the running interpreter.
+        # sys.prefix points to the venv root when running inside one; pyright wants
+        # the parent folder (venvPath) plus the venv folder name (venv).
+        venv_prefix = sys.prefix
+        if venv_prefix != sys.base_prefix:
+            config["venvPath"] = os.path.dirname(venv_prefix)
+            config["venv"] = os.path.basename(venv_prefix)
+
+        config_path = cls.get_pyright_config_file_path()
+        try:
+            typer.echo("Writing the pyrightconfig.json file...")
+            with open(config_path, "w", encoding="UTF-8") as file:
+                json.dump(config, file, indent=2)
+        except Exception as err:
+            typer.echo(f"Error during writing the pyrightconfig.json file: {err}", err=True)
 
     @classmethod
     def install_pytest_config(cls) -> None:
