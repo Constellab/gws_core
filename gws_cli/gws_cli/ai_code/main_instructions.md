@@ -53,6 +53,11 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - Example: `gws resource search --filter '[{"key":"name","operator":"CONTAINS","value":"iris"}]'`
 - **When searching for or inspecting resources, see the `resource-inspection` skill** for the operators, keys, and search defaults that hide rows.
 
+### Scenario Inspection (inspect & control)
+- Inspect scenarios from the CLI: `search` (find), `info` (metadata), `running`, `error` (failure info), `protocol` (process graph), `resources` (produced/consumed). `start` / `stop` change state and require `--yes`.
+- Example: `gws scenario search --filter '[{"key":"status","operator":"EQ","value":"ERROR"}]'`
+- **When searching for or inspecting scenarios, see the `scenario-inspection` skill** for the operators and keys.
+
 ### Constellab Chat Expert
 - **Ask a question**: `gws community ask-chatbot "My question?"`
 - This is a RAG-powered assistant that can answer:

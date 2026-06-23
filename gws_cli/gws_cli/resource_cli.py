@@ -22,13 +22,17 @@ import json
 from typing import Annotated, Any
 
 import typer
-from gws_core.core.classes.search_builder import SearchOperator, SearchParams
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.manage import AppManager
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_service import ResourceService
 
-from gws_cli.utils.agent_output import echo_json, fail, render_value
+from gws_cli.utils.agent_output import (
+    build_search_params,
+    echo_json,
+    fail,
+    render_value,
+)
 from gws_cli.utils.cli_utils import CLIUtils
 
 SettingsPathOption = Annotated[
@@ -117,7 +121,7 @@ def search(
 ):
     _check_format(output_format)
 
-    search_params = _build_search_params(filters, sort)
+    search_params = build_search_params(filters, sort)
 
     _init_env(ctx, settings_path)
 
@@ -130,41 +134,6 @@ def search(
         )
 
     _print_search_results(paginator, output_format)
-
-
-def _build_search_params(filters: str | None, sort: str | None) -> SearchParams:
-    """Parse the --filter / --sort JSON into a validated SearchParams."""
-    params = SearchParams()
-
-    for criteria in _parse_json_list(filters, "--filter"):
-        if "key" not in criteria:
-            fail(f"each --filter entry needs a 'key'; got {json.dumps(criteria)}.")
-        operator_name = criteria.get("operator", "EQ")
-        try:
-            operator = SearchOperator[operator_name]
-        except KeyError:
-            valid = ", ".join(op.name for op in SearchOperator)
-            fail(f"unknown operator '{operator_name}'. Valid operators: {valid}.")
-        params.add_filter_criteria(criteria["key"], operator, criteria.get("value"))
-
-    sort_criteria = _parse_json_list(sort, "--sort")
-    if sort_criteria:
-        params.sortsCriteria = sort_criteria
-
-    return params
-
-
-def _parse_json_list(raw: str | None, option_name: str) -> list[dict]:
-    """Parse a JSON option that must decode to a list of objects (empty if None)."""
-    if not raw:
-        return []
-    try:
-        parsed = json.loads(raw)
-    except json.JSONDecodeError as err:
-        fail(f"{option_name} is not valid JSON: {err}.")
-    if not isinstance(parsed, list):
-        fail(f"{option_name} must be a JSON list, got {type(parsed).__name__}.")
-    return parsed
 
 
 def _print_search_results(paginator: Any, output_format: str) -> None:

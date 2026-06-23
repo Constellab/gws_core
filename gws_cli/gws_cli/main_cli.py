@@ -22,6 +22,7 @@ def main():
         dev_env_cli,
         reflex_cli,
         resource_cli,
+        scenario_cli,
         server_cli,
         streamlit_cli,
         task_cli,
@@ -66,6 +67,9 @@ def main():
     app.add_typer(db_cli.app, name="db", help="Run read-only SQL queries against brick databases")
     app.add_typer(
         resource_cli.app, name="resource", help="Inspect lab resources (search, RFields, views)"
+    )
+    app.add_typer(
+        scenario_cli.app, name="scenario", help="Inspect and control scenarios (search, info, start/stop)"
     )
     app.add_typer(task_cli.app, name="task", help="Generate task classes")
     app.add_typer(

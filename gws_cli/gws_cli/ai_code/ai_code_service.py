@@ -82,6 +82,11 @@ class AICodeService(ABC):
             description="Inspect lab resources from the CLI (search, info, read RFields, views)",
             argument_hint="what to search for or inspect",
         ),
+        SkillFrontmatter(
+            filename="scenario-inspection.md",
+            description="Inspect and control scenarios from the CLI (search, info, error, protocol, resources, start/stop)",
+            argument_hint="what to search for or inspect",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):
