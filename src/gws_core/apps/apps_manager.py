@@ -279,6 +279,31 @@ class AppsManager:
             app_process.set_stop_policy(stop_policy)
 
     @classmethod
+    def set_custom_subdomain(cls, app_id: str, subdomain: str | None) -> None:
+        """Set (or clear) the custom subdomain on an app resource.
+
+        The value is validated and checked for DB-wide uniqueness by the resource setter.
+        Passing a falsy value clears the custom subdomain and restores the default id-based host.
+
+        If the app is currently running, the new host only takes effect on the next start
+        (the running process keeps its current host until restarted).
+
+        :param app_id: the resource model id of the app
+        :param subdomain: the custom subdomain to apply, or None/"" to clear it
+        :raises BadRequestException: if the resource is not an AppResource, or the value is
+                                     invalid or already used by another app
+        """
+
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
+        resource: AppResource = resource_model.get_resource()
+
+        if not isinstance(resource, AppResource):
+            raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
+
+        resource.set_custom_subdomain(subdomain)
+        resource_model.update_resource_fields(resource)
+
+    @classmethod
     def get_logs_of_app(
         cls, app_id: str, from_page_date: datetime | None = None
     ) -> LogsBetweenDates:

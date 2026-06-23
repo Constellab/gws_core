@@ -276,10 +276,18 @@ class AppProcess:
     def get_host_name(self, suffix: str = "") -> str:
         """Get the host name for the app process based on the port and suffix.
         This is used to generate the host URL for the app.
-        We use the resource_model_id as host name to have a stable URL for the app.
+
+        By default we use the resource_model_id as host name to have a stable URL for the app.
         The stable URL is required for reflex as the backend url is stored in the front build and should not change at each deployment.
+
+        An app can optionally define a custom subdomain to get a readable, stable host. The
+        precedence is: dev mode > custom subdomain > resource model id. In dev mode the custom
+        subdomain is ignored (the DEV_MODE_APP_ID is always used).
         """
-        host_name = self.DEV_MODE_APP_ID if self._app.is_dev_mode() else self._app.resource_model_id
+        if self._app.is_dev_mode():
+            host_name = self.DEV_MODE_APP_ID
+        else:
+            host_name = self._app.custom_subdomain or self._app.resource_model_id
 
         if Settings.is_local_or_desktop_env():
             return f"{host_name}{suffix}.localhost"

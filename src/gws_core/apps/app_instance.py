@@ -24,6 +24,10 @@ class AppInstance:
     # Defines whether the app is automatically stopped when no connections are detected
     stop_policy: AppStopPolicy = AppStopPolicy.AUTO
 
+    # Optional readable, stable custom subdomain used to build the app host.
+    # When None, the host falls back to the resource model id.
+    custom_subdomain: str | None = None
+
     _shell_proxy: ShellProxy
 
     _dev_mode: bool = False
@@ -75,6 +79,15 @@ class AppInstance:
         :type stop_policy: AppStopPolicy
         """
         self.stop_policy = stop_policy
+
+    def set_custom_subdomain(self, subdomain: str | None) -> None:
+        """Set the custom subdomain used to build the app host.
+        When None, the host falls back to the resource model id.
+
+        :param subdomain: the custom subdomain to apply, or None
+        :type subdomain: str | None
+        """
+        self.custom_subdomain = subdomain
 
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
         """Return true if the app was generated from the given resource model id"""
