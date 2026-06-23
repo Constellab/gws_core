@@ -60,12 +60,14 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 ### Best Practices
 
 #### General Rules
+- When exploring (`ls`/`find`/`grep`/`cat`), run each as a separate single-tool Bash call instead of chaining them with `cd ... && ...`, `;`, or `|` into one compound command. Single-tool calls match the existing permission allowlist (so they don't prompt) and independent ones can run in parallel; compound chains fall through to a permission prompt. Prefer the dedicated Read/Grep/Glob tools where they fit.
 - Always read files before editing them. Never assume file contents — use the Read tool first to understand current state
 - Don't over-explore the codebase. When the task is clear (e.g., write documentation, create a file), start working immediately rather than reading unrelated files
 - Follow existing coding conventions and styles. When implementing new features, look for similar existing implementations and match their approach (e.g., file storage patterns, SDK object usage, import styles)
 - Write comprehensive docstrings for classes and methods
 - Do not export classes in the __init__.py files unless necessary
 - Always place import statements at the top of the file (module level). Never import inside functions, methods, or other non-top-level scopes
+- Once modifications are finished, run `ruff check --fix` on the modified files and fix simple errors
 
 #### Refactoring Rules
 - When refactoring or restructuring files, verify all existing functionality is preserved. After moving/rewriting code, check that no functions, imports, or features were accidentally removed

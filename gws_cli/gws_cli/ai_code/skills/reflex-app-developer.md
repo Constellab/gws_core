@@ -60,9 +60,11 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 
 ### Specific rules
 - In a function @rx.event(background=True), always wrap statements that update state and `self.get_state` in a `async with state:` block.
+- Never chain a sibling event with `yield SomeState.some_event` from inside a `@rx.event(background=True)` handler. A background handler runs as its own task; if it does slow work (e.g. a network call) before the trailing `yield`, the framework may already have finalized that task's `EventFuture`, so enqueuing the chained event raises `RuntimeError: Cannot add a child to an EventFuture that is already done.` (swallowed as an unretrieved task exception, so the chained event silently never runs). Instead, factor the chained work into a plain `async def` helper (no `@rx.event`, doing its own `async with self:` locking) and `await` it inline. `yield SomeState.some_event` is fine from foreground `@rx.event` handlers, which complete quickly.
 - Mark the method with `@rx.event` only if it is called from the frontend. If it is called only from the backend, do not use the decorator.
 - From the backend, never call a method decorated with `@rx.event`, instead call a private method without the decorator.
 - For menu button use icon 'ellipsis-vertical'
+- To color a whole component (text + hover/active background together), set `color_scheme` (e.g. `color_scheme="red"` on a destructive menu item), not a bare `color`. A lone `color` only recolors the text and leaves the hover background on the app's primary scheme, which clashes.
 - To handle the event calls from the frontend. 
    - If you don't need to pass a custom argument, use `on_click=MyState.my_event` instead of `on_click=lambda: MyState.my_event()`
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
