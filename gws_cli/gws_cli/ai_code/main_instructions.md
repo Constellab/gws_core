@@ -48,6 +48,11 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - Options: `--format json` for parseable output, `--limit N` to cap rows (default 20, `0` for no limit)
 - Example: `gws db query "SHOW TABLES" --db gws_invest`
 
+### Resource Inspection (read-only)
+- Inspect lab resources from the CLI: `search` (find), `info` (metadata), `fields` (list RFields), `read` (read RField values, e.g. a DataFrame), `views` / `call-view`.
+- Example: `gws resource search --filter '[{"key":"name","operator":"CONTAINS","value":"iris"}]'`
+- **When searching for or inspecting resources, see the `resource-inspection` skill** for the operators, keys, and search defaults that hide rows.
+
 ### Constellab Chat Expert
 - **Ask a question**: `gws community ask-chatbot "My question?"`
 - This is a RAG-powered assistant that can answer:

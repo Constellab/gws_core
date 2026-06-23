@@ -21,6 +21,7 @@ def main():
         db_cli,
         dev_env_cli,
         reflex_cli,
+        resource_cli,
         server_cli,
         streamlit_cli,
         task_cli,
@@ -63,6 +64,9 @@ def main():
     )
     app.add_typer(brick_cli.app, name="brick", help="Generate and manage bricks")
     app.add_typer(db_cli.app, name="db", help="Run read-only SQL queries against brick databases")
+    app.add_typer(
+        resource_cli.app, name="resource", help="Inspect lab resources (search, RFields, views)"
+    )
     app.add_typer(task_cli.app, name="task", help="Generate task classes")
     app.add_typer(
         streamlit_cli.app, name="streamlit", help="Generate and run Streamlit applications"

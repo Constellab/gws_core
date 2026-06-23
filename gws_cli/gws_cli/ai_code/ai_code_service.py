@@ -77,6 +77,11 @@ class AICodeService(ABC):
             description="Update a developer documentation file to match current source code using JSON input",
             argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
         ),
+        SkillFrontmatter(
+            filename="resource-inspection.md",
+            description="Inspect lab resources from the CLI (search, info, read RFields, views)",
+            argument_hint="what to search for or inspect",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):

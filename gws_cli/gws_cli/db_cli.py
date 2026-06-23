@@ -15,7 +15,6 @@ The query/validation logic lives in :class:`DbQueryService`; this module is the
 thin CLI layer (argument parsing, environment init, output formatting).
 """
 
-import json
 from typing import Annotated
 
 import typer
@@ -26,6 +25,7 @@ from gws_core.core.db.db_query_service import (
 )
 from gws_core.manage import AppManager
 
+from gws_cli.utils.agent_output import echo_json, fail
 from gws_cli.utils.cli_utils import CLIUtils
 
 SettingsPathOption = Annotated[
@@ -40,23 +40,14 @@ app = typer.Typer(
         "Start with 'gws db list' to see databases, then\n"
         '  gws db query "SHOW TABLES" --db gws_invest\n'
         '  gws db query "DESCRIBE invest_investor" --db gws_invest\n'
-        '  gws db query "SELECT * FROM invest_investor" --db gws_invest --format json'
+        '  gws db query "SELECT * FROM invest_investor" --db gws_invest --format json\n\n'
+        "To inspect resources (search, RFields, views), use the 'gws resource' group."
     )
 )
 
 
 DEFAULT_DB = "gws_core"
 DEFAULT_LIMIT = 20
-
-
-def _fail(message: str) -> None:
-    """Print an agent-readable error to stdout and exit non-zero.
-
-    Errors go to stdout (not stderr) so an agent reading combined output sees
-    the message; the non-zero exit still signals failure to scripts.
-    """
-    typer.echo(f"ERROR: {message}")
-    raise typer.Exit(code=1)
 
 
 def _print_table(result: DbQueryResult, rows: list[tuple], truncated: bool) -> None:
@@ -84,13 +75,14 @@ def _print_table(result: DbQueryResult, rows: list[tuple], truncated: bool) -> N
 
 
 def _print_json(result: DbQueryResult, rows: list[tuple], truncated: bool) -> None:
-    payload = {
-        "columns": result.columns,
-        "row_count": len(rows),
-        "truncated": truncated,
-        "rows": [dict(zip(result.columns, row, strict=False)) for row in rows],
-    }
-    typer.echo(json.dumps(payload, indent=2, default=str, ensure_ascii=False))
+    echo_json(
+        {
+            "columns": result.columns,
+            "row_count": len(rows),
+            "truncated": truncated,
+            "rows": [dict(zip(result.columns, row, strict=False)) for row in rows],
+        }
+    )
 
 
 @app.command("query", help="Execute a read-only SQL query against a brick database.")
@@ -126,13 +118,13 @@ def query(
     settings_path: SettingsPathOption = CLIUtils.MAIN_SETTINGS_FILE_DEFAULT_PATH,
 ):
     if output_format not in ("table", "json"):
-        _fail("--format must be 'table' or 'json'.")
+        fail("--format must be 'table' or 'json'.")
 
     # Validate before touching the (slow) env init so obvious misuse fails fast.
     try:
         DbQueryService.assert_read_only(sql)
     except DbQueryError as err:
-        _fail(str(err))
+        fail(str(err))
 
     # Reuse the server's init path: loads all bricks (registering their
     # DbManagers, so --db can resolve) and connects every db in dependency
@@ -142,7 +134,7 @@ def query(
             settings_path, log_level=CLIUtils.get_global_option_log_level(ctx)
         )
     except Exception as err:
-        _fail(
+        fail(
             f"could not initialize the lab environment: {err}. "
             "Is the lab db reachable? Try 'gws server run' first."
         )
@@ -150,7 +142,7 @@ def query(
     try:
         result = DbQueryService.execute_read_only_query(db_name, sql)
     except DbQueryError as err:
-        _fail(str(err))
+        fail(str(err))
 
     rows, truncated = result.limited_rows(limit)
 
