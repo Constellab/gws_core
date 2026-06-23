@@ -71,11 +71,11 @@ class Table(Resource):
 
     COMMENT_CHAR = "#"
 
-    _data: DataFrame = DataFrameRField()
+    _data = DataFrameRField()
 
-    _row_tags: TableAxisTags = SerializableRField(TableAxisTags)
-    _column_tags: TableAxisTags = SerializableRField(TableAxisTags)
-    comments: str = StrRField()
+    _row_tags = SerializableRField(TableAxisTags)
+    _column_tags = SerializableRField(TableAxisTags)
+    comments = StrRField()
 
     def __init__(
         self,

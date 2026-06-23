@@ -19,7 +19,7 @@ from gws_core.resource.view.view_runner import ViewRunner
 class ViewResource(Resource):
     """Special resource that holds a view"""
 
-    view_dict: dict = DictRField()
+    view_dict = DictRField()
 
     def __init__(self, view_dict: dict | None = None) -> None:
         """Create the view resource from the view dict

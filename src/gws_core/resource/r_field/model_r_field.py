@@ -6,7 +6,7 @@ JSON serialization and deserialization using Pydantic. This ensures type safety,
 validation, and clean serialization for structured data objects.
 """
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.utils import Utils
@@ -14,8 +14,10 @@ from gws_core.core.utils.utils import Utils
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .r_field import BaseRField
 
+DTOT = TypeVar("DTOT", bound=BaseModelDTO)
 
-class ModelRfield(BaseRField):
+
+class ModelRfield(BaseRField[DTOT], Generic[DTOT]):
     """Resource field for storing Pydantic BaseModelDTO objects.
 
     ModelRfield provides automatic serialization and deserialization of Pydantic models
@@ -72,9 +74,9 @@ class ModelRfield(BaseRField):
         - Default value is None (model is not instantiated by default)
     """
 
-    object_type: type[BaseModelDTO]
+    object_type: type[DTOT]
 
-    def __init__(self, object_type: type[BaseModelDTO], include_in_dict_view: bool = False) -> None:
+    def __init__(self, object_type: type[DTOT], include_in_dict_view: bool = False) -> None:
         """Initialize a ModelRfield for storing Pydantic model objects.
 
         :param object_type: The Pydantic model class (subclass of BaseModelDTO) that this field will store.
@@ -101,7 +103,7 @@ class ModelRfield(BaseRField):
         super().__init__(default_value=None, include_in_dict_view=include_in_dict_view)  # type: ignore
         self.object_type = object_type
 
-    def deserialize(self, r_field_value: Any) -> BaseModelDTO:
+    def deserialize(self, r_field_value: Any) -> DTOT:
         """Deserialize a JSON string into a Pydantic model instance.
 
         This method is called when loading the field from storage. It uses Pydantic's
@@ -118,7 +120,7 @@ class ModelRfield(BaseRField):
 
         return self.object_type.from_json_str(r_field_value)
 
-    def serialize(self, r_field_value: BaseModelDTO) -> Any:
+    def serialize(self, r_field_value: DTOT) -> Any:
         """Serialize a Pydantic model instance to a JSON string.
 
         This method is called when saving the field to storage. It uses Pydantic's

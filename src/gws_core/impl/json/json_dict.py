@@ -19,7 +19,7 @@ from .json_view import JSONView
     style=TypingStyle.material_icon("data_object", background_color="#f6995c"),
 )
 class JSONDict(Resource):
-    data: dict = DictRField()
+    data = DictRField()
 
     def __init__(self, data: dict | None = None):
         super().__init__()

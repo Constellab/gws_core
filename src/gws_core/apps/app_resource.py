@@ -43,21 +43,21 @@ class AppResource(ResourceList):
     """
 
     # Used when a AppConfig class was provided (with @app_decorator)
-    _app_config_typing_name: str = StrRField()
+    _app_config_typing_name = StrRField()
 
     # Used when a folder path was provided
     # it contains the name of the sub resource that is a Folder containing the app code.
     # In this case, the app code is stored in the resource and cannot be modified.
-    _code_folder_sub_resource_name: str = StrRField()
+    _code_folder_sub_resource_name = StrRField()
 
-    _requires_authentification: bool = BoolRField(default_value=True)
+    _requires_authentification = BoolRField(default_value=True)
 
     # Stores the AppStopPolicy value (see set_stop_policy / get_stop_policy)
-    _stop_policy: str = StrRField(default_value=AppStopPolicy.AUTO.value)
+    _stop_policy = StrRField(default_value=AppStopPolicy.AUTO.value)
 
-    _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
+    _shell_proxy = ModelRfield(ShellProxyDTO)
 
-    _params: dict = DictRField()
+    _params = DictRField()
 
     _app_config: AppConfig | None = None
 
@@ -201,7 +201,11 @@ class AppResource(ResourceList):
         return self._app_config
 
     def _get_app_config_folder(self) -> str:
-        app_config: AppConfig = self._get_app_config()
+        app_config = self._get_app_config()
+        if not app_config:
+            raise Exception(
+                "App config is not set. Please use the set_app_config method to set the app config."
+            )
         folder = app_config.get_app_folder_path()
         self._check_folder(folder)
         return folder
@@ -258,7 +262,7 @@ class AppResource(ResourceList):
                 "The shell proxy must have a typing name, is it decorated with @typing_registrator ?"
             )
 
-        self._shell_proxy = shell_proxy.to_dto()
+        # self._shell_proxy = shell_proxy.to_dto()
 
         # Installing the virtual environemnt so when the app is run, the environment is already set up.
         shell_proxy.install_env()
@@ -349,7 +353,10 @@ class AppResource(ResourceList):
         shell_proxy.attach_observer(LoggerMessageObserver())
 
         app = self.init_app_instance(
-            shell_proxy, self.get_model_id(), self.get_name(), self._requires_authentification
+            shell_proxy,
+            self.get_and_check_model_id(),
+            self.get_name(),
+            self._requires_authentification,
         )
 
         # add the resources as input to the app

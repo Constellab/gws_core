@@ -7,12 +7,17 @@ formats.
 """
 
 from abc import abstractmethod
-from typing import Any
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from gws_core.core.utils.utils import Utils
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .r_field import BaseRField
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+SerializableT = TypeVar("SerializableT", bound="SerializableObjectJson")
 
 
 class SerializableObjectJson:
@@ -75,7 +80,7 @@ class SerializableObjectJson:
 
     @classmethod
     @abstractmethod
-    def deserialize(cls, data: dict | list | str | bool | float) -> "SerializableObjectJson":
+    def deserialize(cls, data: dict | list | str | bool | float) -> "Self":
         """Deserialize a JSON-compatible representation back to an object instance.
 
         This class method is called when the Resource is loaded from storage.
@@ -99,7 +104,7 @@ class SerializableObjectJson:
         """
 
 
-class SerializableRField(BaseRField):
+class SerializableRField(BaseRField[SerializableT], Generic[SerializableT]):
     """Resource field for storing custom objects with manual JSON serialization.
 
     SerializableRField stores instances of SerializableObjectJson subclasses, which
@@ -159,10 +164,10 @@ class SerializableRField(BaseRField):
         - The object_type must have a no-argument constructor
     """
 
-    object_type: type[SerializableObjectJson]
+    object_type: type[SerializableT]
 
     def __init__(
-        self, object_type: type[SerializableObjectJson], include_in_dict_view: bool = False
+        self, object_type: type[SerializableT], include_in_dict_view: bool = False
     ) -> None:
         """Initialize a SerializableRField for storing custom serializable objects.
 
@@ -193,7 +198,7 @@ class SerializableRField(BaseRField):
         super().__init__(default_value=object_type, include_in_dict_view=include_in_dict_view)
         self.object_type = object_type
 
-    def deserialize(self, r_field_value: Any) -> SerializableObjectJson:
+    def deserialize(self, r_field_value: Any) -> SerializableT:
         """Deserialize JSON data back to a SerializableObjectJson instance.
 
         This method is called when loading the field from storage. It delegates to

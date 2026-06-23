@@ -7,12 +7,14 @@ path is stored, and the actual data is loaded/saved via custom implementations.
 """
 
 from abc import abstractmethod
-from typing import Any, final
+from typing import Any, Generic, TypeVar, final
 
 from ...resource.r_field.r_field import BaseRField, RFieldStorage
 
+T = TypeVar("T")
 
-class FileRField(BaseRField):
+
+class FileRField(BaseRField[T], Generic[T]):
     """Abstract base class for Resource fields that persist data to files.
 
     FileRField provides a framework for RFields that store their data in files on disk.
@@ -76,7 +78,7 @@ class FileRField(BaseRField):
         )
 
     @final
-    def deserialize(self, r_field_value: str) -> Any:
+    def deserialize(self, r_field_value: str) -> T:
         """Deserialize field value by loading data from the file path.
 
         This method is marked as final and cannot be overridden. It delegates to
@@ -105,7 +107,7 @@ class FileRField(BaseRField):
         return ""
 
     @abstractmethod
-    def load_from_file(self, file_path: str) -> Any:
+    def load_from_file(self, file_path: str) -> T:
         """Load and deserialize the field value from a file.
 
         This abstract method must be implemented by subclasses to define how data
@@ -127,7 +129,7 @@ class FileRField(BaseRField):
         """
 
     @abstractmethod
-    def dump_to_file(self, r_field_value: Any, file_path: str) -> None:
+    def dump_to_file(self, r_field_value: T, file_path: str) -> None:
         """Serialize and save the field value to a file.
 
         This abstract method must be implemented by subclasses to define how data

@@ -24,7 +24,7 @@ class ScenarioResource(Resource):
     :rtype: _type_
     """
 
-    scenario_id: str = StrRField()
+    scenario_id = StrRField()
 
     _scenario: Scenario | None = None
 

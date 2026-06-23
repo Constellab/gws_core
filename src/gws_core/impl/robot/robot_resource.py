@@ -21,9 +21,9 @@ from ..text.text_view import TextView
     style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57"),
 )
 class Robot(Resource):
-    age: int = IntRField()
-    position: list[float] = ListRField()
-    weight: float = FloatRField()
+    age = IntRField()
+    position = ListRField[float]()
+    weight = FloatRField()
 
     @classmethod
     def empty(cls) -> "Robot":
@@ -48,11 +48,7 @@ class Robot(Resource):
         view_type=JSONView,
         human_name="View position",
         specs=ConfigSpecs(
-            {
-                "position": SelectParam(
-                    default_value="latitude", options=["latitude", "longitude"]
-                )
-            }
+            {"position": SelectParam(default_value="latitude", options=["latitude", "longitude"])}
         ),
     )
     def view_only_position(self, params: ConfigParams) -> JSONView:
@@ -95,7 +91,7 @@ class MegaRobot(Robot):
     "RobotFood", hide=True, style=TypingStyle.material_icon("smart_toy", background_color="#2b6d57")
 )
 class RobotFood(Resource):
-    multiplicator: int = IntRField()
+    multiplicator = IntRField()
 
     @classmethod
     def empty(cls) -> "RobotFood":

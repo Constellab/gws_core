@@ -6,7 +6,7 @@ The field automatically handles serialization and ensures data integrity through
 validation and JSON conversion.
 """
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from gws_core.core.utils.json_helper import JSONHelper
 
@@ -14,8 +14,10 @@ from ...core.classes.validator import ListValidator
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .primitive_r_field import PrimitiveRField
 
+E = TypeVar("E")
 
-class ListRField(PrimitiveRField):
+
+class ListRField(PrimitiveRField[list[E]], Generic[E]):
     """Resource field for storing JSON-like lists.
 
     ListRField stores list data with automatic JSON serialization and validation.
@@ -40,11 +42,24 @@ class ListRField(PrimitiveRField):
         - Automatically serialized to JSON on save
         - Automatically deserialized from JSON on load
 
+    Typing:
+        The element type can be specified to type the instance value precisely,
+        without a manual annotation (instance access is inferred as ``list[E]``)::
+
+            position = ListRField[float]()   # resource.position typed list[float]
+
+        A bare ``ListRField()`` infers the element type from ``default_value`` when
+        given (``ListRField(default_value=[1, 2])`` -> ``list[int]``), otherwise the
+        element type is unspecified (``list[Any]``).
+
     Example:
         ```python
         class MyResource(Resource):
             # Simple list of items
             items = ListRField()
+
+            # Typed element so resource.coords is list[float]
+            coords = ListRField[float]()
 
             # With default value
             tags = ListRField(default_value=['default', 'tags'])
@@ -67,7 +82,7 @@ class ListRField(PrimitiveRField):
     """
 
     def __init__(
-        self, default_value: list | None = None, include_in_dict_view: bool = False
+        self, default_value: list[E] | None = None, include_in_dict_view: bool = False
     ) -> None:
         """Initialize a ListRField for storing JSON-like lists.
 
@@ -119,10 +134,10 @@ class ListRField(PrimitiveRField):
 
         try:
             return JSONHelper.convert_dict_to_json(self._default_value)
-        except:
+        except Exception as e:
             raise BadRequestException(
                 "Incorrect default value for ListRField. The default value must be a json like list"
-            )
+            ) from e
 
     def serialize(self, r_field_value: Any) -> Any:
         """Serialize the list value for storage.

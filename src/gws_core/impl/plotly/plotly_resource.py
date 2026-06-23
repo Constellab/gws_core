@@ -30,7 +30,7 @@ class PlotlyResource(Resource):
     resource = PlotlyResource(figure)
     """
 
-    figure: go.Figure = PlotlyRField()
+    figure = PlotlyRField()
 
     def __init__(self, figure: go.Figure | None = None):
         super().__init__()

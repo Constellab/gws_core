@@ -4,10 +4,15 @@ PrimitiveRField module for Resource fields that store primitive values.
 This module provides RFields for storing primitive Python types (int, float, str, bool)
 with automatic validation and configurable storage backends. These are the fundamental
 building blocks for Resource data fields.
+
+The descriptor typing that infers the instance value type (``self.count`` -> ``int``)
+lives on ``BaseRField`` itself, which is generic over the stored value type. Each
+field below binds that type (e.g. ``IntRField(PrimitiveRField[int])``) so no manual
+annotation is needed. See ``BaseRField`` for the full explanation.
 """
 
 import uuid
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from ...core.classes.validator import (
     BoolValidator,
@@ -18,8 +23,10 @@ from ...core.classes.validator import (
 )
 from .r_field import BaseRField, RFieldStorage
 
+T = TypeVar("T")
 
-class PrimitiveRField(BaseRField):
+
+class PrimitiveRField(BaseRField[T], Generic[T]):
     """Base class for Resource fields storing primitive Python types.
 
     PrimitiveRField provides validation and storage for primitive values (int, float,
@@ -105,7 +112,7 @@ class PrimitiveRField(BaseRField):
         return self.validator.validate(validated_value)
 
 
-class IntRField(PrimitiveRField):
+class IntRField(PrimitiveRField[int]):
     """Resource field for storing integer values.
 
     IntRField stores integer values with automatic validation and configurable storage.
@@ -168,7 +175,7 @@ class IntRField(PrimitiveRField):
         )
 
 
-class FloatRField(PrimitiveRField):
+class FloatRField(PrimitiveRField[float]):
     """Resource field for storing floating-point values.
 
     FloatRField stores floating-point numeric values with automatic validation and
@@ -232,7 +239,7 @@ class FloatRField(PrimitiveRField):
         )
 
 
-class BoolRField(PrimitiveRField):
+class BoolRField(PrimitiveRField[bool]):
     """Resource field for storing boolean values.
 
     BoolRField stores boolean (True/False) values with automatic validation and
@@ -296,7 +303,7 @@ class BoolRField(PrimitiveRField):
         )
 
 
-class StrRField(PrimitiveRField):
+class StrRField(PrimitiveRField[str]):
     """Resource field for storing string values.
 
     StrRField stores string values with automatic validation and configurable storage.

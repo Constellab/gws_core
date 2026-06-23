@@ -7,7 +7,7 @@ from .resource_model import ResourceModel
 
 
 @final
-class ResourceRField(BaseRField):
+class ResourceRField(BaseRField[Resource]):
     """.. deprecated::
         ResourceRField is deprecated and will be removed in a future version.
         Please define a sub class of ResourceSet instead.
@@ -34,7 +34,7 @@ class ResourceRField(BaseRField):
             default_value=None, include_in_dict_view=False, storage=RFieldStorage.DATABASE
         )
 
-    def deserialize(self, r_field_value: str) -> Resource:
+    def deserialize(self, r_field_value: str) -> Resource | None:
         if r_field_value is None:
             return None
 
@@ -42,7 +42,7 @@ class ResourceRField(BaseRField):
 
         return resource_model.get_resource()
 
-    def serialize(self, r_field_value: Resource) -> str:
+    def serialize(self, r_field_value: Resource) -> str | None:
         if r_field_value is None:
             return None
         if not isinstance(r_field_value, Resource):

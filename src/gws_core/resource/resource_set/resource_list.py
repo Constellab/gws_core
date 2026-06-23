@@ -18,7 +18,7 @@ class ResourceList(ResourceListBase):
     """
 
     # list of resource ids stored
-    _resource_ids: list[str] = ListRField()
+    _resource_ids = ListRField[str]()
 
     # dict provided before the resources are saved
     _resources: list[Resource]

@@ -20,7 +20,7 @@ from gws_core.resource.view.view_result import CallViewResult
     style=TypingStyle.material_icon("note", background_color="#735f32"),
 )
 class LabNoteResource(Resource):
-    note_id: str = StrRField()
+    note_id = StrRField()
 
     _note: Note | None = None
     _content: RichText | None = None

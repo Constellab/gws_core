@@ -8,9 +8,14 @@ that can be automatically persisted and retrieved from different storage backend
 from collections.abc import Callable
 from enum import Enum
 from inspect import isclass, isfunction
-from typing import Any
+from typing import TYPE_CHECKING, Any, Generic, TypeVar, overload
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
+
+if TYPE_CHECKING:
+    from typing_extensions import Self
+
+T = TypeVar("T")
 
 
 class RFieldStorage(Enum):
@@ -55,11 +60,35 @@ class RFieldStorage(Enum):
     NONE = "none"
 
 
-class BaseRField:
+class BaseRField(Generic[T]):
     """Base class for all Resource fields with automatic persistence.
 
     BaseRField provides the foundation for defining fields on Resource objects that are
     automatically persisted and restored based on their storage configuration.
+
+    Descriptor typing
+    ------------------
+    RFields are class-level descriptors: declared on a ``Resource`` class they hold
+    the field object (used by the framework to (de)serialize the resource), but
+    accessed on an instance (``self.count``) they return the stored value. The
+    framework implements this at runtime — ``Resource.__init__`` overwrites the
+    attribute with the value via ``setattr`` — but does not declare it to type
+    checkers, so Pylance would otherwise see ``self.count`` as the field object
+    instead of its value.
+
+    ``BaseRField`` is therefore generic over ``T`` (the stored value type) and
+    declares ``__get__`` overloads (under ``TYPE_CHECKING``) that describe what the
+    framework already does at runtime — the same approach as ``TypedDbField`` for
+    peewee fields (see ``gws_core/core/model/typed_db_field.py``). Concrete fields
+    bind ``T`` so the value type is inferred automatically, with no manual
+    annotation or ``cast(...)``::
+
+        class MyResource(Resource):
+            count = IntRField()        # instance value typed int
+            data = ModelRfield(MyDTO)  # instance value typed MyDTO
+
+    The overloads have zero runtime behavior: at runtime the field is a plain class
+    attribute that ``Resource.__init__`` replaces with the stored value.
 
     When a Resource is output from a task:
         - Fields are serialized and saved to their configured storage backend
@@ -82,6 +111,21 @@ class BaseRField:
     storage: RFieldStorage
     include_in_dict_view: bool
     _default_value: Any
+
+    if TYPE_CHECKING:
+        # Typing-only descriptor protocol: class access returns the field itself
+        # (so the reflection layer can introspect it), instance access returns the
+        # stored value typed ``T``. See the class docstring. No runtime effect.
+
+        @overload
+        def __get__(self, instance: None, owner: Any) -> "Self": ...
+
+        @overload
+        def __get__(self, instance: object, owner: Any) -> T: ...
+
+        def __get__(self, instance: object | None, owner: Any) -> Any: ...
+
+        def __set__(self, instance: object, value: T) -> None: ...
 
     def __init__(
         self,
@@ -198,7 +242,7 @@ class BaseRField:
         return self._default_value
 
 
-class RField(BaseRField):
+class RField(BaseRField[Any]):
     """Resource field with custom serialization/deserialization support.
 
     RField extends BaseRField to provide custom serialization and deserialization logic.

@@ -18,7 +18,7 @@ from gws_core.resource.view.view_decorator import view
     style=TypingStyle.material_icon("note_template", background_color="#735f32"),
 )
 class NoteTemplateResource(Resource):
-    note_template_id: str = StrRField()
+    note_template_id = StrRField()
 
     _note_template: NoteTemplate | None = None
     _content: RichText | None = None

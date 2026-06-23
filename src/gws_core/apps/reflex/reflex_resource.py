@@ -43,8 +43,8 @@ class ReflexResource(AppResource):
     :type AppResource: _type_
     """
 
-    _front_build_sub_resource_uid: str = StrRField()
-    _is_enterprise_app: bool = BoolRField(default_value=False)
+    _front_build_sub_resource_uid = StrRField()
+    _is_enterprise_app = BoolRField(default_value=False)
 
     def set_app_config(self, app_config):
         super().set_app_config(app_config)

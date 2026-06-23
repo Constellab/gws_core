@@ -23,7 +23,7 @@ class SpaceFolderResource(Resource):
     :rtype: _type_
     """
 
-    space_folder_id: str = StrRField()
+    space_folder_id = StrRField()
 
     _space_folder: SpaceFolder | None = None
 

@@ -18,7 +18,7 @@ from .text_view import TextView
 )
 class Text(Resource):
     DEFAULT_FILE_FORMAT = "txt"
-    _data: str = StrRField(storage=RFieldStorage.KV_STORE)
+    _data = StrRField(storage=RFieldStorage.KV_STORE)
 
     def __init__(self, data: str | None = None):
         super().__init__()

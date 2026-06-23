@@ -168,18 +168,6 @@ def search_apps(
     return ResourceService.search_apps(search_dict, page, number_of_items_per_page).to_dto()
 
 
-# TODO TO REMOVE
-@core_app.get("/resource/count/count", tags=["Resource"], summary="Count resources")
-def count_resources(
-    _=Depends(AuthorizationService.check_user_access_token_or_app),
-) -> dict:
-    """
-    Advanced search on resources
-    """
-
-    return {"count": ResourceModel.select().count()}
-
-
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")
 def update_name(
     id_: str, name: str, _=Depends(AuthorizationService.check_user_access_token)

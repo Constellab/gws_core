@@ -36,9 +36,9 @@ class StreamlitResource(AppResource):
     """
 
     # Used when a folder path was provided
-    _streamlit_sub_resource_folder_name: str = StrRField()
+    _streamlit_sub_resource_folder_name = StrRField()
     # Used when code is passed as a string
-    _streamlit_app_code: str = StrRField()
+    _streamlit_app_code = StrRField()
 
     def get_main_app_file_name(self):
         """

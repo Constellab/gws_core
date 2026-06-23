@@ -6,7 +6,7 @@ The field automatically handles serialization and ensures data integrity through
 validation and JSON conversion.
 """
 
-from typing import Any
+from typing import Any, Generic, TypeVar
 
 from gws_core.core.classes.validator import DictValidator
 from gws_core.core.utils.json_helper import JSONHelper
@@ -14,8 +14,11 @@ from gws_core.core.utils.json_helper import JSONHelper
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .primitive_r_field import PrimitiveRField
 
+K = TypeVar("K")
+V = TypeVar("V")
 
-class DictRField(PrimitiveRField):
+
+class DictRField(PrimitiveRField[dict[K, V]], Generic[K, V]):
     """Resource field for storing JSON-like dictionaries.
 
     DictRField stores dictionary data with automatic JSON serialization and validation.
@@ -40,11 +43,23 @@ class DictRField(PrimitiveRField):
         - Automatically serialized to JSON on save
         - Automatically deserialized from JSON on load
 
+    Typing:
+        The key/value types can be specified to type the instance value precisely,
+        without a manual annotation (instance access is inferred as ``dict[K, V]``)::
+
+            ids = DictRField[str, str]()   # resource.ids typed dict[str, str]
+
+        A bare ``DictRField()`` infers from ``default_value`` when given, otherwise
+        the key/value types are unspecified (``dict[Any, Any]``).
+
     Example:
         ```python
         class MyResource(Resource):
             # Simple metadata dictionary
             metadata = DictRField()
+
+            # Typed mapping so resource.ids is dict[str, str]
+            ids = DictRField[str, str]()
 
             # With default value
             config = DictRField(default_value={'key': 'value'})
@@ -65,7 +80,7 @@ class DictRField(PrimitiveRField):
     """
 
     def __init__(
-        self, default_value: dict | None = None, include_in_dict_view: bool = False
+        self, default_value: dict[K, V] | None = None, include_in_dict_view: bool = False
     ) -> None:
         """Initialize a DictRField for storing JSON-like dictionaries.
 

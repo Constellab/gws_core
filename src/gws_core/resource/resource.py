@@ -31,9 +31,9 @@ ResourceType = TypeVar("ResourceType", bound="Resource")
     unique_name="Resource", object_type="RESOURCE", style=TypingStyle.default_resource()
 )
 class Resource(BaseTyping):
-    uid: str = UUIDRField(storage=RFieldStorage.DATABASE)
+    uid = UUIDRField(storage=RFieldStorage.DATABASE)
     name: str | None
-    technical_info = cast(TechnicalInfoDict, SerializableRField(TechnicalInfoDict))
+    technical_info = SerializableRField(TechnicalInfoDict)
 
     # set this during the run of a task to apply a dynamic style to the resource
     # This overrides the style set byt the resource_decorator
@@ -258,6 +258,22 @@ class Resource(BaseTyping):
         :rtype: str
         """
         return self.__model_id__
+
+    @final
+    def get_and_check_model_id(self) -> str:
+        """Get the id of the resource model in the database.
+        It is provided by the system for input resources of a task.
+        If the model id is None, it raises an exception.
+
+        :return: model id
+        :rtype: str
+        """
+        model_id = self.get_model_id()
+        if not model_id:
+            raise Exception(
+                f"The resource {self.full_classname()} has no model id. This can happen if the resource is not saved or if it is a new resource. Please check that the resource is saved before using it."
+            )
+        return model_id
 
     ############################################### CLASS METHODS ####################################################
 

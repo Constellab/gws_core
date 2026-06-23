@@ -14,7 +14,7 @@ class ResourceSet(ResourceListBase):
     """
 
     # dict where key is the initial name of the resource and value is the resource model id
-    _resource_ids: dict[str, str] = DictRField()
+    _resource_ids = DictRField[str, str]()
 
     # dict provided before the resources are saved
     _resources: dict[str, Resource] | None = None

@@ -51,8 +51,8 @@ from gws_core.tag.tag_service import TagService
     style=TypingStyle.material_icon("sticky_note_2", background_color="#f6f193"),
 )
 class NoteResource(ResourceSet):
-    title: str = StrRField()
-    _rich_text: RichText = SerializableRField(RichText)
+    title = StrRField()
+    _rich_text = SerializableRField(RichText)
 
     def __init__(self, title: str | None = None):
         super().__init__()

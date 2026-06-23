@@ -6,7 +6,7 @@ import plotly.graph_objs as go
 from gws_core.resource.r_field.r_field import BaseRField
 
 
-class PlotlyRField(BaseRField):
+class PlotlyRField(BaseRField[go.Figure]):
     """R field to serialize and deserialize plotly figures"""
 
     def __init__(self):
