@@ -327,7 +327,7 @@ class AppProcess:
             return AppInstanceUrl(host_url=host_url)
 
         # Normal mode handling
-        params = {"gws_token": self._token, "gws_app_id": self._app.resource_model_id}
+        params = {"gws_token": self.get_token()}
 
         user: User | None = None
         if self._app.requires_authentication:
