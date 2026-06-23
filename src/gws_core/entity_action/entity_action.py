@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from enum import Enum
 
+from gws_core.config.config_specs import ConfigSpecs
 from gws_core.entity_action.entity_action_dto import (
     EntityActionButtonDTO,
     EntityActionColor,
@@ -38,6 +39,7 @@ class EntityAction:
     action_name: str | None
     disabled: bool
     children: list[EntityAction] | None
+    config_specs: ConfigSpecs | None
 
     # link only
     link_url: str | None
@@ -46,6 +48,7 @@ class EntityAction:
                  divider: bool = False, color: EntityActionColor | None = None,
                  action_name: str | None = None, disabled: bool = False,
                  children: list[EntityAction] | None = None,
+                 config_specs: ConfigSpecs | None = None,
                  link_url: str | None = None) -> None:
         """Build an entity action. Prefer the :meth:`button` / :meth:`link`
         classmethod helpers over calling this directly.
@@ -67,6 +70,10 @@ class EntityAction:
         :type disabled: bool
         :param children: button only - optional nested sub-menu actions.
         :type children: list[EntityAction] | None
+        :param config_specs: button only - optional config specs. When set, the
+            front renders a form from them on click and POSTs the collected
+            values as the body of the execute request.
+        :type config_specs: ConfigSpecs | None
         :param link_url: link only - the internal route the link points to.
         :type link_url: str | None
         """
@@ -78,13 +85,15 @@ class EntityAction:
         self.action_name = action_name
         self.disabled = disabled
         self.children = children
+        self.config_specs = config_specs
         self.link_url = link_url
 
     @classmethod
     def button(cls, action_name: str, text: str, icon: str | None = None,
                divider: bool = False, disabled: bool = False,
                color: EntityActionColor | None = None,
-               children: list[EntityAction] | None = None) -> EntityAction:
+               children: list[EntityAction] | None = None,
+               config_specs: ConfigSpecs | None = None) -> EntityAction:
         """Build a button action. Clicking it calls back the owning plugin.
 
         :param action_name: short, plugin-local action name. It is namespaced
@@ -104,12 +113,17 @@ class EntityAction:
         :type color: EntityActionColor | None
         :param children: optional nested actions rendered as a sub-menu.
         :type children: list[EntityAction] | None
+        :param config_specs: optional config specs. When set, the front renders
+            a form from them on click and POSTs the collected values as the body
+            of the execute request; the plugin receives them in ``config_params``.
+        :type config_specs: ConfigSpecs | None
         :return: the built button action.
         :rtype: EntityAction
         """
         return cls(kind=EntityActionKind.BUTTON, text=text, icon=icon,
                    divider=divider, color=color, action_name=action_name,
-                   disabled=disabled, children=children)
+                   disabled=disabled, children=children,
+                   config_specs=config_specs)
 
     @classmethod
     def link(cls, text: str, link_url: str, icon: str | None = None,
@@ -168,6 +182,9 @@ class EntityAction:
                 disabled=self.disabled,
                 color=self.color,
                 children=children,
+                config_specs=(
+                    self.config_specs.to_dto() if self.config_specs else None
+                ),
             )
         if self.kind == EntityActionKind.LINK:
             if not self.link_url:

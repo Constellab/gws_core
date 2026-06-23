@@ -1,3 +1,4 @@
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -66,13 +67,18 @@ class EntityActionService:
 
     @classmethod
     def execute_entity_action(
-        cls, entity_type: EntityActionType, entity_id: str, action_name: str
+        cls, entity_type: EntityActionType, entity_id: str, action_name: str,
+        config_params: ConfigParamsDict | None = None
     ) -> EntityActionResultDTO:
         """Dispatch an action to the plugin that owns it.
 
         ``action_name`` is namespaced as ``<plugin_id>.<local_name>`` where
         ``plugin_id`` is ``<brick_name>.<plugin_name>``. The local action name
         contains no dot, so the plugin id is everything before the last dot.
+
+        ``config_params`` is the raw dict of form values posted by the front. It
+        is passed straight through to the plugin **without validation** (and
+        normalized from ``None`` to ``{}``); the plugin owns any validation.
         """
         plugin_id, separator, local_name = action_name.rpartition(".")
         if not separator or not plugin_id or not local_name:
@@ -89,7 +95,7 @@ class EntityActionService:
             )
 
         entity = cls._get_entity(entity_type, entity_id)
-        return plugin.execute_action(entity, local_name)
+        return plugin.execute_action(entity, local_name, config_params or {})
 
     @classmethod
     def _get_entity(cls, entity_type: EntityActionType, entity_id: str) -> Model:

@@ -1,5 +1,9 @@
 
 from gws_core import BaseTestCase
+from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.config_specs import ConfigSpecs
+from gws_core.config.param.param_spec import IntParam
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -30,14 +34,24 @@ class _DummyResourcePlugin(EntityActionPlugin):
     __plugin_id__ = _DUMMY_PLUGIN_ID
 
     def get_actions(self, entity: Model) -> list[EntityAction]:
-        return [EntityAction.button(action_name="do_something", text="Do something",
-                                    icon="bolt")]
+        return [
+            # a plain button with no form
+            EntityAction.button(action_name="do_something", text="Do something",
+                                icon="bolt"),
+            # a button that declares a config form
+            EntityAction.button(action_name="act", text="Act",
+                                config_specs=ConfigSpecs({"threshold": IntParam()})),
+        ]
 
-    def execute_action(self, entity: Model, action_name: str) -> EntityActionResultDTO:
-        if action_name != "do_something":
-            raise Exception(f"Unknown action '{action_name}'")
-        return EntityActionResultDTO(navigate_to="/somewhere",
-                                     navigate_query_params={"id": entity.id})
+    def execute_action(self, entity: Model, action_name: str,
+                       config_params: ConfigParamsDict) -> EntityActionResultDTO:
+        if action_name == "do_something":
+            return EntityActionResultDTO(navigate_to="/somewhere",
+                                         navigate_query_params={"id": entity.id})
+        if action_name == "act":
+            # echo the received raw params back so the test can assert on them
+            return EntityActionResultDTO(message=str(config_params))
+        raise Exception(f"Unknown action '{action_name}'")
 
 
 # test_entity_action
@@ -70,14 +84,24 @@ class TestEntityAction(BaseTestCase):
             Robot.empty(), origin=ResourceOrigin.UPLOADED
         )
 
-        # the dummy plugin returns one action for resources
+        # the dummy plugin returns two actions for resources
         actions = EntityActionService.get_entity_actions(
             EntityActionType.RESOURCE, resource_model.id
         )
-        self.assertEqual(len(actions), 1)
+        self.assertEqual(len(actions), 2)
         self.assertIsInstance(actions[0], EntityActionButtonDTO)
         self.assertEqual(actions[0].action_name,
                          f"{_DUMMY_PLUGIN_ID}.do_something")
+
+        # the plain button has no form
+        self.assertIsNone(actions[0].config_specs)
+
+        # the second button carries the serialized config specs for the front
+        button_with_form = actions[1]
+        self.assertEqual(button_with_form.action_name, f"{_DUMMY_PLUGIN_ID}.act")
+        self.assertIsNotNone(button_with_form.config_specs)
+        self.assertIn("threshold", button_with_form.config_specs)
+        self.assertIsInstance(button_with_form.config_specs["threshold"], ParamSpecDTO)
 
         # no plugin registered for notes -> empty menu (type isolation)
         note = Note()
@@ -112,6 +136,25 @@ class TestEntityAction(BaseTestCase):
             EntityActionService.execute_entity_action(
                 EntityActionType.RESOURCE, resource_model.id, "no_namespace"
             )
+
+    def test_execute_action_with_config_params(self):
+        resource_model = ResourceModel.save_from_resource(
+            Robot.empty(), origin=ResourceOrigin.UPLOADED
+        )
+
+        # values posted in the body are passed through raw to the plugin
+        result = EntityActionService.execute_entity_action(
+            EntityActionType.RESOURCE, resource_model.id,
+            f"{_DUMMY_PLUGIN_ID}.act", {"threshold": 5}
+        )
+        self.assertEqual(result.message, str({"threshold": 5}))
+
+        # no body -> plugin receives an empty dict (None normalized to {})
+        result_no_body = EntityActionService.execute_entity_action(
+            EntityActionType.RESOURCE, resource_model.id,
+            f"{_DUMMY_PLUGIN_ID}.act"
+        )
+        self.assertEqual(result_no_body.message, str({}))
 
     def test_duplicate_registration_raises(self):
         # registering a second plugin with the same plugin_id must raise,

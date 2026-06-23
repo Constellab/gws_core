@@ -1,5 +1,6 @@
 from abc import abstractmethod
 
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.model.model import Model
 from gws_core.entity_action.entity_action import EntityAction
 from gws_core.entity_action.entity_action_dto import EntityActionResultDTO
@@ -45,10 +46,17 @@ class EntityActionPlugin:
         """
 
     @abstractmethod
-    def execute_action(self, entity: Model, action_name: str) -> EntityActionResultDTO:
+    def execute_action(self, entity: Model, action_name: str,
+                       config_params: ConfigParamsDict) -> EntityActionResultDTO:
         """Run the action identified by ``action_name``.
 
         ``action_name`` is the short, un-namespaced name (the dispatch endpoint
         strips the plugin namespace before calling this). May return a
         navigation instruction in the result.
+
+        ``config_params`` is the raw, **unvalidated** dict of form values posted
+        by the front (empty ``{}`` for buttons declared without ``config_specs``).
+        The service does not validate it against the button's specs: the plugin
+        owns any validation, e.g. by calling
+        ``self.SPECS.get_and_check_values(config_params)`` itself.
         """

@@ -1,5 +1,6 @@
 from typing import Literal
 
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 
 # Matches the Angular ThemePalette used by the front dynamic menu.
@@ -21,6 +22,11 @@ class EntityActionButtonDTO(BaseModelDTO):
     disabled: bool = False
     color: EntityActionColor | None = None
     children: list["EntityActionMenuDTO"] | None = None
+    # When set, the front renders a form from these specs on click and POSTs the
+    # collected values as the body of the execute request. Null/absent means the
+    # button has no form (click POSTs immediately). Same shape as the credentials
+    # form (produced by ConfigSpecs.to_dto()).
+    config_specs: dict[str, ParamSpecDTO] | None = None
 
 
 class EntityActionLinkDTO(BaseModelDTO):

@@ -52,8 +52,7 @@ class AppStopPolicyActionPlugin(EntityActionPlugin):
             )
         ]
 
-    def execute_action(self, entity: ResourceModel,
-                       action_name: str) -> EntityActionResultDTO:
+    def execute_action(self, entity: ResourceModel, action_name: str) -> EntityActionResultDTO:
         if action_name == self.DISABLE_AUTO_STOP:
             stop_policy = AppStopPolicy.MANUAL
             message = "Auto-stop disabled, the app will stay running."

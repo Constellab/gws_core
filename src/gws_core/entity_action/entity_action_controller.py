@@ -1,5 +1,6 @@
-from fastapi import Depends
+from fastapi import Body, Depends
 
+from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core_controller import core_app
 from gws_core.entity_action.entity_action_dto import (
     EntityActionMenuDTO,
@@ -33,7 +34,15 @@ def execute_entity_action(
     entity_type: EntityActionType,
     entity_id: str,
     action_name: str,
+    config_params: ConfigParamsDict | None = Body(default=None),
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> EntityActionResultDTO:
-    """Execute the named action; the action is dispatched to its owning plugin."""
-    return EntityActionService.execute_entity_action(entity_type, entity_id, action_name)
+    """Execute the named action; the action is dispatched to its owning plugin.
+
+    ``config_params`` is the optional dict of form values collected by the front
+    when the button declared ``config_specs``. It is absent/null for buttons with
+    no form and passed through to the plugin without validation.
+    """
+    return EntityActionService.execute_entity_action(
+        entity_type, entity_id, action_name, config_params
+    )
