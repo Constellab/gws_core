@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.model.typed_db_field import TypedCharField
 
 
 class NavigableEntityType(Enum):
@@ -38,7 +39,7 @@ class NavigableEntityType(Enum):
             human_name += "s"
         return human_name
 
-    def convert_to_tag_entity_type(self) -> "TagEntityType":
+    def convert_to_tag_entity_type(self):
         from gws_core.tag.tag_entity_type import TagEntityType
 
         if self == NavigableEntityType.SCENARIO:
@@ -60,7 +61,7 @@ class NavigableEntityType(Enum):
 
 
 class NavigableEntity:
-    id: str
+    id: TypedCharField
 
     @abstractmethod
     def get_navigable_entity_type(self) -> NavigableEntityType:

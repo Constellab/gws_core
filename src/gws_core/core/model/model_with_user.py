@@ -1,6 +1,5 @@
-
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-from gws_core.core.model.typed_db_field import NullableForeignKeyField
+from gws_core.core.model.typed_db_field import TypedForeignKeyField
 
 from ...user.current_user_service import CurrentUserService
 from ...user.user import User
@@ -17,8 +16,8 @@ class ModelWithUser(Model):
     """
 
     # set null=True because otherwise the attribute can't be None, peewee prevents it
-    created_by = NullableForeignKeyField(User, backref="+")
-    last_modified_by = NullableForeignKeyField(User, backref="+")
+    created_by = TypedForeignKeyField(User, backref="+")
+    last_modified_by = TypedForeignKeyField(User, backref="+")
 
     def _before_insert(self) -> None:
         super()._before_insert()

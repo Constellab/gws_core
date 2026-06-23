@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, TypeVar, cast, final, overload
 
 from peewee import Expression, ModelDelete, ModelSelect
 
@@ -52,6 +52,8 @@ from ..resource.resource import Resource
 from .r_field.r_field import BaseRField, RFieldStorage
 from .resource_factory import ResourceFactory
 
+ResourceType = TypeVar("ResourceType", bound="Resource")
+
 if TYPE_CHECKING:
     from ..scenario.scenario import Scenario
     from ..task.task_model import TaskModel
@@ -63,7 +65,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
     """
 
     # typing name of the resource
-    resource_typing_name = TypedCharField()
+    resource_typing_name: TypedCharField = TypedCharField()
 
     # Path to the kv store if the kv exists for this resource model
     kv_store_path = NullableCharField()
@@ -80,9 +82,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     name = TypedCharField()
 
-    fs_node_model = NullableForeignKeyField(
-        FSNodeModel, index=True, backref="+"
-    )
+    fs_node_model = NullableForeignKeyField(FSNodeModel, index=True, backref="+")
 
     # true when the resource is UPLOADED or is a scenario output
     flagged = TypedBooleanField(default=False)
@@ -288,11 +288,28 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     ########################################## RESOURCE ######################################
 
+    @overload
+    def get_resource(self, new_instance: bool = False) -> Resource: ...
+
+    @overload
+    def get_resource(
+        self, new_instance: bool = False, *, resource_type: type[ResourceType]
+    ) -> ResourceType: ...
+
     @final
-    def get_resource(self, new_instance: bool = False) -> Resource:
+    def get_resource(
+        self, new_instance: bool = False, *, resource_type: type[ResourceType] | None = None
+    ) -> Resource | ResourceType:
         """
         Returns the resource created from the data and resource_typing_name
         if new_instance, it forces to rebuild the resource
+
+        :param new_instance: if True, forces to rebuild the resource
+        :type new_instance: bool
+        :param resource_type: if provided, check that the resource is of this type and return it as this type
+        :type resource_type: type[Resource] | None
+        :return: the resource
+        :rtype: Resource
         """
         if self.content_is_deleted:
             if self.origin == ResourceOrigin.IMPORTED_FROM_LAB:
@@ -309,12 +326,18 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
                 )
 
         if new_instance:
-            return self._instantiate_resource()
+            resource = self._instantiate_resource()
+        else:
+            if self._resource is None:
+                self._resource = self._instantiate_resource()
+            resource = self._resource
 
-        if self._resource is None:
-            self._resource = self._instantiate_resource()
+        if resource_type is not None and not isinstance(resource, resource_type):
+            raise Exception(
+                f"The resource '{self.name}' is of type '{type(resource).__name__}', expected '{resource_type.__name__}'"
+            )
 
-        return self._resource
+        return resource
 
     def _instantiate_resource(self) -> Resource:
         """
@@ -456,7 +479,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             new_node_name = FileHelper.get_node_name(new_node_path)
 
             # Verify if a node with same path already exists
-            existing_node: FSNodeModel = FSNodeModel.find_by_path(new_node_path)
+            existing_node = FSNodeModel.find_by_path(new_node_path)
             # if the path exist in DB but not in the file store, it means that the file was manually deleted
             # so we consider it as deleted
             if existing_node is not None and not local_file_store.node_name_exists(new_node_name):
@@ -694,7 +717,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             is_downloadable = self.is_downloadable()
             type_status = resource_typing.get_type_status()
 
-            resource_type: type = resource_typing.get_type()
+            resource_type = resource_typing.get_type()
 
             # check if the resource has children resources
             if resource_type is not None and Utils.issubclass(resource_type, ResourceListBase):
@@ -744,8 +767,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
 
     def get_technical_info(self) -> TechnicalInfoDict:
         kv_store = self.get_kv_store()
-        if "technical_info" in kv_store:
-            return TechnicalInfoDict.deserialize(kv_store.get("technical_info"))
+        if kv_store and "technical_info" in kv_store:
+            return TechnicalInfoDict.deserialize(cast(Any, kv_store.get("technical_info")))
         return TechnicalInfoDict()
 
     def is_downloadable(self) -> bool:

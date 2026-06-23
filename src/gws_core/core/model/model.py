@@ -46,7 +46,6 @@ class Model(BaseModel, PeeweeModel):
         # We must use the __no_default__ because peewee does'nt always set the id directly in the __init__ (like when there are joins)
         if self.id is None and "__no_default__" not in kwargs:
             self.id = str(uuid.uuid4())
-            # self.id = str(uuid.uuid4())
             self._is_saved = False
         else:
             self._is_saved = True
