@@ -151,8 +151,10 @@ class StreamlitMainStateBase(ABC):
         if st.session_state.get("__gws_app_config__"):
             return st.session_state["__gws_app_config__"]
 
-        # Check token in non-dev mode
-        if not cls.is_dev_mode():
+        # Check token in non-dev mode. Only AUTHENTICATED apps require the token: their
+        # URL always carries it. PUBLIC apps have a bare, shareable URL (no token), so a
+        # missing token must not block loading there.
+        if not cls.is_dev_mode() and cls.authentication_is_required():
             url_token = st.query_params.get("gws_token")
             env_token = os.environ.get("GWS_APP_TOKEN")
             if url_token != env_token:
@@ -179,9 +181,21 @@ class StreamlitMainStateBase(ABC):
 
     @classmethod
     def _check_authentication(cls, config: StreamlitAppConfig):
-        """Validate token and authenticate user."""
+        """Validate token and authenticate user.
+
+        AUTHENTICATED apps hard-require a valid user access token (blocking on failure).
+        PUBLIC apps run anonymously: a missing or invalid token leaves no user
+        authenticated instead of blocking.
+        """
         if st.session_state.get("__gws_user_id__"):
             return  # Already authenticated
+
+        authentication_required = cls.authentication_is_required()
+
+        # A PUBLIC app never authenticates a user, even in dev mode, so it simulates a
+        # public prod app.
+        if not authentication_required:
+            return  # anonymous access
 
         user_access_tokens = config.get("user_access_tokens", {})
         user_access_token: str | None = None
@@ -192,13 +206,18 @@ class StreamlitMainStateBase(ABC):
             user_access_token = st.query_params.get("gws_user_access_token")
 
         if not user_access_token:
-            st.error("User access token not provided")
-            st.stop()
+            if authentication_required:
+                st.error("User access token not provided")
+                st.stop()
+            return  # anonymous access
+
         user_id = user_access_tokens.get(user_access_token)
 
         if not user_id:
-            st.error("Invalid user access token")
-            st.stop()
+            if authentication_required:
+                st.error("Invalid user access token")
+                st.stop()
+            return  # anonymous access
 
         st.session_state["__gws_user_access_token__"] = user_access_token
         st.session_state["__gws_user_id__"] = user_id
@@ -255,23 +274,33 @@ class StreamlitMainStateBase(ABC):
         return os.environ.get("GWS_IS_DEV_MODE", "false").lower() == "true"
 
     @classmethod
-    def authentication_is_required(cls) -> bool:
-        return os.environ.get("GWS_REQUIRES_AUTHENTICATION", "true").lower() == "true"
+    def get_access_mode(cls) -> str:
+        """Return the app access mode (AUTHENTICATED / PUBLIC).
+
+        Read as a plain string from the GWS_APP_ACCESS_MODE env var so gws_streamlit_base
+        stays free of any gws_core import (it may run in a virtual env without gws_core).
+        Defaults to AUTHENTICATED.
+        """
+        return os.environ.get("GWS_APP_ACCESS_MODE", "AUTHENTICATED")
 
     @classmethod
-    def get_user_access_token(cls) -> str:
+    def authentication_is_required(cls) -> bool:
+        return cls.get_access_mode() == "AUTHENTICATED"
+
+    @classmethod
+    def get_user_access_token(cls) -> str | None:
         """Return the user access token
 
         :return: the user access token
-        :rtype: str
+        :rtype: str | None
         """
-        return cast(str, st.session_state.get("__gws_user_access_token__"))
+        return cast("str | None", st.session_state.get("__gws_user_access_token__"))
 
     @classmethod
-    def get_current_user_id(cls) -> str:
-        """Return the current connected user id.
+    def get_current_user_id(cls) -> str | None:
+        """Return the current connected user id, or None for an anonymous app.
 
         :return: the current connected user id
         :rtype: str | None
         """
-        return cast(str, st.session_state.get("__gws_user_id__"))
+        return cast("str | None", st.session_state.get("__gws_user_id__"))

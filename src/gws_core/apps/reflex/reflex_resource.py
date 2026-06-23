@@ -1,5 +1,6 @@
 from typing import cast
 
+from gws_core.apps.app_dto import AppAccessMode
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_resource import AppResource
 from gws_core.apps.reflex.reflex_app import ReflexApp
@@ -121,9 +122,9 @@ class ReflexResource(AppResource):
         shell_proxy: ShellProxy,
         resource_model_id: str,
         app_name: str,
-        requires_authentification: bool = True,
+        access_mode: AppAccessMode = AppAccessMode.AUTHENTICATED,
     ) -> AppInstance:
-        reflex_app = ReflexApp(resource_model_id, app_name, shell_proxy, requires_authentification)
+        reflex_app = ReflexApp(resource_model_id, app_name, shell_proxy, access_mode)
 
         if self.is_enterprise_app():
             reflex_app.set_is_enterprise(True)

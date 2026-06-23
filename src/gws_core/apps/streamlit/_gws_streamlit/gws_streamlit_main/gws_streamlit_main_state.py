@@ -49,11 +49,14 @@ class StreamlitMainState(StreamlitMainStateBase):
                 auth_context_loader=StreamlitAuthContextLoader(),
             )
 
-        # Authenticate user in GWS system
+        # Authenticate user in GWS system. PUBLIC apps may run anonymously (no user id) —
+        # in that case no auth context is set and the app runs without an authenticated user.
         user_id = cls.get_current_user_id()
-        user = UserService.get_by_id_or_none(user_id)
+        user = UserService.get_by_id_or_none(user_id) if user_id else None
         if not user:
-            raise Exception("User not authenticated, cannot find the user from the id")
+            if cls.authentication_is_required():
+                raise Exception("User not authenticated, cannot find the user from the id")
+            return
 
         auth_context = AuthContextApp(app_id=cls.get_app_id(), user=user)
         CurrentUserService.set_auth_context(auth_context)

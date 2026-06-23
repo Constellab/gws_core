@@ -19,6 +19,19 @@ class AppStopPolicy(Enum):
     MANUAL = "MANUAL"
 
 
+class AppAccessMode(Enum):
+    """Defines who can access an app and what identity its backend calls run as.
+
+    - AUTHENTICATED: only the user that launched the app can open it (a token is added to
+      the URL). Backend API calls run as that real user. This is the default.
+    - PUBLIC: anyone with the link can open the app (the URL is bare, no token). The app
+      runs anonymously: no user is authenticated and backend calls carry no user identity.
+    """
+
+    AUTHENTICATED = "AUTHENTICATED"
+    PUBLIC = "PUBLIC"
+
+
 class AppInstanceUrl(BaseModelDTO):
     host_url: str
 

@@ -4,6 +4,7 @@ from typing import Literal
 
 import typer
 from gws_core import (
+    AppAccessMode,
     AppsManager,
     BaseEnvShell,
     CondaShellProxy,
@@ -153,6 +154,20 @@ class AppCli:
 
         # load the parameters
         app_.set_params(self._config.params)
+
+        # apply the access mode (AUTHENTICATED simulates the system/dev user, PUBLIC
+        # simulates a public prod app with no authentication)
+        try:
+            access_mode = AppAccessMode(self._config.access_mode)
+        except ValueError:
+            supported = [mode.value for mode in AppAccessMode]
+            typer.echo(
+                f"Invalid 'access_mode' '{self._config.access_mode}' in config file "
+                f"'{self.config_file_path}', supported values {supported}.",
+                err=True,
+            )
+            raise typer.Abort() from None
+        app_.set_access_mode(access_mode)
 
         dev_user_email = self._config.dev_user_email
         if dev_user_email:

@@ -315,6 +315,12 @@ class AppProcess:
         """
         host_url = self.get_host_url()
 
+        # PUBLIC mode: the URL is bare and shareable. No token and no user access token
+        # are added, and no user is authenticated (the app runs anonymously). This is true
+        # in dev mode too, so a dev app can simulate a public prod app.
+        if not self._app.token_in_url():
+            return AppInstanceUrl(host_url=host_url)
+
         if self._app.is_dev_mode():
             # Dev mode handling
             if self._app._dev_user_id:
@@ -326,18 +332,14 @@ class AppProcess:
                 self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
             return AppInstanceUrl(host_url=host_url)
 
-        # Normal mode handling
+        # AUTHENTICATED: the launching user is authenticated and the token + user access
+        # token are added to the URL.
         params = {"gws_token": self.get_token()}
 
-        user: User | None = None
-        if self._app.requires_authentication:
-            user = CurrentUserService.get_current_user()
-        else:
-            user = User.get_and_check_sysuser()
-
+        user = CurrentUserService.get_current_user()
         if not user:
             raise UnauthorizedException(
-                f"The user could not be be authenticated with requires_authentication : {self._app.requires_authentication}"
+                f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
         user_access_token = self._add_user(user.id)
@@ -357,7 +359,7 @@ class AppProcess:
             "GWS_APP_CONFIG_FILE_PATH": self._get_app_config_path(),
             "GWS_IS_TEST_ENV": str(Settings.get_instance().is_test),
             "GWS_IS_DEV_MODE": str(self._app.is_dev_mode()),
-            "GWS_REQUIRES_AUTHENTICATION": str(self._app.requires_authentication),
+            "GWS_APP_ACCESS_MODE": self._app.access_mode.value,
             # Propagate the parent process's log level so the spawned app backend
             # re-inits its gws Logger at the same level (e.g. DEBUG from the CLI's
             # --log-level), instead of always defaulting to INFO.

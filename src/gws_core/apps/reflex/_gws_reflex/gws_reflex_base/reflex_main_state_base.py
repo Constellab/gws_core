@@ -196,6 +196,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
         return app_id
 
     async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
+        # A PUBLIC app never authenticates a user, even in dev mode, so it simulates a
+        # public prod app.
+        if not self.requires_authentication():
+            return None
+
         if not self.is_dev_mode():
             query_params = self.get_query_params()
 
@@ -241,9 +246,18 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
     ##################### AUTHENTICATION #####################
 
+    def get_access_mode(self) -> str:
+        """Return the app access mode (AUTHENTICATED / PUBLIC).
+
+        Read as a plain string from the GWS_APP_ACCESS_MODE env var so gws_reflex_base
+        stays free of any gws_core import (it runs in virtual env apps without gws_core).
+        Defaults to AUTHENTICATED.
+        """
+        return os.environ.get("GWS_APP_ACCESS_MODE", "AUTHENTICATED")
+
     def requires_authentication(self) -> bool:
-        """Check if the app requires authentication."""
-        return os.environ.get("GWS_REQUIRES_AUTHENTICATION", "true").lower() == "true"
+        """Check if the app requires authentication (AUTHENTICATED access mode)."""
+        return self.get_access_mode() == "AUTHENTICATED"
 
     async def check_authentication(self) -> bool:
         """Check if the current user is authenticated.

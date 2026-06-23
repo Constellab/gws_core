@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Any
 
 from gws_core.apps.app_config import AppConfig
-from gws_core.apps.app_dto import AppStopPolicy
+from gws_core.apps.app_dto import AppAccessMode, AppStopPolicy
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.app_view import AppView
@@ -55,6 +55,8 @@ class AppResource(ResourceList):
     # In this case, the app code is stored in the resource and cannot be modified.
     _code_folder_sub_resource_name = StrRField()
 
+    # Whether the app requires authentication. This is the persisted source of truth for
+    # the access mode (see get_access_mode / set_access_mode).
     _requires_authentification = BoolRField(default_value=True)
 
     # Stores the AppStopPolicy value (see set_stop_policy / get_stop_policy)
@@ -65,7 +67,7 @@ class AppResource(ResourceList):
     # ResourceModel.data column (DATABASE storage) so uniqueness can be checked DB-wide.
     _custom_subdomain = StrRField(storage=RFieldStorage.DATABASE)
 
-    _shell_proxy: ShellProxyDTO = ModelRfield(ShellProxyDTO)
+    _shell_proxy = ModelRfield(ShellProxyDTO)
 
     _params = DictRField()
 
@@ -93,7 +95,7 @@ class AppResource(ResourceList):
         shell_proxy: ShellProxy,
         resource_model_id: str,
         app_name: str,
-        requires_authentification: bool,
+        access_mode: AppAccessMode,
     ) -> AppInstance:
         """
         Initialize the app instance with the shell proxy.
@@ -153,10 +155,24 @@ class AppResource(ResourceList):
         # store the name of the sub resource
         self._code_folder_sub_resource_name = "AppConfig code"
 
-    def set_requires_authentication(self, requires_authentication: bool) -> None:
+    def get_access_mode(self) -> AppAccessMode:
+        """Return the access mode of the app, derived from the _requires_authentification
+        flag (True -> AUTHENTICATED, False -> PUBLIC).
         """
-        Set if the app requires the user to be authenticated.
-        By default it requires authentication.
+        return (
+            AppAccessMode.AUTHENTICATED if self._requires_authentification else AppAccessMode.PUBLIC
+        )
+
+    def set_access_mode(self, access_mode: AppAccessMode) -> None:
+        """Set the access mode of the app. By default the app is AUTHENTICATED.
+
+        :param access_mode: the access mode to apply
+        :type access_mode: AppAccessMode
+        """
+        self._requires_authentification = access_mode == AppAccessMode.AUTHENTICATED
+
+    def set_requires_authentication(self, requires_authentication: bool) -> None:
+        """Back-compat shim for the boolean flag. Prefer set_access_mode for new code.
 
         :param requires_authentication: True if the app requires authentication
         :type requires_authentication: bool
@@ -455,10 +471,7 @@ class AppResource(ResourceList):
         shell_proxy.attach_observer(LoggerMessageObserver())
 
         app = self.init_app_instance(
-            shell_proxy,
-            self.get_and_check_model_id(),
-            self.get_name(),
-            self._requires_authentification,
+            shell_proxy, self.get_model_id(), self.get_name(), self.get_access_mode()
         )
 
         # add the resources as input to the app
