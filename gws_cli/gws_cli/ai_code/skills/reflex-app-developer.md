@@ -65,6 +65,7 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - From the backend, never call a method decorated with `@rx.event`, instead call a private method without the decorator.
 - For menu button use icon 'ellipsis-vertical'
 - To color a whole component (text + hover/active background together), set `color_scheme` (e.g. `color_scheme="red"` on a destructive menu item), not a bare `color`. A lone `color` only recolors the text and leaves the hover background on the app's primary scheme, which clashes.
+- For CSS length props (`margin`, `padding`, `margin_top`, `width`, `height`, `top`, `gap`, `border_radius`, `font_size`, etc.), ALWAYS include an explicit unit. A bare number like `margin_top="4"` is invalid CSS and is silently ignored — write `margin_top="1rem"`. Prefer `rem`, but use another unit when it fits better (`%` for relative sizing, `px` for hairline borders / exact pixel values, `vh`/`vw` for viewport-relative). Exception: Reflex/Radix scale props such as `spacing` on `rx.vstack`/`rx.hstack`/`rx.flex` take a bare scale string (`spacing="4"`, range `"0"`–`"9"`) — leave those unitless.
 - To handle the event calls from the frontend. 
    - If you don't need to pass a custom argument, use `on_click=MyState.my_event` instead of `on_click=lambda: MyState.my_event()`
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
