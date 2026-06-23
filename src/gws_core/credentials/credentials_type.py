@@ -1,6 +1,5 @@
 from abc import abstractmethod
-from enum import Enum
-from typing import Any
+from typing import Any, ClassVar
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_set import ParamSet
@@ -8,32 +7,29 @@ from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
-
-
-class CredentialsType(Enum):
-    """
-    Different types of credentials
-    """
-
-    BASIC = "BASIC"
-    S3 = "S3"
-    S3_LAB_SERVER = "S3_LAB_SERVER"
-    LAB = "LAB"
-    OTHER = "OTHER"
-
+from gws_core.credentials.credentials_decorator import credentials_type
 
 ############################ DTO ############################
 
 
+class CredentialsTypeDTO(BaseModelDTO):
+    """Metadata describing a registered credentials type (without its specs)."""
+
+    type: str
+    brick_name: str
+    human_name: str
+    short_description: str | None = None
+
+
 class CredentialsDTO(ModelWithUserDTO):
     name: str
-    type: CredentialsType
+    type: CredentialsTypeDTO
     description: str | None = None
 
 
 class SaveCredentialsDTO(BaseModelDTO):
     name: str
-    type: CredentialsType
+    type: str
     description: str | None = None
     data: Any
 
@@ -41,10 +37,9 @@ class SaveCredentialsDTO(BaseModelDTO):
 ############################ DATA ############################
 
 
-class CredentialsDataTypeSpecDTO(BaseModelDTO):
+class CredentialsDataTypeSpecDTO(CredentialsTypeDTO):
     """DTO to get the spec  to configure the credentials data of a specific type"""
 
-    type: CredentialsType
     specs: dict[str, ParamSpecDTO]
 
 
@@ -57,6 +52,64 @@ class CredentialsDataSpecsDTO(BaseModelDTO):
 class CredentialsDataBase(BaseModelDTO):
     # this field contains meta info about the credentials
     meta: CredentialsDTO | None = None
+
+    # set by the @credentials_type decorator: the name passed to the decorator,
+    # unique within the declaring brick.
+    # ClassVar so pydantic treats them as class-level metadata, not model fields
+    # (otherwise building a data object manually would require them as arguments).
+    __credentials_type_name__: ClassVar[str]
+
+    # set by the @credentials_type decorator: globally unique id of the form
+    # '<brick_name>.<credentials_type_name>'. It is what gets stored in the
+    # gws_credentials.type column.
+    __credentials_type_id__: ClassVar[str]
+
+    # set by the @credentials_type decorator: the name of the brick that declares
+    # this credentials data class.
+    __credentials_type_brick_name__: ClassVar[str]
+
+    # set by the @credentials_type decorator: human readable name shown in the
+    # interface (defaults to the unique name).
+    __credentials_type_human_name__: ClassVar[str]
+
+    # set by the @credentials_type decorator: short description shown in the
+    # interface (optional).
+    __credentials_type_short_description__: ClassVar[str | None] = None
+
+    @classmethod
+    def get_type_id(cls) -> str:
+        """Return the globally unique id of this credentials data type
+        (``<brick_name>.<unique_name>``), set by the @credentials_type decorator."""
+        return cls.__credentials_type_id__
+
+    @classmethod
+    def get_brick_name(cls) -> str:
+        """Return the name of the brick that declares this credentials data type,
+        set by the @credentials_type decorator."""
+        return cls.__credentials_type_brick_name__
+
+    @classmethod
+    def get_human_name(cls) -> str:
+        """Return the human readable name of this credentials data type,
+        set by the @credentials_type decorator."""
+        return cls.__credentials_type_human_name__
+
+    @classmethod
+    def get_short_description(cls) -> str | None:
+        """Return the short description of this credentials data type,
+        set by the @credentials_type decorator."""
+        return cls.__credentials_type_short_description__
+
+    @classmethod
+    def get_type_dto(cls) -> "CredentialsTypeDTO":
+        """Return the metadata of this credentials type (id, brick, human name,
+        description) without its specs."""
+        return CredentialsTypeDTO(
+            type=cls.get_type_id(),
+            brick_name=cls.get_brick_name(),
+            human_name=cls.get_human_name(),
+            short_description=cls.get_short_description(),
+        )
 
     @classmethod
     @abstractmethod
@@ -81,6 +134,11 @@ class CredentialsDataBase(BaseModelDTO):
         return dict_
 
 
+@credentials_type(
+    "s3",
+    human_name="S3",
+    short_description="Credentials to connect to an S3 bucket",
+)
 class CredentialsDataS3(CredentialsDataBase):
     """Format of the data for S3 credentials"""
 
@@ -103,6 +161,11 @@ class CredentialsDataS3(CredentialsDataBase):
         )
 
 
+@credentials_type(
+    "s3_lab_server",
+    human_name="S3 lab server",
+    short_description="Credentials for the lab acting as an S3 server",
+)
 class CredentialsDataS3LabServer(CredentialsDataBase):
     """Format of the data for credentials for the lab acting as an S3 server"""
 
@@ -126,6 +189,11 @@ class CredentialsDataS3LabServer(CredentialsDataBase):
         )
 
 
+@credentials_type(
+    "basic",
+    human_name="Basic",
+    short_description="Username / password credentials",
+)
 class CredentialsDataBasic(CredentialsDataBase):
     """Format of the data for Basic credentials"""
 
@@ -144,6 +212,11 @@ class CredentialsDataBasic(CredentialsDataBase):
         )
 
 
+@credentials_type(
+    "lab",
+    human_name="Lab",
+    short_description="Credentials to connect two data labs",
+)
 class CredentialsDataLab(CredentialsDataBase):
     """Format of the data for data lab credentials. Useful for connecting 2 data labs"""
 
@@ -161,6 +234,11 @@ class CredentialsDataLab(CredentialsDataBase):
 # Format of the data for other credentials
 # A simple string to string dictionary
 # When convert to and from json the data will be converted to a list of key value pairs for ParamSet
+@credentials_type(
+    "other",
+    human_name="Other",
+    short_description="Custom key / value credentials",
+)
 class CredentialsDataOther(CredentialsDataBase):
     data: dict[str, str]
 

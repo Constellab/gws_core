@@ -1,13 +1,21 @@
+from typing import Literal, cast
+
 from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.select_param import SelectParam
+from gws_core.core.utils.utils import Utils
 from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataS3, CredentialsType
+from gws_core.credentials.credentials_type import CredentialsDataS3
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.task.resource_downloader_base import ResourceDownloaderBase
+from gws_core.share.shared_dto import ShareEntityCreateMode
+
 from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
+
+ResourceDownloaderCreateOption = Literal["Update if exists", "Skip if exists", "Force new resource"]
 
 
 @task_decorator(
@@ -31,7 +39,7 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
 
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(credentials_type=CredentialsType.S3),
+            "credentials": CredentialsParam(credentials_type=CredentialsDataS3),
             "object_key": StrParam(human_name="Key of the S3 object in bucket"),
             "s3_bucket": StrParam(
                 human_name="S3 bucket name",
@@ -39,6 +47,11 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
                 optional=True,
             ),
             "uncompress": ResourceDownloaderBase.uncompress_config,
+            "create_option": SelectParam(
+                human_name="Create option",
+                options=Utils.get_literal_values(ResourceDownloaderCreateOption),
+                default_value="Update if exists",
+            ),
             "skip_tags": ResourceDownloaderBase.skip_tags_config,
         }
     )
@@ -62,9 +75,22 @@ class ResourceDownloaderS3(ResourceDownloaderBase):
         # download the file
         resource_file = s3_bucket.get_object(params.get_value("object_key"))
 
+        create_option = cast(ResourceDownloaderCreateOption, params["create_option"])
+        uncompressed_option = params["uncompress"]
+
+        resource_loader_mode: ShareEntityCreateMode
+        # We keep the id only if option activated and uncompressed option is activated as well
+        if create_option == "Force new resource" or uncompressed_option == "no":
+            self.log_info_message("The resource will be imported with a new id")
+            resource_loader_mode = ShareEntityCreateMode.NEW_ID
+        else:
+            self.log_info_message("The resource will be imported with the same id as the origin")
+            resource_loader_mode = ShareEntityCreateMode.KEEP_ID
+
         resource = self.create_resource_from_file(
             resource_file,
-            params["uncompress"],
+            uncompressed_option,
+            resource_loader_mode,
             skip_tags=params.get_value("skip_tags"),
         )
         return {"resource": resource}

@@ -55,7 +55,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
             "create_option": SelectParam(
                 human_name="Create option",
                 options=Utils.get_literal_values(ResourceDownloaderCreateOption),
-                default_value="Skip if exists",
+                default_value="Update if exists",
             ),
             "skip_tags": ResourceDownloaderBase.skip_tags_config,
         }
@@ -111,7 +111,11 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
         super().run_after_task()
 
         # check if the link is a share link from a lab
-        if ShareLink.is_lab_share_resource_link(self.link) and self.resource_loader:
+        if (
+            ShareLink.is_lab_share_resource_link(self.link)
+            and self.resource_loader
+            and self._local_resource_model_id
+        ):
             self.log_info_message("Marking the resource as received in the origin lab")
             # call the origin lab to mark the resource as received
             current_lab_info = ExternalLabApiService.get_current_lab_info(

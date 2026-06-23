@@ -1,7 +1,7 @@
 from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.credentials.credentials_param import CredentialsParam
-from gws_core.credentials.credentials_type import CredentialsDataS3, CredentialsType
+from gws_core.credentials.credentials_type import CredentialsDataS3
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.s3.s3_bucket import S3Bucket
 from gws_core.io.io_spec import InputSpec
@@ -40,7 +40,7 @@ class ResourceUploaderS3(Task):
     input_specs: InputSpecs = InputSpecs({"resource": InputSpec(Resource)})
     config_specs = ConfigSpecs(
         {
-            "credentials": CredentialsParam(credentials_type=CredentialsType.S3),
+            "credentials": CredentialsParam(credentials_type=CredentialsDataS3),
             "s3_object_prefix": StrParam(human_name="Prefix for the S3 object", default_value=""),
             "s3_bucket": StrParam(human_name="S3 bucket name"),
             "send_me_an_email": BoolParam(
@@ -56,7 +56,7 @@ class ResourceUploaderS3(Task):
 
         self.log_info_message("Zipping resource")
         resource: Resource = inputs["resource"]
-        resource_zipper = ResourceZipper(CurrentUserService.get_current_user())
+        resource_zipper = ResourceZipper(CurrentUserService.get_and_check_current_user())
         resource_zipper.add_resource(resource)
         self.zip_file_path = resource_zipper.close_zip()
 

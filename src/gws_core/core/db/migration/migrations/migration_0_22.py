@@ -63,13 +63,32 @@ _MODELS_WITH_USER: list[type[ModelWithUser]] = [
 _USER_FK_COLUMNS = ["created_by_id", "last_modified_by_id"]
 
 
+# Maps the old CredentialsType enum value to the new brick-namespaced registry id.
+# The CredentialsType enum was replaced by a decorator-based registry, so the
+# gws_credentials.type column now stores the registered data class id
+# (e.g. 'gws_core.s3') instead of the old enum value (e.g. 'S3').
+_CREDENTIALS_TYPE_MIGRATION = {
+    "BASIC": "gws_core.basic",
+    "S3": "gws_core.s3",
+    "S3_LAB_SERVER": "gws_core.s3_lab_server",
+    "LAB": "gws_core.lab",
+    "OTHER": "gws_core.other",
+}
+
+
 @brick_migration(
     "0.22.2",
-    short_description="Set created_by and last_modified_by to NOT NULL on all ModelWithUser tables",
+    short_description="Set created_by and last_modified_by to NOT NULL on all ModelWithUser tables"
+    " and migrate credentials type to namespaced registry id",
 )
 class Migration0222(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+        cls._migrate_user_columns(sql_migrator)
+        cls._migrate_credentials_type()
+
+    @classmethod
+    def _migrate_user_columns(cls, sql_migrator: SqlMigrator) -> None:
         sys_user = UserService.get_sysuser()
 
         for model in _MODELS_WITH_USER:
@@ -114,3 +133,16 @@ class Migration0222(BrickMigration):
                     model, column, CharField(max_length=36, null=False)
                 )
             sql_migrator.migrate()
+
+    @classmethod
+    def _migrate_credentials_type(cls) -> None:
+        if not Credentials.table_exists():
+            return
+
+        Logger.info(
+            "Migration 0.22.2: Migrating credentials type to namespaced registry id"
+        )
+        for old_type, new_type in _CREDENTIALS_TYPE_MIGRATION.items():
+            Credentials.execute_sql(
+                f"UPDATE [TABLE_NAME] SET type = '{new_type}' WHERE type = '{old_type}'"
+            )

@@ -194,14 +194,16 @@ from .core.utils.xml_helper import XMLHelper as XMLHelper
 
 # Credentials
 from .credentials.credentials import Credentials as Credentials
+from .credentials.credentials_decorator import credentials_type as credentials_type
 from .credentials.credentials_param import CredentialsParam as CredentialsParam
+from .credentials.credentials_registry import CredentialsRegistry as CredentialsRegistry
 from .credentials.credentials_service import CredentialsService as CredentialsService
+from .credentials.credentials_type import CredentialsDataBase as CredentialsDataBase
 from .credentials.credentials_type import CredentialsDataBasic as CredentialsDataBasic
 from .credentials.credentials_type import CredentialsDataLab as CredentialsDataLab
 from .credentials.credentials_type import CredentialsDataOther as CredentialsDataOther
 from .credentials.credentials_type import CredentialsDataS3 as CredentialsDataS3
 from .credentials.credentials_type import CredentialsDataS3LabServer as CredentialsDataS3LabServer
-from .credentials.credentials_type import CredentialsType as CredentialsType
 
 # Docker
 from .docker.docker_dto import DockerComposeStatus as DockerComposeStatus

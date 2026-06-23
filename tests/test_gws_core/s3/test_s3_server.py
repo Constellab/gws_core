@@ -12,7 +12,6 @@ from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (
     CredentialsDataS3,
     CredentialsDataS3LabServer,
-    CredentialsType,
     SaveCredentialsDTO,
 )
 from gws_core.folder.space_folder import SpaceFolder
@@ -240,7 +239,7 @@ class TestS3Server(BaseTestCase):
 
         credentials_dto = SaveCredentialsDTO(
             name=name,
-            type=CredentialsType.S3,
+            type=CredentialsDataS3.get_type_id(),
             description="Test s3 server",
             data=s3_data.to_json_dict(),
         )
@@ -262,7 +261,7 @@ class TestS3Server(BaseTestCase):
 
         credentials_dto = SaveCredentialsDTO(
             name=name,
-            type=CredentialsType.S3_LAB_SERVER,
+            type=CredentialsDataS3LabServer.get_type_id(),
             description="Test s3 server",
             data=s3_data.to_json_dict(),
         )

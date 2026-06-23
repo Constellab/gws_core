@@ -6,7 +6,6 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (
     CredentialsDataLab,
-    CredentialsType,
     SaveCredentialsDTO,
 )
 from gws_core.folder.space_folder import SpaceFolder
@@ -116,6 +115,6 @@ class TestHelper:
         lab_credentials = CredentialsDataLab(api_key="test_api_key_minimum_20_chars")
         return CredentialsService.create(
             SaveCredentialsDTO(
-                name="test", type=CredentialsType.LAB, data=lab_credentials.to_json_dict()
+                name="test", type=CredentialsDataLab.get_type_id(), data=lab_credentials.to_json_dict()
             )
         )

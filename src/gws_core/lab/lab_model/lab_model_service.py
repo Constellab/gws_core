@@ -7,7 +7,6 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (
     CredentialsDataLab,
-    CredentialsType,
     SaveCredentialsDTO,
 )
 from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
@@ -134,7 +133,7 @@ class LabModelService:
         # Generate random api_key and create credentials
         save_dto = SaveCredentialsDTO(
             name=name,
-            type=CredentialsType.LAB,
+            type=CredentialsDataLab.get_type_id(),
             description=f"Credentials for lab {lab.name}, mode : {lab.mode.value}",
             data=lab_credentials.to_json_dict(),
         )
@@ -171,5 +170,5 @@ class LabModelService:
         :return: Paginated lab results
         :rtype: Paginator[LabModel]
         """
-        search_builder: SearchBuilder = LabModelSearchBuilder()
+        search_builder = LabModelSearchBuilder()
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)

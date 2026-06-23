@@ -15,7 +15,6 @@ from gws_core.core.db.migration.sql_migrator import SqlMigrator
 from gws_core.core.model.db_field import BaseDTOField, DateTimeUTC
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.credentials.credentials import Credentials
-from gws_core.credentials.credentials_type import CredentialsType
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.agent.env_agent import EnvAgent
 from gws_core.impl.file.file_helper import FileHelper
@@ -1341,7 +1340,7 @@ class Migration0112(BrickMigration):
     @classmethod
     def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
         credentials: list[Credentials] = list(
-            Credentials.select().where(Credentials.type == CredentialsType.OTHER)
+            Credentials.select().where(Credentials.type == "OTHER")
         )
 
         for credential in credentials:

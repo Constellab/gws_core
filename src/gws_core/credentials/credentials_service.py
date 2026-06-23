@@ -6,8 +6,9 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.credentials.credentials_registry import CredentialsRegistry
 from gws_core.credentials.credentials_search_builder import CredentialsSearchBuilder
-from gws_core.credentials.credentials_type import CredentialsDataS3, CredentialsType
+from gws_core.credentials.credentials_type import CredentialsDataS3
 from gws_core.space.space_service import ExternalCheckCredentialResponse, SpaceService
 from gws_core.user.user_credentials_dto import UserCredentialsDTO
 
@@ -67,7 +68,7 @@ class CredentialsService:
             data_obj = credentials_type.build_from_json(save_credentials.data)
             credentials.data = data_obj.convert_to_dict()
         except Exception as e:
-            raise BadRequestException(f"Invalid credentials data: {str(e)}")
+            raise BadRequestException(f"Invalid credentials data: {str(e)}") from e
         return credentials
 
     @classmethod
@@ -87,7 +88,7 @@ class CredentialsService:
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Credentials]:
-        search_builder: SearchBuilder = CredentialsSearchBuilder()
+        search_builder = CredentialsSearchBuilder()
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
@@ -115,7 +116,7 @@ class CredentialsService:
         return Credentials.find_by_name(name)
 
     @classmethod
-    def find_by_name_and_check(cls, name: str, type_: CredentialsType | None = None) -> Credentials:
+    def find_by_name_and_check(cls, name: str, type_: str | None = None) -> Credentials:
         return Credentials.find_by_name_and_check(name, type_)
 
     @classmethod
@@ -124,8 +125,10 @@ class CredentialsService:
     ) -> CredentialsDataS3 | CredentialsDataS3LabServer | None:
         """Return the S3 credentials that match the access key id"""
 
-        s3_credentials: list[Credentials] = Credentials.search_by_types(
-            [CredentialsType.S3, CredentialsType.S3_LAB_SERVER]
+        s3_credentials: list[Credentials] = list(
+            Credentials.search_by_types(
+                [CredentialsDataS3.get_type_id(), CredentialsDataS3LabServer.get_type_id()]
+            )
         )
 
         for credentials in s3_credentials:
@@ -151,7 +154,9 @@ class CredentialsService:
     def get_lab_credentials_by_api_key(cls, api_key: str) -> Credentials | None:
         """Return the lab Credentials model that matches the api key"""
 
-        lab_credentials: list[Credentials] = Credentials.search_by_type(CredentialsType.LAB)
+        lab_credentials: list[Credentials] = list(
+            Credentials.search_by_type(CredentialsDataLab.get_type_id())
+        )
 
         for credentials in lab_credentials:
             data: CredentialsDataLab = cast(CredentialsDataLab, credentials.get_data_object())
@@ -163,12 +168,15 @@ class CredentialsService:
     @classmethod
     def get_credentials_data_specs(cls) -> CredentialsDataSpecsDTO:
         """Return the specs of all credentials data types"""
-        data_types = Credentials.get_data_types()
+        data_types = CredentialsRegistry.get_all()
         data_specs = []
 
-        for type_, data_type in data_types.items():
+        for data_type in data_types.values():
             data_specs.append(
-                CredentialsDataTypeSpecDTO(type=type_, specs=data_type.get_spec_dto())
+                CredentialsDataTypeSpecDTO(
+                    **data_type.get_type_dto().to_json_dict(),
+                    specs=data_type.get_spec_dto(),
+                )
             )
 
         return CredentialsDataSpecsDTO(data_specs=data_specs)
@@ -215,9 +223,10 @@ class CredentialsService:
 
         if existing_credentials:
             # Check that it's the correct type
-            if existing_credentials.type != CredentialsType.BASIC:
+            if existing_credentials.type != CredentialsDataBasic.get_type_id():
                 raise BadRequestException(
-                    f"Credentials '{name}' already exists but has type '{existing_credentials.type}', expected 'BASIC'"
+                    f"Credentials '{name}' already exists but has type '{existing_credentials.type}', "
+                    f"expected '{CredentialsDataBasic.get_type_id()}'"
                 )
             return existing_credentials
 
@@ -235,7 +244,10 @@ class CredentialsService:
 
         # Create the SaveCredentialsDTO
         save_dto = SaveCredentialsDTO(
-            name=name, type=CredentialsType.BASIC, description=description, data=credentials_data
+            name=name,
+            type=CredentialsDataBasic.get_type_id(),
+            description=description,
+            data=credentials_data,
         )
 
         # Create and return the new credentials
@@ -258,12 +270,14 @@ class CredentialsService:
         :return: The updated BASIC credential
         """
         # Get and check the existing credentials
-        existing_credentials = cls.find_by_name_and_check(credentials_name, CredentialsType.BASIC)
+        existing_credentials = cls.find_by_name_and_check(
+            credentials_name, CredentialsDataBasic.get_type_id()
+        )
 
         # Create the SaveCredentialsDTO with updated data
         save_dto = SaveCredentialsDTO(
             name=existing_credentials.name,
-            type=CredentialsType.BASIC,
+            type=CredentialsDataBasic.get_type_id(),
             description=description
             if description is not None
             else existing_credentials.description,

@@ -1,4 +1,4 @@
-# GWS Core Reflex Base Module
+g# GWS Core Reflex Base Module
 
 This module provides the foundational utilities, base components, and state management for building Reflex applications within the GWS Core (Constellab) ecosystem. These elements are available both directly from `gws_reflex_base` and are automatically included when importing from `gws_reflex_main`.
 

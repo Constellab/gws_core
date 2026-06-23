@@ -5,7 +5,7 @@ from gws_core.credentials.credentials_param import CredentialsParam
 from gws_core.credentials.credentials_service import CredentialsService
 from gws_core.credentials.credentials_type import (
     CredentialsDataOther,
-    CredentialsType,
+    CredentialsDataS3,
     SaveCredentialsDTO,
 )
 from gws_core.test.base_test_case import BaseTestCase
@@ -16,7 +16,7 @@ class TestCredentials(BaseTestCase):
     def test_crud(self):
         save_dto: SaveCredentialsDTO = SaveCredentialsDTO(
             name="test",
-            type=CredentialsType.OTHER,
+            type=CredentialsDataOther.get_type_id(),
             description="test",
             data={"data": [{"key": "test", "value": "test"}]},
         )
@@ -34,7 +34,7 @@ class TestCredentials(BaseTestCase):
 
         save_dto2: SaveCredentialsDTO = SaveCredentialsDTO(
             name="hello",
-            type=CredentialsType.S3,
+            type=CredentialsDataS3.get_type_id(),
             data={
                 "endpoint_url": "test",
                 "region": "test",
@@ -56,7 +56,7 @@ class TestCredentials(BaseTestCase):
 
         # Test search by name and type
         search_dict.add_filter_criteria(
-            key="type", operator=SearchOperator.EQ, value=CredentialsType.OTHER
+            key="type", operator=SearchOperator.EQ, value=CredentialsDataOther.get_type_id()
         )
         search_result = CredentialsService.search(search_dict)
         self.assertEqual(search_result.page_info.total_number_of_items, 1)
@@ -65,6 +65,10 @@ class TestCredentials(BaseTestCase):
         # Test json
         json_ = first_credentials.to_dto()
         self.assertEqual(json_.name, first_credentials.name)
+        # the DTO carries the credentials type metadata (without specs)
+        self.assertEqual(json_.type.type, CredentialsDataOther.get_type_id())
+        self.assertEqual(json_.type.brick_name, "gws_core")
+        self.assertEqual(json_.type.human_name, "Other")
 
         # Test delete
         CredentialsService.delete(first_credentials.id)
@@ -73,15 +77,29 @@ class TestCredentials(BaseTestCase):
     def test_credentials_params(self):
         credentials = Credentials()
         credentials.name = "9999"
-        credentials.type = CredentialsType.OTHER
+        credentials.type = CredentialsDataOther.get_type_id()
         credentials.data = {"data": [{"key": "test", "value": "test"}]}
         credentials.save()
 
         config_params = ConfigSpecs(
-            {"credentials": CredentialsParam(credentials_type=CredentialsType.OTHER)}
+            {"credentials": CredentialsParam(credentials_type=CredentialsDataOther)}
         ).build_config_params({"credentials": credentials.name})
 
         data: CredentialsDataOther = config_params["credentials"]
         self.assertIsInstance(data, CredentialsDataOther)
         self.assertEqual(data.data["test"], "test")
         self.assertIsNotNone(data.meta)
+
+    def test_credentials_data_specs(self):
+        specs = CredentialsService.get_credentials_data_specs()
+
+        # the built-in 'other' type is registered with brick name, human name and specs
+        other_spec = next(
+            spec
+            for spec in specs.data_specs
+            if spec.type == CredentialsDataOther.get_type_id()
+        )
+        self.assertEqual(other_spec.brick_name, "gws_core")
+        self.assertEqual(other_spec.human_name, "Other")
+        self.assertEqual(other_spec.short_description, "Custom key / value credentials")
+        self.assertIn("data", other_spec.specs)

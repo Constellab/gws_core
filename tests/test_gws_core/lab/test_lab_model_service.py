@@ -1,5 +1,8 @@
+from typing import cast
+
 from gws_core.core.utils.settings import Settings
-from gws_core.credentials.credentials_type import CredentialsType
+from gws_core.credentials.credentials import Credentials
+from gws_core.credentials.credentials_type import CredentialsDataLab
 from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 from gws_core.lab.lab_model.lab_model import LabModel
@@ -10,7 +13,6 @@ from gws_core.user.unique_code_service import InvalidUniqueCodeException, Unique
 
 # test_lab_model_service
 class TestLabModelService(BaseTestCase):
-
     def test_generate_unique_code_url(self):
         """Verify URL contains a code parameter and uses the lab API URL."""
         url = LabModelService.generate_unique_code_url()
@@ -29,7 +31,6 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="test-lab-123",
             name="Test Lab",
-
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="test.example.com",
@@ -44,17 +45,20 @@ class TestLabModelService(BaseTestCase):
         self.assertIsNotNone(result.lab)
 
         # Verify credentials were created
-        self.assertIsNotNone(result.credentials_data)
-        self.assertIsNotNone(result.credentials_data.api_key)
-        self.assertTrue(len(result.credentials_data.api_key) >= 20)
+        credentials = cast(CredentialsDataLab, result.credentials_data)
+        self.assertIsNotNone(credentials)
+        self.assertIsNotNone(credentials.api_key)
+        self.assertTrue(len(credentials.api_key) >= 20)
 
         # Verify LabModel exists in DB
-        lab = LabModel.get_by_lab_id_and_mode("test-lab-123", LabMode.PROD)
+        lab = cast(LabModel, LabModel.get_by_lab_id_and_mode("test-lab-123", LabMode.PROD))
         self.assertIsNotNone(lab)
-        self.assertIsNotNone(lab.credentials)
+
+        credentials = cast(Credentials, lab.credentials)
+        self.assertIsNotNone(credentials)
 
         # Verify credentials exist in DB and have correct type
-        self.assertEqual(lab.credentials.type, CredentialsType.LAB)
+        self.assertEqual(credentials.type, CredentialsDataLab.get_type_id())
 
     def test_create_or_update_lab_from_code_existing(self):
         """Test update path when lab already exists."""
@@ -64,7 +68,6 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="existing-lab-456",
             name="Original Name",
-
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="original.example.com",
@@ -77,7 +80,6 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="existing-lab-456",
             name="Updated Name",
-
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
             domain="updated.example.com",
@@ -89,7 +91,7 @@ class TestLabModelService(BaseTestCase):
         self.assertIsNotNone(result2.credentials_data)
 
         # Verify the remote lab was updated in DB
-        lab = LabModel.get_by_lab_id_and_mode("existing-lab-456", LabMode.PROD)
+        lab = cast(LabModel, LabModel.get_by_lab_id_and_mode("existing-lab-456", LabMode.PROD))
         self.assertEqual(lab.name, "Updated Name")
         self.assertEqual(lab.domain, "updated.example.com")
 
@@ -99,7 +101,6 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="test-lab-789",
             name="Test Lab",
-
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
         )
@@ -115,21 +116,21 @@ class TestLabModelService(BaseTestCase):
             id="",
             lab_id="creds-test-lab",
             name="Creds Test Lab",
-
             mode=LabMode.PROD,
             environment=LabEnvironment.ON_CLOUD,
         )
-        result1 = LabModelService.create_or_update_lab_from_code(code1, lab_dto)
+        LabModelService.create_or_update_lab_from_code(code1, lab_dto)
 
         # Create again — should reuse existing credentials but regenerate api_key
         code2 = UniqueCodeService.generate_code_current_user(None, 300)
         result2 = LabModelService.create_or_update_lab_from_code(code2, lab_dto)
 
         # Verify credentials were regenerated
-        self.assertIsNotNone(result2.credentials_data)
-        self.assertIsNotNone(result2.credentials_data.api_key)
-        self.assertTrue(len(result2.credentials_data.api_key) >= 20)
+        credentials = cast(CredentialsDataLab, result2.credentials_data)
+        self.assertIsNotNone(credentials)
+        self.assertIsNotNone(credentials.api_key)
+        self.assertTrue(len(credentials.api_key) >= 20)
 
         # Verify the remote lab still has the same credentials object in DB
-        lab = LabModel.get_by_lab_id_and_mode("creds-test-lab", LabMode.PROD)
+        lab = cast(LabModel, LabModel.get_by_lab_id_and_mode("creds-test-lab", LabMode.PROD))
         self.assertIsNotNone(lab.credentials)

@@ -6,7 +6,7 @@ from gws_core.config.param.param_types import ParamSpecType, ParamSpecVisibilty
 from gws_core.core.classes.validator import StrValidator
 
 from .credentials import Credentials
-from .credentials_type import CredentialsDataBase, CredentialsType
+from .credentials_type import CredentialsDataBase
 
 
 class CredentialsParamAdditionalInfo(TypedDict):
@@ -31,15 +31,16 @@ class CredentialsParam(ParamSpec):
 
     def __init__(
         self,
-        credentials_type: CredentialsType | None = None,
+        credentials_type: type[CredentialsDataBase] | None = None,
         optional: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
     ):
         """
-        :param credentials_type: Type of credentials to use for this param (if empty, any credentials can be used)
-        :type credentials_type: CredentialsType
+        :param credentials_type: Credentials data class to use for this param, e.g.
+            ``CredentialsParam(CredentialsDataS3)`` (if empty, any credentials can be used)
+        :type credentials_type: type[CredentialsDataBase]
         :param optional: See default value
         :type optional: Optional[str]
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
@@ -50,13 +51,14 @@ class CredentialsParam(ParamSpec):
         :param short_description: Description of the param, showed in the interface
         :type short_description: Optional[str]
         """
+        type_id = credentials_type.get_type_id() if credentials_type is not None else None
         self.additional_info = {
-            "credentials_type": credentials_type.value if credentials_type is not None else None,
+            "credentials_type": type_id,
         }
 
         if human_name is None:
             if credentials_type is not None:
-                human_name = f"Select {credentials_type.value} credentials"
+                human_name = f"Select {credentials_type.get_human_name()} credentials"
             else:
                 human_name = "Select credentials"
 
@@ -67,17 +69,20 @@ class CredentialsParam(ParamSpec):
             short_description=short_description,
         )
         self.credentials_type = credentials_type
+        self.credentials_type_id = type_id
 
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.CREDENTIALS
 
-    def build(self, value: Any) -> CredentialsDataBase:
+    def build(self, value: Any) -> CredentialsDataBase | None:
         if not value:
             return None
 
         # retrieve the credentials and return it
-        credentials: Credentials = Credentials.find_by_name_and_check(value, self.credentials_type)
+        credentials: Credentials = Credentials.find_by_name_and_check(
+            value, self.credentials_type_id
+        )
         return credentials.get_data_object()
 
     def validate(self, value: Any) -> str:
@@ -93,4 +98,4 @@ class CredentialsParam(ParamSpec):
             value = value["name"]
 
         validator = StrValidator()
-        return validator.validate(value)
+        return validator.validate(str(value))
