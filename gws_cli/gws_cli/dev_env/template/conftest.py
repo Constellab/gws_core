@@ -1,9 +1,34 @@
 import os
 import sys
 
+LAB_FOLDER = os.environ.get("LAB_FOLDER", "/lab")
+
+# gws_core may live either in the user bricks folder or in the system bricks
+# folder (fallback). Resolve which one holds gws_core before touching sys.path.
+USER_BRICKS_DIR = os.path.join(LAB_FOLDER, "user", "bricks")
+SYS_BRICKS_DIR = os.path.join(LAB_FOLDER, ".sys", "bricks")
+
+_gws_core_candidates = [
+    os.path.join(USER_BRICKS_DIR, "gws_core"),
+    os.path.join(SYS_BRICKS_DIR, "gws_core"),
+]
+_gws_core_dir = next(
+    (path for path in _gws_core_candidates if os.path.isdir(path)),
+    None,
+)
+if _gws_core_dir is None:
+    raise RuntimeError(
+        "Could not find the 'gws_core' brick. Looked in:\n"
+        + "\n".join(f"  - {path}" for path in _gws_core_candidates)
+        + "\nEnsure gws_core is installed in the user or system bricks folder "
+        "(or set the LAB_FOLDER environment variable)."
+    )
+
+# The bricks folder that actually contains gws_core is the one we load from.
+BRICKS_DIR = os.path.dirname(_gws_core_dir)
+
 # Add all brick src/ folders to sys.path BEFORE any gws_core import.
 # This mirrors what SettingsLoader.load_brick() does.
-BRICKS_DIR = os.path.join(os.environ.get("LAB_FOLDER", "/lab"), "user", "bricks")
 for brick_name in os.listdir(BRICKS_DIR):
     src_path = os.path.join(BRICKS_DIR, brick_name, "src")
     if os.path.isdir(src_path) and src_path not in sys.path:
