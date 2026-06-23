@@ -174,9 +174,16 @@ class DbQueryService:
 
         db = db_manager.get_db()
 
+        # The driver (pymysql) runs the SQL through %-style parameter
+        # substitution. Since this path never binds parameters, every '%' is a
+        # literal (e.g. a LIKE pattern) and must be doubled so it isn't mistaken
+        # for a placeholder -- otherwise "... LIKE 'x_%'" raises
+        # "not enough arguments for format string".
+        escaped_sql = sql.replace("%", "%%")
+
         try:
             with db.atomic() as txn:
-                cursor = db.execute_sql(sql)
+                cursor = db.execute_sql(escaped_sql)
                 columns = (
                     [desc[0] for desc in cursor.description] if cursor.description else []
                 )

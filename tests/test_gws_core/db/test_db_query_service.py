@@ -173,6 +173,21 @@ class TestDbQueryServiceExecution(BaseTestCase):
         )
         self.assertEqual(result.rows, [(42,)])
 
+    def test_execute_read_only_query_with_literal_percent_in_like(self):
+        """A '%' in the SQL (e.g. a LIKE pattern) must not be treated as a
+        parameter placeholder by the driver.
+
+        Regression: pymysql runs the query through %-style substitution, so an
+        un-escaped '%' raised "not enough arguments for format string" before
+        the literal was reached.
+        """
+        result = DbQueryService.execute_read_only_query(
+            GwsCoreDbManager.get_instance().get_brick_name(),
+            "SELECT 'fake_pay_abc' LIKE 'fake_pay_%' AS matched",
+        )
+        self.assertEqual(result.columns, ["matched"])
+        self.assertEqual(result.rows, [(1,)])
+
     def test_execute_read_only_query_rejects_write(self):
         # The guard must reject writes before they reach the database.
         with self.assertRaises(DbQueryError):
