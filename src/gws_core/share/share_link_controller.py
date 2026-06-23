@@ -40,11 +40,11 @@ def delete_share_link(id_: str, _=Depends(AuthorizationService.check_user_access
 
 @core_app.get("/share-link", tags=["Share"], summary="Get share links")
 def get_share_links(
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ShareLinkDTO]:
-    return ShareLinkService.get_shared_links(page, number_of_items_per_page).to_dto()
+    return ShareLinkService.get_shared_links(page, number_of_items_per_page).to_dto(ShareLinkDTO)
 
 
 @core_app.get(

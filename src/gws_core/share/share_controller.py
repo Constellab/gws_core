@@ -51,7 +51,7 @@ def get_shared_to_list(
     entity_id: str,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ShareEntityInfoDTO]:
-    return ShareService.get_shared_to_list(entity_type, entity_id).to_dto()
+    return ShareService.get_shared_to_list(entity_type, entity_id).to_dto(ShareEntityInfoDTO)
 
 
 @core_app.get(

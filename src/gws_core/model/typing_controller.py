@@ -40,26 +40,26 @@ def get_protocol_typing(
 @core_app.get("/typing/object-type/{object_type}", tags=["Resource"], summary="Get by object type")
 def get_by_object_type(
     object_type: TypingObjectType,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     return TypingService.get_typing_by_object_type(
         object_type, page, number_of_items_per_page
-    ).to_dto()
+    ).to_dto(TypingDTO)
 
 
 @core_app.post("/typing/advanced-search", tags=["Typing"], summary="Search typings")
 def advanced_search(
     search_params: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TypingDTO]:
     """
     Advanced search for typing
     """
-    return TypingService.search(search_params, page, number_of_items_per_page).to_dto()
+    return TypingService.search(search_params, page, number_of_items_per_page).to_dto(TypingDTO)
 
 
 class SearchWithResourceTypes(BaseModelDTO):
@@ -75,8 +75,8 @@ class SearchWithResourceTypes(BaseModelDTO):
 def process_with_input_search(
     search: SearchWithResourceTypes,
     inputs_or_outputs: Literal["inputs", "outputs"],
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """
@@ -88,7 +88,7 @@ def process_with_input_search(
         inputs_or_outputs,
         page,
         number_of_items_per_page,
-    ).to_dto()
+    ).to_dto(TypingDTO)
 
 
 @core_app.post(
@@ -100,8 +100,8 @@ def importers_advanced_search(
     search_dict: SearchParams,
     resource_typing_name: str,
     extension: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """
@@ -109,14 +109,14 @@ def importers_advanced_search(
     """
     return TypingService.search_importers(
         resource_typing_name, extension, search_dict, page, number_of_items_per_page
-    ).to_dto()
+    ).to_dto(TypingDTO)
 
 
 @core_app.post("/typing/transformers/search", tags=["Typing"], summary="Search typings")
 def transformers_advanced_search(
     search: SearchWithResourceTypes,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TypingDTO]:
     """
@@ -124,7 +124,7 @@ def transformers_advanced_search(
     """
     return TypingService.search_transformers(
         search.resource_typing_names, search.search_params, page, number_of_items_per_page
-    ).to_dto()
+    ).to_dto(TypingDTO)
 
 
 @core_app.delete("/typing/unavailable", tags=["Typing"], summary="Delete unavailable typings")

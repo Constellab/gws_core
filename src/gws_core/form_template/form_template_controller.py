@@ -75,11 +75,11 @@ def delete(
 )
 def search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[FormTemplateDTO]:
-    return FormTemplateService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return FormTemplateService.search(search_dict, page, number_of_items_per_page).to_dto(FormTemplateDTO)
 
 
 @core_app.put(

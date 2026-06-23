@@ -29,8 +29,8 @@ class SearchBody(BaseModelDTO):
 def search(
     typing_name: str,
     search: SearchBody,
-    page: int | None = 0,
-    number_of_items_per_page: int | None = 20,
+    page: int = 0,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ModelDTO]:
     """
@@ -48,4 +48,4 @@ def search(
         search_text=search.search_text,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-    ).to_dto()
+    ).to_dto(ModelDTO)

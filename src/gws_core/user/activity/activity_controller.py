@@ -13,11 +13,11 @@ from .activity_service import ActivityService
 @core_app.post("/activity/search", tags=["Activity"], summary="Search for activities")
 def advanced_search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ActivityDTO]:
     """
     Advanced search on scenario
     """
-    return ActivityService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return ActivityService.search(search_dict, page, number_of_items_per_page).to_dto(ActivityDTO)

@@ -125,11 +125,11 @@ def delete(
 )
 def search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[FormDTO]:
-    return FormService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return FormService.search(search_dict, page, number_of_items_per_page).to_dto(FormDTO)
 
 
 @core_app.put(
@@ -163,11 +163,11 @@ def unarchive(
 )
 def get_history(
     id_: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[FormSaveEventDTO]:
     paginator: Paginator[FormSaveEvent] = FormService.get_history(
         id_, page, number_of_items_per_page
     )
-    return paginator.to_dto()
+    return paginator.to_dto(FormSaveEventDTO)

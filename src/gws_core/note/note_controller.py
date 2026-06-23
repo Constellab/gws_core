@@ -189,25 +189,25 @@ def get_scenario_by_note(
 @core_app.post("/note/search", tags=["Note"], summary="Advanced search for notes")
 def advanced_search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
     """
     Advanced search on scenario
     """
 
-    return NoteService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return NoteService.search(search_dict, page, number_of_items_per_page).to_dto(NoteDTO)
 
 
 @core_app.get("/note/search-name/{name}", tags=["Note"], summary="Search for note by name")
 def search_by_name(
     name: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
-    return NoteService.search_by_name(name, page, number_of_items_per_page).to_dto()
+    return NoteService.search_by_name(name, page, number_of_items_per_page).to_dto(NoteDTO)
 
 
 @core_app.get(
@@ -215,15 +215,15 @@ def search_by_name(
 )
 def get_by_resource(
     resource_id: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[NoteDTO]:
     return NoteService.get_by_resource(
         resource_id=resource_id,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-    ).to_dto()
+    ).to_dto(NoteDTO)
 
 
 ################################################# ARCHIVE ########################################

@@ -117,21 +117,21 @@ def create_tag_key(
 @core_app.post("/tag/search", tags=["Tag"], summary="Advanced search for tags")
 def advanced_search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[TagKeyModelDTO]:
     """
     Advanced search on tags
     """
 
-    return TagService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return TagService.search(search_dict, page, number_of_items_per_page).to_dto(TagKeyModelDTO)
 
 
 @core_app.get("/tag/search/key", tags=["Tag"], summary="Search tags by key")
 def search_all_keys(
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagKeyModelDTO]:
     """
@@ -144,8 +144,8 @@ def search_all_keys(
 @core_app.get("/tag/search/key/{key}", tags=["Tag"], summary="Search tags by key")
 def search_keys(
     key: str | None,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagKeyModelDTO]:
     """
@@ -158,30 +158,30 @@ def search_keys(
 @core_app.get("/tag/search/key/{key}/value", tags=["Tag"], summary="Search tags by value")
 def search_all_values(
     key: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_values(key, None, page, number_of_items_per_page).to_dto()
+    return TagService.search_values(key, None, page, number_of_items_per_page).to_dto(TagValueModelDTO)
 
 
 @core_app.get("/tag/search/key/{key}/value/{value}", tags=["Tag"], summary="Search tags by value")
 def search_values(
     key: str,
     value: str | None,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[TagValueModelDTO]:
     """
     Search tags by key.
     """
 
-    return TagService.search_values(key, value, page, number_of_items_per_page).to_dto()
+    return TagService.search_values(key, value, page, number_of_items_per_page).to_dto(TagValueModelDTO)
 
 
 @core_app.post(

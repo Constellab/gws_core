@@ -54,14 +54,14 @@ def get_an_scenario(
 )
 def advanced_search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """
-    return ScenarioService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return ScenarioService.search(search_dict, page, number_of_items_per_page).to_dto(ScenarioDTO)
 
 
 @core_app.get("/scenario/title/{title}/count", tags=["Scenario"], summary="Count scenario by title")
@@ -76,14 +76,16 @@ def count_by_title(
 )
 def search_by_title(
     title: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ScenarioDTO]:
     """
     Advanced search on scenario
     """
-    return ScenarioService.search_by_title(title, page, number_of_items_per_page).to_dto()
+    return ScenarioService.search_by_title(title, page, number_of_items_per_page).to_dto(
+        ScenarioDTO
+    )
 
 
 @core_app.get(
@@ -93,8 +95,8 @@ def search_by_title(
 )
 def get_by_input_resource(
     resource_id: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioDTO]:
     """
@@ -105,7 +107,7 @@ def get_by_input_resource(
         resource_id=resource_id,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-    ).to_dto()
+    ).to_dto(ScenarioDTO)
 
 
 ###################################### CREATE ################################

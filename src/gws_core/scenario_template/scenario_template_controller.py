@@ -95,14 +95,14 @@ def delete_by_id(id_: str, _=Depends(AuthorizationService.check_user_access_toke
 )
 def search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioTemplateDTO]:
     """
     Advanced search on scenario template
     """
-    return ScenarioTemplateService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return ScenarioTemplateService.search(search_dict, page, number_of_items_per_page).to_dto(ScenarioTemplateDTO)
 
 
 @core_app.get(
@@ -112,11 +112,11 @@ def search(
 )
 def search_by_name(
     name: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ScenarioTemplateDTO]:
-    return ScenarioTemplateService.search_by_name(name, page, number_of_items_per_page).to_dto()
+    return ScenarioTemplateService.search_by_name(name, page, number_of_items_per_page).to_dto(ScenarioTemplateDTO)
 
 
 @core_app.get(

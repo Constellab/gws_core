@@ -156,4 +156,4 @@ def search_user_by_name(
     """
     Search users by name
     """
-    return UserService.smart_search_by_name(name, page, number_of_items_per_page).to_dto()
+    return UserService.smart_search_by_name(name, page, number_of_items_per_page).to_dto(UserDTO)

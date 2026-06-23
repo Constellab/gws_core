@@ -9,10 +9,9 @@ from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.resource.resource_dto import ResourceModelDTO, ShareResourceWithSpaceRequestDTO
-from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.resource.view.view_dto import CallViewResultDTO, ResourceViewMetadatalDTO
-from gws_core.share.shared_dto import ShareEntityInfoDTO, ShareLinkDTO
+from gws_core.share.shared_dto import ShareLinkDTO
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_dto import TaskTypingDTO
 from gws_core.task.transformer.transformer_service import TransformerService
@@ -127,15 +126,15 @@ def check_impact_delete_resource(
 @core_app.get("/resource/search-name/{name}", tags=["Resource"], summary="Search resource by name")
 def search_resource_by_name(
     name: str,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
     Search resource by name
     """
 
-    return ResourceService.search_by_name(name, page, number_of_items_per_page).to_dto()
+    return ResourceService.search_by_name(name, page, number_of_items_per_page).to_dto(ResourceModelDTO)
 
 
 @core_app.post(
@@ -143,29 +142,29 @@ def search_resource_by_name(
 )
 def advanced_search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
     Advanced search on resources
     """
 
-    return ResourceService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return ResourceService.search(search_dict, page, number_of_items_per_page).to_dto(ResourceModelDTO)
 
 
 @core_app.post("/resource/search-app", tags=["Resource"], summary="Advanced search for apps")
 def search_apps(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> PageDTO[ResourceModelDTO]:
     """
     Advanced search on apps
     """
 
-    return ResourceService.search_apps(search_dict, page, number_of_items_per_page).to_dto()
+    return ResourceService.search_apps(search_dict, page, number_of_items_per_page).to_dto(ResourceModelDTO)
 
 
 @core_app.put("/resource/{id_}/name/{name}", tags=["Resource"], summary="Update the resource name")

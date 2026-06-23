@@ -52,8 +52,8 @@ def update_favorite(
 def get_by_resource(
     resource_id: str,
     favorite: bool,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.get_by_resource(
@@ -61,18 +61,18 @@ def get_by_resource(
         favorite=favorite,
         page=page,
         number_of_items_per_page=number_of_items_per_page,
-    ).to_dto()
+    ).to_dto(ViewConfigDTO)
 
 
 ###################################### SEARCH #######################################
 @core_app.post("/view-config/search", tags=["View config"], summary="Search available view config")
 def search(
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
-    return ViewConfigService.search(search_dict, page, number_of_items_per_page).to_dto()
+    return ViewConfigService.search(search_dict, page, number_of_items_per_page).to_dto(ViewConfigDTO)
 
 
 @core_app.post(
@@ -83,13 +83,13 @@ def search(
 def search_for_note(
     note_id: str,
     search_dict: SearchParams,
-    page: int | None = 1,
-    number_of_items_per_page: int | None = 20,
+    page: int = 1,
+    number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> PageDTO[ViewConfigDTO]:
     return ViewConfigService.search_by_note(
         note_id, search_dict, page, number_of_items_per_page
-    ).to_dto()
+    ).to_dto(ViewConfigDTO)
 
 
 ############################# VIEW TYPE  ###########################
