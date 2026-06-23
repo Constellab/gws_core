@@ -29,9 +29,13 @@ class ReflexInit:
 
         is_test = os.environ.get("GWS_IS_TEST_ENV", "false").lower() == "true"
 
+        # Inherit the parent process's log level (set by the CLI's --log-level and
+        # forwarded via GWS_LOG_LEVEL), falling back to INFO when not provided.
+        log_level = os.environ.get("GWS_LOG_LEVEL") or "INFO"
+
         manage.AppManager.init_gws_env_and_db(
             main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-            log_level="INFO",
+            log_level=log_level,
             log_context=LogContext.REFLEX,
             log_context_id=app_id,
             is_test=is_test,

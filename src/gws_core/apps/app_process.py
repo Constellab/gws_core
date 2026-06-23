@@ -350,9 +350,25 @@ class AppProcess:
             "GWS_IS_TEST_ENV": str(Settings.get_instance().is_test),
             "GWS_IS_DEV_MODE": str(self._app.is_dev_mode()),
             "GWS_REQUIRES_AUTHENTICATION": str(self._app.requires_authentication),
+            # Propagate the parent process's log level so the spawned app backend
+            # re-inits its gws Logger at the same level (e.g. DEBUG from the CLI's
+            # --log-level), instead of always defaulting to INFO.
+            "GWS_LOG_LEVEL": self._get_parent_log_level(),
             ExecutionContext.get_os_env_name(): execution_context.value,
         }
         return env_vars
+
+    @staticmethod
+    def _get_parent_log_level() -> str:
+        """The parent process's gws Logger level, forwarded to the app backend.
+
+        Falls back to INFO when no logger instance is initialized (the level the
+        app backend would otherwise default to), so reading it never breaks startup.
+        """
+        try:
+            return Logger.get_instance().level
+        except Exception:
+            return "INFO"
 
     ############################################ APP CONFIG ############################################
 

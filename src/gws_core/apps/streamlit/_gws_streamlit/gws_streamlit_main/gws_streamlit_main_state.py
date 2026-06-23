@@ -1,5 +1,6 @@
 """State class for registering GWS Streamlit apps."""
 
+import os
 import warnings
 
 import streamlit as st
@@ -36,9 +37,13 @@ class StreamlitMainState(StreamlitMainStateBase):
         if not manage.AppManager.gws_env_initialized:
             app_id = cls.get_app_id()
 
+            # Inherit the parent process's log level (set by the CLI's --log-level
+            # and forwarded via GWS_LOG_LEVEL), falling back to INFO when not set.
+            log_level = os.environ.get("GWS_LOG_LEVEL") or "INFO"
+
             manage.AppManager.init_gws_env_and_db(
                 main_setting_file_path=Settings.get_instance().get_main_settings_file_path(),
-                log_level="INFO",
+                log_level=log_level,
                 log_context=LogContext.STREAMLIT,
                 log_context_id=app_id,
                 auth_context_loader=StreamlitAuthContextLoader(),
