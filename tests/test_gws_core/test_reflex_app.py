@@ -24,20 +24,48 @@ class TestReflexApp(BaseTestCase):
             input_resources={"resource": table},
         )
 
-    def test_custom_subdomain_host_name(self):
+    def _expected_host(self, host_name: str, suffix: str = "") -> str:
+        if Settings.is_local_or_desktop_env():
+            return f"{host_name}{suffix}.localhost"
+        sub_domain = Settings.get_app_sub_domain()
+        virtual_host = Settings.get_virtual_host()
+        return f"{sub_domain}-{host_name}{suffix}.{virtual_host}"
+
+    def test_custom_subdomain_is_front_only_alias(self):
         app = ReflexApp("resource-model-id", "app", ShellProxy())
         app.set_custom_subdomain("app-hello-world")
         process = ReflexProcess(3000, 8000, app)
 
-        if Settings.is_local_or_desktop_env():
-            expected = "app-hello-world.localhost"
-            expected_back = "app-hello-world-back.localhost"
-        else:
-            sub_domain = Settings.get_app_sub_domain()
-            virtual_host = Settings.get_virtual_host()
-            expected = f"{sub_domain}-app-hello-world.{virtual_host}"
-            expected_back = f"{sub_domain}-app-hello-world-back.{virtual_host}"
+        # canonical front/back hosts stay id-based
+        self.assertEqual(process.get_host_name(), self._expected_host("resource-model-id"))
+        self.assertEqual(
+            process.get_host_name("-back"), self._expected_host("resource-model-id", "-back")
+        )
+        # the custom host is the front alias only
+        self.assertEqual(
+            process.get_custom_host_name(), self._expected_host("app-hello-world")
+        )
 
-        self.assertEqual(process.get_host_name(), expected)
-        # the reflex backend host keeps the custom subdomain and appends the -back suffix
-        self.assertEqual(process.get_host_name("-back"), expected_back)
+        # front nginx block answers on both the id host and the custom alias
+        self.assertEqual(
+            process.get_front_server_names(),
+            [self._expected_host("resource-model-id"), self._expected_host("app-hello-world")],
+        )
+
+        # the backend service host is id-only, but its CORS allow-list includes the custom front
+        back_service = process._get_cloud_back_nginx_services()
+        self.assertEqual(
+            back_service.server_name, self._expected_host("resource-model-id", "-back")
+        )
+        self.assertIn(process.get_custom_host_url(), back_service.allowed_origins)
+        self.assertIn(process.get_host_url(), back_service.allowed_origins)
+
+    def test_default_host_name_unchanged(self):
+        app = ReflexApp("resource-model-id", "app", ShellProxy())
+        process = ReflexProcess(3000, 8000, app)
+
+        self.assertEqual(process.get_host_name(), self._expected_host("resource-model-id"))
+        self.assertIsNone(process.get_custom_host_name())
+        self.assertEqual(
+            process.get_front_server_names(), [self._expected_host("resource-model-id")]
+        )

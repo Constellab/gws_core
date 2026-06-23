@@ -68,7 +68,8 @@ def set_custom_subdomain(
     """
     Set a readable, stable custom subdomain for an app.
     The value is validated as a DNS label and must be unique across all apps in the lab.
-    The new host takes effect on the next start of the app.
+    The custom host is added as a front-only alias next to the id-based host. It is applied
+    immediately if the app is running, otherwise on its next start.
     """
 
     return AppsManager.set_custom_subdomain(id_, subdomain)

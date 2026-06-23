@@ -1,3 +1,4 @@
+import re
 from abc import abstractmethod
 
 
@@ -6,12 +7,21 @@ class AppNginxServiceInfo:
 
     service_id: str
     source_port: int
-    server_name: str
+    # A single host name or a list of host names answered by this server block. Listing
+    # several names lets a custom-subdomain host alias resolve to the same backend as the
+    # canonical id-based host.
+    server_name: str | list[str]
 
-    def __init__(self, service_id: str, source_port: int, server_name: str):
+    def __init__(self, service_id: str, source_port: int, server_name: str | list[str]):
         self.service_id = service_id
         self.source_port = source_port
         self.server_name = server_name
+
+    def _render_server_names(self) -> str:
+        """Render the server_name(s) for the nginx 'server_name ...;' directive."""
+        if isinstance(self.server_name, str):
+            return self.server_name
+        return " ".join(self.server_name)
 
     @abstractmethod
     def get_nginx_service_config(self) -> str:
@@ -23,39 +33,58 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
 
     destination_port: int
     use_localhost_host_header: bool
-    allowed_origin: str | None
+    allowed_origins: list[str]
 
     def __init__(
         self,
         service_id: str,
         source_port: int,
-        server_name: str,
+        server_name: str | list[str],
         destination_port: int,
         use_localhost_host_header: bool = False,
         allowed_origin: str | None = None,
+        allowed_origins: list[str] | None = None,
     ):
         super().__init__(service_id, source_port, server_name)
         self.destination_port = destination_port
         self.use_localhost_host_header = use_localhost_host_header
-        self.allowed_origin = allowed_origin
+        # Accept either a single origin (back-compat) or an explicit list. Both feed the same
+        # allow-list; when more than one origin is allowed the request origin is echoed back
+        # (Access-Control-Allow-Credentials forbids the '*' wildcard).
+        origins = list(allowed_origins) if allowed_origins else []
+        if allowed_origin:
+            origins.append(allowed_origin)
+        # de-duplicate while preserving order
+        self.allowed_origins = list(dict.fromkeys(origins))
 
-    def get_nginx_service_config(self) -> str:
-        """Generate nginx configuration block for this service"""
+    def _build_cors_config(self) -> str:
+        """Build the CORS header block, echoing the request origin when it is allowed.
 
-        host_header = (
-            f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
-        )
-        cors_config = ""
-        if self.allowed_origin:
-            cors_config = f"""# CORS headers
-        add_header 'Access-Control-Allow-Origin' '{self.allowed_origin}' always;
+        nginx can only emit a single Access-Control-Allow-Origin value, and the '*' wildcard is
+        invalid together with Access-Control-Allow-Credentials. To allow several front origins
+        (e.g. the id-based host and a custom-subdomain alias), we match $http_origin against the
+        allow-list and echo it back via a per-request variable.
+        """
+        if not self.allowed_origins:
+            return ""
+
+        # Build a regex alternation of the allowed origins (escape regex metachars in hosts).
+        escaped = [re.escape(origin) for origin in self.allowed_origins]
+        origin_regex = "|".join(escaped)
+
+        return f"""# CORS headers (echo the request origin when it is in the allow-list)
+        set $cors_origin "";
+        if ($http_origin ~ '^({origin_regex})$') {{
+            set $cors_origin $http_origin;
+        }}
+        add_header 'Access-Control-Allow-Origin' $cors_origin always;
         add_header 'Access-Control-Allow-Methods' '*' always;
         add_header 'Access-Control-Allow-Headers' '*' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
 
         # Handle preflight OPTIONS requests
         if ($request_method = 'OPTIONS') {{
-            add_header 'Access-Control-Allow-Origin' '{self.allowed_origin}' always;
+            add_header 'Access-Control-Allow-Origin' $cors_origin always;
             add_header 'Access-Control-Allow-Methods' '*' always;
             add_header 'Access-Control-Allow-Headers' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
@@ -65,10 +94,18 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
             return 204;
         }}
 """
+
+    def get_nginx_service_config(self) -> str:
+        """Generate nginx configuration block for this service"""
+
+        host_header = (
+            f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
+        )
+        cors_config = self._build_cors_config()
         return f"""
 server {{
     listen {self.source_port};
-    server_name {self.server_name};
+    server_name {self._render_server_names()};
 
     location / {{
         proxy_pass http://localhost:{self.destination_port};
@@ -100,7 +137,13 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
 
     front_folder_path: str
 
-    def __init__(self, service_id: str, source_port: int, server_name: str, front_folder_path: str):
+    def __init__(
+        self,
+        service_id: str,
+        source_port: int,
+        server_name: str | list[str],
+        front_folder_path: str,
+    ):
         super().__init__(service_id, source_port, server_name)
         self.front_folder_path = front_folder_path
 
@@ -111,7 +154,7 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
         return rf"""
 server {{
         listen {self.source_port};
-        server_name {self.server_name};
+        server_name {self._render_server_names()};
 
         root {self.front_folder_path};
         index index.html;

@@ -38,19 +38,33 @@ class TestStreamlitApp(BaseTestCase):
         virtual_host = Settings.get_virtual_host()
         return f"{sub_domain}-{host_name}{suffix}.{virtual_host}"
 
-    def test_custom_subdomain_host_name(self):
+    def test_custom_subdomain_is_a_front_alias(self):
+        """The canonical host stays id-based; the custom host is added as a front alias."""
         process = self._build_process_with_subdomain("app-hello-world")
 
-        self.assertEqual(process.get_host_name(), self._expected_host("app-hello-world"))
+        # canonical host is unchanged (id-based)
+        self.assertEqual(process.get_host_name(), self._expected_host("resource-model-id"))
+        # the custom host is exposed separately
         self.assertEqual(
-            process.get_host_name("-back"), self._expected_host("app-hello-world", "-back")
+            process.get_custom_host_name(), self._expected_host("app-hello-world")
+        )
+        # the front nginx server_name lists both the id host and the custom alias
+        front_service = process._get_nginx_services()[0]
+        self.assertEqual(
+            front_service.server_name,
+            [self._expected_host("resource-model-id"), self._expected_host("app-hello-world")],
         )
 
     def test_default_host_name_unchanged(self):
-        """With no custom subdomain, the host still uses the resource model id."""
+        """With no custom subdomain, the front answers only on the resource model id host."""
         process = self._build_process_with_subdomain(None)
 
         self.assertEqual(process.get_host_name(), self._expected_host("resource-model-id"))
+        self.assertIsNone(process.get_custom_host_name())
+        front_service = process._get_nginx_services()[0]
+        self.assertEqual(
+            front_service.server_name, [self._expected_host("resource-model-id")]
+        )
 
     def test_dev_mode_ignores_custom_subdomain(self):
         app = StreamlitApp("resource-model-id", "app", ShellProxy())
@@ -61,6 +75,8 @@ class TestStreamlitApp(BaseTestCase):
         self.assertEqual(
             process.get_host_name(), self._expected_host(AppProcess.DEV_MODE_APP_ID)
         )
+        # the custom subdomain is ignored in dev mode
+        self.assertIsNone(process.get_custom_host_name())
 
     def test_custom_subdomain_validation(self):
         # use a subdomain that no other test persists, so the uniqueness check does not interfere

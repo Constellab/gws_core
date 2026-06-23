@@ -243,7 +243,7 @@ class ReflexProcess(AppProcess):
             AppNginxReflexFrontServerServiceInfo(
                 service_id=self.get_id() + "-front",
                 source_port=self.get_service_source_port(),
-                server_name=self.get_host_name(),
+                server_name=self.get_front_server_names(),
                 front_folder_path=front_build_folder,
             )
         )
@@ -257,12 +257,37 @@ class ReflexProcess(AppProcess):
         return AppNginxRedirectServiceInfo(
             service_id=self.get_id() + "-back",
             source_port=self.get_service_source_port(),
+            # the backend host stays id-based only (the custom subdomain is a front-only alias)
             server_name=self.get_host_name("-back"),
             destination_port=self.back_port,
-            # the back is always served by a redirect service
-            # Set allowed_origin to the frontend URL to enable CORS
-            allowed_origin=self.get_host_url(),
+            # the back is always served by a redirect service.
+            # Allow CORS from the front origin(s): the id-based host and, when set, the
+            # custom-subdomain alias from which the front may also be served.
+            allowed_origins=self._get_front_origins(),
         )
+
+    def _get_front_origins(self) -> list[str]:
+        """Front origins allowed to call the backend: the id-based host plus the custom alias."""
+        origins = [self.get_host_url()]
+        custom_url = self.get_custom_host_url()
+        if custom_url is not None:
+            origins.append(custom_url)
+        return origins
+
+    def _refresh_custom_subdomain_services(self) -> None:
+        """Refresh the front server_name alias and the backend CORS allow-list in place.
+
+        The front static server gains/loses the custom host alias; the backend keeps its
+        id-based host but must allow the custom front origin so the (still id-based) backend
+        accepts cross-origin calls from a front served on the custom domain.
+        """
+        for service in self._services:
+            if isinstance(service, AppNginxReflexFrontServerServiceInfo):
+                service.server_name = self.get_front_server_names()
+            elif service.service_id.endswith("-back") and isinstance(
+                service, AppNginxRedirectServiceInfo
+            ):
+                service.allowed_origins = list(dict.fromkeys(self._get_front_origins()))
 
     def get_back_host_url(self) -> str:
         return self.get_host_url("-back")

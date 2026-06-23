@@ -285,8 +285,10 @@ class AppsManager:
         The value is validated and checked for DB-wide uniqueness by the resource setter.
         Passing a falsy value clears the custom subdomain and restores the default id-based host.
 
-        If the app is currently running, the new host only takes effect on the next start
-        (the running process keeps its current host until restarted).
+        The custom subdomain is a front-only alias on the app host: the canonical id-based host
+        is kept, and the custom host is added as an extra nginx server_name. If the app is
+        currently running, the change is applied immediately (the front nginx service is
+        re-registered and nginx reloaded); otherwise it takes effect on the next start.
 
         :param app_id: the resource model id of the app
         :param subdomain: the custom subdomain to apply, or None/"" to clear it
@@ -302,6 +304,11 @@ class AppsManager:
 
         resource.set_custom_subdomain(subdomain)
         resource_model.update_resource_fields(resource)
+
+        # Apply live to the running process if any (re-registers nginx with the new alias)
+        app_process = cls.find_app_by_resource_model_id(app_id)
+        if app_process is not None:
+            app_process.update_custom_subdomain(resource.get_custom_subdomain())
 
     @classmethod
     def get_logs_of_app(

@@ -273,29 +273,72 @@ class AppProcess:
 
         self.set_status(AppProcessStatus.STOPPED, "Process stopped")
 
-    def get_host_name(self, suffix: str = "") -> str:
-        """Get the host name for the app process based on the port and suffix.
-        This is used to generate the host URL for the app.
+    def _build_host_name(self, host_segment: str, suffix: str = "") -> str:
+        """Build a full host name from a middle segment, applying the local/prod formatting.
 
-        By default we use the resource_model_id as host name to have a stable URL for the app.
-        The stable URL is required for reflex as the backend url is stored in the front build and should not change at each deployment.
-
-        An app can optionally define a custom subdomain to get a readable, stable host. The
-        precedence is: dev mode > custom subdomain > resource model id. In dev mode the custom
-        subdomain is ignored (the DEV_MODE_APP_ID is always used).
+        :param host_segment: the variable middle part of the host (id or custom subdomain)
+        :param suffix: optional suffix appended to the segment (e.g. "-back" for the reflex backend)
         """
-        if self._app.is_dev_mode():
-            host_name = self.DEV_MODE_APP_ID
-        else:
-            host_name = self._app.custom_subdomain or self._app.resource_model_id
-
         if Settings.is_local_or_desktop_env():
-            return f"{host_name}{suffix}.localhost"
+            return f"{host_segment}{suffix}.localhost"
 
         sub_domain = Settings.get_app_sub_domain()
         virtual_host = Settings.get_virtual_host()
 
-        return f"{sub_domain}-{host_name}{suffix}.{virtual_host}"
+        return f"{sub_domain}-{host_segment}{suffix}.{virtual_host}"
+
+    def get_host_name(self, suffix: str = "") -> str:
+        """Get the canonical host name for the app process based on the suffix.
+        This is used to generate the host URL for the app.
+
+        We use the resource_model_id as host name to have a stable URL for the app.
+        The stable URL is required for reflex as the backend url is stored in the front build
+        and should not change at each deployment. In dev mode the DEV_MODE_APP_ID is used.
+
+        An app can optionally define a custom subdomain (see get_custom_host_name). The custom
+        host is registered as an *alias* on the front nginx block — it never replaces this
+        canonical host, so URLs and baked backend addresses stay stable.
+        """
+        if self._app.is_dev_mode():
+            host_segment = self.DEV_MODE_APP_ID
+        else:
+            host_segment = self._app.resource_model_id
+
+        return self._build_host_name(host_segment, suffix)
+
+    def get_custom_host_name(self, suffix: str = "") -> str | None:
+        """Get the custom-subdomain-based host name, or None when no custom subdomain applies.
+
+        Returns None in dev mode (the custom subdomain is ignored) or when the app has no
+        custom subdomain set. Uses the same local/prod formatting as get_host_name, only the
+        middle segment differs (custom subdomain instead of resource model id).
+        """
+        if self._app.is_dev_mode() or not self._app.custom_subdomain:
+            return None
+
+        return self._build_host_name(self._app.custom_subdomain, suffix)
+
+    def get_front_server_names(self, suffix: str = "") -> list[str]:
+        """Get the list of host names the front nginx block should answer to.
+
+        Always contains the canonical id-based host, plus the custom-subdomain host as an
+        alias when one is set. nginx routes by server_name, so listing both names on a single
+        server block makes the custom host resolve to the same backend as the id host.
+        """
+        server_names = [self.get_host_name(suffix)]
+        custom_host = self.get_custom_host_name(suffix)
+        if custom_host is not None:
+            server_names.append(custom_host)
+        return server_names
+
+    def get_custom_host_url(self, suffix: str = "") -> str | None:
+        """Get the full custom-subdomain URL (scheme + host + port), or None when not set."""
+        custom_host = self.get_custom_host_name(suffix)
+        if custom_host is None:
+            return None
+        if Settings.is_local_or_desktop_env():
+            return f"http://{custom_host}:{Settings.get_app_external_port()}"
+        return f"https://{custom_host}"
 
     def get_host_url(self, suffix: str = "") -> str:
         if Settings.is_local_or_desktop_env():
@@ -570,6 +613,39 @@ class AppProcess:
     def set_stop_policy(self, stop_policy: AppStopPolicy) -> None:
         """Update the stop policy on the underlying app instance."""
         self._app.set_stop_policy(stop_policy)
+
+    def update_custom_subdomain(self, subdomain: str | None) -> None:
+        """Update the custom subdomain on a (possibly running) app process.
+
+        Updates the in-memory app instance and, if the process is running, re-registers its
+        front nginx service(s) so the custom host alias is added/removed live (with an nginx
+        reload). The canonical id-based host is untouched, so the running app keeps serving
+        without interruption. When the process is not running, nothing else is needed: the host
+        is rebuilt from the persisted value on the next start.
+
+        :param subdomain: the custom subdomain to apply, or None to clear it
+        """
+        self._app.set_custom_subdomain(subdomain)
+
+        if self.is_stopped() or not self._services:
+            return
+
+        self._refresh_custom_subdomain_services()
+        AppNginxManager.get_instance().register_services(self._services)
+
+    def _refresh_custom_subdomain_services(self) -> None:
+        """Update the registered nginx service objects in place for the current custom subdomain.
+
+        Default implementation updates the front service's server_name list. Subclasses with a
+        separate backend (reflex) override this to also refresh the backend CORS allow-list.
+        """
+        for service in self._services:
+            if self._is_front_service(service):
+                service.server_name = self.get_front_server_names()
+
+    def _is_front_service(self, service: AppNginxServiceInfo) -> bool:
+        """Return True if the given nginx service serves the app front (and carries the alias)."""
+        return not service.service_id.endswith("-back")
 
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
