@@ -134,13 +134,36 @@ class StreamlitMainState(StreamlitMainStateBase):
         return CurrentUserService.get_current_user()
 
     @classmethod
-    def get_user_auth_info(cls) -> StreamlitUserAuthInfo:
-        """Return the user auth info.
-        This is useful to auth the user in custom components
+    def get_user_auth_info(cls, fallback_to_system_user: bool = False) -> StreamlitUserAuthInfo:
+        """Return the auth info a custom component needs to call the data lab API from the front.
 
+        Resolution order:
+        - if a user is authenticated (AUTHENTICATED app), use that user's access token;
+        - else if ``fallback_to_system_user`` is True, use the system user's access token so
+          the front can still reach the API. WARNING: this lets any visitor of the app read
+          and write data lab objects through the API as the system user. Only enable it on
+          apps where this is acceptable;
+        - else (PUBLIC app, no user, no fallback) raise a clear error.
+
+        :param fallback_to_system_user: run the front API requests as the system user when no
+            user is authenticated, defaults to False
+        :type fallback_to_system_user: bool, optional
         :return: the user auth info
         :rtype: StreamlitUserAuthInfo
         """
-        return StreamlitUserAuthInfo(
-            app_id=cls.get_app_id(), user_access_token=cls.get_user_access_token()
-        )
+        user_access_token = cls.get_user_access_token()
+
+        if not user_access_token and fallback_to_system_user:
+            user_access_token = cls.get_system_user_access_token()
+
+        if not user_access_token:
+            st.error(
+                "This component needs to call the data lab API but no user is authenticated "
+                "(the app runs in PUBLIC access mode). Either set the app access mode to "
+                "AUTHENTICATED, or enable fallback_to_system_user on the component. Note that "
+                "fallback_to_system_user lets any visitor of the app read and write data lab "
+                "objects through the API as the system user."
+            )
+            st.stop()
+
+        return StreamlitUserAuthInfo(app_id=cls.get_app_id(), user_access_token=user_access_token)

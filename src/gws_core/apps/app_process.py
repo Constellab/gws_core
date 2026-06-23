@@ -81,6 +81,12 @@ class AppProcess:
     DEV_MODE_APP_ID = "dev-app"
     APP_CONFIG_FILENAME = "app_config.json"
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
+    # Token always provisioned for the system user (kept in the app config but never
+    # added to the URL). It lets front components opt into running their API requests
+    # as the system user via fallback_to_system_user. Mirrored in
+    # StreamlitMainStateBase.SYSTEM_USER_ACCESS_TOKEN_KEY (the base module cannot import
+    # gws_core, so the literal is duplicated there).
+    SYSTEM_USER_ACCESS_TOKEN_KEY = "system_user_token"
 
     def __init__(self, app: AppInstance):
         """Initialize the app process.
@@ -358,12 +364,6 @@ class AppProcess:
         """
         host_url = self.get_host_url()
 
-        # PUBLIC mode: the URL is bare and shareable. No token and no user access token
-        # are added, and no user is authenticated (the app runs anonymously). This is true
-        # in dev mode too, so a dev app can simulate a public prod app.
-        if not self._app.token_in_url():
-            return AppInstanceUrl(host_url=host_url)
-
         if self._app.is_dev_mode():
             # Dev mode handling
             if self._app._dev_user_id:
@@ -373,6 +373,21 @@ class AppProcess:
                 # add the system user to the list of users that can access the app
                 # in dev mode, we authenticate the system user
                 self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+            return AppInstanceUrl(host_url=host_url)
+
+        # Always provision the system user under a fixed token (real modes only; dev mode
+        # already reaches the system/dev user through the dev token above). It is stored in
+        # the app config but never added to the URL, so it changes nothing for normal
+        # access. It only becomes usable when a front component explicitly opts in via
+        # fallback_to_system_user (e.g. a PUBLIC app with no authenticated user that still
+        # needs to call the API). Done for both PUBLIC and AUTHENTICATED so the opt-in works
+        # uniformly.
+        self._add_user(User.get_and_check_sysuser().id, self.SYSTEM_USER_ACCESS_TOKEN_KEY)
+
+        # PUBLIC mode: the URL is bare and shareable. No token and no user access token
+        # are added, and no user is authenticated (the app runs anonymously). This is true
+        # in dev mode too, so a dev app can simulate a public prod app.
+        if not self._app.token_in_url():
             return AppInstanceUrl(host_url=host_url)
 
         # AUTHENTICATED: the launching user is authenticated and the token + user access

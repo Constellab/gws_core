@@ -18,7 +18,10 @@ def render_resources_page():
 
 def _render_resource_select():
     def example_demo():
-        resource_select = StreamlitResourceSelect()
+        # fallback_to_system_user lets the component call the API as the system user when
+        # the app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+        # visitor of the app read and write data lab objects through the API.
+        resource_select = StreamlitResourceSelect(fallback_to_system_user=True)
         selected_resource = resource_select.select_resource(
             placeholder="Search for resource", key="resource-selector", default_resource=None
         )
@@ -31,7 +34,10 @@ def _render_resource_select():
     code = """import streamlit as st
 from gws_streamlit_main import StreamlitResourceSelect
 
-resource_select = StreamlitResourceSelect()
+# fallback_to_system_user lets the component call the API as the system user when
+# the app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+# visitor of the app read and write data lab objects through the API.
+resource_select = StreamlitResourceSelect(fallback_to_system_user=True)
 selected_resource = resource_select.select_resource(
     placeholder='Search for resource', key="resource-selector", defaut_resource=None)
 

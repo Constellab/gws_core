@@ -27,6 +27,10 @@ class StreamlitMainStateBase(ABC):
     APP_CONFIG_FILENAME = "app_config.json"
     DEV_MODE_APP_ID = "dev-app"
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
+    # Fixed token always provisioned for the system user by the launch side. Mirrors
+    # AppProcess.SYSTEM_USER_ACCESS_TOKEN_KEY (this module cannot import gws_core, so the
+    # literal is duplicated). Used by components opting into fallback_to_system_user.
+    SYSTEM_USER_ACCESS_TOKEN_KEY = "system_user_token"
 
     @classmethod
     def initialize(cls) -> None:
@@ -304,3 +308,19 @@ class StreamlitMainStateBase(ABC):
         :rtype: str | None
         """
         return cast("str | None", st.session_state.get("__gws_user_id__"))
+
+    @classmethod
+    def get_system_user_access_token(cls) -> str | None:
+        """Return the access token of the system user, if the launch side provisioned one.
+
+        The token is provisioned for every non-dev app (stored in the app config but never
+        in the URL). It lets front components fall back to running their API requests as the
+        system user. Returns None if it is not available (e.g. a dev-mode app).
+
+        :return: the system user access token, or None
+        :rtype: str | None
+        """
+        user_access_tokens = cls.get_app_config().get("user_access_tokens", {})
+        if cls.SYSTEM_USER_ACCESS_TOKEN_KEY in user_access_tokens:
+            return cls.SYSTEM_USER_ACCESS_TOKEN_KEY
+        return None

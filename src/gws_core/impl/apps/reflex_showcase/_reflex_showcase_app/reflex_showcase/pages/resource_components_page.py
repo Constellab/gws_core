@@ -135,11 +135,15 @@ resource_select_button(state=FilteredResourceSelectState)"""
             "Search and select a resource using the embedded dc-select-resource web component:",
             margin_bottom="0.5em",
         ),
+        # fallback_to_system_user lets the component call the API as the system user when the
+        # app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+        # visitor of the app read and write data lab objects through the API.
         select_resource_2_component(
             input_data=SelectResourceInput(
                 placeholder="Search for a resource...",
             ).to_dto(),
             output_event=ResourceComponentsPageState.handle_resource_2_selected,
+            fallback_to_system_user=True,
         ),
         rx.cond(
             ResourceComponentsPageState.selected_resource_2_name != "",
@@ -184,12 +188,16 @@ class MyState(rx.State):
         resource_model = ResourceModel.get_by_id_and_check(resource_id)
         self.selected_resource_name = resource_model.name
 
-# Display the embedded resource select component
+# Display the embedded resource select component.
+# fallback_to_system_user lets the component call the API as the system user when the
+# app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+# visitor of the app read and write data lab objects through the API.
 select_resource_2_component(
     input_data=SelectResourceInput(
         placeholder="Search for a resource...",
     ).to_dto(),
     output_event=MyState.handle_resource_selected,
+    fallback_to_system_user=True,
 )"""
 
     return page_layout(

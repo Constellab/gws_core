@@ -59,6 +59,10 @@ class ReflexMainStateBase(rx.State, mixin=True):
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
     DEV_MODE_APP_ID = "dev-app"
+    # Fixed token always provisioned for the system user by the launch side. Mirrors
+    # AppProcess.SYSTEM_USER_ACCESS_TOKEN_KEY (this module cannot import gws_core, so the
+    # literal is duplicated). Used by components opting into fallback_to_system_user.
+    SYSTEM_USER_ACCESS_TOKEN_KEY = "system_user_token"
 
     MAIN_STATE_CLASS = type["ReflexMainStateBase"]
 
@@ -284,6 +288,19 @@ class ReflexMainStateBase(rx.State, mixin=True):
             query_params = self.get_query_params()
             self.user_access_token = query_params.get("gws_user_access_token")
         return self.user_access_token
+
+    async def _get_system_user_access_token(self) -> str | None:
+        """Return the access token of the system user, if the launch side provisioned one.
+
+        The token is provisioned for every non-dev app (stored in the app config but never
+        in the URL). It lets front components fall back to running their API requests as the
+        system user. Returns None if it is not available (e.g. a dev-mode app).
+        """
+        app_config = await self.get_app_config()
+        user_access_tokens = app_config.get("user_access_tokens") or {}
+        if self.SYSTEM_USER_ACCESS_TOKEN_KEY in user_access_tokens:
+            return self.SYSTEM_USER_ACCESS_TOKEN_KEY
+        return None
 
     ####################### PARAMS #####################
 

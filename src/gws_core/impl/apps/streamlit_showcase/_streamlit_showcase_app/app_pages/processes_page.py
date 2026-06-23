@@ -26,7 +26,10 @@ def _render_task_config_form():
         if "config_data" not in st.session_state:
             st.session_state["config_data"] = None
 
-        form_config = StreamlitTaskRunner(TableImporter)
+        # fallback_to_system_user lets the form call the API as the system user when the app
+        # runs in PUBLIC access mode (no authenticated user). WARNING: this lets any visitor
+        # of the app read and write data lab objects through the API.
+        form_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
         form_config.generate_config_form_without_run(
             session_state_key="config_data",
             default_config_values=TableImporter.config_specs.get_default_values(),
@@ -44,7 +47,10 @@ from gws_streamlit_main import StreamlitTaskRunner
 if "config_data" not in st.session_state:
     st.session_state["config_data"] = None
 
-form_config = StreamlitTaskRunner(TableImporter)
+# fallback_to_system_user lets the form call the API as the system user when the app
+# runs in PUBLIC access mode (no authenticated user). WARNING: this lets any visitor
+# of the app read and write data lab objects through the API.
+form_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
 form_config.generate_config_form_without_run(
     session_state_key="config_data",
     default_config_values=TableImporter.config_specs.get_default_values(),
@@ -69,7 +75,7 @@ def _render_task_config_form_in_dialog():
 
         @st.dialog("Task Configuration")
         def dialog():
-            form_config = StreamlitTaskRunner(TableImporter)
+            form_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
             form_config.generate_config_form_without_run(
                 session_state_key="config_data_dialog",
                 default_config_values=TableImporter.config_specs.get_default_values(),
@@ -98,7 +104,7 @@ if "config_data_dialog" not in st.session_state:
 
 @st.dialog("Task Configuration")
 def dialog():
-    form_config = StreamlitTaskRunner(TableImporter)
+    form_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
     form_config.generate_config_form_without_run(
         session_state_key="config_data_dialog",
         default_config_values=TableImporter.config_specs.get_default_values(),
@@ -169,7 +175,7 @@ def _import_file_to_table(key: str) -> None:
             f.write(uploaded_file.getbuffer())
 
         # convert the file to table
-        task_config = StreamlitTaskRunner(TableImporter)
+        task_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
         file = File(temp_file_path)
         task_config.generate_form_dialog(
             inputs={TableImporter.input_name: file},
@@ -202,7 +208,10 @@ def _import_file_to_table(key: str) -> None:
             f.write(uploaded_file.getbuffer())
 
         # convert the file to table
-        task_config = StreamlitTaskRunner(TableImporter)
+        # fallback_to_system_user lets the task runner call the API as the system user when
+        # the app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+        # visitor of the app read and write data lab objects through the API.
+        task_config = StreamlitTaskRunner(TableImporter, fallback_to_system_user=True)
 
         file = File(temp_file_path)
         task_config.generate_form_dialog(

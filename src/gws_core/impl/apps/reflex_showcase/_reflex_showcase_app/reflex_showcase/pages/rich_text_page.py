@@ -54,10 +54,14 @@ def rich_text_page() -> rx.Component:
 
     # Example component
     example_component = rx.box(
+        # fallback_to_system_user lets the editor call the API as the system user when the
+        # app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+        # visitor of the app read and write data lab objects through the API.
         rich_text_component(
             placeholder="Type something here...",
             value=RichTextPageState.rich_text,
             output_event=RichTextPageState.handle_rich_text_change,
+            fallback_to_system_user=True,
         ),
         rx.cond(
             RichTextPageState.is_not_empty,
@@ -105,12 +109,16 @@ class MyState(rx.State):
         \"\"\"Reset to default content.\"\"\"
         self._rich_text = default_rich_text
 
-# Use the component
+# Use the component.
+# fallback_to_system_user lets the editor call the API as the system user when the
+# app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+# visitor of the app read and write data lab objects through the API.
 rx.box(
     rich_text_component(
         placeholder="Type something here...",
         value=MyState.rich_text,
         output_event=MyState.handle_rich_text_change,
+        fallback_to_system_user=True,
     ),
     rx.button("Reset Content",
               on_click=MyState.reset_rich_text,

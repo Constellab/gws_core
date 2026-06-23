@@ -37,13 +37,25 @@ class StreamlitTaskRunner:
     """
 
     task_type: type[Task]
+    _fallback_to_system_user: bool
 
     _streamlit_component_loader = StreamlitComponentLoader("process-config")
 
-    def __init__(self, task_type: type[Task]):
+    def __init__(self, task_type: type[Task], fallback_to_system_user: bool = False):
+        """Initialize the StreamlitTaskRunner.
+
+        :param task_type: the task class to configure and run
+        :type task_type: type[Task]
+        :param fallback_to_system_user: when no user is authenticated (PUBLIC app), run the
+            component's API requests as the system user instead of raising an error. WARNING:
+            this lets any visitor of the app read and write data lab objects through the API
+            as the system user. Defaults to False.
+        :type fallback_to_system_user: bool, optional
+        """
         if not Utils.issubclass(task_type, Task):
             raise ValueError("task_type must be a subclass of Task")
         self.task_type = task_type
+        self._fallback_to_system_user = fallback_to_system_user
 
     def generate_config_form_without_run(
         self,
@@ -145,7 +157,11 @@ class StreamlitTaskRunner:
         }
 
         component_value = self._streamlit_component_loader.call_component(
-            data, key=key, authentication_info=StreamlitMainState.get_user_auth_info()
+            data,
+            key=key,
+            authentication_info=StreamlitMainState.get_user_auth_info(
+                fallback_to_system_user=self._fallback_to_system_user
+            ),
         )
 
         if component_value is None:
