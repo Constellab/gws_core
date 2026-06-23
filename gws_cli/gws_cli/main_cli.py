@@ -1,7 +1,9 @@
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 import typer
+
+# ruff: noqa: PLC0415
 
 
 class LogLevel(str, Enum):
@@ -16,6 +18,7 @@ def main():
         claude_cli,
         community_cli,
         copilot_cli,
+        db_cli,
         dev_env_cli,
         reflex_cli,
         server_cli,
@@ -59,6 +62,7 @@ def main():
         help="Manage server operations (run, test, execute scenarios/processes)",
     )
     app.add_typer(brick_cli.app, name="brick", help="Generate and manage bricks")
+    app.add_typer(db_cli.app, name="db", help="Run read-only SQL queries against brick databases")
     app.add_typer(task_cli.app, name="task", help="Generate task classes")
     app.add_typer(
         streamlit_cli.app, name="streamlit", help="Generate and run Streamlit applications"
@@ -68,7 +72,9 @@ def main():
         dev_env_cli.app, name="dev-env", help="Manage development environment (reset data)"
     )
     app.add_typer(claude_cli.app, name="claude", help="Claude Code management commands")
-    app.add_typer(community_cli.app, name="community", help="Community commands (documentation, chatbot)")
+    app.add_typer(
+        community_cli.app, name="community", help="Community commands (documentation, chatbot)"
+    )
     app.add_typer(copilot_cli.app, name="copilot", help="GitHub Copilot management commands")
     app.add_typer(
         utils_cli.app, name="utils", help="Utility commands for development environment setup"
@@ -102,7 +108,7 @@ def enable_logger(log_level: str = "INFO") -> None:
     from gws_core import Logger, Settings
 
     log_dir = Settings.build_log_dir(is_test=False)
-    Logger.build_main_logger(log_dir=log_dir, level=log_level)
+    Logger.build_main_logger(log_dir=log_dir, level=cast(Any, log_level))
 
 
 def start():

@@ -5,6 +5,7 @@ from typing_extensions import final
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.db_config import DbConfig, DbMode
+from gws_core.core.db.db_unavailable_error import DbUnavailableError
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials_type import CredentialsDataBasic
@@ -76,13 +77,15 @@ class LazyAbstractDbManager(AbstractDbManager):
                 Logger.info(f"{self.get_unique_name()} database container started")
 
         except Exception as err:
-            # If the lab manager failed to start the docker, we try to get the credentials to connect
-            Logger.info(
-                f"Cannot start the {self.get_brick_name()} db compose, skipping startup. Error: {str(err)}."
+            # Starting the container via the lab manager is best-effort and
+            # non-blocking: the lab manager may be unreachable. We log it and
+            # continue to try connecting to an already-running database (see
+            # get_config). If that connection also fails, the error surfaces
+            # there (and in DbManagerService) rather than being hidden here.
+            Logger.error(
+                f"Could not reach the lab manager to start the {self.get_unique_name()} database "
+                f"container. Will attempt to connect to an existing database. Error: {str(err)}."
             )
-
-            if not Settings.is_local_dev_env():
-                Logger.log_exception_stack_trace(err)
 
     def get_config(self, mode: DbMode) -> DbConfig:
         """Get database configuration with credentials from Docker service"""
@@ -96,8 +99,9 @@ class LazyAbstractDbManager(AbstractDbManager):
                 unique_name=self.get_name(),
             )
             if not credentials:
-                raise Exception(
-                    f"Error while registering the {self.get_brick_name()} db compose. Could not find existing credentials."
+                raise DbUnavailableError(
+                    f"The {self.get_unique_name()} database is unavailable: no credentials found "
+                    "(the container was likely never provisioned)."
                 )
 
             credentials_data = cast(CredentialsDataBasic, credentials.get_data_object())
@@ -107,8 +111,9 @@ class LazyAbstractDbManager(AbstractDbManager):
                 )
 
             if not credentials_data.url:
-                raise Exception(
-                    f"Error while registering the {self.get_brick_name()} db compose. Existing credentials {credentials.name} has no URL."
+                raise DbUnavailableError(
+                    f"The {self.get_unique_name()} database is unavailable: credentials "
+                    f"{credentials.name} have no URL."
                 )
 
             self._config = DbConfig(

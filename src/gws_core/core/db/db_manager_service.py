@@ -83,16 +83,21 @@ class DbManagerService:
             if db_manager.ignore_error_on_init():
                 return False
             unique_name = db_manager.get_unique_name()
-            error_message = f"Error while initializing the db '{unique_name}'. Error: {err}"
             if db_manager.is_lazy_init():
+                # Lazy managers are allowed to be unavailable at boot (the lab
+                # manager may be down or the container not provisioned yet). This
+                # is the single place that declares the db unavailable: log it
+                # and skip initialization instead of crashing the boot.
                 Logger.log_exception_stack_trace(err)
                 BrickLogService.log_brick_critical(
                     db_manager,
-                    f"{error_message}. The db manager is lazy, so skipping initialization.",
+                    f"The '{unique_name}' database is unavailable, skipping initialization. Error: {err}",
                 )
                 return False
             else:
-                raise Exception(error_message) from err
+                raise Exception(
+                    f"Error while initializing the db '{unique_name}'. Error: {err}"
+                ) from err
 
         Logger.debug(f"Db manager '{db_manager.get_unique_name()}' initialized in '{mode}' mode")
         return True

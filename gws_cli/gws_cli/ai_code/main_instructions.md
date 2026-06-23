@@ -24,6 +24,10 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - **Run specific test**: `gws server test [TEST_FILE_NAME]` (without `.py` extension, run from the brick directory)
 - Tests are located in each brick's `tests/` directory
 - Example: `cd bricks/gws_ai_toolkit && gws server test test_table_copilot`
+- **Run tests in parallel**: add `--parallel` to run via pytest-xdist. Each worker gets its own test DB schema.
+  - Example: `gws server test all --parallel`
+  - Control the worker count with `--workers` / `-n` (default `auto`, one worker per CPU); only takes effect with `--parallel`.
+  - Example: `gws server test all --parallel -n 4`
 
 ### Development Apps
 - Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
@@ -35,6 +39,14 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - **Generate new brick**: `gws brick generate [NAME]`
 - **Generate task class**: `gws task generate`
 - **Install dependencies**: Dependencies are defined in each brick's `settings.json`
+
+### Database Queries (read-only)
+- **Run a query**: `gws db query "SELECT ..." --db [BRICK_NAME]`
+- `--db` defaults to `gws_core`; pass a brick name (e.g. `gws_invest`) to query its database
+- **List databases**: `gws db list`
+- Only read-only statements are allowed (SELECT/SHOW/EXPLAIN/DESCRIBE); writes are blocked
+- Options: `--format json` for parseable output, `--limit N` to cap rows (default 20, `0` for no limit)
+- Example: `gws db query "SHOW TABLES" --db gws_invest`
 
 ### Constellab Chat Expert
 - **Ask a question**: `gws community ask-chatbot "My question?"`
