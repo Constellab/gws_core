@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import typer
+from gws_core.core.utils.package_helper import PackageHelper
 
 
 @dataclass
@@ -218,6 +219,44 @@ class AICodeService(ABC):
             target_dir: The plugin root directory
         """
 
+    def _resolve_placeholders(self, content: str) -> str:
+        """Substitute dynamic placeholders in skill content at generation time.
+
+        Placeholders use the ``{{NAME}}`` syntax. Currently resolves installed
+        package versions so that skills always reflect the environment they are
+        generated in (e.g. the Reflex version pinned in this lab).
+
+        Args:
+            content: The raw skill file content.
+
+        Returns:
+            The content with placeholders replaced.
+        """
+        replacements = {
+            "{{REFLEX_VERSION}}": self._get_package_version("reflex"),
+        }
+        for placeholder, value in replacements.items():
+            content = content.replace(placeholder, value)
+        return content
+
+    @staticmethod
+    def _get_package_version(package: str) -> str:
+        """Return the installed version of a package, or 'unknown' if absent.
+
+        Skill generation must never fail just because an optional package is not
+        installed, so any lookup error degrades gracefully.
+
+        Args:
+            package: The pip package name (e.g. "reflex").
+
+        Returns:
+            The installed version string, or "unknown" if it cannot be determined.
+        """
+        try:
+            return PackageHelper.get_package_version(package)
+        except ValueError:
+            return "unknown"
+
     def _write_skill(self, target_dir: Path, frontmatter_config: SkillFrontmatter) -> None:
         """Write a single skill to the target directory
 
@@ -234,6 +273,9 @@ class AICodeService(ABC):
 
         # Read the source file
         content = source_file.read_text(encoding="utf-8")
+
+        # Substitute dynamic placeholders (e.g. installed package versions)
+        content = self._resolve_placeholders(content)
 
         # Check if frontmatter already exists
         if not content.startswith("---"):
