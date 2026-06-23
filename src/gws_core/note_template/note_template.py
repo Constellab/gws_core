@@ -13,7 +13,7 @@ from gws_core.tag.tag_entity_type import TagEntityType
 class NoteTemplate(ModelWithUser):
     title = TypedCharField()
 
-    content = NullableRichTextDbField(null=True)
+    content = NullableRichTextDbField()
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)

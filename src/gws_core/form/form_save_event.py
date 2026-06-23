@@ -12,11 +12,11 @@ class FormSaveEvent(Model):
     """Audit row written once per Form save. The full per-leaf change list lives
     in the `changes` JSON column. See form_feature.md §3.4."""
 
-    form = TypedForeignKeyField(Form, on_delete="CASCADE", null=False, backref="save_events")
-    user = TypedForeignKeyField(User, null=False, backref="+")
+    form = TypedForeignKeyField(Form, on_delete="CASCADE", backref="save_events")
+    user = TypedForeignKeyField(User, backref="+")
 
     # List of FormChangeEntry dicts.
-    changes = TypedJSONField(null=False)
+    changes = TypedJSONField()
 
     def get_changes(self) -> list[FormChangeEntry]:
         raw = self.changes or []

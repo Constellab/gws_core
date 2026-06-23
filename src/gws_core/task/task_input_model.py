@@ -23,13 +23,13 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    scenario = NullableForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
-    task_model = NullableForeignKeyField(TaskModel, null=True, index=True, on_delete="CASCADE")
+    scenario = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
+    task_model = NullableForeignKeyField(TaskModel, index=True, on_delete="CASCADE")
     protocol_model = NullableForeignKeyField(
-        ProtocolModel, null=True, index=True, on_delete="CASCADE"
+        ProtocolModel, index=True, on_delete="CASCADE"
     )
     resource_model = NullableForeignKeyField(
-        ResourceModel, null=True, index=True, on_delete="CASCADE"
+        ResourceModel, index=True, on_delete="CASCADE"
     )
 
     port_name = TypedCharField()

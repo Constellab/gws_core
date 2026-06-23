@@ -16,7 +16,7 @@ class FileStore(Model):
     FileStore class
     """
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

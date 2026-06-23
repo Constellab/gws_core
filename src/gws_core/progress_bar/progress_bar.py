@@ -29,17 +29,17 @@ class ProgressBar(Model):
     ProgressBar class
     """
 
-    process_id = TypedCharField(null=False, index=True, unique=True)
-    process_typing_name = TypedCharField(null=False)
+    process_id = TypedCharField(index=True, unique=True)
+    process_typing_name = TypedCharField()
 
     current_value = TypedFloatField(default=0.0)
-    started_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
-    ended_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
+    started_at = NullableDateTimeUTC(with_milliseconds=True)
+    ended_at = NullableDateTimeUTC(with_milliseconds=True)
 
-    elapsed_time = NullableFloatField(null=True)
-    second_start = NullableDateTimeUTC(null=True, with_milliseconds=True)
+    elapsed_time = NullableFloatField()
+    second_start = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0

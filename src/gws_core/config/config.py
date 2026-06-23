@@ -18,7 +18,7 @@ class Config(ModelWithUser):
     a collection of parameters
     """
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

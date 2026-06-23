@@ -37,29 +37,29 @@ class TriggeredJobModel(ModelWithUser):
 
     # === SOURCE OF THE SCENARIO ===
     # Option 1: Task or Protocol typing (mutually exclusive with scenario_template)
-    process_typing = NullableForeignKeyField(Typing, null=True, backref="+")
+    process_typing = NullableForeignKeyField(Typing, backref="+")
 
     # Option 2: ScenarioTemplate (mutually exclusive with process_typing)
     scenario_template = NullableForeignKeyField(
-        ScenarioTemplate, null=True, backref="triggered_jobs", on_delete="SET NULL"
+        ScenarioTemplate, backref="triggered_jobs", on_delete="SET NULL"
     )
 
     # Configuration values for the process/template
-    config_values = NullableJSONField(null=True)
+    config_values = NullableJSONField()
 
     # === TRIGGER CONFIGURATION ===
-    trigger_type = TypedEnumField(choices=TriggerType, null=False)
+    trigger_type = TypedEnumField(choices=TriggerType)
 
     # CRON configuration
-    cron_expression = NullableCharField(max_length=100, null=True)
-    next_run_at = NullableDateTimeUTC(null=True)
+    cron_expression = NullableCharField(max_length=100)
+    next_run_at = NullableDateTimeUTC()
 
     # === STATE ===
     is_active = TypedBooleanField(default=False)
 
     # === METADATA ===
-    name = TypedCharField(max_length=255, null=False)
-    description = NullableTextField(null=True)
+    name = TypedCharField(max_length=255)
+    description = NullableTextField()
 
     class Meta:
         table_name = "gws_triggered_job"

@@ -23,7 +23,6 @@ class TagValueModel(Model):
 
     tag_key = TypedForeignKeyField(
         TagKeyModel,
-        null=False,
         index=True,
         on_delete="CASCADE",
         on_update="CASCADE",
@@ -32,13 +31,13 @@ class TagValueModel(Model):
     )
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = TypedCharField(null=False, collation="utf8mb4_bin")
+    tag_value = TypedCharField(collation="utf8mb4_bin")
 
     is_community_tag_value = TypedBooleanField(default=False)
 
-    short_description = NullableCharField(null=True, default=None)
+    short_description = NullableCharField(default=None)
 
-    additional_infos = NullableJSONField(null=True)
+    additional_infos = NullableJSONField()
 
     deprecated = TypedBooleanField(default=False)
 

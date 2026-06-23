@@ -24,21 +24,21 @@ from gws_core.tag.tag_value_model import TagValueModel
 class EntityTag(Model):
     """Table to store the tags of all entities"""
 
-    tag_key = TypedCharField(null=False)
+    tag_key = TypedCharField()
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = TypedCharField(null=False, collation="utf8mb4_bin")
+    tag_value = TypedCharField(collation="utf8mb4_bin")
 
     value_format = TypedEnumField(
-        choices=TagValueFormat, null=False, default=TagValueFormat.STRING
+        choices=TagValueFormat, default=TagValueFormat.STRING
     )
 
     # to override in child classes
-    entity_id = TypedCharField(null=False, max_length=36)
+    entity_id = TypedCharField(max_length=36)
 
-    entity_type = TypedEnumField(choices=TagEntityType, null=False)
+    entity_type = TypedEnumField(choices=TagEntityType)
 
-    origins = TypedJSONField(null=False)
+    origins = TypedJSONField()
 
     is_propagable = TypedBooleanField(default=False)
 

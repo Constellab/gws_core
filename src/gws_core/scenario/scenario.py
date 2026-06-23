@@ -44,30 +44,30 @@ if TYPE_CHECKING:
 
 @final
 class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
-    folder = NullableForeignKeyField(SpaceFolder, null=True)
+    folder = NullableForeignKeyField(SpaceFolder)
 
     status = TypedEnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
-    error_info = NullableJSONField(null=True)
+    error_info = NullableJSONField()
     creation_type = TypedEnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
     title = TypedCharField(max_length=50)
-    description = NullableRichTextDbField(null=True)
-    lab_config = NullableForeignKeyField(LabConfigModel, null=True)
+    description = NullableRichTextDbField()
+    lab_config = NullableForeignKeyField(LabConfigModel)
 
     is_validated = TypedBooleanField(default=False)
-    validated_at = NullableDateTimeUTC(null=True)
-    validated_by = NullableForeignKeyField(User, null=True, backref="+")
+    validated_at = NullableDateTimeUTC()
+    validated_by = NullableForeignKeyField(User, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = NullableDateTimeUTC(null=True)
-    last_sync_by = NullableForeignKeyField(User, null=True, backref="+")
+    last_sync_at = NullableDateTimeUTC()
+    last_sync_by = NullableForeignKeyField(User, backref="+")
 
     is_archived = TypedBooleanField(default=False, index=True)
-    running_process_pid = NullableIntegerField(null=True)
+    running_process_pid = NullableIntegerField()
     running_in_external_lab = NullableForeignKeyField(
-        LabModel, null=True, backref="+", on_delete="SET NULL"
+        LabModel, backref="+", on_delete="SET NULL"
     )
 
     # cache of the _protocol

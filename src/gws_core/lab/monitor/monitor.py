@@ -62,7 +62,7 @@ class Monitor(Model):
     gpu_memory_free = TypedFloatField(default=0)
     gpu_memory_percent = TypedFloatField(default=0)
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

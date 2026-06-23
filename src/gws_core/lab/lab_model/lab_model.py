@@ -21,13 +21,13 @@ class LabModel(Model):
 
     lab_id = TypedCharField(max_length=36)
     name = TypedCharField()
-    mode = TypedEnumField(choices=LabMode, null=False)
-    environment = TypedEnumField(choices=LabEnvironment, null=False)
-    domain = NullableCharField(null=True)
-    space_id = NullableCharField(null=True)
-    space_name = NullableCharField(null=True)
+    mode = TypedEnumField(choices=LabMode)
+    environment = TypedEnumField(choices=LabEnvironment)
+    domain = NullableCharField()
+    space_id = NullableCharField()
+    space_name = NullableCharField()
     credentials = NullableForeignKeyField(
-        Credentials, null=True, backref="+", on_delete="SET NULL"
+        Credentials, backref="+", on_delete="SET NULL"
     )
 
     class Meta:

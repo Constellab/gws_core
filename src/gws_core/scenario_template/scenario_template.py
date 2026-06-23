@@ -24,11 +24,11 @@ class ScenarioTemplate(ModelWithUser):
 
     name = TypedCharField(max_length=255)
 
-    description = NullableRichTextDbField(null=True)
+    description = NullableRichTextDbField()
 
     # version number of the scenario template
-    version = TypedIntegerField(null=False, default=1)
-    data = NullableJSONField(null=True)
+    version = TypedIntegerField(default=1)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

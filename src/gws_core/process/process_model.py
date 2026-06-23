@@ -61,32 +61,32 @@ class ProcessModel(ModelWithUser):
     """
 
     parent_protocol_id = NullableDeferredForeignKeyIdField(
-        "ProtocolModel", null=True, index=True
+        "ProtocolModel", index=True
     )
 
-    scenario = NullableForeignKeyField(Scenario, null=True, index=True, backref="+")
-    instance_name = NullableCharField(null=True)
-    config = TypedForeignKeyField(Config, null=False, backref="+")
-    progress_bar = NullableForeignKeyField(ProgressBar, null=True, backref="+")
-    process_typing_name = TypedCharField(null=False)
+    scenario = NullableForeignKeyField(Scenario, index=True, backref="+")
+    instance_name = NullableCharField()
+    config = TypedForeignKeyField(Config, backref="+")
+    progress_bar = NullableForeignKeyField(ProgressBar, backref="+")
+    process_typing_name = TypedCharField()
     # version of the brick when the process was created
-    brick_version_on_create = TypedCharField(null=False, max_length=50)
+    brick_version_on_create = TypedCharField(max_length=50)
     # version of the brick when the process was run
-    brick_version_on_run = NullableCharField(null=True, max_length=50)
-    run_by = NullableForeignKeyField(User, null=True, backref="+")
-    run_by_lab = NullableForeignKeyField(LabModel, null=True, backref="+")
+    brick_version_on_run = NullableCharField(max_length=50)
+    run_by = NullableForeignKeyField(User, backref="+")
+    run_by_lab = NullableForeignKeyField(LabModel, backref="+")
     status = TypedEnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
-    error_info = NullableJSONField(null=True)
+    error_info = NullableJSONField()
 
-    started_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
-    ended_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
+    started_at = NullableDateTimeUTC(with_milliseconds=True)
+    ended_at = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
     is_archived = TypedBooleanField(default=False, index=True)
-    style = TypedBaseDTOField(TypingStyle, null=False)
+    style = TypedBaseDTOField(TypingStyle)
 
     # name of the process set by the user
-    name = NullableCharField(null=True)
+    name = NullableCharField()
 
     _scenario: Scenario | None = None
     _parent_protocol: ProtocolModel | None = None

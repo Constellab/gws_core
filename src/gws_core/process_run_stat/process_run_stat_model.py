@@ -19,9 +19,9 @@ from gws_core.process_run_stat.process_run_stat_dto import (
 
 class ProcessRunStatModel(Model):
     process_typing_name = TypedCharField()
-    community_agent_version_id = NullableCharField(null=True)
+    community_agent_version_id = NullableCharField()
     status = TypedCharField()
-    error_info = NullableJSONField(null=True)
+    error_info = NullableJSONField()
     started_at = TypedDateTimeUTC()
     ended_at = TypedDateTimeUTC()
     elapsed_time = TypedFloatField()

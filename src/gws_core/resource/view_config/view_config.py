@@ -33,16 +33,16 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     title = TypedCharField()
     view_type = TypedEnumField(choices=ViewType)
     view_name = TypedCharField()
-    config = NullableForeignKeyField(Config, null=True, backref="+")
+    config = NullableForeignKeyField(Config, backref="+")
 
-    scenario = NullableForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
+    scenario = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
     resource_model = TypedForeignKeyField(
-        ResourceModel, null=False, index=True, on_delete="CASCADE"
+        ResourceModel, index=True, on_delete="CASCADE"
     )
 
     is_favorite = TypedBooleanField(default=False)
 
-    style = NullableBaseDTOField(TypingStyle, null=True)
+    style = NullableBaseDTOField(TypingStyle)
 
     def to_dto(self) -> ViewConfigDTO:
         return ViewConfigDTO(

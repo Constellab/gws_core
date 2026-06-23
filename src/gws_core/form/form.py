@@ -25,24 +25,24 @@ from gws_core.user.user import User
 class Form(ModelWithUser, NavigableEntity):
     """An instance of a FormTemplateVersion filled (or being filled) with values."""
 
-    name = TypedCharField(max_length=255, null=False)
+    name = TypedCharField(max_length=255)
 
     # FK is non-cascading: deleting a version that has Forms is forbidden at
     # the service layer (Phase 2). Forms outlive the version they were minted
     # from for as long as the version is not hard-deleted.
     template_version = TypedForeignKeyField(
-        FormTemplateVersion, null=False, backref="forms"
+        FormTemplateVersion, backref="forms"
     )
 
     status = TypedEnumField(
         choices=FormStatus, default=FormStatus.DRAFT, index=True
     )
 
-    submitted_at = NullableDateTimeUTC(null=True)
-    submitted_by = NullableForeignKeyField(User, null=True, backref="+")
+    submitted_at = NullableDateTimeUTC()
+    submitted_by = NullableForeignKeyField(User, backref="+")
 
     # Field values keyed by ConfigSpecs key; ParamSet items carry __item_id.
-    values = NullableJSONField(null=True)
+    values = NullableJSONField()
 
     is_archived = TypedBooleanField(default=False, index=True)
 

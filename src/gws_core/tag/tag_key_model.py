@@ -19,22 +19,22 @@ from ..core.model.model import Model
 
 
 class TagKeyModel(Model):
-    key = TypedCharField(null=False, unique=True)
+    key = TypedCharField(unique=True)
     order = TypedIntegerField(default=0)
 
     value_format = TypedEnumField(
-        choices=TagValueFormat, null=False, default=TagValueFormat.STRING
+        choices=TagValueFormat, default=TagValueFormat.STRING
     )
 
-    label = NullableCharField(null=True)
+    label = NullableCharField()
 
-    description = NullableRichTextDbField(null=True)
+    description = NullableRichTextDbField()
 
     is_community_tag = TypedBooleanField(default=False)
 
     deprecated = TypedBooleanField(default=False)
 
-    additional_infos_specs = NullableJSONField(null=True)
+    additional_infos_specs = NullableJSONField()
 
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return Tag.convert_value_to_type(value, self.value_format)

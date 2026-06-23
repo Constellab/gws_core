@@ -24,8 +24,8 @@ class Job(Model):
     :type scenario: `gws.scenario.Scenario`
     """
 
-    user = TypedForeignKeyField(User, null=False, backref="+")
-    scenario = TypedForeignKeyField(Scenario, null=False, backref="+", unique=True)
+    user = TypedForeignKeyField(User, backref="+")
+    scenario = TypedForeignKeyField(Scenario, backref="+", unique=True)
 
     @classmethod
     @GwsCoreDbManager.transaction(

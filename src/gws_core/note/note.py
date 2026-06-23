@@ -36,23 +36,23 @@ from ..scenario.scenario import Scenario
 class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     title = TypedCharField()
 
-    content = NullableRichTextDbField(null=True)
+    content = NullableRichTextDbField()
 
-    folder = NullableForeignKeyField(SpaceFolder, null=True)
+    folder = NullableForeignKeyField(SpaceFolder)
 
-    lab_config = NullableForeignKeyField(LabConfigModel, null=True)
+    lab_config = NullableForeignKeyField(LabConfigModel)
 
     is_validated = TypedBooleanField(default=False)
-    validated_at = NullableDateTimeUTC(null=True)
-    validated_by = NullableForeignKeyField(User, null=True, backref="+")
+    validated_at = NullableDateTimeUTC()
+    validated_by = NullableForeignKeyField(User, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = NullableDateTimeUTC(null=True)
-    last_sync_by = NullableForeignKeyField(User, null=True, backref="+")
+    last_sync_at = NullableDateTimeUTC()
+    last_sync_by = NullableForeignKeyField(User, backref="+")
 
     is_archived = TypedBooleanField(default=False, index=True)
 
-    modifications = NullableBaseDTOField(RichTextModificationsDTO, null=True)
+    modifications = NullableBaseDTOField(RichTextModificationsDTO)
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)

@@ -28,9 +28,9 @@ class LabConfigModel(BaseModel):
 
     id = TypedCharField(primary_key=True, max_length=36)
     created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    version = TypedIntegerField(null=False)  # version of the config
-    brick_versions = TypedJSONField(null=False)
-    hash = TypedCharField(null=False)
+    version = TypedIntegerField()  # version of the config
+    brick_versions = TypedJSONField()
+    hash = TypedCharField()
 
     _current_config: Optional["LabConfigModel"] = None
 

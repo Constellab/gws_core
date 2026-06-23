@@ -15,7 +15,7 @@ from ..core.model.model import Model
 class BrickModel(Model):
     name = TypedCharField(unique=True)
     status = TypedCharField()
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

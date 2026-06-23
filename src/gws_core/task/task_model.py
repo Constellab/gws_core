@@ -53,9 +53,9 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id = NullableForeignKeyIdField(ResourceModel, null=True, index=True)
+    source_config_id = NullableForeignKeyIdField(ResourceModel, index=True)
 
-    community_agent_version_id = NullableCharField(null=True, max_length=36, default=None)
+    community_agent_version_id = NullableCharField(max_length=36, default=None)
 
     community_agent_version_modified = TypedBooleanField(default=False)
 

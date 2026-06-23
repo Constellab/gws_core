@@ -42,29 +42,29 @@ class Typing(Model):
     """
 
     # Full python type of the model
-    model_type = TypedCharField(null=False, max_length=511)
-    brick = TypedCharField(null=False, max_length=50)
-    brick_version = TypedCharField(null=False, max_length=50, default="")
-    unique_name = TypedCharField(null=False, column_name="model_name")
-    object_type = TypedCharField(null=False, max_length=20)
+    model_type = TypedCharField(max_length=511)
+    brick = TypedCharField(max_length=50)
+    brick_version = TypedCharField(max_length=50, default="")
+    unique_name = TypedCharField(column_name="model_name")
+    object_type = TypedCharField(max_length=20)
     human_name = TypedCharField(max_length=255)
     short_description = TypedCharField()
-    deprecated_since = NullableCharField(null=True, max_length=50)
-    deprecated_message = NullableCharField(null=True, max_length=255)
+    deprecated_since = NullableCharField(max_length=50)
+    deprecated_message = NullableCharField(max_length=255)
     hide = TypedBooleanField(default=False)
-    style = NullableBaseDTOField(TypingStyle, null=True)
+    style = NullableBaseDTOField(TypingStyle)
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type = NullableCharField(null=True, max_length=20)
+    object_sub_type = NullableCharField(max_length=20)
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
-    related_model_typing_name = NullableCharField(null=True, index=True)
+    related_model_typing_name = NullableCharField(index=True)
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     # List of errors in the typing definition (invalid config/input/output spec).
     # Stored as a JSON list of TypingErrorDTO dicts. A non-empty list
     # means the type was registered but cannot be used.
-    definition_errors = NullableJSONField(null=True)
+    definition_errors = NullableJSONField()
 
     _object_type: TypingObjectType = "MODEL"
 

@@ -26,10 +26,10 @@ class FSNodeModel(Model):
     :type Model: [type]
     """
 
-    path = TypedCharField(null=False, max_length=1024)
-    file_store_id = TypedForeignKeyIdField(FileStore, null=False)
-    size = NullableBigIntegerField(null=True)
-    is_symbolic_link = TypedBooleanField(null=False, default=False)
+    path = TypedCharField(max_length=1024)
+    file_store_id = TypedForeignKeyIdField(FileStore)
+    size = NullableBigIntegerField()
+    is_symbolic_link = TypedBooleanField(default=False)
 
     def delete_instance(self, *args, **kwargs):
         result = super().delete_instance(*args, **kwargs)

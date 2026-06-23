@@ -21,7 +21,7 @@ class TaskTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type = NullableCharField(null=True, max_length=20)
+    object_sub_type = NullableCharField(max_length=20)
 
     _object_type: TypingObjectType = "TASK"
 

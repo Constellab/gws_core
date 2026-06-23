@@ -26,7 +26,7 @@ class User(Model):
 
     lang = TypedEnumField(choices=UserLanguage, default=UserLanguage.EN)
 
-    photo = NullableCharField(null=True)
+    photo = NullableCharField()
 
     @classmethod
     def get_and_check_sysuser(cls) -> "User":

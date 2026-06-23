@@ -18,13 +18,13 @@ from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkEntityType, ShareLi
 
 
 class ShareLink(ModelWithUser):
-    entity_id = NullableCharField(null=True, max_length=36)
+    entity_id = NullableCharField(max_length=36)
 
     entity_type = TypedEnumField(choices=ShareLinkEntityType)
 
-    valid_until = NullableDateTimeUTC(null=True)
+    valid_until = NullableDateTimeUTC()
 
-    token = NullableCharField(null=True, max_length=100, unique=True)
+    token = NullableCharField(max_length=100, unique=True)
 
     link_type = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
 

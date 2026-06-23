@@ -25,12 +25,12 @@ from .credentials_type import (
 
 @final
 class Credentials(ModelWithUser):
-    name = TypedCharField(max_length=255, null=False, unique=True)
+    name = TypedCharField(max_length=255, unique=True)
     type = TypedEnumField(choices=CredentialsType)
 
-    description = NullableTextField(null=True)
+    description = NullableTextField()
 
-    data = NullableJSONField(null=True)
+    data = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
