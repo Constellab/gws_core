@@ -86,6 +86,9 @@ class AppProcessStatusDTO(BaseModelDTO):
     config_file_path: str
     started_at: datetime | None
     started_by: UserDTO | None
+    # Bare host URL (scheme + host + port, no auth token) reachable via the app's custom
+    # subdomain alias. None when the app has no custom subdomain (or in dev mode).
+    custom_subdomain_url: str | None = None
 
 
 class AppsStatusDTO(BaseModelDTO):

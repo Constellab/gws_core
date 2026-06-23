@@ -186,7 +186,7 @@ class AppsManager:
                     cls.stop_all_processes()
                 finally:
                     if should_chain:
-                        previous(signum, frame)
+                        previous(signum, frame)  # type: ignore
                     else:
                         # os._exit skips interpreter finalizers; safer than
                         # sys.exit when the handler may fire during
@@ -265,7 +265,7 @@ class AppsManager:
         """
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
-        resource: AppResource = resource_model.get_resource()
+        resource = resource_model.get_resource(resource_type=AppResource)
 
         if not isinstance(resource, AppResource):
             raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
@@ -297,7 +297,7 @@ class AppsManager:
         """
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
-        resource: AppResource = resource_model.get_resource()
+        resource = resource_model.get_resource(resource_type=AppResource)
 
         if not isinstance(resource, AppResource):
             raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")

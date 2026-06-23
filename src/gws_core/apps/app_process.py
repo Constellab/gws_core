@@ -672,6 +672,7 @@ class AppProcess:
             config_file_path=self._get_app_config_path(),
             started_at=self._started_at,
             started_by=self._started_by.to_dto() if self._started_by else None,
+            custom_subdomain_url=self.get_custom_host_url(),
         )
 
     ############################################ UTILS ############################################

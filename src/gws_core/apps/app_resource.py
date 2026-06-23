@@ -282,7 +282,7 @@ class AppResource(ResourceList):
             if self_id is not None and resource_model.id == self_id:
                 continue
 
-            other: AppResource = resource_model.get_resource()
+            other = resource_model.get_resource(resource_type=AppResource)
             if other.get_custom_subdomain() == subdomain:
                 raise BadRequestException(
                     f"The custom subdomain '{subdomain}' is already used by another app."
@@ -471,7 +471,7 @@ class AppResource(ResourceList):
         shell_proxy.attach_observer(LoggerMessageObserver())
 
         app = self.init_app_instance(
-            shell_proxy, self.get_model_id(), self.get_name(), self.get_access_mode()
+            shell_proxy, self.get_and_check_model_id(), self.get_name(), self.get_access_mode()
         )
 
         # add the resources as input to the app
