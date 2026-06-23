@@ -1,7 +1,8 @@
 from typing import Literal, final
 
-from peewee import CharField, ModelSelect
+from peewee import ModelSelect
 
+from gws_core.core.model.typed_db_field import NullableCharField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 
@@ -19,7 +20,7 @@ class ProtocolTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type: ProtocolSubType = CharField(null=True, max_length=20)
+    object_sub_type = NullableCharField(null=True, max_length=20)
 
     _object_type: TypingObjectType = "PROTOCOL"
 

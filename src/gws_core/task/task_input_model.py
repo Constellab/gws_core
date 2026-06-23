@@ -1,5 +1,11 @@
 
-from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
+from peewee import CompositeKey, ModelSelect
+
+from gws_core.core.model.typed_db_field import (
+    NullableForeignKeyField,
+    TypedBooleanField,
+    TypedCharField,
+)
 
 from ..core.model.base_model import BaseModel
 from ..protocol.protocol_model import ProtocolModel
@@ -17,17 +23,17 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
-    task_model: TaskModel = ForeignKeyField(TaskModel, null=True, index=True, on_delete="CASCADE")
-    protocol_model: ProtocolModel = ForeignKeyField(
+    scenario = NullableForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
+    task_model = NullableForeignKeyField(TaskModel, null=True, index=True, on_delete="CASCADE")
+    protocol_model = NullableForeignKeyField(
         ProtocolModel, null=True, index=True, on_delete="CASCADE"
     )
-    resource_model: ResourceModel = ForeignKeyField(
+    resource_model = NullableForeignKeyField(
         ResourceModel, null=True, index=True, on_delete="CASCADE"
     )
 
-    port_name: str = CharField()
-    is_interface: bool = BooleanField()
+    port_name = TypedCharField()
+    is_interface = TypedBooleanField()
 
     @classmethod
     def get_by_resource_model(cls, resource_model_id: str) -> ModelSelect:

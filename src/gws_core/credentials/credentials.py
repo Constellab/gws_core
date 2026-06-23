@@ -1,11 +1,15 @@
 import builtins
-from typing import Any, Optional, final
+from typing import Optional, final
 
-from peewee import CharField, ModelSelect, TextField
+from peewee import ModelSelect
 
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import (
+    NullableJSONField,
+    NullableTextField,
+    TypedCharField,
+    TypedEnumField,
+)
 from gws_core.credentials.credentials_type import CredentialsDTO
 
 from .credentials_type import (
@@ -21,12 +25,12 @@ from .credentials_type import (
 
 @final
 class Credentials(ModelWithUser):
-    name = CharField(max_length=255, null=False, unique=True)
-    type: CredentialsType = EnumField(choices=CredentialsType)
+    name = TypedCharField(max_length=255, null=False, unique=True)
+    type = TypedEnumField(choices=CredentialsType)
 
-    description = TextField(null=True)
+    description = NullableTextField(null=True)
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

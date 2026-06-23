@@ -1,12 +1,17 @@
 from typing import Optional
 
-from peewee import BooleanField, CharField, IntegerField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.community.community_dto import CommunityTagKeyDTO
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import JSONField
-from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+    TypedIntegerField,
+)
+from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.tag.tag import Tag, TagValueType
 from gws_core.tag.tag_dto import TagKeyModelDTO, TagValueFormat
 
@@ -14,22 +19,22 @@ from ..core.model.model import Model
 
 
 class TagKeyModel(Model):
-    key = CharField(null=False, unique=True)
-    order = IntegerField(default=0)
+    key = TypedCharField(null=False, unique=True)
+    order = TypedIntegerField(default=0)
 
-    value_format: TagValueFormat = EnumField(
+    value_format = TypedEnumField(
         choices=TagValueFormat, null=False, default=TagValueFormat.STRING
     )
 
-    label = CharField(null=True)
+    label = NullableCharField(null=True)
 
-    description: RichTextDTO = RichTextDbField(null=True)
+    description = NullableRichTextDbField(null=True)
 
-    is_community_tag = BooleanField(default=False)
+    is_community_tag = TypedBooleanField(default=False)
 
-    deprecated = BooleanField(default=False)
+    deprecated = TypedBooleanField(default=False)
 
-    additional_infos_specs: dict = JSONField(null=True)
+    additional_infos_specs = NullableJSONField(null=True)
 
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return Tag.convert_value_to_type(value, self.value_format)

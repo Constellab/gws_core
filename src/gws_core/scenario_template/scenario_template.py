@@ -1,9 +1,7 @@
-from typing import Any
 
-from peewee import CharField, IntegerField
 
-from gws_core.core.model.db_field import JSONField
-from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
+from gws_core.core.model.typed_db_field import NullableJSONField, TypedCharField, TypedIntegerField
+from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactoryFromType
 from gws_core.protocol.protocol_model import ProtocolModel
@@ -24,13 +22,13 @@ class ScenarioTemplate(ModelWithUser):
 
     CURRENT_VERSION = 3
 
-    name = CharField(max_length=255)
+    name = TypedCharField(max_length=255)
 
-    description = RichTextDbField(null=True)
+    description = NullableRichTextDbField(null=True)
 
     # version number of the scenario template
-    version = IntegerField(null=False, default=1)
-    data: dict[str, Any] = JSONField(null=True)
+    version = TypedIntegerField(null=False, default=1)
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

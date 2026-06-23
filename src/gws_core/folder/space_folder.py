@@ -1,13 +1,14 @@
 
-from peewee import CharField, ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import NullableForeignKeyField, TypedCharField
 from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 
 class SpaceFolder(Model):
-    name: str = CharField(null=False, max_length=100)
-    parent: "SpaceFolder" = ForeignKeyField(
+    name = TypedCharField(null=False, max_length=100)
+    parent = NullableForeignKeyField["SpaceFolder"](
         "self", null=True, backref="children", on_delete="CASCADE"
     )
 

@@ -46,7 +46,14 @@ from peewee import (
 from peewee import Model as PeeweeModel
 
 from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
+from gws_core.core.model.db_field import (
+    BaseDTOField,
+    DateTimeUTC,
+    JSONField,
+    SerializableDBField,
+    SerializableObject,
+)
+from gws_core.core.model.model_dto import BaseModelDTO
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -54,6 +61,8 @@ if TYPE_CHECKING:
 T = TypeVar("T")
 EnumT = TypeVar("EnumT", bound=Enum)
 ModelT = TypeVar("ModelT", bound=PeeweeModel)
+DTOT = TypeVar("DTOT", bound=BaseModelDTO)
+SerializableT = TypeVar("SerializableT", bound=SerializableObject)
 
 
 class TypedDbField(Generic[T]):
@@ -332,6 +341,105 @@ class NullableForeignKeyField(TypedDbField[ModelT | None], ForeignKeyField):
         super().__init__(model, *args, **kwargs)
 
 
+class TypedForeignKeyIdField(TypedDbField[str], ForeignKeyField):
+    """
+    ``ForeignKeyField`` (``null=False``, ``lazy_load=False``) whose instance value is the
+    related row's id, typed ``str``.
+
+    With ``lazy_load=False`` peewee never loads the related row: instance access
+    returns the raw foreign-key id (a ``str``) instead of the related model. Use
+    this when you only ever need the id and want to avoid the extra query:
+
+        scenario = TypedForeignKeyIdField(Scenario)   # -> str (the scenario id)
+
+    For a self-reference, pass ``"self"`` (no generic to specialize, the value is
+    always a ``str``):
+
+        parent = TypedForeignKeyIdField("self")   # -> str
+    """
+
+    if TYPE_CHECKING:
+
+        @overload
+        def __init__(self, model: type[PeeweeModel], *args: Any, **kwargs: Any) -> None: ...
+
+        @overload
+        def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
+
+    def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        kwargs["lazy_load"] = False
+        super().__init__(model, *args, **kwargs)
+
+
+class NullableForeignKeyIdField(TypedDbField[str | None], ForeignKeyField):
+    """
+    ``ForeignKeyField`` (``null=True``, ``lazy_load=False``) whose instance value is the
+    related row's id, typed ``str | None``.
+
+    With ``lazy_load=False`` peewee never loads the related row: instance access
+    returns the raw foreign-key id (a ``str``, or ``None`` when unset) instead of
+    the related model. Use this when you only ever need the id and want to avoid
+    the extra query:
+
+        source = NullableForeignKeyIdField(ResourceModel)   # -> str | None
+
+    For a self-reference, pass ``"self"`` (no generic to specialize, the value is
+    always ``str | None``):
+
+        parent = NullableForeignKeyIdField("self")   # -> str | None
+    """
+
+    if TYPE_CHECKING:
+
+        @overload
+        def __init__(self, model: type[PeeweeModel], *args: Any, **kwargs: Any) -> None: ...
+
+        @overload
+        def __init__(self, model: Literal["self"], *args: Any, **kwargs: Any) -> None: ...
+
+    def __init__(self, model: Any, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        kwargs["lazy_load"] = False
+        super().__init__(model, *args, **kwargs)
+
+
+class TypedDeferredForeignKeyIdField(TypedDbField[str], DeferredForeignKey):
+    """
+    ``DeferredForeignKey`` (``null=False``, ``lazy_load=False``) whose instance value is the
+    related row's id, typed ``str``.
+
+    Like :class:`TypedForeignKeyIdField` but for a deferred FK (related model
+    referenced by string name, resolved once all tables exist). The value is
+    always the raw id, so there is no generic to specialize:
+
+        ref = TypedDeferredForeignKeyIdField("OtherModel")   # -> str
+    """
+
+    def __init__(self, rel_model_name: str, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        kwargs["lazy_load"] = False
+        super().__init__(rel_model_name, *args, **kwargs)
+
+
+class NullableDeferredForeignKeyIdField(TypedDbField[str | None], DeferredForeignKey):
+    """
+    ``DeferredForeignKey`` (``null=True``, ``lazy_load=False``) whose instance value is the
+    related row's id, typed ``str | None``.
+
+    Like :class:`NullableForeignKeyIdField` but for a deferred FK (related model
+    referenced by string name, resolved once all tables exist). The value is
+    always the raw id, so there is no generic to specialize:
+
+        ref = NullableDeferredForeignKeyIdField("OtherModel")   # -> str | None
+    """
+
+    def __init__(self, rel_model_name: str, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        kwargs["lazy_load"] = False
+        super().__init__(rel_model_name, *args, **kwargs)
+
+
 class TypedDeferredForeignKeyField(TypedDbField[ModelT], DeferredForeignKey):
     """
     ``DeferredForeignKey`` (``null=False``) whose instance value is typed with the related model.
@@ -374,3 +482,59 @@ class NullableDeferredForeignKeyField(TypedDbField[ModelT | None], DeferredForei
     def __init__(self, rel_model_name: str, *args: Any, **kwargs: Any) -> None:
         kwargs["null"] = True
         super().__init__(rel_model_name, *args, **kwargs)
+
+
+class TypedBaseDTOField(TypedDbField[DTOT], BaseDTOField):
+    """
+    ``BaseDTOField`` (``null=False``) whose instance value is typed with the DTO passed as ``dto_type``.
+
+    The DTO type is inferred from the constructor, no annotation needed:
+
+        config = TypedBaseDTOField(MyConfigDTO)   # instance value typed MyConfigDTO
+    """
+
+    def __init__(self, dto_type: type[DTOT], *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(dto_type, *args, **kwargs)
+
+
+class NullableBaseDTOField(TypedDbField[DTOT | None], BaseDTOField):
+    """
+    ``BaseDTOField`` (``null=True``) whose instance value is typed ``DTO | None``.
+
+    The DTO type is inferred from the constructor, no annotation needed:
+
+        config = NullableBaseDTOField(MyConfigDTO)   # -> MyConfigDTO | None
+    """
+
+    def __init__(self, dto_type: type[DTOT], *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(dto_type, *args, **kwargs)
+
+
+class TypedSerializableDBField(TypedDbField[SerializableT], SerializableDBField):
+    """
+    ``SerializableDBField`` (``null=False``) whose instance value is typed with the object passed as ``object_type``.
+
+    The object type is inferred from the constructor, no annotation needed:
+
+        data = TypedSerializableDBField(MyObject)   # instance value typed MyObject
+    """
+
+    def __init__(self, object_type: type[SerializableT], *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(object_type, *args, **kwargs)
+
+
+class NullableSerializableDBField(TypedDbField[SerializableT | None], SerializableDBField):
+    """
+    ``SerializableDBField`` (``null=True``) whose instance value is typed ``object | None``.
+
+    The object type is inferred from the constructor, no annotation needed:
+
+        data = NullableSerializableDBField(MyObject)   # -> MyObject | None
+    """
+
+    def __init__(self, object_type: type[SerializableT], *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(object_type, *args, **kwargs)

@@ -2,6 +2,7 @@ import re
 from typing import Literal
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
+from gws_core.core.model.typed_db_field import NullableSerializableDBField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.process.process import Process
@@ -22,7 +23,6 @@ from gws_core.scenario.scenario_dto import ScenarioProgressDTO
 from gws_core.task.plug.input_task import InputTask
 
 from ..core.exception.exceptions import BadRequestException
-from ..core.model.db_field import SerializableDBField
 from ..io.connector import Connector
 from ..io.ioface import IOface
 from ..io.port import InPort, OutPort
@@ -32,7 +32,7 @@ from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
-    layout: ProtocolLayout = SerializableDBField(object_type=ProtocolLayout, null=True)
+    layout = NullableSerializableDBField(object_type=ProtocolLayout, null=True)
 
     # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco

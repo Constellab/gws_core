@@ -1,8 +1,14 @@
 from typing import Optional, final
 
-from peewee import BooleanField, CharField, ModelSelect
+from peewee import ModelSelect
 
-from ..core.classes.enum_field import EnumField
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+)
+
 from ..core.exception.exceptions import BadRequestException
 from ..core.model.model import Model
 from .user_dto import UserDTO, UserFullDTO, UserLanguage, UserTheme
@@ -11,16 +17,16 @@ from .user_group import UserGroup
 
 @final
 class User(Model):
-    email: str = CharField(default=False, unique=True)
-    first_name: str = CharField(default=False)
-    last_name: str = CharField(default=False)
-    group: UserGroup = EnumField(choices=UserGroup, default=UserGroup.USER)
-    is_active = BooleanField(default=True)
-    theme: UserTheme = EnumField(choices=UserTheme, default=UserTheme.LIGHT_THEME)
+    email = TypedCharField(unique=True)
+    first_name = TypedCharField()
+    last_name = TypedCharField()
+    group = TypedEnumField(choices=UserGroup, default=UserGroup.USER)
+    is_active = TypedBooleanField(default=True)
+    theme = TypedEnumField(choices=UserTheme, default=UserTheme.LIGHT_THEME)
 
-    lang: UserLanguage = EnumField(choices=UserLanguage, default=UserLanguage.EN)
+    lang = TypedEnumField(choices=UserLanguage, default=UserLanguage.EN)
 
-    photo: str = CharField(null=True)
+    photo = NullableCharField(null=True)
 
     @classmethod
     def get_and_check_sysuser(cls) -> "User":

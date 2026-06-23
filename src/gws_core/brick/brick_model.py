@@ -1,25 +1,21 @@
 from time import time
-from typing import Any
-
-from peewee import CharField
 
 from gws_core.brick.brick_dto import (
     BrickDTO,
     BrickInfo,
     BrickMessageDTO,
     BrickMessageStatus,
-    BrickStatus,
 )
 from gws_core.brick.brick_helper import BrickHelper
-from gws_core.core.model.db_field import JSONField
+from gws_core.core.model.typed_db_field import NullableJSONField, TypedCharField
 
 from ..core.model.model import Model
 
 
 class BrickModel(Model):
-    name: str = CharField(unique=True)
-    status: BrickStatus = CharField()
-    data: dict[str, Any] = JSONField(null=True)
+    name = TypedCharField(unique=True)
+    status = TypedCharField()
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

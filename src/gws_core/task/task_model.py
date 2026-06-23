@@ -1,11 +1,16 @@
 from traceback import format_exc
 from typing import Any
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableForeignKeyIdField,
+    TypedBooleanField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process import Process
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -48,13 +53,11 @@ class TaskModel(ProcessModel):
 
     # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id: str | None = ForeignKeyField(
-        ResourceModel, null=True, index=True, lazy_load=False
-    )
+    source_config_id = NullableForeignKeyIdField(ResourceModel, null=True, index=True)
 
-    community_agent_version_id: str | None = CharField(null=True, max_length=36, default=None)
+    community_agent_version_id = NullableCharField(null=True, max_length=36, default=None)
 
-    community_agent_version_modified: bool = BooleanField(default=False)
+    community_agent_version_modified = TypedBooleanField(default=False)
 
     # cache to store the list of tags of all inputs
     _input_resource_tags: list[Tag] | None = None

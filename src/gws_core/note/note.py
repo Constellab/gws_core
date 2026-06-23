@@ -1,17 +1,24 @@
 from typing import Any, final
 
-from peewee import BooleanField, CharField, CompositeKey, ForeignKeyField, ModelSelect
+from peewee import CompositeKey, ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.model.typed_db_field import (
+    NullableBaseDTOField,
+    NullableDateTimeUTC,
+    NullableForeignKeyField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedForeignKeyField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
+from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -19,7 +26,6 @@ from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ..core.model.base_model import BaseModel
-from ..core.model.db_field import BaseDTOField, DateTimeUTC
 from ..core.model.model_with_user import ModelWithUser
 from ..folder.space_folder import SpaceFolder
 from ..lab.lab_config_model import LabConfigModel
@@ -28,25 +34,25 @@ from ..scenario.scenario import Scenario
 
 @final
 class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
-    title = CharField()
+    title = TypedCharField()
 
-    content: RichTextDTO = RichTextDbField(null=True)
+    content = NullableRichTextDbField(null=True)
 
-    folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
+    folder = NullableForeignKeyField(SpaceFolder, null=True)
 
-    lab_config: LabConfigModel = ForeignKeyField(LabConfigModel, null=True)
+    lab_config = NullableForeignKeyField(LabConfigModel, null=True)
 
-    is_validated: bool = BooleanField(default=False)
-    validated_at = DateTimeUTC(null=True)
-    validated_by = ForeignKeyField(User, null=True, backref="+")
+    is_validated = TypedBooleanField(default=False)
+    validated_at = NullableDateTimeUTC(null=True)
+    validated_by = NullableForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = DateTimeUTC(null=True)
-    last_sync_by = ForeignKeyField(User, null=True, backref="+")
+    last_sync_at = NullableDateTimeUTC(null=True)
+    last_sync_by = NullableForeignKeyField(User, null=True, backref="+")
 
-    is_archived = BooleanField(default=False, index=True)
+    is_archived = TypedBooleanField(default=False, index=True)
 
-    modifications: RichTextModificationsDTO = BaseDTOField(RichTextModificationsDTO, null=True)
+    modifications = NullableBaseDTOField(RichTextModificationsDTO, null=True)
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -158,8 +164,8 @@ class NoteScenario(BaseModel):
     :rtype: [type]
     """
 
-    scenario = ForeignKeyField(Scenario, on_delete="CASCADE")
-    note = ForeignKeyField(Note, on_delete="CASCADE")
+    scenario = TypedForeignKeyField(Scenario, on_delete="CASCADE")
+    note = TypedForeignKeyField(Note, on_delete="CASCADE")
 
     ############################################# CLASS METHODS ########################################
 

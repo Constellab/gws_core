@@ -1,6 +1,7 @@
-from peewee import CompositeKey, ForeignKeyField, ModelSelect
+from peewee import CompositeKey, ModelSelect
 
 from gws_core.core.model.base_model import BaseModel
+from gws_core.core.model.typed_db_field import TypedForeignKeyField
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.note_template.note_template import NoteTemplate
@@ -20,13 +21,13 @@ class NoteTemplateFormTemplateModel(BaseModel):
     when the family-level question suffices.
     """
 
-    note_template: NoteTemplate = ForeignKeyField(
+    note_template = TypedForeignKeyField(
         NoteTemplate, null=False, index=True, on_delete="CASCADE"
     )
-    form_template_version: FormTemplateVersion = ForeignKeyField(
+    form_template_version = TypedForeignKeyField(
         FormTemplateVersion, null=False, index=True, on_delete="RESTRICT"
     )
-    form_template: FormTemplate = ForeignKeyField(
+    form_template = TypedForeignKeyField(
         FormTemplate, null=False, index=True, on_delete="RESTRICT"
     )
 

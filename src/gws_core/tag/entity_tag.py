@@ -1,9 +1,13 @@
-from peewee import BooleanField, CharField, Expression, ModelSelect
+from peewee import Expression, ModelSelect
 
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.classes.expression_builder import ExpressionBuilder
-from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import (
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+    TypedJSONField,
+)
 from gws_core.tag.tag import Tag, TagOrigins, TagValueType
 from gws_core.tag.tag_dto import (
     EntityTagDTO,
@@ -20,23 +24,23 @@ from gws_core.tag.tag_value_model import TagValueModel
 class EntityTag(Model):
     """Table to store the tags of all entities"""
 
-    tag_key = CharField(null=False)
+    tag_key = TypedCharField(null=False)
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = CharField(null=False, collation="utf8mb4_bin")
+    tag_value = TypedCharField(null=False, collation="utf8mb4_bin")
 
-    value_format: TagValueFormat = EnumField(
+    value_format = TypedEnumField(
         choices=TagValueFormat, null=False, default=TagValueFormat.STRING
     )
 
     # to override in child classes
-    entity_id: str = CharField(null=False, max_length=36)
+    entity_id = TypedCharField(null=False, max_length=36)
 
-    entity_type: TagEntityType = EnumField(choices=TagEntityType, null=False)
+    entity_type = TypedEnumField(choices=TagEntityType, null=False)
 
-    origins = JSONField(null=False)
+    origins = TypedJSONField(null=False)
 
-    is_propagable = BooleanField(default=False)
+    is_propagable = TypedBooleanField(default=False)
 
     def get_tag_value(self) -> TagValueType:
         return Tag.convert_value_to_type(self.tag_value, self.value_format)

@@ -1,10 +1,14 @@
-from datetime import datetime
 
-from peewee import ForeignKeyField
 
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import (
+    NullableDateTimeUTC,
+    NullableForeignKeyField,
+    NullableJSONField,
+    TypedDateTimeUTC,
+    TypedEnumField,
+    TypedForeignKeyField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.scenario.scenario import Scenario
 from gws_core.triggered_job.triggered_job_model import TriggeredJobModel
@@ -20,28 +24,28 @@ class TriggeredJobRunModel(Model):
     """
 
     # Reference to the parent job
-    triggered_job: TriggeredJobModel = ForeignKeyField(
+    triggered_job = TypedForeignKeyField(
         TriggeredJobModel, backref="runs", null=False, on_delete="CASCADE"
     )
 
     # How the job was triggered
-    trigger: JobRunTrigger = EnumField(choices=JobRunTrigger, null=False)
+    trigger = TypedEnumField(choices=JobRunTrigger, null=False)
 
     # The scenario that was created and executed
-    scenario: Scenario = ForeignKeyField(
+    scenario = NullableForeignKeyField(
         Scenario, null=True, backref="triggered_job_runs", on_delete="SET NULL"
     )
 
     # Timing
-    started_at: datetime = DateTimeUTC(null=False, default=DateHelper.now_utc)
-    ended_at: datetime = DateTimeUTC(null=True)
+    started_at = TypedDateTimeUTC(null=False, default=DateHelper.now_utc)
+    ended_at = NullableDateTimeUTC(null=True)
 
     # Execution status
-    status: JobStatus = EnumField(choices=JobStatus, null=False)
+    status = TypedEnumField(choices=JobStatus, null=False)
 
     # Error information if status is ERROR
     # Format: {"message": str, "stacktrace": str}
-    error_info: dict = JSONField(null=True)
+    error_info = NullableJSONField(null=True)
 
     class Meta:
         table_name = "gws_triggered_job_run"

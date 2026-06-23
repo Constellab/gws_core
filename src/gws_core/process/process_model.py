@@ -3,11 +3,21 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import TYPE_CHECKING, Any, final
 
-from peewee import BooleanField, CharField, DeferredForeignKey, ForeignKeyField
-
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.gws_exceptions import GWSException
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableDateTimeUTC,
+    NullableDeferredForeignKeyIdField,
+    NullableForeignKeyField,
+    NullableJSONField,
+    TypedBaseDTOField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+    TypedForeignKeyField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.io.io_dto import IODTO
@@ -27,9 +37,7 @@ from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
 from ..config.config import Config
-from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
-from ..core.model.db_field import BaseDTOField, DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..core.utils.logger import Logger
 from ..io.io import Inputs, Outputs
@@ -52,33 +60,33 @@ class ProcessModel(ModelWithUser):
     :type Viewable: [type]
     """
 
-    parent_protocol_id: str = DeferredForeignKey(
-        "ProtocolModel", null=True, index=True, lazy_load=False
+    parent_protocol_id = NullableDeferredForeignKeyIdField(
+        "ProtocolModel", null=True, index=True
     )
 
-    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, backref="+")
-    instance_name = CharField(null=True)
-    config: Config = ForeignKeyField(Config, null=False, backref="+")
-    progress_bar: ProgressBar = ForeignKeyField(ProgressBar, null=True, backref="+")
-    process_typing_name = CharField(null=False)
+    scenario = NullableForeignKeyField(Scenario, null=True, index=True, backref="+")
+    instance_name = NullableCharField(null=True)
+    config = TypedForeignKeyField(Config, null=False, backref="+")
+    progress_bar = NullableForeignKeyField(ProgressBar, null=True, backref="+")
+    process_typing_name = TypedCharField(null=False)
     # version of the brick when the process was created
-    brick_version_on_create = CharField(null=False, max_length=50)
+    brick_version_on_create = TypedCharField(null=False, max_length=50)
     # version of the brick when the process was run
-    brick_version_on_run = CharField(null=True, max_length=50)
-    run_by = ForeignKeyField(User, null=True, backref="+")
-    run_by_lab: LabModel | None = ForeignKeyField(LabModel, null=True, backref="+")
-    status: ProcessStatus = EnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
-    error_info: ProcessErrorInfo = JSONField(null=True)
+    brick_version_on_run = NullableCharField(null=True, max_length=50)
+    run_by = NullableForeignKeyField(User, null=True, backref="+")
+    run_by_lab = NullableForeignKeyField(LabModel, null=True, backref="+")
+    status = TypedEnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
+    error_info = NullableJSONField(null=True)
 
-    started_at = DateTimeUTC(null=True, with_milliseconds=True)
-    ended_at = DateTimeUTC(null=True, with_milliseconds=True)
+    started_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
+    ended_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
 
-    data: dict[str, Any] = JSONField(null=True)
-    is_archived = BooleanField(default=False, index=True)
-    style: TypingStyle = BaseDTOField(TypingStyle, null=False)
+    data = NullableJSONField(null=True)
+    is_archived = TypedBooleanField(default=False, index=True)
+    style = TypedBaseDTOField(TypingStyle, null=False)
 
     # name of the process set by the user
-    name = CharField(null=True)
+    name = NullableCharField(null=True)
 
     _scenario: Scenario | None = None
     _parent_protocol: ProtocolModel | None = None

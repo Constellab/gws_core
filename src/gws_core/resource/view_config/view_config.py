@@ -1,14 +1,20 @@
 from typing import Any, Optional
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.db_field import BaseDTOField
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import (
+    NullableBaseDTOField,
+    NullableForeignKeyField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+    TypedForeignKeyField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.utils import Utils
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
@@ -24,19 +30,19 @@ from ..resource_model import ResourceModel
 
 
 class ViewConfig(ModelWithUser, NavigableEntity):
-    title = CharField()
-    view_type: ViewType = EnumField(choices=ViewType)
-    view_name = CharField()
-    config: Config = ForeignKeyField(Config, null=True, backref="+")
+    title = TypedCharField()
+    view_type = TypedEnumField(choices=ViewType)
+    view_name = TypedCharField()
+    config = NullableForeignKeyField(Config, null=True, backref="+")
 
-    scenario: Scenario = ForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
-    resource_model: ResourceModel = ForeignKeyField(
+    scenario = NullableForeignKeyField(Scenario, null=True, index=True, on_delete="CASCADE")
+    resource_model = TypedForeignKeyField(
         ResourceModel, null=False, index=True, on_delete="CASCADE"
     )
 
-    is_favorite = BooleanField(default=False)
+    is_favorite = TypedBooleanField(default=False)
 
-    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
+    style = NullableBaseDTOField(TypingStyle, null=True)
 
     def to_dto(self) -> ViewConfigDTO:
         return ViewConfigDTO(

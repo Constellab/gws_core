@@ -1,7 +1,13 @@
 from typing import TYPE_CHECKING, Optional, final
 
-from peewee import BigIntegerField, BooleanField, CharField, Expression, ForeignKeyField
+from peewee import Expression
 
+from gws_core.core.model.typed_db_field import (
+    NullableBigIntegerField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedForeignKeyIdField,
+)
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 
@@ -20,10 +26,10 @@ class FSNodeModel(Model):
     :type Model: [type]
     """
 
-    path = CharField(null=False, max_length=1024)
-    file_store_id: str = ForeignKeyField(FileStore, null=False, lazy_load=False)
-    size = BigIntegerField(null=True)
-    is_symbolic_link = BooleanField(null=False, default=False)
+    path = TypedCharField(null=False, max_length=1024)
+    file_store_id = TypedForeignKeyIdField(FileStore, null=False)
+    size = NullableBigIntegerField(null=True)
+    is_symbolic_link = TypedBooleanField(null=False, default=False)
 
     def delete_instance(self, *args, **kwargs):
         result = super().delete_instance(*args, **kwargs)

@@ -2,12 +2,19 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 
 from croniter import croniter
-from peewee import BooleanField, CharField, ForeignKeyField, TextField
 
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableDateTimeUTC,
+    NullableForeignKeyField,
+    NullableJSONField,
+    NullableTextField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.model.typing import Typing
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
@@ -30,29 +37,29 @@ class TriggeredJobModel(ModelWithUser):
 
     # === SOURCE OF THE SCENARIO ===
     # Option 1: Task or Protocol typing (mutually exclusive with scenario_template)
-    process_typing: Typing = ForeignKeyField(Typing, null=True, backref="+")
+    process_typing = NullableForeignKeyField(Typing, null=True, backref="+")
 
     # Option 2: ScenarioTemplate (mutually exclusive with process_typing)
-    scenario_template: ScenarioTemplate = ForeignKeyField(
+    scenario_template = NullableForeignKeyField(
         ScenarioTemplate, null=True, backref="triggered_jobs", on_delete="SET NULL"
     )
 
     # Configuration values for the process/template
-    config_values: dict = JSONField(null=True)
+    config_values = NullableJSONField(null=True)
 
     # === TRIGGER CONFIGURATION ===
-    trigger_type: TriggerType = EnumField(choices=TriggerType, null=False)
+    trigger_type = TypedEnumField(choices=TriggerType, null=False)
 
     # CRON configuration
-    cron_expression: str = CharField(max_length=100, null=True)
-    next_run_at: datetime = DateTimeUTC(null=True)
+    cron_expression = NullableCharField(max_length=100, null=True)
+    next_run_at = NullableDateTimeUTC(null=True)
 
     # === STATE ===
-    is_active: bool = BooleanField(default=False)
+    is_active = TypedBooleanField(default=False)
 
     # === METADATA ===
-    name: str = CharField(max_length=255, null=False)
-    description: str = TextField(null=True)
+    name = TypedCharField(max_length=255, null=False)
+    description = NullableTextField(null=True)
 
     class Meta:
         table_name = "gws_triggered_job"

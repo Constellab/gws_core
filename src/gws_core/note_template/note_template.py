@@ -1,11 +1,9 @@
 from typing import final
 
-from peewee import CharField
-
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import TypedCharField
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.note_template.note_template_dto import NoteTemplateDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -13,9 +11,9 @@ from gws_core.tag.tag_entity_type import TagEntityType
 
 @final
 class NoteTemplate(ModelWithUser):
-    title = CharField()
+    title = TypedCharField()
 
-    content: RichTextDTO = RichTextDbField(null=True)
+    content = NullableRichTextDbField(null=True)
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)

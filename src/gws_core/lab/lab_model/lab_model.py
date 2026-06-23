@@ -1,9 +1,13 @@
-from peewee import CharField, ForeignKeyField
 
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableForeignKeyField,
+    TypedCharField,
+    TypedEnumField,
+)
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
@@ -15,14 +19,14 @@ from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 class LabModel(Model):
     """Model representing a lab (local or external)."""
 
-    lab_id: str = CharField(max_length=36)
-    name: str = CharField()
-    mode: LabMode = EnumField(choices=LabMode, null=False)
-    environment: LabEnvironment = EnumField(choices=LabEnvironment, null=False)
-    domain: str | None = CharField(null=True)
-    space_id: str | None = CharField(null=True)
-    space_name: str | None = CharField(null=True)
-    credentials: Credentials | None = ForeignKeyField(
+    lab_id = TypedCharField(max_length=36)
+    name = TypedCharField()
+    mode = TypedEnumField(choices=LabMode, null=False)
+    environment = TypedEnumField(choices=LabEnvironment, null=False)
+    domain = NullableCharField(null=True)
+    space_id = NullableCharField(null=True)
+    space_name = NullableCharField(null=True)
+    credentials = NullableForeignKeyField(
         Credentials, null=True, backref="+", on_delete="SET NULL"
     )
 

@@ -1,9 +1,9 @@
 from abc import abstractmethod
 from io import IOBase
 from tempfile import SpooledTemporaryFile
-from typing import Any, cast
+from typing import cast
 
-from gws_core.core.model.db_field import JSONField
+from gws_core.core.model.typed_db_field import NullableJSONField
 
 from ...core.exception.exceptions import BadRequestException
 from ...core.model.model import Model
@@ -16,7 +16,7 @@ class FileStore(Model):
     FileStore class
     """
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

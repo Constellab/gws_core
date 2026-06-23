@@ -1,17 +1,24 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, final
 
-from peewee import BooleanField, CharField, ForeignKeyField, IntegerField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.sys_proc import SysProc
+from gws_core.core.model.typed_db_field import (
+    NullableDateTimeUTC,
+    NullableForeignKeyField,
+    NullableIntegerField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
-from gws_core.impl.rich_text.rich_text_db_field import RichTextDbField
-from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.process.process_types import ProcessErrorInfo, ProcessStatus
@@ -22,10 +29,8 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.user.current_user_service import CurrentUserService
 
-from ..core.classes.enum_field import EnumField
 from ..core.exception.exceptions import BadRequestException
 from ..core.exception.gws_exceptions import GWSException
-from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.model.model_with_user import ModelWithUser
 from ..folder.space_folder import SpaceFolder
 from ..resource.resource_model import ResourceModel
@@ -39,29 +44,29 @@ if TYPE_CHECKING:
 
 @final
 class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
-    folder: SpaceFolder = ForeignKeyField(SpaceFolder, null=True)
+    folder = NullableForeignKeyField(SpaceFolder, null=True)
 
-    status: ScenarioStatus = EnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
-    error_info: dict[str, Any] | None = JSONField(null=True)
-    creation_type: ScenarioCreationType = EnumField(
+    status = TypedEnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
+    error_info = NullableJSONField(null=True)
+    creation_type = TypedEnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
-    title = CharField(max_length=50)
-    description: RichTextDTO = RichTextDbField(null=True)
-    lab_config: LabConfigModel | None = ForeignKeyField(LabConfigModel, null=True)
+    title = TypedCharField(max_length=50)
+    description = NullableRichTextDbField(null=True)
+    lab_config = NullableForeignKeyField(LabConfigModel, null=True)
 
-    is_validated: bool = BooleanField(default=False)
-    validated_at: datetime | None = DateTimeUTC(null=True)
-    validated_by = ForeignKeyField(User, null=True, backref="+")
+    is_validated = TypedBooleanField(default=False)
+    validated_at = NullableDateTimeUTC(null=True)
+    validated_by = NullableForeignKeyField(User, null=True, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at: datetime | None = DateTimeUTC(null=True)
-    last_sync_by = ForeignKeyField(User, null=True, backref="+")
+    last_sync_at = NullableDateTimeUTC(null=True)
+    last_sync_by = NullableForeignKeyField(User, null=True, backref="+")
 
-    is_archived = BooleanField(default=False, index=True)
-    running_process_pid: int | None = IntegerField(null=True)
-    running_in_external_lab: LabModel | None = ForeignKeyField(
+    is_archived = TypedBooleanField(default=False, index=True)
+    running_process_pid = NullableIntegerField(null=True)
+    running_in_external_lab = NullableForeignKeyField(
         LabModel, null=True, backref="+", on_delete="SET NULL"
     )
 

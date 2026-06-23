@@ -1,9 +1,7 @@
 from typing import final
 
-from peewee import ForeignKeyField
-
-from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import TypedForeignKeyField, TypedJSONField
 from gws_core.form.form import Form
 from gws_core.form.form_dto import FormChangeEntry, FormSaveEventDTO
 from gws_core.user.user import User
@@ -14,11 +12,11 @@ class FormSaveEvent(Model):
     """Audit row written once per Form save. The full per-leaf change list lives
     in the `changes` JSON column. See form_feature.md §3.4."""
 
-    form: Form = ForeignKeyField(Form, on_delete="CASCADE", null=False, backref="save_events")
-    user: User = ForeignKeyField(User, null=False, backref="+")
+    form = TypedForeignKeyField(Form, on_delete="CASCADE", null=False, backref="save_events")
+    user = TypedForeignKeyField(User, null=False, backref="+")
 
     # List of FormChangeEntry dicts.
-    changes = JSONField(null=False)
+    changes = TypedJSONField(null=False)
 
     def get_changes(self) -> list[FormChangeEntry]:
         raw = self.changes or []

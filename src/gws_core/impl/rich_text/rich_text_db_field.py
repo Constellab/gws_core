@@ -1,7 +1,9 @@
 from json import loads
+from typing import Any
 
 from peewee import TextField
 
+from gws_core.core.model.typed_db_field import TypedDbField
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
 
@@ -33,3 +35,19 @@ class RichTextDbField(TextField):
 
             return RichTextDTO.from_json(json_value)
         return None
+
+
+class TypedRichTextDbField(TypedDbField[RichTextDTO], RichTextDbField):
+    """``RichTextDbField`` (``null=False``) whose instance value is typed ``RichTextDTO``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = False
+        super().__init__(*args, **kwargs)
+
+
+class NullableRichTextDbField(TypedDbField[RichTextDTO | None], RichTextDbField):
+    """``RichTextDbField`` (``null=True``) whose instance value is typed ``RichTextDTO | None``."""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        kwargs["null"] = True
+        super().__init__(*args, **kwargs)

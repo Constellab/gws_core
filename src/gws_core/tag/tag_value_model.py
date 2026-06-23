@@ -1,12 +1,18 @@
 from typing import Any
 
-from peewee import BooleanField, CharField, ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.community.community_dto import CommunityTagValueDTO
 from gws_core.core.classes.expression_builder import ExpressionBuilder
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedForeignKeyField,
+)
 from gws_core.tag.tag import Tag, TagValueType
 from gws_core.tag.tag_dto import TagValueModelDTO
 from gws_core.tag.tag_key_model import TagKeyModel
@@ -15,7 +21,7 @@ from gws_core.tag.tag_key_model import TagKeyModel
 class TagValueModel(Model):
     """Table to store all the existing tag values"""
 
-    tag_key: TagKeyModel = ForeignKeyField(
+    tag_key = TypedForeignKeyField(
         TagKeyModel,
         null=False,
         index=True,
@@ -26,15 +32,15 @@ class TagValueModel(Model):
     )
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = CharField(null=False, collation="utf8mb4_bin")
+    tag_value = TypedCharField(null=False, collation="utf8mb4_bin")
 
-    is_community_tag_value = BooleanField(default=False)
+    is_community_tag_value = TypedBooleanField(default=False)
 
-    short_description = CharField(null=True, default=None)
+    short_description = NullableCharField(null=True, default=None)
 
-    additional_infos: dict[str, Any] = JSONField(null=True)
+    additional_infos = NullableJSONField(null=True)
 
-    deprecated = BooleanField(default=False)
+    deprecated = TypedBooleanField(default=False)
 
     def get_tag_value(self) -> TagValueType:
         return self.tag_key.convert_str_value_to_type(self.tag_value)

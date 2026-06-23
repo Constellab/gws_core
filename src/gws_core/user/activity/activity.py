@@ -1,9 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional, final
 
-from peewee import CharField, ForeignKeyField
-
-from gws_core.core.classes.enum_field import EnumField
+from gws_core.core.model.typed_db_field import TypedCharField, TypedEnumField, TypedForeignKeyField
 from gws_core.user.activity.activity_dto import ActivityDTO, ActivityObjectType, ActivityType
 
 from ...core.model.model import Model
@@ -17,10 +15,10 @@ class Activity(Model):
     (User) Activity class
     """
 
-    user: User = ForeignKeyField(User, null=False)
-    activity_type = EnumField(choices=ActivityType, null=False)
-    object_type = EnumField(choices=ActivityObjectType, null=False)
-    object_id = CharField(null=False, max_length=36)
+    user = TypedForeignKeyField(User, null=False)
+    activity_type = TypedEnumField(choices=ActivityType, null=False)
+    object_type = TypedEnumField(choices=ActivityObjectType, null=False)
+    object_id = TypedCharField(null=False, max_length=36)
 
     # For add of update activity, if the last activity or same type is less than ACTIVITY_MERGE_MAX_TIME seconds,
     # the activity will be updated

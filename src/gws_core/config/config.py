@@ -1,7 +1,7 @@
 from typing import Any, final
 
 from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
-from gws_core.core.model.db_field import JSONField
+from gws_core.core.model.typed_db_field import NullableJSONField
 
 from ..core.model.model_with_user import ModelWithUser
 from .config_exceptions import InvalidParamValueException
@@ -18,7 +18,7 @@ class Config(ModelWithUser):
     a collection of parameters
     """
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

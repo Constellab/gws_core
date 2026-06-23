@@ -1,8 +1,8 @@
-from peewee import CharField, ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import TypedCharField, TypedEnumField, TypedForeignKeyField
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.share.shared_dto import SharedEntityMode, ShareEntityInfoDTO
@@ -16,22 +16,22 @@ class SharedEntityInfo(Model):
     It stores the destination of the entity if the entity was exported to an external source.
     """
 
-    share_mode: SharedEntityMode = EnumField(choices=SharedEntityMode, null=False)
+    share_mode = TypedEnumField(choices=SharedEntityMode, null=False)
 
     # FK to LabModel — replaces lab_id, lab_name, space_id, space_name
-    lab: LabModel = ForeignKeyField(LabModel, null=False, backref="+")
+    lab = TypedForeignKeyField(LabModel, null=False, backref="+")
 
     # FK to User — the user from the external lab who shared/received the entity.
     # If the user doesn't exist locally, import them as inactive.
-    user: User = ForeignKeyField(User, null=False, backref="+")
+    user = TypedForeignKeyField(User, null=False, backref="+")
 
     # Current lab user who created the share link (SENT) or imported the entity (RECEIVED)
-    created_by: User = ForeignKeyField(User, null=False, backref="+")
+    created_by = TypedForeignKeyField(User, null=False, backref="+")
 
     # The entity ID on the *other* lab:
     # RECEIVED: original entity ID from the source lab (before local ID remapping)
     # SENT: entity ID assigned by the receiving lab
-    external_id = CharField(max_length=36, null=False)
+    external_id = TypedCharField(max_length=36, null=False)
 
     # override on children classes
     entity: Model | None = None

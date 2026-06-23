@@ -1,11 +1,9 @@
 import subprocess
-from typing import Any
 
 import psutil
-from peewee import FloatField
 
-from gws_core.core.model.db_field import JSONField
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.core.model.typed_db_field import NullableJSONField, TypedFloatField
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.monitor.monitor_dto import MonitorDTO
@@ -31,40 +29,40 @@ class Monitor(Model):
     """
 
     # CPU
-    cpu_count = FloatField()
-    cpu_percent = FloatField()
+    cpu_count = TypedFloatField()
+    cpu_percent = TypedFloatField()
 
     # Disk
-    disk_total = FloatField()
-    disk_usage_used = FloatField()
-    disk_usage_free = FloatField()
-    disk_usage_percent = FloatField()
+    disk_total = TypedFloatField()
+    disk_usage_used = TypedFloatField()
+    disk_usage_free = TypedFloatField()
+    disk_usage_percent = TypedFloatField()
 
     # Swap Memory
-    swap_memory_total = FloatField()
-    swap_memory_used = FloatField()
-    swap_memory_free = FloatField()
-    swap_memory_percent = FloatField()
+    swap_memory_total = TypedFloatField()
+    swap_memory_used = TypedFloatField()
+    swap_memory_free = TypedFloatField()
+    swap_memory_percent = TypedFloatField()
 
     # Network
-    net_io_bytes_sent = FloatField()
-    net_io_bytes_recv = FloatField()
+    net_io_bytes_sent = TypedFloatField()
+    net_io_bytes_recv = TypedFloatField()
 
     # Ram
-    ram_usage_total = FloatField(default=0)
-    ram_usage_used = FloatField(default=0)
-    ram_usage_free = FloatField(default=0)
-    ram_usage_percent = FloatField(default=0)
+    ram_usage_total = TypedFloatField(default=0)
+    ram_usage_used = TypedFloatField(default=0)
+    ram_usage_free = TypedFloatField(default=0)
+    ram_usage_percent = TypedFloatField(default=0)
 
     # Gpu
-    gpu_percent = FloatField(default=0)
-    gpu_temperature = FloatField(default=0)
-    gpu_memory_total = FloatField(default=0)
-    gpu_memory_used = FloatField(default=0)
-    gpu_memory_free = FloatField(default=0)
-    gpu_memory_percent = FloatField(default=0)
+    gpu_percent = TypedFloatField(default=0)
+    gpu_temperature = TypedFloatField(default=0)
+    gpu_memory_total = TypedFloatField(default=0)
+    gpu_memory_used = TypedFloatField(default=0)
+    gpu_memory_free = TypedFloatField(default=0)
+    gpu_memory_percent = TypedFloatField(default=0)
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

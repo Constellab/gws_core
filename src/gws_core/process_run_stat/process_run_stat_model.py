@@ -1,29 +1,36 @@
 from datetime import datetime
 
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedDateTimeUTC,
+    TypedFloatField,
+    TypedJSONField,
+)
 from gws_core.process_run_stat.process_run_stat_dto import (
     ProcessRunStatDTO,
     ProcessRunStatLabEnv,
     ProcessRunStatStatus,
 )
-from peewee import BooleanField, CharField, FloatField
 
 
 class ProcessRunStatModel(Model):
-    process_typing_name: str = CharField()
-    community_agent_version_id: str = CharField(null=True)
-    status: ProcessRunStatStatus = CharField()
-    error_info: dict = JSONField(null=True)
-    started_at: datetime = DateTimeUTC()
-    ended_at: datetime = DateTimeUTC()
-    elapsed_time: float = FloatField()
-    brick_version_on_run: str = CharField()
-    brick_version_on_create: str = CharField()
-    config_value: dict = JSONField()
-    lab_env: ProcessRunStatLabEnv = CharField()
-    executed_by: str = CharField()
-    sync_with_community: bool = BooleanField()
+    process_typing_name = TypedCharField()
+    community_agent_version_id = NullableCharField(null=True)
+    status = TypedCharField()
+    error_info = NullableJSONField(null=True)
+    started_at = TypedDateTimeUTC()
+    ended_at = TypedDateTimeUTC()
+    elapsed_time = TypedFloatField()
+    brick_version_on_run = TypedCharField()
+    brick_version_on_create = TypedCharField()
+    config_value = TypedJSONField()
+    lab_env = TypedCharField()
+    executed_by = TypedCharField()
+    sync_with_community = TypedBooleanField()
 
     @classmethod
     def create_stat(

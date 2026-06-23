@@ -1,13 +1,14 @@
 from datetime import datetime
 from typing import Optional
 
-from peewee import CharField
-
-from gws_core.core.classes.enum_field import EnumField
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
-from gws_core.core.model.db_field import DateTimeUTC
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import (
+    NullableCharField,
+    NullableDateTimeUTC,
+    TypedEnumField,
+)
 from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
@@ -17,15 +18,15 @@ from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkEntityType, ShareLi
 
 
 class ShareLink(ModelWithUser):
-    entity_id: str = CharField(null=True, max_length=36)
+    entity_id = NullableCharField(null=True, max_length=36)
 
-    entity_type: ShareLinkEntityType = EnumField(choices=ShareLinkEntityType)
+    entity_type = TypedEnumField(choices=ShareLinkEntityType)
 
-    valid_until: datetime = DateTimeUTC(null=True)
+    valid_until = NullableDateTimeUTC(null=True)
 
-    token: str = CharField(null=True, max_length=100, unique=True)
+    token = NullableCharField(null=True, max_length=100, unique=True)
 
-    link_type: ShareLinkType = EnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
+    link_type = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
 
     @classmethod
     def find_by_token_and_check(cls, token: str) -> "ShareLink":

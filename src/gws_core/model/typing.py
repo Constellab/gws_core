@@ -1,9 +1,15 @@
 import inspect
-from typing import Any, Optional
+from typing import Optional
 
-from peewee import BooleanField, CharField, ModelSelect
+from peewee import ModelSelect
 
-from gws_core.core.model.db_field import BaseDTOField, JSONField
+from gws_core.core.model.typed_db_field import (
+    NullableBaseDTOField,
+    NullableCharField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+)
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_dto import (
     SimpleTypingDTO,
@@ -36,29 +42,29 @@ class Typing(Model):
     """
 
     # Full python type of the model
-    model_type: CharField = CharField(null=False, max_length=511)
-    brick: CharField = CharField(null=False, max_length=50)
-    brick_version: CharField = CharField(null=False, max_length=50, default="")
-    unique_name: CharField = CharField(null=False, column_name="model_name")
-    object_type: CharField = CharField(null=False, max_length=20)
-    human_name: CharField = CharField(default=False, max_length=255)
-    short_description: CharField = CharField(default=False)
-    deprecated_since: CharField = CharField(null=True, max_length=50)
-    deprecated_message: CharField = CharField(null=True, max_length=255)
-    hide: BooleanField = BooleanField(default=False)
-    style: TypingStyle = BaseDTOField(TypingStyle, null=True)
+    model_type = TypedCharField(null=False, max_length=511)
+    brick = TypedCharField(null=False, max_length=50)
+    brick_version = TypedCharField(null=False, max_length=50, default="")
+    unique_name = TypedCharField(null=False, column_name="model_name")
+    object_type = TypedCharField(null=False, max_length=20)
+    human_name = TypedCharField(max_length=255)
+    short_description = TypedCharField()
+    deprecated_since = NullableCharField(null=True, max_length=50)
+    deprecated_message = NullableCharField(null=True, max_length=255)
+    hide = TypedBooleanField(default=False)
+    style = NullableBaseDTOField(TypingStyle, null=True)
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type: CharField = CharField(null=True, max_length=20)
+    object_sub_type = NullableCharField(null=True, max_length=20)
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
-    related_model_typing_name: CharField = CharField(null=True, index=True)
+    related_model_typing_name = NullableCharField(null=True, index=True)
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     # List of errors in the typing definition (invalid config/input/output spec).
     # Stored as a JSON list of TypingErrorDTO dicts. A non-empty list
     # means the type was registered but cannot be used.
-    definition_errors: list = JSONField(null=True)
+    definition_errors = NullableJSONField(null=True)
 
     _object_type: TypingObjectType = "MODEL"
 

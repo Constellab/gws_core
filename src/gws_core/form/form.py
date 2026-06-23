@@ -1,10 +1,15 @@
-from typing import Any, final
+from typing import final
 
-from peewee import BooleanField, CharField, ForeignKeyField
-
-from gws_core.core.classes.enum_field import EnumField
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import (
+    NullableDateTimeUTC,
+    NullableForeignKeyField,
+    NullableJSONField,
+    TypedBooleanField,
+    TypedCharField,
+    TypedEnumField,
+    TypedForeignKeyField,
+)
 from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity,
     NavigableEntityType,
@@ -20,26 +25,26 @@ from gws_core.user.user import User
 class Form(ModelWithUser, NavigableEntity):
     """An instance of a FormTemplateVersion filled (or being filled) with values."""
 
-    name = CharField(max_length=255, null=False)
+    name = TypedCharField(max_length=255, null=False)
 
     # FK is non-cascading: deleting a version that has Forms is forbidden at
     # the service layer (Phase 2). Forms outlive the version they were minted
     # from for as long as the version is not hard-deleted.
-    template_version: FormTemplateVersion = ForeignKeyField(
+    template_version = TypedForeignKeyField(
         FormTemplateVersion, null=False, backref="forms"
     )
 
-    status: FormStatus = EnumField(
+    status = TypedEnumField(
         choices=FormStatus, default=FormStatus.DRAFT, index=True
     )
 
-    submitted_at = DateTimeUTC(null=True)
-    submitted_by = ForeignKeyField(User, null=True, backref="+")
+    submitted_at = NullableDateTimeUTC(null=True)
+    submitted_by = NullableForeignKeyField(User, null=True, backref="+")
 
     # Field values keyed by ConfigSpecs key; ParamSet items carry __item_id.
-    values: dict[str, Any] = JSONField(null=True)
+    values = NullableJSONField(null=True)
 
-    is_archived = BooleanField(default=False, index=True)
+    is_archived = TypedBooleanField(default=False, index=True)
 
     @classmethod
     def count_for_template(cls, template_id: str) -> int:

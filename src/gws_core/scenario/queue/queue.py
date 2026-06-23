@@ -1,10 +1,11 @@
-from typing import Optional, Union
+from typing import Optional
 
-from peewee import ForeignKeyField, ModelSelect
+from peewee import ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.exceptions import BadRequestException
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import TypedForeignKeyField
 from gws_core.scenario.queue.queue_dto import JobDTO
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
@@ -23,8 +24,8 @@ class Job(Model):
     :type scenario: `gws.scenario.Scenario`
     """
 
-    user: User = ForeignKeyField(User, null=False, backref="+")
-    scenario: Scenario = ForeignKeyField(Scenario, null=False, backref="+", unique=True)
+    user = TypedForeignKeyField(User, null=False, backref="+")
+    scenario = TypedForeignKeyField(Scenario, null=False, backref="+", unique=True)
 
     @classmethod
     @GwsCoreDbManager.transaction(

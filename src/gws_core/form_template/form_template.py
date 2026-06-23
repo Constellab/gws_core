@@ -1,8 +1,7 @@
 from typing import final
 
-from peewee import BooleanField, CharField, TextField
-
 from gws_core.core.model.model_with_user import ModelWithUser
+from gws_core.core.model.typed_db_field import NullableTextField, TypedBooleanField, TypedCharField
 from gws_core.entity_navigator.entity_navigator_type import (
     NavigableEntity,
     NavigableEntityType,
@@ -17,9 +16,9 @@ class FormTemplate(ModelWithUser, NavigableEntity):
     """Family record for a versioned form schema. Tags and high-level metadata
     live here; schema content lives in FormTemplateVersion."""
 
-    name = CharField(max_length=255, null=False)
-    description = TextField(null=True)
-    is_archived = BooleanField(default=False, index=True)
+    name = TypedCharField(max_length=255, null=False)
+    description = NullableTextField(null=True)
+    is_archived = TypedBooleanField(default=False, index=True)
 
     def archive(self, archive: bool) -> "FormTemplate":
         if self.is_archived == archive:

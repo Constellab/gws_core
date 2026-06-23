@@ -1,11 +1,16 @@
 from datetime import datetime
-from typing import Any, final
+from typing import final
 
 from fastapi.encoders import jsonable_encoder
-from peewee import CharField, FloatField
 
 from gws_core.core.classes.observer.message_level import MessageLevel
-from gws_core.core.model.db_field import DateTimeUTC, JSONField
+from gws_core.core.model.typed_db_field import (
+    NullableDateTimeUTC,
+    NullableFloatField,
+    NullableJSONField,
+    TypedCharField,
+    TypedFloatField,
+)
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.progress_bar.progress_bar_dto import (
     ProgressBarConfigDTO,
@@ -24,17 +29,17 @@ class ProgressBar(Model):
     ProgressBar class
     """
 
-    process_id = CharField(null=False, index=True, unique=True)
-    process_typing_name = CharField(null=False)
+    process_id = TypedCharField(null=False, index=True, unique=True)
+    process_typing_name = TypedCharField(null=False)
 
-    current_value = FloatField(default=0.0)
-    started_at = DateTimeUTC(null=True, with_milliseconds=True)
-    ended_at = DateTimeUTC(null=True, with_milliseconds=True)
+    current_value = TypedFloatField(default=0.0)
+    started_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
+    ended_at = NullableDateTimeUTC(null=True, with_milliseconds=True)
 
-    elapsed_time = FloatField(null=True)
-    second_start = DateTimeUTC(null=True, with_milliseconds=True)
+    elapsed_time = NullableFloatField(null=True)
+    second_start = NullableDateTimeUTC(null=True, with_milliseconds=True)
 
-    data: dict[str, Any] = JSONField(null=True)
+    data = NullableJSONField(null=True)
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0

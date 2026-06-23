@@ -1,5 +1,5 @@
-from peewee import ForeignKeyField
 
+from gws_core.core.model.typed_db_field import TypedForeignKeyField
 from gws_core.core.service.front_service import FrontService
 from gws_core.scenario.scenario import Scenario
 
@@ -7,7 +7,7 @@ from .shared_entity_info import SharedEntityInfo
 
 
 class SharedScenario(SharedEntityInfo):
-    entity: Scenario = ForeignKeyField(Scenario, backref="+", on_delete="CASCADE")
+    entity = TypedForeignKeyField(Scenario, backref="+", on_delete="CASCADE")
 
     def get_external_object_url(self) -> str | None:
         """Build the URL of the external scenario on the other lab."""

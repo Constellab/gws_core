@@ -1,7 +1,8 @@
 from typing import Literal, final
 
-from peewee import CharField, Expression, ModelSelect
+from peewee import Expression, ModelSelect
 
+from gws_core.core.model.typed_db_field import NullableCharField
 from gws_core.core.utils.utils import Utils
 from gws_core.resource.resource import Resource
 from gws_core.task.task_dto import TaskTypingDTO
@@ -20,7 +21,7 @@ class TaskTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type: TaskSubType = CharField(null=True, max_length=20)
+    object_sub_type = NullableCharField(null=True, max_length=20)
 
     _object_type: TypingObjectType = "TASK"
 

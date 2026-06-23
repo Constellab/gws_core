@@ -2,15 +2,18 @@ import hashlib
 from json import dumps
 from typing import Optional
 
-from peewee import CharField, IntegerField
-
 from gws_core.brick.brick_dto import BrickVersion
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.base_model import BaseModel
+from gws_core.core.model.typed_db_field import (
+    TypedCharField,
+    TypedDateTimeUTC,
+    TypedIntegerField,
+    TypedJSONField,
+)
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
 
-from ..core.model.db_field import DateTimeUTC, JSONField
 from ..core.utils.date_helper import DateHelper
 
 
@@ -23,11 +26,11 @@ class LabConfigModel(BaseModel):
 
     LAB_CONFIG_VERSION = 1
 
-    id = CharField(primary_key=True, max_length=36)
-    created_at = DateTimeUTC(default=DateHelper.now_utc)
-    version = IntegerField(null=False)  # version of the config
-    brick_versions = JSONField(null=False)
-    hash = CharField(null=False)
+    id = TypedCharField(primary_key=True, max_length=36)
+    created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
+    version = TypedIntegerField(null=False)  # version of the config
+    brick_versions = TypedJSONField(null=False)
+    hash = TypedCharField(null=False)
 
     _current_config: Optional["LabConfigModel"] = None
 
