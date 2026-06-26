@@ -194,7 +194,7 @@ class TypingStyle(BaseModelDTO):
         )
 
     @staticmethod
-    def check_background_color(background_color: str) -> str:
+    def check_background_color(background_color: str | None) -> str | None:
         if background_color and (
             not background_color.startswith("#") or len(background_color) != 7
         ):
@@ -203,7 +203,7 @@ class TypingStyle(BaseModelDTO):
         return background_color
 
     @staticmethod
-    def check_icon_color(icon_color: TypingIconColor) -> TypingIconColor:
+    def check_icon_color(icon_color: TypingIconColor | None) -> TypingIconColor | None:
         if icon_color and not isinstance(icon_color, TypingIconColor):
             Logger.error(f"Invalid icon color '{icon_color}'. Must be a TypingIconColor")
             return None

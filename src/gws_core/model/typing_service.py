@@ -1,5 +1,5 @@
 from collections.abc import Callable
-from typing import Literal
+from typing import Literal, cast
 
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchOperator, SearchParams
@@ -26,7 +26,7 @@ def filter_typing_by_specs(
     Filter a process typing by its specs (inputs or outputs). Return true if the specs contains a resource types
     that is stricly equals to one of the provided resource_types.
     """
-    process_type: type[Process] = typing.get_type()
+    process_type: type | None = typing.get_type()
 
     # if the type does not exist or is not a process, we return false
     if not process_type or not Utils.issubclass(process_type, Process):
@@ -100,14 +100,14 @@ class TypingService:
 
         # convert resource_typing_names to resource types
         resource_types: list[type[Resource]] = [
-            TypingManager.get_type_from_name(x) for x in resource_typing_names
+            TypingManager.get_and_check_type_from_name(x) for x in resource_typing_names
         ]
 
         # filter the pagination task input
         filter_function: Callable[[Typing], bool] = lambda t: filter_typing_by_specs(
             t, resource_types, check_io
         )
-        pagination.filter(filter_function, number_of_items_per_page / 2)
+        pagination.filter(filter_function, number_of_items_per_page // 2)
 
         return pagination
 
@@ -123,7 +123,7 @@ class TypingService:
         search_builder = TypingSearchBuilder(TaskTyping)
 
         # force to add a filter on related typing name
-        related_model_type: type[Resource] = TypingManager.get_type_from_name(resource_typing_name)
+        related_model_type: type[Resource] = TypingManager.get_and_check_type_from_name(resource_typing_name)
         search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_type))
 
         # force to add a filter on sub type
@@ -138,11 +138,11 @@ class TypingService:
 
         # filter the pagination by extension manually after the search
         if extension and not ignore_file_extension:
-            filter_function: Callable[[TaskTyping], bool] = (
-                lambda t: t.importer_extension_is_supported(extension)
+            filter_function: Callable[[Typing], bool] = (
+                lambda t: cast(TaskTyping, t).importer_extension_is_supported(extension)
             )
 
-            pagination.filter(filter_function, number_of_items_per_page / 2)
+            pagination.filter(filter_function, number_of_items_per_page // 2)
 
         return pagination
 
@@ -158,7 +158,7 @@ class TypingService:
 
         # force to add a filter on related typing name
         related_model_types: list[type[Resource]] = [
-            TypingManager.get_type_from_name(x) for x in resource_typing_names
+            TypingManager.get_and_check_type_from_name(x) for x in resource_typing_names
         ]
         search_builder.add_expression(TaskTyping.get_related_model_expression(related_model_types))
 

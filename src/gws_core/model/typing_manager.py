@@ -1,5 +1,8 @@
+from typing import cast
+
 from peewee import ModelSelect
 
+from gws_core.model.typing_dto import TypingObjectType
 from gws_core.model.typing_exception import TypingNotFoundException
 from gws_core.model.typing_name import TypingNameObj
 
@@ -148,7 +151,7 @@ class TypingManager:
                     f"Can't get the brick info for brick '{typing.brick}' of typing '{typing.typing_name}'. Is the file in the correct folder in your brick ? Skipping the typing"
                 )
             else:
-                typing.brick_version = brick_info.version
+                typing.brick_version = brick_info.version or ""
 
         # refresh the ancestor list once all the type are loaded
         # if the typing's module failed to import, its Python type can't be
@@ -167,7 +170,7 @@ class TypingManager:
             cls._init_typing(typing)
 
             query: ModelSelect = Typing.get_by_brick_and_unique_name(
-                typing.object_type, typing.brick, typing.unique_name
+                cast(TypingObjectType, typing.object_type), typing.brick, typing.unique_name
             )
             # If it doesn't exist, create the type in DB
             if query.count() == 0:

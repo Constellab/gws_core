@@ -8,6 +8,7 @@ from gws_core.credentials.credentials import Credentials
 from gws_core.form.form import Form
 from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_version import FormTemplateVersion
+from gws_core.model.typing import Typing
 from gws_core.note.note import Note
 from gws_core.note_template.note_template import NoteTemplate
 from gws_core.process.process_model import ProcessModel
@@ -80,7 +81,8 @@ _CREDENTIALS_TYPE_MIGRATION = {
     " set instance_name/name/data/scenario_id/progress_bar to NOT NULL on process tables,"
     " set parent_protocol_id to NOT NULL on the gws_task table,"
     " set the gws_protocol layout column to NOT NULL,"
-    " and set entity_id/token to NOT NULL on the gws_share_link table",
+    " set entity_id/token to NOT NULL on the gws_share_link table,"
+    " and set data to NOT NULL on the gws_typing table",
 )
 class Migration0230(BrickMigration):
     @classmethod
@@ -90,6 +92,24 @@ class Migration0230(BrickMigration):
         cls._migrate_process_columns(sql_migrator)
         cls._migrate_protocol_layout(sql_migrator)
         cls._migrate_share_link_columns(sql_migrator)
+        cls._migrate_typing_data(sql_migrator)
+
+    @classmethod
+    def _migrate_typing_data(cls, sql_migrator: SqlMigrator) -> None:
+        """Backfill NULL gws_typing.data columns with an empty JSON object and set the
+        column to NOT NULL, mirroring the model which now always initializes data to {}
+        (TypedJSONField). Every Typing is created through Typing.__init__, which defaults
+        data to {}, so '{}' is the safe synthetic value for any legacy NULL row."""
+        if not Typing.table_exists() or not Typing.column_exists("data"):
+            Logger.info("Migration 0.23.0: No gws_typing.data column, skipping")
+            return
+
+        Logger.info("Migration 0.23.0: Backfilling NULL gws_typing.data columns")
+        Typing.execute_sql("UPDATE [TABLE_NAME] SET data = '{}' WHERE data IS NULL")
+
+        Logger.info("Migration 0.23.0: Setting gws_typing.data to NOT NULL")
+        sql_migrator.alter_column_type(Typing, "data", TextField(null=False))
+        sql_migrator.migrate()
 
     @classmethod
     def _migrate_share_link_columns(cls, sql_migrator: SqlMigrator) -> None:

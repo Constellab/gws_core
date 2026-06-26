@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.model.typing_dto import TypingObjectType
@@ -43,7 +43,9 @@ class TypingNameObj:
     def from_typing_name(typing_name: str) -> TypingNameObj:
         try:
             parts: list[str] = typing_name.split(TypingNameObj.SEPARATOR)
-            return TypingNameObj(object_type=parts[0], brick_name=parts[1], unique_name=parts[2])
+            return TypingNameObj(
+                object_type=cast(TypingObjectType, parts[0]), brick_name=parts[1], unique_name=parts[2]
+            )
         except:
             raise BadRequestException(f"The typing name '{typing_name}' is invalid")
 
