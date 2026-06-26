@@ -1,5 +1,6 @@
 from typing import cast
 
+from gws_core.apps.app_dto import AppAccessMode
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_resource import AppResource
 from gws_core.apps.streamlit.streamlit_app import StreamlitApp
@@ -91,10 +92,10 @@ class StreamlitResource(AppResource):
         shell_proxy: ShellProxy,
         resource_model_id: str,
         app_name: str,
-        requires_authentification: bool = True,
+        access_mode: AppAccessMode = AppAccessMode.AUTHENTICATED,
     ) -> AppInstance:
         streamlit_app = StreamlitApp(
-            resource_model_id, app_name, shell_proxy, requires_authentification
+            resource_model_id, app_name, shell_proxy, access_mode
         )
 
         app_config = self._get_app_config()

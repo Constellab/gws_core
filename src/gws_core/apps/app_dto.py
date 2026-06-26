@@ -19,6 +19,19 @@ class AppStopPolicy(Enum):
     MANUAL = "MANUAL"
 
 
+class AppAccessMode(Enum):
+    """Defines who can access an app and what identity its backend calls run as.
+
+    - AUTHENTICATED: only the user that launched the app can open it (a token is added to
+      the URL). Backend API calls run as that real user. This is the default.
+    - PUBLIC: anyone with the link can open the app (the URL is bare, no token). The app
+      runs anonymously: no user is authenticated and backend calls carry no user identity.
+    """
+
+    AUTHENTICATED = "AUTHENTICATED"
+    PUBLIC = "PUBLIC"
+
+
 class AppInstanceUrl(BaseModelDTO):
     host_url: str
 
@@ -44,6 +57,7 @@ class AppInstanceDTO(BaseModelDTO):
     name: str
     env_type: str
     stop_policy: AppStopPolicy = AppStopPolicy.AUTO
+    custom_subdomain: str | None = None
     source_ids: list[str] | None = None
     env_file_path: str | None = None  # for env app
     env_file_content: str | None = None  # for env app
@@ -72,6 +86,9 @@ class AppProcessStatusDTO(BaseModelDTO):
     config_file_path: str
     started_at: datetime | None
     started_by: UserDTO | None
+    # Bare host URL (scheme + host + port, no auth token) reachable via the app's custom
+    # subdomain alias. None when the app has no custom subdomain (or in dev mode).
+    custom_subdomain_url: str | None = None
 
 
 class AppsStatusDTO(BaseModelDTO):

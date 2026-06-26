@@ -1,6 +1,6 @@
 from abc import abstractmethod
 
-from gws_core.apps.app_dto import AppInstanceDTO, AppStopPolicy, AppType
+from gws_core.apps.app_dto import AppAccessMode, AppInstanceDTO, AppStopPolicy, AppType
 from gws_core.core.utils.logger import Logger
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.impl.shell.base_env_shell import BaseEnvShell
@@ -18,11 +18,15 @@ class AppInstance:
 
     params: dict | None = None
 
-    # If True, the user must be authenticated to access the app
-    requires_authentication: bool = True
+    # Defines who can access the app and what identity its backend calls run as.
+    access_mode: AppAccessMode = AppAccessMode.AUTHENTICATED
 
     # Defines whether the app is automatically stopped when no connections are detected
     stop_policy: AppStopPolicy = AppStopPolicy.AUTO
+
+    # Optional readable, stable custom subdomain used to build the app host.
+    # When None, the host falls back to the resource model id.
+    custom_subdomain: str | None = None
 
     _shell_proxy: ShellProxy
 
@@ -34,13 +38,26 @@ class AppInstance:
         resource_model_id: str,
         name: str,
         shell_proxy: ShellProxy,
-        requires_authentication: bool = True,
+        access_mode: AppAccessMode = AppAccessMode.AUTHENTICATED,
     ):
         self.resource_model_id = resource_model_id
         self.name = name
         self.resources = []
         self._shell_proxy = shell_proxy
-        self.requires_authentication = requires_authentication
+        self.access_mode = access_mode
+
+    @property
+    def requires_authentication(self) -> bool:
+        """Back-compat accessor. True only for the AUTHENTICATED access mode."""
+        return self.access_mode == AppAccessMode.AUTHENTICATED
+
+    def token_in_url(self) -> bool:
+        """Whether the app URL carries the access token (and a user access token).
+
+        True for AUTHENTICATED (only the launcher may open it). False for PUBLIC, whose
+        URL is bare and shareable.
+        """
+        return self.access_mode == AppAccessMode.AUTHENTICATED
 
     @abstractmethod
     def get_app_type(self) -> AppType:
@@ -57,15 +74,24 @@ class AppInstance:
     def set_params(self, params: dict) -> None:
         self.params = params
 
+    def set_access_mode(self, access_mode: AppAccessMode) -> None:
+        """Set the access mode of the app. By default the app is AUTHENTICATED.
+
+        :param access_mode: the access mode to apply
+        :type access_mode: AppAccessMode
+        """
+        self.access_mode = access_mode
+
     def set_requires_authentication(self, requires_authentication: bool) -> None:
-        """Set if the app requires authentication. By default it requires authentication.
-        If the app does not require authentication, the user access tokens are not used.
-        In this case the system user is used to access the app.
+        """Back-compat shim for the former boolean flag. Maps True to AUTHENTICATED and
+        False to PUBLIC (anonymous). Prefer set_access_mode for new code.
 
         : param requires_authentication: True if the app requires authentication
         : type requires_authentication: bool
         """
-        self.requires_authentication = requires_authentication
+        self.set_access_mode(
+            AppAccessMode.AUTHENTICATED if requires_authentication else AppAccessMode.PUBLIC
+        )
 
     def set_stop_policy(self, stop_policy: AppStopPolicy) -> None:
         """Set how the app should be stopped when no connections are detected.
@@ -75,6 +101,15 @@ class AppInstance:
         :type stop_policy: AppStopPolicy
         """
         self.stop_policy = stop_policy
+
+    def set_custom_subdomain(self, subdomain: str | None) -> None:
+        """Set the custom subdomain used to build the app host.
+        When None, the host falls back to the resource model id.
+
+        :param subdomain: the custom subdomain to apply, or None
+        :type subdomain: str | None
+        """
+        self.custom_subdomain = subdomain
 
     def was_generated_from_resource_model_id(self, resource_model_id: str) -> bool:
         """Return true if the app was generated from the given resource model id"""
@@ -131,6 +166,7 @@ class AppInstance:
             name=self.name,
             env_type="",
             stop_policy=self.stop_policy,
+            custom_subdomain=self.custom_subdomain,
             source_ids=self.get_source_ids(),
         )
 

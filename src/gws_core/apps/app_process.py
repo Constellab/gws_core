@@ -81,6 +81,12 @@ class AppProcess:
     DEV_MODE_APP_ID = "dev-app"
     APP_CONFIG_FILENAME = "app_config.json"
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
+    # Token always provisioned for the system user (kept in the app config but never
+    # added to the URL). It lets front components opt into running their API requests
+    # as the system user via fallback_to_system_user. Mirrored in
+    # StreamlitMainStateBase.SYSTEM_USER_ACCESS_TOKEN_KEY (the base module cannot import
+    # gws_core, so the literal is duplicated there).
+    SYSTEM_USER_ACCESS_TOKEN_KEY = "system_user_token"
 
     def __init__(self, app: AppInstance):
         """Initialize the app process.
@@ -273,21 +279,72 @@ class AppProcess:
 
         self.set_status(AppProcessStatus.STOPPED, "Process stopped")
 
-    def get_host_name(self, suffix: str = "") -> str:
-        """Get the host name for the app process based on the port and suffix.
-        This is used to generate the host URL for the app.
-        We use the resource_model_id as host name to have a stable URL for the app.
-        The stable URL is required for reflex as the backend url is stored in the front build and should not change at each deployment.
-        """
-        host_name = self.DEV_MODE_APP_ID if self._app.is_dev_mode() else self._app.resource_model_id
+    def _build_host_name(self, host_segment: str, suffix: str = "") -> str:
+        """Build a full host name from a middle segment, applying the local/prod formatting.
 
+        :param host_segment: the variable middle part of the host (id or custom subdomain)
+        :param suffix: optional suffix appended to the segment (e.g. "-back" for the reflex backend)
+        """
         if Settings.is_local_or_desktop_env():
-            return f"{host_name}{suffix}.localhost"
+            return f"{host_segment}{suffix}.localhost"
 
         sub_domain = Settings.get_app_sub_domain()
         virtual_host = Settings.get_virtual_host()
 
-        return f"{sub_domain}-{host_name}{suffix}.{virtual_host}"
+        return f"{sub_domain}-{host_segment}{suffix}.{virtual_host}"
+
+    def get_host_name(self, suffix: str = "") -> str:
+        """Get the canonical host name for the app process based on the suffix.
+        This is used to generate the host URL for the app.
+
+        We use the resource_model_id as host name to have a stable URL for the app.
+        The stable URL is required for reflex as the backend url is stored in the front build
+        and should not change at each deployment. In dev mode the DEV_MODE_APP_ID is used.
+
+        An app can optionally define a custom subdomain (see get_custom_host_name). The custom
+        host is registered as an *alias* on the front nginx block — it never replaces this
+        canonical host, so URLs and baked backend addresses stay stable.
+        """
+        if self._app.is_dev_mode():
+            host_segment = self.DEV_MODE_APP_ID
+        else:
+            host_segment = self._app.resource_model_id
+
+        return self._build_host_name(host_segment, suffix)
+
+    def get_custom_host_name(self, suffix: str = "") -> str | None:
+        """Get the custom-subdomain-based host name, or None when no custom subdomain applies.
+
+        Returns None in dev mode (the custom subdomain is ignored) or when the app has no
+        custom subdomain set. Uses the same local/prod formatting as get_host_name, only the
+        middle segment differs (custom subdomain instead of resource model id).
+        """
+        if self._app.is_dev_mode() or not self._app.custom_subdomain:
+            return None
+
+        return self._build_host_name(self._app.custom_subdomain, suffix)
+
+    def get_front_server_names(self, suffix: str = "") -> list[str]:
+        """Get the list of host names the front nginx block should answer to.
+
+        Always contains the canonical id-based host, plus the custom-subdomain host as an
+        alias when one is set. nginx routes by server_name, so listing both names on a single
+        server block makes the custom host resolve to the same backend as the id host.
+        """
+        server_names = [self.get_host_name(suffix)]
+        custom_host = self.get_custom_host_name(suffix)
+        if custom_host is not None:
+            server_names.append(custom_host)
+        return server_names
+
+    def get_custom_host_url(self, suffix: str = "") -> str | None:
+        """Get the full custom-subdomain URL (scheme + host + port), or None when not set."""
+        custom_host = self.get_custom_host_name(suffix)
+        if custom_host is None:
+            return None
+        if Settings.is_local_or_desktop_env():
+            return f"http://{custom_host}:{Settings.get_app_external_port()}"
+        return f"https://{custom_host}"
 
     def get_host_url(self, suffix: str = "") -> str:
         if Settings.is_local_or_desktop_env():
@@ -318,18 +375,29 @@ class AppProcess:
                 self._add_user(User.get_and_check_sysuser().id, self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
             return AppInstanceUrl(host_url=host_url)
 
-        # Normal mode handling
-        params = {"gws_token": self._token, "gws_app_id": self._app.resource_model_id}
+        # Always provision the system user under a fixed token (real modes only; dev mode
+        # already reaches the system/dev user through the dev token above). It is stored in
+        # the app config but never added to the URL, so it changes nothing for normal
+        # access. It only becomes usable when a front component explicitly opts in via
+        # fallback_to_system_user (e.g. a PUBLIC app with no authenticated user that still
+        # needs to call the API). Done for both PUBLIC and AUTHENTICATED so the opt-in works
+        # uniformly.
+        self._add_user(User.get_and_check_sysuser().id, self.SYSTEM_USER_ACCESS_TOKEN_KEY)
 
-        user: User | None = None
-        if self._app.requires_authentication:
-            user = CurrentUserService.get_current_user()
-        else:
-            user = User.get_and_check_sysuser()
+        # PUBLIC mode: the URL is bare and shareable. No token and no user access token
+        # are added, and no user is authenticated (the app runs anonymously). This is true
+        # in dev mode too, so a dev app can simulate a public prod app.
+        if not self._app.token_in_url():
+            return AppInstanceUrl(host_url=host_url)
 
+        # AUTHENTICATED: the launching user is authenticated and the token + user access
+        # token are added to the URL.
+        params = {"gws_token": self.get_token()}
+
+        user = CurrentUserService.get_current_user()
         if not user:
             raise UnauthorizedException(
-                f"The user could not be be authenticated with requires_authentication : {self._app.requires_authentication}"
+                f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
         user_access_token = self._add_user(user.id)
@@ -349,7 +417,7 @@ class AppProcess:
             "GWS_APP_CONFIG_FILE_PATH": self._get_app_config_path(),
             "GWS_IS_TEST_ENV": str(Settings.get_instance().is_test),
             "GWS_IS_DEV_MODE": str(self._app.is_dev_mode()),
-            "GWS_REQUIRES_AUTHENTICATION": str(self._app.requires_authentication),
+            "GWS_APP_ACCESS_MODE": self._app.access_mode.value,
             # Propagate the parent process's log level so the spawned app backend
             # re-inits its gws Logger at the same level (e.g. DEBUG from the CLI's
             # --log-level), instead of always defaulting to INFO.
@@ -561,6 +629,39 @@ class AppProcess:
         """Update the stop policy on the underlying app instance."""
         self._app.set_stop_policy(stop_policy)
 
+    def update_custom_subdomain(self, subdomain: str | None) -> None:
+        """Update the custom subdomain on a (possibly running) app process.
+
+        Updates the in-memory app instance and, if the process is running, re-registers its
+        front nginx service(s) so the custom host alias is added/removed live (with an nginx
+        reload). The canonical id-based host is untouched, so the running app keeps serving
+        without interruption. When the process is not running, nothing else is needed: the host
+        is rebuilt from the persisted value on the next start.
+
+        :param subdomain: the custom subdomain to apply, or None to clear it
+        """
+        self._app.set_custom_subdomain(subdomain)
+
+        if self.is_stopped() or not self._services:
+            return
+
+        self._refresh_custom_subdomain_services()
+        AppNginxManager.get_instance().register_services(self._services)
+
+    def _refresh_custom_subdomain_services(self) -> None:
+        """Update the registered nginx service objects in place for the current custom subdomain.
+
+        Default implementation updates the front service's server_name list. Subclasses with a
+        separate backend (reflex) override this to also refresh the backend CORS allow-list.
+        """
+        for service in self._services:
+            if self._is_front_service(service):
+                service.server_name = self.get_front_server_names()
+
+    def _is_front_service(self, service: AppNginxServiceInfo) -> bool:
+        """Return True if the given nginx service serves the app front (and carries the alias)."""
+        return not service.service_id.endswith("-back")
+
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(
             id=self.get_id(),
@@ -571,6 +672,7 @@ class AppProcess:
             config_file_path=self._get_app_config_path(),
             started_at=self._started_at,
             started_by=self._started_by.to_dto() if self._started_by else None,
+            custom_subdomain_url=self.get_custom_host_url(),
         )
 
     ############################################ UTILS ############################################

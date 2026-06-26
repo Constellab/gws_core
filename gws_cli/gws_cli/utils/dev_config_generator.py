@@ -18,6 +18,9 @@ class AppDevConfig(BaseModelDTO):
     is_reflex_enterprise: bool = False
     is_streamlit_v2: bool = False
     dev_user_email: str | None = ""
+    # Access mode to simulate in dev mode: "AUTHENTICATED" (default, uses the system /
+    # dev user) or "PUBLIC" (no authentication, simulates a public prod app).
+    access_mode: str = "AUTHENTICATED"
 
 
 def create_dev_config_json(

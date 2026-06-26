@@ -186,7 +186,7 @@ class AppsManager:
                     cls.stop_all_processes()
                 finally:
                     if should_chain:
-                        previous(signum, frame)
+                        previous(signum, frame)  # type: ignore
                     else:
                         # os._exit skips interpreter finalizers; safer than
                         # sys.exit when the handler may fire during
@@ -265,7 +265,7 @@ class AppsManager:
         """
 
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
-        resource: AppResource = resource_model.get_resource()
+        resource = resource_model.get_resource(resource_type=AppResource)
 
         if not isinstance(resource, AppResource):
             raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
@@ -277,6 +277,38 @@ class AppsManager:
         app_process = cls.find_app_by_resource_model_id(app_id)
         if app_process is not None:
             app_process.set_stop_policy(stop_policy)
+
+    @classmethod
+    def set_custom_subdomain(cls, app_id: str, subdomain: str | None) -> None:
+        """Set (or clear) the custom subdomain on an app resource.
+
+        The value is validated and checked for DB-wide uniqueness by the resource setter.
+        Passing a falsy value clears the custom subdomain and restores the default id-based host.
+
+        The custom subdomain is a front-only alias on the app host: the canonical id-based host
+        is kept, and the custom host is added as an extra nginx server_name. If the app is
+        currently running, the change is applied immediately (the front nginx service is
+        re-registered and nginx reloaded); otherwise it takes effect on the next start.
+
+        :param app_id: the resource model id of the app
+        :param subdomain: the custom subdomain to apply, or None/"" to clear it
+        :raises BadRequestException: if the resource is not an AppResource, or the value is
+                                     invalid or already used by another app
+        """
+
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(app_id)
+        resource = resource_model.get_resource(resource_type=AppResource)
+
+        if not isinstance(resource, AppResource):
+            raise BadRequestException(f"Resource with ID {app_id} is not an AppResource")
+
+        resource.set_custom_subdomain(subdomain)
+        resource_model.update_resource_fields(resource)
+
+        # Apply live to the running process if any (re-registers nginx with the new alias)
+        app_process = cls.find_app_by_resource_model_id(app_id)
+        if app_process is not None:
+            app_process.update_custom_subdomain(resource.get_custom_subdomain())
 
     @classmethod
     def get_logs_of_app(

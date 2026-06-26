@@ -1,14 +1,17 @@
 import os
+import re
 from abc import abstractmethod
 from typing import Any
 
 from gws_core.apps.app_config import AppConfig
-from gws_core.apps.app_dto import AppStopPolicy
+from gws_core.apps.app_dto import AppAccessMode, AppStopPolicy
 from gws_core.apps.app_instance import AppInstance
+from gws_core.apps.app_process import AppProcess
 from gws_core.apps.app_view import AppView
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
@@ -21,8 +24,10 @@ from gws_core.model.typing_style import TypingStyle
 from gws_core.resource.r_field.dict_r_field import DictRField
 from gws_core.resource.r_field.model_r_field import ModelRfield
 from gws_core.resource.r_field.primitive_r_field import BoolRField, StrRField
+from gws_core.resource.r_field.r_field import RFieldStorage
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_decorator import resource_decorator
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.resource.resource_set.resource_set import ResourceSet
@@ -50,16 +55,26 @@ class AppResource(ResourceList):
     # In this case, the app code is stored in the resource and cannot be modified.
     _code_folder_sub_resource_name = StrRField()
 
+    # Whether the app requires authentication. This is the persisted source of truth for
+    # the access mode (see get_access_mode / set_access_mode).
     _requires_authentification = BoolRField(default_value=True)
 
     # Stores the AppStopPolicy value (see set_stop_policy / get_stop_policy)
     _stop_policy = StrRField(default_value=AppStopPolicy.AUTO.value)
+
+    # Optional readable, stable custom subdomain used to build the app host
+    # (see set_custom_subdomain / get_custom_subdomain). Stored in the queryable
+    # ResourceModel.data column (DATABASE storage) so uniqueness can be checked DB-wide.
+    _custom_subdomain = StrRField(storage=RFieldStorage.DATABASE)
 
     _shell_proxy = ModelRfield(ShellProxyDTO)
 
     _params = DictRField()
 
     _app_config: AppConfig | None = None
+
+    # DNS label: lowercase letters, digits and dashes; cannot start or end with a dash; max 63 chars.
+    _CUSTOM_SUBDOMAIN_REGEX = re.compile(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$")
 
     def __init__(self):
         super().__init__()
@@ -80,7 +95,7 @@ class AppResource(ResourceList):
         shell_proxy: ShellProxy,
         resource_model_id: str,
         app_name: str,
-        requires_authentification: bool,
+        access_mode: AppAccessMode,
     ) -> AppInstance:
         """
         Initialize the app instance with the shell proxy.
@@ -140,10 +155,24 @@ class AppResource(ResourceList):
         # store the name of the sub resource
         self._code_folder_sub_resource_name = "AppConfig code"
 
-    def set_requires_authentication(self, requires_authentication: bool) -> None:
+    def get_access_mode(self) -> AppAccessMode:
+        """Return the access mode of the app, derived from the _requires_authentification
+        flag (True -> AUTHENTICATED, False -> PUBLIC).
         """
-        Set if the app requires the user to be authenticated.
-        By default it requires authentication.
+        return (
+            AppAccessMode.AUTHENTICATED if self._requires_authentification else AppAccessMode.PUBLIC
+        )
+
+    def set_access_mode(self, access_mode: AppAccessMode) -> None:
+        """Set the access mode of the app. By default the app is AUTHENTICATED.
+
+        :param access_mode: the access mode to apply
+        :type access_mode: AppAccessMode
+        """
+        self._requires_authentification = access_mode == AppAccessMode.AUTHENTICATED
+
+    def set_requires_authentication(self, requires_authentication: bool) -> None:
+        """Back-compat shim for the boolean flag. Prefer set_access_mode for new code.
 
         :param requires_authentication: True if the app requires authentication
         :type requires_authentication: bool
@@ -169,6 +198,95 @@ class AppResource(ResourceList):
         Disable the automatic stop of the app when no connections are detected.
         """
         self.set_stop_policy(AppStopPolicy.MANUAL)
+
+    #################################### CUSTOM SUBDOMAIN ####################################
+
+    def get_custom_subdomain(self) -> str | None:
+        """Return the custom subdomain of the app, or None if not set.
+
+        When set, the app is reachable at a readable, stable host derived from this
+        value instead of the (unstable) resource model id.
+
+        :return: the custom subdomain or None
+        :rtype: str | None
+        """
+        return self._custom_subdomain or None
+
+    def set_custom_subdomain(self, subdomain: str | None) -> None:
+        """Set an optional readable, stable custom subdomain for the app.
+
+        When set, the app host uses this value instead of the resource model id, so the
+        URL stays stable across re-publishes. The value is validated as a DNS label and
+        must be unique across all persisted AppResources in the lab.
+
+        Passing a falsy value (None or empty string) clears the custom subdomain and
+        restores the default id-based host.
+
+        :param subdomain: the custom subdomain to set, or None/"" to clear it
+        :type subdomain: str | None
+        :raises BadRequestException: if the value is invalid or already used by another app
+        """
+        if not subdomain:
+            self._custom_subdomain = ""
+            return
+
+        normalized = self._validate_custom_subdomain(subdomain)
+        self._check_custom_subdomain_unique(normalized)
+        self._custom_subdomain = normalized
+
+    @staticmethod
+    def _validate_custom_subdomain(subdomain: str) -> str:
+        """Normalize (lowercase) and validate a custom subdomain as a DNS label.
+
+        :param subdomain: the raw custom subdomain value
+        :type subdomain: str
+        :return: the normalized (lowercased) value
+        :rtype: str
+        :raises BadRequestException: if the value is not a valid DNS label or is reserved
+        """
+        normalized = subdomain.lower()
+
+        if not AppResource._CUSTOM_SUBDOMAIN_REGEX.match(normalized):
+            raise BadRequestException(
+                f"Invalid custom subdomain '{subdomain}'. It must be a valid DNS label: "
+                "lowercase letters, digits and dashes only, cannot start or end with a dash, "
+                "max 63 characters."
+            )
+
+        if normalized == AppProcess.DEV_MODE_APP_ID:
+            raise BadRequestException(
+                f"The custom subdomain '{normalized}' is reserved and cannot be used."
+            )
+
+        return normalized
+
+    def _check_custom_subdomain_unique(self, subdomain: str) -> None:
+        """Raise if another persisted AppResource already uses the given custom subdomain.
+
+        The check is DB-wide: it scans all persisted Streamlit/Reflex AppResources in the
+        lab (not just running ones). The comparison is done in Python (app counts are modest)
+        to avoid a fragile ``data LIKE`` query.
+
+        :param subdomain: the normalized custom subdomain to check
+        :type subdomain: str
+        :raises BadRequestException: if another app already uses the subdomain
+        """
+        self_id = self.get_model_id()
+
+        resource_models: list[ResourceModel] = list(
+            ResourceModel.select_by_type_and_sub_types(AppResource)
+        )
+
+        for resource_model in resource_models:
+            # skip the current resource (e.g. when updating its own subdomain)
+            if self_id is not None and resource_model.id == self_id:
+                continue
+
+            other = resource_model.get_resource(resource_type=AppResource)
+            if other.get_custom_subdomain() == subdomain:
+                raise BadRequestException(
+                    f"The custom subdomain '{subdomain}' is already used by another app."
+                )
 
     def _check_folder(self, folder_path: str) -> None:
         if not FileHelper.exists_on_os(folder_path) or not FileHelper.is_dir(folder_path):
@@ -353,10 +471,7 @@ class AppResource(ResourceList):
         shell_proxy.attach_observer(LoggerMessageObserver())
 
         app = self.init_app_instance(
-            shell_proxy,
-            self.get_and_check_model_id(),
-            self.get_name(),
-            self._requires_authentification,
+            shell_proxy, self.get_and_check_model_id(), self.get_name(), self.get_access_mode()
         )
 
         # add the resources as input to the app
@@ -367,6 +482,9 @@ class AppResource(ResourceList):
 
         # set the stop policy
         app.set_stop_policy(self.get_stop_policy())
+
+        # set the custom subdomain (used to build the app host)
+        app.set_custom_subdomain(self.get_custom_subdomain())
 
         # create the app asynchronously and return the instance ID
         result = AppsManager.create_or_get_app_async(app)

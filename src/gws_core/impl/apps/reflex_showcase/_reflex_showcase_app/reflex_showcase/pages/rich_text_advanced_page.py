@@ -71,6 +71,9 @@ def rich_text_advanced_page() -> rx.Component:
 
     # Example component
     example_component = rx.box(
+        # fallback_to_system_user lets the editor call the API as the system user when the
+        # app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+        # visitor of the app read and write data lab objects through the API.
         rich_text_component(
             placeholder="Type something here...",
             value=RichTextAdvancedPageState.rich_text,
@@ -79,6 +82,7 @@ def rich_text_advanced_page() -> rx.Component:
                 jsx_file_path=asset_path,
                 custom_blocks={"CustomBlock": CustomBlock},
             ),
+            fallback_to_system_user=True,
         ),
         rx.cond(
             RichTextAdvancedPageState.is_not_empty,
@@ -131,6 +135,9 @@ class MyState(rx.State):
         self._rich_text = RichText.from_json(event_data)
 
 
+# fallback_to_system_user lets the editor call the API as the system user when the
+# app runs in PUBLIC access mode (no authenticated user). WARNING: this lets any
+# visitor of the app read and write data lab objects through the API.
 rich_text_component(
     placeholder="Type something here...",
     value=MyState.rich_text,
@@ -139,6 +146,7 @@ rich_text_component(
         jsx_file_path=asset_path,
         custom_blocks={"CustomBlock": CustomBlock},
     ),
+    fallback_to_system_user=True,
 )"""
 
     # Rich text editor demo with tabs

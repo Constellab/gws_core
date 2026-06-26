@@ -57,6 +57,39 @@ def set_stop_policy(
     return AppsManager.set_stop_policy(id_, stop_policy)
 
 
+@core_app.put(
+    "/apps/{id_}/custom-subdomain/{subdomain}",
+    tags=["App"],
+    summary="Set the custom subdomain for an app",
+)
+def set_custom_subdomain(
+    id_: str, subdomain: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
+    """
+    Set a readable, stable custom subdomain for an app.
+    The value is validated as a DNS label and must be unique across all apps in the lab.
+    The custom host is added as a front-only alias next to the id-based host. It is applied
+    immediately if the app is running, otherwise on its next start.
+    """
+
+    return AppsManager.set_custom_subdomain(id_, subdomain)
+
+
+@core_app.delete(
+    "/apps/{id_}/custom-subdomain",
+    tags=["App"],
+    summary="Clear the custom subdomain for an app",
+)
+def clear_custom_subdomain(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> None:
+    """
+    Clear the custom subdomain of an app, restoring the default id-based host.
+    """
+
+    return AppsManager.set_custom_subdomain(id_, None)
+
+
 @core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
 def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
     """

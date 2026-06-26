@@ -162,7 +162,7 @@ class StreamlitProcess(AppProcess):
             AppNginxRedirectServiceInfo(
                 source_port=self.get_service_source_port(),
                 service_id=self.get_id() + "-streamlit",
-                server_name=self.get_host_name(),
+                server_name=self.get_front_server_names(),
                 destination_port=self.port,
             )
         ]

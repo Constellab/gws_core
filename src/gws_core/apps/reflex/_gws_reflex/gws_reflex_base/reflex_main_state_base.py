@@ -59,6 +59,10 @@ class ReflexMainStateBase(rx.State, mixin=True):
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
     DEV_MODE_APP_ID = "dev-app"
+    # Fixed token always provisioned for the system user by the launch side. Mirrors
+    # AppProcess.SYSTEM_USER_ACCESS_TOKEN_KEY (this module cannot import gws_core, so the
+    # literal is duplicated). Used by components opting into fallback_to_system_user.
+    SYSTEM_USER_ACCESS_TOKEN_KEY = "system_user_token"
 
     MAIN_STATE_CLASS = type["ReflexMainStateBase"]
 
@@ -196,6 +200,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
         return app_id
 
     async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
+        # A PUBLIC app never authenticates a user, even in dev mode, so it simulates a
+        # public prod app.
+        if not self.requires_authentication():
+            return None
+
         if not self.is_dev_mode():
             query_params = self.get_query_params()
 
@@ -241,9 +250,18 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
     ##################### AUTHENTICATION #####################
 
+    def get_access_mode(self) -> str:
+        """Return the app access mode (AUTHENTICATED / PUBLIC).
+
+        Read as a plain string from the GWS_APP_ACCESS_MODE env var so gws_reflex_base
+        stays free of any gws_core import (it runs in virtual env apps without gws_core).
+        Defaults to AUTHENTICATED.
+        """
+        return os.environ.get("GWS_APP_ACCESS_MODE", "AUTHENTICATED")
+
     def requires_authentication(self) -> bool:
-        """Check if the app requires authentication."""
-        return os.environ.get("GWS_REQUIRES_AUTHENTICATION", "true").lower() == "true"
+        """Check if the app requires authentication (AUTHENTICATED access mode)."""
+        return self.get_access_mode() == "AUTHENTICATED"
 
     async def check_authentication(self) -> bool:
         """Check if the current user is authenticated.
@@ -270,6 +288,19 @@ class ReflexMainStateBase(rx.State, mixin=True):
             query_params = self.get_query_params()
             self.user_access_token = query_params.get("gws_user_access_token")
         return self.user_access_token
+
+    async def _get_system_user_access_token(self) -> str | None:
+        """Return the access token of the system user, if the launch side provisioned one.
+
+        The token is provisioned for every non-dev app (stored in the app config but never
+        in the URL). It lets front components fall back to running their API requests as the
+        system user. Returns None if it is not available (e.g. a dev-mode app).
+        """
+        app_config = await self.get_app_config()
+        user_access_tokens = app_config.get("user_access_tokens") or {}
+        if self.SYSTEM_USER_ACCESS_TOKEN_KEY in user_access_tokens:
+            return self.SYSTEM_USER_ACCESS_TOKEN_KEY
+        return None
 
     ####################### PARAMS #####################
 

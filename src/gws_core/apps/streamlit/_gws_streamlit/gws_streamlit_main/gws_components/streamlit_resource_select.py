@@ -22,10 +22,19 @@ class StreamlitResourceSelect:
     _streamlit_component_loader = StreamlitComponentLoader("select-resource")
 
     _search_filters: ResourceFrontSearchFilters
+    _fallback_to_system_user: bool
 
-    def __init__(self):
-        """Initialize the StreamlitResourceSelect component."""
+    def __init__(self, fallback_to_system_user: bool = False):
+        """Initialize the StreamlitResourceSelect component.
+
+        :param fallback_to_system_user: when no user is authenticated (PUBLIC app), run the
+            component's API requests as the system user instead of raising an error. WARNING:
+            this lets any visitor of the app read and write data lab objects through the API
+            as the system user. Defaults to False.
+        :type fallback_to_system_user: bool, optional
+        """
         self._search_filters = ResourceFrontSearchFilters()
+        self._fallback_to_system_user = fallback_to_system_user
 
     def set_disabled_filters(self, disabled_filters: dict[str, bool]) -> None:
         """Set the disabled filters for the resource search.
@@ -122,7 +131,11 @@ class StreamlitResourceSelect:
         }
 
         component_value = self._streamlit_component_loader.call_component(
-            data, key=key, authentication_info=StreamlitMainState.get_user_auth_info()
+            data,
+            key=key,
+            authentication_info=StreamlitMainState.get_user_auth_info(
+                fallback_to_system_user=self._fallback_to_system_user
+            ),
         )
 
         key = f"__{key}_gws_resource_model__"

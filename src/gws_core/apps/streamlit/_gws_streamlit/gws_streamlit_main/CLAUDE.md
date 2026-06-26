@@ -50,10 +50,10 @@ Add a rich text editor component to your Streamlit app with customizable height 
 Create a dropdown menu button with hierarchical items, icons, and click handlers. Use `StreamlitMenuButtonItem` to define individual menu items.
 
 ### `StreamlitResourceSelect`
-Select a GWS resource using a pretty search with advanced search but limited filtering options.
+Select a GWS resource using a pretty search with advanced search but limited filtering options. The component calls the data lab API from the front, so it needs an authenticated user. On a PUBLIC app (no authenticated user) it raises a clear error unless the component is built with `StreamlitResourceSelect(fallback_to_system_user=True)`, which runs the API requests as the system user. **WARNING:** `fallback_to_system_user` lets any visitor of the app read and write data lab objects through the API as the system user.
 
 ### `StreamlitTaskRunner`
-Generate a form to configure and run a GWS task with automatic validation and execution.
+Generate a form to configure and run a GWS task with automatic validation and execution. The configuration form calls the data lab API from the front, so it needs an authenticated user. On a PUBLIC app (no authenticated user) it raises a clear error unless the component is built with `StreamlitTaskRunner(task_type, fallback_to_system_user=True)`, which runs the API requests as the system user. **WARNING:** `fallback_to_system_user` lets any visitor of the app read and write data lab objects through the API as the system user.
 
 ### `StreamlitTreeMenu`
 Create a tree menu with selectable hierarchical items and icon support. Use `StreamlitTreeMenuItem` to define individual tree items.

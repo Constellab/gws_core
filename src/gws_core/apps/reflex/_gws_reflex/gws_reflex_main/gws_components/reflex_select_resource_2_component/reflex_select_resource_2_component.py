@@ -57,6 +57,7 @@ class SelectResource2Component(rx.Component):
 def select_resource_2_component(
     input_data: SelectResourceInputDTO | Var[SelectResourceInputDTO],
     output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+    fallback_to_system_user: bool = False,
     **kwargs,
 ):
     """Create a SelectResource2Component instance.
@@ -75,12 +76,22 @@ def select_resource_2_component(
     :param output_event: Event handler called when the selection changes. Receives a
         dict ``{"resourceId": str | None}``, defaults to None
     :type output_event: Optional[rx.EventHandler[rx.event.passthrough_event_spec(dict)]], optional
+    :param fallback_to_system_user: when no user is authenticated (PUBLIC app), authenticate
+        the component's API requests as the system user instead of leaving them
+        unauthenticated. WARNING: this lets any visitor of the app read and write data lab
+        objects through the API as the system user. Defaults to False.
+    :type fallback_to_system_user: bool, optional
     :return: Instance of SelectResource2Component
     :rtype: SelectResource2Component
     """
+    authentication_info = (
+        ReflexMainState.get_reflex_user_auth_info_with_system_fallback
+        if fallback_to_system_user
+        else ReflexMainState.get_reflex_user_auth_info
+    )
     return SelectResource2Component.create(
         input_data=input_data,
-        authentication_info=ReflexMainState.get_reflex_user_auth_info,
+        authentication_info=authentication_info,
         output_event=output_event,
         **kwargs,
     )

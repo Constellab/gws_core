@@ -6,5 +6,6 @@
     },
     "env_type": "NONE",
     "env_file_path": "",
-    "is_reflex_enterprise": true
+    "is_reflex_enterprise": true,
+    "access_mode": "PUBLIC"
 }

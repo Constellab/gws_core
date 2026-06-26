@@ -5,6 +5,7 @@
 # Apps
 from .apps.app_config import AppConfig as AppConfig
 from .apps.app_config import app_decorator as app_decorator
+from .apps.app_dto import AppAccessMode as AppAccessMode
 from .apps.app_dto import AppInstanceUrl as AppInstanceUrl
 from .apps.app_dto import AppStopPolicy as AppStopPolicy
 from .apps.app_dto import AppType as AppType

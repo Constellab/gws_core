@@ -64,14 +64,50 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         auth_context = AuthContextApp(app_id=app_id, user=user)
         return ReflexAuthUser(auth_context)
 
-    @rx.var
-    async def get_reflex_user_auth_info(self) -> ReflexUserAuthInfo | None:
-        """Get the Reflex user authentication info.
+    async def _build_user_auth_info(
+        self, fallback_to_system_user: bool
+    ) -> ReflexUserAuthInfo | None:
+        """Build the auth info a front component needs to call the data lab API.
 
-        Returns:
-            ReflexUserAuthInfo: The Reflex user authentication info.
+        Uses the authenticated user's access token when available. When no user is
+        authenticated (PUBLIC app) and ``fallback_to_system_user`` is True, falls back to the
+        system user's access token so the front can still reach the API. Returns None when no
+        token is available (PUBLIC app, no user, no fallback).
         """
         user_access_token = self._get_user_access_token()
+
+        if not user_access_token and fallback_to_system_user:
+            user_access_token = await self._get_system_user_access_token()
+
         if not user_access_token:
             return None
         return ReflexUserAuthInfo(app_id=self.get_app_id(), user_access_token=user_access_token)
+
+    @rx.var
+    async def get_reflex_user_auth_info(self) -> ReflexUserAuthInfo | None:
+        """Get the Reflex user authentication info for the authenticated user.
+
+        Returns None when no user is authenticated (PUBLIC app). Components bound to this var
+        will not be able to call the data lab API in that case; use
+        ``get_reflex_user_auth_info_with_system_fallback`` (via the component's
+        ``fallback_to_system_user`` option) to run those requests as the system user instead.
+
+        Returns:
+            ReflexUserAuthInfo | None: The Reflex user authentication info, or None.
+        """
+        return await self._build_user_auth_info(fallback_to_system_user=False)
+
+    @rx.var
+    async def get_reflex_user_auth_info_with_system_fallback(self) -> ReflexUserAuthInfo | None:
+        """Like ``get_reflex_user_auth_info`` but falls back to the system user.
+
+        When no user is authenticated (PUBLIC app), this returns the system user's auth info
+        so the bound component can still call the data lab API. WARNING: this lets any visitor
+        of the app read and write data lab objects through the API as the system user. Only
+        use it (via a component's ``fallback_to_system_user`` option) on apps where this is
+        acceptable.
+
+        Returns:
+            ReflexUserAuthInfo | None: The Reflex user authentication info, or None.
+        """
+        return await self._build_user_auth_info(fallback_to_system_user=True)

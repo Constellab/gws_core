@@ -69,6 +69,7 @@ def rich_text_component(
     custom_style: dict | None = None,
     custom_tools_config: RichTextCustomBlocksConfig | None = None,
     custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+    fallback_to_system_user: bool = False,
 ):
     """Create a RichTextComponent instance.
 
@@ -172,10 +173,20 @@ def rich_text_component(
 
         Defaults to None (disabled).
     :type custom_tools_config: Optional[RichTextCustomBlocksConfig], optional
+    :param fallback_to_system_user: when no user is authenticated (PUBLIC app), authenticate
+        the component's API requests as the system user instead of leaving them
+        unauthenticated. WARNING: this lets any visitor of the app read and write data lab
+        objects through the API as the system user. Defaults to False.
+    :type fallback_to_system_user: bool, optional
     :return: Instance of RichTextComponent
     :rtype: RichTextComponent
     """
 
+    authentication_info = (
+        ReflexMainState.get_reflex_user_auth_info_with_system_fallback
+        if fallback_to_system_user
+        else ReflexMainState.get_reflex_user_auth_info
+    )
     return RichTextComponent.create(
         placeholder=placeholder,
         value=value,
@@ -184,6 +195,6 @@ def rich_text_component(
         output_event=output_event,
         custom_style=custom_style,
         custom_tools_config=custom_tools_config.to_dict() if custom_tools_config else None,
-        authentication_info=ReflexMainState.get_reflex_user_auth_info,
+        authentication_info=authentication_info,
         custom_tools_event=custom_tools_event,
     )

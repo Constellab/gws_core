@@ -4,5 +4,6 @@
     "params": {},
     "env_type": "NONE",
     "env_file_path": "",
-    "is_streamlit_v2": true
+    "is_streamlit_v2": true,
+    "access_mode": "AUTHENTICATED"
 }
