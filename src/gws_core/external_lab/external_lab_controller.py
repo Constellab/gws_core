@@ -134,25 +134,25 @@ def zip_resource(
 ) -> ShareResourceZippedResponseDTO:
     """
     DEPRECATED: zips the resource synchronously and blocks until done.
-    Use ``POST /resource/{resource_id}/zip-async`` instead.
+    Use ``POST /resource/{resource_id}/compress-async`` instead.
     """
     return ExternalLabService.zip_resource(resource_id)
 
 
 @external_lab_app.post(
-    "/resource/{resource_id}/zip-async",
-    summary="Zip a resource for download asynchronously",
+    "/resource/{resource_id}/compress-async",
+    summary="Compress a resource for download asynchronously",
 )
-def zip_resource_async(
+def compress_resource_async(
     resource_id: str, _=Depends(ExternalLabAuth.check_auth)
 ) -> ShareResourceZipAsyncResponseDTO:
     """
-    Zip a resource for credential-based download without blocking the server.
+    Compress a resource for credential-based download without blocking the server.
 
-    Returns the running (or already finished) zip scenario and the download
+    Returns the running (or already finished) compress scenario and the download
     route. The calling lab polls the scenario until it succeeds, then downloads.
     """
-    return ExternalLabService.zip_resource_async(resource_id)
+    return ExternalLabService.compress_resource_async(resource_id)
 
 
 @external_lab_app.get(

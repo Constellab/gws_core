@@ -121,16 +121,16 @@ class ExternalLabApiService:
         """Get the full URL for the resource zip endpoint on the external lab."""
         return self.get_full_route(f"resource/{resource_id}/zip")
 
-    def zip_resource_async(self, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
-        """Start zipping a resource on the external lab asynchronously.
+    def compress_resource_async(self, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
+        """Start compressing a resource on the external lab asynchronously.
 
-        Returns the zip scenario and the download route. The caller polls the
+        Returns the compress scenario and the download route. The caller polls the
         scenario (e.g. via ``ScenarioWaiterExternalLab``) until it succeeds,
         then downloads from the returned route.
         """
         headers = self._get_auth_headers()
 
-        url = self.get_full_route(f"resource/{resource_id}/zip-async")
+        url = self.get_full_route(f"resource/{resource_id}/compress-async")
 
         response = ExternalApiService.post(
             url, body=None, headers=headers, raise_exception_if_error=True

@@ -159,7 +159,7 @@ class ExternalLabService:
         """Zip a resource for credential-based download.
 
         DEPRECATED: blocks the request until the zip is done. Prefer
-        ``zip_resource_async``.
+        ``compress_resource_async``.
         """
         ResourceModel.get_by_id_and_check(resource_id)
 
@@ -179,7 +179,7 @@ class ExternalLabService:
         )
 
     @classmethod
-    def zip_resource_async(cls, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
+    def compress_resource_async(cls, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
         """Zip a resource for credential-based download, asynchronously.
 
         Starts (or reuses) the zip scenario without blocking the server and
