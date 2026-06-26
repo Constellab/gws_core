@@ -1,11 +1,12 @@
 from gws_core import BaseTestCase, Tag
 from gws_core.core.classes.search_builder import SearchOperator
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_with_tag_search_builder import EntityWithTagSearchBuilder
 from gws_core.tag.tag import TagOrigin, TagValueType
-from gws_core.tag.tag_dto import TagOriginType, TagValueEditDTO, TagValueFormat
+from gws_core.tag.tag_dto import NewTagDTO, TagOriginType, TagValueEditDTO, TagValueFormat
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_key_model import TagKeyModel
 from gws_core.tag.tag_service import TagService
@@ -138,6 +139,73 @@ class TestTag(BaseTestCase):
         self.assertIsNotNone(tag_key_model)
         assert tag_key_model is not None
         self.assertEqual(tag_key_model.value_format, value_format)
+
+    def test_add_tags_to_multiple_entities(self) -> None:
+        """Add tags to several entities at once"""
+        scenario_1: Scenario = ScenarioService.create_scenario()
+        scenario_2: Scenario = ScenarioService.create_scenario()
+
+        result = TagService.add_tag_dict_to_entities(
+            TagEntityType.SCENARIO,
+            [scenario_1.id, scenario_2.id],
+            [NewTagDTO(key="bulk", value="value")],
+            propagate=False,
+        )
+
+        self.assertEqual(set(result.keys()), {scenario_1.id, scenario_2.id})
+
+        expected_tag = Tag("bulk", "value")
+        for scenario in (scenario_1, scenario_2):
+            entity_tags = TagService.find_by_entity_id(TagEntityType.SCENARIO, scenario.id)
+            self.assertTrue(entity_tags.has_tag(expected_tag))
+
+    def test_check_propagation_multiple_entities(self) -> None:
+        """Check propagation impact accepts a list of entity ids"""
+        scenario_1: Scenario = ScenarioService.create_scenario()
+        scenario_2: Scenario = ScenarioService.create_scenario()
+
+        tag = Tag("propag", "value", is_propagable=False)
+        TagService.add_tag_to_entity(TagEntityType.SCENARIO, scenario_1.id, tag)
+        TagService.add_tag_to_entity(TagEntityType.SCENARIO, scenario_2.id, tag)
+
+        # add: impact computed across all entities, no per-entity filtering
+        add_impact = TagService.check_propagation_add_tags(
+            TagEntityType.SCENARIO,
+            [scenario_1.id, scenario_2.id],
+            [NewTagDTO(key="other", value="value")],
+        )
+        impacted_ids = {
+            entity.id
+            for group in add_impact.impacted_entities
+            for entity in group.entities
+        }
+        self.assertIn(scenario_1.id, impacted_ids)
+        self.assertIn(scenario_2.id, impacted_ids)
+
+        # delete: a non-propagable tag only impacts the entities that carry it.
+        # scenario_2 does not have the tag any more -> it is skipped, no raise.
+        TagService.delete_tag_from_entity(
+            TagEntityType.SCENARIO, scenario_2.id, tag.key, tag.value
+        )
+        delete_impact = TagService.check_propagation_delete_tag(
+            TagEntityType.SCENARIO,
+            [scenario_1.id, scenario_2.id],
+            NewTagDTO(key="propag", value="value"),
+        )
+        deleted_impacted_ids = {
+            entity.id
+            for group in delete_impact.impacted_entities
+            for entity in group.entities
+        }
+        self.assertEqual(deleted_impacted_ids, {scenario_1.id})
+
+        # delete: tag missing on every entity -> raise
+        with self.assertRaises(BadRequestException):
+            TagService.check_propagation_delete_tag(
+                TagEntityType.SCENARIO,
+                [scenario_2.id],
+                NewTagDTO(key="propag", value="value"),
+            )
 
     def test_tag_crud(self) -> None:
         """Test update and delete tag"""

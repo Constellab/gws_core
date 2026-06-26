@@ -15,6 +15,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.entity_navigator.entity_navigator import EntityNavigator
+from gws_core.entity_navigator.entity_navigator_deep import NavigableEntitySet
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.view_config.view_config import ViewConfig
@@ -299,6 +300,42 @@ class TagService:
     def add_tag_dict_to_entity(
         cls, entity_type: TagEntityType, entity_id: str, tag_dicts: list[NewTagDTO], propagate: bool
     ) -> list[EntityTag]:
+        tags = cls._build_tags_from_dicts(tag_dicts, propagate)
+
+        if propagate:
+            return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
+        else:
+            return cls.add_tags_to_entity(entity_type, entity_id, tags)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def add_tag_dict_to_entities(
+        cls,
+        entity_type: TagEntityType,
+        entity_ids: list[str],
+        tag_dicts: list[NewTagDTO],
+        propagate: bool,
+    ) -> dict[str, list[EntityTag]]:
+        """Add the given tags to several entities of the same type.
+
+        Returns a dict mapping each entity id to the tags added to it."""
+        # the tags (and their community keys) only need to be built/registered once
+        tags = cls._build_tags_from_dicts(tag_dicts, propagate)
+
+        result: dict[str, list[EntityTag]] = {}
+        for entity_id in entity_ids:
+            if propagate:
+                result[entity_id] = cls.add_tags_to_entity_and_propagate(
+                    entity_type, entity_id, tags
+                )
+            else:
+                result[entity_id] = cls.add_tags_to_entity(entity_type, entity_id, tags)
+
+        return result
+
+    @classmethod
+    def _build_tags_from_dicts(cls, tag_dicts: list[NewTagDTO], propagate: bool) -> list[Tag]:
+        """Build Tag objects from the DTOs, registering their community tag keys if needed"""
         tags = [
             Tag(
                 key=tag_dict.key,
@@ -313,28 +350,32 @@ class TagService:
         ]
 
         for tag in tags:
-            if tag.is_community_tag_key:
-                # check if community tag is already registered
-                current_tag_key = TagKeyModel.get_by_key(tag.key)
-                if not current_tag_key:
-                    # get Community Tag Key and create it if not exists
-                    community_tag_key = CommunityService.get_community_tag_key(tag.key)
-                    if not community_tag_key:
-                        raise BadRequestException(
-                            f"The community tag key '{tag.key}' does not exists. Please create it first."
-                        )
+            cls._register_community_tag_key(tag)
 
-                    tag_key = TagKeyModel.from_community_tag_key(community_tag_key)
-                    if tag_key:
-                        tag_key = tag_key.save()
-                        cls.import_all_community_tag_key_values(tag_key)
-                elif tag.is_community_tag_value:
-                    cls.import_all_community_tag_key_values(current_tag_key)
+        return tags
 
-        if propagate:
-            return cls.add_tags_to_entity_and_propagate(entity_type, entity_id, tags)
-        else:
-            return cls.add_tags_to_entity(entity_type, entity_id, tags)
+    @classmethod
+    def _register_community_tag_key(cls, tag: Tag) -> None:
+        """Import the community tag key (and its values) for the tag if not already registered"""
+        if not tag.is_community_tag_key:
+            return
+
+        # check if community tag is already registered
+        current_tag_key = TagKeyModel.get_by_key(tag.key)
+        if not current_tag_key:
+            # get Community Tag Key and create it if not exists
+            community_tag_key = CommunityService.get_community_tag_key(tag.key)
+            if not community_tag_key:
+                raise BadRequestException(
+                    f"The community tag key '{tag.key}' does not exists. Please create it first."
+                )
+
+            tag_key = TagKeyModel.from_community_tag_key(community_tag_key)
+            if tag_key:
+                tag_key = tag_key.save()
+                cls.import_all_community_tag_key_values(tag_key)
+        elif tag.is_community_tag_value:
+            cls.import_all_community_tag_key_values(current_tag_key)
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -383,15 +424,11 @@ class TagService:
 
     @classmethod
     def check_propagation_add_tags(
-        cls, entity_type: TagEntityType, entity_id: str, tags: list[NewTagDTO]
+        cls, entity_type: TagEntityType, entity_ids: list[str], tags: list[NewTagDTO]
     ) -> TagPropagationImpactDTO:
-        """Check the impact of the propagation of the given tags"""
-        entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
-
-        new_tags: list[Tag] = []
-
-        for tag in tags:
-            new_tag = Tag(
+        """Check the impact of the propagation of the given tags on the given entities"""
+        new_tags: list[Tag] = [
+            Tag(
                 key=tag.key,
                 value=tag.value,
                 is_community_tag_key=tag.is_community_tag_key,
@@ -399,58 +436,89 @@ class TagService:
                 additional_info=tag.additional_info,
                 auto_parse=True,
             )
-            if not entity_tags.has_tag(new_tag):
-                new_tags.append(new_tag)
+            for tag in tags
+        ]
 
-        if len(new_tags) == 0:
-            raise BadRequestException("The tags already exists for the object")
-
-        return cls._check_tag_propagation_impact(entity_type, entity_id, new_tags)
+        return cls._check_tag_propagation_impact(entity_type, entity_ids, new_tags)
 
     @classmethod
     def check_propagation_delete_tag(
-        cls, entity_type: TagEntityType, entity_id: str, tag: NewTagDTO
+        cls, entity_type: TagEntityType, entity_ids: list[str], tag: NewTagDTO
     ) -> TagPropagationImpactDTO:
-        """Check the impact of deletion of a the propagation of the given tags"""
-
-        entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
+        """Check the impact of the deletion of the given tag on the given entities"""
 
         tag_to_delete = Tag(tag.key, tag.value)
 
-        existing_tag = entity_tags.get_tag(tag_to_delete)
+        # entities for which the tag is propagable: their downstream entities are impacted
+        propagable_entity_ids: list[str] = []
+        # entities for which the tag exists but is not propagable: only themselves are impacted
+        non_propagable_entity_ids: list[str] = []
 
-        if not existing_tag:
-            raise BadRequestException("The tag does not exists for the object")
+        for entity_id in entity_ids:
+            entity_tags = EntityTagList.find_by_entity(entity_type, entity_id)
+            existing_tag = entity_tags.get_tag(tag_to_delete)
 
-        # return only the current entity if the tag is not propagable
-        if not existing_tag.is_propagable:
-            entity_nav = EntityNavigator.from_entity_id(
-                entity_type.convert_to_navigable_entity_type(), entity_id
+            if not existing_tag:
+                continue
+
+            if existing_tag.is_propagable:
+                propagable_entity_ids.append(entity_id)
+            else:
+                non_propagable_entity_ids.append(entity_id)
+
+        if not propagable_entity_ids and not non_propagable_entity_ids:
+            raise BadRequestException("The tag does not exists for any of the objects")
+
+        navigable_entity_type = entity_type.convert_to_navigable_entity_type()
+
+        impacted_entities = NavigableEntitySet()
+
+        # downstream entities of the propagable occurrences
+        if propagable_entity_ids:
+            entity_nav = EntityNavigator.from_entity_ids(
+                navigable_entity_type, propagable_entity_ids
             )
-            return TagPropagationImpactDTO(
-                tags=[tag_to_delete.to_dto()],
-                impacted_entities=entity_nav.get_as_nav_set().get_entity_dict_nav_group(),
+            impacted_entities.update(
+                cls._get_propagation_impacted_entities(entity_nav).get_entities()
             )
 
-        return cls._check_tag_propagation_impact(entity_type, entity_id, [tag_to_delete])
+        # non-propagable occurrences only impact themselves
+        if non_propagable_entity_ids:
+            entity_nav = EntityNavigator.from_entity_ids(
+                navigable_entity_type, non_propagable_entity_ids
+            )
+            impacted_entities.update(entity_nav.get_as_nav_set().get_entities())
+
+        return TagPropagationImpactDTO(
+            tags=[tag_to_delete.to_dto()],
+            impacted_entities=impacted_entities.get_entity_dict_nav_group(),
+        )
 
     @classmethod
     def _check_tag_propagation_impact(
-        cls, entity_type: TagEntityType, entity_id: str, tags: list[Tag]
+        cls, entity_type: TagEntityType, entity_ids: list[str], tags: list[Tag]
     ) -> TagPropagationImpactDTO:
-        """Check the impact of the propagation of the given tags"""
-        entity_nav = EntityNavigator.from_entity_id(
-            entity_type.convert_to_navigable_entity_type(), entity_id
+        """Check the impact of the propagation of the given tags on the given entities"""
+        entity_nav = EntityNavigator.from_entity_ids(
+            entity_type.convert_to_navigable_entity_type(), entity_ids
         )
-        # The tags can't be propagated to SCENARIO
-        next_entities = entity_nav.get_next_entities_recursive(
-            [NavigableEntityType.RESOURCE, NavigableEntityType.VIEW, NavigableEntityType.NOTE],
-            include_current_entities=True,
-        )
+        next_entities = cls._get_propagation_impacted_entities(entity_nav)
 
         return TagPropagationImpactDTO(
             tags=[tag.to_dto() for tag in tags],
             impacted_entities=next_entities.get_entity_dict_nav_group(),
+        )
+
+    @classmethod
+    def _get_propagation_impacted_entities(
+        cls, entity_nav: EntityNavigator
+    ) -> NavigableEntitySet:
+        """Return the entities impacted by a tag propagation (the entities and their descendants).
+
+        Tags can't be propagated to SCENARIO."""
+        return entity_nav.get_next_entities_recursive(
+            [NavigableEntityType.RESOURCE, NavigableEntityType.VIEW, NavigableEntityType.NOTE],
+            include_current_entities=True,
         )
 
     @classmethod

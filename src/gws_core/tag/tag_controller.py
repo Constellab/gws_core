@@ -5,6 +5,9 @@ from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.tag.tag_dto import (
+    AddTagsToEntitiesBodyDTO,
+    CheckPropagationAddBodyDTO,
+    CheckPropagationDeleteBodyDTO,
     EntityTagDTO,
     EntityTagFullDTO,
     NewTagDTO,
@@ -407,6 +410,22 @@ def add_tag(
     return [tag.to_dto() for tag in new_tags]
 
 
+@core_app.post(
+    "/tag/entities/{entity_type}", tags=["Tag"], summary="Save tags for multiple entities"
+)
+def add_tags_to_entities(
+    entity_type: TagEntityType,
+    body: AddTagsToEntitiesBodyDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> dict[str, list[EntityTagDTO]]:
+    new_tags = TagService.add_tag_dict_to_entities(
+        entity_type, body.entity_ids, body.tags, body.propagate
+    )
+    return {
+        entity_id: [tag.to_dto() for tag in tags] for entity_id, tags in new_tags.items()
+    }
+
+
 @core_app.delete(
     "/tag/entity/{entity_type}/{entity_id}/{tag_key}/{tag_value}",
     tags=["Tag"],
@@ -424,28 +443,26 @@ def delete_tag(
 
 ################################### CHECK PROPAGATION ####################################
 @core_app.post(
-    "/tag/check-propagation-add/{entity_type}/{entity_id}",
+    "/tag/check-propagation-add/{entity_type}",
     tags=["Tag"],
     summary="Check tag propagation impact for tags addition",
 )
 def check_propagation_add_tags(
     entity_type: TagEntityType,
-    entity_id: str,
-    tags: list[NewTagDTO],
+    body: CheckPropagationAddBodyDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TagPropagationImpactDTO:
-    return TagService.check_propagation_add_tags(entity_type, entity_id, tags)
+    return TagService.check_propagation_add_tags(entity_type, body.entity_ids, body.tags)
 
 
 @core_app.post(
-    "/tag/check-propagation-delete/{entity_type}/{entity_id}",
+    "/tag/check-propagation-delete/{entity_type}",
     tags=["Tag"],
     summary="Check tag propagation impact for tag deletion",
 )
 def check_propagation_delete_tag(
     entity_type: TagEntityType,
-    entity_id: str,
-    tag: NewTagDTO,
+    body: CheckPropagationDeleteBodyDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TagPropagationImpactDTO:
-    return TagService.check_propagation_delete_tag(entity_type, entity_id, tag)
+    return TagService.check_propagation_delete_tag(entity_type, body.entity_ids, body.tag)

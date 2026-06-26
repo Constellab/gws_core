@@ -103,6 +103,28 @@ class TagPropagationImpactDTO(BaseModelDTO):
     impacted_entities: list[EntityNavGroupDTO]
 
 
+class AddTagsToEntitiesBodyDTO(BaseModelDTO):
+    """Body to add tags to several entities at once."""
+
+    entity_ids: list[str]
+    tags: list[NewTagDTO]
+    propagate: bool = False
+
+
+class CheckPropagationAddBodyDTO(BaseModelDTO):
+    """Body to check the propagation impact of adding tags to several entities."""
+
+    entity_ids: list[str]
+    tags: list[NewTagDTO]
+
+
+class CheckPropagationDeleteBodyDTO(BaseModelDTO):
+    """Body to check the propagation impact of deleting a tag from several entities."""
+
+    entity_ids: list[str]
+    tag: NewTagDTO
+
+
 class TagKeyModelCreateDTO(BaseModelDTO):
     key: str
     label: str
