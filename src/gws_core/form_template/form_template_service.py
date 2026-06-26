@@ -522,6 +522,30 @@ class FormTemplateService:
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod
+    @GwsCoreDbManager.transaction()
+    def override_specs(
+        cls,
+        template_id: str,
+        version_id: str,
+        specs_dto: dict[str, ParamSpecDTO],
+    ) -> FormTemplateVersion:
+        """Fully replace a DRAFT version's field set from a serialized spec map.
+
+        The bulk counterpart of the per-field create/update routes: the draft's
+        whole content is replaced by ``specs_dto`` (not merged). The specs are
+        rebuilt and validated (types + computed-param graph) before the write,
+        so a broken schema is rejected and the draft is left unchanged.
+        """
+        try:
+            specs = ConfigSpecs.from_dto(specs_dto)
+            specs.check_config_specs()
+        except BadRequestException:
+            raise
+        except Exception as err:
+            raise BadRequestException(f"Invalid form template specs: {err}") from err
+        return cls.apply_generated_specs(template_id, version_id, specs)
+
+    @classmethod
     def _get_draft_version_and_check(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:

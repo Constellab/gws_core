@@ -8,22 +8,22 @@ from gws_core.form_template.form_template_dto import (
     GenerateTemplateFieldDTO,
     GenerateTemplateFieldResultDTO,
     GenerateTemplateSpecsDTO,
+    GenerateTemplateSpecsResultDTO,
     ValidateComputedParamDTO,
 )
 from gws_core.form_template.form_template_service import FormTemplateService
-from gws_core.form_template.form_template_version import FormTemplateVersion
 
 
 class FormTemplateAiService:
     """AI adapters for form-template editing, over :class:`ConfigSpecsAiService`.
 
     Holds the form-template concerns — resolving / requiring a DRAFT version,
-    persisting (or not), building the wire DTOs, and the ComputedParam scope +
-    validation — while the generic AI work (prompts, type catalog, GPT call)
-    lives in :class:`ConfigSpecsAiService`.
+    building the wire DTOs, and the ComputedParam scope + validation — while the
+    generic AI work (prompts, type catalog, GPT call) lives in
+    :class:`ConfigSpecsAiService`.
 
-    Nothing here persists except :meth:`generate_template_specs` (which writes
-    the generated specs onto the DRAFT).
+    Nothing here persists: each method returns a preview the editor reviews and
+    then applies through the regular field / override-specs routes.
     """
 
     @classmethod
@@ -71,20 +71,21 @@ class FormTemplateAiService:
         template_id: str,
         version_id: str,
         dto: GenerateTemplateSpecsDTO,
-    ) -> FormTemplateVersion:
+    ) -> GenerateTemplateSpecsResultDTO:
         """Generate or edit a DRAFT form template's fields from a description.
 
-        Delegates the AI work to :class:`ConfigSpecsAiService` and **persists**
-        the validated result onto the DRAFT (overwriting its content), returning
-        the updated version — same shape as every other field route.
+        Delegates the AI work to :class:`ConfigSpecsAiService` and returns the
+        validated proposed specs **without persisting** — the editor reviews
+        them and applies them via the override-specs route
+        (:meth:`FormTemplateService.override_specs`).
 
         Only DRAFT versions are accepted (a published schema cannot be edited).
         Raises on an empty description, a JSON-parse failure, or a proposal that
-        fails schema validation — the draft is then left unchanged.
+        fails schema validation.
         """
         version = FormTemplateService._get_draft_version_and_check(template_id, version_id)
         specs = ConfigSpecsAiService.generate_specs(version.get_content(), dto.description)
-        return FormTemplateService.apply_generated_specs(template_id, version_id, specs)
+        return GenerateTemplateSpecsResultDTO(specs=specs.to_dto())
 
     @classmethod
     def generate_template_field(

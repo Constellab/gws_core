@@ -38,7 +38,7 @@ class ConfigSpecsAiService:
     # the two prompts consistent — only the surrounding task differs.
     _field_spec_rules = """A field spec is a JSON object following the exact shape of one of the allowed field types below. Set "human_name" (a readable label) and "short_description" on every field; set "optional": true for a field the user is not required to fill. Use the type-specific keys exactly as shown — do not invent keys.
 
-Field keys are snake_case identifiers: only letters, digits, and underscores; must not start with a digit; no spaces. Choose a key from the field's meaning (e.g. "Full name" -> "full_name").
+Field keys are snake_case identifiers: only letters, digits, and underscores; must not start with a digit; no spaces; at most {{MAX_KEY_LENGTH}} characters. Choose a key from the field's meaning (e.g. "Full name" -> "full_name").
 
 Language of "human_name" and "short_description":
 - If there are existing fields, write them in the SAME language as the existing fields' human_name / short_description.
@@ -295,17 +295,20 @@ Available fields in the target scope:
         template: str,
         categories: list[ParamSpecCategory] | None = None,
     ) -> str:
-        """Fill the shared placeholders ({{FIELD_SPEC_RULES}}, {{TYPE_CATALOG}})
-        in a prompt template.
+        """Fill the shared placeholders ({{FIELD_SPEC_RULES}}, {{TYPE_CATALOG}},
+        {{MAX_KEY_LENGTH}}) in a prompt template.
 
         ``{{FIELD_SPEC_RULES}}`` is expanded first (it itself contains
-        ``{{TYPE_CATALOG}}``), then the catalog is filled. The ComputedParam /
-        Formula grammar rides along inside the computed_param catalog entry
-        (``ComputedParam.ai_summary``), so it appears only when COMPUTED is
-        offered — no separate placeholder needed.
+        ``{{TYPE_CATALOG}}`` and ``{{MAX_KEY_LENGTH}}``), then those are filled.
+        The key-length limit comes from ``ConfigSpecs.MAX_KEY_LENGTH`` (the same
+        limit ConfigSpecs enforces). The ComputedParam / Formula grammar rides
+        along inside the computed_param catalog entry (``ComputedParam.ai_summary``),
+        so it appears only when COMPUTED is offered — no separate placeholder.
         """
-        return template.replace("{{FIELD_SPEC_RULES}}", cls._field_spec_rules).replace(
-            "{{TYPE_CATALOG}}", cls._build_type_catalog(categories)
+        return (
+            template.replace("{{FIELD_SPEC_RULES}}", cls._field_spec_rules)
+            .replace("{{TYPE_CATALOG}}", cls._build_type_catalog(categories))
+            .replace("{{MAX_KEY_LENGTH}}", str(ConfigSpecs.MAX_KEY_LENGTH))
         )
 
     @staticmethod

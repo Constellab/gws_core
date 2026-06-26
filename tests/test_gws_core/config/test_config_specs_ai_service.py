@@ -117,6 +117,21 @@ class TestConfigSpecsAiService(BaseTestCaseLight):
             self.assertIn("@@", prompt)
 
     # ------------------------------------------------------------------ #
+    # max key length in prompt
+    # ------------------------------------------------------------------ #
+
+    def test_max_key_length_in_prompt(self):
+        # The prompt advertises the same limit ConfigSpecs enforces.
+        for template in (
+            ConfigSpecsAiService.specs_system_prompt,
+            ConfigSpecsAiService.field_system_prompt,
+        ):
+            prompt = ConfigSpecsAiService._render_prompt(template)
+            self.assertIn(
+                f"at most {ConfigSpecs.MAX_KEY_LENGTH} characters", prompt
+            )
+
+    # ------------------------------------------------------------------ #
     # category filter
     # ------------------------------------------------------------------ #
 

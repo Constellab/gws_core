@@ -1,8 +1,9 @@
-"""AI-assisted form-template field generation / editing (FormTemplateAiService.generate_template_specs).
+"""AI-assisted form-template field generation / editing (FormTemplateAiService).
 
 The AI is prompted to return a complete field specification (a dict mapping
-field key -> spec). The result is validated and written onto the DRAFT version
-(the draft's whole field set is replaced); the updated version is returned.
+field key -> spec). The result is validated and RETURNED (not persisted) — the
+editor applies it via the override-specs route. Single-field generation returns
+one proposed field for the create/update field routes.
 """
 import json
 from unittest.mock import patch
@@ -32,10 +33,10 @@ _GPT_TARGET = "gws_core.impl.openai.open_ai_chat.OpenAiHelper.call_gpt"
 
 class TestFormTemplateAiSpecs(BaseTestCase):
     # ------------------------------------------------------------------ #
-    # generate / modify — persisted onto the draft
+    # generate / modify — preview only (returns specs, no DB write)
     # ------------------------------------------------------------------ #
 
-    def test_generate_from_scratch_persists(self):
+    def test_generate_from_scratch_returns_specs_without_persisting(self):
         template, version_id = self._empty_template()
         ai_specs = ConfigSpecs(
             {
@@ -43,22 +44,22 @@ class TestFormTemplateAiSpecs(BaseTestCase):
                 "mass": FloatParam(human_name="Mass"),
             }
         ).to_json_dict()
+        content_before = FormTemplateVersion.get_by_id(version_id).content
         with patch(_GPT_TARGET, return_value=json.dumps(ai_specs)):
-            version = FormTemplateAiService.generate_template_specs(
+            result = FormTemplateAiService.generate_template_specs(
                 template.id,
                 version_id,
                 GenerateTemplateSpecsDTO(description="a name and a mass"),
             )
-        # Returned version reflects the change...
-        specs = version.get_content()
-        self.assertTrue(specs.has_spec("full_name"))
-        self.assertTrue(specs.has_spec("mass"))
-        # ...and it is persisted in the DB.
-        reloaded = FormTemplateVersion.get_by_id(version_id).get_content()
-        self.assertTrue(reloaded.has_spec("full_name"))
-        self.assertTrue(reloaded.has_spec("mass"))
+        # The proposed specs are returned (dict<key, ParamSpecDTO>)...
+        self.assertIn("full_name", result.specs)
+        self.assertIn("mass", result.specs)
+        # ...and nothing was written to the draft.
+        self.assertEqual(
+            FormTemplateVersion.get_by_id(version_id).content, content_before
+        )
 
-    def test_modify_overwrites_with_full_set(self):
+    def test_modify_returns_full_set(self):
         template, version_id = self._template_with_specs(
             ConfigSpecs({"full_name": StrParam(human_name="Full name")})
         )
@@ -69,34 +70,15 @@ class TestFormTemplateAiSpecs(BaseTestCase):
             }
         ).to_json_dict()
         with patch(_GPT_TARGET, return_value=json.dumps(ai_specs)):
-            FormTemplateAiService.generate_template_specs(
+            result = FormTemplateAiService.generate_template_specs(
                 template.id,
                 version_id,
                 GenerateTemplateSpecsDTO(description="add an age field"),
             )
-        specs = FormTemplateVersion.get_by_id(version_id).get_content()
-        self.assertTrue(specs.has_spec("full_name"))
-        self.assertTrue(specs.has_spec("age"))
+        self.assertIn("full_name", result.specs)
+        self.assertIn("age", result.specs)
 
-    def test_modify_can_drop_a_field(self):
-        # The AI returns the COMPLETE set; omitting a field removes it.
-        template, version_id = self._template_with_specs(
-            ConfigSpecs(
-                {"a": StrParam(human_name="A"), "b": StrParam(human_name="B")}
-            )
-        )
-        ai_specs = ConfigSpecs({"a": StrParam(human_name="A")}).to_json_dict()
-        with patch(_GPT_TARGET, return_value=json.dumps(ai_specs)):
-            FormTemplateAiService.generate_template_specs(
-                template.id,
-                version_id,
-                GenerateTemplateSpecsDTO(description="remove b"),
-            )
-        specs = FormTemplateVersion.get_by_id(version_id).get_content()
-        self.assertTrue(specs.has_spec("a"))
-        self.assertFalse(specs.has_spec("b"))
-
-    def test_param_set_field_persists(self):
+    def test_param_set_field_in_result(self):
         template, version_id = self._empty_template()
         ai_specs = ConfigSpecs(
             {
@@ -112,13 +94,12 @@ class TestFormTemplateAiSpecs(BaseTestCase):
             }
         ).to_json_dict()
         with patch(_GPT_TARGET, return_value=json.dumps(ai_specs)):
-            FormTemplateAiService.generate_template_specs(
+            result = FormTemplateAiService.generate_template_specs(
                 template.id,
                 version_id,
                 GenerateTemplateSpecsDTO(description="a list of samples"),
             )
-        spec = FormTemplateVersion.get_by_id(version_id).get_content().get_spec("samples")
-        self.assertIsInstance(spec, ParamSet)
+        self.assertEqual(result.specs["samples"].type.value, "param_set")
 
     def test_current_specs_sent_to_the_ai(self):
         template, version_id = self._template_with_specs(
@@ -162,13 +143,12 @@ class TestFormTemplateAiSpecs(BaseTestCase):
         template, version_id = self._empty_template()
         body = json.dumps(ConfigSpecs({"name": StrParam()}).to_json_dict())
         with patch(_GPT_TARGET, return_value="```json\n" + body + "\n```"):
-            FormTemplateAiService.generate_template_specs(
+            result = FormTemplateAiService.generate_template_specs(
                 template.id,
                 version_id,
                 GenerateTemplateSpecsDTO(description="a name"),
             )
-        specs = FormTemplateVersion.get_by_id(version_id).get_content()
-        self.assertTrue(specs.has_spec("name"))
+        self.assertIn("name", result.specs)
 
     # ------------------------------------------------------------------ #
     # invalid schema -> raise, draft left unchanged

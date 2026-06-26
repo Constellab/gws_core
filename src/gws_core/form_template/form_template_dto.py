@@ -152,13 +152,38 @@ class GenerateTemplateSpecsDTO(BaseModelDTO):
 
     The AI is given the DRAFT version's current specs (which may be empty) and
     the user's free-text ``description``, and produces the complete new field
-    specification. That spec is validated and **written onto the DRAFT** (the
-    draft's whole field set is replaced); the updated version is returned. Empty
-    current specs ⇒ build from scratch; non-empty ⇒ modify the existing fields.
-    Only DRAFT versions can be targeted.
+    specification from the DRAFT's current specs + the description. The result
+    is returned (NOT persisted) — the editor reviews it and applies it via the
+    override-specs route. Empty current specs ⇒ build from scratch; non-empty ⇒
+    modify the existing fields. Only DRAFT versions can be targeted.
     """
 
     description: str
+
+
+class GenerateTemplateSpecsResultDTO(BaseModelDTO):
+    """Result of an AI-assisted whole-template generation.
+
+    ``specs`` is the complete proposed field set, serialized the same way as
+    ``FormSaveResultDTO.specs`` and the field routes (``dict[key, ParamSpecDTO]``)
+    so the editor can render it and, when the user accepts, send it back to the
+    override-specs route. Nothing is persisted.
+    """
+
+    specs: dict[str, ParamSpecDTO]
+
+
+class OverrideFormTemplateSpecsDTO(BaseModelDTO):
+    """Request body for fully replacing a DRAFT version's field set.
+
+    ``specs`` is the complete new field set (``dict[key, ParamSpecDTO]``) — the
+    draft's content is replaced wholesale (not merged). Validated before write;
+    only DRAFT versions can be targeted. This is the bulk counterpart of the
+    per-field create/update routes, and the route the AI generate-specs preview
+    is applied through.
+    """
+
+    specs: dict[str, ParamSpecDTO]
 
 
 class GenerateTemplateFieldDTO(BaseModelDTO):

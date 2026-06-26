@@ -187,6 +187,103 @@ class TestFormTemplateVersioning(BaseTestCase):
                 template.id, published.id, ["b", "a"]
             )
 
+    def test_override_specs_replaces_full_set(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a", "b"]))
+
+        new_specs = _str_specs(["x", "y", "z"]).to_dto()
+        updated = FormTemplateService.override_specs(template.id, draft.id, new_specs)
+
+        keys = list(updated.get_content().specs.keys())
+        self.assertEqual(keys, ["x", "y", "z"])
+        # persisted
+        self.assertEqual(
+            list(FormTemplateVersion.get_by_id(draft.id).get_content().specs.keys()),
+            ["x", "y", "z"],
+        )
+
+    def test_override_specs_with_empty_clears(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a"]))
+
+        updated = FormTemplateService.override_specs(template.id, draft.id, {})
+        self.assertEqual(list(updated.get_content().specs.keys()), [])
+
+    def test_override_specs_rejects_invalid_schema(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["keep"]))
+        content_before = FormTemplateVersion.get_by_id(draft.id).content
+
+        # cyclic computed params -> check_config_specs fails
+        cyclic = ConfigSpecs(
+            {
+                "a": ComputedParam(expression="@b + 1"),
+                "b": ComputedParam(expression="@a + 1"),
+            }
+        ).to_dto()
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.override_specs(template.id, draft.id, cyclic)
+        # draft untouched
+        self.assertEqual(
+            FormTemplateVersion.get_by_id(draft.id).content, content_before
+        )
+
+    def test_create_field_rejects_too_long_key(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        long_key = "a" * (ConfigSpecs.MAX_KEY_LENGTH + 1)
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.create_draft_field(
+                template.id, draft.id, long_key, StrParam(human_name="X").to_dto()
+            )
+
+    def test_rename_field_rejects_too_long_key(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a"]))
+        long_key = "b" * (ConfigSpecs.MAX_KEY_LENGTH + 1)
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.rename_and_update_draft_field(
+                template.id, draft.id, "a", long_key, StrParam(human_name="X").to_dto()
+            )
+
+    def test_override_specs_rejects_too_long_key(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        long_key = "c" * (ConfigSpecs.MAX_KEY_LENGTH + 1)
+        # Build the spec map directly (ConfigSpecs(...) would zero an invalid key
+        # at construction); override_specs must reject it via check_config_specs.
+        specs_dto = {long_key: StrParam(human_name="X").to_dto()}
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.override_specs(template.id, draft.id, specs_dto)
+
+    def test_override_specs_rejects_too_long_key_inside_param_set(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        long_key = "d" * (ConfigSpecs.MAX_KEY_LENGTH + 1)
+        # Build the inner ParamSet ConfigSpecs with _skip_key_validation so the
+        # long key survives to override_specs (which must reject it).
+        inner = ConfigSpecs({long_key: StrParam(human_name="X")}, _skip_key_validation=True)
+        specs = ConfigSpecs(
+            {"samples": ParamSet(inner)}
+        ).to_dto()
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.override_specs(template.id, draft.id, specs)
+
+    def test_override_specs_rejected_on_non_draft(self):
+        template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
+        draft = self._get_draft(template)
+        draft.update_specs(_str_specs(["a"]))
+        published = FormTemplateService.publish_version(template.id, draft.id)
+
+        with self.assertRaises(BadRequestException):
+            FormTemplateService.override_specs(
+                template.id, published.id, _str_specs(["b"]).to_dto()
+            )
+
     def test_publish_rejects_syntactically_invalid_computed_param(self):
         """A ComputedParam whose expression does not parse must not publish.
 
