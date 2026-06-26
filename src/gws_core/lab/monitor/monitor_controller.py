@@ -1,5 +1,8 @@
 from fastapi import Depends
 
+from gws_core.core.exception.exceptions.bad_request_exception import (
+    BadRequestException,
+)
 from gws_core.lab.monitor.monitor_dto import (
     CurrentMonitorDTO,
     DiskFolderSizesDTO,
@@ -29,6 +32,9 @@ def get_the_lab_monitor_graphics(
     """
     Get lab monitor graphics
     """
+    if request.from_date is None or request.to_date is None:
+        raise BadRequestException("from_date and to_date are required")
+
     timezone_num = request.timezone_number if request.timezone_number else 0
     return MonitorService.get_monitor_graphics_between_dates_str(
         from_date_str=request.from_date, to_date_str=request.to_date, utc_num=timezone_num

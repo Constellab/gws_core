@@ -3,7 +3,11 @@ from fastapi import Depends, Query
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core_controller import core_app
-from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_dto import (
+    LabDTO,
+    LabDTOWithCredentials,
+    UpdateLabDomainDTO,
+)
 from gws_core.lab.lab_model.lab_model_service import LabModelService
 from gws_core.user.authorization_service import AuthorizationService
 
@@ -66,3 +70,43 @@ def search_labs(
 ) -> PageDTO[LabDTO]:
     """Search labs using a search builder."""
     return LabModelService.search(search_dict, page, number_of_items_per_page).to_dto(LabDTO)
+
+
+################################### UPDATE ROUTES ###################################
+@core_app.put("/lab/{id_}/refresh", tags=["Lab"], summary="Refresh an external lab info")
+def refresh_external_lab(
+    id_: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> LabDTO:
+    """Refresh the locally stored information of an external lab.
+
+    Calls the external lab using the stored credentials to fetch its up-to-date
+    information and updates the local record."""
+    return LabModelService.refresh_external_lab(id_).to_dto()
+
+
+@core_app.put("/lab/{id_}/domain", tags=["Lab"], summary="Update an external lab domain")
+def update_lab_domain(
+    id_: str,
+    update_dto: UpdateLabDomainDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> LabDTO:
+    """Update the domain of an external lab.
+
+    Before saving, the new domain is verified by calling the external lab's
+    get-lab-info route with the new domain and the stored credentials. The domain
+    is only updated if that call succeeds."""
+    return LabModelService.update_domain(id_, update_dto.domain).to_dto()
+
+
+################################### DELETE ROUTES ###################################
+@core_app.delete("/lab/{id_}", tags=["Lab"], summary="Delete a lab by id")
+def delete_lab(
+    id_: str,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> None:
+    """Delete a lab by its database id.
+
+    The deletion is prevented if the lab is still referenced by another entity
+    (task, protocol, scenario, shared scenario or shared resource)."""
+    LabModelService.delete(id_)

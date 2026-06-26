@@ -12,7 +12,7 @@ from gws_core.external_lab.external_lab_dto import (
     ExternalLabWithUserInfo,
     MarkEntityAsSharedDTO,
 )
-from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
+from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.share.shared_dto import (
     ShareLinkEntityType,
@@ -154,6 +154,20 @@ class ExternalLabApiService:
         return ExternalApiService.post(
             url, body=body.to_json_dict(), headers=headers, raise_exception_if_error=True
         )
+
+    def get_lab_info(self) -> LabDTO:
+        """Get the up-to-date information of the external lab (name, space, domain, etc.).
+
+        Calls the credentials-secured ``/lab-info`` route on the external lab.
+        Used to refresh the locally stored LabModel.
+        """
+        headers = self._get_auth_headers()
+
+        url = self.get_full_route("lab-info")
+
+        response = ExternalApiService.get(url, headers=headers, raise_exception_if_error=True)
+
+        return LabDTO.from_json(response.json())
 
     def get_full_route(self, route: str) -> str:
         """Get the full route for an external lab API call.

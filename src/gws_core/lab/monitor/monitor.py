@@ -82,6 +82,7 @@ class Monitor(Model):
         monitor.cpu_percent = psutil.cpu_percent(interval=None)
 
         # All CPU
+        assert monitor.data is not None  # initialized to {} in __init__ for unsaved monitors
         monitor.data["all_cpu_percent"] = psutil.cpu_percent(interval=None, percpu=True)
 
         # Disk
@@ -129,7 +130,7 @@ class Monitor(Model):
         return psutil.disk_usage(disk_path)
 
     @classmethod
-    def get_gpu_info(cls) -> GpuInfo:
+    def get_gpu_info(cls) -> GpuInfo | None:
         try:
             result = subprocess.run(
                 [
@@ -160,6 +161,8 @@ class Monitor(Model):
 
     @property
     def get_all_cpu_percent(self) -> list[float]:
+        if self.data is None:
+            return []
         return self.data.get("all_cpu_percent", [])
 
     def to_dto(self) -> MonitorDTO:
@@ -190,7 +193,7 @@ class Monitor(Model):
             gpu_memory_used=self.gpu_memory_used,
             gpu_memory_free=self.gpu_memory_free,
             gpu_memory_percent=self.gpu_memory_percent,
-            data=self.data,
+            data=self.data or {},
         )
 
     class Meta:

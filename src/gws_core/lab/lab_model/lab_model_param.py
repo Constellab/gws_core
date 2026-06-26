@@ -56,7 +56,7 @@ class LabModelParam(ParamSpec):
         lab: LabModel = LabModel.get_by_id_and_check(value)
         return lab.to_dto_with_credentials()
 
-    def validate(self, value: Any) -> str:
+    def validate(self, value: Any) -> str | None:
         """Extract the id from LabModel, dict, or string."""
         if value is None:
             return value

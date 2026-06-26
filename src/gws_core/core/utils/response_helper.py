@@ -13,7 +13,7 @@ from gws_core.core.utils.xml_helper import XMLHelper
 class ResponseHelper:
     @staticmethod
     def create_file_response_from_json(
-        json_: dict, file_name: str = "file.json", media_type: str = "application/json"
+        json_: dict | list, file_name: str = "file.json", media_type: str = "application/json"
     ) -> StreamingResponse:
         """
         Create a StreamingResponse from a json

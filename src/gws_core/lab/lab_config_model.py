@@ -67,7 +67,7 @@ class LabConfigModel(BaseModel):
     @classmethod
     def get_current_config(cls) -> "LabConfigModel":
         if cls._current_config is None:
-            cls.save_current_config()
+            return cls.save_current_config()
         return cls._current_config
 
     @classmethod

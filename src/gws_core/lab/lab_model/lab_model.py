@@ -1,4 +1,5 @@
 
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.model.model import Model
@@ -93,7 +94,18 @@ class LabModel(Model):
             space_name=self.space_name,
             credentials_id=self.credentials.id if self.credentials else None,
             front_url=self.get_front_url(),
+            gws_core_version=self._get_gws_core_version(),
         )
+
+    def _get_gws_core_version(self) -> str | None:
+        """Return the installed gws_core version, but only for the current lab.
+
+        For an external lab the local install version is irrelevant; its version
+        is whatever it reported in its own DTO, so we leave it unset here.
+        """
+        if not self.is_current_lab():
+            return None
+        return BrickHelper.get_gws_core_version()
 
     def to_dto_with_credentials(self) -> LabDTOWithCredentials:
         """Convert the model to a DTO with resolved credentials data."""
