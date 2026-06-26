@@ -1,4 +1,5 @@
 import time
+import traceback
 from threading import Timer
 from typing import Optional
 
@@ -20,21 +21,21 @@ class MessageDispatcher:
     # if the last message was send less than this time ago,
     # and the last message type is the same as the current one,
     # then the messages are merged separated by a new line
-    interval_time_merging_message: float | None = None
+    interval_time_merging_message: float
 
     # During this time all the notify message are buffered before being dispatched all at once
-    interval_time_dispatched_buffer: float | None = None
+    interval_time_dispatched_buffer: float
 
     # Min level of message to be notified
-    message_level: MessageLevel | None = None
+    message_level: MessageLevel
 
     # Prefix for all the messages
     prefix: str | None = None
 
-    _observers: list[MessageObserver] | None = None
+    _observers: list[MessageObserver]
 
     # list of the messages that are waiting to be dispatched by the timer
-    _waiting_messages: list[DispatchedMessage] | None = None
+    _waiting_messages: list[DispatchedMessage]
 
     # last time a message was notified
     _last_notify_time: float | None = None
@@ -50,8 +51,8 @@ class MessageDispatcher:
 
     def __init__(
         self,
-        interval_time_merging_message=0.1,
-        interval_time_dispatched_buffer=1,
+        interval_time_merging_message: float = 0.1,
+        interval_time_dispatched_buffer: float = 1,
         log_level: MessageLevel = MessageLevel.INFO,
         prefix: str | None = None,
         parent_dispatcher: Optional["MessageDispatcher"] = None,
@@ -184,11 +185,31 @@ class MessageDispatcher:
         """
         self._build_and_notify_message(message, MessageLevel.WARNING)
 
-    def notify_error_message(self, message: str) -> None:
+    def notify_error_message(self, message: str, exception: Exception | None = None) -> None:
         """
         Trigger a error in each subscriber.
+
+        :param message: error message to dispatch
+        :type message: str
+        :param exception: if provided, its formatted traceback is appended to the message
+        :type exception: Exception | None
         """
+        if exception is not None:
+            message = f"{message}\n{self.format_exception(exception)}"
         self._build_and_notify_message(message, MessageLevel.ERROR)
+
+    @staticmethod
+    def format_exception(exception: Exception) -> str:
+        """Format an exception into its full traceback string.
+
+        :param exception: the exception to format
+        :type exception: Exception
+        :return: the formatted traceback
+        :rtype: str
+        """
+        return "".join(
+            traceback.format_exception(type(exception), exception, exception.__traceback__)
+        )
 
     def notify_success_message(self, message: str) -> None:
         """
@@ -223,7 +244,7 @@ class MessageDispatcher:
             return
 
         # if there is a parent dispatcher, we forward the message to it
-        if self.has_parent_dispatcher():
+        if self._parent_dispatcher is not None:
             self._parent_dispatcher.notify_message(message)
             return
 

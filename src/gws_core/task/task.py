@@ -1,4 +1,3 @@
-import traceback
 from abc import abstractmethod
 from typing import Literal, final
 
@@ -146,6 +145,17 @@ class Task(Process):
         self.message_dispatcher.notify_progress_value(progress=value, message=message)
 
     @final
+    def get_and_check_message_dispatcher(self) -> MessageDispatcher:
+        """Return the message dispatcher, raising if it is not set.
+
+        :return: the message dispatcher of the task
+        :rtype: MessageDispatcher
+        """
+        if self.message_dispatcher is None:
+            raise BadRequestException("The message dispatcher is not set for the task")
+        return self.message_dispatcher
+
+    @final
     def log_message(self, message: str, type_: MessageLevel) -> None:
         """Store a message in the progress
 
@@ -153,11 +163,7 @@ class Task(Process):
         :type message: str
         """
         dispatched_message = DispatchedMessage(status=type_, message=message)
-
-        if self.message_dispatcher is None:
-            raise BadRequestException("The message dispatcher is not set for the task")
-
-        self.message_dispatcher.notify_message(dispatched_message)
+        self.get_and_check_message_dispatcher().notify_message(dispatched_message)
 
     @final
     def log_debug_message(self, message: str):
@@ -176,12 +182,7 @@ class Task(Process):
         """Log an error message, optionally appending the formatted traceback
         of an exception.
         """
-        if exception is not None:
-            formatted = "".join(
-                traceback.format_exception(type(exception), exception, exception.__traceback__)
-            )
-            message = f"{message}\n{formatted}"
-        self.log_message(message, MessageLevel.ERROR)
+        self.get_and_check_message_dispatcher().notify_error_message(message, exception=exception)
 
     @final
     def log_warning_message(self, message: str):
@@ -209,9 +210,7 @@ class Task(Process):
 
     @final
     def get_message_dispatcher(self) -> MessageDispatcher:
-        if self.message_dispatcher is None:
-            raise BadRequestException("The message dispatcher is not set for the task")
-        return self.message_dispatcher
+        return self.get_and_check_message_dispatcher()
 
     @final
     @classmethod
