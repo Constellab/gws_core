@@ -34,6 +34,24 @@ class TestValidator(unittest.TestCase):
         self.assertRaises(Exception, validator.validate, 4)
         self.assertRaises(Exception, validator.validate, True)
 
+    def test_str_validator_regex(self):
+        validator: Validator = StrValidator(regex="[A-Z]{3}")
+        self.assertEqual(validator.validate("ABC"), "ABC")
+        # fullmatch: a partial match is rejected
+        self.assertRaises(Exception, validator.validate, "ABCD")
+        self.assertRaises(Exception, validator.validate, "abc")
+
+        # an invalid pattern raises on construction
+        self.assertRaises(Exception, StrValidator, regex="[A-Z")
+
+        # the human-readable description is surfaced in the error message
+        validator = StrValidator(regex="[A-Z]{3}", regex_description="three uppercase letters")
+        try:
+            validator.validate("abc")
+            self.fail("Expected a validation error")
+        except Exception as err:
+            self.assertIn("three uppercase letters", str(err))
+
     def test_bool_validator(self):
         validator: Validator = BoolValidator()
         self.assertEqual(validator.validate(False), False)

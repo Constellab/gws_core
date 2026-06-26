@@ -1,3 +1,4 @@
+import re
 import sys
 import warnings
 from abc import abstractmethod
@@ -282,6 +283,11 @@ class StrParamAdditionalInfo(TypedDict):
     min_length: int | None
     max_length: int | None
     allowed_values: list[str] | None
+    # A regular expression the value must fully match (re.fullmatch)
+    regex: str | None
+    # Plain-language description of the expected format, shown to the user and
+    # used in the validation error message instead of the raw regex
+    regex_description: str | None
 
 
 @param_spec_decorator()
@@ -300,6 +306,8 @@ class StrParam(ParamSpec):
         human_name: str | None = None,
         short_description: str | None = None,
         allowed_values: list[str] | None = None,
+        regex: str | None = None,
+        regex_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -316,16 +324,43 @@ class StrParam(ParamSpec):
         :param allowed_values: DEPRECATED(gws_core 0.22, remove in 0.24): use SelectParam instead.
                         If present, the param value must be in the array
         :type allowed_values: Optional[List[str]]
+        :param regex: A regular expression the value must fully match (uses re.fullmatch, so
+                        the whole string must conform; anchor explicitly for a partial match).
+                        If set, regex_description is required.
+        :type regex: Optional[str]
+        :param regex_description: Plain-language description of the expected format. Shown to the
+                        user and used in the validation error message instead of the raw regex.
+                        Mandatory when regex is set.
+        :type regex_description: Optional[str]
         """
 
         if allowed_values is not None:
             # DEPRECATED(gws_core 0.22, remove in 0.24): allowed_values -> use SelectParam
             _warn_allowed_values_deprecated("StrParam")
 
+        if regex is not None:
+            # A regex without a plain-language description is useless to the end user
+            # (the error message would show the raw pattern), so require both together.
+            if not regex_description:
+                raise BadRequestException(
+                    "'regex_description' is required when 'regex' is set on StrParam: "
+                    "it is the human-readable explanation shown to the user."
+                )
+            # Fail fast on an invalid pattern (an authoring error) at construction
+            # rather than when validate() later builds the StrValidator.
+            try:
+                re.compile(regex)
+            except re.error as err:
+                raise BadRequestException(
+                    f"The regex '{regex}' is not a valid regular expression: {err}"
+                ) from err
+
         self.additional_info = {
             "min_length": min_length,
             "max_length": max_length,
             "allowed_values": allowed_values,
+            "regex": regex,
+            "regex_description": regex_description,
         }
         super().__init__(
             default_value=default_value,
@@ -339,10 +374,14 @@ class StrParam(ParamSpec):
         if value is None:
             return value
 
+        # StrValidator checks the user input against the regex (re.fullmatch) when
+        # one is set, raising with regex_description in the message on a mismatch.
         str_validator = StrValidator(
             allowed_values=self.additional_info.get("allowed_values"),
             min_length=self.additional_info.get("min_length"),
             max_length=self.additional_info.get("max_length"),
+            regex=self.additional_info.get("regex"),
+            regex_description=self.additional_info.get("regex_description"),
         )
         return str_validator.validate(value)
 
@@ -361,6 +400,8 @@ class StrParam(ParamSpec):
         return {
             "min_length": "Minimum number of characters (inclusive), or null.",
             "max_length": "Maximum number of characters (inclusive), or null.",
+            "regex": "A regular expression the value must fully match, or null.",
+            "regex_description": "Plain-language description of the expected format, shown to the user, or null.",
         }
 
     @classmethod
@@ -371,19 +412,6 @@ class StrParam(ParamSpec):
             min_length=1,
             max_length=120,
         )
-
-    def _check_allowed_values(self, allowed_values: list[str] | None) -> None:
-        if allowed_values is not None:
-            if not isinstance(allowed_values, (list, tuple)):
-                raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in 'str' param, it must be an list or a tuple"
-                )
-
-            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
-                raise BadRequestException("Allowed values are not allowed in the 'str' param")
-            self.additional_info["allowed_values"] = allowed_values
-        else:
-            self.additional_info["allowed_values"] = None
 
 
 @param_spec_decorator()
@@ -670,21 +698,6 @@ class NumericParam(ParamSpec):
             "min_value": "Minimum allowed value (inclusive), or null.",
             "max_value": "Maximum allowed value (inclusive), or null.",
         }
-
-    def _check_allowed_values(self, allowed_values: list[Any] | None) -> None:
-        if allowed_values is not None:
-            if not isinstance(allowed_values, (list, tuple)):
-                raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in '{self.get_param_spec_type()}' param, it must be an list or a tuple"
-                )
-
-            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
-                raise BadRequestException(
-                    f"Allowed values are not allowed in the '{self.get_param_spec_type()}' param"
-                )
-            self.additional_info["allowed_values"] = allowed_values
-        else:
-            self.additional_info["allowed_values"] = None
 
 
 @param_spec_decorator()

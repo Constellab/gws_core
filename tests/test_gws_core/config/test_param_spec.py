@@ -32,6 +32,38 @@ class TestParamSpec(TestCase):
         self.assertEqual(spec_dto.additional_info["max_value"], 10)
         self.assertEqual(spec_dto.additional_info["allowed_values"], [1, 2])
 
+    def test_str_param_regex(self):
+        param = StrParam(
+            regex="[A-Z]{3}",
+            regex_description="three uppercase letters",
+            human_name="Code",
+        )
+
+        spec_dto = param.to_dto()
+        self.assertEqual(spec_dto.type, ParamSpecType.STRING)
+        self.assertEqual(spec_dto.additional_info["regex"], "[A-Z]{3}")
+        self.assertEqual(
+            spec_dto.additional_info["regex_description"], "three uppercase letters"
+        )
+
+        # a matching value passes, a non-matching value is rejected
+        self.assertEqual(param.validate("ABC"), "ABC")
+        with self.assertRaises(BadRequestException):
+            param.validate("abc")
+
+        # the human-readable description is surfaced in the error message
+        with self.assertRaises(BadRequestException) as ctx:
+            param.validate("abc")
+        self.assertIn("three uppercase letters", str(ctx.exception))
+
+        # regex requires a regex_description: setting regex alone fails at construction
+        with self.assertRaises(BadRequestException):
+            StrParam(regex="[A-Z]{3}")
+
+        # an invalid regular expression fails at construction
+        with self.assertRaises(BadRequestException):
+            StrParam(regex="[A-Z", regex_description="three uppercase letters")
+
     def test_param_set(self):
         param = ParamSet(
             ConfigSpecs({"str": StrParam(), "int": IntParam(default_value=12)}),
