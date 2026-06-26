@@ -9,6 +9,7 @@ from ...process.process_proxy import ProcessProxy
 from ...protocol.protocol_proxy import ProtocolProxy
 from ...resource.resource import Resource
 from ...resource.resource_model import ResourceModel
+from ...scenario.scenario import Scenario
 from ...scenario.scenario_proxy import ScenarioProxy
 from ..converter.converter import Converter
 from ..task import Task
@@ -20,6 +21,45 @@ class TransformerService:
     def create_and_run_transformer_scenario(
         cls, transformers: list[TransformerDict], resource_model_id: str
     ) -> ResourceModel:
+        scenario = cls._build_transformer_scenario(transformers, resource_model_id)
+
+        #  run the scenario
+        try:
+            scenario.run()
+        except Exception as exception:
+            # delete scenario if there was an error
+            scenario.delete()
+            raise exception
+
+        # return the resource model of the output process
+        resoure_model = (
+            scenario.get_model()
+            .protocol_model.get_process("output")
+            .inputs.get_resource_model(OutputTask.input_name)
+        )
+        if resoure_model is None:
+            raise BadRequestException("The transformed resource could not be retrieved")
+        return resoure_model
+
+    @classmethod
+    def create_and_run_transformer_scenario_async(
+        cls, transformers: list[TransformerDict], resource_model_id: str
+    ) -> Scenario:
+        """Build the transformer scenario and run it asynchronously.
+
+        Returns the running scenario immediately; the front-end polls its status
+        and fetches the transformed resource once it succeeds. Unlike the sync
+        variant this does not fork the HTTP server process.
+        """
+        scenario = cls._build_transformer_scenario(transformers, resource_model_id)
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_transformer_scenario(
+        cls, transformers: list[TransformerDict], resource_model_id: str
+    ) -> ScenarioProxy:
         if not transformers or len(transformers) == 0:
             raise BadRequestException("At least 1 transformer mustbe provided")
 
@@ -64,20 +104,7 @@ class TransformerService:
         # add output task
         protocol.add_output("output", last_process >> Transformer.output_name)
 
-        #  run the scenario
-        try:
-            scenario.run()
-        except Exception as exception:
-            # delete scenario if there was an error
-            scenario.delete()
-            raise exception
-
-        # return the resource model of the output process
-        return (
-            scenario.get_model()
-            .protocol_model.get_process("output")
-            .inputs.get_resource_model(OutputTask.input_name)
-        )
+        return scenario
 
     @classmethod
     def call_transformers(cls, resource: Resource, transformers: list[TransformerDict]) -> Resource:

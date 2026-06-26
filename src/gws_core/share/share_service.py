@@ -28,6 +28,7 @@ from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.shared_dto import (
     ShareLinkEntityType,
     ShareResourceInfoReponseDTO,
+    ShareResourceZipAsyncResponseDTO,
     ShareResourceZippedResponseDTO,
     ShareScenarioInfoReponseDTO,
 )
@@ -161,9 +162,43 @@ class ShareService:
         )
 
     @classmethod
+    def zip_shared_resource_async(
+        cls, shared_entity_link: ShareLink
+    ) -> ShareResourceZipAsyncResponseDTO:
+        """Asynchronous version of ``zip_shared_resource``.
+
+        Starts (or reuses) the zip scenario without blocking the server and
+        returns it alongside the download route. The caller polls the scenario
+        until it succeeds, then downloads the entity.
+        """
+        if shared_entity_link.entity_type != ShareLinkEntityType.RESOURCE:
+            raise Exception(f"Entity type {shared_entity_link.entity_type} is not supported")
+
+        scenario = cls.zip_resource_async(
+            shared_entity_link.entity_id, shared_entity_link.created_by
+        )
+
+        # generate the link to download the zipped resource (token-based, available now)
+        download_url: str = ExternalLabApiService.get_current_lab_route(
+            f"{Settings.core_api_route_path()}/share/resource/{shared_entity_link.token}/download"
+        )
+        return ShareResourceZipAsyncResponseDTO(
+            version=cls.VERSION,
+            entity_type=shared_entity_link.entity_type,
+            entity_id=shared_entity_link.entity_id,
+            scenario=scenario.get_model().to_dto(),
+            download_entity_route=download_url,
+        )
+
+    @classmethod
     def zip_resource(cls, resource_model_id: str, shared_by: User) -> ResourceModel:
         with AuthenticateUser(shared_by):
             return cls.run_zip_resource_scenario(resource_model_id, shared_by)
+
+    @classmethod
+    def zip_resource_async(cls, resource_model_id: str, shared_by: User) -> ScenarioProxy:
+        with AuthenticateUser(shared_by):
+            return cls.run_zip_resource_scenario_async(resource_model_id, shared_by)
 
     @classmethod
     def _create_system_tag(cls, key: str, value: str) -> Tag:
@@ -172,9 +207,9 @@ class ShareService:
         return Tag(key, value, origins=origins)
 
     @classmethod
-    def find_existing_zipped_resource(cls, resource_model_id: str) -> ResourceModel | None:
+    def find_existing_zip_scenario(cls, resource_model_id: str) -> ScenarioProxy | None:
         """Search for an existing successful zip scenario for the given resource
-        and current task version, and return the zipped resource output."""
+        and current task version, and return it as a proxy."""
         search_builder = ScenarioSearchBuilder()
         search_builder.add_tag_filter(
             cls._create_system_tag(TagSystem.TAG_KEY_ZIP_RESOURCE_ID, resource_model_id)
@@ -187,27 +222,24 @@ class ShareService:
         scenario = search_builder.search_first()
 
         if scenario:
-            scenario_proxy = ScenarioProxy.from_existing_scenario(scenario.id)
-            protocol = scenario_proxy.get_protocol()
-            output_task = protocol.get_process("output")
-            return output_task.get_input_resource_model(OutputTask.input_name)
+            return ScenarioProxy.from_existing_scenario(scenario.id)
 
         return None
 
     @classmethod
-    def run_zip_resource_scenario(cls, id_: str, shared_by: User) -> ResourceModel:
-        """Method that zip a resource and return the new resource.
-        If a successful zip scenario already exists for this resource and task version, reuse it.
-        """
+    def find_existing_zipped_resource(cls, resource_model_id: str) -> ResourceModel | None:
+        """Search for an existing successful zip scenario for the given resource
+        and current task version, and return the zipped resource output."""
+        scenario_proxy = cls.find_existing_zip_scenario(resource_model_id)
+        if scenario_proxy is None:
+            return None
 
-        # Check if a zip scenario already exists for this resource
-        existing_zipped_resource = cls.find_existing_zipped_resource(id_)
-        if existing_zipped_resource:
-            Logger.info(
-                f"Resource {id_} was already zipped to resource {existing_zipped_resource.id}, reusing the output."
-            )
-            return existing_zipped_resource
+        output_task = scenario_proxy.get_protocol().get_process("output")
+        return output_task.get_input_resource_model(OutputTask.input_name)
 
+    @classmethod
+    def _build_zip_resource_scenario(cls, id_: str, shared_by: User) -> ScenarioProxy:
+        """Build (without running) the scenario that zips a resource, tagged for later lookup."""
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(id_)
 
         scenario: ScenarioProxy = ScenarioProxy(None, title=f"{resource_model.name} zipper")
@@ -230,12 +262,63 @@ class ShareService:
         protocol.add_resource("source", resource_model.id, zipper << ResourceZipperTask.input_name)
 
         # Add output task and connect it
-        output_task = protocol.add_output("output", zipper >> ResourceZipperTask.output_name, False)
+        protocol.add_output("output", zipper >> ResourceZipperTask.output_name, False)
 
-        scenario.run(auto_delete_if_error=True)
-        output_task.refresh()
+        return scenario
 
+    @classmethod
+    def run_zip_resource_scenario(cls, id_: str, shared_by: User) -> ResourceModel:
+        """Method that zip a resource and return the new resource.
+        If a successful zip scenario already exists for this resource and task version, reuse it.
+
+        DEPRECATED: this runs synchronously inside the cross-lab share/download
+        request and forks the server (see the ``allow_in_http_server`` escape
+        hatch). Prefer ``run_zip_resource_scenario_async``, which runs the zip
+        asynchronously so the server is not blocked.
+        """
+
+        # Check if a zip scenario already exists for this resource
+        existing_zipped_resource = cls.find_existing_zipped_resource(id_)
+        if existing_zipped_resource:
+            Logger.info(
+                f"Resource {id_} was already zipped to resource {existing_zipped_resource.id}, reusing the output."
+            )
+            return existing_zipped_resource
+
+        scenario = cls._build_zip_resource_scenario(id_, shared_by)
+
+        # This runs synchronously inside the cross-lab share/download request
+        # (another lab waits on the HTTP response for the zip). It still forks the
+        # server; the async route avoids this. Kept for backward compatibility with
+        # labs that have not been updated to poll.
+        scenario.run(auto_delete_if_error=True, allow_in_http_server=True)
+
+        output_task = scenario.get_protocol().get_process("output").refresh()
         return output_task.get_input_resource_model(OutputTask.input_name)
+
+    @classmethod
+    def run_zip_resource_scenario_async(cls, id_: str, shared_by: User) -> ScenarioProxy:
+        """Zip a resource asynchronously and return the running (or already finished) scenario.
+
+        If a successful zip scenario already exists for this resource and task
+        version, it is reused and returned directly (already in SUCCESS state).
+        Otherwise a new zip scenario is started with ``run_async`` so the HTTP
+        server is not blocked; the caller polls the returned scenario until it
+        succeeds and then downloads the entity.
+        """
+
+        # Reuse an existing successful zip scenario if present
+        existing_scenario = cls.find_existing_zip_scenario(id_)
+        if existing_scenario:
+            Logger.info(
+                f"Resource {id_} was already zipped by scenario {existing_scenario.get_model_id()}, reusing it."
+            )
+            return existing_scenario
+
+        scenario = cls._build_zip_resource_scenario(id_, shared_by)
+
+        scenario.run_async()
+        return scenario.refresh()
 
     @classmethod
     def download_zipped_resource(cls, shared_entity_link: ShareLink) -> str:

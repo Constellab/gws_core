@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing_extensions import TypedDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
+from gws_core.lab.lab_model.lab_enums import LabEnvironment
 
 
 class SettingsDTO(BaseModelDTO):
@@ -11,7 +12,7 @@ class SettingsDTO(BaseModelDTO):
     space_api_url: str | None
     lab_prod_api_url: str
     lab_dev_api_url: str
-    lab_environment: str
+    lab_environment: LabEnvironment
     virtual_host: str
     main_settings_file_path: str
     log_dir: str

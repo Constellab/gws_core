@@ -385,6 +385,42 @@ class ScenarioService:
         return Scenario.get_by_id_and_check(id_)
 
     @classmethod
+    def get_scenario_output_resource(cls, id_: str) -> ResourceModel | None:
+        """Return the output resource of a classic, single-output scenario.
+
+        This is meant for scenarios that expose exactly one output, like the ones
+        built by ``ResourceTransfertService`` (an ``OutputTask`` connected to the
+        produced resource). The output resource is retrieved through the
+        ``ScenarioProxy`` / ``ProtocolProxy`` by looking up the protocol's
+        ``OutputTask`` processes.
+
+        Returns ``None`` when the scenario is not successful (still running, in
+        error, ...) or when it does not expose exactly one output resource.
+
+        :param id_: the id of the scenario
+        :type id_: str
+        :return: the output resource model, or None
+        :rtype: ResourceModel | None
+        """
+        # Local import to avoid a circular import (ScenarioProxy imports ScenarioService).
+        from gws_core.scenario.scenario_proxy import ScenarioProxy
+
+        scenario = cls.get_by_id_and_check(id_)
+        # If the scenario is running or in error, there is no available output.
+        if not scenario.is_success:
+            return None
+
+        scenario_proxy = ScenarioProxy.from_existing_scenario(id_)
+        protocol = scenario_proxy.get_protocol()
+
+        output_tasks = protocol.get_processes_by_type(OutputTask)
+        # Only classic single-output scenarios are supported.
+        if len(output_tasks) != 1:
+            return None
+
+        return output_tasks[0].get_input_resource_model(OutputTask.input_name)
+
+    @classmethod
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Scenario]:

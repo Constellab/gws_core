@@ -7,7 +7,7 @@ from gws_core.folder.space_folder_dto import SpaceFolderDTO
 from gws_core.impl.file.fs_node_model_dto import FsNodeModelDTO
 from gws_core.model.typing_dto import TypingRefDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.scenario_dto import ScenarioSimpleDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO, ScenarioSimpleDTO
 
 
 class ResourceOrigin(Enum):
@@ -47,6 +47,17 @@ class ResourceModelExportDTO(ResourceModelDTO):
 class ResourceSimpleDTO(BaseModelDTO):
     id: str
     name: str
+
+
+class ScenarioWithOutputResourceDTO(BaseModelDTO):
+    """Response holding a scenario and the resource of its single output.
+
+    The output resource is ``None`` when the scenario is still running, ended in
+    error, or does not expose exactly one output resource.
+    """
+
+    scenario: ScenarioDTO
+    output_resource: ResourceModelDTO | None = None
 
 
 class ShareResourceWithSpaceRequestDTO(BaseModelDTO):

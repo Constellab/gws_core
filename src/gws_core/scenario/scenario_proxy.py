@@ -3,6 +3,7 @@ from time import sleep
 
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.service.front_service import FrontService
+from gws_core.core.utils.settings import Settings
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.scenario.queue.queue_service import QueueService
@@ -70,7 +71,7 @@ class ScenarioProxy:
 
         if protocol_type is None:
             self._scenario = ScenarioService.create_scenario(
-                title=title, folder_id=folder, creation_type=creation_type
+                title=title, folder_id=folder.id if folder else None, creation_type=creation_type
             )
         else:
             if not isclass(protocol_type) or not issubclass(protocol_type, Protocol):
@@ -99,8 +100,50 @@ class ScenarioProxy:
         """retrieve the main protocol of the scenario"""
         return self._protocol
 
-    def run(self, auto_delete_if_error: bool = False) -> None:
-        """execute the scenario, after that the resource should be generated and can be retrieve by process"""
+    def run(
+        self, auto_delete_if_error: bool = False, allow_in_http_server: bool = False
+    ) -> None:
+        """Execute the scenario synchronously and block until it is finished.
+
+        The scenario runs in a forked sub-process (``ProcessDb``) so it can be
+        stopped, then this method waits for it to complete and raises if it
+        errored.
+
+        .. warning::
+            This forks the current process. It is safe in tests, CLI commands
+            and the scenario queue subprocess, but **must never be called from a
+            FastAPI request handler** (i.e. from the running HTTP server). The
+            fork duplicates the server's listening socket and event-loop state,
+            which blocks every other HTTP request until the scenario finishes,
+            and the forked download keeps running even if the client disconnects.
+
+            From a request handler, run the scenario asynchronously instead:
+            use :meth:`run_async` and return immediately, then poll the scenario
+            status from the front-end (see the ``*_async`` methods on
+            ``ResourceTransfertService``, ``ConverterService``, etc.).
+
+        This method enforces the rule above: calling it while this process is the
+        HTTP server raises a ``RuntimeError`` instead of silently degrading the
+        server. The ``allow_in_http_server`` escape hatch exists only for call
+        sites that are not yet converted and must be reviewed individually; do
+        not use it for new code.
+
+        :param auto_delete_if_error: delete the scenario if it ends in error,
+                                     defaults to False
+        :type auto_delete_if_error: bool, optional
+        :param allow_in_http_server: bypass the request-handler guard. Reserved
+                                     for not-yet-converted call sites; do not use
+                                     in new code, defaults to False
+        :type allow_in_http_server: bool, optional
+        """
+
+        if not allow_in_http_server and Settings.get_instance().is_http_server:
+            raise RuntimeError(
+                "ScenarioProxy.run() forks the process and cannot be called from a "
+                "request handler: it would duplicate the HTTP server socket and block "
+                "all other requests until the scenario finishes. Use run_async() (and "
+                "poll the scenario status) instead."
+            )
 
         # run the scenario in a sub process so it can be stopped
         process = ProcessDb(target=ScenarioRunService.run_scenario_by_id, args=(self._scenario.id,))

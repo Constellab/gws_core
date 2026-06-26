@@ -14,7 +14,11 @@ from gws_core.external_lab.external_lab_dto import (
 )
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
-from gws_core.share.shared_dto import ShareLinkEntityType, ShareScenarioInfoReponseDTO
+from gws_core.share.shared_dto import (
+    ShareLinkEntityType,
+    ShareResourceZipAsyncResponseDTO,
+    ShareScenarioInfoReponseDTO,
+)
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.user import User
 
@@ -99,7 +103,7 @@ class ExternalLabApiService:
 
         url = self.get_full_route(f"scenario/{id_}/stop")
 
-        response = ExternalApiService.put(url, headers=headers, raise_exception_if_error=True)
+        response = ExternalApiService.put(url, body=None, headers=headers, raise_exception_if_error=True)
 
         return ExternalLabImportScenarioResponseDTO.from_json(response.json())
 
@@ -116,6 +120,23 @@ class ExternalLabApiService:
     def get_resource_zip_route(self, resource_id: str) -> str:
         """Get the full URL for the resource zip endpoint on the external lab."""
         return self.get_full_route(f"resource/{resource_id}/zip")
+
+    def zip_resource_async(self, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
+        """Start zipping a resource on the external lab asynchronously.
+
+        Returns the zip scenario and the download route. The caller polls the
+        scenario (e.g. via ``ScenarioWaiterExternalLab``) until it succeeds,
+        then downloads from the returned route.
+        """
+        headers = self._get_auth_headers()
+
+        url = self.get_full_route(f"resource/{resource_id}/zip-async")
+
+        response = ExternalApiService.post(
+            url, body=None, headers=headers, raise_exception_if_error=True
+        )
+
+        return ShareResourceZipAsyncResponseDTO.from_json(response.json())
 
     def mark_entity_as_shared(
         self,
@@ -148,8 +169,15 @@ class ExternalLabApiService:
 
     def _get_auth_headers(self) -> dict:
         """Get the external lab auth headers"""
+        credentials_data = self._lab_dto.credentials_data
+        if credentials_data is None:
+            raise BadRequestException(
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
+                {"lab_name": self._lab_dto.lab.name},
+            )
         return ExternalLabAuth.get_auth_headers(
-            self._lab_dto.credentials_data.api_key, self._user_id
+            credentials_data.api_key, self._user_id
         )
 
     ######################## CLASS METHODS #########################

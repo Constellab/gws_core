@@ -24,6 +24,7 @@ from gws_core.scenario.scenario_transfert_service import ScenarioTransfertServic
 from gws_core.share.share_service import ShareService
 from gws_core.share.shared_dto import (
     ShareLinkEntityType,
+    ShareResourceZipAsyncResponseDTO,
     ShareResourceZippedResponseDTO,
     ShareScenarioInfoReponseDTO,
 )
@@ -155,7 +156,11 @@ class ExternalLabService:
 
     @classmethod
     def zip_resource(cls, resource_id: str) -> ShareResourceZippedResponseDTO:
-        """Zip a resource for credential-based download."""
+        """Zip a resource for credential-based download.
+
+        DEPRECATED: blocks the request until the zip is done. Prefer
+        ``zip_resource_async``.
+        """
         ResourceModel.get_by_id_and_check(resource_id)
 
         current_user = CurrentUserService.get_and_check_current_user()
@@ -170,6 +175,31 @@ class ExternalLabService:
             entity_type=ShareLinkEntityType.RESOURCE,
             entity_id=resource_id,
             zipped_entity_resource_id=zipped_resource.id,
+            download_entity_route=download_url,
+        )
+
+    @classmethod
+    def zip_resource_async(cls, resource_id: str) -> ShareResourceZipAsyncResponseDTO:
+        """Zip a resource for credential-based download, asynchronously.
+
+        Starts (or reuses) the zip scenario without blocking the server and
+        returns it with the download route. The calling lab polls the scenario
+        (via the ``scenario/{id}`` route) until it succeeds, then downloads.
+        """
+        ResourceModel.get_by_id_and_check(resource_id)
+
+        current_user = CurrentUserService.get_and_check_current_user()
+        scenario = ShareService.zip_resource_async(resource_id, current_user)
+
+        download_url = ExternalLabApiService.get_current_lab_route(
+            f"{Settings.external_lab_api_route_path()}/resource/{resource_id}/download"
+        )
+
+        return ShareResourceZipAsyncResponseDTO(
+            version=ShareService.VERSION,
+            entity_type=ShareLinkEntityType.RESOURCE,
+            entity_id=resource_id,
+            scenario=scenario.get_model().to_dto(),
             download_entity_route=download_url,
         )
 

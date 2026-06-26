@@ -8,6 +8,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.scenario.scenario_zipper import ScenarioExportPackage
 from gws_core.user.user_dto import UserDTO
 
@@ -103,6 +104,23 @@ class ShareResourceZippedResponseDTO(BaseModelDTO):
     # id of the resource that contains the zip file of the shared entity
     zipped_entity_resource_id: str
     # full route to call to download the entity
+    download_entity_route: str
+
+
+class ShareResourceZipAsyncResponseDTO(BaseModelDTO):
+    """Response of the asynchronous resource zip route.
+
+    The zip scenario runs asynchronously: the caller polls ``scenario`` until it
+    succeeds (e.g. via ``ScenarioWaiterExternalLab``) and then downloads the
+    entity from ``download_entity_route``.
+    """
+
+    version: int
+    entity_type: ShareLinkEntityType
+    entity_id: str
+    # scenario that zips the shared entity; poll it until it succeeds
+    scenario: ScenarioDTO
+    # full route to call to download the entity once the scenario succeeded
     download_entity_route: str
 
 

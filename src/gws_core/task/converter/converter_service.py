@@ -11,6 +11,7 @@ from ...model.typing_manager import TypingManager
 from ...process.process_proxy import ProcessProxy
 from ...protocol.protocol_proxy import ProtocolProxy
 from ...resource.resource_model import ResourceModel
+from ...scenario.scenario import Scenario
 from ...scenario.scenario_proxy import ScenarioProxy
 from ...task.converter.importer import ResourceImporter
 from ...task.task_typing import TaskTyping
@@ -23,9 +24,43 @@ class ConverterService:
     def call_importer(
         cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict
     ) -> ResourceModel:
+        scenario, output_task = cls._build_importer_scenario(
+            resource_model_id, importer_typing_name, config
+        )
+
+        # run the scenario
+        scenario.run(auto_delete_if_error=True)
+
+        # return the resource model of the output task process
+        output_task.refresh()
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The imported resource could not be retrieved")
+        return resource_model
+
+    @classmethod
+    def call_importer_async(
+        cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict
+    ) -> Scenario:
+        """Build the importer scenario and run it asynchronously.
+
+        Returns the running scenario immediately; the front-end polls its status
+        and fetches the imported resource once it succeeds.
+        """
+        scenario, _ = cls._build_importer_scenario(
+            resource_model_id, importer_typing_name, config
+        )
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_importer_scenario(
+        cls, resource_model_id: str, importer_typing_name: str, config: ConfigParamsDict
+    ) -> tuple[ScenarioProxy, ProcessProxy]:
         # Get and check the resource id
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model_id)
-        resource_type: type[File] = resource_model.get_and_check_resource_type()
+        resource_type = resource_model.get_and_check_resource_type()
 
         importer_type: type[ResourceImporter] = TypingManager.get_and_check_type_from_name(
             importer_typing_name
@@ -46,12 +81,7 @@ class ConverterService:
         # Add output task and connect it
         output_task = protocol.add_output("output", importer >> ResourceImporter.output_name)
 
-        # run the scenario
-        scenario.run(auto_delete_if_error=True)
-
-        # return the resource model of the output task process
-        output_task.refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        return scenario, output_task
 
     ################################################ EXPORTER ################################################
 
@@ -92,6 +122,40 @@ class ConverterService:
     def call_exporter(
         cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict
     ) -> ResourceModel:
+        scenario, output_task = cls._build_exporter_scenario(
+            resource_model_id, exporter_typing_name, params
+        )
+
+        # run the scenario
+        scenario.run(auto_delete_if_error=True)
+
+        # return the resource model of the output task process
+        output_task.refresh()
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The exported resource could not be retrieved")
+        return resource_model
+
+    @classmethod
+    def call_exporter_async(
+        cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict
+    ) -> Scenario:
+        """Build the exporter scenario and run it asynchronously.
+
+        Returns the running scenario immediately; the front-end polls its status
+        and fetches the exported resource once it succeeds.
+        """
+        scenario, _ = cls._build_exporter_scenario(
+            resource_model_id, exporter_typing_name, params
+        )
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_exporter_scenario(
+        cls, resource_model_id: str, exporter_typing_name: str, params: ConfigParamsDict
+    ) -> tuple[ScenarioProxy, ProcessProxy]:
         # Check that the resource exists
         resource_model = ResourceModel.get_by_id_and_check(resource_model_id)
 
@@ -111,12 +175,7 @@ class ConverterService:
         # Add output task and connect it, don't flag the resource
         output_task = protocol.add_output("output", extractor >> "target", False)
 
-        # run the scenario
-        scenario.run(auto_delete_if_error=True)
-
-        # return the resource model of the output task process
-        output_task.refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        return scenario, output_task
 
     ################################################ FILE EXTRACTOR ################################################
 
@@ -124,6 +183,40 @@ class ConverterService:
     def call_file_extractor(
         cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str
     ) -> ResourceModel:
+        scenario, output_task = cls._build_file_extractor_scenario(
+            folder_model_id, sub_path, fs_node_typing_name
+        )
+
+        #  run the scenario
+        scenario.run(auto_delete_if_error=True)
+
+        # return the resource model of the output task process
+        output_task.refresh()
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The extracted resource could not be retrieved")
+        return resource_model
+
+    @classmethod
+    def call_file_extractor_async(
+        cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str
+    ) -> Scenario:
+        """Build the file extractor scenario and run it asynchronously.
+
+        Returns the running scenario immediately; the front-end polls its status
+        and fetches the extracted resource once it succeeds.
+        """
+        scenario, _ = cls._build_file_extractor_scenario(
+            folder_model_id, sub_path, fs_node_typing_name
+        )
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_file_extractor_scenario(
+        cls, folder_model_id: str, sub_path: str, fs_node_typing_name: str
+    ) -> tuple[ScenarioProxy, ProcessProxy]:
         # Check that the resource exists
         ResourceModel.get_by_id_and_check(folder_model_id)
 
@@ -146,9 +239,4 @@ class ConverterService:
         # Add output task and connect it
         output_task = protocol.add_output("output", extractor >> "target")
 
-        #  run the scenario
-        scenario.run(auto_delete_if_error=True)
-
-        # return the resource model of the output task process
-        output_task.refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        return scenario, output_task
