@@ -1,3 +1,4 @@
+
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
@@ -58,7 +59,11 @@ class SendResourceToLab(Task):
     INPUT_NAME = "resource"
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource: Resource = inputs.get("resource")
+        resource = inputs.get_resource(self.INPUT_NAME, Resource)
+
+        resource_id = resource.get_model_id()
+        if resource_id is None:
+            raise Exception("The input resource was not saved")
 
         # Call the external lab API to import the resource
         lab_dto: LabDTOWithCredentials = params.get_value("lab")
@@ -72,7 +77,7 @@ class SendResourceToLab(Task):
         # need to pass the lab id in the params.
         request_dto = ExternalLabImportRequestDTO(
             params=ResourceDownloaderFromLab.build_config(
-                resource_id=resource.get_model_id(),
+                resource_id=resource_id,
                 uncompress=params["uncompress"],
                 create_option=params["create_option"],
                 skip_tags=params["skip_tags"],
@@ -97,8 +102,8 @@ class SendResourceToLab(Task):
 
         if scenario_info.scenario.status != ScenarioStatus.SUCCESS:
             error = (
-                scenario_info.progress.last_message.text
-                if scenario_info.progress and scenario_info.progress.has_last_message()
+                scenario_info.progress.get_last_message_content() or "Unknown error"
+                if scenario_info.progress
                 else "Unknown error"
             )
             raise Exception(

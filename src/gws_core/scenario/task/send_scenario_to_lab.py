@@ -87,7 +87,7 @@ class SendScenarioToLab(Task):
     OUTPUT_NAME = "scenario"
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        scenario_resource: ScenarioResource = inputs["scenario"]
+        scenario_resource = inputs.get_resource("scenario", ScenarioResource)
 
         scenario = scenario_resource.get_scenario()
 
@@ -153,11 +153,11 @@ class SendScenarioToLab(Task):
 
             if import_scenario_info.scenario.status != ScenarioStatus.SUCCESS:
                 error = (
-                    import_scenario_info.progress.last_message.text
+                    import_scenario_info.progress.get_last_message_content()
                     if import_scenario_info.progress
                     and import_scenario_info.progress.has_last_message()
                     else "Unknown error"
-                )
+                ) or "Unknown error"
                 raise Exception(
                     f"Export scenario to lab failed, status: {import_scenario_info.scenario.status}. Error details: {error}"
                 )

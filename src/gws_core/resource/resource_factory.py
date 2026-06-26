@@ -27,7 +27,7 @@ class ResourceFactory:
     def create_resource(
         cls,
         resource_type: type[Resource],
-        kv_store: KVStore,
+        kv_store: KVStore | None,
         data: dict[str, Any],
         resource_model_id: str | None = None,
         name: str | None = None,
@@ -40,8 +40,9 @@ class ResourceFactory:
 
         :param resource_type: The class type of the resource to create
         :type resource_type: Type[Resource]
-        :param kv_store: Key-value store instance for loading RFields with KV_STORE storage
-        :type kv_store: KVStore
+        :param kv_store: Key-value store instance for loading RFields with KV_STORE storage,
+                         or None when the resource has no kv store (KV_STORE RFields keep their default value)
+        :type kv_store: KVStore | None
         :param data: Dictionary containing values for RFields with DATABASE storage
         :type data: Dict[str, Any]
         :param resource_model_id: Optional model ID to assign to the resource, defaults to None
@@ -87,7 +88,7 @@ class ResourceFactory:
     def _send_fields_to_resource(
         cls,
         resource: Resource,
-        kv_store: KVStore,
+        kv_store: KVStore | None,
         data: dict[str, Any],
         additional_data: dict[str, Any] | None = None,
     ) -> None:
@@ -101,8 +102,9 @@ class ResourceFactory:
 
         :param resource: The resource instance to populate
         :type resource: Resource
-        :param kv_store: Key-value store instance for lazy-loading RFields with KV_STORE storage
-        :type kv_store: KVStore
+        :param kv_store: Key-value store instance for lazy-loading RFields with KV_STORE storage,
+                         or None when the resource has no kv store (KV_STORE RFields keep their default value)
+        :type kv_store: KVStore | None
         :param data: Dictionary containing values for RFields with DATABASE storage (from database)
         :type data: Dict[str, Any]
         :param additional_data: Dictionary containing values for RFields with NONE storage (transient data), defaults to None

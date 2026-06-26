@@ -84,7 +84,7 @@ class ScenarioLoaderFromArchive(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        archive_file: File = inputs["archive"]
+        archive_file = inputs.get_resource("archive", File)
         create_option: str = params["create_option"]
         auto_run: bool = params["auto_run"]
 

@@ -1,5 +1,6 @@
+from typing import cast
 
-from peewee import Expression
+from peewee import Expression, Field
 from typing_extensions import Self
 
 from gws_core.impl.file.fs_node_model import FSNodeModel
@@ -25,13 +26,13 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder[ResourceModel]):
             ResourceModel, TagEntityType.RESOURCE, default_orders=[ResourceModel.created_at.desc()]
         )
 
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression | None:
         if filter_.key == "resource_typing_name":
             return ResourceModel.get_by_types_and_sub_expression([filter_.value])
         elif filter_.key == "resource_typing_names":
             return ResourceModel.get_by_types_and_sub_expression(filter_.value)
         elif filter_.key == "generated_by_task":
-            entity_alias: type[TaskModel] = TaskModel.alias()
+            entity_alias: type[TaskModel] = TaskModel.alias()  # type: ignore[reportAssignmentType]
 
             self.add_join(
                 entity_alias,
@@ -72,9 +73,9 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder[ResourceModel]):
         self, resource_type: type[Resource]
     ) -> Self:
         """Filter the search query by a specific resource type and its subtypes"""
-        self.add_expression(
-            ResourceModel.get_by_types_and_sub_expression([resource_type.get_typing_name()])
-        )
+        expression = ResourceModel.get_by_types_and_sub_expression([resource_type.get_typing_name()])
+        if expression is not None:
+            self.add_expression(expression)
         return self
 
     def add_resource_types_and_sub_types_filter(
@@ -82,14 +83,18 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder[ResourceModel]):
     ) -> Self:
         """Filter the search query by resource types and its subtypes"""
         typing_names = [resource_type.get_typing_name() for resource_type in resource_types]
-        self.add_expression(ResourceModel.get_by_types_and_sub_expression(typing_names))
+        expression = ResourceModel.get_by_types_and_sub_expression(typing_names)
+        if expression is not None:
+            self.add_expression(expression)
         return self
 
     def add_resource_typing_names_and_sub_types_filter(
         self, resource_typing_names: list[str]
     ) -> Self:
         """Filter the search query by resource types and its subtypes"""
-        self.add_expression(ResourceModel.get_by_types_and_sub_expression(resource_typing_names))
+        expression = ResourceModel.get_by_types_and_sub_expression(resource_typing_names)
+        if expression is not None:
+            self.add_expression(expression)
         return self
 
     def add_origin_filter(self, origin: ResourceOrigin) -> Self:
@@ -114,12 +119,12 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder[ResourceModel]):
 
     def add_parent_filter(self, parent_id: str) -> Self:
         """Filter the search query by a specific parent"""
-        self.add_expression(ResourceModel.parent_resource_id == parent_id)
+        self.add_expression(cast(Field, ResourceModel.parent_resource_id) == parent_id)
         return self
 
     def add_is_archived_filter(self, is_archived: bool) -> Self:
         """Filter the search query by a specific archived status"""
-        self.add_expression(ResourceModel.is_archived == is_archived)
+        self.add_expression(cast(Field, ResourceModel.is_archived) == is_archived)
         return self
 
     def add_fs_node_extension_filter(self, extension: str) -> Self:
@@ -131,5 +136,5 @@ class ResourceSearchBuilder(EntityWithTagSearchBuilder[ResourceModel]):
 
     def add_is_fs_node_filter(self) -> Self:
         """Filter the search query to keep only fs node resources (file or folder)"""
-        self.add_expression(ResourceModel.fs_node_model.is_null(False))
+        self.add_expression(cast(Field, ResourceModel.fs_node_model).is_null(False))
         return self

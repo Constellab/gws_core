@@ -341,7 +341,9 @@ class ShareService:
             raise Exception("Zip file is not a file")
 
         # check that the generated zip resource was generated from the shared entity of the token
-        if zip_file.get_technical_info("origin_entity_id").value != shared_entity_link.entity_id:
+        if zip_file.get_and_check_technical_info(
+            ResourceZipperTask.ORIGIN_ENTITY_ID_KEY
+        ).value != shared_entity_link.entity_id:
             raise Exception("Zip file does not contain the shared entity")
 
         return zip_file.path

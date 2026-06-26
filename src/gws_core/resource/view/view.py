@@ -78,11 +78,18 @@ class View:
         """Add technical info"""
         self._technical_info.add(technical_info)
 
-    def get_technical_info(self, key: str) -> TechnicalInfo:
-        """Get technical info dict"""
+    def get_technical_info(self, key: str) -> TechnicalInfo | None:
+        """Get the technical information, or None if the key does not exist"""
         return self._technical_info.get(key)
 
-    def get_style(self) -> TypingStyle:
+    def get_and_check_technical_info(self, key: str) -> TechnicalInfo:
+        """Get the technical information and raise if the key does not exist"""
+        technical_info = self.get_technical_info(key)
+        if technical_info is None:
+            raise BadRequestException(f"Technical info with key '{key}' not found")
+        return technical_info
+
+    def get_style(self) -> TypingStyle | None:
         """Get style"""
         return self._style
 

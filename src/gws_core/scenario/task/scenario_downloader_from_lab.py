@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -106,7 +108,7 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
         self._external_lab_service = ExternalLabApiService(lab_dto, user_id)
 
         # Get scenario_id from input or config
-        scenario_resource: ScenarioResource | None = inputs.get(self.INPUT_NAME)
+        scenario_resource = cast("ScenarioResource | None", inputs.get(self.INPUT_NAME))
         if scenario_resource is not None:
             self._scenario_id = scenario_resource.scenario_id
         else:
@@ -132,7 +134,7 @@ class ScenarioDownloaderFromLab(ScenarioDownloaderBase):
     def run_after_task(self) -> None:
         super().run_after_task()
 
-        if self.share_entity:
+        if self.share_entity and self._built_scenario_id is not None:
             self.log_info_message("Marking the scenario as received in the origin lab")
             current_lab_info = ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user()

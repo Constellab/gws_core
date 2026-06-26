@@ -1,4 +1,6 @@
 
+from typing import Any
+
 from .r_field.serializable_r_field import SerializableObjectJson
 
 
@@ -14,11 +16,11 @@ class TechnicalInfo:
         self.value = value
         self.short_description = short_description
 
-    def to_json(self) -> dict[str, str]:
+    def to_json(self) -> dict[str, Any]:
         return {"key": self.key, "value": self.value, "short_description": self.short_description}
 
     @classmethod
-    def from_json(cls, json_data: dict[str, str]) -> "TechnicalInfo":
+    def from_json(cls, json_data: dict[str, Any]) -> "TechnicalInfo":
         return TechnicalInfo(
             key=json_data["key"],
             value=json_data["value"],
@@ -35,10 +37,8 @@ class TechnicalInfoDict(SerializableObjectJson):
     def add(self, technical_info: TechnicalInfo):
         self._technical_info[technical_info.key] = technical_info
 
-    def get(self, key: str) -> TechnicalInfo:
-        if key not in self._technical_info:
-            return None
-        return self._technical_info[key]
+    def get(self, key: str) -> TechnicalInfo | None:
+        return self._technical_info.get(key)
 
     def get_all(self) -> dict[str, TechnicalInfo]:
         return self._technical_info

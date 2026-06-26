@@ -36,19 +36,22 @@ class Viewer(Task):
         from gws_core.resource.resource_service import ResourceService
         from gws_core.resource.view_config.view_config_service import ViewConfigService
 
-        resource: Resource = inputs.get("resource")
+        resource: Resource = inputs.get_resource("resource", Resource)
 
         config_resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(
-            params.get("resource_typing_name")
+            params.get_value("resource_typing_name")
         )
         if not Utils.issubclass(type(resource), config_resource_type):
             raise Exception(
                 f"The input resource type '{resource.get_human_name()}' is not compatible with the type provided in the config: '{config_resource_type.get_human_name()}'"
             )
 
-        resource_model = ResourceService.get_by_id_and_check(resource.get_model_id())
+        resource_model_id = resource.get_model_id()
+        if resource_model_id is None:
+            raise Exception("The input resource is not saved, it has no model id")
+        resource_model = ResourceService.get_by_id_and_check(resource_model_id)
 
-        view_config = params.get("view_config")
+        view_config = params.get_value("view_config")
         view_method_name = view_config["view_method_name"]
         config_values = view_config["config_values"]
 

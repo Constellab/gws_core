@@ -71,12 +71,14 @@ class ViewConfigService:
 
         # Copy the resource tags to the view config
         resource_tags = EntityTagList.find_by_entity(
-            NavigableEntityType.RESOURCE, resource_model.id
+            NavigableEntityType.RESOURCE.convert_to_tag_entity_type(), resource_model.id
         )
         tag_propagated = resource_tags.build_tags_propagated(
             TagOriginType.RESOURCE_PROPAGATED, resource_model.id
         )
-        view_config_tags = EntityTagList.find_by_entity(NavigableEntityType.VIEW, view_config_db.id)
+        view_config_tags = EntityTagList.find_by_entity(
+            NavigableEntityType.VIEW.convert_to_tag_entity_type(), view_config_db.id
+        )
         view_config_tags.add_tags(tag_propagated)
 
         # limit the length without blocking the thread
@@ -123,7 +125,7 @@ class ViewConfigService:
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[ViewConfig]:
-        search_builder: SearchBuilder = ViewConfigSearchBuilder()
+        search_builder: ViewConfigSearchBuilder = ViewConfigSearchBuilder()
 
         return cls._search(search_builder, search, page, number_of_items_per_page)
 
@@ -133,7 +135,7 @@ class ViewConfigService:
     ) -> Paginator[ViewConfig]:
         from ...note.note_service import NoteService
 
-        search_builder: SearchBuilder = ViewConfigSearchBuilder()
+        search_builder: ViewConfigSearchBuilder = ViewConfigSearchBuilder()
 
         # retrieve resources associated to the note's scenarios
         # It retrieves the resources used as input or output of the scenarios
@@ -148,7 +150,7 @@ class ViewConfigService:
     @classmethod
     def _search(
         cls,
-        search_builder: SearchBuilder,
+        search_builder: SearchBuilder[ViewConfig],
         search: SearchParams,
         page: int = 0,
         number_of_items_per_page: int = 20,
@@ -203,6 +205,6 @@ class ViewConfigService:
             )
 
         # sort by human name
-        view_types_dto.sort(key=lambda x: x.human_name)
+        view_types_dto.sort(key=lambda x: x.human_name or "")
 
         return view_types_dto

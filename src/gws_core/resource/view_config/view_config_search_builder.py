@@ -22,7 +22,7 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder[ViewConfig]):
             ViewConfig, TagEntityType.VIEW, default_orders=[ViewConfig.last_modified_at.desc()]
         )
 
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression | None:
         if filter_.key == "include_not_favorite":
             return None
         elif filter_.key == "folder":

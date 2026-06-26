@@ -55,7 +55,7 @@ class ResourceStacker(Task):
     output_specs: OutputSpecs = OutputSpecs({"resource_set": OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource_list: ResourceList = inputs.get("source")
+        resource_list = inputs.get_resource("source", ResourceList)
 
         configs: list[dict] = params.get_value("keys")
 
@@ -130,7 +130,7 @@ class ResourcePicker(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource_set: ResourceSet = inputs.get("resource_set")
+        resource_set = inputs.get_resource("resource_set", ResourceSet)
         configs: list[dict] = params.get_value("keys")
 
         resource_list = ResourceList()

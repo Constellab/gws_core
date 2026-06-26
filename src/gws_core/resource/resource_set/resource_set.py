@@ -59,7 +59,7 @@ class ResourceSet(ResourceListBase):
     def __set_r_field__(self, saved_resources: dict[str, Resource]) -> None:
         resources_dict = {}
         resource_ids = {}
-        for key, existing_resource in self._resources.items():
+        for key, existing_resource in self.get_resources().items():
             if existing_resource.uid not in saved_resources:
                 raise Exception(
                     f"The resource with uid '{existing_resource.uid}' was not found in the saved resources"
@@ -91,8 +91,6 @@ class ResourceSet(ResourceListBase):
 
         # load the existing resources
         resources = self.get_resources()
-        if resources is None:
-            self._resources = {}
 
         name = unique_name or resource.name
         if name is None:
@@ -106,7 +104,7 @@ class ResourceSet(ResourceListBase):
         if not create_new_resource:
             resource.set_as_reference()
 
-        self._resources[name] = resource
+        resources[name] = resource
 
     def get_resource(self, resource_name: str) -> Resource:
         """
@@ -138,14 +136,14 @@ class ResourceSet(ResourceListBase):
         resources = self.get_resources()
         return resources.get(resource_name, None)
 
-    def resource_exists(self, resource_name: str) -> Resource:
+    def resource_exists(self, resource_name: str) -> bool:
         """
         Return true if the resource with the given name exists in the dict
 
         :param resource_name: name of the resource
         :type resource_name: str
         :return: True if the resource with the given name exists in the dict
-        :rtype: Resource
+        :rtype: bool
         """
         resources = self.get_resources()
         return resource_name in resources

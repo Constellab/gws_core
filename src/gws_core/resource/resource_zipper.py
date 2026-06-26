@@ -84,9 +84,10 @@ class ResourceZipper:
             self._message_dispatcher = message_dispatcher
 
     def add_resource(self, resource: Resource) -> None:
-        if not resource.get_model_id():
+        model_id = resource.get_model_id()
+        if not model_id:
             raise Exception("Resource must have a model id")
-        self.add_resource_model(resource.get_model_id())
+        self.add_resource_model(model_id)
 
     def add_resource_model(self, resource_id: str, parent_resource_id: str | None = None) -> None:
         resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
@@ -102,12 +103,12 @@ class ResourceZipper:
 
         resource_zip = ResourceExportDTO(
             resource_model_export=resource_model_export,
-            data=resource_model.data,
+            data=resource_model.data or {},
             tags=tags_dict,
         )
 
         # add the kvstore
-        kvstore: KVStore = resource_model.get_kv_store()
+        kvstore: KVStore | None = resource_model.get_kv_store()
         if kvstore is not None:
             self._message_dispatcher.notify_info_message(
                 f"Adding kvstore for resource '{resource_model.name}'."
@@ -117,7 +118,7 @@ class ResourceZipper:
             resource_zip.has_kvstore = True
 
         # add the fs_node
-        fs_node_model: FSNodeModel = resource_model.fs_node_model
+        fs_node_model: FSNodeModel | None = resource_model.fs_node_model
         if fs_node_model is not None:
             self._message_dispatcher.notify_info_message(
                 f"Adding file/folder for resource '{resource_model.name}'."

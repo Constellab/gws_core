@@ -22,7 +22,12 @@ class ViewHelper:
 
         # specific case for the default view, we retrieve the view name
         if view_name == cls.DEFAULT_VIEW_NAME:
-            return ViewHelper.get_default_view_of_resource_type(resource_type)
+            default_view = ViewHelper.get_default_view_of_resource_type(resource_type)
+            if default_view is None:
+                raise BadRequestException(
+                    f"The resource does not have a view named '{view_name}'"
+                )
+            return default_view
 
         # check that the method exists and is annotated with view
         if not hasattr(resource_type, view_name):
@@ -69,7 +74,9 @@ class ViewHelper:
             view_meta_data[func_name].default_view = False
 
         # retrieve the default view and set it
-        default_view: ResourceViewMetaData = cls.get_default_view_of_resource_type(resource_type)
+        default_view: ResourceViewMetaData | None = cls.get_default_view_of_resource_type(
+            resource_type
+        )
         if default_view is not None and not default_view.hide:
             view_meta_data[default_view.method_name] = default_view
 
@@ -78,7 +85,7 @@ class ViewHelper:
     @classmethod
     def get_default_view_of_resource_type(
         cls, resource_type: type[Resource]
-    ) -> ResourceViewMetaData:
+    ) -> ResourceViewMetaData | None:
         """Method to get the default view of a resource type. It iterates from the parent class to the children and returns
         the last view found
 
@@ -116,6 +123,9 @@ class ViewHelper:
                 # save the view to skip the function next time we encounter it
                 view_meta_data[func_name] = view_data
 
+        if last_default_name is None:
+            return None
+
         return view_meta_data[last_default_name]
 
     @classmethod
@@ -144,8 +154,8 @@ class ViewHelper:
     def _get_class_hierarchy(cls, resource_type: type[Resource]) -> list[type[Resource]]:
         parent_types: list[type[Resource]] = []
 
-        type_ = resource_type
-        while issubclass(type_, Resource):
+        type_: type | None = resource_type
+        while type_ is not None and issubclass(type_, Resource):
             parent_types.insert(0, type_)
             type_ = type_.__base__
 
