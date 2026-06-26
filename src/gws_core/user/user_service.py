@@ -111,19 +111,8 @@ class UserService:
     # Create the admin
     @classmethod
     def create_sysuser(cls):
-        """Create the system user"""
-        try:
-            UserService.get_sysuser()
-        except:
-            user = User(
-                email="admin@gencovery.com",
-                first_name="System",
-                last_name="User",
-                data={},
-                is_active=True,
-                group=UserGroup.SYSUSER,
-            )
-            user.save()
+        """Create the system user if it doesn't exist yet."""
+        User.get_and_check_sysuser()
 
     @classmethod
     def get_sysuser(cls):

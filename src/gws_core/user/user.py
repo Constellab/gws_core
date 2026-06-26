@@ -17,25 +17,35 @@ from .user_group import UserGroup
 
 @final
 class User(Model):
-    email = TypedCharField(unique=True)
-    first_name = TypedCharField()
-    last_name = TypedCharField()
-    group = TypedEnumField(choices=UserGroup, default=UserGroup.USER)
-    is_active = TypedBooleanField(default=True)
-    theme = TypedEnumField(choices=UserTheme, default=UserTheme.LIGHT_THEME)
+    email: TypedCharField = TypedCharField(unique=True)
+    first_name: TypedCharField = TypedCharField()
+    last_name: TypedCharField = TypedCharField()
+    group: TypedEnumField = TypedEnumField(choices=UserGroup, default=UserGroup.USER)
+    is_active: TypedBooleanField = TypedBooleanField(default=True)
+    theme: TypedEnumField = TypedEnumField(choices=UserTheme, default=UserTheme.LIGHT_THEME)
 
-    lang = TypedEnumField(choices=UserLanguage, default=UserLanguage.EN)
+    lang: TypedEnumField = TypedEnumField(choices=UserLanguage, default=UserLanguage.EN)
 
-    photo = NullableCharField()
+    photo: NullableCharField = NullableCharField()
 
     @classmethod
     def get_and_check_sysuser(cls) -> "User":
         sys_user = User.get_or_none(User.group == UserGroup.SYSUSER)
 
+        # Create the system user on demand if it doesn't exist yet. This can
+        # happen early during the lab boot (e.g. when a lazy database is being
+        # initialized) before the dedicated sysuser creation step has run.
+        # User is a plain Model (not ModelWithUser), so creating it does not
+        # itself require an authenticated user.
         if sys_user is None:
-            raise Exception(
-                "System user not found, please restart your lab. If the error continues, contact the support."
+            sys_user = User(
+                email="admin@gencovery.com",
+                first_name="System",
+                last_name="User",
+                is_active=True,
+                group=UserGroup.SYSUSER,
             )
+            sys_user.save()
 
         return sys_user
 

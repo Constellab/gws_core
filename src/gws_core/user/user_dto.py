@@ -57,7 +57,7 @@ class UserDTO(BaseModelDTO):
     photo: str | None
 
     @staticmethod
-    def from_user_space(user_space: UserSpace | dict) -> "UserDTO":
+    def from_user_space(user_space: UserSpace | dict) -> "UserDTO | None":
         if not user_space:
             return None
         if isinstance(user_space, dict):

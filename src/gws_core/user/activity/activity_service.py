@@ -1,7 +1,7 @@
 from threading import Thread
 
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.utils.logger import Logger
 from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.current_user_service import CurrentUserService
@@ -83,6 +83,6 @@ class ActivityService:
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Activity]:
-        search_builder: SearchBuilder = ActivitySearchBuilder()
+        search_builder: ActivitySearchBuilder = ActivitySearchBuilder()
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)

@@ -71,9 +71,9 @@ class ResourceTyping(Typing):
 
 class FileTyping(ResourceTyping):
     @classmethod
-    def get_typings(cls) -> list["ResourceTyping"]:
+    def get_typings(cls) -> list["FileTyping"]:
         return cast(
-            "list[ResourceTyping]", cls.get_children_typings(cls._object_type, File)
+            "list[FileTyping]", cls.get_children_typings(cls._object_type, File)
         )
 
     def to_dto(self) -> TypingDTO:

@@ -23,7 +23,7 @@ class UserGroup(Enum):
             UserGroup.ADMIN: 5,
             UserGroup.USER: 15,
         }
-        return switcher.get(user_group)
+        return switcher[user_group]
 
     def __lt__(self, other: "UserGroup") -> bool:
         return UserGroup.get_value(self) < UserGroup.get_value(other)

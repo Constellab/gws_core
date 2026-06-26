@@ -251,5 +251,9 @@ class UserSyncService(EventListener, Generic[TCustomUser]):
             self.sync_all_users()
 
         # Sync individual user on user events
-        elif event.type == "user" and event.action in ("created", "updated", "activated"):
+        elif (
+            event.type == "user"
+            and event.action in ("created", "updated", "activated")
+            and event.data is not None
+        ):
             self.sync_user(event.data)
