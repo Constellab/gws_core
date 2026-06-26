@@ -169,15 +169,7 @@ class DynamicParam(ParamSpec):
         self.specs.specs = {name: self.specs.get_spec(name) for name in param_names}
 
     def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
-        spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
-        # TODO A VERIFIER
-        if (
-            "allowed_values" in spec.additional_info
-            and spec.additional_info["allowed_values"] is not None
-            and len(spec.additional_info["allowed_values"]) == 0
-        ):
-            spec.additional_info["allowed_values"] = None
-        return spec
+        return ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
 
     @staticmethod
     def get_param_spec_from_type(type_: str) -> ParamSpec:
