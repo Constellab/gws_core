@@ -34,7 +34,7 @@ class SharedEntityInfo(Model):
     external_id = TypedCharField(max_length=36)
 
     # override on children classes
-    entity: Model | None = None
+    entity: TypedForeignKeyField
 
     @classmethod
     def get_and_check_entity_origin(cls, entity_id: str) -> "SharedEntityInfo":

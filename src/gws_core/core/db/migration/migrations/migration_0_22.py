@@ -93,7 +93,8 @@ _CREDENTIALS_TYPE_MIGRATION = {
     " migrate credentials type to namespaced registry id,"
     " set instance_name/name/data/scenario_id/progress_bar to NOT NULL on process tables,"
     " set parent_protocol_id to NOT NULL on the gws_task table,"
-    " and set the gws_protocol layout column to NOT NULL",
+    " set the gws_protocol layout column to NOT NULL,"
+    " and set entity_id/token to NOT NULL on the gws_share_link table",
 )
 class Migration0222(BrickMigration):
     @classmethod
@@ -102,6 +103,45 @@ class Migration0222(BrickMigration):
         cls._migrate_credentials_type()
         cls._migrate_process_columns(sql_migrator)
         cls._migrate_protocol_layout(sql_migrator)
+        cls._migrate_share_link_columns(sql_migrator)
+
+    @classmethod
+    def _migrate_share_link_columns(cls, sql_migrator: SqlMigrator) -> None:
+        """Set gws_share_link.entity_id and token to NOT NULL, mirroring the model
+        which now declares both as TypedCharField.
+
+        A share link with a NULL entity_id points to nothing and a NULL token is
+        unreachable: either way the row is an unusable link with no safe synthetic
+        value, so the orphan rows are deleted before the columns are altered."""
+        if not ShareLink.table_exists():
+            Logger.info("Migration 0.22.2: Table 'gws_share_link' does not exist, skipping")
+            return
+
+        share_link_columns = [c for c in ["entity_id", "token"] if ShareLink.column_exists(c)]
+        if not share_link_columns:
+            Logger.info(
+                "Migration 0.22.2: No entity_id/token columns on 'gws_share_link', skipping"
+            )
+            return
+
+        Logger.info(
+            "Migration 0.22.2: Deleting unusable gws_share_link rows with NULL entity_id or token"
+        )
+        delete_condition = " OR ".join(f"{column} IS NULL" for column in share_link_columns)
+        ShareLink.execute_sql(f"DELETE FROM [TABLE_NAME] WHERE {delete_condition}")
+
+        Logger.info("Migration 0.22.2: Setting gws_share_link.entity_id/token to NOT NULL")
+        if "entity_id" in share_link_columns:
+            sql_migrator.alter_column_type(
+                ShareLink, "entity_id", CharField(max_length=36, null=False)
+            )
+        # The unique index on token already exists from the original schema; this
+        # alter only changes nullability, so the unique constraint is not re-declared.
+        if "token" in share_link_columns:
+            sql_migrator.alter_column_type(
+                ShareLink, "token", CharField(max_length=100, null=False)
+            )
+        sql_migrator.migrate()
 
     @classmethod
     def _migrate_protocol_layout(cls, sql_migrator: SqlMigrator) -> None:

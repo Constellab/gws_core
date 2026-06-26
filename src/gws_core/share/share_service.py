@@ -65,10 +65,9 @@ class ShareService:
 
         query = share_entity_info.get_sents(entity_id)
 
-        paginator: Paginator[ShareLink] = Paginator(
+        return Paginator(
             query, page=page, nb_of_items_per_page=number_of_items_per_page
         )
-        return paginator
 
     @classmethod
     def mark_entity_as_sent(
@@ -294,7 +293,10 @@ class ShareService:
         scenario.run(auto_delete_if_error=True, allow_in_http_server=True)
 
         output_task = scenario.get_protocol().get_process("output").refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        output_resource = output_task.get_input_resource_model(OutputTask.input_name)
+        if not output_resource:
+            raise Exception("Zip scenario did not produce an output resource")
+        return output_resource
 
     @classmethod
     def run_zip_resource_scenario_async(cls, id_: str, shared_by: User) -> ScenarioProxy:
@@ -361,17 +363,19 @@ class ShareService:
 
         # If this is a StreamlitResource, send app statistics to the Community
         if shared_entity_link.entity_type is ShareLinkEntityType.RESOURCE:
-            resource = cast(
-                ResourceModel,
-                shared_entity_link.get_model_and_check(
-                    shared_entity_link.entity_id, shared_entity_link.entity_type
-                ),
-            ).get_resource()
+            public_link = shared_entity_link.get_public_link()
+            if public_link :
+                resource = cast(
+                    ResourceModel,
+                    shared_entity_link.get_model_and_check(
+                        shared_entity_link.entity_id, shared_entity_link.entity_type
+                    ),
+                ).get_resource()
 
-            if isinstance(resource, AppResource):
-                cls._init_send_resource_app_stat_to_community_thread(
-                    app_url=shared_entity_link.get_public_link()
-                )
+                if isinstance(resource, AppResource):
+                    cls._init_send_resource_app_stat_to_community_thread(
+                        app_url=public_link
+                    )
 
         return view_result
 
