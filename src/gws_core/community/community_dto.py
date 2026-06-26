@@ -101,7 +101,7 @@ class CommunityAgentVersionCreateResDTO(BaseModelDTO):
 class CommunityTagKeyDTO(BaseModelDTO):
     id: str
     key: str
-    label: str
+    label: str | None = None
     value_format: TagValueFormat
     deprecated: bool
     published_at: str | None = None

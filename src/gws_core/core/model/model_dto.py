@@ -108,4 +108,23 @@ class PageDTO(BaseModelDTO, Generic[PageDTOType]):
             objects=[],
         )
 
+    def with_objects(self, objects: list) -> "PageDTO":
+        """
+        Return a copy of the page keeping the same pagination envelope but
+        replacing the objects (e.g. after mapping the items to another type).
+        """
+        return PageDTO(
+            page=self.page,
+            prev_page=self.prev_page,
+            next_page=self.next_page,
+            last_page=self.last_page,
+            total_number_of_items=self.total_number_of_items,
+            total_number_of_pages=self.total_number_of_pages,
+            number_of_items_per_page=self.number_of_items_per_page,
+            is_first_page=self.is_first_page,
+            is_last_page=self.is_last_page,
+            total_is_approximate=self.total_is_approximate,
+            objects=objects,
+        )
+
     model_config = ConfigDict(arbitrary_types_allowed=True)

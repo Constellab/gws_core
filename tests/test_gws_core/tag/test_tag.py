@@ -4,7 +4,7 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.tag.entity_with_tag_search_builder import EntityWithTagSearchBuilder
-from gws_core.tag.tag import TagOrigin, TagOrigins
+from gws_core.tag.tag import TagOrigin, TagValueType
 from gws_core.tag.tag_dto import TagOriginType, TagValueEditDTO, TagValueFormat
 from gws_core.tag.tag_entity_type import TagEntityType
 from gws_core.tag.tag_key_model import TagKeyModel
@@ -108,16 +108,14 @@ class TestTag(BaseTestCase):
         # add int tag
         tag = TagService.add_tag_to_entity(TagEntityType.SCENARIO, scenario.id, Tag("test_int", 1))
         self.assertEqual(tag.get_tag_value(), 1)
-        self.assertEqual(TagValueModel.get_tag_value_model("test_int", 1).get_tag_value(), 1)
-        self.assertEqual(TagKeyModel.find_by_key("test_int").value_format, TagValueFormat.INTEGER)
+        self._assert_tag_value_and_format("test_int", 1, TagValueFormat.INTEGER)
 
         # add float tag
         tag = TagService.add_tag_to_entity(
             TagEntityType.SCENARIO, scenario.id, Tag("test_float", 1.1)
         )
         self.assertEqual(tag.get_tag_value(), 1.1)
-        self.assertEqual(TagValueModel.get_tag_value_model("test_float", 1.1).get_tag_value(), 1.1)
-        self.assertEqual(TagKeyModel.find_by_key("test_float").value_format, TagValueFormat.FLOAT)
+        self._assert_tag_value_and_format("test_float", 1.1, TagValueFormat.FLOAT)
 
         # add datetime tag
         now = DateHelper.now_utc()
@@ -125,12 +123,21 @@ class TestTag(BaseTestCase):
             TagEntityType.SCENARIO, scenario.id, Tag("test_datetime", now)
         )
         self.assertEqual(tag.get_tag_value(), now)
-        self.assertEqual(
-            TagValueModel.get_tag_value_model("test_datetime", now).get_tag_value(), now
-        )
-        self.assertEqual(
-            TagKeyModel.find_by_key("test_datetime").value_format, TagValueFormat.DATETIME
-        )
+        self._assert_tag_value_and_format("test_datetime", now, TagValueFormat.DATETIME)
+
+    def _assert_tag_value_and_format(
+        self, key: str, value: TagValueType, value_format: TagValueFormat
+    ) -> None:
+        """Assert that the stored tag value and its key format match the expected ones"""
+        tag_value_model = TagValueModel.get_tag_value_model_by_key_and_value(key, value)
+        self.assertIsNotNone(tag_value_model)
+        assert tag_value_model is not None
+        self.assertEqual(tag_value_model.get_tag_value(), value)
+
+        tag_key_model = TagKeyModel.find_by_key(key)
+        self.assertIsNotNone(tag_key_model)
+        assert tag_key_model is not None
+        self.assertEqual(tag_key_model.value_format, value_format)
 
     def test_tag_crud(self) -> None:
         """Test update and delete tag"""

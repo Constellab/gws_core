@@ -70,7 +70,6 @@ class EntityTagDTO(BaseModelDTO):
     is_community_tag_key: bool | None = None
 
 
-
 class EntityTagFullDTO(EntityTagDTO):
     is_propagable: bool
     created_at: datetime
@@ -82,8 +81,8 @@ class EntityTagFullDTO(EntityTagDTO):
 class NewTagDTO(BaseModelDTO):
     key: str
     value: str
-    is_community_tag_key: bool | None = None
-    is_community_tag_value: bool | None = None
+    is_community_tag_key: bool = False
+    is_community_tag_value: bool = False
     additional_info: dict | None = None
 
 

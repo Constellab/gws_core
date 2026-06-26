@@ -135,7 +135,9 @@ class EntityTag(Model):
 
     def get_tag_value_model(self, tag_key_model: TagKeyModel) -> TagValueModel:
         """Get the tag value model"""
-        tag_value_model = TagValueModel.get_tag_value_model(tag_key_model, str(self.tag_value))
+        tag_value_model = TagValueModel.get_tag_value_model_by_key_and_value(
+            tag_key_model, self.tag_value
+        )
         if not tag_value_model:
             raise ValueError(
                 f"Tag value model for key {self.tag_key} and value {self.tag_value} not found"

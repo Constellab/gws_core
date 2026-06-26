@@ -61,6 +61,17 @@ class TagValueModel(Model):
             additional_infos=self.additional_infos,
         )
 
+    def to_community_dto(self) -> CommunityTagValueDTO:
+        """Convert the tag value model to a community tag value DTO"""
+        return CommunityTagValueDTO(
+            id=self.id,
+            value=self.tag_value,
+            short_description=self.short_description,
+            additional_infos=self.additional_infos,
+            deprecated=self.deprecated,
+            tag_key=self.tag_key.to_community_dto(),
+        )
+
     @classmethod
     def from_dto(
         cls, tag_value_model_dto: TagValueModelDTO, tag_key_model: TagKeyModel
@@ -82,9 +93,30 @@ class TagValueModel(Model):
     ######################################### CLASS METHODS #########################################
 
     @classmethod
-    def tag_value_exists(cls, tag_key: TagKeyModel, tag_value: TagValueType) -> bool:
+    def tag_value_exists(cls, tag_key: str | TagKeyModel, tag_value: TagValueType) -> bool:
         """Return true if the tag value exists"""
-        return cls.get_tag_value_model(tag_key, tag_value) is not None
+        return cls.get_tag_value_model_by_key_and_value(tag_key, tag_value) is not None
+
+    @classmethod
+    def create_tag_value_model(
+        cls,
+        tag_key_model: TagKeyModel,
+        tag_value: TagValueType,
+        short_description: str | None = None,
+        additional_infos: dict[str, Any] | None = None,
+        is_community_tag_value: bool = False,
+        deprecated: bool = False,
+    ) -> "TagValueModel":
+        """Create and save a tag value model"""
+        tag_value_model = cls()
+        tag_value_model.tag_key = tag_key_model
+        tag_value_model.tag_value = Tag.convert_value_to_str(tag_value)
+        tag_value_model.short_description = short_description
+        tag_value_model.additional_infos = additional_infos
+        tag_value_model.is_community_tag_value = is_community_tag_value
+        tag_value_model.deprecated = deprecated
+
+        return tag_value_model.save()
 
     @classmethod
     def create_tag_value(
@@ -118,7 +150,7 @@ class TagValueModel(Model):
     @GwsCoreDbManager.transaction()
     def delete_tag_value(cls, tag_key: str, tag_value: TagValueType) -> None:
         """Delete a tag value model, and the tag key if it has no more values"""
-        tag_value_model = cls.get_tag_value_model(tag_key, tag_value)
+        tag_value_model = cls.get_tag_value_model_by_key_and_value(tag_key, tag_value)
         if tag_value_model:
             tag_value_model.delete_instance()
 
@@ -133,7 +165,10 @@ class TagValueModel(Model):
         cls, tag_key: str, old_tag_value: TagValueType, new_tag_value: TagValueType
     ) -> "TagValueModel":
         """Update a tag value model"""
-        tag_value_model = cls.get_tag_value_model(tag_key, old_tag_value)
+        tag_value_model = cls.get_tag_value_model_by_key_and_value(tag_key, old_tag_value)
+
+        if not tag_value_model:
+            raise ValueError(f"Tag value '{old_tag_value}' does not exist for tag key '{tag_key}'")
         if tag_value_model:
             tag_value_model.tag_value = Tag.convert_value_to_str(new_tag_value)
             tag_value_model.save()
@@ -143,34 +178,49 @@ class TagValueModel(Model):
     ######################################### SELECT #########################################
 
     @classmethod
-    def get_tag_value_model(
-        cls, tag_key: TagKeyModel, tag_value_id_or_value: TagValueType | str
-    ) -> "TagValueModel":
-        """Return the tag value model if it exists"""
-        res = None
-        if isinstance(tag_value_id_or_value, str):
-            res = cls.get_tag_value_model_by_id(tag_value_id_or_value)
-
-        if res is None:
-            res = cls.get_tag_value_model_by_key_and_value(tag_key, tag_value_id_or_value)
-
-        return res
-
-    @classmethod
-    def get_tag_value_model_by_id(cls, tag_value_id: str) -> "TagValueModel":
+    def get_tag_value_model_by_id(cls, tag_value_id: str) -> "TagValueModel | None":
         """Return the tag value model by its ID"""
         return cls.get_or_none(id=tag_value_id)
 
     @classmethod
     def get_tag_value_model_by_key_and_value(
-        cls, tag_key: str, tag_value: TagValueType
-    ) -> "TagValueModel":
+        cls, tag_key: str | TagKeyModel, tag_value: TagValueType
+    ) -> "TagValueModel | None":
         """Return the tag value model by its key and value"""
         return cls.get_or_none(tag_key=tag_key, tag_value=Tag.convert_value_to_str(tag_value))
 
     @classmethod
     def find_by_tag_key(cls, tag_key: str) -> ModelSelect:
         return cls.select().where(cls.tag_key == tag_key)
+
+    @classmethod
+    def get_by_tag_key(cls, tag_key: TagKeyModel) -> list["TagValueModel"]:
+        """Return all the tag values for a tag key"""
+        return list(cls.select().where(cls.tag_key == tag_key))
+
+    @classmethod
+    def count_by_tag_key(cls, tag_key: TagKeyModel) -> int:
+        """Return the number of tag values for a tag key"""
+        return cls.select().where(cls.tag_key == tag_key).count()
+
+    @classmethod
+    def get_non_community_values_by_tag_key(
+        cls, tag_key: TagKeyModel
+    ) -> list["TagValueModel"]:
+        """Return the non-community tag values for a tag key, newest first"""
+        return list(
+            cls.select()
+            .where((cls.tag_key == tag_key) & (cls.is_community_tag_value == False))  # noqa: E712
+            .order_by(cls.created_at.desc())
+        )
+
+    @classmethod
+    def get_non_deprecated_by_tag_key(cls, tag_key: TagKeyModel) -> list["TagValueModel"]:
+        """Return the non-deprecated tag values for a tag key"""
+        return list(
+            cls.select()
+            .where((cls.tag_key == tag_key) & (cls.deprecated == False))  # noqa: E712
+        )
 
     @classmethod
     def search_by_value(cls, tag_key: str, tag_value: TagValueType | None = None) -> ModelSelect:

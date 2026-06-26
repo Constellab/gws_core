@@ -3,6 +3,9 @@ from typing import Optional
 from peewee import ModelSelect
 
 from gws_core.community.community_dto import CommunityTagKeyDTO
+from gws_core.core.exception.exceptions.bad_request_exception import (
+    BadRequestException,
+)
 from gws_core.core.model.typed_db_field import (
     NullableCharField,
     NullableJSONField,
@@ -22,9 +25,7 @@ class TagKeyModel(Model):
     key = TypedCharField(unique=True)
     order = TypedIntegerField(default=0)
 
-    value_format = TypedEnumField(
-        choices=TagValueFormat, default=TagValueFormat.STRING
-    )
+    value_format = TypedEnumField(choices=TagValueFormat, default=TagValueFormat.STRING)
 
     label = NullableCharField()
 
@@ -53,6 +54,22 @@ class TagKeyModel(Model):
             additional_infos_specs=self.additional_infos_specs,
         )
 
+    def to_community_dto(self) -> CommunityTagKeyDTO:
+        """Convert the tag key model to a community tag key DTO"""
+        return CommunityTagKeyDTO(
+            id=self.id,
+            key=self.key,
+            label=self.label,
+            value_format=self.value_format,
+            deprecated=self.deprecated,
+            published_at=None,
+            unit=None,
+            description=self.description,
+            created_at=self.created_at.isoformat(),
+            last_modified_at=self.last_modified_at.isoformat(),
+            additional_infos_specs=self.additional_infos_specs,
+        )
+
     ############################################## CLASS METHODS ##############################################
 
     @classmethod
@@ -73,7 +90,7 @@ class TagKeyModel(Model):
 
     @classmethod
     def delete_tag(cls, key: str) -> None:
-        tag_model: TagKeyModel = cls.find_by_key(key)
+        tag_model = cls.find_by_key(key)
 
         if tag_model is None:
             return
@@ -82,19 +99,41 @@ class TagKeyModel(Model):
 
     @classmethod
     def find_by_key(cls, key: str) -> Optional["TagKeyModel"]:
-        try:
-            return cls.get(cls.key == key)
-        except:
-            return None
+        return cls.get_or_none(cls.key == key)
+
+    @classmethod
+    def get_by_key(cls, key: str) -> Optional["TagKeyModel"]:
+        return cls.select().where(cls.key == key).first()
+
+    @classmethod
+    def get_and_check_by_key(cls, key: str) -> "TagKeyModel":
+        """Get the tag key model by key and raise an exception if it does not exist"""
+        tag_key_model = cls.get_by_key(key)
+        if not tag_key_model:
+            raise BadRequestException(
+                f"The tag key '{key}' does not exists. Please create it first."
+            )
+        return tag_key_model
 
     @classmethod
     def search_by_key(cls, key: str) -> ModelSelect:
-        if key:
-            return (
-                TagKeyModel.select().where(TagKeyModel.key.contains(key)).order_by(TagKeyModel.key)
-            )
-        else:
-            return TagKeyModel.select().order_by(TagKeyModel.key)
+        return cls.select().where(cls.key.contains(key)).order_by(cls.key)
+
+    @classmethod
+    def get_all_ordered_by_key(cls) -> ModelSelect:
+        return cls.select().order_by(cls.key)
+
+    @classmethod
+    def get_all_ordered_by_order(cls) -> list["TagKeyModel"]:
+        """Return all the tag keys ordered by their display order"""
+        return list(cls.select().order_by(cls.order))
+
+    @classmethod
+    def get_community_tag_keys_imported(cls) -> list["TagKeyModel"]:
+        """Get the community tag keys imported"""
+        return list(
+            cls.select().where(cls.is_community_tag == True).order_by(cls.order)  # noqa: E712
+        )
 
     @classmethod
     def get_highest_order(cls) -> int:
