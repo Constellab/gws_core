@@ -49,6 +49,18 @@ class MonitorFreeDiskDTO(BaseModelDTO):
         return self.disk_usage_free - file_size
 
 
+class UploadSpaceCheckDTO(BaseModelDTO):
+    """Result of a pre-flight check telling whether an upload of a given size
+    would fit on disk. Lets the frontend reject an upload before the user waits
+    for the whole file to transfer."""
+
+    has_enough_space: bool
+    file_size: float
+    required_disk_free_space: float
+    disk_usage_free: float
+    remaining_space_after_file: float
+
+
 class CurrentMonitorDTO(BaseModelDTO):
     monitor: MonitorDTO
     free_disk: MonitorFreeDiskDTO
