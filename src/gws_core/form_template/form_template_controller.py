@@ -12,6 +12,9 @@ from gws_core.form_template.form_template_dto import (
     FormTemplateVersionDTO,
     GenerateComputedParamDTO,
     GenerateComputedParamResultDTO,
+    GenerateTemplateFieldDTO,
+    GenerateTemplateFieldResultDTO,
+    GenerateTemplateSpecsDTO,
     ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
@@ -240,6 +243,34 @@ def generate_computed_param_with_ai(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> GenerateComputedParamResultDTO:
     return FormTemplateAiService.generate_computed_param_expression(id_, version_id, body)
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/generate-specs-with-ai",
+    tags=["Form template"],
+    summary="AI-generate or modify a DRAFT form template's fields from a description",
+)
+def generate_specs_with_ai(
+    id_: str,
+    version_id: str,
+    body: GenerateTemplateSpecsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateAiService.generate_template_specs(id_, version_id, body).to_dto()
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/generate-field-with-ai",
+    tags=["Form template"],
+    summary="AI-generate or edit a single DRAFT field from a description (does not persist)",
+)
+def generate_field_with_ai(
+    id_: str,
+    version_id: str,
+    body: GenerateTemplateFieldDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> GenerateTemplateFieldResultDTO:
+    return FormTemplateAiService.generate_template_field(id_, version_id, body)
 
 
 @core_app.put(

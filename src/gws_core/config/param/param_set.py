@@ -9,7 +9,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.utils.logger import Logger
 
 from ...core.classes.validator import DictValidator, ListValidator
-from .param_spec import ParamSpec
+from .param_spec import FloatParam, ParamSpec
 from .param_types import ParamSpecDTO, ParamSpecType, ParamSpecVisibilty
 
 
@@ -239,6 +239,36 @@ class ParamSet(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.PARAM_SET
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return (
+            "A repeatable group of rows — each row is a small set of fields the "
+            "user can add several times (e.g. a list of samples)."
+        )
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "param_set": "Object mapping each ROW field KEY to its spec (same shape as a top-level field).",
+            "max_number_of_occurrences": "Maximum number of rows, or -1 / null for no limit.",
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> "ParamSet":
+        # Built from real inner params so the serialized example shows the exact
+        # nested shape (additional_info.param_set) the deserializer expects.
+        return cls(
+            ConfigSpecs(
+                {
+                    "mass": FloatParam(human_name="Mass", short_description="Mass in grams"),
+                    "volume": FloatParam(human_name="Volume", optional=True),
+                }
+            ),
+            human_name="Samples",
+        )
 
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSet":

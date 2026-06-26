@@ -9,6 +9,7 @@ from gws_core.core.utils.logger import Logger
 from gws_core.form.form_dto import FormSaveResultDTO
 from gws_core.form.form_service import FormService
 from gws_core.impl.openai.open_ai_chat import OpenAiChat
+from gws_core.impl.openai.open_ai_json_helper import OpenAiJsonHelper
 
 
 class FormAiFillService:
@@ -95,32 +96,7 @@ Form field specification:
 
     @classmethod
     def _parse_json_object(cls, response: str) -> dict[str, Any]:
-        cleaned = cls._strip_code_fences(response)
-        try:
-            parsed = json.loads(cleaned)
-        except Exception as err:
-            raise BadRequestException(
-                f"The AI returned a response that is not valid JSON: {err}"
-            ) from err
-        if not isinstance(parsed, dict):
-            raise BadRequestException(
-                "The AI response must be a JSON object mapping form field keys to values."
-            )
-        return parsed
-
-    @staticmethod
-    def _strip_code_fences(response: str) -> str:
-        """Remove a surrounding ```...``` / ```json ... ``` fence if present."""
-        text = response.strip()
-        if not text.startswith("```"):
-            return text
-        # Drop the opening fence line (``` or ```json) and the closing fence.
-        lines = text.splitlines()
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        return "\n".join(lines).strip()
+        return OpenAiJsonHelper.parse_json_object(response)
 
     @classmethod
     def _build_result(cls, specs: ConfigSpecs, ai_values: dict[str, Any]) -> FormSaveResultDTO:

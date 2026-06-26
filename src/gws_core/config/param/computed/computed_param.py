@@ -4,6 +4,9 @@ from typing import Any
 
 from typing_extensions import TypedDict
 
+from gws_core.config.param.computed.computed_param_evaluator import (
+    ConfigSpecsEvaluator,
+)
 from gws_core.config.param.param_spec import ParamSpec
 from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.config.param.param_types import (
@@ -22,11 +25,33 @@ class ComputedParamAdditionalInfo(TypedDict):
 class ComputedParam(ParamSpec):
     """Read-only param whose value is derived from other params via an expression.
 
+    Also referred to as a **Formula** field in the user interface.
+
     The user cannot submit a value for a ComputedParam. The value is recomputed
     on every save and on every read by ConfigSpecs.compute_values(...).
     """
 
     additional_info: ComputedParamAdditionalInfo
+
+    # Human-facing name of this field type (it is shown as "Formula" in the UI).
+    AI_FIELD_NAME = "ComputedParam (also called a Formula field)"
+
+    # AI prompt fragment describing the expression grammar a ComputedParam /
+    # Formula accepts. Folded into ai_summary so it flows through the normal
+    # describe_for_ai catalog entry. Placeholder:
+    #   {{FUNCTIONS}} — filled by ai_summary with the allowed function names.
+    AI_EXPRESSION_GRAMMAR = """A ComputedParam (also called a Formula) field has no user-entered value: its value is computed from other fields via an EXPRESSION.
+
+Expression grammar:
+- Same-scope field references use a single leading `@`: `@weight`, `@volume`.
+- ParamSet aggregate sugar (list of values across rows): `@samples[].mass` — only valid at the OUTER scope, never inside a ParamSet row formula.
+- Outer-scope references from inside a ParamSet row use a DOUBLE sigil: `@@factor`. Only valid when the formula lives inside a ParamSet. The target may be a plain outer field OR another outer ComputedParam — the engine resolves dependencies for you.
+- The combined form `@@key[].field` (outer aggregate from inside a row) is RESERVED and rejected. Do not produce it.
+- Allowed functions: {{FUNCTIONS}}.
+- Conditional: `if(cond, a, b)`.
+- Operators: + - * / % ** == != < <= > >= and or not.
+- No assignments, no statements, no Python keywords other than the operators above and `if(...)`.
+- A bare identifier without `@` is treated as a function name and will fail if it is not in the allowed list. Always prefix field references with `@` (or `@@` for outer refs)."""
 
     def __init__(
         self,
@@ -73,6 +98,38 @@ class ComputedParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.COMPUTED
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        # Summary + the full expression grammar (functions filled in), so the
+        # generic describe_for_ai catalog entry carries everything the AI needs
+        # to author a valid Formula — no bespoke method or prompt placeholder.
+        functions = ", ".join(ConfigSpecsEvaluator.get_allowed_function_names())
+        grammar = cls.AI_EXPRESSION_GRAMMAR.replace("{{FUNCTIONS}}", functions)
+        return (
+            "A ComputedParam (Formula) field — read-only, its value is computed "
+            "from other fields via the 'expression' in additional_info. Use it "
+            "for totals, ratios, or any value derived from other fields.\n" + grammar
+        )
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "expression": (
+                "The formula computing this field's value from other fields "
+                "(see the expression grammar). Reference other fields with `@key`."
+            ),
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> ComputedParam:
+        return cls(
+            expression="@quantity * @unit_price",
+            human_name="Total price",
+            short_description="Quantity times unit price",
+        )
 
     @classmethod
     def empty(cls) -> ComputedParam:

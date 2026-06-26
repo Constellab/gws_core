@@ -10,7 +10,7 @@ from unittest.mock import patch
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.computed.computed_param import ComputedParam
 from gws_core.config.param.param_set import ParamSet
-from gws_core.config.param.param_spec import FloatParam, StrParam
+from gws_core.config.param.param_spec import FloatParam, IntParam, StrParam
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -370,7 +370,36 @@ class TestFormTemplateAiField(BaseTestCase):
         self.assertNotIn("mass", payload["other_fields"])
         # ...but its siblings are present.
         self.assertIn("name", payload["other_fields"])
-        self.assertEqual(payload["field_key"], "mass")
+        self.assertEqual(payload["current_field_key"], "mass")
+
+    def test_current_field_forwarded_to_ai_for_update(self):
+        template, version_id = self._make(
+            ConfigSpecs({"age": IntParam(human_name="Age")})
+        )
+        captured: dict = {}
+
+        def _fake_call_gpt(messages):
+            captured["messages"] = messages
+            return self._field_response(
+                "age", IntParam(human_name="Age", min_value=0, max_value=150)
+            )
+
+        with patch(_GPT_TARGET, side_effect=_fake_call_gpt):
+            result = FormTemplateAiService.generate_template_field(
+                template.id,
+                version_id,
+                GenerateTemplateFieldDTO(
+                    description="cap at 150",
+                    field_key="age",
+                    current_field=IntParam(human_name="Age").to_dto(),
+                ),
+            )
+        payload = json.loads(captured["messages"][-1]["content"])
+        # the current field spec is forwarded so the AI starts from it
+        self.assertIsNotNone(payload["current_field"])
+        self.assertEqual(payload["current_field"]["type"], "int")
+        self.assertEqual(result.field_key, "age")
+        self.assertEqual(result.spec.additional_info.get("max_value"), 150)
 
     def test_param_set_field(self):
         template, version_id = self._make()

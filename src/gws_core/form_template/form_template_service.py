@@ -506,6 +506,22 @@ class FormTemplateService:
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod
+    @GwsCoreDbManager.transaction()
+    def apply_generated_specs(
+        cls,
+        template_id: str,
+        version_id: str,
+        specs: ConfigSpecs,
+    ) -> FormTemplateVersion:
+        """Overwrite a DRAFT version's whole field set with ``specs``.
+
+        Used by the AI generation flow to replace the draft's content in one
+        shot. The caller is responsible for having validated ``specs`` first.
+        """
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
     def _get_draft_version_and_check(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:

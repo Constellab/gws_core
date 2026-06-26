@@ -3,7 +3,7 @@ import warnings
 from abc import abstractmethod
 from typing import Any
 
-from typing_extensions import TypedDict
+from typing_extensions import Self, TypedDict
 
 from gws_core.config.param.param_spec_decorator import (
     ParamSpecCategory,
@@ -20,6 +20,7 @@ from ...core.classes.validator import (
 )
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .param_types import (
+    ParamSpecAiDescriptionDTO,
     ParamSpecDTO,
     ParamSpecSimpleDTO,
     ParamSpecType,
@@ -85,6 +86,11 @@ class ParamSpec:
 
     # Category of the param spec, set by the @param_spec_decorator
     __category__: ParamSpecCategory
+
+    # Whether this type should be offered to the AI form-builder catalog.
+    # Off by default — only the generic, user-authorable field types opt in
+    # (see describe_for_ai). Lab-specific / system params stay out.
+    ai_catalog_member: bool = False
 
     def __init__(
         self,
@@ -205,11 +211,54 @@ class ParamSpec:
         pass
 
     @classmethod
-    def empty(cls) -> "ParamSpec":
+    def get_category(cls) -> ParamSpecCategory | None:
+        """The :class:`ParamSpecCategory` this type was registered with by the
+        ``@param_spec_decorator``. None if the class was never decorated."""
+        return getattr(cls, "__category__", None)
+
+    @classmethod
+    def empty(cls) -> Self:
         return cls()
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSpec":
+    def ai_example_spec(cls) -> "ParamSpec":
+        """A representative, valid instance of this type used as the example in
+        :meth:`describe_for_ai`. Override to show meaningful constraints
+        (e.g. min/max). The default is a bare instance with a human_name."""
+        return cls(human_name="Example field")
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        """One-line description of what this field type is for. Override per type."""
+        return f"A '{cls.get_param_spec_type().value}' field."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        """Maps this type's AI-relevant ``additional_info`` constraint keys to a
+        human explanation. Default: none. Override on types that expose
+        constraints (min/max, lengths, multiple, ...)."""
+        return {}
+
+    @classmethod
+    def describe_for_ai(cls, example_key: str = "example_field") -> ParamSpecAiDescriptionDTO:
+        """Self-describe this param type for an AI form-builder.
+
+        Returns the type tag, a one-line summary, the meaning of each
+        AI-relevant ``additional_info`` key, and a real example spec serialized
+        exactly as ``ConfigSpecs.from_json`` expects. Built from
+        :meth:`ai_example_spec` / :meth:`ai_summary` / :meth:`ai_additional_info_doc`
+        so a type only overrides the small pieces it cares about. Keeping this on
+        the type (not in the AI service) means a new param type ships its own
+        catalog entry."""
+        return ParamSpecAiDescriptionDTO(
+            type=cls.get_param_spec_type(),
+            summary=cls.ai_summary(),
+            additional_info_doc=cls.ai_additional_info_doc(),
+            example={example_key: cls.ai_example_spec().to_dto().to_json_dict()},
+        )
+
+    @classmethod
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> Self:
         param_spec = cls.empty()
         param_spec.default_value = spec_dto.default_value
         param_spec.optional = spec_dto.optional
@@ -301,6 +350,28 @@ class StrParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.STRING
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "Free text on a single line (names, codes, short answers)."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "min_length": "Minimum number of characters (inclusive), or null.",
+            "max_length": "Maximum number of characters (inclusive), or null.",
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> "StrParam":
+        return cls(
+            human_name="Full name",
+            short_description="The person's name",
+            min_length=1,
+            max_length=120,
+        )
+
     def _check_allowed_values(self, allowed_values: list[str] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
@@ -362,6 +433,16 @@ class TextParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.TEXT
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "Multi-line free text (paragraphs, comments, long answers)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "TextParam":
+        return cls(human_name="Comments", short_description="Any extra notes", optional=True)
+
 
 @param_spec_decorator()
 class BoolParam(ParamSpec):
@@ -408,6 +489,16 @@ class BoolParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.BOOL
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A yes/no (true/false) toggle."
+
+    @classmethod
+    def ai_example_spec(cls) -> "BoolParam":
+        return cls(human_name="Active", default_value=True)
 
 
 @param_spec_decorator()
@@ -573,6 +664,13 @@ class NumericParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         pass
 
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "min_value": "Minimum allowed value (inclusive), or null.",
+            "max_value": "Maximum allowed value (inclusive), or null.",
+        }
+
     def _check_allowed_values(self, allowed_values: list[Any] | None) -> None:
         if allowed_values is not None:
             if not isinstance(allowed_values, (list, tuple)):
@@ -608,6 +706,22 @@ class IntParam(NumericParam):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.INT
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A whole number (counts, quantities, years)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "IntParam":
+        return cls(
+            human_name="Age",
+            short_description="Age in years",
+            optional=True,
+            min_value=0,
+            max_value=120,
+        )
+
 
 @param_spec_decorator()
 class FloatParam(NumericParam):
@@ -627,3 +741,13 @@ class FloatParam(NumericParam):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.FLOAT
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A decimal number (measurements, rates, amounts)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "FloatParam":
+        return cls(human_name="Mass", short_description="Mass in grams", min_value=0)

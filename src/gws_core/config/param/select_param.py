@@ -182,3 +182,24 @@ class SelectParam(ParamSpec):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.SELECT
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A choice restricted to a fixed list of options (dropdown)."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "options": 'The list of choices, each {"label": <shown text>, "value": <stored value>}.',
+            "multiple": "When true, several options can be selected and the value is a list.",
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> "SelectParam":
+        return cls(
+            options=["low", "medium", "high"],
+            human_name="Category",
+            short_description="Pick one",
+        )

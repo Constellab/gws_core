@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.form.form_dto import FormSaveResultDTO
@@ -144,3 +145,47 @@ class GenerateComputedParamResultDTO(BaseModelDTO):
 
     expression: str
     validation: ValidateComputedParamResultDTO
+
+
+class GenerateTemplateSpecsDTO(BaseModelDTO):
+    """Request body for AI-assisted form-template field generation / editing.
+
+    The AI is given the DRAFT version's current specs (which may be empty) and
+    the user's free-text ``description``, and produces the complete new field
+    specification. That spec is validated and **written onto the DRAFT** (the
+    draft's whole field set is replaced); the updated version is returned. Empty
+    current specs ⇒ build from scratch; non-empty ⇒ modify the existing fields.
+    Only DRAFT versions can be targeted.
+    """
+
+    description: str
+
+
+class GenerateTemplateFieldDTO(BaseModelDTO):
+    """Request body for AI-assisted single-field generation / editing.
+
+    The AI is given the DRAFT version's other fields (read-only context),
+    ``field_key`` (the key of the field being edited, or null for a new field),
+    ``current_field`` (the current spec of that field for an edit, or null for a
+    new field — the AI starts from it and applies the description), and the
+    user's free-text ``description``. It returns one proposed field. Nothing is
+    persisted — the editor applies the result via the existing create/update
+    field routes.
+    """
+
+    description: str
+    field_key: str | None = None
+    current_field: ParamSpecDTO | None = None
+
+
+class GenerateTemplateFieldResultDTO(BaseModelDTO):
+    """Result of an AI-assisted single-field generation.
+
+    ``field_key`` is the proposed snake_case key (the AI may suggest one for a
+    new field, or keep/rename the given one). ``spec`` is the field spec,
+    serialized the same way as the field routes' bodies (``ParamSpecDTO``) so
+    the editor can apply it directly. Nothing is persisted.
+    """
+
+    field_key: str
+    spec: ParamSpecDTO
