@@ -26,14 +26,14 @@ class ParamSetRowsValidationResult:
     errors: dict[str, str] = field(default_factory=dict)
 
 
-@param_spec_decorator(type_=ParamSpecCategory.PARAM_SET)
+@param_spec_decorator(category=ParamSpecCategory.PARAM_SET)
 class ParamSet(ParamSpec):
     """ParamSet. Use to define a group of parameters that can be added multiple times. This will
     provid a list of dictionary as values : List[Dict[str, Any]]
 
     """
 
-    param_set: ConfigSpecs | None = None
+    param_set: ConfigSpecs
     max_number_of_occurrences: int | None
 
     def __init__(
@@ -99,9 +99,7 @@ class ParamSet(ParamSpec):
         """
         return self._validate_rows(value, lenient=False).rows
 
-    def validate_lenient(
-        self, value: list[dict[str, Any]]
-    ) -> ParamSetRowsValidationResult:
+    def validate_lenient(self, value: list[dict[str, Any]]) -> ParamSetRowsValidationResult:
         """Lenient variant of ``validate`` — runs leaf-level validation on
         provided values but does NOT raise on missing inner mandatories or
         on per-leaf validation failures.
@@ -134,7 +132,9 @@ class ParamSet(ParamSpec):
 
             item_id = valid_dict.get(ConfigSpecs.ITEM_ID_KEY) or str(uuid.uuid4())
             if item_id in seen_ids:
-                raise BadRequestException(f"Duplicate {ConfigSpecs.ITEM_ID_KEY} '{item_id}' in ParamSet")
+                raise BadRequestException(
+                    f"Duplicate {ConfigSpecs.ITEM_ID_KEY} '{item_id}' in ParamSet"
+                )
             seen_ids.add(item_id)
 
             if lenient:

@@ -8,6 +8,8 @@ from gws_core.config.param.computed.computed_param_graph import (
     ComputedParamGraphChecker,
 )
 from gws_core.config.param.param_set import ParamSet
+from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.paginator import Paginator
@@ -43,6 +45,17 @@ from gws_core.user.current_user_service import CurrentUserService
 
 
 class FormTemplateService:
+
+    # Param-spec categories a form template's specs may contain. Anything else
+    # (e.g. the CODE_PARAM IDE params) is rejected, whether added field-by-field,
+    # via the bulk override, or by the AI generation flow.
+    ALLOWED_SPEC_CATEGORIES = [
+        ParamSpecCategory.SIMPLE,
+        ParamSpecCategory.LAB_SPECIFIC,
+        ParamSpecCategory.PARAM_SET,
+        ParamSpecCategory.COMPUTED,
+    ]
+
     # ------------------------------------------------------------------ #
     # Template-level CRUD
     # ------------------------------------------------------------------ #
@@ -546,6 +559,31 @@ class FormTemplateService:
         return cls.apply_generated_specs(template_id, version_id, specs)
 
     @classmethod
+    def _check_spec_category(cls, field_key: str, spec: ParamSpec) -> None:
+        """Reject a single field whose category is not allowed in a form template.
+
+        Recurses into a ParamSet's inner specs so a disallowed type cannot be
+        smuggled in as a row field. Raises ``BadRequestException`` on the first
+        offending field.
+        """
+        category = spec.get_category()
+        if category not in cls.ALLOWED_SPEC_CATEGORIES:
+            allowed = ", ".join(c.value for c in cls.ALLOWED_SPEC_CATEGORIES)
+            raise BadRequestException(
+                f"Field '{field_key}' has type '{spec.get_param_spec_type().value}' "
+                f"which is not allowed in a form template. Allowed categories: {allowed}."
+            )
+        if isinstance(spec, ParamSet) and spec.param_set is not None:
+            cls._check_specs_categories(spec.param_set)
+
+    @classmethod
+    def _check_specs_categories(cls, specs: ConfigSpecs) -> None:
+        """Reject any field of ``specs`` (recursively) whose category is not in
+        :attr:`ALLOWED_SPEC_CATEGORIES`."""
+        for field_key, spec in specs.get_specs_as_dict().items():
+            cls._check_spec_category(field_key, spec)
+
+    @classmethod
     def _get_draft_version_and_check(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:
@@ -562,6 +600,7 @@ class FormTemplateService:
         specs: ConfigSpecs,
         template_id: str,
     ) -> FormTemplateVersion:
+        cls._check_specs_categories(specs)
         version.update_specs(specs)
 
         ActivityService.add(
@@ -588,6 +627,7 @@ class FormTemplateService:
         try:
             specs = version.get_content()
             specs.check_config_specs()
+            cls._check_specs_categories(specs)
         except Exception as err:
             raise BadRequestException(f"Cannot publish: schema is invalid ({err})") from err
 

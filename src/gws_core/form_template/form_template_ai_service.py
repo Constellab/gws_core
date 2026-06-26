@@ -84,7 +84,10 @@ class FormTemplateAiService:
         fails schema validation.
         """
         version = FormTemplateService._get_draft_version_and_check(template_id, version_id)
-        specs = ConfigSpecsAiService.generate_specs(version.get_content(), dto.description)
+        specs = ConfigSpecsAiService.generate_specs(
+            version.get_content(), dto.description,
+            FormTemplateService.ALLOWED_SPEC_CATEGORIES,
+        )
         return GenerateTemplateSpecsResultDTO(specs=specs.to_dto())
 
     @classmethod
@@ -112,7 +115,8 @@ class FormTemplateAiService:
             else None
         )
         field_key, spec = ConfigSpecsAiService.generate_field(
-            other_specs, dto.description, dto.field_key, current_field
+            other_specs, dto.description, dto.field_key, current_field,
+            FormTemplateService.ALLOWED_SPEC_CATEGORIES,
         )
         return GenerateTemplateFieldResultDTO(field_key=field_key, spec=spec.to_dto())
 

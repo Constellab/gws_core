@@ -13,7 +13,7 @@ extend-exclude = [
 
 [lint]
 select = ["E", "F", "W", "C90", "I", "N", "UP", "B", "A", "C4", "T20", "SIM", "PL"]
-ignore = ["E501", "PLW1641", "B008"]
+ignore = ["E501", "PLW1641", "B008" "PLR0911"]
 
 [lint.pylint]
 max-args = 10

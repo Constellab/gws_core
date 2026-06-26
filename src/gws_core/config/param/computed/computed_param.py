@@ -21,7 +21,7 @@ class ComputedParamAdditionalInfo(TypedDict):
     expression: str
 
 
-@param_spec_decorator(type_=ParamSpecCategory.COMPUTED)
+@param_spec_decorator(category=ParamSpecCategory.COMPUTED)
 class ComputedParam(ParamSpec):
     """Read-only param whose value is derived from other params via an expression.
 

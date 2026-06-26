@@ -19,7 +19,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from .param_types import ParamSpecDTO, ParamSpecType
 
 
-@param_spec_decorator(type_=ParamSpecCategory.DYNAMIC_PARAM)
+@param_spec_decorator(category=ParamSpecCategory.DYNAMIC_PARAM)
 class DynamicParam(ParamSpec):
     """Dynamic param"""
 

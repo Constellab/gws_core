@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecType
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(category=ParamSpecCategory.CODE_PARAM)
 class RCodeParam(TextParam):
     """Param for r code. It shows a simple r IDE
       in the interface to provide code for r.
