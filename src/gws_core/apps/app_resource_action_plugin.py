@@ -79,6 +79,11 @@ class AppResourceActionPlugin(EntityActionPlugin):
                             "A stable host alias for the app (a single DNS label, e.g. "
                             "'my-app'). Leave empty to clear it and restore the default host."
                         ),
+                        regex=r"[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?",
+                        regex_description=(
+                            "Use lowercase letters, digits and hyphens only, and start and "
+                            "end with a letter or digit (e.g. 'my-app')"
+                        ),
                     )
                 }
             ),
