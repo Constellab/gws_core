@@ -14,6 +14,7 @@ from gws_core.core.model.typed_db_field import (
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process import Process
+from gws_core.process.process_types import ProcessStatus
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
 from gws_core.tag.entity_tag_list import EntityTagList
@@ -478,7 +479,7 @@ class TaskModel(ProcessModel):
             return
         self.progress_bar.start()
         self.progress_bar.add_message(f"Start of task '{self.get_instance_name_context()}'")
-        # self.status = ProcessStatus.RUNNING
+        self.status = ProcessStatus.RUNNING
         self.started_at = DateHelper.now_utc()
         self.save()
 
