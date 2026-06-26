@@ -40,4 +40,5 @@ class AudioView(View):
         with open(file_path, "rb") as audio_file:
             encoded_string = b64encode(audio_file.read())
 
-        return AudioView(encoded_string, FileHelper.get_mime(file_path))
+        mime = FileHelper.get_mime(file_path) or "application/octet-stream"
+        return AudioView(encoded_string, mime)

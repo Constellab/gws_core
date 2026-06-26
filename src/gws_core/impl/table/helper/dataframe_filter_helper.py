@@ -122,7 +122,7 @@ class DataframeFilterHelper:
             ),
             human_name=param_set_human_name,
             short_description=param_set_short_description,
-            optional=optional,
+            min_number_of_occurrences=0 if optional else 1,
         )
 
     @classmethod

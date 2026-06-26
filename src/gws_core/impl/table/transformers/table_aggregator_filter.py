@@ -61,7 +61,7 @@ class TableColumnAggregatorFilter(Transformer):
                         "value": value_param,
                     }
                 ),
-                optional=True,
+                min_number_of_occurrences=0,
                 human_name="Numeric aggregation criterion",
                 short_description="Filter axis validating a numeric criterion after aggregation",
                 max_number_of_occurrences=3,
@@ -112,7 +112,7 @@ class TableRowAggregatorFilter(Transformer):
                         "value": value_param,
                     }
                 ),
-                optional=True,
+                min_number_of_occurrences=0,
                 human_name="Numeric aggregation criterion",
                 short_description="Filter axis validating a numeric criterion after aggregation",
                 max_number_of_occurrences=3,

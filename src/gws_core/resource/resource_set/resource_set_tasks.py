@@ -45,7 +45,7 @@ class ResourceStacker(Task):
                         )
                     }
                 ),
-                optional=True,
+                min_number_of_occurrences=0,
                 human_name="Resource keys",
                 short_description="The keys of the resources to stack",
             )
@@ -123,7 +123,6 @@ class ResourcePicker(Task):
                         )
                     }
                 ),
-                optional=False,
                 human_name="Resource keys",
                 short_description="The keys of the resources to pick",
             )

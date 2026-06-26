@@ -295,25 +295,8 @@ class FormTemplateService:
                 {**target_existing, probe_key: candidate}, _skip_key_validation=True
             )
         else:
-            # Candidate lives inside a ParamSet. Build a probe outer ConfigSpecs
-            # with that ParamSet's inner specs replaced so cross-scope cycle
-            # detection sees the candidate.
-            outer_existing = outer_specs.get_specs_as_dict()
-            probe_inner = ConfigSpecs(
-                {**target_existing, probe_key: candidate}, _skip_key_validation=True
-            )
-            original_paramset = outer_existing[dto.param_set_key]
-            probe_paramset = ParamSet(
-                param_set=probe_inner,
-                optional=original_paramset.optional,
-                visibility=original_paramset.visibility,
-                human_name=original_paramset.human_name,
-                short_description=original_paramset.short_description,
-                max_number_of_occurrences=original_paramset.max_number_of_occurrences,
-            )
-            probe_specs = ConfigSpecs(
-                {**outer_existing, dto.param_set_key: probe_paramset},
-                _skip_key_validation=True,
+            probe_specs = FormTemplateService._build_inner_probe_specs(
+                outer_specs, dto.param_set_key, target_existing, probe_key, candidate
             )
         try:
             ComputedParamGraphChecker.check(probe_specs)
@@ -324,6 +307,33 @@ class FormTemplateService:
                 message = message.replace(probe_key, "<this param>")
             return message
         return None
+
+    @staticmethod
+    def _build_inner_probe_specs(
+        outer_specs: ConfigSpecs,
+        param_set_key: str,
+        target_existing: dict,
+        probe_key: str,
+        candidate: ComputedParam,
+    ) -> ConfigSpecs:
+        """Probe outer ConfigSpecs for a candidate living inside a ParamSet.
+
+        Rebuilds the enclosing ParamSet with its inner specs replaced by the
+        target specs plus the candidate, so cross-scope cycle detection sees the
+        candidate in place.
+        """
+        outer_existing = outer_specs.get_specs_as_dict()
+        probe_inner = ConfigSpecs(
+            {**target_existing, probe_key: candidate}, _skip_key_validation=True
+        )
+        original_paramset = outer_existing[param_set_key]
+        if not isinstance(original_paramset, ParamSet):
+            raise BadRequestException(f"Field '{param_set_key}' is not a ParamSet.")
+        probe_paramset = original_paramset.clone_with_inner_specs(probe_inner)
+        return ConfigSpecs(
+            {**outer_existing, param_set_key: probe_paramset},
+            _skip_key_validation=True,
+        )
 
     @classmethod
     def test_version(
