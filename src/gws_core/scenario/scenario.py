@@ -45,15 +45,17 @@ if TYPE_CHECKING:
 
 @final
 class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
-    folder = NullableForeignKeyField(SpaceFolder)
+    folder: NullableForeignKeyField[SpaceFolder] = NullableForeignKeyField(SpaceFolder)
 
-    status = TypedEnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
+    status: TypedEnumField[ScenarioStatus] = TypedEnumField(
+        choices=ScenarioStatus, default=ScenarioStatus.DRAFT
+    )
     error_info = NullableJSONField()
     creation_type = TypedEnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
-    title = TypedCharField(max_length=50)
+    title: TypedCharField = TypedCharField(max_length=50)
     description = NullableRichTextDbField()
     lab_config = NullableForeignKeyField(LabConfigModel)
 
@@ -254,11 +256,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.folder is None:
             raise BadRequestException(
                 "The scenario must be linked to a folder before validating it"
-            )
-
-        if self.folder.children.count() > 0:
-            raise BadRequestException(
-                "The scenario must be associated with a leaf folder (folder with no children)"
             )
 
         self.is_validated = True

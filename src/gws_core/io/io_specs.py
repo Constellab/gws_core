@@ -112,7 +112,7 @@ class InputSpecs(IOSpecs):
     def __init__(self, input_specs: dict[str, InputSpec] | None = None) -> None:
         super().__init__(cast(dict[str, IOSpec], input_specs))
 
-    def check_and_build_inputs(self, inputs: dict[str, Resource]) -> TaskInputs:
+    def check_and_build_inputs(self, inputs: dict[str, Resource | None]) -> TaskInputs:
         """Check and convert input to TaskInputs
         :rtype: TaskInputs
         """
@@ -123,7 +123,8 @@ class InputSpecs(IOSpecs):
 
         for key, spec in self._specs.items():
             # If the resource is None
-            if key not in inputs or inputs[key] is None:
+            resource = inputs.get(key)
+            if resource is None:
                 # If the resource is empty and the spec not optional, add an error
                 if not spec.optional:
                     missing_resource.append(key)
@@ -131,7 +132,6 @@ class InputSpecs(IOSpecs):
                     input_dict[key] = None
                 continue
 
-            resource: Resource = inputs[key]
             if not spec.is_compatible_with_resource_type(type(resource)):
                 invalid_input_text = (
                     invalid_input_text
@@ -200,7 +200,7 @@ class OutputSpecs(IOSpecs):
 
             # If the resource for the output port was provided
             if key in task_outputs:
-                resource: Resource = task_outputs[key]
+                resource = task_outputs[key]
 
                 check_result = self._check_output(
                     resource, spec, self._get_spec_key_pretty_name(key)
@@ -224,9 +224,12 @@ class OutputSpecs(IOSpecs):
         )
 
     def _check_output(
-        self, output_resource: Resource, spec: OutputSpec, pretty_key_name: str
+        self, output_resource: Resource | None, spec: OutputSpec, pretty_key_name: str
     ) -> OutputCheckResult:
         """Method to check a output resource, return str if there is an error with the resource"""
+
+        if output_resource is None:
+            return OutputCheckResult(error=None, resource=None, auto_convert_message=None)
 
         auto_convert_message: str | None = None
         # if the resource is not a Resource, try to convert it
@@ -236,6 +239,7 @@ class OutputSpecs(IOSpecs):
                 return OutputCheckResult(
                     error=f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' is not a resource and could not be converted dynamically. It must extend the Resource class",
                     resource=None,
+                    auto_convert_message=auto_convert_message,
                 )
 
             auto_convert_message = f"The output '{pretty_key_name}' of type '{type(output_resource).__name__}' was automatically converted to '{type(converted_resource).get_human_name()}'."

@@ -16,7 +16,7 @@ from gws_core.user.user_dto import UserDTO
 # DTO to create/update a scenario
 class ScenarioSaveDTO(BaseModelDTO):
     folder_id: str | None = None
-    title: str | None = None
+    title: str = ""
     scenario_template_id: str | None = None
     scenario_template_json: dict | None = None
 

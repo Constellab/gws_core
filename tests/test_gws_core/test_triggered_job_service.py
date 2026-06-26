@@ -1,12 +1,16 @@
+from typing import cast
+
 from gws_core import BaseTestCase
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
-from gws_core.impl.robot.robot_service import RobotService
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.model.typing import Typing
 from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.scenario.scenario_service import ScenarioService
+from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_service import ScenarioTemplateService
 from gws_core.triggered_job.triggered_job_dto import (
     CreateTriggeredJobFromProcessDTO,
@@ -44,7 +48,7 @@ class TestTriggeredJobService(BaseTestCase):
         self.assertEqual(job.cron_expression, "0 * * * *")
         self.assertFalse(job.is_active)
         self.assertTrue(job.uses_process_typing())
-        self.assertEqual(job.process_typing.typing_name, typing.typing_name)
+        self.assertEqual(cast(Typing, job.process_typing).typing_name, typing.typing_name)
 
     def test_create_from_protocol(self):
         """Test creating a triggered job from a Protocol"""
@@ -64,7 +68,7 @@ class TestTriggeredJobService(BaseTestCase):
         self.assertIsNotNone(job.id)
         self.assertTrue(job.is_active)
         self.assertIsNotNone(job.next_run_at)
-        self.assertEqual(job.process_typing.typing_name, typing.typing_name)
+        self.assertEqual(cast(Typing, job.process_typing).typing_name, typing.typing_name)
 
     def test_create_from_invalid_typing(self):
         """Test that creating from invalid typing raises error"""
@@ -81,7 +85,9 @@ class TestTriggeredJobService(BaseTestCase):
     def test_create_from_template(self):
         """Test creating a triggered job from a ScenarioTemplate"""
         # Create a scenario template first
-        proto = RobotService.create_robot_simple_travel()
+        proto = ScenarioService.create_scenario_from_protocol_type(
+            RobotSimpleTravel
+        ).protocol_model
 
         template = ScenarioTemplateService.create_from_protocol(
             protocol=proto, name="Robot Template"
@@ -100,7 +106,7 @@ class TestTriggeredJobService(BaseTestCase):
         self.assertIsNotNone(job.id)
         self.assertEqual(job.name, "Template Job")
         self.assertTrue(job.uses_scenario_template())
-        self.assertEqual(job.scenario_template.id, template.id)
+        self.assertEqual(cast(ScenarioTemplate, job.scenario_template).id, template.id)
 
     def test_invalid_cron_expression(self):
         """Test that invalid cron expression raises error"""
@@ -281,7 +287,7 @@ class TestTriggeredJobService(BaseTestCase):
         self.assertIsNotNone(run.scenario)
 
         # Verify the scenario was created and executed
-        scenario = run.scenario.refresh()
+        scenario = cast(Scenario, run.scenario).refresh()
         self.assertIsNotNone(scenario)
         self.assertIn(scenario.status, [ScenarioStatus.SUCCESS, ScenarioStatus.ERROR])
 

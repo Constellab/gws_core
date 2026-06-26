@@ -1,13 +1,12 @@
-from gws_core import BaseTestCase, Paginator, ProtocolModel, Scenario, ScenarioService
-from gws_core.impl.robot.robot_service import RobotService
+from gws_core import BaseTestCase, Paginator, Scenario, ScenarioService
+from gws_core.impl.robot.robot_protocol import RobotWorldTravelProto
 
 
 # test_paginator
 class TestPaginator(BaseTestCase):
     def test_paginator(self):
-        protocol: ProtocolModel = RobotService.create_robot_world_travel()
-        ScenarioService.create_scenario_from_protocol_model(
-            protocol_model=protocol, title="My title"
+        ScenarioService.create_scenario_from_protocol_type(
+            RobotWorldTravelProto, title="My title"
         )
 
         query = Scenario.select().order_by(Scenario.created_at.desc())

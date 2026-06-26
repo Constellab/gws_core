@@ -140,26 +140,27 @@ class IO(Base, Generic[PortType]):
             raise BadRequestException(f"{self.classname()} port '{name}' not found")
 
     ################################################### RESOURCE ########################################
-    def get_resources(self, new_instance: bool = False) -> dict[str, Resource]:
+    def get_resources(self, new_instance: bool = False) -> dict[str, Resource | None]:
         """
         Returns the resources of all the ports to be used for the input of a task.
         """
-        resources: dict[str, Resource] = {}
+        resources: dict[str, Resource | None] = {}
 
         # for normal IO, add the resource with key = port name
         for key, port in self._ports.items():
             resources[key] = port.get_resource(new_instance)
         return resources
 
-    def set_resource_model(self, port_name: str, resource_model: ResourceModel) -> None:
+    def set_resource_model(self, port_name: str, resource_model: ResourceModel | None) -> None:
         """Set the resource_model of a port"""
         port: PortType = self.get_port(port_name)
 
-        resource_type: type[Resource] = type(resource_model.get_resource())
-        if not port.resource_type_is_compatible(resource_type):
-            raise ResourceNotCompatibleException(
-                port_name=port_name, resource_type=resource_type, spec=port.resource_spec
-            )
+        if resource_model is not None:
+            resource_type: type[Resource] = type(resource_model.get_resource())
+            if not port.resource_type_is_compatible(resource_type):
+                raise ResourceNotCompatibleException(
+                    port_name=port_name, resource_type=resource_type, spec=port.resource_spec
+                )
 
         port.set_resource_model(resource_model)
 
@@ -278,7 +279,10 @@ class Inputs(IO[InPort]):
     def _get_port_type(self) -> type[InPort]:
         return InPort
 
-    def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
+    def get_specs(self) -> InputSpecs:
+        return cast(InputSpecs, super().get_specs())
+
+    def _build_specs(self, specs: dict[str, IOSpec]) -> InputSpecs:
         input_specs = cast(dict[str, InputSpec], specs)
         if self.is_dynamic:
             return DynamicInputs.from_dto(input_specs, self._additional_info)
@@ -294,7 +298,10 @@ class Outputs(IO[OutPort]):
     def _get_port_type(self) -> type[OutPort]:
         return OutPort
 
-    def _build_specs(self, specs: dict[str, IOSpec]) -> IOSpecs:
+    def get_specs(self) -> OutputSpecs:
+        return cast(OutputSpecs, super().get_specs())
+
+    def _build_specs(self, specs: dict[str, IOSpec]) -> OutputSpecs:
         output_specs = cast(dict[str, OutputSpec], specs)
         if self.is_dynamic:
             return DynamicOutputs.from_dto(output_specs, self._additional_info)

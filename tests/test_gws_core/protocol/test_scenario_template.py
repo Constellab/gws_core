@@ -9,6 +9,8 @@ from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
+from gws_core.process.process_dto import ProcessDTO
+from gws_core.protocol.protocol_layout import ProcessLayoutDTO
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.protocol.protocol_service import ProtocolService
@@ -72,13 +74,15 @@ class TestScenarioTemplate(BaseTestCase):
         init_count_task = TaskModel.select().count()
 
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
+        proto = ScenarioService.create_scenario_from_protocol_type(
+            NestedProtocolTest
+        ).protocol_model
 
         # configure the process to check config in template
         ProtocolService.configure_process(proto.id, "p5", {"food_weight": 1000})
 
         # configure the layout to check layout in template
-        ProtocolService.save_process_layout(proto.id, "p5", {"x": 1000, "y": 1000})
+        ProtocolService.save_process_layout(proto.id, "p5", cast(ProcessLayoutDTO, {"x": 1000, "y": 1000}))
 
         count_protocol = ProtocolModel.select().count() - init_count_protocol
         count_task = TaskModel.select().count() - init_count_task
@@ -130,7 +134,7 @@ class TestScenarioTemplate(BaseTestCase):
             main_proto.layout.process_layouts["p5"].to_json_dict(), {"x": 1000, "y": 1000}
         )
 
-        mini_proto: ProtocolModel = main_proto.get_process("mini_proto")
+        mini_proto: ProtocolModel = cast(ProtocolModel, main_proto.get_process("mini_proto"))
         self.assertIsNotNone(mini_proto)
         self.assertIsInstance(mini_proto, ProtocolModel)
         self.assertTrue(mini_proto.is_interfaced_with("p1"))
@@ -203,7 +207,9 @@ class TestScenarioTemplate(BaseTestCase):
 
     def test_serialization(self):
         # create a chain
-        proto = ProtocolService.create_protocol_model_from_type(NestedProtocolTest)
+        proto = ScenarioService.create_scenario_from_protocol_type(
+            NestedProtocolTest
+        ).protocol_model
 
         # create a template
         template = ProtocolService.create_scenario_template_from_id(
@@ -212,9 +218,9 @@ class TestScenarioTemplate(BaseTestCase):
 
         template_str = template.to_export_dto().to_json_str()
         new_template = ScenarioTemplateFactory.from_export_dto_str(template_str)
-        self.assert_json(new_template.name, template.name)
-        self.assert_json(new_template.version, template.version)
-        self.assert_json(new_template.description, template.description)
+        self.assert_json(cast(dict, new_template.name), cast(dict, template.name))
+        self.assert_json(cast(dict, new_template.version), cast(dict, template.version))
+        self.assert_json(cast(dict, new_template.description), cast(dict, template.description))
         self.assert_json(
             new_template.to_export_dto().data.to_json_dict(),
             template.to_export_dto().data.to_json_dict(),
@@ -227,7 +233,7 @@ class TestScenarioTemplate(BaseTestCase):
         protocol = i_scenario.get_protocol()
 
         process = protocol.add_process(RobotMove, "robotMove")
-        protocol.add_resource("source", None, process << "robot")
+        protocol.add_resource("source", cast(str, None), process << "robot")
         protocol.add_output("output", process >> "robot")
 
         # create scenario template
@@ -246,9 +252,9 @@ class TestScenarioTemplate(BaseTestCase):
 
         # Check that the component is added to the protocol
         protocol_2: ProtocolProxy = scenario_2.get_protocol().refresh()
-        sub_protocol: ProtocolModel = protocol_2.get_process(
-            protocol_update.process.instance_name
-        ).get_model()
+        sub_protocol: ProtocolModel = cast(ProtocolModel, protocol_2.get_process(
+            cast(ProcessDTO, protocol_update.process).instance_name
+        ).get_model())
 
         self.assertIsInstance(sub_protocol, ProtocolModel)
         self.assertEqual(sub_protocol.name, "test_template")

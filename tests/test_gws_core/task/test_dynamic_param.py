@@ -1,22 +1,29 @@
+from typing import cast
+
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import IntParam
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
 from gws_core.impl.agent.py_agent import PyAgent
+from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.test.base_test_case import BaseTestCase
 
 
 # test_dynamic_param
 class TestDynamicParam(BaseTestCase):
     def test(self):
-        proto: ProtocolModel = ProtocolService.create_empty_protocol()
+        proto: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
-        process_model = ProtocolService.add_process_to_protocol_id(
-            proto.id, PyAgent.get_typing_name(), "task"
-        ).process
+        process_model = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                proto.id, PyAgent.get_typing_name(), "task"
+            ).process,
+        )
 
         proto = proto.refresh()
 
@@ -33,10 +40,12 @@ class TestDynamicParam(BaseTestCase):
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
 
-        dynamic_param: DynamicParam = test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        dynamic_param: DynamicParam = cast(
+            DynamicParam, test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        )
         self.assertIsInstance(dynamic_param, DynamicParam)
 
-        int_param: IntParam = dynamic_param.specs.get_spec("a")
+        int_param: IntParam = cast(IntParam, dynamic_param.specs.get_spec("a"))
         self.assertIsNotNone(int_param)
 
         self.assertIsNotNone(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME))
@@ -61,8 +70,11 @@ class TestDynamicParam(BaseTestCase):
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
 
-        int_param = test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME).specs.get_spec(
-            "a"
+        int_param = cast(
+            IntParam,
+            cast(
+                DynamicParam, test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+            ).specs.get_spec("a"),
         )
         self.assertIsNotNone(int_param)
         self.assertIsNotNone(test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME))
@@ -87,8 +99,10 @@ class TestDynamicParam(BaseTestCase):
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
 
-        dynamic_param = test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
-        int_param = dynamic_param.specs.get_spec("b")
+        dynamic_param = cast(
+            DynamicParam, test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        )
+        int_param = cast(IntParam, dynamic_param.specs.get_spec("b"))
 
         self.assertFalse(dynamic_param.specs.has_spec("a"))
         self.assertIsNotNone(int_param)
@@ -110,7 +124,9 @@ class TestDynamicParam(BaseTestCase):
         test_process_model = proto.get_process(process_model.instance_name)
         self.assertIsNotNone(test_process_model)
         self.assertFalse(
-            test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME).specs.has_spec("b")
+            cast(
+                DynamicParam, test_process_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+            ).specs.has_spec("b")
         )
         self.assertTrue("b" not in test_process_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME))
 
@@ -119,10 +135,13 @@ class TestDynamicParam(BaseTestCase):
 
         Returns the protocol and the process instance name.
         """
-        proto: ProtocolModel = ProtocolService.create_empty_protocol()
-        process_model = ProtocolService.add_process_to_protocol_id(
-            proto.id, PyAgent.get_typing_name(), "task"
-        ).process
+        proto: ProtocolModel = ScenarioProxy().get_protocol().get_model()
+        process_model = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                proto.id, PyAgent.get_typing_name(), "task"
+            ).process,
+        )
         for name in names:
             ProtocolService.add_dynamic_param_spec_of_process(
                 proto.id,
@@ -141,8 +160,9 @@ class TestDynamicParam(BaseTestCase):
         )
 
         proto = proto.refresh()
-        dynamic_param: DynamicParam = proto.get_process(instance_name).config.get_spec(
-            PyAgent.CONFIG_PARAMS_NAME
+        dynamic_param: DynamicParam = cast(
+            DynamicParam,
+            proto.get_process(instance_name).config.get_spec(PyAgent.CONFIG_PARAMS_NAME),
         )
         self.assertEqual(list(dynamic_param.specs.specs.keys()), ["c", "a", "b"])
 

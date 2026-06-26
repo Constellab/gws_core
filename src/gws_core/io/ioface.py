@@ -1,14 +1,13 @@
-
 from gws_core.protocol.protocol_dto import IOFaceDTO
 
 
 class IOface:
-    name: str | None = None
+    name: str
 
     # For interface, this is the process that receives the resource from interface
     # For outerface, this is the process that sends the resource to outerface
-    process_instance_name: str | None = None
-    port_name: str | None = None
+    process_instance_name: str
+    port_name: str
 
     def __init__(self, name: str, process_instance_name: str, port_name: str):
         self.name = name

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import cast
 
 from gws_core import (
     BaseTestCase,
@@ -30,7 +31,7 @@ from ..protocol_examples import SimpleProtocolTest
 class RunAfterTask(Task):
     @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        return None
+        return {}
 
     def run_after_task(self) -> None:
         raise Exception("run_after_task")
@@ -41,79 +42,89 @@ class TestTask(BaseTestCase):
     def test_task_singleton(self):
         p0: TaskModel = ProcessFactory.create_task_model_from_type(task_type=RobotCreate)
         p1: TaskModel = ProcessFactory.create_task_model_from_type(task_type=RobotCreate)
-        # p0.title = "First 'Create' task"
-        # p0.description = "This is the description of the task"
-        p0.save_full()
 
         self.assertTrue(p0.id != p1.id)
 
     def test_process(self):
-        proto: ProtocolModel = ProtocolService.create_protocol_model_from_type(SimpleProtocolTest)
+        scenario: Scenario = ScenarioService.create_scenario_from_protocol_type(SimpleProtocolTest)
+        proto: ProtocolModel = scenario.protocol_model
 
-        p0: TaskModel = proto.get_process("p0")
-        p1: TaskModel = proto.get_process("p1")
-        p2: TaskModel = proto.get_process("p2")
+        p0: TaskModel = cast(TaskModel, proto.get_process("p0"))
 
         self.assertTrue(p0.created_by.is_sysuser)
-        self.assertEqual(proto.created_by, TestHelper.user)
+        self.assertEqual(proto.created_by, TestHelper.get_system_user())
 
-        p2.config.set_value("food_weight", "5.6")
+        # configure p2 through the service so the value is persisted before the run
+        ProtocolService.configure_process(proto.id, "p2", {"food_weight": "5.6"})
 
-        scenario: Scenario = ScenarioService.create_scenario_from_protocol_model(
-            protocol_model=proto
-        )
-
-        self.assertEqual(scenario.created_by, TestHelper.user)
+        self.assertEqual(scenario.created_by, TestHelper.get_system_user())
 
         scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
         # Refresh the processes
         protocol: ProtocolModel = scenario.protocol_model
-        self.assertEqual(protocol.created_by, TestHelper.user)
+        self.assertEqual(protocol.created_by, TestHelper.get_system_user())
 
-        p0 = protocol.get_process("p0")
-        self.assertEqual(protocol.created_by, TestHelper.user)
+        p0 = cast(TaskModel, protocol.get_process("p0"))
+        self.assertEqual(protocol.created_by, TestHelper.get_system_user())
 
-        p1 = protocol.get_process("p1")
-        p2 = protocol.get_process("p2")
-        p3 = protocol.get_process("p3")
-        elon: Robot = p0.outputs.get_resource_model("robot").get_resource()
+        p1 = cast(TaskModel, protocol.get_process("p1"))
+        p2 = cast(TaskModel, protocol.get_process("p2"))
+        p3 = cast(TaskModel, protocol.get_process("p3"))
+        elon: Robot = cast(
+            Robot, cast(ResourceModel, p0.outputs.get_resource_model("robot")).get_resource()
+        )
 
         self.assertEqual(elon.weight, 70)
 
         # check p1
+        p1_out: Robot = cast(
+            Robot, cast(ResourceModel, p1.outputs.get_resource_model("robot")).get_resource()
+        )
         self.assertEqual(
-            p1.outputs.get_resource_model("robot").get_resource().position[1],
+            p1_out.position[1],
             elon.position[1] + p1.config.get_value("moving_step"),
         )
-        self.assertEqual(p1.outputs.get_resource_model("robot").get_resource().weight, elon.weight)
+        self.assertEqual(p1_out.weight, elon.weight)
 
         # check p2
-        self.assertEqual(
-            p2.outputs.get_resource_model("robot").get_resource().position,
-            p2.inputs.get_resource_model("robot").get_resource().position,
+        p2_out: Robot = cast(
+            Robot, cast(ResourceModel, p2.outputs.get_resource_model("robot")).get_resource()
+        )
+        p2_in: Robot = cast(
+            Robot, cast(ResourceModel, p2.inputs.get_resource_model("robot")).get_resource()
         )
         self.assertEqual(
-            p2.outputs.get_resource_model("robot").get_resource().weight,
-            p2.inputs.get_resource_model("robot").get_resource().weight
-            + p2.config.get_value("food_weight"),
+            p2_out.position,
+            p2_in.position,
+        )
+        self.assertEqual(
+            p2_out.weight,
+            p2_in.weight + p2.config.get_value("food_weight"),
         )
 
         # check p3
-        self.assertEqual(
-            p3.outputs.get_resource_model("robot").get_resource().position[1],
-            p3.inputs.get_resource_model("robot").get_resource().position[1]
-            + p3.config.get_value("moving_step"),
+        p3_out: Robot = cast(
+            Robot, cast(ResourceModel, p3.outputs.get_resource_model("robot")).get_resource()
+        )
+        p3_in: Robot = cast(
+            Robot, cast(ResourceModel, p3.inputs.get_resource_model("robot")).get_resource()
         )
         self.assertEqual(
-            p3.outputs.get_resource_model("robot").get_resource().weight,
-            p3.inputs.get_resource_model("robot").get_resource().weight,
+            p3_out.position[1],
+            p3_in.position[1] + p3.config.get_value("moving_step"),
+        )
+        self.assertEqual(
+            p3_out.weight,
+            p3_in.weight,
         )
 
-        res = ResourceModel.get_by_id(p3.outputs.get_resource_model("robot").id)
+        res = ResourceModel.get_by_id(
+            cast(ResourceModel, p3.outputs.get_resource_model("robot")).id
+        )
         self.assertTrue(isinstance(res, ResourceModel))
 
-        self.assertTrue(len(p0.progress_bar.data["messages"]) >= 2)
+        self.assertTrue(len(cast(dict, p0.progress_bar.data)["messages"]) >= 2)
 
         scenario.to_dto()
 

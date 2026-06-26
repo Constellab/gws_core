@@ -2,7 +2,7 @@ import re
 from typing import Literal
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.typed_db_field import NullableSerializableDBField
+from gws_core.core.model.typed_db_field import TypedSerializableDBField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.process.process import Process
@@ -32,7 +32,7 @@ from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
-    layout = NullableSerializableDBField(object_type=ProtocolLayout)
+    layout = TypedSerializableDBField(object_type=ProtocolLayout, default=ProtocolLayout)
 
     # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco
@@ -166,7 +166,7 @@ class ProtocolModel(ProcessModel):
         """Refresh the graph json object inside the data from the dump method"""
         self.data["graph"] = self.to_protocol_minimum_dto().to_json_dict()
 
-    def get_graph(self) -> ProtocolMinimumDTO:
+    def get_graph(self) -> ProtocolMinimumDTO | None:
         """Return the graph json object"""
         graph = self.data["graph"]
         if not isinstance(graph, dict):
@@ -285,8 +285,8 @@ class ProtocolModel(ProcessModel):
 
         # if it ready, check that all the previous precesses are finished in success
         # it prevent from running a process if an optional input is not set
-        for process in self.get_direct_previous_processes(process.instance_name):
-            if not process.is_success:
+        for proc in self.get_direct_previous_processes(process.instance_name):
+            if not proc.is_success:
                 return False
 
         return True
@@ -412,8 +412,6 @@ class ProtocolModel(ProcessModel):
 
         if instance_name in self._processes:
             raise BadRequestException(f"Process name '{instance_name}' already exists")
-        if process_model in self._processes.items():
-            raise BadRequestException(f"Process '{instance_name}' duplicate")
 
         process_model.set_parent_protocol(self)
 
@@ -718,7 +716,7 @@ class ProtocolModel(ProcessModel):
         # Lazy load specifically the connector because it might need to load the children (for sub protocol)
         self._load_connectors()
 
-        return self._connectors
+        return self._connectors or []
 
     def _load_connectors(self) -> None:
         if self._connectors is None:
@@ -792,6 +790,9 @@ class ProtocolModel(ProcessModel):
             right_port_name=to_port_name,
             check_compatiblity=check_compatiblity,
         )
+
+        if not self._connectors:
+            self._connectors = []
 
         if connector in self._connectors:
             raise BadRequestException("Duplicated connector")
@@ -1279,10 +1280,11 @@ class ProtocolModel(ProcessModel):
     def get_protocol_chain_info(self) -> str:
         """return a string with the information up to the main protocol"""
 
-        if self.parent_protocol_id is None:
+        parent_protocol = self.parent_protocol
+        if parent_protocol is None:
             return "Main protocol"
 
-        return f"{self.parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
+        return f"{parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
 
     def mark_as_started(self):
         if self.is_running:
@@ -1367,8 +1369,7 @@ class ProtocolModel(ProcessModel):
             if process.is_input_task():
                 # convert the output connexions of Input process to interfaces
                 connectors = self._get_connectors_linked_to_process(process)
-                i = 0
-                for connector in connectors:
+                for i, connector in enumerate(connectors):
                     interface_name = f"{process.instance_name}_{str(i)}"
                     new_interfaces[interface_name] = IOFaceDTO(
                         name=interface_name,
@@ -1376,22 +1377,17 @@ class ProtocolModel(ProcessModel):
                         port_name=connector.right_port.name,
                     )
 
-                    i += 1
-
                 processes_to_remove.append(process.instance_name)
             elif process.is_output_task():
                 # convert the input connexions of Output process to outerfaces
                 connectors = self._get_connectors_linked_to_process(process)
-                i = 0
-                for connector in connectors:
+                for i, connector in enumerate(connectors):
                     outerface_name = f"{process.instance_name}_{str(i)}"
                     new_outerfaces[outerface_name] = IOFaceDTO(
                         name=outerface_name,
                         process_instance_name=connector.left_process.instance_name,
                         port_name=connector.left_port.name,
                     )
-
-                    i += 1
                 processes_to_remove.append(process.instance_name)
 
         # remove the process before adding the interfaces, so the ports are not used
@@ -1413,11 +1409,11 @@ class ProtocolModel(ProcessModel):
 
         return f"{name}_{count}"
 
-    def get_community_agent_version_id(self) -> str:
+    def get_community_agent_version_id(self) -> str | None:
         return None
 
     def get_community_agent_version_modified(self) -> bool:
-        return None
+        return False
 
     class Meta:
         table_name = "gws_protocol"

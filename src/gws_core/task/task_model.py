@@ -10,6 +10,7 @@ from gws_core.core.model.typed_db_field import (
     NullableCharField,
     NullableForeignKeyIdField,
     TypedBooleanField,
+    TypedDeferredForeignKeyIdField,
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.process.process import Process
@@ -30,7 +31,6 @@ from ..io.io_exception import InvalidOutputsException
 from ..io.port import Port
 from ..process.process_exception import CheckBeforeTaskStopException, ProcessRunException
 from ..process.process_model import ProcessModel
-from ..process.process_types import ProcessStatus
 from ..resource.resource import Resource
 from ..resource.resource_model import ResourceModel
 from ..resource.resource_r_field import ResourceRField
@@ -51,13 +51,22 @@ class TaskModel(ProcessModel):
     :type config_specs: dict
     """
 
+    # A task always lives inside a protocol, so override the nullable parent FK
+    # inherited from ProcessModel (kept nullable there for root ProtocolModel) to
+    # make it NOT NULL on the gws_task table and typed as str (never None).
+    parent_protocol_id: TypedDeferredForeignKeyIdField = TypedDeferredForeignKeyIdField(
+        "ProtocolModel", index=True
+    )
+
     # Only for task of type Input, this is to store the resource used in config
     # with lazy load = false, the Resource is not Loaded, it only contains the id
-    source_config_id = NullableForeignKeyIdField(ResourceModel, index=True)
+    source_config_id: NullableForeignKeyIdField = NullableForeignKeyIdField(
+        ResourceModel, index=True
+    )
 
-    community_agent_version_id = NullableCharField(max_length=36, default=None)
+    community_agent_version_id: NullableCharField = NullableCharField(max_length=36, default=None)
 
-    community_agent_version_modified = TypedBooleanField(default=False)
+    community_agent_version_modified: TypedBooleanField = TypedBooleanField(default=False)
 
     # cache to store the list of tags of all inputs
     _input_resource_tags: list[Tag] | None = None
@@ -74,8 +83,17 @@ class TaskModel(ProcessModel):
             )
         super().set_process_type(process_type)
 
+    def get_task_type(self) -> type[Task]:
+        """Return the type of the task"""
+        process_type = self.get_process_type()
+        if not issubclass(process_type, Task):
+            raise Exception(
+                f"Error while getting the task type. The process type '{process_type}' is not a subclass of Task"
+            )
+        return process_type
+
     def _create_task_instance(self) -> Task:
-        return self.get_process_type()()
+        return self.get_task_type()()
 
     def is_protocol(self) -> bool:
         return False
@@ -103,7 +121,7 @@ class TaskModel(ProcessModel):
         return self.save()
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> "ProcessModel":
+    def reset(self) -> "TaskModel":
         """
         Reset the process
         """
@@ -153,7 +171,7 @@ class TaskModel(ProcessModel):
 
         # build the task tester
         params: ConfigParamsDict = self.config.get_and_check_values()
-        inputs: dict[str, Resource] = self.inputs.get_resources(new_instance=True)
+        inputs = self.inputs.get_resources(new_instance=True)
 
         # Reset runtime flags on input resources before passing them to the task
         for resource in inputs.values():
@@ -161,7 +179,7 @@ class TaskModel(ProcessModel):
                 resource.__prepare_for_task_run__()
 
         task_runner: TaskRunner = TaskRunner(
-            task_type=self.get_process_type(),
+            task_type=self.get_task_type(),
             params=params,
             inputs=inputs,
             config_model_id=self.config.id,
@@ -183,7 +201,9 @@ class TaskModel(ProcessModel):
 
         # If the check before task retuned False
         if isinstance(check_result, dict) and check_result.get("result") is False:
-            raise CheckBeforeTaskStopException(message=check_result.get("message"))
+            raise CheckBeforeTaskStopException(
+                message=check_result.get("message") or "Check before task returned False"
+            )
 
         self._run_before_task()
 
@@ -201,7 +221,8 @@ class TaskModel(ProcessModel):
             ) from err
 
         # save the style of the task if provided
-        style_override = task_runner.get_task().style
+        task = task_runner.get_task()
+        style_override = task.style if task else None
         if style_override:
             style_override.fill_empty_values()
             self.style = style_override
@@ -222,7 +243,7 @@ class TaskModel(ProcessModel):
         from .task_input_model import TaskInputModel
 
         for port_name, port in self.inputs.ports.items():
-            resource_model: ResourceModel = port.get_resource_model()
+            resource_model = port.get_resource_model()
 
             if resource_model is None:
                 continue
@@ -276,7 +297,7 @@ class TaskModel(ProcessModel):
                     f"Error while saving the task output. The port '{key}' does not exists"
                 )
 
-            resource_model: ResourceModel
+            resource_model: ResourceModel | None
 
             if resource is not None and resource.__is_reference__:
                 # The resource is marked as a reference, we don't create a new resource
@@ -293,7 +314,7 @@ class TaskModel(ProcessModel):
                         f"The resource '{resource.get_name() or resource.uid}' on port '{key}' is marked as reference "
                         f"but the resource model with id '{model_id}' was not found in the database."
                     )
-            else:
+            elif resource is not None:
                 port: Port = self.outputs.get_port(key)
                 resource_model = self._save_output_resource(resource, port.name)
 
@@ -393,6 +414,8 @@ class TaskModel(ProcessModel):
             tags: list[Tag] = []
 
             for input_resource in self.inputs.get_resource_models().values():
+                if not input_resource:
+                    continue
                 entity_tags = EntityTagList.find_by_entity(
                     TagEntityType.RESOURCE, input_resource.id
                 )
@@ -455,7 +478,7 @@ class TaskModel(ProcessModel):
             return
         self.progress_bar.start()
         self.progress_bar.add_message(f"Start of task '{self.get_instance_name_context()}'")
-        self.status = ProcessStatus.RUNNING
+        # self.status = ProcessStatus.RUNNING
         self.started_at = DateHelper.now_utc()
         self.save()
 
@@ -471,7 +494,7 @@ class TaskModel(ProcessModel):
         res.community_agent_version_modified = self.community_agent_version_modified
         return res
 
-    def get_community_agent_version_id(self) -> str:
+    def get_community_agent_version_id(self) -> str | None:
         return self.community_agent_version_id
 
     def get_community_agent_version_modified(self) -> bool:

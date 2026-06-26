@@ -22,7 +22,6 @@ from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.io.ioface import IOface
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
-from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.protocol.protocol_graph_factory import ProtocolGraphFactoryFromType
 from gws_core.protocol.protocol_layout import ProcessLayoutDTO, ProtocolLayout, ProtocolLayoutDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec
@@ -57,7 +56,6 @@ from ..process.process_factory import ProcessFactory
 from ..process.process_model import ProcessModel
 from ..protocol.protocol_model import ProtocolModel
 from ..task.task_model import TaskModel
-from .protocol import Protocol
 
 
 class ProtocolService:
@@ -68,26 +66,6 @@ class ProtocolService:
         return ProtocolModel.get_by_id_and_check(id_)
 
     ########################## CREATE #####################
-    @classmethod
-    def create_protocol_model_from_type(
-        cls,
-        protocol_type: type[Protocol],
-        instance_name: str | None = None,
-        config_params: ConfigParamsDict | None = None,
-    ) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
-            protocol_type=protocol_type, instance_name=instance_name, config_params=config_params
-        )
-
-        protocol.save_full()
-        return protocol
-
-    @classmethod
-    def create_empty_protocol(cls, instance_name: str | None = None) -> ProtocolModel:
-        protocol: ProtocolModel = ProcessFactory.create_protocol_empty(instance_name=instance_name)
-
-        protocol.save_full()
-        return protocol
 
     ########################## UPDATE PROCESS #####################
 
@@ -616,15 +594,6 @@ class ProtocolService:
 
         return cls._on_protocol_object_updated(protocol_model=protocol_model, protocol_updated=True)
 
-    @classmethod
-    @GwsCoreDbManager.transaction()
-    def copy_protocol(cls, protocol_model: ProtocolModel) -> ProtocolModel:
-        factory = ProtocolGraphFactoryFromType(protocol_model.to_protocol_config_dto())
-        new_protocol_model: ProtocolModel = factory.create_protocol_model()
-        new_protocol_model.save_full()
-        new_protocol_model.reset()
-        return new_protocol_model
-
     ########################## CONFIG #####################
 
     @classmethod
@@ -1025,21 +994,6 @@ class ProtocolService:
         )
 
     @classmethod
-    def create_protocol_model_from_template(
-        cls, scenario_template: ScenarioTemplate
-    ) -> ProtocolModel:
-        return cls.create_protocol_model_from_graph(scenario_template.get_template())
-
-    @classmethod
-    def create_protocol_model_from_graph(cls, graph: ProtocolGraphConfigDTO) -> ProtocolModel:
-        factory = ProtocolGraphFactoryFromType(graph)
-
-        protocol: ProtocolModel = factory.create_protocol_model()
-
-        protocol.save_full()
-        return protocol
-
-    @classmethod
     def generate_scenario_template(cls, protocol_id: str) -> ScenarioTemplate:
         protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
 
@@ -1087,11 +1041,6 @@ class ProtocolService:
                 code=community_agent_version.code, params=params
             )
         elif issubclass(agent_type, EnvAgent) or issubclass(agent_type, StreamlitEnvAgent):
-            config_params = agent_type.build_config_params_dict(
-                code=community_agent_version.code,
-                params=params,
-                env=community_agent_version.environment,
-            )
             config_params = agent_type.build_config_params_dict(
                 code=community_agent_version.code,
                 params=params,
@@ -1145,7 +1094,6 @@ class ProtocolService:
             protocol_model=protocol_model, process_model=process_model
         )
 
-        # TODO TO IMPROVE WHEN UPDATING AGENT CONFIG
         if protocol_update.process is None:
             raise BadRequestException("The process was not added to the protocol")
 
@@ -1157,10 +1105,11 @@ class ProtocolService:
                     protocol_id, process_model.instance_name, port
                 )
 
-            for io_spec in list(community_agent_version.input_specs.specs.values()):
-                protocol_update = cls.add_dynamic_input_port_to_process(
-                    protocol_id, process_model.instance_name, io_spec
-                )
+            if community_agent_version.input_specs is not None:
+                for io_spec in list(community_agent_version.input_specs.specs.values()):
+                    protocol_update = cls.add_dynamic_input_port_to_process(
+                        protocol_id, process_model.instance_name, io_spec
+                    )
 
         if process_model.outputs.is_dynamic:
             for port in list(process_model.outputs.ports.keys()):
@@ -1168,10 +1117,11 @@ class ProtocolService:
                     protocol_id, process_model.instance_name, port
                 )
 
-            for io_spec in list(community_agent_version.output_specs.specs.values()):
-                protocol_update = cls.add_dynamic_output_port_to_process(
-                    protocol_id, process_model.instance_name, io_spec
-                )
+            if community_agent_version.output_specs is not None:
+                for io_spec in list(community_agent_version.output_specs.specs.values()):
+                    protocol_update = cls.add_dynamic_output_port_to_process(
+                        protocol_id, process_model.instance_name, io_spec
+                    )
 
         return protocol_update
 
@@ -1427,9 +1377,9 @@ class ProtocolService:
     def _get_process_dynamic_param_spec(
         cls, process_model: ProcessModel, config_spec_name: str
     ) -> DynamicParam:
-        dynamic_param_spec: DynamicParam = DynamicParam.load_from_dto(
-            ParamSpecDTO.from_json(process_model.config.data.get("specs").get(config_spec_name))
-        )
+        # get the dynamic param spec
+        dynamic_spec = process_model.config.get_spec(config_spec_name)
+        dynamic_param_spec: DynamicParam = DynamicParam.load_from_dto(dynamic_spec.to_dto())
 
         if dynamic_param_spec is None:
             raise BadRequestException("The process does not support dynamic params")

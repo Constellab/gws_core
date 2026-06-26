@@ -4,6 +4,7 @@ Pure: works on ConfigSpecs / ParamSpec only — no DB, no form template. The GPT
 call is patched so no API key / network is needed.
 """
 import json
+from typing import cast
 from unittest.mock import patch
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -91,12 +92,17 @@ class TestConfigSpecsAiService(BaseTestCaseLight):
         with self.assertRaises(BadRequestException):
             ConfigSpecsAiService.generate_specs(ConfigSpecs(), "  ")
 
-    def test_catalog_in_prompt_excludes_code_params(self):
+    def test_catalog_in_prompt_includes_json_excludes_other_code_params(self):
         catalog = ConfigSpecsAiService._build_type_catalog()
         self.assertIn("# str", catalog)
         self.assertIn("# param_set", catalog)
         self.assertIn("min_value", catalog)
-        self.assertNotIn("code_param", catalog)
+        # json_code_param opts into the catalog so the AI can author JSON fields
+        self.assertIn("# json_code_param", catalog)
+        # the other code params (python/julia/r/perl/yaml/bash) stay out
+        for code_type in ("# python_code", "# julia_code", "# r_code",
+                          "# perl_code", "# yaml_code", "# bash_code"):
+            self.assertNotIn(code_type, catalog)
 
     def test_catalog_includes_computed_param(self):
         catalog = ConfigSpecsAiService._build_type_catalog()
@@ -287,7 +293,7 @@ class TestConfigSpecsAiService(BaseTestCaseLight):
         # the current field's spec is sent so the AI can start from it
         self.assertEqual(payload["current_field"]["type"], "int")
         self.assertEqual(key, "age")
-        self.assertEqual(spec.additional_info.get("max_value"), 150)
+        self.assertEqual(cast(dict, spec.additional_info).get("max_value"), 150)
 
     def test_generate_field_param_set(self):
         spec_obj = ParamSet(

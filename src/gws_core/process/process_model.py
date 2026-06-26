@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Any, final
+from typing import TYPE_CHECKING, Any, cast, final
+
+from typing_extensions import Self
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -17,6 +19,7 @@ from gws_core.core.model.typed_db_field import (
     TypedCharField,
     TypedEnumField,
     TypedForeignKeyField,
+    TypedJSONField,
 )
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
@@ -60,14 +63,16 @@ class ProcessModel(ModelWithUser):
     :type Viewable: [type]
     """
 
-    parent_protocol_id = NullableDeferredForeignKeyIdField(
+    parent_protocol_id: NullableDeferredForeignKeyIdField = NullableDeferredForeignKeyIdField(
         "ProtocolModel", index=True
     )
 
-    scenario = NullableForeignKeyField(Scenario, index=True, backref="+")
-    instance_name = NullableCharField()
+    scenario: TypedForeignKeyField[Scenario] = TypedForeignKeyField(
+        Scenario, index=True, backref="+"
+    )
+    instance_name = TypedCharField()
     config = TypedForeignKeyField(Config, backref="+")
-    progress_bar = NullableForeignKeyField(ProgressBar, backref="+")
+    progress_bar = TypedForeignKeyField(ProgressBar, backref="+")
     process_typing_name = TypedCharField()
     # version of the brick when the process was created
     brick_version_on_create = TypedCharField(max_length=50)
@@ -75,18 +80,22 @@ class ProcessModel(ModelWithUser):
     brick_version_on_run = NullableCharField(max_length=50)
     run_by = NullableForeignKeyField(User, backref="+")
     run_by_lab = NullableForeignKeyField(LabModel, backref="+")
-    status = TypedEnumField(choices=ProcessStatus, default=ProcessStatus.DRAFT)
+    status: TypedEnumField[ProcessStatus] = TypedEnumField(
+        choices=ProcessStatus, default=ProcessStatus.DRAFT
+    )
     error_info = NullableJSONField()
 
     started_at = NullableDateTimeUTC(with_milliseconds=True)
     ended_at = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = NullableJSONField()
+    data = TypedJSONField()
     is_archived = TypedBooleanField(default=False, index=True)
     style = TypedBaseDTOField(TypingStyle)
 
     # name of the process set by the user
-    name = NullableCharField()
+    name = TypedCharField()
+
+    scenario_id: str
 
     _scenario: Scenario | None = None
     _parent_protocol: ProtocolModel | None = None
@@ -131,13 +140,12 @@ class ProcessModel(ModelWithUser):
         result = super().delete_instance(*args, **kwargs)
         if self.config:
             self.config.delete_instance()
-        if self.progress_bar:
-            self.progress_bar.delete_instance()
+        self.progress_bar.delete_instance()
 
         return result
 
     @property
-    def parent_protocol(self) -> ProtocolModel:
+    def parent_protocol(self) -> ProtocolModel | None:
         if not self._parent_protocol and self.parent_protocol_id:
             from ..protocol.protocol_model import ProtocolModel
 
@@ -146,14 +154,13 @@ class ProcessModel(ModelWithUser):
         return self._parent_protocol
 
     @GwsCoreDbManager.transaction()
-    def reset(self) -> ProcessModel:
+    def reset(self) -> Self:
         """
         Reset the process
         """
         self.mark_as_draft()
         self._reset_io()
-        process_model = self.save()
-        return process_model
+        return self.save()
 
     def copy_from_and_save(self, other: ProcessModel) -> None:
         """Copy metadata, config, I/O, and progress bar from another ProcessModel and save."""
@@ -191,7 +198,7 @@ class ProcessModel(ModelWithUser):
         self.data["inputs"] = self.inputs.to_json()
         self.data["outputs"] = self.outputs.to_json()
 
-    def save(self, *args, **kwargs) -> ProcessModel:
+    def save(self, *args, **kwargs) -> Self:
         """Override save to save the inputs and outputs"""
 
         # if inputs were loaded, save them
@@ -203,9 +210,9 @@ class ProcessModel(ModelWithUser):
             self.data["outputs"] = self.outputs.to_json()
         return super().save(*args, **kwargs)
 
-    def save_full(self, *args, **kwargs) -> ProcessModel:
+    @abstractmethod
+    def save_full(self, *args, **kwargs) -> Self:
         """Function to run overrided by the sub classes"""
-        pass
 
     def set_parent_protocol(self, parent_protocol: ProtocolModel) -> None:
         """
@@ -216,7 +223,11 @@ class ProcessModel(ModelWithUser):
             self.parent_protocol_id = parent_protocol.id
         self._parent_protocol = parent_protocol
 
-        self.set_scenario(parent_protocol.scenario)
+        # Read the raw FK id to avoid the lazy DoesNotExist lookup: during the
+        # in-memory build the parent has no scenario yet, so skip propagation.
+        # The scenario is propagated to children later by ProtocolModel.set_scenario.
+        if parent_protocol.scenario_id:
+            self.set_scenario(parent_protocol.scenario)
 
     def set_process_type(self, process_type: type[Process]) -> None:
         self.process_typing_name = process_type.get_typing_name()
@@ -264,7 +275,7 @@ class ProcessModel(ModelWithUser):
     def get_error_info(self) -> ProcessErrorInfo | None:
         return ProcessErrorInfo.from_json(self.error_info) if self.error_info else None
 
-    def set_error_info(self, error_info: ProcessErrorInfo) -> None:
+    def set_error_info(self, error_info: ProcessErrorInfo | None) -> None:
         self.error_info = error_info.to_json_dict() if error_info else None
 
     ################################# INPUTS #############################
@@ -280,7 +291,7 @@ class ProcessModel(ModelWithUser):
 
         if self._inputs is None:
             self._init_inputs_from_data()
-        return self._inputs
+        return cast(Inputs, self._inputs)
 
     def _init_inputs_from_data(self) -> None:
         """Init the inputs object from the inputs in the data
@@ -313,7 +324,7 @@ class ProcessModel(ModelWithUser):
 
         if self._outputs is None:
             self._init_outputs_from_data()
-        return self._outputs
+        return cast(Outputs, self._outputs)
 
     def _init_outputs_from_data(self) -> None:
         """Init the ouput object from the outputs in the data
@@ -382,7 +393,7 @@ class ProcessModel(ModelWithUser):
             # Create a new processRunException with correct info
             exception: ProcessRunException = ProcessRunException.from_exception(self, err)
             self.mark_as_error_and_parent(exception)
-            raise exception
+            raise exception from err
 
     @abstractmethod
     def _run(self) -> None:
@@ -466,7 +477,7 @@ class ProcessModel(ModelWithUser):
 
     def get_instance_path(self) -> str:
         """Return the instance path"""
-        if self.parent_protocol_id:
+        if self.parent_protocol:
             parent_path = self.parent_protocol.get_instance_path()
             if len(parent_path) > 0:
                 return f"{parent_path}.{self.get_instance_name_context()}"
@@ -524,16 +535,10 @@ class ProcessModel(ModelWithUser):
 
     def get_last_message(self) -> ProgressBarMessageDTO | None:
         """Return the last message of the process"""
-        if self.progress_bar is None:
-            return None
-
         return self.progress_bar.get_last_message()
 
     def get_progress_value(self) -> float:
         """Return the last message of the process"""
-        if self.progress_bar is None:
-            return 0
-
         return self.progress_bar.current_value
 
     def get_external_lab_id(self) -> str | None:
@@ -556,14 +561,14 @@ class ProcessModel(ModelWithUser):
         )
 
     def to_dto(self) -> ProcessDTO:
-        process_typing: Typing = self.get_process_typing()
+        process_typing = self.get_process_typing()
         process_type_dto: SimpleTypingDTO | None = None
         type_status: TypingStatus = TypingStatus.OK
         is_agent: bool = False
         if process_typing:
             process_type_dto = process_typing.to_simple_dto()
             type_status = process_typing.get_type_status()
-            process_type: type[Process] = process_typing.get_type()
+            process_type: type[Process] | None = process_typing.get_type()
             if process_type is not None:
                 is_agent = process_type.__is_agent__
         else:
@@ -576,7 +581,7 @@ class ProcessModel(ModelWithUser):
             last_modified_at=self.last_modified_at,
             created_by=self.created_by.to_dto(),
             last_modified_by=self.last_modified_by.to_dto(),
-            parent_protocol_id=self.parent_protocol.id if self.parent_protocol_id else None,
+            parent_protocol_id=self.parent_protocol_id,
             scenario_id=self.scenario.id if self.scenario else None,
             instance_name=self.instance_name,
             config=self.config.to_dto(),
@@ -610,7 +615,7 @@ class ProcessModel(ModelWithUser):
         :rtype: ProcessConfigDTO
         """
 
-        process_typing: Typing = self.get_process_typing()
+        process_typing = self.get_process_typing()
 
         if process_typing is None:
             raise Exception(f"Could not find the process typing {self.process_typing_name}")
@@ -640,7 +645,7 @@ class ProcessModel(ModelWithUser):
         pass
 
     @abstractmethod
-    def get_community_agent_version_id(self) -> str:
+    def get_community_agent_version_id(self) -> str | None:
         pass
 
     ########################### STATUS MANAGEMENT ##################################
@@ -784,9 +789,13 @@ class ProcessModel(ModelWithUser):
                 self.is_auto_run()
                 or self.process_typing_name == "PROTOCOL.gws_core.Protocol"
                 or self.get_community_agent_version_modified() is True
+                or self.started_at is None
+                or self.ended_at is None
+                or self.brick_version_on_run is None
             ):
                 return
 
+            error_info = self.get_error_info()
             ProcessRunStatModel.create_stat(
                 process_typing_name=self.process_typing_name,
                 status=self.status.value,
@@ -798,7 +807,7 @@ class ProcessModel(ModelWithUser):
                 config_value=self.config.get_values(),
                 lab_env="DEV" if Settings.get_instance().is_dev_mode() else "PROD",
                 executed_by=CurrentUserService().get_and_check_current_user().id,
-                error_info=self.get_error_info().to_json_dict() if self.get_error_info() else None,
+                error_info=error_info.to_json_dict() if error_info else None,
                 community_agent_version_id=self.get_community_agent_version_id(),
             )
         except Exception:

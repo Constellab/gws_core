@@ -1,5 +1,6 @@
 import os
 from time import sleep
+from typing import cast
 
 from gws_core import ResourceModel
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
@@ -19,6 +20,7 @@ from gws_core.resource.view.viewer import Viewer
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
+from gws_core.task.task_model import TaskModel
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 
@@ -29,11 +31,14 @@ from ..protocol_examples import NestedProtocolTest
 class TestProtocolService(BaseTestCase):
     def test_add_process(self):
         CurrentUserService.get_and_check_current_user()
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
-        process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove.get_typing_name()
-        ).process
+        process_model: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                protocol_model.id, RobotMove.get_typing_name()
+            ).process,
+        )
 
         protocol_model = protocol_model.refresh()
         self.assertEqual(
@@ -44,12 +49,15 @@ class TestProtocolService(BaseTestCase):
         resource_model: ResourceModel = ResourceModel.save_from_resource(
             Robot.empty(), ResourceOrigin.UPLOADED
         )
-        source_model: ProcessModel = ProtocolService.add_input_resource_to_process_input(
-            protocol_model.id, resource_model.id, process_model.instance_name, "robot"
-        ).process
+        source_model: TaskModel = cast(
+            TaskModel,
+            ProtocolService.add_input_resource_to_process_input(
+                protocol_model.id, resource_model.id, process_model.instance_name, "robot"
+            ).process,
+        )
 
         protocol_model = protocol_model.refresh()
-        source_model = protocol_model.get_process(source_model.instance_name)
+        source_model = cast(TaskModel, protocol_model.get_process(source_model.instance_name))
         self.assertEqual(source_model.get_process_type(), InputTask)
         self.assertEqual(source_model.config.get_value(InputTask.config_name), resource_model.id)
         # check that the source_config_id is set for the task model
@@ -65,9 +73,12 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(len(protocol_model.connectors), 1)
 
         # Test add output
-        output_task_model: ProcessModel = ProtocolService.add_output_task_to_process_ouput(
-            protocol_model.id, process_model.instance_name, "robot"
-        ).process
+        output_task_model: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_output_task_to_process_ouput(
+                protocol_model.id, process_model.instance_name, "robot"
+            ).process,
+        )
         protocol_model = protocol_model.refresh()
         output_task_model = protocol_model.get_process(output_task_model.instance_name)
         self.assertEqual(output_task_model.get_process_type(), OutputTask)
@@ -83,16 +94,22 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(process_model.name, "New super name")
 
     def test_add_viewer(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
-        process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove.get_typing_name()
-        ).process
+        process_model: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                protocol_model.id, RobotMove.get_typing_name()
+            ).process,
+        )
 
         # Test add view task
-        viewer_model = ProtocolService.add_viewer_to_process_output(
-            protocol_model.id, process_model.instance_name, "robot"
-        ).process
+        viewer_model: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_viewer_to_process_output(
+                protocol_model.id, process_model.instance_name, "robot"
+            ).process,
+        )
         protocol_model = protocol_model.refresh()
 
         viewer_model = protocol_model.get_process(viewer_model.instance_name)
@@ -106,14 +123,20 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(len(protocol_model.connectors), 1)
 
     def test_connector(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
-        create: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotCreate.get_typing_name()
-        ).process
-        move: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove.get_typing_name()
-        ).process
+        create: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                protocol_model.id, RobotCreate.get_typing_name()
+            ).process,
+        )
+        move: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                protocol_model.id, RobotMove.get_typing_name()
+            ).process,
+        )
 
         ProtocolService.add_connector_to_protocol_id(
             protocol_model.id, create.instance_name, "robot", move.instance_name, "robot"
@@ -146,18 +169,18 @@ class TestProtocolService(BaseTestCase):
 
         # reset a process of the sub protocol
         main_protocol: ProtocolProxy = scenario.get_protocol()
-        sub_protocol: ProtocolProxy = main_protocol.get_process("mini_proto")
+        sub_protocol: ProtocolProxy = main_protocol.get_protocol("mini_proto")
 
         # Get resources and check that they exist
-        main_resource_to_clear: ResourceModel = main_protocol.get_process(
-            "p5"
-        ).get_output_resource_model("robot")
-        sub_resource_to_keep: ResourceModel = sub_protocol.get_process(
-            "p1"
-        ).get_output_resource_model("robot")
-        sub_resource_to_clear: ResourceModel = sub_protocol.get_process(
-            "p3"
-        ).get_output_resource_model("robot")
+        main_resource_to_clear: ResourceModel = cast(
+            ResourceModel, main_protocol.get_process("p5").get_output_resource_model("robot")
+        )
+        sub_resource_to_keep: ResourceModel = cast(
+            ResourceModel, sub_protocol.get_process("p1").get_output_resource_model("robot")
+        )
+        sub_resource_to_clear: ResourceModel = cast(
+            ResourceModel, sub_protocol.get_process("p3").get_output_resource_model("robot")
+        )
         self.assertIsNotNone(main_resource_to_clear.refresh())
         self.assertIsNotNone(sub_resource_to_keep.refresh())
         self.assertIsNotNone(sub_resource_to_clear.refresh())
@@ -196,8 +219,8 @@ class TestProtocolService(BaseTestCase):
 
         # Test using the output resource in another scenario and the first process should not be resettable
         # retrieve the main resource
-        main_resource: ResourceModel = main_protocol.get_process("p5").get_output_resource_model(
-            "robot"
+        main_resource: ResourceModel = cast(
+            ResourceModel, main_protocol.get_process("p5").get_output_resource_model("robot")
         )
 
         scenario2 = ScenarioProxy()
@@ -270,8 +293,9 @@ class TestProtocolService(BaseTestCase):
 
         # Create a sub-protocol inside the root protocol via the service API
         sub_update = ProtocolService.add_empty_protocol_to_protocol_id(root_protocol_id)
-        sub_protocol_id = sub_update.process.id
-        sub_protocol = root_protocol.get_protocol(sub_update.process.instance_name)
+        sub_update_process = cast(ProcessModel, sub_update.process)
+        sub_protocol_id = sub_update_process.id
+        sub_protocol = root_protocol.get_protocol(sub_update_process.instance_name)
 
         # Add two tasks A and B inside the sub-protocol
         p_a = sub_protocol.add_process(RobotCreate, "A")
@@ -323,11 +347,14 @@ class TestProtocolService(BaseTestCase):
         self.assertLess(root_last, gap_threshold_ms)
 
     def test_duplicate_process_to_protocol_id(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
-        process_model: ProcessModel = ProtocolService.add_process_to_protocol_id(
-            protocol_model.id, RobotMove.get_typing_name()
-        ).process
+        process_model: ProcessModel = cast(
+            ProcessModel,
+            ProtocolService.add_process_to_protocol_id(
+                protocol_model.id, RobotMove.get_typing_name()
+            ).process,
+        )
 
         ProtocolService.duplicate_process_to_protocol_id(
             protocol_model.id, process_model.instance_name
@@ -381,7 +408,7 @@ class TestProtocolService(BaseTestCase):
         self.assertTrue(duplicated_process.is_draft)
 
     def test_add_streamlite_community_agent_version_to_protocol(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
         community_agent_version: CommunityAgentVersionDTO = CommunityAgentVersionDTO.from_json(
             {
@@ -474,7 +501,7 @@ class TestProtocolService(BaseTestCase):
         self.assertEqual(streamlit_process.get_name(), "Test Streamlit")
 
     def test_add_community_agent_with_multiple_io(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
         first_input = {
             "resource_types": [
@@ -600,7 +627,7 @@ class TestProtocolService(BaseTestCase):
     def test_add_streamlit_env_agent(self):
         """Test the import of a streamlit env agent from Community and check that the env config is created properly"""
 
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
         community_agent_version: CommunityAgentVersionDTO = CommunityAgentVersionDTO.from_json(
             {
