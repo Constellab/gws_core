@@ -50,26 +50,26 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     status: TypedEnumField[ScenarioStatus] = TypedEnumField(
         choices=ScenarioStatus, default=ScenarioStatus.DRAFT
     )
-    error_info = NullableJSONField()
-    creation_type = TypedEnumField(
+    error_info: NullableJSONField = NullableJSONField()
+    creation_type: TypedEnumField[ScenarioCreationType] = TypedEnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
     title: TypedCharField = TypedCharField(max_length=50)
-    description = NullableRichTextDbField()
-    lab_config = NullableForeignKeyField(LabConfigModel)
+    description: NullableRichTextDbField = NullableRichTextDbField()
+    lab_config: NullableForeignKeyField[LabConfigModel] = NullableForeignKeyField(LabConfigModel)
 
-    is_validated = TypedBooleanField(default=False)
-    validated_at = NullableDateTimeUTC()
-    validated_by = NullableForeignKeyField(User, backref="+")
+    is_validated: TypedBooleanField = TypedBooleanField(default=False)
+    validated_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    validated_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = NullableDateTimeUTC()
-    last_sync_by = NullableForeignKeyField(User, backref="+")
+    last_sync_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    last_sync_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
-    is_archived = TypedBooleanField(default=False, index=True)
-    running_process_pid = NullableIntegerField()
-    running_in_external_lab = NullableForeignKeyField(LabModel, backref="+", on_delete="SET NULL")
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
+    running_process_pid: NullableIntegerField = NullableIntegerField()
+    running_in_external_lab: NullableForeignKeyField[LabModel] = NullableForeignKeyField(LabModel, backref="+", on_delete="SET NULL")
 
     # cache of the _protocol
     _protocol: ProtocolModel | None = None

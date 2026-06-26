@@ -92,4 +92,4 @@ class ScenarioLoader:
         return self.exp_info.main_resource_models or []
 
     def get_tags(self) -> list[Tag]:
-        return TagHelper.tags_dto_to_list(self.exp_info.scenario.tags)
+        return TagHelper.tags_dto_to_list(self.exp_info.scenario.tags or [])

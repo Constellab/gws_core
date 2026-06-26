@@ -24,13 +24,14 @@ class ScenarioResource(Resource):
     :rtype: _type_
     """
 
-    scenario_id = StrRField()
+    scenario_id: StrRField = StrRField()
 
     _scenario: Scenario | None = None
 
     def __init__(self, scenario_id: str | None = None):
         super().__init__()
-        self.scenario_id = scenario_id
+        if scenario_id is not None:
+            self.scenario_id = scenario_id
 
     def get_scenario(self) -> Scenario:
         if self._scenario is None:

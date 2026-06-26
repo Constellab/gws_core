@@ -68,8 +68,8 @@ class ScenarioArchiveZipperTask(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        scenario_resource: ScenarioResource = inputs["scenario"]
-        resource_mode: str = params["resource_mode"]
+        scenario_resource = inputs.get_resource("scenario", ScenarioResource)
+        resource_mode: ScenarioDownloaderResourceMode = params["resource_mode"]
         compress_format: str = params["compress_format"]
         user = CurrentUserService.get_and_check_current_user()
 

@@ -1,3 +1,5 @@
+from typing import cast
+
 from peewee import ModelSelect
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -8,6 +10,7 @@ from gws_core.lab.lab_config_model import LabConfigModel
 from gws_core.note.note import NoteScenario
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario_zipper import ScenarioExportPackage
+from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderResourceMode
 from gws_core.scenario_template.scenario_template import ScenarioTemplate
 from gws_core.scenario_template.scenario_template_factory import ScenarioTemplateFactory
 from gws_core.task.plug.output_task import OutputTask
@@ -643,5 +646,5 @@ class ScenarioService:
         from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
 
         user = CurrentUserService.get_and_check_current_user()
-        zipper = ScenarioArchiveZipper(scenario_id, resource_mode, user)
+        zipper = ScenarioArchiveZipper(scenario_id, cast(ScenarioDownloaderResourceMode, resource_mode), user)
         return zipper.zip()

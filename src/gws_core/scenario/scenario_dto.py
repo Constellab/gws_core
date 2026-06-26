@@ -62,7 +62,7 @@ class ScenarioSimpleDTO(BaseModelDTO):
 
 
 class ScenarioProgressDTO(BaseModelDTO):
-    progress: int | None = None
+    progress: float | None = None
     last_message: ProgressBarMessageDTO | None = None
 
     def get_last_message_content(self) -> str | None:
