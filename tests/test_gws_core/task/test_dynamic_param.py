@@ -188,3 +188,24 @@ class TestDynamicParam(BaseTestCase):
             ProtocolService.reorder_dynamic_param_specs_of_process(
                 proto.id, instance_name, PyAgent.CONFIG_PARAMS_NAME, ["a", "a"]
             )
+
+    def test_load_from_dto_tolerates_invalid_key(self):
+        """Reading a persisted dynamic param whose specs contain an invalid key
+        (e.g. one with a space) must not raise: key validation is a write-time
+        concern, not a read-time one. Regression for opening a protocol failing
+        with "Invalid param key 'Second valeur'".
+        """
+        param = DynamicParam()
+        # Inject an invalid key directly into the persisted spec dict, bypassing
+        # the add_spec mutator (which legitimately rejects invalid keys).
+        param.specs.specs["Second valeur"] = IntParam(default_value=2, optional=True)
+
+        dto = param.to_dto()
+
+        # The read path must rehydrate without raising.
+        reloaded = DynamicParam.load_from_dto(dto)
+        self.assertTrue(reloaded.specs.has_spec("Second valeur"))
+
+        # Mutators still reject invalid keys (write-time validation preserved).
+        with self.assertRaises(BadRequestException):
+            reloaded.add_spec("Third valeur", IntParam(optional=True).to_dto())
