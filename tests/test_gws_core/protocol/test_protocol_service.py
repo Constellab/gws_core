@@ -232,6 +232,213 @@ class TestProtocolService(BaseTestCase):
         )
         self.assertTrue(reset_impact.has_entities)
 
+    def test_add_outerface_to_finished_sub_protocol(self):
+        """Adding an outerface to an already-run sub-protocol must NOT reset it:
+        existing process resources are kept and the new outerface carries the
+        already-computed resource."""
+        scenario = ScenarioProxy(NestedProtocolTest)
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
+
+        main_protocol: ProtocolProxy = scenario.get_protocol()
+        sub_protocol: ProtocolProxy = main_protocol.get_protocol("mini_proto")
+
+        # the sub protocol and its processes are finished
+        self.assertTrue(sub_protocol.get_model().is_success)
+        kept_resource: ResourceModel = cast(
+            ResourceModel, sub_protocol.get_process("p4").get_output_resource_model("robot")
+        )
+        self.assertIsNotNone(kept_resource.refresh())
+
+        # add an outerface on the finished sub protocol from p4's "robot" out-port
+        update = ProtocolService.add_outerface_to_protocol_id(
+            sub_protocol.get_model().id, "p4", "robot"
+        )
+        outerface_name = update.ioface.name
+
+        sub_protocol = sub_protocol.refresh()
+
+        # the outerface was created
+        self.assertIn(outerface_name, sub_protocol.get_model().outerfaces)
+
+        # the sub protocol was NOT reset: it is still successful and p4's resource still exists
+        self.assertTrue(sub_protocol.get_model().is_success)
+        self.assertIsNotNone(ResourceModel.get_by_id(kept_resource.id))
+
+        # the new outerface carries the already-computed resource (auto-propagated)
+        outerface_resource = sub_protocol.get_model().outputs.get_resource_model(outerface_name)
+        self.assertIsNotNone(outerface_resource)
+        self.assertEqual(outerface_resource.id, kept_resource.id)
+
+    def test_delete_outerface_of_finished_sub_protocol(self):
+        """Deleting an outerface of an already-run sub-protocol must NOT reset it, but the
+        guard preventing deletion of an outerface connected at the parent level must remain."""
+        scenario = ScenarioProxy(NestedProtocolTest)
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
+
+        main_protocol: ProtocolProxy = scenario.get_protocol()
+        sub_protocol: ProtocolProxy = main_protocol.get_protocol("mini_proto")
+        self.assertTrue(sub_protocol.get_model().is_success)
+
+        kept_resource: ResourceModel = cast(
+            ResourceModel, sub_protocol.get_process("p4").get_output_resource_model("robot")
+        )
+
+        # the "robot" outerface is connected to p5 in the parent -> deletion must still be blocked
+        with self.assertRaises(Exception):
+            ProtocolService.delete_outerface_of_protocol_id(sub_protocol.get_model().id, "robot")
+
+        # add a fresh, unconnected outerface from p4, then delete it on the finished sub protocol
+        update = ProtocolService.add_outerface_to_protocol_id(
+            sub_protocol.get_model().id, "p4", "robot"
+        )
+        new_outerface_name = update.ioface.name
+
+        ProtocolService.delete_outerface_of_protocol_id(
+            sub_protocol.get_model().id, new_outerface_name
+        )
+
+        sub_protocol = sub_protocol.refresh()
+
+        # the outerface was deleted, the sub protocol was NOT reset and resources are kept
+        self.assertNotIn(new_outerface_name, sub_protocol.get_model().outerfaces)
+        self.assertTrue(sub_protocol.get_model().is_success)
+        self.assertIsNotNone(ResourceModel.get_by_id(kept_resource.id))
+
+    def test_add_interface_to_finished_sub_protocol(self):
+        """Adding an interface to an already-run sub-protocol must NOT reset it: existing
+        resources are kept and the new interface carries the already-computed input resource."""
+        scenario = ScenarioProxy(NestedProtocolTest)
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
+
+        main_protocol: ProtocolProxy = scenario.get_protocol()
+        sub_protocol: ProtocolProxy = main_protocol.get_protocol("mini_proto")
+        self.assertTrue(sub_protocol.get_model().is_success)
+
+        # the resource currently on p3's "robot" in-port, that the interface will expose
+        exposed_resource: ResourceModel = cast(
+            ResourceModel, sub_protocol.get_process("p3").get_input_resource_model("robot")
+        )
+        self.assertIsNotNone(exposed_resource.refresh())
+
+        update = ProtocolService.add_interface_to_protocol_id(
+            sub_protocol.get_model().id, "p3", "robot"
+        )
+        interface_name = update.ioface.name
+
+        sub_protocol = sub_protocol.refresh()
+
+        # the interface was created, the sub protocol was NOT reset and resources are kept
+        self.assertIn(interface_name, sub_protocol.get_model().interfaces)
+        self.assertTrue(sub_protocol.get_model().is_success)
+        self.assertIsNotNone(ResourceModel.get_by_id(exposed_resource.id))
+
+        # the new interface carries the already-computed input resource (auto-propagated)
+        interface_resource = sub_protocol.get_model().inputs.get_resource_model(interface_name)
+        self.assertIsNotNone(interface_resource)
+        self.assertEqual(interface_resource.id, exposed_resource.id)
+
+    def test_attach_input_to_sub_protocol_interface_propagates_to_inner_task(self):
+        """When attaching a resource to a sub-protocol interface at the parent level, the
+        resource must be propagated DOWN to the inner task connected to the interface, so the
+        inner task input is set and the task is runnable on its own."""
+        # produce a robot resource to attach later
+        producer = ScenarioProxy()
+        producer_protocol = producer.get_protocol()
+        producer_protocol.add_task(RobotCreate, "creator")
+        producer.run()
+        robot_resource: ResourceModel = cast(
+            ResourceModel,
+            producer.get_protocol().get_process("creator").get_output_resource_model("robot"),
+        )
+        self.assertIsNotNone(robot_resource)
+
+        # build a draft scenario : main protocol -> sub protocol -> inner task (RobotMove)
+        scenario = ScenarioProxy()
+        main_protocol = scenario.get_protocol()
+        sub_protocol = main_protocol.add_empty_protocol("sub")
+        sub_protocol.add_task(RobotMove, "mover")
+        # expose the inner task input as an interface of the sub protocol
+        sub_protocol.add_interface("robot", "mover", "robot")
+
+        sub_id = sub_protocol.get_model().id
+
+        # at parent level, attach the resource to the sub protocol interface input port
+        ProtocolService.add_input_resource_to_process_input(
+            main_protocol.get_model().id, robot_resource.id, sub_protocol.instance_name, "robot"
+        )
+
+        sub_protocol = sub_protocol.refresh()
+
+        # parent level : the resource IS on the sub protocol input port
+        sub_input_resource = sub_protocol.get_model().inputs.get_resource_model("robot")
+        self.assertIsNotNone(sub_input_resource)
+        self.assertEqual(sub_input_resource.id, robot_resource.id)
+
+        # BUG : inside the sub protocol the interface must propagate to the inner task input
+        inner_input_resource = (
+            sub_protocol.refresh().get_process("mover").get_input_resource_model("robot")
+        )
+        self.assertIsNotNone(
+            inner_input_resource,
+            "The inner task input was not set: the interface resource was not propagated down",
+        )
+        self.assertEqual(inner_input_resource.id, robot_resource.id)
+
+        # the inner task is now runnable on its own (its input is provided)
+        inner_task = sub_protocol.refresh().get_process("mover").get_model()
+        self.assertTrue(inner_task.inputs.is_ready)
+
+    def test_reset_propagates_interface_to_inner_task(self):
+        """On a full protocol reset, the input resource must be re-propagated DOWN through the
+        sub-protocol interface to the inner task, not only onto the sub-protocol input port."""
+        # produce a robot resource to feed the sub protocol interface
+        producer = ScenarioProxy()
+        producer.get_protocol().add_task(RobotCreate, "creator")
+        producer.run()
+        robot_resource: ResourceModel = cast(
+            ResourceModel,
+            producer.get_protocol().get_process("creator").get_output_resource_model("robot"),
+        )
+
+        # main protocol -> source -> sub protocol interface -> inner task (RobotMove)
+        scenario = ScenarioProxy()
+        main_protocol = scenario.get_protocol()
+        sub_protocol = main_protocol.add_empty_protocol("sub")
+        sub_protocol.add_task(RobotMove, "mover")
+        sub_protocol.add_interface("robot", "mover", "robot")
+        # auto-run source feeding the sub protocol interface at parent level
+        source = main_protocol.add_resource("source", robot_resource.id)
+        main_protocol.add_connector(source >> InputTask.output_name, sub_protocol << "robot")
+
+        scenario.run()
+        self.assertTrue(scenario.get_model().is_success)
+
+        # reset the whole scenario
+        scenario.reset()
+
+        main_protocol = scenario.get_protocol()
+        sub_protocol = main_protocol.get_protocol("sub")
+
+        # after reset the source auto-runs and the resource is back on the sub protocol input
+        sub_input_resource = sub_protocol.get_model().inputs.get_resource_model("robot")
+        self.assertIsNotNone(sub_input_resource)
+
+        # BUG : the interface must be re-propagated down to the inner task on reset
+        inner_input_resource = (
+            sub_protocol.refresh().get_process("mover").get_input_resource_model("robot")
+        )
+        self.assertIsNotNone(
+            inner_input_resource,
+            "After reset the inner task input was not set: interface was not propagated down",
+        )
+        self.assertEqual(inner_input_resource.id, sub_input_resource.id)
+        self.assertTrue(
+            sub_protocol.refresh().get_process("mover").get_model().inputs.is_ready
+        )
+
     def test_run_protocol_process(self):
         scenario = ScenarioProxy()
         i_protocol = scenario.get_protocol()
@@ -345,6 +552,54 @@ class TestProtocolService(BaseTestCase):
         gap_threshold_ms = 3000
         self.assertLess(sub_last, gap_threshold_ms)
         self.assertLess(root_last, gap_threshold_ms)
+
+    def test_run_inner_task_propagates_outerface_through_parent_connector(self):
+        """When running a task inside a sub-protocol connected to an outerface, the resource
+        must reach the protocol output (outerface) AND be propagated UP through the parent
+        connector to the downstream task connected to the sub-protocol output."""
+        scenario = ScenarioProxy()
+        root_protocol = scenario.get_protocol()
+        root_protocol_id = root_protocol.get_model().id
+
+        # sub-protocol with an inner source task exposed through an outerface
+        sub_update = ProtocolService.add_empty_protocol_to_protocol_id(root_protocol_id)
+        sub_process = cast(ProcessModel, sub_update.process)
+        sub_protocol = root_protocol.get_protocol(sub_process.instance_name)
+        sub_protocol.add_task(RobotCreate, "creator")
+        sub_protocol.add_outerface("robot", "creator", "robot")
+
+        # downstream task in the root connected to the sub-protocol output
+        downstream = root_protocol.add_task(RobotMove, "downstream")
+        root_protocol.add_connector(
+            sub_protocol >> "robot", downstream << "robot"
+        )
+
+        # run the inner task synchronously
+        scenario.get_model().mark_as_started(os.getpid())
+        sub_model = ProtocolModel.get_by_id_and_check(sub_process.id)
+        sub_model.run_process("creator")
+
+        sub_model = ProtocolModel.get_by_id_and_check(sub_process.id)
+        inner_resource = sub_model.get_process("creator").out_port("robot").get_resource_model()
+        self.assertIsNotNone(inner_resource)
+
+        # the outerface propagated the resource to the sub-protocol output (already works)
+        sub_output_resource = sub_model.outputs.get_resource_model("robot")
+        self.assertIsNotNone(sub_output_resource)
+        self.assertEqual(sub_output_resource.id, inner_resource.id)
+
+        # BUG : the parent connector must propagate the sub-protocol output to the downstream task
+        # read the downstream task from a fresh DB load to avoid any in-memory caching
+        root_reloaded = ProtocolModel.get_by_id_and_check(root_protocol_id)
+        downstream_model = root_reloaded.get_process("downstream")
+        downstream_input_resource = downstream_model.in_port("robot").get_resource_model()
+        self.assertIsNotNone(
+            downstream_input_resource,
+            "The downstream task input was not set: the parent connector did not propagate "
+            "the sub-protocol output",
+        )
+        self.assertEqual(downstream_input_resource.id, inner_resource.id)
+        self.assertTrue(downstream_model.inputs.is_ready)
 
     def test_duplicate_process_to_protocol_id(self):
         protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()

@@ -493,6 +493,13 @@ class ProtocolService:
         # save the right process to save its inputs (new or deleted)
         connector.right_process.save()
 
+        # if the connector feeds a sub-protocol, the resource was propagated down through its
+        # interfaces (see ProtocolModel.add_connector). Persist the inner processes whose input
+        # was updated so the inner task inputs are set and the task becomes runnable.
+        if isinstance(connector.right_process, ProtocolModel):
+            for inner_process in connector.right_process.propagate_interfaces():
+                inner_process.save()
+
         return cls._on_protocol_object_updated(
             protocol_model=protocol, connector=connector, protocol_updated=True
         )
@@ -519,7 +526,11 @@ class ProtocolService:
         target_process_name: str,
         target_port_name: str,
     ) -> ProtocolUpdate:
-        protocol_model.check_is_updatable()
+        # Adding an interface only exposes an existing in-port as a new input port of the
+        # protocol. It does not invalidate already-computed resources, so we allow it on a
+        # finished/partially-run protocol (only running/queued is rejected) instead of
+        # forcing a full reset of the sub-protocol.
+        protocol_model.check_is_updatable(error_if_finished=False)
 
         if protocol_model.is_root_process():
             raise BadRequestException("Cannot add an interface to the root protocol")
@@ -549,10 +560,17 @@ class ProtocolService:
         source_process_name: str,
         source_port_name: str,
     ) -> ProtocolUpdate:
-        protocol_model.check_is_updatable()
+        # Adding an outerface only reads an existing out-port and adds a new output port
+        # on the protocol. It does not invalidate already-computed resources, so we allow it
+        # on a finished/partially-run protocol (only running/queued is rejected) instead of
+        # forcing a full reset of the sub-protocol.
+        protocol_model.check_is_updatable(error_if_finished=False)
 
         if protocol_model.is_root_process():
             raise BadRequestException("Cannot add an outerface to the root protocol")
+        # add_outerface already copies the source out-port resource onto the new output port,
+        # so on a finished sub-protocol the new outerface immediately carries the
+        # already-computed resource (no re-run needed).
         ioface = protocol_model.add_outerface(name, source_process_name, source_port_name)
         protocol_model.save_graph()
 
@@ -588,7 +606,12 @@ class ProtocolService:
     def delete_outerface_of_protocol(
         cls, protocol_model: ProtocolModel, outerface_name: str
     ) -> ProtocolUpdate:
-        protocol_model.check_is_updatable()
+        # Deleting an outerface only removes an output port of the protocol, it does not
+        # invalidate already-computed resources, so we allow it on a finished/partially-run
+        # protocol (only running/queued is rejected) instead of forcing a reset.
+        # The guard against deleting an outerface still connected at the parent level is
+        # kept in ProtocolModel.remove_outerface.
+        protocol_model.check_is_updatable(error_if_finished=False)
         protocol_model.remove_outerface(outerface_name)
         protocol_model.save_graph()
 
