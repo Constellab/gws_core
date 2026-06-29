@@ -138,8 +138,8 @@ class ParamSet(ParamSpec):
         effective_min = max(min_occ, 0) if min_occ is not None else 0
         if max_occ < effective_min:
             raise BadRequestException(
-                f"ParamSet: max_number_of_occurrences ({max_occ}) cannot be lower than "
-                f"min_number_of_occurrences ({effective_min})."
+                f"ParamSet: Max number of occurrences ({max_occ}) cannot be lower than "
+                f"Min number of occurrences ({effective_min})."
             )
 
     def clone_with_inner_specs(self, inner_specs: ConfigSpecs) -> "ParamSet":
