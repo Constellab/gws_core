@@ -41,7 +41,6 @@ class TableImporter(ResourceImporter):
             ),
             "format_header_names": BoolParam(
                 default_value=False,
-                optional=True,
                 human_name="Format header names",
                 short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed).",
             ),
@@ -100,7 +99,6 @@ class TableImporter(ResourceImporter):
                         ),
                         "keep_in_table": BoolParam(
                             default_value=True,
-                            optional=True,
                             visibility=BoolParam.PROTECTED_VISIBILITY,
                             human_name="Keep in table",
                             short_description="Set True to keep the column in the final table; False otherwise",

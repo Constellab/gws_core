@@ -52,7 +52,6 @@ class PlotlyBoxplot(PlotlyTask):
             ),
             "notched": BoolParam(
                 default_value=False,
-                optional=True,
                 human_name="notches",
                 short_description="if True, boxes are drawn with notches",
             ),

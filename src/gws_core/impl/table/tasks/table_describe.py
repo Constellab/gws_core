@@ -49,7 +49,6 @@ class TableDescribe(Task):
             "include_NaN": BoolParam(
                 default_value=False,
                 human_name="include_non_numeric",
-                optional=True,
                 short_description="Include non numeric data",
             ),
         }

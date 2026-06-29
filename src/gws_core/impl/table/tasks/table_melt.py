@@ -68,7 +68,6 @@ class TableMelt(Task):
             "ignore_index": BoolParam(
                 default_value=True,
                 human_name="ignore_index",
-                optional=True,
                 short_description="If True, original index is ignored. If False, the original index is retained. Index labels will be repeated as necessary.",
             ),
         }

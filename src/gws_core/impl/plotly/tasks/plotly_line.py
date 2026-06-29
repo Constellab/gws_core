@@ -62,7 +62,6 @@ class PlotlyLine(PlotlyTask):
             "markers": BoolParam(
                 default_value=False,
                 human_name="Marker",
-                optional=True,
                 short_description="if ticked, markers are shown on line",
             ),
             "line_shape": SelectParam(

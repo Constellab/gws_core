@@ -46,7 +46,6 @@ class TableStackedBarPlotView(TableBarPlotView):
         {
             "normalize": BoolParam(
                 default_value=False,
-                optional=True,
                 human_name="Normalize",
                 short_description="True to normalize values",
             ),

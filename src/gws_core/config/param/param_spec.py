@@ -478,21 +478,17 @@ class BoolParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Any | None = False,
-        optional: bool = False,
+        default_value: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
     ) -> None:
         """
-        :param default_value: Default value, if None, and optional is false, the config is mandatory
-                        If a value is provided there is no need to set the optional
-                        Setting optional to True, allows default None value
-        :param optional: See default value
-        :type optional: Optional[str]
+        :param default_value: Default value of the param. A BoolParam is always optional;
+                        when no value is provided it falls back to the default value (False by default).
+        :type default_value: bool
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
         :type visibility: ParamSpecVisibilty
-        :type default: Optional[ConfigParamType]
         :param human_name: Human readable name of the param, showed in the interface
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
@@ -501,15 +497,16 @@ class BoolParam(ParamSpec):
 
         super().__init__(
             default_value=default_value,
-            optional=optional,
+            optional=True,
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
         )
 
     def validate(self, value: Any) -> bool:
+        # A bool is never null: a missing/None value means "unchecked" (False).
         if value is None:
-            return value
+            return False
 
         bool_validator = BoolValidator()
         return bool_validator.validate(value)
