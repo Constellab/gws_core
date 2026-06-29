@@ -44,6 +44,19 @@ class CreateDraftVersionDTO(BaseModelDTO):
     copy_from_version_id: str | None = None
 
 
+class DuplicateFormTemplateDTO(BaseModelDTO):
+    """Request body for duplicating a form template from one of its versions.
+
+    A brand-new FormTemplate family is created with a single DRAFT v1 whose
+    content is copied from the source version (which may be DRAFT, PUBLISHED or
+    ARCHIVED). ``name`` overrides the new template's name; when omitted it
+    defaults to the source template's name suffixed with " (copy)".
+    """
+
+    name: str | None = None
+    description: str | None = None
+
+
 class TestFormTemplateVersionDTO(BaseModelDTO):
     """Request body for the "test a form" endpoint: validate a set of values
     against a form template version's specs without persisting anything.

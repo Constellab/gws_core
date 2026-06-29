@@ -76,6 +76,28 @@ class TestParamSetDefaultRows(unittest.TestCase):
         result = ps.validate([{"name": "a"}, {"name": "b"}])
         self.assertEqual(len(result), 2)
 
+    # ----- max vs min consistency ---------------------------------------- #
+
+    def test_max_lower_than_min_rejected(self):
+        with self.assertRaises(BadRequestException):
+            ParamSet(_specs(), min_number_of_occurrences=3, max_number_of_occurrences=2)
+
+    def test_max_equal_to_min_allowed(self):
+        ps = ParamSet(_specs(), min_number_of_occurrences=2, max_number_of_occurrences=2)
+        self.assertEqual(ps.max_number_of_occurrences, 2)
+
+    def test_negative_max_is_no_limit(self):
+        # negative / None max means "no upper limit" -> never inconsistent
+        ParamSet(_specs(), min_number_of_occurrences=3, max_number_of_occurrences=-1)
+        ParamSet(_specs(), min_number_of_occurrences=3, max_number_of_occurrences=None)
+
+    def test_max_vs_min_checked_on_load_when_validating(self):
+        dto = ParamSet(_specs(), min_number_of_occurrences=1).to_dto()
+        dto.additional_info["min_number_of_occurrences"] = 3
+        dto.additional_info["max_number_of_occurrences"] = 2
+        with self.assertRaises(BadRequestException):
+            ParamSet.load_from_dto(dto, validate=True)
+
     # ----- optional is derived from min_number_of_occurrences ------------ #
 
     def test_default_min_is_one_and_not_optional(self):
@@ -111,6 +133,58 @@ class TestParamSetDefaultRows(unittest.TestCase):
     def test_lock_requires_default_rows(self):
         with self.assertRaises(BadRequestException):
             ParamSet(_specs(), default_rows_mode=LOCK)
+
+    def test_default_value_ignores_occurrence_bounds_on_load(self):
+        # Regression: the default value must NOT be checked against
+        # min_number_of_occurrences (regardless of mode). A default holding 0
+        # rows under min=1 used to raise "Invalid default value ... the minimum
+        # number of elements is 1." on load_from_dto(validate=True).
+        for mode in (ParamSetDefaultRowsMode.EDITABLE, LOCK):
+            with self.subTest(mode=mode):
+                ps = ParamSet(
+                    _specs(),
+                    default_rows=[{"name": "morning"}],
+                    default_rows_mode=mode,
+                    min_number_of_occurrences=1,
+                )
+                # the default value (one preset row) is fewer than nothing here,
+                # but the round-trip through a serialized spec is the real path:
+                dto = ps.to_dto()
+                # force a 0-row default to exercise the relaxed check explicitly
+                dto.default_value = []
+                reloaded = ParamSet.load_from_dto(dto, validate=True)
+                self.assertEqual(reloaded.min_number_of_occurrences, 1)
+
+    def test_user_value_still_enforces_occurrence_bounds(self):
+        # The relaxation is scoped to the DEFAULT value; a user-submitted value
+        # is still validated against min_number_of_occurrences.
+        ps = ParamSet(_specs(), min_number_of_occurrences=1)
+        with self.assertRaises(BadRequestException):
+            ps.validate([])
+
+    def test_default_value_tolerates_missing_mandatory_on_load(self):
+        # Regression: a default row that leaves a mandatory inner field (here
+        # 'name') unset must NOT raise "the mandatory config 'Name' is missing."
+        # — the user fills it; the default only pre-fills what it provides.
+        ps = ParamSet(_specs())
+        dto = ps.to_dto()
+        dto.default_value = [{"value": 1.0}]  # 'name' (mandatory) omitted
+        reloaded = ParamSet.load_from_dto(dto, validate=True)
+        self.assertEqual(reloaded.default_value, [{"value": 1.0}])
+
+    def test_default_value_tolerates_none_cells_on_load(self):
+        ps = ParamSet(_specs())
+        dto = ps.to_dto()
+        dto.default_value = [{"name": None, "value": None}]
+        ParamSet.load_from_dto(dto, validate=True)  # must not raise
+
+    def test_default_value_rejects_incompatible_value_on_load(self):
+        # A PROVIDED value that is incompatible (wrong type) is still rejected.
+        ps = ParamSet(_specs())
+        dto = ps.to_dto()
+        dto.default_value = [{"value": "not-a-float"}]
+        with self.assertRaises(BadRequestException):
+            ParamSet.load_from_dto(dto, validate=True)
 
     def test_no_row_duplication_on_validate(self):
         # Regression: the client sends the 3 preset rows back WITHOUT ids

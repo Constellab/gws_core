@@ -25,6 +25,7 @@ from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
+    DuplicateFormTemplateDTO,
     FormTemplateVersionStatus,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
@@ -82,6 +83,50 @@ class FormTemplateService:
             object_id=template.id,
         )
         return template
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def duplicate_from_version(
+        cls,
+        template_id: str,
+        version_id: str,
+        dto: DuplicateFormTemplateDTO | None = None,
+    ) -> FormTemplate:
+        """Duplicate a form template into a brand-new family from one of its versions.
+
+        Creates a new FormTemplate with a single DRAFT v1 whose content is a copy
+        of the given source version's content. The source version may be in any
+        status (DRAFT, PUBLISHED or ARCHIVED). The new template's name defaults to
+        the source template's name suffixed with " (copy)" unless overridden via
+        ``dto.name``; its description defaults to the source's unless overridden.
+        """
+        source_version = cls.get_version(template_id, version_id)
+        source_template = cls.get_by_id_and_check(template_id)
+
+        new_template = FormTemplate()
+        new_template.name = (
+            dto.name if dto is not None and dto.name is not None
+            else f"{source_template.name} (copy)"
+        )
+        new_template.description = (
+            dto.description if dto is not None and dto.description is not None
+            else source_template.description
+        )
+        new_template.save()
+
+        draft = FormTemplateVersion()
+        draft.template = new_template
+        draft.status = FormTemplateVersionStatus.DRAFT
+        draft.version = 1
+        draft.content = source_version.content
+        draft.save()
+
+        ActivityService.add(
+            ActivityType.CREATE,
+            object_type=ActivityObjectType.FORM_TEMPLATE,
+            object_id=new_template.id,
+        )
+        return new_template
 
     @classmethod
     def get_by_id_and_check(cls, template_id: str) -> FormTemplate:

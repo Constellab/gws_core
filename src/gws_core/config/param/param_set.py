@@ -66,7 +66,7 @@ class ParamSet(ParamSpec):
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
-        max_number_of_occurrences: int | None = -1,
+        max_number_of_occurrences: int | None = None,
         min_number_of_occurrences: int | None = 1,
         default_rows: list[dict[str, Any]] | None = None,
         default_rows_mode: ParamSetDefaultRowsMode = ParamSetDefaultRowsMode.EDITABLE,
@@ -96,6 +96,7 @@ class ParamSet(ParamSpec):
 
         self.max_number_of_occurrences = max_number_of_occurrences
         self.min_number_of_occurrences = min_number_of_occurrences
+        self._check_occurrence_bounds()
 
         if param_set is None:
             param_set = ConfigSpecs()
@@ -122,6 +123,24 @@ class ParamSet(ParamSpec):
     def _is_optional_for(min_number_of_occurrences: int | None) -> bool:
         """A ParamSet is optional iff it accepts 0 rows (min is 0 / None / negative)."""
         return min_number_of_occurrences is None or min_number_of_occurrences <= 0
+
+    def _check_occurrence_bounds(self) -> None:
+        """Reject a spec whose max occurrence is below its min.
+
+        Only checked when both bounds are concrete limits: a negative or ``None``
+        max means "no upper limit", and a negative or ``None`` min is treated as
+        0 — neither can be inconsistent. Effective min is ``max(min, 0)``.
+        """
+        max_occ = self.max_number_of_occurrences
+        min_occ = self.min_number_of_occurrences
+        if max_occ is None or max_occ < 0:
+            return
+        effective_min = max(min_occ, 0) if min_occ is not None else 0
+        if max_occ < effective_min:
+            raise BadRequestException(
+                f"ParamSet: max_number_of_occurrences ({max_occ}) cannot be lower than "
+                f"min_number_of_occurrences ({effective_min})."
+            )
 
     def clone_with_inner_specs(self, inner_specs: ConfigSpecs) -> "ParamSet":
         """Return a copy of this ParamSet with its inner specs replaced.
@@ -221,9 +240,7 @@ class ParamSet(ParamSpec):
             try:
                 spec.validate(value)
             except BadRequestException as err:
-                raise BadRequestException(
-                    f"ParamSet default_rows[{index}].{key}: {err}"
-                ) from err
+                raise BadRequestException(f"ParamSet default_rows[{index}].{key}: {err}") from err
 
     @property
     def _locked_default_cells(self) -> list[dict[str, Any]]:
@@ -241,11 +258,7 @@ class ParamSet(ParamSpec):
         ):
             return []
         return [
-            {
-                k: v
-                for k, v in row.items()
-                if k != ConfigSpecs.ITEM_ID_KEY and v is not None
-            }
+            {k: v for k, v in row.items() if k != ConfigSpecs.ITEM_ID_KEY and v is not None}
             for row in self.default_rows
         ]
 
@@ -300,13 +313,21 @@ class ParamSet(ParamSpec):
         return self._validate_rows(value, lenient=True)
 
     def _validate_rows(
-        self, value: list[dict[str, Any]], lenient: bool
+        self, value: list[dict[str, Any]], lenient: bool, enforce_occurrences: bool = True
     ) -> ParamSetRowsValidationResult:
         if value is None:
             return ParamSetRowsValidationResult(rows=[])
+        # ``enforce_occurrences`` is False when validating the default value: the
+        # default may legitimately hold fewer rows than min_number_of_occurrences
+        # (e.g. an empty list, or fewer preset rows than the min the user must end
+        # up with), so the row-count bounds must not be checked there.
         list_validator = ListValidator(
-            min_number_of_occurrences=self.min_number_of_occurrences,
-            max_number_of_occurrences=self.max_number_of_occurrences,
+            min_number_of_occurrences=self.min_number_of_occurrences
+            if enforce_occurrences
+            else None,
+            max_number_of_occurrences=self.max_number_of_occurrences
+            if enforce_occurrences
+            else None,
         )
         dict_validator = DictValidator()
 
@@ -499,7 +520,11 @@ class ParamSet(ParamSpec):
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSet":
         from .param_spec_helper import ParamSpecHelper
 
-        param_set: ParamSet = super().load_from_dto(spec_dto, validate=validate)
+        # Defer default-value validation: the base class would validate it before
+        # the bounds/specs below are set (i.e. against a half-built ParamSet), and
+        # it would enforce the occurrence count, which must NOT apply to the
+        # default value. We re-run it ourselves at the end, occurrence-free.
+        param_set: ParamSet = super().load_from_dto(spec_dto, validate=False)
 
         # load info from additional info
         param_set.max_number_of_occurrences = spec_dto.additional_info.get(
@@ -514,6 +539,8 @@ class ParamSet(ParamSpec):
         else:
             # legacy spec without min: derive min from the serialized optional flag
             param_set.min_number_of_occurrences = 0 if param_set.optional else 1
+        if validate:
+            param_set._check_occurrence_bounds()
         param_set.default_rows_mode = cls._load_default_rows_mode(spec_dto.additional_info)
         # default_rows store only the provided cells, positionally (no __item_id).
         # Strip any stray id a legacy/serialized payload may carry. No re-validation.
@@ -535,5 +562,26 @@ class ParamSet(ParamSpec):
             )
 
         param_set.param_set = specs
+
+        if validate and param_set.default_value is not None:
+            # The default value is checked LENIENTLY: only the compatibility of
+            # the values that ARE provided is verified. Missing mandatory inner
+            # fields and None cells are tolerated (a default row may legitimately
+            # leave the user to fill the mandatory cells), and the occurrence
+            # bounds are not enforced. Only a genuinely incompatible value (wrong
+            # type / out-of-range) makes the spec invalid.
+            try:
+                result = param_set._validate_rows(
+                    param_set.default_value, lenient=True, enforce_occurrences=False
+                )
+            except Exception as err:
+                raise BadRequestException(
+                    f"Invalid default value for field '{param_set.human_name}': {err}"
+                ) from err
+            if result.errors:
+                raise BadRequestException(
+                    f"Invalid default value for field '{param_set.human_name}': "
+                    f"{'; '.join(f'{k}: {v}' for k, v in result.errors.items())}"
+                )
 
         return param_set

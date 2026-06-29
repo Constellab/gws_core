@@ -8,6 +8,7 @@ from gws_core.form_template.form_template_ai_service import FormTemplateAiServic
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
+    DuplicateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
     GenerateComputedParamDTO,
@@ -137,6 +138,20 @@ def list_versions(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> list[FormTemplateVersionDTO]:
     return [v.to_dto() for v in FormTemplateService.list_versions(id_)]
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/duplicate",
+    tags=["Form template"],
+    summary="Duplicate a form template into a new family from one of its versions",
+)
+def duplicate_from_version(
+    id_: str,
+    version_id: str,
+    body: DuplicateFormTemplateDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateDTO:
+    return FormTemplateService.duplicate_from_version(id_, version_id, body).to_dto()
 
 
 @core_app.get(
