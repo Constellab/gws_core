@@ -126,12 +126,4 @@ def register_gws_reflex_app(
     if add_unauthorized_page:
         _add_unauthorized_page(app)
 
-    # Appends a <base href="/"> tag to the <head> of the app if not already present.
-    # Static assets that are referenced with relative paths (e.g., /sub-path/...)
-    # will not load correctly if the app is served from a subpath.
-    # This <base> tag ensures that all relative URLs are resolved correctly
-    # regardless of the app's deployment path.
-    if not any(getattr(component, "tag", None) == "base" for component in app.head_components):
-        app.head_components.append(rx.el.base(href="/"))
-
     return app
