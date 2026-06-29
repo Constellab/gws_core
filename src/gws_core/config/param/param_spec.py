@@ -512,6 +512,16 @@ class BoolParam(ParamSpec):
         return bool_validator.validate(value)
 
     @classmethod
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "BoolParam":
+        # A BoolParam is always optional (a missing value means "unchecked"),
+        # so re-assert the invariant after loading: the base implementation
+        # blindly copies ``spec_dto.optional`` and would otherwise let a DTO
+        # carrying ``optional=False`` produce a mandatory bool.
+        param_spec = super().load_from_dto(spec_dto, validate=validate)
+        param_spec.optional = True
+        return param_spec
+
+    @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.BOOL
 
