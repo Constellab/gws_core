@@ -52,7 +52,7 @@
                     },
                     {
                         "name": "python-multipart",
-                        "version": "0.0.20"
+                        "version": "0.0.32"
                     },
                     {
                         "name": "starlette-context",
