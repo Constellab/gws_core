@@ -52,7 +52,15 @@ class I18nState(rx.State):
 
     @rx.event
     def set_lang(self, lang: str) -> None:
-        """Set the active language (call from the UI, e.g. a language toggle)."""
+        """Set the active language (call from the UI, e.g. a language toggle).
+
+        Guards against a non-``str`` argument: when wired to a generic click trigger
+        (e.g. ``rx.menu.item``) the browser event payload can leak in as the argument,
+        which would corrupt ``lang`` and crash the ``t`` var on the next recompute
+        (``get_translations`` hashes ``lang``). Ignore anything that is not a string.
+        """
+        if not isinstance(lang, str):
+            return
         self.lang = lang
 
     @rx.var
