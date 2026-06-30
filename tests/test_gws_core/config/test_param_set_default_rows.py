@@ -4,6 +4,7 @@ Default rows are POSITIONAL and carry NO __item_id: they behave like rows with
 no default at all (ids are minted on validation). The LOCK_PROVIDED mode pins the
 provided cells of the preset at index i onto the incoming row at index i.
 """
+
 import unittest
 
 from gws_core.config.config_specs import ConfigSpecs
@@ -36,7 +37,6 @@ def _preset_paramset(lock: bool = False) -> ParamSet:
 
 
 class TestParamSetDefaultRows(unittest.TestCase):
-
     # ----- default_rows -------------------------------------------------- #
 
     def test_default_value_returns_preset_rows(self):
@@ -140,7 +140,7 @@ class TestParamSetDefaultRows(unittest.TestCase):
         # rows under min=1 used to raise "Invalid default value ... the minimum
         # number of elements is 1." on load_from_dto(validate=True).
         for mode in (ParamSetDefaultRowsMode.EDITABLE, LOCK):
-            with self.subTest(mode=mode):
+            with self.subTest(mode=mode.value):
                 ps = ParamSet(
                     _specs(),
                     default_rows=[{"name": "morning"}],
@@ -190,9 +190,7 @@ class TestParamSetDefaultRows(unittest.TestCase):
         # Regression: the client sends the 3 preset rows back WITHOUT ids
         # (as the front end does). The result must be exactly 3 rows, not 6.
         ps = _preset_paramset(lock=True)
-        result = ps.validate(
-            [{"name": "morning"}, {"name": "afternoon"}, {"name": "evening"}]
-        )
+        result = ps.validate([{"name": "morning"}, {"name": "afternoon"}, {"name": "evening"}])
         self.assertEqual(len(result), 3)
         self.assertEqual([r["name"] for r in result], ["morning", "afternoon", "evening"])
 
@@ -212,9 +210,7 @@ class TestParamSetDefaultRows(unittest.TestCase):
     def test_validated_rows_get_fresh_uuids(self):
         # ids are minted exactly like the no-default case
         ps = _preset_paramset(lock=True)
-        result = ps.validate(
-            [{"name": "morning"}, {"name": "afternoon"}, {"name": "evening"}]
-        )
+        result = ps.validate([{"name": "morning"}, {"name": "afternoon"}, {"name": "evening"}])
         ids = [r[ConfigSpecs.ITEM_ID_KEY] for r in result]
         self.assertEqual(len(set(ids)), 3)
         for item_id in ids:
@@ -248,7 +244,7 @@ class TestParamSetDefaultRows(unittest.TestCase):
         )
         result = ps.validate([{"name": "user-filled", "value": 99.0}])
         row = result[0]
-        self.assertEqual(row["value"], 1.0)        # provided -> locked
+        self.assertEqual(row["value"], 1.0)  # provided -> locked
         self.assertEqual(row["name"], "user-filled")  # not provided -> editable
 
     def test_locked_only_provided_cells_pinned(self):
@@ -261,14 +257,15 @@ class TestParamSetDefaultRows(unittest.TestCase):
         result = ps.validate([{"name": "HACKED", "value": 5.0}])
         row = result[0]
         self.assertEqual(row["name"], "morning")  # provided -> locked
-        self.assertEqual(row["value"], 5.0)        # not provided -> editable
+        self.assertEqual(row["value"], 5.0)  # not provided -> editable
 
     def test_locked_null_cell_does_not_clobber_user_value(self):
         # Regression (bug report): a preset cell whose value is None is NOT a
         # real lock — it must keep the user's value, not overwrite it with null.
         ps = ParamSet(
-            ConfigSpecs({"name": StrParam(human_name="Name"),
-                         "price": FloatParam(human_name="Price")}),
+            ConfigSpecs(
+                {"name": StrParam(human_name="Name"), "price": FloatParam(human_name="Price")}
+            ),
             # row1 provides name='Apple' but price=None ; row2 provides price=15
             # but name=None. The None cells must stay user-editable.
             default_rows=[
@@ -348,9 +345,7 @@ class TestParamSetDefaultRows(unittest.TestCase):
         for row in reloaded.get_default_value():
             self.assertNotIn(ConfigSpecs.ITEM_ID_KEY, row)
         # lock enforcement still works after reload (no duplication)
-        result = reloaded.validate(
-            [{"name": "HACKED"}, {"name": "afternoon"}, {"name": "evening"}]
-        )
+        result = reloaded.validate([{"name": "HACKED"}, {"name": "afternoon"}, {"name": "evening"}])
         self.assertEqual(len(result), 3)
         self.assertEqual(result[0]["name"], "morning")
 
@@ -358,6 +353,8 @@ class TestParamSetDefaultRows(unittest.TestCase):
         # the serialized default_value (what the front consumes) carries no ids
         ps = _preset_paramset(lock=True)
         dto = ps.to_dto()
+        if not dto.default_value:
+            self.fail("default_value is empty")
         for row in dto.default_value:
             self.assertNotIn(ConfigSpecs.ITEM_ID_KEY, row)
 
@@ -416,6 +413,10 @@ class TestParamSetDefaultRows(unittest.TestCase):
     def test_clone_default_rows_is_independent_copy(self):
         ps = ParamSet(_specs(), default_rows=[{"name": "morning"}], default_rows_mode=LOCK)
         clone = ps.clone_with_inner_specs(_specs())
+        if not ps.default_rows:
+            self.fail("ps.default_rows is None")
+        if not clone.default_rows:
+            self.fail("clone.default_rows is None")
         clone.default_rows[0]["name"] = "mutated"
         self.assertEqual(ps.default_rows[0]["name"], "morning")
 
