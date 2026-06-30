@@ -16,13 +16,13 @@ from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 
 from ..core.classes.paginator import Paginator
-from ..core.classes.search_builder import SearchBuilder, SearchParams
+from ..core.classes.search_builder import SearchParams
 from ..core.exception.exceptions import BadRequestException
 from ..folder.space_folder import SpaceFolder
 from ..process.process_factory import ProcessFactory
 from ..protocol.protocol import Protocol
+from ..protocol.protocol_graph_factory import ProtocolGraphFactoryFromType
 from ..protocol.protocol_model import ProtocolModel
-from ..protocol.protocol_service import ProtocolService
 from ..space.space_dto import SaveScenarioToSpaceDTO
 from ..space.space_service import SpaceService
 from ..task.task_model import TaskModel
@@ -72,7 +72,9 @@ class ScenarioService:
         description: RichTextDTO | None = None
         if scenario_template is not None:
             description = scenario_template.description
-            protocol_model = ProtocolService.create_protocol_model_from_template(scenario_template)
+            protocol_model = ProtocolGraphFactoryFromType(
+                scenario_template.get_template()
+            ).create_protocol_model()
         else:
             protocol_model = ProcessFactory.create_protocol_empty()
 
@@ -125,7 +127,7 @@ class ScenarioService:
         title: str = "",
         creation_type: ScenarioCreationType = ScenarioCreationType.MANUAL,
     ) -> Scenario:
-        protocol_model: ProtocolModel = ProtocolService.create_protocol_model_from_type(
+        protocol_model: ProtocolModel = ProcessFactory.create_protocol_model_from_type(
             protocol_type=protocol_type
         )
         return cls.create_scenario_from_protocol_model(
@@ -171,7 +173,7 @@ class ScenarioService:
     ) -> Scenario:
         folder_changed = False
         folder_removed = False
-        old_folder: SpaceFolder = scenario.folder
+        old_folder = scenario.folder
 
         new_folder: SpaceFolder | None = None
         # update the folder
@@ -180,20 +182,24 @@ class ScenarioService:
 
             # if the scenario was synchronized with space, check that the folder is in the same root folder,
             # if not raise an error, otherwise update the folder in space
-            if scenario.last_sync_at is not None and new_folder != scenario.folder:
-                if new_folder.get_root() != scenario.folder.get_root():
+            if (
+                scenario.last_sync_at is not None
+                and old_folder is not None
+                and new_folder != old_folder
+            ):
+                if new_folder.get_root() != old_folder.get_root():
                     raise BadRequestException(
                         "This scenario is synchronized with space, you can't move it to another root folder. Please unsync it first by removing it from the folder."
                     )
 
                 SpaceService.get_instance().update_scenario_folder(
-                    scenario.folder.id, scenario.id, new_folder.id
+                    old_folder.id, scenario.id, new_folder.id
                 )
 
-            if scenario.folder != new_folder:
+            if old_folder != new_folder:
                 folder_changed = True
 
-        if scenario.folder is not None and new_folder_id is None:
+        if old_folder is not None and new_folder_id is None:
             folder_removed = True
 
         scenario.folder = new_folder
@@ -203,13 +209,13 @@ class ScenarioService:
 
         # update generated resources folder
         if folder_changed or folder_removed:
-            resources: list[ResourceModel] = ResourceModel.get_by_scenario(scenario.id)
+            resources: list[ResourceModel] = list(ResourceModel.get_by_scenario(scenario.id))
             for resource in resources:
                 resource.folder = scenario.folder
                 resource.save()
 
         # if the folder was removed
-        if folder_removed and scenario.last_sync_at is not None:
+        if folder_removed and scenario.last_sync_at is not None and old_folder is not None:
             cls._unsynchronize_with_space(scenario, old_folder.id, check_notes=check_notes)
 
         return scenario
@@ -245,8 +251,8 @@ class ScenarioService:
 
     @classmethod
     @GwsCoreDbManager.transaction()
-    def validate_scenario_by_id(cls, id: str, folder_id: str | None = None) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def validate_scenario_by_id(cls, id_: str, folder_id: str | None = None) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
 
         # set the folder if it is provided
         if folder_id is not None:
@@ -271,8 +277,8 @@ class ScenarioService:
     ###################################  SYNCHRO WITH SPACE  ##############################
 
     @classmethod
-    def synchronize_with_space_by_id(cls, id: str) -> Scenario:
-        scenario: Scenario = Scenario.get_by_id_and_check(id)
+    def synchronize_with_space_by_id(cls, id_: str) -> Scenario:
+        scenario: Scenario = Scenario.get_by_id_and_check(id_)
         scenario = cls._synchronize_with_space(scenario)
         return scenario.save()
 
@@ -290,7 +296,7 @@ class ScenarioService:
         scenario.last_sync_at = DateHelper.now_utc()
         scenario.last_sync_by = CurrentUserService.get_and_check_current_user()
 
-        lab_config: LabConfigModel = scenario.lab_config
+        lab_config = scenario.lab_config
         if lab_config is None:
             lab_config = LabConfigModel.get_current_config()
         save_scenario_dto = SaveScenarioToSpaceDTO(
@@ -379,10 +385,46 @@ class ScenarioService:
         return Scenario.get_by_id_and_check(id_)
 
     @classmethod
+    def get_scenario_output_resource(cls, id_: str) -> ResourceModel | None:
+        """Return the output resource of a classic, single-output scenario.
+
+        This is meant for scenarios that expose exactly one output, like the ones
+        built by ``ResourceTransfertService`` (an ``OutputTask`` connected to the
+        produced resource). The output resource is retrieved through the
+        ``ScenarioProxy`` / ``ProtocolProxy`` by looking up the protocol's
+        ``OutputTask`` processes.
+
+        Returns ``None`` when the scenario is not successful (still running, in
+        error, ...) or when it does not expose exactly one output resource.
+
+        :param id_: the id of the scenario
+        :type id_: str
+        :return: the output resource model, or None
+        :rtype: ResourceModel | None
+        """
+        # Local import to avoid a circular import (ScenarioProxy imports ScenarioService).
+        from gws_core.scenario.scenario_proxy import ScenarioProxy
+
+        scenario = cls.get_by_id_and_check(id_)
+        # If the scenario is running or in error, there is no available output.
+        if not scenario.is_success:
+            return None
+
+        scenario_proxy = ScenarioProxy.from_existing_scenario(id_)
+        protocol = scenario_proxy.get_protocol()
+
+        output_tasks = protocol.get_processes_by_type(OutputTask)
+        # Only classic single-output scenarios are supported.
+        if len(output_tasks) != 1:
+            return None
+
+        return output_tasks[0].get_input_resource_model(OutputTask.input_name)
+
+    @classmethod
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Scenario]:
-        search_builder: SearchBuilder = ScenarioSearchBuilder()
+        search_builder = ScenarioSearchBuilder()
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 
@@ -462,11 +504,20 @@ class ScenarioService:
         """Copy the scenario into a new draft scenario"""
         scenario: Scenario = Scenario.get_by_id_and_check(scenario_id)
 
+        # Build the protocol copy in memory, the scenario is set and the
+        # protocol saved by create_scenario_from_protocol_model.
+        new_protocol_model: ProtocolModel = ProtocolGraphFactoryFromType(
+            scenario.protocol_model.to_protocol_config_dto()
+        ).create_protocol_model()
+
         new_scenario: Scenario = cls.create_scenario_from_protocol_model(
-            protocol_model=ProtocolService.copy_protocol(scenario.protocol_model),
+            protocol_model=new_protocol_model,
             folder=scenario.folder,
             title=scenario.title + " copy",
         )
+
+        # Reset to draft now that the protocol is saved with its scenario.
+        new_protocol_model.reset()
 
         new_scenario.description = scenario.description
         return new_scenario.save()
@@ -592,5 +643,5 @@ class ScenarioService:
         from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
 
         user = CurrentUserService.get_and_check_current_user()
-        zipper = ScenarioArchiveZipper(scenario_id, resource_mode, user)
+        zipper = ScenarioArchiveZipper(scenario_id, resource_mode, user)  # type: ignore
         return zipper.zip()

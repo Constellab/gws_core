@@ -3,11 +3,11 @@ from json import dumps, loads
 from typing import Any
 
 from gws_core.config.param.param_spec import ParamSpec
-from gws_core.config.param.param_spec_decorator import param_spec_decorator
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory, param_spec_decorator
 from gws_core.config.param.param_types import ParamSpecType
 
 
-@param_spec_decorator()
+@param_spec_decorator(category=ParamSpecCategory.CODE_PARAM)
 class JsonCodeParam(ParamSpec):
     """Param for json code. It shows a simple json IDE
     in the interface to provide code for json.
@@ -40,16 +40,33 @@ class JsonCodeParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.JSON_CODE
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return (
+            "A JSON document, edited in a JSON IDE. The value is a JSON object or array "
+            "(single-line // comments are allowed). Use for structured/nested configuration."
+        )
+
+    @classmethod
+    def ai_example_spec(cls) -> "JsonCodeParam":
+        return cls(
+            human_name="Settings",
+            short_description="Structured JSON configuration",
+            optional=True,
+        )
+
     def validate(self, value: Any) -> Any:
         if value is None:
             return value
-        if isinstance(value, dict) or isinstance(value, list):
+        if isinstance(value, (dict, list)):
             value = dumps(value, indent=4)
         if not isinstance(value, str):
             raise ValueError("Invalid value for JsonCodeParam, expected a string.")
         return value.strip()
 
-    def build(self, value: Any) -> dict:
+    def build(self, value: Any) -> dict | list | None:
         """Validate the json code.
 
         :param value: The value of the param
@@ -71,5 +88,5 @@ class JsonCodeParam(ParamSpec):
 
                 return loads(value)
             except Exception as e:
-                raise ValueError(f"Invalid JSON code: {e}")
+                raise ValueError(f"Invalid JSON code: {e}") from e
         raise ValueError("Invalid value for JsonCodeParam, expected a string or a dictionary.")

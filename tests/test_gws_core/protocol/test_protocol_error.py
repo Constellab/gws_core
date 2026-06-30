@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     CheckBeforeTaskResult,
@@ -11,7 +13,6 @@ from gws_core import (
     ProcessSpec,
     Protocol,
     ProtocolModel,
-    ProtocolService,
     Resource,
     ScenarioService,
     Task,
@@ -25,6 +26,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
+from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.protocol.protocol_exception import ProtocolBuildException
 from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_run_service import ScenarioRunService
@@ -63,7 +65,7 @@ class CheckBeforeTaskError(Task):
     def check_before_run(self, params: ConfigParams, inputs: TaskInputs) -> CheckBeforeTaskResult:
         return {"result": False, "message": "We can't run this task"}
 
-    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
+    def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs | None:
         pass
 
 
@@ -110,9 +112,7 @@ class TestProtocolError(BaseTestCase):
     def test_error_on_task(self):
         """Test a scenario with a task that throws an exception"""
 
-        protocol = ProtocolService.create_protocol_model_from_type(ErrorProtocolTest)
-
-        scenario = ScenarioService.create_scenario_from_protocol_model(protocol)
+        scenario = ScenarioService.create_scenario_from_protocol_type(ErrorProtocolTest)
 
         # check that the scenario end up in error and get exception
         exception: ScenarioRunException
@@ -128,22 +128,22 @@ class TestProtocolError(BaseTestCase):
         self.assertTrue(scenario.is_error)
         self.assertIsNotNone(scenario.get_error_info())
         # Check that the instance_id and unique_code where copied from base exception
-        self.assertEqual(scenario.get_error_info().instance_id, exception.instance_id)
-        self.assertEqual(scenario.get_error_info().unique_code, exception.unique_code)
+        self.assertEqual(cast(ProcessErrorInfo, scenario.get_error_info()).instance_id, exception.instance_id)
+        self.assertEqual(cast(ProcessErrorInfo, scenario.get_error_info()).unique_code, exception.unique_code)
 
         # Check that main protocol is in error status
         protocol = scenario.protocol_model
         self.assertTrue(protocol.is_error)
         self.assertIsNotNone(protocol.get_error_info())
-        self.assertEqual(protocol.get_error_info().instance_id, exception.instance_id)
-        self.assertEqual(protocol.get_error_info().unique_code, exception.unique_code)
+        self.assertEqual(cast(ProcessErrorInfo, protocol.get_error_info()).instance_id, exception.instance_id)
+        self.assertEqual(cast(ProcessErrorInfo, protocol.get_error_info()).unique_code, exception.unique_code)
 
         # Check sub protocol is in error status
-        sub_protocol: ProtocolModel = protocol.get_process("sub_proto")
+        sub_protocol: ProtocolModel = cast(ProtocolModel, protocol.get_process("sub_proto"))
         self.assertTrue(sub_protocol.is_error)
         self.assertIsNotNone(sub_protocol.get_error_info())
-        self.assertEqual(sub_protocol.get_error_info().instance_id, exception.instance_id)
-        self.assertEqual(sub_protocol.get_error_info().unique_code, exception.unique_code)
+        self.assertEqual(cast(ProcessErrorInfo, sub_protocol.get_error_info()).instance_id, exception.instance_id)
+        self.assertEqual(cast(ProcessErrorInfo, sub_protocol.get_error_info()).unique_code, exception.unique_code)
 
         # Check that the create process endup in success
         create_process: ProcessModel = sub_protocol.get_process("create")
@@ -153,8 +153,8 @@ class TestProtocolError(BaseTestCase):
         error_process: ProcessModel = sub_protocol.get_process("error")
         self.assertTrue(error_process.is_error)
         self.assertIsNotNone(error_process.get_error_info())
-        self.assertEqual(error_process.get_error_info().instance_id, exception.instance_id)
-        self.assertEqual(error_process.get_error_info().unique_code, exception.unique_code)
+        self.assertEqual(cast(ProcessErrorInfo, error_process.get_error_info()).instance_id, exception.instance_id)
+        self.assertEqual(cast(ProcessErrorInfo, error_process.get_error_info()).unique_code, exception.unique_code)
 
         # reset error tasks
         EntityNavigatorService.reset_error_processes_of_protocol(protocol)
@@ -169,9 +169,7 @@ class TestProtocolError(BaseTestCase):
         self.assertTrue(error_process.is_draft)
 
     def test_error_on_before_check(self):
-        protocol = ProtocolService.create_protocol_model_from_type(CheckBeforeTaskErrorProtocol)
-
-        scenario = ScenarioService.create_scenario_from_protocol_model(protocol)
+        scenario = ScenarioService.create_scenario_from_protocol_type(CheckBeforeTaskErrorProtocol)
 
         # check that the scenario end up in error and get exception
         exception: ScenarioRunException
@@ -187,8 +185,8 @@ class TestProtocolError(BaseTestCase):
         self.assertTrue(scenario.is_error)
         self.assertIsNotNone(scenario.error_info)
         # Check that the instance_id and unique_code where copied from base exception
-        self.assertEqual(scenario.error_info["instance_id"], exception.instance_id)
-        self.assertEqual(scenario.error_info["unique_code"], exception.unique_code)
+        self.assertEqual(cast(dict, scenario.error_info)["instance_id"], exception.instance_id)
+        self.assertEqual(cast(dict, scenario.error_info)["unique_code"], exception.unique_code)
 
     def test_protocol_build_error(self):
         """Test an error happens during protocol build"""

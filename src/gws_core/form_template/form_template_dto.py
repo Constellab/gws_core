@@ -2,6 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
+from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.model.model_with_user_dto import ModelWithUserDTO
 from gws_core.form.form_dto import FormSaveResultDTO
@@ -41,6 +42,19 @@ class UpdateFormTemplateDTO(BaseModelDTO):
 
 class CreateDraftVersionDTO(BaseModelDTO):
     copy_from_version_id: str | None = None
+
+
+class DuplicateFormTemplateDTO(BaseModelDTO):
+    """Request body for duplicating a form template from one of its versions.
+
+    A brand-new FormTemplate family is created with a single DRAFT v1 whose
+    content is copied from the source version (which may be DRAFT, PUBLISHED or
+    ARCHIVED). ``name`` overrides the new template's name; when omitted it
+    defaults to the source template's name suffixed with " (copy)".
+    """
+
+    name: str | None = None
+    description: str | None = None
 
 
 class TestFormTemplateVersionDTO(BaseModelDTO):
@@ -144,3 +158,72 @@ class GenerateComputedParamResultDTO(BaseModelDTO):
 
     expression: str
     validation: ValidateComputedParamResultDTO
+
+
+class GenerateTemplateSpecsDTO(BaseModelDTO):
+    """Request body for AI-assisted form-template field generation / editing.
+
+    The AI is given the DRAFT version's current specs (which may be empty) and
+    the user's free-text ``description``, and produces the complete new field
+    specification from the DRAFT's current specs + the description. The result
+    is returned (NOT persisted) — the editor reviews it and applies it via the
+    override-specs route. Empty current specs ⇒ build from scratch; non-empty ⇒
+    modify the existing fields. Only DRAFT versions can be targeted.
+    """
+
+    description: str
+
+
+class GenerateTemplateSpecsResultDTO(BaseModelDTO):
+    """Result of an AI-assisted whole-template generation.
+
+    ``specs`` is the complete proposed field set, serialized the same way as
+    ``FormSaveResultDTO.specs`` and the field routes (``dict[key, ParamSpecDTO]``)
+    so the editor can render it and, when the user accepts, send it back to the
+    override-specs route. Nothing is persisted.
+    """
+
+    specs: dict[str, ParamSpecDTO]
+
+
+class OverrideFormTemplateSpecsDTO(BaseModelDTO):
+    """Request body for fully replacing a DRAFT version's field set.
+
+    ``specs`` is the complete new field set (``dict[key, ParamSpecDTO]``) — the
+    draft's content is replaced wholesale (not merged). Validated before write;
+    only DRAFT versions can be targeted. This is the bulk counterpart of the
+    per-field create/update routes, and the route the AI generate-specs preview
+    is applied through.
+    """
+
+    specs: dict[str, ParamSpecDTO]
+
+
+class GenerateTemplateFieldDTO(BaseModelDTO):
+    """Request body for AI-assisted single-field generation / editing.
+
+    The AI is given the DRAFT version's other fields (read-only context),
+    ``field_key`` (the key of the field being edited, or null for a new field),
+    ``current_field`` (the current spec of that field for an edit, or null for a
+    new field — the AI starts from it and applies the description), and the
+    user's free-text ``description``. It returns one proposed field. Nothing is
+    persisted — the editor applies the result via the existing create/update
+    field routes.
+    """
+
+    description: str
+    field_key: str | None = None
+    current_field: ParamSpecDTO | None = None
+
+
+class GenerateTemplateFieldResultDTO(BaseModelDTO):
+    """Result of an AI-assisted single-field generation.
+
+    ``field_key`` is the proposed snake_case key (the AI may suggest one for a
+    new field, or keep/rename the given one). ``spec`` is the field spec,
+    serialized the same way as the field routes' bodies (``ParamSpecDTO``) so
+    the editor can apply it directly. Nothing is persisted.
+    """
+
+    field_key: str
+    spec: ParamSpecDTO

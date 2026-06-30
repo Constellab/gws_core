@@ -52,6 +52,7 @@ from .config.param.code_param.yaml_code_param import YamlCodeParam as YamlCodePa
 from .config.param.computed.computed_param import ComputedParam as ComputedParam
 from .config.param.date_param import DateParam as DateParam
 from .config.param.param_set import ParamSet as ParamSet
+from .config.param.param_set import ParamSetDefaultRowsMode as ParamSetDefaultRowsMode
 from .config.param.param_spec import BoolParam as BoolParam
 from .config.param.param_spec import DictParam as DictParam
 from .config.param.param_spec import FloatParam as FloatParam

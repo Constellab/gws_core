@@ -39,6 +39,12 @@ class ConfigSpecs:
 
     ITEM_ID_KEY: ClassVar[str] = "__item_id"
 
+    # Max length of a spec key. Applies to every ConfigSpecs (tasks, views,
+    # forms, ...). Enforced by _spec_key_error on construction and by the
+    # imperative mutators (add_spec / add_or_update_spec). Set well above the
+    # longest existing keys in the codebase so it only rejects absurd ones.
+    MAX_KEY_LENGTH: ClassVar[int] = 40
+
     # Field-key shapes accepted by ``format_field_key``:
     #   ``"<key>"``                       outer-scope leaf or computed
     #   ``"<paramset>[].<inner>"``        ParamSet inner computed (formula
@@ -108,19 +114,21 @@ class ConfigSpecs:
 
         self.specs = specs
 
-    @staticmethod
-    def _spec_key_error(key: str) -> str | None:
+    @classmethod
+    def _spec_key_error(cls, key: str) -> str | None:
         """Return an error message if the key is invalid, None otherwise.
 
-        A valid key contains only letters, digits, and underscores, and does
-        not start with a digit. Keeps spec keys readable as variable-like
-        tokens.
+        A valid key contains only letters, digits, and underscores, does not
+        start with a digit, and is at most ``MAX_KEY_LENGTH`` characters. Keeps
+        spec keys readable as variable-like tokens.
         """
         if not isinstance(key, str) or not key.isidentifier():
             return (
                 f"Invalid param key '{key}': must contain only letters, digits, "
                 f"and underscores, and cannot start with a digit."
             )
+        if len(key) > cls.MAX_KEY_LENGTH:
+            return f"Invalid param key '{key}': too long (max {cls.MAX_KEY_LENGTH} characters)."
         return None
 
     @classmethod
@@ -131,7 +139,7 @@ class ConfigSpecs:
         """
         error = cls._spec_key_error(key)
         if error is not None:
-            raise Exception(error)
+            raise BadRequestException(error)
 
     def assert_valid(self) -> None:
         """Raise if this ConfigSpecs was built with an invalid definition.
@@ -263,8 +271,10 @@ class ConfigSpecs:
     def check_config_specs(self) -> None:
         """Check that the config specs are valid.
 
-        Validates spec types and delegates to ComputedParamGraphChecker for
-        cycle detection and reference validation across computed expressions.
+        Validates spec keys (shape + length) and types, and delegates to
+        ComputedParamGraphChecker for cycle detection and reference validation
+        across computed expressions (which already recurses into ParamSets).
+        Key validation also recurses into ParamSet inner specs.
         """
         if not self.specs:
             return
@@ -277,12 +287,25 @@ class ConfigSpecs:
                 raise Exception(
                     f"The config spec '{key}' is invalid, it must be a ParamSpec but got {type(item)}"
                 )
+        self._check_keys_recursive()
 
         from gws_core.config.param.computed.computed_param_graph import (
             ComputedParamGraphChecker,
         )
 
         ComputedParamGraphChecker.check(self)
+
+    def _check_keys_recursive(self) -> None:
+        """Validate every spec key (shape + length), recursing into ParamSet
+        inner specs. Raises on the first invalid key."""
+        from .param.param_set import ParamSet
+
+        for key, item in self.specs.items():
+            key_error = self._spec_key_error(key)
+            if key_error is not None:
+                raise BadRequestException(key_error)
+            if isinstance(item, ParamSet) and item.param_set is not None:
+                item.param_set._check_keys_recursive()
 
     def build_config_params(self, param_values: ConfigParamsDict) -> ConfigParams:
         """
@@ -482,8 +505,7 @@ class ConfigSpecs:
         result = self.validate_values(values)
         if result.errors:
             raise BadRequestException(
-                "Invalid values: "
-                + "; ".join(f"{k}: {msg}" for k, msg in result.errors.items())
+                "Invalid values: " + "; ".join(f"{k}: {msg}" for k, msg in result.errors.items())
             )
         return result.values
 
@@ -526,10 +548,7 @@ class ConfigSpecs:
         Centralizes what every save/test surface used to do inline so the
         order and format are consistent across them.
         """
-        return sorted(
-            f"{self.format_field_key(key)}: {message}"
-            for key, message in errors.items()
-        )
+        return sorted(f"{self.format_field_key(key)}: {message}" for key, message in errors.items())
 
     def merge_computed(
         self,

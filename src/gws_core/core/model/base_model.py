@@ -1,5 +1,5 @@
 from typing import Any
-
+from typing_extensions import Self
 from peewee import (
     ColumnMetadata,
     DatabaseProxy,
@@ -193,7 +193,7 @@ class BaseModel(Base, PeeweeModel):
     def is_mysql_engine(cls):
         return cls.get_db_manager().is_mysql_engine()
 
-    def save(self, *args, **kwargs) -> "BaseModel":
+    def save(self, *args, **kwargs) -> Self:
         if not self.is_table():
             raise Exception(
                 f"The class '{type(self).__name__}' is not a table, cannot save it. Set is_table to True in the Meta class to make it a table."

@@ -195,14 +195,14 @@ class AuthorizationService:
 
     @classmethod
     def get_token_from_request(cls, request: Request) -> str | None:
-        header_authorization: str = request.headers.get("Authorization")
-        cookie_authorization: str = request.cookies.get("Authorization")
+        header_authorization: str | None = request.headers.get("Authorization")
+        cookie_authorization: str | None = request.cookies.get("Authorization")
 
         return header_authorization or cookie_authorization
 
     @classmethod
     def get_and_check_token_from_request(cls, request: Request) -> str:
-        token: str = cls.get_token_from_request(request)
+        token: str | None = cls.get_token_from_request(request)
         if not token:
             raise InvalidTokenException()
         return token

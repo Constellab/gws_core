@@ -190,6 +190,9 @@ class LogService:
         if error_line and error_line.message:
             content += f"<p><strong>Error:</strong> {error_line.message}</p>"
 
+        if error_line and error_line.date_time:
+            content += f"<p><strong>Date:</strong> {error_line.date_time} (UTC)</p>"
+
         content += (
             f"<p><strong>Request ID:</strong> {request_id}</p>"
             f"<p><strong>Lab:</strong> {lab_name} (ID: {lab_id})</p>"
@@ -199,6 +202,12 @@ class LogService:
 
         if error_line and error_line.instance_id:
             content += f"<p><strong>Instance ID:</strong> {error_line.instance_id}</p>"
+
+        if error_line and error_line.stack_trace:
+            content += (
+                f"<h4>Stack trace:</h4>"
+                f"<pre>{error_line.stack_trace}</pre>"
+            )
 
         # Complete log lines
         content += (

@@ -19,7 +19,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from .param_types import ParamSpecDTO, ParamSpecType
 
 
-@param_spec_decorator(type_=ParamSpecCategory.DYNAMIC_PARAM)
+@param_spec_decorator(category=ParamSpecCategory.DYNAMIC_PARAM)
 class DynamicParam(ParamSpec):
     """Dynamic param"""
 
@@ -101,20 +101,25 @@ class DynamicParam(ParamSpec):
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "DynamicParam":
         dynamic_param: DynamicParam = super().load_from_dto(spec_dto, validate=validate)
 
-        specs = ConfigSpecs()
-
         if spec_dto.additional_info is None or "specs" not in spec_dto.additional_info:
             raise BadRequestException("The specs attribute is required.")
 
+        # Rehydrate persisted specs without re-validating their keys. Reading a
+        # protocol/config must never raise on a legacy or otherwise-invalid key
+        # (e.g. one with a space): key validation is a write-time concern,
+        # enforced by the add_spec/update_spec/rename_and_update_spec mutators
+        # when the user adds or modifies a param. This mirrors
+        # ConfigSpecs.from_json/from_dto using _skip_key_validation=True.
+        sub_specs: dict[str, ParamSpec] = {}
         for key, spec in spec_dto.additional_info["specs"].items():
             sub_spec_dto = ParamSpecDTO.from_json(spec)
             param_spec: ParamSpec = ParamSpecHelper.get_param_spec_type_from_str(
                 sub_spec_dto.type
             ).load_from_dto(sub_spec_dto, validate=validate)
-            specs.add_spec(key, param_spec)
+            sub_specs[key] = param_spec
 
         dynamic_param.edition_mode = spec_dto.additional_info.get("edition_mode", True)
-        dynamic_param.specs = specs
+        dynamic_param.specs = ConfigSpecs(sub_specs, _skip_key_validation=True)
 
         return dynamic_param
 
@@ -169,15 +174,7 @@ class DynamicParam(ParamSpec):
         self.specs.specs = {name: self.specs.get_spec(name) for name in param_names}
 
     def get_spec_from_dto(self, spec_dto: ParamSpecDTO) -> ParamSpec:
-        spec = ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
-        # TODO A VERIFIER
-        if (
-            "allowed_values" in spec.additional_info
-            and spec.additional_info["allowed_values"] is not None
-            and len(spec.additional_info["allowed_values"]) == 0
-        ):
-            spec.additional_info["allowed_values"] = None
-        return spec
+        return ParamSpecHelper.get_param_spec_type_from_str(spec_dto.type).load_from_dto(spec_dto)
 
     @staticmethod
     def get_param_spec_from_type(type_: str) -> ParamSpec:

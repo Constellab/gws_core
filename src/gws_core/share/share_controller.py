@@ -12,6 +12,7 @@ from gws_core.share.shared_dto import (
     ShareEntityInfoDTO,
     ShareLinkEntityType,
     ShareResourceInfoReponseDTO,
+    ShareResourceZipAsyncResponseDTO,
     ShareResourceZippedResponseDTO,
     ShareScenarioInfoReponseDTO,
 )
@@ -84,13 +85,44 @@ def get_share_resource_info(
 
 
 # Open zip the shared entity
-@core_app.post("/share/resource/{token}/zip", tags=["Share"], summary="Zip the shared entity")
+@core_app.post(
+    "/share/resource/{token}/zip",
+    tags=["Share"],
+    summary="Zip the shared entity (deprecated, blocking)",
+    deprecated=True,
+)
 def zip_resource(
     auth_context: AuthContextShareLink = Depends(
         ShareTokenAuth.get_and_check_share_link_token_from_url
     ),
 ) -> ShareResourceZippedResponseDTO:
+    """DEPRECATED: zips the resource synchronously and blocks the request until done.
+
+    Use ``POST /share/resource/{token}/zip-async`` instead, which returns the
+    running zip scenario to poll. Kept for backward compatibility with labs that
+    have not been updated.
+    """
     return ShareService.zip_shared_resource(auth_context.get_share_link())
+
+
+# Open zip the shared entity asynchronously
+@core_app.post(
+    "/share/resource/{token}/zip-async",
+    tags=["Share"],
+    summary="Zip the shared entity asynchronously",
+)
+def zip_resource_async(
+    auth_context: AuthContextShareLink = Depends(
+        ShareTokenAuth.get_and_check_share_link_token_from_url
+    ),
+) -> ShareResourceZipAsyncResponseDTO:
+    """Start zipping the shared resource without blocking the server.
+
+    Returns the running (or already finished) zip scenario and the download
+    route. The caller polls the scenario until it succeeds, then downloads the
+    entity from ``download_entity_route``.
+    """
+    return ShareService.zip_shared_resource_async(auth_context.get_share_link())
 
 
 # Open route to download a resource

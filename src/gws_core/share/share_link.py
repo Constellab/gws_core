@@ -5,8 +5,8 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.model.typed_db_field import (
-    NullableCharField,
     NullableDateTimeUTC,
+    TypedCharField,
     TypedEnumField,
 )
 from gws_core.core.service.front_service import FrontService
@@ -18,13 +18,13 @@ from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkEntityType, ShareLi
 
 
 class ShareLink(ModelWithUser):
-    entity_id = NullableCharField(max_length=36)
+    entity_id = TypedCharField(max_length=36)
 
     entity_type = TypedEnumField(choices=ShareLinkEntityType)
 
     valid_until = NullableDateTimeUTC()
 
-    token = NullableCharField(max_length=100, unique=True)
+    token = TypedCharField(max_length=100, unique=True)
 
     link_type = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
 
@@ -45,7 +45,7 @@ class ShareLink(ModelWithUser):
     ) -> "ShareLink":
         """Method that find a shared entity link by its entity id and type and check if it is valid"""
 
-        shared_entity_link: ShareLink = cls.find_by_entity_type_and_id(
+        shared_entity_link = cls.find_by_entity_type_and_id(
             entity_type=entity_type, entity_id=entity_id, link_type=link_type
         )
 
@@ -66,7 +66,7 @@ class ShareLink(ModelWithUser):
         )
 
     @classmethod
-    def get_model(cls, entity_id: str, entity_type: ShareLinkEntityType) -> Model:
+    def get_model(cls, entity_id: str, entity_type: ShareLinkEntityType) -> Model | None:
         """Method that return the model for a given entity type"""
 
         model_type: type[Model] = cls._get_model_type(entity_type)
@@ -126,14 +126,18 @@ class ShareLink(ModelWithUser):
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/resource/{self.token}"
         elif self.entity_type == ShareLinkEntityType.SCENARIO:
             return f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}/share/scenario/{self.token}"
+        else:
+            raise BadRequestException(f"Entity type {self.entity_type} is not supported")
 
     def get_public_link(self) -> str | None:
         if self.entity_type == ShareLinkEntityType.RESOURCE:
             return FrontService().get_resource_open_url(self.token)
         elif self.entity_type == ShareLinkEntityType.SCENARIO:
             return None
+        else:
+            raise BadRequestException(f"Entity type {self.entity_type} is not supported")
 
-    def get_space_link(self, user_access_token: str) -> str | None:
+    def get_space_link(self, user_access_token: str) -> str:
         if self.entity_type == ShareLinkEntityType.RESOURCE:
             return FrontService().get_resource_open_space_url(self.token, user_access_token)
         else:
@@ -142,7 +146,7 @@ class ShareLink(ModelWithUser):
     def is_valid(self) -> bool:
         return self.valid_until is None or self.valid_until > DateHelper.now_utc()
 
-    def is_valid_at(self, valid_until_date: datetime) -> bool:
+    def is_valid_at(self, valid_until_date: datetime | None) -> bool:
         if not valid_until_date:
             return self.valid_until is None
         return self.valid_until is None or self.valid_until > valid_until_date

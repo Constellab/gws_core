@@ -3,7 +3,7 @@ import os
 import shutil
 from pathlib import Path
 from re import sub
-from typing import Any, Literal
+from typing import Any, Literal, overload
 
 from charset_normalizer import from_path
 from fastapi.responses import FileResponse
@@ -110,15 +110,23 @@ class FileHelper:
 
         return cls.normalize_extension(extension)
 
+    @overload
     @classmethod
-    def normalize_extension(cls, extension: str) -> str | None:
+    def normalize_extension(cls, extension: str) -> str: ...
+
+    @overload
+    @classmethod
+    def normalize_extension(cls, extension: None) -> None: ...
+
+    @classmethod
+    def normalize_extension(cls, extension: str | None) -> str | None:
         """
         Normalize a file extension by removing leading dots and applying case rules.
         Returns the extension in lowercase except for special cases (.R stays uppercase).
         Returns None if the input is None.
 
         :param extension: extension to normalize (with or without leading dot)
-        :type extension: str
+        :type extension: str | None
         :return: normalized extension without leading dot, or None
         :rtype: str | None
         """
@@ -335,13 +343,13 @@ class FileHelper:
         return os.path.isdir(path)
 
     @classmethod
-    def get_mime(cls, path: PathType) -> str:
+    def get_mime(cls, path: PathType) -> str | None:
         if not path:
             return None
 
         if cls.is_dir(path):
             return "application/x-directory"
-        ext: str = cls.get_normalized_extension(path)
+        ext = cls.get_normalized_extension(path)
         if ext:
             # specific case not handled by mimetypes
             custom_mimes = {
@@ -367,7 +375,7 @@ class FileHelper:
             return "application/octet-stream"
 
     @classmethod
-    def get_extension_from_content_type(cls, content_type: str) -> str:
+    def get_extension_from_content_type(cls, content_type: str) -> str | None:
         """
         Return the extension of a file from its content type
 

@@ -68,7 +68,18 @@ class TechnicalDocService:
         cls, brick_name: str, resources_tasks_protocols: list[TypingFullDTO]
     ) -> list[ClassicClassDocDTO]:
         other_classes: list[ClassicClassDocDTO] = []
-        clsmembers = inspect.getmembers(sys.modules[brick_name], inspect.isclass)
+
+        brick_module = sys.modules.get(brick_name)
+        if brick_module is None:
+            raise Exception(
+                f"The brick module '{brick_name}' is not imported (not present in sys.modules). "
+                "This usually means the brick failed to load or was skipped during settings "
+                "loading (e.g. its folder was not found). Check the earlier log lines for a "
+                f"'Skipping brick' error about '{brick_name}', and make sure the brick is "
+                "correctly installed/loaded before pushing its technical documentation."
+            )
+
+        clsmembers = inspect.getmembers(brick_module, inspect.isclass)
 
         for name, obj in clsmembers:
             ok = True

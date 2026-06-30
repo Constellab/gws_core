@@ -22,7 +22,7 @@ class TestConfig(BaseTestCase):
         self.assertEqual(config.get_value("moving_step"), 4.5)
 
         config.save()
-        config2: Config = Config.get_by_id(config.id)
+        config2: Config = Config.get_by_id_and_check(config.id)
         self.assertEqual(config2.data, config.data)
         self.assertIsNotNone(config2.get_specs().get_spec("moving_step"))
         self.assertIsInstance(config2.get_specs().get_spec("moving_step"), FloatParam)
@@ -32,9 +32,9 @@ class TestConfig(BaseTestCase):
         robot_move = ProcessFactory.create_task_model_from_type(RobotMove)
         self.assertEqual(robot_move.config.get_value("moving_step"), 0.1)
         robot_move.config.set_value("moving_step", 0.3)
-        robot_move.save_full()
+        robot_move.config.save()
 
-        config: Config = Config.get_by_id(robot_move.config.id)
+        config: Config = Config.get_by_id_and_check(robot_move.config.id)
         self.assertEqual(config.get_value("moving_step"), 0.3)
 
     def test_optional(self):

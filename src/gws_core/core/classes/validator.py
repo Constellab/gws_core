@@ -320,12 +320,16 @@ class StrValidator(Validator):
 
     _min_length: int = -1
     _max_length: int = sys.maxsize
+    _regex: "re.Pattern | None" = None
+    _regex_description: str | None = None
 
     def __init__(
         self,
         allowed_values: list[str] | None = None,
         min_length: int | None = None,
         max_length: int | None = None,
+        regex: str | None = None,
+        regex_description: str | None = None,
     ):
         super().__init__(
             type_=str,
@@ -351,6 +355,15 @@ class StrValidator(Validator):
                 f"The min length ({self._min_length}) must be grater than the max length ({self._max_length})"
             )
 
+        if regex is not None:
+            try:
+                self._regex = re.compile(regex)
+            except re.error as err:
+                raise BadRequestException(
+                    f"The regex '{regex}' is not a valid regular expression: {err}"
+                ) from err
+        self._regex_description = regex_description
+
     def _from_str(self, str_value: str) -> str:
         return str_value
 
@@ -363,6 +376,14 @@ class StrValidator(Validator):
         if len(validated_value) > self._max_length:
             raise BadRequestException(
                 f"The string length is {len(validated_value)}. It exceeds the max length of {self._max_length}"
+            )
+        if self._regex is not None and self._regex.fullmatch(validated_value) is None:
+            if self._regex_description:
+                raise BadRequestException(
+                    f"The value '{validated_value}' is invalid. It must be: {self._regex_description}"
+                )
+            raise BadRequestException(
+                f"The value '{validated_value}' does not match the required pattern '{self._regex.pattern}'"
             )
         return validated_value
 

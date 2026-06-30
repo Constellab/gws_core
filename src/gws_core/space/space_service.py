@@ -281,7 +281,7 @@ class SpaceService(SpaceServiceBase):
                     "oldModifications": old_modifications.to_json_dict()
                     if old_modifications
                     else None,
-                    "userId": CurrentUserService.get_current_user().id,
+                    "userId": CurrentUserService.get_and_check_current_user().id,
                 },
                 self._get_request_header(),
                 raise_exception_if_error=True,
@@ -609,6 +609,7 @@ class SpaceService(SpaceServiceBase):
             space_folder_users: list[SpaceFolderUser] = []
             for user_json in result.json():
                 user_dto = UserDTO.from_user_space(user_json["user"])
+                assert user_dto is not None
                 space_folder_users.append(
                     SpaceFolderUser(user=user_dto, role=SpaceRootFolderUserRole(user_json["role"]))
                 )

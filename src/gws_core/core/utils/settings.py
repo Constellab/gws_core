@@ -37,6 +37,13 @@ class Settings:
     # Not persisted to disk: it describes the current invocation, not config.
     _is_test: bool = False
 
+    # Runtime-only flag set when this process starts the uvicorn HTTP server
+    # (``gws server run``). Stays False in CLI subprocesses (e.g. the scenario
+    # queue runner) and in tests. Used by ``ScenarioProxy.run()`` to refuse
+    # fork-based execution inside a request handler, which would duplicate the
+    # server socket and block other HTTP requests.
+    _is_http_server: bool = False
+
     _setting_instance: Optional["Settings"] = None
 
     SETTINGS_NAME = "settings.json"
@@ -718,6 +725,17 @@ class Settings:
 
     def set_is_test(self, is_test: bool) -> None:
         self._is_test = is_test
+
+    @property
+    def is_http_server(self) -> bool:
+        """Whether this process is running the uvicorn HTTP server.
+
+        False in CLI subprocesses (e.g. the scenario queue runner) and tests.
+        """
+        return self._is_http_server
+
+    def set_is_http_server(self, is_http_server: bool) -> None:
+        self._is_http_server = is_http_server
 
     @property
     def name(self):

@@ -70,7 +70,6 @@ class EntityTagDTO(BaseModelDTO):
     is_community_tag_key: bool | None = None
 
 
-
 class EntityTagFullDTO(EntityTagDTO):
     is_propagable: bool
     created_at: datetime
@@ -82,8 +81,8 @@ class EntityTagFullDTO(EntityTagDTO):
 class NewTagDTO(BaseModelDTO):
     key: str
     value: str
-    is_community_tag_key: bool | None = None
-    is_community_tag_value: bool | None = None
+    is_community_tag_key: bool = False
+    is_community_tag_value: bool = False
     additional_info: dict | None = None
 
 
@@ -102,6 +101,28 @@ class TagPropagationImpactDTO(BaseModelDTO):
 
     tags: list[TagDTO]
     impacted_entities: list[EntityNavGroupDTO]
+
+
+class AddTagsToEntitiesBodyDTO(BaseModelDTO):
+    """Body to add tags to several entities at once."""
+
+    entity_ids: list[str]
+    tags: list[NewTagDTO]
+    propagate: bool = False
+
+
+class CheckPropagationAddBodyDTO(BaseModelDTO):
+    """Body to check the propagation impact of adding tags to several entities."""
+
+    entity_ids: list[str]
+    tags: list[NewTagDTO]
+
+
+class CheckPropagationDeleteBodyDTO(BaseModelDTO):
+    """Body to check the propagation impact of deleting a tag from several entities."""
+
+    entity_ids: list[str]
+    tag: NewTagDTO
 
 
 class TagKeyModelCreateDTO(BaseModelDTO):

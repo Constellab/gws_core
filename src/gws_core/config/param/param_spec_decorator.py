@@ -14,6 +14,7 @@ class ParamSpecCategory(Enum):
     PARAM_SET = "param_set"
     DYNAMIC_PARAM = "dynamic_param"
     COMPUTED = "computed"
+    CODE_PARAM = "code_param"
 
 
 # Param spec types annotated with @param_spec_decorator, indexed by category.
@@ -23,11 +24,11 @@ PARAM_SPEC_TYPES_BY_CATEGORY: dict[ParamSpecCategory, list[type[ParamSpec]]] = {
 
 
 def param_spec_decorator(
-    type_: ParamSpecCategory = ParamSpecCategory.SIMPLE,
+    category: ParamSpecCategory = ParamSpecCategory.SIMPLE,
 ) -> Callable:
     """Decorator of ParamSpec class to add it to the list of param spec types.
 
-    :param type_: Category of the param spec.
+    :param category: Category of the param spec.
     """
 
     def decorator(param_class: type[ParamSpec]):
@@ -35,8 +36,8 @@ def param_spec_decorator(
 
         if not issubclass(param_class, ParamSpec):
             raise Exception("The param decorator can only be used on a ParamSpec child class")
-        param_class.__category__ = type_
-        PARAM_SPEC_TYPES_BY_CATEGORY[type_].append(param_class)
+        param_class.__category__ = category
+        PARAM_SPEC_TYPES_BY_CATEGORY[category].append(param_class)
         return param_class
 
     return decorator

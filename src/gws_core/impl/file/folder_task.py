@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -34,7 +35,7 @@ class FolderExporter(ResourceExporter):
     def export_to_path(
         self, source: Resource, dest_dir: str, params: ConfigParams, target_type: type[FSNode]
     ) -> File:
-        folder: Folder = source
+        folder = cast(Folder, source)
         tmp_dir = self.create_tmp_dir()
         destination = os.path.join(tmp_dir, FileHelper.get_dir_name(folder.path))
 
@@ -42,15 +43,15 @@ class FolderExporter(ResourceExporter):
 
         compression = params.get_value("compression")
         if compression == "zip":
-            destination += folder_name + ".zip"
+            destination += ".zip"
             self.log_info_message("Compressing folder " + folder_name + " to " + destination)
             ZipCompress.compress_dir(folder.path, destination)
         elif compression == "tar":
-            destination += folder_name + ".tar"
+            destination += ".tar"
             self.log_info_message("Compressing folder " + folder_name + " to " + destination)
             TarCompress.compress_dir(folder.path, destination)
         elif compression == "tar.gz":
-            destination += folder_name + ".tar.gz"
+            destination += ".tar.gz"
             self.log_info_message("Compressing folder " + folder_name + " to " + destination)
             TarGzCompress.compress_dir(folder.path, destination)
         else:

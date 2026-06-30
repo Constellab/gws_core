@@ -1,9 +1,10 @@
+import re
 import sys
 import warnings
 from abc import abstractmethod
 from typing import Any
 
-from typing_extensions import TypedDict
+from typing_extensions import Self, TypedDict
 
 from gws_core.config.param.param_spec_decorator import (
     ParamSpecCategory,
@@ -20,6 +21,7 @@ from ...core.classes.validator import (
 )
 from ...core.exception.exceptions.bad_request_exception import BadRequestException
 from .param_types import (
+    ParamSpecAiDescriptionDTO,
     ParamSpecDTO,
     ParamSpecSimpleDTO,
     ParamSpecType,
@@ -85,6 +87,11 @@ class ParamSpec:
 
     # Category of the param spec, set by the @param_spec_decorator
     __category__: ParamSpecCategory
+
+    # Whether this type should be offered to the AI form-builder catalog.
+    # Off by default — only the generic, user-authorable field types opt in
+    # (see describe_for_ai). Lab-specific / system params stay out.
+    ai_catalog_member: bool = False
 
     def __init__(
         self,
@@ -205,11 +212,54 @@ class ParamSpec:
         pass
 
     @classmethod
-    def empty(cls) -> "ParamSpec":
+    def get_category(cls) -> ParamSpecCategory | None:
+        """The :class:`ParamSpecCategory` this type was registered with by the
+        ``@param_spec_decorator``. None if the class was never decorated."""
+        return getattr(cls, "__category__", None)
+
+    @classmethod
+    def empty(cls) -> Self:
         return cls()
 
     @classmethod
-    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSpec":
+    def ai_example_spec(cls) -> "ParamSpec":
+        """A representative, valid instance of this type used as the example in
+        :meth:`describe_for_ai`. Override to show meaningful constraints
+        (e.g. min/max). The default is a bare instance with a human_name."""
+        return cls(human_name="Example field")
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        """One-line description of what this field type is for. Override per type."""
+        return f"A '{cls.get_param_spec_type().value}' field."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        """Maps this type's AI-relevant ``additional_info`` constraint keys to a
+        human explanation. Default: none. Override on types that expose
+        constraints (min/max, lengths, multiple, ...)."""
+        return {}
+
+    @classmethod
+    def describe_for_ai(cls, example_key: str = "example_field") -> ParamSpecAiDescriptionDTO:
+        """Self-describe this param type for an AI form-builder.
+
+        Returns the type tag, a one-line summary, the meaning of each
+        AI-relevant ``additional_info`` key, and a real example spec serialized
+        exactly as ``ConfigSpecs.from_json`` expects. Built from
+        :meth:`ai_example_spec` / :meth:`ai_summary` / :meth:`ai_additional_info_doc`
+        so a type only overrides the small pieces it cares about. Keeping this on
+        the type (not in the AI service) means a new param type ships its own
+        catalog entry."""
+        return ParamSpecAiDescriptionDTO(
+            type=cls.get_param_spec_type(),
+            summary=cls.ai_summary(),
+            additional_info_doc=cls.ai_additional_info_doc(),
+            example={example_key: cls.ai_example_spec().to_dto().to_json_dict()},
+        )
+
+    @classmethod
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> Self:
         param_spec = cls.empty()
         param_spec.default_value = spec_dto.default_value
         param_spec.optional = spec_dto.optional
@@ -233,6 +283,11 @@ class StrParamAdditionalInfo(TypedDict):
     min_length: int | None
     max_length: int | None
     allowed_values: list[str] | None
+    # A regular expression the value must fully match (re.fullmatch)
+    regex: str | None
+    # Plain-language description of the expected format, shown to the user and
+    # used in the validation error message instead of the raw regex
+    regex_description: str | None
 
 
 @param_spec_decorator()
@@ -251,6 +306,8 @@ class StrParam(ParamSpec):
         human_name: str | None = None,
         short_description: str | None = None,
         allowed_values: list[str] | None = None,
+        regex: str | None = None,
+        regex_description: str | None = None,
     ) -> None:
         """
         :param default_value: Default value, if None, and optional is false, the config is mandatory
@@ -267,16 +324,43 @@ class StrParam(ParamSpec):
         :param allowed_values: DEPRECATED(gws_core 0.22, remove in 0.24): use SelectParam instead.
                         If present, the param value must be in the array
         :type allowed_values: Optional[List[str]]
+        :param regex: A regular expression the value must fully match (uses re.fullmatch, so
+                        the whole string must conform; anchor explicitly for a partial match).
+                        If set, regex_description is required.
+        :type regex: Optional[str]
+        :param regex_description: Plain-language description of the expected format. Shown to the
+                        user and used in the validation error message instead of the raw regex.
+                        Mandatory when regex is set.
+        :type regex_description: Optional[str]
         """
 
         if allowed_values is not None:
             # DEPRECATED(gws_core 0.22, remove in 0.24): allowed_values -> use SelectParam
             _warn_allowed_values_deprecated("StrParam")
 
+        if regex is not None:
+            # A regex without a plain-language description is useless to the end user
+            # (the error message would show the raw pattern), so require both together.
+            if not regex_description:
+                raise BadRequestException(
+                    "'regex_description' is required when 'regex' is set on StrParam: "
+                    "it is the human-readable explanation shown to the user."
+                )
+            # Fail fast on an invalid pattern (an authoring error) at construction
+            # rather than when validate() later builds the StrValidator.
+            try:
+                re.compile(regex)
+            except re.error as err:
+                raise BadRequestException(
+                    f"The regex '{regex}' is not a valid regular expression: {err}"
+                ) from err
+
         self.additional_info = {
             "min_length": min_length,
             "max_length": max_length,
             "allowed_values": allowed_values,
+            "regex": regex,
+            "regex_description": regex_description,
         }
         super().__init__(
             default_value=default_value,
@@ -290,10 +374,14 @@ class StrParam(ParamSpec):
         if value is None:
             return value
 
+        # StrValidator checks the user input against the regex (re.fullmatch) when
+        # one is set, raising with regex_description in the message on a mismatch.
         str_validator = StrValidator(
             allowed_values=self.additional_info.get("allowed_values"),
             min_length=self.additional_info.get("min_length"),
             max_length=self.additional_info.get("max_length"),
+            regex=self.additional_info.get("regex"),
+            regex_description=self.additional_info.get("regex_description"),
         )
         return str_validator.validate(value)
 
@@ -301,18 +389,29 @@ class StrParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.STRING
 
-    def _check_allowed_values(self, allowed_values: list[str] | None) -> None:
-        if allowed_values is not None:
-            if not isinstance(allowed_values, (list, tuple)):
-                raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in 'str' param, it must be an list or a tuple"
-                )
+    ai_catalog_member = True
 
-            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
-                raise BadRequestException("Allowed values are not allowed in the 'str' param")
-            self.additional_info["allowed_values"] = allowed_values
-        else:
-            self.additional_info["allowed_values"] = None
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "Free text on a single line (names, codes, short answers)."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "min_length": "Minimum number of characters (inclusive), or null.",
+            "max_length": "Maximum number of characters (inclusive), or null.",
+            "regex": "A regular expression the value must fully match, or null.",
+            "regex_description": "Plain-language description of the expected format, shown to the user, or null.",
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> "StrParam":
+        return cls(
+            human_name="Full name",
+            short_description="The person's name",
+            min_length=1,
+            max_length=120,
+        )
 
 
 @param_spec_decorator()
@@ -362,6 +461,16 @@ class TextParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.TEXT
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "Multi-line free text (paragraphs, comments, long answers)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "TextParam":
+        return cls(human_name="Comments", short_description="Any extra notes", optional=True)
+
 
 @param_spec_decorator()
 class BoolParam(ParamSpec):
@@ -369,21 +478,17 @@ class BoolParam(ParamSpec):
 
     def __init__(
         self,
-        default_value: Any | None = False,
-        optional: bool = False,
+        default_value: bool = False,
         visibility: ParamSpecVisibilty = "public",
         human_name: str | None = None,
         short_description: str | None = None,
     ) -> None:
         """
-        :param default_value: Default value, if None, and optional is false, the config is mandatory
-                        If a value is provided there is no need to set the optional
-                        Setting optional to True, allows default None value
-        :param optional: See default value
-        :type optional: Optional[str]
+        :param default_value: Default value of the param. A BoolParam is always optional;
+                        when no value is provided it falls back to the default value (False by default).
+        :type default_value: bool
         :param visibility: Visibility of the param, see doc on type ParamSpecVisibilty for more info
         :type visibility: ParamSpecVisibilty
-        :type default: Optional[ConfigParamType]
         :param human_name: Human readable name of the param, showed in the interface
         :type human_name: Optional[str]
         :param short_description: Description of the param, showed in the interface
@@ -392,22 +497,43 @@ class BoolParam(ParamSpec):
 
         super().__init__(
             default_value=default_value,
-            optional=optional,
+            optional=True,
             visibility=visibility,
             human_name=human_name,
             short_description=short_description,
         )
 
     def validate(self, value: Any) -> bool:
+        # A bool is never null: a missing/None value means "unchecked" (False).
         if value is None:
-            return value
+            return False
 
         bool_validator = BoolValidator()
         return bool_validator.validate(value)
 
     @classmethod
+    def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "BoolParam":
+        # A BoolParam is always optional (a missing value means "unchecked"),
+        # so re-assert the invariant after loading: the base implementation
+        # blindly copies ``spec_dto.optional`` and would otherwise let a DTO
+        # carrying ``optional=False`` produce a mandatory bool.
+        param_spec = super().load_from_dto(spec_dto, validate=validate)
+        param_spec.optional = True
+        return param_spec
+
+    @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.BOOL
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A yes/no (true/false) toggle."
+
+    @classmethod
+    def ai_example_spec(cls) -> "BoolParam":
+        return cls(human_name="Active", default_value=True)
 
 
 @param_spec_decorator()
@@ -573,20 +699,12 @@ class NumericParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         pass
 
-    def _check_allowed_values(self, allowed_values: list[Any] | None) -> None:
-        if allowed_values is not None:
-            if not isinstance(allowed_values, (list, tuple)):
-                raise BadRequestException(
-                    f"Invalid allowed values '{allowed_values}' in '{self.get_param_spec_type()}' param, it must be an list or a tuple"
-                )
-
-            if self.additional_info is not None and self.additional_info["allowed_values"] is None:
-                raise BadRequestException(
-                    f"Allowed values are not allowed in the '{self.get_param_spec_type()}' param"
-                )
-            self.additional_info["allowed_values"] = allowed_values
-        else:
-            self.additional_info["allowed_values"] = None
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "min_value": "Minimum allowed value (inclusive), or null.",
+            "max_value": "Maximum allowed value (inclusive), or null.",
+        }
 
 
 @param_spec_decorator()
@@ -608,6 +726,22 @@ class IntParam(NumericParam):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.INT
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A whole number (counts, quantities, years)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "IntParam":
+        return cls(
+            human_name="Age",
+            short_description="Age in years",
+            optional=True,
+            min_value=0,
+            max_value=120,
+        )
+
 
 @param_spec_decorator()
 class FloatParam(NumericParam):
@@ -627,3 +761,13 @@ class FloatParam(NumericParam):
     @classmethod
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.FLOAT
+
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A decimal number (measurements, rates, amounts)."
+
+    @classmethod
+    def ai_example_spec(cls) -> "FloatParam":
+        return cls(human_name="Mass", short_description="Mass in grams", min_value=0)

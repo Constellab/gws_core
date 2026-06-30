@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, TypeVar, overload
 
+from typing_extensions import Self
+
 from gws_core.config.config_params import ConfigParamsDict
+from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
@@ -53,7 +56,7 @@ class ProcessProxy:
     def get_process_type(self) -> type[Process]:
         return self._process_model.get_process_type()
 
-    def refresh(self) -> ProcessProxy:
+    def refresh(self) -> Self:
         self._process_model = self._process_model.refresh()
         return self
 
@@ -182,6 +185,88 @@ class ProcessProxy:
     def has_dynamic_outputs(self) -> bool:
         return self._process_model.outputs.is_dynamic
 
+    def has_dynamic_param(self, config_spec_name: str) -> bool:
+        """Return True if the named config spec is a dynamic param spec.
+
+        :param config_spec_name: Name of the config spec to check
+        :type config_spec_name: str
+        :return: True if the config spec exists and is a dynamic param
+        :rtype: bool
+        """
+        if not self._process_model.config.has_spec(config_spec_name):
+            return False
+        return isinstance(self._process_model.config.get_spec(config_spec_name), DynamicParam)
+
+    def _check_dynamic_input_manipulation(self) -> str:
+        """Check that the process can have its dynamic input ports manipulated.
+
+        Verifies that the process has a parent protocol and that its inputs are dynamic.
+
+        :raises Exception: if the process has no parent protocol or its inputs are not dynamic
+        :return: the id of the parent protocol
+        :rtype: str
+        """
+        if not self.has_dynamic_inputs():
+            raise Exception(f"The process '{self.instance_name}' does not have dynamic inputs")
+
+        parent_protocol_id = self._process_model.parent_protocol_id
+        if parent_protocol_id is None:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol, "
+                "cannot manipulate dynamic input ports"
+            )
+
+        return parent_protocol_id
+
+    def _check_dynamic_output_manipulation(self) -> str:
+        """Check that the process can have its dynamic output ports manipulated.
+
+        Verifies that the process has a parent protocol and that its outputs are dynamic.
+
+        :raises Exception: if the process has no parent protocol or its outputs are not dynamic
+        :return: the id of the parent protocol
+        :rtype: str
+        """
+        if not self.has_dynamic_outputs():
+            raise Exception(f"The process '{self.instance_name}' does not have dynamic outputs")
+
+        parent_protocol_id = self._process_model.parent_protocol_id
+        if parent_protocol_id is None:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol, "
+                "cannot manipulate dynamic output ports"
+            )
+
+        return parent_protocol_id
+
+    def _check_dynamic_param_manipulation(self, config_spec_name: str) -> str:
+        """Check that the process can have its dynamic param specs manipulated.
+
+        Verifies that the process has a parent protocol and that the named config spec
+        is a dynamic param spec.
+
+        :param config_spec_name: Name of the dynamic config spec (e.g. 'params')
+        :type config_spec_name: str
+        :raises Exception: if the process has no parent protocol or the config spec
+                           is not a dynamic param
+        :return: the id of the parent protocol
+        :rtype: str
+        """
+        if not self.has_dynamic_param(config_spec_name):
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a dynamic param "
+                f"config spec named '{config_spec_name}'"
+            )
+
+        parent_protocol_id = self._process_model.parent_protocol_id
+        if parent_protocol_id is None:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol, "
+                "cannot manipulate dynamic param specs"
+            )
+
+        return parent_protocol_id
+
     ############################################### PORTS #########################################
 
     def get_input_port(self, port_name: str) -> ProcessWithPort:
@@ -217,11 +302,9 @@ class ProcessProxy:
         :return: The newly added port
         :rtype: ProcessWithPort
         """
-        if not self.has_dynamic_inputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic inputs")
-
+        parent_protocol_id = self._check_dynamic_input_manipulation()
         update = ProtocolService.add_dynamic_input_port_to_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_spec_dto
+            parent_protocol_id, self.instance_name, port_spec_dto
         )
 
         if update.process:
@@ -239,11 +322,9 @@ class ProcessProxy:
         :param port_spec_dto: New specification for the port
         :type port_spec_dto: IOSpecDTO
         """
-        if not self.has_dynamic_inputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic inputs")
-
+        parent_protocol_id = self._check_dynamic_input_manipulation()
         update = ProtocolService.update_dynamic_input_port_of_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_name, port_spec_dto
+            parent_protocol_id, self.instance_name, port_name, port_spec_dto
         )
 
         if update.process:
@@ -255,11 +336,9 @@ class ProcessProxy:
         :param port_name: Name of the port to delete
         :type port_name: str
         """
-        if not self.has_dynamic_inputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic inputs")
-
+        parent_protocol_id = self._check_dynamic_input_manipulation()
         update = ProtocolService.delete_dynamic_input_port_of_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_name
+            parent_protocol_id, self.instance_name, port_name
         )
 
         if update.process:
@@ -273,11 +352,9 @@ class ProcessProxy:
         :return: The newly added port
         :rtype: ProcessWithPort
         """
-        if not self.has_dynamic_outputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic outputs")
-
+        parent_protocol_id = self._check_dynamic_output_manipulation()
         update = ProtocolService.add_dynamic_output_port_to_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_spec_dto
+            parent_protocol_id, self.instance_name, port_spec_dto
         )
 
         if update.process:
@@ -295,11 +372,9 @@ class ProcessProxy:
         :param port_spec_dto: New specification for the port
         :type port_spec_dto: IOSpecDTO
         """
-        if not self.has_dynamic_outputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic outputs")
-
+        parent_protocol_id = self._check_dynamic_output_manipulation()
         update = ProtocolService.update_dynamic_output_port_of_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_name, port_spec_dto
+            parent_protocol_id, self.instance_name, port_name, port_spec_dto
         )
 
         if update.process:
@@ -311,11 +386,9 @@ class ProcessProxy:
         :param port_name: Name of the port to delete
         :type port_name: str
         """
-        if not self.has_dynamic_outputs():
-            raise Exception(f"The process '{self.instance_name}' does not have dynamic outputs")
-
+        parent_protocol_id = self._check_dynamic_output_manipulation()
         update = ProtocolService.delete_dynamic_output_port_of_process(
-            self._process_model.parent_protocol_id, self.instance_name, port_name
+            parent_protocol_id, self.instance_name, port_name
         )
 
         if update.process:
@@ -335,8 +408,9 @@ class ProcessProxy:
         :param spec_dto: Specification of the parameter
         :type spec_dto: ParamSpecDTO
         """
+        parent_protocol_id = self._check_dynamic_param_manipulation(config_spec_name)
         update = ProtocolService.add_dynamic_param_spec_of_process(
-            self._process_model.parent_protocol_id,
+            parent_protocol_id,
             self.instance_name,
             config_spec_name,
             param_name,
@@ -358,8 +432,9 @@ class ProcessProxy:
         :param spec_dto: New specification of the parameter
         :type spec_dto: ParamSpecDTO
         """
+        parent_protocol_id = self._check_dynamic_param_manipulation(config_spec_name)
         update = ProtocolService.update_dynamic_param_spec_of_process(
-            self._process_model.parent_protocol_id,
+            parent_protocol_id,
             self.instance_name,
             config_spec_name,
             param_name,
@@ -377,8 +452,9 @@ class ProcessProxy:
         :param param_name: Name of the parameter to remove
         :type param_name: str
         """
+        parent_protocol_id = self._check_dynamic_param_manipulation(config_spec_name)
         update = ProtocolService.remove_dynamic_param_spec_of_process(
-            self._process_model.parent_protocol_id,
+            parent_protocol_id,
             self.instance_name,
             config_spec_name,
             param_name,
@@ -454,17 +530,23 @@ class ProcessProxy:
 
     def reset_process(self) -> None:
         """Reset the process, clearing its execution results and impacted entities."""
-        EntityNavigatorService.reset_process_of_protocol_id(
-            self._process_model.parent_protocol_id, self.instance_name
-        )
+        parent_protocol_id = self._process_model.parent_protocol_id
+        if parent_protocol_id is None:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol, cannot reset"
+            )
+        EntityNavigatorService.reset_process_of_protocol_id(parent_protocol_id, self.instance_name)
 
     def delete_process(self) -> None:
         """Delete the process from its parent protocol.
         If the process is not in draft status, it is reset first.
         """
+        parent_protocol_id = self._process_model.parent_protocol_id
+        if parent_protocol_id is None:
+            raise Exception(
+                f"The process '{self.instance_name}' does not have a parent protocol, cannot delete"
+            )
         if not self._process_model.is_draft:
             self.reset_process()
 
-        ProtocolService.delete_process_of_protocol_id(
-            self._process_model.parent_protocol_id, self.instance_name
-        )
+        ProtocolService.delete_process_of_protocol_id(parent_protocol_id, self.instance_name)

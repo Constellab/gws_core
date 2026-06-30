@@ -1,4 +1,3 @@
-
 from fastapi.param_functions import Depends
 
 from gws_core.community.community_dto import CommunityGetTagKeysBody
@@ -6,6 +5,9 @@ from gws_core.config.param.param_types import ParamSpecSimpleDTO
 from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.tag.tag_dto import (
+    AddTagsToEntitiesBodyDTO,
+    CheckPropagationAddBodyDTO,
+    CheckPropagationDeleteBodyDTO,
     EntityTagDTO,
     EntityTagFullDTO,
     NewTagDTO,
@@ -39,7 +41,7 @@ def share_tag_to_community(
     shared_tag_key = TagService.share_tag_to_community(
         tag_key, body.publish_mode, body.space_selected
     )
-    return shared_tag_key.to_dto() if shared_tag_key else None
+    return shared_tag_key.to_dto()
 
 
 @core_app.post(
@@ -143,7 +145,7 @@ def search_all_keys(
 
 @core_app.get("/tag/search/key/{key}", tags=["Tag"], summary="Search tags by key")
 def search_keys(
-    key: str | None,
+    key: str,
     page: int = 1,
     number_of_items_per_page: int = 20,
     _=Depends(AuthorizationService.check_user_access_token_or_app),
@@ -166,7 +168,9 @@ def search_all_values(
     Search tags by key.
     """
 
-    return TagService.search_values(key, None, page, number_of_items_per_page).to_dto(TagValueModelDTO)
+    return TagService.search_values(key, None, page, number_of_items_per_page).to_dto(
+        TagValueModelDTO
+    )
 
 
 @core_app.get("/tag/search/key/{key}/value/{value}", tags=["Tag"], summary="Search tags by value")
@@ -181,7 +185,9 @@ def search_values(
     Search tags by key.
     """
 
-    return TagService.search_values(key, value, page, number_of_items_per_page).to_dto(TagValueModelDTO)
+    return TagService.search_values(key, value, page, number_of_items_per_page).to_dto(
+        TagValueModelDTO
+    )
 
 
 @core_app.post(
@@ -281,7 +287,7 @@ def get_tag_value_by_key_and_value(
     key: str,
     tag_value_dto: TagValueEditDTO,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> TagValueModelDTO:
+) -> TagValueModelDTO | None:
     """
     Get tag value by key and value.
     """
@@ -352,11 +358,11 @@ def delete_registered_tag(
 @core_app.get("/tag/{key}", tags=["Tag"], summary="Get tag by key")
 def get_tag_key_by_key(
     key: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> TagKeyModelDTO:
+) -> TagKeyModelDTO | None:
     """
     Get tag by key
     """
-    tag_key = TagService.get_by_key(key)
+    tag_key = TagService.get_tag_key_model(key)
     return tag_key.to_dto() if tag_key else None
 
 
@@ -404,6 +410,22 @@ def add_tag(
     return [tag.to_dto() for tag in new_tags]
 
 
+@core_app.post(
+    "/tag/entities/{entity_type}", tags=["Tag"], summary="Save tags for multiple entities"
+)
+def add_tags_to_entities(
+    entity_type: TagEntityType,
+    body: AddTagsToEntitiesBodyDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> dict[str, list[EntityTagDTO]]:
+    new_tags = TagService.add_tag_dict_to_entities(
+        entity_type, body.entity_ids, body.tags, body.propagate
+    )
+    return {
+        entity_id: [tag.to_dto() for tag in tags] for entity_id, tags in new_tags.items()
+    }
+
+
 @core_app.delete(
     "/tag/entity/{entity_type}/{entity_id}/{tag_key}/{tag_value}",
     tags=["Tag"],
@@ -421,28 +443,26 @@ def delete_tag(
 
 ################################### CHECK PROPAGATION ####################################
 @core_app.post(
-    "/tag/check-propagation-add/{entity_type}/{entity_id}",
+    "/tag/check-propagation-add/{entity_type}",
     tags=["Tag"],
     summary="Check tag propagation impact for tags addition",
 )
 def check_propagation_add_tags(
     entity_type: TagEntityType,
-    entity_id: str,
-    tags: list[NewTagDTO],
+    body: CheckPropagationAddBodyDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TagPropagationImpactDTO:
-    return TagService.check_propagation_add_tags(entity_type, entity_id, tags)
+    return TagService.check_propagation_add_tags(entity_type, body.entity_ids, body.tags)
 
 
 @core_app.post(
-    "/tag/check-propagation-delete/{entity_type}/{entity_id}",
+    "/tag/check-propagation-delete/{entity_type}",
     tags=["Tag"],
     summary="Check tag propagation impact for tag deletion",
 )
 def check_propagation_delete_tag(
     entity_type: TagEntityType,
-    entity_id: str,
-    tag: NewTagDTO,
+    body: CheckPropagationDeleteBodyDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> TagPropagationImpactDTO:
-    return TagService.check_propagation_delete_tag(entity_type, entity_id, tag)
+    return TagService.check_propagation_delete_tag(entity_type, body.entity_ids, body.tag)

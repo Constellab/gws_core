@@ -93,7 +93,15 @@ class BrickHelper:
         """
 
         brick_info = cls.get_brick_info_and_check(obj)
+        if not brick_info.version:
+            raise Exception(f"Brick '{brick_info.name}' has no version")
         return Version(brick_info.version)
+
+    @classmethod
+    def get_gws_core_version(cls) -> str | None:
+        """Return the version of the gws_core brick, or None if not found."""
+        brick_info = cls.get_brick_info(cls.GWS_CORE)
+        return brick_info.version if brick_info else None
 
     @classmethod
     def get_all_brick_versions(cls) -> list[BrickVersion]:

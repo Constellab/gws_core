@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.compress.zip_compress import ZipCompress
@@ -49,13 +50,15 @@ class ResourceSetExporter(ResourceExporter):
                     exporter_typing: TaskTyping = ConverterService.get_resource_exporter_from_name(
                         resource_typing_name
                     )
-                    exporters[resource_typing_name] = exporter_typing.get_type()
+                    exporters[resource_typing_name] = cast(
+                        "type[ResourceExporter]", exporter_typing.get_type()
+                    )
                 except Exception:
                     Logger.info(f"Can't find exporter for resource {resource_typing_name}")
                     continue
 
             # store the exporter for the resource type
-            exporter: ResourceExporter = exporters[resource_typing_name]
+            exporter: type[ResourceExporter] = exporters[resource_typing_name]
 
             # skip the exporter if 1 config is not optional
             if not exporter.config_specs.all_config_are_optional():
@@ -64,7 +67,7 @@ class ResourceSetExporter(ResourceExporter):
                 )
 
             # call the exporter without config
-            fs_nodes.append(exporter.call(resource, params={}))
+            fs_nodes.append(cast(FSNode, exporter.call(resource, params={})))
 
         # create a zip file with all the exported files
         temp_dir = self.create_tmp_dir()

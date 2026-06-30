@@ -147,7 +147,7 @@ class TestFormSaveEvents(BaseTestCase):
             {
                 "samples": ParamSet(
                     ConfigSpecs({"mass": FloatParam(human_name="Mass")}),
-                    optional=True,
+                    min_number_of_occurrences=0,
                 )
             }
         )

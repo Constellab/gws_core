@@ -18,6 +18,7 @@ class LabDTO(BaseModelDTO):
     space_name: str | None = None
     credentials_id: str | None = None
     front_url: str | None = None
+    gws_core_version: str | None = None
 
     def get_api_url(self) -> str:
         """Build the API URL for this lab from its domain and mode.
@@ -45,3 +46,9 @@ class CreateLabFromCodeDTO(BaseModelDTO):
 
     code: str
     lab: LabDTO
+
+
+class UpdateLabDomainDTO(BaseModelDTO):
+    """DTO for updating the domain of a lab."""
+
+    domain: str

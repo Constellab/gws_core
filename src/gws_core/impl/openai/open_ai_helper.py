@@ -1,4 +1,3 @@
-
 from openai import OpenAI
 
 from gws_core.core.utils.settings import Settings
@@ -23,7 +22,7 @@ class OpenAiHelper:
         """
         client = OpenAI(api_key=Settings.get_open_ai_api_key())
 
-        response = client.chat.completions.create(model="gpt-4o", messages=chat_messages)
+        response = client.chat.completions.create(model="gpt-5.4", messages=chat_messages)
 
         return response.choices[0].message.content
 

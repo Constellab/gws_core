@@ -48,6 +48,7 @@ class ResourceTypingDTO(TypingFullDTO):
         else:
             markdown += "\n\nNo attribute."
 
-        markdown += self.methods.to_markdown(self.human_name)
+        if self.methods:
+            markdown += self.methods.to_markdown(self.human_name)
 
         return markdown

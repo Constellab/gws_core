@@ -1,4 +1,5 @@
 import subprocess
+import traceback
 from typing import Annotated
 
 import typer
@@ -17,6 +18,17 @@ from gws_cli.utils.brick_cli_service import BrickCliService
 from gws_cli.utils.brick_configure_service import BrickConfigureService
 
 app = typer.Typer(help="Generate and manage bricks - reusable components for data processing")
+
+
+def _print_error(prefix: str, e: Exception) -> None:
+    """Print an exception to stderr with its type and full traceback.
+
+    Some exceptions (e.g. a bare KeyError) have an unhelpful str() that only shows the key
+    (e.g. 'gws_ai_toolkit'), so we always include the exception type and the traceback to
+    make the failure diagnosable.
+    """
+    typer.echo(f"{prefix}: {type(e).__name__}: {e}", err=True)
+    typer.echo(traceback.format_exc(), err=True)
 
 
 @app.command("generate", help="Generate a new brick with boilerplate code and structure")
@@ -229,7 +241,7 @@ def technical_doc_push(
     try:
         BrickCliService.push_technical_doc(brick_dir)
     except Exception as e:
-        typer.echo(f"Error pushing technical documentation: {e}", err=True)
+        _print_error("Error pushing technical documentation", e)
         raise typer.Exit(1) from e
     typer.echo("Successfully pushed technical documentation")
 
@@ -328,6 +340,6 @@ def version_push(
         try:
             BrickCliService.push_technical_doc(brick_dir)
         except Exception as e:
-            typer.echo(f"Error pushing technical documentation: {e}", err=True)
+            _print_error("Error pushing technical documentation", e)
             raise typer.Exit(1) from e
         typer.echo("Successfully pushed technical documentation")

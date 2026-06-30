@@ -16,7 +16,7 @@ from gws_core.user.user_dto import UserDTO
 # DTO to create/update a scenario
 class ScenarioSaveDTO(BaseModelDTO):
     folder_id: str | None = None
-    title: str | None = None
+    title: str = ""
     scenario_template_id: str | None = None
     scenario_template_json: dict | None = None
 
@@ -62,7 +62,7 @@ class ScenarioSimpleDTO(BaseModelDTO):
 
 
 class ScenarioProgressDTO(BaseModelDTO):
-    progress: int | None = None
+    progress: float | None = None
     last_message: ProgressBarMessageDTO | None = None
 
     def get_last_message_content(self) -> str | None:

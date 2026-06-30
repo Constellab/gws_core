@@ -44,9 +44,7 @@ class CommunityService:
         return CommunityAgentVersionDTO.from_json(response.json())
 
     @classmethod
-    def get_brick_version_info(
-        cls, brick_name: str, brick_version: str
-    ) -> HnBrickVersionInfoDTO:
+    def get_brick_version_info(cls, brick_name: str, brick_version: str) -> HnBrickVersionInfoDTO:
         """
         Get repository info for a brick at a given version, including the
         matching GLAB_VERSION exposed under `technicalInfo`.
@@ -272,7 +270,7 @@ class CommunityService:
         cls,
         spaces_filter: list[str],
         key_filter: str,
-        label_filter: str,
+        label_filter: str | None,
         personal_only: bool,
         page: int,
         number_of_items_per_page: int,

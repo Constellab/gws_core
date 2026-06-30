@@ -10,7 +10,7 @@ class TypingSearchBuilder(SearchBuilder[Typing]):
     def __init__(self, type_: type[Typing] = Typing) -> None:
         super().__init__(type_, default_orders=[type_.human_name.asc()])
 
-    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression:
+    def convert_filter_to_expression(self, filter_: SearchFilterCriteria) -> Expression | None:
         # Special case for the tags to filter on all tags
         if filter_.key == "text":
             # on text key, full text search on title and description

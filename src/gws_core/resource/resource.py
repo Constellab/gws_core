@@ -168,16 +168,29 @@ class Resource(BaseTyping):
         """
         self.technical_info.add(technical_info)
 
-    def get_technical_info(self, key: str) -> TechnicalInfo:
+    def get_technical_info(self, key: str) -> TechnicalInfo | None:
         """Get the technical information of the resource
-
 
         :param key: key of the technical information
         :type key: str
-        :return: _description_
-        :rtype: TechnicalInfo
+        :return: the technical information, or None if the key does not exist
+        :rtype: TechnicalInfo | None
         """
         return self.technical_info.get(key)
+
+    def get_and_check_technical_info(self, key: str) -> TechnicalInfo:
+        """Get the technical information of the resource and raise if it does not exist
+
+        :param key: key of the technical information
+        :type key: str
+        :raises BadRequestException: if the key does not exist
+        :return: the technical information
+        :rtype: TechnicalInfo
+        """
+        technical_info = self.get_technical_info(key)
+        if technical_info is None:
+            raise BadRequestException(f"Technical info with key '{key}' not found")
+        return technical_info
 
     def check_resource(self) -> str | None:
         """You can redefine this method to define custom logic to check this resource.
@@ -300,6 +313,7 @@ class Resource(BaseTyping):
         :rtype: TypingStyle
         """
         style = TypingManager.get_typing_from_name_and_check(cls.get_typing_name()).style
+        assert style is not None
         return style.clone_with_overrides(
             icon_technical_name, icon_type, background_color, icon_color
         )
@@ -318,13 +332,13 @@ class Resource(BaseTyping):
         self.__model_id__ = model_id
 
     @final
-    def __set_kv_store__(self, kv_store: KVStore) -> None:
+    def __set_kv_store__(self, kv_store: KVStore | None) -> None:
         """Set the kv_store of the resource
         This method is called by the system when the resource is created,
         you should not call this method yourself
 
-        :param kv_store: kv_store
-        :type kv_store: KVStore
+        :param kv_store: kv_store, or None when the resource has no kv store
+        :type kv_store: KVStore | None
         """
         self.__kv_store__ = kv_store
 

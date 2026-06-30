@@ -21,7 +21,7 @@ class ModelService:
         Counts models
         """
 
-        model_type: type[Model] = TypingManager.get_type_from_name(typing_name)
+        model_type: type[Model] = TypingManager.get_and_check_type_from_name(typing_name)
 
         return cls.count_model_from_type(model_type)
 
@@ -54,7 +54,7 @@ class ModelService:
     def fetch_list_of_models(
         cls, typing_name: str, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Model]:
-        model_type: type[Model] = TypingManager.get_type_from_name(typing_name)
+        model_type: type[Model] = TypingManager.get_and_check_type_from_name(typing_name)
 
         if not issubclass(model_type, Model):
             raise BadRequestException("The requested type is not a Model")
@@ -68,7 +68,7 @@ class ModelService:
     def search(
         cls, typing_name: str, search_text: str, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[Model]:
-        base_type: type[Model] = TypingManager.get_type_from_name(typing_name)
+        base_type: type[Model] = TypingManager.get_and_check_type_from_name(typing_name)
 
         query = base_type.search(search_text)
         return Paginator(

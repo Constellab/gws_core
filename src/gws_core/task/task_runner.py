@@ -37,7 +37,7 @@ class TaskRunner:
     _task_type: type[Task]
     _input_specs: InputSpecs
     _output_specs: OutputSpecs
-    _inputs: dict[str, Resource]
+    _inputs: dict[str, Resource | None]
     _outputs: TaskOutputs | None
     _task_id: str | None
     _scenario_id: str | None
@@ -53,7 +53,7 @@ class TaskRunner:
         self,
         task_type: type[Task],
         params: ConfigParamsDict | None = None,
-        inputs: dict[str, Resource] | None = None,
+        inputs: dict[str, Resource | None] | None = None,
         config_model_id: str | None = None,
         input_specs: InputSpecs | None = None,
         output_specs: OutputSpecs | None = None,
@@ -139,7 +139,7 @@ class TaskRunner:
     def set_input(self, input_name: str, resource: Resource) -> None:
         self._inputs[input_name] = resource
 
-    def get_output(self, output_name: str) -> Resource:
+    def get_output(self, output_name: str) -> Resource | None:
         return self.get_outputs()[output_name]
 
     def get_outputs(self) -> TaskOutputs:

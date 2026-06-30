@@ -2,7 +2,7 @@ import re
 from typing import Literal
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.typed_db_field import NullableSerializableDBField
+from gws_core.core.model.typed_db_field import TypedSerializableDBField
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.process.process import Process
@@ -32,7 +32,7 @@ from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
-    layout = NullableSerializableDBField(object_type=ProtocolLayout)
+    layout = TypedSerializableDBField(object_type=ProtocolLayout, default=ProtocolLayout)
 
     # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco
@@ -166,7 +166,7 @@ class ProtocolModel(ProcessModel):
         """Refresh the graph json object inside the data from the dump method"""
         self.data["graph"] = self.to_protocol_minimum_dto().to_json_dict()
 
-    def get_graph(self) -> ProtocolMinimumDTO:
+    def get_graph(self) -> ProtocolMinimumDTO | None:
         """Return the graph json object"""
         graph = self.data["graph"]
         if not isinstance(graph, dict):
@@ -285,8 +285,8 @@ class ProtocolModel(ProcessModel):
 
         # if it ready, check that all the previous precesses are finished in success
         # it prevent from running a process if an optional input is not set
-        for process in self.get_direct_previous_processes(process.instance_name):
-            if not process.is_success:
+        for proc in self.get_direct_previous_processes(process.instance_name):
+            if not proc.is_success:
                 return False
 
         return True
@@ -296,10 +296,41 @@ class ProtocolModel(ProcessModel):
             return
 
         self._propagate_outerfaces()
+
         self.refresh_status(refresh_parent=False)
 
-        # save the protocol graph
+        # save the protocol graph (persists the outputs set by the outerfaces) before
+        # propagating to the parent, so the parent's freshly-loaded copy of this sub-protocol
+        # sees the updated outputs.
         self.save_graph()
+
+        # propagate the (now set) outputs up through the parent connectors, so a downstream
+        # process connected to this sub-protocol output receives the resource. Otherwise the
+        # resource stays on the sub-protocol output port and the downstream task input is
+        # never set (e.g. when running a single inner task connected to an outerface).
+        self._propagate_outputs_to_parent()
+
+    def _propagate_outputs_to_parent(self) -> None:
+        """Propagate this protocol's output resources up through the parent connectors and
+        persist the downstream processes that received a resource."""
+        if not self.parent_protocol:
+            return
+
+        next_processes: dict[str, ProcessModel] = {}
+        for port_name in self.outputs.ports:
+            for connector in self.parent_protocol.get_connectors_from_left(
+                self.instance_name, port_name
+            ):
+                connector.propagate_resource()
+                # persist the downstream process whenever the connector carries a resource:
+                # the in-memory parent copy may already reflect it (so propagate_resource is a
+                # no-op) while the downstream's DB input is still empty.
+                if connector.left_port.get_resource_model() is not None:
+                    next_process = connector.right_process
+                    next_processes[next_process.instance_name] = next_process
+
+        for next_process in next_processes.values():
+            next_process.save()
 
     def get_current_progress(self) -> ScenarioProgressDTO:
         """Calculate the current progress of the protocol.
@@ -412,8 +443,6 @@ class ProtocolModel(ProcessModel):
 
         if instance_name in self._processes:
             raise BadRequestException(f"Process name '{instance_name}' already exists")
-        if process_model in self._processes.items():
-            raise BadRequestException(f"Process '{instance_name}' duplicate")
 
         process_model.set_parent_protocol(self)
 
@@ -718,7 +747,7 @@ class ProtocolModel(ProcessModel):
         # Lazy load specifically the connector because it might need to load the children (for sub protocol)
         self._load_connectors()
 
-        return self._connectors
+        return self._connectors or []
 
     def _load_connectors(self) -> None:
         if self._connectors is None:
@@ -764,6 +793,16 @@ class ProtocolModel(ProcessModel):
         # propagate the resource if the left port has a resource
         connector.propagate_resource()
 
+        # if the connector feeds a sub-protocol input, propagate the resource down through
+        # its interfaces so the inner processes receive it (otherwise the resource stays on
+        # the sub-protocol input port and the inner task input is never set).
+        # In-memory only: persistence of the affected inner processes is handled by the
+        # caller (e.g. the service layer) since this is also called at build time when the
+        # processes are not persisted yet.
+        right_process = connector.right_process
+        if isinstance(right_process, ProtocolModel):
+            right_process.propagate_interfaces()
+
         # check if there is a circular connexion
         self.get_all_next_processes(from_process_name, check_circular_connexion=True)
 
@@ -792,6 +831,9 @@ class ProtocolModel(ProcessModel):
             right_port_name=to_port_name,
             check_compatiblity=check_compatiblity,
         )
+
+        if not self._connectors:
+            self._connectors = []
 
         if connector in self._connectors:
             raise BadRequestException("Duplicated connector")
@@ -909,8 +951,19 @@ class ProtocolModel(ProcessModel):
             if connector.propagate_resource():
                 affected_processes.add(connector.right_process)
 
+        # propagate the resources down through the interfaces of every sub-protocol so the
+        # inner processes receive them (otherwise the resource stays on the sub-protocol input
+        # port and the inner task input is never set, e.g. after a reset). We cannot restrict
+        # this to the connectors that just changed: after a reset the sub-protocol input may
+        # already hold the resource (so the connector reports no change) while its inner
+        # processes were cleared by their own reset.
+        inner_affected_processes: set[ProcessModel] = set()
+        for process in self.processes.values():
+            if isinstance(process, ProtocolModel):
+                inner_affected_processes.update(process.propagate_interfaces())
+
         # save processes to update inputs and outputs
-        for process in affected_processes:
+        for process in affected_processes | inner_affected_processes:
             process.save()
 
     ############################### RESOURCES #################################
@@ -987,11 +1040,36 @@ class ProtocolModel(ProcessModel):
         )
         return self._interfaces[name]
 
+    def propagate_interfaces(self) -> set["ProcessModel"]:
+        """
+        Propagate the resources of the protocol input ports down to the inner processes
+        connected through interfaces (in-memory only).
+
+        :return: the inner processes whose input was updated, so the caller can persist them
+        :rtype: set[ProcessModel]
+        """
+        affected_processes: set[ProcessModel] = set()
+        for key, interface in self.interfaces.items():
+            resource_model = self.inputs.get_resource_model(key)
+            # only propagate when the input actually holds a resource: set_resource_model(None)
+            # would mark the inner port as "provided" (with no resource), which breaks reset
+            if resource_model is None:
+                continue
+
+            process = self.get_process(interface.process_instance_name)
+            port = process.in_port(interface.port_name)
+            port.set_resource_model(resource_model)
+            affected_processes.add(process)
+
+            # cascade into nested sub-protocols so resources reach deeply nested inner tasks
+            if isinstance(process, ProtocolModel):
+                affected_processes.update(process.propagate_interfaces())
+        return affected_processes
+
     def _propagate_interfaces(self):
         """
-        Propagate resources through interfaces
+        Propagate resources through interfaces (in-memory only, used during run).
         """
-
         for key, interface in self.interfaces.items():
             process = self.get_process(interface.process_instance_name)
             port = process.in_port(interface.port_name)
@@ -1279,10 +1357,11 @@ class ProtocolModel(ProcessModel):
     def get_protocol_chain_info(self) -> str:
         """return a string with the information up to the main protocol"""
 
-        if self.parent_protocol_id is None:
+        parent_protocol = self.parent_protocol
+        if parent_protocol is None:
             return "Main protocol"
 
-        return f"{self.parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
+        return f"{parent_protocol.get_protocol_chain_info()} > {self.instance_name}"
 
     def mark_as_started(self):
         if self.is_running:
@@ -1367,8 +1446,7 @@ class ProtocolModel(ProcessModel):
             if process.is_input_task():
                 # convert the output connexions of Input process to interfaces
                 connectors = self._get_connectors_linked_to_process(process)
-                i = 0
-                for connector in connectors:
+                for i, connector in enumerate(connectors):
                     interface_name = f"{process.instance_name}_{str(i)}"
                     new_interfaces[interface_name] = IOFaceDTO(
                         name=interface_name,
@@ -1376,22 +1454,17 @@ class ProtocolModel(ProcessModel):
                         port_name=connector.right_port.name,
                     )
 
-                    i += 1
-
                 processes_to_remove.append(process.instance_name)
             elif process.is_output_task():
                 # convert the input connexions of Output process to outerfaces
                 connectors = self._get_connectors_linked_to_process(process)
-                i = 0
-                for connector in connectors:
+                for i, connector in enumerate(connectors):
                     outerface_name = f"{process.instance_name}_{str(i)}"
                     new_outerfaces[outerface_name] = IOFaceDTO(
                         name=outerface_name,
                         process_instance_name=connector.left_process.instance_name,
                         port_name=connector.left_port.name,
                     )
-
-                    i += 1
                 processes_to_remove.append(process.instance_name)
 
         # remove the process before adding the interfaces, so the ports are not used
@@ -1413,11 +1486,11 @@ class ProtocolModel(ProcessModel):
 
         return f"{name}_{count}"
 
-    def get_community_agent_version_id(self) -> str:
+    def get_community_agent_version_id(self) -> str | None:
         return None
 
     def get_community_agent_version_modified(self) -> bool:
-        return None
+        return False
 
     class Meta:
         table_name = "gws_protocol"

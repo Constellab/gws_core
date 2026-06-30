@@ -8,6 +8,7 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.model.typing_dto import TypingDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.resource.view.view_dto import CallViewResultDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.task.converter.converter_service import ConverterService
 
 from ...core_controller import core_app
@@ -17,16 +18,16 @@ from .fs_node_service import FsNodeService
 
 @core_app.post("/fs-node/upload-file", tags=["Fs node"], summary="Upload file")
 def upload_file(
+    typing_name: list[str],
     file: UploadFile = FastAPIFile(...),
-    typing_name: list[str] | None = None,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ResourceModelDTO:
     """Upload a file
 
-    :param files: file to upload, defaults to FastAPIFile(...)
-    :type files: List[UploadFile], optional
-    :param typingNames: typing_name of the file, defaults to None
-    :type typingNames: List[str], optional
+    :param file: file to upload, defaults to FastAPIFile(...)
+    :type file: UploadFile, optional
+    :param typing_name: typing_name of the file, defaults to None
+    :type typing_name: List[str], optional
     """
 
     return FsNodeService.upload_file(upload_file=file, typing_name=typing_name[0]).to_dto()
@@ -96,11 +97,11 @@ class ExtractFileDTO(BaseModelDTO):
 )
 def extract_node_from_folder(
     id_: str, extract: ExtractFileDTO, _=Depends(AuthorizationService.check_user_access_token)
-) -> ResourceModelDTO:
+) -> ScenarioDTO:
     """
     Extract a node from a folder to make it a new Resource
     """
-    return ConverterService.call_file_extractor(
+    return ConverterService.call_file_extractor_async(
         folder_model_id=id_, sub_path=extract.path, fs_node_typing_name=extract.fs_node_typing_name
     ).to_dto()
 

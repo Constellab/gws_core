@@ -92,7 +92,7 @@ class TestFormComputedValues(BaseTestCase):
             {
                 "samples": ParamSet(
                     ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
-                    optional=True,
+                    min_number_of_occurrences=0,
                 ),
                 "avg_mass": ComputedParam(expression="mean(@samples[].mass)"),
             }
@@ -110,7 +110,7 @@ class TestFormComputedValues(BaseTestCase):
             {
                 "samples": ParamSet(
                     ConfigSpecs({"mass": FloatParam(human_name="Mass", optional=True)}),
-                    optional=True,
+                    min_number_of_occurrences=0,
                 ),
                 "all_masses": ComputedParam(expression="@samples[].mass"),
             }
@@ -277,7 +277,7 @@ class TestFormComputedValues(BaseTestCase):
                             ),
                         }
                     ),
-                    optional=True,
+                    min_number_of_occurrences=0,
                 ),
                 "total_mass": ComputedParam(expression="sum(@samples[].mass)"),
             }

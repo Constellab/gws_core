@@ -3,6 +3,7 @@
 import os
 
 import typer
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.brick.brick_service import BrickService
 from gws_core.brick.brick_settings import BrickSettings
 from gws_core.brick.technical_doc_service import TechnicalDocService
@@ -154,6 +155,22 @@ class BrickCliService:
         # the brick package, which may reference classes from dependencies.
         settings_file_path = os.path.join(brick_path, SettingsLoader.SETTINGS_JSON_FILE)
         SettingsLoader(main_settings_file_path=settings_file_path).load_settings()
+
+        # Verify the brick was actually loaded (and not skipped) during settings loading.
+        # If it failed to load, generate_technical_doc would later fail with a cryptic error
+        # (e.g. a bare KeyError on the brick name when accessing sys.modules).
+        brick_info = BrickHelper.get_brick_info(brick_name)
+        if brick_info is None:
+            raise BadRequestException(
+                f"Brick '{brick_name}' was not loaded. It is not present in the loaded bricks "
+                f"after reading the settings from '{brick_path}'. Check the logs above for a "
+                "'Skipping brick' message explaining why."
+            )
+        if brick_info.error:
+            raise BadRequestException(
+                f"Brick '{brick_name}' failed to load and was skipped: {brick_info.error} "
+                "Fix this issue before pushing the technical documentation."
+            )
 
         # Connect the database and init typings (required for querying typings with brick_version)
         DbManagerService.init_all_db(full_init=False)

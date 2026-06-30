@@ -2,6 +2,9 @@ import json
 import os
 import sys
 from threading import Thread
+from typing import cast
+
+from peewee import Field
 
 from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.db.db_manager_service import DbManagerService
@@ -9,7 +12,6 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.folder.space_folder_service import SpaceFolderService
-from gws_core.impl.file.file_store import FileStore
 from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -21,7 +23,6 @@ from gws_core.lab.system_dto import (
     LabSystemConfig,
     LabSystemInfoDTO,
 )
-from gws_core.process.process_exception import ProcessRunException
 from gws_core.process.process_types import ProcessErrorInfo
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource_model import ResourceModel
@@ -29,7 +30,6 @@ from gws_core.scenario.queue.queue_runner import QueueRunner
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_run_service import ScenarioRunService
-from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.space.space_service import SpaceService
 from gws_core.triggered_job.triggered_job_scheduler import TriggeredJobScheduler
@@ -342,7 +342,7 @@ class SystemService:
                 # (use contains for security to avoid deleting everything)
                 if (
                     ResourceModel.get_or_none(
-                        (ResourceModel.kv_store_path.contains(file_name))
+                        (cast(Field, ResourceModel.kv_store_path).contains(file_name))
                         | (ResourceModel.id == file_name)
                     )
                     is None
@@ -351,7 +351,7 @@ class SystemService:
                     Logger.info(f"Deleting KVStore {file_path}")
                     FileHelper.delete_node(file_path)
 
-        file_store: LocalFileStore = FileStore.get_default_instance()
+        file_store: LocalFileStore = LocalFileStore.get_default_instance()
         if FileHelper.exists_on_os(file_store.path):
             Logger.info("Deleting all usunused resource files")
             for file_name in os.listdir(file_store.path):

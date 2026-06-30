@@ -8,6 +8,8 @@ from gws_core.config.param.computed.computed_param_graph import (
     ComputedParamGraphChecker,
 )
 from gws_core.config.param.param_set import ParamSet
+from gws_core.config.param.param_spec import ParamSpec
+from gws_core.config.param.param_spec_decorator import ParamSpecCategory
 from gws_core.config.param.param_spec_helper import ParamSpecHelper
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.classes.paginator import Paginator
@@ -23,6 +25,7 @@ from gws_core.form_template.form_template import FormTemplate
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
+    DuplicateFormTemplateDTO,
     FormTemplateVersionStatus,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
@@ -43,6 +46,17 @@ from gws_core.user.current_user_service import CurrentUserService
 
 
 class FormTemplateService:
+
+    # Param-spec categories a form template's specs may contain. Anything else
+    # (e.g. the CODE_PARAM IDE params) is rejected, whether added field-by-field,
+    # via the bulk override, or by the AI generation flow.
+    ALLOWED_SPEC_CATEGORIES = [
+        ParamSpecCategory.SIMPLE,
+        ParamSpecCategory.LAB_SPECIFIC,
+        ParamSpecCategory.PARAM_SET,
+        ParamSpecCategory.COMPUTED,
+    ]
+
     # ------------------------------------------------------------------ #
     # Template-level CRUD
     # ------------------------------------------------------------------ #
@@ -69,6 +83,50 @@ class FormTemplateService:
             object_id=template.id,
         )
         return template
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def duplicate_from_version(
+        cls,
+        template_id: str,
+        version_id: str,
+        dto: DuplicateFormTemplateDTO | None = None,
+    ) -> FormTemplate:
+        """Duplicate a form template into a brand-new family from one of its versions.
+
+        Creates a new FormTemplate with a single DRAFT v1 whose content is a copy
+        of the given source version's content. The source version may be in any
+        status (DRAFT, PUBLISHED or ARCHIVED). The new template's name defaults to
+        the source template's name suffixed with " (copy)" unless overridden via
+        ``dto.name``; its description defaults to the source's unless overridden.
+        """
+        source_version = cls.get_version(template_id, version_id)
+        source_template = cls.get_by_id_and_check(template_id)
+
+        new_template = FormTemplate()
+        new_template.name = (
+            dto.name if dto is not None and dto.name is not None
+            else f"{source_template.name} (copy)"
+        )
+        new_template.description = (
+            dto.description if dto is not None and dto.description is not None
+            else source_template.description
+        )
+        new_template.save()
+
+        draft = FormTemplateVersion()
+        draft.template = new_template
+        draft.status = FormTemplateVersionStatus.DRAFT
+        draft.version = 1
+        draft.content = source_version.content
+        draft.save()
+
+        ActivityService.add(
+            ActivityType.CREATE,
+            object_type=ActivityObjectType.FORM_TEMPLATE,
+            object_id=new_template.id,
+        )
+        return new_template
 
     @classmethod
     def get_by_id_and_check(cls, template_id: str) -> FormTemplate:
@@ -282,25 +340,8 @@ class FormTemplateService:
                 {**target_existing, probe_key: candidate}, _skip_key_validation=True
             )
         else:
-            # Candidate lives inside a ParamSet. Build a probe outer ConfigSpecs
-            # with that ParamSet's inner specs replaced so cross-scope cycle
-            # detection sees the candidate.
-            outer_existing = outer_specs.get_specs_as_dict()
-            probe_inner = ConfigSpecs(
-                {**target_existing, probe_key: candidate}, _skip_key_validation=True
-            )
-            original_paramset = outer_existing[dto.param_set_key]
-            probe_paramset = ParamSet(
-                param_set=probe_inner,
-                optional=original_paramset.optional,
-                visibility=original_paramset.visibility,
-                human_name=original_paramset.human_name,
-                short_description=original_paramset.short_description,
-                max_number_of_occurrences=original_paramset.max_number_of_occurrences,
-            )
-            probe_specs = ConfigSpecs(
-                {**outer_existing, dto.param_set_key: probe_paramset},
-                _skip_key_validation=True,
+            probe_specs = FormTemplateService._build_inner_probe_specs(
+                outer_specs, dto.param_set_key, target_existing, probe_key, candidate
             )
         try:
             ComputedParamGraphChecker.check(probe_specs)
@@ -311,6 +352,33 @@ class FormTemplateService:
                 message = message.replace(probe_key, "<this param>")
             return message
         return None
+
+    @staticmethod
+    def _build_inner_probe_specs(
+        outer_specs: ConfigSpecs,
+        param_set_key: str,
+        target_existing: dict,
+        probe_key: str,
+        candidate: ComputedParam,
+    ) -> ConfigSpecs:
+        """Probe outer ConfigSpecs for a candidate living inside a ParamSet.
+
+        Rebuilds the enclosing ParamSet with its inner specs replaced by the
+        target specs plus the candidate, so cross-scope cycle detection sees the
+        candidate in place.
+        """
+        outer_existing = outer_specs.get_specs_as_dict()
+        probe_inner = ConfigSpecs(
+            {**target_existing, probe_key: candidate}, _skip_key_validation=True
+        )
+        original_paramset = outer_existing[param_set_key]
+        if not isinstance(original_paramset, ParamSet):
+            raise BadRequestException(f"Field '{param_set_key}' is not a ParamSet.")
+        probe_paramset = original_paramset.clone_with_inner_specs(probe_inner)
+        return ConfigSpecs(
+            {**outer_existing, param_set_key: probe_paramset},
+            _skip_key_validation=True,
+        )
 
     @classmethod
     def test_version(
@@ -506,6 +574,71 @@ class FormTemplateService:
         return cls._save_draft_specs(version, specs, template_id)
 
     @classmethod
+    @GwsCoreDbManager.transaction()
+    def apply_generated_specs(
+        cls,
+        template_id: str,
+        version_id: str,
+        specs: ConfigSpecs,
+    ) -> FormTemplateVersion:
+        """Overwrite a DRAFT version's whole field set with ``specs``.
+
+        Used by the AI generation flow to replace the draft's content in one
+        shot. The caller is responsible for having validated ``specs`` first.
+        """
+        version = cls._get_draft_version_and_check(template_id, version_id)
+        return cls._save_draft_specs(version, specs, template_id)
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def override_specs(
+        cls,
+        template_id: str,
+        version_id: str,
+        specs_dto: dict[str, ParamSpecDTO],
+    ) -> FormTemplateVersion:
+        """Fully replace a DRAFT version's field set from a serialized spec map.
+
+        The bulk counterpart of the per-field create/update routes: the draft's
+        whole content is replaced by ``specs_dto`` (not merged). The specs are
+        rebuilt and validated (types + computed-param graph) before the write,
+        so a broken schema is rejected and the draft is left unchanged.
+        """
+        try:
+            specs = ConfigSpecs.from_dto(specs_dto)
+            specs.check_config_specs()
+        except BadRequestException:
+            raise
+        except Exception as err:
+            raise BadRequestException(f"Invalid form template specs: {err}") from err
+        return cls.apply_generated_specs(template_id, version_id, specs)
+
+    @classmethod
+    def _check_spec_category(cls, field_key: str, spec: ParamSpec) -> None:
+        """Reject a single field whose category is not allowed in a form template.
+
+        Recurses into a ParamSet's inner specs so a disallowed type cannot be
+        smuggled in as a row field. Raises ``BadRequestException`` on the first
+        offending field.
+        """
+        category = spec.get_category()
+        if category not in cls.ALLOWED_SPEC_CATEGORIES:
+            allowed = ", ".join(c.value for c in cls.ALLOWED_SPEC_CATEGORIES)
+            raise BadRequestException(
+                f"Field '{field_key}' has type '{spec.get_param_spec_type().value}' "
+                f"which is not allowed in a form template. Allowed categories: {allowed}."
+            )
+        if isinstance(spec, ParamSet) and spec.param_set is not None:
+            cls._check_specs_categories(spec.param_set)
+
+    @classmethod
+    def _check_specs_categories(cls, specs: ConfigSpecs) -> None:
+        """Reject any field of ``specs`` (recursively) whose category is not in
+        :attr:`ALLOWED_SPEC_CATEGORIES`."""
+        for field_key, spec in specs.get_specs_as_dict().items():
+            cls._check_spec_category(field_key, spec)
+
+    @classmethod
     def _get_draft_version_and_check(cls, template_id: str, version_id: str) -> FormTemplateVersion:
         version = cls.get_version(template_id, version_id)
         if version.status != FormTemplateVersionStatus.DRAFT:
@@ -522,6 +655,7 @@ class FormTemplateService:
         specs: ConfigSpecs,
         template_id: str,
     ) -> FormTemplateVersion:
+        cls._check_specs_categories(specs)
         version.update_specs(specs)
 
         ActivityService.add(
@@ -548,6 +682,7 @@ class FormTemplateService:
         try:
             specs = version.get_content()
             specs.check_config_specs()
+            cls._check_specs_categories(specs)
         except Exception as err:
             raise BadRequestException(f"Cannot publish: schema is invalid ({err})") from err
 

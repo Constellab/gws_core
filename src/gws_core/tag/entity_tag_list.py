@@ -110,7 +110,7 @@ class EntityTagList:
             tag.origins.add_origin(self._default_origin)
 
         tag_key_model = TagKeyModel.select().where(TagKeyModel.key == tag.key).first()
-        tag_value_model = TagValueModel.get_tag_value_model(tag.key, tag.value)
+        tag_value_model = TagValueModel.get_tag_value_model_by_key_and_value(tag.key, tag.value)
 
         if tag_key_model is None:
             tag_key_model = TagKeyModel.create_tag_key_model(

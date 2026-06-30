@@ -1,3 +1,6 @@
+from collections.abc import Callable
+from typing import Any
+
 from gws_core.resource.r_field.list_r_field import ListRField
 
 from ..resource import Resource
@@ -179,7 +182,7 @@ class ResourceList(ResourceListBase):
     def count(self, item) -> int:
         return self.get_resources().count(item)
 
-    def sort(self, key=None, reverse=False) -> None:
+    def sort(self, key: Callable[[Resource], Any], reverse: bool = False) -> None:
         self.get_resources().sort(key=key, reverse=reverse)
 
     def reverse(self) -> None:

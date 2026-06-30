@@ -9,6 +9,7 @@ from gws_core.core.model.typed_db_field import (
     NullableJSONField,
     TypedBooleanField,
     TypedCharField,
+    TypedJSONField,
 )
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.model.typing_dto import (
@@ -59,12 +60,12 @@ class Typing(Model):
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
     related_model_typing_name = NullableCharField(index=True)
 
-    data = NullableJSONField()
+    data = TypedJSONField()
 
     # List of errors in the typing definition (invalid config/input/output spec).
     # Stored as a JSON list of TypingErrorDTO dicts. A non-empty list
     # means the type was registered but cannot be used.
-    definition_errors = NullableJSONField()
+    definition_errors: NullableJSONField = NullableJSONField()
 
     _object_type: TypingObjectType = "MODEL"
 
@@ -75,11 +76,11 @@ class Typing(Model):
             self.data = {}
 
     def _get_hierarchy_table(self) -> list[str]:
-        model_t: type = self.get_type()
+        model_t = self.get_type()
 
         if model_t is None:
             raise Exception(f"Can't get the type of the typing {self.typing_name}")
-        mro: list[type] = inspect.getmro(model_t)
+        mro = inspect.getmro(model_t)
 
         ht: list[str] = []
         for t in mro:
@@ -204,13 +205,13 @@ class Typing(Model):
         full_dto = TypingFullDTO(**typing_dto.to_json_dict())
 
         # retrieve the task python type
-        model_t: type[Base] = self.get_type()
+        model_t = self.get_type()
 
         if model_t:
             full_dto.doc = self.get_model_type_doc()
 
             # handle parent ref
-            parent_typing: Typing = self.get_parent_typing()
+            parent_typing = self.get_parent_typing()
             if parent_typing:
                 full_dto.parent = parent_typing.to_ref_dto()
 
@@ -218,27 +219,27 @@ class Typing(Model):
 
     def get_parent_typing(self) -> Optional["Typing"]:
         # retrieve the task python type
-        model_t: type[Base] = self.get_type()
+        model_t = self.get_type()
 
         if model_t is None:
             return None
 
-        parent_class: type[Base] = model_t.__base__
+        parent_class = model_t.__base__
 
         # If the parent class has the attribute typing_name, it means that this is a typing
-        if hasattr(parent_class, "__typing_name__"):
+        if parent_class and hasattr(parent_class, "__typing_name__"):
             # retrieve the typing of the parent class
             return Typing.get_by_model_type(parent_class)
         return None
 
-    def get_model_type_doc(self) -> str:
+    def get_model_type_doc(self) -> str | None:
         """Return the python documentation of the model type"""
 
         # retrieve the task python type
-        model_t: type[Base] = self.get_type()
+        model_t = self.get_type()
 
         if model_t is None:
-            return ""
+            return None
 
         return ReflectorHelper.get_cleaned_doc_string(model_t)
 
@@ -308,18 +309,21 @@ class Typing(Model):
 
     @classmethod
     def get_by_brick_and_object_type(cls, brick_name: str) -> list["Typing"]:
-        return cls.get_by_type_and_brick(cls._object_type, brick_name)
+        return list(cls.get_by_type_and_brick(cls._object_type, brick_name))
 
     @classmethod
     def get_children_typings(
         cls, typing_type: TypingObjectType, base_type: type[Base]
     ) -> list["Typing"]:
-        """Retunr the list of typings that are a child class of the provided model_type"""
+        """Return the list of typings that are a child class of the provided model_type"""
         all_typings: list[Typing] = list(cls.get_by_object_type(typing_type))
 
-        typings = list(
-            filter(lambda typing: Utils.issubclass(typing.get_type(), base_type), all_typings)
-        )
+        typings = [
+            typing
+            for typing in all_typings
+            if (typing_type_value := typing.get_type()) is not None
+            and Utils.issubclass(typing_type_value, base_type)
+        ]
         return typings
 
     @classmethod

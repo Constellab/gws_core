@@ -5,7 +5,6 @@ from peewee import ModelSelect
 from gws_core.config.config import Config
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
-from gws_core.core.model.model import Model
 from gws_core.core.model.model_with_user import ModelWithUser
 from gws_core.core.model.typed_db_field import (
     NullableBaseDTOField,
@@ -62,6 +61,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         )
 
     def get_config_values(self) -> ConfigParamsDict:
+        assert self.config is not None
         return self.config.get_values()
 
     def get_navigable_entity_name(self) -> str:
@@ -71,8 +71,9 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         return NavigableEntityType.VIEW
 
     @GwsCoreDbManager.transaction()
-    def save(self, *args, **kwargs) -> Model:
-        self.config.save()
+    def save(self, *args, **kwargs) -> "ViewConfig":
+        if self.config is not None:
+            self.config.save()
         return super().save(*args, **kwargs)
 
     @GwsCoreDbManager.transaction()
@@ -114,6 +115,8 @@ class ViewConfig(ModelWithUser, NavigableEntity):
         )
 
         for view_config_db in view_configs_db:
+            assert view_config_db.config is not None
+            assert view_config.config is not None
             if Utils.json_equals(
                 view_config_db.config.get_values(), view_config.config.get_values()
             ):

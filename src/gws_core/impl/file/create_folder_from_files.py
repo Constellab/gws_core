@@ -62,7 +62,7 @@ class CreateFolderFromFiles(Task):
                         )
                     }
                 ),
-                optional=True,
+                min_number_of_occurrences=0,
             ),
         }
     )

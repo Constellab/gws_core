@@ -142,6 +142,16 @@ class TestRField(BaseTestCase):
 
         self.assertEqual(value.to_dict(), new_dataframe.to_dict())
 
+        # The new dump format is Parquet (columnar, no pickle code-execution risk).
+        with open(path, "rb") as file:
+            self.assertEqual(file.read(4), b"PAR1")
+
+        # Legacy DataFrames were stored as pickle: load_from_file must still read them.
+        legacy_path = str(kv_store.generate_new_file())
+        value.to_pickle(legacy_path)
+        legacy_dataframe = r_field.load_from_file(legacy_path)
+        self.assertEqual(value.to_dict(), legacy_dataframe.to_dict())
+
     def test_resource_r_field(self):
         resource_model = ResourceModel.save_from_resource(
             Robot.empty(), origin=ResourceOrigin.UPLOADED

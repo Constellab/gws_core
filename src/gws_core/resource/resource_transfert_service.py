@@ -37,7 +37,10 @@ class ResourceTransfertService:
 
         # return the resource model of the output process
         output_task = scenario.get_protocol().get_process("output").refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The imported resource could not be retrieved")
+        return resource_model
 
     @classmethod
     def import_resource_from_link_async(cls, values: ConfigParamsDict) -> Scenario:
@@ -71,7 +74,11 @@ class ResourceTransfertService:
 
     @classmethod
     def _build_import_resource_from_link_scenario(cls, values: ConfigParamsDict) -> ScenarioProxy:
-        link: str = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
+        link: str | None = values.get(ResourceDownloaderHttp.LINK_PARAM_NAME)
+        if link is None:
+            raise BadRequestException(
+                f"The parameter '{ResourceDownloaderHttp.LINK_PARAM_NAME}' is required"
+            )
         file_name = link.split("/")[-1]
         # Create an resource containing 1 resource downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(title=f"Download {file_name}")
@@ -96,7 +103,10 @@ class ResourceTransfertService:
                 "The scenario is not finished or not successful, can't retrieve the resource"
             )
         output_task = scenario_proxy.get_protocol().get_process("output")
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The imported resource could not be retrieved")
+        return resource_model
 
     @classmethod
     def get_import_from_link_config_specs(cls) -> dict[str, ParamSpecDTO]:
@@ -104,6 +114,24 @@ class ResourceTransfertService:
 
     @classmethod
     def export_resource_to_lab(cls, resource_id: str, values: ConfigParamsDict) -> Scenario:
+        scenario = cls._build_export_resource_to_lab_scenario(resource_id, values)
+
+        scenario.run()
+
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def export_resource_to_lab_async(cls, resource_id: str, values: ConfigParamsDict) -> Scenario:
+        """Export a resource to a lab asynchronously, return the running export scenario"""
+        scenario = cls._build_export_resource_to_lab_scenario(resource_id, values)
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_export_resource_to_lab_scenario(
+        cls, resource_id: str, values: ConfigParamsDict
+    ) -> ScenarioProxy:
         # Create an resource containing 1 resource downloader , 1 output task
         scenario: ScenarioProxy = ScenarioProxy(title="Send resource")
         protocol = scenario.get_protocol()
@@ -116,9 +144,7 @@ class ResourceTransfertService:
             "resource", resource_id, send_process.get_input_port(SendResourceToLab.INPUT_NAME)
         )
 
-        scenario.run()
-
-        return scenario.get_model().refresh()
+        return scenario
 
     @classmethod
     def get_export_resource_to_lab_config_specs(cls) -> dict[str, ParamSpecDTO]:
@@ -131,6 +157,32 @@ class ResourceTransfertService:
         The resource must have its content deleted and must have been imported from
         another lab (has a SharedResource RECEIVED record).
         """
+        scenario = cls._build_download_resource_content_scenario(resource_id)
+
+        scenario.run()
+
+        # Get the output resource model
+        output_task = scenario.get_protocol().get_process("output").refresh()
+        resource_model = output_task.get_input_resource_model(OutputTask.input_name)
+        if resource_model is None:
+            raise BadRequestException("The downloaded resource could not be retrieved")
+        return resource_model
+
+    @classmethod
+    def download_resource_content_async(cls, resource_id: str) -> Scenario:
+        """Download resource content from the source lab asynchronously.
+
+        Same as ``download_resource_content`` but returns the running scenario
+        immediately instead of waiting for the download to finish.
+        """
+        scenario = cls._build_download_resource_content_scenario(resource_id)
+
+        scenario.run_async()
+        return scenario.get_model().refresh()
+
+    @classmethod
+    def _build_download_resource_content_scenario(cls, resource_id: str) -> ScenarioProxy:
+        """Build the scenario that re-downloads a content-deleted resource from its source lab."""
         resource_model = ResourceModel.get_by_id_and_check(resource_id)
 
         if not resource_model.content_is_deleted:
@@ -139,7 +191,7 @@ class ResourceTransfertService:
             )
 
         # Find the SharedResource record for this resource
-        shared_resource: SharedResource | None = SharedResource.get_received_entity(resource_id)
+        shared_resource = SharedResource.get_received_entity(resource_id)
         if shared_resource is None:
             raise BadRequestException(
                 "This resource was not imported from another lab, cannot download content"
@@ -169,11 +221,7 @@ class ResourceTransfertService:
 
         protocol.add_output("output", downloader >> ResourceDownloaderFromLab.OUTPUT_NAME)
 
-        scenario.run()
-
-        # Get the output resource model
-        output_task = scenario.get_protocol().get_process("output").refresh()
-        return output_task.get_input_resource_model(OutputTask.input_name)
+        return scenario
 
     @classmethod
     @GwsCoreDbManager.transaction()

@@ -1,7 +1,7 @@
 import os
 import shutil
 from pathlib import Path
-from shelve import DbfilenameShelf
+from shelve import Shelf
 from shelve import open as shelve_open
 from time import time
 from typing import Any, cast
@@ -178,7 +178,7 @@ class KVStore(dict[str, Any]):
         kv_data.close()
         return length
 
-    def _open_shelve(self) -> DbfilenameShelf:
+    def _open_shelve(self) -> Shelf:
         self._create_dir()
 
         return shelve_open(self.get_full_path_without_extension())
@@ -196,16 +196,19 @@ class KVStore(dict[str, Any]):
     def check_before_write(self, key: str) -> None:
         self._check_key(key=key)
         if self._lock:
+            assert self._lock_copy_full_file_path is not None
             self._copy_file(self._lock_copy_full_file_path)
             self.unlock()
 
     def check_before_read(self) -> None:
         if not self.file_exists():
+            assert self._lock_copy_full_file_path is not None
             self._copy_file(self._lock_copy_full_file_path)
             self.unlock()
 
     def unlock(self) -> None:
         """Remove lock and update file path,"""
+        assert self._lock_copy_full_file_path is not None
         self._lock = False
         self._full_file_path = self._lock_copy_full_file_path
         self._lock_copy_full_file_path = None

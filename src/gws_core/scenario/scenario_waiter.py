@@ -162,7 +162,7 @@ class ScenarioWaiter:
                     )
                 return scenario
 
-            if self._message_dispatcher and scenario.progress:
+            if self._message_dispatcher and scenario.progress and scenario.progress.progress is not None:
                 message = scenario.progress.get_last_message_content() or "Update progress"
                 self._message_dispatcher.notify_progress_value(scenario.progress.progress, message)
             time.sleep(refresh_interval)

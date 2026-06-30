@@ -253,14 +253,12 @@ class PlotlyTask(Task):
         ),
         "log_x": BoolParam(
             default_value=False,
-            optional=True,
             human_name="Log X Axis",
             short_description=" the x-axis is log-scaled in cartesian coordinates.",
             visibility="protected",
         ),
         "log_y": BoolParam(
             default_value=False,
-            optional=True,
             human_name="Log Y Axis",
             short_description=" the y-axis is log-scaled in cartesian coordinates.",
             visibility="protected",
@@ -484,7 +482,6 @@ class PlotlyTask(Task):
         ),
         "text_auto": BoolParam(
             default_value=False,
-            optional=True,
             visibility="private",
             human_name="text auto",
         ),

@@ -29,7 +29,7 @@ class ScenarioTransfertService:
 
         # return the resource model of the output process
         output_task = scenario.get_protocol().get_process("output").refresh()
-        scenario_resource: ScenarioResource = output_task.get_input(OutputTask.input_name)
+        scenario_resource = output_task.get_input(OutputTask.input_name, ScenarioResource)
 
         return scenario_resource.get_scenario()
 
@@ -142,15 +142,16 @@ class ScenarioTransfertService:
         """
         scenario = ScenarioService.get_by_id_and_check(scenario_id)
 
-        if not scenario.is_running_in_external_lab:
+        if not scenario.is_running_in_external_lab or not scenario.running_in_external_lab:
             raise Exception("The scenario is not running in an external lab")
 
         # Find the SharedScenario record to get the external ID on the source lab
-        shared_scenario: SharedScenario | None = SharedScenario.get_received_entity(scenario_id)
+        shared_scenario = SharedScenario.get_received_entity(scenario_id)
         if shared_scenario is None:
             raise BadRequestException(
                 "This scenario was not imported from another lab, cannot update from external lab"
             )
+
 
         lab_model_id = scenario.running_in_external_lab.id
         external_scenario_id = shared_scenario.external_id

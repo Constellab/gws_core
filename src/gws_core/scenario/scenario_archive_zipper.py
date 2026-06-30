@@ -9,6 +9,7 @@ from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.external_lab.external_lab_dto import ExternalLabWithUserInfo
 from gws_core.resource.resource_zipper import ResourceZipper
 from gws_core.scenario.scenario_zipper import ScenarioExportPackage
+from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderResourceMode
 from gws_core.user.user import User
 
 
@@ -44,8 +45,13 @@ class ScenarioArchiveZipper:
         multi_entry_only=True
     )
 
+    _scenario_id: str
+    _resource_mode: ScenarioDownloaderResourceMode
+    _user: User
+    _compress_format: str
+
     def __init__(
-        self, scenario_id: str, resource_mode: str, user: User, compress_format: str = "tar"
+        self, scenario_id: str, resource_mode: ScenarioDownloaderResourceMode, user: User, compress_format: str = "tar"
     ):
         self._scenario_id = scenario_id
         self._resource_mode = resource_mode

@@ -3,12 +3,13 @@ from gws_core.community.community_dto import CommunityAgentFileDTO, CommunityAge
 from gws_core.impl.agent.helper.agent_factory import AgentFactory
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_service import ProtocolService
+from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.test.base_test_case import BaseTestCase
 
 
 class TestAgentFactory(BaseTestCase):
     def test_generate_agent_file_from_agent_id(self):
-        protocol_model: ProtocolModel = ProtocolService.create_empty_protocol()
+        protocol_model: ProtocolModel = ScenarioProxy().get_protocol().get_model()
 
         community_agent_version: CommunityAgentVersionDTO = CommunityAgentVersionDTO.from_json(
             {

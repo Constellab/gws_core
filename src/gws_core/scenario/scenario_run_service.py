@@ -293,7 +293,7 @@ class ScenarioRunService:
             options.append("--test")
 
         command: str
-        if process_model:
+        if process_model and process_model.parent_protocol_id:
             options.extend(
                 [
                     "--protocol-model-id",

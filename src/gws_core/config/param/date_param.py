@@ -133,6 +133,24 @@ class DateParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.DATE
 
+    ai_catalog_member = True
+
+    @classmethod
+    def ai_summary(cls) -> str:
+        return "A calendar date, or a date+time when include_time is true."
+
+    @classmethod
+    def ai_additional_info_doc(cls) -> dict[str, str]:
+        return {
+            "include_time": "When true, a full datetime is accepted; otherwise a date only.",
+            "min_value": "Earliest allowed value (inclusive), ISO 8601 string or null.",
+            "max_value": "Latest allowed value (inclusive), ISO 8601 string or null.",
+        }
+
+    @classmethod
+    def ai_example_spec(cls) -> "DateParam":
+        return cls(human_name="Collected at", short_description="Collection date", optional=True)
+
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "DateParam":
         """Override to re-validate ``min_value`` / ``max_value`` carried in the DTO.

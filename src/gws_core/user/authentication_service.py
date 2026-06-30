@@ -23,11 +23,14 @@ class AuthenticationService:
     @classmethod
     def login(cls, credentials: UserCredentialsDTO) -> Response:
         # Check if user exist in the lab
-        user: User
+        user: User | None
 
         try:
             user = UserService.get_user_by_email(credentials.email)
         except:
+            raise WrongCredentialsException()
+
+        if user is None:
             raise WrongCredentialsException()
 
         # skip the check with space in local dev env
@@ -88,7 +91,7 @@ class AuthenticationService:
 
     @classmethod
     def generate_user_access_token(cls, id_: str) -> str:
-        user: User = UserService.get_by_id_or_none(id_)
+        user: User | None = UserService.get_by_id_or_none(id_)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,
@@ -116,7 +119,7 @@ class AuthenticationService:
     @classmethod
     def get_and_refresh_user_from_space(cls, user_space: UserSpace) -> User:
         """Check user space exists in the lab and if yes, it updates the user info"""
-        user: User = UserService.get_by_id_or_none(user_space.id)
+        user: User | None = UserService.get_by_id_or_none(user_space.id)
         if not user:
             raise UnauthorizedException(
                 detail=GWSException.WRONG_CREDENTIALS_USER_NOT_FOUND.value,

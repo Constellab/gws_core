@@ -75,7 +75,7 @@ class MultiViews(View):
         if isinstance(view, MultiViews):
             raise Exception("[MultiViews] cannot create nested MultiViews")
 
-        config_params: ConfigParamsDict = view._specs.build_config_params(params)
+        config_params: ConfigParamsDict = view._specs.build_config_params(params or {})
 
         self._check_number(colspan, "Colums span")
         self._check_number(rowspan, "Rows span")

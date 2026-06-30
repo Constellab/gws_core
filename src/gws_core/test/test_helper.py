@@ -24,7 +24,13 @@ class TestHelper:
     Provides functionalities to initilize unit testing environments
     """
 
-    user: User | None = None
+    @classmethod
+    def get_system_user(cls) -> User:
+        """
+        Get the system user, caching it after the first lookup. The returned
+        user is guaranteed to be non-null.
+        """
+        return User.get_and_check_sysuser()
 
     @classmethod
     def init_complete(cls):
@@ -37,12 +43,10 @@ class TestHelper:
 
         SystemService.init()
 
-        user = User.get_and_check_sysuser()
+        user = cls.get_system_user()
 
         # refresh user information from DB
         AuthorizationService.authenticate_user(user_id=user.id)
-
-        cls.user = user
 
     @classmethod
     def init(cls):
@@ -115,6 +119,8 @@ class TestHelper:
         lab_credentials = CredentialsDataLab(api_key="test_api_key_minimum_20_chars")
         return CredentialsService.create(
             SaveCredentialsDTO(
-                name="test", type=CredentialsDataLab.get_type_id(), data=lab_credentials.to_json_dict()
+                name="test",
+                type=CredentialsDataLab.get_type_id(),
+                data=lab_credentials.to_json_dict(),
             )
         )

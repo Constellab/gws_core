@@ -8,7 +8,7 @@ from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
 
 
-@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(category=ParamSpecCategory.LAB_SPECIFIC)
 class LabModelParam(ParamSpec):
     """Lab model param spec. When used, the end user will be able to select a lab
     from the list of labs available in the system. The config stores only the lab model id.
@@ -56,7 +56,7 @@ class LabModelParam(ParamSpec):
         lab: LabModel = LabModel.get_by_id_and_check(value)
         return lab.to_dto_with_credentials()
 
-    def validate(self, value: Any) -> str:
+    def validate(self, value: Any) -> str | None:
         """Extract the id from LabModel, dict, or string."""
         if value is None:
             return value

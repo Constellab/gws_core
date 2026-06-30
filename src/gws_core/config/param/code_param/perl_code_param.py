@@ -4,7 +4,7 @@ from gws_core.config.param.param_types import ParamSpecType
 from ..param_spec import TextParam
 
 
-@param_spec_decorator(type_=ParamSpecCategory.LAB_SPECIFIC)
+@param_spec_decorator(category=ParamSpecCategory.CODE_PARAM)
 class PerlCodeParam(TextParam):
     """Param for perl code. It shows a simple perl IDE
       in the interface to provide code for perl.

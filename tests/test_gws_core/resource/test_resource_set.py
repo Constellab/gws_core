@@ -26,7 +26,10 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
 from gws_core.resource.resource_set.resource_set_exporter import ResourceSetExporter
-from gws_core.resource.resource_set.resource_set_tasks import ResourceStacker
+from gws_core.resource.resource_set.resource_set_tasks import (
+    ResourcePicker,
+    ResourceStacker,
+)
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.task.task_runner import TaskRunner
 from gws_core.test.base_test_case import BaseTestCase
@@ -44,7 +47,7 @@ class RobotsGenerator(Task):
     output_specs: OutputSpecs = OutputSpecs({"set": OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot_1 = inputs.get("robot_i")
+        robot_1 = inputs.get_resource("robot_i", Robot)
         robot_2 = Robot.empty()
         robot_2.age = 99
         robot_2.name = "Robot 2"
@@ -64,7 +67,7 @@ class RobotsAdd(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # this task takes the resource set and add a new robot
         # keeps the resources that where already in the set
-        resource_set: ResourceSet = inputs.get("set")
+        resource_set: ResourceSet = inputs.get_resource("set", ResourceSet)
         robot_3 = Robot.empty()
         robot_3.age = 100
         robot_3.name = "Robot 3"
@@ -98,20 +101,22 @@ class TestResourceSet(BaseTestCase):
         # check that it created 5 resources (2 for the resource set and 3 robots)
         self.assertEqual(ResourceModel.select().count(), resource_count + 5)
 
-        resource_set: ResourceSet = robot_generator.get_output("set")
+        resource_set: ResourceSet = robot_generator.get_output("set", ResourceSet)
 
         self.assertEqual(len(resource_set.get_resources()), 2)
 
         age = 0
         for resource in resource_set.get_resources().values():
             self.assertIsInstance(resource, Robot)
+            assert isinstance(resource, Robot)
             age += resource.age
 
         # check the age, this will mean the two where correctly saved separatly
         self.assertEqual(age, 9 + 99)
 
         # Test get_resource
-        robot_1: Robot = resource_set.get_resource("Robot 1")
+        robot_1 = resource_set.get_resource("Robot 1")
+        assert isinstance(robot_1, Robot)
         self.assertEqual(robot_1.age, 9)
 
         # Test get_resource
@@ -119,12 +124,18 @@ class TestResourceSet(BaseTestCase):
         self.assertEqual(robot_2.name, "Robot 2")
 
         # test the view, reload the resource to simulate real view
-        resource_set = ResourceModel.get_by_id_and_check(resource_set.get_model_id()).get_resource()
+        resource_set_id = resource_set.get_model_id()
+        assert resource_set_id is not None
+        resource_set = ResourceModel.get_by_id_and_check(resource_set_id).get_resource(
+            resource_type=ResourceSet
+        )
 
-        self.assertEqual(len(resource_set.view_resources_list({}).to_dto({}).data), 2)
+        self.assertEqual(
+            len(resource_set.view_resources_list(ConfigParams()).to_dto(ConfigParams()).data), 2
+        )
 
         # check that output or robot add has 3 robots
-        resource_set = robot_add.get_output("set")
+        resource_set = robot_add.get_output("set", ResourceSet)
         self.assertEqual(len(resource_set.get_resources()), 3)
         self.assertTrue(resource_set.resource_exists("Robot 2"))
         self.assertTrue(resource_set.resource_exists("Robot 3"))
@@ -145,14 +156,15 @@ class TestResourceSet(BaseTestCase):
         file_path = FileHelper.create_empty_file_if_not_exist(
             os.path.join(settings.make_temp_dir(), "test.json")
         )
-        file = File(file_path)
+        file = File(str(file_path))
 
         resource_set: ResourceSet = ResourceSet()
         resource_set.add_resource(table, unique_name="table")
         resource_set.add_resource(empty_resource, unique_name="empty_resource")
         resource_set.add_resource(file, unique_name="test")
 
-        zip_file: File = ResourceSetExporter.call(resource_set, {})
+        zip_file = ResourceSetExporter.call(resource_set, {})
+        assert isinstance(zip_file, File)
 
         self.assertTrue(zip_file.exists())
 
@@ -206,11 +218,38 @@ class TestResourceSet(BaseTestCase):
 
         outputs = task_runner.run()
 
-        resource_set: ResourceSet = outputs.get("resource_set")
+        output_set = outputs.get("resource_set")
 
-        self.assertIsInstance(resource_set, ResourceSet)
-        self.assertEqual(len(resource_set.get_resources()), 3)
-        self.assertEqual(resource_set.get_resource("robot_1").uid, robot_1.uid)
-        self.assertEqual(resource_set.get_resource("robot_2").uid, robot_2.uid)
+        self.assertIsInstance(output_set, ResourceSet)
+        assert isinstance(output_set, ResourceSet)
+        self.assertEqual(len(output_set.get_resources()), 3)
+        self.assertEqual(output_set.get_resource("robot_1").uid, robot_1.uid)
+        self.assertEqual(output_set.get_resource("robot_2").uid, robot_2.uid)
         # check that the sub resource set was flatten
-        self.assertEqual(resource_set.get_resource("robot_3").uid, robot_3.uid)
+        self.assertEqual(output_set.get_resource("robot_3").uid, robot_3.uid)
+
+    def test_resource_picker(self):
+        robot_1 = Robot.empty()
+        robot_2 = Robot.empty()
+        robot_2.name = "robot_2"
+
+        resource_set: ResourceSet = ResourceSet()
+        resource_set.add_resource(robot_1, unique_name="robot_1")
+        resource_set.add_resource(robot_2, unique_name="robot_2")
+        ResourceModel.save_from_resource(resource_set, ResourceOrigin.UPLOADED)
+
+        task_runner = TaskRunner(
+            ResourcePicker,
+            params={"keys": [{"key": "robot_2"}]},
+            inputs={"resource_set": resource_set},
+        )
+
+        outputs = task_runner.run()
+
+        # DynamicOutputs distributes the picked resources over individual output ports
+        picked = list(outputs.values())
+        self.assertEqual(len(picked), 1)
+        picked_robot = picked[0]
+        self.assertIsInstance(picked_robot, Robot)
+        assert picked_robot is not None
+        self.assertEqual(picked_robot.uid, robot_2.uid)

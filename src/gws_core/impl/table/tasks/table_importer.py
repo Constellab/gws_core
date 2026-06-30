@@ -41,7 +41,6 @@ class TableImporter(ResourceImporter):
             ),
             "format_header_names": BoolParam(
                 default_value=False,
-                optional=True,
                 human_name="Format header names",
                 short_description="If true, the column and row names are formatted to remove special characters and spaces (only '_' are allowed).",
             ),
@@ -100,14 +99,13 @@ class TableImporter(ResourceImporter):
                         ),
                         "keep_in_table": BoolParam(
                             default_value=True,
-                            optional=True,
                             visibility=BoolParam.PROTECTED_VISIBILITY,
                             human_name="Keep in table",
                             short_description="Set True to keep the column in the final table; False otherwise",
                         ),
                     }
                 ),
-                optional=True,
+                min_number_of_occurrences=0,
                 visibility=ParamSet.PROTECTED_VISIBILITY,
                 human_name="Metadata columns",
                 short_description="Columns data to use to tag the rows of the table",
@@ -133,7 +131,7 @@ class TableImporter(ResourceImporter):
             self.log_info_message(f"Detected encoding: {encoding}")
 
         # the empty string meanse no comment
-        comment_char = params.get_value("comment")
+        comment_char: str | None = params.get_value("comment")
         if comment_char == "":
             comment_char = None
 
@@ -168,13 +166,12 @@ class TableImporter(ResourceImporter):
     def get_file_format(self, source: File, file_format: str) -> str:
         clean_file_format: str = FileHelper.normalize_extension(file_format)
 
-        if clean_file_format == "auto":
-            extension = source.extension
-
+        extension = source.extension
+        if clean_file_format == "auto" and extension is not None:
             if extension not in Table.ALLOWED_FILE_FORMATS:
                 raise Exception(f"File format {extension} not supported.")
 
-            return source.extension
+            return extension
 
         return clean_file_format
 
@@ -186,7 +183,7 @@ class TableImporter(ResourceImporter):
 
             if sheet_name not in available_sheets:
                 raise BadRequestException(
-                    f"Sheet '{sheet_name}' not found in Excel file. Available sheets: {', '.join(available_sheets)}"
+                    f"Sheet '{sheet_name}' not found in Excel file. Available sheets: {', '.join(str(sheet) for sheet in available_sheets)}"
                 )
 
             return read_excel(source.path, sheet_name=sheet_name)
@@ -195,7 +192,7 @@ class TableImporter(ResourceImporter):
             return read_excel(source.path)
 
     def _import_csv(
-        self, source: File, params: ConfigParams, comment_char: str, encoding: str
+        self, source: File, params: ConfigParams, comment_char: str | None, encoding: str
     ) -> DataFrame:
         header = params.get_value("header")
         header = None if header == -1 else header
@@ -226,7 +223,7 @@ class TableImporter(ResourceImporter):
             encoding=encoding,
         )
 
-    def _read_comments(self, source: File, comment_char: str, encoding: str) -> str:
+    def _read_comments(self, source: File, comment_char: str | None, encoding: str) -> str:
         if not source.is_readable():
             return ""
 

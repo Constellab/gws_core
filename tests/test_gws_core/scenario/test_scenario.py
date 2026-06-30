@@ -10,13 +10,13 @@ from gws_core import (
     ScenarioService,
     ScenarioStatus,
     TaskModel,
+    User,
 )
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.block.rich_text_block_paragraph import RichTextBlockParagraph
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel, RobotWorldTravelProto
 from gws_core.impl.robot.robot_resource import Robot
-from gws_core.impl.robot.robot_service import RobotService
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.io_spec import IOSpec
 from gws_core.lab.lab_config_model import LabConfigModel
@@ -41,7 +41,7 @@ class TestScenario(BaseTestCase):
         self.assertIsNotNone(scenario.id)
         self.assertEqual(scenario.title, "Scenario title")
         self.assertIsNotNone(scenario.protocol_model.id)
-        self.assertEqual(scenario.folder.id, folder.id)
+        self.assertEqual(cast(SpaceFolder, scenario.folder).id, folder.id)
 
         rich_text = RichText()
         rich_text.add_paragraph("test")
@@ -66,10 +66,8 @@ class TestScenario(BaseTestCase):
         self.assertEqual(Scenario.count_running_or_queued_scenarios(), 0)
 
         # Create scenario 1
-        proto1 = RobotService.create_robot_simple_travel()
-
-        scenario = ScenarioService.create_scenario_from_protocol_model(
-            protocol_model=proto1, title="My exp title", folder=folder
+        scenario = ScenarioService.create_scenario_from_protocol_type(
+            RobotSimpleTravel, title="My exp title", folder=folder
         )
 
         self.assertEqual(Scenario.select().count(), scenario_count + 1)
@@ -83,12 +81,11 @@ class TestScenario(BaseTestCase):
         self.assertEqual(ResourceModel.select().count(), resource_count)
         self.assertEqual(scenario.title, "My exp title")
 
-        print("Run scenario_2 ...")
         scenario = ScenarioRunService.run_scenario(scenario=scenario)
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
         # check that the lab config was saved in the scenario
-        self.assertEqual(scenario.lab_config.id, LabConfigModel.id)
+        self.assertEqual(cast(LabConfigModel, scenario.lab_config).id, LabConfigModel.id)
 
         self.assertEqual(
             ResourceModel.select().count(), resource_count + RobotSimpleTravel.resources_count
@@ -103,14 +100,14 @@ class TestScenario(BaseTestCase):
         current_lab = LabModel.get_or_create_current_lab()
         for task_model in scenario.get_task_models():
             self.assertEqual(task_model.status, ProcessStatus.SUCCESS)
-            self.assertEqual(task_model.run_by.id, TestHelper.user.id)
-            self.assertEqual(task_model.run_by_lab.id, current_lab.id)
+            self.assertEqual(cast(User, task_model.run_by).id, TestHelper.get_system_user().id)
+            self.assertEqual(cast(LabModel, task_model.run_by_lab).id, current_lab.id)
 
         # Also check the protocol model itself
         protocol_model = scenario.protocol_model
         self.assertEqual(protocol_model.status, ProcessStatus.SUCCESS)
-        self.assertEqual(protocol_model.run_by.id, TestHelper.user.id)
-        self.assertEqual(protocol_model.run_by_lab.id, current_lab.id)
+        self.assertEqual(cast(User, protocol_model.run_by).id, TestHelper.get_system_user().id)
+        self.assertEqual(cast(LabModel, protocol_model.run_by_lab).id, current_lab.id)
 
         # refresh scenario
         scenario = Scenario.get_by_id_and_check(scenario.id)
@@ -118,11 +115,13 @@ class TestScenario(BaseTestCase):
         # Test the configuration on fly_1 process (west 2000)
         move_1 = scenario.protocol_model.get_process("move_1")
         # check that the resource was associated to the folder
-        robot1_model = move_1.inputs.get_resource_model("robot")
-        self.assertEqual(robot1_model.folder.id, folder.id)
-        robot1: Robot = robot1_model.get_resource()
+        robot1_model = cast(ResourceModel, move_1.inputs.get_resource_model("robot"))
+        self.assertEqual(cast(SpaceFolder, robot1_model.folder).id, folder.id)
+        robot1: Robot = cast(Robot, robot1_model.get_resource())
 
-        robot2: Robot = move_1.outputs.get_resource_model("robot").get_resource()
+        robot2: Robot = cast(
+            Robot, cast(ResourceModel, move_1.outputs.get_resource_model("robot")).get_resource()
+        )
         self.assertEqual(robot1.position[0], robot2.position[0] + 2000)
 
         # Check if the port resource spec was correctly loaded
@@ -136,7 +135,7 @@ class TestScenario(BaseTestCase):
 
         ScenarioService.update_scenario_folder(scenario.id, folder2.id)
         robot1_model = robot1_model.refresh()
-        self.assertEqual(robot1_model.folder.id, folder2.id)
+        self.assertEqual(cast(SpaceFolder, robot1_model.folder).id, folder2.id)
 
         # Test remove the folder
         ScenarioService.update_scenario_folder(scenario.id, None)
@@ -144,12 +143,13 @@ class TestScenario(BaseTestCase):
         self.assertIsNone(robot1_model.folder)
 
     def test_run_through_cli(self):
-        proto = RobotService.create_robot_world_travel()
-        scenario = ScenarioService.create_scenario_from_protocol_model(protocol_model=proto)
+        scenario = ScenarioService.create_scenario_from_protocol_type(RobotWorldTravelProto)
 
-        ScenarioRunService.create_cli_for_scenario(scenario=scenario, user=TestHelper.user)
+        ScenarioRunService.create_cli_for_scenario(
+            scenario=scenario, user=TestHelper.get_system_user()
+        )
         self.assertEqual(scenario.status, ScenarioStatus.WAITING_FOR_CLI_PROCESS)
-        self.assertTrue(scenario.running_process_pid > 0)
+        self.assertTrue(cast(int, scenario.running_process_pid) > 0)
 
         scenario = Scenario.get_by_id_and_check(scenario.id)
 
@@ -164,7 +164,7 @@ class TestScenario(BaseTestCase):
         scenario = Scenario.get_by_id_and_check(scenario.id)
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
         self.assertIsNone(scenario.running_process_pid)
-        self.assertEqual(scenario.lab_config.id, LabConfigModel.id)
+        self.assertEqual(cast(LabConfigModel, scenario.lab_config).id, LabConfigModel.id)
 
         self.assertEqual(
             len(scenario.get_generated_resources()), RobotWorldTravelProto.resource_count
@@ -185,7 +185,7 @@ class TestScenario(BaseTestCase):
             self.assertEqual(resource.is_archived, archive)
 
         # check that the process are archived
-        processes: list[ProcessModel] = scenario.get_task_models()
+        processes: list[TaskModel] = scenario.get_task_models()
         self.assertEqual(len(processes), RobotWorldTravelProto.tasks_count)
         for process in processes:
             self.assertEqual(process.is_archived, archive)
@@ -286,7 +286,9 @@ class TestScenario(BaseTestCase):
         scenario.run()
 
         # generate a resource
-        robot_model = output.refresh().get_input_resource_model(OutputTask.input_name)
+        robot_model = cast(
+            ResourceModel, output.refresh().get_input_resource_model(OutputTask.input_name)
+        )
 
         # create a scenario that uses this resource
         scenario_2 = ScenarioProxy()
@@ -309,9 +311,9 @@ class TestScenario(BaseTestCase):
 
         main_protocol: ProtocolModel = scenario.protocol_model
 
-        create_process: TaskModel = ProtocolService.add_process_to_protocol(
-            main_protocol, RobotCreate
-        ).process
+        create_process: TaskModel = cast(
+            TaskModel, ProtocolService.add_process_to_protocol(main_protocol, RobotCreate).process
+        )
 
         # first run
         scenario = ScenarioRunService.run_scenario(scenario)
@@ -319,14 +321,14 @@ class TestScenario(BaseTestCase):
 
         self.assertEqual(scenario.status, ScenarioStatus.SUCCESS)
         # retrieve resource to compare it after
-        created_robot = create_process.out_port("robot").get_resource_model()
+        created_robot = cast(ResourceModel, create_process.out_port("robot").get_resource_model())
         self.assertIsNotNone(created_robot)
 
         # add a move process to the protocol
         main_protocol = main_protocol.refresh()
-        move_process: TaskModel = ProtocolService.add_process_to_protocol(
-            main_protocol, RobotMove
-        ).process
+        move_process: TaskModel = cast(
+            TaskModel, ProtocolService.add_process_to_protocol(main_protocol, RobotMove).process
+        )
         ProtocolService.add_connector_to_protocol(
             main_protocol,
             create_process.instance_name,
@@ -347,7 +349,7 @@ class TestScenario(BaseTestCase):
 
         # Check that the create process was not re-run by comparing output
         create_process = create_process.refresh()
-        created_robot_2 = create_process.out_port("robot").get_resource_model()
+        created_robot_2 = cast(ResourceModel, create_process.out_port("robot").get_resource_model())
         self.assertEqual(created_robot.id, created_robot_2.id)
 
         # Check that the move process was run
@@ -362,11 +364,11 @@ class TestScenario(BaseTestCase):
         move_2 = protocol.add_process(RobotMove, "move_2")
         protocol.add_connector(i_create >> "robot", move_1 << "robot")
         protocol.add_connector(move_1 >> "robot", move_2 << "robot")
-        output = protocol.add_output("output", move_2 >> "robot")
+        protocol.add_output("output", move_2 >> "robot")
         scenario.run()
 
         # flag the output of i_create
-        create_output = i_create.refresh().get_output_resource_model("robot")
+        create_output = cast(ResourceModel, i_create.refresh().get_output_resource_model("robot"))
         create_output.flagged = True
         create_output.save()
 
@@ -377,6 +379,14 @@ class TestScenario(BaseTestCase):
         # the output of i_create should not be deleted because it is flagged
         self.assertFalse(create_output.content_is_deleted)
         # the output of move_2 should not be deleted because it is the output of the scenario
-        self.assertFalse(move_2.refresh().get_output_resource_model("robot").content_is_deleted)
+        self.assertFalse(
+            cast(
+                ResourceModel, move_2.refresh().get_output_resource_model("robot")
+            ).content_is_deleted
+        )
         # the output of move_1 should be deleted
-        self.assertTrue(move_1.refresh().get_output_resource_model("robot").content_is_deleted)
+        self.assertTrue(
+            cast(
+                ResourceModel, move_1.refresh().get_output_resource_model("robot")
+            ).content_is_deleted
+        )

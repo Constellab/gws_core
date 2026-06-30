@@ -16,6 +16,7 @@ from gws_core.core.model.typed_db_field import (
     TypedEnumField,
 )
 from gws_core.core.utils.date_helper import DateHelper
+from gws_core.core.utils.logger import Logger
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntity, NavigableEntityType
 from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
@@ -44,31 +45,31 @@ if TYPE_CHECKING:
 
 @final
 class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
-    folder = NullableForeignKeyField(SpaceFolder)
+    folder: NullableForeignKeyField[SpaceFolder] = NullableForeignKeyField(SpaceFolder)
 
-    status = TypedEnumField(choices=ScenarioStatus, default=ScenarioStatus.DRAFT)
-    error_info = NullableJSONField()
-    creation_type = TypedEnumField(
+    status: TypedEnumField[ScenarioStatus] = TypedEnumField(
+        choices=ScenarioStatus, default=ScenarioStatus.DRAFT
+    )
+    error_info: NullableJSONField = NullableJSONField()
+    creation_type: TypedEnumField[ScenarioCreationType] = TypedEnumField(
         choices=ScenarioCreationType, default=ScenarioCreationType.MANUAL, max_length=20
     )
 
-    title = TypedCharField(max_length=50)
-    description = NullableRichTextDbField()
-    lab_config = NullableForeignKeyField(LabConfigModel)
+    title: TypedCharField = TypedCharField(max_length=50)
+    description: NullableRichTextDbField = NullableRichTextDbField()
+    lab_config: NullableForeignKeyField[LabConfigModel] = NullableForeignKeyField(LabConfigModel)
 
-    is_validated = TypedBooleanField(default=False)
-    validated_at = NullableDateTimeUTC()
-    validated_by = NullableForeignKeyField(User, backref="+")
+    is_validated: TypedBooleanField = TypedBooleanField(default=False)
+    validated_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    validated_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = NullableDateTimeUTC()
-    last_sync_by = NullableForeignKeyField(User, backref="+")
+    last_sync_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    last_sync_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
-    is_archived = TypedBooleanField(default=False, index=True)
-    running_process_pid = NullableIntegerField()
-    running_in_external_lab = NullableForeignKeyField(
-        LabModel, backref="+", on_delete="SET NULL"
-    )
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
+    running_process_pid: NullableIntegerField = NullableIntegerField()
+    running_in_external_lab: NullableForeignKeyField[LabModel] = NullableForeignKeyField(LabModel, backref="+", on_delete="SET NULL")
 
     # cache of the _protocol
     _protocol: ProtocolModel | None = None
@@ -76,14 +77,35 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
     @property
     def protocol_model(self) -> ProtocolModel:
         """
-        Returns the main protocol model
+        Returns the main protocol model of the scenario.
+
+        If the protocol row does not exist anymore (e.g. orphaned scenario), an
+        empty protocol is created, linked to this scenario and persisted, so a
+        scenario always has a main protocol. The orphan case should not happen
+        in normal usage.
         """
+        from ..process.process_factory import ProcessFactory
         from ..protocol.protocol_model import ProtocolModel
 
         if self._protocol is None:
-            self._protocol = ProtocolModel.get(
+            self._protocol = ProtocolModel.get_or_none(
                 (ProtocolModel.scenario == self) & (ProtocolModel.parent_protocol_id.is_null())
             )
+
+        if self._protocol is None:
+            if not self.is_saved():
+                raise BadRequestException(
+                    f"Scenario '{self.id}' is not saved yet, it has no protocol model"
+                )
+
+            # Recreate a main protocol for orphaned scenarios so the scenario stays usable
+            Logger.warning(
+                f"Scenario '{self.id}' has no main protocol model, recreating an empty one. "
+                "The original protocol may have been deleted."
+            )
+            protocol_model: ProtocolModel = ProcessFactory.create_protocol_empty()
+            protocol_model.set_scenario(self)
+            self._protocol = protocol_model.save_full()
 
         return self._protocol
 
@@ -234,11 +256,6 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         if self.folder is None:
             raise BadRequestException(
                 "The scenario must be linked to a folder before validating it"
-            )
-
-        if self.folder.children.count() > 0:
-            raise BadRequestException(
-                "The scenario must be associated with a leaf folder (folder with no children)"
             )
 
         self.is_validated = True

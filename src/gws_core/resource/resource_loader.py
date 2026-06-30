@@ -9,9 +9,9 @@ from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.folder import Folder
 from gws_core.impl.file.fs_node import FSNode
 from gws_core.model.typing_manager import TypingManager
+from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.kv_store import KVStore
 from gws_core.resource.resource import Resource
-from gws_core.resource.id_mapper import IdMapper
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_factory import ResourceFactory
 from gws_core.resource.resource_set.resource_list_base import ResourceListBase
@@ -139,10 +139,11 @@ class ResourceLoader:
                 raise Exception("Resource type is not a FSNode")
 
             fs_node_name = zip_resource.get_fs_node_name()
+            assert fs_node_name is not None
             # set the path of the resource node
             resource.path = os.path.join(self._resource_folder_path, fs_node_name)
             # clear other values
-            resource.file_store_id = None
+            resource.file_store_id = None  # type: ignore[assignment]
             resource.is_symbolic_link = False
 
         if self.resource_origin is not None:
@@ -216,10 +217,14 @@ class ResourceLoader:
         return self._load_info_json().origin
 
     def get_main_resource_origin_id(self) -> str:
-        return self._load_info_json().resource.resource_model_export.id
+        resource = self._load_info_json().resource
+        assert resource is not None
+        return resource.resource_model_export.id
 
     def get_main_resource(self) -> ResourceExportDTO:
-        return self._load_info_json().resource
+        resource = self._load_info_json().resource
+        assert resource is not None
+        return resource
 
     def get_children_zip_resources(self) -> list[ResourceExportDTO]:
         """Return the children zip resource DTOs from the export package."""

@@ -1,5 +1,5 @@
 import inspect
-from typing import Literal
+from typing import Literal, cast
 
 from gws_core.core.utils.reflector_types import MethodDoc
 from gws_core.core.utils.utils import Utils
@@ -28,19 +28,21 @@ class ResourceTyping(Typing):
 
     @classmethod
     def get_folder_types(cls) -> list["ResourceTyping"]:
-        return cls.get_children_typings(cls._object_type, Folder)
+        return cast(
+            "list[ResourceTyping]", cls.get_children_typings(cls._object_type, Folder)
+        )
 
     def to_full_dto(self) -> ResourceTypingDTO:
         typing_dto = super().to_full_dto()
 
         return ResourceTypingDTO(
             **typing_dto.to_json_dict(),
-            variables=ReflectorHelper.get_all_public_args(self.get_type()),
+            variables=ReflectorHelper.get_all_public_args(cast(type, self.get_type())),
             methods=self.get_class_methods_docs(),
         )
 
-    def get_class_methods_docs(self) -> ResourceTypingMethodDTO:
-        type_: type = self.get_type()
+    def get_class_methods_docs(self) -> ResourceTypingMethodDTO | None:
+        type_: type | None = self.get_type()
         if not inspect.isclass(type_):
             return None
 
@@ -69,18 +71,21 @@ class ResourceTyping(Typing):
 
 class FileTyping(ResourceTyping):
     @classmethod
-    def get_typings(cls) -> list["ResourceTyping"]:
-        return cls.get_children_typings(cls._object_type, File)
+    def get_typings(cls) -> list["FileTyping"]:
+        return cast(
+            "list[FileTyping]", cls.get_children_typings(cls._object_type, File)
+        )
 
     def to_dto(self) -> TypingDTO:
         typing_dto = super().to_dto()
 
         # retrieve the task python type
-        model_t: type[File] = self.get_type()
+        model_t: type | None = self.get_type()
 
         if model_t and Utils.issubclass(model_t, File):
+            file_type = cast("type[File]", model_t)
             typing_dto.additional_data = {
-                "default_extensions": model_t.__default_extensions__ or []
+                "default_extensions": file_type.__default_extensions__ or []
             }
 
         return typing_dto

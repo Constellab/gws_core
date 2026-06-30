@@ -8,10 +8,11 @@ from starlette_context.middleware.context_middleware import ContextMiddleware
 from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
+from .apps.apps_manager import AppsManager
 from .core.classes.cors_config import CorsConfig
 from .core.classes.request_id_middleware import RequestIdMiddleware
 from .core.classes.security_headers import SecurityHeadersMiddleware
-from .apps.apps_manager import AppsManager
+from .core.utils.settings import Settings
 from .lab.api_registry import ApiRegistry
 from .lab.system_service import SystemService
 
@@ -99,5 +100,9 @@ class App:
 
         # Install access log filter for silent APIs (e.g. S3 server)
         ApiRegistry.install_access_log_filter()
+
+        # Mark this process as the HTTP server so fork-based scenario execution
+        # (ScenarioProxy.run()) can refuse to run inside a request handler.
+        Settings.get_instance().set_is_http_server(True)
 
         uvicorn.run(cls.app, host="0.0.0.0", port=int(port))

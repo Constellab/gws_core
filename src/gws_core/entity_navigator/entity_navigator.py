@@ -622,6 +622,35 @@ class EntityNavigator(Generic[GenericNavigableEntity]):
 
         raise Exception(f"Entity type {entity_type} not supported")
 
+    @classmethod
+    def from_entity_ids(
+        cls, entity_type: NavigableEntityType, entity_ids: list[str]
+    ) -> "EntityNavigator":
+        """Build the appropriate concrete navigator for several entities of the
+        same type, by type and ids.
+
+        Batch counterpart of ``from_entity_id``: the entities are loaded in a
+        single query per type rather than one lookup per id. Ids that do not
+        match an existing entity are silently dropped (unlike ``from_entity_id``,
+        which raises on a missing entity).
+
+        Raises if ``entity_type`` is unknown.
+        """
+        if entity_type == NavigableEntityType.SCENARIO:
+            return EntityNavigatorScenario(Scenario.get_by_ids(entity_ids))
+        elif entity_type == NavigableEntityType.NOTE:
+            return EntityNavigatorNote(Note.get_by_ids(entity_ids))
+        elif entity_type == NavigableEntityType.VIEW:
+            return EntityNavigatorView(ViewConfig.get_by_ids(entity_ids))
+        elif entity_type == NavigableEntityType.RESOURCE:
+            return EntityNavigatorResource(ResourceModel.get_by_ids(entity_ids))
+        elif entity_type == NavigableEntityType.FORM_TEMPLATE:
+            return EntityNavigatorFormTemplate(FormTemplate.get_by_ids(entity_ids))
+        elif entity_type == NavigableEntityType.FORM:
+            return EntityNavigatorForm(Form.get_by_ids(entity_ids))
+
+        raise Exception(f"Entity type {entity_type} not supported")
+
 
 class EntityNavigatorScenario(EntityNavigator[Scenario]):
     """Navigator over scenarios. Edges: scenario -> resources it produces and notes attached to it."""

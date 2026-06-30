@@ -301,12 +301,12 @@ class LogsBetweenDates:
             is_last_page=self.is_last_page,
         )
 
-    def get_next_page_date(self) -> datetime:
+    def get_next_page_date(self) -> datetime | None:
         """return the start date for the next page
         Add 1 millisecond to the last log date to avoid duplicate logs
 
         :return: _description_
-        :rtype: datetime
+        :rtype: datetime | None
         """
         return self.logs[-1].date_time + timedelta(milliseconds=1) if len(self.logs) > 0 else None
 

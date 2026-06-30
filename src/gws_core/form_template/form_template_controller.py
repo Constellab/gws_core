@@ -8,10 +8,16 @@ from gws_core.form_template.form_template_ai_service import FormTemplateAiServic
 from gws_core.form_template.form_template_dto import (
     CreateDraftVersionDTO,
     CreateFormTemplateDTO,
+    DuplicateFormTemplateDTO,
     FormTemplateDTO,
     FormTemplateVersionDTO,
     GenerateComputedParamDTO,
     GenerateComputedParamResultDTO,
+    GenerateTemplateFieldDTO,
+    GenerateTemplateFieldResultDTO,
+    GenerateTemplateSpecsDTO,
+    GenerateTemplateSpecsResultDTO,
+    OverrideFormTemplateSpecsDTO,
     ReorderDraftFieldsDTO,
     TestFormTemplateVersionDTO,
     TestFormTemplateVersionResultDTO,
@@ -134,6 +140,20 @@ def list_versions(
     return [v.to_dto() for v in FormTemplateService.list_versions(id_)]
 
 
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/duplicate",
+    tags=["Form template"],
+    summary="Duplicate a form template into a new family from one of its versions",
+)
+def duplicate_from_version(
+    id_: str,
+    version_id: str,
+    body: DuplicateFormTemplateDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateDTO:
+    return FormTemplateService.duplicate_from_version(id_, version_id, body).to_dto()
+
+
 @core_app.get(
     "/form-template/{id_}/version/{version_id}",
     tags=["Form template"],
@@ -240,6 +260,48 @@ def generate_computed_param_with_ai(
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> GenerateComputedParamResultDTO:
     return FormTemplateAiService.generate_computed_param_expression(id_, version_id, body)
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/generate-specs-with-ai",
+    tags=["Form template"],
+    summary="AI-generate or modify a DRAFT form template's fields from a description (does not persist)",
+)
+def generate_specs_with_ai(
+    id_: str,
+    version_id: str,
+    body: GenerateTemplateSpecsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> GenerateTemplateSpecsResultDTO:
+    return FormTemplateAiService.generate_template_specs(id_, version_id, body)
+
+
+@core_app.put(
+    "/form-template/{id_}/version/{version_id}/specs",
+    tags=["Form template"],
+    summary="Fully replace a DRAFT version's field set",
+)
+def override_specs(
+    id_: str,
+    version_id: str,
+    body: OverrideFormTemplateSpecsDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> FormTemplateVersionDTO:
+    return FormTemplateService.override_specs(id_, version_id, body.specs).to_dto()
+
+
+@core_app.post(
+    "/form-template/{id_}/version/{version_id}/generate-field-with-ai",
+    tags=["Form template"],
+    summary="AI-generate or edit a single DRAFT field from a description (does not persist)",
+)
+def generate_field_with_ai(
+    id_: str,
+    version_id: str,
+    body: GenerateTemplateFieldDTO,
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> GenerateTemplateFieldResultDTO:
+    return FormTemplateAiService.generate_template_field(id_, version_id, body)
 
 
 @core_app.put(

@@ -6,8 +6,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.lab.lab_model.lab_dto import LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model_param import LabModelParam
 from gws_core.model.typing_style import TypingStyle
-from gws_core.scenario.scenario import Scenario
-from gws_core.scenario.scenario_enums import ScenarioStatus
 from gws_core.scenario.scenario_waiter import ScenarioWaiterExternalLab
 from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.task.task import Task
@@ -58,7 +56,7 @@ class ScenarioWaiterTask(Task):
     OUTPUT_NAME = "scenario"
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        scenario_resource: ScenarioResource = inputs[self.INPUT_NAME]
+        scenario_resource = inputs.get_resource(self.INPUT_NAME, ScenarioResource)
         scenario_id = scenario_resource.scenario_id
 
         lab_dto: LabDTOWithCredentials = params.get_value("lab")

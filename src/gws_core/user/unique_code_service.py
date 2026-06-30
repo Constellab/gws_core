@@ -23,7 +23,9 @@ class UniqueCodeService:
 
     @classmethod
     def generate_code_current_user(cls, obj: Any, validity_duration: int) -> str:
-        return cls.generate_code(CurrentUserService.get_current_user().id, obj, validity_duration)
+        return cls.generate_code(
+            CurrentUserService.get_and_check_current_user().id, obj, validity_duration
+        )
 
     @classmethod
     def generate_code(cls, user_id: str, obj: Any, validity_duration: int) -> str:

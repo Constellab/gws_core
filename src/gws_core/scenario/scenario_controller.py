@@ -7,6 +7,7 @@ from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
+from gws_core.resource.resource_dto import ScenarioWithOutputResourceDTO
 from gws_core.scenario.queue.queue_service import QueueService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
 
@@ -47,6 +48,34 @@ def get_an_scenario(
     """
 
     return ScenarioService.get_by_id_and_check(id_).to_dto()
+
+
+@core_app.get(
+    "/scenario/{id_}/output-resource",
+    tags=["Scenario"],
+    summary="Get a scenario and its output resource",
+)
+def get_scenario_with_output_resource(
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
+) -> ScenarioWithOutputResourceDTO:
+    """
+    Retrieve a scenario together with the resource of its single output.
+
+    This is meant for classic single-output scenarios (like the ones created by
+    ``ResourceTransfertService``). The ``output_resource`` is ``None`` when the
+    scenario is still running, ended in error, or does not expose exactly one
+    output resource.
+
+    - **id_**: the id_ of the scenario
+    """
+
+    scenario = ScenarioService.get_by_id_and_check(id_)
+    output_resource = ScenarioService.get_scenario_output_resource(id_)
+
+    return ScenarioWithOutputResourceDTO(
+        scenario=scenario.to_dto(),
+        output_resource=output_resource.to_dto() if output_resource else None,
+    )
 
 
 @core_app.post(
@@ -291,7 +320,7 @@ def delete_intermediate_resources(
 def import_from_lab(
     values: ConfigParamsDict, _=Depends(AuthorizationService.check_user_access_token)
 ) -> ScenarioDTO:
-    return ScenarioTransfertService.import_from_lab_sync(values).to_dto()
+    return ScenarioTransfertService.import_from_lab_async(values).to_dto()
 
 
 @core_app.get(

@@ -111,7 +111,7 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
     def run_after_task(self) -> None:
         super().run_after_task()
 
-        if self.share_entity:
+        if self.share_entity and self._built_scenario_id is not None:
             self.log_info_message("Marking the resource as received in the origin lab")
             current_lab_info = ExternalLabApiService.get_current_lab_info(
                 CurrentUserService.get_and_check_current_user()

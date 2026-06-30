@@ -53,6 +53,32 @@ class ParamSpecSimpleDTO(BaseModelDTO):
     additional_info: dict = {}
 
 
+class ParamSpecAiDescriptionDTO(BaseModelDTO):
+    """A ParamSpec type's self-description for an AI form-builder.
+
+    Produced by :meth:`ParamSpec.describe_for_ai`. Lets each param type document
+    itself where it is defined — its purpose, the meaning of its
+    ``additional_info`` constraint keys, and a real, valid example spec — so an
+    AI catalog can be assembled from the type registry without hard-coding any
+    type's shape elsewhere.
+    """
+
+    # The wire type tag, e.g. "str", "int", "param_set".
+    type: ParamSpecType
+
+    # One-line summary of what the field is for and when to use it.
+    summary: str
+
+    # Maps each ``additional_info`` constraint key to a human explanation
+    # (e.g. {"min_value": "Minimum allowed value (inclusive)"}). Empty when the
+    # type has no AI-relevant constraints.
+    additional_info_doc: dict[str, str] = {}
+
+    # A real, valid example spec (a single ``{key: ParamSpecJSON}`` object) —
+    # the exact shape ``ConfigSpecs.from_json`` accepts.
+    example: dict = {}
+
+
 class ParamSpecDTO(ParamSpecSimpleDTO):
     human_name: str | None = None
     short_description: str | None = None

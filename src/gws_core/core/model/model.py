@@ -3,6 +3,7 @@ from typing import TypeVar
 
 from peewee import DoesNotExist
 from peewee import Model as PeeweeModel
+from typing_extensions import Self
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.model.base_model import BaseModel
@@ -32,9 +33,9 @@ class Model(BaseModel, PeeweeModel):
     :type last_modified_at: `datetime`
     """
 
-    id = TypedCharField(primary_key=True, max_length=36)
-    created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    last_modified_at = TypedDateTimeUTC(default=DateHelper.now_utc)
+    id: TypedCharField = TypedCharField(primary_key=True, max_length=36)
+    created_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
+    last_modified_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
 
     _json_ignore_fields: list[str] = []
     _is_saved: bool = False
@@ -114,7 +115,7 @@ class Model(BaseModel, PeeweeModel):
     def refresh(self: ModelType) -> ModelType:
         return self.get_by_id_and_check(self.id)
 
-    def save(self: ModelType, *args, **kwargs) -> ModelType:
+    def save(self, *args, **kwargs) -> Self:
         """
         Sets the `data`
         set force_insert to True to force creation of the object

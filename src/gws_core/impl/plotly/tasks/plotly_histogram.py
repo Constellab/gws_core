@@ -70,7 +70,6 @@ class PlotlyHistogram(PlotlyTask):
             ),
             "cumulative": BoolParam(
                 default_value=False,
-                optional=True,
                 human_name="cumulative",
                 short_description="cumulative or not",
             ),

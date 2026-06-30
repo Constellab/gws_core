@@ -356,7 +356,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return ResourceFactory.create_resource(
             self.get_and_check_resource_type(),
             kv_store=kv_store,
-            data=self.data,
+            data=self.data or {},
             resource_model_id=self.id,
             name=self.name,
             style=self.style,

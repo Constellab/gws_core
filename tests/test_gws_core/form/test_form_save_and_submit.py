@@ -337,7 +337,7 @@ class TestFormSaveAndSubmit(BaseTestCase):
                             ),
                         }
                     ),
-                    optional=True,
+                    min_number_of_occurrences=0,
                 ),
                 "total_mass": ComputedParam(
                     expression="sum(@samples[].mass)"

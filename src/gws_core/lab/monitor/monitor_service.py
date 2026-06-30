@@ -20,6 +20,7 @@ from .monitor_dto import (
     FolderSizeDTO,
     MonitorBetweenDateGraphicsDTO,
     MonitorFreeDiskDTO,
+    UploadSpaceCheckDTO,
 )
 
 
@@ -344,4 +345,24 @@ class MonitorService:
 
         return MonitorFreeDiskDTO(
             required_disk_free_space=required_free_disk, disk_usage_free=disk_usage.free
+        )
+
+    @classmethod
+    def check_upload_space(cls, file_size: float) -> UploadSpaceCheckDTO:
+        """Pre-flight check telling whether an upload of the given size would fit
+        on disk, without writing anything. Used by the frontend before starting
+        an upload so the user does not wait for the whole transfer to learn the
+        upload won't fit.
+
+        :param file_size: the size of the upload in bytes
+        :type file_size: float
+        """
+        free_disk_info = cls.get_free_disk_info()
+
+        return UploadSpaceCheckDTO(
+            has_enough_space=free_disk_info.has_enough_space_for_file(file_size),
+            file_size=file_size,
+            required_disk_free_space=free_disk_info.required_disk_free_space,
+            disk_usage_free=free_disk_info.disk_usage_free,
+            remaining_space_after_file=free_disk_info.get_remaining_space_after_file(file_size),
         )

@@ -11,6 +11,7 @@ from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorSe
 from gws_core.resource.resource_dto import ResourceModelDTO, ShareResourceWithSpaceRequestDTO
 from gws_core.resource.resource_transfert_service import ResourceTransfertService
 from gws_core.resource.view.view_dto import CallViewResultDTO, ResourceViewMetadatalDTO
+from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.share.shared_dto import ShareLinkDTO
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_dto import TaskTypingDTO
@@ -219,8 +220,8 @@ def create_transformer_scenario(
     transformers: list[TransformerDict],
     resource_model_id: str,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> ResourceModelDTO:
-    return TransformerService.create_and_run_transformer_scenario(
+) -> ScenarioDTO:
+    return TransformerService.create_and_run_transformer_scenario_async(
         transformers, resource_model_id
     ).to_dto()
 
@@ -238,8 +239,10 @@ def import_resource(
     resource_model_id: str,
     importer_typing_name: str,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> ResourceModelDTO:
-    return ConverterService.call_importer(resource_model_id, importer_typing_name, config).to_dto()
+) -> ScenarioDTO:
+    return ConverterService.call_importer_async(
+        resource_model_id, importer_typing_name, config
+    ).to_dto()
 
 
 ############################# EXPORTER ###########################
@@ -264,11 +267,11 @@ def export_resource(
     exporter_typing_name: str,
     params: dict,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> ResourceModelDTO:
+) -> ScenarioDTO:
     """
     Export a resource.
     """
-    return ConverterService.call_exporter(
+    return ConverterService.call_exporter_async(
         resource_model_id=id_, exporter_typing_name=exporter_typing_name, params=params
     ).to_dto()
 
@@ -309,8 +312,8 @@ def get_view_specs_from_type(
 )
 def download_resource_content(
     id_: str, _=Depends(AuthorizationService.check_user_access_token)
-) -> ResourceModelDTO:
-    return ResourceTransfertService.download_resource_content(id_).to_dto()
+) -> ScenarioDTO:
+    return ResourceTransfertService.download_resource_content_async(id_).to_dto()
 
 
 ################################ RESOURCE ################################
@@ -323,8 +326,8 @@ def download_resource_content(
 )
 def import_resource_from_link(
     values: ConfigParamsDict, _=Depends(AuthorizationService.check_user_access_token)
-) -> ResourceModelDTO:
-    return ResourceTransfertService.import_resource_from_link_sync(values).to_dto()
+) -> ScenarioDTO:
+    return ResourceTransfertService.import_resource_from_link_async(values).to_dto()
 
 
 @core_app.get(
@@ -345,8 +348,8 @@ def export_resource_to_lab(
     resource_id: str,
     values: ConfigParamsDict,
     _=Depends(AuthorizationService.check_user_access_token),
-) -> None:
-    ResourceTransfertService.export_resource_to_lab(resource_id, values)
+) -> ScenarioDTO:
+    return ResourceTransfertService.export_resource_to_lab_async(resource_id, values).to_dto()
 
 
 @core_app.get(

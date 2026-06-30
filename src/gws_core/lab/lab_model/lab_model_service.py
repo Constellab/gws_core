@@ -1,5 +1,9 @@
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.exception.exceptions.bad_request_exception import (
+    BadRequestException,
+)
+from gws_core.core.exception.gws_exceptions import GWSException
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.string_helper import StringHelper
@@ -9,9 +13,15 @@ from gws_core.credentials.credentials_type import (
     CredentialsDataLab,
     SaveCredentialsDTO,
 )
+from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.lab.lab_model.lab_dto import LabDTO, LabDTOWithCredentials
 from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.lab.lab_model.lab_model_search_builder import LabModelSearchBuilder
+from gws_core.protocol.protocol_model import ProtocolModel
+from gws_core.scenario.scenario import Scenario
+from gws_core.share.shared_resource import SharedResource
+from gws_core.share.shared_scenario import SharedScenario
+from gws_core.task.task_model import TaskModel
 from gws_core.user.current_user_service import AuthenticateUser
 from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user import User
@@ -154,6 +164,135 @@ class LabModelService:
         :rtype: LabModel
         """
         return LabModel.get_by_id_and_check(id_)
+
+    ############################ REFRESH #############################
+    @classmethod
+    def refresh_external_lab(cls, id_: str) -> LabModel:
+        """Refresh the locally stored information of an external lab.
+
+        Calls the external lab's credentials-secured ``/lab-info`` route (using the
+        credentials stored for that lab) to fetch its up-to-date information, then
+        updates the local LabModel row accordingly.
+
+        :param id_: The database id of the external lab to refresh
+        :type id_: str
+        :raises BadRequestException: If the lab is the current lab, or has no
+            credentials/domain configured for external communication
+        :return: The updated lab model
+        :rtype: LabModel
+        """
+        lab = LabModel.get_by_id_and_check(id_)
+
+        if lab.is_current_lab():
+            raise BadRequestException("The current lab cannot be refreshed from an external lab.")
+
+        # Ensures the lab has both credentials and a domain to reach it.
+        lab.check_credentials_and_domain()
+
+        api_service = ExternalLabApiService(lab.to_dto_with_credentials())
+        lab_info = api_service.get_lab_info()
+
+        # get_or_create_from_dto looks up by (lab_id, mode) and updates the changed fields.
+        return LabModel.get_or_create_from_dto(lab_info)
+
+    ############################ UPDATE #############################
+    @classmethod
+    def update_domain(cls, id_: str, domain: str) -> LabModel:
+        """Update the domain of an external lab.
+
+        Before persisting the new domain, the external lab's credentials-secured
+        ``/lab-info`` route is called using the new domain (with the stored
+        credentials) to verify that the lab is reachable at this domain and that
+        the credentials still work. The domain is only saved if that call succeeds.
+
+        :param id_: The database id of the external lab to update
+        :type id_: str
+        :param domain: The new domain to set
+        :type domain: str
+        :raises BadRequestException: If the lab is the current lab or has no
+            credentials configured
+        :return: The updated lab model
+        :rtype: LabModel
+        """
+        lab = LabModel.get_by_id_and_check(id_)
+
+        if lab.is_current_lab():
+            raise BadRequestException("The current lab domain cannot be updated from an external lab.")
+
+        if not lab.has_credentials():
+            raise BadRequestException(
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.value,
+                GWSException.LAB_MISSING_CREDENTIALS_OR_DOMAIN.name,
+                {"lab_name": lab.name},
+            )
+
+        # Build a DTO carrying the new domain (but the stored credentials) so the
+        # client targets the new domain. The call raises if the lab is unreachable
+        # at this domain or the credentials are invalid, leaving the row untouched.
+        lab_dto = lab.to_dto_with_credentials()
+        lab_dto.lab = lab_dto.lab.model_copy(update={"domain": domain})
+        ExternalLabApiService(lab_dto).get_lab_info()
+
+        # The new domain is verified, persist it.
+        lab.domain = domain
+        lab.save()
+
+        return lab
+
+    ############################ DELETE #############################
+    @classmethod
+    def delete(cls, id_: str) -> None:
+        """Delete a lab by its database id.
+
+        Before deleting, verify that the lab is not referenced by any other
+        entity through a blocking foreign key. If it is still used somewhere,
+        the deletion is prevented and a ``BadRequestException`` is raised.
+
+        References checked (foreign keys pointing to the lab):
+          - ``TaskModel.run_by_lab`` / ``ProtocolModel.run_by_lab``
+            (concrete tables of the abstract ``ProcessModel``)
+          - ``SharedScenario.lab`` / ``SharedResource.lab``
+          - ``Scenario.running_in_external_lab``
+
+        :param id_: The database id of the lab to delete
+        :type id_: str
+        :raises BadRequestException: If the lab is still referenced somewhere
+        """
+        lab = LabModel.get_by_id_and_check(id_)
+
+        cls._check_lab_not_used(lab)
+
+        lab.delete_instance()
+
+    @classmethod
+    def _check_lab_not_used(cls, lab: LabModel) -> None:
+        """Verify that the lab is not referenced by any blocking foreign key.
+
+        :param lab: The lab model to check
+        :type lab: LabModel
+        :raises BadRequestException: If the lab is still referenced somewhere
+        """
+        # ProcessModel is abstract; its concrete tables are TaskModel and ProtocolModel.
+        if TaskModel.select().where(TaskModel.run_by_lab == lab.id).exists():
+            cls._raise_lab_used(lab, "task(s)")
+
+        if ProtocolModel.select().where(ProtocolModel.run_by_lab == lab.id).exists():
+            cls._raise_lab_used(lab, "protocol(s)")
+
+        if Scenario.select().where(Scenario.running_in_external_lab == lab.id).exists():
+            cls._raise_lab_used(lab, "scenario(s) running in this lab")
+
+        if SharedScenario.select().where(SharedScenario.lab == lab.id).exists():
+            cls._raise_lab_used(lab, "shared scenario(s)")
+
+        if SharedResource.select().where(SharedResource.lab == lab.id).exists():
+            cls._raise_lab_used(lab, "shared resource(s)")
+
+    @classmethod
+    def _raise_lab_used(cls, lab: LabModel, used_by: str) -> None:
+        raise BadRequestException(
+            f"The lab '{lab.name}' cannot be deleted because it is still used by {used_by}."
+        )
 
     @classmethod
     def search(

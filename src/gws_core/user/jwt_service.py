@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from typing import Any
 
 from jwt import decode, encode
 from typing_extensions import TypedDict
@@ -28,7 +29,7 @@ class JWTService:
         # calculate the expiration date
         expire = DateHelper.now_utc() + timedelta(seconds=cls.get_token_duration_in_seconds())
 
-        data: JWTData = {"sub": user_id, "exp": expire}
+        data: dict[str, Any] = {"sub": user_id, "exp": expire}
 
         encoded_jwt = encode(data, cls._get_secret(), algorithm=cls.ALGORITHM)
         return JWTService.AUTH_SCHEME + encoded_jwt
@@ -66,4 +67,5 @@ class JWTService:
         if cls._secret is None:
             cls._secret = Settings.get_instance().data.get("secret_key")
 
+        assert cls._secret is not None, "secret_key is not configured in the settings"
         return cls._secret

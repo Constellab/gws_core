@@ -76,8 +76,11 @@ class SettingsLoader:
             # loop thourgh all direct sub folder of the user bricks folder
             for folder in os.listdir(user_bricks):
                 folder_path = os.path.join(user_bricks, folder)
-                # if the brick was alreayd loaded, skip it
-                if folder in self.settings.get_bricks():
+                # if the brick was already successfully loaded, skip it.
+                # A brick that failed to load as a dependency (e.g. was looked up in the system
+                # bricks folder and not found) is recorded with an error; in that case we still
+                # want to (re)load it from the user bricks folder, where the working dev copy is.
+                if self._brick_is_loaded_without_error(folder):
                     continue
                 if os.path.isdir(folder_path) and BrickService.folder_is_brick(folder_path):
                     Logger.info(f"Loading dev brick '{folder}' from '{folder_path}'")
@@ -120,8 +123,10 @@ class SettingsLoader:
             else os.path.join(Settings.get_sys_bricks_folder(), brick_name)
         )
 
-        # if the package is already loaded, skip it
-        if brick_name in self.settings.get_bricks():
+        # if the package is already successfully loaded, skip it.
+        # A brick recorded with an error is not really loaded, so we allow it to be retried
+        # (e.g. when reloading a dev brick from the user bricks folder).
+        if self._brick_is_loaded_without_error(brick_name):
             return
 
         brick_module = BrickInfo(
@@ -314,6 +319,15 @@ class SettingsLoader:
 
     def _save_brick(self, brick_info: BrickInfo) -> None:
         self.settings.add_brick(brick_info)
+
+    def _brick_is_loaded_without_error(self, brick_name: str) -> bool:
+        """Return True if the brick is recorded and loaded successfully (no load error).
+
+        A brick that was skipped during loading is still recorded (with an error set), so a
+        plain presence check is not enough to know whether the brick is actually usable.
+        """
+        brick_info = self.settings.get_brick(brick_name)
+        return brick_info is not None and not brick_info.error
 
     def _pip_package_to_module_name(self, pip_package: str) -> str:
         """Convert the pip package name to the module name"""

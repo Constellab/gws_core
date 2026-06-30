@@ -14,6 +14,7 @@ from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.share.shared_dto import (
     ShareLinkEntityType,
+    ShareResourceZipAsyncResponseDTO,
     ShareResourceZippedResponseDTO,
     ShareScenarioInfoReponseDTO,
 )
@@ -125,15 +126,33 @@ def get_scenario_export_info(
 
 @external_lab_app.post(
     "/resource/{resource_id}/zip",
-    summary="Zip a resource for download",
+    summary="Zip a resource for download (deprecated, blocking)",
+    deprecated=True,
 )
 def zip_resource(
     resource_id: str, _=Depends(ExternalLabAuth.check_auth)
 ) -> ShareResourceZippedResponseDTO:
     """
-    Zip a resource for credential-based download.
+    DEPRECATED: zips the resource synchronously and blocks until done.
+    Use ``POST /resource/{resource_id}/compress-async`` instead.
     """
     return ExternalLabService.zip_resource(resource_id)
+
+
+@external_lab_app.post(
+    "/resource/{resource_id}/compress-async",
+    summary="Compress a resource for download asynchronously",
+)
+def compress_resource_async(
+    resource_id: str, _=Depends(ExternalLabAuth.check_auth)
+) -> ShareResourceZipAsyncResponseDTO:
+    """
+    Compress a resource for credential-based download without blocking the server.
+
+    Returns the running (or already finished) compress scenario and the download
+    route. The calling lab polls the scenario until it succeeds, then downloads.
+    """
+    return ExternalLabService.compress_resource_async(resource_id)
 
 
 @external_lab_app.get(

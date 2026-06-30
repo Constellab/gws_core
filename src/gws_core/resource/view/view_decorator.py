@@ -19,10 +19,10 @@ def _decorator_view(
     view_type: type[View],
     human_name: str,
     short_description: str,
-    specs: ConfigSpecs,
+    specs: ConfigSpecs | None,
     default_view: bool,
     hide: bool,
-    style: TypingStyle,
+    style: TypingStyle | None,
 ) -> Callable:
     if specs is None:
         specs = ConfigSpecs({})
@@ -66,8 +66,13 @@ def _decorator_view(
                 )
 
             if not specs.all_config_are_optional():
+                mandatory_spec_names = [
+                    spec_name
+                    for spec_name, spec in specs.specs.items()
+                    if not spec.optional
+                ]
                 raise Exception(
-                    f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec '{spec_name}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value"
+                    f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec(s) '{', '.join(mandatory_spec_names)}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value"
                 )
 
         # # Check that the function arg matches the view specs and the type are the same

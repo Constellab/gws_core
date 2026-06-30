@@ -1,3 +1,4 @@
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
@@ -40,6 +41,10 @@ class ResourceZipperTask(Task):
     input_name = "source"
     output_name = "target"
 
+    # technical info keys stored on the generated zip file
+    ORIGIN_ENTITY_TYPE_KEY = "origin_entity_type"
+    ORIGIN_ENTITY_ID_KEY = "origin_entity_id"
+
     input_specs: InputSpecs = InputSpecs(
         {"source": InputSpec(Resource, human_name="Resource to zip")}
     )
@@ -69,7 +74,10 @@ class ResourceZipperTask(Task):
         else:
             shared_by = CurrentUserService.get_and_check_current_user()
 
-        origin_entity_id = inputs["source"].get_model_id()
+        source = inputs.get_resource("source", Resource)
+        origin_entity_id = source.get_model_id()
+        if origin_entity_id is None:
+            raise Exception("The input resource was not saved")
         resource_zipper = ResourceZipper(shared_by, message_dispatcher=self.message_dispatcher)
         resource_zipper.add_resource_model(origin_entity_id)
         resource_zipper.close_zip()
@@ -78,8 +86,8 @@ class ResourceZipperTask(Task):
 
         file = File(file_path)
         # store information about the entity that generated the zip file
-        file.add_technical_info(TechnicalInfo("origin_entity_type", "RESOURCE"))
-        file.add_technical_info(TechnicalInfo("origin_entity_id", origin_entity_id))
+        file.add_technical_info(TechnicalInfo(self.ORIGIN_ENTITY_TYPE_KEY, "RESOURCE"))
+        file.add_technical_info(TechnicalInfo(self.ORIGIN_ENTITY_ID_KEY, origin_entity_id))
 
         return {"target": file}
 
@@ -114,7 +122,7 @@ class ResourceUnZipper(Task):
     resource_loader: ResourceLoader | None = None
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        source: File = inputs["source"]
+        source = inputs.get_resource("source", File)
 
         self.log_info_message("Uncompressing the file")
         self.resource_loader = ResourceLoader.from_compress_file(
@@ -127,4 +135,5 @@ class ResourceUnZipper(Task):
         return {"target": resource}
 
     def run_after_task(self) -> None:
-        self.resource_loader.delete_resource_folder()
+        if self.resource_loader is not None:
+            self.resource_loader.delete_resource_folder()

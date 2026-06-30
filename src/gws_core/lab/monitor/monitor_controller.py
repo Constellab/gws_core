@@ -1,9 +1,13 @@
 from fastapi import Depends
 
+from gws_core.core.exception.exceptions.bad_request_exception import (
+    BadRequestException,
+)
 from gws_core.lab.monitor.monitor_dto import (
     CurrentMonitorDTO,
     DiskFolderSizesDTO,
     MonitorBetweenDateGraphicsDTO,
+    UploadSpaceCheckDTO,
 )
 
 from ...core_controller import core_app
@@ -29,10 +33,30 @@ def get_the_lab_monitor_graphics(
     """
     Get lab monitor graphics
     """
+    if request.from_date is None or request.to_date is None:
+        raise BadRequestException("from_date and to_date are required")
+
     timezone_num = request.timezone_number if request.timezone_number else 0
     return MonitorService.get_monitor_graphics_between_dates_str(
         from_date_str=request.from_date, to_date_str=request.to_date, utc_num=timezone_num
     )
+
+
+@core_app.get(
+    "/monitor/check-upload-space",
+    tags=["Lab"],
+    summary="Check if an upload of a given size fits on disk",
+)
+def check_upload_space(
+    file_size: float, _=Depends(AuthorizationService.check_user_access_token)
+) -> UploadSpaceCheckDTO:
+    """
+    Pre-flight check telling whether an upload of the given size (in bytes) would
+    fit on disk, without writing anything. The frontend should call this before
+    starting an upload so the user is warned immediately instead of waiting for
+    the whole file to transfer.
+    """
+    return MonitorService.check_upload_space(file_size)
 
 
 @core_app.get("/monitor/folder-sizes", tags=["Lab"], summary="Get folder sizes")
