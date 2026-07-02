@@ -1,5 +1,11 @@
 # The component are exported at this level to only load them when they are used
 # Because it triggers the loading of the reflex_plugin that load js assets
+from .reflex_ag_grid_component.reflex_ag_grid_component import (
+    AgGridComponent as AgGridComponent,
+)
+from .reflex_ag_grid_component.reflex_ag_grid_component import (
+    ag_grid_component as ag_grid_component,
+)
 from .reflex_input_search_component.reflex_input_search_component import (
     InputSearchResultDTO as InputSearchResultDTO,
 )

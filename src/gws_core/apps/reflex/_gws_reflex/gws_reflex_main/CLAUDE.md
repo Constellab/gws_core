@@ -92,6 +92,17 @@ Input search component using dc-input-search web component. Provides a searchabl
 
 ---
 
+## AG Grid Components
+
+### `ag_grid_component()`
+Data grid built on the `ag-grid-react` npm package. Exposes the AG Grid options used by the apps as typed props (`column_defs`, `row_data`, `theme`, `cell_selection`, `on_cell_selection_changed`, `auto_size_strategy`, `tooltip_show_delay`, `tooltip_hide_delay`); extra props are forwarded to the underlying component. Column definitions and row data must use AG Grid's native camelCase keys (`headerName`, `headerTooltip`, `headerClass`, `width`, ...).
+
+`on_cell_selection_changed` receives a list of `{startRow, endRow, columns}` dicts (0-based row indices, list of selected column ids).
+
+Import: `from gws_reflex_main.gws_components import ag_grid_component`
+
+---
+
 ## Usage
 
 Import components and state from `gws_reflex_main` module:
@@ -113,8 +124,8 @@ from gws_reflex_main import (
     main_component,
 )
 
-# Rich text component (requires separate import)
-from gws_reflex_main.gws_components import rich_text_component
+# Rich text and AG Grid components (require separate import)
+from gws_reflex_main.gws_components import rich_text_component, ag_grid_component
 ```
 
 ---
