@@ -12,6 +12,12 @@ from .reflex_input_search_component.reflex_input_search_component import (
 from .reflex_input_search_component.reflex_input_search_component import (
     input_search_component as input_search_component,
 )
+from .reflex_multi_select_component.reflex_multi_select_component import (
+    MultiSelectComponent as MultiSelectComponent,
+)
+from .reflex_multi_select_component.reflex_multi_select_component import (
+    multi_select_component as multi_select_component,
+)
 from .reflex_rich_text_component.reflex_rich_text_component import (
     RichTextCustomBlocksConfig as RichTextCustomBlocksConfig,
 )

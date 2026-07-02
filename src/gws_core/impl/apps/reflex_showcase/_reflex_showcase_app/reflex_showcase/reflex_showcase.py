@@ -8,12 +8,14 @@ from gws_reflex_main import (
 )
 
 from .pages import (
+    ag_grid_page,
     dialog_page,
     doc_component_page,
     home_page,
     i18n_page,
     input_search_page,
     layout_page,
+    multi_select_page,
     paginated_table_page,
     resource_components_page,
     rich_text_page,
@@ -39,6 +41,8 @@ def _sidebar_content() -> rx.Component:
             menu_item_component("layout-grid", "Layout Components", "/layout"),
             menu_item_component("file-text", "Doc Component", "/doc-component"),
             menu_item_component("search", "Input search", "/input-search"),
+            menu_item_component("list-checks", "Multi-Select", "/multi-select"),
+            menu_item_component("grid-3x3", "AG Grid", "/ag-grid"),
             menu_item_component("table", "Paginated Table", "/paginated-table"),
             menu_item_component("languages", "Internationalisation", "/i18n"),
         ],
@@ -101,6 +105,18 @@ def resource_components():
 def input_search():
     """Input search component demo page."""
     return layout(input_search_page.input_search_page())
+
+
+@rx.page(route="/multi-select")
+def multi_select():
+    """Multi-select component demo page."""
+    return layout(multi_select_page.multi_select_page())
+
+
+@rx.page(route="/ag-grid")
+def ag_grid():
+    """AG Grid component demo page."""
+    return layout(ag_grid_page.ag_grid_page())
 
 
 @rx.page(route="/paginated-table")

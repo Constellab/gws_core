@@ -99,7 +99,22 @@ Data grid built on the `ag-grid-react` npm package. Exposes the AG Grid options 
 
 `on_cell_selection_changed` receives a list of `{startRow, endRow, columns}` dicts (0-based row indices, list of selected column ids).
 
+The `enterprise` param toggles the `ag-grid-enterprise` bundle (needed for cell range selection). It defaults to `False` (community only); set `enterprise=True` to use `cell_selection` / `on_cell_selection_changed`. Passing those without `enterprise=True` raises a `ValueError`.
+
 Import: `from gws_reflex_main.gws_components import ag_grid_component`
+
+---
+
+## Multi-Select Components
+
+### `multi_select_component()`
+Searchable multi-select dropdown built on the `@mantine/core` `MultiSelect` component. It imports the Mantine styles and wraps the app in a color-mode-aware `MantineProvider` itself.
+
+Only the props used by the apps are exposed as typed props (`data`, `value`, `label`, `placeholder`, `searchable`, `clearable`, `max_values`) plus the `on_change` handler (receives the new list of selected values); extra props are forwarded to the underlying component.
+
+`data` is a list of strings (or `{value, label}` dicts); `value` is the list of selected string values. Both accept state Vars.
+
+Import: `from gws_reflex_main.gws_components import multi_select_component`
 
 ---
 
