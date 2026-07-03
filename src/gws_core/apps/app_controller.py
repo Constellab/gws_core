@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from fastapi import Depends, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 
 from gws_core.apps.app_dto import (
     AppGatewayHandoffDTO,
@@ -13,6 +13,8 @@ from gws_core.apps.app_dto import (
     AppStopPolicy,
     ExchangeAppCodeDTO,
     ExchangeAppCodeResponseDTO,
+    ValidateAppJwtDTO,
+    ValidateAppJwtResponseDTO,
 )
 from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
@@ -130,6 +132,52 @@ def exchange_app_code(data: ExchangeAppCodeDTO) -> ExchangeAppCodeResponseDTO:
     return AppsManager.exchange_app_code(data.app_id, data.code)
 
 
+@core_app.post("/apps/validate-jwt", tags=["App"], summary="Validate an app session JWT")
+def validate_app_jwt(data: ValidateAppJwtDTO) -> ValidateAppJwtResponseDTO:
+    """
+    Validate the JWT an app stored in its ``gws_app_jwt`` cookie and return the user id.
+
+    Called by the app on a fresh page load (F5 / new tab), when there is no one-time code but the
+    cookie holds the JWT from the initial handoff. No user-auth dependency: the JWT is the
+    credential (validated here). Lets the app re-authenticate without going back through the
+    gateway. The app cannot validate the JWT itself (no gws_core, no secret).
+    """
+
+    return AppsManager.validate_app_jwt(data.app_id, data.jwt)
+
+
+# The "nginx-login" segment mirrors AppGatewayService.NGINX_LOGIN_ENDPOINT_SEGMENT (used by
+# AppProcess.get_nginx_login_url to build the URL nginx proxies to); keep the two in sync. The
+# "gws_code" query param mirrors AppGatewayService.GWS_CODE_QUERY_PARAM.
+@core_app.get("/apps/{app_id}/nginx-login", tags=["App"], summary="App-host login (sets session cookie)", response_model=None)
+def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
+    """
+    App-host login endpoint the app's nginx proxies ``/gws-login`` to.
+
+    Exchanges the one-time ``gws_code`` for a JWT, sets it as an HttpOnly, host-only session
+    cookie on the app host, and redirects to the app root. From then on every request (including
+    a hard refresh) carries the cookie, so the app re-authenticates by reading it — no code in
+    the app URL, and auth survives page reloads.
+
+    The app cannot set an HttpOnly cookie itself (Streamlit can't set cookies; app JS can't set
+    HttpOnly), so this runs at the app host via nginx + this endpoint.
+    """
+    # exchange consumes the single-use code and returns the JWT (raises 403 if invalid/expired)
+    exchanged = AppsManager.exchange_app_code(app_id, gws_code)
+
+    # redirect to the app root; the cookie is set on this response so the redirected load has it
+    response = RedirectResponse(url="/")
+    response.set_cookie(
+        AppGatewayService.APP_JWT_COOKIE_NAME,
+        value=exchanged.user_access_token,
+        httponly=True,
+        secure=True,  # works over https and localhost
+        samesite="lax",  # sent on the top-level redirect navigation
+        # host-only: no domain= so app A cannot read app B's cookie
+    )
+    return response
+
+
 ############################################ APP LAUNCHER GATEWAY ############################################
 
 
@@ -143,17 +191,9 @@ def _resolve_gateway_user(request: Request, code: str | None) -> User | None:
     if code:
         return AuthorizationService.check_unique_code(code).get_user()
 
-    has_auth_header = request.headers.get("Authorization")
-    has_auth_cookie = request.cookies.get("Authorization")
-    print(f"[GWS DEBUG] _resolve_gateway_user: no code. "
-          f"Authorization header={has_auth_header!r} cookie={has_auth_cookie!r} "
-          f"all_cookies={list(request.cookies.keys())!r}")
     try:
-        user = AuthorizationService.check_user_access_token(request).get_user()
-        print(f"[GWS DEBUG] _resolve_gateway_user resolved user={user.id if user else None!r}")
-        return user
-    except Exception as e:
-        print(f"[GWS DEBUG] _resolve_gateway_user no user: {e!r}")
+        return AuthorizationService.check_user_access_token(request).get_user()
+    except Exception:
         return None
 
 
@@ -170,7 +210,6 @@ def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStart
     the status token the front polls until the app is RUNNING. Raises 401 when the caller is
     not authenticated, so the front redirects to the login page itself.
     """
-    print("BBBBBBBBBBBBBBBBBBBBBBBBB")
     app_resource = AppGatewayService.resolve_app_resource(data.app_key)
 
     user = _resolve_gateway_user(request, data.code)
@@ -192,7 +231,6 @@ def gateway_handoff(data: AppGatewayHandoffDTO, request: Request) -> AppGatewayH
     returns the app host URL (carrying ``?gws_code=…``) the front navigates the browser to. The
     user is resolved from the lab session established for this browser.
     """
-    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
     app_resource = AppGatewayService.resolve_app_resource(data.app_key)
 
     user = _resolve_gateway_user(request, None)

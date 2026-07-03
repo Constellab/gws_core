@@ -354,6 +354,20 @@ class AppProcess:
         else:
             return f"https://{self.get_host_name(suffix)}"
 
+    def get_nginx_login_url(self) -> str:
+        """Core-api URL that the app-host `/gws-login` nginx location proxies to.
+
+        Exchanges the one-time gws_code for a JWT and sets the host session cookie. Passed to the
+        app's nginx redirect service so auth can be established (and survive reloads) at the app
+        host. Not used in dev mode (auth is bypassed there).
+        """
+        from gws_core.apps.app_gateway_service import AppGatewayService
+
+        return (
+            f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}"
+            f"/apps/{self._app.resource_model_id}/{AppGatewayService.NGINX_LOGIN_ENDPOINT_SEGMENT}"
+        )
+
     def get_app_full_url(self) -> AppInstanceUrl:
         """Get the full URL for the app with authentication tokens.
 
@@ -390,28 +404,23 @@ class AppProcess:
         if not self._app.token_in_url():
             return AppInstanceUrl(host_url=host_url)
 
-        # AUTHENTICATED: the launching user is authenticated and the token + user access
-        # token are added to the URL.
-        params = {"gws_token": self.get_token()}
-
+        # AUTHENTICATED: the launching user is authenticated via a single-use, app-scoped code
+        # the app exchanges for a JWT (via POST /apps/exchange-code). Restart-safe, and no
+        # long-lived secret lingers in the URL.
         user = CurrentUserService.get_current_user()
         if not user:
             raise UnauthorizedException(
                 f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
-        # New auth path: a single-use, app-scoped code the app exchanges for a JWT (via
-        # POST /apps/exchange-code). Restart-safe, and no long-lived secret lingers in the URL.
+        from gws_core.apps.app_gateway_service import AppGatewayService
         from gws_core.apps.apps_manager import AppsManager
 
-        params["gws_code"] = AppsManager.generate_app_access_code(
-            user.id, self._app.resource_model_id
-        )
-
-        # Backward-compat window: also emit the legacy opaque user access token so an app built
-        # against an older base (which reads gws_user_access_token, not gws_code) keeps working.
-        # Remove once all app bases read gws_code.
-        params["gws_user_access_token"] = self._add_user(user.id)
+        params = {
+            AppGatewayService.GWS_CODE_QUERY_PARAM: AppsManager.generate_app_access_code(
+                user.id, self._app.resource_model_id
+            )
+        }
 
         return AppInstanceUrl(host_url=host_url, params=params)
 

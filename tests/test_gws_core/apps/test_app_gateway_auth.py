@@ -45,6 +45,35 @@ class TestAppGatewayAuth(BaseTestCase):
         with self.assertRaises(InvalidUniqueCodeException):
             AppsManager.exchange_app_code("app-2", code)
 
+    def test_validate_app_jwt_round_trip(self):
+        """A JWT obtained from an exchange validates back to the same user (cookie-refresh path)."""
+        user = CurrentUserService.get_and_check_current_user()
+        app_id = "app-1"
+
+        code = AppsManager.generate_app_access_code(user.id, app_id)
+        exchanged = AppsManager.exchange_app_code(app_id, code)
+
+        # the JWT (as stored in the gws_app_jwt cookie) re-validates on a fresh load
+        result = AppsManager.validate_app_jwt(app_id, exchanged.user_access_token)
+        self.assertEqual(result.user_id, user.id)
+
+    def test_validate_app_jwt_accepts_bare_token(self):
+        """validate_app_jwt tolerates a JWT with or without the 'Bearer ' prefix."""
+        user = CurrentUserService.get_and_check_current_user()
+        code = AppsManager.generate_app_access_code(user.id, "app-1")
+        exchanged = AppsManager.exchange_app_code("app-1", code)
+
+        bare = exchanged.user_access_token.removeprefix("Bearer ")
+        result = AppsManager.validate_app_jwt("app-1", bare)
+        self.assertEqual(result.user_id, user.id)
+
+    def test_validate_app_jwt_rejects_garbage(self):
+        """An invalid JWT is rejected."""
+        from gws_core.user.user_exception import InvalidTokenException
+
+        with self.assertRaises(InvalidTokenException):
+            AppsManager.validate_app_jwt("app-1", "not-a-jwt")
+
     def test_space_access_code_round_trip(self):
         """The space link code carries the share link id and resolves the user once."""
         user = CurrentUserService.get_and_check_current_user()

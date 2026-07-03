@@ -7,7 +7,17 @@ from typing import Any, TypedDict, cast
 
 import streamlit as st
 
-from .streamlit_code_exchange import exchange_code_for_jwt
+from .streamlit_code_exchange import exchange_code_for_jwt, validate_jwt_for_user
+
+# Name of the host session cookie holding the JWT, set by the app-host /gws-login endpoint (nginx
+# -> core-api) and read here via st.context.cookies so auth survives a fresh page load (F5 / new
+# tab). Mirrors AppGatewayService.APP_JWT_COOKIE_NAME (this module cannot import gws_core).
+_APP_JWT_COOKIE_NAME = "gws_app_jwt"
+
+# Query-param name carrying the single-use handoff code in the app URL (iframe / direct link
+# initial load). Mirrors AppGatewayService.GWS_CODE_QUERY_PARAM (this module cannot import
+# gws_core).
+_GWS_CODE_QUERY_PARAM = "gws_code"
 
 
 class StreamlitAppConfig(TypedDict):
@@ -50,11 +60,6 @@ class StreamlitMainStateBase(ABC):
 
         # 1. Configure Streamlit page first (enables st.spinner, st.error, etc.)
         cls._configure_page()
-
-        print(f"[GWS DEBUG] initialize: bootstrap_initialized="
-              f"{st.session_state.get('__gws_bootstrap_initialized__')!r} "
-              f"user_id={st.session_state.get('__gws_user_id__')!r} "
-              f"query_params={dict(st.query_params)!r}")
 
         if st.session_state.get("__gws_bootstrap_initialized__"):
             return
@@ -162,24 +167,9 @@ class StreamlitMainStateBase(ABC):
         if st.session_state.get("__gws_app_config__"):
             return st.session_state["__gws_app_config__"]
 
-        # Check token in non-dev mode. Only AUTHENTICATED apps require the token: their
-        # URL always carries it. PUBLIC apps have a bare, shareable URL (no token), so a
-        # missing token must not block loading there.
-        #
-        # The gws_token gate only guards the legacy gws_user_access_token path. A gateway
-        # handoff URL carries a single-use gws_code instead (the code is the credential,
-        # verified server-side at exchange), and no gws_token — so skip the gate when a
-        # gws_code is present.
-        if (
-            not cls.is_dev_mode()
-            and cls.authentication_is_required()
-            and not st.query_params.get("gws_code")
-        ):
-            url_token = st.query_params.get("gws_token")
-            env_token = os.environ.get("GWS_APP_TOKEN")
-            if url_token != env_token:
-                st.error("Invalid token")
-                st.stop()
+        # Auth is established by the host session cookie (gws_app_jwt) set by the app-host
+        # /gws-login endpoint and validated in _check_authentication — there is no longer a
+        # gws_token gate here (the app never receives gws_token; the cookie is the credential).
 
         # Get config directory from environment
         app_config_file = os.environ.get("GWS_APP_CONFIG_FILE_PATH")
@@ -217,80 +207,75 @@ class StreamlitMainStateBase(ABC):
         if not authentication_required:
             return  # anonymous access
 
-        # New auth path: a single-use gws_code exchanged for a JWT. The code is the credential
-        # (verified server-side by the lab). Handled before the legacy opaque-token map lookup.
-        if not cls.is_dev_mode():
-            code_result = cls._exchange_code_if_present()
-            if code_result == "success":
-                return
-            if code_result == "failed":
-                # A gws_code was present but could not be exchanged: it is single-use and
-                # short-lived, so this typically means the link was already opened or expired.
-                # Report that accurately instead of falling through to "token not provided".
-                if authentication_required:
-                    st.error(
-                        "This app link has expired or was already used. "
-                        "Please reopen the app to get a fresh link."
-                    )
-                    st.stop()
-                return  # anonymous access
-            # code_result == "absent": fall through to the legacy token path below.
-
-        user_access_tokens = config.get("user_access_tokens", {})
-        user_access_token: str | None = None
+        # Dev mode: authenticate via the fixed dev sentinel token in the app config.
         if cls.is_dev_mode():
-            user_access_token = cls.DEV_MODE_USER_ACCESS_TOKEN_KEY
-        else:
-            # Legacy path: opaque user access token (kept for the backward-compat window while
-            # both a gws_code and a gws_user_access_token are emitted).
-            user_access_token = st.query_params.get("gws_user_access_token")
+            user_id = config.get("user_access_tokens", {}).get(cls.DEV_MODE_USER_ACCESS_TOKEN_KEY)
+            if user_id:
+                st.session_state["__gws_user_access_token__"] = cls.DEV_MODE_USER_ACCESS_TOKEN_KEY
+                st.session_state["__gws_user_id__"] = user_id
+            return
 
-        if not user_access_token:
-            if authentication_required:
-                st.error("User access token not provided")
-                st.stop()
-            return  # anonymous access
+        # Prod initial load: a single-use gws_code in the URL (iframe embed in the lab, or a
+        # direct/bookmarked link opened without the host cookie yet). Exchange it for a JWT.
+        if cls._authenticate_from_url_code():
+            return
 
-        user_id = user_access_tokens.get(user_access_token)
+        # Prod page reload (F5 / new tab): no code in the URL, but the host session cookie
+        # (gws_app_jwt) set by the app-host /gws-login endpoint is still sent. Read + validate it.
+        if cls._authenticate_from_cookie_jwt():
+            return
 
-        if not user_id:
-            if authentication_required:
-                st.error("Invalid user access token")
-                st.stop()
-            return  # anonymous access
-
-        st.session_state["__gws_user_access_token__"] = user_access_token
-        st.session_state["__gws_user_id__"] = user_id
+        if authentication_required:
+            st.error(
+                "Not authenticated. Please (re)open the app from its link to sign in."
+            )
+            st.stop()
+        # PUBLIC: anonymous access
 
     @classmethod
-    def _exchange_code_if_present(cls) -> str:
-        """Try to authenticate from a single-use gws_code in the URL.
+    def _authenticate_from_url_code(cls) -> bool:
+        """Try to authenticate from a single-use gws_code in the app URL.
 
-        Returns one of:
-          - "absent": no gws_code in the URL (caller falls through to the legacy token path)
-          - "success": exchanged; JWT + user id stored in session, gws_code scrubbed from the URL
-          - "failed": a gws_code was present but could not be exchanged (expired or already used)
-        Distinguishing "failed" from "absent" lets the caller show an accurate message instead of
-        the misleading "token not provided".
+        This is the initial-load credential: the lab embeds the app in an iframe (or a direct
+        link is opened) with ?gws_code=… . The code is exchanged for a JWT, stored in session,
+        and scrubbed from the URL so it is not reused or kept in history. Returns True on success
+        (user stored in session), False when there is no code or the exchange fails.
         """
-        code = st.query_params.get("gws_code")
-        print(f"[GWS DEBUG] _exchange_code_if_present: gws_code={code!r} "
-              f"all_query_params={dict(st.query_params)!r}")
+        code = st.query_params.get(_GWS_CODE_QUERY_PARAM)
         if not code:
-            return "absent"
+            return False
 
         exchanged = exchange_code_for_jwt(cls.get_app_id(), code)
-        print(f"[GWS DEBUG] exchange result: {exchanged!r} app_id={cls.get_app_id()!r}")
-        if exchanged is None:
-            return "failed"
+        # single-use: drop it from the URL regardless of the outcome so a reload can't retry it
+        if _GWS_CODE_QUERY_PARAM in st.query_params:
+            del st.query_params[_GWS_CODE_QUERY_PARAM]
+        if not exchanged:
+            return False
 
-        # the JWT becomes the user access token the app carries to the data lab API
         st.session_state["__gws_user_access_token__"] = exchanged.user_access_token
         st.session_state["__gws_user_id__"] = exchanged.user_id
-        # scrub gws_code from the URL (single-use; keep it out of history/referrers)
-        if "gws_code" in st.query_params:
-            del st.query_params["gws_code"]
-        return "success"
+        return True
+
+    @classmethod
+    def _authenticate_from_cookie_jwt(cls) -> bool:
+        """Try to authenticate from the JWT stored in the gws_app_jwt cookie.
+
+        Runs on a fresh page load (F5 / new tab), where session_state is gone and there is no
+        one-time code, but the cookie set on the first load is still sent by the browser. The JWT
+        is read synchronously via st.context.cookies and validated by the lab. Returns True on
+        success (user stored in session), False otherwise.
+        """
+        jwt = st.context.cookies.get(_APP_JWT_COOKIE_NAME)
+        if not jwt:
+            return False
+
+        user_id = validate_jwt_for_user(cls.get_app_id(), jwt)
+        if not user_id:
+            return False
+
+        st.session_state["__gws_user_access_token__"] = jwt
+        st.session_state["__gws_user_id__"] = user_id
+        return True
 
     @classmethod
     def get_app_config(cls) -> StreamlitAppConfig:

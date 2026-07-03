@@ -16,6 +16,26 @@ class AppGatewayService:
     (lab session or a one-time code) and this service assumes an already-resolved user.
     """
 
+    # Name of the host-only, HttpOnly cookie holding the app session JWT. Set by the app-host
+    # nginx-login endpoint; read by the app (st.context.cookies / reflex request) so auth
+    # survives a page reload. Mirrored as a literal in the gws_reflex_base / gws_streamlit_base
+    # modules (they cannot import gws_core).
+    APP_JWT_COOKIE_NAME = "gws_app_jwt"
+
+    # Query-param name carrying the single-use handoff code in an app URL. The app relays it back
+    # to the lab (POST /apps/exchange-code) to obtain the session JWT. Mirrored as a literal in
+    # the gws_reflex_base / gws_streamlit_base modules (they cannot import gws_core).
+    GWS_CODE_QUERY_PARAM = "gws_code"
+
+    # Path on the app host that nginx proxies to the core-api login endpoint (which exchanges the
+    # code for a JWT and sets the session cookie). Streamlit handoff targets this path.
+    GWS_LOGIN_PATH = "gws-login"
+
+    # Last URL segment of the core-api app-host login endpoint
+    # (…/core-api/apps/{app_id}/nginx-login) that the app-host `GWS_LOGIN_PATH` nginx location
+    # proxies to.
+    NGINX_LOGIN_ENDPOINT_SEGMENT = "nginx-login"
+
     @classmethod
     def resolve_app_resource(cls, app_key: str) -> AppResource:
         """Resolve a stable app key to its AppResource.
@@ -86,6 +106,8 @@ class AppGatewayService:
         :param user: the authenticated user the code authenticates
         :return: the app host URL carrying ``?gws_code=<code>``
         """
+        from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
+
         app_id = app_resource.get_and_check_model_id()
         app_process = AppsManager.find_app_by_resource_model_id(app_id)
         if app_process is None or not app_process.is_running():
@@ -93,4 +115,15 @@ class AppGatewayService:
 
         code = AppsManager.generate_app_access_code(user.id, app_id)
         host_url = app_process.get_host_url()
-        return f"{host_url}?gws_code={code}"
+
+        # Streamlit: land on the app host's /gws-login route. nginx proxies it to the core-api
+        # login endpoint, which exchanges the code for a JWT, sets the host session cookie, and
+        # redirects to the app root. The code never reaches the app; the cookie carries auth and
+        # survives page reloads (F5 / new tab).
+        if isinstance(app_process, StreamlitProcess):
+            return f"{host_url}/{cls.GWS_LOGIN_PATH}?{cls.GWS_CODE_QUERY_PARAM}={code}"
+
+        # Reflex (and others): keep the current query-param handoff — the reflex front is a static
+        # host + separate backend, so the cookie-session flow doesn't map cleanly yet. The app
+        # exchanges gws_code for a JWT itself (no reload survival for now).
+        return f"{host_url}?{cls.GWS_CODE_QUERY_PARAM}={code}"

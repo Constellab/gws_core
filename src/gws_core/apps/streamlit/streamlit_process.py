@@ -158,11 +158,14 @@ class StreamlitProcess(AppProcess):
         return [self.port]
 
     def _get_nginx_services(self) -> list[AppNginxServiceInfo]:
+        # In dev mode auth is bypassed, so no /gws-login exchange is needed.
+        gws_login_url = None if self._app.is_dev_mode() else self.get_nginx_login_url()
         return [
             AppNginxRedirectServiceInfo(
                 source_port=self.get_service_source_port(),
                 service_id=self.get_id() + "-streamlit",
                 server_name=self.get_front_server_names(),
                 destination_port=self.port,
+                gws_login_url=gws_login_url,
             )
         ]

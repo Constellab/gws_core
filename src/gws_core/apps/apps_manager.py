@@ -9,6 +9,7 @@ from gws_core.apps.app_dto import (
     AppStopPolicy,
     CreateAppAsyncResultDTO,
     ExchangeAppCodeResponseDTO,
+    ValidateAppJwtResponseDTO,
 )
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
@@ -27,6 +28,7 @@ from gws_core.lab.log.log_service import LogService
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.unique_code_service import InvalidUniqueCodeException, UniqueCodeService
+from gws_core.user.user_exception import InvalidTokenException
 
 
 class AppsManager:
@@ -289,6 +291,30 @@ class AppsManager:
             user_access_token=JWTService.create_jwt(code_obj.user_id),
             user_id=code_obj.user_id,
         )
+
+    @classmethod
+    def validate_app_jwt(cls, app_id: str, jwt: str) -> ValidateAppJwtResponseDTO:
+        """Validate a JWT (from the app's ``gws_app_jwt`` cookie) and return the user id.
+
+        Used on a fresh page load (F5 / new tab) to re-authenticate without a one-time code: the
+        app stored the JWT in a cookie on first load and relays it here. Reuses the same JWT
+        validation as every other API call.
+
+        :param app_id: the app the JWT is used for (currently identity-only; kept for a future
+            app-scoped JWT claim so a JWT can't be replayed on another app)
+        :param jwt: the JWT (with or without the ``Bearer `` prefix)
+        :return: the resolved user id
+        :raises InvalidTokenException: if the JWT is missing, malformed or expired
+        """
+        # JWTService expects the "Bearer " scheme prefix; add it if the cookie stored the bare JWT.
+        token = jwt if jwt.startswith(JWTService.AUTH_SCHEME) else JWTService.AUTH_SCHEME + jwt
+        try:
+            user_id = JWTService.check_user_access_token(token)
+        except Exception as e:
+            # normalize any JWT-library decode/verify error into a clean typed exception
+            # (so the endpoint returns 401, not an uncaught 500)
+            raise InvalidTokenException() from e
+        return ValidateAppJwtResponseDTO(user_id=user_id)
 
     @classmethod
     def find_process_by_token(cls, token: str) -> AppProcess | None:

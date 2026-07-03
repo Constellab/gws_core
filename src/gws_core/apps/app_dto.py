@@ -164,3 +164,24 @@ class AppGatewayHandoffResponseDTO(BaseModelDTO):
     """
 
     app_url: str
+
+
+class ValidateAppJwtDTO(BaseModelDTO):
+    """Body of POST /apps/validate-jwt.
+
+    On a fresh page load (F5 / new tab), the app has no one-time code but holds the JWT it
+    stored in a cookie on first load. It relays the JWT here to re-authenticate. The app cannot
+    validate the JWT itself (no gws_core, no secret).
+
+    :app_id: the app the JWT is being used for (must match the code the JWT was minted from)
+    :jwt: the JWT stored in the ``gws_app_jwt`` cookie (with or without the ``Bearer `` prefix)
+    """
+
+    app_id: str
+    jwt: str
+
+
+class ValidateAppJwtResponseDTO(BaseModelDTO):
+    """Response of POST /apps/validate-jwt: the resolved user id for a valid JWT."""
+
+    user_id: str

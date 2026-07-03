@@ -131,7 +131,13 @@ class AuthorizationService:
             user = User.get_and_check_sysuser()
 
         else:
+            # The launching user's token is a session JWT (from the gws_code exchange). The in-app
+            # sentinel tokens (system user, dev) are opaque and resolved via the in-memory map.
+            # Try the map first, then fall back to validating the token as a JWT.
             user_id = AppsManager.user_has_access_to_app(app_id, user_access_token)
+
+            if not user_id:
+                user_id = cls._user_id_from_app_jwt(user_access_token)
 
             if not user_id:
                 raise UnauthorizedException(
@@ -144,6 +150,24 @@ class AuthorizationService:
         auth_context = AuthContextApp(app_id=app_id, user=user)
         CurrentUserService.set_auth_context(auth_context)
         return auth_context
+
+    @classmethod
+    def _user_id_from_app_jwt(cls, user_access_token: str) -> str | None:
+        """Resolve the user id from an app session JWT, or None if it is not a valid JWT.
+
+        The launching user's app token is the session JWT minted by the gws_code exchange
+        (AppsManager.exchange_app_code). It is carried in the gws_user_access_token header on the
+        app's API calls; JWTService expects the ``Bearer `` scheme, so add it if absent.
+        """
+        token = (
+            user_access_token
+            if user_access_token.startswith(JWTService.AUTH_SCHEME)
+            else JWTService.AUTH_SCHEME + user_access_token
+        )
+        try:
+            return JWTService.check_user_access_token(token)
+        except Exception:
+            return None
 
     @classmethod
     def _auth_share_link(cls, request: Request) -> AuthContextShareLink | None:
