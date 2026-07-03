@@ -1,11 +1,12 @@
 
+from datetime import timedelta
+
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.share.share_link import ShareLink
-from gws_core.share.share_link_space_access import ShareLinkSpaceAccessService
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
     GenerateUserAccessTokenForSpaceResponse,
@@ -13,11 +14,18 @@ from gws_core.share.shared_dto import (
     ShareLinkType,
     UpdateShareLinkDTO,
 )
+from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user_dto import UserFullDTO
 from gws_core.user.user_service import UserService
 
 
 class ShareLinkService:
+    # Lifetime of the single-use space access code (was ShareLinkSpaceAccessService.ACCESS_DURATION).
+    SPACE_ACCESS_DURATION_SECONDS = 60 * 60  # 1 hour
+    # Key under which the share link id is stored in the space access code payload, so the
+    # verify side can confirm the code was minted for this exact share link.
+    SPACE_ACCESS_SHARE_LINK_ID_KEY = "share_link_id"
+
     @classmethod
     def find_by_type_and_entity(
         cls, entity_type: ShareLinkEntityType, entity_id: str, link_type: ShareLinkType
@@ -169,14 +177,23 @@ class ShareLinkService:
         # Update the user information in the database
         UserService.create_or_update_user_dto(user)
 
-        share_link_access = ShareLinkSpaceAccessService.generate_share_link_space_access(
-            share_link.id, user.id
+        # Mint a single-use, short-lived code bound to this share link. The code replaces the
+        # former in-memory ShareLinkSpaceAccess store. It is consumed once when the shared
+        # resource/app is opened (see AuthorizationService.auth_share_link_from_token). The
+        # space always requests a fresh code right before each open, so single-use is safe.
+        user_access_token = UniqueCodeService.generate_code(
+            user.id,
+            {cls.SPACE_ACCESS_SHARE_LINK_ID_KEY: share_link.id},
+            cls.SPACE_ACCESS_DURATION_SECONDS,
+        )
+        access_url_valid_until = DateHelper.now_utc() + timedelta(
+            seconds=cls.SPACE_ACCESS_DURATION_SECONDS
         )
 
-        access_url = share_link.get_space_link(share_link_access.user_access_token)
+        access_url = share_link.get_space_link(user_access_token)
         return GenerateUserAccessTokenForSpaceResponse(
             # return the main share link valid until date
             share_link_valid_until=share_link.valid_until,
             access_url=access_url,
-            access_url_valid_until=share_link_access.valid_until,
+            access_url_valid_until=access_url_valid_until,
         )

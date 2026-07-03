@@ -6,6 +6,7 @@ from typing import Any, cast
 import reflex as rx
 from typing_extensions import TypedDict
 
+from .reflex_code_exchange import exchange_code_for_jwt
 from .reflex_exception import ReflexAppException
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
@@ -205,6 +206,14 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if not self.requires_authentication():
             return None
 
+        # New auth path: a single-use gws_code exchanged for a JWT. The code is the credential
+        # (verified server-side by the lab), so it is handled before the gws_token gate below,
+        # which only guards the legacy gws_user_access_token path.
+        if not self.is_dev_mode():
+            user_id = self._exchange_code_if_present()
+            if user_id is not None:
+                return user_id
+
         if not self.is_dev_mode():
             query_params = self.get_query_params()
 
@@ -215,12 +224,53 @@ class ReflexMainStateBase(rx.State, mixin=True):
             if url_token != env_token:
                 return None
 
-        # load user id from access token
+        # Legacy path: load user id from the opaque access token map. Kept for the backward-compat
+        # window while both a gws_code and a gws_user_access_token are emitted; also serves the
+        # dev/system sentinel tokens.
         user_access_token = self._get_user_access_token()
         if user_access_token is None:
             return None
 
         return user_access_tokens.get(user_access_token)
+
+    def _exchange_code_if_present(self) -> str | None:
+        """If a single-use gws_code is in the URL, exchange it for a JWT and return the user id.
+
+        On success, stores the JWT as the user access token (carried on later API calls) and
+        removes gws_code from the browser URL so nothing reusable lingers. Returns None when no
+        code is present (caller falls through to the legacy token path).
+
+        Raises ReflexAppException when a gws_code IS present but cannot be exchanged: it is
+        single-use and short-lived, so this means the link was already opened or expired. Raising
+        here surfaces an accurate message instead of degrading into the generic
+        "User not authenticated".
+        """
+        query_params = self.get_query_params()
+        code = query_params.get("gws_code")
+        if not code:
+            return None
+
+        exchanged = exchange_code_for_jwt(self.get_app_id(), code)
+        if exchanged is None:
+            raise ReflexAppException(
+                "This app link has expired or was already used. "
+                "Please reopen the app to get a fresh link."
+            )
+
+        # the JWT becomes the user access token the app carries to the data lab API
+        self.user_access_token = exchanged.user_access_token
+        # scrub gws_code from the URL (single-use; keep it out of history/referrers)
+        self._scrub_gws_code_from_url()
+        return exchanged.user_id
+
+    def _scrub_gws_code_from_url(self) -> None:
+        """Remove the gws_code query param from the browser URL via a history replace."""
+        rx.call_script(
+            "if (window.history && window.location.search.includes('gws_code')) {"
+            " const u = new URL(window.location.href);"
+            " u.searchParams.delete('gws_code');"
+            " window.history.replaceState({}, '', u.toString()); }"
+        )
 
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""

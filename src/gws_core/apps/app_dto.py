@@ -102,3 +102,65 @@ class AppInstanceConfigDTO(BaseModelDTO):
     # Only provided if the app requires authentication
     # Key is access token, value is user id
     user_access_tokens: dict[str, str]
+
+
+class ExchangeAppCodeDTO(BaseModelDTO):
+    """Body of POST /apps/exchange-code: a one-time code the app relays to the lab.
+
+    The app (reflex/streamlit base) cannot import gws_core, so it cannot consume the code
+    or mint a JWT itself. It sends the code here and gets back a JWT + the resolved user id.
+    """
+
+    app_id: str
+    code: str
+
+
+class ExchangeAppCodeResponseDTO(BaseModelDTO):
+    """Response of POST /apps/exchange-code.
+
+    :user_access_token: a JWT the app carries on its data lab API calls (validated by the
+        existing check_user_access_token). Replaces the former opaque user access token.
+    :user_id: the resolved user id, so the app can display the user without decoding the JWT
+        (it has no access to the JWT secret).
+    """
+
+    user_access_token: str
+    user_id: str
+
+
+class AppGatewayStartDTO(BaseModelDTO):
+    """Body of POST /apps/gateway/start, called by the front (Angular) gateway page.
+
+    :app_key: the stable app key (resource model id or custom subdomain)
+    :code: optional one-time code (space/external open); when absent the caller is resolved
+        from the lab session cookie.
+    """
+
+    app_key: str
+    code: str | None = None
+
+
+class AppGatewayStartResponseDTO(BaseModelDTO):
+    """Response of POST /apps/gateway/start.
+
+    :status_token: the process status token the front polls on
+        GET /apps/process/{status_token}/status until the app is RUNNING.
+    """
+
+    status_token: str
+
+
+class AppGatewayHandoffDTO(BaseModelDTO):
+    """Body of POST /apps/gateway/handoff, called by the front once the app is RUNNING."""
+
+    app_key: str
+
+
+class AppGatewayHandoffResponseDTO(BaseModelDTO):
+    """Response of POST /apps/gateway/handoff.
+
+    :app_url: the app host URL carrying a one-time ``gws_code`` the app exchanges for a JWT.
+        The front navigates the browser to this URL.
+    """
+
+    app_url: str

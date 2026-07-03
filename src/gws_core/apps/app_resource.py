@@ -467,6 +467,25 @@ class AppResource(ResourceList):
         """This view generates the app and returns a AppView."""
         from gws_core.apps.apps_manager import AppsManager
 
+        app = self.build_app_instance()
+
+        # create the app asynchronously and return the instance ID
+        result = AppsManager.create_or_get_app_async(app)
+
+        # create the view with the app instance ID
+        view_ = AppView(result)
+        view_.set_favorite(True)
+        view_.set_title(self.get_name())
+        return view_
+
+    def build_app_instance(self) -> AppInstance:
+        """Build a fully-configured AppInstance for this resource (inputs, params, stop policy,
+        custom subdomain). Used both by the default view and by the launcher gateway to
+        (cold-)start the app.
+
+        :return: the configured app instance, ready to pass to AppsManager
+        :rtype: AppInstance
+        """
         shell_proxy = self._get_shell_proxy()
         shell_proxy.attach_observer(LoggerMessageObserver())
 
@@ -486,11 +505,4 @@ class AppResource(ResourceList):
         # set the custom subdomain (used to build the app host)
         app.set_custom_subdomain(self.get_custom_subdomain())
 
-        # create the app asynchronously and return the instance ID
-        result = AppsManager.create_or_get_app_async(app)
-
-        # create the view with the app instance ID
-        view_ = AppView(result)
-        view_.set_favorite(True)
-        view_.set_title(self.get_name())
-        return view_
+        return app

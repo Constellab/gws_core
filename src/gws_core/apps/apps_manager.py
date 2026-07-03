@@ -8,6 +8,7 @@ from gws_core.apps.app_dto import (
     AppsStatusDTO,
     AppStopPolicy,
     CreateAppAsyncResultDTO,
+    ExchangeAppCodeResponseDTO,
 )
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
@@ -24,6 +25,8 @@ from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import InvalidUniqueCodeException, UniqueCodeService
 
 
 class AppsManager:
@@ -241,6 +244,51 @@ class AppsManager:
             return app.user_has_access_to_app(user_access_token)
 
         return None
+
+    # key stored in the code obj to bind a one-time app code to a single app
+    APP_CODE_APP_ID_KEY = "app_id"
+
+    @classmethod
+    def generate_app_access_code(cls, user_id: str, app_id: str, validity_seconds: int = 60) -> str:
+        """Mint a short-lived, single-use code that authenticates a user to a specific app.
+
+        The code is put in the app URL as ``gws_code``. The app relays it back to
+        ``exchange_app_code`` (it cannot consume the code itself, being gws_core-free), which
+        swaps it for a JWT. The code is bound to ``app_id`` so it cannot be replayed against
+        another app.
+
+        :param user_id: the user the code authenticates
+        :param app_id: the app resource model id the code is valid for
+        :param validity_seconds: code lifetime (default 60s; single-use)
+        :return: the one-time code
+        """
+        return UniqueCodeService.generate_code(
+            user_id, {cls.APP_CODE_APP_ID_KEY: app_id}, validity_seconds
+        )
+
+    @classmethod
+    def exchange_app_code(cls, app_id: str, code: str) -> ExchangeAppCodeResponseDTO:
+        """Consume a one-time app code and return a JWT + the resolved user id.
+
+        Called from the app (via POST /apps/exchange-code) to turn the ``gws_code`` it received
+        in its URL into a JWT it carries on data lab API calls. The code is single-use
+        (consumed here) and must match the app it was minted for.
+
+        :param app_id: the app the code is being exchanged for (must match the code binding)
+        :param code: the one-time code from the app URL
+        :return: the JWT (as user_access_token) and the user id
+        :raises InvalidUniqueCodeException: if the code is invalid, expired, or for another app
+        """
+        code_obj = UniqueCodeService.check_code(code)
+
+        # bind the code to its app: reject a code minted for a different app
+        if code_obj.obj.get(cls.APP_CODE_APP_ID_KEY) != app_id:
+            raise InvalidUniqueCodeException()
+
+        return ExchangeAppCodeResponseDTO(
+            user_access_token=JWTService.create_jwt(code_obj.user_id),
+            user_id=code_obj.user_id,
+        )
 
     @classmethod
     def find_process_by_token(cls, token: str) -> AppProcess | None:

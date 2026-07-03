@@ -1,14 +1,27 @@
 from datetime import datetime
 
-from fastapi import Depends
+from fastapi import Depends, Request
 from fastapi.responses import StreamingResponse
 
-from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO, AppStopPolicy
+from gws_core.apps.app_dto import (
+    AppGatewayHandoffDTO,
+    AppGatewayHandoffResponseDTO,
+    AppGatewayStartDTO,
+    AppGatewayStartResponseDTO,
+    AppProcessStatusDTO,
+    AppsStatusDTO,
+    AppStopPolicy,
+    ExchangeAppCodeDTO,
+    ExchangeAppCodeResponseDTO,
+)
+from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
+from gws_core.user.user import User
 
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
@@ -102,6 +115,92 @@ def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
         raise Exception("Invalid token")
 
     return app_process.get_status_dto()
+
+
+@core_app.post("/apps/exchange-code", tags=["App"], summary="Exchange an app code for a JWT")
+def exchange_app_code(data: ExchangeAppCodeDTO) -> ExchangeAppCodeResponseDTO:
+    """
+    Exchange a one-time app code (the ``gws_code`` the app received in its URL) for a JWT.
+
+    Called by the app itself (reflex/streamlit base), which cannot consume the code or mint a
+    JWT (it does not import gws_core). No user-auth dependency: the single-use code is the
+    credential. The code is consumed here and must match the app it was minted for.
+    """
+
+    return AppsManager.exchange_app_code(data.app_id, data.code)
+
+
+############################################ APP LAUNCHER GATEWAY ############################################
+
+
+def _resolve_gateway_user(request: Request, code: str | None) -> User | None:
+    """Resolve the caller for the launcher gateway from either a one-time code or a lab session.
+
+    Model B: if a ``code`` is present it is consumed directly (no lab session minted); otherwise
+    the lab session token (cookie/header) is tried. Returns None when neither identifies a user,
+    so the gateway can bounce to the auth page.
+    """
+    if code:
+        return AuthorizationService.check_unique_code(code).get_user()
+
+    has_auth_header = request.headers.get("Authorization")
+    has_auth_cookie = request.cookies.get("Authorization")
+    print(f"[GWS DEBUG] _resolve_gateway_user: no code. "
+          f"Authorization header={has_auth_header!r} cookie={has_auth_cookie!r} "
+          f"all_cookies={list(request.cookies.keys())!r}")
+    try:
+        user = AuthorizationService.check_user_access_token(request).get_user()
+        print(f"[GWS DEBUG] _resolve_gateway_user resolved user={user.id if user else None!r}")
+        return user
+    except Exception as e:
+        print(f"[GWS DEBUG] _resolve_gateway_user no user: {e!r}")
+        return None
+
+
+@core_app.post(
+    "/apps/gateway/start",
+    tags=["App"],
+    summary="Gateway: authenticate + (cold-)start an app",
+)
+def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStartResponseDTO:
+    """
+    Called by the front (Angular) gateway page ``/open/app/{app_key}``.
+
+    Resolves the caller (one-time ``code`` or lab session), (cold-)starts the app, and returns
+    the status token the front polls until the app is RUNNING. Raises 401 when the caller is
+    not authenticated, so the front redirects to the login page itself.
+    """
+    print("BBBBBBBBBBBBBBBBBBBBBBBBB")
+    app_resource = AppGatewayService.resolve_app_resource(data.app_key)
+
+    user = _resolve_gateway_user(request, data.code)
+    if user is None:
+        raise UnauthorizedException("User not authenticated")
+
+    status_token = AppGatewayService.start_app_and_get_status_token(app_resource)
+    return AppGatewayStartResponseDTO(status_token=status_token)
+
+
+@core_app.post(
+    "/apps/gateway/handoff",
+    tags=["App"],
+    summary="Gateway: hand off into a running app",
+)
+def gateway_handoff(data: AppGatewayHandoffDTO, request: Request) -> AppGatewayHandoffResponseDTO:
+    """
+    Called by the front gateway page once the app is RUNNING. Mints a one-time handoff code and
+    returns the app host URL (carrying ``?gws_code=…``) the front navigates the browser to. The
+    user is resolved from the lab session established for this browser.
+    """
+    print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+    app_resource = AppGatewayService.resolve_app_resource(data.app_key)
+
+    user = _resolve_gateway_user(request, None)
+    if user is None:
+        raise UnauthorizedException("User not authenticated")
+
+    app_url = AppGatewayService.build_app_handoff_url(app_resource, user)
+    return AppGatewayHandoffResponseDTO(app_url=app_url)
 
 
 @core_app.get(

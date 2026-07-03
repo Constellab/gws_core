@@ -7,6 +7,8 @@ from typing import Any, TypedDict, cast
 
 import streamlit as st
 
+from .streamlit_code_exchange import exchange_code_for_jwt
+
 
 class StreamlitAppConfig(TypedDict):
     source_ids: list[str]
@@ -48,6 +50,11 @@ class StreamlitMainStateBase(ABC):
 
         # 1. Configure Streamlit page first (enables st.spinner, st.error, etc.)
         cls._configure_page()
+
+        print(f"[GWS DEBUG] initialize: bootstrap_initialized="
+              f"{st.session_state.get('__gws_bootstrap_initialized__')!r} "
+              f"user_id={st.session_state.get('__gws_user_id__')!r} "
+              f"query_params={dict(st.query_params)!r}")
 
         if st.session_state.get("__gws_bootstrap_initialized__"):
             return
@@ -158,7 +165,16 @@ class StreamlitMainStateBase(ABC):
         # Check token in non-dev mode. Only AUTHENTICATED apps require the token: their
         # URL always carries it. PUBLIC apps have a bare, shareable URL (no token), so a
         # missing token must not block loading there.
-        if not cls.is_dev_mode() and cls.authentication_is_required():
+        #
+        # The gws_token gate only guards the legacy gws_user_access_token path. A gateway
+        # handoff URL carries a single-use gws_code instead (the code is the credential,
+        # verified server-side at exchange), and no gws_token — so skip the gate when a
+        # gws_code is present.
+        if (
+            not cls.is_dev_mode()
+            and cls.authentication_is_required()
+            and not st.query_params.get("gws_code")
+        ):
             url_token = st.query_params.get("gws_token")
             env_token = os.environ.get("GWS_APP_TOKEN")
             if url_token != env_token:
@@ -201,12 +217,32 @@ class StreamlitMainStateBase(ABC):
         if not authentication_required:
             return  # anonymous access
 
+        # New auth path: a single-use gws_code exchanged for a JWT. The code is the credential
+        # (verified server-side by the lab). Handled before the legacy opaque-token map lookup.
+        if not cls.is_dev_mode():
+            code_result = cls._exchange_code_if_present()
+            if code_result == "success":
+                return
+            if code_result == "failed":
+                # A gws_code was present but could not be exchanged: it is single-use and
+                # short-lived, so this typically means the link was already opened or expired.
+                # Report that accurately instead of falling through to "token not provided".
+                if authentication_required:
+                    st.error(
+                        "This app link has expired or was already used. "
+                        "Please reopen the app to get a fresh link."
+                    )
+                    st.stop()
+                return  # anonymous access
+            # code_result == "absent": fall through to the legacy token path below.
+
         user_access_tokens = config.get("user_access_tokens", {})
         user_access_token: str | None = None
         if cls.is_dev_mode():
             user_access_token = cls.DEV_MODE_USER_ACCESS_TOKEN_KEY
         else:
-            # Check user access token
+            # Legacy path: opaque user access token (kept for the backward-compat window while
+            # both a gws_code and a gws_user_access_token are emitted).
             user_access_token = st.query_params.get("gws_user_access_token")
 
         if not user_access_token:
@@ -225,6 +261,36 @@ class StreamlitMainStateBase(ABC):
 
         st.session_state["__gws_user_access_token__"] = user_access_token
         st.session_state["__gws_user_id__"] = user_id
+
+    @classmethod
+    def _exchange_code_if_present(cls) -> str:
+        """Try to authenticate from a single-use gws_code in the URL.
+
+        Returns one of:
+          - "absent": no gws_code in the URL (caller falls through to the legacy token path)
+          - "success": exchanged; JWT + user id stored in session, gws_code scrubbed from the URL
+          - "failed": a gws_code was present but could not be exchanged (expired or already used)
+        Distinguishing "failed" from "absent" lets the caller show an accurate message instead of
+        the misleading "token not provided".
+        """
+        code = st.query_params.get("gws_code")
+        print(f"[GWS DEBUG] _exchange_code_if_present: gws_code={code!r} "
+              f"all_query_params={dict(st.query_params)!r}")
+        if not code:
+            return "absent"
+
+        exchanged = exchange_code_for_jwt(cls.get_app_id(), code)
+        print(f"[GWS DEBUG] exchange result: {exchanged!r} app_id={cls.get_app_id()!r}")
+        if exchanged is None:
+            return "failed"
+
+        # the JWT becomes the user access token the app carries to the data lab API
+        st.session_state["__gws_user_access_token__"] = exchanged.user_access_token
+        st.session_state["__gws_user_id__"] = exchanged.user_id
+        # scrub gws_code from the URL (single-use; keep it out of history/referrers)
+        if "gws_code" in st.query_params:
+            del st.query_params["gws_code"]
+        return "success"
 
     @classmethod
     def get_app_config(cls) -> StreamlitAppConfig:

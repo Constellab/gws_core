@@ -1,7 +1,6 @@
 from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 
 
@@ -133,6 +132,25 @@ class FrontService:
             + user_access_token
             + "&hide_header=true"
         )
+
+    def get_app_gateway_url(self, app_key: str, code: str | None = None) -> str:
+        """Stable, bookmarkable launcher URL for an app.
+
+        This is a **front** (Angular) route ``{front}/open/app/{app_key}``: it owns the
+        auth-guard (redirecting to login when needed) and the progress UI, and drives the
+        backend gateway APIs (start / handoff). Opening it authenticates the caller,
+        cold-starts the app if needed, shows progress, and navigates into the app (no iframe).
+
+        When a one-time ``code`` is provided (e.g. issued for a space open), it is carried as
+        ``?code=`` so the front can start the app without an existing lab session.
+
+        :param app_key: stable app key (resource model id or custom subdomain)
+        :param code: optional one-time access code to authenticate the caller
+        """
+        url = f"{self._lab_url}/open/app/{app_key}"
+        if code:
+            url += f"?code={code}"
+        return url
 
     ############################################### OTHER URLS ###############################################
 

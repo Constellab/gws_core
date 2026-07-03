@@ -400,8 +400,18 @@ class AppProcess:
                 f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
-        user_access_token = self._add_user(user.id)
-        params["gws_user_access_token"] = user_access_token
+        # New auth path: a single-use, app-scoped code the app exchanges for a JWT (via
+        # POST /apps/exchange-code). Restart-safe, and no long-lived secret lingers in the URL.
+        from gws_core.apps.apps_manager import AppsManager
+
+        params["gws_code"] = AppsManager.generate_app_access_code(
+            user.id, self._app.resource_model_id
+        )
+
+        # Backward-compat window: also emit the legacy opaque user access token so an app built
+        # against an older base (which reads gws_user_access_token, not gws_code) keeps working.
+        # Remove once all app bases read gws_code.
+        params["gws_user_access_token"] = self._add_user(user.id)
 
         return AppInstanceUrl(host_url=host_url, params=params)
 
@@ -418,6 +428,10 @@ class AppProcess:
             "GWS_IS_TEST_ENV": str(Settings.get_instance().is_test),
             "GWS_IS_DEV_MODE": str(self._app.is_dev_mode()),
             "GWS_APP_ACCESS_MODE": self._app.access_mode.value,
+            # Base lab API URL, so the app can reach core routes (e.g. POST /apps/exchange-code
+            # to swap its one-time gws_code for a JWT). The app cannot import gws_core, so it
+            # needs the URL from the env.
+            "GWS_LAB_API_URL": Settings.get_lab_api_url(),
             # Propagate the parent process's log level so the spawned app backend
             # re-inits its gws Logger at the same level (e.g. DEBUG from the CLI's
             # --log-level), instead of always defaulting to INFO.

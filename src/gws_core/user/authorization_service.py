@@ -7,7 +7,6 @@ from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.utils.settings import Settings
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.share_link_space_access import ShareLinkSpaceAccessService
 from gws_core.share.shared_dto import ShareLinkType
 from gws_core.user.auth_context import (
     AuthContext,
@@ -171,11 +170,18 @@ class AuthorizationService:
         if share_link.link_type == ShareLinkType.SPACE:
             if not user_access_token:
                 raise ForbiddenException("This link requires authentication")
-            space_access_info = ShareLinkSpaceAccessService.find_by_token_and_check_validity(
-                user_access_token, share_link.id
-            )
 
-            user = cls._get_and_check_user(space_access_info.user_id, allow_inactive=True)
+            # The user access token is a single-use code minted by
+            # ShareLinkService.generate_user_access_token_for_space_link. Consume it and
+            # confirm it was minted for this exact share link.
+            code_obj: CodeObject = UniqueCodeService.check_code(user_access_token)
+            if (
+                code_obj.obj.get(ShareLinkService.SPACE_ACCESS_SHARE_LINK_ID_KEY)
+                != share_link.id
+            ):
+                raise InvalidUniqueCodeException()
+
+            user = cls._get_and_check_user(code_obj.user_id, allow_inactive=True)
         else:
             user = User.get_and_check_sysuser()
 
