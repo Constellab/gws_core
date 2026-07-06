@@ -19,11 +19,9 @@ from gws_core.apps.app_dto import (
 from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
-from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
-from gws_core.user.user import User
 
 from ..core_controller import core_app
 from ..user.authorization_service import AuthorizationService
@@ -181,22 +179,6 @@ def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
 ############################################ APP LAUNCHER GATEWAY ############################################
 
 
-def _resolve_gateway_user(request: Request, code: str | None) -> User | None:
-    """Resolve the caller for the launcher gateway from either a one-time code or a lab session.
-
-    Model B: if a ``code`` is present it is consumed directly (no lab session minted); otherwise
-    the lab session token (cookie/header) is tried. Returns None when neither identifies a user,
-    so the gateway can bounce to the auth page.
-    """
-    if code:
-        return AuthorizationService.check_unique_code(code).get_user()
-
-    try:
-        return AuthorizationService.check_user_access_token(request).get_user()
-    except Exception:
-        return None
-
-
 @core_app.post(
     "/apps/gateway/start",
     tags=["App"],
@@ -206,18 +188,11 @@ def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStart
     """
     Called by the front (Angular) gateway page ``/open/app/{app_key}``.
 
-    Resolves the caller (one-time ``code`` or lab session), (cold-)starts the app, and returns
-    the status token the front polls until the app is RUNNING. Raises 401 when the caller is
-    not authenticated, so the front redirects to the login page itself.
+    (Cold-)starts the app and returns the status token the front polls until the app is RUNNING.
+    For an AUTHENTICATED app the caller must be authenticated (one-time ``code`` or lab session),
+    else a 401 is raised so the front redirects to login; a PUBLIC app is started for anyone.
     """
-    app_resource = AppGatewayService.resolve_app_resource(data.app_key)
-
-    user = _resolve_gateway_user(request, data.code)
-    if user is None:
-        raise UnauthorizedException("User not authenticated")
-
-    status_token = AppGatewayService.start_app_and_get_status_token(app_resource)
-    return AppGatewayStartResponseDTO(status_token=status_token)
+    return AppGatewayService.start(data.app_key, data.code, request)
 
 
 @core_app.post(
@@ -227,18 +202,11 @@ def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStart
 )
 def gateway_handoff(data: AppGatewayHandoffDTO, request: Request) -> AppGatewayHandoffResponseDTO:
     """
-    Called by the front gateway page once the app is RUNNING. Mints a one-time handoff code and
-    returns the app host URL (carrying ``?gws_code=…``) the front navigates the browser to. The
-    user is resolved from the lab session established for this browser.
+    Called by the front gateway page once the app is RUNNING. Returns the app host URL the front
+    navigates the browser to: for an AUTHENTICATED app, carrying a one-time ``?gws_code=…`` bound
+    to the lab-session user; for a PUBLIC app, the bare app URL (anonymous, no code).
     """
-    app_resource = AppGatewayService.resolve_app_resource(data.app_key)
-
-    user = _resolve_gateway_user(request, None)
-    if user is None:
-        raise UnauthorizedException("User not authenticated")
-
-    app_url = AppGatewayService.build_app_handoff_url(app_resource, user)
-    return AppGatewayHandoffResponseDTO(app_url=app_url)
+    return AppGatewayService.handoff(data.app_key, request)
 
 
 @core_app.get(

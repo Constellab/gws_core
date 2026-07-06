@@ -1,6 +1,8 @@
 import re
 from abc import abstractmethod
 
+from gws_core.apps import app_gateway_constants
+
 
 class AppNginxServiceInfo:
     """Information about a registered nginx service"""
@@ -73,9 +75,7 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         if not self.gws_login_url:
             return ""
 
-        from gws_core.apps.app_gateway_service import AppGatewayService
-
-        login_path = AppGatewayService.GWS_LOGIN_PATH
+        login_path = app_gateway_constants.GWS_LOGIN_PATH
 
         # Use a literal host (127.0.0.1) so nginx resolves the upstream at startup. A hostname
         # like "localhost" — or any variable in proxy_pass — would force runtime resolution and

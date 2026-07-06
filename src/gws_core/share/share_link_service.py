@@ -35,6 +35,35 @@ class ShareLinkService:
         return ShareLink.find_by_entity_type_and_id(entity_type, entity_id, link_type)
 
     @classmethod
+    def resource_is_authenticated_app(
+        cls, entity_type: ShareLinkEntityType, entity_id: str
+    ) -> bool:
+        """Return True if the shared entity is an app that requires authentication.
+
+        Used to forbid PUBLIC share links on such apps: a PUBLIC link authenticates every visitor
+        as the system user (see AuthorizationService.auth_share_link_from_token), which would
+        bypass the app's authentication. AUTHENTICATED apps must be shared with a SPACE link (real
+        per-user auth) or opened through the launcher gateway.
+        """
+        if entity_type != ShareLinkEntityType.RESOURCE:
+            return False
+
+        # Local import to avoid a module-level dependency of the share layer on apps.
+        from gws_core.apps.app_dto import AppAccessMode
+        from gws_core.apps.app_resource import AppResource
+        from gws_core.resource.resource_model import ResourceModel
+
+        resource_model = ResourceModel.get_by_id(entity_id)
+        if resource_model is None:
+            return False
+
+        resource = resource_model.get_resource()
+        return (
+            isinstance(resource, AppResource)
+            and resource.get_access_mode() == AppAccessMode.AUTHENTICATED
+        )
+
+    @classmethod
     def find_by_token_and_check_validity(cls, token: str) -> ShareLink:
         """Method that find a shared entity link by its token and check if it is valid"""
         share_link = ShareLink.find_by_token_and_check(token)
@@ -57,6 +86,16 @@ class ShareLinkService:
         if link_type == ShareLinkType.SPACE:
             if share_dto.entity_type != ShareLinkEntityType.RESOURCE:
                 raise BadRequestException("Only resource can be shared with space")
+
+        # A PUBLIC link would authenticate every visitor as the system user, bypassing the app's
+        # authentication. AUTHENTICATED apps must be shared with a SPACE link instead.
+        if link_type == ShareLinkType.PUBLIC and cls.resource_is_authenticated_app(
+            share_dto.entity_type, share_dto.entity_id
+        ):
+            raise BadRequestException(
+                "An app that requires authentication cannot have a public share link. "
+                "Use a space link instead."
+            )
 
         existing_link = ShareLink.find_by_entity_type_and_id(
             entity_type=share_dto.entity_type, entity_id=share_dto.entity_id, link_type=link_type

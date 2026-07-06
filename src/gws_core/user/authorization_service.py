@@ -207,6 +207,18 @@ class AuthorizationService:
 
             user = cls._get_and_check_user(code_obj.user_id, allow_inactive=True)
         else:
+            # PUBLIC link: normally authenticates the visitor as the system user (so a public
+            # resource preview can call the API). Refuse this for an app that requires
+            # authentication — it would silently elevate any visitor to the system user and bypass
+            # the app's auth. Such apps must be opened via a SPACE link or the launcher gateway.
+            # (New PUBLIC links on these apps are also blocked at creation in
+            # ShareLinkService.generate_share_link; this guards links created before that check.)
+            if ShareLinkService.resource_is_authenticated_app(
+                share_link.entity_type, share_link.entity_id
+            ):
+                raise ForbiddenException(
+                    "This app requires authentication and cannot be opened through a public link."
+                )
             user = User.get_and_check_sysuser()
 
         auth_context = AuthContextShareLink(share_link=share_link, user=user)

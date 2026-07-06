@@ -67,7 +67,7 @@ class GenerateStreamlitShowcaseApp(Task):
         streamlit_app = StreamlitResource()
 
         streamlit_app.set_app_config(StreamlitShowcaseApp())
-        # streamlit_app.set_requires_authentication(False)
+        streamlit_app.set_requires_authentication(False)
         streamlit_app.set_name("Streamlit showcase App")
 
         custom_subdomain = params.get_value("custom_subdomain")

@@ -48,20 +48,29 @@ The `gws_code` is short-lived and **single-use** (`UniqueCodeService.check_code`
 read). The JWT is the durable credential; validating it is idempotent, so it is always safe to
 re-check. **This asymmetry is load-bearing** — see §5 and §6.
 
-Constant names (mirrored as literals in the gws_core-free app bases): `gws_code`, `gws_app_jwt`
-(cookie), `gws-login` (nginx path), `nginx-login` (core-api segment) — all defined on
-`AppGatewayService` in [app_gateway_service.py](app_gateway_service.py).
+Constant names: `gws_code`, `gws_app_jwt` (cookie), `gws-login` (nginx path), `nginx-login`
+(core-api segment) — defined in the dependency-free
+[app_gateway_constants.py](app_gateway_constants.py) (so low-level consumers can import them without
+a cycle) and re-exported as class attributes on `AppGatewayService`. They are **also mirrored as
+literals** in the gws_core-free app bases (`gws_streamlit_base` / `gws_reflex_base`), which cannot
+import gws_core at all — keep those in sync.
 
 ### The relevant `core-api` routes ([app_controller.py](app_controller.py))
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
-| `POST /apps/gateway/start` | one-time `code` **or** lab session | resolve user + (cold-)start app, return status token |
-| `POST /apps/gateway/handoff` | lab session (cookie) | mint `gws_code`, return the app URL to navigate to |
+| `POST /apps/gateway/start` | AUTHENTICATED app: one-time `code` **or** lab session · PUBLIC app: none | resolve user (if required) + (cold-)start app, return status token |
+| `POST /apps/gateway/handoff` | AUTHENTICATED app: lab session · PUBLIC app: none | AUTHENTICATED: mint `gws_code` + return app URL · PUBLIC: return **bare** app URL |
 | `GET  /apps/process/{token}/status` | none (opaque token) | poll app status until RUNNING |
 | `POST /apps/exchange-code` | the `gws_code` itself | exchange `gws_code` → JWT (called **by the app**) |
 | `POST /apps/validate-jwt` | the JWT itself | validate a JWT → user id (called **by the app** on reload) |
 | `GET  /apps/{app_id}/nginx-login?gws_code=…` | the `gws_code` itself | exchange + `Set-Cookie gws_app_jwt` + 302 to `/` (Streamlit only) |
+
+The two `gateway/*` routes are **thin controllers** — all logic (caller auth + cold-start + handoff
+URL) lives in `AppGatewayService.start(...)` / `AppGatewayService.handoff(...)`
+([app_gateway_service.py](app_gateway_service.py)). Whether a user is required is decided there by
+`AppGatewayService.app_requires_authentication(app_resource)` (True for **AUTHENTICATED**, False for
+**PUBLIC**).
 
 `exchange-code` / `validate-jwt` / `nginx-login` have **no user-auth dependency** — the code / JWT
 in the body/query *is* the credential. That is deliberate: the app has no lab session to present.
@@ -72,7 +81,8 @@ in the body/query *is* the credential. That is deliberate: the app has no lab se
 ([front_service.py](../core/service/front_service.py)). `app_key` = resource model id or custom
 subdomain. This page owns the auth-guard (redirect to login), the progress UI, and drives
 `gateway/start` → poll `status` → `gateway/handoff`. Optional `?code=` carries a one-time code
-(used by the space flow, §4).
+(used by the space flow, §4). For a **PUBLIC** app the gateway never blocks on auth — `start` and
+`handoff` succeed for anyone and the app is entered anonymously.
 
 ---
 
@@ -106,6 +116,12 @@ each time, so step 2–3 simply repeat. No cookie is needed or used here. (A coo
 host would be a *third-party* cookie relative to the datalab origin, and modern browsers block/
 partition those — so relying on the fresh code is both simpler and more robust.)
 
+**PUBLIC app:** the iframe `src` is **bare** (`http://{resource_model_id}.localhost:8510/`, no
+`gws_code`). This is decided in `AppProcess.get_app_full_url` via `token_in_url()` — PUBLIC returns
+early with no params. The app boots, `authentication_is_required()` is False, so it runs
+**anonymously** (no user, no exchange). Front components that still need the data lab API can opt
+into the system-user fallback (§7).
+
 ---
 
 ## 3. Mode B — standalone gateway (bookmarkable link)
@@ -116,20 +132,22 @@ The stable, iframe-free way to open an app: `{front}/open/app/{app_key}`. Solves
 **Flow:**
 
 1. Browser opens `{front}/open/app/{app_key}` (an Angular page).
-2. Front `POST /apps/gateway/start {app_key}`.
-   - The lab resolves the user from the **lab session** (Authorization cookie/header). If none →
-     `401` → the front redirects to login, then returns here.
-   - `AppGatewayService.start_app_and_get_status_token` (cold-)starts the app and returns a
-     `status_token`.
+2. Front `POST /apps/gateway/start {app_key}` → `AppGatewayService.start`.
+   - **AUTHENTICATED app:** the lab resolves the user from the **lab session** (Authorization
+     cookie/header). If none → `401` → the front redirects to login, then returns here.
+   - **PUBLIC app:** no user is resolved or required — start proceeds for anyone.
+   - `start_app_and_get_status_token` (cold-)starts the app and returns a `status_token`.
 3. Front polls `GET /apps/process/{status_token}/status` until `RUNNING` (shows progress).
-4. Front `POST /apps/gateway/handoff {app_key}` → lab mints a `gws_code` for the session user and
-   returns the app URL to navigate to (`AppGatewayService.build_app_handoff_url`):
-   - **Streamlit** → `http://{host}/gws-login?gws_code=<code>`  (note the `/gws-login` path)
-   - **Reflex**    → `http://{host}/?gws_code=<code>`
+4. Front `POST /apps/gateway/handoff {app_key}` → `AppGatewayService.handoff` → `build_app_handoff_url`:
+   - **AUTHENTICATED app** (mints a `gws_code` for the session user):
+     - **Streamlit** → `http://{host}/gws-login?gws_code=<code>`  (note the `/gws-login` path)
+     - **Reflex**    → `http://{host}/?gws_code=<code>`
+   - **PUBLIC app** → the **bare** URL `http://{host}/` (no code; the app runs anonymously).
 5. Front navigates the browser to that URL. From here the two app types diverge — see §5.
 
 **Refresh (F5) / new tab of the app URL directly** is the case Mode A doesn't have (nobody
-re-injects a code). That is what the cookie / `rx.Cookie` mechanism in §5 exists to survive.
+re-injects a code). For an AUTHENTICATED app that is what the cookie / `rx.Cookie` mechanism in §5
+survives; a PUBLIC app has nothing to persist (it is always anonymous) so F5 just reloads.
 
 ---
 
@@ -169,7 +187,10 @@ the space link routes through the **same gateway** as Mode B, pre-seeded with a 
 
 ## 5. Into the app: how auth survives a reload (the divergence)
 
-Once handed off (§3/§4), the two app types establish and persist auth differently.
+Once handed off (§3/§4), the two app types establish and persist auth differently. **This section
+applies to AUTHENTICATED apps only** — a PUBLIC app never has a user/JWT/cookie: it runs
+anonymously (`authentication_is_required()` is False) and there is nothing to persist across a
+reload.
 
 ### Streamlit — nginx-set HttpOnly cookie
 
@@ -253,6 +274,11 @@ Server side, `AuthorizationService._auth_app` ([authorization_service.py](../use
 
 Step 3 is what makes the launching-user API auth JWT-based end-to-end after the legacy removal (§6).
 
+**PUBLIC app:** there is no authenticated user, so no `user_access_token` is sent — API calls are
+unauthenticated. A component that must still reach the API can opt into `fallback_to_system_user`,
+which sends the `system_user_token` sentinel (resolved by step 2 above) and runs the request as the
+system user. ⚠️ That lets any visitor read/write data lab objects as the system user — use with care.
+
 ---
 
 ## 8. Legacy that was removed (do not reintroduce)
@@ -276,8 +302,9 @@ and the **system-user fallback** (`fallback_to_system_user`).
 | Concern | File |
 | --- | --- |
 | App URL / launch / cold-start / env vars | [app_process.py](app_process.py) |
-| Gateway service (resolve app, start, handoff URL) | [app_gateway_service.py](app_gateway_service.py) |
-| Gateway + exchange + validate + nginx-login routes | [app_controller.py](app_controller.py) |
+| Gateway/auth string constants (dependency-free) | [app_gateway_constants.py](app_gateway_constants.py) |
+| Gateway service: `start` / `handoff`, auth, `app_requires_authentication` | [app_gateway_service.py](app_gateway_service.py) |
+| Gateway (thin) + exchange + validate + nginx-login routes | [app_controller.py](app_controller.py) |
 | nginx block generation (incl. `/gws-login`) | [app_nginx_service.py](app_nginx_service.py) |
 | Streamlit auth (URL code + cookie) | [streamlit/_gws_streamlit/gws_streamlit_base/streamlit_main_state_base.py](streamlit/_gws_streamlit/gws_streamlit_base/streamlit_main_state_base.py) |
 | Streamlit code↔JWT HTTP helpers | [streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py](streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py) |

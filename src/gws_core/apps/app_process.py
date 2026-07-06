@@ -7,6 +7,7 @@ from threading import Thread
 
 import psutil
 
+from gws_core.apps import app_gateway_constants
 from gws_core.apps.app_dto import (
     AppInstanceConfigDTO,
     AppInstanceUrl,
@@ -361,11 +362,9 @@ class AppProcess:
         app's nginx redirect service so auth can be established (and survive reloads) at the app
         host. Not used in dev mode (auth is bypassed there).
         """
-        from gws_core.apps.app_gateway_service import AppGatewayService
-
         return (
             f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}"
-            f"/apps/{self._app.resource_model_id}/{AppGatewayService.NGINX_LOGIN_ENDPOINT_SEGMENT}"
+            f"/apps/{self._app.resource_model_id}/{app_gateway_constants.NGINX_LOGIN_ENDPOINT_SEGMENT}"
         )
 
     def get_app_full_url(self) -> AppInstanceUrl:
@@ -413,11 +412,10 @@ class AppProcess:
                 f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
-        from gws_core.apps.app_gateway_service import AppGatewayService
         from gws_core.apps.apps_manager import AppsManager
 
         params = {
-            AppGatewayService.GWS_CODE_QUERY_PARAM: AppsManager.generate_app_access_code(
+            app_gateway_constants.GWS_CODE_QUERY_PARAM: AppsManager.generate_app_access_code(
                 user.id, self._app.resource_model_id
             )
         }
