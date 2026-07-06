@@ -226,9 +226,7 @@ class StreamlitMainStateBase(ABC):
             return
 
         if authentication_required:
-            st.error(
-                "Not authenticated. Please (re)open the app from its link to sign in."
-            )
+            st.error("Not authenticated. Please (re)open the app from its link to sign in.")
             st.stop()
         # PUBLIC: anonymous access
 

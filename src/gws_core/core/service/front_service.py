@@ -122,14 +122,17 @@ class FrontService:
     def get_resource_open_url(self, token: str) -> str:
         return self.get_app_open_url() + "/resource/" + token
 
-    def get_resource_open_space_url(self, token: str, user_access_token: str) -> str:
-        """Open route to access the resource but the user needs to be authenticated
-        via the user_access_token
+    def get_resource_open_space_url(self, token: str, space_access_code: str) -> str:
+        """Open route to access the shared resource, carrying the single-use space access code.
+
+        The ``gws_user_access_token`` query param name is the legacy wire name (kept for
+        compatibility); it mirrors AuthorizationService.USER_ACCESS_TOKEN_HEADER. Not imported here
+        to keep front_service free of an auth-layer dependency — keep the two in sync.
         """
         return (
             self.get_resource_open_url(token)
             + "?gws_user_access_token="
-            + user_access_token
+            + space_access_code
             + "&hide_header=true"
         )
 

@@ -1,6 +1,7 @@
 import os
 import time
 
+from gws_core.apps import app_gateway_constants
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_service import (
@@ -322,6 +323,13 @@ class ReflexProcess(AppProcess):
 
     def get_ports(self) -> list[int]:
         return [self.front_port, self.back_port]
+
+    def build_handoff_url(self, host_url: str, code: str) -> str:
+        """Keep the query-param handoff — the reflex front is a static host + separate backend, so
+        the cookie-session flow doesn't map cleanly yet. The app exchanges gws_code for a JWT
+        itself (no reload survival for now).
+        """
+        return f"{host_url}?{app_gateway_constants.GWS_CODE_QUERY_PARAM}={code}"
 
     def _get_log_level_option(self) -> str:
         return f"--loglevel={Logger.get_instance().level.lower()}"

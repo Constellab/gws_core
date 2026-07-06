@@ -11,6 +11,7 @@ from gws_core.apps import app_gateway_constants
 from gws_core.apps.app_dto import (
     AppInstanceConfigDTO,
     AppInstanceUrl,
+    AppProcessLightStatusDTO,
     AppProcessStatus,
     AppProcessStatusDTO,
     AppStopPolicy,
@@ -126,6 +127,19 @@ class AppProcess:
     @abstractmethod
     def get_ports(self) -> list[int]:
         """Return all local ports this process will bind to."""
+
+    @abstractmethod
+    def build_handoff_url(self, host_url: str, code: str) -> str:
+        """Build the URL the browser is redirected to for an AUTHENTICATED app handoff.
+
+        The one-time handoff ``code`` (bound to the app + user) must be conveyed to the app so it
+        can be exchanged for a JWT. How the code is carried depends on the app framework, so each
+        subclass builds the URL its own way.
+
+        :param host_url: the app host URL
+        :param code: the single-use, app-scoped handoff code to convey
+        :return: the URL the browser is redirected to
+        """
 
     def get_status(self) -> AppProcessStatus:
         """Get the current status of the app process"""
@@ -414,9 +428,13 @@ class AppProcess:
 
         from gws_core.apps.apps_manager import AppsManager
 
+        # Baked into the app URL before the app has started; use the longer validity so the code
+        # survives a cold frontend build (Reflex can take minutes) before the app exchanges it.
         params = {
             app_gateway_constants.GWS_CODE_QUERY_PARAM: AppsManager.generate_app_access_code(
-                user.id, self._app.resource_model_id
+                user.id,
+                self._app.resource_model_id,
+                validity_seconds=AppsManager.URL_APP_CODE_VALIDITY_SECONDS,
             )
         }
 
@@ -682,6 +700,14 @@ class AppProcess:
     def _is_front_service(self, service: AppNginxServiceInfo) -> bool:
         """Return True if the given nginx service serves the app front (and carries the alias)."""
         return not service.service_id.endswith("-back")
+
+    def get_light_status_dto(self) -> AppProcessLightStatusDTO:
+        """Minimal status for the token-guarded polling route (no user/config/env leak)."""
+        return AppProcessLightStatusDTO(
+            id=self.get_id(),
+            status=self._status,
+            status_text=self._status_text,
+        )
 
     def get_status_dto(self) -> AppProcessStatusDTO:
         return AppProcessStatusDTO(

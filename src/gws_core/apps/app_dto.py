@@ -77,6 +77,21 @@ class CreateAppAsyncResultDTO(BaseModelDTO):
     status_text: str | None = None
 
 
+class AppProcessLightStatusDTO(BaseModelDTO):
+    """Minimal status returned by the token-guarded polling route
+    (GET /apps/process/{token}/status).
+
+    The polling token is an opaque process handle, not a user credential, so the payload is kept to
+    the lifecycle fields the gateway progress UI needs — no user, config path, env content, or
+    source ids (which the rich AppProcessStatusDTO on the authenticated /apps/status route exposes).
+    See APP_AUTH_OAUTH_REDESIGN.md.
+    """
+
+    id: str
+    status: AppProcessStatus
+    status_text: str | None = None
+
+
 class AppProcessStatusDTO(BaseModelDTO):
     id: str
     status: AppProcessStatus
@@ -145,15 +160,26 @@ class AppGatewayStartResponseDTO(BaseModelDTO):
 
     :status_token: the process status token the front polls on
         GET /apps/process/{status_token}/status until the app is RUNNING.
+    :authorize_grant: for an AUTHENTICATED app, a single-use grant naming the resolved caller,
+        bound to the app. The front keeps it and replays it to POST /apps/gateway/handoff once the
+        app is RUNNING (a space caller has no lab session, and the space code is consumed here, so
+        this grant is how the identity is carried to handoff). None for a PUBLIC app.
     """
 
     status_token: str
+    authorize_grant: str | None = None
 
 
 class AppGatewayHandoffDTO(BaseModelDTO):
-    """Body of POST /apps/gateway/handoff, called by the front once the app is RUNNING."""
+    """Body of POST /apps/gateway/handoff, called by the front once the app is RUNNING.
+
+    :app_key: the stable app key (resource model id or custom subdomain)
+    :authorize_grant: the grant returned by /apps/gateway/start, replayed here to identify the
+        caller without a lab session (AUTHENTICATED apps). None for a PUBLIC app.
+    """
 
     app_key: str
+    authorize_grant: str | None = None
 
 
 class AppGatewayHandoffResponseDTO(BaseModelDTO):

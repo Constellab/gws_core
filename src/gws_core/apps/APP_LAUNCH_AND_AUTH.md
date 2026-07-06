@@ -39,14 +39,22 @@ by `AppProcess._build_host_name` (see [app_process.py](app_process.py)):
 
 | Credential | Type | Lifetime | Minted by | Consumed by |
 | --- | --- | --- | --- | --- |
-| **`gws_code`** | single-use opaque code (`UniqueCodeService`, in-memory) | 60 s | `AppsManager.generate_app_access_code(user_id, app_id)` | exchanged **once** for a JWT — destructive |
-| **app session JWT** | HS256 JWT (`Bearer …`), signed by the lab | 2 days | `AppsManager.exchange_app_code` → `JWTService.create_jwt(user_id)` | validated repeatedly (idempotent) |
+| **authorize grant** | single-use code (`UniqueCodeService`), app-bound, names the user | 10 min | `AppsManager.generate_authorize_grant` at gateway `start` | `AppsManager.consume_authorize_grant` at gateway `handoff` — carries identity across the two stateless gateway calls |
+| **`gws_code`** (app grant) | single-use code (`UniqueCodeService`), app-bound | 60 s | `AppsManager.generate_app_access_code(user_id, app_id)` at `handoff` (post-RUNNING) | exchanged **once** for the app token — destructive |
+| **app access token** | HS256 JWT `{sub, exp, typ:"app", app_id}` (`Bearer …`) | 2 days | `AppsManager.exchange_app_code` → `JWTService.create_app_jwt(user_id, app_id)` | validated repeatedly as an **app** credential → `AuthContextApp`; **rejected on user routes** |
 | **dev sentinel** `dev_mode_token` | fixed string in app config | app lifetime | launch side (`_add_user`) | dev mode only |
 | **system sentinel** `system_user_token` | fixed string in app config | app lifetime | launch side (`_add_user`) | `fallback_to_system_user` components |
 
-The `gws_code` is short-lived and **single-use** (`UniqueCodeService.check_code` deletes it on
-read). The JWT is the durable credential; validating it is idempotent, so it is always safe to
-re-check. **This asymmetry is load-bearing** — see §5 and §6.
+The grants are short-lived and **single-use** (`UniqueCodeService.check_code` deletes on read). The
+**app access token** is the durable credential; validating it is idempotent, so it is always safe to
+re-check. **This asymmetry is load-bearing** — see §5.
+
+> **App-scoped, not a session (this is the key security property).** The app access token carries
+> `typ:"app"` + `app_id`. It authenticates the user **only** as an app credential
+> (`AuthorizationMode.APP` → `AuthContextApp`) on the ~20 `_or_app` routes, and is **rejected** by
+> the 344 user-only routes (`check_user_access_token` refuses `typ:"app"`). So a space-only /
+> inactive user who opens an app never obtains a general lab session, and a leaked app token /
+> cookie cannot roam the lab. Full design + rationale: [APP_AUTH_OAUTH_REDESIGN.md](APP_AUTH_OAUTH_REDESIGN.md).
 
 Constant names: `gws_code`, `gws_app_jwt` (cookie), `gws-login` (nginx path), `nginx-login`
 (core-api segment) — defined in the dependency-free
@@ -59,18 +67,24 @@ import gws_core at all — keep those in sync.
 
 | Route | Auth | Purpose |
 | --- | --- | --- |
-| `POST /apps/gateway/start` | AUTHENTICATED app: one-time `code` **or** lab session · PUBLIC app: none | resolve user (if required) + (cold-)start app, return status token |
-| `POST /apps/gateway/handoff` | AUTHENTICATED app: lab session · PUBLIC app: none | AUTHENTICATED: mint `gws_code` + return app URL · PUBLIC: return **bare** app URL |
-| `GET  /apps/process/{token}/status` | none (opaque token) | poll app status until RUNNING |
-| `POST /apps/exchange-code` | the `gws_code` itself | exchange `gws_code` → JWT (called **by the app**) |
-| `POST /apps/validate-jwt` | the JWT itself | validate a JWT → user id (called **by the app** on reload) |
-| `GET  /apps/{app_id}/nginx-login?gws_code=…` | the `gws_code` itself | exchange + `Set-Cookie gws_app_jwt` + 302 to `/` (Streamlit only) |
+| `POST /apps/gateway/start` | AUTHENTICATED app: one-time space `code` **or** lab session · PUBLIC app: none | resolve user **once** + (cold-)start app; return `status_token` + **`authorize_grant`** (None for PUBLIC) |
+| `POST /apps/gateway/handoff` | AUTHENTICATED app: the **`authorize_grant`** from start · PUBLIC app: none | consume grant → mint `gws_code` (post-RUNNING) + return app URL · PUBLIC: **bare** app URL. No lab session needed. |
+| `GET  /apps/process/{token}/status` | none (opaque process handle) | poll status until RUNNING — returns the **light DTO** `{id, status, status_text}` only (no user/config/env) |
+| `POST /apps/exchange-code` | the `gws_code` itself | exchange `gws_code` → **app access token** (called **by the app**) |
+| `POST /apps/validate-jwt` | the app token itself | validate an **app-scoped** token (bound to `app_id`) → user id (app reload) |
+| `GET  /apps/{app_id}/nginx-login?gws_code=…` | the `gws_code` itself | exchange + `Set-Cookie gws_app_jwt` (app token) + 302 to `/` (Streamlit only) |
 
 The two `gateway/*` routes are **thin controllers** — all logic (caller auth + cold-start + handoff
 URL) lives in `AppGatewayService.start(...)` / `AppGatewayService.handoff(...)`
 ([app_gateway_service.py](app_gateway_service.py)). Whether a user is required is decided there by
 `AppGatewayService.app_requires_authentication(app_resource)` (True for **AUTHENTICATED**, False for
 **PUBLIC**).
+
+**Why an authorize grant (start → handoff).** The two gateway calls are stateless, and a space user
+has no lab session — so identity is resolved **once** at `start` and carried to `handoff` as a
+single-use `authorize_grant` (the front replays it). The short-lived app grant (`gws_code`) is
+minted at `handoff` **after** the app is RUNNING, so its 60 s lifetime can't expire during
+cold-start. See [APP_AUTH_OAUTH_REDESIGN.md](APP_AUTH_OAUTH_REDESIGN.md).
 
 `exchange-code` / `validate-jwt` / `nginx-login` have **no user-auth dependency** — the code / JWT
 in the body/query *is* the credential. That is deliberate: the app has no lab session to present.
@@ -83,6 +97,77 @@ subdomain. This page owns the auth-guard (redirect to login), the progress UI, a
 `gateway/start` → poll `status` → `gateway/handoff`. Optional `?code=` carries a one-time code
 (used by the space flow, §4). For a **PUBLIC** app the gateway never blocks on auth — `start` and
 `handoff` succeed for anyone and the app is entered anonymously.
+
+---
+
+## 1.5. Schemas — the auth workflow
+
+### Standalone gateway + space (Mode B / Mode C), AUTHENTICATED app
+
+Identity is resolved once at `start`; the **authorize grant** carries it to `handoff`; the app grant
+(`gws_code`) is exchanged for the **app-scoped token** at the app host.
+
+```
+browser/front            lab (core-api)                         app host (nginx + app)
+    |                        |                                          |
+    | POST gateway/start     |                                          |
+    |  {app_key, code?}      |                                          |
+    |----------------------->| resolve user ONCE:                       |
+    |                        |   space code (allow_inactive) OR session |
+    |                        |   → mint AUTHORIZE GRANT (10m, app-bound) |
+    |                        |   → cold-start app                        |
+    |<-----------------------| {status_token, authorize_grant}          |
+    |                        |                                          |
+    | GET process/{tok}/status (poll, light DTO)                        |
+    |----------------------->| {id,status,status_text}                  |
+    |          ... until RUNNING ...                                    |
+    |                        |                                          |
+    | POST gateway/handoff   |                                          |
+    |  {app_key, grant}      |                                          |
+    |----------------------->| consume grant → user (no session needed) |
+    |                        |   → mint gws_code NOW (60s, app-bound)    |
+    |<-----------------------| {app_url = host + gws_code}              |
+    |                        |                                          |
+    | navigate to app_url ------------------------------------------->  |
+    |                        |                        Streamlit: /gws-login?gws_code=…
+    |                        |   nginx → core-api /apps/{id}/nginx-login |
+    |                        |<---------- exchange gws_code ------------ |
+    |                        | mint APP TOKEN (typ:app, app_id)          |
+    |                        |----------- 302 "/" + Set-Cookie --------->| gws_app_jwt (HttpOnly)
+    |                        |                        Reflex: /?gws_code=… → app POSTs exchange-code
+    |                        |                                          |   → APP TOKEN in rx.Cookie
+    |                        |                                          |
+    | app API call: gws_app_id + gws_user_access_token = APP TOKEN      |
+    |----------------------->| _auth_app → AuthContextApp (APP routes)  |
+    |                        | (rejected on user-only routes)           |
+```
+
+### Reload (F5 / new tab), AUTHENTICATED app
+
+```
+browser --- GET / (cookie gws_app_jwt sent) ---> app
+   app reads cookie → POST /apps/validate-jwt {app_id, token}
+                          → check_app_access_token(token, app_id) → user id   (idempotent; no refresh)
+```
+
+### iframe (Mode A) — no gateway, fresh code each render
+
+```
+datalab (session) --- builds iframe src ---> app host
+   AUTHENTICATED: src = host/?gws_code=<fresh code>   → app exchanges → APP TOKEN (session_state)
+   PUBLIC:        src = host/                          → anonymous
+   F5: datalab re-renders the iframe with a NEW gws_code (cookie is third-party here, not relied on)
+```
+
+### Credential hand-offs at a glance
+
+```
+ space code ──(start)──> authorize grant ──(handoff)──> gws_code ──(exchange)──> APP TOKEN
+  (or lab session)         10m, 1-use            60m…              60s, 1-use      2d, app-scoped
+  identifies user       carries identity      mints app grant    → app token    used for app API,
+  at the gateway        across 2 calls         post-RUNNING        (HttpOnly /    rejected on user
+                                                                   rx.Cookie)     routes
+```
 
 ---
 
@@ -133,17 +218,23 @@ The stable, iframe-free way to open an app: `{front}/open/app/{app_key}`. Solves
 
 1. Browser opens `{front}/open/app/{app_key}` (an Angular page).
 2. Front `POST /apps/gateway/start {app_key}` → `AppGatewayService.start`.
-   - **AUTHENTICATED app:** the lab resolves the user from the **lab session** (Authorization
-     cookie/header). If none → `401` → the front redirects to login, then returns here.
-   - **PUBLIC app:** no user is resolved or required — start proceeds for anyone.
-   - `start_app_and_get_status_token` (cold-)starts the app and returns a `status_token`.
-3. Front polls `GET /apps/process/{status_token}/status` until `RUNNING` (shows progress).
-4. Front `POST /apps/gateway/handoff {app_key}` → `AppGatewayService.handoff` → `build_app_handoff_url`:
-   - **AUTHENTICATED app** (mints a `gws_code` for the session user):
+   - **AUTHENTICATED app:** the lab resolves the user **once** (lab session, or a space `code`). If
+     none → `401` → the front redirects to login, then returns here. On success it mints an
+     **`authorize_grant`** naming that user and returns it with `status_token`.
+   - **PUBLIC app:** no user resolved/required; `authorize_grant` is None.
+   - `start_app_and_get_status_token` (cold-)starts the app.
+3. Front polls `GET /apps/process/{status_token}/status` until `RUNNING` (light DTO; shows progress).
+4. Front `POST /apps/gateway/handoff {app_key, authorize_grant}` → `AppGatewayService.handoff`:
+   - **AUTHENTICATED app:** consumes the `authorize_grant` (no lab session needed) → mints a fresh
+     `gws_code` **now** (post-RUNNING, so it can't expire during cold-start) → `build_app_handoff_url`:
      - **Streamlit** → `http://{host}/gws-login?gws_code=<code>`  (note the `/gws-login` path)
      - **Reflex**    → `http://{host}/?gws_code=<code>`
    - **PUBLIC app** → the **bare** URL `http://{host}/` (no code; the app runs anonymously).
 5. Front navigates the browser to that URL. From here the two app types diverge — see §5.
+
+> **Front contract (Angular) changed with the redesign:** `start` now returns `authorize_grant`,
+> and `handoff` must send it back in its body (`{app_key, authorize_grant}`). The status poll now
+> returns only `{id, status, status_text}` — the front must not read user/config fields from it.
 
 **Refresh (F5) / new tab of the app URL directly** is the case Mode A doesn't have (nobody
 re-injects a code). For an AUTHENTICATED app that is what the cookie / `rx.Cookie` mechanism in §5
@@ -160,28 +251,32 @@ the space link routes through the **same gateway** as Mode B, pre-seeded with a 
 [share_link_service.py](../share/share_link_service.py)):
 
 1. A `SPACE` `ShareLink` row exists for the resource ([share_link.py](../share/share_link.py)).
-2. `generate_user_access_token_for_space_link(user, share_link)` mints a **single-use code** bound
-   to the share link:
-   `UniqueCodeService.generate_code(user.id, {SPACE_ACCESS_SHARE_LINK_ID_KEY: share_link.id}, 3600)`
-   (1-hour validity).
-3. `ShareLink.get_space_link(code)`:
+2. The `ShareLink` entity mints a **single-use space access code** bound to itself + the
+   space-authenticated user: `share_link.generate_space_access_code(user.id)` (1-hour validity).
+   Consumption lives on the same entity: `share_link.check_space_access_code(code)` → user id
+   (used by `AuthorizationService.auth_share_link_from_token`).
+3. `ShareLink.get_space_link(space_access_code)`:
    - if the resource **is an app** (`_resource_is_app()`) →
-     `FrontService.get_app_gateway_url(entity_id, code=code)` = `{front}/open/app/{id}?code=<code>`
+     `FrontService.get_app_gateway_url(entity_id, code=space_access_code)` = `{front}/open/app/{id}?code=<code>`
    - else (normal resource) → `{front}/open/resource/{token}?gws_user_access_token=<code>&hide_header=true`
+     (the `gws_user_access_token` name is legacy wire; the value is a space access code).
 
 **Flow (app case):**
 
 1. User opens the space link → lands on the gateway page `{front}/open/app/{id}?code=<code>`.
 2. Front `POST /apps/gateway/start {app_key, code}`.
    - Because a `code` is present, `_resolve_gateway_user` consumes it via
-     `AuthorizationService.check_unique_code(code)` → **no lab session required**. This is the
-     "space decides, lab trusts" model: the space issued the code, the lab consumes it.
-3. Steps 3–5 of Mode B follow identically (poll status → handoff → navigate into the app).
+     `AuthorizationService.check_unique_code(code, allow_inactive=True)` → **no lab session
+     required**, and the user **may be inactive** (a space visitor with no lab login). "Space
+     decides, lab trusts": the space issued the code, the lab consumes it and issues an
+     `authorize_grant`.
+3. Steps 3–5 of Mode B follow identically (poll status → handoff **with the grant** → navigate).
 
-> The space code in step 1 and the app `gws_code` in the handoff are **two different codes**, each
-> with a single reader: the space code authenticates the *gateway*; the handoff code authenticates
-> the *app*. (The space code is validated against `share_link.id` in
-> `AuthorizationService.auth_share_link_from_token`, SPACE branch.)
+> **Three single-use codes, one reader each** — do not confuse them: (1) the **space access code**
+> authenticates the *gateway* at `start` (validated against `share_link.id` by
+> `ShareLink.check_space_access_code`); (2) the **authorize grant** carries the resolved identity
+> from `start` to `handoff`; (3) the app **`gws_code`** authenticates the *app* at exchange. The
+> inactive user flows through all three and ends with an **app-scoped** token (never a lab session).
 
 ---
 
@@ -206,11 +301,13 @@ layer:
      variables** (`_to_loopback_upstream`). A hostname or any `$var` in `proxy_pass` forces
      runtime DNS resolution, which needs a `resolver` directive we don't configure → `502 no
      resolver defined`. The original query string is appended automatically.
-3. The core-api `app_nginx_login` handler exchanges the code, then returns `302 → "/"` with
-   `Set-Cookie gws_app_jwt=<JWT>; HttpOnly; Secure; SameSite=Lax` (host-only, no `domain=`).
+3. The core-api `app_nginx_login` handler exchanges the code for the **app-scoped token**, then
+   returns `302 → "/"` with `Set-Cookie gws_app_jwt=<app token>; HttpOnly; Secure; SameSite=Lax`
+   (host-only, no `domain=`).
 4. Browser lands on `/` (clean URL, no code) with the cookie set.
 5. On this and **every subsequent load (F5 / new tab)**, Streamlit `_authenticate_from_cookie_jwt()`
-   reads `gws_app_jwt` via `st.context.cookies` and `POST /apps/validate-jwt` to re-authenticate.
+   reads `gws_app_jwt` via `st.context.cookies` and `POST /apps/validate-jwt` to re-authenticate —
+   validated as an **app-scoped** token bound to this `app_id` (no refresh token; re-validate only).
 
 Streamlit auth resolution order (`_check_authentication`): session_state → dev sentinel →
 `gws_code` in URL (Mode A) → `gws_app_jwt` cookie (Mode B reload).
@@ -223,14 +320,14 @@ handshake). So Reflex uses its **native `rx.Cookie`** — a JS-readable cookie R
 state and rehydrates on load:
 
 - `jwt_cookie: str = rx.Cookie(name="gws_app_jwt", same_site="lax")` on `ReflexMainStateBase`.
-- On a successful `gws_code` exchange, the JWT is written to both `user_access_token` (the API-call
-  token) and `jwt_cookie` (the persistent store).
+- On a successful `gws_code` exchange, the **app-scoped token** is written to both
+  `user_access_token` (the API-call token) and `jwt_cookie` (the persistent store).
 - On reload, Reflex rehydrates `jwt_cookie`; `_authenticate_from_jwt()` re-validates it via
-  `POST /apps/validate-jwt`.
+  `POST /apps/validate-jwt` (bound to `app_id`).
 
-Trade-off vs Streamlit: the Reflex cookie is **not HttpOnly** (JS-readable). It holds the same JWT
-already validated server-side and already in client state, so the exposure delta is small. This is
-a deliberate, documented choice, not an oversight.
+Trade-off vs Streamlit: the Reflex cookie is **not HttpOnly** (JS-readable). But it holds an
+**app-scoped** token (rejected on user routes, bound to this app), already validated server-side and
+already in client state — so a stolen cookie cannot roam the lab. Deliberate, documented choice.
 
 ---
 
@@ -261,18 +358,20 @@ Streamlit does not have this problem (it does not re-enter auth from concurrent 
 ## 7. API calls from inside an app (app → lab)
 
 Front components call the data lab API with the user's identity. The token used is
-`user_access_token` — i.e. **the session JWT** (or the dev sentinel in dev mode). It is sent in the
-`gws_user_access_token` header alongside `gws_app_id`.
+`user_access_token` — i.e. **the app-scoped token** (or the dev sentinel in dev mode). It is sent in
+the `gws_user_access_token` header (legacy wire name) alongside `gws_app_id`.
 
 Server side, `AuthorizationService._auth_app` ([authorization_service.py](../user/authorization_service.py)):
 
 1. dev app + `dev_mode_token` → system user (dev connections only).
 2. else look up the token in the app's in-memory `user_access_tokens` map
    (`AppsManager.user_has_access_to_app`) — this resolves the **dev / system sentinels**.
-3. **else validate the token as a JWT** (`_user_id_from_app_jwt`) — this resolves the **launching
-   user** (whose token is the session JWT, no longer stored in the map).
+3. **else validate as an app-scoped token bound to this app** (`_user_id_from_app_token` →
+   `JWTService.check_app_access_token(token, app_id)`) — resolves the **launching user**.
 
-Step 3 is what makes the launching-user API auth JWT-based end-to-end after the legacy removal (§6).
+These routes admit `AuthorizationMode.APP` (the ~20 `check_user_access_token_or_app` endpoints);
+the app token yields `AuthContextApp` and is **rejected** on the 344 user-only routes. That set of
+`_or_app` routes *is* the app's scope. See [APP_AUTH_OAUTH_REDESIGN.md](APP_AUTH_OAUTH_REDESIGN.md).
 
 **PUBLIC app:** there is no authenticated user, so no `user_access_token` is sent — API calls are
 unauthenticated. A component that must still reach the API can opt into `fallback_to_system_user`,
@@ -295,6 +394,11 @@ The pre-`gws_code` scheme put two things on the app URL and in an in-memory map:
 Still present (NOT legacy): the `user_access_tokens` map itself, used only for the **dev sentinel**
 and the **system-user fallback** (`fallback_to_system_user`).
 
+**PUBLIC share link on an AUTHENTICATED app is refused** (both at creation in
+`ShareLinkService.generate_share_link` and at open in `auth_share_link_from_token`) — a PUBLIC link
+authenticates every visitor as the system user, which would bypass the app's auth. Such apps are
+reachable only via a SPACE link or the gateway. See `ShareLinkService.resource_is_authenticated_app`.
+
 ---
 
 ## 9. Quick reference — file map
@@ -310,6 +414,11 @@ and the **system-user fallback** (`fallback_to_system_user`).
 | Streamlit code↔JWT HTTP helpers | [streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py](streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py) |
 | Reflex auth (code + rx.Cookie, re-entrancy) | [reflex/_gws_reflex/gws_reflex_base/reflex_main_state_base.py](reflex/_gws_reflex/gws_reflex_base/reflex_main_state_base.py) |
 | Reflex code↔JWT HTTP helpers | [reflex/_gws_reflex/gws_reflex_base/reflex_code_exchange.py](reflex/_gws_reflex/gws_reflex_base/reflex_code_exchange.py) |
-| App API-call auth (JWT fallback) | [../user/authorization_service.py](../user/authorization_service.py) |
-| Space share link → gateway URL | [../share/share_link.py](../share/share_link.py), [../share/share_link_service.py](../share/share_link_service.py) |
+| App-scoped JWT mint/verify (`create_app_jwt` / `check_app_access_token`) | [../user/jwt_service.py](../user/jwt_service.py) |
+| App API-call auth (`_auth_app` → `AuthContextApp`); app token rejected on user routes | [../user/authorization_service.py](../user/authorization_service.py) |
+| Authorize grant + app grant + app-token exchange | [apps_manager.py](apps_manager.py) |
+| Space access code (mint + consume, on the entity) | [../share/share_link.py](../share/share_link.py) |
+| PUBLIC-on-authenticated-app guard; space link → gateway URL | [../share/share_link_service.py](../share/share_link_service.py), [../share/share_link.py](../share/share_link.py) |
 | Front gateway URL builder | [../core/service/front_service.py](../core/service/front_service.py) |
+| OAuth-structured redesign (design + decisions) | [APP_AUTH_OAUTH_REDESIGN.md](APP_AUTH_OAUTH_REDESIGN.md) |
+| Angular front integration (gateway request/response contract) | [APP_GATEWAY_FRONT_INTEGRATION.md](APP_GATEWAY_FRONT_INTEGRATION.md) |

@@ -8,7 +8,6 @@ from gws_core.apps.app_dto import (
 )
 from gws_core.apps.app_resource import AppResource
 from gws_core.apps.apps_manager import AppsManager
-from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
@@ -105,66 +104,93 @@ class AppGatewayService:
 
     @classmethod
     def start(cls, app_key: str, code: str | None, request: Request) -> AppGatewayStartResponseDTO:
-        """Resolve the caller, (cold-)start the app, and return the status token to poll.
+        """Resolve the caller **once**, (cold-)start the app, return the status token + a grant.
 
-        For an AUTHENTICATED app the caller must be authenticated (a one-time ``code`` or the lab
-        session), else UnauthorizedException is raised so the front redirects to login. A PUBLIC
-        app is started for anyone.
+        Identity is resolved here (a one-time space ``code`` OR the lab session) and, for an
+        AUTHENTICATED app, an **authorize grant** naming that user is issued and returned. The front
+        replays the grant to ``handoff`` once the app is RUNNING — so handoff needs no lab session
+        (a space user has none) and the identity survives the two stateless calls. A PUBLIC app is
+        started for anyone and gets no grant. Raises 401 for an AUTHENTICATED app when the caller
+        cannot be identified (so the front redirects to login).
 
         :param app_key: stable app key (resource model id or custom subdomain)
-        :param code: optional one-time access code (e.g. from a space link)
+        :param code: optional one-time space access code (space/external open)
         :param request: the incoming request, used to read the lab session
-        :return: the process status token the front polls until the app is RUNNING
+        :return: the status token to poll, plus the authorize grant (None for PUBLIC)
         """
         app_resource = cls.resolve_app_resource(app_key)
 
-        if (
-            cls.app_requires_authentication(app_resource)
-            and cls._resolve_gateway_user(request, code) is None
-        ):
-            raise UnauthorizedException("User not authenticated")
+        authorize_grant: str | None = None
+        if cls.app_requires_authentication(app_resource):
+            user = cls._resolve_gateway_user(request, code)
+            if user is None:
+                raise UnauthorizedException("User not authenticated")
+            authorize_grant = AppsManager.generate_authorize_grant(
+                user.id, app_resource.get_and_check_model_id()
+            )
 
         status_token = cls.start_app_and_get_status_token(app_resource)
-        return AppGatewayStartResponseDTO(status_token=status_token)
+        return AppGatewayStartResponseDTO(
+            status_token=status_token, authorize_grant=authorize_grant
+        )
 
     @classmethod
-    def handoff(cls, app_key: str, request: Request) -> AppGatewayHandoffResponseDTO:
+    def handoff(
+        cls, app_key: str, authorize_grant: str | None
+    ) -> AppGatewayHandoffResponseDTO:
         """Build the app URL the browser is navigated to once the app is RUNNING.
 
-        For an AUTHENTICATED app the user is resolved from the lab session and a one-time handoff
-        code is minted (UnauthorizedException if no user). For a PUBLIC app the bare app URL is
-        returned (anonymous, no code).
+        For an AUTHENTICATED app the user is resolved by **consuming the authorize grant** issued at
+        ``start`` (no lab session required — the grant carries the identity), then a fresh, single
+        app grant is minted. Minting the app grant here (post-RUNNING) keeps its short lifetime from
+        expiring during cold-start. For a PUBLIC app the bare app URL is returned (anonymous).
 
         :param app_key: stable app key (resource model id or custom subdomain)
-        :param request: the incoming request, used to read the lab session
+        :param authorize_grant: the grant returned by ``start`` (required for AUTHENTICATED apps)
         :return: the app host URL the front navigates the browser to
         """
         app_resource = cls.resolve_app_resource(app_key)
 
         user: User | None = None
         if cls.app_requires_authentication(app_resource):
-            user = cls._resolve_gateway_user(request, None)
-            if user is None:
-                raise UnauthorizedException("User not authenticated")
+            if not authorize_grant:
+                raise UnauthorizedException("Missing authorization grant")
+            app_id = app_resource.get_and_check_model_id()
+            try:
+                user_id = AppsManager.consume_authorize_grant(app_id, authorize_grant)
+            except Exception as e:
+                raise UnauthorizedException("Invalid or expired authorization grant") from e
+            user = cls._get_gateway_user_by_id(user_id)
 
         app_url = cls.build_app_handoff_url(app_resource, user)
         return AppGatewayHandoffResponseDTO(app_url=app_url)
 
     @classmethod
     def _resolve_gateway_user(cls, request: Request, code: str | None) -> User | None:
-        """Resolve the caller from either a one-time code or the lab session.
+        """Resolve the caller from either a one-time space code or the lab session.
 
         If a ``code`` is present it is consumed directly (no lab session needed); otherwise the
         lab session token (cookie/header) is tried. Returns None when neither identifies a user,
-        so the gateway can bounce to the login page.
+        so the gateway can bounce to the login page. The space code may name an inactive user (a
+        user who reaches an app from the space without lab access), so it is resolved with
+        ``allow_inactive=True``.
         """
         if code:
-            return AuthorizationService.check_unique_code(code).get_user()
+            return AuthorizationService.check_unique_code(code, allow_inactive=True).get_user()
 
         try:
             return AuthorizationService.check_user_access_token(request).get_user()
         except Exception:
             return None
+
+    @classmethod
+    def _get_gateway_user_by_id(cls, user_id: str) -> User:
+        """Resolve a user id (from a consumed authorize grant) to a User for the gateway.
+
+        Allows an inactive user: a space visitor may have no lab login. The identity was already
+        vouched for at ``start`` (space code or lab session) and carried in the single-use grant.
+        """
+        return AuthorizationService._get_and_check_user(user_id, allow_inactive=True)
 
     @classmethod
     def build_app_handoff_url(cls, app_resource: AppResource, user: User | None) -> str:
@@ -193,14 +219,7 @@ class AppGatewayService:
 
         code = AppsManager.generate_app_access_code(user.id, app_id)
 
-        # Streamlit: land on the app host's /gws-login route. nginx proxies it to the core-api
-        # login endpoint, which exchanges the code for a JWT, sets the host session cookie, and
-        # redirects to the app root. The code never reaches the app; the cookie carries auth and
-        # survives page reloads (F5 / new tab).
-        if isinstance(app_process, StreamlitProcess):
-            return f"{host_url}/{cls.GWS_LOGIN_PATH}?{cls.GWS_CODE_QUERY_PARAM}={code}"
-
-        # Reflex (and others): keep the current query-param handoff — the reflex front is a static
-        # host + separate backend, so the cookie-session flow doesn't map cleanly yet. The app
-        # exchanges gws_code for a JWT itself (no reload survival for now).
-        return f"{host_url}?{cls.GWS_CODE_QUERY_PARAM}={code}"
+        # How the code is conveyed to the app depends on the framework (Streamlit lands on the
+        # nginx /gws-login route for a cookie session; Reflex keeps the query-param handoff), so
+        # each process subclass builds its own handoff URL.
+        return app_process.build_handoff_url(host_url, code)

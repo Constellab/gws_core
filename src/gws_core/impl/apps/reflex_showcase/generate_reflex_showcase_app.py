@@ -86,7 +86,7 @@ class GenerateReflexShowcaseApp(Task):
             reflex_app.add_resource(resource, create_new_resource=False)
 
         reflex_app.set_app_config(ReflexShowcaseApp())
-        reflex_app.set_requires_authentication(False)
+        # reflex_app.set_requires_authentication(False)
         reflex_app.set_name("Reflex Showcase App")
 
         custom_subdomain = params.get_value("custom_subdomain")

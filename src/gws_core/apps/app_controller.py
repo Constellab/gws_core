@@ -8,7 +8,7 @@ from gws_core.apps.app_dto import (
     AppGatewayHandoffResponseDTO,
     AppGatewayStartDTO,
     AppGatewayStartResponseDTO,
-    AppProcessStatusDTO,
+    AppProcessLightStatusDTO,
     AppsStatusDTO,
     AppStopPolicy,
     ExchangeAppCodeDTO,
@@ -104,9 +104,13 @@ def clear_custom_subdomain(
 
 
 @core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
-def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
+def get_app_status_by_id(token: str) -> AppProcessLightStatusDTO:
     """
-    Get the status of a specific app by its ID
+    Get the status of a specific app by its process token.
+
+    The token is an opaque process handle (not a user credential), so this returns only the
+    lifecycle fields (id / status / status_text) — no user, config, or env details. See
+    APP_AUTH_OAUTH_REDESIGN.md.
     """
 
     app_process = AppsManager.find_process_by_token(token)
@@ -114,7 +118,7 @@ def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
     if app_process is None:
         raise Exception("Invalid token")
 
-    return app_process.get_status_dto()
+    return app_process.get_light_status_dto()
 
 
 @core_app.post("/apps/exchange-code", tags=["App"], summary="Exchange an app code for a JWT")
@@ -200,13 +204,14 @@ def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStart
     tags=["App"],
     summary="Gateway: hand off into a running app",
 )
-def gateway_handoff(data: AppGatewayHandoffDTO, request: Request) -> AppGatewayHandoffResponseDTO:
+def gateway_handoff(data: AppGatewayHandoffDTO) -> AppGatewayHandoffResponseDTO:
     """
     Called by the front gateway page once the app is RUNNING. Returns the app host URL the front
     navigates the browser to: for an AUTHENTICATED app, carrying a one-time ``?gws_code=…`` bound
-    to the lab-session user; for a PUBLIC app, the bare app URL (anonymous, no code).
+    to the caller named by the ``authorize_grant`` from /apps/gateway/start; for a PUBLIC app, the
+    bare app URL (anonymous, no code).
     """
-    return AppGatewayService.handoff(data.app_key, request)
+    return AppGatewayService.handoff(data.app_key, data.authorize_grant)
 
 
 @core_app.get(

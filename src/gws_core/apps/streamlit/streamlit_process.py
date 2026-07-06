@@ -1,5 +1,6 @@
 import os
 
+from gws_core.apps import app_gateway_constants
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_service import AppNginxRedirectServiceInfo, AppNginxServiceInfo
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
@@ -156,6 +157,17 @@ class StreamlitProcess(AppProcess):
 
     def get_ports(self) -> list[int]:
         return [self.port]
+
+    def build_handoff_url(self, host_url: str, code: str) -> str:
+        """Land on the app host's /gws-login route. nginx proxies it to the core-api login
+        endpoint, which exchanges the code for a JWT, sets the host session cookie, and redirects
+        to the app root. The code never reaches the app; the cookie carries auth and survives page
+        reloads (F5 / new tab).
+        """
+        return (
+            f"{host_url}/{app_gateway_constants.GWS_LOGIN_PATH}"
+            f"?{app_gateway_constants.GWS_CODE_QUERY_PARAM}={code}"
+        )
 
     def _get_nginx_services(self) -> list[AppNginxServiceInfo]:
         # In dev mode auth is bypassed, so no /gws-login exchange is needed.

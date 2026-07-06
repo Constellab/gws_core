@@ -14,17 +14,11 @@ from gws_core.share.shared_dto import (
     ShareLinkType,
     UpdateShareLinkDTO,
 )
-from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user_dto import UserFullDTO
 from gws_core.user.user_service import UserService
 
 
 class ShareLinkService:
-    # Lifetime of the single-use space access code (was ShareLinkSpaceAccessService.ACCESS_DURATION).
-    SPACE_ACCESS_DURATION_SECONDS = 60 * 60  # 1 hour
-    # Key under which the share link id is stored in the space access code payload, so the
-    # verify side can confirm the code was minted for this exact share link.
-    SPACE_ACCESS_SHARE_LINK_ID_KEY = "share_link_id"
 
     @classmethod
     def find_by_type_and_entity(
@@ -216,20 +210,15 @@ class ShareLinkService:
         # Update the user information in the database
         UserService.create_or_update_user_dto(user)
 
-        # Mint a single-use, short-lived code bound to this share link. The code replaces the
-        # former in-memory ShareLinkSpaceAccess store. It is consumed once when the shared
-        # resource/app is opened (see AuthorizationService.auth_share_link_from_token). The
-        # space always requests a fresh code right before each open, so single-use is safe.
-        user_access_token = UniqueCodeService.generate_code(
-            user.id,
-            {cls.SPACE_ACCESS_SHARE_LINK_ID_KEY: share_link.id},
-            cls.SPACE_ACCESS_DURATION_SECONDS,
-        )
+        # Mint the single-use space access code (owned by the ShareLink entity), for the
+        # space-authenticated user. Consumed once when the shared resource/app is opened
+        # (see AuthorizationService.auth_share_link_from_token via ShareLink.check_space_access_code).
+        space_access_code = share_link.generate_space_access_code(user.id)
         access_url_valid_until = DateHelper.now_utc() + timedelta(
-            seconds=cls.SPACE_ACCESS_DURATION_SECONDS
+            seconds=ShareLink.SPACE_ACCESS_DURATION_SECONDS
         )
 
-        access_url = share_link.get_space_link(user_access_token)
+        access_url = share_link.get_space_link(space_access_code)
         return GenerateUserAccessTokenForSpaceResponse(
             # return the main share link valid until date
             share_link_valid_until=share_link.valid_until,
