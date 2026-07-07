@@ -4,17 +4,23 @@ import reflex as rx
 
 
 def dialog_header(
-    title: str | rx.Component, close: Callable | None = None, additional_actions: rx.Component | None = None
+    title: str | rx.Component,
+    subtitle: str | rx.Component | None = None,
+    close: Callable | None = None,
+    additional_actions: rx.Component | None = None,
 ) -> rx.Component:
     """Create a styled header component for a Reflex dialog with a title and close button.
 
     This function generates a horizontal stack layout containing a heading and a close button,
     designed to be used as the header section of a dialog/modal component. The header
     features a flexible title area that expands to fill available space, and a fixed-width
-    close button with an "x" icon positioned on the right side.
+    close button with an "x" icon positioned on the right side. An optional subtitle is
+    rendered as a smaller, muted line right under the title.
 
     :param title: The text or component to display as the dialog heading
     :type title: str | rx.Component
+    :param subtitle: Optional secondary line shown under the title (a string is rendered as small gray text), defaults to None
+    :type subtitle: str | rx.Component | None, optional
     :param close: Optional callback function to execute when the close button is clicked, defaults to None
     :type close: Callable | None, optional
     :param additional_actions: Optional additional actions to include in the header (align on right side), defaults to None
@@ -25,8 +31,20 @@ def dialog_header(
     # Convert title to component if it is a string
     title_component = rx.text(title) if isinstance(title, str) else title
 
+    if subtitle is None:
+        title_area = rx.dialog.title(title_component, flex="1", margin_bottom="0")
+    else:
+        subtitle_component = rx.text(subtitle, size="2", color="gray") if isinstance(subtitle, str) else subtitle
+        title_area = rx.vstack(
+            rx.dialog.title(title_component, margin_bottom="0"),
+            subtitle_component,
+            flex="1",
+            spacing="1",
+            align_items="start",
+        )
+
     return rx.hstack(
-        rx.dialog.title(title_component, flex="1", margin_bottom="0"),
+        title_area,
         additional_actions if additional_actions else rx.box(),
         rx.dialog.close(
             rx.button(rx.icon("x"), variant="ghost", color_scheme="gray", on_click=close),

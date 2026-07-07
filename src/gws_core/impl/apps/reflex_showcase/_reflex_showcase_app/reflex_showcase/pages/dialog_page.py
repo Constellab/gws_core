@@ -178,6 +178,7 @@ def dialog_page() -> rx.Component:
                 rx.vstack(
                     dialog_header(
                         title="Basic Dialog Example",
+                        subtitle="An optional subtitle shown under the title",
                         close=DialogPageState.close_basic_dialog,
                     ),
                     rx.text(
@@ -233,6 +234,7 @@ rx.dialog.root(
         rx.vstack(
             dialog_header(
                 title="My Dialog",
+                subtitle="An optional subtitle shown under the title",
                 close=MyState.close_dialog,
             ),
             rx.text("Dialog content goes here..."),
@@ -531,7 +533,8 @@ form_dialog_component(
             example_component=basic_dialog_component,
             code=code1,
             title="dialog_header",
-            description="A reusable header component for dialogs with title and close button.",
+            description="A reusable header component for dialogs with a title, an optional "
+            "subtitle, and a close button.",
             func=dialog_header,
         ),
         # Confirm dialog example
