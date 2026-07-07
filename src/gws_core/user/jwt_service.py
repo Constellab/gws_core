@@ -49,6 +49,12 @@ class JWTService:
         The token carries ``typ = "app"`` and the ``app_id`` claim so it can be authenticated only
         as an app credential (AuthorizationMode.APP -> AuthContextApp) and rejected on normal user
         routes. See APP_AUTH_OAUTH_REDESIGN.md.
+
+        Returned **without** the ``Bearer `` scheme prefix: this token is stored/transported as a
+        value (the ``gws_app_jwt`` cookie / rx.Cookie / the ``gws_user_access_token`` header), and a
+        prefix with a space gets mangled by cookie quoting (Streamlit) or URL-encoding (Reflex, the
+        space becomes ``%20``). Consumers (``check_app_access_token``, ``_auth_app``,
+        ``validate_app_jwt``) add the ``Bearer `` prefix at the point they need it.
         """
         expire = DateHelper.now_utc() + timedelta(seconds=cls.get_token_duration_in_seconds())
 
@@ -59,16 +65,20 @@ class JWTService:
             APP_ID_CLAIM: app_id,
         }
 
-        encoded_jwt = encode(data, cls._get_secret(), algorithm=cls.ALGORITHM)
-        return JWTService.AUTH_SCHEME + encoded_jwt
+        return encode(data, cls._get_secret(), algorithm=cls.ALGORITHM)
 
     @classmethod
     def _decode(cls, token: str) -> dict:
-        """Strip the scheme prefix and decode/verify the JWT payload (raises on invalid)."""
-        if not token or not token.startswith(cls.AUTH_SCHEME):
+        """Decode/verify the JWT payload (raises on invalid).
+
+        Accepts the token with or without the ``Bearer `` scheme prefix: header-based callers pass
+        ``Bearer <jwt>``, while stored-value callers (cookie / rx.Cookie) hold the bare JWT.
+        """
+        if not token:
             raise InvalidTokenException()
 
-        token = token[len(cls.AUTH_SCHEME) :]
+        if token.startswith(cls.AUTH_SCHEME):
+            token = token[len(cls.AUTH_SCHEME) :]
         return decode(token, cls._get_secret(), algorithms=[cls.ALGORITHM])
 
     @classmethod

@@ -1,5 +1,6 @@
 import re
 from abc import abstractmethod
+from urllib.parse import urlsplit
 
 from gws_core.apps import app_gateway_constants
 
@@ -82,6 +83,14 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         # require a `resolver` directive we don't configure (else: "no resolver defined").
         login_url = self._to_loopback_upstream(self.gws_login_url)
 
+        # The Host header sent upstream must match the login endpoint's own host, NOT $host
+        # (the app host). In real modes the login endpoint sits behind a host-routing reverse
+        # proxy: sending $host (appdev-…) makes that proxy route the request back into this very
+        # app (Streamlit) instead of core-api, so /gws-login returns the app's index.html instead
+        # of the 302+Set-Cookie. In localhost mode core-api is reached directly on loopback and
+        # ignores Host, so using the upstream host there is harmless.
+        upstream_host = urlsplit(login_url).netloc
+
         return f"""
     location = /{login_path} {{
         # Exchange the one-time gws_code for a JWT at the core-api login endpoint, which responds
@@ -89,7 +98,11 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         # browser. proxy_pass carries a rewrite URI (no variables), so nginx appends the original
         # query string (?gws_code=…) automatically.
         proxy_pass {login_url};
-        proxy_set_header Host $host;
+        # Host = the login endpoint's host (see _build_login_location) so a host-routing edge
+        # proxy forwards this to core-api and not back into the app. Original app host is kept in
+        # X-Forwarded-Host for core-api's redirect/cookie logic.
+        proxy_set_header Host {upstream_host};
+        proxy_set_header X-Forwarded-Host $host;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_pass_request_body off;
     }}
