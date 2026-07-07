@@ -10,7 +10,7 @@ from gws_core.lab.lab_model.lab_dto import LabDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
 from gws_core.scenario.scenario_dto import ScenarioDTO
 from gws_core.scenario.scenario_zipper import ScenarioExportPackage
-from gws_core.user.user_dto import UserDTO
+from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 
 class ShareLinkEntityType(Enum):
@@ -127,6 +127,14 @@ class ShareResourceZipAsyncResponseDTO(BaseModelDTO):
 class ShareEntityCreateMode(Enum):
     KEEP_ID = "KEEP_ID"
     NEW_ID = "NEW_ID"
+
+
+class GenerateUserAccessTokenForSpaceRequest(BaseModelDTO):
+    # Space-authenticated user requesting access to the share link
+    user: UserFullDTO
+    # True when the shared resource is an app to open in a new tab: the access url points to the
+    # app launcher gateway instead of the datalab resource-open page.
+    open_app_in_new_tab: bool = False
 
 
 class GenerateUserAccessTokenForSpaceResponse(BaseModelDTO):

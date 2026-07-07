@@ -180,27 +180,17 @@ class ShareLink(ModelWithUser):
             raise InvalidUniqueCodeException()
         return code_obj.user_id
 
-    def get_space_link(self, space_access_code: str) -> str:
+    def get_space_link(self, space_access_code: str, open_app_in_new_tab: bool = False) -> str:
         if self.entity_type != ShareLinkEntityType.RESOURCE:
             raise BadRequestException("Space link is not supported for this entity type")
 
-        # When the shared resource is an app, open it through the launcher gateway (stable,
-        # iframe-free, cold-starts the app) instead of the datalab resource-open page. The
-        # space_access_code is the single-use code the gateway consumes.
-        if self._resource_is_app():
+        # When the shared resource is an app to open in a new tab, open it through the launcher
+        # gateway (stable, iframe-free, cold-starts the app) instead of the datalab resource-open
+        # page. The space_access_code is the single-use code the gateway consumes.
+        if open_app_in_new_tab:
             return FrontService().get_app_gateway_url(self.entity_id, code=space_access_code)
 
         return FrontService().get_resource_open_space_url(self.token, space_access_code)
-
-    def _resource_is_app(self) -> bool:
-        """Return True if the shared resource is an app resource."""
-        # Local import to avoid a module-level dependency of the share layer on apps.
-        from gws_core.apps.app_resource import AppResource
-
-        resource_model = ResourceModel.get_by_id(self.entity_id)
-        if resource_model is None:
-            return False
-        return isinstance(resource_model.get_resource(), AppResource)
 
     def is_valid(self) -> bool:
         return self.valid_until is None or self.valid_until > DateHelper.now_utc()

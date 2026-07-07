@@ -193,10 +193,13 @@ class ShareLinkService:
 
     @classmethod
     def generate_user_access_token_for_space_link(
-        cls, token: str, user: UserFullDTO
+        cls, token: str, user: UserFullDTO, open_app_in_new_tab: bool = False
     ) -> GenerateUserAccessTokenForSpaceResponse:
         """Method called from Space to generate a user access token for a space link.
         As this is called by space, the user is authenticated
+
+        :param open_app_in_new_tab: when True the shared resource is an app to open in a new tab,
+            so the access url points to the app launcher gateway instead of the resource-open page.
         """
 
         share_link = ShareLinkService.find_by_token_and_check_validity(token)
@@ -218,7 +221,7 @@ class ShareLinkService:
             seconds=ShareLink.SPACE_ACCESS_DURATION_SECONDS
         )
 
-        access_url = share_link.get_space_link(space_access_code)
+        access_url = share_link.get_space_link(space_access_code, open_app_in_new_tab)
         return GenerateUserAccessTokenForSpaceResponse(
             # return the main share link valid until date
             share_link_valid_until=share_link.valid_until,

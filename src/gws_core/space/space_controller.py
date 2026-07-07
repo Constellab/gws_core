@@ -9,7 +9,10 @@ from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.dev_env_service import DevEnvService
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.shared_dto import GenerateUserAccessTokenForSpaceResponse
+from gws_core.share.shared_dto import (
+    GenerateUserAccessTokenForSpaceRequest,
+    GenerateUserAccessTokenForSpaceResponse,
+)
 from gws_core.space.space_dto import LabActivityReponseDTO, SpaceSyncObjectDTO
 from gws_core.space.space_object_service import SpaceObjectService
 from gws_core.user.activity.activity_service import ActivityService
@@ -201,7 +204,9 @@ def sync_notes(note: SpaceSyncObjectDTO, _=Depends(AuthSpace.check_space_api_key
 
 @space_app.post("/share/{token}/generate-user-access-token", tags=["Share"])
 def generate_user_access_token(
-    token: str, user: UserFullDTO, _=Depends(AuthSpace.check_space_api_key)
+    token: str,
+    request: GenerateUserAccessTokenForSpaceRequest,
+    _=Depends(AuthSpace.check_space_api_key),
 ) -> GenerateUserAccessTokenForSpaceResponse:
     """
     Route to generate a user access token for a space share link.
@@ -209,4 +214,6 @@ def generate_user_access_token(
     This token usure that the user is connected and has access to the share link.
     """
 
-    return ShareLinkService.generate_user_access_token_for_space_link(token, user)
+    return ShareLinkService.generate_user_access_token_for_space_link(
+        token, request.user, request.open_app_in_new_tab
+    )
