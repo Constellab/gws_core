@@ -42,10 +42,7 @@ class BrickHelper:
         :rtype: str
         """
 
-        if isinstance(obj, str):
-            brick_name = obj
-        else:
-            brick_name = cls.get_brick_name(obj)
+        brick_name = obj if isinstance(obj, str) else cls.get_brick_name(obj)
 
         bricks = cls.get_all_bricks()
 

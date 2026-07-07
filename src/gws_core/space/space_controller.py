@@ -1,5 +1,7 @@
 from fastapi import Depends
 
+from gws_core.brick.brick_dto import BrickVersion
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.settings_dto import SettingsDTO
@@ -7,6 +9,8 @@ from gws_core.folder.space_folder_dto import ExternalSpaceFolder, ExternalSpaceF
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.lab.dev_env_service import DevEnvService
+from gws_core.lab.lab_model.lab_dto import LabDTO
+from gws_core.lab.lab_model.lab_model import LabModel
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (
@@ -34,6 +38,23 @@ space_app = ApiRegistry.register_api(
 @space_app.get("/settings", summary="Get settings")
 def get_settings(_=Depends(AuthSpace.check_space_api_key)) -> SettingsDTO:
     return SettingsService.get_settings().to_dto()
+
+
+@space_app.get("/lab", summary="Get current lab information")
+def get_current_lab(_=Depends(AuthSpace.check_space_api_key)) -> LabDTO:
+    """
+    Get information about the current lab (versions, bricks, API paths, etc.).
+    """
+    return LabModel.get_or_create_current_lab().to_dto()
+
+
+@space_app.get("/brick-versions", summary="Get installed brick versions")
+def get_brick_versions(_=Depends(AuthSpace.check_space_api_key)) -> list[BrickVersion]:
+    """
+    Get the versions of all the bricks installed on the lab, as a list of
+    brick name and version.
+    """
+    return BrickHelper.get_all_brick_versions()
 
 
 @space_app.get("/health-check", summary="Health check route")

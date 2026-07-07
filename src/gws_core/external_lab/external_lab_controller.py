@@ -1,6 +1,8 @@
 from fastapi import Depends
 from fastapi.responses import FileResponse
 
+from gws_core.brick.brick_dto import BrickVersion
+from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.external_lab.external_lab_auth import ExternalLabAuth
 from gws_core.external_lab.external_lab_dto import (
@@ -89,6 +91,17 @@ def get_current_lab_info(
     Get information about the current lab (name, space, etc.)
     """
     return ExternalLabService.get_current_lab_info()
+
+
+@external_lab_app.get("/brick-versions", summary="Get installed brick versions")
+def get_brick_versions(
+    _=Depends(ExternalLabAuth.check_auth),
+) -> list[BrickVersion]:
+    """
+    Get the versions of all the bricks installed on the lab, as a list of
+    brick name and version.
+    """
+    return BrickHelper.get_all_brick_versions()
 
 
 @external_lab_app.get("/user/{user_id}", summary="Get user information")
