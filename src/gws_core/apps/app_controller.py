@@ -19,6 +19,7 @@ from gws_core.apps.app_dto import (
 from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
@@ -116,7 +117,7 @@ def get_app_status_by_id(token: str) -> AppProcessLightStatusDTO:
     app_process = AppsManager.find_process_by_token(token)
 
     if app_process is None:
-        raise Exception("Invalid token")
+        raise UnauthorizedException("Invalid token")
 
     return app_process.get_light_status_dto()
 
@@ -151,7 +152,12 @@ def validate_app_jwt(data: ValidateAppJwtDTO) -> ValidateAppJwtResponseDTO:
 # The "nginx-login" segment mirrors AppGatewayService.NGINX_LOGIN_ENDPOINT_SEGMENT (used by
 # AppProcess.get_nginx_login_url to build the URL nginx proxies to); keep the two in sync. The
 # "gws_code" query param mirrors AppGatewayService.GWS_CODE_QUERY_PARAM.
-@core_app.get("/apps/{app_id}/nginx-login", tags=["App"], summary="App-host login (sets session cookie)", response_model=None)
+@core_app.get(
+    "/apps/{app_id}/nginx-login",
+    tags=["App"],
+    summary="App-host login (sets session cookie)",
+    response_model=None,
+)
 def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
     """
     App-host login endpoint the app's nginx proxies ``/gws-login`` to.

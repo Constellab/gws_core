@@ -232,7 +232,7 @@ def generate_user_access_token(
     """
     Route to generate a user access token for a space share link.
     This is called to view resources and apps from the space.
-    This token usure that the user is connected and has access to the share link.
+    This token ensures that the user is connected and has access to the share link.
     """
 
     return ShareLinkService.generate_user_access_token_for_space_link(

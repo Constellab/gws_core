@@ -133,8 +133,8 @@ class ExchangeAppCodeDTO(BaseModelDTO):
 class ExchangeAppCodeResponseDTO(BaseModelDTO):
     """Response of POST /apps/exchange-code.
 
-    :user_access_token: a JWT the app carries on its data lab API calls (validated by the
-        existing check_user_access_token). Replaces the former opaque user access token.
+    :user_access_token: an app-scoped JWT the app carries on its data lab API calls (validated via
+         AuthorizationMode.APP / JWTService.check_app_access_token, and rejected on user-only routes).
     :user_id: the resolved user id, so the app can display the user without decoding the JWT
         (it has no access to the JWT secret).
     """
