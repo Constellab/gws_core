@@ -5,7 +5,7 @@ from gws_core.apps.app_dto import AppType
 from gws_core.apps.reflex.reflex_resource import ReflexResource
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource import Resource
@@ -72,7 +72,12 @@ class GenerateReflexShowcaseApp(Task):
                 human_name="Custom subdomain",
                 short_description="Optional readable, stable subdomain for the app "
                 "(e.g. 'app-hello-world'). Leave empty to use the default id-based host.",
-            )
+            ),
+            "requires_authentication": BoolParam(
+                default_value=False,
+                human_name="Requires authentication",
+                short_description="Whether the app requires the user to be authenticated to access it.",
+            ),
         }
     )
 
@@ -86,7 +91,7 @@ class GenerateReflexShowcaseApp(Task):
             reflex_app.add_resource(resource, create_new_resource=False)
 
         reflex_app.set_app_config(ReflexShowcaseApp())
-        reflex_app.set_requires_authentication(False)
+        reflex_app.set_requires_authentication(params.get_value("requires_authentication"))
         reflex_app.set_name("Reflex Showcase App")
 
         custom_subdomain = params.get_value("custom_subdomain")

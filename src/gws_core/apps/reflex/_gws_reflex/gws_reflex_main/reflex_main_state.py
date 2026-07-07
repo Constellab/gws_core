@@ -34,9 +34,18 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         return sources_
 
     async def get_current_user(self) -> User | None:
-        """Return the current user of the app."""
+        """Return the current user of the app.
 
-        user_id = await self._load_and_check_user_authentication(store_in_state=False)
+        Safe to call from a ``@rx.var``: it reads the reactive ``authenticated_user_id`` resolved by
+        ``_on_load`` (so a bound var re-renders once authentication completes), and only falls back
+        to a read-only auth check (which cannot consume the single-use code) before init has run.
+        """
+        # Prefer the already-resolved reactive user id: reading it here establishes the reactive
+        # dependency, so a @rx.var that renders BEFORE on_main_component_mount runs will re-render
+        # once _on_load sets authenticated_user_id (fixes "user: null" on first paint).
+        user_id = self.authenticated_user_id
+        if not user_id:
+            user_id = await self._load_and_check_user_authentication(store_in_state=False)
         if not user_id:
             return None
         return User.get_by_id_and_check(user_id)

@@ -15,6 +15,11 @@ from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.scenario.scenario import Scenario
 from gws_core.share.shared_dto import ShareLinkDTO, ShareLinkEntityType, ShareLinkType
+from gws_core.user.unique_code_service import (
+    CodeObject,
+    InvalidUniqueCodeException,
+    UniqueCodeService,
+)
 
 
 class ShareLink(ModelWithUser):
@@ -27,6 +32,12 @@ class ShareLink(ModelWithUser):
     token = TypedCharField(max_length=100, unique=True)
 
     link_type = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
+
+    # Lifetime of a single-use space access code (was ShareLinkService.SPACE_ACCESS_DURATION_SECONDS).
+    SPACE_ACCESS_DURATION_SECONDS = 60 * 60  # 1 hour
+    # Key under which this share link's id is stored in a space access code payload, so consumption
+    # can confirm the code was minted for this exact link.
+    SPACE_ACCESS_SHARE_LINK_ID_KEY = "share_link_id"
 
     @classmethod
     def find_by_token_and_check(cls, token: str) -> "ShareLink":
@@ -137,11 +148,49 @@ class ShareLink(ModelWithUser):
         else:
             raise BadRequestException(f"Entity type {self.entity_type} is not supported")
 
-    def get_space_link(self, user_access_token: str) -> str:
-        if self.entity_type == ShareLinkEntityType.RESOURCE:
-            return FrontService().get_resource_open_space_url(self.token, user_access_token)
-        else:
+    def generate_space_access_code(self, user_id: str) -> str:
+        """Mint a single-use, short-lived code granting access to this (space) share link.
+
+        The code is bound to this link's id and to the given user; it is consumed once when the
+        shared resource/app is opened (see ``check_space_access_code``). The space requests a fresh
+        code (for the space-authenticated user) right before each open, so single-use is safe.
+        Replaces the former in-memory ShareLinkSpaceAccess store.
+
+        :param user_id: the user the code authenticates (the space-authenticated visitor)
+        :return: the one-time space access code
+        """
+        return UniqueCodeService.generate_code(
+            user_id,
+            {self.SPACE_ACCESS_SHARE_LINK_ID_KEY: self.id},
+            self.SPACE_ACCESS_DURATION_SECONDS,
+        )
+
+    def check_space_access_code(self, space_access_code: str) -> str:
+        """Consume a space access code and return the user id it was minted for.
+
+        Confirms the code was minted for *this* share link (bound id) before trusting it, so a code
+        for link A cannot open link B.
+
+        :param space_access_code: the single-use code (consumed here)
+        :return: the user id the code authenticates
+        :raises InvalidUniqueCodeException: if the code is invalid, expired, or for another link
+        """
+        code_obj: CodeObject = UniqueCodeService.check_code(space_access_code)
+        if code_obj.obj.get(self.SPACE_ACCESS_SHARE_LINK_ID_KEY) != self.id:
+            raise InvalidUniqueCodeException()
+        return code_obj.user_id
+
+    def get_space_link(self, space_access_code: str, open_app_in_new_tab: bool = False) -> str:
+        if self.entity_type != ShareLinkEntityType.RESOURCE:
             raise BadRequestException("Space link is not supported for this entity type")
+
+        # When the shared resource is an app to open in a new tab, open it through the launcher
+        # gateway (stable, iframe-free, cold-starts the app) instead of the datalab resource-open
+        # page. The space_access_code is the single-use code the gateway consumes.
+        if open_app_in_new_tab:
+            return FrontService().get_app_gateway_url(self.entity_id, code=space_access_code)
+
+        return FrontService().get_resource_open_space_url(self.token, space_access_code)
 
     def is_valid(self) -> bool:
         return self.valid_until is None or self.valid_until > DateHelper.now_utc()

@@ -1,11 +1,25 @@
 from datetime import datetime
 
-from fastapi import Depends
-from fastapi.responses import StreamingResponse
+from fastapi import Depends, Request
+from fastapi.responses import RedirectResponse, StreamingResponse
 
-from gws_core.apps.app_dto import AppProcessStatusDTO, AppsStatusDTO, AppStopPolicy
+from gws_core.apps.app_dto import (
+    AppGatewayHandoffDTO,
+    AppGatewayHandoffResponseDTO,
+    AppGatewayStartDTO,
+    AppGatewayStartResponseDTO,
+    AppProcessLightStatusDTO,
+    AppsStatusDTO,
+    AppStopPolicy,
+    ExchangeAppCodeDTO,
+    ExchangeAppCodeResponseDTO,
+    ValidateAppJwtDTO,
+    ValidateAppJwtResponseDTO,
+)
+from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_dto import LogsBetweenDatesDTO
@@ -91,17 +105,119 @@ def clear_custom_subdomain(
 
 
 @core_app.get("/apps/process/{token}/status", tags=["App"], summary="Get app status by ID")
-def get_app_status_by_id(token: str) -> AppProcessStatusDTO:
+def get_app_status_by_id(token: str) -> AppProcessLightStatusDTO:
     """
-    Get the status of a specific app by its ID
+    Get the status of a specific app by its process token.
+
+    The token is an opaque process handle (not a user credential), so this returns only the
+    lifecycle fields (id / status / status_text) — no user, config, or env details. See
+    APP_AUTH_OAUTH_REDESIGN.md.
     """
 
     app_process = AppsManager.find_process_by_token(token)
 
     if app_process is None:
-        raise Exception("Invalid token")
+        raise UnauthorizedException("Invalid token")
 
-    return app_process.get_status_dto()
+    return app_process.get_light_status_dto()
+
+
+@core_app.post("/apps/exchange-code", tags=["App"], summary="Exchange an app code for a JWT")
+def exchange_app_code(data: ExchangeAppCodeDTO) -> ExchangeAppCodeResponseDTO:
+    """
+    Exchange a one-time app code (the ``gws_code`` the app received in its URL) for a JWT.
+
+    Called by the app itself (reflex/streamlit base), which cannot consume the code or mint a
+    JWT (it does not import gws_core). No user-auth dependency: the single-use code is the
+    credential. The code is consumed here and must match the app it was minted for.
+    """
+
+    return AppsManager.exchange_app_code(data.app_id, data.code)
+
+
+@core_app.post("/apps/validate-jwt", tags=["App"], summary="Validate an app session JWT")
+def validate_app_jwt(data: ValidateAppJwtDTO) -> ValidateAppJwtResponseDTO:
+    """
+    Validate the JWT an app stored in its ``gws_app_jwt`` cookie and return the user id.
+
+    Called by the app on a fresh page load (F5 / new tab), when there is no one-time code but the
+    cookie holds the JWT from the initial handoff. No user-auth dependency: the JWT is the
+    credential (validated here). Lets the app re-authenticate without going back through the
+    gateway. The app cannot validate the JWT itself (no gws_core, no secret).
+    """
+
+    return AppsManager.validate_app_jwt(data.app_id, data.jwt)
+
+
+# The "nginx-login" segment mirrors AppGatewayService.NGINX_LOGIN_ENDPOINT_SEGMENT (used by
+# AppProcess.get_nginx_login_url to build the URL nginx proxies to); keep the two in sync. The
+# "gws_code" query param mirrors AppGatewayService.GWS_CODE_QUERY_PARAM.
+@core_app.get(
+    "/apps/{app_id}/nginx-login",
+    tags=["App"],
+    summary="App-host login (sets session cookie)",
+    response_model=None,
+)
+def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
+    """
+    App-host login endpoint the app's nginx proxies ``/gws-login`` to.
+
+    Exchanges the one-time ``gws_code`` for a JWT, sets it as an HttpOnly, host-only session
+    cookie on the app host, and redirects to the app root. From then on every request (including
+    a hard refresh) carries the cookie, so the app re-authenticates by reading it — no code in
+    the app URL, and auth survives page reloads.
+
+    The app cannot set an HttpOnly cookie itself (Streamlit can't set cookies; app JS can't set
+    HttpOnly), so this runs at the app host via nginx + this endpoint.
+    """
+    # exchange consumes the single-use code and returns the JWT (raises 403 if invalid/expired)
+    exchanged = AppsManager.exchange_app_code(app_id, gws_code)
+
+    # redirect to the app root; the cookie is set on this response so the redirected load has it
+    response = RedirectResponse(url="/")
+    response.set_cookie(
+        AppGatewayService.APP_JWT_COOKIE_NAME,
+        value=exchanged.user_access_token,
+        httponly=True,
+        secure=True,  # works over https and localhost
+        samesite="lax",  # sent on the top-level redirect navigation
+        # host-only: no domain= so app A cannot read app B's cookie
+    )
+    return response
+
+
+############################################ APP LAUNCHER GATEWAY ############################################
+
+
+@core_app.post(
+    "/apps/gateway/start",
+    tags=["App"],
+    summary="Gateway: authenticate + (cold-)start an app",
+)
+def gateway_start(data: AppGatewayStartDTO, request: Request) -> AppGatewayStartResponseDTO:
+    """
+    Called by the front (Angular) gateway page ``/open/app/{app_key}``.
+
+    (Cold-)starts the app and returns the status token the front polls until the app is RUNNING.
+    For an AUTHENTICATED app the caller must be authenticated (one-time ``code`` or lab session),
+    else a 401 is raised so the front redirects to login; a PUBLIC app is started for anyone.
+    """
+    return AppGatewayService.start(data.app_key, data.code, request)
+
+
+@core_app.post(
+    "/apps/gateway/handoff",
+    tags=["App"],
+    summary="Gateway: hand off into a running app",
+)
+def gateway_handoff(data: AppGatewayHandoffDTO) -> AppGatewayHandoffResponseDTO:
+    """
+    Called by the front gateway page once the app is RUNNING. Returns the app host URL the front
+    navigates the browser to: for an AUTHENTICATED app, carrying a one-time ``?gws_code=…`` bound
+    to the caller named by the ``authorize_grant`` from /apps/gateway/start; for a PUBLIC app, the
+    bare app URL (anonymous, no code).
+    """
+    return AppGatewayService.handoff(data.app_key, data.authorize_grant)
 
 
 @core_app.get(

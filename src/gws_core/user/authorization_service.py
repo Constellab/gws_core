@@ -7,7 +7,6 @@ from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.forbidden_exception import ForbiddenException
 from gws_core.core.utils.settings import Settings
 from gws_core.share.share_link_service import ShareLinkService
-from gws_core.share.share_link_space_access import ShareLinkSpaceAccessService
 from gws_core.share.shared_dto import ShareLinkType
 from gws_core.user.auth_context import (
     AuthContext,
@@ -35,6 +34,12 @@ class AuthorizationService:
     """Service for handling user authorization when accessing resources"""
 
     SHARE_LINK_AUTH_SCHEME = "ShareToken "
+    # Header carrying, depending on the request: the app-scoped token (app -> lab API calls) or the
+    # single-use space access code (share-link / space open). The legacy name is kept for wire
+    # compatibility; the value is NOT a general user/session token. See APP_AUTH_OAUTH_REDESIGN.md
+    # (the planned split into gws_app_token / gws_space_access_code). Also mirrored as a literal in
+    # front_service.py's space-open URL and in the gws_core-free app bases (they cannot import this).
+    USER_ACCESS_TOKEN_HEADER = "gws_user_access_token"
     # Flag to allow connections from dev mode apps
     allow_dev_app_connections: bool = False
 
@@ -108,7 +113,7 @@ class AuthorizationService:
     @classmethod
     def _auth_app(cls, request: Request) -> AuthContextApp | None:
         app_id = request.headers.get("gws_app_id")
-        user_access_token = request.headers.get("gws_user_access_token")
+        user_access_token = request.headers.get(cls.USER_ACCESS_TOKEN_HEADER)
 
         if not app_id or not user_access_token:
             return None
@@ -132,7 +137,13 @@ class AuthorizationService:
             user = User.get_and_check_sysuser()
 
         else:
+            # The launching user's token is an app-scoped JWT (typ:app, bound to app_id), minted by
+            # the gws_code exchange. The in-app sentinel tokens (system user, dev) are opaque and
+            # resolved via the in-memory map. Try the map first, then validate as an app token.
             user_id = AppsManager.user_has_access_to_app(app_id, user_access_token)
+
+            if not user_id:
+                user_id = cls._user_id_from_app_token(user_access_token, app_id)
 
             if not user_id:
                 raise UnauthorizedException(
@@ -147,36 +158,68 @@ class AuthorizationService:
         return auth_context
 
     @classmethod
+    def _user_id_from_app_token(cls, user_access_token: str, app_id: str) -> str | None:
+        """Resolve the user id from an app-scoped token, or None if it is not valid for this app.
+
+        The launching user's app token is the app-scoped JWT minted by the gws_code exchange
+        (AppsManager.exchange_app_code): it carries ``typ == "app"`` and an ``app_id`` claim, so it
+        authenticates only as an app credential and only for the app it was minted for. Carried in
+        the ``gws_user_access_token`` header; JWTService expects the ``Bearer `` scheme, so add it
+        if absent.
+        """
+        token = (
+            user_access_token
+            if user_access_token.startswith(JWTService.AUTH_SCHEME)
+            else JWTService.AUTH_SCHEME + user_access_token
+        )
+        try:
+            return JWTService.check_app_access_token(token, app_id)
+        except Exception:
+            return None
+
+    @classmethod
     def _auth_share_link(cls, request: Request) -> AuthContextShareLink | None:
         token = request.headers.get("Authorization")
         if not token or not token.startswith(cls.SHARE_LINK_AUTH_SCHEME):
             return None
 
-        if not token or not token.startswith(cls.SHARE_LINK_AUTH_SCHEME):
-            raise InvalidTokenException()
-
         share_link_token = token[len(cls.SHARE_LINK_AUTH_SCHEME) :]
 
-        user_access_token = request.headers.get("gws_user_access_token")
-        return cls.auth_share_link_from_token(share_link_token, user_access_token)
+        # For a SPACE link the caller sends the single-use space access code in the
+        # USER_ACCESS_TOKEN_HEADER (legacy header name; the value is a space access code, not a
+        # user/session token). PUBLIC links ignore it.
+        space_access_code = request.headers.get(cls.USER_ACCESS_TOKEN_HEADER)
+        return cls.auth_share_link_from_token(share_link_token, space_access_code)
 
     @classmethod
     def auth_share_link_from_token(
-        cls, share_link_token: str, user_access_token: str | None = None
+        cls, share_link_token: str, space_access_code: str | None = None
     ) -> AuthContextShareLink:
         share_link = ShareLinkService.find_by_token_and_check_validity(share_link_token)
 
         user: User
-        # if the link is a space access link, check if the user access token is valid
+        # SPACE link: authenticated by a single-use space access code (NOT a user/session token),
+        # minted by ShareLink.generate_space_access_code. The ShareLink entity owns consuming it
+        # and confirming it was minted for this exact link.
         if share_link.link_type == ShareLinkType.SPACE:
-            if not user_access_token:
+            if not space_access_code:
                 raise ForbiddenException("This link requires authentication")
-            space_access_info = ShareLinkSpaceAccessService.find_by_token_and_check_validity(
-                user_access_token, share_link.id
-            )
 
-            user = cls._get_and_check_user(space_access_info.user_id, allow_inactive=True)
+            user_id = share_link.check_space_access_code(space_access_code)
+            user = cls._get_and_check_user(user_id, allow_inactive=True)
         else:
+            # PUBLIC link: normally authenticates the visitor as the system user (so a public
+            # resource preview can call the API). Refuse this for an app that requires
+            # authentication — it would silently elevate any visitor to the system user and bypass
+            # the app's auth. Such apps must be opened via a SPACE link or the launcher gateway.
+            # (New PUBLIC links on these apps are also blocked at creation in
+            # ShareLinkService.generate_share_link; this guards links created before that check.)
+            if ShareLinkService.resource_is_authenticated_app(
+                share_link.entity_type, share_link.entity_id
+            ):
+                raise ForbiddenException(
+                    "This app requires authentication and cannot be opened through a public link."
+                )
             user = User.get_and_check_sysuser()
 
         auth_context = AuthContextShareLink(share_link=share_link, user=user)
@@ -184,14 +227,21 @@ class AuthorizationService:
         return auth_context
 
     @classmethod
-    def check_unique_code(cls, unique_code: str) -> AuthContextUser:
-        """Use link the the token to check access for a unique code generated. return the object associated with the code"""
+    def check_unique_code(cls, unique_code: str, allow_inactive: bool = False) -> AuthContextUser:
+        """Consume a one-time code and authenticate the user it was minted for.
+
+        :param unique_code: the single-use code (consumed here)
+        :param allow_inactive: when True, authenticate a user that exists but is not active. Used
+            by the app launcher gateway: a user can reach an app from the space without lab access
+            (exists in DB but cannot log in). Defaults to False so login-style callers stay strict.
+        """
         try:
             code_obj: CodeObject = UniqueCodeService.check_code(unique_code)
 
-            return cls.authenticate_user(code_obj.user_id)
-        except Exception:
-            raise InvalidUniqueCodeException()
+            user = cls._get_and_check_user(code_obj.user_id, allow_inactive=allow_inactive)
+            return CurrentUserService.set_auth_user(user)
+        except Exception as e:
+            raise InvalidUniqueCodeException() from e
 
     @classmethod
     def get_token_from_request(cls, request: Request) -> str | None:
@@ -208,13 +258,13 @@ class AuthorizationService:
         return token
 
     @classmethod
-    def authenticate_from_token(cls, token: str) -> AuthContext:
+    def authenticate_from_token(cls, token: str) -> AuthContextUser:
         try:
             user_id: str = JWTService.check_user_access_token(token)
             return cls.authenticate_user(user_id)
 
-        except Exception:
-            raise InvalidTokenException()
+        except Exception as e:
+            raise InvalidTokenException() from e
 
     @classmethod
     def authenticate_user(cls, user_id: str) -> AuthContextUser:

@@ -8,6 +8,8 @@ from gws_core.apps.app_dto import (
     AppsStatusDTO,
     AppStopPolicy,
     CreateAppAsyncResultDTO,
+    ExchangeAppCodeResponseDTO,
+    ValidateAppJwtResponseDTO,
 )
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_manager import AppNginxManager
@@ -24,6 +26,9 @@ from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
 from gws_core.resource.resource_model import ResourceModel
+from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import InvalidUniqueCodeException, UniqueCodeService
+from gws_core.user.user_exception import InvalidTokenException
 
 
 class AppsManager:
@@ -241,6 +246,133 @@ class AppsManager:
             return app.user_has_access_to_app(user_access_token)
 
         return None
+
+    # key stored in the code obj to bind a one-time app code to a single app
+    APP_CODE_APP_ID_KEY = "app_id"
+
+    # Validity of the app code when it is baked into the app URL up front (datalab iframe /
+    # get_app_full_url), BEFORE the app has started. A Reflex app builds its frontend bundle on
+    # first start (can take minutes), and the app only exchanges the code AFTER that — so a 60 s
+    # code would already be expired (403 "Invalid url"). This window must outlast a cold build.
+    # (The gateway handoff mints its code post-RUNNING and navigates immediately, so it keeps the
+    # tight 60 s default.)
+    URL_APP_CODE_VALIDITY_SECONDS = 60 * 10  # 10 min: covers a cold Reflex frontend build
+
+    # Authorize grant: the single-use carrier the gateway issues at `authorize` (start) and the
+    # front replays at `handoff`. It names the resolved user and is bound to the app, so handoff can
+    # re-resolve the user WITHOUT a lab session (a space user has none) and mint the fresh app grant
+    # only once the app is RUNNING. Distinct payload key from the app grant so the two are not
+    # interchangeable. Its lifetime must outlast a cold-start + status polling (see
+    # AUTHORIZE_GRANT_VALIDITY_SECONDS). See APP_AUTH_OAUTH_REDESIGN.md.
+    AUTHORIZE_GRANT_APP_ID_KEY = "authorize_app_id"
+    AUTHORIZE_GRANT_VALIDITY_SECONDS = 60 * 10  # 10 min: comfortably covers cold-start + polling
+
+    @classmethod
+    def generate_authorize_grant(cls, user_id: str, app_id: str) -> str:
+        """Mint the single-use authorize grant returned by the gateway ``authorize`` step.
+
+        Names the resolved user and is bound to ``app_id``. The front replays it to ``handoff``,
+        which consumes it (``consume_authorize_grant``) to re-resolve the user without a lab
+        session and mint the fresh app grant post-RUNNING.
+
+        :param user_id: the user resolved at authorize (lab session or space code)
+        :param app_id: the app the grant is bound to
+        :return: the one-time authorize grant
+        """
+        return UniqueCodeService.generate_code(
+            user_id,
+            {cls.AUTHORIZE_GRANT_APP_ID_KEY: app_id},
+            cls.AUTHORIZE_GRANT_VALIDITY_SECONDS,
+        )
+
+    @classmethod
+    def consume_authorize_grant(cls, app_id: str, grant: str) -> str:
+        """Consume an authorize grant and return the user id it names.
+
+        Confirms the grant was minted for this app before trusting it, so a grant for app A cannot
+        be replayed on app B.
+
+        :param app_id: the app the grant must be bound to
+        :param grant: the single-use authorize grant (consumed here)
+        :return: the user id the grant names
+        :raises InvalidUniqueCodeException: if the grant is invalid, expired, or for another app
+        """
+        code_obj = UniqueCodeService.check_code(grant)
+        if code_obj.obj.get(cls.AUTHORIZE_GRANT_APP_ID_KEY) != app_id:
+            raise InvalidUniqueCodeException()
+        return code_obj.user_id
+
+    @classmethod
+    def generate_app_access_code(cls, user_id: str, app_id: str, validity_seconds: int = 60) -> str:
+        """Mint a short-lived, single-use code that authenticates a user to a specific app.
+
+        The code is put in the app URL as ``gws_code``. The app relays it back to
+        ``exchange_app_code`` (it cannot consume the code itself, being gws_core-free), which
+        swaps it for a JWT. The code is bound to ``app_id`` so it cannot be replayed against
+        another app.
+
+        :param user_id: the user the code authenticates
+        :param app_id: the app resource model id the code is valid for
+        :param validity_seconds: code lifetime (single-use). Default 60s suits the gateway handoff
+            (minted post-RUNNING, navigated immediately); pass URL_APP_CODE_VALIDITY_SECONDS when
+            baking the code into the app URL up front (must survive a cold build before exchange).
+        :return: the one-time code
+        """
+        return UniqueCodeService.generate_code(
+            user_id, {cls.APP_CODE_APP_ID_KEY: app_id}, validity_seconds
+        )
+
+    @classmethod
+    def exchange_app_code(cls, app_id: str, code: str) -> ExchangeAppCodeResponseDTO:
+        """Consume a one-time app code and return a JWT + the resolved user id.
+
+        Called from the app (via POST /apps/exchange-code) to turn the ``gws_code`` it received
+        in its URL into a JWT it carries on data lab API calls. The code is single-use
+        (consumed here) and must match the app it was minted for.
+
+        :param app_id: the app the code is being exchanged for (must match the code binding)
+        :param code: the one-time code from the app URL
+        :return: the JWT (as user_access_token) and the user id
+        :raises InvalidUniqueCodeException: if the code is invalid, expired, or for another app
+        """
+        code_obj = UniqueCodeService.check_code(code)
+
+        # bind the code to its app: reject a code minted for a different app
+        if code_obj.obj.get(cls.APP_CODE_APP_ID_KEY) != app_id:
+            raise InvalidUniqueCodeException()
+
+        # Mint an app-scoped token (typ:app, app_id) — NOT a general session JWT. It authenticates
+        # the user only for this app's API calls and is rejected on normal user routes. See
+        # APP_AUTH_OAUTH_REDESIGN.md.
+        return ExchangeAppCodeResponseDTO(
+            user_access_token=JWTService.create_app_jwt(code_obj.user_id, app_id),
+            user_id=code_obj.user_id,
+        )
+
+    @classmethod
+    def validate_app_jwt(cls, app_id: str, jwt: str) -> ValidateAppJwtResponseDTO:
+        """Validate an app-scoped token (from the app's ``gws_app_jwt`` cookie) and return the user id.
+
+        Used on a fresh page load (F5 / new tab) to re-authenticate without a one-time code: the
+        app stored the app token in a cookie on first load and relays it here. Validated as an
+        app-scoped token bound to this app (typ:app + matching app_id), so a token minted for
+        another app is rejected.
+
+        :param app_id: the app the token must be scoped to
+        :param jwt: the token (with or without the ``Bearer `` prefix)
+        :return: the resolved user id
+        :raises InvalidTokenException: if the token is missing, malformed, expired, or not scoped
+            to this app
+        """
+        # JWTService expects the "Bearer " scheme prefix; add it if the cookie stored the bare token.
+        token = jwt if jwt.startswith(JWTService.AUTH_SCHEME) else JWTService.AUTH_SCHEME + jwt
+        try:
+            user_id = JWTService.check_app_access_token(token, app_id)
+        except Exception as e:
+            # normalize any JWT-library decode/verify error into a clean typed exception
+            # (so the endpoint returns 401, not an uncaught 500)
+            raise InvalidTokenException() from e
+        return ValidateAppJwtResponseDTO(user_id=user_id)
 
     @classmethod
     def find_process_by_token(cls, token: str) -> AppProcess | None:

@@ -1,7 +1,6 @@
 from typing import Literal
 
 from gws_core.core.model.model_dto import BaseModelDTO
-from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 
 
@@ -123,16 +122,38 @@ class FrontService:
     def get_resource_open_url(self, token: str) -> str:
         return self.get_app_open_url() + "/resource/" + token
 
-    def get_resource_open_space_url(self, token: str, user_access_token: str) -> str:
-        """Open route to access the resource but the user needs to be authenticated
-        via the user_access_token
+    def get_resource_open_space_url(self, token: str, space_access_code: str) -> str:
+        """Open route to access the shared resource, carrying the single-use space access code.
+
+        The ``gws_user_access_token`` query param name is the legacy wire name (kept for
+        compatibility); it mirrors AuthorizationService.USER_ACCESS_TOKEN_HEADER. Not imported here
+        to keep front_service free of an auth-layer dependency — keep the two in sync.
         """
         return (
             self.get_resource_open_url(token)
             + "?gws_user_access_token="
-            + user_access_token
+            + space_access_code
             + "&hide_header=true"
         )
+
+    def get_app_gateway_url(self, app_key: str, code: str | None = None) -> str:
+        """Stable, bookmarkable launcher URL for an app.
+
+        This is a **front** (Angular) route ``{front}/open/app/{app_key}``: it owns the
+        auth-guard (redirecting to login when needed) and the progress UI, and drives the
+        backend gateway APIs (start / handoff). Opening it authenticates the caller,
+        cold-starts the app if needed, shows progress, and navigates into the app (no iframe).
+
+        When a one-time ``code`` is provided (e.g. issued for a space open), it is carried as
+        ``?code=`` so the front can start the app without an existing lab session.
+
+        :param app_key: stable app key (resource model id or custom subdomain)
+        :param code: optional one-time access code to authenticate the caller
+        """
+        url = f"{self._lab_url}/open/app/{app_key}"
+        if code:
+            url += f"?code={code}"
+        return url
 
     ############################################### OTHER URLS ###############################################
 

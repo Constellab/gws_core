@@ -5,7 +5,7 @@ from gws_core.apps.app_dto import AppType
 from gws_core.apps.streamlit.streamlit_resource import StreamlitResource
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
-from gws_core.config.param.param_spec import StrParam
+from gws_core.config.param.param_spec import BoolParam, StrParam
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
 from gws_core.task.task import Task
@@ -57,7 +57,12 @@ class GenerateStreamlitShowcaseApp(Task):
                 human_name="Custom subdomain",
                 short_description="Optional readable, stable subdomain for the app "
                 "(e.g. 'app-hello-world'). Leave empty to use the default id-based host.",
-            )
+            ),
+            "requires_authentication": BoolParam(
+                default_value=False,
+                human_name="Requires authentication",
+                short_description="Whether the app requires the user to be authenticated to access it.",
+            ),
         }
     )
 
@@ -67,7 +72,7 @@ class GenerateStreamlitShowcaseApp(Task):
         streamlit_app = StreamlitResource()
 
         streamlit_app.set_app_config(StreamlitShowcaseApp())
-        streamlit_app.set_requires_authentication(False)
+        streamlit_app.set_requires_authentication(params.get_value("requires_authentication"))
         streamlit_app.set_name("Streamlit showcase App")
 
         custom_subdomain = params.get_value("custom_subdomain")

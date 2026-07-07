@@ -6,10 +6,19 @@ from typing import Any, cast
 import reflex as rx
 from typing_extensions import TypedDict
 
+from .reflex_code_exchange import exchange_code_for_jwt, validate_jwt_for_user
 from .reflex_exception import ReflexAppException
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
 APP_CONFIG_FILENAME = "app_config.json"
+
+# Name of the client-side cookie holding the session JWT so auth survives a page reload
+# (F5 / new tab) on a standalone app link. This is an rx.Cookie (JS-readable, not HttpOnly):
+# Reflex has no supported way to read an HttpOnly cookie from the websocket handshake, and its
+# two-host front/back split makes the Streamlit-style nginx cookie impractical. The JWT is the
+# same one already validated server-side and already held in client state. Mirrors
+# AppGatewayService.APP_JWT_COOKIE_NAME (this module cannot import gws_core).
+_APP_JWT_COOKIE_NAME = "gws_app_jwt"
 
 
 class ReflexConfigDTO(TypedDict):
@@ -55,6 +64,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
     authenticated_user_id: str | None = None
 
     user_access_token: str | None = None
+
+    # Persistent copy of the session JWT, synced to a client-side cookie by Reflex so it survives
+    # a page reload (state is otherwise cleared on refresh). Rehydrated automatically on load; the
+    # F5-survival path in _check_user_token re-validates it. Written on a successful code exchange.
+    jwt_cookie: str = rx.Cookie(name=_APP_JWT_COOKIE_NAME, same_site="lax")
 
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
@@ -137,7 +151,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
             return None
 
         user_access_tokens = app_config.get("user_access_tokens", {})
-        user_id = await self._check_user_token(user_access_tokens)
+        # Only the initialization path (store_in_state=True, i.e. _on_load) may consume the
+        # single-use gws_code. @rx.var / read-only contexts (store_in_state=False) run
+        # concurrently and repeatedly on a load — letting them exchange too would re-submit the
+        # already-consumed code (403 "Invalid url"). They only validate an existing JWT.
+        user_id = await self._check_user_token(user_access_tokens, allow_code_exchange=store_in_state)
 
         # Store in state if requested
         if store_in_state and user_id:
@@ -199,28 +217,102 @@ class ReflexMainStateBase(rx.State, mixin=True):
             raise ReflexAppException("GWS_APP_ID environment variable is not set")
         return app_id
 
-    async def _check_user_token(self, user_access_tokens: dict[str, str]) -> str | None:
+    async def _check_user_token(
+        self, user_access_tokens: dict[str, str], allow_code_exchange: bool = False
+    ) -> str | None:
         # A PUBLIC app never authenticates a user, even in dev mode, so it simulates a
         # public prod app.
         if not self.requires_authentication():
             return None
 
-        if not self.is_dev_mode():
-            query_params = self.get_query_params()
+        # Dev mode: authenticate via the fixed dev sentinel token stored in the app config
+        # (no gws_code / cookie flow in dev).
+        if self.is_dev_mode():
+            return user_access_tokens.get(self.DEV_MODE_USER_ACCESS_TOKEN_KEY)
 
-            url_token = query_params.get("gws_token")
+        # Prod: a single-use gws_code is exchanged once for a JWT that then persists (state +
+        # client cookie). The JWT is checked FIRST: the code is destructive (single-use), and this
+        # method runs several times per load (router-ready retry, and each bound @rx.var).
+        # Re-submitting a spent code would 403; validating the already obtained JWT is idempotent,
+        # so it must win whenever a JWT is available.
+        user_id = self._authenticate_from_jwt()
+        if user_id is not None:
+            return user_id
 
-            env_token = os.environ.get("GWS_APP_TOKEN")
+        # First open: exchange the one-time gws_code from the URL (stores the JWT in state +
+        # cookie for subsequent runs and reloads). Guarded to the initialization path only —
+        # concurrent @rx.var contexts must not race to consume the same single-use code.
+        if allow_code_exchange:
+            return self._exchange_code_if_present()
 
-            if url_token != env_token:
-                return None
+        return None
 
-        # load user id from access token
-        user_access_token = self._get_user_access_token()
-        if user_access_token is None:
+    def _exchange_code_if_present(self) -> str | None:
+        """If a single-use gws_code is in the URL, exchange it for a JWT and return the user id.
+
+        On success, stores the JWT as the user access token (carried on later API calls) and
+        removes gws_code from the browser URL so nothing reusable lingers. Returns None when no
+        code is present (caller falls through to the legacy token path).
+
+        Raises ReflexAppException when a gws_code IS present but cannot be exchanged: it is
+        single-use and short-lived, so this means the link was already opened or expired. Raising
+        here surfaces an accurate message instead of degrading into the generic
+        "User not authenticated".
+        """
+        query_params = self.get_query_params()
+        code = query_params.get("gws_code")
+        if not code:
             return None
 
-        return user_access_tokens.get(user_access_token)
+        exchanged = exchange_code_for_jwt(self.get_app_id(), code)
+        if exchanged is None:
+            raise ReflexAppException(
+                "This app link has expired or was already used. "
+                "Please reopen the app to get a fresh link."
+            )
+
+        # the JWT becomes the user access token the app carries to the data lab API
+        self.user_access_token = exchanged.user_access_token
+        # persist it in the client cookie so auth survives a page reload (F5 / new tab)
+        self.jwt_cookie = exchanged.user_access_token
+        # scrub gws_code from the URL (single-use; keep it out of history/referrers)
+        self._scrub_gws_code_from_url()
+        return exchanged.user_id
+
+    def _authenticate_from_jwt(self) -> str | None:
+        """Try to authenticate from the session JWT, returning the user id.
+
+        The JWT lives in jwt_cookie — the authoritative, persistent store: it is written on a
+        successful code exchange and rehydrated by Reflex from the client cookie on a page reload
+        (F5 / new tab). It is kept separate from user_access_token, which may instead hold the
+        *legacy* opaque access token (gws_user_access_token) that is NOT a JWT and would fail
+        validation. Validating a JWT is idempotent, so this path is safe to run repeatedly and
+        wins over re-exchanging a single-use code. The app cannot validate the JWT itself (no
+        gws_core / no secret), so it relays it to the lab. Returns None when there is no JWT or it
+        is invalid/expired.
+        """
+        jwt = self.jwt_cookie
+        if not jwt:
+            return None
+
+        user_id = validate_jwt_for_user(self.get_app_id(), jwt)
+        if user_id is None:
+            # stale/expired JWT: clear it so it is not retried on every run/reload
+            self.jwt_cookie = ""
+            return None
+
+        # the validated JWT is also the token the app carries on later data lab API calls
+        self.user_access_token = jwt
+        return user_id
+
+    def _scrub_gws_code_from_url(self) -> None:
+        """Remove the gws_code query param from the browser URL via a history replace."""
+        rx.call_script(
+            "if (window.history && window.location.search.includes('gws_code')) {"
+            " const u = new URL(window.location.href);"
+            " u.searchParams.delete('gws_code');"
+            " window.history.replaceState({}, '', u.toString()); }"
+        )
 
     async def get_app_config(self) -> ReflexConfigDTO:
         """Get the app configuration."""
@@ -280,13 +372,15 @@ class ReflexMainStateBase(rx.State, mixin=True):
         return user_id is not None
 
     def _get_user_access_token(self) -> str | None:
-        """Get the user access token from the app configuration."""
+        """Return the token the app carries on data lab API calls for the current user.
+
+        In dev mode this is the fixed dev sentinel token; in prod it is the session JWT obtained
+        from the gws_code exchange (or the cookie on reload), stored in self.user_access_token by
+        the authentication flow.
+        """
         if self.is_dev_mode():
             return self.DEV_MODE_USER_ACCESS_TOKEN_KEY
 
-        if not self.user_access_token:
-            query_params = self.get_query_params()
-            self.user_access_token = query_params.get("gws_user_access_token")
         return self.user_access_token
 
     async def _get_system_user_access_token(self) -> str | None:

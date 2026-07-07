@@ -369,6 +369,7 @@ class SystemService:
         sync_folders: bool = True,
         sync_notes: bool = True,
         sync_scenarios: bool = True,
+        sync_lab_config: bool = False,
     ) -> None:
         if sync_users:
             UserService.synchronize_all_space_users()
@@ -381,6 +382,12 @@ class SystemService:
 
         if sync_notes:
             SpaceObjectService.sync_notes_from_space()
+
+        if sync_lab_config:
+            # Push the current lab config to space using the same format as lab start
+            SpaceService.get_instance().register_lab_start(
+                LabConfigModel.get_current_config().to_dto(), raise_exception_if_error=True
+            )
         Logger.info("Synchronization with space done")
 
     @classmethod
