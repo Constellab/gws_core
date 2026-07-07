@@ -97,9 +97,14 @@ class SpaceService(SpaceServiceBase):
 
         return UserSpace.from_json(response.json())
 
-    def register_lab_start(self, lab_config: LabConfigModelDTO) -> bool:
+    def register_lab_start(
+        self, lab_config: LabConfigModelDTO, raise_exception_if_error: bool = False
+    ) -> bool:
         """
         Call the space api to mark the lab as started
+
+        :param raise_exception_if_error: if True, re-raise the error instead of
+            logging it and returning False
         """
         space_api_url: str = self._get_space_api_url(f"{self._EXTERNAL_LABS_ROUTE}/start")
 
@@ -111,6 +116,8 @@ class SpaceService(SpaceServiceBase):
             )
 
         except BaseHTTPException as err:
+            if raise_exception_if_error:
+                raise err
             BrickLogService.log_brick_error(
                 SpaceService, f"Can't register lab start on space. Error : {err.detail}"
             )

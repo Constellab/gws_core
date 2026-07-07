@@ -49,6 +49,7 @@ class SynchronizeDTO(BaseModelDTO):
     sync_folders: bool
     sync_notes: bool
     sync_scenarios: bool
+    sync_lab_config: bool = False
 
 
 @core_app.post("/system/synchronize", tags=["System"], summary="Synchronise info with space")
@@ -60,6 +61,7 @@ def synchronize(
         sync_folders=sync_dto.sync_folders,
         sync_notes=sync_dto.sync_notes,
         sync_scenarios=sync_dto.sync_scenarios,
+        sync_lab_config=sync_dto.sync_lab_config,
     )
 
 
