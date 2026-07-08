@@ -1,7 +1,7 @@
 from typing import cast
 
 from gws_core.core.classes.paginator import Paginator
-from gws_core.core.classes.search_builder import SearchBuilder, SearchParams
+from gws_core.core.classes.search_builder import SearchParams
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.utils.settings import Settings
@@ -64,8 +64,11 @@ class CredentialsService:
         try:
             credentials_type = credentials.get_credentials_data_type()
 
+            # validate and build the data against the credentials config specs
+            result = credentials_type.get_specs().build_config_params(save_credentials.data)
+
             # build the data object to check the data
-            data_obj = credentials_type.build_from_json(save_credentials.data)
+            data_obj = credentials_type.build_from_json(result)
             credentials.data = data_obj.convert_to_dict()
         except Exception as e:
             raise BadRequestException(f"Invalid credentials data: {str(e)}") from e
