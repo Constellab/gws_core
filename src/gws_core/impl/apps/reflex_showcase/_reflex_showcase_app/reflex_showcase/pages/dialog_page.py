@@ -387,7 +387,7 @@ def my_component():
                     "Create New Entry",
                 ),
             ),
-            description=cast(
+            subtitle=cast(
                 str,
                 rx.cond(
                     ExampleFormDialogState.is_update_mode,
@@ -474,7 +474,9 @@ form_dialog_component(
         "Update Item",
         "Create Item"
     ),
-    description="Enter the item details below.",
+    # subtitle shows the intro text (muted) directly under the title.
+    # Use `description=` instead to render it as a separate block below the header.
+    subtitle="Enter the item details below.",
     form_content=my_form_content(),
 )'''
 
@@ -549,7 +551,9 @@ form_dialog_component(
             example_component=example3_component,
             code=code3,
             title="form_dialog_component",
-            description="A form dialog component supporting both create and update modes.",
+            description="A form dialog component supporting both create and update modes. "
+            "Intro text can be shown as a muted subtitle under the title (subtitle=) or as a "
+            "separate block below the header (description=).",
             func=form_dialog_component,
         ),
         # Non-dismissable form dialog example

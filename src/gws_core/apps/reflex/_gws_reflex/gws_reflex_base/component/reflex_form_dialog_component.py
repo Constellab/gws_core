@@ -121,6 +121,7 @@ def form_dialog_component(
     title: str | rx.Component,
     form_content: rx.Component,
     description: str | rx.Component | None = None,
+    subtitle: str | rx.Var[str] | rx.Component | None = None,
     max_width: str = "500px",
     max_height: str = "90vh",
     dismissable: bool = True,
@@ -138,6 +139,10 @@ def form_dialog_component(
                Can use rx.cond() for different titles in create vs update mode.
         description: Dialog description (string or rx.Component for dynamic content).
                     Can use rx.cond() for different descriptions in create vs update mode.
+                    Rendered as a separate block under the header.
+        subtitle: Optional subtitle shown directly under the title in the header
+                    (muted). Use instead of ``description`` to keep the intro text
+                    tight against the title rather than in its own block.
         form_content: The form content component containing form fields and buttons.
                      Should include form fields and submit/cancel buttons.
         max_width: Maximum width of the dialog (default: "500px")
@@ -239,7 +244,7 @@ def form_dialog_component(
     return rx.dialog.root(
         rx.dialog.content(
             rx.vstack(
-                dialog_header(title, close=state.close_dialog),
+                dialog_header(title, subtitle, close=state.close_dialog),
                 rx.cond(
                     description,
                     rx.dialog.description(description, size="2", margin_bottom="1rem"),
