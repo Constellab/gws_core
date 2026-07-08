@@ -1,11 +1,14 @@
-
 from datetime import timedelta
 
+from gws_core.apps.app_dto import AppAccessMode
+from gws_core.apps.app_resource import AppResource
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model import Model
+from gws_core.core.service.front_service import FrontService
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
+from gws_core.resource.resource_model import ResourceModel
 from gws_core.share.share_link import ShareLink
 from gws_core.share.shared_dto import (
     GenerateShareLinkDTO,
@@ -19,7 +22,6 @@ from gws_core.user.user_service import UserService
 
 
 class ShareLinkService:
-
     @classmethod
     def find_by_type_and_entity(
         cls, entity_type: ShareLinkEntityType, entity_id: str, link_type: ShareLinkType
@@ -27,6 +29,21 @@ class ShareLinkService:
         """Method that find a shared entity link by its entity id and type"""
 
         return ShareLink.find_by_entity_type_and_id(entity_type, entity_id, link_type)
+
+    @classmethod
+    def _get_shared_app_resource(
+        cls, entity_type: ShareLinkEntityType, entity_id: str
+    ) -> "AppResource | None":
+        """Resolve the shared entity to its AppResource, or None if it is not an app."""
+        if entity_type != ShareLinkEntityType.RESOURCE:
+            return None
+
+        resource_model = ResourceModel.get_by_id(entity_id)
+        if resource_model is None:
+            return None
+
+        resource = resource_model.get_resource()
+        return resource if isinstance(resource, AppResource) else None
 
     @classmethod
     def resource_is_authenticated_app(
@@ -39,23 +56,15 @@ class ShareLinkService:
         bypass the app's authentication. AUTHENTICATED apps must be shared with a SPACE link (real
         per-user auth) or opened through the launcher gateway.
         """
-        if entity_type != ShareLinkEntityType.RESOURCE:
-            return False
-
-        # Local import to avoid a module-level dependency of the share layer on apps.
-        from gws_core.apps.app_dto import AppAccessMode
-        from gws_core.apps.app_resource import AppResource
-        from gws_core.resource.resource_model import ResourceModel
-
-        resource_model = ResourceModel.get_by_id(entity_id)
-        if resource_model is None:
-            return False
-
-        resource = resource_model.get_resource()
-        return (
-            isinstance(resource, AppResource)
-            and resource.get_access_mode() == AppAccessMode.AUTHENTICATED
+        app_resource = cls._get_shared_app_resource(entity_type, entity_id)
+        return app_resource is not None and (
+            app_resource.get_access_mode() == AppAccessMode.AUTHENTICATED
         )
+
+    @classmethod
+    def resource_is_app(cls, entity_type: ShareLinkEntityType, entity_id: str) -> bool:
+        """Return True if the shared entity is an app resource."""
+        return cls._get_shared_app_resource(entity_type, entity_id) is not None
 
     @classmethod
     def find_by_token_and_check_validity(cls, token: str) -> ShareLink:
@@ -77,9 +86,11 @@ class ShareLinkService:
     ) -> ShareLink:
         """Method that generate a share link for a given entity"""
 
-        if link_type == ShareLinkType.SPACE:
-            if share_dto.entity_type != ShareLinkEntityType.RESOURCE:
-                raise BadRequestException("Only resource can be shared with space")
+        if (
+            link_type == ShareLinkType.SPACE
+            and share_dto.entity_type != ShareLinkEntityType.RESOURCE
+        ):
+            raise BadRequestException("Only resource can be shared with space")
 
         # A PUBLIC link would authenticate every visitor as the system user, bypassing the app's
         # authentication. AUTHENTICATED apps must be shared with a SPACE link instead.
@@ -188,18 +199,20 @@ class ShareLinkService:
         links: list[ShareLink] = ShareLink.select()
 
         for link in links:
-            if clean_expired_links and not link.is_valid() or clean_invalid_links and link.get_model(link.entity_id, link.entity_type) is None:
+            if (
+                clean_expired_links
+                and not link.is_valid()
+                or clean_invalid_links
+                and link.get_model(link.entity_id, link.entity_type) is None
+            ):
                 link.delete_instance()
 
     @classmethod
     def generate_user_access_token_for_space_link(
-        cls, token: str, user: UserFullDTO, open_app_in_new_tab: bool = False
+        cls, token: str, user: UserFullDTO
     ) -> GenerateUserAccessTokenForSpaceResponse:
         """Method called from Space to generate a user access token for a space link.
         As this is called by space, the user is authenticated
-
-        :param open_app_in_new_tab: when True the shared resource is an app to open in a new tab,
-            so the access url points to the app launcher gateway instead of the resource-open page.
         """
 
         share_link = ShareLinkService.find_by_token_and_check_validity(token)
@@ -221,10 +234,25 @@ class ShareLinkService:
             seconds=ShareLink.SPACE_ACCESS_DURATION_SECONDS
         )
 
-        access_url = share_link.get_space_link(space_access_code, open_app_in_new_tab)
+        # Url to embed in an iframe: the resource-open page with its header hidden (the host,
+        # Space, provides its own chrome).
+        embedded_url = share_link.get_space_link(space_access_code, hide_header=True)
+
+        # Url to open standalone (new tab / full page):
+        # - for an app, the launcher gateway (iframe-free, cold-starts the app); the
+        #   space_access_code is the single-use code the gateway consumes.
+        # - for a normal resource, the same open page but with its header shown.
+        if cls.resource_is_app(share_link.entity_type, share_link.entity_id):
+            standalone_url = FrontService().get_app_gateway_url(
+                share_link.entity_id, code=space_access_code
+            )
+        else:
+            standalone_url = share_link.get_space_link(space_access_code, hide_header=False)
+
         return GenerateUserAccessTokenForSpaceResponse(
             # return the main share link valid until date
             share_link_valid_until=share_link.valid_until,
-            access_url=access_url,
+            embedded_url=embedded_url,
+            standalone_url=standalone_url,
             access_url_valid_until=access_url_valid_until,
         )

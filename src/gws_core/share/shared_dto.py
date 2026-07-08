@@ -132,13 +132,15 @@ class ShareEntityCreateMode(Enum):
 class GenerateUserAccessTokenForSpaceRequest(BaseModelDTO):
     # Space-authenticated user requesting access to the share link
     user: UserFullDTO
-    # True when the shared resource is an app to open in a new tab: the access url points to the
-    # app launcher gateway instead of the datalab resource-open page.
-    open_app_in_new_tab: bool = False
 
 
 class GenerateUserAccessTokenForSpaceResponse(BaseModelDTO):
     # Valid until date for the share link
     share_link_valid_until: datetime | None = None
-    access_url: str
+    # Url to open the shared resource embedded in an iframe (header hidden; the host provides chrome).
+    embedded_url: str
+    # Url to open the shared resource standalone (new tab / full page). For an app this is the
+    # launcher gateway (iframe-free, cold-starts the app); for a normal resource it is the same
+    # open page as embedded_url but with its header shown.
+    standalone_url: str
     access_url_valid_until: datetime

@@ -236,5 +236,5 @@ def generate_user_access_token(
     """
 
     return ShareLinkService.generate_user_access_token_for_space_link(
-        token, request.user, request.open_app_in_new_tab
+        token, request.user
     )
