@@ -1,4 +1,5 @@
 {
+  "community_brick_id": "b63530c2-ecc6-44ea-a4c5-8037ddf8644d",
   "docs": [
     {
       "title": "Deploy containers",
@@ -6,6 +7,104 @@
       "source_files": [
         "src/gws_core/docker/docker_service.py",
         "src/gws_core/docker/docker_dto.py"
+      ]
+    },
+    {
+      "title": "CLI - Introduction",
+      "remote_doc_id": "42f044b5-6187-4867-8dc1-0450b87ef9b1",
+      "source_files": [
+        "gws_cli/gws_cli/main_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - server",
+      "remote_doc_id": "ebf428ab-83ec-4049-b0ec-d83c0bc592e9",
+      "source_files": [
+        "gws_cli/gws_cli/server_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - brick",
+      "remote_doc_id": "a9b5ffb8-6062-42be-9d3f-9a04fbcfcf49",
+      "source_files": [
+        "gws_cli/gws_cli/brick_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - task",
+      "remote_doc_id": "3579a146-495c-4722-b1f1-24b2994e53f4",
+      "source_files": [
+        "gws_cli/gws_cli/task_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - streamlit",
+      "remote_doc_id": "0e34c649-af08-4e50-85a3-a1364900d3f8",
+      "source_files": [
+        "gws_cli/gws_cli/streamlit_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - reflex",
+      "remote_doc_id": "3bebf14c-3b7e-4da7-8b37-050db27620ef",
+      "source_files": [
+        "gws_cli/gws_cli/reflex_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - resource",
+      "remote_doc_id": "14c695c4-0501-4f0a-b746-17bd20f17832",
+      "source_files": [
+        "gws_cli/gws_cli/resource_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - scenario",
+      "remote_doc_id": "28d1e525-9f95-475f-ad0b-39197cba734b",
+      "source_files": [
+        "gws_cli/gws_cli/scenario_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - db",
+      "remote_doc_id": "3cc2144b-d04c-417f-9e58-c9a5f5c22901",
+      "source_files": [
+        "gws_cli/gws_cli/db_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - community",
+      "remote_doc_id": "0295a49b-ddda-44e8-bb7b-e5c09c46c61d",
+      "source_files": [
+        "gws_cli/gws_cli/community_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - dev-env",
+      "remote_doc_id": "b6e33d35-2964-446f-8580-fcf56c0c3be8",
+      "source_files": [
+        "gws_cli/gws_cli/dev_env_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - claude",
+      "remote_doc_id": "219d43b6-abac-42a7-af7e-462000c4d3f5",
+      "source_files": [
+        "gws_cli/gws_cli/claude_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - copilot",
+      "remote_doc_id": "1e1bf003-eb39-48c4-8392-64ba7b536c6b",
+      "source_files": [
+        "gws_cli/gws_cli/copilot_cli.py"
+      ]
+    },
+    {
+      "title": "CLI - utils",
+      "remote_doc_id": "291ae07b-fe69-4c11-b89e-cda8b007c083",
+      "source_files": [
+        "gws_cli/gws_cli/utils_cli.py"
       ]
     }
   ]

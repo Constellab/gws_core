@@ -78,6 +78,11 @@ class AICodeService(ABC):
             argument_hint="brick_name [doc keyword] (e.g. gws_core docker)",
         ),
         SkillFrontmatter(
+            filename="skill-builder.md",
+            description="Create or update a Constellab skill (.md file + SKILL_FRONTMATTER registration + gws dev-env configure)",
+            argument_hint="skill to create or update and what it should do",
+        ),
+        SkillFrontmatter(
             filename="resource-inspection.md",
             description="Inspect lab resources from the CLI (search, info, read RFields, views)",
             argument_hint="what to search for or inspect",

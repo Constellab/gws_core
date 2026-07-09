@@ -9,6 +9,7 @@ The workspace at `/lab/user/bricks/` contains multiple bricks (each brick is a g
 The manifest has this structure:
 ```json
 {
+  "community_brick_id": "uuid-of-the-community-brick-the-docs-live-under",
   "docs": [
     {
       "title": "Doc title",
@@ -23,6 +24,16 @@ The manifest has this structure:
 ```
 
 All paths in the manifest are relative to the brick root (the directory containing `doc_manifest.json`).
+
+### Where documentation lives on the Community
+
+Documentation pages on the Constellab Community are organized as a tree of folders under a **Community brick**. The `community_brick_id` field at the top of `doc_manifest.json` records which Community brick this manifest's pages live under. Use it (not a hardcoded ID) whenever you need the brick's documentation tree — for example to find the `folder_id` a new page should be created in:
+
+```bash
+gws community doc-hierarchy <community_brick_id>
+```
+
+If `doc_manifest.json` has no `community_brick_id` yet, ask the user which Community brick the docs belong to and add the field.
 
 ## EditorJS JSON format
 
@@ -120,7 +131,7 @@ The content of each cell can include HTML for formatting like the paragraph bloc
   "type": "hint",
   "data": {
     "hintType": "info",
-    "content": "Callout text with optional <b>bold</b> and <code>inline code</code>."
+    "content": "Callout text as plain text only."
   }
 }
 ```
@@ -129,7 +140,7 @@ A hint renders as a highlighted callout box. `hintType` must be one of:
 - `warning` — a caution about a risky or irreversible action.
 - `science` — a scientific or domain-specific remark.
 
-Use hints sparingly for short, important asides. The `content` field can include HTML for formatting like the paragraph block; use `\n` for line breaks within a hint.
+A hint's `data` object has **exactly two fields**: `hintType` and `content`. Do **not** use `title`, `message`, `text`, or `type` — those are not recognized and produce a block that stores but fails to render (the page appears empty). Use hints sparingly for short, important asides. Unlike other blocks, the `content` field supports **plain text only** — no HTML formatting (no `<b>`, `<i>`, `<u>`, `<code>`, or `<a>` links). Use `\n` for line breaks within a hint.
 
 ### Block IDs
 
@@ -186,17 +197,49 @@ Based on the source files and the user's input, generate the EditorJS JSON docum
 - Place the file next to the source files with a `doc_` prefix and `.json` extension (e.g., `doc_my_service.json`), or ask the user for a preferred location
 - The output must be valid EditorJS JSON with the top-level `version`, `editorVersion`, and `blocks` fields
 
-### Step A4: Update the manifest
+### Step A4: Create the remote documentation page
+
+A new doc needs a page on the Community platform before content can be pushed to it. Create an empty page with the `gws community create-doc` CLI command. It creates a new documentation page inside a folder and prints the new page's ID, which becomes the `remote_doc_id`.
+
+Usage:
+```bash
+gws community create-doc <folder_id> <title>
+```
+
+Example:
+```bash
+gws community create-doc "297895b3-275a-4ad3-ba00-249fa1736aca" "CLI - server"
+```
+
+The command prints a line like `Documentation 'CLI - server' created successfully (id=<uuid>).` — capture that `id`.
+
+- **You must have a `folder_id`.** If the user has not provided one, ask which Community folder the page should be created in. Do not guess a folder ID.
+- To discover existing folders and their IDs, inspect the documentation hierarchy of the manifest's `community_brick_id` with `gws community doc-hierarchy <community_brick_id>` (add `--version <v>`, defaults to `latest`; `--format json` for parseable output). Every node prints its `id`, so you can reuse an existing folder's ID as the `folder_id`. See the "Where documentation lives on the Community" section above.
+- To create a new folder to hold the page(s), use `gws community create-folder <parent_folder_id> <title>`, which prints the new folder's `id` for use as the `folder_id` above.
+- If the command fails (e.g., not logged in, token expired, or the API is unreachable), warn the user and **stop**. The user can log in with `gws community login`.
+
+### Step A5: Update the manifest
 
 Add a new entry to the brick's `doc_manifest.json`:
-- If `doc_manifest.json` does not exist yet, create it
-- Add an empty `remote_doc_id` (to be filled later by the user), and the `source_files` list
+- If `doc_manifest.json` does not exist yet, create it, including a top-level `community_brick_id` (ask the user which Community brick the docs live under if you don't already know it)
+- Set `remote_doc_id` to the `id` returned by `create-doc` in the previous step (if the user chose to skip page creation, leave it empty to be filled later), and add the `source_files` list
 
-### Step A5: Review
+### Step A6: Upload the content
+
+Push the generated JSON to the newly created page using the `gws community update-doc` CLI command (same command used in Mode B). The command validates every block against its platform schema before uploading and refuses to push a malformed document (see the note in Step B6), so a block with the right `type` but wrong `data` fields is caught here rather than rendering as an empty page:
+
+```bash
+gws community update-doc <documentation_id> <json_file_path>
+```
+
+If the command fails, read the error — if it names an invalid block, fix that block and re-run; otherwise warn the user and **stop**.
+
+### Step A7: Review
 
 Show the user a summary of what was created:
 - The doc file path and a brief outline of its sections (list the H2/H3 headers)
-- The manifest entry that was added
+- The manifest entry that was added (including the `remote_doc_id`)
+- Confirmation that the page was created and content uploaded
 
 ---
 

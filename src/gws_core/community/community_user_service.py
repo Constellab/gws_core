@@ -6,8 +6,10 @@ from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..impl.rich_text.rich_text_types import RichTextDTO
 from .community_dto import (
+    CommunityCreateDocResponseDTO,
     CommunityDocumentationDTO,
     CommunityRagflowAskResponseDTO,
+    HnNode,
 )
 
 
@@ -61,6 +63,84 @@ class CommunityUserService:
             raise err
 
         return CommunityDocumentationDTO.from_json(response.json())
+
+    def get_documentation_hierarchy(self, brick_id: str, brick_version: str = "latest") -> HnNode:
+        """Retrieve the documentation hierarchy (tree of folders and pages) of a brick.
+
+        :param brick_id: ID of the brick whose documentation hierarchy to retrieve.
+        :param brick_version: Brick version to retrieve the hierarchy for. Defaults to ``latest``.
+        :return: The root node of the documentation hierarchy tree.
+        """
+        url = f"{self.get_community_api_url()}/brick/docs/{brick_id}/{brick_version}"
+
+        try:
+            response = ExternalApiService.get(
+                url, headers=self._get_request_headers(), raise_exception_if_error=True
+            )
+        except BaseHTTPException as err:
+            err.detail = f"Can't retrieve documentation hierarchy. Error : {err.detail}"
+            raise err
+
+        return HnNode.from_json(response.json())
+
+    def create_documentation(self, folder_id: str, title: str) -> CommunityCreateDocResponseDTO:
+        """Create a new empty documentation page inside a folder.
+
+        The freshly created page has no content yet; use the returned ``id`` with
+        :meth:`update_documentation_content` to push content.
+
+        :param folder_id: ID of the folder the documentation will be created in.
+        :param title: Title of the new documentation page.
+        :return: The created documentation page.
+        """
+        url = f"{self.get_community_api_url()}/folder/doc"
+
+        payload = {
+            "folderId": folder_id,
+            "title": title,
+            "type": "DOC",
+        }
+
+        try:
+            response = ExternalApiService.post(
+                url,
+                payload,
+                headers=self._get_request_headers(),
+                raise_exception_if_error=True,
+            )
+        except BaseHTTPException as err:
+            err.detail = f"Can't create documentation. Error : {err.detail}"
+            raise err
+
+        return CommunityCreateDocResponseDTO.from_json(response.json())
+
+    def create_folder(self, folder_id: str, title: str) -> dict:
+        """Create a new folder inside a folder.
+
+        :param folder_id: ID of the parent folder the new folder will be created in.
+        :param title: Title of the new folder.
+        :return: The raw JSON payload returned by the API (contains at least the new folder's ``id``).
+        """
+        url = f"{self.get_community_api_url()}/folder/doc"
+
+        payload = {
+            "folderId": folder_id,
+            "title": title,
+            "type": "FOL",
+        }
+
+        try:
+            response = ExternalApiService.post(
+                url,
+                payload,
+                headers=self._get_request_headers(),
+                raise_exception_if_error=True,
+            )
+        except BaseHTTPException as err:
+            err.detail = f"Can't create folder. Error : {err.detail}"
+            raise err
+
+        return response.json()
 
     def update_documentation_content(
         self, documentation_id: str, content: RichTextDTO

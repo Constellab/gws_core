@@ -23,6 +23,22 @@ class HnBrickVersionInfoDTO(BaseModelDTO):
     technicalInfo: dict[str, Any] | None = None
 
 
+class HnNode(BaseModelDTO):
+    """A node in a brick's documentation hierarchy tree.
+
+    ``name``, ``path`` and ``completePath`` are ``None`` on the virtual root node
+    returned by the API (whose only meaningful content is its ``children``).
+    """
+
+    id: str
+    name: str | None = None
+    order: int
+    path: str | None = None
+    completePath: str | None = None
+    parentId: str | None = None
+    children: list["HnNode"] | None = None
+
+
 class CommunitySpaceDTO(BaseModelDTO):
     id: str
     name: str
@@ -159,3 +175,24 @@ class CommunityDocumentationDTO(BaseModelDTO):
     path: str
     completePath: str
     order: int
+
+
+class CommunityCreateDocResponseDTO(BaseModelDTO):
+    """Response from the POST /folder/doc endpoint when creating a documentation page.
+
+    A freshly created page has no content yet (``content`` is ``None``). The response
+    also embeds the parent ``folder`` (with all its sibling documentations); it is kept
+    as a loose dict since only the created page's own fields are needed here.
+    """
+
+    id: str
+    title: str
+    createdAt: datetime
+    createdBy: CommunityUserDTO
+    lastModifiedAt: datetime
+    lastModifiedBy: CommunityUserDTO
+    path: str
+    completePath: str
+    order: int
+    content: RichTextDTO | None = None
+    folder: dict | None = None

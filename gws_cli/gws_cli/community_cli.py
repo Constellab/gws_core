@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from typing import Annotated
 
 import typer
+from gws_core.community.community_dto import HnNode
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 
@@ -77,6 +78,74 @@ def status():
         typer.echo(f"\nOther stored domains: {', '.join(other_domains)}")
 
 
+# Command to create a new folder in a folder
+@app.command("create-folder", help="Create a new folder inside a folder")
+def create_folder(
+    folder_id: Annotated[
+        str,
+        typer.Argument(help="ID of the parent folder to create the folder in."),
+    ],
+    title: Annotated[
+        str,
+        typer.Argument(help="Title of the new folder."),
+    ],
+):
+    try:
+        result = CommunityCliService.get_community_service(
+            requires_authentication=True
+        ).create_folder(folder_id, title)
+    except TokenExpiredError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"Folder '{result.get('title', title)}' created successfully (id={result.get('id')}).")
+
+
+# Command to create a new empty documentation page in a folder
+@app.command("create-doc", help="Create a new empty documentation page inside a folder")
+def create_documentation(
+    folder_id: Annotated[
+        str,
+        typer.Argument(help="ID of the folder to create the documentation page in."),
+    ],
+    title: Annotated[
+        str,
+        typer.Argument(help="Title of the new documentation page."),
+    ],
+):
+    try:
+        result = CommunityCliService.get_community_service(
+            requires_authentication=True
+        ).create_documentation(folder_id, title)
+    except TokenExpiredError as e:
+        typer.echo(str(e), err=True)
+        raise typer.Exit(1) from e
+    typer.echo(f"Documentation '{result.title}' created successfully (id={result.id}).")
+    typer.echo(f"Push content to it with: gws community update-doc {result.id} <json_file_path>")
+
+
+def _validate_rich_text_content(content: RichTextDTO) -> None:
+    """Validate every block's data against its platform schema before uploading.
+
+    ``RichTextDTO.from_json`` only validates the top-level envelope, not each block's
+    ``data``: a block with a valid ``type`` but wrong ``data`` fields (e.g. a ``hint``
+    using ``title``/``message`` instead of ``content``) parses fine here but fails to
+    render, leaving an empty page. ``block.get_data()`` forces the per-block schema
+    validation that rendering would, so we catch the bad block here rather than on the
+    server. Exits with a message naming the offending block.
+    """
+    for index, block in enumerate(RichText(content).get_blocks()):
+        try:
+            block.get_data()
+        except Exception as e:
+            block_id = block.id or "<no id>"
+            typer.echo(
+                f"Error: block #{index} (id={block_id}, type={block.type}) is invalid "
+                f"and would render as an empty page.\n{e}",
+                err=True,
+            )
+            raise typer.Exit(1) from e
+
+
 # Command to update a documentation's content from a JSON file
 @app.command("update-doc", help="Update a documentation page content from a JSON file")
 def update_documentation(
@@ -94,6 +163,7 @@ def update_documentation(
         content_dict = json.load(f)
 
     content = RichTextDTO.from_json(content_dict)
+    _validate_rich_text_content(content)
     try:
         result = CommunityCliService.get_community_service(
             requires_authentication=True
@@ -142,3 +212,33 @@ def get_documentation(
         f.write(markdown)
 
     typer.echo(f"Documentation '{result.title}' written to '{output_file_path}'.")
+
+
+def _print_hierarchy(node: HnNode, indent: int = 0) -> None:
+    """Print a documentation hierarchy node and its children as an indented tree."""
+    typer.echo(f"{'  ' * indent}{node.name or '<root>'} (id={node.id})")
+    for child in node.children or []:
+        _print_hierarchy(child, indent + 1)
+
+
+@app.command("doc-hierarchy", help="Show the documentation hierarchy (tree) of a brick")
+def documentation_hierarchy(
+    brick_id: Annotated[
+        str, typer.Argument(help="ID of the brick whose documentation hierarchy to retrieve.")
+    ],
+    brick_version: Annotated[
+        str,
+        typer.Option("--version", help="Brick version to retrieve the hierarchy for."),
+    ] = "latest",
+    output_format: Annotated[
+        str, typer.Option("--format", help="Output format: 'text' (default) or 'json'.")
+    ] = "text",
+):
+    result = CommunityCliService.get_community_service().get_documentation_hierarchy(
+        brick_id, brick_version
+    )
+
+    if output_format == "json":
+        typer.echo(json.dumps(result.to_json_dict(), indent=2))
+    else:
+        _print_hierarchy(result)
