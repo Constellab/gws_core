@@ -127,9 +127,36 @@ class MainState(rx.State):
 - `async get_param(key: str, default=None) -> Optional[str]`: Gets a specific parameter value
 
 **Authentication:**
-- `async requires_authentication() -> bool`: Checks if app requires authentication
+- `async requires_authentication() -> bool`: True if the app is in `AUTHENTICATED` access mode
 - `async check_authentication() -> bool`: Validates current authentication status
 - `is_dev_mode() -> bool`: Checks if running in development mode
+
+### Authentication: `AUTHENTICATED` vs `PUBLIC`
+
+An app has one access mode, chosen on the app resource when the task builds it:
+
+```python
+from gws_core import AppAccessMode
+
+reflex_app.set_access_mode(AppAccessMode.AUTHENTICATED)  # default
+reflex_app.set_access_mode(AppAccessMode.PUBLIC)         # anonymous
+```
+
+**`AUTHENTICATED` (default)** — the app always has a user.
+- The user is identified before the app opens (data lab session, or a one-time code from a space share link). The app receives a single-use `gws_code` on its URL, exchanges it once for an **app-scoped JWT**, and stores it in an `rx.Cookie` named `gws_app_jwt` so a F5 / new tab stays logged in.
+- Inside the app, `get_current_user()` / `authenticate_user()` return that user, and API calls to the data lab run as them.
+- The JWT is scoped to this app: it works only on the app-enabled API routes and is rejected everywhere else, so a leaked cookie can't be used as a general lab session.
+- Never write auth code yourself: `ReflexMainState` does the exchange, the cookie and the re-validation. Just call `get_current_user()` / `authenticate_user()`.
+
+**`PUBLIC`** — the app is anonymous.
+- No user, no code, no JWT, no cookie. The URL is bare and shareable; anyone who has it opens the app.
+- `requires_authentication()` is False, `get_current_user()` returns `None`, and `get_and_check_current_user()` / `authenticate_user()` raise. Any UI needing a user must be guarded.
+- API calls to the data lab carry no identity. A component that must still reach the API can opt into `fallback_to_system_user`, which runs the request as the **system user** — that means any visitor reads/writes lab objects as the system user, so use it only on read-only, non-sensitive data.
+- A `PUBLIC` share link on an `AUTHENTICATED` app is refused (it would bypass the app's auth); such apps are shared via a `SPACE` link or the app gateway URL.
+
+Both modes behave the same in dev mode (`gws reflex run`): `AUTHENTICATED` fakes the system user as the logged-in user, `PUBLIC` stays anonymous.
+
+Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_LAUNCH_AND_AUTH.md`.
 
 ### Running and Debugging the App
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 

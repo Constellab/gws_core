@@ -68,6 +68,33 @@ You can use the following application as a reference implementation: `${GWS_CORE
 ### GWS Core custom Streamlit Components
 - Leverage the custom components and widgets provided by the `gws_core.streamlit` module. More details in the `${GWS_CORE_SRC}/streamlit/CLAUDE.md` file.
 
+### Authentication: `AUTHENTICATED` vs `PUBLIC`
+
+An app has one access mode, chosen on the app resource when the task builds it:
+
+```python
+from gws_core import AppAccessMode
+
+streamlit_app.set_access_mode(AppAccessMode.AUTHENTICATED)  # default
+streamlit_app.set_access_mode(AppAccessMode.PUBLIC)         # anonymous
+```
+
+**`AUTHENTICATED` (default)** — the app always has a user.
+- The user is identified before the app opens (data lab session, or a one-time code from a space share link). The app receives a single-use `gws_code`, exchanges it once for an **app-scoped JWT**, and the JWT is stored in an HttpOnly `gws_app_jwt` cookie (set by nginx via `/gws-login`) so a F5 / new tab stays logged in.
+- Inside the app, `StreamlitMainState.get_current_user()` / `get_and_check_current_user()` return that user, and API calls to the data lab run as them.
+- The JWT is scoped to this app: it works only on the app-enabled API routes and is rejected everywhere else, so a leaked cookie can't be used as a general lab session.
+- Never write auth code yourself: the base state does the exchange, the cookie and the re-validation. Just call `get_current_user()` / `get_and_check_current_user()`.
+
+**`PUBLIC`** — the app is anonymous.
+- No user, no code, no JWT, no cookie. The URL is bare and shareable; anyone who has it opens the app.
+- `authentication_is_required()` is False, `get_current_user()` returns `None`, and `get_and_check_current_user()` raises. Any UI needing a user must be guarded.
+- API calls to the data lab carry no identity. A custom component that must still reach the API can pass `fallback_to_system_user=True` (see `get_user_auth_info`), which runs the request as the **system user** — that means any visitor reads/writes lab objects as the system user, so use it only on read-only, non-sensitive data. Without it the component shows an error and stops.
+- A `PUBLIC` share link on an `AUTHENTICATED` app is refused (it would bypass the app's auth); such apps are shared via a `SPACE` link or the app gateway URL.
+
+In dev mode (`gws streamlit run`): an `AUTHENTICATED` app authenticates the system user as the logged-in user, a `PUBLIC` app stays anonymous (same as in prod).
+
+Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_LAUNCH_AND_AUTH.md`.
+
 ### Running and Debugging the App
 - To run the app locally: `gws streamlit run [DEV_CONFIG_FILE_PATH]`
 - The app is available once you see: `You can now view your Streamlit app in your browser.`
