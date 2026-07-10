@@ -69,6 +69,7 @@ from .config.param.tags_param_spec import TagsParam as TagsParam
 
 # Core
 # Core > Classes
+from .core.classes.cors_config import CorsPolicy as CorsPolicy
 from .core.classes.enum_field import EnumField as EnumField
 from .core.classes.expression_builder import ExpressionBuilder as ExpressionBuilder
 from .core.classes.file_downloader import FileDownloader as FileDownloader

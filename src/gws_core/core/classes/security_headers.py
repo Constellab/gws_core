@@ -20,15 +20,21 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response = await call_next(request)
 
         # Add security headers
-        self._add_security_headers(response)
+        self.add_security_headers(response)
 
         return response
 
-    def _add_security_headers(self, response: Response) -> None:
-        """Add comprehensive security headers to the response"""
+    @classmethod
+    def add_security_headers(cls, response: Response) -> None:
+        """Add comprehensive security headers to the response.
+
+        Classmethod so responses built outside the middleware (a 500 handler
+        response never traverses its app's middleware) can be stamped too — see
+        ``ApiRegistry.configure_exception_handlers``.
+        """
 
         # Content Security Policy
-        csp_policy = self._get_csp_policy()
+        csp_policy = cls._get_csp_policy()
         response.headers["Content-Security-Policy"] = csp_policy
 
         # HTTP Strict Transport Security (HSTS)
@@ -55,7 +61,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
             "vibrate=(), fullscreen=(self), payment=()"
         )
 
-    def _get_csp_policy(self) -> str:
+    @classmethod
+    def _get_csp_policy(cls) -> str:
         """Generate Content Security Policy based on environment"""
         lab_env: LabEnvironment = Settings.get_lab_environment()
 

@@ -6,7 +6,7 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException
 from starlette.requests import Request
 
-from ..classes.cors_config import CorsConfig
+from ..classes.cors_config import CorsConfig, CorsPolicy
 from ..utils.logger import Logger
 from ..utils.request_context import RequestContext
 from ..utils.settings import Settings
@@ -39,7 +39,18 @@ class ExceptionHandler:
         )
 
     @classmethod
-    def handle_exception(cls, request: Request | None, exception: Exception) -> ExceptionResponse:
+    def handle_exception(
+        cls,
+        request: Request | None,
+        exception: Exception,
+        cors_policy: CorsPolicy | None = None,
+    ) -> ExceptionResponse:
+        """Convert an exception to a formatted ExceptionResponse.
+
+        :param cors_policy: the CORS policy of the app the request belongs to
+            (None for the lab default). Only used for unexpected exceptions (500),
+            whose responses must be stamped with CORS headers manually.
+        """
         if isinstance(exception, BaseHTTPException):
             return cls._handle_expected_exception(request, exception)
         elif isinstance(exception, HTTPException):
@@ -47,7 +58,7 @@ class ExceptionHandler:
         elif isinstance(exception, ValidationError):
             return cls._handle_validation_exception(request, exception)
         else:
-            return cls._handle_unexcepted_exception(request, exception)
+            return cls._handle_unexcepted_exception(request, exception, cors_policy)
 
     @classmethod
     def _handle_expected_exception(
@@ -149,7 +160,10 @@ class ExceptionHandler:
 
     @classmethod
     def _handle_unexcepted_exception(
-        cls, request: Request | None, exception: Exception
+        cls,
+        request: Request | None,
+        exception: Exception,
+        cors_policy: CorsPolicy | None = None,
     ) -> ExceptionResponse:
         """Handle the unexcepted exception (error 500) it logs the stack trace and return a formated object
 
@@ -184,13 +198,15 @@ class ExceptionHandler:
         if request is not None:
             # Since the CORSMiddleware is not executed when an unhandled server exception
             # occurs, we need to manually set the CORS headers ourselves if we want the FE
-            # to receive a proper JSON 500, opposed to a CORS error.
+            # to receive a proper JSON 500, opposed to a CORS error. The app's own
+            # policy is applied (lab default otherwise), matching what its
+            # middleware would have done.
             # Setting CORS headers on server errors is a bit of a philosophical topic of
             # discussion in many frameworks, and it is currently not handled in FastAPI.
             # See dotnet core for a recent discussion, where ultimately it was
             # decided to return CORS headers on server failures:
             # https://github.com/dotnet/aspnetcore/issues/2378
-            CorsConfig.configure_response_cors(request, response)
+            CorsConfig.configure_response_cors(request, response, cors_policy)
 
         return response
 

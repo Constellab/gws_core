@@ -9,9 +9,7 @@ from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
 from .apps.apps_manager import AppsManager
-from .core.classes.cors_config import CorsConfig
 from .core.classes.request_id_middleware import RequestIdMiddleware
-from .core.classes.security_headers import SecurityHeadersMiddleware
 from .core.utils.settings import Settings
 from .lab.api_registry import ApiRegistry
 from .lab.system_service import SystemService
@@ -71,11 +69,11 @@ class App:
 
         SystemService.init_queue_and_monitor()
 
-        # Configure the CORS
-        CorsConfig.configure_app_cors(app)
-
-        # Add security headers middleware
-        app.add_middleware(SecurityHeadersMiddleware)
+        # No CORS or security-headers middleware on the main app: each sub-app gets
+        # its own from ApiRegistry.register_api — CORS because a parent CORS
+        # middleware would answer preflights before the mounts are reached,
+        # overriding the sub-apps' policies; security headers so an app can opt
+        # out (with_security_headers=False).
 
         # Add request ID middleware (outermost — runs first, sets request_id for all logs)
         app.add_middleware(RequestIdMiddleware)
