@@ -75,6 +75,15 @@ class AppsManager:
         )
 
     @classmethod
+    def start_app_async(cls, app: AppInstance) -> AppProcess:
+        """(Cold-)start the app in background and return its process.
+
+        Unlike create_or_get_app_async, this builds no app URL, so it works in contexts where
+        there is no current user (lab boot) and for callers that only need the process itself.
+        """
+        return cls._create_or_get_app_async(app)
+
+    @classmethod
     def _create_or_get_app_async(cls, app: AppInstance) -> AppProcess:
         """Create app asynchronously and return the app ID. The app will be registered and started in background."""
         cls._refresh_processes()

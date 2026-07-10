@@ -82,15 +82,14 @@ class AppGatewayService:
         The token is used by the interstitial page to poll GET /apps/process/{token}/status
         until the app is RUNNING.
 
+        Builds no app URL: the caller only polls the status, and URL generation needs a current
+        user, which the lab-boot auto-start has none of.
+
         :param app_resource: the app to start
         :return: the process status token
         """
         app = app_resource.build_app_instance()
-        AppsManager.create_or_get_app_async(app)
-
-        app_process = AppsManager.find_app_by_resource_model_id(app.resource_model_id)
-        if app_process is None:
-            raise BadRequestException("The app failed to start")
+        app_process = AppsManager.start_app_async(app)
         return app_process.get_token()
 
     @classmethod
