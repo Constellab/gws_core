@@ -269,6 +269,26 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "create constellab document in space")
 
+    def get_constellab_document_content(self, document_id: str) -> RichTextDTO:
+        """Get the content of a Constellab document as rich text
+
+        :param document_id: id of the Constellab document
+        :type document_id: str
+        :return: the document content as rich text
+        :rtype: RichTextDTO
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/constellab-document/{document_id}/content"
+        )
+
+        try:
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
+            return RichTextDTO.from_json(response.json())
+        except Exception as err:
+            self.handle_error(err, "get constellab document content from space")
+
     #################################### RICH TEXT ####################################
     def get_rich_text_modifications(
         self,
@@ -1032,6 +1052,28 @@ class SpaceService(SpaceServiceBase):
             return group_list
         except Exception as err:
             self.handle_error(err, "retrieve groups for the lab")
+
+    def get_group_users(self, group_id: str) -> list[UserSpace]:
+        """Get all the users of a group
+
+        :param group_id: id of the group
+        :type group_id: str
+        :return: list of users of the group
+        :rtype: List[UserSpace]
+        """
+
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/groups/{group_id}/users"
+        )
+
+        try:
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
+            # the route returns a wrapper object: { "users": CnUser[] }
+            return UserSpace.from_json_list(response.json().get("users", []))
+        except Exception as err:
+            self.handle_error(err, "retrieve users of the group")
 
     ############################################## OTHER ##############################################
 

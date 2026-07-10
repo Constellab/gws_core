@@ -16,6 +16,7 @@ from gws_core.folder.space_folder_dto import (
     SpaceFolderUser,
     SpaceRootFolderUserRole,
 )
+from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.lab.lab_config_dto import LabConfigModelDTO
@@ -43,18 +44,30 @@ class TestMockSpaceService(SpaceService):
     """
 
     _space_folder_users: list[SpaceFolderUser]
+    _group_users: dict[str, list[UserSpace]]
+    _constellab_document_contents: dict[str, RichTextDTO]
 
     # ==================== AUTHENTICATION ====================
 
     def __init__(self):
         super().__init__()
         self._space_folder_users = []
+        self._group_users = {}
+        self._constellab_document_contents = {}
 
     def set_space_folder_users_mock(self, users: list[UserDTO]):
         """Set mock space folder users"""
         self._space_folder_users = [
             SpaceFolderUser(role=SpaceRootFolderUserRole.USER, user=user) for user in users
         ]
+
+    def set_group_users_mock(self, group_id: str, users: list[UserSpace]):
+        """Set the mock users returned by get_group_users for a group"""
+        self._group_users[group_id] = users
+
+    def set_constellab_document_content_mock(self, document_id: str, content: RichTextDTO):
+        """Set the mock content returned by get_constellab_document_content for a document"""
+        self._constellab_document_contents[document_id] = content
 
     def check_api_key(self, api_key: str) -> bool:
         """Mock check_api_key - always returns True"""
@@ -272,6 +285,22 @@ class TestMockSpaceService(SpaceService):
             lang=UserLanguage.EN,
             photo=None,
         )
+
+    # ==================== GROUPS ====================
+
+    def get_group_users(self, group_id: str) -> list[UserSpace]:
+        """Mock get_group_users - returns the users set via set_group_users_mock"""
+        return self._group_users.get(group_id, [])
+
+    # ==================== CONSTELLAB DOCUMENT ====================
+
+    def get_constellab_document_content(self, document_id: str) -> RichTextDTO:
+        """Mock get_constellab_document_content - returns the content set via
+        set_constellab_document_content_mock, or an empty rich text"""
+        content = self._constellab_document_contents.get(document_id)
+        if content is not None:
+            return content
+        return RichText().to_dto()
 
     # ==================== MAIL ====================
 
