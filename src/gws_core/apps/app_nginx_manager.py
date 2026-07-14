@@ -1,9 +1,11 @@
 import atexit
 import contextlib
+import fcntl
+import json
 import os
 from typing import Optional
 
-from gws_core.apps.app_nginx_service import AppNginxServiceInfo
+from gws_core.apps.app_nginx_service import AppNginxServiceInfo, app_nginx_service_from_dict
 from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -21,6 +23,8 @@ class AppNginxManager:
     _services: dict[str, AppNginxServiceInfo]
 
     _NGINX_CONF_FILENAME = "nginx.conf"
+    _SERVICES_FILENAME = "services.json"
+    _SERVICES_LOCK_FILENAME = "services.lock"
 
     NGINX_TEMPLATE = """
 # Nginx configuration template for apps
@@ -70,7 +74,7 @@ http {
 """
 
     def __init__(self):
-        self._services = {}
+        self._services = self._load_services()
 
     @classmethod
     def get_instance(cls) -> "AppNginxManager":
@@ -88,35 +92,95 @@ http {
             nginx_manager.stop()
 
     def register_services(self, services: list[AppNginxServiceInfo]) -> None:
-        """Register a service and update nginx configuration"""
-        for service in services:
-            self._services[service.service_id] = service
-            Logger.debug(
-                f"Registered service: {service.service_id}, server name {service.server_name}"
-            )
+        """Register a service and update nginx configuration.
+
+        AppNginxManager is a per-process singleton, but nginx itself is a single
+        shared daemon for the whole lab (every registered app, across every
+        process that provisions one). Registering/unregistering must therefore
+        read-modify-write the persisted service list under a lock, not just the
+        in-memory copy this particular process happened to load at startup —
+        otherwise a process that registered nothing yet would blow away every
+        service another process already registered.
+        """
+        with self._locked_services() as current:
+            for service in services:
+                current[service.service_id] = service
+                Logger.debug(
+                    f"Registered service: {service.service_id}, server name {service.server_name}"
+                )
+            self._services = current
+            self._save_services()
 
         self.start_or_reload()
 
     def unregister_services(self, service_ids: list[str]) -> None:
         """Unregister a service and update nginx configuration"""
-        for service_id in service_ids:
-            if service_id in self._services:
-                del self._services[service_id]
-                Logger.debug(f"Unregistered service: {service_id}")
+        with self._locked_services() as current:
+            for service_id in service_ids:
+                if service_id in current:
+                    del current[service_id]
+                    Logger.debug(f"Unregistered service: {service_id}")
+            self._services = current
+            self._save_services()
 
         if self._services:
             self.start_or_reload()
         else:
-            # if no services left, stop nginx
+            # if no services left (across every process), stop nginx
             self.stop()
 
     def get_services(self) -> list[AppNginxServiceInfo]:
-        """Get all registered services"""
-        return list(self._services.values())
+        """Get all registered services (fresh from disk, reflects every process)"""
+        return list(self._load_services().values())
 
     def get_service(self, name: str) -> AppNginxServiceInfo | None:
-        """Get a specific service by name"""
-        return self._services.get(name)
+        """Get a specific service by name (fresh from disk, reflects every process)"""
+        return self._load_services().get(name)
+
+    @contextlib.contextmanager
+    def _locked_services(self):
+        """Hold an exclusive advisory lock across the whole lab while yielding the
+        current, freshly-reloaded-from-disk service dict, so a read-modify-write
+        (register/unregister) from one process can't race with another."""
+        FileHelper.create_dir_if_not_exist(self.get_nginx_config_dir())
+        with open(self._get_services_lock_file_path(), "w", encoding="utf-8") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                yield self._load_services()
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
+
+    def _load_services(self) -> dict[str, AppNginxServiceInfo]:
+        """Load the persisted service list from disk. Empty dict if never saved
+        or if the file is unreadable/corrupt (never crash the caller over this)."""
+        path = self._get_services_file_path()
+        if not os.path.exists(path):
+            return {}
+        try:
+            with open(path, encoding="utf-8") as f:
+                raw: dict = json.load(f)
+            return {service_id: app_nginx_service_from_dict(data) for service_id, data in raw.items()}
+        except Exception as e:
+            Logger.error(f"Failed to load persisted nginx services from {path}, starting empty: {e}")
+            return {}
+
+    def _save_services(self) -> None:
+        """Persist self._services to disk so other processes see it."""
+        FileHelper.create_dir_if_not_exist(self.get_nginx_config_dir())
+        path = self._get_services_file_path()
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(
+                    {service_id: service.to_dict() for service_id, service in self._services.items()}, f
+                )
+        except Exception as e:
+            Logger.error(f"Failed to persist nginx services to {path}: {e}")
+
+    def _get_services_file_path(self) -> str:
+        return os.path.join(self.get_nginx_config_dir(), self._SERVICES_FILENAME)
+
+    def _get_services_lock_file_path(self) -> str:
+        return os.path.join(self.get_nginx_config_dir(), self._SERVICES_LOCK_FILENAME)
 
     def start_or_reload(self):
         """Start nginx if not already started"""

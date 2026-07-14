@@ -17,6 +17,17 @@ class AppNginxServiceInfo:
         self.source_port = source_port
         self.server_name = server_name
 
+    def to_dict(self) -> dict:
+        """Serialize to a JSON-safe dict. Persisted across processes by
+        AppNginxManager, so subclasses that add fields must override this and
+        extend the base dict rather than replace it."""
+        return {
+            "type": type(self).__name__,
+            "service_id": self.service_id,
+            "source_port": self.source_port,
+            "server_name": self.server_name,
+        }
+
     def _render_server_names(self) -> str:
         """Render the server_name(s) for the nginx 'server_name ...;' directive."""
         if isinstance(self.server_name, str):
@@ -31,6 +42,7 @@ class AppNginxServiceInfo:
 class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
     """Service to redirect requests to a backend app or dev frontend app"""
 
+    destination_host: str
     destination_port: int
     use_localhost_host_header: bool
     allowed_origins: list[str]
@@ -41,11 +53,13 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         source_port: int,
         server_name: str | list[str],
         destination_port: int,
+        destination_host: str = "localhost",
         use_localhost_host_header: bool = False,
         allowed_origin: str | None = None,
         allowed_origins: list[str] | None = None,
     ):
         super().__init__(service_id, source_port, server_name)
+        self.destination_host = destination_host
         self.destination_port = destination_port
         self.use_localhost_host_header = use_localhost_host_header
         # Accept either a single origin (back-compat) or an explicit list. Both feed the same
@@ -56,6 +70,16 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
             origins.append(allowed_origin)
         # de-duplicate while preserving order
         self.allowed_origins = list(dict.fromkeys(origins))
+
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data.update({
+            "destination_port": self.destination_port,
+            "destination_host": self.destination_host,
+            "use_localhost_host_header": self.use_localhost_host_header,
+            "allowed_origins": self.allowed_origins,
+        })
+        return data
 
     def _build_cors_config(self) -> str:
         """Build the CORS header block, echoing the request origin when it is allowed.
@@ -99,7 +123,9 @@ class AppNginxRedirectServiceInfo(AppNginxServiceInfo):
         """Generate nginx configuration block for this service"""
 
         host_header = (
-            f"localhost:{self.destination_port}" if self.use_localhost_host_header else "$host"
+            f"{self.destination_host}:{self.destination_port}"
+            if self.use_localhost_host_header
+            else "$host"
         )
         cors_config = self._build_cors_config()
         return f"""
@@ -108,7 +134,7 @@ server {{
     server_name {self._render_server_names()};
 
     location / {{
-        proxy_pass http://localhost:{self.destination_port};
+        proxy_pass http://{self.destination_host}:{self.destination_port};
         proxy_set_header Host {host_header};
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -147,6 +173,11 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
         super().__init__(service_id, source_port, server_name)
         self.front_folder_path = front_folder_path
 
+    def to_dict(self) -> dict:
+        data = super().to_dict()
+        data["front_folder_path"] = self.front_folder_path
+        return data
+
     def get_nginx_service_config(
         self,
     ) -> str:
@@ -182,3 +213,16 @@ server {{
         gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
     }}
 """
+
+
+_SERVICE_INFO_TYPES: dict[str, type[AppNginxServiceInfo]] = {
+    cls.__name__: cls
+    for cls in (AppNginxRedirectServiceInfo, AppNginxReflexFrontServerServiceInfo)
+}
+
+
+def app_nginx_service_from_dict(data: dict) -> AppNginxServiceInfo:
+    """Reconstruct the concrete AppNginxServiceInfo subclass persisted by to_dict()."""
+    kwargs = {key: value for key, value in data.items() if key != "type"}
+    service_type = _SERVICE_INFO_TYPES[data["type"]]
+    return service_type(**kwargs)
