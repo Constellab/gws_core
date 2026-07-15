@@ -172,6 +172,8 @@ Wait for the user's answer before proceeding.
 
 ### Step A1: Collect source files
 
+**Before anything else, read the brick's `CLAUDE.md` file** at the brick root (and any brick-specific `CLAUDE.md` files it points to). This gives you a global understanding of the project — its architecture, conventions, key concepts, and terminology — so the documentation you generate fits the brick's context rather than being derived from the source files in isolation. If the brick has no `CLAUDE.md`, note that and continue.
+
 Ask the user to provide the source files (Python files) that this documentation should cover. The user can provide:
 - Relative paths from the brick root (e.g., `src/my_brick/services/my_service.py`)
 - Absolute paths
@@ -271,6 +273,8 @@ Show the user the current list of source files linked to the selected doc, then 
 Wait for the answer.
 
 ### Step B3: Read source files and fetch current doc
+
+**First, read the brick's `CLAUDE.md` file** at the brick root (and any brick-specific `CLAUDE.md` files it points to) to build a global understanding of the project — its architecture, conventions, key concepts, and terminology — before analyzing the source. If the brick has no `CLAUDE.md`, note that and continue.
 
 **Read the source files:** Read every file in the `source_files` array. Pay attention to:
 
