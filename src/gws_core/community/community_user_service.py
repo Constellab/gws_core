@@ -121,9 +121,10 @@ class CommunityUserService:
         :param title: Title of the new folder.
         :return: The raw JSON payload returned by the API (contains at least the new folder's ``id``).
         """
-        url = f"{self.get_community_api_url()}/folder/doc"
+        url = f"{self.get_community_api_url()}/folder"
 
         payload = {
+            "id": None,
             "folderId": folder_id,
             "title": title,
             "type": "FOL",
