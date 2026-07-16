@@ -1,4 +1,3 @@
-import os
 import traceback
 
 import reflex as rx
@@ -24,7 +23,9 @@ def main_component(*contents: rx.Component, include_theme_css: bool = True) -> r
     :return: The wrapped component.
     :rtype: rx.Component
     """
-    theme_link = [rx.el.link(rel="stylesheet", href=gws_theme_css_asset_path)] if include_theme_css else []
+    theme_link = (
+        [rx.el.link(rel="stylesheet", href=gws_theme_css_asset_path)] if include_theme_css else []
+    )
 
     return rx.fragment(
         *theme_link,
@@ -63,7 +64,8 @@ def get_theme():
     """
     return rx.theme(
         gray_color="sage",
-        appearance=os.environ.get("GWS_THEME", "light"),
+        # force light mode, because switch based on user is not yet supported
+        appearance="light",
         radius="large",
     )
 

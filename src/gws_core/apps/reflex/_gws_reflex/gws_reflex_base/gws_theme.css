@@ -54,6 +54,7 @@ a[href="https://reflex.dev"] {
 }
 
 
+/* Mode-independent tokens (fonts, cursors) — apply to both light and dark. */
 .radix-themes {
   --default-font-family: 'Plus Jakarta Sans', sans-serif;
   --cursor-button: pointer;
@@ -65,8 +66,18 @@ a[href="https://reflex.dev"] {
   --cursor-slider-thumb: grab;
   --cursor-slider-thumb-active: grabbing;
   --cursor-switch: pointer;
-  --color-background: var(--accent-1);
 
+
+}
+
+/* Light palettes.
+Scoped like Radix scopes its own scales (tokens/colors/*.css): light values under
+`:is(.light, .light-theme)`, dark values under `:is(.dark, .dark-theme)`. Without the
+scope these custom scales would also override Radix's dark scales, so `appearance="dark"`
+would flip the grays but leave the brand colors light. */
+.radix-themes:is(.light, .light-theme) {
+  --color-background: var(--accent-1);
+  --color-panel: white;
   /* Custom accent color palette */
   --accent-1: #f7fdfc;
   --accent-2: #e9f8f5;
@@ -218,6 +229,173 @@ a[href="https://reflex.dev"] {
 
   --pink-contrast: var(--tertiary-contrast);
   --pink-surface: #ffd4ec33;
+  --pink-indicator: var(--tertiary-9);
+  --pink-track: var(--tertiary-9);
+}
+
+/* Dark palettes.
+   Follows Radix's dark-scale rules rather than inverting the light scales: step 1-2 are
+   near-black app/subtle backgrounds, 3-5 component backgrounds, 6-8 borders, 9 the brand
+   hue held identical to light (Radix keeps step 9 stable across modes), 10 a lighter hover,
+   11-12 the accessible text steps. Background stays `--gray-1` (Radix's default) so dark
+   mode gets a neutral base instead of a tinted one. */
+.radix-themes:is(.dark, .dark-theme) {
+  --color-background: #222222;
+  --color-panel: #2b2d2e;
+
+  /* Custom accent color palette */
+  --accent-1: #0c1614;
+  --accent-2: #101d1a;
+  --accent-3: #0b2f28;
+  --accent-4: #013d33;
+  --accent-5: #0a4a3f;
+  --accent-6: #16594c;
+  --accent-7: #1e6b5c;
+  --accent-8: #22806e;
+  --accent-9: #25b49c;
+  --accent-10: #2cc4aa;
+  --accent-11: #3fdcbe;
+  --accent-12: #b3f1e2;
+
+  --accent-a1: #00deb406;
+  --accent-a2: #14fbdc0d;
+  --accent-a3: #00ffd91f;
+  --accent-a4: #00ffd82e;
+  --accent-a5: #00ffdc3c;
+  --accent-a6: #1effdb4c;
+  --accent-a7: #30fedb60;
+  --accent-a8: #34ffda76;
+  --accent-a9: #17ffd9a0;
+  --accent-a10: #10ffd6af;
+  --accent-a11: #0dffcbd7;
+  --accent-a12: #bafff0f0;
+
+  --accent-surface: #10282380;
+  --accent-indicator: var(--accent-9);
+  --accent-track: var(--accent-9);
+  --accent-contrast: #0b1a17;
+
+  /* Custom secondary color palette (purple/violet) */
+  --secondary-1: #131223;
+  --secondary-2: #19172e;
+  --secondary-3: #241f47;
+  --secondary-4: #2d265c;
+  --secondary-5: #362e6b;
+  --secondary-6: #40397a;
+  --secondary-7: #4e4691;
+  --secondary-8: #6055b4;
+  --secondary-9: #877bb8;
+  --secondary-10: #968ac6;
+  --secondary-11: #b3a8e0;
+  --secondary-12: #ddd7f5;
+
+  --secondary-a1: #3a2ef714;
+  --secondary-a2: #5442ff20;
+  --secondary-a3: #6b52ff3b;
+  --secondary-a4: #7358ff52;
+  --secondary-a5: #7d64ff62;
+  --secondary-a6: #8672ff72;
+  --secondary-a7: #8b77ff8b;
+  --secondary-a8: #8878ffb2;
+  --secondary-a9: #b6a7ffb4;
+  --secondary-a10: #c1b2ffc3;
+  --secondary-a11: #cabdffde;
+  --secondary-a12: #e6dffff5;
+
+  --secondary-contrast: #131223;
+  --secondary-surface: #1f1b3a80;
+
+  /* Custom tertiary color palette (pink/magenta) */
+  --tertiary-1: #1b1016;
+  --tertiary-2: #24131c;
+  --tertiary-3: #3d1830;
+  --tertiary-4: #4f1a3d;
+  --tertiary-5: #5d2249;
+  --tertiary-6: #6d2d56;
+  --tertiary-7: #863b69;
+  --tertiary-8: #a94a83;
+  --tertiary-9: #c35895;
+  --tertiary-10: #d066a2;
+  --tertiary-11: #f28cbf;
+  --tertiary-12: #fcd6e8;
+
+  --tertiary-a1: #f4126d0b;
+  --tertiary-a2: #fe2c8a15;
+  --tertiary-a3: #ff40b330;
+  --tertiary-a4: #ff44b444;
+  --tertiary-a5: #ff51b953;
+  --tertiary-a6: #ff62bd64;
+  --tertiary-a7: #fd72c07f;
+  --tertiary-a8: #ff77c0a4;
+  --tertiary-a9: #ff7ac0c0;
+  --tertiary-a10: #ff81c3ce;
+  --tertiary-a11: #ff93c7f1;
+  --tertiary-a12: #ffdaedfc;
+
+  --tertiary-contrast: #1b1016;
+  --tertiary-surface: #33162880;
+
+  /* Override Radix "violet" palette with secondary colors */
+  --violet-1: var(--secondary-1);
+  --violet-2: var(--secondary-2);
+  --violet-3: var(--secondary-3);
+  --violet-4: var(--secondary-4);
+  --violet-5: var(--secondary-5);
+  --violet-6: var(--secondary-6);
+  --violet-7: var(--secondary-7);
+  --violet-8: var(--secondary-8);
+  --violet-9: var(--secondary-9);
+  --violet-10: var(--secondary-10);
+  --violet-11: var(--secondary-11);
+  --violet-12: var(--secondary-12);
+
+  --violet-a1: var(--secondary-a1);
+  --violet-a2: var(--secondary-a2);
+  --violet-a3: var(--secondary-a3);
+  --violet-a4: var(--secondary-a4);
+  --violet-a5: var(--secondary-a5);
+  --violet-a6: var(--secondary-a6);
+  --violet-a7: var(--secondary-a7);
+  --violet-a8: var(--secondary-a8);
+  --violet-a9: var(--secondary-a9);
+  --violet-a10: var(--secondary-a10);
+  --violet-a11: var(--secondary-a11);
+  --violet-a12: var(--secondary-a12);
+
+  --violet-contrast: var(--secondary-contrast);
+  --violet-surface: var(--secondary-surface);
+  --violet-indicator: var(--secondary-9);
+  --violet-track: var(--secondary-9);
+
+  /* Override Radix "pink" palette with tertiary colors */
+  --pink-1: var(--tertiary-1);
+  --pink-2: var(--tertiary-2);
+  --pink-3: var(--tertiary-3);
+  --pink-4: var(--tertiary-4);
+  --pink-5: var(--tertiary-5);
+  --pink-6: var(--tertiary-6);
+  --pink-7: var(--tertiary-7);
+  --pink-8: var(--tertiary-8);
+  --pink-9: var(--tertiary-9);
+  --pink-10: var(--tertiary-10);
+  --pink-11: var(--tertiary-11);
+  --pink-12: var(--tertiary-12);
+
+  --pink-a1: var(--tertiary-a1);
+  --pink-a2: var(--tertiary-a2);
+  --pink-a3: var(--tertiary-a3);
+  --pink-a4: var(--tertiary-a4);
+  --pink-a5: var(--tertiary-a5);
+  --pink-a6: var(--tertiary-a6);
+  --pink-a7: var(--tertiary-a7);
+  --pink-a8: var(--tertiary-a8);
+  --pink-a9: var(--tertiary-a9);
+  --pink-a10: var(--tertiary-a10);
+  --pink-a11: var(--tertiary-a11);
+  --pink-a12: var(--tertiary-a12);
+
+  --pink-contrast: var(--tertiary-contrast);
+  --pink-surface: var(--tertiary-surface);
   --pink-indicator: var(--tertiary-9);
   --pink-track: var(--tertiary-9);
 }

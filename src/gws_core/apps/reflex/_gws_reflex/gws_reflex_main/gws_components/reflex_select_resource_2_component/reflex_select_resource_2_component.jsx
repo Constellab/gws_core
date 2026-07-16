@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-
 import '/public/external/gws_plugin/styles.css';
-import '/public/external/gws_plugin/light-theme.css';
 import { dcInitComponents } from '/public/external/gws_plugin/dc-reflex.js';
 await dcInitComponents();
 

@@ -155,7 +155,6 @@ class ReflexProcess(AppProcess):
             raise Exception(f"Reflex modules not found at {reflex_modules_path}")
 
         brick_info = BrickHelper.get_brick_info_and_check(BrickHelper.GWS_CORE)
-        theme = self.get_current_user_theme()
 
         python_path = reflex_modules_path
 
@@ -168,7 +167,6 @@ class ReflexProcess(AppProcess):
         # define python path to include gws_reflex_base and gws_reflex_main and gws_core
         env_dict["PYTHONPATH"] = python_path
         env_dict["GWS_REFLEX_API_URL"] = self.get_back_host_url()
-        env_dict["GWS_THEME"] = theme.theme
 
         # Get access token based on whether this is an enterprise app
         access_token: str | None = None  # Default token
