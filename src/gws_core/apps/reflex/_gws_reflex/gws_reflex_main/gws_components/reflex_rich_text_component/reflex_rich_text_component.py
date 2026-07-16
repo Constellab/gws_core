@@ -13,6 +13,35 @@ public_js_path = "$/public/" + asset_path
 
 
 @dataclass
+class RichTextImageConfig:
+    """Configuration of the images of a rich text editor.
+
+    It identifies the object owning the rich text. The editor uploads and loads the images
+    through the lab ``rich-text/{object_type}/{object_id}/image`` routes, in a directory
+    dedicated to that object.
+
+    The images are stored by :class:`RichTextFileService`, so the owner of the object must
+    delete that directory when the object is deleted (``RichTextFileService.delete_object_dir``),
+    otherwise the images are leaked.
+    """
+
+    object_type: str
+    """Type of the object owning the rich text, e.g. ``'project_document'`` or a
+    :class:`RichTextObjectType` value. It is used as a directory name, so it must only contain
+    letters, digits, ``_`` and ``-``."""
+
+    object_id: str
+    """Id of the object owning the rich text."""
+
+    def to_dict(self) -> dict:
+        """Convert the config to a dictionary for serialization."""
+        return {
+            "objectType": self.object_type,
+            "objectId": self.object_id,
+        }
+
+
+@dataclass
 class RichTextCustomBlocksConfig:
     jsx_file_path: str
     custom_blocks: dict[str, type[RichTextBlockDataBase]] | None = None
@@ -48,6 +77,10 @@ class RichTextComponent(rx.Component):
     disabled: Var[bool | None]
     change_event_debounce_time: Var[int | None]
 
+    # Object owning the images of the rich text. When it is set, the image tool is enabled
+    # and the editor uploads/loads the images through the lab rich text API.
+    image_config: Var[dict | None]
+
     custom_style: Var[dict | None]  # Additional style properties
 
     custom_tools_config: Var[dict | None]
@@ -60,7 +93,7 @@ class RichTextComponent(rx.Component):
     custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)]
 
 
-def rich_text_component(
+def rich_text_component(  # noqa: PLR0913 the params mirror the component's props
     placeholder: str | None = None,
     value: RichTextDTO | None = None,
     disabled: bool | None = None,
@@ -70,6 +103,7 @@ def rich_text_component(
     custom_tools_config: RichTextCustomBlocksConfig | None = None,
     custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
     fallback_to_system_user: bool = False,
+    image_config: RichTextImageConfig | None = None,
 ):
     """Create a RichTextComponent instance.
 
@@ -176,8 +210,25 @@ def rich_text_component(
     :param fallback_to_system_user: when no user is authenticated (PUBLIC app), authenticate
         the component's API requests as the system user instead of leaving them
         unauthenticated. WARNING: this lets any visitor of the app read and write data lab
-        objects through the API as the system user. Defaults to False.
+        objects through the API as the system user, including uploading the editor's images.
+        Defaults to False.
     :type fallback_to_system_user: bool, optional
+    :param image_config: object owning the images of this rich text. When provided, the image
+        tool is enabled and the editor uploads/loads the images through the lab rich text API::
+
+            rich_text_component(
+                value=MyState.content,
+                output_event=MyState.handle_change,
+                image_config=RichTextImageConfig(
+                    object_type="project_document",
+                    object_id=MyState.document_id,
+                ),
+            )
+
+        The images are stored in a directory dedicated to the object, so the owner of the
+        object is responsible for deleting that directory when the object is deleted
+        (``RichTextFileService.delete_object_dir``). Defaults to None (image tool disabled).
+    :type image_config: Optional[RichTextImageConfig], optional
     :return: Instance of RichTextComponent
     :rtype: RichTextComponent
     """
@@ -197,4 +248,5 @@ def rich_text_component(
         custom_tools_config=custom_tools_config.to_dict() if custom_tools_config else None,
         authentication_info=authentication_info,
         custom_tools_event=custom_tools_event,
+        image_config=image_config.to_dict() if image_config else None,
     )

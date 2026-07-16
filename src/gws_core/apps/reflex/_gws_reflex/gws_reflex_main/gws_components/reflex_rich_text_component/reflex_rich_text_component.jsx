@@ -111,6 +111,7 @@ export function RichTextComponent({
   customToolsConfig = null,
   authenticationInfo = null,
   customToolsEvent = null,
+  imageConfig = null,
 }) {
   const componentRef = useRef(null);
   const inputDataCountRef = useRef(0);
@@ -118,12 +119,15 @@ export function RichTextComponent({
 
 
   // Combine all input data into a single JSON object
+  // imageConfig enables the image tool: the editor uploads and loads the images
+  // through the lab rich text API, in a directory dedicated to that object.
   const inputData = useMemo(() => ({
     placeholder,
     value,
     disabled,
     changeEventDebounceTime,
-  }), [placeholder, value, disabled, changeEventDebounceTime]);
+    imageConfig,
+  }), [placeholder, value, disabled, changeEventDebounceTime, imageConfig]);
 
   // Set inputData as a property on the element so the web component picks up changes
   useEffect(() => {

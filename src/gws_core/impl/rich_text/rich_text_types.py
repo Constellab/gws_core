@@ -15,11 +15,13 @@ RICH_TEXT_CURRENT_VERSION = 2
 RICH_TEXT_EDITORJS_VERSION = "2.31.0"
 
 
-class RichTextObjectType(Enum):
-    """Different object that use the rich text editor
+class RichTextObjectType(str, Enum):
+    """Standard objects that use the rich text editor.
 
-    :param Enum: _description_
-    :type Enum: _type_
+    Inherits ``str`` so that members are usable anywhere an object type string is
+    expected: :class:`RichTextFileService` takes the object type as a plain ``str``
+    so other bricks can scope their own rich text files (e.g. gws_project's
+    ``project_document``) without extending this enum.
     """
 
     NOTE = "note"

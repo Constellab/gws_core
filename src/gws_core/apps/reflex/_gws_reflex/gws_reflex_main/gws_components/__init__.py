@@ -22,6 +22,9 @@ from .reflex_rich_text_component.reflex_rich_text_component import (
     RichTextCustomBlocksConfig as RichTextCustomBlocksConfig,
 )
 from .reflex_rich_text_component.reflex_rich_text_component import (
+    RichTextImageConfig as RichTextImageConfig,
+)
+from .reflex_rich_text_component.reflex_rich_text_component import (
     rich_text_component as rich_text_component,
 )
 from .reflex_select_resource_2_component.reflex_select_resource_2_component import (

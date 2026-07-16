@@ -18,16 +18,22 @@ from gws_core.user.authorization_service import AuthorizationService
 ########################################### IMAGE ###########################################
 
 
+# The image routes take the object type as a plain str (not a RichTextObjectType) so that other
+# bricks can store the images of their own objects (e.g. gws_project's 'project_document'). This
+# removes the enum validation, so RichTextFileService.get_object_dir_path is what rejects a type
+# or id that could escape the object directory.
+# They also allow the app authentication so the rich text editor embedded in a reflex/streamlit
+# app can upload and display images with the app token.
 @core_app.post(
     "/rich-text/{object_type}/{object_id}/image",
     tags=["Rich text"],
     summary="Upload an image to a rich text",
 )
 def upload_image(
-    object_type: RichTextObjectType,
+    object_type: str,
     object_id: str,
     image: UploadFile = FastAPIFile(...),
-    _=Depends(AuthorizationService.check_user_access_token),
+    _=Depends(AuthorizationService.check_user_access_token_or_app),
 ) -> RichTextUploadImageResultDTO:
     return RichTextFileService.upload_image(object_type, object_id, image)
 
@@ -38,10 +44,9 @@ def upload_image(
     summary="Get an image of a rich text",
 )
 def get_image(
-    object_type: RichTextObjectType,
+    object_type: str,
     object_id: str,
     filename: str,
-    _=Depends(AuthorizationService.check_user_access_token),
 ) -> FileResponse:
     file_path = RichTextFileService.get_figure_file_path(object_type, object_id, filename)
     return FileHelper.create_file_response(file_path, filename=filename)
