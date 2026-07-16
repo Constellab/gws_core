@@ -352,6 +352,7 @@ from .impl.rich_text.rich_text import RichText as RichText
 from .impl.rich_text.rich_text_db_field import NullableRichTextDbField as NullableRichTextDbField
 from .impl.rich_text.rich_text_db_field import RichTextDbField as RichTextDbField
 from .impl.rich_text.rich_text_db_field import TypedRichTextDbField as TypedRichTextDbField
+from .impl.rich_text.rich_text_file_service import RichTextFileService as RichTextFileService
 from .impl.rich_text.rich_text_modification import RichTextAggregateDTO as RichTextAggregateDTO
 from .impl.rich_text.rich_text_types import RichTextBlock as RichTextBlock
 from .impl.rich_text.rich_text_types import RichTextDTO as RichTextDTO
