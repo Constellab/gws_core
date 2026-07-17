@@ -92,6 +92,11 @@ class AICodeService(ABC):
             description="Inspect and control scenarios from the CLI (search, info, error, protocol, resources, start/stop)",
             argument_hint="what to search for or inspect",
         ),
+        SkillFrontmatter(
+            filename="faq.md",
+            description="Save a diagnosed and fixed error to the developer FAQ on the Community",
+            argument_hint="the error to save (defaults to the one just debugged)",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):

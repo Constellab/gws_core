@@ -67,6 +67,11 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
   - API usage, conventions, and coding guidelines
 - Use this tool BEFORE writing code if you have any doubt about how something works on Constellab
 
+### Developer FAQ
+- The developer FAQ lives on the Community, under the **Developer guide** folder: one `FAQ` page per domain subfolder, plus a fallback `FAQ` page directly in `Developer guide`.
+- **When you finish diagnosing a non-obvious error, offer to save it to the FAQ** — then invoke the `gws-faq` skill if the user accepts. Offer only when the cause is understood AND the fix is verified AND the error was hard to diagnose (the message did not point to the fix). Offer once, and drop it if the user declines.
+- **When debugging an error, consider checking the FAQ first** — it may already be documented.
+
 ### Best Practices
 
 #### General Rules
