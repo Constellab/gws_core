@@ -40,6 +40,14 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - **Generate task class**: `gws task generate`
 - **Install dependencies**: Dependencies are defined in each brick's `settings.json`
 
+### Bump and Publish a Brick Version
+Run from the brick folder (or pass its path as an argument):
+1. **Bump the version manually** in the brick's `settings.json` (`"version"` field). Also bump the gws_core dependency if needed.
+2. **Commit it**
+3. **Publish**: `gws brick version push`
+   - Options: `-y` to skip every prompt, `-td` to push the technical documentation at the same time
+- **To push the technical documentation alone** (no new version): `gws brick technical-doc push`
+
 ### Database Queries (read-only)
 - **Run a query**: `gws db query "SELECT ..." --db [BRICK_NAME]`
 - `--db` defaults to `gws_core`; pass a brick name (e.g. `gws_invest`) to query its database
