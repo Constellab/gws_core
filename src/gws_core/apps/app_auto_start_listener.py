@@ -2,6 +2,7 @@ from gws_core.apps.app_dto import AppStopPolicy
 from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_resource import AppResource
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.lab.system_event import SystemStartedEvent
 from gws_core.model.event.event import Event
 from gws_core.model.event.event_listener import EventListener
@@ -21,10 +22,16 @@ class AppAutoStartListener(EventListener):
     Asynchronous on purpose: it runs in the dispatcher's DB-connected worker thread, so spawning
     the app processes never blocks the uvicorn startup, and a failing app only logs an error
     instead of aborting the lab boot.
+
+    Disabled in dev mode: a developer restarting the lab does not want every MANUAL app of their
+    local database respawned in the background.
     """
 
     def handle(self, event: Event) -> None:
         if not isinstance(event, SystemStartedEvent):
+            return
+        if Settings.is_dev_mode():
+            Logger.info("Skipping the MANUAL apps auto-start because the lab runs in dev mode")
             return
         _start_manual_apps()
 
