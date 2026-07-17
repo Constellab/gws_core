@@ -61,8 +61,15 @@ def get_theme():
     appended to ``config.plugins`` inside each app's ``rxconfig._init_reflex`` (after
     ``ReflexInit.init()`` makes this module importable). This replaces the
     ``App(theme=...)`` argument, deprecated in reflex 0.9.0 and removed in 1.0.
+
+    ``accent_color="teal"`` is required, not cosmetic: it makes Radix emit
+    ``[data-accent-color='teal'] { --accent-N: var(--teal-N) }``, which is what maps the
+    brand palette (defined as --teal-* in gws_theme.css) onto --accent-*. Without it Reflex
+    defaults to "blue" and Radix overwrites --accent-* with its own blue scale everywhere,
+    including inside portalled dialogs. See the note above the light block in gws_theme.css.
     """
     return rx.theme(
+        accent_color="teal",
         gray_color="sage",
         # force light mode, because switch based on user is not yet supported
         appearance="light",

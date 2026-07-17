@@ -4,10 +4,14 @@ from typing import Any
 class ReflexTheme:
     """
     Theme color constants for Reflex components.
-    The color schemes are overriden in the style.css of the main Reflex app.
+
+    Each constant is the name of a real Radix scale that gws_theme.css redefines with the
+    brand palette, so it can be passed straight to ``color_scheme=``. Radix only accepts its
+    own scale names there (see LiteralAccentColor), which is why the brand colors have to
+    hijack existing scales rather than add new ones.
     """
 
-    ACCENT = "accent"
+    ACCENT = "teal"
     SECONDARY = "violet"
     TERTIARY = "pink"
 

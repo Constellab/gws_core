@@ -76,6 +76,7 @@ def right_sidebar_open_button() -> rx.Component:
             initial="block",
             xl="none",
         ),
+        class_name="right-sidebar-open-button",
     )
 
 
@@ -100,6 +101,7 @@ def right_sidebar_close_button() -> rx.Component:
             initial="block",
             xl="none",
         ),
+        class_name="right-sidebar-close-button",
     )
 
 
@@ -124,11 +126,14 @@ def _create_sidebar_drawer(
                 padding="1rem 0",
                 display="flex",
                 flex_direction="column",
+                class_name="left-sidebar-drawer-content",
+                background="var(--color-panel-solid)",
             ),
         ),
         direction="left",
         open=SidebarState.show_left_sidebar,
         on_open_change=SidebarState.set_left_sidebar_open,
+        class_name="left-sidebar-drawer",
     )
 
 
@@ -152,7 +157,7 @@ def _create_desktop_sidebar(
         align_items="start",
         height="100vh",
         position="fixed",
-        bg="var(--color-panel)",
+        background="var(--color-panel-solid)",
         left="0",
         top="0",
         z_index="5",
@@ -161,6 +166,7 @@ def _create_desktop_sidebar(
             sm="none",  # Tablet: hidden
             md="flex",  # Desktop: always visible
         ),
+        class_name="left-sidebar-desktop",
     )
 
 
@@ -188,6 +194,7 @@ def _create_mobile_menu_button() -> rx.Component:
             sm="block",  # Tablet: visible
             md="none",  # Desktop: hidden
         ),
+        class_name="mobile-menu-button",
     )
 
 
@@ -212,12 +219,14 @@ def _create_right_sidebar(
             width="100%",
             height="100%",
             overflow_y="auto",
+            class_name="right-sidebar-content",
         ),
         width=right_sidebar_width,
         min_width=right_sidebar_width,
         height="100%",
         border_left="1px solid var(--gray-4)",
         display=rx.breakpoints(initial="none", xl="flex"),
+        class_name="right-sidebar-desktop",
     )
 
 
@@ -245,6 +254,7 @@ def _create_right_sidebar_mobile_overlay(
             background="rgba(0, 0, 0, 0.4)",
             z_index="998",
             on_click=SidebarState.toggle_right_sidebar,
+            class_name="right-sidebar-mobile-backdrop",
         ),
         # Sidebar panel
         rx.box(
@@ -255,21 +265,24 @@ def _create_right_sidebar_mobile_overlay(
                 width="100%",
                 height="100%",
                 overflow_y="auto",
+                class_name="right-sidebar-content",
             ),
             position="fixed",
             top="0",
             right="0",
             bottom="0",
             width=f"min({right_sidebar_width}, 90vw)",
-            background="var(--color-background)",
+            background="var(--color-panel-solid)",
             box_shadow="-4px 0 20px rgba(0, 0, 0, 0.15)",
             z_index="999",
             padding="1rem",
             display="flex",
             flex_direction="column",
             overflow_y="auto",
+            class_name="right-sidebar-mobile-panel",
         ),
         display=rx.breakpoints(initial="block", xl="none"),
+        class_name="right-sidebar-mobile-overlay",
     )
 
 
@@ -295,7 +308,7 @@ def _create_content_wrapper(
             header_content is not None,
             rx.hstack(
                 mobile_menu_button if mobile_menu_button is not None else rx.fragment(),
-                rx.box(header_content, flex=1),
+                rx.box(header_content, flex=1, class_name="page-header-slot"),
                 right_sidebar_open_button() if has_right_sidebar else rx.fragment(),
                 width="100%",
                 align_items="center",
@@ -315,6 +328,7 @@ def _create_content_wrapper(
             width="100%",
             flex="1",
             min_height="0",
+            class_name="page-content-max-width",
         )
     else:
         inner = rx.fragment(*inner_children)
@@ -418,6 +432,7 @@ def page_sidebar_component(
             height="100vh",
             spacing="0",
             align_items="stretch",
+            class_name="page-layout-main-row",
         ),
         # Mobile right sidebar overlay
         rx.cond(

@@ -71,13 +71,44 @@ a[href="https://reflex.dev"] {
 }
 
 /* Light palettes.
-Scoped like Radix scopes its own scales (tokens/colors/*.css): light values under
-`:is(.light, .light-theme)`, dark values under `:is(.dark, .dark-theme)`. Without the
-scope these custom scales would also override Radix's dark scales, so `appearance="dark"`
-would flip the grays but leave the brand colors light. */
-.radix-themes:is(.light, .light-theme) {
+Scoped on :root like Radix scopes its own scales (tokens/colors/*.css), *and* on
+.radix-themes. The :root part matters for two reasons:
+  - The appearance class is set on the <html> element (.web/utils/react-theme.js does
+    `document.documentElement.classList.add(resolvedTheme)`), so `.radix-themes.light`
+    never matches: the class is not on that element.
+  - Dialogs, popovers and toasts render in a portal on <body>, outside the .radix-themes
+    subtree. Only :root-level variables are inherited by them.
+
+.radix-themes is listed too because :root alone is not enough for the --color-* tokens:
+Radix re-declares them *on the theme element* (`:where(.radix-themes) { --color-background:
+white }`). :where() is zero-specificity so it loses on paper, but it targets a different,
+nearer element — the theme element's own value shadows the inherited :root one for the whole
+subtree. Setting both elements covers the in-theme tree and the portals.
+
+Never redefine --accent-* here. `rx.theme(accent_color=...)` puts [data-accent-color] on the
+theme element, and Radix's own `[data-accent-color='teal'] { --accent-N: var(--teal-N) }` rule
+has the same specificity as :root but ships later in the cascade, so it always wins — and it
+sits *between* :root and the portal, so it shadows :root for dialogs too. Instead we override
+the concrete --teal-* scale and let that Radix rule alias --accent-* onto it. get_theme() must
+keep passing accent_color="teal" for this to resolve; the same trick maps violet/pink below.
+
+Keep the two blocks symmetric: a variable defined in one but not the other silently falls
+back to the Radix default (or leaks the light value) in the other mode. */
+:root,
+.light,
+.light-theme,
+.radix-themes {
   --color-background: var(--accent-1);
-  --color-panel: white;
+
+  /* Set the *source* variables, never --color-panel itself: Radix recomputes
+     --color-panel on .radix-themes from these, based on the theme's
+     panel_background prop (`.radix-themes:where([data-panel-background='solid'])
+     { --color-panel: var(--color-panel-solid) }`). An override of --color-panel
+     on :root is discarded by that rule everywhere inside the theme. Both are set
+     so the value holds whichever prop the app picks. */
+  --color-panel-solid: white;
+  --color-panel-translucent: rgba(255, 255, 255, 0.7);
+
   /* Custom accent color palette */
   --accent-1: #f7fdfc;
   --accent-2: #e9f8f5;
@@ -92,23 +123,23 @@ would flip the grays but leave the brand colors light. */
   --accent-11: #0e483e;
   --accent-12: #0b362f;
 
-  --accent-a1: #25b49c08;
-  --accent-a2: #25b49c0d;
-  --accent-a3: #25b49c1a;
-  --accent-a4: #25b49c2e;
-  --accent-a5: #25b49c45;
-  --accent-a6: #25b49c66;
-  --accent-a7: #25b49c8c;
-  --accent-a8: #25b49cbd;
-  --accent-a9: #1d907dde;
-  --accent-a10: #166c5eef;
-  --accent-a11: #0e483ef5;
-  --accent-a12: #0b362ffa;
+  --teal-a1: #25b49c08;
+  --teal-a2: #25b49c0d;
+  --teal-a3: #25b49c1a;
+  --teal-a4: #25b49c2e;
+  --teal-a5: #25b49c45;
+  --teal-a6: #25b49c66;
+  --teal-a7: #25b49c8c;
+  --teal-a8: #25b49cbd;
+  --teal-a9: #1d907dde;
+  --teal-a10: #166c5eef;
+  --teal-a11: #0e483ef5;
+  --teal-a12: #0b362ffa;
 
-  --accent-surface: #d3f0eb33;
-  --accent-indicator: var(--accent-9);
-  --accent-track: var(--accent-9);
-  --accent-contrast: #e9f7f5;
+  --teal-surface: #d3f0eb33;
+  --teal-indicator: var(--teal-9);
+  --teal-track: var(--teal-9);
+  --teal-contrast: #e9f7f5;
 
   /* Custom secondary color palette (purple/violet) */
   --secondary-1: #f9f8fd;
@@ -138,6 +169,7 @@ would flip the grays but leave the brand colors light. */
   --secondary-a12: #291a67fc;
 
   --secondary-contrast: #f9f8fd;
+  --secondary-surface: #eeebfa33;
 
   /* Custom tertiary color palette (pink/magenta) */
   --tertiary-1: #fff4fa;
@@ -167,6 +199,7 @@ would flip the grays but leave the brand colors light. */
   --tertiary-a12: #4d002cfa;
 
   --tertiary-contrast: #fff4fa;
+  --tertiary-surface: #ffd4ec33;
 
   /* Override Radix "violet" palette with secondary colors */
   --violet-1: var(--secondary-1);
@@ -196,7 +229,7 @@ would flip the grays but leave the brand colors light. */
   --violet-a12: var(--secondary-a12);
 
   --violet-contrast: var(--secondary-contrast);
-  --violet-surface: #eeebfa33;
+  --violet-surface: var(--secondary-surface);
   --violet-indicator: var(--secondary-9);
   --violet-track: var(--secondary-9);
 
@@ -228,7 +261,7 @@ would flip the grays but leave the brand colors light. */
   --pink-a12: var(--tertiary-a12);
 
   --pink-contrast: var(--tertiary-contrast);
-  --pink-surface: #ffd4ec33;
+  --pink-surface: var(--tertiary-surface);
   --pink-indicator: var(--tertiary-9);
   --pink-track: var(--tertiary-9);
 }
@@ -237,43 +270,52 @@ would flip the grays but leave the brand colors light. */
    Follows Radix's dark-scale rules rather than inverting the light scales: step 1-2 are
    near-black app/subtle backgrounds, 3-5 component backgrounds, 6-8 borders, 9 the brand
    hue held identical to light (Radix keeps step 9 stable across modes), 10 a lighter hover,
-   11-12 the accessible text steps. Background stays `--gray-1` (Radix's default) so dark
-   mode gets a neutral base instead of a tinted one. */
-.radix-themes:is(.dark, .dark-theme) {
+   11-12 the accessible text steps.
+
+   Selector mirrors Radix's own dark scales (`.dark, .dark-theme`) — see the note on the
+   light block above: the appearance class lands on <html>, and portalled dialogs live
+   outside the .radix-themes subtree. */
+.dark,
+.dark-theme,
+.dark .radix-themes,
+.dark-theme .radix-themes {
   --color-background: #222222;
-  --color-panel: #2b2d2e;
 
-  /* Custom accent color palette */
-  --accent-1: #0c1614;
-  --accent-2: #101d1a;
-  --accent-3: #0b2f28;
-  --accent-4: #013d33;
-  --accent-5: #0a4a3f;
-  --accent-6: #16594c;
-  --accent-7: #1e6b5c;
-  --accent-8: #22806e;
-  --accent-9: #25b49c;
-  --accent-10: #2cc4aa;
-  --accent-11: #3fdcbe;
-  --accent-12: #b3f1e2;
+  /* See the note in the light block: --color-panel is derived, not read. */
+  --color-panel-solid: #2b2d2e;
+  --color-panel-translucent: #2b2d2eb3;
 
-  --accent-a1: #00deb406;
-  --accent-a2: #14fbdc0d;
-  --accent-a3: #00ffd91f;
-  --accent-a4: #00ffd82e;
-  --accent-a5: #00ffdc3c;
-  --accent-a6: #1effdb4c;
-  --accent-a7: #30fedb60;
-  --accent-a8: #34ffda76;
-  --accent-a9: #17ffd9a0;
-  --accent-a10: #10ffd6af;
-  --accent-a11: #0dffcbd7;
-  --accent-a12: #bafff0f0;
+  /* Custom accent color palette (overrides Radix "teal") */
+  --teal-1: #0c1614;
+  --teal-2: #101d1a;
+  --teal-3: #0b2f28;
+  --teal-4: #013d33;
+  --teal-5: #0a4a3f;
+  --teal-6: #16594c;
+  --teal-7: #1e6b5c;
+  --teal-8: #22806e;
+  --teal-9: #25b49c;
+  --teal-10: #2cc4aa;
+  --teal-11: #3fdcbe;
+  --teal-12: #b3f1e2;
 
-  --accent-surface: #10282380;
-  --accent-indicator: var(--accent-9);
-  --accent-track: var(--accent-9);
-  --accent-contrast: #0b1a17;
+  --teal-a1: #00deb406;
+  --teal-a2: #14fbdc0d;
+  --teal-a3: #00ffd91f;
+  --teal-a4: #00ffd82e;
+  --teal-a5: #00ffdc3c;
+  --teal-a6: #1effdb4c;
+  --teal-a7: #30fedb60;
+  --teal-a8: #34ffda76;
+  --teal-a9: #17ffd9a0;
+  --teal-a10: #10ffd6af;
+  --teal-a11: #0dffcbd7;
+  --teal-a12: #bafff0f0;
+
+  --teal-surface: #10282380;
+  --teal-indicator: var(--teal-9);
+  --teal-track: var(--teal-9);
+  --teal-contrast: #0b1a17;
 
   /* Custom secondary color palette (purple/violet) */
   --secondary-1: #131223;
