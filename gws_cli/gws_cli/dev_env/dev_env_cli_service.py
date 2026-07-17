@@ -23,6 +23,44 @@ class DevEnvCliService:
     CUSTOM_GWS_CORE_REFLEX_PATH = os.path.join("gws_core", "apps", "reflex", "_gws_reflex")
     OPENVSCODE_SERVER_BIN = "/home/.openvscode-server/bin/openvscode-server"
 
+    # Folders that are never worth indexing, watching or showing. Workspace-relative
+    # entries (data, other-bricks) match the fixed user folder layout; the rest are
+    # build output / caches that can appear under any brick. ".states" and ".web" are
+    # per-app Reflex caches (see ReflexApp.CACHE_FOLDER_NAMES).
+    NOISE_FOLDER_NAMES = [
+        "**/node_modules",
+        "**/.venv",
+        "**/__pycache__",
+        "**/.pytest_cache",
+        "**/.ruff_cache",
+        "**/.mypy_cache",
+        "**/.ipynb_checkpoints",
+        "**/dist",
+        "**/build",
+        "**/.next",
+        "**/.web",
+        "**/.states",
+        "data",
+        "other-bricks",
+    ]
+
+    # Watching a large tree exhausts the kernel's inotify handles (a frequent cause
+    # of editor crashes on WSL2), so the watcher drops the noise folders plus the
+    # heavy git subtrees. .git itself stays watched: VSCode reads HEAD/index/refs to
+    # keep the source control view in sync.
+    WATCHER_EXCLUDE_EXTRA = [
+        "**/.git/objects",
+        "**/.git/subtree-cache",
+    ]
+
+    # Keys that pyright owns via pyrightconfig.json. Pylance ignores them in
+    # settings.json and warns when they are set, so the CLI removes them.
+    PYRIGHT_OWNED_SETTINGS_KEYS = [
+        "python.analysis.extraPaths",
+        "python.analysis.exclude",
+        "python.analysis.typeCheckingMode",
+    ]
+
     @classmethod
     def configure_dev_env(cls, force: bool = False, configure_bricks: bool = False) -> None:
         """Configure the development environment.
@@ -167,11 +205,6 @@ class DevEnvCliService:
         ):
             settings["python.autoComplete.extraPaths"] = []
 
-        if "python.analysis.extraPaths" not in settings or not isinstance(
-            settings["python.analysis.extraPaths"], list
-        ):
-            settings["python.analysis.extraPaths"] = []
-
         # Remove all bricks paths from existing paths, then re-add the current
         # brick src paths (kept in sync via the shared computation).
         existing_paths: list[str] = settings["python.autoComplete.extraPaths"]
@@ -185,7 +218,18 @@ class DevEnvCliService:
         existing_paths.extend(cls.compute_brick_extra_paths())
 
         settings["python.autoComplete.extraPaths"] = existing_paths
-        settings["python.analysis.extraPaths"] = existing_paths
+
+        # pyrightconfig.json is the single source of truth for the analysis scope.
+        # Pylance ignores these keys when that file exists and reports a warning for
+        # each one, so drop any that a previous version of this CLI wrote.
+        for key in cls.PYRIGHT_OWNED_SETTINGS_KEYS:
+            settings.pop(key, None)
+
+        # Always managed by the CLI: overwrite so list updates reach every dev.
+        # Other keys in the file are left untouched.
+        typer.echo("Setting the excluded folders...")
+        settings["files.watcherExclude"] = cls.compute_watcher_exclude()
+        settings["files.exclude"] = cls.compute_files_exclude()
 
         try:
             typer.echo("Writing the vscode settings file...")
@@ -195,6 +239,24 @@ class DevEnvCliService:
         except Exception as err:
             typer.echo(f"Error during writing the vscode settings file: {err}", err=True)
             return
+
+    @classmethod
+    def compute_watcher_exclude(cls) -> dict:
+        """Build the ``files.watcherExclude`` value.
+
+        The watcher matches full paths, so every entry needs a trailing ``/**``.
+        """
+        patterns = cls.WATCHER_EXCLUDE_EXTRA + cls.NOISE_FOLDER_NAMES
+        return {f"{pattern}/**": True for pattern in patterns}
+
+    @classmethod
+    def compute_files_exclude(cls) -> dict:
+        """Build the ``files.exclude`` value (hides the noise folders from the Explorer).
+
+        Unlike the watcher, this matches the folder itself, so no ``/**`` suffix.
+        The git subtrees are left out: hiding them would hide ``.git`` in the tree.
+        """
+        return dict.fromkeys(cls.NOISE_FOLDER_NAMES, True)
 
     @classmethod
     def generate_vs_code_settings_json(cls, settings_path: str) -> dict:
@@ -251,8 +313,17 @@ class DevEnvCliService:
         """
         typer.echo("Configuring pyrightconfig.json file...")
 
+        # Setting "exclude" replaces pyright's own defaults rather than extending
+        # them, so they are restored explicitly. "**/.*" only covers dotted entries
+        # at the root of each search path, hence the explicit "**/.states" & co.
+        pyright_default_exclude = ["**/node_modules", "**/__pycache__", "**/.*"]
+        exclude = pyright_default_exclude + [
+            pattern for pattern in cls.NOISE_FOLDER_NAMES if pattern not in pyright_default_exclude
+        ]
+
         config: dict = {
             "typeCheckingMode": "basic",
+            "exclude": exclude,
             "extraPaths": cls.compute_brick_extra_paths(),
         }
 

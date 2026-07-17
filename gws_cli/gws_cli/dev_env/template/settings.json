@@ -4,8 +4,8 @@
   "diffEditor.ignoreTrimWhitespace": false,
   "workbench.editor.revealIfOpen": true,
   "editor.minimap.enabled": false,
-  "python.defaultInterpreterPath": "/home/labuser/.venv/bin/python",
-  "python.terminal.activateEnvironment": true,
+  "python.defaultInterpreterPath": "/home/labuser/.venv/bin/python3",
+  "python.terminal.activateEnvironment": false,
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
@@ -15,16 +15,15 @@
     "editor.defaultFormatter": "charliermarsh.ruff"
   },
   "python.languageServer": "Pylance",
-  "python.analysis.typeCheckingMode": "basic",
   "python.analysis.diagnosticMode": "openFilesOnly",
   "python.analysis.indexing": true,
   "python.analysis.autoImportCompletions": true,
   "python.analysis.importFormat": "absolute",
   "python.autoComplete.extraPaths": [],
-  "python.analysis.extraPaths": [],
   "python.testing.pytestEnabled": true,
   "python.testing.unittestEnabled": false,
   "python.testing.pytestArgs": [
     "-v"
-  ]
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:venv"
 }
