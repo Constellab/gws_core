@@ -98,16 +98,18 @@ back to the Radix default (or leaks the light value) in the other mode. */
 .light,
 .light-theme,
 .radix-themes {
-  --color-background: var(--accent-1);
 
   /* Set the *source* variables, never --color-panel itself: Radix recomputes
-     --color-panel on .radix-themes from these, based on the theme's
-     panel_background prop (`.radix-themes:where([data-panel-background='solid'])
-     { --color-panel: var(--color-panel-solid) }`). An override of --color-panel
-     on :root is discarded by that rule everywhere inside the theme. Both are set
-     so the value holds whichever prop the app picks. */
+  --color-panel on .radix-themes from these, based on the theme's
+  panel_background prop (`.radix-themes:where([data-panel-background='solid'])
+  { --color-panel: var(--color-panel-solid) }`). An override of --color-panel
+  on :root is discarded by that rule everywhere inside the theme. Both are set
+  so the value holds whichever prop the app picks. */
   --color-panel-solid: white;
   --color-panel-translucent: rgba(255, 255, 255, 0.7);
+
+  --color-background: var(--accent-1);
+  --card-background: var(--color-panel-solid);
 
   /* Custom accent color palette */
   --accent-1: #f7fdfc;
@@ -279,11 +281,13 @@ back to the Radix default (or leaks the light value) in the other mode. */
 .dark-theme,
 .dark .radix-themes,
 .dark-theme .radix-themes {
-  --color-background: #222222;
 
   /* See the note in the light block: --color-panel is derived, not read. */
   --color-panel-solid: #2b2d2e;
   --color-panel-translucent: #2b2d2eb3;
+
+  --color-background: #222222;
+  --card-background: var(--color-panel-solid);
 
   /* Custom accent color palette (overrides Radix "teal") */
   --teal-1: #0c1614;
