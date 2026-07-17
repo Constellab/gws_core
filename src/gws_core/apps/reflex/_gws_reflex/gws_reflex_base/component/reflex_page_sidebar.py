@@ -261,6 +261,7 @@ def _create_right_sidebar_mobile_overlay(
             right="0",
             bottom="0",
             width=f"min({right_sidebar_width}, 90vw)",
+            background="var(--color-background)",
             box_shadow="-4px 0 20px rgba(0, 0, 0, 0.15)",
             z_index="999",
             padding="1rem",
