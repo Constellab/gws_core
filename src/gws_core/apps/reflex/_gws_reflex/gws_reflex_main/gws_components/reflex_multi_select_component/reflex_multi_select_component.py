@@ -19,10 +19,12 @@ from reflex.components.component import Component
 from reflex.vars.base import Var
 
 from ..reflex_mantine.mantine_base import (
-    CHEVRON_CSS,
     MANTINE_SELECT_CLASS,
+    SELECT_CSS,
     MantineBaseComponent,
     mantine_chevron,
+    mantine_input_styles,
+    mantine_select_class_names,
 )
 
 
@@ -58,6 +60,12 @@ class MultiSelectComponent(MantineBaseComponent):
 
     # Custom node rendered on the right side of the input (replaces the default chevron).
     right_section: Var[Component]
+
+    # Mantine per-slot styles (e.g. ``{"input": {...}}``).
+    styles: Var[dict]
+
+    # Mantine per-slot class names (e.g. ``{"option": "..."}``).
+    class_names: Var[dict]
 
     # Called when the value changes. Receives the new list of selected values.
     on_change: rx.EventHandler[lambda value: [value]]
@@ -106,12 +114,14 @@ def multi_select_component(
     # select_component. Mantine keeps the clear (×) button next to it when
     # clearable and a value is set. Override with your own right_section.
     props.setdefault("right_section", mantine_chevron())
+    props.setdefault("styles", mantine_input_styles())
+    props.setdefault("class_names", mantine_select_class_names())
 
     caller_class = props.pop("class_name", None)
     props["class_name"] = f"{MANTINE_SELECT_CLASS} {caller_class}" if caller_class else MANTINE_SELECT_CLASS
 
     return rx.fragment(
-        rx.el.style(CHEVRON_CSS),
+        rx.el.style(SELECT_CSS),
         MultiSelectComponent.create(
             data=data,
             value=value,

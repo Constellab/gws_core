@@ -65,14 +65,72 @@ class MantineBaseComponent(rx.Component):
 MANTINE_SELECT_CLASS = "gws-mantine-select"
 # Class on the chevron itself, so only it rotates (not the clear button).
 _CHEVRON_CLASS = "gws-mantine-chevron"
+# Class on each dropdown option. The dropdown is portalled outside the component
+# root, so this global class (not the root class) is what the option CSS targets.
+_OPTION_CLASS = "gws-mantine-option"
+# Class on the input slot (the bordered box). For the single select this is the
+# ``<input>`` itself; for the multi-select it is the pills container wrapping the
+# chips and the typing field. Focus styling targets it via ``:focus-within`` so the
+# whole box (chips included) gets the outline, not just the inner field.
+_FIELD_CLASS = "gws-mantine-field"
 
-CHEVRON_CSS = (
+SELECT_CSS = (
+    # Single chevron: rotate it up when the dropdown is open.
     f".{MANTINE_SELECT_CLASS} .{_CHEVRON_CLASS}{{transition:transform 150ms ease;}}"
     f".{MANTINE_SELECT_CLASS}:has(input[data-expanded]) .{_CHEVRON_CLASS}"
     "{transform:rotate(180deg);}"
+    # Hovered / keyboard-active option uses the theme accent instead of Mantine's
+    # gray hover and blue selected. Higher specificity than Mantine's own rules.
+    # The dropdown is portalled to <body>, outside the `.radix-themes` element that
+    # defines --accent-contrast, so that token is unavailable here; fall back to
+    # --accent-1 (defined on :root) for readable light text on the dark accent.
+    f".{_OPTION_CLASS}[data-combobox-selected],"
+    f".{_OPTION_CLASS}:hover:not([data-combobox-disabled])"
+    "{background-color:var(--accent-9);color:var(--accent-contrast,var(--accent-1));}"
+    # Focus outline matching the app's Radix text field / input search. Targets the
+    # bordered input slot via :focus-within, so on the multi-select the whole box
+    # (chips + field) is outlined, not just the inner typing field.
+    f".{_FIELD_CLASS}:focus-within"
+    "{outline:2px solid var(--focus-8);outline-offset:-1px;}"
 )
 
 
 def mantine_chevron() -> rx.Component:
     """The single down-chevron used as the right section (rotates when open)."""
     return rx.icon("chevron-down", size=16, color="var(--gray-9)", class_name=_CHEVRON_CLASS)
+
+
+def mantine_select_class_names() -> dict:
+    """Mantine ``classNames`` tagging the option (accent CSS) and the input slot
+    (focus-outline CSS)."""
+    return {"option": _OPTION_CLASS, "input": _FIELD_CLASS}
+
+
+# --- Resting outer style matching the app's Radix ``Select.Trigger`` -----------
+# Mirrors the Radix surface trigger (size 2) so the Mantine input blends with the
+# other selects on a page: same radius, 1px inset border, surface background and
+# text color. Referenced tokens are defined by the app's Radix theme, so this
+# tracks the theme automatically. Applied to the Mantine ``input`` slot, which
+# works for both the single Select and the MultiSelect.
+_INPUT_STYLE = {
+    "borderRadius": "var(--radius-2)",
+    "border": "none",
+    "boxShadow": "inset 0 0 0 1px var(--gray-a7)",
+    "backgroundColor": "var(--color-surface)",
+    "color": "var(--gray-12)",
+    "minHeight": "var(--space-6)",
+    "fontSize": "var(--font-size-2)",
+}
+
+
+def mantine_input_styles(exact_height: bool = False) -> dict:
+    """Mantine ``styles`` mapping that styles the input slot like a Radix trigger.
+
+    :param exact_height: when True, pin the height to ``var(--space-6)`` (the Radix
+        size-2 field height) so a single select lines up exactly with text inputs.
+        Left off for the multi-select, whose height must grow with the pills.
+    """
+    style = dict(_INPUT_STYLE)
+    if exact_height:
+        style["height"] = "var(--space-6)"
+    return {"input": style}

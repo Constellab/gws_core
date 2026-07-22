@@ -116,6 +116,8 @@ Exposed typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `cle
 
 By default it shows a single chevron that points down when closed and rotates up when the dropdown is open (replacing Mantine's static double-chevron). With `clearable=True`, a clear (×) button appears next to the chevron once a value is set. Pass your own `right_section` to override the chevron.
 
+It is themed to blend with the app's Radix inputs: the resting outer style (radius, 1px border, surface background, text color, height) mirrors `Select.Trigger`, focus shows the same accent outline as a text field, and hovered/selected options use the theme accent (`--accent-9`) instead of Mantine's gray/blue. All via theme tokens, so it tracks the brick's accent. Override the input via a Mantine `styles` mapping (e.g. `styles={"input": {...}}`).
+
 Import: `from gws_reflex_main.gws_components import select_component`
 
 ---

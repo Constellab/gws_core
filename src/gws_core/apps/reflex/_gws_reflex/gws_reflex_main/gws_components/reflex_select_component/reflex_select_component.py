@@ -20,10 +20,12 @@ from reflex.components.component import Component
 from reflex.vars.base import Var
 
 from ..reflex_mantine.mantine_base import (
-    CHEVRON_CSS,
     MANTINE_SELECT_CLASS,
+    SELECT_CSS,
     MantineBaseComponent,
     mantine_chevron,
+    mantine_input_styles,
+    mantine_select_class_names,
 )
 
 
@@ -39,8 +41,10 @@ class SelectComponent(MantineBaseComponent):
 
     tag = "Select"
 
-    # Data used to render options. An array of strings or ``{value, label}`` dicts.
-    data: Var[list[str | dict]]
+    # Data used to render options: strings, ``{value, label}`` dicts, or dataclass
+    # instances exposing ``value``/``label``. Typed loosely as ``list`` so a state
+    # Var of typed DTOs (or a concatenation of literals + a DTO list) is accepted.
+    data: Var[list]
 
     # Controlled component value (the selected option value, or ``None``).
     value: Var[str]
@@ -71,6 +75,12 @@ class SelectComponent(MantineBaseComponent):
 
     # Custom node rendered on the right side of the input (replaces the default chevron).
     right_section: Var[Component]
+
+    # Mantine per-slot styles (e.g. ``{"input": {...}}``).
+    styles: Var[dict]
+
+    # Mantine per-slot class names (e.g. ``{"option": "..."}``).
+    class_names: Var[dict]
 
     # Called when the value changes. Receives the newly selected value (or ``None``).
     on_change: rx.EventHandler[lambda value: [value]]
@@ -130,13 +140,19 @@ def select_component(
     # A caller can override by passing their own right_section.
     props.setdefault("right_section", mantine_chevron())
 
+    # Match the resting outer style (radius, border, background) of the app's
+    # Radix selects so this blends in. Overridable via a caller-supplied styles.
+    props.setdefault("styles", mantine_input_styles(exact_height=True))
+    # Tag the dropdown options so the accent-hover CSS can target them.
+    props.setdefault("class_names", mantine_select_class_names())
+
     # Scope the rotation CSS to this component via a stable class, keeping any
     # class the caller passed.
     caller_class = props.pop("class_name", None)
     props["class_name"] = f"{MANTINE_SELECT_CLASS} {caller_class}" if caller_class else MANTINE_SELECT_CLASS
 
     return rx.fragment(
-        rx.el.style(CHEVRON_CSS),
+        rx.el.style(SELECT_CSS),
         SelectComponent.create(
             data=data,
             searchable=searchable,
