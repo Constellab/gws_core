@@ -105,14 +105,31 @@ Import: `from gws_reflex_main.gws_components import ag_grid_component`
 
 ---
 
+## Select Components
+
+### `select_component()`
+Single-value select dropdown built on the `@mantine/core` `Select` component. Behaves like a regular single select (`value` is a single string, `on_change` receives a single string, or `None` when cleared) but, with `searchable=True`, adds an integrated text field to filter the options as the user types.
+
+Exposed typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `clearable`, `nothing_found_message`, `disabled`, plus the `on_change` handler; extra props are forwarded to the underlying component.
+
+`data` is a list of strings (or `{value, label}` dicts); `value` is the selected string value. Both accept state Vars. It shares the Mantine wiring (styles + color-mode-aware `MantineProvider`) with `multi_select_component`, so no extra setup is needed.
+
+By default it shows a single chevron that points down when closed and rotates up when the dropdown is open (replacing Mantine's static double-chevron). With `clearable=True`, a clear (×) button appears next to the chevron once a value is set. Pass your own `right_section` to override the chevron.
+
+Import: `from gws_reflex_main.gws_components import select_component`
+
+---
+
 ## Multi-Select Components
 
 ### `multi_select_component()`
-Searchable multi-select dropdown built on the `@mantine/core` `MultiSelect` component. It imports the Mantine styles and wraps the app in a color-mode-aware `MantineProvider` itself.
+Searchable multi-select dropdown built on the `@mantine/core` `MultiSelect` component. It shares the Mantine wiring (styles import + color-mode-aware `MantineProvider`) with `select_component`, so no extra setup is needed.
 
 Only the props used by the apps are exposed as typed props (`data`, `value`, `label`, `placeholder`, `searchable`, `clearable`, `max_values`) plus the `on_change` handler (receives the new list of selected values); extra props are forwarded to the underlying component.
 
 `data` is a list of strings (or `{value, label}` dicts); `value` is the list of selected string values. Both accept state Vars.
+
+Like `select_component`, it shows the single rotating chevron by default (the clear × button appears next to it when `clearable=True` and values are set); pass your own `right_section` to override.
 
 Import: `from gws_reflex_main.gws_components import multi_select_component`
 

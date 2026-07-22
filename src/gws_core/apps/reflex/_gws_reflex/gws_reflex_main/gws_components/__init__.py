@@ -27,6 +27,12 @@ from .reflex_rich_text_component.reflex_rich_text_component import (
 from .reflex_rich_text_component.reflex_rich_text_component import (
     rich_text_component as rich_text_component,
 )
+from .reflex_select_component.reflex_select_component import (
+    SelectComponent as SelectComponent,
+)
+from .reflex_select_component.reflex_select_component import (
+    select_component as select_component,
+)
 from .reflex_select_resource_2_component.reflex_select_resource_2_component import (
     SelectResourceInput as SelectResourceInput,
 )

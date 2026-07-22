@@ -19,6 +19,7 @@ from .pages import (
     paginated_table_page,
     resource_components_page,
     rich_text_page,
+    select_page,
     user_components_page,
 )
 
@@ -41,6 +42,7 @@ def _sidebar_content() -> rx.Component:
             menu_item_component("layout-grid", "Layout Components", "/layout"),
             menu_item_component("file-text", "Doc Component", "/doc-component"),
             menu_item_component("search", "Input search", "/input-search"),
+            menu_item_component("chevron-down", "Select", "/select"),
             menu_item_component("list-checks", "Multi-Select", "/multi-select"),
             menu_item_component("grid-3x3", "AG Grid", "/ag-grid"),
             menu_item_component("table", "Paginated Table", "/paginated-table"),
@@ -105,6 +107,12 @@ def resource_components():
 def input_search():
     """Input search component demo page."""
     return layout(input_search_page.input_search_page())
+
+
+@rx.page(route="/select")
+def select():
+    """Single-select component demo page."""
+    return layout(select_page.select_page())
 
 
 @rx.page(route="/multi-select")
