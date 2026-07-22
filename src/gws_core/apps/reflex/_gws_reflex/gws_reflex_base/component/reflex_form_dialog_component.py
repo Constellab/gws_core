@@ -259,7 +259,7 @@ def form_dialog_component(
                         flex="1",
                         min_height="0",
                         width="100%",
-                        padding_right="0.5rem",
+                        padding_x="0.5rem",
                     ),
                     rx.hstack(
                         rx.button(
@@ -296,12 +296,8 @@ def form_dialog_component(
             flex_direction="column",
             # When not dismissable, prevent the default close on outside-click /
             # Escape so the dialog only closes via its Cancel/Save buttons.
-            on_interact_outside=(
-                state.close_dialog if dismissable else rx.prevent_default
-            ),
-            on_escape_key_down=(
-                state.close_dialog if dismissable else rx.prevent_default
-            ),
+            on_interact_outside=(state.close_dialog if dismissable else rx.prevent_default),
+            on_escape_key_down=(state.close_dialog if dismissable else rx.prevent_default),
         ),
         open=state.dialog_opened,
     )

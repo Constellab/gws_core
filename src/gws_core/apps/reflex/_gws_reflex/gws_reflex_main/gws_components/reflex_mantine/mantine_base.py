@@ -73,6 +73,10 @@ _OPTION_CLASS = "gws-mantine-option"
 # chips and the typing field. Focus styling targets it via ``:focus-within`` so the
 # whole box (chips included) gets the outline, not just the inner field.
 _FIELD_CLASS = "gws-mantine-field"
+# Class on the portalled dropdown. Radix dialogs set ``pointer-events: none`` on
+# <body> while a modal is open; the dropdown is portalled to <body>, so without
+# this it becomes non-interactive inside a dialog (no hover, clicks ignored).
+_DROPDOWN_CLASS = "gws-mantine-dropdown"
 
 SELECT_CSS = (
     # Single chevron: rotate it up when the dropdown is open.
@@ -92,6 +96,9 @@ SELECT_CSS = (
     # (chips + field) is outlined, not just the inner typing field.
     f".{_FIELD_CLASS}:focus-within"
     "{outline:2px solid var(--focus-8);outline-offset:-1px;}"
+    # Keep the portalled dropdown interactive inside a modal Radix dialog, which
+    # otherwise sets pointer-events:none on <body> (and thus on the dropdown).
+    f".{_DROPDOWN_CLASS}{{pointer-events:auto;}}"
 )
 
 
@@ -101,9 +108,9 @@ def mantine_chevron() -> rx.Component:
 
 
 def mantine_select_class_names() -> dict:
-    """Mantine ``classNames`` tagging the option (accent CSS) and the input slot
-    (focus-outline CSS)."""
-    return {"option": _OPTION_CLASS, "input": _FIELD_CLASS}
+    """Mantine ``classNames`` tagging the option (accent CSS), the input slot
+    (focus-outline CSS) and the dropdown (pointer-events fix inside dialogs)."""
+    return {"option": _OPTION_CLASS, "input": _FIELD_CLASS, "dropdown": _DROPDOWN_CLASS}
 
 
 # --- Resting outer style matching the app's Radix ``Select.Trigger`` -----------
