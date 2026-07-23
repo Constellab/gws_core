@@ -2,6 +2,7 @@ import os
 import signal
 import socket
 from datetime import datetime, timedelta
+from threading import Thread
 
 from gws_core.apps.app_dto import (
     AppInstanceUrl,
@@ -20,8 +21,9 @@ from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.apps.streamlit.streamlit_app import StreamlitApp
 from gws_core.apps.streamlit.streamlit_process import StreamlitProcess
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.date_helper import DateHelper
-from gws_core.core.utils.logger import LogContext
+from gws_core.core.utils.logger import LogContext, Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.log.log import LogsBetweenDates
 from gws_core.lab.log.log_service import LogService
@@ -168,12 +170,39 @@ class AppsManager:
 
     @classmethod
     def init(cls):
+        cls._reap_orphan_processes()
         cls._register_signal_handlers()
         AppNginxManager.init()
 
     @classmethod
+    def _reap_orphan_processes(cls) -> None:
+        """Kill app processes left over from a previous, uncleanly-stopped server run.
+
+        Runs at boot, before any port is allocated, so freed ports are reused rather than
+        leaked. Without this, a hard server stop (SIGKILL, crash, OOM, closing the terminal)
+        leaves detached app process groups running, and each new run piles more on top until
+        the lab runs out of RAM (see issue #97).
+        """
+        # Band of local ports apps may bind to — used only for the fallback sweep when reading
+        # process environments is denied. Widened past MAX_RUNNING_APPS because reflex apps take
+        # two ports each and ports are only ever skipped, never reused within a run.
+        first_port = Settings.get_app_external_port() + 1
+        port_band = range(first_port, first_port + cls.MAX_RUNNING_APPS * 2)
+        try:
+            SysProc.kill_orphan_app_processes(AppProcess.APP_ID_ENV_VAR, port_band)
+        except Exception as e:
+            # Reaping is best-effort: a failure here must never abort the lab boot.
+            Logger.error(f"Failed to reap orphan app processes at boot: {e}", exception=e)
+
+    # Signals on which child app processes are stopped. SIGHUP is included because
+    # closing the terminal running `gws server run` (e.g. the VSCode terminal) sends
+    # SIGHUP, and without a handler the detached app groups would survive — the exact
+    # cause behind issue #97.
+    _STOP_SIGNALS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+
+    @classmethod
     def _register_signal_handlers(cls) -> None:
-        """Register SIGINT/SIGTERM handlers as a safety net to stop child app
+        """Register stop-signal handlers as a safety net to stop child app
         processes even when graceful shutdown hooks (e.g. FastAPI lifespan)
         do not run — notably the dev CLIs (`gws reflex run`, `gws streamlit run`)
         which never start a FastAPI server, and abrupt server terminations.
@@ -181,7 +210,7 @@ class AppsManager:
         The handler chains to the previous handler so uvicorn's own graceful
         shutdown path still runs in server mode.
         """
-        for sig in (signal.SIGINT, signal.SIGTERM):
+        for sig in cls._STOP_SIGNALS:
             previous = signal.getsignal(sig)
 
             # Only chain to previous handler if it's a real custom handler
@@ -211,10 +240,42 @@ class AppsManager:
 
     @classmethod
     def stop_all_processes(cls) -> None:
-        for running_process in cls.running_processes.values():
-            running_process.stop_process()
+        """Stop every running app process, concurrently.
 
+        Each stop_process() SIGTERMs the app's process group and then waits up to 5s for it
+        to die before SIGKILLing survivors. Stopping apps sequentially would sum those waits
+        and, with several apps, exceed uvicorn's shutdown-timeout — cutting shutdown short and
+        leaving some apps as orphans (issue #97). Stopping them in parallel bounds the total
+        wait to a single ~5s window regardless of app count.
+        """
+        processes = list(cls.running_processes.values())
+        # Clear the registry up front so a concurrent _refresh_processes / start does not
+        # observe half-stopped processes while the threads run.
         cls.running_processes = {}
+
+        if not processes:
+            return
+
+        threads: list[Thread] = []
+        for running_process in processes:
+            thread = Thread(target=cls._stop_process_safe, args=(running_process,))
+            thread.start()
+            threads.append(thread)
+
+        # Bound the join so a single hung app cannot block the whole shutdown. The per-app
+        # SIGTERM wait is 5s, so 10s comfortably covers a healthy parallel stop.
+        for thread in threads:
+            thread.join(timeout=10)
+
+    @classmethod
+    def _stop_process_safe(cls, running_process: AppProcess) -> None:
+        """Stop one process, swallowing errors so one failing app cannot break the others."""
+        try:
+            running_process.stop_process()
+        except Exception as e:
+            Logger.error(
+                f"Error while stopping app process {running_process.get_id()}: {e}", exception=e
+            )
 
     @classmethod
     def stop_process(cls, app_id: str) -> None:
@@ -228,11 +289,42 @@ class AppsManager:
     def _refresh_processes(cls) -> None:
         """Method to remove the stopped processes from the running_processes dict.
         Because if it is killed after inactivity, the AppsManager does not know it.
+
+        Also reaps untracked orphan app processes (see _reap_untracked_orphans): strays that
+        appeared while the server kept running (a crashed check-running loop, a runner that
+        respawned a listener) would otherwise accumulate until the next restart.
         """
         stopped_processes = [x for x in cls.running_processes.values() if x.is_stopped()]
 
         for process in stopped_processes:
             del cls.running_processes[process.get_id()]
+
+        cls._reap_untracked_orphans()
+
+    @classmethod
+    def _reap_untracked_orphans(cls) -> None:
+        """Kill app processes carrying the app marker whose app id is NOT currently tracked.
+
+        Unlike the boot reaper (_reap_orphan_processes, which kills every marked process because
+        nothing is tracked yet), this runs mid-session and must spare the live apps. An app is
+        tracked as soon as it is registered — before its child is even spawned — so a
+        starting-but-not-yet-running app is never mistaken for an orphan.
+
+        Best-effort: any failure is logged and swallowed so a housekeeping pass never breaks the
+        request that triggered it. The environ-denied fallback is deliberately skipped here (a
+        port sweep cannot tell tracked ports from stray ones without risking a live app).
+        """
+        try:
+            marked, _ = SysProc.find_marked_processes(AppProcess.APP_ID_ENV_VAR)
+            tracked_ids = set(cls.running_processes.keys())
+
+            orphan_pids = [pid for pid, app_id in marked.items() if app_id not in tracked_ids]
+            if orphan_pids:
+                SysProc.killpg_of_pids(
+                    orphan_pids, reason="Untracked orphan app process (not in running_processes)"
+                )
+        except Exception as e:
+            Logger.error(f"Failed to reap untracked orphan app processes: {e}", exception=e)
 
     @classmethod
     def get_status_dto(cls) -> AppsStatusDTO:

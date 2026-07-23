@@ -82,6 +82,10 @@ class AppProcess:
 
     DEV_MODE_APP_ID = "dev-app"
     APP_CONFIG_FILENAME = "app_config.json"
+    # Env var set on every spawned app child (and, via inheritance, its whole process
+    # tree). Used by AppsManager.init() to identify and reap orphaned app processes
+    # left over from a previous, uncleanly-stopped server run. See issue #97.
+    APP_ID_ENV_VAR = "GWS_APP_ID"
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
     # Token always provisioned for the system user (kept in the app config but never
     # added to the URL). It lets front components opt into running their API requests
@@ -446,7 +450,7 @@ class AppProcess:
     def _get_common_env_variables(self, execution_context: ExecutionContext) -> dict[str, str]:
         """Get common environment variables for the app process."""
         env_vars = {
-            "GWS_APP_ID": self._app.resource_model_id,
+            self.APP_ID_ENV_VAR: self._app.resource_model_id,
             "GWS_APP_TOKEN": self.get_token(),
             "GWS_IS_VIRTUAL_ENV": str(self._app.is_virtual_env_app()),
             "GWS_APP_CONFIG_FILE_PATH": self._get_app_config_path(),
