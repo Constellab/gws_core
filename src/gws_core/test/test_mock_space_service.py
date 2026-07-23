@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 from requests.models import Response
 
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.service.external_api_service import FormData
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.folder.space_folder_dto import (
@@ -46,6 +47,7 @@ class TestMockSpaceService(SpaceService):
     _space_folder_users: list[SpaceFolderUser]
     _group_users: dict[str, list[UserSpace]]
     _constellab_document_contents: dict[str, RichTextDTO]
+    _constellab_document_figures: dict[tuple[str, str], bytes]
 
     # ==================== AUTHENTICATION ====================
 
@@ -54,6 +56,7 @@ class TestMockSpaceService(SpaceService):
         self._space_folder_users = []
         self._group_users = {}
         self._constellab_document_contents = {}
+        self._constellab_document_figures = {}
 
     def set_space_folder_users_mock(self, users: list[UserDTO]):
         """Set mock space folder users"""
@@ -68,6 +71,12 @@ class TestMockSpaceService(SpaceService):
     def set_constellab_document_content_mock(self, document_id: str, content: RichTextDTO):
         """Set the mock content returned by get_constellab_document_content for a document"""
         self._constellab_document_contents[document_id] = content
+
+    def set_constellab_document_figure_mock(
+        self, document_id: str, filename: str, content: bytes
+    ):
+        """Set the mock bytes returned by get_constellab_document_figure for a figure"""
+        self._constellab_document_figures[(document_id, filename)] = content
 
     def check_api_key(self, api_key: str) -> bool:
         """Mock check_api_key - always returns True"""
@@ -301,6 +310,17 @@ class TestMockSpaceService(SpaceService):
         if content is not None:
             return content
         return RichText().to_dto()
+
+    def get_constellab_document_figure(self, document_id: str, filename: str) -> bytes:
+        """Mock get_constellab_document_figure - returns the bytes set via
+        set_constellab_document_figure_mock, or raises if none is set (mirroring
+        a Space 404 for a missing figure)"""
+        figure = self._constellab_document_figures.get((document_id, filename))
+        if figure is None:
+            raise BadRequestException(
+                f"No mock figure '{filename}' for document '{document_id}'"
+            )
+        return figure
 
     # ==================== MAIL ====================
 

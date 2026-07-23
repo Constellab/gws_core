@@ -289,6 +289,32 @@ class SpaceService(SpaceServiceBase):
         except Exception as err:
             self.handle_error(err, "get constellab document content from space")
 
+    def get_constellab_document_figure(self, document_id: str, filename: str) -> bytes:
+        """Get the bytes of a figure (image) embedded in a Constellab document.
+
+        The figures of a Constellab document are referenced by their filename in
+        its rich text content (``RichTextBlockFigure.filename``). This returns
+        the raw image bytes of one such figure.
+
+        :param document_id: id of the Constellab document owning the figure
+        :type document_id: str
+        :param filename: name of the figure as referenced in the content
+        :type filename: str
+        :return: the figure image bytes
+        :rtype: bytes
+        """
+        space_api_url: str = self._get_space_api_url(
+            f"{self._EXTERNAL_LABS_ROUTE}/constellab-document/{document_id}/image/{filename}"
+        )
+
+        try:
+            response = ExternalApiService.get(
+                space_api_url, self._get_request_header(), raise_exception_if_error=True
+            )
+            return response.content
+        except Exception as err:
+            self.handle_error(err, "get constellab document figure from space")
+
     #################################### RICH TEXT ####################################
     def get_rich_text_modifications(
         self,
