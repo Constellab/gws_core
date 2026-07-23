@@ -108,15 +108,13 @@ Import: `from gws_reflex_main.gws_components import ag_grid_component`
 ## Select Components
 
 ### `select_component()`
-Single-value select dropdown built on the `@mantine/core` `Select` component. Behaves like a regular single select (`value` is a single string, `on_change` receives a single string, or `None` when cleared) but, with `searchable=True`, adds an integrated text field to filter the options as the user types.
+Single-value select dropdown built on the `@mantine/core` `Select`. `value`/`on_change` are a single string; `searchable=True` adds an integrated field to filter the options as you type. `data` is a list of strings (or `{value, label}` dicts); both `data` and `value` accept state Vars. Typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `allow_deselect`, `nothing_found_message`, `disabled`, `on_change`; extra props are forwarded.
 
-Exposed typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `nothing_found_message`, `disabled`, plus the `on_change` handler; extra props are forwarded to the underlying component. Unlike `multi_select_component`, the single select has **no** `clearable` prop (there is no clear × button): to change the value you pick another option, and with `searchable=True` focusing the input clears the visible text so you can type a new query right away — the current selection stays selected and its label is restored on blur if you don't pick anything else.
+Behavior differs from `multi_select_component` on two points:
+- **No `clearable`** (no clear × button): change the value by picking another option. With `searchable=True`, focusing the input clears the visible text so you can type right away — the current selection is kept and its label is restored on blur if you pick nothing.
+- **`allow_deselect=False` by default** (Mantine's default is `True`), so clicking the selected option keeps it and `on_change` never fires with `None`. Pass `allow_deselect=True` to allow clearing by re-click (your `on_change`/state field must then accept `None`).
 
-`data` is a list of strings (or `{value, label}` dicts); `value` is the selected string value. Both accept state Vars. It shares the Mantine wiring (styles + color-mode-aware `MantineProvider`) with `multi_select_component`, so no extra setup is needed.
-
-By default it shows a single chevron that points down when closed and rotates up when the dropdown is open (replacing Mantine's static double-chevron). Pass your own `right_section` to override the chevron.
-
-It is themed to blend with the app's Radix inputs: the resting outer style (radius, 1px border, surface background, text color, height) mirrors `Select.Trigger`, focus shows the same accent outline as a text field, and hovered/selected options use the theme accent (`--accent-9`) instead of Mantine's gray/blue. All via theme tokens, so it tracks the brick's accent. Override the input via a Mantine `styles` mapping (e.g. `styles={"input": {...}}`).
+It shares the Mantine wiring (styles + color-mode-aware `MantineProvider`) with `multi_select_component`, shows the single rotating chevron by default (override via `right_section`), and is themed to blend with the app's Radix inputs (border, surface, accent focus/hover — all via theme tokens). Override the input via a `styles` mapping (e.g. `styles={"input": {...}}`).
 
 Import: `from gws_reflex_main.gws_components import select_component`
 
