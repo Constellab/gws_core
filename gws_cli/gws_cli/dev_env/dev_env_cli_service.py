@@ -251,12 +251,12 @@ class DevEnvCliService:
 
     @classmethod
     def compute_files_exclude(cls) -> dict:
-        """Build the ``files.exclude`` value (hides the noise folders from the Explorer).
+        """Build the ``files.exclude`` value (hides ``__pycache__`` from the Explorer).
 
-        Unlike the watcher, this matches the folder itself, so no ``/**`` suffix.
-        The git subtrees are left out: hiding them would hide ``.git`` in the tree.
+        Only ``__pycache__`` is hidden; the other noise folders stay visible in the
+        Explorer (they remain excluded from the watcher via ``compute_watcher_exclude``).
         """
-        return dict.fromkeys(cls.NOISE_FOLDER_NAMES, True)
+        return {"**/__pycache__": True}
 
     @classmethod
     def generate_vs_code_settings_json(cls, settings_path: str) -> dict:
