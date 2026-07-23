@@ -28,15 +28,23 @@ from ..reflex_mantine.mantine_base import (
     mantine_select_class_names,
 )
 
+# On focus, empty the searchable input's visible text so the user can type a new
+# query without first erasing the current label.
+_CLEAR_SEARCH_ON_FOCUS_JS = Var(
+    "(e) => { const i = e.currentTarget;"
+    " const set = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value').set;"
+    " set.call(i, ''); i.dispatchEvent(new Event('input', { bubbles: true })); }"
+)
+
 
 class SelectComponent(MantineBaseComponent):
     """Reflex wrapper around the Mantine single ``Select`` component.
 
     A drop-in single-select dropdown: ``value`` is a single option value and
     ``on_change`` is called with the newly selected value (or ``None`` when the
-    value is cleared). Set ``searchable=True`` to add a type-to-filter search
-    field inside the dropdown. Only the props used by the GWS apps are exposed;
-    everything else can be passed through ``props``.
+    current option is deselected). Set ``searchable=True`` to add a type-to-filter
+    search field inside the dropdown. Only the props used by the GWS apps are
+    exposed; everything else can be passed through ``props``.
     """
 
     tag = "Select"
@@ -57,9 +65,6 @@ class SelectComponent(MantineBaseComponent):
 
     # Whether the options are filtered based on the search query (adds a search field).
     searchable: Var[bool]
-
-    # Whether the value can be cleared via a clear button on the right side.
-    clearable: Var[bool]
 
     # Message displayed when no option matches the search query (searchable only).
     nothing_found_message: Var[str]
@@ -94,7 +99,6 @@ def select_component(
     label: str | None = None,
     placeholder: str | None = None,
     searchable: bool = False,
-    clearable: bool = False,
     nothing_found_message: str | None = None,
     disabled: bool = False,
     **props,
@@ -108,12 +112,13 @@ def select_component(
         dicts), or a state Var resolving to one.
     :param value: Currently selected value (a single string) or a state Var.
     :param on_change: Event handler called with the newly selected value (or
-        ``None`` when cleared) when the selection changes.
+        ``None`` when deselected) when the selection changes.
     :param label: Optional label displayed above the input.
     :param placeholder: Optional placeholder shown when the input is empty.
     :param searchable: Whether the options can be filtered by typing. Defaults to ``False``.
-    :param clearable: Whether a clear button is shown to reset the value.
-        Defaults to ``False``.
+        When ``True``, focusing the input clears the visible text so the user can type
+        a new query straight away; the previously selected value stays selected (and its
+        label is restored on blur if nothing else is picked).
     :param nothing_found_message: Optional message shown when no option matches
         the search query (only relevant when ``searchable=True``).
     :param disabled: Whether the select is disabled. Defaults to ``False``.
@@ -135,10 +140,14 @@ def select_component(
 
     # Replace Mantine's static double-chevron with a single chevron that points
     # down when closed and rotates up when the dropdown is open (see CHEVRON_CSS).
-    # When clearable and a value is set, Mantine renders its clear (×) button next
-    # to this chevron, so overriding the right section keeps the clear button.
     # A caller can override by passing their own right_section.
     props.setdefault("right_section", mantine_chevron())
+
+    # In searchable mode, clear the visible text on focus so the user can type
+    # right away (see _CLEAR_SEARCH_ON_FOCUS_JS). Merged into any caller custom_attrs.
+    if searchable:
+        custom_attrs = props.setdefault("custom_attrs", {})
+        custom_attrs.setdefault("onFocus", _CLEAR_SEARCH_ON_FOCUS_JS)
 
     # Match the resting outer style (radius, border, background) of the app's
     # Radix selects so this blends in. Overridable via a caller-supplied styles.
@@ -149,14 +158,15 @@ def select_component(
     # Scope the rotation CSS to this component via a stable class, keeping any
     # class the caller passed.
     caller_class = props.pop("class_name", None)
-    props["class_name"] = f"{MANTINE_SELECT_CLASS} {caller_class}" if caller_class else MANTINE_SELECT_CLASS
+    props["class_name"] = (
+        f"{MANTINE_SELECT_CLASS} {caller_class}" if caller_class else MANTINE_SELECT_CLASS
+    )
 
     return rx.fragment(
         rx.el.style(SELECT_CSS),
         SelectComponent.create(
             data=data,
             searchable=searchable,
-            clearable=clearable,
             disabled=disabled,
             **props,
         ),

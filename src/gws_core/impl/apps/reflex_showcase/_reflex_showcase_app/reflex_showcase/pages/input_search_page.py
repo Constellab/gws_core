@@ -186,8 +186,10 @@ input_search_component(
             example_component=example1_component,
             code=code1,
             title="input_search_component",
-            description="A searchable input field with autocomplete functionality. "
-            "It triggers search requests as the user types and displays results in a dropdown.",
+            description="A searchable input with autocomplete. Each keystroke fires a "
+            "search request to the backend and the results are shown in a dropdown. "
+            "Use it for large or remote datasets that can't be loaded in the browser "
+            "all at once.",
             func=input_search_component,
         ),
         # Custom configuration example

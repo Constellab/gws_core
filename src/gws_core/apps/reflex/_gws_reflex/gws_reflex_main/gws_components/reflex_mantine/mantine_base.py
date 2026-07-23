@@ -77,12 +77,32 @@ _FIELD_CLASS = "gws-mantine-field"
 # <body> while a modal is open; the dropdown is portalled to <body>, so without
 # this it becomes non-interactive inside a dialog (no hover, clicks ignored).
 _DROPDOWN_CLASS = "gws-mantine-dropdown"
+# Mantine renders the ``clearable`` (×) button as a CloseButton with the static
+# selector "InputClearButton", so it always carries this readable class. Used to
+# match its color to the chevron and give it a hover "fab" container.
+_CLEAR_BUTTON_SELECTOR = ".mantine-InputClearButton-root"
 
 SELECT_CSS = (
-    # Single chevron: rotate it up when the dropdown is open.
-    f".{MANTINE_SELECT_CLASS} .{_CHEVRON_CLASS}{{transition:transform 150ms ease;}}"
+    # Chevron: gray at rest (color set here, not on the icon). It rotates up when the
+    # dropdown is open.
+    f".{_CHEVRON_CLASS}"
+    "{color:var(--gray-10);transition:transform 150ms ease;}"
     f".{MANTINE_SELECT_CLASS}:has(input[data-expanded]) .{_CHEVRON_CLASS}"
     "{transform:rotate(180deg);}"
+    # Clear (×) button: same resting gray as the chevron. On hover it darkens, scales
+    # like the chevron, and reveals a rounded "fab" container. Its inline background is
+    # var(--input-bg), so the hover tint needs !important to win over the inline style.
+    f".{MANTINE_SELECT_CLASS} {_CLEAR_BUTTON_SELECTOR}"
+    "{color:var(--gray-10);border-radius:var(--radius-2);scale:0.9;}"
+    f".{MANTINE_SELECT_CLASS} {_CLEAR_BUTTON_SELECTOR}:hover"
+    "{color:var(--gray-12);background-color:var(--gray-a4)!important;}"
+    # The currently-chosen option(s) (the checked one, with the left check icon) get
+    # a light accent tint so they stand out at rest. Declared BEFORE the hover/active
+    # rule below so the darker accent still wins when such an option is hovered.
+    f".{_OPTION_CLASS}[data-checked]{{background-color:var(--accent-4);}}"
+    # The left check icon follows the option's text color (CheckIcon fills with
+    # currentColor), so it stays readable at rest and on the dark accent hover.
+    f".{_OPTION_CLASS} svg{{color:inherit;}}"
     # Hovered / keyboard-active option uses the theme accent instead of Mantine's
     # gray hover and blue selected. Higher specificity than Mantine's own rules.
     # The dropdown is portalled to <body>, outside the `.radix-themes` element that
@@ -103,8 +123,12 @@ SELECT_CSS = (
 
 
 def mantine_chevron() -> rx.Component:
-    """The single down-chevron used as the right section (rotates when open)."""
-    return rx.icon("chevron-down", size=16, color="var(--gray-9)", class_name=_CHEVRON_CLASS)
+    """The single down-chevron used as the right section (rotates when open).
+
+    Color lives in ``SELECT_CSS`` (not as an ``rx.icon`` color prop) so the hover
+    rule can darken it — an inline color would beat the stylesheet.
+    """
+    return rx.icon("chevron-down", size=16, class_name=_CHEVRON_CLASS)
 
 
 def mantine_select_class_names() -> dict:

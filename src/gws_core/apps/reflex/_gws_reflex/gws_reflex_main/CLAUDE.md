@@ -110,11 +110,11 @@ Import: `from gws_reflex_main.gws_components import ag_grid_component`
 ### `select_component()`
 Single-value select dropdown built on the `@mantine/core` `Select` component. Behaves like a regular single select (`value` is a single string, `on_change` receives a single string, or `None` when cleared) but, with `searchable=True`, adds an integrated text field to filter the options as the user types.
 
-Exposed typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `clearable`, `nothing_found_message`, `disabled`, plus the `on_change` handler; extra props are forwarded to the underlying component.
+Exposed typed props: `data`, `value`, `label`, `placeholder`, `searchable`, `nothing_found_message`, `disabled`, plus the `on_change` handler; extra props are forwarded to the underlying component. Unlike `multi_select_component`, the single select has **no** `clearable` prop (there is no clear × button): to change the value you pick another option, and with `searchable=True` focusing the input clears the visible text so you can type a new query right away — the current selection stays selected and its label is restored on blur if you don't pick anything else.
 
 `data` is a list of strings (or `{value, label}` dicts); `value` is the selected string value. Both accept state Vars. It shares the Mantine wiring (styles + color-mode-aware `MantineProvider`) with `multi_select_component`, so no extra setup is needed.
 
-By default it shows a single chevron that points down when closed and rotates up when the dropdown is open (replacing Mantine's static double-chevron). With `clearable=True`, a clear (×) button appears next to the chevron once a value is set. Pass your own `right_section` to override the chevron.
+By default it shows a single chevron that points down when closed and rotates up when the dropdown is open (replacing Mantine's static double-chevron). Pass your own `right_section` to override the chevron.
 
 It is themed to blend with the app's Radix inputs: the resting outer style (radius, 1px border, surface background, text color, height) mirrors `Select.Trigger`, focus shows the same accent outline as a text field, and hovered/selected options use the theme accent (`--accent-9`) instead of Mantine's gray/blue. All via theme tokens, so it tracks the brick's accent. Override the input via a Mantine `styles` mapping (e.g. `styles={"input": {...}}`).
 
@@ -131,7 +131,7 @@ Only the props used by the apps are exposed as typed props (`data`, `value`, `la
 
 `data` is a list of strings (or `{value, label}` dicts); `value` is the list of selected string values. Both accept state Vars.
 
-Like `select_component`, it shows the single rotating chevron by default (the clear × button appears next to it when `clearable=True` and values are set); pass your own `right_section` to override.
+It shows the same single rotating chevron as `select_component` by default. Unlike the single select, it supports `clearable`: when `clearable=True` and values are set, a clear × button appears next to the chevron (it clears all the selected chips). Pass your own `right_section` to override.
 
 Import: `from gws_reflex_main.gws_components import multi_select_component`
 

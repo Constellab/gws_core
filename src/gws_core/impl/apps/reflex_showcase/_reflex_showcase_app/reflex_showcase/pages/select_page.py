@@ -135,7 +135,6 @@ select_component(
             data=SelectPageState.color_options,
             value=SelectPageState.selected_color,
             on_change=SelectPageState.set_selected_color,
-            clearable=True,
         ),
         rx.text(
             "Selected value: ",
@@ -168,7 +167,6 @@ select_component(
     data=MyState.color_options,
     value=MyState.selected_color,
     on_change=MyState.set_selected_color,
-    clearable=True,
 )"""
 
     return page_layout(
@@ -191,17 +189,20 @@ select_component(
             code=code2,
             title="Searchable",
             description="The same select with searchable=True, which adds an integrated "
-            "text field to filter the options as you type (clearable adds a reset button).",
+            "text field to filter the options as you type. Focusing the input clears the "
+            "visible text so you can type straight away; the current selection is kept "
+            "(its label comes back on blur if you don't pick anything else). Use this when "
+            "the whole list of options is small (up to ~100 options) and loaded in the "
+            "browser up front. Typing just filters that in-memory list, no server call.",
             func=select_component,
         ),
         # Dict options
         example_tabs(
             example_component=example3_component,
             code=code3,
-            title="Dict options & clearable",
+            title="Dict options",
             description="Options can be {value, label} dicts so the displayed label differs "
-            "from the stored value. With clearable=True, a clear (×) button appears next to the "
-            "chevron once a value is selected.",
+            "from the stored value: on_change still receives the value, not the label.",
             func=select_component,
         ),
     )
