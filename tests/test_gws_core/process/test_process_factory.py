@@ -18,7 +18,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 
-from ..protocol_examples import SimpleProtocolTest, NestedProtocolTest
+from ..protocol_examples import NestedProtocolTest, SimpleProtocolTest
 
 
 # test_process_factory

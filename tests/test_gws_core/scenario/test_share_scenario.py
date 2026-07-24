@@ -1,3 +1,4 @@
+import os
 from datetime import timedelta
 from typing import cast
 from unittest import TestCase
@@ -13,12 +14,11 @@ from gws_core import (
     TaskOutputs,
     task_decorator,
 )
-import os
-
 from gws_core.core.utils.compress.tar_compress import TarCompress
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.external_lab.external_lab_api_service import ExternalLabApiService
 from gws_core.folder.space_folder import SpaceFolder
+from gws_core.impl.file.file import File
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.lab.lab_model.lab_model import LabModel
@@ -26,18 +26,18 @@ from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.resource.resource_set.resource_set import ResourceSet
-from gws_core.impl.file.file import File
 from gws_core.resource.resource_zipper import ResourceZipper
-from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
-from gws_core.scenario.task.scenario_archive_zipper_task import ScenarioArchiveZipperTask
-from gws_core.scenario.task.scenario_loader_from_archive import ScenarioLoaderFromArchive
 from gws_core.scenario.scenario import Scenario
+from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
 from gws_core.scenario.scenario_builder import ScenarioBuilder
 from gws_core.scenario.scenario_enums import ScenarioCreationType, ScenarioStatus
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_service import ScenarioService
 from gws_core.scenario.scenario_transfert_service import ScenarioTransfertService
+from gws_core.scenario.task.scenario_archive_zipper_task import ScenarioArchiveZipperTask
 from gws_core.scenario.task.scenario_downloader_share_link import ScenarioDownloaderShareLink
+from gws_core.scenario.task.scenario_loader_from_archive import ScenarioLoaderFromArchive
+from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.scenario.task.send_scenario_to_lab import SendScenarioToLab
 from gws_core.share.share_link_service import ShareLinkService
 from gws_core.share.shared_dto import (
@@ -52,7 +52,6 @@ from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag import Tag, TagOrigins
 from gws_core.tag.tag_dto import TagOriginType
 from gws_core.tag.tag_entity_type import TagEntityType
-from gws_core.scenario.task.scenario_resource import ScenarioResource
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.task_input_model import TaskInputModel
