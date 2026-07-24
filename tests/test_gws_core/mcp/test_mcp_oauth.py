@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import hashlib
 import secrets
@@ -172,6 +173,23 @@ class TestMcpOAuthFlow(BaseTestCase):
 
     def test_client_can_register_itself(self):
         self.assertIsNotNone(self._register_client())
+
+    def test_a_registered_client_survives_a_restart(self):
+        """Regression: clients used to live in memory, so a lab restart made Claude's
+        cached client_id permanently unknown ("Client ID '...' not found" on
+        /authorize) with no way for the client to recover."""
+        client_id = self._register_client()
+
+        # A brand-new provider stands in for the process after a restart.
+        restarted = ConstellabOAuthProvider(callback_url=CALLBACK_URL, resource_url=MCP_URL)
+        client = asyncio.run(restarted.get_client(client_id))
+
+        self.assertIsNotNone(client)
+        self.assertEqual(client.client_id, client_id)
+        self.assertEqual([str(uri) for uri in client.redirect_uris], [CLIENT_REDIRECT])
+
+    def test_an_unknown_client_is_not_found(self):
+        self.assertIsNone(asyncio.run(self.provider.get_client("no-such-client")))
 
     def test_full_flow_mints_a_working_lab_token(self):
         """Register -> authorize -> Constellab login -> code -> token -> authenticated call."""
