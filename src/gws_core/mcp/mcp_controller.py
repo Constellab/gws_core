@@ -68,6 +68,21 @@ def _get_mcp_url() -> str:
     return f"{_get_lab_base_url()}/{MCP_ROUTE_PATH}"
 
 
+def _get_allowed_hosts(mcp_url: str) -> list[str]:
+    """Host headers the MCP endpoint answers to.
+
+    The SDK's DNS-rebinding protection rejects any Host it was not told about with
+    ``421 Invalid Host header``, so the lab's own domain has to be declared or no
+    client can connect (see ``_build_transport_security``).
+
+    The host is derived from the lab's configured URL, which is by definition the
+    one clients are told to call. A reverse proxy that rewrites Host would need
+    that value added here too.
+    """
+    host = urlparse(mcp_url).netloc
+    return [host] if host else []
+
+
 def _get_consent_page_url() -> str:
     """Absolute URL of the lab front-end page where the user approves a client.
 
@@ -206,7 +221,11 @@ def mount_mcp_app(main_app: FastAPI) -> None:
         client_registration_options=ClientRegistrationOptions(enabled=True),
     )
 
-    mcp_server = build_mcp_server(auth_provider=oauth_provider, auth_settings=auth_settings)
+    mcp_server = build_mcp_server(
+        auth_provider=oauth_provider,
+        auth_settings=auth_settings,
+        allowed_hosts=_get_allowed_hosts(mcp_url),
+    )
 
     # Serve the MCP endpoint at the mount root: the sub-app is mounted at "/mcp/",
     # so the SDK's own path must not repeat it.
