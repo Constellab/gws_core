@@ -136,6 +136,21 @@ class MainState(rx.State):
 - `async check_authentication() -> bool`: Validates current authentication status
 - `is_dev_mode() -> bool`: Checks if running in development mode
 
+### `main_component` — the app init gate
+
+`main_component(*contents)` (from `gws_reflex_main`) wraps a page's content and is what runs the app's initialization: on mount it triggers the main state's auth flow (the `gws_code` → JWT exchange) and shows a spinner until it completes, then renders `contents`. `get_current_user()` / `get_resources()` / `authenticate_user()` only resolve once this has run.
+
+- **Every page must render its content through `main_component`.** A page that skips it (e.g. an index page that only does `rx.box(on_mount=rx.redirect(...))`) never runs the auth init, so any page it leads to loads before a user is resolved and raises `ReflexAppException("User not authenticated")`. Wrap the redirect too:
+
+```python
+@rx.page(route="/")
+def index() -> rx.Component:
+    # main_component so auth init runs before we navigate
+    return main_component(rx.box(on_mount=rx.redirect("/projects")))
+```
+
+- It also injects the GWS theme CSS (`include_theme_css=True` by default) and the shared confirm dialog. Call it once per page, at the top of the returned tree.
+
 ### Authentication: `AUTHENTICATED` vs `PUBLIC`
 
 An app has one access mode, chosen on the app resource when the task builds it:
