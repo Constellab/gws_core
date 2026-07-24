@@ -13,16 +13,14 @@ from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse
 
 from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.oauth.oauth_service import OAuthService
 from gws_core.user.authorization_service import AuthorizationService
 
 OAUTH_AUTH_ROUTE_PATH = "oauth-auth"
 
-oauth_auth_app = ApiRegistry.register_api(f"/{OAUTH_AUTH_ROUTE_PATH}/")
 
-
-@oauth_auth_app.get("/consent")
 async def oauth_consent(request: Request):
     """Finish an authorization once the user has consented on the front-end.
 
@@ -87,3 +85,13 @@ def _error_page(message: str) -> str:
       <p>{message}</p>
     </body></html>
     """
+
+
+# Register /oauth-auth/ only when the MCP server is enabled. It is the only thing
+# that ever installs an OAuth provider (via mount_mcp_app), so with MCP off there is
+# nothing to consent to and the route must not exist at all. Gating here (rather than
+# wrapping the handler) keeps the disabled surface fully absent -- the module attribute
+# ``oauth_auth_app`` is likewise defined only when enabled.
+if Settings.is_mcp_server_enabled():
+    oauth_auth_app = ApiRegistry.register_api(f"/{OAUTH_AUTH_ROUTE_PATH}/")
+    oauth_auth_app.get("/consent")(oauth_consent)

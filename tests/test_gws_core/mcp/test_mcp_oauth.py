@@ -25,6 +25,22 @@ CONSENT_PAGE_URL = "https://dev-lab.example.com/oauth-consent"
 CLIENT_REDIRECT = "http://localhost:33418/callback"
 
 
+def _consent_app() -> FastAPI:
+    """Mount the consent route the way oauth_controller does at import time.
+
+    Built here rather than reusing ``oauth_controller.oauth_auth_app``: that module
+    attribute exists only when GWS_MCP_SERVER_ENABLED was set before the controller
+    was imported, which would force the flag on for the whole test process. The
+    route under test is the handler, not the registration, so wiring it onto a
+    local app tests the same thing without that global.
+    """
+    app = FastAPI()
+    app.get(f"/{oauth_controller.OAUTH_AUTH_ROUTE_PATH}/consent")(
+        oauth_controller.oauth_consent
+    )
+    return app
+
+
 def _pkce_pair() -> tuple[str, str]:
     """Return a (code_verifier, code_challenge) S256 PKCE pair."""
     verifier = secrets.token_urlsafe(64)
@@ -327,9 +343,7 @@ class TestMcpConsent(_McpOAuthTestCase):
         return UniqueCodeService.generate_code(user.id, {}, 60)
 
     def _consent(self, login_state: str, code: str):
-        app = FastAPI()
-        app.mount("/oauth-auth/", oauth_controller.oauth_auth_app)
-        with TestClient(app) as client:
+        with TestClient(_consent_app()) as client:
             return client.get(
                 "/oauth-auth/consent",
                 params={"login_state": login_state, "code": code},
@@ -381,9 +395,7 @@ class TestMcpConsent(_McpOAuthTestCase):
         self.assertEqual(response.status_code, 400)
 
     def test_missing_params_are_refused(self):
-        app = FastAPI()
-        app.mount("/oauth-auth/", oauth_controller.oauth_auth_app)
-        with TestClient(app) as client:
+        with TestClient(_consent_app()) as client:
             for params in [{}, {"login_state": "x"}, {"code": "y"}]:
                 response = client.get("/oauth-auth/consent", params=params, follow_redirects=False)
                 self.assertEqual(response.status_code, 400)

@@ -48,6 +48,12 @@ class Settings:
 
     SETTINGS_NAME = "settings.json"
 
+    # Env var that gates the MCP FastAPI surface. Named constant (other env keys in
+    # this file are inline literals) because it is a cross-repo contract: lab-manager
+    # writes the same key. GWS_ prefix per the convention for gws-specific vars
+    # (GWS_MONITOR_*). See lab-manager MCP_SERVER_ENABLED_KEY.
+    MCP_SERVER_ENABLED_ENV_VAR = "GWS_MCP_SERVER_ENABLED"
+
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
     DEFAULT_GWS_MONITOR_LOG_MAX_LINES = 86400  # 1 month of log with 1 log every 30 seconds
@@ -124,6 +130,12 @@ class Settings:
     @classmethod
     def is_dev_mode(cls) -> bool:
         return not cls.is_prod_mode()
+
+    @classmethod
+    def is_mcp_server_enabled(cls) -> bool:
+        # Default OFF. Strict "true" match (mirrors is_prod_mode); the value is
+        # machine-written by lab-manager, so leniency buys nothing.
+        return os.environ.get(cls.MCP_SERVER_ENABLED_ENV_VAR, "false") == "true"
 
     @classmethod
     def get_lab_mode(cls) -> LabMode:
