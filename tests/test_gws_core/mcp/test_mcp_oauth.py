@@ -2,6 +2,7 @@ import base64
 import hashlib
 import secrets
 from contextlib import asynccontextmanager
+from unittest import TestCase
 from unittest.mock import patch
 
 from fastapi import FastAPI
@@ -12,6 +13,7 @@ from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
+from pydantic import AnyHttpUrl
 from starlette.testclient import TestClient
 
 MCP_URL = "https://lab.example.com/mcp"
@@ -100,6 +102,44 @@ class TestMcpOAuthDiscovery(BaseTestCase):
         self.assertEqual(metadata["code_challenge_methods_supported"], ["S256"])
         self.assertEqual(metadata["authorization_endpoint"], f"{MCP_URL}/authorize")
         self.assertEqual(metadata["token_endpoint"], f"{MCP_URL}/token")
+
+    def test_authorization_server_metadata_is_served_at_the_rfc_8414_path(self):
+        """Regression: our issuer has a path, so RFC 8414 clients ask for
+        /.well-known/oauth-authorization-server/mcp. The SDK only serves the bare
+        path, and the mismatch 404s the login before the browser opens."""
+        response = self.client.get("/.well-known/oauth-authorization-server/mcp")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["issuer"], MCP_URL)
+
+    def test_both_metadata_paths_serve_the_same_document(self):
+        with_path = self.client.get("/.well-known/oauth-authorization-server/mcp").json()
+        bare = self.client.get("/.well-known/oauth-authorization-server").json()
+
+        self.assertEqual(with_path, bare)
+
+
+# test_mcp_oauth
+class TestAuthorizationServerMetadataPaths(TestCase):
+    """Which well-known paths the metadata is published on (RFC 8414 §3.1)."""
+
+    def test_an_issuer_with_a_path_publishes_both_paths(self):
+        paths = mcp_controller._authorization_server_metadata_paths(
+            AnyHttpUrl("https://lab.example.com/mcp")
+        )
+
+        self.assertEqual(
+            paths,
+            [
+                "/.well-known/oauth-authorization-server/mcp",
+                "/.well-known/oauth-authorization-server",
+            ],
+        )
+
+    def test_an_issuer_without_a_path_publishes_only_the_bare_path(self):
+        for issuer in ["https://lab.example.com", "https://lab.example.com/"]:
+            paths = mcp_controller._authorization_server_metadata_paths(AnyHttpUrl(issuer))
+            self.assertEqual(paths, ["/.well-known/oauth-authorization-server"])
 
 
 # test_mcp_oauth

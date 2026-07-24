@@ -19,6 +19,7 @@ browser renders (see ``ApiRegistry.register_api``).
 
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from urllib.parse import urlparse
 
 from fastapi import FastAPI
 from mcp.server.auth.handlers.metadata import MetadataHandler
@@ -33,6 +34,7 @@ from mcp.server.auth.settings import (
     RevocationOptions,
 )
 from mcp.server.fastmcp import FastMCP
+from pydantic import AnyHttpUrl
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.routing import Route
@@ -258,6 +260,28 @@ def mount_mcp_app(main_app: FastAPI) -> None:
     Logger.info(f"MCP server available at {mcp_url}")
 
 
+def _authorization_server_metadata_paths(issuer_url: AnyHttpUrl) -> list[str]:
+    """Return every path a client may fetch the authorization-server metadata from.
+
+    Our issuer carries a path (``https://<lab>/mcp``). RFC 8414 §3.1 says a client
+    must then insert the well-known segment *between the host and that path* and
+    request ``/.well-known/oauth-authorization-server/mcp`` -- which is what
+    Claude does. The SDK, however, hardcodes its route at the bare
+    ``/.well-known/oauth-authorization-server`` regardless of the issuer, so the
+    two disagree and the login dies on a 404 (``{"detail":"Not Found"}``) before
+    the browser ever opens.
+
+    Both paths are therefore served: the RFC-compliant one for spec-following
+    clients, and the bare one for clients that ignore the issuer path.
+    """
+    path = urlparse(str(issuer_url)).path.rstrip("/")
+
+    paths = ["/.well-known/oauth-authorization-server"]
+    if path:
+        paths.insert(0, f"/.well-known/oauth-authorization-server{path}")
+    return paths
+
+
 def _add_well_known_routes(main_app: FastAPI, auth_settings: AuthSettings) -> None:
     """Serve the OAuth discovery documents from the domain root.
 
@@ -288,13 +312,10 @@ def _add_well_known_routes(main_app: FastAPI, auth_settings: AuthSettings) -> No
         or ClientRegistrationOptions(enabled=True),
         revocation_options=auth_settings.revocation_options or RevocationOptions(),
     )
-    routes.append(
-        Route(
-            "/.well-known/oauth-authorization-server",
-            endpoint=cors_middleware(MetadataHandler(metadata).handle, ["GET", "OPTIONS"]),
-            methods=["GET", "OPTIONS"],
-        )
-    )
+    handler = cors_middleware(MetadataHandler(metadata).handle, ["GET", "OPTIONS"])
+
+    for path in _authorization_server_metadata_paths(auth_settings.issuer_url):
+        routes.append(Route(path, endpoint=handler, methods=["GET", "OPTIONS"]))
 
     for route in routes:
         main_app.router.routes.append(route)
