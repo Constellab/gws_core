@@ -81,7 +81,30 @@ Extend this state to handle resource selection:
 ### `rich_text_component()`
 Rich text editor component using dc-text-editor Angular component. Provides a WYSIWYG editor for formatted text content.
 
-Like `select_resource_2_component()`, it calls the data lab API from the front using the authenticated user's token. On a PUBLIC app (no authenticated user) the requests are unauthenticated unless `fallback_to_system_user=True` is passed, which runs them as the system user (binds the `get_reflex_user_auth_info_with_system_fallback` state var instead of `get_reflex_user_auth_info`). **WARNING:** `fallback_to_system_user` lets any visitor of the app read and write data lab objects through the API as the system user.
+Like `select_resource_2_component()`, it calls the data lab API from the front using the authenticated user's token. On a PUBLIC app (no authenticated user) the requests are unauthenticated unless `fallback_to_system_user=True` is passed, which runs them as the system user (binds the `get_reflex_user_auth_info_with_system_fallback` state var instead of `get_reflex_user_auth_info`). **WARNING:** `fallback_to_system_user` lets any visitor of the app read and write data lab objects through the API as the system user, including uploading the editor's images.
+
+**Images:** pass an `image_config` (`RichTextImageConfig`) to enable the image tool (it is disabled when the config is missing). It identifies the object owning the rich text, and the editor then uploads/loads the images through the lab `rich-text/{object_type}/{object_id}/image` routes. The images are stored by `RichTextFileService` in a directory dedicated to the object, so **the owner of the object must delete that directory when the object is deleted**, otherwise the images are leaked:
+
+```python
+from gws_reflex_main.gws_components import RichTextImageConfig, rich_text_component
+
+# in the component
+rich_text_component(
+    value=MyState.note_content,
+    output_event=MyState.handle_content_change,
+    image_config=RichTextImageConfig(
+        object_type=PROJECT_DOCUMENT_RICH_TEXT_OBJECT_TYPE,  # ex: "project_document"
+        object_id=MyState.note_id,
+    ),
+)
+
+# in the service deleting the object, AFTER the db transaction is committed
+RichTextFileService.delete_object_dir(PROJECT_DOCUMENT_RICH_TEXT_OBJECT_TYPE, document_id)
+```
+
+`object_type` is a free-form string (`RichTextObjectType` members are accepted too, the enum inherits `str`), so a brick declares its own value as a constant. It must only contain letters, digits, `_` and `-` (it is a directory name, validated by `RichTextFileService`).
+
+The upload is authenticated with the app token (the Angular `HttpClient` interceptor adds the app headers). The image `GET` route is **public**: an `<img>` tag cannot send those headers, so anyone with an image URL can read it. The filenames are unguessable (uuid + timestamp), but do not use the image tool for sensitive images.
 
 ---
 

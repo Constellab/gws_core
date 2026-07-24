@@ -14,7 +14,7 @@ from gws_cli.ai_code.ai_code_service import AICodeService, SkillFrontmatter
 class ClaudeService(AICodeService):
     """Service for managing Claude Code installation and related operations"""
 
-    MCP_DIR = Path(__file__).parent / ".." / "mcp"
+    MCP_DIR = Path(__file__).parent / ".." / "mcp_tools"
 
     # List of MCP servers to configure: (name, script filename)
     MCP_SERVERS: list[tuple[str, str]] = [

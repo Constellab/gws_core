@@ -6,6 +6,7 @@ from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
 from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
+from gws_core.mcp.mcp_controller import mcp_session_manager_lifespan, mount_mcp_app
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
 from .apps.apps_manager import AppsManager
@@ -27,7 +28,12 @@ async def lifespan(app: FastAPI):
     Lifespan event handler for startup and shutdown events
     """
     # Startup: code before yield
-    yield
+    # The MCP server keeps its sessions in a task group started by its own
+    # lifespan. Starlette does not run the lifespan of a *mounted* sub-app, so
+    # without this the manager stays uninitialized and every authenticated MCP
+    # call fails with "Task group is not initialized".
+    async with mcp_session_manager_lifespan():
+        yield
     # Shutdown: code after yield
     App.deinit()
 
@@ -91,6 +97,11 @@ class App:
     def start_uvicorn_app(cls, port: int = 3000):
         # configure the context middleware
         cls.app.add_middleware(ContextMiddleware)
+
+        # Build and register the MCP server. Done here (not at import) because its
+        # OAuth issuer/resource URLs are read from Settings, and before the loop
+        # below so its sub-apps are part of the mount.
+        mount_mcp_app(cls.app)
 
         # Mount all registered apps (internal + brick apps)
         for path, sub_app in ApiRegistry.get_all_apis().items():
