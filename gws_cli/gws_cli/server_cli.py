@@ -134,9 +134,10 @@ def test(
         pytest_args += [f"--junitxml={junit_xml}"]
 
     if not (len(test_name) == 1 and test_name[0] in ("*", "all")):
-        for name in test_name:
-            filename = name if name.endswith(".py") else f"{name}.py"
-            pytest_args += ["-k", os.path.splitext(filename)[0]]
+        # A single -k with an `or` expression: pytest keeps only the LAST -k it
+        # sees, so one flag per file would silently run just the last one.
+        stems = [os.path.splitext(name)[0] for name in test_name]
+        pytest_args += ["-k", " or ".join(stems)]
 
     log_level = CLIUtils.get_global_option_log_level(ctx)
     if log_level:
