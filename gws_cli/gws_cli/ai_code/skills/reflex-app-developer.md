@@ -82,6 +82,19 @@ Note: the `dev_config.json` simulate configuration values that would normally be
 - Dialogs should close when clicking outside by default. Add `on_interact_outside=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`.
 - Dialogs should close on Escape key by default. Add `on_escape_key_down=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`. For `rx.alert_dialog`, this is already the default behavior.
 
+### Clickable table rows (navigate to a link on click)
+- To make a whole `rx.table.row` open a link, put a `style` dict with a `:hover` background and `cursor: pointer` on the row itself, plus a row-level `on_click` that redirects:
+  ```python
+  rx.table.row(
+      rx.table.cell(...),
+      rx.table.cell(...),
+      style={":hover": {"background_color": "var(--gray-3)"}, "cursor": "pointer"},
+      on_click=lambda: rx.redirect(f"/items/{item.id}"),
+  )
+  ```
+- Any interactive element inside that row (a menu, a button) must stop the click from bubbling to the row, or it will also navigate. Add `on_click=lambda: rx.stop_propagation` on the wrapping element (e.g. `rx.menu.content`), or pass `on_click=[rx.stop_propagation, real_handler]` on a single button.
+- Do not add row hover/click to a row whose action isn't navigation (e.g. a row that only downloads a file or opens a menu) — reserve this pattern for rows that open another page.
+
 ### GWS Core custom Reflex Components
 - Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
 
