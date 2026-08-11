@@ -25,6 +25,17 @@ ShowSqlAnnotation = Annotated[
 ]
 IsTestAnnotation = Annotated[bool, typer.Option("--test", help="Run in test mode.", is_flag=True)]
 
+# Sentinel default for --workers: resolved to (available CPUs - RESERVED_CPUS).
+# Kept distinct from 'auto' so that value keeps its xdist meaning (all CPUs).
+DEFAULT_WORKERS = "reserved"
+# CPUs left free for the rest of the machine when --workers is 'reserved'.
+RESERVED_CPUS = 2
+
+WORKERS_HELP = (
+    f"Number of parallel workers. '{DEFAULT_WORKERS}' (default) uses all available CPUs "
+    f"minus {RESERVED_CPUS}, at least 1. 'auto' uses one per CPU. Only with --parallel."
+)
+
 
 @app.command("run", help="Start the server")
 def run(
@@ -88,9 +99,9 @@ def test(
         typer.Option(
             "--workers",
             "-n",
-            help="Number of parallel workers. 'auto' uses one per CPU. Only with --parallel.",
+            help=WORKERS_HELP,
         ),
-    ] = "auto",
+    ] = DEFAULT_WORKERS,
     durations: Annotated[
         int,
         typer.Option("--durations", help="Print the N slowest tests after the run."),
@@ -116,7 +127,7 @@ def test(
 
     pytest_args = [sys.executable, "-m", "pytest"]
     if parallel:
-        pytest_args += ["-n", workers]
+        pytest_args += ["-n", _resolve_workers(workers)]
     if durations > 0:
         pytest_args += [f"--durations={durations}"]
     if junit_xml:
@@ -143,6 +154,30 @@ def test(
     # the brick root adds src/ to sys.path for the master and every worker.
     os.chdir(brick_dir)
     os.execvp(pytest_args[0], pytest_args)
+
+
+def _resolve_workers(workers: str) -> str:
+    """Resolve the --workers value into an argument for pytest-xdist's -n.
+
+    'reserved' (the default) leaves 2 CPUs free for the rest of the machine,
+    with a floor of 1 worker. Any other value ('auto', 'logical', a number,
+    ...) is passed through to xdist untouched.
+
+    :param workers: raw --workers option value
+    :return: value to pass to `pytest -n`
+    """
+    if workers != DEFAULT_WORKERS:
+        return workers
+
+    # sched_getaffinity respects cgroup/taskset limits (Docker, CI runners),
+    # unlike os.cpu_count() which reports the whole host. Fall back to
+    # cpu_count() on platforms without it (macOS, Windows).
+    if hasattr(os, "sched_getaffinity"):
+        available = len(os.sched_getaffinity(0))
+    else:
+        available = os.cpu_count() or 1
+
+    return str(max(1, available - RESERVED_CPUS))
 
 
 def _resolve_brick_dirs(brick_names: list[str]) -> list[str]:
@@ -182,9 +217,9 @@ def test_all(
         typer.Option(
             "--workers",
             "-n",
-            help="Parallel workers per brick. Only with --parallel.",
+            help=f"Parallel workers per brick. {WORKERS_HELP}",
         ),
-    ] = "auto",
+    ] = DEFAULT_WORKERS,
     durations: Annotated[
         int,
         typer.Option("--durations", help="Print the N slowest tests per brick."),

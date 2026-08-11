@@ -20,13 +20,17 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - Start server with debug logging: `gws server run --log-level=DEBUG`
 
 ### Testing
-- **Run all tests**: `gws server test all`
+- **Run all tests**: `gws server test all --parallel`
 - **Run specific test**: `gws server test [TEST_FILE_NAME]` (without `.py` extension, run from the brick directory)
 - Tests are located in each brick's `tests/` directory
 - Example: `cd bricks/gws_ai_toolkit && gws server test test_table_copilot`
-- **Run tests in parallel**: add `--parallel` to run via pytest-xdist. Each worker gets its own test DB schema.
-  - Example: `gws server test all --parallel`
-  - Control the worker count with `--workers` / `-n` (default `auto`, one worker per CPU); only takes effect with `--parallel`.
+- **Always add `--parallel` when running all tests or several test files at once** — it runs them via pytest-xdist, which is much faster. Each worker gets its own test DB schema.
+  - Example (all tests): `gws server test all --parallel`
+  - Example (several files): `gws server test test_table test_view --parallel`
+  - A single test file does not need `--parallel` (one file, one worker — no gain).
+- Control the worker count with `--workers` / `-n`; only takes effect with `--parallel`.
+  - Default is `reserved`: all available CPUs minus 2 (minimum 1), leaving 2 CPUs free for the rest of the machine.
+  - Pass `auto` for one worker per CPU, or an explicit number to pin it.
   - Example: `gws server test all --parallel -n 4`
 
 ### Development Apps
