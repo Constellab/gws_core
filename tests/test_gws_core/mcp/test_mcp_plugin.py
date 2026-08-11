@@ -195,6 +195,17 @@ class TestServedNameHistory(_PluginTestCase):
         self.assertEqual(identity.plugin_name, "mon-lab")
         self.assertEqual(identity.build_renames(), {"notre-lab": "mon-lab"})
 
+    def test_a_history_holding_junk_does_not_reach_the_manifest(self):
+        """The history is a hand-editable JSON file, and Claude Code rejects a whole
+        marketplace over one malformed ``renames`` key -- every user of the lab, to
+        migrate an install that cannot exist."""
+        Settings.get_instance().data[SETTINGS_SERVED_PLUGIN_NAMES_KEY] = ["", None, 3, "old-lab"]
+
+        with self.lab(name="Mon Lab"):
+            identity = resolve_and_record_identity()
+
+        self.assertEqual(identity.build_renames(), {"old-lab": "mon-lab"})
+
     def test_a_settings_that_cannot_be_saved_does_not_break_the_manifest(self):
         """The degraded state is a rename that will not migrate later -- not a lab that
         stops serving its plugin."""
@@ -328,6 +339,39 @@ class TestMarketplaceManifest(_PluginTestCase):
         manifest = self.generate(name="Notre Lab").marketplace_manifest
 
         self.assertEqual(manifest["renames"], {"mon-lab": "notre-lab"})
+
+    def test_a_name_served_before_two_renames_points_at_the_current_plugin(self):
+        """In one hop, not a chain to walk.
+
+        Claude Code resolves an install through ``renames`` when the name in the user's
+        settings is no longer in ``plugins``. Verified by hand against Claude Code
+        2.1.227: a plugin installed as ``mon-lab``, with the marketplace then renaming
+        twice, is migrated straight to ``leur-lab`` by this flat map.
+        """
+        for name in ["Mon Lab", "Notre Lab", "Leur Lab"]:
+            manifest = self.generate(name=name).marketplace_manifest
+
+        self.assertEqual(manifest["plugins"][0]["name"], "leur-lab")
+        # The whole map: emitting only the oldest name, or only the newest, migrates one
+        # of the two populations of installed users and strands the other.
+        self.assertEqual(manifest["renames"], {"mon-lab": "leur-lab", "notre-lab": "leur-lab"})
+
+    def test_renames_terminate_at_the_plugin_the_manifest_declares(self):
+        """``claude plugin validate`` rejects a map that cycles, or whose target is not a
+        declared plugin -- and a marketplace it rejects is one no user can update.
+
+        The exposure is a lab renamed *back* to a name it already served: that name is
+        both in the history and the current one, and emitting it would close a cycle.
+        """
+        for name in ["Mon Lab", "Notre Lab", "Leur Lab", "Mon Lab"]:
+            manifest = self.generate(name=name).marketplace_manifest
+            plugin_name = manifest["plugins"][0]["name"]
+            renames = manifest.get("renames", {})
+
+            self.assertNotIn(plugin_name, renames)
+            self.assertEqual(set(renames.values()) - {plugin_name}, set())
+
+        self.assertEqual(manifest["renames"], {"notre-lab": "mon-lab", "leur-lab": "mon-lab"})
 
 
 # test_mcp_plugin

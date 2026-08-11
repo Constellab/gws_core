@@ -124,11 +124,7 @@ approve the access in the browser window that opens. The tools appear once you h
 - "If a download answers 404, your copy of the marketplace is older than the lab: run those
   two commands and install again."
 
-**Rename warning** — show it wherever this lab's *name* is edited, not necessarily here:
-
-> Renaming this lab renames its Claude Code plugin. Installations follow the rename
-> automatically, but each user is asked to approve the renamed tools once more, and has to
-> sign in again through `/mcp`.
+**Rename warning** — this lives on the rename screen, not here. See §4.
 
 ### 3.2 `MCP_DISABLED`
 
@@ -150,7 +146,66 @@ No commands, no copy buttons.
 
 ---
 
-## 4. Behaviour notes
+## 4. The rename screen
+
+Not the screen above: wherever a lab administrator edits the lab's **name**. The plugin's name is
+derived from it, so renaming the lab renames the plugin, and every user who installed it
+pays something for that. They are never left broken — the lab's manifest carries the
+migration — but three of the four things below are visible to them, so the administrator
+has to know before they hit save.
+
+Show it as a warning next to the name field, or in the confirmation dialog. It is the same
+text whether or not the lab currently serves a plugin (`status` does not gate it): a lab
+with its MCP server off may have served one before, and the installs are still out there.
+
+**Heading:** Renaming this lab renames its Claude Code plugin
+
+> Users who installed this lab's plugin keep it — the lab tells Claude Code about the new
+> name, and every installation follows it, including ones made before an earlier rename.
+> But each user has to do three things once, the next time they use it:
+>
+> - run `/plugin marketplace update` and then `/plugin install`, to fetch the plugin under
+>   its new name;
+> - approve its tools again, because permission rules mention the old name;
+> - sign in again through `/mcp`.
+>
+> Nothing is lost and nothing breaks in the meantime. If you can, tell your users before
+> renaming.
+
+**Copy notes for whoever implements this:**
+
+- **Don't soften it to "automatic".** The settings migration is automatic; the re-fetch, the
+  permission prompts and the sign-in are not. A user promised a seamless rename will read
+  the sign-in prompt as a failure.
+- **Don't name the plugin's new name in the warning.** It is derived by the lab from the
+  name being typed, and the screen would have to recompute the slug rules to show it —
+  which §5 forbids. The new name appears on the "Connect Claude Code" screen after the
+  rename takes effect.
+- **The commands stay bare.** `/plugin marketplace update` and `/plugin install` without
+  arguments are what the user types into Claude Code's own picker; the argument forms live
+  on the "Connect Claude Code" screen, in `commands`, where they can be copied.
+- **A rename takes effect when the lab restarts**, like every other consumer of the lab's
+  name. Until then the lab keeps serving the plugin under the old name — so the
+  "Connect Claude Code" screen still shows the old one, and that is correct, not stale.
+
+**What the lab handles on its own, and the front-end does not mention:**
+
+- Two or more renames in a row. The lab remembers every name it has served, so an install
+  made before the first rename still migrates, in one step.
+- Renaming back to a previous name. It resolves to a plugin that exists, with no loop.
+
+**One more line, for a lab whose name is not public knowledge.** The migration works by the
+lab publishing "this name is now that name" in a manifest served to anyone who knows the
+lab's URL, and it must keep publishing it for as long as an install might still carry the
+old name — which is forever. Worth saying on the screen where a lab named after a customer
+or an unannounced project is renamed:
+
+> The old name stays visible in the plugin this lab publishes, so that existing
+> installations can find their way to the new one.
+
+---
+
+## 5. Behaviour notes
 
 - **Every command gets a copy button.** They are typed into Claude Code, so copying is the
   whole interaction. Display them as code, in one line, without a leading `$`.
@@ -166,7 +221,7 @@ No commands, no copy buttons.
 
 ---
 
-## 5. Out of scope
+## 6. Out of scope
 
 - Anything that *changes* the plugin. There is no setting here — the marketplace name comes
   from the lab id, the plugin name from the lab name, the version from the served content.

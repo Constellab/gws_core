@@ -137,10 +137,17 @@ that can migrate.
 - **The history of served names is persisted in `Settings`** (F8): on each generation, if the
   current name differs from the last one served, append it. The manifest emits `renames` from that
   list. A full list, not just the last name, so two successive renames still migrate.
-- **A lab rename costs users two things `renames` does not cover**, and this is accepted:
-  their permission rules for the old tool ids stop matching (they are re-prompted, with no error),
-  and they most likely have to log in again, since OAuth credentials are stored per server entry
-  and that entry derives from the plugin name. The lab's rename screen should say so.
+- **A lab rename costs users three things `renames` does not cover**, and this is accepted:
+  one `/plugin install` to fetch the archive under its new name, their permission rules for the
+  old tool ids no longer matching (they are re-prompted, with no error), and a new sign-in, since
+  OAuth credentials are held per server entry and that entry derives from the plugin name. Priced
+  against the real client under [what a lab rename actually costs](#what-a-lab-rename-actually-costs-its-users);
+  the lab's rename screen says all three.
+- **Every name the lab has ever served stays public.** The history is emitted as `renames` in an
+  unauthenticated manifest, for the life of the lab — dropping an entry would strand the installs
+  still on it. A lab named after a customer or an unannounced project carries that name in its
+  manifest long after being renamed away from it. Nothing mitigates this; the rename screen says
+  it, so the choice is made by someone who knows.
 - **Known degraded case**: if the settings file is lost (recreated volume), the history goes with
   it, no `renames` is emitted, and existing installs point at a plugin name the manifest no longer
   lists. The user reinstalls. Rare, and silent.
@@ -211,6 +218,10 @@ skill edit moving the version.
    to it. Not a page on the public repository (see the deviation below) but a screen of the lab's
    own front-end, backed by `GET /core-api/claude-plugin`:
    `docs/todo/claude_plugin_frontend_spec.md`.~~
+9. ~~**The rename, verified and told** — what a lab rename costs an install, measured against the
+   real client, and the warning text that goes on the rename screen.~~ Issue #107. It cost no
+   production code: the mechanism shipped whole with #105, and every claim it rested on held.
+   Recorded below, handed over in `docs/todo/claude_plugin_frontend_spec.md` §3.4.
 
 ## Verified during implementation
 
@@ -244,12 +255,38 @@ skill edit moving the version.
   changing `LAB_NAME` needs a restart, which is already true of every other consumer of
   that variable.
 
-## Still unverified
+## What a lab rename actually costs its users
 
-- **Does renaming the plugin force a new OAuth login?** Inferred from credentials being keyed per
-  server entry. Settling it needs a real HTTPS lab and two names, so it was left open; the rename
-  warning is written as if it does, which is the safe direction, and
-  `docs/todo/claude_plugin_frontend_spec.md` has the lab's rename screen say the same.
+Issue #107. Measured against Claude Code **2.1.227**, driving the real client through
+`claude plugin` with an isolated `CLAUDE_CONFIG_DIR`, against a marketplace carrying the map this
+generator emits. What could not be measured that way is marked as such.
+
+| | |
+|---|---|
+| **The `renames` map is followed, and one hop is enough** | A plugin installed as `mon-lab`, with the marketplace then renaming twice (`renames` = `{mon-lab: leur-lab, notre-lab: leur-lab}`), migrated straight to `leur-lab`. The flat map this generator emits — *every* former name pointing at the current one — needs no chain walking. |
+| **The migration is a settings rewrite, and it happens on the next load** | `/plugin marketplace update` alone leaves `enabledPlugins` untouched. The next time Claude Code loads plugins it rewrites the key (`mon-lab@… → leur-lab@…`) in the user, project and local scopes, and prints `Renamed to "leur-lab" in the "constellab-…" marketplace` once. No user action beyond the update and the restart they were doing anyway. |
+| **The MCP server entry is renamed with the plugin** | It is keyed `plugin:<plugin name>:<server key>`: `plugin:mon-lab:constellab` became `plugin:leur-lab:constellab`. |
+| **So yes — users sign in again** | Credentials are held per server entry (`claude mcp login <name>` takes that id), and the rename gives the entry a new id, leaving the new one with none. Directly observed: the id changes. Not observed: the credential lookup missing, which needs a live OAuth round-trip against an HTTPS lab. |
+| **And their permission rules stop matching** | Tool ids are `mcp__plugin_<plugin name>_<server key>__<tool>`, so every rule a user wrote names the old plugin. They are re-prompted, with no error. |
+| **One `/plugin install` is needed on top of the update** | Plugin content is cached at `plugins/cache/<marketplace>/<plugin>/<version>`; after the rename nothing sits under the new name. A `directory` source is re-read from its path, but a remote one — `archive`, which is what this lab serves — reports `plugin-cache-miss`, and the docs are explicit that the user runs `/plugin install` once to fetch it under the new name. Not reproduced locally: an `archive` source needs a public HTTPS host, which is the same reason local development uses a checkout-backed marketplace. |
+| **A lab renamed back to a former name is safe** | That name is both in the history and the current one. It is emitted as the rename *target* and never as a key, so the map cannot close a cycle — which `claude plugin validate` rejects outright, and a marketplace it rejects is one nobody can update. |
+| **Managed and policy settings are not rewritten** | They are read-only to Claude Code. The plugin still loads, but the rename notice recurs at every start until an administrator updates `enabledPlugins` there. Affects labs whose plugin is deployed by policy, not individual users. |
+
+So the honest account, and what the rename screen says: the install follows the rename by itself,
+but the user runs `/plugin install` once, approves the renamed tools again, and signs in again.
+The text handed to the front-end is in `docs/todo/claude_plugin_frontend_spec.md`.
+
+### When the history is lost
+
+The served names live in the `Settings` JSON file (F8). If that file goes — a recreated volume, a
+lab rebuilt from scratch — the history goes with it. The lab then serves a manifest with no
+`renames` for the names it served before, and an install pointing at one of them resolves to
+nothing — `plugin-not-found`, per the documented behaviour for a name absent from both `plugins`
+and `renames`; not reproduced here, for the same reason as the row above. Those users reinstall
+from the same marketplace URL, which is unchanged. Nothing detects this, and nothing repairs it: the lab cannot know
+a name it no longer remembers serving. It is the same degraded state as a save that fails, which
+is why `_record_served_plugin_name` logs rather than raises — the manifest served *now* is correct
+either way.
 
 ## Out of scope
 

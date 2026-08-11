@@ -17,6 +17,13 @@ that is allowed to move is the half that can carry its users with it.
 The names a lab has served are kept in ``Settings`` (the JSON file that already holds
 ``secret_key``), because ``renames`` has to list *every* previous name: a lab renamed
 twice while a user was away must still migrate that user in one step.
+
+Lose that file -- a recreated volume, a lab rebuilt from scratch -- and the history goes
+with it: the manifest then carries no ``renames``, an install made under an older name
+resolves to nothing, and those users reinstall from the same (unchanged) marketplace URL.
+Nothing here detects that state, and nothing repairs it; a lab cannot know a name it no
+longer remembers serving. Which is why saving is best-effort below rather than fatal --
+the manifest served *now* is correct either way.
 """
 
 from dataclasses import dataclass, field
@@ -98,8 +105,11 @@ def build_plugin_name(lab_name: str) -> str:
 def resolve_and_record_identity() -> PluginIdentity:
     """Resolve the lab's identity, recording the plugin name it is about to serve.
 
-    Recording here (rather than in a migration or at startup) keeps the history exact:
-    a name enters it when, and only when, a manifest actually announced it.
+    Recording at generation, rather than at startup, is what keeps a lab that serves no
+    plugin -- MCP off -- out of the history entirely. It errs the other way for a lab that
+    does serve one: the generation also feeds the lab's own screen, so merely opening it
+    records the name. Recording a name nobody installed costs one spare ``renames`` entry;
+    failing to record one somebody did install costs that user their migration.
     """
     lab_name = Settings.get_lab_name()
     plugin_name = build_plugin_name(lab_name)
@@ -116,13 +126,19 @@ def resolve_and_record_identity() -> PluginIdentity:
 
 
 def get_served_plugin_names() -> list[str]:
-    """The plugin names this lab has served, oldest first."""
+    """The plugin names this lab has served, oldest first.
+
+    Read defensively: this is a hand-editable JSON file, and an entry that is not a
+    non-empty string would reach the manifest as a ``renames`` key Claude Code rejects,
+    taking the whole marketplace down for every user of the lab -- to migrate an install
+    that cannot exist, since no name this module builds is empty.
+    """
     names = Settings.get_instance().data.get(SETTINGS_SERVED_PLUGIN_NAMES_KEY)
 
     if not isinstance(names, list):
         return []
 
-    return [name for name in names if isinstance(name, str)]
+    return [name for name in names if isinstance(name, str) and name]
 
 
 def _record_served_plugin_name(plugin_name: str) -> list[str]:
