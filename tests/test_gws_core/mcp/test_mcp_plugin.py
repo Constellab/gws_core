@@ -404,7 +404,7 @@ class TestBrickSkills(_PluginTestCase):
         self.brick_paths: dict[str, str] = {}
         real_get_brick_info = BrickHelper.get_brick_info
 
-        def get_brick_info(obj):
+        def get_brick_info(obj: object) -> BrickInfo | None:
             if isinstance(obj, str) and obj in self.brick_paths:
                 return BrickInfo(
                     path=self.brick_paths[obj],
@@ -421,13 +421,12 @@ class TestBrickSkills(_PluginTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def a_brick_shipping(self, brick_name: str, skills: dict[str, dict[str, str]]) -> str:
+    def a_brick_shipping(self, brick_name: str, skills: dict[str, dict[str, str]]) -> None:
         """Write a brick's ``claude-plugin/skills/`` folder on disk.
 
         :param skills: skill folder name -> file path (relative to the skill folder) ->
             content. A folder with no ``SKILL.md`` is written as asked, so a test can
             check it is not served.
-        :return: The brick's root folder.
         """
         brick_path = self.brick_paths.setdefault(brick_name, Settings.make_temp_dir())
 
@@ -440,13 +439,19 @@ class TestBrickSkills(_PluginTestCase):
                 with open(file_path, "w", encoding="utf-8") as file:
                     file.write(content)
 
-        return brick_path
-
-    def a_contributing_brick(self, brick_name: str, skills: dict[str, dict[str, str]]) -> str:
+    def a_contributing_brick(self, brick_name: str, skills: dict[str, dict[str, str]]) -> None:
         """A brick that declares a tool *and* ships skills -- the ordinary case."""
-        brick_path = self.a_brick_shipping(brick_name, skills)
+        self.a_brick_shipping(brick_name, skills)
         McpRegistry._register(a_tool, brick_name=brick_name, name="do_something")
-        return brick_path
+
+    def shipped_skills(self, brick_name: str) -> list[str]:
+        """The archive paths a brick's skills reach, read from the zip itself.
+
+        From the archive rather than from ``plugin.json``: what a client ends up loading
+        is the files, and a manifest that agrees with the wrong zip proves nothing.
+        """
+        files = self.archive_files(self.generate().archive)
+        return sorted(path for path in files if path.startswith(f"skills/{brick_name}/"))
 
     def test_a_contributing_brick_ships_its_skills(self):
         self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
@@ -469,6 +474,7 @@ class TestBrickSkills(_PluginTestCase):
         # What BrickService does when a brick's import fails part-way.
         McpRegistry.unregister_brick(FAKE_BRICK)
 
+        self.assertEqual(self.shipped_skills(FAKE_BRICK), [])
         self.assertNotIn(FAKE_BRICK, json.dumps(self.plugin_manifest(self.generate().archive)))
 
     def test_a_brick_declaring_no_tool_ships_none(self):
@@ -476,6 +482,7 @@ class TestBrickSkills(_PluginTestCase):
         server contributes nothing to the plugin either."""
         self.a_brick_shipping(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
 
+        self.assertEqual(self.shipped_skills(FAKE_BRICK), [])
         self.assertNotIn(FAKE_BRICK, json.dumps(self.plugin_manifest(self.generate().archive)))
 
     def test_two_bricks_may_ship_a_skill_of_the_same_name(self):
@@ -504,12 +511,33 @@ class TestBrickSkills(_PluginTestCase):
         )
 
     def test_a_folder_with_no_skill_file_is_not_shipped(self):
-        """Claude Code would not load it either, so it is left out with a warning."""
-        self.a_contributing_brick(FAKE_BRICK, {"not-a-skill": {"README.md": "# Notes\n"}})
+        """Claude Code would not load it either, so it is left out with a warning --
+        and the skill next to it still travels."""
+        self.a_contributing_brick(
+            FAKE_BRICK,
+            {"track-things": {"SKILL.md": self.SKILL}, "not-a-skill": {"README.md": "# Notes\n"}},
+        )
 
-        files = self.archive_files(self.generate().archive)
+        self.assertEqual(
+            self.shipped_skills(FAKE_BRICK), [f"skills/{FAKE_BRICK}/track-things/SKILL.md"]
+        )
 
-        self.assertNotIn(f"skills/{FAKE_BRICK}/not-a-skill/README.md", files)
+    def test_an_unreadable_skill_costs_that_skill_and_nothing_else(self):
+        """The generation feeds the marketplace, the archive and the lab's own screen,
+        and is cached: raising here would 500 all three for the life of the process."""
+        self.a_contributing_brick(
+            FAKE_BRICK,
+            {"track-things": {"SKILL.md": self.SKILL}, "broken": {"SKILL.md": self.SKILL}},
+        )
+        broken = os.path.join(
+            self.brick_paths[FAKE_BRICK], "claude-plugin", "skills", "broken", "SKILL.md"
+        )
+        with open(broken, "wb") as file:
+            file.write("---\ndescription: Cassé.\n---\n".encode("latin-1"))
+
+        self.assertEqual(
+            self.shipped_skills(FAKE_BRICK), [f"skills/{FAKE_BRICK}/track-things/SKILL.md"]
+        )
 
     def test_the_lab_name_is_injected_into_a_brick_skill(self):
         self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})

@@ -85,9 +85,15 @@ def _collect_brick_skills(brick_name: str, lab_name: str) -> list[PluginSkill]:
 
     skills: list[PluginSkill] = []
 
-    # Sorted, so the archive (and the version fingerprint derived from it) does not
-    # depend on the order the file system happens to return.
-    for folder_name in sorted(os.listdir(skills_folder)):
+    try:
+        # Sorted, so the archive (and the version fingerprint derived from it) does not
+        # depend on the order the file system happens to return.
+        folder_names = sorted(os.listdir(skills_folder))
+    except OSError as exception:
+        Logger.error(f"Brick '{brick_name}' has an unreadable skills folder: {exception}")
+        return []
+
+    for folder_name in folder_names:
         skill_folder = os.path.join(skills_folder, folder_name)
         if not os.path.isdir(skill_folder):
             continue
@@ -100,13 +106,20 @@ def _collect_brick_skills(brick_name: str, lab_name: str) -> list[PluginSkill]:
             )
             continue
 
-        skills.append(
-            PluginSkill(
-                brick_name=brick_name,
-                folder_name=folder_name,
-                files=_read_skill_folder(skill_folder, brick_name, folder_name, lab_name),
+        try:
+            files = _read_skill_folder(skill_folder, brick_name, folder_name, lab_name)
+        except (OSError, UnicodeDecodeError) as exception:
+            # One unreadable file -- a broken symlink, a SKILL.md that is not UTF-8 --
+            # must cost that skill and nothing else. The generation feeds the marketplace,
+            # the archive and the lab's own screen, and it is cached: letting the error
+            # out would 500 all three, for the life of the process, naming no brick.
+            Logger.error(
+                f"The skill '{brick_name}/{folder_name}' cannot be read and is not served: "
+                f"{exception}"
             )
-        )
+            continue
+
+        skills.append(PluginSkill(brick_name=brick_name, folder_name=folder_name, files=files))
 
     return skills
 
