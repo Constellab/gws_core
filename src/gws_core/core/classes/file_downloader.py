@@ -130,6 +130,9 @@ class FileDownloader:
 
                 destination_path = os.path.join(destination_folder, filename)
 
+                downloaded_size = 0
+                total_size = None
+
                 with open(destination_path, "wb") as file:
                     if response.headers.get("content-length") is None:
                         file.write(response.content)
@@ -156,6 +159,17 @@ class FileDownloader:
 
                                 self._dispatch_progress(total_size, downloaded_size, remaining_time)
                                 last_progress_logged = progress
+
+                # A connection cut mid-transfer ends iter_content without raising, so the
+                # file is silently short. Caught here (rather than by whoever consumes the
+                # file later) because this is the layer that knows the expected size and
+                # where the download can be retried.
+                if total_size is not None and downloaded_size != total_size:
+                    raise Exception(
+                        f"Incomplete download from {url}: got {downloaded_size} bytes, "
+                        f"expected {total_size} (content-length). The connection was "
+                        "likely interrupted."
+                    )
 
         except Exception as exc:
             self._dispatch_error(f"Error downloading from {url} : {exc}")

@@ -2,6 +2,7 @@ import os
 import shutil
 import subprocess
 import tempfile
+import zipfile
 
 from .compress import Compress
 
@@ -77,10 +78,57 @@ class ZipCompress(Compress):
 
     @classmethod
     def decompress(cls, file_path: str, destination_folder: str) -> None:
-        """Unzip a file into destination_folder."""
+        """Unzip a file into destination_folder.
+
+        The archive index is checked before extracting, because `unzip -o` extracts as
+        far as it can and only exits non-zero at the point of failure — a truncated
+        archive would otherwise leave a partially-populated destination that callers
+        mistake for a complete one.
+        """
         os.makedirs(destination_folder, exist_ok=True)
-        cmd = ["unzip", "-q", "-o", file_path, "-d", destination_folder]
-        subprocess.run(cmd, check=True)
+
+        cls._check_archive_readable(file_path)
+        cls._run_unzip(
+            ["unzip", "-q", "-o", file_path, "-d", destination_folder], "unzip", file_path
+        )
+
+    @staticmethod
+    def _check_archive_readable(file_path: str) -> None:
+        """Cheaply verify the archive index is intact before extracting.
+
+        Reads only the central directory, which a zip stores at the end of the file, so
+        the cost is a couple of seeks regardless of the archive size. That is enough to
+        reject the realistic download failures — a truncated file (the end-of-central-
+        directory record is missing) or a non-zip payload such as an HTML error page.
+
+        A deep CRC check (`unzip -t`) is deliberately NOT done: it decompresses every
+        entry, roughly doubling the cost of an extraction, which is prohibitive on large
+        archives. A bit flip inside one entry's deflate stream is therefore left to
+        surface during extraction, where `_run_unzip` reports it.
+        """
+        try:
+            with zipfile.ZipFile(file_path) as archive:
+                archive.namelist()
+        except (zipfile.BadZipFile, OSError) as e:
+            raise RuntimeError(f"invalid zip archive '{file_path}': {e}") from e
+
+    @staticmethod
+    def _run_unzip(cmd: list[str], action: str, file_path: str) -> None:
+        """Run an unzip command, surfacing its output in the raised error.
+
+        `unzip` signals a corrupt archive and a failed write (quota, permissions, I/O
+        error) through its exit code alone; without its output the caller cannot tell
+        them apart. It splits diagnostics across both streams (the integrity test writes
+        to stdout, write errors to stderr), so the two are merged into one message.
+        """
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"{action} failed on '{file_path}' (exit {e.returncode}): "
+                f"{(e.stdout or '').strip()}"
+            ) from e
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:

@@ -26,7 +26,9 @@ class GzipCompress(Compress):
             raise Exception("No file added to the GzipCompress")
 
         with open(self.file_path, "rb") as input_file, open(self.destination_file_path, "wb") as output_file:
-            subprocess.run(["pigz", "-c"], stdin=input_file, stdout=output_file, check=True)
+            self._run_pigz(
+                ["pigz", "-c"], input_file, output_file, "pigz compress", self.file_path
+            )
 
         return self.destination_file_path
 
@@ -39,7 +41,27 @@ class GzipCompress(Compress):
         FileHelper.create_dir_if_not_exist(destination_folder)
 
         with open(file_path, "rb") as f_in, open(decompress_file_path, "wb") as f_out:
-            subprocess.run(["pigz", "-d", "-c"], stdin=f_in, stdout=f_out, check=True)
+            cls._run_pigz(
+                ["pigz", "-d", "-c"], f_in, f_out, "pigz decompress", file_path
+            )
+
+    @staticmethod
+    def _run_pigz(cmd: list[str], stdin, stdout, action: str, file_path: str) -> None:
+        """Run a pigz command, surfacing its stderr in the raised error.
+
+        `pigz` signals a corrupt input and a failed write (quota, permissions, I/O error)
+        through its exit code alone; without the captured stderr the caller cannot tell
+        them apart. Output is streamed straight to ``stdout``, so a failure leaves a
+        truncated file behind — the caller is responsible for discarding it.
+        """
+        try:
+            subprocess.run(cmd, stdin=stdin, stdout=stdout, stderr=subprocess.PIPE,
+                           check=True, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"{action} failed on '{file_path}' (exit {e.returncode}): "
+                f"{(e.stderr or '').strip()}"
+            ) from e
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:
