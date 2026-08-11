@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 from gws_core.apps.app_nginx_manager import AppNginxManager
 from gws_core.apps.app_nginx_service import AppNginxRedirectServiceInfo
+from gws_core.core.utils.settings import Settings
 
 
 def _ok_process() -> subprocess.CompletedProcess:
@@ -125,6 +126,18 @@ class TestAppNginxManager(TestCase):
         self.assertEqual(command[0], "nginx")
         self.assertIn("-t", command)
         self.assertTrue(run_mock.call_args.kwargs["capture_output"])
+
+    def test_external_port_is_test_scoped(self):
+        """In test mode the app port band is shifted away from the production port,
+        so the test nginx never collides with a real lab nginx on the same machine."""
+        base = int(os.environ.get("APP_EXTERNAL_PORT", Settings.APP_EXTERNAL_PORT_DEFAULT))
+        expected = (
+            base
+            + Settings.APP_EXTERNAL_PORT_TEST_OFFSET
+            + Settings.get_test_worker_offset() * Settings.APP_EXTERNAL_PORT_WORKER_STRIDE
+        )
+        self.assertEqual(Settings.get_app_external_port(), expected)
+        self.assertNotEqual(Settings.get_app_external_port(), base)
 
     def test_get_instance_is_singleton(self):
         first = AppNginxManager.get_instance()

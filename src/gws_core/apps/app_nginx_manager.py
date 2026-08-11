@@ -1,5 +1,6 @@
 import atexit
 import contextlib
+import logging
 import os
 import subprocess
 import threading
@@ -11,6 +12,7 @@ from gws_core.apps.app_nginx_service import (
     AppNginxRedirectServiceInfo,
     AppNginxServiceInfo,
 )
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
@@ -207,7 +209,16 @@ http {
             self._start_nginx()
             if not AppNginxManager._atexit_registered:
                 AppNginxManager._atexit_registered = True
-                atexit.register(self.stop)
+                atexit.register(self._stop_at_exit)
+
+    def _stop_at_exit(self) -> None:
+        """Stop nginx from the atexit hook.
+
+        At interpreter exit the console stream may already be closed (e.g. by pytest),
+        so logging errors are silenced instead of being printed as '--- Logging error ---'.
+        """
+        logging.raiseExceptions = False
+        self.stop()
 
     def stop(self, force: bool = False) -> None:
         """Stop nginx"""
@@ -296,6 +307,17 @@ http {
 
     def _start_nginx(self):
         """Start nginx daemon"""
+        # In test mode only: free the (test-scoped) port from leftovers of previous
+        # killed test runs before binding. Safe because the test port band is never
+        # used by a real lab nginx (see Settings.get_app_external_port).
+        if Settings.get_instance().is_test:
+            killed = SysProc.kill_process_on_port(Settings.get_app_external_port())
+            if killed:
+                Logger.warning(
+                    f"Killed leftover process(es) {killed} holding the test app port "
+                    f"{Settings.get_app_external_port()} before starting nginx"
+                )
+
         # Test configuration first
         test_result = self._run_nginx_command(["-t"])
         if test_result.returncode != 0:

@@ -62,6 +62,11 @@ class Settings:
     # Width of the per-worker port band for parallel tests (front/back fit in 2 ports;
     # 10 leaves headroom for future per-app ports without colliding with the next worker).
     APP_EXTERNAL_PORT_WORKER_STRIDE = 10
+    # Shift applied to the whole port range in test mode, so the test nginx + app ports
+    # never collide with a real (or leftover) lab nginx running on the same machine.
+    # Large enough that no realistic number of xdist worker bands reaches back into
+    # the production range.
+    APP_EXTERNAL_PORT_TEST_OFFSET = 1000
 
     def __init__(self, data: dict):
         self.data = data
@@ -506,14 +511,20 @@ class Settings:
     def get_app_external_port(cls) -> int:
         """Returns the port where all the external request to app are sent.
 
-        Under pytest-xdist, each worker is assigned its own port band so parallel
-        reflex/streamlit tests don't fight for the same nginx + app ports. The
-        ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
-        the first worker (``gw0``) / non-xdist runs — the per-worker stride is
-        still applied on top, otherwise every worker would collide on it.
+        In test mode the whole range is shifted by ``APP_EXTERNAL_PORT_TEST_OFFSET``
+        so tests never fight with a real (or leftover) lab nginx bound to the
+        production port on the same machine.
+
+        Under pytest-xdist, each worker is additionally assigned its own port band so
+        parallel reflex/streamlit tests don't fight for the same nginx + app ports.
+        The ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
+        the first worker (``gw0``) / non-xdist runs — the test offset and per-worker
+        stride are still applied on top, otherwise every worker would collide on it.
         """
         external_port = os.environ.get("APP_EXTERNAL_PORT")
         base_port = int(external_port) if external_port is not None else cls.APP_EXTERNAL_PORT_DEFAULT
+        if cls.get_instance().is_test:
+            base_port += cls.APP_EXTERNAL_PORT_TEST_OFFSET
         return base_port + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
 
     @classmethod
