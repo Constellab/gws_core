@@ -50,6 +50,7 @@ from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
 
 from gws_core.core.utils.logger import Logger
 from gws_core.mcp.mcp_constellab_login import ConstellabLoginService
+from gws_core.mcp.mcp_oauth_client import McpOAuthClient
 from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.jwt_service import JWTService
 from gws_core.user.user import User
@@ -95,7 +96,11 @@ class ConstellabOAuthProvider(
         self._callback_url = callback_url
         self._resource_url = resource_url
 
-        self._clients: dict[str, OAuthClientInformationFull] = {}
+        # Registered clients live in the DB (see McpOAuthClient): a client caches
+        # its client_id forever, so an in-memory registry would break it for good
+        # on the first lab restart. The rest of the state below is short-lived and
+        # is fine to lose on a restart -- it only costs a login retry.
+        #
         # keyed by the opaque state we hand to the callback
         self._pending_logins: dict[str, _PendingLogin] = {}
         self._auth_codes: dict[str, AuthorizationCode] = {}
@@ -108,10 +113,16 @@ class ConstellabOAuthProvider(
     # ------------------------------------------------------------------ #
 
     async def get_client(self, client_id: str) -> OAuthClientInformationFull | None:
-        return self._clients.get(client_id)
+        stored = McpOAuthClient.find_by_client_id(client_id)
+        if stored is None:
+            return None
+        return OAuthClientInformationFull.model_validate(stored.client_info)
 
     async def register_client(self, client_info: OAuthClientInformationFull) -> None:
-        self._clients[client_info.client_id] = client_info
+        McpOAuthClient.save_client(
+            client_id=client_info.client_id,
+            client_info=client_info.model_dump(mode="json", exclude_none=True),
+        )
         Logger.debug(f"MCP OAuth: registered client '{client_info.client_id}'")
 
     # ------------------------------------------------------------------ #
