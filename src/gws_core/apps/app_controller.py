@@ -186,6 +186,35 @@ def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
     return response
 
 
+# The "fallback/resolve" path mirrors AppGatewayService.APP_FALLBACK_ENDPOINT_SEGMENT (used by
+# AppNginxManager._get_fallback_resolver_url to build the URL nginx proxies to); keep the two in
+# sync. The "host"/"target" query params mirror APP_FALLBACK_*_QUERY_PARAM.
+@core_app.get(
+    "/apps/fallback/resolve",
+    tags=["App"],
+    summary="Resolve an app host that matches no running app",
+    response_model=None,
+)
+def app_fallback_resolve(host: str, target: str | None = None) -> RedirectResponse:
+    """
+    Resolver the nginx fallback (``default_server``) block proxies to.
+
+    An app's nginx block only exists while it runs, so a shared URL of a *stopped* app matches no
+    server block. Rather than letting it hit a dead port, the fallback block sends it here: the
+    requested host is mapped back to an app key and the browser is redirected to the Angular
+    gateway, which authenticates the caller, cold-starts the app and shows progress.
+
+    Intentionally **unauthenticated and side-effect free** — it starts nothing and reveals only
+    whether a host maps to an app, so a bare URL cannot be used to spin up apps anonymously.
+
+    Always redirects, never raises: this is a top-level browser navigation, so an API exception
+    would render the raw JSON error envelope to a human. An unknown host redirects to the gateway's
+    error URL, which shows a styled, translated message and starts nothing.
+    """
+    redirect_url = AppGatewayService.build_fallback_redirect_url(host, target)
+    return RedirectResponse(url=redirect_url)
+
+
 ############################################ APP LAUNCHER GATEWAY ############################################
 
 

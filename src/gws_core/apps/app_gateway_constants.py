@@ -27,3 +27,32 @@ GWS_LOGIN_PATH = "gws-login"
 # Last URL segment of the core-api app-host login endpoint (…/core-api/apps/{app_id}/nginx-login)
 # that the app-host GWS_LOGIN_PATH nginx location proxies to.
 NGINX_LOGIN_ENDPOINT_SEGMENT = "nginx-login"
+
+# Path on the nginx fallback (`default_server`) block that proxies to the core-api fallback
+# resolver. Requests for a host no running app claims are redirected here, so a shared URL of a
+# stopped app still gets an answer instead of hitting a dead port.
+APP_FALLBACK_PATH = "gws-app-fallback"
+
+# Core-api route (…/core-api/apps/<this>) that maps an app host back to an app key and redirects to
+# the Angular gateway, which owns the auth guard, cold-start and progress UI.
+APP_FALLBACK_ENDPOINT_SEGMENT = "fallback/resolve"
+
+# Query-param names the fallback block passes to the resolver: the original app host, and the
+# original path+query so a deep link survives the trip through the gateway.
+APP_FALLBACK_HOST_QUERY_PARAM = "host"
+APP_FALLBACK_TARGET_QUERY_PARAM = "target"
+
+# Query-param carrying the in-app path the gateway should land on after handoff, so sharing a deep
+# link (e.g. /config) does not drop the user on the app root.
+REDIRECT_TO_QUERY_PARAM = "redirect_to"
+
+# Query-param telling the gateway page to render a terminal error instead of trying to open an app.
+# The fallback resolver is reached by a top-level browser navigation, so raising an API exception
+# there would show the raw JSON error envelope to a human; it redirects with this instead.
+GATEWAY_ERROR_QUERY_PARAM = "error"
+
+# Values for GATEWAY_ERROR_QUERY_PARAM. Distinguished because the resolver can tell them apart
+# cheaply and they mean different things to the user: a host that is not shaped like an app host at
+# all (mistyped/foreign URL) vs a well-formed key whose app is gone (deleted or never existed).
+GATEWAY_ERROR_INVALID_HOST = "invalid_host"
+GATEWAY_ERROR_APP_NOT_FOUND = "app_not_found"

@@ -240,6 +240,40 @@ The stable, iframe-free way to open an app: `{front}/open/app/{app_key}`. Solves
 re-injects a code). For an AUTHENTICATED app that is what the cookie / `rx.Cookie` mechanism in §5
 survives; a PUBLIC app has nothing to persist (it is always anonymous) so F5 just reloads.
 
+### 3.1. Sharing the app URL — the nginx fallback
+
+An app's nginx block only exists while the app runs (`AppProcess.stop` →
+`AppNginxManager.unregister_services`). So a **shared app URL for a stopped app** matches no
+`server` block. A persistent fallback block keeps it answering:
+
+```
+GET http://{resource_model_id}.localhost:8510/config   (app STOPPED)
+  -> nginx `default_server` block (always present)
+  -> 302 /gws-app-fallback?host=$host&target=$request_uri
+  -> proxied to core-api GET /apps/fallback/resolve
+  -> host -> app key (AppGatewayService.app_key_from_host, inverts _build_host_name)
+  -> 302 {front}/open/app/{app_key}?redirect_to=/config
+  -> the Mode B gateway takes over (auth guard -> start -> poll -> handoff)
+```
+
+- The fallback is `default_server`, so a **running** app's exact `server_name` always wins; it
+  only catches hosts no specific block claims.
+- It **starts nothing and authenticates nobody** — it maps a host to a key and redirects. The
+  gateway still resolves identity before `start_app_and_get_status_token`, so a bare URL cannot
+  become an unauthenticated app-start primitive.
+- `redirect_to` carries the original path so a shared **deep link** survives the handoff. It is
+  sanitised (single-slash-prefixed paths only) to avoid an open redirect, and the fallback path
+  itself is dropped to avoid a loop.
+- A host that maps to no app returns a real **404**, rather than bouncing into a gateway that
+  would fail confusingly.
+- Consequence: **nginx now stays up with zero registered apps** (it used to stop). Both the
+  empty-services early return in `_build_nginx_config` and the `stop()` on empty in
+  `unregister_services` were removed — either one would leave shared URLs dead.
+
+> Still open (not solved by the fallback): a **stale or missing `gws_code`** on a shared URL of a
+> *running* app. `_exchange_code_if_present` currently raises for a spent code instead of
+> discarding it and re-entering the gateway. See `docs/todo/app_shareable_url_plan.md`.
+
 ---
 
 ## 4. Mode C — space (share link)
@@ -410,6 +444,8 @@ reachable only via a SPACE link or the gateway. See `ShareLinkService.resource_i
 | Gateway service: `start` / `handoff`, auth, `app_requires_authentication` | [app_gateway_service.py](app_gateway_service.py) |
 | Gateway (thin) + exchange + validate + nginx-login routes | [app_controller.py](app_controller.py) |
 | nginx block generation (incl. `/gws-login`) | [app_nginx_service.py](app_nginx_service.py) |
+| nginx template + persistent fallback `default_server` block | [app_nginx_manager.py](app_nginx_manager.py) |
+| Host → app key mapping + fallback redirect target | [app_gateway_service.py](app_gateway_service.py) |
 | Streamlit auth (URL code + cookie) | [streamlit/_gws_streamlit/gws_streamlit_base/streamlit_main_state_base.py](streamlit/_gws_streamlit/gws_streamlit_base/streamlit_main_state_base.py) |
 | Streamlit code↔JWT HTTP helpers | [streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py](streamlit/_gws_streamlit/gws_streamlit_base/streamlit_code_exchange.py) |
 | Reflex auth (code + rx.Cookie, re-entrancy) | [reflex/_gws_reflex/gws_reflex_base/reflex_main_state_base.py](reflex/_gws_reflex/gws_reflex_base/reflex_main_state_base.py) |

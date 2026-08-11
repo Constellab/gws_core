@@ -2,8 +2,13 @@ import atexit
 import contextlib
 import os
 from typing import Optional
+from urllib.parse import urlsplit
 
-from gws_core.apps.app_nginx_service import AppNginxServiceInfo
+from gws_core.apps import app_gateway_constants
+from gws_core.apps.app_nginx_service import (
+    AppNginxRedirectServiceInfo,
+    AppNginxServiceInfo,
+)
 from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
@@ -56,11 +61,35 @@ http {
     # Fix for long server names
     server_names_hash_bucket_size 128;
 
-    # Default server block to handle unmatched requests
+    # Fallback server block for hosts that match no running app.
+    #
+    # An app's nginx block only exists while it runs (see unregister_services), so a shared app
+    # URL for a *stopped* app would otherwise hit a dead port and get no HTTP response at all --
+    # nothing the app itself could ever recover from. This block keeps such URLs answering: it
+    # hands the request to the core-api resolver, which maps the host back to an app key and
+    # redirects to the Angular gateway (auth guard + cold-start + progress UI).
+    #
+    # This is `default_server`, so it only ever catches hosts no specific server block claims --
+    # a running app's own block always wins on exact server_name match.
     server {
 		listen [APP_EXTERNAL_PORT] default_server;
 		server_name _;
-		return 444;  # Close connection without response
+
+		location = /[APP_FALLBACK_PATH] {
+			# Literal loopback host and no variables in proxy_pass: a hostname or any $var forces
+			# runtime DNS resolution, which needs a `resolver` directive we do not configure
+			# (502 "no resolver defined"). Mirrors _to_loopback_upstream in app_nginx_service.py.
+			proxy_pass [APP_FALLBACK_URL];
+			proxy_set_header Host [APP_FALLBACK_HOST];
+			proxy_set_header X-Forwarded-Host $host;
+			proxy_pass_request_body off;
+		}
+
+		location / {
+			# Preserve the original host and the full original URI (path + query) so the gateway
+			# can send the user to the deep link they actually opened, not just the app root.
+			return 302 /[APP_FALLBACK_PATH]?host=$host&target=$request_uri;
+		}
 	}
 
     # This will be replaced with the actual server blocks
@@ -81,11 +110,33 @@ http {
 
     @classmethod
     def init(cls) -> None:
-        """Initialize the NginxManager instance"""
+        """Start nginx at lab boot, serving only the fallback block.
+
+        No app is registered yet at this point, so nginx comes up with just the fallback
+        `default_server`. That is the point: a shared URL of a **stopped** app must resolve (and
+        cold-start the app through the gateway) without waiting for some other app to be launched
+        first. Previously this stopped nginx at boot and nothing brought it back until the first app
+        started, so such URLs hit a dead port for the whole idle period.
+
+        A leftover nginx from a previous, uncleanly-stopped run is restarted rather than left as is,
+        so it picks up the freshly generated config.
+        """
         nginx_manager = cls.get_instance()
         if nginx_manager.nginx_is_running():
-            Logger.info("Nginx is running, stopping it.")
+            Logger.info("Nginx is running, stopping it before restarting with a fresh config.")
             nginx_manager.stop()
+
+        # Boot must not be fatal: another process may already serve the app port (a concurrently
+        # running lab server, or an nginx this manager cannot see because it owns a different PID
+        # file). Apps still work in that case -- they register into the config and reload -- so log
+        # and continue instead of taking the whole lab boot down over the fallback block.
+        try:
+            nginx_manager.start_or_reload()
+        except Exception as exception:
+            Logger.error(
+                "Could not start nginx at boot; shared URLs of stopped apps will not resolve "
+                f"until an app starts. Cause: {exception}"
+            )
 
     def register_services(self, services: list[AppNginxServiceInfo]) -> None:
         """Register a service and update nginx configuration"""
@@ -104,11 +155,10 @@ http {
                 del self._services[service_id]
                 Logger.debug(f"Unregistered service: {service_id}")
 
-        if self._services:
-            self.start_or_reload()
-        else:
-            # if no services left, stop nginx
-            self.stop()
+        # Reload even when no services are left: nginx must keep listening so the fallback
+        # `default_server` block can still answer shared URLs of stopped apps (and cold-start
+        # them via the gateway). Stopping here would make those URLs fail at the network layer.
+        self.start_or_reload()
 
     def get_services(self) -> list[AppNginxServiceInfo]:
         """Get all registered services"""
@@ -119,11 +169,11 @@ http {
         return self._services.get(name)
 
     def start_or_reload(self):
-        """Start nginx if not already started"""
-        if not self._services:
-            self.stop()
+        """Start nginx if not already started, otherwise reload its configuration.
 
-        # Generate initial empty config
+        Runs with zero registered services too: the generated config always contains the fallback
+        `default_server` block, which must stay reachable so shared URLs of stopped apps resolve.
+        """
         self._generate_nginx_config()
 
         if self.nginx_is_running():
@@ -220,10 +270,12 @@ http {
         Logger.info("Nginx started successfully")
 
     def _build_nginx_config(self) -> str:
-        """Build nginx configuration content"""
-        if not self._services:
-            return "# No services registered\n"
+        """Build nginx configuration content.
 
+        Always renders the full template, even with zero registered services: the template holds
+        the fallback `default_server` block that answers shared URLs of stopped apps. Returning a
+        bare comment here (as this used to) would drop that block and leave such URLs dead.
+        """
         config_lines = []
 
         for service in self._services.values():
@@ -248,7 +300,34 @@ http {
         nginx_config = nginx_config.replace(
             "[APP_EXTERNAL_PORT]", str(Settings.get_app_external_port())
         )
+
+        # Fallback block: resolver URL is rewritten to loopback for the same reason as the
+        # gws-login location (no variables/hostnames in proxy_pass, else nginx needs a `resolver`).
+        fallback_url = AppNginxRedirectServiceInfo._to_loopback_upstream(
+            self._get_fallback_resolver_url()
+        )
+        nginx_config = nginx_config.replace(
+            "[APP_FALLBACK_PATH]", app_gateway_constants.APP_FALLBACK_PATH
+        )
+        nginx_config = nginx_config.replace("[APP_FALLBACK_URL]", fallback_url)
+        # Host must be the resolver's own host, not $host: a host-routing edge proxy would
+        # otherwise send this back into the app host instead of core-api.
+        nginx_config = nginx_config.replace(
+            "[APP_FALLBACK_HOST]", urlsplit(fallback_url).netloc
+        )
         return nginx_config
+
+    @staticmethod
+    def _get_fallback_resolver_url() -> str:
+        """Core-api URL the nginx fallback block proxies to.
+
+        Maps an app host back to an app key and redirects to the Angular gateway. Not app-specific
+        (unlike the nginx-login URL): one resolver serves every unmatched host.
+        """
+        return (
+            f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}"
+            f"/apps/{app_gateway_constants.APP_FALLBACK_ENDPOINT_SEGMENT}"
+        )
 
     def get_nginx_config_file_path(self) -> str:
         """Get the path to the generated nginx config file"""
