@@ -227,8 +227,10 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
 
         ``^~`` makes this prefix win over the regex asset location below (a backend
         path like ``{prefix}/foo.js`` must reach the backend, not the static server).
-        The trailing ``/`` on ``proxy_pass`` strips the matched prefix, so the backend
-        keeps serving its routes at root (``{prefix}/_event`` -> ``/_event``).
+        The prefix is passed through UNSTRIPPED (no URI part on ``proxy_pass``): the
+        backend runs with the same ``backend_path`` and mounts its endpoints — and,
+        critically, its socket.io namespace, which is negotiated inside the websocket
+        payload and cannot be rewritten by nginx — under that prefix.
         ``127.0.0.1`` instead of ``localhost`` avoids nginx's DNS resolver (see
         _to_loopback_upstream).
         """
@@ -237,7 +239,7 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
         prefix = self.backend_path.rstrip("/")
         return f"""
         location ^~ {prefix}/ {{
-            proxy_pass http://127.0.0.1:{self.backend_port}/;
+            proxy_pass http://127.0.0.1:{self.backend_port};
             proxy_set_header Host $host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

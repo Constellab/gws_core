@@ -38,6 +38,13 @@ class ReflexApp(AppInstance):
     # The value is the current brick version.
     FRONT_BUILD_TAG_KEY_NAME = "reflex_build_brick_name"
     FRONT_BUILD_TAG_KEY_VERSION = "reflex_build_brick_version"
+    # Build contract marker: bumped when the way the frontend is built changes in a
+    # way that makes existing builds unusable, forcing a one-time rebuild on upgrade.
+    # "2" = same-origin builds (endpoints baked under the /gws-back prefix); builds
+    # without the tag predate the prefix and would call root paths the backend no
+    # longer serves.
+    FRONT_BUILD_TAG_KEY_FORMAT = "reflex_build_format"
+    FRONT_BUILD_FORMAT = "2"
 
     INDEX_FILE_NAME = "index.html"
 
@@ -93,32 +100,41 @@ class ReflexApp(AppInstance):
         :type brick_version: str
         """
         app_config = self.get_app_config()
-        if not app_config:
-            return
 
-        Logger.info(
-            f"Updating front build info for app {self.resource_model_id} with brick name {app_config.get_brick_name()} "
-            + f"and version {app_config.get_brick_version()}"
-        )
+        # The format tag is set for all apps (including static-folder ones) so a build
+        # contract change invalidates every existing build.
+        tags = [
+            Tag(
+                key=ReflexApp.FRONT_BUILD_TAG_KEY_FORMAT,
+                value=ReflexApp.FRONT_BUILD_FORMAT,
+                origins=TagOrigins.system_origins(),
+            ),
+        ]
+
+        if app_config:
+            Logger.info(
+                f"Updating front build info for app {self.resource_model_id} with brick name {app_config.get_brick_name()} "
+                + f"and version {app_config.get_brick_version()}"
+            )
+            tags.extend(
+                [
+                    # Tag containing the brick name of the front build
+                    Tag(
+                        key=ReflexApp.FRONT_BUILD_TAG_KEY_NAME,
+                        value=app_config.get_brick_name(),
+                        origins=TagOrigins.system_origins(),
+                    ),
+                    # Tag containing the brick version of the front build
+                    Tag(
+                        key=ReflexApp.FRONT_BUILD_TAG_KEY_VERSION,
+                        value=str(app_config.get_brick_version()),
+                        origins=TagOrigins.system_origins(),
+                    ),
+                ]
+            )
 
         resource_list = EntityTagList.find_by_entity(TagEntityType.RESOURCE, self.resource_model_id)
-
-        resource_list.replace_tags(
-            [
-                # Tag containing the brick name of the front build
-                Tag(
-                    key=ReflexApp.FRONT_BUILD_TAG_KEY_NAME,
-                    value=app_config.get_brick_name(),
-                    origins=TagOrigins.system_origins(),
-                ),
-                # Tag containing the brick version of the front build
-                Tag(
-                    key=ReflexApp.FRONT_BUILD_TAG_KEY_VERSION,
-                    value=str(app_config.get_brick_version()),
-                    origins=TagOrigins.system_origins(),
-                ),
-            ]
-        )
+        resource_list.replace_tags(tags)
 
     def _get_front_built_brick_version(self) -> str | None:
         """Get the front build brick version.
@@ -131,6 +147,15 @@ class ReflexApp(AppInstance):
         version_tag = resource_list.get_first_tag_by_key(ReflexApp.FRONT_BUILD_TAG_KEY_VERSION)
         if version_tag:
             return version_tag.tag_value
+        return None
+
+    def _get_front_built_format(self) -> str | None:
+        """Get the build format marker of the existing front build (None for builds
+        made before the marker existed)."""
+        resource_list = EntityTagList.find_by_entity(TagEntityType.RESOURCE, self.resource_model_id)
+        format_tag = resource_list.get_first_tag_by_key(ReflexApp.FRONT_BUILD_TAG_KEY_FORMAT)
+        if format_tag:
+            return format_tag.tag_value
         return None
 
     def get_front_build_path_if_exists(self) -> str | None:
@@ -161,10 +186,22 @@ class ReflexApp(AppInstance):
             FileHelper.delete_dir_content(build_folder.path)
             return None
 
+        # Checked for all apps (static-folder ones too): a build made under an older
+        # build contract (e.g. root-path endpoints instead of the /gws-back prefix)
+        # would not work against the current backend.
+        build_format = self._get_front_built_format()
+        if build_format != ReflexApp.FRONT_BUILD_FORMAT:
+            Logger.info(
+                f"Frontend build format {build_format} does not match current format "
+                f"{ReflexApp.FRONT_BUILD_FORMAT} for app {self.resource_model_id}. Cleaning old build."
+            )
+            build_folder.empty_folder()
+            return None
+
         app_config = self.get_app_config()
 
         if not app_config:
-            # this is static folder mode, no need to check the version
+            # this is static folder mode, no version to check
             return build_folder.path
 
         # get the current brick version

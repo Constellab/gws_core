@@ -138,9 +138,11 @@ class TestReflexFrontBuildCache(TestCase):
         )
         config = service.get_nginx_service_config()
 
-        # ^~ prefix location wins over the regex asset location; trailing slash strips the prefix
+        # ^~ prefix location wins over the regex asset location; the prefix is passed
+        # through unstripped (the backend mounts its endpoints + socket.io namespace
+        # under the same prefix)
         self.assertIn(f"location ^~ {ReflexProcess.BACKEND_PATH}/", config)
-        self.assertIn("proxy_pass http://127.0.0.1:8536/;", config)
+        self.assertIn("proxy_pass http://127.0.0.1:8536;", config)
         self.assertIn('proxy_set_header Connection "upgrade";', config)
         # the backend location must be rendered before the asset regex location
         self.assertLess(

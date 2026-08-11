@@ -48,16 +48,16 @@ class ReflexProcess(AppProcess):
     ZIP_FILE_NAME = "frontend.zip"
     INDEX_HTML_FILE = "index.html"
 
-    # Path prefix under which the front nginx server proxies the reflex backend
-    # (same-origin routing). Baked into the frontend at build time via
-    # REFLEX_BACKEND_PATH; stripped by nginx, so the backend keeps serving at root.
+    # Path prefix under which the reflex backend serves its endpoints (same-origin
+    # routing). Set via REFLEX_BACKEND_PATH on BOTH the export env (baked into the
+    # frontend URLs) and the prod backend runtime env (endpoints + socket.io
+    # namespace mounted under it): the socket.io namespace is derived from the URL
+    # path on both sides and travels inside the websocket payload, so client and
+    # server must agree on it — nginx proxies the prefix through without stripping.
     BACKEND_PATH = "/gws-back"
     # Set to "1" in the reflex export env so gws_reflex state code can avoid baking
     # instance-specific values (app id, auth info) into the compiled bundle.
     BUILD_MODE_ENV_VAR = "GWS_REFLEX_BUILD_MODE"
-    # Runtime env var telling the app its backend is reachable on the front origin
-    # under this prefix (used by the download service to emit relative URLs).
-    BACKEND_PREFIX_ENV_VAR = "GWS_REFLEX_BACKEND_PREFIX"
 
     _front_app_build_folder: str | None = None
 
@@ -141,9 +141,11 @@ class ReflexProcess(AppProcess):
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
         env = self._get_base_env(app)
 
-        # The backend is reachable same-origin on the front host under BACKEND_PATH
-        # (nginx strips the prefix). The download service uses this to emit relative URLs.
-        env[ReflexProcess.BACKEND_PREFIX_ENV_VAR] = ReflexProcess.BACKEND_PATH
+        # Mount the backend endpoints (and the socket.io namespace) under BACKEND_PATH:
+        # the frontend bundle bakes its URLs under the same prefix, and the socket.io
+        # namespace must match on both sides (it is negotiated inside the websocket
+        # payload, nginx cannot rewrite it).
+        env["REFLEX_BACKEND_PATH"] = ReflexProcess.BACKEND_PATH
 
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
@@ -335,8 +337,9 @@ class ReflexProcess(AppProcess):
           instance host. Under local http the external port matches because every
           app host is served on that single shared nginx port.
         - REFLEX_BACKEND_PATH prefixes the baked endpoint URLs; the front nginx
-          block proxies that prefix to the instance's backend port and strips it,
-          so the backend (whose runtime env is unchanged) keeps serving at root.
+          block proxies that prefix (unstripped) to the instance's backend, which
+          runs with the same REFLEX_BACKEND_PATH so paths and the socket.io
+          namespace match.
         - GWS_REFLEX_BUILD_MODE tells gws_reflex state code to bake neutral values
           (no app id, no auth info) into the initial state.
         """
@@ -409,8 +412,11 @@ class ReflexProcess(AppProcess):
     def call_health_check(self) -> bool:
         # health check for both front and back
         try:
+            # in prod the backend endpoints are mounted under BACKEND_PATH; dev serves at root
+            ping_prefix = "" if self._app.is_dev_mode() else ReflexProcess.BACKEND_PATH
             ExternalApiService.get(
-                f"http://localhost:{self.back_port}/ping", raise_exception_if_error=True
+                f"http://localhost:{self.back_port}{ping_prefix}/ping",
+                raise_exception_if_error=True,
             )
         except Exception:
             return False
