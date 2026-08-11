@@ -1,9 +1,11 @@
+import contextvars
 import os
 import select
 import subprocess
 import threading
 from collections.abc import Callable
 from enum import Enum
+from functools import partial
 from typing import IO, Any
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
@@ -188,13 +190,27 @@ class ShellProxy(BaseTyping):
                 f"[ShellProxy] Running command in process : {proc.pid}"
             )
 
+            # tag every output line of this process with its pid so interleaved output
+            # from concurrent commands stays attributable
+            proc_dispatcher = self._create_process_dispatcher(proc.pid)
+
             # get the file descriptors of the stdout and stderr
             shell_io: list[ShellIO] = []
             if dispatch_stdout and proc.stdout is not None:
-                shell_io.append(ShellIO(io=proc.stdout, dispatch=self._self_dispatch_stdout))
+                shell_io.append(
+                    ShellIO(
+                        io=proc.stdout,
+                        dispatch=partial(self._self_dispatch_stdout, dispatcher=proc_dispatcher),
+                    )
+                )
 
             if dispatch_stderr and proc.stderr is not None:
-                shell_io.append(ShellIO(io=proc.stderr, dispatch=self._self_dispatch_stderr))
+                shell_io.append(
+                    ShellIO(
+                        io=proc.stderr,
+                        dispatch=partial(self._self_dispatch_stderr, dispatcher=proc_dispatcher),
+                    )
+                )
 
             if len(shell_io) > 0:
                 self._manage_run_output(proc, shell_io)
@@ -206,12 +222,12 @@ class ShellProxy(BaseTyping):
                     self._message_dispatcher.notify_error_message(
                         "[ShellProxy] The communicate method has returned an stdout output. This is not expected."
                     )
-                    self._self_dispatch_stdout(outs)
+                    self._self_dispatch_stdout(outs, dispatcher=proc_dispatcher)
                 if errs:
                     self._message_dispatcher.notify_error_message(
                         "[ShellProxy] The communicate method has returned an stderr output. This is not expected."
                     )
-                    self._self_dispatch_stderr(errs)
+                    self._self_dispatch_stderr(errs, dispatcher=proc_dispatcher)
 
             # retrieve the return code of the process and dispatch the message to the observers
             # we can use wait instead of poll because we have already called communicate
@@ -221,7 +237,9 @@ class ShellProxy(BaseTyping):
                     "[ShellProxy] Command executed successfully"
                 )
             else:
-                self._message_dispatcher.notify_error_message("[ShellProxy] Command failed")
+                self._message_dispatcher.notify_error_message(
+                    f"[ShellProxy] Command failed (exit {return_core}, pid {proc.pid})"
+                )
 
             self.dispatch_waiting_messages()
 
@@ -315,19 +333,39 @@ class ShellProxy(BaseTyping):
             start_new_session=True,
         )
 
+        self._message_dispatcher.notify_info_message(
+            f"[ShellProxy] Running command in process : {sys_proc.get_process().pid}"
+        )
+
         # Start a daemon thread to read and dispatch stdout/stderr
         if dispatch_stdout or dispatch_stderr:
             proc = sys_proc.get_process()
+            # tag every output line of this process with its pid so interleaved output
+            # from concurrent commands stays attributable
+            proc_dispatcher = self._create_process_dispatcher(proc.pid)
             shell_io: list[ShellIO] = []
             if dispatch_stdout and proc.stdout is not None:
-                shell_io.append(ShellIO(io=proc.stdout, dispatch=self._self_dispatch_stdout))
+                shell_io.append(
+                    ShellIO(
+                        io=proc.stdout,
+                        dispatch=partial(self._self_dispatch_stdout, dispatcher=proc_dispatcher),
+                    )
+                )
             if dispatch_stderr and proc.stderr is not None:
-                shell_io.append(ShellIO(io=proc.stderr, dispatch=self._self_dispatch_stderr))
+                shell_io.append(
+                    ShellIO(
+                        io=proc.stderr,
+                        dispatch=partial(self._self_dispatch_stderr, dispatcher=proc_dispatcher),
+                    )
+                )
 
             if shell_io:
+                # run the reader in a copy of the current context so ContextVars
+                # (e.g. the app log context) propagate to the dispatched log records
+                context = contextvars.copy_context()
                 output_thread = threading.Thread(
-                    target=self._manage_run_output,
-                    args=(proc, shell_io),
+                    target=context.run,
+                    args=(self._manage_run_output, proc, shell_io),
                     daemon=True,
                 )
                 output_thread.start()
@@ -434,7 +472,17 @@ class ShellProxy(BaseTyping):
 
         return {}
 
-    def _self_dispatch_stdout(self, message: bytes) -> None:
+    def _create_process_dispatcher(self, pid: int) -> MessageDispatcher:
+        """Create a sub dispatcher that prefixes every message with the process pid.
+
+        The prefix is applied after format parsing, so `[INFO]`-style prefixes in the
+        output keep working.
+        """
+        return self._message_dispatcher.create_sub_dispatcher(prefix=f"[pid {pid}]")
+
+    def _self_dispatch_stdout(
+        self, message: bytes, dispatcher: MessageDispatcher | None = None
+    ) -> None:
         """Dispatch stdout message to the message dispatcher.
 
         Messages are parsed for special format prefixes like [INFO], [WARNING], [ERROR],
@@ -442,16 +490,30 @@ class ShellProxy(BaseTyping):
 
         :param message: Raw stdout message bytes
         :type message: bytes
+        :param dispatcher: dispatcher to use (e.g. a pid-tagged sub dispatcher),
+            defaults to the proxy's dispatcher
+        :type dispatcher: MessageDispatcher, optional
         """
-        self._message_dispatcher.notify_message_with_format(message.decode().strip())
+        (dispatcher or self._message_dispatcher).notify_message_with_format(
+            message.decode().strip()
+        )
 
-    def _self_dispatch_stderr(self, message: bytes) -> None:
-        """Dispatch stderr message as an error to the message dispatcher.
+    def _self_dispatch_stderr(
+        self, message: bytes, dispatcher: MessageDispatcher | None = None
+    ) -> None:
+        """Dispatch stderr message as a warning to the message dispatcher.
+
+        stderr is logged at WARNING (not ERROR) level: many tools write informational
+        output to stderr, and the actual failure is reported from the exit code by the
+        `[ShellProxy] Command failed (exit N)` error message.
 
         :param message: Raw stderr message bytes
         :type message: bytes
+        :param dispatcher: dispatcher to use (e.g. a pid-tagged sub dispatcher),
+            defaults to the proxy's dispatcher
+        :type dispatcher: MessageDispatcher, optional
         """
-        self._message_dispatcher.notify_error_message(message.decode().strip())
+        (dispatcher or self._message_dispatcher).notify_warning_message(message.decode().strip())
 
     def clean_working_dir(self):
         """Delete the working directory and all its contents."""

@@ -22,6 +22,7 @@ from gws_core.apps.app_nginx_service import AppNginxServiceInfo
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.front_service import FrontService, FrontTheme
+from gws_core.core.utils.app_log_context import AppLogContext
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.execution_context import ExecutionContext
 from gws_core.core.utils.logger import Logger
@@ -215,6 +216,9 @@ class AppProcess:
                 )
 
     def _start_app_and_watch(self) -> None:
+        # attribute every log record of this start (build, plugin install, nginx
+        # registration, subprocess output) to the app
+        AppLogContext.set_context_id(self._app.resource_model_id)
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
@@ -235,7 +239,7 @@ class AppProcess:
 
             self.start_check_running()
         except Exception as e:
-            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}")
+            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}", exception=e)
             self.stop_process()
             raise e
 
@@ -276,6 +280,9 @@ class AppProcess:
         """Kill the process and the app"""
         if self.is_stopped():
             return
+
+        # attribute the stop operation logs (nginx unregistration...) to the app
+        AppLogContext.set_context_id(self._app.resource_model_id)
 
         Logger.debug("Killing the app")
         if self._process is not None:
@@ -688,8 +695,9 @@ class AppProcess:
         if self.is_stopped() or not self._services:
             return
 
-        self._refresh_custom_subdomain_services()
-        AppNginxManager.get_instance().register_services(self._services)
+        with AppLogContext.use(self._app.resource_model_id):
+            self._refresh_custom_subdomain_services()
+            AppNginxManager.get_instance().register_services(self._services)
 
     def _refresh_custom_subdomain_services(self) -> None:
         """Update the registered nginx service objects in place for the current custom subdomain.

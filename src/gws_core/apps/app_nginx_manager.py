@@ -1,6 +1,8 @@
 import atexit
 import contextlib
 import os
+import subprocess
+import threading
 from typing import Optional
 from urllib.parse import urlsplit
 
@@ -9,21 +11,32 @@ from gws_core.apps.app_nginx_service import (
     AppNginxRedirectServiceInfo,
     AppNginxServiceInfo,
 )
-from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.shell.shell_proxy import ShellProxy
 
 
 class AppNginxManager:
     """Singleton to manage the nginx service to run apps.
     It handles the registration of services, generation of nginx configuration,
     and starting/stopping the nginx server.
+
+    All operations that touch the shared state (the services dict, the config file on
+    disk and the running nginx) are serialized by a re-entrant lock: registrations come
+    from one thread per app start/stop, and an unsynchronized generate+reload lets nginx
+    read a half-written config (`pread() returned only N bytes`, `no "events" section`).
     """
 
     _instance: Optional["AppNginxManager"] = None
+    _instance_lock = threading.Lock()
     _services: dict[str, AppNginxServiceInfo]
+
+    # Serializes generate-config + reload/start/stop across threads. RLock because
+    # `start_or_reload` -> `nginx_is_running` -> `stop(force=True)` can nest.
+    _lock: threading.RLock
+
+    # atexit handler must be registered only once (it used to stack per start)
+    _atexit_registered: bool = False
 
     _NGINX_CONF_FILENAME = "nginx.conf"
 
@@ -100,12 +113,15 @@ http {
 
     def __init__(self):
         self._services = {}
+        self._lock = threading.RLock()
 
     @classmethod
     def get_instance(cls) -> "AppNginxManager":
         """Get the global nginx manager instance"""
         if not cls._instance:
-            cls._instance = cls()
+            with cls._instance_lock:
+                if not cls._instance:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
@@ -140,25 +156,27 @@ http {
 
     def register_services(self, services: list[AppNginxServiceInfo]) -> None:
         """Register a service and update nginx configuration"""
-        for service in services:
-            self._services[service.service_id] = service
-            Logger.debug(
-                f"Registered service: {service.service_id}, server name {service.server_name}"
-            )
+        with self._lock:
+            for service in services:
+                self._services[service.service_id] = service
+                Logger.debug(
+                    f"Registered service: {service.service_id}, server name {service.server_name}"
+                )
 
-        self.start_or_reload()
+            self.start_or_reload()
 
     def unregister_services(self, service_ids: list[str]) -> None:
         """Unregister a service and update nginx configuration"""
-        for service_id in service_ids:
-            if service_id in self._services:
-                del self._services[service_id]
-                Logger.debug(f"Unregistered service: {service_id}")
+        with self._lock:
+            for service_id in service_ids:
+                if service_id in self._services:
+                    del self._services[service_id]
+                    Logger.debug(f"Unregistered service: {service_id}")
 
-        # Reload even when no services are left: nginx must keep listening so the fallback
-        # `default_server` block can still answer shared URLs of stopped apps (and cold-start
-        # them via the gateway). Stopping here would make those URLs fail at the network layer.
-        self.start_or_reload()
+            # Reload even when no services are left: nginx must keep listening so the fallback
+            # `default_server` block can still answer shared URLs of stopped apps (and cold-start
+            # them via the gateway). Stopping here would make those URLs fail at the network layer.
+            self.start_or_reload()
 
     def get_services(self) -> list[AppNginxServiceInfo]:
         """Get all registered services"""
@@ -168,33 +186,42 @@ http {
         """Get a specific service by name"""
         return self._services.get(name)
 
-    def start_or_reload(self):
+    def start_or_reload(self) -> None:
         """Start nginx if not already started, otherwise reload its configuration.
 
         Runs with zero registered services too: the generated config always contains the fallback
         `default_server` block, which must stay reachable so shared URLs of stopped apps resolve.
+
+        Held under the lock so the config that gets reloaded is the config that was just
+        generated, and so two threads cannot both decide nginx is stopped and start it twice.
         """
-        self._generate_nginx_config()
+        with self._lock:
+            self._generate_nginx_config()
 
-        if self.nginx_is_running():
-            Logger.debug("Nginx already started, reloading configuration")
-            self._reload_nginx()
-            return True
+            if self.nginx_is_running():
+                Logger.debug("Nginx already started, reloading configuration")
+                self._reload_nginx()
+                return
 
-        # Start nginx
-        self._start_nginx()
-        atexit.register(self.stop)
+            # Start nginx
+            self._start_nginx()
+            if not AppNginxManager._atexit_registered:
+                AppNginxManager._atexit_registered = True
+                atexit.register(self.stop)
 
     def stop(self, force: bool = False) -> None:
         """Stop nginx"""
-        if not force and not self.nginx_is_running():
-            return
+        with self._lock:
+            if not force and not self.nginx_is_running():
+                return
 
-        result = self._run_nginx_command(["-s", "stop"])
-        if result == 0:
-            Logger.info("Nginx stopped successfully")
-        else:
-            Logger.error("Failed to stop nginx")
+            result = self._run_nginx_command(["-s", "stop"])
+            if result.returncode == 0:
+                Logger.info("Nginx stopped successfully")
+            else:
+                Logger.error(
+                    f"Failed to stop nginx (exit {result.returncode}): {result.stderr.strip()}"
+                )
 
     def nginx_is_running(self) -> bool:
         """Check if nginx is running"""
@@ -234,38 +261,55 @@ http {
             return False
 
     def _generate_nginx_config(self):
-        """Generate nginx configuration for all services"""
+        """Generate nginx configuration for all services.
+
+        The config is written to a temp file then renamed onto the live path: `os.replace`
+        is atomic within a filesystem, so nginx always reads either the whole old file or
+        the whole new one — never a truncated prefix.
+        """
         config_content = self._build_nginx_config()
         config_path = self.get_nginx_config_file_path()
+        tmp_path = f"{config_path}.tmp-{os.getpid()}-{threading.get_ident()}"
 
         try:
-            with open(config_path, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 f.write(config_content)
+            os.replace(tmp_path, config_path)
             Logger.info(f"Generated nginx config: {config_path}")
 
         except Exception as e:
-            raise Exception(f"Failed to write nginx config to {config_path}: {e}")
+            with contextlib.suppress(OSError):
+                os.remove(tmp_path)
+            raise Exception(f"Failed to write nginx config to {config_path}: {e}") from e
 
     def _reload_nginx(self):
         """Reload nginx configuration"""
         # nginx is running, reload it
         result = self._run_nginx_command(["-s", "reload"])
-        if result == 0:
+        if result.returncode == 0:
             Logger.debug("Nginx configuration reloaded successfully")
         else:
-            Logger.error("Failed to reload nginx configuration")
+            Logger.error(
+                f"Failed to reload nginx configuration (exit {result.returncode}): "
+                f"{result.stderr.strip()}"
+            )
 
     def _start_nginx(self):
         """Start nginx daemon"""
         # Test configuration first
         test_result = self._run_nginx_command(["-t"])
-        if test_result != 0:
-            raise Exception("Nginx configuration test failed")
+        if test_result.returncode != 0:
+            raise Exception(
+                f"Nginx configuration test failed (exit {test_result.returncode}): "
+                f"{test_result.stderr.strip()}"
+            )
 
         # Start nginx
         result = self._run_nginx_command([])
-        if result != 0:
-            raise Exception("Failed to start nginx")
+        if result.returncode != 0:
+            raise Exception(
+                f"Failed to start nginx (exit {result.returncode}): {result.stderr.strip()}"
+            )
 
         Logger.info("Nginx started successfully")
 
@@ -333,24 +377,31 @@ http {
         """Get the path to the generated nginx config file"""
         return os.path.join(self.get_nginx_config_dir(), self._NGINX_CONF_FILENAME)
 
-    def _get_shell_proxy(self) -> ShellProxy:
-        """Get the ShellProxy instance for this manager"""
-        shell_proxy = ShellProxy(self.get_nginx_config_dir())
-        shell_proxy.attach_observer(LoggerMessageObserver())
-        return shell_proxy
+    def _run_nginx_command(self, args: list[str]) -> subprocess.CompletedProcess:
+        """Run nginx command with -c option always set.
 
-    def _run_nginx_command(self, args: list[str]) -> int:
-        """Run nginx command with -c option always set
+        Output is captured and returned to the caller so the log level can be chosen
+        from the exit code: nginx writes informational output (e.g. successful `-t`
+        results) to stderr, which must not be logged as ERROR on success.
 
         Args:
             args: List of nginx arguments (e.g., ['-s', 'reload'])
 
         Returns:
-            Exit code from the command
+            The completed process (returncode, stdout, stderr)
         """
-        shell_proxy = self._get_shell_proxy()
         command = ["nginx", "-c", self.get_nginx_config_file_path()] + args
-        return shell_proxy.run(command)
+        Logger.debug(f"Running nginx command: {command}")
+        result = subprocess.run(
+            command,
+            cwd=self.get_nginx_config_dir(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stderr.strip():
+            Logger.debug(f"nginx output: {result.stderr.strip()}")
+        return result
 
     def get_nginx_access_log_path(self) -> str:
         """Get the path to the nginx access log file"""

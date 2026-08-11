@@ -1,7 +1,9 @@
 import os
+import threading
 import time
 
 from gws_core.apps import app_gateway_constants
+from gws_core.apps.app_dir_locks import AppDirLocks
 from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.app_instance import AppInstance
 from gws_core.apps.app_nginx_service import (
@@ -11,6 +13,7 @@ from gws_core.apps.app_nginx_service import (
 )
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
+from gws_core.apps.reflex.reflex_plugin import ReflexPlugin
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_api_service import ExternalApiService
 from gws_core.core.utils.compress.zip_compress import ZipCompress
@@ -50,6 +53,8 @@ class ReflexProcess(AppProcess):
     _cached_access_token: str | None = None
     _cache_timestamp: float | None = None
     _cache_duration_seconds: int = 3600  # 1 hour
+    # serializes the check-then-fetch of the token cache across app start threads
+    _token_cache_lock = threading.Lock()
 
     def __init__(self, front_port: int, back_port: int, app: AppInstance):
         super().__init__(app)
@@ -85,6 +90,10 @@ class ReflexProcess(AppProcess):
         ]
 
         env = self._get_base_env(app)
+
+        # Make sure the gws_plugin is materialized in the app folder before reflex
+        # imports the components (avoids a download from inside the reflex process)
+        ReflexPlugin(app.get_app_folder()).install_package()
 
         process = shell_proxy.run_in_new_thread(
             cmd, shell_mode=False, env=env, dispatch_stderr=True
@@ -122,6 +131,10 @@ class ReflexProcess(AppProcess):
 
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
+
+        # Ensure the gws_plugin is present in the app folder for the backend workers
+        # (no-op version check when the build above just materialized it)
+        ReflexPlugin(app.get_app_folder()).install_package()
 
         # Start backend-only
         backend_cmd = [
@@ -177,8 +190,20 @@ class ReflexProcess(AppProcess):
         return env_dict
 
     def _build_frontend(self, shell_proxy: ShellProxy, env: dict, app: ReflexApp) -> str:
-        """Build the frontend for production"""
+        """Build the frontend for production.
 
+        Builds of the same app folder are serialized: several instances of one app share
+        the folder (`.web`, `node_modules`, `assets`), and concurrent `reflex export`
+        runs delete each other's state mid-build (missing `node_modules/.bin` binaries,
+        `bun install` FileNotFound, corrupted lockfiles). Late arrivals wait, then reuse
+        the finished build when their resource already has one.
+        """
+        with AppDirLocks.get_lock(app.get_app_folder()):
+            return self._build_frontend_locked(shell_proxy, env, app)
+
+    def _build_frontend_locked(self, shell_proxy: ShellProxy, env: dict, app: ReflexApp) -> str:
+        # Checked inside the lock (double-checked locking): another instance of the same
+        # app may have finished this resource's build while this thread was waiting.
         front_build_path = app.get_front_build_path_if_exists()
 
         if front_build_path:
@@ -189,7 +214,16 @@ class ReflexProcess(AppProcess):
         # so if the cache is corrupted or on old version, the build may fail
         app.clear_app_cache()
 
+        # assets/external was just cleared: re-materialize the gws_plugin from the
+        # lab-wide immutable store before reflex compiles the assets
+        ReflexPlugin(app.get_app_folder()).install_package()
+
         self.set_status(AppProcessStatus.STARTING, "Building app (it may take a while)...")
+        build_started_at = time.time()
+        Logger.info(
+            f"Frontend build started for app {app.resource_model_id} "
+            f"in {app.get_app_folder()}"
+        )
         app_build_folder = app.get_front_app_build_folder()
         if not app_build_folder or not app_build_folder.exists():
             raise Exception(f"Destination folder {app_build_folder} does not exist.")
@@ -213,6 +247,10 @@ class ReflexProcess(AppProcess):
 
         result = shell_proxy.run(build_cmd, env=env, dispatch_stderr=True, dispatch_stdout=True)
         if result != 0:
+            Logger.error(
+                f"Frontend build failed for app {app.resource_model_id} "
+                f"after {time.time() - build_started_at:.0f}s (exit {result})"
+            )
             raise Exception(f"Failed to build REFLEX frontend app {app.get_app_folder()}.")
 
         # Unzip the build  and delete the zip file
@@ -231,7 +269,10 @@ class ReflexProcess(AppProcess):
         # store the build info
         app.update_front_build_info()
 
-        Logger.info("Frontend built successfully")
+        Logger.info(
+            f"Frontend build finished for app {app.resource_model_id} "
+            f"in {time.time() - build_started_at:.0f}s"
+        )
         return app_build_folder.path
 
     def _get_prod_nginx_services(self, front_build_folder: str) -> list[AppNginxServiceInfo]:
@@ -341,33 +382,34 @@ class ReflexProcess(AppProcess):
             Logger.debug("Using reflex access token from Settings")
             return reflex_access_token
 
-        current_time = time.time()
+        with cls._token_cache_lock:
+            current_time = time.time()
 
-        # Check if cache is still valid
-        if (
-            cls._cached_access_token is not None
-            and cls._cache_timestamp is not None
-            and current_time - cls._cache_timestamp < cls._cache_duration_seconds
-        ):
-            cache_age = current_time - cls._cache_timestamp
+            # Check if cache is still valid
+            if (
+                cls._cached_access_token is not None
+                and cls._cache_timestamp is not None
+                and current_time - cls._cache_timestamp < cls._cache_duration_seconds
+            ):
+                cache_age = current_time - cls._cache_timestamp
+                Logger.debug(
+                    f"Using cached reflex access token (age: {cache_age:.0f}s, "
+                    f"ttl: {cls._cache_duration_seconds}s)"
+                )
+                return cls._cached_access_token
+
+            # Cache is invalid, retrieve new token
             Logger.debug(
-                f"Using cached reflex access token (age: {cache_age:.0f}s, "
-                f"ttl: {cls._cache_duration_seconds}s)"
+                "Reflex access token cache invalid or missing, fetching new token from SpaceService"
             )
-            return cls._cached_access_token
+            space_service = SpaceService.get_instance()
+            new_token = space_service.get_reflex_access_token()
+            Logger.debug(
+                f"Fetched new reflex access token (length: {len(new_token) if new_token else 0})"
+            )
 
-        # Cache is invalid, retrieve new token
-        Logger.debug(
-            "Reflex access token cache invalid or missing, fetching new token from SpaceService"
-        )
-        space_service = SpaceService.get_instance()
-        new_token = space_service.get_reflex_access_token()
-        Logger.debug(
-            f"Fetched new reflex access token (length: {len(new_token) if new_token else 0})"
-        )
+            # Update cache
+            cls._cached_access_token = new_token
+            cls._cache_timestamp = current_time
 
-        # Update cache
-        cls._cached_access_token = new_token
-        cls._cache_timestamp = current_time
-
-        return new_token
+            return new_token

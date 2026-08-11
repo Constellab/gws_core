@@ -33,17 +33,23 @@ class TestShellProxy(TestCase):
         result = shell_proxy.run('echo "AA" && ui', shell_mode=True, dispatch_stdout=True)
         self.assertNotEqual(result, 0)
 
-        # Check that the message observer received echo AA info message
+        # Check that the message observer received echo AA info message (tagged with the pid)
         self.assertEqual(
-            len([x for x in message_observer.messages if x.message == "AA" and x.status == "INFO"]),
+            len(
+                [
+                    x
+                    for x in message_observer.messages
+                    if x.message.endswith("AA") and x.status == "INFO"
+                ]
+            ),
             1,
         )
 
-        # Check that the message observer received ui error message
+        # Check that the command failure is reported as an error with the exit code
         error_message = [
             x
             for x in message_observer.messages
-            if "ui: not found" in x.message and x.status == "ERROR"
+            if "Command failed (exit" in x.message and x.status == "ERROR"
         ]
         self.assertEqual(len(error_message), 1)
 
@@ -61,13 +67,25 @@ class TestShellProxy(TestCase):
         result = shell_proxy.run('echo "AA\nBB"', shell_mode=True, dispatch_stdout=True)
         self.assertEqual(result, 0)
 
-        # Check that the message observer received echo AA info message
+        # Check that the message observer received echo AA info message (tagged with the pid)
         self.assertEqual(
-            len([x for x in message_observer.messages if x.message == "AA" and x.status == "INFO"]),
+            len(
+                [
+                    x
+                    for x in message_observer.messages
+                    if x.message.endswith("AA") and x.status == "INFO"
+                ]
+            ),
             1,
         )
         self.assertEqual(
-            len([x for x in message_observer.messages if x.message == "BB" and x.status == "INFO"]),
+            len(
+                [
+                    x
+                    for x in message_observer.messages
+                    if x.message.endswith("BB") and x.status == "INFO"
+                ]
+            ),
             1,
         )
 
@@ -86,17 +104,34 @@ class TestShellProxy(TestCase):
         )
         self.assertNotEqual(result, 0)
 
-        # Check that the message observer received echo AA info message
+        # stdout is not dispatched
         self.assertEqual(
-            len([x for x in message_observer.messages if x.message == "AA" and x.status == "INFO"]),
+            len(
+                [
+                    x
+                    for x in message_observer.messages
+                    if x.message.endswith("AA") and x.status == "INFO"
+                ]
+            ),
             0,
+        )
+        # stderr output is dispatched as WARNING (the failure itself is the ERROR below)
+        self.assertEqual(
+            len(
+                [
+                    x
+                    for x in message_observer.messages
+                    if "ui: not found" in x.message and x.status == "WARNING"
+                ]
+            ),
+            1,
         )
         self.assertEqual(
             len(
                 [
                     x
                     for x in message_observer.messages
-                    if "ui: not found" in x.message and x.status == "ERROR"
+                    if "Command failed (exit" in x.message and x.status == "ERROR"
                 ]
             ),
             1,

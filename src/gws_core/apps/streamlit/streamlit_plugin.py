@@ -34,12 +34,13 @@ class StreamlitPlugin(AppPluginDownloader):
 
     def __init__(self):
         """Initialize the StreamlitPlugin.
-        Sets the package name to streamlit-components and destination folder to Streamlit's static folder.
+        Sets the package name to streamlit-components and materializes the package into
+        Streamlit's static folder (the shared store keeps the pristine copy).
         """
         streamlit_static_folder = os.path.join(self.get_plugin_path())
         super().__init__(
             package_name=self.STREAMLIT_COMPONENTS,
-            destination_folder=streamlit_static_folder,
+            materialize_target=streamlit_static_folder,
         )
 
     def get_streamlit_path(self) -> str:
@@ -48,13 +49,17 @@ class StreamlitPlugin(AppPluginDownloader):
         """
         return os.path.dirname(streamlit.__file__)
 
-    def post_install(self) -> None:
-        """Override post_install to add Streamlit-specific installation logic.
-        Modifies streamlit index.html and creates environment file after package download.
-        """
-        # Add Streamlit-specific installation steps
+    def pre_materialize_finalize(self, staging_folder: str) -> None:
+        """Write the environment file into the staging copy so the plugin folder is
+        complete the instant it is swapped into the streamlit static folder."""
+        self.create_environment_json_file(staging_folder)
+
+    def post_materialize(self) -> None:
+        """Inject the plugin into the streamlit index.html once the plugin folder is
+        in place. Previously injected content is removed first (the materialization
+        replaces the folder without going through uninstall)."""
+        self.reset_streamlit_index_html_file()
         self.modifiy_streamlit_index_html()
-        self.create_environment_json_file()
 
     def post_uninstall(self) -> None:
         """Override post_uninstall to add Streamlit-specific cleanup logic.
