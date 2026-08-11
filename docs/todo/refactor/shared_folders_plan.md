@@ -4,6 +4,13 @@
 > [modular_apps_split_plan.md](modular_apps_split_plan.md) (registries, soft references) and
 > **amends** [document_management_plan.md](document_management_plan.md) — see
 > "Amendments to the document management plan" at the end, which lists every change to apply there.
+>
+> ⚠ **Amended by [traceability_plan.md](traceability_plan.md)** on one point: membership and item
+> rows (`gws_shared_folder_member`, `gws_shared_folder_item`) must be **auditable entities**, since
+> Part 11 requires access-right changes to be audited — `created_by` / `created_at` record current
+> state, not history. That plan otherwise **confirms** this one: the `Permission` vocabulary needs no
+> change (GxP roles are orthogonal to READ/WRITE/MANAGE), and the "sharing never exceeds `READ`"
+> ceiling is favourable to compliance.
 
 ## Purpose
 

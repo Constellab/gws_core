@@ -6,6 +6,15 @@
 > [app_discovery_and_activation_plan.md](app_discovery_and_activation_plan.md) (à-la-carte apps,
 > the `DocumentSource` provider pattern it sketches for the Search app).
 >
+> ⚠️ **Also amended by [traceability_plan.md](traceability_plan.md)** on three points: the
+> "deactivate = delete index rows, reactivate = re-enumerate" rule must **not** be generalised to the
+> audit trail (which is not rebuildable and is retained with orphaned `entity_type` values, even
+> though both are core tables keyed by soft references); the settled `origin_type` vocabulary is the
+> candidate basis for retention policy (source data vs reproducible intermediates); and
+> `RichTextFileService` files, having no `FSNodeModel` row, can carry no content hash and so cannot be
+> integrity-checked — which makes unifying that storage a compliance prerequisite, not only a search
+> one.
+>
 > ⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md)**, which introduces **option C**
 > (a shared folder *grants* read access) and changes this plan on five points: the index `UNIQUE`
 > constraint, new `source_type`/`source_id`/`scope_source` columns, the meaning of `folder_id`, the

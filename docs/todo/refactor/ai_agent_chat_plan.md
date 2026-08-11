@@ -1,5 +1,12 @@
 # AI Agent Chat — implementation plan
 
+> ⚠ **Amended by [traceability_plan.md](traceability_plan.md)** once MCP tools stop being read-only:
+> agent-initiated mutations are audited like any other caller (intent is declared at service level,
+> so capture is automatic), but they need an action context and their intent rows must record that
+> the actor was an **agent acting on behalf of a user**. In compliance mode, agent-initiated
+> mutations are a likely candidate for either exclusion or mandatory human confirmation — to settle
+> in this plan.
+
 ## Goal
 
 Add an AI agent to the lab that the user chats with from the Angular front. The

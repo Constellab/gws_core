@@ -36,6 +36,12 @@ The canonical example — *a note embedding a resource view*: `gws_workflow` reg
   (option C, index schema, rebuildability) and answers half of point 17 below.
 - [ai_agent_chat_plan.md](ai_agent_chat_plan.md) — the lab AI agent (MCP tools), which the document
   plan relies on for querying structured entities in SQL.
+- [traceability_plan.md](traceability_plan.md) — audit trail, compliance mode and electronic
+  signature, so apps can be built to pharmaceutical standards (GxP, 21 CFR Part 11). **It amends
+  this plan**: it adds an `auditable` capability to the entity-type registry of points 1+2, gives
+  point 12 an argument for option A (the audit trail is one core table that must survive an app
+  being uninstalled), and makes point 14's typing-name aliases a condition of replaying validated
+  scenarios.
 
 ### Migration order
 
