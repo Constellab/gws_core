@@ -36,6 +36,13 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 ### Development Apps
 - Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
 - Run Reflex app in dev mode: `gws reflex run [CONFIG_FILE_PATH]`
+- Check a Reflex app compiles (without starting it): `gws reflex compile [CONFIG_FILE_PATH]`
+  - **This is how you verify a Reflex app still works after changing its code — use it instead of
+    starting the app.** Much faster, and needs no database. Exit code 0 = compiles, 1 = failed
+    (the traceback shows the offending file and line).
+  - Only run the app (`gws reflex run`) if the user explicitly asks for it, or to investigate
+    runtime behaviour a compile cannot reveal.
+  - A successful compile proves the app builds, not that it runs correctly with real data.
 - **When creating, modifying, or debugging any Reflex app code, FIRST invoke the `gws-reflex-app-developer` skill** to load the global Reflex rules.
 - **When creating, modifying, or debugging any Streamlit app code, FIRST invoke the `gws-streamlit-app-developer` skill** for the equivalent Streamlit rules.
 

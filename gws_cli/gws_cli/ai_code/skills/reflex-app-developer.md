@@ -178,7 +178,26 @@ Both modes behave the same in dev mode (`gws reflex run`): `AUTHENTICATED` fakes
 
 Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_LAUNCH_AND_AUTH.md`.
 
+### Compiling the App (check it builds)
+- To check that the app compiles without starting it: `gws reflex compile [DEV_CONFIG_FILE_PATH]`
+- **This is how you verify the app still works after modifying app code — use it instead of
+  starting the app.** It is much faster and it catches syntax errors, bad imports, invalid component
+  usage and broken computed vars (`@rx.var`), because the compile imports the app modules and
+  prerenders the pages.
+- Exit code is 0 on success (prints `App compiled successfully.`) and 1 on failure, with the
+  Python traceback pointing at the offending file and line.
+- It needs no database and no lab environment: the compile runs in build mode with a throwaway app
+  config, so it works even when the lab manager is unreachable.
+- Consequences of that isolation, so do not misread a successful compile: no resource is loaded
+  (`source_ids` is ignored) and no user is authenticated, so it proves the app **builds** rather
+  than that it behaves correctly with real data.
+- Add `--no-dry` to keep the generated `.web` output instead of discarding it (rarely needed).
+- Unrelated brick-loading errors from other bricks may appear in the logs; only the final
+  `App compiled successfully.` / `App compilation FAILED` line and the exit code decide the result.
+
 ### Running and Debugging the App
+- Only run the app if the user explicitly asks for it, or to investigate runtime behaviour a compile
+  cannot reveal. To simply check your changes are valid, use `gws reflex compile` above instead.
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 
 - The app is available once the following log is print : `Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}`
 - During app start, check the console for any errors or warnings
@@ -186,15 +205,7 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
 - During development:
   - You can keep the app running to leverage hot reloading
   - Code changes will automatically refresh
-- Important: After completing all development work or capturing screenshots, terminate the app process
-
-### Test app in browser
-- ONLY IF THE USER EXPLICITLY REQUEST IT
-- To take a screen shot of the app and check browser console, use the `gws utils screenshot --url=[URL]` (in root folder of project) script.
-- The dev app must be running to use the screenshot utility, you can find the front url in the console logs of the app run process
-- The screenshot command print the path to the screenshot and console logs file
-- When taking a screenshot, check the logs of app (backend) run process to see if there are any errors. 
-- Optionally specify a route: `gws utils screenshot --route [ROUTE]` like `/config`
+- Important: After completing all development work, terminate the app process
 
 ## Development Workflow
 
@@ -210,11 +221,11 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
    - Integrate with GWS Core resources and tasks
    - Polish UI and add error handling
 
-4. **Test Thoroughly**: Run the application in development mode and verify all functionality works as expected.
+4. **Verify it compiles**: Run `gws reflex compile [DEV_CONFIG_FILE_PATH]` and fix every compile
+   error. This is how you check the app still works after your changes — do NOT start the app to
+   verify it.
 
-5. **Screen and Debug**: If necessary, use the screenshot utility to capture the app state and check for console errors.
-
-6. **Document**: Provide clear documentation on how to run and use the application.
+5. **Document**: Provide clear documentation on how to run and use the application.
 
 ## When to Seek Clarification
 
@@ -227,8 +238,10 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
 ## Quality Assurance
 
 Before considering your work complete:
-- Verify the application runs without errors in development mode
-- Verify that state management and event handlers work correctly across interactions
+- Verify the app compiles: `gws reflex compile [DEV_CONFIG_FILE_PATH]` must exit 0. This is the
+  verification step — do not start the app to check your work.
+- Only run the app (`gws reflex run`) if the user explicitly asks for it, or if you need to
+  investigate runtime behaviour that a compile cannot reveal.
 
 ## Task
 

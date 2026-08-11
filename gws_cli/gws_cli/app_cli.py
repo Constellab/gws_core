@@ -229,6 +229,9 @@ class AppCli:
                 )
                 raise typer.Abort()
 
+    def get_params(self) -> dict:
+        return self._config.params or {}
+
     def is_reflex_enterprise(self) -> bool:
         return self._config.is_reflex_enterprise
 
