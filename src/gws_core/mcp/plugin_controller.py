@@ -19,19 +19,28 @@ public by construction (see :mod:`gws_core.mcp.plugin_generator`).
 Registered from ``mount_mcp_app``'s caller, in the same conditional block as ``/mcp/``:
 with the MCP server off, an installed plugin would connect to nothing, and a 404 on the
 marketplace is a far more legible failure than a plugin that silently never works.
+
+Beside them, on the lab's ordinary authenticated API, one route describes the plugin to
+the lab's **own** front-end (``GET /core-api/claude-plugin``). That one always exists:
+telling a user why their lab serves no plugin is exactly what the screen is for.
 """
 
+from fastapi.param_functions import Depends
 from starlette.responses import JSONResponse, Response
 
 from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.utils.logger import Logger
+from gws_core.core_controller import core_app
 from gws_core.lab.api_registry import ApiRegistry
+from gws_core.mcp.plugin_dto import ClaudePluginInfoDTO
 from gws_core.mcp.plugin_generator import (
     MARKETPLACE_FILE_NAME,
     PLUGINS_ROUTE_PATH,
     PluginGenerator,
     build_marketplace_url,
 )
+from gws_core.mcp.plugin_service import PluginService
+from gws_core.user.authorization_service import AuthorizationService
 
 # The archive URL carries the version, so it may be cached forever. The manifest is the
 # one thing that must be re-read to discover a new version.
@@ -76,6 +85,23 @@ def get_plugin_archive(file_name: str) -> Response:
             "Cache-Control": ARCHIVE_CACHE_CONTROL,
         },
     )
+
+
+@core_app.get(
+    "/claude-plugin",
+    tags=["Claude plugin"],
+    summary="Describe the Claude Code plugin this lab serves",
+)
+def get_claude_plugin_info(
+    _=Depends(AuthorizationService.check_user_access_token),
+) -> ClaudePluginInfoDTO:
+    """What this lab's Claude Code screen shows: the commands to run, or why there are none.
+
+    Authenticated like the rest of the lab API: it is read by the lab's front-end, for a
+    user who is already signed in. The manifest itself stays public -- a Claude Code
+    client has no lab credentials until it has installed the plugin.
+    """
+    return PluginService.get_plugin_info()
 
 
 def register_plugin_routes() -> None:

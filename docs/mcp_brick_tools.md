@@ -139,7 +139,8 @@ Two rules for the file:
 
 The lab serves a Claude Code marketplace at `https://<lab api url>/plugins/marketplace.json`,
 declaring one plugin: itself. A user adds that URL once and gets this lab's MCP server
-plus the skills of its bricks.
+plus the skills of its bricks. The lab's front-end shows them the exact commands, read from
+`GET /core-api/claude-plugin`.
 
 Nothing to do on your side beyond the two sections above — declaring a tool and, if it
 helps, shipping a skill. The plugin's version is a fingerprint of what the lab serves, so
@@ -178,5 +179,6 @@ from. Your own keys are kept alongside them.
 | `gws_core/mcp/plugin_generator.py` | generates the marketplace manifest and the archive |
 | `gws_core/mcp/plugin_identity.py` | the marketplace and plugin names, and renames |
 | `gws_core/mcp/plugin_skills.py` | collects the bricks' skills into the archive |
-| `gws_core/mcp/plugin_controller.py` | the two public routes |
+| `gws_core/mcp/plugin_controller.py` | the two public routes, and the lab front-end's |
+| `gws_core/mcp/plugin_service.py` | what the lab tells its own front-end |
 | `gws_core/claude-plugin/skills/query-lab-db/` | `gws_core`'s own skill, as a worked example |

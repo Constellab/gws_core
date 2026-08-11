@@ -10,6 +10,7 @@ from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.mcp_registry import META_BRICK_VERSION_KEY, McpRegistry
 from gws_core.mcp.plugin_controller import get_marketplace, get_plugin_archive
+from gws_core.mcp.plugin_dto import ClaudePluginStatus
 from gws_core.mcp.plugin_generator import (
     MCP_SERVER_KEY,
     PLUGIN_MANIFEST_FILE_NAME,
@@ -24,6 +25,7 @@ from gws_core.mcp.plugin_identity import (
     build_plugin_name,
     resolve_and_record_identity,
 )
+from gws_core.mcp.plugin_service import PluginService
 from gws_core.mcp.plugin_skills import inject_lab_name
 from mcp.types import Icon, ToolAnnotations
 
@@ -471,6 +473,50 @@ class TestRoutes(_PluginTestCase):
         self.assertIn(generated.version, detail)
         self.assertIn("marketplace update", detail)
         self.assertIn(generated.identity.marketplace_name, detail)
+
+    def test_the_lab_own_screen_is_described_from_the_served_generation(self):
+        """The screen and the manifest must never name different things, so the info
+        comes from the generation the marketplace serves, not from the naming rules
+        applied a second time."""
+        generated = PluginGenerator.get_generated()
+
+        with mock.patch.object(
+            PluginService, "get_status", return_value=ClaudePluginStatus.AVAILABLE
+        ):
+            info = PluginService.get_plugin_info()
+
+        self.assertEqual(info.status, ClaudePluginStatus.AVAILABLE)
+        self.assertEqual(info.plugin_name, generated.identity.plugin_name)
+        self.assertEqual(info.marketplace_name, generated.identity.marketplace_name)
+        self.assertEqual(info.version, generated.version)
+        self.assertEqual(info.mcp_url, generated.mcp_url)
+        assert info.commands is not None
+        self.assertIn(info.marketplace_url or "", info.commands.add_marketplace)
+        self.assertEqual(
+            info.commands.install,
+            f"/plugin install {generated.identity.plugin_name}@{generated.identity.marketplace_name}",
+        )
+
+    def test_a_lab_with_mcp_off_says_so_and_names_nothing(self):
+        """It must not record a plugin name it never served."""
+        info = PluginService.get_plugin_info()
+
+        self.assertEqual(info.status, ClaudePluginStatus.MCP_DISABLED)
+        self.assertIsNone(info.plugin_name)
+        self.assertIsNone(info.commands)
+        self.assertNotIn(SETTINGS_SERVED_PLUGIN_NAMES_KEY, Settings.get_instance().data)
+
+    def test_a_lab_that_is_not_on_https_says_so(self):
+        """Claude Code refuses such an archive URL outright, so the screen says it rather
+        than letting the user meet the refusal halfway through an install."""
+        with mock.patch.object(Settings, "is_mcp_server_enabled", return_value=True):
+            self.assertEqual(PluginService.get_status(), ClaudePluginStatus.URL_NOT_SUPPORTED)
+
+    def test_which_lab_urls_claude_code_accepts(self):
+        self.assertTrue(PluginService.url_is_supported("https://glab.my-lab.constellab.io"))
+        self.assertFalse(PluginService.url_is_supported("http://glab.my-lab.constellab.io"))
+        self.assertFalse(PluginService.url_is_supported("https://localhost:3000"))
+        self.assertFalse(PluginService.url_is_supported("http://127.0.0.1:3000"))
 
     def test_the_routes_are_not_registered_when_mcp_is_disabled(self):
         """They are registered from the same block that mounts /mcp/, so importing

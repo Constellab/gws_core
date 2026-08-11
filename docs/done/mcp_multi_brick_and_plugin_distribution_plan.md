@@ -202,8 +202,11 @@ Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 
    `src/gws_core/mcp/plugin_identity.py`.
 7. ~~**Docs** — brick author guide (declare a tool, choose annotations, authorization is the
    brick's job): `docs/mcp_brick_tools.md`, extended with shipping a skill and the public-content
-   rule; the page explaining the per-lab command with the Claude Code ≥ 2.1.224 prerequisite next
-   to it: `docs/lab_claude_plugin.md`, to be copied into the public repository.~~
+   rule.~~
+8. ~~**The per-lab command, told to the user** — with the Claude Code ≥ 2.1.224 prerequisite next
+   to it. Not a page on the public repository (see the deviation below) but a screen of the lab's
+   own front-end, backed by `GET /core-api/claude-plugin`:
+   `docs/todo/claude_plugin_frontend_spec.md`.~~
 
 ## Verified during implementation
 
@@ -220,6 +223,15 @@ Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 
 
 ## Deviations from the plan
 
+- **The per-lab command is told to the user by the lab, not by the public repository.** The
+  plan gave the public repo a page explaining the command; a generic page can only ever say
+  "replace `<your lab>` with…", because the marketplace name comes from the lab's id, the
+  plugin name from its name, and the version from the content it serves. So the lab states
+  its own commands, on its own screen: `GET /core-api/claude-plugin` returns them ready to
+  copy, plus the reason when the lab serves no plugin at all (MCP off, or a non-HTTPS URL).
+  The front-end never rebuilds a command, so the naming rules keep one implementation. The
+  public repository still needs a line pointing at that screen — it is the natural place to
+  look first — but it is no longer where the instructions live.
 - **The manifest is cached with the archive, not generated per request** (B said per
   request). The two must describe the same content, and nothing the generation reads can
   change while the process runs — the lab's URL, id and name come from the environment,
@@ -233,7 +245,7 @@ Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 
 - **Does renaming the plugin force a new OAuth login?** Inferred from credentials being keyed per
   server entry. Settling it needs a real HTTPS lab and two names, so it was left open; the rename
   warning is written as if it does, which is the safe direction, and
-  `docs/lab_claude_plugin.md` tells users the same.
+  `docs/todo/claude_plugin_frontend_spec.md` has the lab's rename screen say the same.
 
 ## Out of scope
 

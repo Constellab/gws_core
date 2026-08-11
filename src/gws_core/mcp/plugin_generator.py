@@ -74,6 +74,7 @@ class GeneratedPlugin:
 
     :param identity: The names this lab serves.
     :param version: The plugin version, in both the manifest and ``plugin.json``.
+    :param mcp_url: The endpoint the generated ``plugin.json`` points at.
     :param archive_file_name: File name of the archive, version included.
     :param marketplace_manifest: The marketplace manifest, ready to serialize.
     :param archive: The zip archive's bytes.
@@ -81,6 +82,7 @@ class GeneratedPlugin:
 
     identity: PluginIdentity
     version: str
+    mcp_url: str
     archive_file_name: str
     marketplace_manifest: dict[str, Any]
     archive: bytes
@@ -142,6 +144,7 @@ class PluginGenerator:
         return GeneratedPlugin(
             identity=identity,
             version=version,
+            mcp_url=mcp_url,
             archive_file_name=archive_file_name,
             marketplace_manifest=build_marketplace_manifest(identity, version, archive_file_name),
             archive=build_archive(plugin_manifest, skills),
