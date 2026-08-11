@@ -167,7 +167,15 @@ class ReflexDownloadService:
 
     @classmethod
     def _backend_download_url(cls, token: str) -> str:
-        # Read lazily so launchers that set the var after import still work.
+        # Read lazily so launchers that set the vars after import still work.
+        # In prod the backend is reachable same-origin on the front host under
+        # GWS_REFLEX_BACKEND_PREFIX (nginx strips the prefix): a relative URL then
+        # resolves on whichever front host the page is on (id host or custom alias).
+        backend_prefix = os.environ.get("GWS_REFLEX_BACKEND_PREFIX")
+        if backend_prefix:
+            return f"{backend_prefix.rstrip('/')}{cls.ROUTE_PREFIX}/{quote(token)}"
+
+        # Dev-mode fallback: absolute backend URL.
         # GWS_REFLEX_API_URL is set by gws_core's reflex_process launcher.
         backend_url = (os.environ.get("GWS_REFLEX_API_URL") or "").rstrip("/")
         return f"{backend_url}{cls.ROUTE_PREFIX}/{quote(token)}"

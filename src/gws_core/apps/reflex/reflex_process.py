@@ -13,6 +13,7 @@ from gws_core.apps.app_nginx_service import (
 )
 from gws_core.apps.app_process import AppProcess, AppProcessStartResult
 from gws_core.apps.reflex.reflex_app import ReflexApp
+from gws_core.apps.reflex.reflex_front_build_cache import ReflexFrontBuildCache
 from gws_core.apps.reflex.reflex_plugin import ReflexPlugin
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.service.external_api_service import ExternalApiService
@@ -46,6 +47,17 @@ class ReflexProcess(AppProcess):
     REFLEX_MODULES_PATH = "_gws_reflex"
     ZIP_FILE_NAME = "frontend.zip"
     INDEX_HTML_FILE = "index.html"
+
+    # Path prefix under which the front nginx server proxies the reflex backend
+    # (same-origin routing). Baked into the frontend at build time via
+    # REFLEX_BACKEND_PATH; stripped by nginx, so the backend keeps serving at root.
+    BACKEND_PATH = "/gws-back"
+    # Set to "1" in the reflex export env so gws_reflex state code can avoid baking
+    # instance-specific values (app id, auth info) into the compiled bundle.
+    BUILD_MODE_ENV_VAR = "GWS_REFLEX_BUILD_MODE"
+    # Runtime env var telling the app its backend is reachable on the front origin
+    # under this prefix (used by the download service to emit relative URLs).
+    BACKEND_PREFIX_ENV_VAR = "GWS_REFLEX_BACKEND_PREFIX"
 
     _front_app_build_folder: str | None = None
 
@@ -129,6 +141,10 @@ class ReflexProcess(AppProcess):
         """Start reflex in prod mode: build frontend (served via nginx), run backend-only"""
         env = self._get_base_env(app)
 
+        # The backend is reachable same-origin on the front host under BACKEND_PATH
+        # (nginx strips the prefix). The download service uses this to emit relative URLs.
+        env[ReflexProcess.BACKEND_PREFIX_ENV_VAR] = ReflexProcess.BACKEND_PATH
+
         # Build frontend
         front_build_path = self._build_frontend(shell_proxy, env, app)
 
@@ -210,6 +226,23 @@ class ReflexProcess(AppProcess):
             Logger.info("Frontend is already built, skipping build.")
             return front_build_path
 
+        app_build_folder = app.get_front_app_build_folder()
+        if not app_build_folder or not app_build_folder.exists():
+            raise Exception(f"Destination folder {app_build_folder} does not exist.")
+
+        # The bundle is instance-independent (see _get_build_env), so builds of
+        # AppConfig apps are shared across instances through a cache: only the first
+        # instance runs `reflex export`, the others copy the cached build.
+        build_cache = self._get_build_cache(app)
+        if build_cache and build_cache.get_cached_build_path():
+            Logger.info(
+                f"Reusing cached frontend build for app {app.resource_model_id} "
+                f"from {build_cache.get_entry_path()}"
+            )
+            build_cache.copy_into(app_build_folder.path)
+            app.update_front_build_info()
+            return app_build_folder.path
+
         # delete the cache before building because it seems to be used by reflex build
         # so if the cache is corrupted or on old version, the build may fail
         app.clear_app_cache()
@@ -224,9 +257,6 @@ class ReflexProcess(AppProcess):
             f"Frontend build started for app {app.resource_model_id} "
             f"in {app.get_app_folder()}"
         )
-        app_build_folder = app.get_front_app_build_folder()
-        if not app_build_folder or not app_build_folder.exists():
-            raise Exception(f"Destination folder {app_build_folder} does not exist.")
 
         build_cmd = [
             "reflex",
@@ -241,11 +271,15 @@ class ReflexProcess(AppProcess):
         zip_file_path = os.path.join(app_build_folder.path, ReflexProcess.ZIP_FILE_NAME)
         FileHelper.delete_file(zip_file_path)
 
+        build_env = self._get_build_env(env)
+
         # Log in debug the command to build manually the app
-        env_str_cmd = " ".join(f"{key}={value}" for key, value in env.items())
+        env_str_cmd = " ".join(f"{key}={value}" for key, value in build_env.items())
         Logger.debug(f"Command to build frontend: {env_str_cmd} {' '.join(build_cmd)}")
 
-        result = shell_proxy.run(build_cmd, env=env, dispatch_stderr=True, dispatch_stdout=True)
+        result = shell_proxy.run(
+            build_cmd, env=build_env, dispatch_stderr=True, dispatch_stdout=True
+        )
         if result != 0:
             Logger.error(
                 f"Frontend build failed for app {app.resource_model_id} "
@@ -269,11 +303,48 @@ class ReflexProcess(AppProcess):
         # store the build info
         app.update_front_build_info()
 
+        # Share the fresh build with other instances of the same app. Skipped when the
+        # bundle turns out to contain the builder's instance id (user app baking
+        # instance env vars at import time).
+        if build_cache:
+            build_cache.store_build(
+                app_build_folder.path, instance_marker=app.resource_model_id
+            )
+
         Logger.info(
             f"Frontend build finished for app {app.resource_model_id} "
             f"in {time.time() - build_started_at:.0f}s"
         )
         return app_build_folder.path
+
+    def _get_build_cache(self, app: ReflexApp) -> ReflexFrontBuildCache | None:
+        """Build cache for this app, or None when not cacheable (static-folder apps
+        carry their code per resource, so their builds cannot be shared)."""
+        app_config = app.get_app_config()
+        if not app_config:
+            return None
+        return ReflexFrontBuildCache(app_config, ReflexProcess.BACKEND_PATH)
+
+    def _get_build_env(self, env: dict) -> dict:
+        """Derive the `reflex export` env from the runtime env.
+
+        The build env makes the compiled bundle instance-independent:
+        - the api_url is `http://localhost:<external app port>`: the reflex client
+          rewrites a literal `localhost` hostname to `window.location.hostname` at
+          runtime (and drops the port under https), so the bundle carries no
+          instance host. Under local http the external port matches because every
+          app host is served on that single shared nginx port.
+        - REFLEX_BACKEND_PATH prefixes the baked endpoint URLs; the front nginx
+          block proxies that prefix to the instance's backend port and strips it,
+          so the backend (whose runtime env is unchanged) keeps serving at root.
+        - GWS_REFLEX_BUILD_MODE tells gws_reflex state code to bake neutral values
+          (no app id, no auth info) into the initial state.
+        """
+        build_env = dict(env)
+        build_env["GWS_REFLEX_API_URL"] = f"http://localhost:{Settings.get_app_external_port()}"
+        build_env["REFLEX_BACKEND_PATH"] = ReflexProcess.BACKEND_PATH
+        build_env[ReflexProcess.BUILD_MODE_ENV_VAR] = "1"
+        return build_env
 
     def _get_prod_nginx_services(self, front_build_folder: str) -> list[AppNginxServiceInfo]:
         services: list[AppNginxServiceInfo] = []
@@ -285,6 +356,9 @@ class ReflexProcess(AppProcess):
                 source_port=self.get_service_source_port(),
                 server_name=self.get_front_server_names(),
                 front_folder_path=front_build_folder,
+                # same-origin backend routing for builds baked with BACKEND_PATH
+                backend_port=self.back_port,
+                backend_path=ReflexProcess.BACKEND_PATH,
             )
         )
 

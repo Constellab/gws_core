@@ -104,6 +104,10 @@ class ReflexMainStateBase(rx.State, mixin=True):
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
     DEV_MODE_APP_ID = "dev-app"
+    # Sentinel app id baked into the compiled bundle during `reflex export` (build mode).
+    # Frontend builds are shared across app instances, so the real app id must never be
+    # compiled in — it is provided at runtime by the per-instance backend on hydration.
+    BUILD_MODE_APP_ID = "gws-build"
     # Fixed token always provisioned for the system user by the launch side. Mirrors
     # AppProcess.SYSTEM_USER_ACCESS_TOKEN_KEY (this module cannot import gws_core, so the
     # literal is duplicated). Used by components opting into fallback_to_system_user.
@@ -241,6 +245,10 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
     def get_app_id(self) -> str:
         """Get the app ID from the environment variable."""
+        if self.is_build_mode():
+            # never bake the builder instance's app id into the shared bundle
+            return self.BUILD_MODE_APP_ID
+
         if self.is_dev_mode():
             return self.DEV_MODE_APP_ID
 
@@ -498,6 +506,17 @@ class ReflexMainStateBase(rx.State, mixin=True):
     def is_dev_mode(cls) -> bool:
         """Check if the app is running in development mode."""
         return os.environ.get("GWS_IS_DEV_MODE", "false").lower() == "true"
+
+    @classmethod
+    def is_build_mode(cls) -> bool:
+        """True while the frontend is being compiled (`reflex export`).
+
+        Set by gws_core's ReflexProcess in the export env. State code evaluated at
+        compile time (e.g. `@rx.var` initial values) must bake neutral values in this
+        mode: the bundle is shared across app instances, so nothing instance-specific
+        may end up in it. Real values arrive at runtime on websocket hydration.
+        """
+        return os.environ.get("GWS_REFLEX_BUILD_MODE") == "1"
 
     async def get_first_child_of_state(self, state_class: type[rx.State]) -> rx.State | None:
         """Get the first child state of a given type.

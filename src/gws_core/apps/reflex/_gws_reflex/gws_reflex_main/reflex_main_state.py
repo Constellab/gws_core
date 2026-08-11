@@ -83,6 +83,13 @@ class ReflexMainState(ReflexMainStateBase, rx.State):
         system user's access token so the front can still reach the API. Returns None when no
         token is available (PUBLIC app, no user, no fallback).
         """
+        if self.is_build_mode():
+            # compile time (`reflex export`): the initial value of the bound @rx.var is
+            # baked into the shared bundle, so it must stay neutral. None is already a
+            # legal pre-hydration value (PUBLIC app with no user); the real auth info
+            # is recomputed by the per-instance backend on hydration.
+            return None
+
         user_access_token = self._get_user_access_token()
 
         if not user_access_token and fallback_to_system_user:
