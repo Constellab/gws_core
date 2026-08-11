@@ -9,6 +9,7 @@ import typer
 from gws_core.core.utils.settings import Settings
 
 from gws_cli.ai_code.ai_code_service import AICodeService, SkillFrontmatter
+from gws_cli.ai_code.claude.statusline.configure_statusline import StatuslineService
 
 
 class ClaudeService(AICodeService):
@@ -250,6 +251,7 @@ argument-hint: [{frontmatter.argument_hint}]
         2. Pulls GWS skills to global Claude skills folder
         3. Updates Claude Code settings with GWS_CORE_SRC environment variable
         4. Generates main instructions file
+        5. Configures the GWS statusline at user level
 
         Returns:
             int: Exit code (0 for success, 1 for failure)
@@ -273,6 +275,12 @@ argument-hint: [{frontmatter.argument_hint}]
         result = self.generate_main_instructions()
         if result != 0:
             typer.echo("Failed to generate main instructions", err=True)
+            return result
+
+        # Configure the GWS statusline (cwd, model, context usage, cost)
+        result = StatuslineService.configure()
+        if result != 0:
+            typer.echo("Failed to configure statusline", err=True)
             return result
 
         return 0
