@@ -23,6 +23,17 @@ Today `gws_core` is a single brick containing every domain of the data lab: scen
 
 The canonical example — *a note embedding a resource view*: `gws_workflow` registers the `resourceView` rich text block in the core registry (payload schema + renderer + reference extractor). The note stores the block as opaque JSON. On `NoteContentUpdatedEvent`, a core reconciler extracts references via the registry and maintains generic `EntityLink` rows (note → view, note → scenario). Rendering asks the registry for the block's renderer; deletion of a view first checks incoming links and applies the declared deletion policy. `gws_form` plugs `form`/`formTemplate` blocks in exactly the same way.
 
+### Companion documents
+
+- [app_discovery_and_activation_plan.md](app_discovery_and_activation_plan.md) — how users find and
+  activate apps on top of this split.
+- [document_management_plan.md](document_management_plan.md) — the document index, drive and access
+  scopes. **It amends this plan**: it merges points 1+2 into a single entity-type registry, settles the
+  `origin_type` vocabulary, adds a third file storage to points 7 and 8, and defers two of its own
+  decisions to the `gws_workflow` and `gws_note` app refactors.
+- [ai_agent_chat_plan.md](ai_agent_chat_plan.md) — the lab AI agent (MCP tools), which the document
+  plan relies on for querying structured entities in SQL.
+
 ### Migration order
 
 1. **Break the coupling hubs without moving files** (highest-value step, monolith keeps running):
@@ -39,11 +50,32 @@ Frontend: not decided yet — `lab-front` stays a single app for now; it will ne
 
 ### 1. Tags: registered entity types instead of enums
 
+> ⚠️ **Superseded — merged into points 1+2 by [document_management_plan.md](document_management_plan.md)**
+> ("Settled: one entity-type registry replaces five enums"). That document treats this point and
+> point 2 as **a single registry**, because they answer different questions about the same objects.
+> Read it before implementing either. Summary of what changed:
+>
+> - There are **five** parallel enums, not the two or three implied here: `TagEntityType` (8 values),
+>   `NavigableEntityType` (6), `RichTextObjectType` (3, **lowercase** values), `ActivityObjectType`
+>   (7 — incl. `PROCESS`/`USER`, which exist nowhere else), `ShareLinkEntityType` (2, not mentioned
+>   below). None is a proper subset of another.
+> - One registry entry per entity type, with **declared capabilities** (`taggable`, `navigable`,
+>   `shareable`, `indexable`, `activity_logged`) rather than one registry per concern — five separate
+>   lists means five places to keep consistent, which is what produced the raising conversion at
+>   `tag_entity_type.py:48-64`.
+> - The registry also carries `indexable`, for the document index that plan introduces.
+> - It is a **prerequisite** of the document index and a bigger job than the index itself (five
+>   consumers, `entity_navigator` among them).
+
 The tag system must become configurable: no more closed `TagEntityType` enum (`tag/tag_entity_type.py`), but a core registry where each app **registers its taggable entity types** at brick load time. The core tag machinery (`EntityTag`, tag values, propagation flags) is already generic — it stores `(entity_type, entity_id)` strings with no FK — only the type list is hard-coded.
 
-The same principle applies to the other closed enums that hard-code the domain list (`ActivityObjectType` in `user/activity/`, `RichTextBlockTypeStandard` in `impl/rich_text/block/rich_text_block.py` — see point 5). Registered type keys must keep the exact string values already persisted in DB rows and rich text JSON.
+The same principle applies to the other closed enums that hard-code the domain list (`ActivityObjectType` in `user/activity/`, `ShareLinkEntityType` in `share/shared_dto.py`, `RichTextBlockTypeStandard` in `impl/rich_text/block/rich_text_block.py` — see point 5). Registered type keys must keep the exact string values already persisted in DB rows and rich text JSON — including `RichTextObjectType`'s lowercase values, which are also directory names on disk.
 
 ### 2. `entity_navigator` → generic navigation with next/previous methods
+
+> ⚠️ **Merged with point 1** — see the note there. Navigation becomes the `navigable=True` capability
+> of the single entity-type registry, with `get_navigation_next`/`get_navigation_previous` on the
+> registered definition; it is not a separate registry.
 
 `entity_navigator/entity_navigator.py` imports every model of every domain (Form, Note, ResourceModel, ViewConfig, Scenario, TaskModel…). It is the #1 coupling hub.
 
@@ -74,6 +106,20 @@ To settle: renderer contract (backend enrichment endpoint vs frontend calling ea
 Notes are hard-linked to scenarios via the `gws_note_scenario` M2M (auto-maintained from embedded views). Decide whether this is: (a) a note-domain feature ("scenarios this note documents") expressed as an `EntityLink` kind derived from embedded views + optional manual association — preferred; or (b) a workflow-domain feature. Impacts who owns the link kind and its deletion policy.
 
 ### 7. App file management vs resources ⚠ (options)
+
+> ⚠️ **Amended by [document_management_plan.md](document_management_plan.md).** The recommendation
+> below (option 1, promotion by copy) stands, but that plan adds three things:
+> - a **third file storage** this point does not mention: `RichTextFileService`
+>   (`data_dir/note/{object_type}/{object_id}/filename`) — **no table, no tags, no index** — which
+>   holds every note attachment and figure, and which `gws_project` already uses via its free-form
+>   `object_type`. Point 8 unifies `FSNodeModel` but ignores this one entirely.
+> - a **document index** that makes "search across all apps' documents" possible without any app→app
+>   dependency, and which is what the promotion back-link becomes (an index row rather than an ad-hoc
+>   `resource_id` column).
+> - a settled **`origin_type` vocabulary** (`UPLOADED | AUTHORED | GENERATED | IMPORTED | DERIVED`,
+>   with the *where* in `(origin_entity_type, origin_id)`). `ResourceOrigin` could not be generalised
+>   as-is because it mixes the two dimensions. A promoted document is
+>   `DERIVED + origin=(PROJECT_DOCUMENT, doc_id)`.
 
 External apps (pattern `gws_project` / `project_document`, also `gws_invest`) manage their own files: a per-brick document table + a brick-owned filestore, outside the resource system. But sometimes the user needs to **analyze** such a file in the lab — it must then already be, or become, a `ResourceModel`.
 
@@ -116,6 +162,12 @@ Variant of option 1 triggered from the workflow side: a generic "app document so
 **Option 1 now, option 4 as its natural extension, option 3 as a long-term target only if storage duplication becomes a real cost.** Note: the file layer moving to the core (point 8) makes option 3 significantly cheaper — re-evaluate this recommendation once point 8 is settled. Concretely on the `project_document` pattern: nullable soft `resource_id` + `promoted_content_hash` on the document row; "Analyze in lab" action reuses the existing resource when the hash is unchanged, otherwise copies to temp → `save_from_resource(..., UPLOADED)` with provenance tags. Assumed policy: a promoted resource is a snapshot — re-promotion creates a new resource; deleting the document never touches the resource. On the day of the split, `resource_id` + tags become `EntityLink(document → resource, kind="promoted_as")` and the promotion action becomes a port registered by `gws_workflow`.
 
 ### 8. File vs file resource — the file layer moves to the core ⚠ (decision to take)
+
+> ⚠️ **Amended by [document_management_plan.md](document_management_plan.md)**: this point must also
+> cover **`RichTextFileService`** (the third storage — see point 7's note), otherwise note attachments
+> stay invisible to any search. Note also that the document index does **not** depend on this point:
+> it indexes descriptors, not bytes, and its `fs_node_id` is nullable precisely so it ships first
+> (`storage_ref` covers files still living outside the core file store).
 
 The raw file layer is a **common building block, not a workflow concern**: it is extracted from `impl/file/` into the core. This introduces a distinction that does not exist today and whose exact contract must be decided:
 
