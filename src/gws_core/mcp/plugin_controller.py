@@ -1,16 +1,24 @@
-"""The two public routes over which the lab hands out its Claude Code plugin.
+"""The public routes over which the lab hands out its Claude Code plugin.
 
 ============================================  ===================  ==================
 Route                                          Stability            Who reads it
 ============================================  ===================  ==================
 ``GET /plugins/marketplace.json``              **never changes**    the user, once
 ``GET /plugins/<plugin>-<version>.zip``        changes per version  nobody by hand
+``GET /plugins/install-dev.sh``                **never changes**    a developer, piped
+``GET /plugins/install-dev.ps1``               **never changes**    a developer, piped
 ============================================  ===================  ==================
 
 The user runs ``/plugin marketplace add https://<lab api url>/plugins/marketplace.json``
 once and never returns to that URL. The archive's URL lives inside the manifest and
 carries the version, so it moves freely -- which is what keeps a proxy from answering a
 new version's URL with the zip it cached for the previous one.
+
+The two ``install-dev`` scripts serve the case the marketplace channel cannot: a lab on
+``http://localhost``, whose plugin Claude Code refuses to fetch itself (see
+:mod:`gws_core.mcp.plugin_dev_install`). They are served unconditionally rather than only
+by a lab that needs them -- a pinned local copy is a legitimate way to debug any lab, and a
+route that exists only sometimes is one nobody can document.
 
 Both routes are unauthenticated, because a Claude Code client has no lab credentials
 until it has installed the plugin and gone through the MCP login. What they serve is
@@ -32,6 +40,12 @@ from gws_core.core.exception.exceptions.not_found_exception import NotFoundExcep
 from gws_core.core.utils.logger import Logger
 from gws_core.core_controller import core_app
 from gws_core.lab.api_registry import ApiRegistry
+from gws_core.mcp.plugin_dev_install import (
+    POSIX_SCRIPT_FILE_NAME,
+    WINDOWS_SCRIPT_FILE_NAME,
+    build_posix_script,
+    build_windows_script,
+)
 from gws_core.mcp.plugin_dto import ClaudePluginInfoDTO
 from gws_core.mcp.plugin_generator import (
     MARKETPLACE_FILE_NAME,
@@ -46,6 +60,10 @@ from gws_core.user.authorization_service import AuthorizationService
 # one thing that must be re-read to discover a new version.
 ARCHIVE_CACHE_CONTROL = "public, max-age=31536000, immutable"
 MARKETPLACE_CACHE_CONTROL = "no-cache"
+
+# The install scripts name the current version, and re-downloading one is how a developer
+# picks up a new one. A cached copy would send them at an archive the lab no longer serves.
+SCRIPT_CACHE_CONTROL = "no-cache"
 
 
 def get_marketplace() -> JSONResponse:
@@ -87,6 +105,30 @@ def get_plugin_archive(file_name: str) -> Response:
     )
 
 
+def get_dev_install_script_posix() -> Response:
+    """Serve the bash install script, for macOS and Linux."""
+    return _script_response(build_posix_script())
+
+
+def get_dev_install_script_windows() -> Response:
+    """Serve the PowerShell install script, for Windows."""
+    return _script_response(build_windows_script())
+
+
+def _script_response(script: str) -> Response:
+    """A script, served as text.
+
+    ``text/plain`` for both: a shell reads what is piped into it whatever the type says,
+    while a browser -- where a developer checks what they are about to run -- displays plain
+    text and downloads anything else.
+    """
+    return Response(
+        content=script,
+        media_type="text/plain; charset=utf-8",
+        headers={"Cache-Control": SCRIPT_CACHE_CONTROL},
+    )
+
+
 @core_app.get(
     "/claude-plugin",
     tags=["Claude plugin"],
@@ -111,8 +153,11 @@ def register_plugin_routes() -> None:
     """
     plugins_app = ApiRegistry.register_api(f"/{PLUGINS_ROUTE_PATH}/")
 
-    # The manifest first: its path would otherwise be swallowed by the archive route.
+    # Every named path first: they would otherwise be swallowed by the archive route, which
+    # matches any single segment and answers a 404 naming the version it does serve.
     plugins_app.get(f"/{MARKETPLACE_FILE_NAME}")(get_marketplace)
+    plugins_app.get(f"/{POSIX_SCRIPT_FILE_NAME}")(get_dev_install_script_posix)
+    plugins_app.get(f"/{WINDOWS_SCRIPT_FILE_NAME}")(get_dev_install_script_windows)
     plugins_app.get("/{file_name}")(get_plugin_archive)
 
     Logger.info(f"Claude Code marketplace available at {build_marketplace_url()}")

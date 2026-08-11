@@ -1,7 +1,11 @@
 import json
 import os
+import subprocess
 import zipfile
+from functools import partial
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
+from threading import Thread
 from unittest import TestCase, mock
 
 from gws_core.brick.brick_dto import BrickInfo
@@ -10,7 +14,22 @@ from gws_core.core.exception.exceptions.not_found_exception import NotFoundExcep
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.mcp_registry import META_BRICK_VERSION_KEY, McpRegistry
-from gws_core.mcp.plugin_controller import get_marketplace, get_plugin_archive
+from gws_core.mcp.plugin_controller import (
+    get_dev_install_script_posix,
+    get_dev_install_script_windows,
+    get_marketplace,
+    get_plugin_archive,
+)
+from gws_core.mcp.plugin_dev_install import (
+    JSON_TERMINATOR,
+    POSIX_SCRIPT_FILE_NAME,
+    WINDOWS_SCRIPT_FILE_NAME,
+    build_dev_install_plan,
+    build_posix_script,
+    build_windows_script,
+    quote_for_bash,
+    quote_for_powershell,
+)
 from gws_core.mcp.plugin_dto import ClaudePluginStatus
 from gws_core.mcp.plugin_generator import (
     MCP_SERVER_KEY,
@@ -668,8 +687,348 @@ class TestSkillLabNameInjection(TestCase):
 
 
 # test_mcp_plugin
+class TestDevInstallScripts(_PluginTestCase):
+    """The scripts that install the plugin from a local folder.
+
+    They exist for the lab Claude Code will not download from -- ``http://localhost`` --
+    where the machine running Claude Code can still reach the lab over its published port
+    but cannot see the container's filesystem.
+    """
+
+    def plan(self, name: str = "Mon Lab"):
+        with self.lab(name):
+            return build_dev_install_plan(PluginGenerator.generate())
+
+    def embedded_manifest(self, script: str) -> dict:
+        """The marketplace JSON a script writes, read back out of the script.
+
+        Delimited by the lines that are *exactly* the terminator, the way both shells
+        delimit it -- not by every occurrence of the word, which a hostile lab name can
+        also put inside the JSON.
+        """
+        lines = script.splitlines()
+        # bash opens with <<'TERMINATOR' and closes on TERMINATOR; PowerShell opens with
+        # @' and closes on '@. Which one is in play is read from the opening line, not
+        # sniffed from the whole script -- a hostile lab name appears in both.
+        opening = next(
+            index
+            for index, line in enumerate(lines)
+            if line.rstrip().endswith(f"<<'{JSON_TERMINATOR}'") or line.rstrip().endswith("@'")
+        )
+        terminator = (
+            JSON_TERMINATOR if lines[opening].rstrip().endswith(f"'{JSON_TERMINATOR}'") else "'@"
+        )
+        closing = next(
+            index for index, line in enumerate(lines) if index > opening and line == terminator
+        )
+        return json.loads("\n".join(lines[opening + 1 : closing]))
+
+    def terminator_lines(self, script: str, terminator: str) -> int:
+        """How many lines are exactly the terminator: one, or the block closes early."""
+        return sum(1 for line in script.splitlines() if line == terminator)
+
+    def test_the_posix_script_is_valid_bash(self):
+        """Generated code nobody reviews before piping it into a shell, so its syntax is
+        checked here rather than on a developer's machine."""
+        plan = self.plan()
+
+        result = subprocess.run(
+            ["bash", "-n"], check=False, input=build_posix_script(plan), text=True, capture_output=True
+        )
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_the_scripts_carry_the_values_instead_of_parsing_them(self):
+        """The whole reason this is a route: no client-side JSON parser, on any of the
+        three platforms, for a lab that already knows every value."""
+        plan = self.plan()
+
+        for script in [build_posix_script(plan), build_windows_script(plan)]:
+            self.assertIn(plan.archive_url, script)
+            self.assertIn(plan.version, script)
+            self.assertIn(plan.plugin_name, script)
+            # Nothing downloads the manifest, and nothing reads JSON: jq is not
+            # installable-by-assumption on any of the three platforms.
+            self.assertNotIn("jq", script)
+            self.assertNotIn("ConvertFrom-Json", script)
+
+    def test_the_local_marketplace_is_not_the_one_the_lab_serves(self):
+        """A local install never updates itself. Under the lab's own marketplace name, a
+        developer who later added the real marketplace would have two claiming one name."""
+        with self.lab():
+            generated = PluginGenerator.generate()
+        plan = build_dev_install_plan(generated)
+
+        self.assertNotEqual(plan.marketplace_name, generated.identity.marketplace_name)
+        self.assertTrue(plan.marketplace_name.startswith(generated.identity.marketplace_name))
+
+    def test_the_plugin_keeps_the_name_the_lab_serves(self):
+        """The tool permission ids a developer writes (``mcp__<plugin>_<server>__<tool>``)
+        must be the ones a production install will use."""
+        with self.lab():
+            generated = PluginGenerator.generate()
+
+        self.assertEqual(build_dev_install_plan(generated).plugin_name, "mon-lab")
+
+    def test_the_source_is_a_local_path(self):
+        """The one source type with no scheme requirement -- which is the point."""
+        manifest = self.embedded_manifest(build_posix_script(self.plan()))
+
+        self.assertEqual(manifest["plugins"][0]["source"], "./mon-lab")
+
+    def test_both_scripts_write_the_same_manifest(self):
+        plan = self.plan()
+
+        self.assertEqual(
+            self.embedded_manifest(build_posix_script(plan)),
+            self.embedded_manifest(build_windows_script(plan)),
+        )
+
+    def test_the_manifest_declares_the_installed_version(self):
+        plan = self.plan()
+        manifest = self.embedded_manifest(build_posix_script(plan))
+
+        self.assertEqual(manifest["plugins"][0]["version"], plan.version)
+        self.assertEqual(manifest["plugins"][0]["name"], plan.plugin_name)
+
+    def test_the_manifest_declares_no_renames(self):
+        """A marketplace created on a developer's machine has no served-name history, and
+        ``claude plugin validate`` rejects a rename whose target it cannot find."""
+        for name in ["Mon Lab", "Notre Lab"]:
+            manifest = self.embedded_manifest(build_posix_script(self.plan(name)))
+
+        self.assertNotIn("renames", manifest)
+
+    def test_a_lab_name_carrying_a_quote_breaks_neither_script(self):
+        """The lab name reaches the embedded JSON, which sits inside a quoted heredoc and
+        a single-quoted here-string."""
+        plan = self.plan(name="L'Institut \"Zéro\"")
+        posix = build_posix_script(plan)
+        windows = build_windows_script(plan)
+
+        result = subprocess.run(["bash", "-n"], check=False, input=posix, text=True, capture_output=True)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.embedded_manifest(posix), self.embedded_manifest(windows))
+        self.assertIn("L'Institut", self.embedded_manifest(posix)["owner"]["name"])
+
+    def test_a_lab_name_cannot_close_the_block_holding_the_manifest(self):
+        """The exposure of embedding JSON in a heredoc: a lab named after the terminator.
+        json.dumps escapes the newlines, so the name cannot become a line of its own."""
+        hostile = f"Lab\n{JSON_TERMINATOR}\nand\n'@\n"
+        posix = build_posix_script(self.plan(name=hostile))
+        windows = build_windows_script(self.plan(name=hostile))
+
+        self.assertEqual(self.terminator_lines(posix, JSON_TERMINATOR), 1)
+        self.assertEqual(self.terminator_lines(windows, "'@"), 1)
+        self.assertEqual(
+            subprocess.run(["bash", "-n"], check=False, input=posix, text=True, capture_output=True).returncode, 0
+        )
+        self.assertIn(JSON_TERMINATOR, self.embedded_manifest(posix)["owner"]["name"])
+
+    def test_the_windows_script_writes_the_manifest_without_a_byte_order_mark(self):
+        """Set-Content -Encoding UTF8 emits one in PowerShell 5.1, and a BOM ahead of the
+        opening brace is a JSON file some parsers reject."""
+        script = build_windows_script(self.plan())
+
+        self.assertIn("UTF8Encoding($false)", script)
+        self.assertNotIn("Set-Content", script)
+
+    def test_a_value_with_an_apostrophe_survives_bash_quoting(self):
+        result = subprocess.run(
+            ["bash", "-c", f"printf '%s' {quote_for_bash(chr(39))}"],
+            check=False, text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual(result.stdout, "'")
+
+    def test_a_value_with_an_apostrophe_survives_powershell_quoting(self):
+        self.assertEqual(quote_for_powershell("a'b"), "'a''b'")
+
+    def test_the_posix_script_installs_a_marketplace_claude_code_can_read(self):
+        """Run for real, against the archive served over loopback, because the thing under
+        test is generated shell code: that it parses says nothing about what it writes."""
+        generated = self.generate()
+        lab_url = self.a_lab_serving(generated)
+        install_dir = Settings.make_temp_dir()
+
+        with mock.patch.object(Settings, "get_lab_api_url", return_value=lab_url):
+            plan = build_dev_install_plan(generated)
+            script = build_posix_script(plan)
+
+        result = self.run_posix_script(script, install_dir, self.a_path_without_claude())
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        root = os.path.join(install_dir, plan.marketplace_name)
+        with open(os.path.join(root, ".claude-plugin", "marketplace.json"), encoding="utf-8") as f:
+            marketplace = json.load(f)
+
+        # The source is a path relative to the marketplace root, and it has to resolve.
+        source = os.path.join(root, marketplace["plugins"][0]["source"])
+        self.assertTrue(os.path.isfile(os.path.join(source, ".claude-plugin", "plugin.json")))
+        self.assertTrue(os.path.isfile(os.path.join(source, "skills/gws_core/query-lab-db/SKILL.md")))
+
+    def test_the_posix_script_registers_the_plugin_itself(self):
+        """The two commands this used to print had to be run in order, and the second one
+        alone answers 'Marketplace not found' -- which reads as a broken plugin rather than
+        a skipped step. So the script runs all three CLI calls, in order, itself."""
+        generated = self.generate()
+        lab_url = self.a_lab_serving(generated)
+        install_dir = Settings.make_temp_dir()
+        claude_dir, calls_log = self.a_stub_claude()
+
+        with mock.patch.object(Settings, "get_lab_api_url", return_value=lab_url):
+            plan = build_dev_install_plan(generated)
+            script = build_posix_script(plan)
+
+        result = self.run_posix_script(script, install_dir, self.a_path_with(claude_dir))
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        root = os.path.join(install_dir, plan.marketplace_name)
+        with open(calls_log, encoding="utf-8") as file:
+            calls = file.read().splitlines()
+
+        self.assertEqual(
+            calls,
+            [
+                f"plugin marketplace add {root}",
+                f"plugin marketplace update {plan.marketplace_name}",
+                f"plugin install {plan.plugin_name}@{plan.marketplace_name}",
+            ],
+        )
+        self.assertIn("Restart Claude Code", result.stdout)
+        self.assertNotIn("by hand", result.stdout)
+
+    def test_without_the_claude_cli_the_script_says_what_to_run_in_which_order(self):
+        """The fallback has to carry the ordering, and name the error a skipped step gives,
+        because that error does not point at the step that was skipped."""
+        generated = self.generate()
+        lab_url = self.a_lab_serving(generated)
+        install_dir = Settings.make_temp_dir()
+
+        with mock.patch.object(Settings, "get_lab_api_url", return_value=lab_url):
+            plan = build_dev_install_plan(generated)
+            script = build_posix_script(plan)
+
+        result = self.run_posix_script(script, install_dir, self.a_path_without_claude())
+        root = os.path.join(install_dir, plan.marketplace_name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn(f"1. /plugin marketplace add {root}", result.stdout)
+        self.assertIn(f"2. {plan.install_command}", result.stdout)
+        self.assertIn("Marketplace not found", result.stdout)
+        self.assertLess(
+            result.stdout.index("marketplace add"), result.stdout.index(plan.install_command)
+        )
+
+    def test_a_claude_cli_that_fails_leaves_the_download_in_place(self):
+        """An old CLI with no 'plugin marketplace add' must not turn a finished download
+        into a failed script -- the files are there, and the manual path still works."""
+        generated = self.generate()
+        lab_url = self.a_lab_serving(generated)
+        install_dir = Settings.make_temp_dir()
+        claude_dir, _ = self.a_stub_claude(exit_code=1)
+
+        with mock.patch.object(Settings, "get_lab_api_url", return_value=lab_url):
+            plan = build_dev_install_plan(generated)
+            script = build_posix_script(plan)
+
+        result = self.run_posix_script(script, install_dir, self.a_path_with(claude_dir))
+        installed = os.path.join(install_dir, plan.marketplace_name, plan.plugin_name)
+
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertTrue(os.path.isfile(os.path.join(installed, ".claude-plugin", "plugin.json")))
+        self.assertIn("by hand", result.stdout)
+
+    def test_re_running_the_posix_script_drops_a_skill_the_lab_no_longer_ships(self):
+        """The installed copy is replaced, not merged: a stale skill would keep telling the
+        model to call a tool the lab stopped serving."""
+        generated = self.generate()
+        lab_url = self.a_lab_serving(generated)
+        install_dir = Settings.make_temp_dir()
+        path = self.a_path_without_claude()
+
+        with mock.patch.object(Settings, "get_lab_api_url", return_value=lab_url):
+            script = build_posix_script(build_dev_install_plan(generated))
+            plan = build_dev_install_plan(generated)
+
+        self.run_posix_script(script, install_dir, path)
+        stale = os.path.join(
+            install_dir, plan.marketplace_name, plan.plugin_name, "skills/gws_core/gone/SKILL.md"
+        )
+        os.makedirs(os.path.dirname(stale))
+        with open(stale, "w", encoding="utf-8") as file:
+            file.write("---\nname: gone\n---\n")
+
+        self.run_posix_script(script, install_dir, path)
+
+        self.assertFalse(os.path.exists(stale))
+
+    def run_posix_script(self, script: str, install_dir: str, path: str):
+        """Run the script with an explicit PATH, so no test ever reaches the real CLI.
+
+        A test that let the script find the developer's own ``claude`` would register a
+        marketplace in their settings and install a plugin from a temp folder.
+        """
+        return subprocess.run(
+            ["bash", "-s"],
+            check=False,
+            input=script,
+            text=True,
+            capture_output=True,
+            env={**os.environ, "PATH": path, "CONSTELLAB_PLUGIN_DIR": install_dir},
+        )
+
+    def a_path_without_claude(self) -> str:
+        """The current PATH, minus every entry that holds a ``claude`` executable."""
+        entries = os.environ.get("PATH", "").split(os.pathsep)
+        return os.pathsep.join(
+            entry for entry in entries if not os.path.exists(os.path.join(entry, "claude"))
+        )
+
+    def a_path_with(self, folder: str) -> str:
+        """A PATH whose only ``claude`` is the one in the given folder."""
+        return os.pathsep.join([folder, self.a_path_without_claude()])
+
+    def a_stub_claude(self, exit_code: int = 0) -> tuple[str, str]:
+        """A fake ``claude`` recording its arguments. Returns its folder and the log path."""
+        folder = Settings.make_temp_dir()
+        stub = os.path.join(folder, "claude")
+
+        with open(stub, "w", encoding="utf-8") as file:
+            file.write(
+                "#!/usr/bin/env bash\n"
+                'printf "%s\\n" "$*" >> "$(dirname "$0")/calls.log"\n'
+                f"exit {exit_code}\n"
+            )
+        os.chmod(stub, 0o755)
+
+        return folder, os.path.join(folder, "calls.log")
+
+    def a_lab_serving(self, generated) -> str:
+        """A loopback HTTP server answering this lab's archive URL. Returns its base URL.
+
+        The archive route itself is covered elsewhere; what this stands in for is the lab
+        being on the *other side of a container boundary* from the script.
+        """
+        folder = Settings.make_temp_dir()
+        plugins = os.path.join(folder, PLUGINS_ROUTE_PATH)
+        os.makedirs(plugins)
+        with open(os.path.join(plugins, generated.archive_file_name), "wb") as file:
+            file.write(generated.archive)
+
+        handler = partial(SimpleHTTPRequestHandler, directory=folder)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        Thread(target=server.serve_forever, daemon=True).start()
+        self.addCleanup(server.shutdown)
+
+        return f"http://127.0.0.1:{server.server_address[1]}"
+
+
+# test_mcp_plugin
 class TestRoutes(_PluginTestCase):
-    """What the two public routes answer."""
+    """What the public routes answer."""
 
     def test_the_marketplace_route_serves_the_manifest(self):
         response = get_marketplace()
@@ -733,7 +1092,60 @@ class TestRoutes(_PluginTestCase):
         self.assertEqual(info.status, ClaudePluginStatus.MCP_DISABLED)
         self.assertIsNone(info.plugin_name)
         self.assertIsNone(info.commands)
+        self.assertIsNone(info.dev_install)
         self.assertNotIn(SETTINGS_SERVED_PLUGIN_NAMES_KEY, Settings.get_instance().data)
+
+    def test_a_lab_claude_code_will_not_download_from_is_told_what_to_run_instead(self):
+        """The screen for a local development lab: not 'unsupported', but the one command
+        that does work."""
+        with mock.patch.object(
+            PluginService, "get_status", return_value=ClaudePluginStatus.URL_NOT_SUPPORTED
+        ):
+            info = PluginService.get_plugin_info()
+
+        generated = PluginGenerator.get_generated()
+        dev_install = info.dev_install
+
+        assert dev_install is not None
+        self.assertEqual(dev_install.plugin_name, generated.identity.plugin_name)
+        self.assertEqual(dev_install.version, generated.version)
+        self.assertIn(POSIX_SCRIPT_FILE_NAME, dev_install.posix_command)
+        self.assertIn(WINDOWS_SCRIPT_FILE_NAME, dev_install.windows_command)
+        self.assertEqual(
+            dev_install.install, f"/plugin install {generated.identity.plugin_name}@"
+            f"{dev_install.marketplace_name}"
+        )
+
+    def test_which_command_block_each_status_carries(self):
+        """One screen, one way in: the two blocks are never both filled. The dev fallback
+        beside the ordinary commands would invite a copy that never updates, and the
+        ordinary commands beside the fallback would invite an install that gets refused."""
+        expected = {
+            ClaudePluginStatus.AVAILABLE: (True, False),
+            ClaudePluginStatus.URL_NOT_SUPPORTED: (False, True),
+            ClaudePluginStatus.MCP_DISABLED: (False, False),
+        }
+
+        for status, (has_commands, has_dev_install) in expected.items():
+            with mock.patch.object(PluginService, "get_status", return_value=status):
+                info = PluginService.get_plugin_info()
+
+            self.assertEqual(info.commands is not None, has_commands, status)
+            self.assertEqual(info.dev_install is not None, has_dev_install, status)
+
+    def test_the_dev_screen_shows_no_marketplace_that_cannot_work(self):
+        """The lab's own marketplace URL is exactly what Claude Code refuses here, so the
+        screen must not offer it: the names it shows are the local marketplace's."""
+        with mock.patch.object(
+            PluginService, "get_status", return_value=ClaudePluginStatus.URL_NOT_SUPPORTED
+        ):
+            info = PluginService.get_plugin_info()
+
+        self.assertIsNone(info.marketplace_url)
+        self.assertIsNone(info.marketplace_name)
+        self.assertIsNone(info.commands)
+        assert info.dev_install is not None
+        self.assertTrue(info.dev_install.marketplace_name.endswith("-dev"))
 
     def test_a_lab_that_is_not_on_https_says_so(self):
         """Claude Code refuses such an archive URL outright, so the screen says it rather
@@ -746,6 +1158,33 @@ class TestRoutes(_PluginTestCase):
         self.assertFalse(PluginService.url_is_supported("http://glab.my-lab.constellab.io"))
         self.assertFalse(PluginService.url_is_supported("https://localhost:3000"))
         self.assertFalse(PluginService.url_is_supported("http://127.0.0.1:3000"))
+
+    def test_the_install_scripts_are_served_as_readable_text(self):
+        """A developer checks in a browser what they are about to pipe into a shell, and a
+        browser shows text/plain rather than downloading it."""
+        for response, marker in [
+            (get_dev_install_script_posix(), "#!/usr/bin/env bash"),
+            (get_dev_install_script_windows(), "#Requires -Version 5.1"),
+        ]:
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(response.media_type, "text/plain; charset=utf-8")
+            self.assertTrue(response.body.decode("utf-8").startswith(marker))
+
+    def test_the_install_scripts_name_the_version_they_install(self):
+        """Which is why they are not cached: re-downloading one is how a developer moves to
+        a new version, and a cached copy would send them at an archive that is gone."""
+        generated = PluginGenerator.get_generated()
+
+        for response in [get_dev_install_script_posix(), get_dev_install_script_windows()]:
+            self.assertIn(generated.version, response.body.decode("utf-8"))
+            self.assertEqual(response.headers["Cache-Control"], "no-cache")
+
+    def test_the_script_names_are_not_swallowed_by_the_archive_route(self):
+        """Both live under the same single-segment path as the archive, so the archive
+        route -- registered last -- must not be what answers them."""
+        for file_name in [POSIX_SCRIPT_FILE_NAME, WINDOWS_SCRIPT_FILE_NAME]:
+            with self.assertRaises(NotFoundException):
+                get_plugin_archive(file_name)
 
     def test_the_routes_are_not_registered_when_mcp_is_disabled(self):
         """They are registered from the same block that mounts /mcp/, so importing

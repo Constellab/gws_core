@@ -150,6 +150,46 @@ installed clients to see an update.
 The whole thing hangs off `GWS_MCP_SERVER_ENABLED`: with the MCP server off, the
 marketplace route does not exist either.
 
+### Installing from a lab on localhost
+
+Claude Code refuses an `archive` source that is not HTTPS on a non-loopback host, so a lab on
+`http://localhost` cannot be installed from its marketplace URL — its own screen says so
+(`URL_NOT_SUPPORTED`). The lab still serves the archive; what it cannot do is have Claude Code
+fetch it.
+
+Two generated scripts close that gap. Run one **on the machine Claude Code runs on**, which
+works even when the lab is in a container whose filesystem that machine cannot see:
+
+```bash
+# macOS, Linux, WSL
+curl -fsSL http://localhost:3000/plugins/install-dev.sh | bash
+```
+
+```powershell
+# Windows
+irm http://localhost:3000/plugins/install-dev.ps1 | iex
+```
+
+Each downloads the archive, unpacks it under `~/.constellab/claude-plugins/`, and writes a
+second marketplace beside it whose plugin `source` is a **local path** — the one source type
+with no scheme requirement. It then registers the marketplace and installs the plugin through
+the `claude` CLI, so there is nothing to paste: restart Claude Code and the plugin is there.
+
+- **Re-run the same one-liner to update.** That is the whole update path — the script's three
+  CLI calls are idempotent, and one of them is the `marketplace update` that makes Claude Code
+  re-read the folder. The script is never cached, because it names the version it installs.
+- The plugin keeps the name the lab serves, so the tool permission ids
+  (`mcp__<plugin>_<server>__<tool>`) you test against are the ones production will use.
+- The marketplace is named `<the lab's marketplace>-dev`, so adding the real one later cannot
+  collide with it.
+- **No `claude` on the PATH?** The script says so and prints the two commands to run in Claude
+  Code, numbered. They are order-dependent: `/plugin install` before
+  `/plugin marketplace add` answers `Marketplace "…" not found`, which looks like a broken
+  plugin rather than a skipped step.
+- Only interested in the tools, not the skills? Skip all of this:
+  `claude mcp add --transport http constellab http://localhost:3000/mcp`. The scheme
+  restriction is specific to `archive` sources; an MCP server on loopback HTTP is fine.
+
 ## Metadata
 
 `meta` is free-form and reaches the client as the tool's `_meta`. The registry adds two
@@ -179,6 +219,7 @@ from. Your own keys are kept alongside them.
 | `gws_core/mcp/plugin_generator.py` | generates the marketplace manifest and the archive |
 | `gws_core/mcp/plugin_identity.py` | the marketplace and plugin names, and renames |
 | `gws_core/mcp/plugin_skills.py` | collects the bricks' skills into the archive |
-| `gws_core/mcp/plugin_controller.py` | the two public routes, and the lab front-end's |
+| `gws_core/mcp/plugin_dev_install.py` | generates the two install-from-a-folder scripts |
+| `gws_core/mcp/plugin_controller.py` | the public routes, and the lab front-end's |
 | `gws_core/mcp/plugin_service.py` | what the lab tells its own front-end |
 | `gws_core/claude-plugin/skills/query-lab-db/` | `gws_core`'s own skill, as a worked example |

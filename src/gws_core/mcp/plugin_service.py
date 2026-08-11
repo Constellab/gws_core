@@ -2,7 +2,8 @@
 
 The public routes (:mod:`gws_core.mcp.plugin_controller`) hand the plugin to Claude Code.
 This describes it to a human, on the lab's screen: which commands to run, which version is
-being served, and -- when nothing is being served -- why.
+being served, and -- when the marketplace channel cannot be used -- what to run instead, or
+why there is nothing at all.
 
 It reads the same generation the marketplace serves, so the screen and the manifest can
 never name different things.
@@ -12,8 +13,10 @@ from urllib.parse import urlparse
 
 from gws_core.core.utils.settings import Settings
 from gws_core.mcp.mcp_controller import get_lab_base_url
+from gws_core.mcp.plugin_dev_install import build_dev_install_plan
 from gws_core.mcp.plugin_dto import (
     ClaudePluginCommandsDTO,
+    ClaudePluginDevInstallDTO,
     ClaudePluginInfoDTO,
     ClaudePluginStatus,
 )
@@ -33,20 +36,29 @@ class PluginService:
 
     @classmethod
     def get_plugin_info(cls) -> ClaudePluginInfoDTO:
-        """Describe the plugin, or say why there is none.
+        """Describe the plugin, how to install it by hand, or say why there is none.
 
-        Nothing is generated when the plugin cannot be installed: a lab with its MCP
-        server off must not record a plugin name it never served, and a lab on http has
-        nothing a client could accept anyway.
+        A lab with its MCP server off generates nothing: it serves no route, and must not
+        record a plugin name it never served. A lab Claude Code will not download from does
+        generate -- what it cannot do is hand the plugin over by URL, and the scripts exist
+        precisely so that stops being the end of the story.
         """
         lab_name = Settings.get_lab_name()
         status = cls.get_status()
 
-        if status is not ClaudePluginStatus.AVAILABLE:
+        if status is ClaudePluginStatus.MCP_DISABLED:
             return ClaudePluginInfoDTO(
                 status=status,
                 lab_name=lab_name,
                 minimum_claude_code_version=MINIMUM_CLAUDE_CODE_VERSION,
+            )
+
+        if status is ClaudePluginStatus.URL_NOT_SUPPORTED:
+            return ClaudePluginInfoDTO(
+                status=status,
+                lab_name=lab_name,
+                minimum_claude_code_version=MINIMUM_CLAUDE_CODE_VERSION,
+                dev_install=cls.get_dev_install(),
             )
 
         # The very generation the marketplace route serves, cached with its archive.
@@ -70,6 +82,32 @@ class PluginService:
                 update_marketplace=f"/plugin marketplace update {marketplace_name}",
                 update_plugin=f"/plugin update {plugin_name}",
             ),
+        )
+
+    @classmethod
+    def get_dev_install(cls) -> ClaudePluginDevInstallDTO:
+        """The install-from-a-folder fallback, read from the generation the lab serves.
+
+        The commands are built here rather than assembled by the front-end, for the same
+        reason the ordinary ones are: the plugin and marketplace names follow rules only the
+        lab applies, and a second implementation of them would drift.
+
+        One command the lab cannot build is ``/plugin marketplace add <path>`` -- the path
+        depends on the home directory of the machine the script runs on. The script prints
+        it once it knows.
+        """
+        plan = build_dev_install_plan()
+
+        return ClaudePluginDevInstallDTO(
+            posix_command=plan.posix_command,
+            windows_command=plan.windows_command,
+            posix_script_url=plan.posix_script_url,
+            windows_script_url=plan.windows_script_url,
+            plugin_name=plan.plugin_name,
+            version=plan.version,
+            marketplace_name=plan.marketplace_name,
+            install=plan.install_command,
+            update_marketplace=plan.update_command,
         )
 
     @classmethod

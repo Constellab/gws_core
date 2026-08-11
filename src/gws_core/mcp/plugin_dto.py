@@ -26,7 +26,8 @@ class ClaudePluginStatus(Enum):
     # a manifest. An administrator decides this.
     MCP_DISABLED = "MCP_DISABLED"
     # The lab is reachable only over http, or on a loopback host. Claude Code refuses such
-    # an archive URL outright. This is the normal state of a local development lab.
+    # an archive URL outright. This is the normal state of a local development lab, and the
+    # one status that carries ``dev_install`` instead of ``commands``.
     URL_NOT_SUPPORTED = "URL_NOT_SUPPORTED"
 
 
@@ -44,11 +45,56 @@ class ClaudePluginCommandsDTO(BaseModelDTO):
     update_plugin: str
 
 
+class ClaudePluginDevInstallDTO(BaseModelDTO):
+    """The fallback for a lab Claude Code will not download from: install from a folder.
+
+    Carried only by ``URL_NOT_SUPPORTED``. The user runs one shell command and restarts
+    Claude Code: the script downloads the archive, writes a local marketplace, and registers
+    both through the ``claude`` CLI. ``install`` and ``update_marketplace`` are the manual
+    fallback for a machine where that CLI is not on the PATH -- the script prints them
+    itself, numbered, when it needs them.
+
+    Self-contained on purpose: the names in here belong to the **local** marketplace, not to
+    the lab's own one, and a screen mixing the two would tell a user to install from a
+    marketplace that cannot work.
+
+    :param posix_command: The one-liner for macOS, Linux and WSL.
+    :param windows_command: The one-liner for PowerShell.
+    :param posix_script_url: Where the bash script is served, for a user who wants to read
+        it before piping it into a shell.
+    :param windows_script_url: Where the PowerShell script is served.
+    :param plugin_name: The plugin's name -- the same one the lab serves.
+    :param version: The version the script installs right now.
+    :param marketplace_name: The name of the local marketplace the script writes.
+    :param install: The Claude Code command that installs from it. Only needed when the
+        script could not use the ``claude`` CLI, and only *after*
+        ``/plugin marketplace add`` -- on its own it answers "Marketplace not found".
+    :param update_marketplace: Makes Claude Code re-read the folder. The script runs it too;
+        it is here for the same manual fallback.
+    """
+
+    posix_command: str
+    windows_command: str
+    posix_script_url: str
+    windows_script_url: str
+    plugin_name: str
+    version: str
+    marketplace_name: str
+    install: str
+    update_marketplace: str
+
+
 class ClaudePluginInfoDTO(BaseModelDTO):
     """Everything the lab's "connect Claude Code" screen needs.
 
-    Every field but the first three is ``None`` unless the status is ``AVAILABLE``: a lab
-    that serves no plugin has no name, no version and no URL to show.
+    Which of the two command blocks is filled follows the status, and they are never both
+    set:
+
+    - ``AVAILABLE``: every field, and ``commands``.
+    - ``URL_NOT_SUPPORTED``: ``dev_install``, and nothing else. The lab's own marketplace
+      name and URL stay empty -- they name a channel that cannot work here.
+    - ``MCP_DISABLED``: the first three fields only. There is no plugin at all, so no name
+      and no version exist to show.
     """
 
     status: ClaudePluginStatus
@@ -62,3 +108,4 @@ class ClaudePluginInfoDTO(BaseModelDTO):
     version: str | None = None
     mcp_url: str | None = None
     commands: ClaudePluginCommandsDTO | None = None
+    dev_install: ClaudePluginDevInstallDTO | None = None
