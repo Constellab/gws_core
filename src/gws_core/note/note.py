@@ -132,7 +132,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs) -> Any:
         result = super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)
+        EntityTagList.delete_by_entity(TagEntityType.NOTE, self.id)
         return result
 
     @classmethod
