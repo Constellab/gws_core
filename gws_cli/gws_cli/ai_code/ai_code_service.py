@@ -97,6 +97,14 @@ class AICodeService(ABC):
             description="Save a diagnosed and fixed error to the developer FAQ on the Community",
             argument_hint="the error to save (defaults to the one just debugged)",
         ),
+        SkillFrontmatter(
+            filename="dc-dashboard-component-builder.md",
+            description=(
+                "Create or extend a dc-dashboard-components Angular component usable from "
+                "Reflex and/or Streamlit apps, including its release via GitHub tag"
+            ),
+            argument_hint="component name and what it should do (reflex, streamlit, or both)",
+        ),
     ]
 
     def __init__(self, ai_tool_name: str):
