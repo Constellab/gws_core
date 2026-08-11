@@ -102,6 +102,53 @@ before the user has asked anything. There is no per-brick switch for a client to
 Context budget is the real ceiling on how many tools a lab can usefully serve, so describe
 what the tool does and what it returns, and stop there.
 
+## Ship a skill with your tools
+
+A skill is a markdown file telling the model how to drive your tools — which one to call
+first, what the arguments mean, what a returned shape is good for. Ship it from **your**
+brick, not from `gws_core`: a skill naming a tool you renamed while it lived somewhere
+else breaks nothing loudly, it just tells the model to call something that does not exist.
+
+Put it at your brick's root, outside `src/`:
+
+```
+gws_invest/
+├── claude-plugin/
+│   └── skills/
+│       └── track-campaigns/
+│           └── SKILL.md
+├── settings.json
+└── src/
+```
+
+The lab collects the skills of every brick that declares an MCP tool into the plugin it
+serves (see below), one sub-folder per brick — so two bricks may ship a skill folder of
+the same name.
+
+Two rules for the file:
+
+- **Front matter with a single-line `description`.** The lab rewrites that description to
+  name the lab, so a user with two labs installed can tell the two copies apart. A
+  description written as a YAML block (`|` or `>`) is left alone, with a warning in the
+  lab's logs, and both labs then describe the skill identically.
+- **Nothing private in it.** The plugin is served over an unauthenticated route to anyone
+  who knows the lab's URL. A skill is documentation: no customer names, no internal
+  hostnames, no credentials, no example data you would not publish.
+
+## The lab hands out the plugin itself
+
+The lab serves a Claude Code marketplace at `https://<lab api url>/plugins/marketplace.json`,
+declaring one plugin: itself. A user adds that URL once and gets this lab's MCP server
+plus the skills of its bricks.
+
+Nothing to do on your side beyond the two sections above — declaring a tool and, if it
+helps, shipping a skill. The plugin's version is a fingerprint of what the lab serves, so
+adding a tool, changing its description or its arguments, or editing a skill is enough for
+installed clients to see an update.
+
+The whole thing hangs off `GWS_MCP_SERVER_ENABLED`: with the MCP server off, the
+marketplace route does not exist either.
+
 ## Metadata
 
 `meta` is free-form and reaches the client as the tool's `_meta`. The registry adds two
@@ -128,3 +175,8 @@ from. Your own keys are kept alongside them.
 | `gws_core/mcp/mcp_server_builder.py` | builds the server from the registry |
 | `gws_core/mcp/mcp_controller.py` | mounts it, with the OAuth discovery routes |
 | `gws_core/mcp/db_mcp.py` | `gws_core`'s own two tools, as a worked example |
+| `gws_core/mcp/plugin_generator.py` | generates the marketplace manifest and the archive |
+| `gws_core/mcp/plugin_identity.py` | the marketplace and plugin names, and renames |
+| `gws_core/mcp/plugin_skills.py` | collects the bricks' skills into the archive |
+| `gws_core/mcp/plugin_controller.py` | the two public routes |
+| `gws_core/claude-plugin/skills/query-lab-db/` | `gws_core`'s own skill, as a worked example |

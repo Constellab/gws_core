@@ -8,6 +8,7 @@ from starlette_context.middleware.context_middleware import ContextMiddleware
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.mcp.mcp_controller import mcp_session_manager_lifespan, mount_mcp_app
+from gws_core.mcp.plugin_controller import register_plugin_routes
 from gws_core.model.event.event_dispatcher import EventDispatcher
 
 from .apps.apps_manager import AppsManager
@@ -105,11 +106,15 @@ class App:
         # the env var is not set, neither /mcp/ nor the OAuth provider is created.
         if Settings.is_mcp_server_enabled():
             mount_mcp_app(cls.app)
+            # The plugin the lab hands out is a connection to that endpoint plus the
+            # skills that drive it, so it is registered in the same block: with MCP off,
+            # an installed plugin would connect to nothing.
+            register_plugin_routes()
             Logger.info("MCP server enabled; mounting /mcp/ and the OAuth provider.")
         else:
             Logger.debug(
                 f"MCP server disabled ({Settings.MCP_SERVER_ENABLED_ENV_VAR} != 'true'); "
-                "not mounting /mcp/ or the OAuth provider."
+                "not mounting /mcp/, /plugins/ or the OAuth provider."
             )
 
         # Mount all registered apps (internal + brick apps)

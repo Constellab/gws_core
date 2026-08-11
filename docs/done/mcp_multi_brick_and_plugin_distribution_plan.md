@@ -182,34 +182,48 @@ brick root (F1).
 
 ## Work items
 
-Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 4, 6) is issue #105.
+Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 4, 6, 7) is **done**
+— issue #105.
 
 1. ~~**`McpRegistry`** — registry + decorator, brick prefixing, `meta` merge, filtering of bricks
    in error. Modelled on `ApiRegistry`.~~ `src/gws_core/mcp/mcp_registry.py`.
 2. ~~**`build_mcp_server` consumes the registry** instead of adding two tools inline; server
    `instructions` generated from the contributing bricks.~~ Moved out of `db_mcp.py` into
    `src/gws_core/mcp/mcp_server_builder.py`, which is now the only consumer of the registry.
-3. **Plugin generator** — manifest (identity, version, `renames`, MCP server URL) + deterministic
-   archive assembly + in-memory cache.
-4. **Distribution routes** — `marketplace.json` and the versioned archive, public, mounted only
-   when MCP is enabled, 404 on version mismatch.
+3. ~~**Plugin generator** — manifest (identity, version, `renames`, MCP server URL) + deterministic
+   archive assembly + in-memory cache.~~ `src/gws_core/mcp/plugin_generator.py`, with the skill
+   collection in `plugin_skills.py`.
+4. ~~**Distribution routes** — `marketplace.json` and the versioned archive, public, mounted only
+   when MCP is enabled, 404 on version mismatch.~~ `src/gws_core/mcp/plugin_controller.py`,
+   registered from `App.start_uvicorn_app`'s `is_mcp_server_enabled` block, beside `mount_mcp_app`.
 5. ~~**`gws_core` as a contributor** — move `db_list` / `db_query` onto the registry with their
-   annotations~~; rewrite `query-lab-db` (the skill does not exist in the repo yet — it comes
-   with item 3, which is what collects skills into the archive).
-6. **Identity persistence** — name resolution, suffix rule, history in `Settings`.
-7. **Docs** — ~~brick author guide (declare a tool, choose annotations, authorization is the
-   brick's job): `docs/mcp_brick_tools.md`~~. Still to write, with item 3: shipping a skill, the
-   public-content rule, and the page on the public repo explaining the per-lab command with the
-   Claude Code ≥ 2.1.224 prerequisite next to it.
+   annotations; write `query-lab-db`.~~ `claude-plugin/skills/query-lab-db/SKILL.md`.
+6. ~~**Identity persistence** — name resolution, suffix rule, history in `Settings`.~~
+   `src/gws_core/mcp/plugin_identity.py`.
+7. ~~**Docs** — brick author guide (declare a tool, choose annotations, authorization is the
+   brick's job): `docs/mcp_brick_tools.md`, extended with shipping a skill and the public-content
+   rule; the page explaining the per-lab command with the Claude Code ≥ 2.1.224 prerequisite next
+   to it: `docs/lab_claude_plugin.md`, to be copied into the public repository.~~
 
-## To verify during implementation
+## Verified during implementation
 
-- **Do files outside `src` survive for a packaged brick?** `MANIFEST.in` currently includes only
-  `src/**/*.py|txt|yml|R`. If a brick-root `claude-plugin/` does not travel with a distributed
-  brick, either extend the manifest or move the folder under `src`.
+- **Files outside `src` survive.** The worry was misplaced: `MANIFEST.in` governs a python
+  *package*, and a brick is never consumed as one. `SettingsLoader.load_brick` reads bricks as
+  folders under the user or system bricks folder — `settings.json` at the root, code under `src/`
+  — and `BrickInfo.path` is that root. `repo_type: "pip"` only records the absence of a `.git`;
+  the folder travels whole either way. So `<brick>/claude-plugin/` is readable at runtime and
+  `MANIFEST.in` is untouched.
+- **Both generated manifests are accepted by Claude Code 2.1.227** (`claude plugin validate`),
+  including a `+`-suffixed version, an `archive` source and a `renames` map. The one rejection is
+  the one the plan predicted: an archive URL that is not HTTPS, or that points at a loopback host
+  — which is exactly why local development keeps a checkout-backed marketplace.
+
+## Still unverified
+
 - **Does renaming the plugin force a new OAuth login?** Inferred from credentials being keyed per
-  server entry, not read in the documentation. Worth one test, because it changes what the rename
-  screen must warn about.
+  server entry. Settling it needs a real HTTPS lab and two names, so it was left open; the rename
+  warning is written as if it does, which is the safe direction, and
+  `docs/lab_claude_plugin.md` tells users the same.
 
 ## Out of scope
 

@@ -48,14 +48,18 @@ MCP_ROUTE_PATH = "mcp"
 MCP_RESOURCE_NAME = "MCP server"
 
 
-def _get_lab_base_url() -> str:
+def get_lab_base_url() -> str:
     """Return the lab's externally reachable base URL (no trailing slash)."""
     return Settings.get_lab_api_url().rstrip("/")
 
 
-def _get_mcp_url() -> str:
-    """The canonical MCP resource URL; also the OAuth issuer."""
-    return f"{_get_lab_base_url()}/{MCP_ROUTE_PATH}"
+def get_mcp_url() -> str:
+    """The canonical MCP resource URL; also the OAuth issuer.
+
+    Public because the generated plugin points its MCP server at this exact URL: the
+    address a client is told to call has one definition.
+    """
+    return f"{get_lab_base_url()}/{MCP_ROUTE_PATH}"
 
 
 def _get_allowed_hosts(mcp_url: str) -> list[str]:
@@ -136,13 +140,13 @@ def mount_mcp_app(main_app: FastAPI) -> None:
         discovery documents must be served from the domain root (see
         :func:`_add_well_known_routes`).
     """
-    mcp_url = _get_mcp_url()
+    mcp_url = get_mcp_url()
 
     oauth_provider = LabOAuthProvider(
         consent_page_url=OAuthService.get_consent_page_url(),
         resource_url=mcp_url,
         resource_name=MCP_RESOURCE_NAME,
-        lab_url=_get_lab_base_url(),
+        lab_url=get_lab_base_url(),
     )
     # OAuthService owns the provider: the consent route reaches it from there,
     # without the OAuth package having to depend on this MCP module.
