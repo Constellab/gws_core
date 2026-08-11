@@ -100,6 +100,44 @@ class TestAppGatewayAuth(BaseTestCase):
         with self.assertRaises(InvalidTokenException):
             AppsManager.validate_app_jwt("app-1", "not-a-jwt")
 
+    def test_validate_app_jwt_does_not_renew_a_fresh_token(self):
+        """A just-minted token is not re-minted: most validations must stay read-only."""
+        user = CurrentUserService.get_and_check_current_user()
+        code = AppsManager.generate_app_access_code(user.id, "app-1")
+        exchanged = AppsManager.exchange_app_code("app-1", code)
+
+        result = AppsManager.validate_app_jwt("app-1", exchanged.user_access_token)
+        self.assertIsNone(result.renewed_jwt)
+
+    def test_validate_app_jwt_renews_a_half_expired_token(self):
+        """A more-than-half-expired token is re-minted, giving the app a *sliding* session.
+
+        Without this the token dies a fixed 2 days after the handoff and the user is bounced
+        mid-session even while actively using the app.
+        """
+        user = CurrentUserService.get_and_check_current_user()
+        app_id = "app-1"
+
+        # mint a token that is already past halfway by shortening the configured lifetime
+        original_duration = JWTService.ACCESS_TOKEN_EXPIRE_SECONDS
+        try:
+            JWTService.ACCESS_TOKEN_EXPIRE_SECONDS = 10
+            old_token = JWTService.create_app_jwt(user.id, app_id)
+        finally:
+            JWTService.ACCESS_TOKEN_EXPIRE_SECONDS = original_duration
+
+        # against the real (much longer) lifetime, 10s of remaining validity is past halfway
+        result = AppsManager.validate_app_jwt(app_id, old_token)
+
+        self.assertEqual(result.user_id, user.id)
+        self.assertIsNotNone(result.renewed_jwt)
+        # the replacement is a usable app token for the same user and app
+        self.assertEqual(JWTService.check_app_access_token(result.renewed_jwt, app_id), user.id)
+
+    def test_app_token_needs_refresh_ignores_undecodable_tokens(self):
+        """Garbage never reports as needing a refresh; the caller's validation reports it instead."""
+        self.assertFalse(JWTService.app_token_needs_refresh("not-a-jwt"))
+
     def test_authorize_grant_round_trip(self):
         """The authorize grant (start->handoff carrier) resolves the user once, is single-use."""
         user = CurrentUserService.get_and_check_current_user()

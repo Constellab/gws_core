@@ -1,9 +1,16 @@
 # Front spec — honour `redirect_to` on the app gateway page
 
+**Status: DONE** — implemented in monorepo-front commit `0ddb9d8a1`
+*"(feat)[Lab] handle start app url and app not existing"*. Kept as the written contract for this
+gateway page (the file the auth doc's map cites, `APP_GATEWAY_FRONT_INTEGRATION.md`, does not exist).
+
+Both changes below are in the code, plus the terminal-error page for an unknown app (see
+`app_shareable_url_plan.md` §3). Specs live alongside the component in
+`lab-open-app-page.component.spec.ts`.
+
 **Target:** `monorepo-front` / `lab-front`
 **Component:** `apps/lab-front/src/app/lab-public-route/lab-open-app-page/lab-open-app-page.component.ts`
-**Backend status:** already implemented (`docs/todo/app_shareable_url_plan.md`). The backend *sends*
-`redirect_to`; nothing reads it yet, so shared **deep links** silently land on the app root.
+**Backend:** implemented (`docs/done/app_shareable_url_plan.md`).
 
 ---
 
@@ -185,9 +192,15 @@ Run with `bunx nx test lab-front`.
 
 ---
 
-## 6. Not in scope
+## 6. Superseded / not in scope
 
-- **Host maps to no app** → the resolver returns 404 and never redirects here; do not add handling.
+- **Host maps to no app** — this section originally said the resolver returns a 404 that never
+  reaches this page. **That changed:** a 404 body rendered the raw JSON error envelope to a human, so
+  the resolver now redirects here with `?error=invalid_host|app_not_found` and the page renders a
+  terminal error (keyless `path: 'app'` route, no `start` call, Retry hidden). Implemented in the same
+  commit — see `app_shareable_url_plan.md` §3.
 - **App fails to start** → existing `onError` / Retry UI is unchanged.
-- Backend follow-ups in `docs/todo/app_shareable_url_plan.md`: stale-`gws_code` recovery for a
-  *running* app, cookie `max_age` + sliding JWT renewal, space-origin re-auth.
+- Backend follow-ups, now **done**: stale-`gws_code` recovery for a *running* app, cookie `max_age`
+  + sliding JWT renewal.
+- Still open (backend): Streamlit sliding renewal + gateway re-entry, space-origin re-auth. See
+  `app_shareable_url_plan.md`.

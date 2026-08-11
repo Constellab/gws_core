@@ -25,6 +25,20 @@ class ExchangedUser:
         self.user_id = user_id
 
 
+class ValidatedUser:
+    """Result of a successful JWT validation.
+
+    :param user_id: the user the JWT authenticates.
+    :param renewed_jwt: a fresh JWT when the lab decided the presented one was half-expired, else
+        None. Storing it keeps the app session *sliding* — an app in active use renews on each page
+        load instead of dying a fixed 2 days after the handoff.
+    """
+
+    def __init__(self, user_id: str, renewed_jwt: str | None = None):
+        self.user_id = user_id
+        self.renewed_jwt = renewed_jwt
+
+
 def exchange_code_for_jwt(app_id: str, code: str) -> ExchangedUser | None:
     """Exchange a one-time app code for a JWT + user id, or None on failure.
 
@@ -57,16 +71,20 @@ def exchange_code_for_jwt(app_id: str, code: str) -> ExchangedUser | None:
     )
 
 
-def validate_jwt_for_user(app_id: str, jwt: str) -> str | None:
-    """Validate a session JWT (from the gws_app_jwt cookie) and return the user id, or None.
+def validate_jwt_for_user(app_id: str, jwt: str) -> "ValidatedUser | None":
+    """Validate a session JWT (from the gws_app_jwt cookie), or None if it is not usable.
 
     Used on a fresh page load (F5 / new tab): the app has no one-time code but holds the JWT it
     stored in a cookie on first load. It cannot validate the JWT itself (no gws_core / no secret),
     so it relays it to the lab.
 
+    The lab may return a **renewed** JWT when the presented one is more than half-expired; the caller
+    stores it so an actively-used app keeps a rolling session.
+
     :param app_id: the app the JWT is used for (GWS_APP_ID)
     :param jwt: the JWT from the ``gws_app_jwt`` cookie
-    :return: the resolved user id, or None if the JWT is invalid/expired or the call fails
+    :return: the validated user (with an optional renewed JWT), or None if the JWT is
+        invalid/expired or the call fails
     """
     lab_api_url = (os.environ.get("GWS_LAB_API_URL") or "").rstrip("/")
     if not lab_api_url:
@@ -86,4 +104,9 @@ def validate_jwt_for_user(app_id: str, jwt: str) -> str | None:
     if response.status_code != _HTTP_OK:
         return None
 
-    return response.json().get("user_id")
+    data = response.json()
+    user_id = data.get("user_id")
+    if not user_id:
+        return None
+
+    return ValidatedUser(user_id=user_id, renewed_jwt=data.get("renewed_jwt"))

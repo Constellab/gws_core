@@ -2,6 +2,7 @@ from gws_core import BaseTestCase
 from gws_core.apps import app_gateway_constants
 from gws_core.apps.app_gateway_service import AppGatewayService
 from gws_core.apps.app_nginx_manager import AppNginxManager
+from reflex.istate.data import ReflexURL
 
 
 class TestAppFallbackResolve(BaseTestCase):
@@ -17,8 +18,26 @@ class TestAppFallbackResolve(BaseTestCase):
         self.assertEqual(AppGatewayService.app_key_from_host("abc123.localhost"), "abc123")
 
     def test_app_key_from_host_ignores_port(self):
-        """The port is not part of the app key."""
+        """The port is not part of the app key.
+
+        Load-bearing for the in-app gateway re-entry: the Reflex app sends `router.url.netloc`,
+        which includes the port (ReflexURL exposes no port-less host attribute).
+        """
         self.assertEqual(AppGatewayService.app_key_from_host("abc123.localhost:8510"), "abc123")
+
+    def test_reflex_url_exposes_netloc_not_host(self):
+        """Pin the ReflexURL attribute the in-app redirect relies on.
+
+        `_redirect_to_gateway` reads `router.url.netloc`; an earlier version read `.host`, which does
+        not exist and raised at runtime ("'ReflexURL' object has no attribute 'host'"). This fails if
+        a Reflex upgrade renames it.
+        """
+        url = ReflexURL("http://abc123.localhost:8510/config?tab=1")
+
+        self.assertEqual(url.netloc, "abc123.localhost:8510")
+        self.assertEqual(url.path, "/config")
+        self.assertEqual(url.query, "tab=1")
+        self.assertFalse(hasattr(url, "host"))
 
     def test_app_key_from_host_strips_reflex_back_suffix(self):
         """A Reflex app's front and backend hosts resolve to the same app."""

@@ -270,9 +270,38 @@ GET http://{resource_model_id}.localhost:8510/config   (app STOPPED)
   empty-services early return in `_build_nginx_config` and the `stop()` on empty in
   `unregister_services` were removed — either one would leave shared URLs dead.
 
-> Still open (not solved by the fallback): a **stale or missing `gws_code`** on a shared URL of a
-> *running* app. `_exchange_code_if_present` currently raises for a spent code instead of
-> discarding it and re-entering the gateway. See `docs/todo/app_shareable_url_plan.md`.
+### 3.2. Shared URL of a *running* app — the app re-enters the gateway
+
+The fallback only covers a **stopped** app. A shared URL of a *running* app reaches the app itself
+with either a **spent** `gws_code` (single-use, the first visitor consumed it) or **none** (the app
+scrubs it from the URL after the first open). Neither is a dead end:
+
+- `_exchange_code_if_present` treats a non-exchangeable code as "no credential" (it scrubs it and
+  returns None) instead of raising. A spent code is what a shared link *normally* looks like.
+- `_on_load` then calls `_redirect_to_gateway()`, which sends the browser to the core-api fallback
+  resolver (`GWS_LAB_API_URL` + `/core-api/apps/fallback/resolve?host=…&target=…`) → gateway →
+  fresh code. Transparent when the visitor holds a lab session.
+- The resolver is reached **on the lab API, not the app host**: the nginx fallback `location` exists
+  only on the catch-all block, so a running app's own block would serve that path from the app.
+- **Loop guard:** the forwarded `target` carries `gws_gateway_retry=1`. Coming back still
+  unauthenticated *with* that marker raises instead of bouncing again (Reflex state is wiped by the
+  reload, so the flag has to live in the URL).
+- **Dev mode** keeps raising — a dev app failing auth is a config problem to see, not to bounce.
+
+### 3.3. Session lifetime — sliding renewal
+
+Two independent things used to cut sessions short, both fixed:
+
+- **The cookie was a session cookie.** `rx.Cookie` had no `max_age`, so the browser dropped it when
+  the tab closed — the app forgot the visitor long before the 2-day JWT expired. Both the Reflex
+  `rx.Cookie` and the Streamlit nginx-login `Set-Cookie` now use
+  `APP_JWT_COOKIE_MAX_AGE_SECONDS` (30 days). Outliving the JWT is deliberate: the JWT stays the
+  authority, the cookie is only its persistent store.
+- **The JWT never renewed.** `POST /apps/validate-jwt` now returns a `renewed_jwt` when the presented
+  token is more than half-expired (`JWTService.app_token_needs_refresh`), and the app stores it. An
+  app in active use renews on every page load; an idle one still expires on schedule. Reflex consumes
+  this today — **Streamlit does not yet** (it reads only `user_id`; the field is additive, so it stays
+  compatible and simply does not slide).
 
 ---
 

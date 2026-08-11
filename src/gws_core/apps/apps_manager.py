@@ -459,9 +459,13 @@ class AppsManager:
         app-scoped token bound to this app (typ:app + matching app_id), so a token minted for
         another app is rejected.
 
+        Re-mints the token when it is more than half-expired, so an app that is actually being used
+        keeps a rolling session instead of being cut off a fixed 2 days after the handoff. An idle
+        app is never renewed (nothing calls this), so it still expires on schedule.
+
         :param app_id: the app the token must be scoped to
         :param jwt: the token (with or without the ``Bearer `` prefix)
-        :return: the resolved user id
+        :return: the resolved user id, plus a renewed token when the presented one is half-expired
         :raises InvalidTokenException: if the token is missing, malformed, expired, or not scoped
             to this app
         """
@@ -473,7 +477,12 @@ class AppsManager:
             # normalize any JWT-library decode/verify error into a clean typed exception
             # (so the endpoint returns 401, not an uncaught 500)
             raise InvalidTokenException() from e
-        return ValidateAppJwtResponseDTO(user_id=user_id)
+
+        renewed_jwt: str | None = None
+        if JWTService.app_token_needs_refresh(token):
+            renewed_jwt = JWTService.create_app_jwt(user_id, app_id)
+
+        return ValidateAppJwtResponseDTO(user_id=user_id, renewed_jwt=renewed_jwt)
 
     @classmethod
     def find_process_by_token(cls, token: str) -> AppProcess | None:

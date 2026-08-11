@@ -181,6 +181,10 @@ def app_nginx_login(app_id: str, gws_code: str) -> RedirectResponse:
         httponly=True,
         secure=True,  # works over https and localhost
         samesite="lax",  # sent on the top-level redirect navigation
+        # Without max_age this is a *session* cookie: the browser drops it when the tab/browser
+        # closes, so the app forgets the visitor long before the JWT expires. Outliving the JWT is
+        # deliberate — the JWT stays the authority, the cookie is only its persistent store.
+        max_age=AppGatewayService.APP_JWT_COOKIE_MAX_AGE_SECONDS,
         # host-only: no domain= so app A cannot read app B's cookie
     )
     return response

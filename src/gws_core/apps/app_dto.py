@@ -208,6 +208,14 @@ class ValidateAppJwtDTO(BaseModelDTO):
 
 
 class ValidateAppJwtResponseDTO(BaseModelDTO):
-    """Response of POST /apps/validate-jwt: the resolved user id for a valid JWT."""
+    """Response of POST /apps/validate-jwt: the resolved user id for a valid JWT.
+
+    :user_id: the user the token authenticates.
+    :renewed_jwt: a freshly minted token when the presented one is more than half-expired, else
+        None. The app stores it in place of the old one, which makes the app session *sliding*:
+        an actively-used app keeps renewing on each page load instead of dying a fixed 2 days
+        after the handoff, while an idle one still expires on schedule.
+    """
 
     user_id: str
+    renewed_jwt: str | None = None

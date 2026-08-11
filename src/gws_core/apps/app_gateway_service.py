@@ -33,6 +33,7 @@ class AppGatewayService:
     # low-level consumers (AppProcess, nginx service) can import them without a circular dependency
     # on this service. Re-exported here as class attributes for convenience.
     APP_JWT_COOKIE_NAME = _consts.APP_JWT_COOKIE_NAME
+    APP_JWT_COOKIE_MAX_AGE_SECONDS = _consts.APP_JWT_COOKIE_MAX_AGE_SECONDS
     GWS_CODE_QUERY_PARAM = _consts.GWS_CODE_QUERY_PARAM
     GWS_LOGIN_PATH = _consts.GWS_LOGIN_PATH
     NGINX_LOGIN_ENDPOINT_SEGMENT = _consts.NGINX_LOGIN_ENDPOINT_SEGMENT

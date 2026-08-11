@@ -16,6 +16,13 @@ in sync with the values here.
 # page reload.
 APP_JWT_COOKIE_NAME = "gws_app_jwt"
 
+# Lifetime of the app JWT cookie. Without it the cookie is a *session* cookie, dropped when the
+# browser closes — so the app forgot the visitor long before the 2-day JWT expired, which reads as
+# "the app logs me out constantly". Outliving the JWT is deliberate: the JWT stays the real authority
+# (validated on every load, and re-minted while the app is in use), the cookie is only its persistent
+# store. Mirrored as a literal in gws_reflex_base, which cannot import gws_core.
+APP_JWT_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+
 # Query-param name carrying the single-use handoff code in an app URL. The app relays it back to
 # the lab (POST /apps/exchange-code) to obtain the session JWT.
 GWS_CODE_QUERY_PARAM = "gws_code"

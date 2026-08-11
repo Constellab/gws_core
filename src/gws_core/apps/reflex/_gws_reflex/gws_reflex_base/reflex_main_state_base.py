@@ -2,6 +2,7 @@ import os
 from abc import abstractmethod
 from json import load
 from typing import Any, cast
+from urllib.parse import parse_qsl, urlencode
 
 import reflex as rx
 from typing_extensions import TypedDict
@@ -19,6 +20,34 @@ APP_CONFIG_FILENAME = "app_config.json"
 # same one already validated server-side and already held in client state. Mirrors
 # AppGatewayService.APP_JWT_COOKIE_NAME (this module cannot import gws_core).
 _APP_JWT_COOKIE_NAME = "gws_app_jwt"
+
+# Cookie lifetime. Without max_age an rx.Cookie is a *session* cookie: the browser drops it when the
+# tab/browser closes, so the app forgot the visitor long before the 2-day JWT expired — reading as
+# "the app logs me out constantly". 30 days outlives the JWT on purpose: the JWT stays the real
+# authority (validated, and re-minted while in use), the cookie is only its persistent store. An
+# expired JWT in a still-present cookie is handled by _authenticate_from_jwt (clears + re-enters the
+# gateway).
+_APP_JWT_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
+
+# Core-api route that maps an app host back to its app key and redirects to the lab gateway (auth
+# guard + cold-start + progress UI). Used to re-enter the gateway when the app holds no usable
+# credential: a shared app URL whose single-use `gws_code` was already spent, or one carrying none at
+# all. Reached directly on the lab API (GWS_LAB_API_URL) rather than through the app host, because
+# the nginx fallback location only exists on the catch-all block -- a *running* app's own block would
+# serve this path from the app itself.
+# Mirrors app_gateway_constants.APP_FALLBACK_ENDPOINT_SEGMENT (this module cannot import gws_core).
+_APP_FALLBACK_ENDPOINT = "apps/fallback/resolve"
+
+# Marker added to the in-app path when bouncing to the gateway for a fresh code. Reflex state is
+# cleared by the full page reload the bounce causes, so the "already tried" flag has to live in the
+# URL. If the app comes back still unauthenticated *with* this marker, something is genuinely wrong
+# (clock skew, revoked user, misconfigured app) and bouncing again would ping-pong the browser
+# between app and gateway forever -- so the second failure surfaces as a plain error.
+_GATEWAY_RETRY_QUERY_PARAM = "gws_gateway_retry"
+
+# Query-param carrying the single-use handoff code in the app URL.
+# Mirrors app_gateway_constants.GWS_CODE_QUERY_PARAM (this module cannot import gws_core).
+_GWS_CODE_QUERY_PARAM = "gws_code"
 
 
 class ReflexConfigDTO(TypedDict):
@@ -68,7 +97,9 @@ class ReflexMainStateBase(rx.State, mixin=True):
     # Persistent copy of the session JWT, synced to a client-side cookie by Reflex so it survives
     # a page reload (state is otherwise cleared on refresh). Rehydrated automatically on load; the
     # F5-survival path in _check_user_token re-validates it. Written on a successful code exchange.
-    jwt_cookie: str = rx.Cookie(name=_APP_JWT_COOKIE_NAME, same_site="lax")
+    jwt_cookie: str = rx.Cookie(
+        name=_APP_JWT_COOKIE_NAME, same_site="lax", max_age=_APP_JWT_COOKIE_MAX_AGE_SECONDS
+    )
 
     # Constant for dev mode
     DEV_MODE_USER_ACCESS_TOKEN_KEY = "dev_mode_token"
@@ -116,10 +147,11 @@ class ReflexMainStateBase(rx.State, mixin=True):
         requires_authentication = self.requires_authentication()
 
         if requires_authentication and not authenticated_user_id:
-            # If the app requires authentication and the user is not authenticated,
-            # redirect to the unauthorized page
-            raise ReflexAppException("User not authenticated")
-            return rx.redirect(UNAUTHORIZED_ROUTE)
+            # No usable credential: either a bare app URL (someone shared the address bar copy, whose
+            # gws_code was scrubbed after the first open), a spent single-use code, or an expired JWT.
+            # None of these is a dead end -- re-enter the gateway, which authenticates the visitor
+            # (using their lab session when they have one) and hands back a fresh code.
+            return self._redirect_to_gateway()
 
         self._is_initialized = True
 
@@ -254,22 +286,22 @@ class ReflexMainStateBase(rx.State, mixin=True):
         removes gws_code from the browser URL so nothing reusable lingers. Returns None when no
         code is present (caller falls through to the legacy token path).
 
-        Raises ReflexAppException when a gws_code IS present but cannot be exchanged: it is
-        single-use and short-lived, so this means the link was already opened or expired. Raising
-        here surfaces an accurate message instead of degrading into the generic
-        "User not authenticated".
+        A gws_code that is present but cannot be exchanged is **not** an error: the code is
+        single-use, so this is exactly what a *shared* app URL looks like once the first visitor
+        consumed it (or after a reload replayed a spent one). Returning None lets the caller
+        re-enter the gateway for a fresh code instead of dead-ending the visitor.
         """
         query_params = self.get_query_params()
-        code = query_params.get("gws_code")
+        code = query_params.get(_GWS_CODE_QUERY_PARAM)
         if not code:
             return None
 
         exchanged = exchange_code_for_jwt(self.get_app_id(), code)
         if exchanged is None:
-            raise ReflexAppException(
-                "This app link has expired or was already used. "
-                "Please reopen the app to get a fresh link."
-            )
+            # spent/expired code (typically a shared URL): drop it and let the caller re-enter the
+            # gateway, which mints a new one. Scrub it first so a retry cannot replay it.
+            self._scrub_gws_code_from_url()
+            return None
 
         # the JWT becomes the user access token the app carries to the data lab API
         self.user_access_token = exchanged.user_access_token
@@ -295,15 +327,65 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if not jwt:
             return None
 
-        user_id = validate_jwt_for_user(self.get_app_id(), jwt)
-        if user_id is None:
+        validated = validate_jwt_for_user(self.get_app_id(), jwt)
+        if validated is None:
             # stale/expired JWT: clear it so it is not retried on every run/reload
             self.jwt_cookie = ""
             return None
 
+        # The lab re-mints the token once it is half-expired, so an app in active use keeps a
+        # rolling session rather than being cut off a fixed 2 days after the handoff.
+        if validated.renewed_jwt:
+            jwt = validated.renewed_jwt
+            self.jwt_cookie = jwt
+
         # the validated JWT is also the token the app carries on later data lab API calls
         self.user_access_token = jwt
-        return user_id
+        return validated.user_id
+
+    def _redirect_to_gateway(self):
+        """Send the browser to the lab's fallback resolver, which re-enters the gateway.
+
+        The resolver maps this app's host back to its app key and redirects to the gateway, so the
+        visitor is authenticated (transparently when they hold a lab session) and comes back with a
+        fresh single-use code. The current in-app path is forwarded as ``target`` so a shared deep
+        link still lands where it pointed.
+
+        In dev mode there is no gateway, so this stays an exception: a dev app failing auth is a
+        configuration problem the developer should see, not something to bounce.
+        """
+        lab_api_url = (os.environ.get("GWS_LAB_API_URL") or "").rstrip("/")
+        if self.is_dev_mode() or not lab_api_url:
+            raise ReflexAppException("User not authenticated")
+
+        # `netloc` (host[:port]) — ReflexURL exposes no `host` attribute. Sending it with the port is
+        # fine: the resolver strips the port when mapping the host back to an app key.
+        host = self.router.url.netloc or ""
+        if not host:
+            # without a host the resolver cannot identify the app; surface the plain failure
+            raise ReflexAppException("User not authenticated")
+
+        query_params = self.get_query_params()
+        if query_params.get(_GATEWAY_RETRY_QUERY_PARAM):
+            # already came back from the gateway and still no credential: stop, do not loop
+            raise ReflexAppException("User not authenticated")
+
+        path = self.router.url.path or "/"
+
+        # Drop any gws_code still on the URL: it is the spent one that sent us here (the scrub in
+        # _exchange_code_if_present is a client-side history rewrite, so the server-side router still
+        # sees it). Carrying it would put a stale code next to the fresh one the gateway appends.
+        kept_params = [
+            (key, value)
+            for key, value in parse_qsl(self.router.url.query or "")
+            if key not in (_GWS_CODE_QUERY_PARAM, _GATEWAY_RETRY_QUERY_PARAM)
+        ]
+        # mark the target so a second failure is detected instead of bouncing again
+        kept_params.append((_GATEWAY_RETRY_QUERY_PARAM, "1"))
+        target = f"{path}?{urlencode(kept_params)}"
+
+        params = urlencode({"host": host, "target": target})
+        return rx.redirect(f"{lab_api_url}/core-api/{_APP_FALLBACK_ENDPOINT}?{params}")
 
     def _scrub_gws_code_from_url(self) -> None:
         """Remove the gws_code query param from the browser URL via a history replace."""
