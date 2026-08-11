@@ -5,6 +5,7 @@ import uvicorn
 from fastapi import FastAPI
 from starlette_context.middleware.context_middleware import ContextMiddleware
 
+from gws_core.core.utils.logger import Logger
 from gws_core.lab.system_event import SystemStartedEvent, SystemStoppedEvent
 from gws_core.mcp.mcp_controller import mcp_session_manager_lifespan, mount_mcp_app
 from gws_core.model.event.event_dispatcher import EventDispatcher
@@ -100,8 +101,16 @@ class App:
 
         # Build and register the MCP server. Done here (not at import) because its
         # OAuth issuer/resource URLs are read from Settings, and before the loop
-        # below so its sub-apps are part of the mount.
-        mount_mcp_app(cls.app)
+        # below so its sub-apps are part of the mount. Gated OFF by default: when
+        # the env var is not set, neither /mcp/ nor the OAuth provider is created.
+        if Settings.is_mcp_server_enabled():
+            mount_mcp_app(cls.app)
+            Logger.info("MCP server enabled; mounting /mcp/ and the OAuth provider.")
+        else:
+            Logger.debug(
+                f"MCP server disabled ({Settings.MCP_SERVER_ENABLED_ENV_VAR} != 'true'); "
+                "not mounting /mcp/ or the OAuth provider."
+            )
 
         # Mount all registered apps (internal + brick apps)
         for path, sub_app in ApiRegistry.get_all_apis().items():
