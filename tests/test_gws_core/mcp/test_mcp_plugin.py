@@ -5,6 +5,7 @@ from io import BytesIO
 from unittest import TestCase, mock
 
 from gws_core.brick.brick_helper import BrickHelper
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.mcp_registry import META_BRICK_VERSION_KEY, McpRegistry
@@ -21,9 +22,10 @@ from gws_core.mcp.plugin_identity import (
     SETTINGS_SERVED_PLUGIN_NAMES_KEY,
     build_marketplace_name,
     build_plugin_name,
-    resolve_identity,
+    resolve_and_record_identity,
 )
 from gws_core.mcp.plugin_skills import inject_lab_name
+from mcp.types import Icon, ToolAnnotations
 
 # A brick name no installed brick can collide with, so a test never removes real tools.
 FAKE_BRICK = "gws_fake_plugin_brick"
@@ -34,6 +36,11 @@ LAB_ID = "3f7a9c2e-4b1d-4c9a-9d2e-000000000000"
 def a_tool(subject: str) -> str:
     """A tool body: only its declaration reaches the generated plugin."""
     return subject
+
+
+def another_tool(subject: str, count: int = 1) -> str:
+    """The same tool with one more argument, to move its schema."""
+    return subject * count
 
 
 class _PluginTestCase(TestCase):
@@ -140,7 +147,7 @@ class TestServedNameHistory(_PluginTestCase):
 
     def test_the_served_name_is_recorded(self):
         with self.lab(name="Mon Lab"):
-            resolve_identity()
+            resolve_and_record_identity()
 
         self.assertEqual(
             Settings.get_instance().data[SETTINGS_SERVED_PLUGIN_NAMES_KEY], ["mon-lab"]
@@ -148,8 +155,8 @@ class TestServedNameHistory(_PluginTestCase):
 
     def test_serving_the_same_name_twice_records_it_once(self):
         with self.lab(name="Mon Lab"):
-            resolve_identity()
-            identity = resolve_identity()
+            resolve_and_record_identity()
+            identity = resolve_and_record_identity()
 
         self.assertEqual(
             Settings.get_instance().data[SETTINGS_SERVED_PLUGIN_NAMES_KEY], ["mon-lab"]
@@ -158,9 +165,9 @@ class TestServedNameHistory(_PluginTestCase):
 
     def test_a_rename_is_emitted_as_a_rename(self):
         with self.lab(name="Mon Lab"):
-            resolve_identity()
+            resolve_and_record_identity()
         with self.lab(name="Notre Lab"):
-            identity = resolve_identity()
+            identity = resolve_and_record_identity()
 
         self.assertEqual(identity.plugin_name, "notre-lab")
         self.assertEqual(identity.build_renames(), {"mon-lab": "notre-lab"})
@@ -170,7 +177,7 @@ class TestServedNameHistory(_PluginTestCase):
         history is emitted, not only the last name."""
         for name in ["Mon Lab", "Notre Lab", "Leur Lab"]:
             with self.lab(name=name):
-                identity = resolve_identity()
+                identity = resolve_and_record_identity()
 
         self.assertEqual(
             identity.build_renames(), {"mon-lab": "leur-lab", "notre-lab": "leur-lab"}
@@ -179,7 +186,7 @@ class TestServedNameHistory(_PluginTestCase):
     def test_a_lab_renamed_back_does_not_rename_itself_away(self):
         for name in ["Mon Lab", "Notre Lab", "Mon Lab"]:
             with self.lab(name=name):
-                identity = resolve_identity()
+                identity = resolve_and_record_identity()
 
         self.assertEqual(identity.plugin_name, "mon-lab")
         self.assertEqual(identity.build_renames(), {"notre-lab": "mon-lab"})
@@ -191,7 +198,7 @@ class TestServedNameHistory(_PluginTestCase):
             mock.patch.object(Settings, "save", side_effect=OSError("read-only")),
             self.lab(name="Mon Lab"),
         ):
-            identity = resolve_identity()
+            identity = resolve_and_record_identity()
 
         self.assertEqual(identity.plugin_name, "mon-lab")
 
@@ -223,6 +230,33 @@ class TestVersion(_PluginTestCase):
         McpRegistry._register(a_tool, brick_name=FAKE_BRICK, name="do_something", description="b")
 
         self.assertNotEqual(self.generate().version, before)
+
+    def test_a_changed_tool_signature_changes_the_version(self):
+        McpRegistry._register(a_tool, brick_name=FAKE_BRICK, name="do_something")
+        before = self.generate().version
+
+        McpRegistry.unregister_brick(FAKE_BRICK)
+        McpRegistry._register(another_tool, brick_name=FAKE_BRICK, name="do_something")
+
+        self.assertNotEqual(self.generate().version, before)
+
+    def test_every_declared_option_the_client_sees_changes_the_version(self):
+        """The print covers the whole declaration, not the fields it was easy to hash:
+        an option changed with nothing else would otherwise reach no installed client."""
+        options = [
+            {"annotations": ToolAnnotations(readOnlyHint=True)},
+            {"icons": [Icon(src="https://example.com/icon.png")]},
+            {"structured_output": True},
+            {"title": "Do something"},
+        ]
+        versions = set()
+
+        for option in [{}, *options]:
+            McpRegistry.unregister_brick(FAKE_BRICK)
+            McpRegistry._register(a_tool, brick_name=FAKE_BRICK, name="do_something", **option)
+            versions.add(self.generate().version)
+
+        self.assertEqual(len(versions), len(options) + 1)
 
     def test_a_rename_of_the_lab_changes_the_version(self):
         """Otherwise clients would keep a plugin whose name the manifest no longer
@@ -428,10 +462,12 @@ class TestRoutes(_PluginTestCase):
         current archive under a URL announcing another version."""
         generated = PluginGenerator.get_generated()
 
-        response = get_plugin_archive("mon-lab-0.0.1+deadbeef.zip")
-        detail = json.loads(response.body)["detail"]
+        with self.assertRaises(NotFoundException) as raised:
+            get_plugin_archive("mon-lab-0.0.1+deadbeef.zip")
 
-        self.assertEqual(response.status_code, 404)
+        detail = raised.exception.detail
+
+        self.assertEqual(raised.exception.status_code, 404)
         self.assertIn(generated.version, detail)
         self.assertIn("marketplace update", detail)
         self.assertIn(generated.identity.marketplace_name, detail)

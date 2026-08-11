@@ -23,6 +23,7 @@ marketplace is a far more legible failure than a plugin that silently never work
 
 from starlette.responses import JSONResponse, Response
 
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.utils.logger import Logger
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.plugin_generator import (
@@ -55,19 +56,16 @@ def get_plugin_archive(file_name: str) -> Response:
     longer has. Answering with the current archive would serve content under a URL
     announcing another version -- exactly what the versioned URL exists to prevent -- so
     the answer is a 404 saying what to do about it.
+
+    :raises NotFoundException: When the name is not the one the manifest announces.
     """
     generated = PluginGenerator.get_generated()
 
     if file_name != generated.archive_file_name:
-        return JSONResponse(
-            {
-                "detail": (
-                    f"This lab does not serve '{file_name}'. It now serves version "
-                    f"{generated.version}. Run '/plugin marketplace update "
-                    f"{generated.identity.marketplace_name}' to refresh it, then install again."
-                )
-            },
-            status_code=404,
+        raise NotFoundException(
+            f"This lab does not serve '{file_name}'. It now serves version "
+            f"{generated.version}. Run '/plugin marketplace update "
+            f"{generated.identity.marketplace_name}' to refresh it, then install again."
         )
 
     return Response(

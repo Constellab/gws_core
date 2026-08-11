@@ -218,6 +218,16 @@ Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 
   the one the plan predicted: an archive URL that is not HTTPS, or that points at a loopback host
   — which is exactly why local development keeps a checkout-backed marketplace.
 
+## Deviations from the plan
+
+- **The manifest is cached with the archive, not generated per request** (B said per
+  request). The two must describe the same content, and nothing the generation reads can
+  change while the process runs — the lab's URL, id and name come from the environment,
+  and the registry is complete once the bricks are imported. Regenerating the manifest
+  alone would only add a way for it to disagree with the cached archive. The cost is that
+  changing `LAB_NAME` needs a restart, which is already true of every other consumer of
+  that variable.
+
 ## Still unverified
 
 - **Does renaming the plugin force a new OAuth login?** Inferred from credentials being keyed per

@@ -19,12 +19,20 @@ In Claude Code, replacing the host with your lab's API address:
 
 ```
 /plugin marketplace add https://<your lab api url>/plugins/marketplace.json
-/plugin install <your lab name>
+/plugin
 ```
 
-`/plugin install` proposes the one plugin the marketplace declares — your lab. Restart
-Claude Code when it asks, then run `/mcp` and log in: a browser opens on your lab, you
-approve the access, and the tools appear.
+The marketplace declares exactly one plugin — your lab — so `/plugin` shows it and you
+install it from there. The plugin is named after the lab, in lower case and with dashes
+instead of spaces (`Mon Lab` becomes `mon-lab`), which is also what you pass to install it
+by name:
+
+```
+/plugin install mon-lab@constellab-<your lab id>
+```
+
+Restart Claude Code when it asks, then run `/mcp` and log in: a browser opens on your lab,
+you approve the access, and the tools appear.
 
 You add the marketplace URL once. It never changes for the life of the lab.
 
@@ -45,8 +53,8 @@ The plugin's version moves whenever the lab's surface does: a brick installed or
 with a changed tool, a new skill, a lab renamed. To pull it:
 
 ```
-/plugin marketplace update <your marketplace>
-/plugin update <your lab name>
+/plugin marketplace update constellab-<your lab id>
+/plugin update mon-lab
 ```
 
 If a download ever answers **404**, the message tells you which version the lab serves

@@ -95,7 +95,7 @@ def build_plugin_name(lab_name: str) -> str:
     return slug
 
 
-def resolve_identity() -> PluginIdentity:
+def resolve_and_record_identity() -> PluginIdentity:
     """Resolve the lab's identity, recording the plugin name it is about to serve.
 
     Recording here (rather than in a migration or at startup) keeps the history exact:

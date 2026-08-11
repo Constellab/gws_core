@@ -40,7 +40,7 @@ from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.utils.logger import Logger
 from gws_core.mcp.mcp_controller import get_lab_base_url, get_mcp_url
 from gws_core.mcp.mcp_registry import McpRegistry, McpToolDeclaration
-from gws_core.mcp.plugin_identity import PluginIdentity, resolve_identity
+from gws_core.mcp.plugin_identity import PluginIdentity, resolve_and_record_identity
 from gws_core.mcp.plugin_skills import PluginSkill, collect_skills
 
 # Route the archive and the manifest are served from.
@@ -127,7 +127,7 @@ class PluginGenerator:
     @classmethod
     def generate(cls) -> GeneratedPlugin:
         """Generate the manifest and the archive, without touching the cache."""
-        identity = resolve_identity()
+        identity = resolve_and_record_identity()
         contributions = McpRegistry.get_contributions()
         tools = [tool for contribution in contributions for tool in contribution.tools]
         skills = collect_skills(
@@ -157,7 +157,7 @@ def build_version(
     """``<gws_core version>+<fingerprint>``, stable for as long as the content is.
 
     The fingerprint covers what a client can see: the identity, the endpoint, every
-    tool's name, title, description and schema, and every skill file.
+    tool's declaration as the client receives it, and every skill file.
 
     What it deliberately leaves out is each tool's ``meta``, which carries the declaring
     brick's version. Including it would move the fingerprint on every brick release, for
@@ -177,6 +177,10 @@ def build_version(
                 "annotations": tool.annotations.model_dump(mode="json")
                 if tool.annotations
                 else None,
+                "icons": [icon.model_dump(mode="json") for icon in tool.icons]
+                if tool.icons
+                else None,
+                "structured_output": tool.structured_output,
                 "schema": _build_tool_schema(tool),
             }
             for tool in tools
@@ -210,9 +214,10 @@ def build_archive_file_name(plugin_name: str, version: str) -> str:
     return f"{plugin_name}-{version}.zip"
 
 
-def build_archive_url(archive_file_name: str) -> str:
-    """The absolute URL the manifest points at, on the lab's own domain."""
-    return f"{get_lab_base_url()}/{PLUGINS_ROUTE_PATH}/{archive_file_name}"
+def build_plugins_url(file_name: str) -> str:
+    """The absolute URL of something served from the plugins route, on the lab's own
+    domain."""
+    return f"{get_lab_base_url()}/{PLUGINS_ROUTE_PATH}/{file_name}"
 
 
 def build_marketplace_manifest(
@@ -238,7 +243,7 @@ def build_marketplace_manifest(
                 "version": version,
                 "source": {
                     "source": "archive",
-                    "url": build_archive_url(archive_file_name),
+                    "url": build_plugins_url(archive_file_name),
                 },
             }
         ],
@@ -343,4 +348,4 @@ def _build_tool_schema(tool: McpToolDeclaration) -> dict[str, Any]:
 
 def build_marketplace_url() -> str:
     """The URL a user adds once, which never changes for the life of the lab."""
-    return f"{get_lab_base_url()}/{PLUGINS_ROUTE_PATH}/{MARKETPLACE_FILE_NAME}"
+    return build_plugins_url(MARKETPLACE_FILE_NAME)
