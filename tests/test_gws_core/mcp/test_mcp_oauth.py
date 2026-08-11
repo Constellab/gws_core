@@ -8,7 +8,9 @@ from unittest import TestCase
 from fastapi import FastAPI
 from gws_core.mcp import mcp_controller
 from gws_core.mcp.db_mcp import build_mcp_server
-from gws_core.mcp.mcp_oauth_provider import LabOAuthProvider
+from gws_core.oauth import oauth_controller
+from gws_core.oauth.oauth_provider import LabOAuthProvider
+from gws_core.oauth.oauth_service import OAuthService
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
@@ -19,7 +21,7 @@ from starlette.testclient import TestClient
 
 LAB_HOST = "lab.example.com"
 MCP_URL = f"https://{LAB_HOST}/mcp"
-CONSENT_PAGE_URL = "https://dev-lab.example.com/mcp-consent"
+CONSENT_PAGE_URL = "https://dev-lab.example.com/oauth-consent"
 CLIENT_REDIRECT = "http://localhost:33418/callback"
 
 
@@ -33,7 +35,12 @@ def _pkce_pair() -> tuple[str, str]:
 
 
 def _build_provider() -> LabOAuthProvider:
-    return LabOAuthProvider(consent_page_url=CONSENT_PAGE_URL, resource_url=MCP_URL)
+    return LabOAuthProvider(
+        consent_page_url=CONSENT_PAGE_URL,
+        resource_url=MCP_URL,
+        resource_name="MCP server",
+        lab_url=f"https://{LAB_HOST}",
+    )
 
 
 def _build_client(provider: LabOAuthProvider) -> TestClient:
@@ -44,8 +51,8 @@ def _build_client(provider: LabOAuthProvider) -> TestClient:
     authenticated call fails with "Task group is not initialized".
     """
     auth_settings = AuthSettings(
-        issuer_url=MCP_URL,
-        resource_server_url=MCP_URL,
+        issuer_url=AnyHttpUrl(MCP_URL),
+        resource_server_url=AnyHttpUrl(MCP_URL),
         client_registration_options=ClientRegistrationOptions(enabled=True),
     )
     server = build_mcp_server(
@@ -252,8 +259,9 @@ class TestMcpClientRegistration(_McpOAuthTestCase):
         # A brand-new provider stands in for the process after a restart.
         client = asyncio.run(_build_provider().get_client(client_id))
 
-        self.assertIsNotNone(client)
+        assert client is not None
         self.assertEqual(client.client_id, client_id)
+        assert client.redirect_uris is not None
         self.assertEqual([str(uri) for uri in client.redirect_uris], [CLIENT_REDIRECT])
 
     def test_an_unknown_client_is_not_found(self):
@@ -314,23 +322,23 @@ class TestMcpConsent(_McpOAuthTestCase):
     """The consent route: the one-time code is the proof of identity."""
 
     def _consent_code(self) -> str:
-        """Mint a code the way /core-api/user/mcp-consent-code does."""
+        """Mint a code the way /core-api/user/oauth-consent-code does."""
         user = CurrentUserService.get_and_check_current_user()
         return UniqueCodeService.generate_code(user.id, {}, 60)
 
     def _consent(self, login_state: str, code: str):
         app = FastAPI()
-        app.mount("/mcp-auth/", mcp_controller.mcp_auth_app)
+        app.mount("/oauth-auth/", oauth_controller.oauth_auth_app)
         with TestClient(app) as client:
             return client.get(
-                "/mcp-auth/consent",
+                "/oauth-auth/consent",
                 params={"login_state": login_state, "code": code},
                 follow_redirects=False,
             )
 
     def test_consent_redirects_back_to_the_client_with_a_code(self):
-        mcp_controller.oauth_provider = self.provider
-        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+        OAuthService.set_provider(self.provider)
+        self.addCleanup(OAuthService.clear)
 
         client_id = self._register_client()
         _, challenge = _pkce_pair()
@@ -346,8 +354,8 @@ class TestMcpConsent(_McpOAuthTestCase):
 
     def test_a_reused_consent_code_is_refused(self):
         """The code rides in a URL, so a replay must not authorize a second client."""
-        mcp_controller.oauth_provider = self.provider
-        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+        OAuthService.set_provider(self.provider)
+        self.addCleanup(OAuthService.clear)
 
         client_id = self._register_client()
         _, challenge = _pkce_pair()
@@ -361,8 +369,8 @@ class TestMcpConsent(_McpOAuthTestCase):
         self.assertEqual(second.status_code, 400)
 
     def test_an_unknown_consent_code_is_refused(self):
-        mcp_controller.oauth_provider = self.provider
-        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+        OAuthService.set_provider(self.provider)
+        self.addCleanup(OAuthService.clear)
 
         client_id = self._register_client()
         _, challenge = _pkce_pair()
@@ -374,10 +382,10 @@ class TestMcpConsent(_McpOAuthTestCase):
 
     def test_missing_params_are_refused(self):
         app = FastAPI()
-        app.mount("/mcp-auth/", mcp_controller.mcp_auth_app)
+        app.mount("/oauth-auth/", oauth_controller.oauth_auth_app)
         with TestClient(app) as client:
             for params in [{}, {"login_state": "x"}, {"code": "y"}]:
-                response = client.get("/mcp-auth/consent", params=params, follow_redirects=False)
+                response = client.get("/oauth-auth/consent", params=params, follow_redirects=False)
                 self.assertEqual(response.status_code, 400)
 
 

@@ -28,7 +28,7 @@ A remote MCP breaks both assumptions:
 > `constellab.community`. It now authorizes **entirely within the lab**: `/authorize`
 > redirects to a lab front-end consent page, which proves identity with a
 > single-use `UniqueCodeService` code. No Space, no Community, no password. See
-> "Consent flow" below and `mcp_consent_frontend_spec.md`. Everything about the
+> "Consent flow" below and `oauth_consent_frontend_spec.md`. Everything about the
 > token model (the lab mints its own JWT) is unchanged, and is *why* this works.
 
 ## Key architectural fact (drove the auth design)
@@ -202,6 +202,26 @@ auto-refreshes the token. No manual token pasting.
    - a **community** token (not a lab JWT) → 401 (proves the resource-token separation)
    - write statement (`UPDATE ...`) → blocked by `assert_read_only`
    - token of an inactive user → rejected
+
+## Package layout
+
+The authorization server is **not** MCP-specific and lives on its own:
+
+| Package | Holds | MCP-aware? |
+|---|---|---|
+| `gws_core/oauth/` | `LabOAuthProvider` (OAuth 2.1 AS), `OAuthClient` (registered clients) | no |
+| `gws_core/mcp/` | the tools (`db_mcp`) and the transport/mount (`mcp_controller`) | yes |
+
+`gws_core/oauth/` imports `mcp.server.auth` only for the protocol machinery -- those
+classes are plain pydantic models of the OAuth RFCs, and `create_auth_routes` serves a
+standard OAuth surface. Another transport can construct `LabOAuthProvider` with its own
+`resource_url` without involving MCP.
+
+**Tokens are unscoped**: an issued token is a full lab session. Fine while the only
+consumer is the read-only MCP endpoint; a second consumer needs real scopes first.
+`scopes` is already threaded end to end, and `_mint_lab_token` is the single place a
+grant becomes a credential -- that is where scoping lands (see `JWTService.create_app_jwt`
+for how the lab already mints a bounded token).
 
 ## Consent flow (current design)
 

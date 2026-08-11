@@ -1,21 +1,15 @@
-"""Mounts the MCP server (and its OAuth flow) into the lab's FastAPI app.
+"""Mounts the MCP server into the lab's FastAPI app.
 
 Serving MCP from the lab process (rather than as a standalone service) reuses the
 lab's TLS, domain, and -- critically -- its ``secret_key``, so the JWT the OAuth
 flow mints is the very token :class:`JWTService` already validates.
 
-Two apps are registered:
+``/mcp/`` holds the MCP endpoint itself (Streamable HTTP) plus, courtesy of the SDK,
+the OAuth discovery documents, ``/register``, ``/authorize`` and ``/token``.
 
-- ``/mcp/``      -- the MCP endpoint itself (Streamable HTTP) plus, courtesy of the
-                    SDK, the OAuth discovery documents, ``/register``, ``/authorize``
-                    and ``/token``.
-- ``/mcp-auth/`` -- the browser-facing route that completes an authorization once
-                    the user has consented on the lab front-end. It lives outside
-                    the MCP app because it is the one part a human's browser
-                    actually visits.
-
-The consent UI itself is a lab front-end page (``docs/todo/mcp_consent_frontend_spec.md``);
-the lab API only redirects to it and receives its result.
+Only the MCP-specific parts live here. The authorization server itself, and the
+browser-facing consent route that completes a login, belong to any OAuth client and
+live in :mod:`gws_core.oauth`.
 
 Security headers are disabled on ``/mcp/``: it is a machine-to-machine API that no
 browser renders (see ``ApiRegistry.register_api``).
@@ -39,23 +33,19 @@ from mcp.server.auth.settings import (
 )
 from mcp.server.fastmcp import FastMCP
 from pydantic import AnyHttpUrl
-from starlette.requests import Request
-from starlette.responses import HTMLResponse, RedirectResponse
 from starlette.routing import Route
 
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.db_mcp import build_mcp_server
-from gws_core.mcp.mcp_oauth_provider import LabOAuthProvider
-from gws_core.user.authorization_service import AuthorizationService
+from gws_core.oauth.oauth_provider import LabOAuthProvider
+from gws_core.oauth.oauth_service import OAuthService
 
 MCP_ROUTE_PATH = "mcp"
-MCP_AUTH_ROUTE_PATH = "mcp-auth"
 
-# Route of the consent page on the lab front-end. Must match the front-end's
-# router (see docs/todo/mcp_consent_frontend_spec.md).
-CONSENT_PAGE_ROUTE = "mcp-consent"
+# How this resource is named to a user on the consent page.
+MCP_RESOURCE_NAME = "MCP server"
 
 
 def _get_lab_base_url() -> str:
@@ -83,31 +73,31 @@ def _get_allowed_hosts(mcp_url: str) -> list[str]:
     return [host] if host else []
 
 
-def _get_consent_page_url() -> str:
-    """Absolute URL of the lab front-end page where the user approves a client.
+class McpServerHolder:
+    """Holds the MCP server built at startup.
 
-    Implemented by the front-end (see ``docs/todo/mcp_consent_frontend_spec.md``);
-    the lab only ever redirects to it with a ``login_state``.
+    The server cannot be built at import time (its URLs come from ``Settings``,
+    which is not loaded yet), so something must hold it between ``mount_mcp_app``
+    and the app's lifespan. A class attribute rather than a module global: the
+    ``global`` statement makes every reader guess whether the name was rebound,
+    and ``clear()`` gives tests a way to reset it. Mirrors ``OAuthService``.
     """
-    return f"{Settings.get_front_url().rstrip('/')}/{CONSENT_PAGE_ROUTE}"
 
+    _server: FastMCP | None = None
 
-# ---------------------------------------------------------------------- #
-#  The browser-facing callback app
-# ---------------------------------------------------------------------- #
+    @classmethod
+    def set_server(cls, server: FastMCP) -> None:
+        cls._server = server
 
-mcp_auth_app = ApiRegistry.register_api(f"/{MCP_AUTH_ROUTE_PATH}/")
+    @classmethod
+    def get_server_or_none(cls) -> FastMCP | None:
+        """Return the server, or ``None`` when MCP was never mounted."""
+        return cls._server
 
-# Both are built lazily by mount_mcp_app: the URLs they need come from Settings,
-# which is not loaded at import time.
-oauth_provider: LabOAuthProvider | None = None
-mcp_server: FastMCP | None = None
-
-
-def _get_provider() -> LabOAuthProvider:
-    if oauth_provider is None:
-        raise RuntimeError("The MCP server is not initialized (mount_mcp_app was not called).")
-    return oauth_provider
+    @classmethod
+    def clear(cls) -> None:
+        """Drop the server. Useful for tests."""
+        cls._server = None
 
 
 @asynccontextmanager
@@ -121,74 +111,14 @@ async def mcp_session_manager_lifespan() -> AsyncIterator[None]:
 
     A no-op when the MCP server was not mounted (e.g. tests that build their own).
     """
-    if mcp_server is None:
+    server = McpServerHolder.get_server_or_none()
+    if server is None:
         yield
         return
 
-    async with mcp_server.session_manager.run():
+    async with server.session_manager.run():
         yield
 
-
-@mcp_auth_app.get("/consent")
-async def mcp_auth_consent(request: Request):
-    """Finish an authorization once the user has consented on the front-end.
-
-    The browser arrives here from the lab's consent page (see
-    ``docs/todo/mcp_consent_frontend_spec.md``) carrying:
-
-    - ``login_state``: the pending authorization opened by ``/authorize``
-    - ``code``: a single-use, 60s code the front-end obtained from
-      ``/core-api/user/mcp-consent-code`` while authenticated
-
-    The code **is** the proof of identity: the front-end and this API live on
-    different sub-domains and the lab session cookie is ``samesite=strict``, so it
-    is never sent here. This is the same bridge the lab already uses for
-    ``login-temp-access``.
-
-    Responds with a 302 back to the MCP client, so it must be reached by a real
-    browser navigation (not fetch).
-    """
-    login_state = request.query_params.get("login_state")
-    code = request.query_params.get("code")
-
-    if not login_state or not code:
-        return HTMLResponse(
-            _error_page("This authorization link is incomplete. Please start again from your client."),
-            400,
-        )
-
-    # Consumes the code: it cannot be replayed.
-    try:
-        auth_context = AuthorizationService.check_unique_code(code)
-    except Exception:
-        Logger.info("MCP OAuth: consent refused (invalid or already-used code)")
-        return HTMLResponse(
-            _error_page("This authorization link has expired or was already used. Please try again."),
-            400,
-        )
-
-    user = auth_context.get_user()
-
-    try:
-        redirect_url = _get_provider().complete_authorization(login_state, user)
-    except Exception:
-        return HTMLResponse(
-            _error_page("This authorization request expired. Please start again from your client."),
-            400,
-        )
-
-    Logger.info(f"MCP OAuth: authorized '{user.email}'")
-    return RedirectResponse(redirect_url, status_code=302)
-
-
-def _error_page(message: str) -> str:
-    return f"""
-    <html><head><title>Authorization failed</title></head>
-    <body style="font-family: sans-serif; max-width: 40rem; margin: 4rem auto;">
-      <h2>Authorization failed</h2>
-      <p>{message}</p>
-    </body></html>
-    """
 
 
 # ---------------------------------------------------------------------- #
@@ -206,18 +136,21 @@ def mount_mcp_app(main_app: FastAPI) -> None:
         discovery documents must be served from the domain root (see
         :func:`_add_well_known_routes`).
     """
-    global oauth_provider, mcp_server
-
     mcp_url = _get_mcp_url()
 
     oauth_provider = LabOAuthProvider(
-        consent_page_url=_get_consent_page_url(),
+        consent_page_url=OAuthService.get_consent_page_url(),
         resource_url=mcp_url,
+        resource_name=MCP_RESOURCE_NAME,
+        lab_url=_get_lab_base_url(),
     )
+    # OAuthService owns the provider: the consent route reaches it from there,
+    # without the OAuth package having to depend on this MCP module.
+    OAuthService.set_provider(oauth_provider)
 
     auth_settings = AuthSettings(
-        issuer_url=mcp_url,
-        resource_server_url=mcp_url,
+        issuer_url=AnyHttpUrl(mcp_url),
+        resource_server_url=AnyHttpUrl(mcp_url),
         client_registration_options=ClientRegistrationOptions(enabled=True),
     )
 
@@ -230,6 +163,9 @@ def mount_mcp_app(main_app: FastAPI) -> None:
     # Serve the MCP endpoint at the mount root: the sub-app is mounted at "/mcp/",
     # so the SDK's own path must not repeat it.
     mcp_server.settings.streamable_http_path = "/"
+
+    # The app's lifespan needs it later, to run the session manager.
+    McpServerHolder.set_server(mcp_server)
 
     mcp_app = ApiRegistry.register_api(
         f"/{MCP_ROUTE_PATH}/",
@@ -279,8 +215,12 @@ def _add_well_known_routes(main_app: FastAPI, auth_settings: AuthSettings) -> No
     The routes are therefore re-registered on the root app, where the client
     actually looks. The MCP mount does not shadow them: it only claims ``/mcp/``.
     """
+    resource_server_url = auth_settings.resource_server_url
+    if resource_server_url is None:
+        raise ValueError("The MCP auth settings must define a resource server URL")
+
     routes = create_protected_resource_routes(
-        resource_url=auth_settings.resource_server_url,
+        resource_url=resource_server_url,
         authorization_servers=[auth_settings.issuer_url],
         resource_name="Constellab lab MCP server",
     )
