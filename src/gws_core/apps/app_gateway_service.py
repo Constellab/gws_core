@@ -124,9 +124,13 @@ class AppGatewayService:
             Logger.info(f"App fallback: no app for key '{app_key}'")
             return front_service.get_app_gateway_error_url(_consts.GATEWAY_ERROR_APP_NOT_FOUND)
 
-        return front_service.get_app_gateway_url(
+        app_url = front_service.get_app_gateway_url(
             app_resource.get_and_check_model_id(), redirect_to=cls._sanitize_redirect_target(target)
         )
+        Logger.debug(
+            f"App fallback: host '{host}' maps to app key '{app_key}', redirecting to '{app_url}'"
+        )
+        return app_url
 
     @staticmethod
     def _sanitize_redirect_target(target: str | None) -> str | None:

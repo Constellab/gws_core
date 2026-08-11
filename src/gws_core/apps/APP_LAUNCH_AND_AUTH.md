@@ -283,9 +283,13 @@ scrubs it from the URL after the first open). Neither is a dead end:
   fresh code. Transparent when the visitor holds a lab session.
 - The resolver is reached **on the lab API, not the app host**: the nginx fallback `location` exists
   only on the catch-all block, so a running app's own block would serve that path from the app.
-- **Loop guard:** the forwarded `target` carries `gws_gateway_retry=1`. Coming back still
-  unauthenticated *with* that marker raises instead of bouncing again (Reflex state is wiped by the
-  reload, so the flag has to live in the URL).
+- **Loop guard:** the forwarded `target` carries `gws_gateway_retry=1`, **and** a short-lived
+  `gws_gateway_retry` cookie (1 min) is set just before bouncing. Coming back still unauthenticated
+  with *either* marker raises instead of bouncing again; the marker is cleared as soon as a
+  credential is obtained. Two homes because neither alone is reliable: Reflex state is wiped by the
+  reload so the flag cannot live in state, the query param only survives if the front carries the
+  target's query over to the app URL it navigates to (the handoff URL it is built from carries only
+  `gws_code`), and the cookie is gone once it expires.
 - **Dev mode** keeps raising — a dev app failing auth is a config problem to see, not to bounce.
 
 ### 3.3. Session lifetime — sliding renewal

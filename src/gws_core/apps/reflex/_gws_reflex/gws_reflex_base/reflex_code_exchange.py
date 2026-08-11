@@ -6,6 +6,7 @@ swaps it here for a JWT it then carries on data lab API calls. This module is in
 env vars, mirroring gws_reflex_download_service's approach.
 """
 
+import logging
 import os
 
 import requests
@@ -15,6 +16,10 @@ import requests
 _CORE_API_ROUTE_PATH = "core-api"
 _EXCHANGE_TIMEOUT_SECONDS = 10
 _HTTP_OK = 200
+
+# Standard-library logger: this module cannot import gws_core (it runs in virtual-env apps),
+# so the GWS Logger is unavailable. Output lands in the app process stdout/stderr.
+_logger = logging.getLogger(__name__)
 
 
 class ExchangedUser:
@@ -48,6 +53,7 @@ def exchange_code_for_jwt(app_id: str, code: str) -> ExchangedUser | None:
     """
     lab_api_url = (os.environ.get("GWS_LAB_API_URL") or "").rstrip("/")
     if not lab_api_url:
+        _logger.warning("[gws-auth] Code exchange skipped: GWS_LAB_API_URL is not set.")
         return None
 
     url = f"{lab_api_url}/{_CORE_API_ROUTE_PATH}/apps/exchange-code"
@@ -58,10 +64,19 @@ def exchange_code_for_jwt(app_id: str, code: str) -> ExchangedUser | None:
             json={"app_id": app_id, "code": code},
             timeout=_EXCHANGE_TIMEOUT_SECONDS,
         )
-    except requests.RequestException:
+    except requests.RequestException as err:
+        _logger.warning("[gws-auth] Code exchange call to %s failed: %s", url, err)
         return None
 
     if response.status_code != _HTTP_OK:
+        # A 403 here is normal for a *shared* app URL whose single-use code was already
+        # consumed; anything else points at a real misconfiguration (wrong app id, etc.).
+        _logger.warning(
+            "[gws-auth] Code exchange for app '%s' refused with HTTP %s: %s",
+            app_id,
+            response.status_code,
+            response.text[:200],
+        )
         return None
 
     data = response.json()
@@ -88,6 +103,7 @@ def validate_jwt_for_user(app_id: str, jwt: str) -> "ValidatedUser | None":
     """
     lab_api_url = (os.environ.get("GWS_LAB_API_URL") or "").rstrip("/")
     if not lab_api_url:
+        _logger.warning("[gws-auth] JWT validation skipped: GWS_LAB_API_URL is not set.")
         return None
 
     url = f"{lab_api_url}/{_CORE_API_ROUTE_PATH}/apps/validate-jwt"
@@ -98,15 +114,26 @@ def validate_jwt_for_user(app_id: str, jwt: str) -> "ValidatedUser | None":
             json={"app_id": app_id, "jwt": jwt},
             timeout=_EXCHANGE_TIMEOUT_SECONDS,
         )
-    except requests.RequestException:
+    except requests.RequestException as err:
+        _logger.warning("[gws-auth] JWT validation call to %s failed: %s", url, err)
         return None
 
     if response.status_code != _HTTP_OK:
+        # Expected once the JWT expires; the caller clears the cookie and re-enters the gateway.
+        _logger.info(
+            "[gws-auth] JWT validation for app '%s' refused with HTTP %s: %s",
+            app_id,
+            response.status_code,
+            response.text[:200],
+        )
         return None
 
     data = response.json()
     user_id = data.get("user_id")
     if not user_id:
+        _logger.warning(
+            "[gws-auth] JWT validation for app '%s' returned HTTP 200 without a user_id.", app_id
+        )
         return None
 
     return ValidatedUser(user_id=user_id, renewed_jwt=data.get("renewed_jwt"))
