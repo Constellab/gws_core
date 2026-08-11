@@ -4,21 +4,21 @@ import hashlib
 import secrets
 from contextlib import asynccontextmanager
 from unittest import TestCase
-from unittest.mock import patch
 
 from fastapi import FastAPI
 from gws_core.mcp import mcp_controller
 from gws_core.mcp.db_mcp import build_mcp_server
-from gws_core.mcp.mcp_oauth_provider import ConstellabOAuthProvider
+from gws_core.mcp.mcp_oauth_provider import LabOAuthProvider
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import UniqueCodeService
 from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
 from pydantic import AnyHttpUrl
 from starlette.testclient import TestClient
 
 MCP_URL = "https://lab.example.com/mcp"
-CALLBACK_URL = "https://lab.example.com/mcp-auth/callback"
+CONSENT_PAGE_URL = "https://dev-lab.example.com/mcp-consent"
 CLIENT_REDIRECT = "http://localhost:33418/callback"
 
 
@@ -31,7 +31,11 @@ def _pkce_pair() -> tuple[str, str]:
     return verifier, challenge
 
 
-def _build_client(provider: ConstellabOAuthProvider) -> TestClient:
+def _build_provider() -> LabOAuthProvider:
+    return LabOAuthProvider(consent_page_url=CONSENT_PAGE_URL, resource_url=MCP_URL)
+
+
+def _build_client(provider: LabOAuthProvider) -> TestClient:
     """Build the app the way the lab mounts it: MCP at /mcp/, metadata at the root.
 
     The root app runs the MCP session manager, exactly as ``App.lifespan`` does:
@@ -57,19 +61,52 @@ def _build_client(provider: ConstellabOAuthProvider) -> TestClient:
     return TestClient(app)
 
 
-# test_mcp_oauth
-class TestMcpOAuthDiscovery(BaseTestCase):
-    """The metadata a client needs before it can log in."""
+class _McpOAuthTestCase(BaseTestCase):
+    """Shared setup: an app mounted the way the lab mounts it."""
 
     def setUp(self):
-        self.provider = ConstellabOAuthProvider(
-            callback_url=CALLBACK_URL, resource_url=MCP_URL
-        )
+        self.provider = _build_provider()
         # Entering the TestClient context runs the app lifespan (and so the MCP
         # session manager); addCleanup exits it at the end of the test.
         self.client = _build_client(self.provider)
         self.client.__enter__()
         self.addCleanup(self.client.__exit__, None, None, None)
+
+    def _register_client(self) -> str:
+        response = self.client.post(
+            "/mcp/register",
+            json={
+                "redirect_uris": [CLIENT_REDIRECT],
+                "client_name": "Claude Code",
+                "grant_types": ["authorization_code", "refresh_token"],
+                "response_types": ["code"],
+                "token_endpoint_auth_method": "none",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        return response.json()["client_id"]
+
+    def _authorize(self, client_id: str, challenge: str, state: str = "the-state") -> str:
+        """Run /authorize and return the login_state handed to the consent page."""
+        response = self.client.get(
+            "/mcp/authorize",
+            params={
+                "client_id": client_id,
+                "redirect_uri": CLIENT_REDIRECT,
+                "response_type": "code",
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+                "state": state,
+            },
+            follow_redirects=False,
+        )
+        self.assertEqual(response.status_code, 302)
+        return response.headers["location"].split("login_state=")[1].split("&")[0]
+
+
+# test_mcp_oauth
+class TestMcpOAuthDiscovery(_McpOAuthTestCase):
+    """The metadata a client needs before it can log in."""
 
     def test_unauthenticated_call_is_refused_and_points_at_the_metadata(self):
         """A 401 must advertise where the metadata lives, or discovery never starts."""
@@ -144,32 +181,8 @@ class TestAuthorizationServerMetadataPaths(TestCase):
 
 
 # test_mcp_oauth
-class TestMcpOAuthFlow(BaseTestCase):
-    """The full browser login, from client registration to an authenticated call."""
-
-    def setUp(self):
-        self.provider = ConstellabOAuthProvider(
-            callback_url=CALLBACK_URL, resource_url=MCP_URL
-        )
-        # Entering the TestClient context runs the app lifespan (and so the MCP
-        # session manager); addCleanup exits it at the end of the test.
-        self.client = _build_client(self.provider)
-        self.client.__enter__()
-        self.addCleanup(self.client.__exit__, None, None, None)
-
-    def _register_client(self) -> str:
-        response = self.client.post(
-            "/mcp/register",
-            json={
-                "redirect_uris": [CLIENT_REDIRECT],
-                "client_name": "Claude Code",
-                "grant_types": ["authorization_code", "refresh_token"],
-                "response_types": ["code"],
-                "token_endpoint_auth_method": "none",
-            },
-        )
-        self.assertEqual(response.status_code, 201)
-        return response.json()["client_id"]
+class TestMcpClientRegistration(_McpOAuthTestCase):
+    """Dynamic client registration and its persistence."""
 
     def test_client_can_register_itself(self):
         self.assertIsNotNone(self._register_client())
@@ -181,8 +194,7 @@ class TestMcpOAuthFlow(BaseTestCase):
         client_id = self._register_client()
 
         # A brand-new provider stands in for the process after a restart.
-        restarted = ConstellabOAuthProvider(callback_url=CALLBACK_URL, resource_url=MCP_URL)
-        client = asyncio.run(restarted.get_client(client_id))
+        client = asyncio.run(_build_provider().get_client(client_id))
 
         self.assertIsNotNone(client)
         self.assertEqual(client.client_id, client_id)
@@ -191,40 +203,147 @@ class TestMcpOAuthFlow(BaseTestCase):
     def test_an_unknown_client_is_not_found(self):
         self.assertIsNone(asyncio.run(self.provider.get_client("no-such-client")))
 
+
+# test_mcp_oauth
+class TestMcpAuthorize(_McpOAuthTestCase):
+    """/authorize hands the browser to the lab's own consent page."""
+
+    def test_authorize_redirects_to_the_lab_consent_page(self):
+        """The user must stay on the lab's domains: no Space, no Community."""
+        client_id = self._register_client()
+        _, challenge = _pkce_pair()
+
+        response = self.client.get(
+            "/mcp/authorize",
+            params={
+                "client_id": client_id,
+                "redirect_uri": CLIENT_REDIRECT,
+                "response_type": "code",
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+                "state": "s",
+            },
+            follow_redirects=False,
+        )
+
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["location"]
+        self.assertTrue(location.startswith(CONSENT_PAGE_URL))
+        self.assertIn("login_state=", location)
+
+    def test_authorize_passes_only_the_login_state_to_the_front_end(self):
+        """The consent page needs nothing else; PKCE/redirect_uri stay server-side."""
+        client_id = self._register_client()
+        _, challenge = _pkce_pair()
+
+        location = self.client.get(
+            "/mcp/authorize",
+            params={
+                "client_id": client_id,
+                "redirect_uri": CLIENT_REDIRECT,
+                "response_type": "code",
+                "code_challenge": challenge,
+                "code_challenge_method": "S256",
+                "state": "s",
+            },
+            follow_redirects=False,
+        ).headers["location"]
+
+        self.assertNotIn("code_challenge", location)
+        self.assertNotIn("redirect_uri", location)
+
+
+# test_mcp_oauth
+class TestMcpConsent(_McpOAuthTestCase):
+    """The consent route: the one-time code is the proof of identity."""
+
+    def _consent_code(self) -> str:
+        """Mint a code the way /core-api/user/mcp-consent-code does."""
+        user = CurrentUserService.get_and_check_current_user()
+        return UniqueCodeService.generate_code(user.id, {}, 60)
+
+    def _consent(self, login_state: str, code: str):
+        app = FastAPI()
+        app.mount("/mcp-auth/", mcp_controller.mcp_auth_app)
+        with TestClient(app) as client:
+            return client.get(
+                "/mcp-auth/consent",
+                params={"login_state": login_state, "code": code},
+                follow_redirects=False,
+            )
+
+    def test_consent_redirects_back_to_the_client_with_a_code(self):
+        mcp_controller.oauth_provider = self.provider
+        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+
+        client_id = self._register_client()
+        _, challenge = _pkce_pair()
+        login_state = self._authorize(client_id, challenge)
+
+        response = self._consent(login_state, self._consent_code())
+
+        self.assertEqual(response.status_code, 302)
+        location = response.headers["location"]
+        self.assertTrue(location.startswith(CLIENT_REDIRECT))
+        self.assertIn("code=", location)
+        self.assertIn("state=the-state", location)
+
+    def test_a_reused_consent_code_is_refused(self):
+        """The code rides in a URL, so a replay must not authorize a second client."""
+        mcp_controller.oauth_provider = self.provider
+        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+
+        client_id = self._register_client()
+        _, challenge = _pkce_pair()
+        code = self._consent_code()
+
+        first = self._consent(self._authorize(client_id, challenge), code)
+        self.assertEqual(first.status_code, 302)
+
+        # Same code, a fresh authorization: must not go through.
+        second = self._consent(self._authorize(client_id, challenge), code)
+        self.assertEqual(second.status_code, 400)
+
+    def test_an_unknown_consent_code_is_refused(self):
+        mcp_controller.oauth_provider = self.provider
+        self.addCleanup(setattr, mcp_controller, "oauth_provider", None)
+
+        client_id = self._register_client()
+        _, challenge = _pkce_pair()
+        login_state = self._authorize(client_id, challenge)
+
+        response = self._consent(login_state, "not-a-real-code")
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_missing_params_are_refused(self):
+        app = FastAPI()
+        app.mount("/mcp-auth/", mcp_controller.mcp_auth_app)
+        with TestClient(app) as client:
+            for params in [{}, {"login_state": "x"}, {"code": "y"}]:
+                response = client.get("/mcp-auth/consent", params=params, follow_redirects=False)
+                self.assertEqual(response.status_code, 400)
+
+
+# test_mcp_oauth
+class TestMcpOAuthFlow(_McpOAuthTestCase):
+    """The full authorization, from client registration to an authenticated call."""
+
     def test_full_flow_mints_a_working_lab_token(self):
-        """Register -> authorize -> Constellab login -> code -> token -> authenticated call."""
+        """Register -> authorize -> consent -> code -> token -> authenticated call."""
         client_id = self._register_client()
         verifier, challenge = _pkce_pair()
         user = CurrentUserService.get_and_check_current_user()
 
-        # /authorize hands the browser off to Constellab
-        with patch(
-            "gws_core.mcp.mcp_constellab_login.ConstellabLoginService.request_device_code",
-            return_value=("device-code", "https://constellab.community/cli-auth?code=x"),
-        ):
-            authorize = self.client.get(
-                "/mcp/authorize",
-                params={
-                    "client_id": client_id,
-                    "redirect_uri": CLIENT_REDIRECT,
-                    "response_type": "code",
-                    "code_challenge": challenge,
-                    "code_challenge_method": "S256",
-                    "state": "the-state",
-                },
-                follow_redirects=False,
-            )
-        self.assertEqual(authorize.status_code, 302)
+        login_state = self._authorize(client_id, challenge)
 
-        # The user comes back from Constellab; the lab resolves them and mints a code
-        login_state = authorize.headers["location"].split("login_state=")[1].split("&")[0]
+        # The user consents on the front-end; the lab mints the authorization code.
         redirect_url = self.provider.complete_authorization(login_state, user)
         self.assertTrue(redirect_url.startswith(CLIENT_REDIRECT))
         self.assertIn("state=the-state", redirect_url)
 
         code = redirect_url.split("code=")[1].split("&")[0]
 
-        # The code is exchanged for a lab JWT
         token_response = self.client.post(
             "/mcp/token",
             data={
@@ -261,24 +380,10 @@ class TestMcpOAuthFlow(BaseTestCase):
         verifier, challenge = _pkce_pair()
         user = CurrentUserService.get_and_check_current_user()
 
-        with patch(
-            "gws_core.mcp.mcp_constellab_login.ConstellabLoginService.request_device_code",
-            return_value=("device-code", "https://constellab.community/cli-auth?code=x"),
-        ):
-            authorize = self.client.get(
-                "/mcp/authorize",
-                params={
-                    "client_id": client_id,
-                    "redirect_uri": CLIENT_REDIRECT,
-                    "response_type": "code",
-                    "code_challenge": challenge,
-                    "code_challenge_method": "S256",
-                    "state": "s",
-                },
-                follow_redirects=False,
-            )
-        login_state = authorize.headers["location"].split("login_state=")[1].split("&")[0]
-        code = self.provider.complete_authorization(login_state, user).split("code=")[1].split("&")[0]
+        login_state = self._authorize(client_id, challenge)
+        code = (
+            self.provider.complete_authorization(login_state, user).split("code=")[1].split("&")[0]
+        )
 
         payload = {
             "grant_type": "authorization_code",
@@ -296,24 +401,10 @@ class TestMcpOAuthFlow(BaseTestCase):
         _, challenge = _pkce_pair()
         user = CurrentUserService.get_and_check_current_user()
 
-        with patch(
-            "gws_core.mcp.mcp_constellab_login.ConstellabLoginService.request_device_code",
-            return_value=("device-code", "https://constellab.community/cli-auth?code=x"),
-        ):
-            authorize = self.client.get(
-                "/mcp/authorize",
-                params={
-                    "client_id": client_id,
-                    "redirect_uri": CLIENT_REDIRECT,
-                    "response_type": "code",
-                    "code_challenge": challenge,
-                    "code_challenge_method": "S256",
-                    "state": "s",
-                },
-                follow_redirects=False,
-            )
-        login_state = authorize.headers["location"].split("login_state=")[1].split("&")[0]
-        code = self.provider.complete_authorization(login_state, user).split("code=")[1].split("&")[0]
+        login_state = self._authorize(client_id, challenge)
+        code = (
+            self.provider.complete_authorization(login_state, user).split("code=")[1].split("&")[0]
+        )
 
         response = self.client.post(
             "/mcp/token",
@@ -330,18 +421,8 @@ class TestMcpOAuthFlow(BaseTestCase):
 
 
 # test_mcp_oauth
-class TestMcpTokenVerification(BaseTestCase):
+class TestMcpTokenVerification(_McpOAuthTestCase):
     """What the resource server accepts as a credential."""
-
-    def setUp(self):
-        self.provider = ConstellabOAuthProvider(
-            callback_url=CALLBACK_URL, resource_url=MCP_URL
-        )
-        # Entering the TestClient context runs the app lifespan (and so the MCP
-        # session manager); addCleanup exits it at the end of the test.
-        self.client = _build_client(self.provider)
-        self.client.__enter__()
-        self.addCleanup(self.client.__exit__, None, None, None)
 
     def test_a_valid_lab_jwt_is_accepted(self):
         user = CurrentUserService.get_and_check_current_user()
@@ -359,7 +440,7 @@ class TestMcpTokenVerification(BaseTestCase):
         self.assertNotEqual(response.status_code, 401)
 
     def test_garbage_and_foreign_tokens_are_refused(self):
-        """Notably a community token: it is signed by another issuer, not the lab."""
+        """Notably a token from another issuer: it is not signed by this lab."""
         foreign = (
             "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
             ".eyJzdWIiOiIxIiwiZXhwIjo5OTk5OTk5OTk5fQ"

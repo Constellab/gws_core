@@ -9,9 +9,13 @@ Two apps are registered:
 - ``/mcp/``      -- the MCP endpoint itself (Streamable HTTP) plus, courtesy of the
                     SDK, the OAuth discovery documents, ``/register``, ``/authorize``
                     and ``/token``.
-- ``/mcp-auth/`` -- the browser-facing callback that finishes the Constellab leg of
-                    the flow. It lives outside the MCP app because it is the one
-                    part a human's browser actually visits.
+- ``/mcp-auth/`` -- the browser-facing route that completes an authorization once
+                    the user has consented on the lab front-end. It lives outside
+                    the MCP app because it is the one part a human's browser
+                    actually visits.
+
+The consent UI itself is a lab front-end page (``docs/todo/mcp_consent_frontend_spec.md``);
+the lab API only redirects to it and receives its result.
 
 Security headers are disabled on ``/mcp/``: it is a machine-to-machine API that no
 browser renders (see ``ApiRegistry.register_api``).
@@ -43,13 +47,15 @@ from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
 from gws_core.mcp.db_mcp import build_mcp_server
-from gws_core.mcp.mcp_constellab_login import ConstellabLoginError, ConstellabLoginService
-from gws_core.mcp.mcp_oauth_provider import ConstellabOAuthProvider
-from gws_core.user.user import User
-from gws_core.user.user_service import UserService
+from gws_core.mcp.mcp_oauth_provider import LabOAuthProvider
+from gws_core.user.authorization_service import AuthorizationService
 
 MCP_ROUTE_PATH = "mcp"
 MCP_AUTH_ROUTE_PATH = "mcp-auth"
+
+# Route of the consent page on the lab front-end. Must match the front-end's
+# router (see docs/todo/mcp_consent_frontend_spec.md).
+CONSENT_PAGE_ROUTE = "mcp-consent"
 
 
 def _get_lab_base_url() -> str:
@@ -62,9 +68,13 @@ def _get_mcp_url() -> str:
     return f"{_get_lab_base_url()}/{MCP_ROUTE_PATH}"
 
 
-def _get_callback_url() -> str:
-    """Absolute URL of the route that completes the Constellab login."""
-    return f"{_get_lab_base_url()}/{MCP_AUTH_ROUTE_PATH}/callback"
+def _get_consent_page_url() -> str:
+    """Absolute URL of the lab front-end page where the user approves a client.
+
+    Implemented by the front-end (see ``docs/todo/mcp_consent_frontend_spec.md``);
+    the lab only ever redirects to it with a ``login_state``.
+    """
+    return f"{Settings.get_front_url().rstrip('/')}/{CONSENT_PAGE_ROUTE}"
 
 
 # ---------------------------------------------------------------------- #
@@ -75,11 +85,11 @@ mcp_auth_app = ApiRegistry.register_api(f"/{MCP_AUTH_ROUTE_PATH}/")
 
 # Both are built lazily by mount_mcp_app: the URLs they need come from Settings,
 # which is not loaded at import time.
-oauth_provider: ConstellabOAuthProvider | None = None
+oauth_provider: LabOAuthProvider | None = None
 mcp_server: FastMCP | None = None
 
 
-def _get_provider() -> ConstellabOAuthProvider:
+def _get_provider() -> LabOAuthProvider:
     if oauth_provider is None:
         raise RuntimeError("The MCP server is not initialized (mount_mcp_app was not called).")
     return oauth_provider
@@ -104,109 +114,63 @@ async def mcp_session_manager_lifespan() -> AsyncIterator[None]:
         yield
 
 
-def _resolve_lab_user(email: str) -> User | None:
-    """Map a Constellab identity to an active lab user."""
-    user = UserService.get_user_by_email(email)
-    if user is None or not user.is_active:
-        return None
-    return user
+@mcp_auth_app.get("/consent")
+async def mcp_auth_consent(request: Request):
+    """Finish an authorization once the user has consented on the front-end.
 
+    The browser arrives here from the lab's consent page (see
+    ``docs/todo/mcp_consent_frontend_spec.md``) carrying:
 
-@mcp_auth_app.get("/callback")
-async def mcp_auth_callback(request: Request):
-    """Complete the Constellab login leg and redirect back to the MCP client.
+    - ``login_state``: the pending authorization opened by ``/authorize``
+    - ``code``: a single-use, 60s code the front-end obtained from
+      ``/core-api/user/mcp-consent-code`` while authenticated
 
-    Reached by the user's browser after ``/authorize``. Two phases:
+    The code **is** the proof of identity: the front-end and this API live on
+    different sub-domains and the lab session cookie is ``samesite=strict``, so it
+    is never sent here. This is the same bridge the lab already uses for
+    ``login-temp-access``.
 
-    1. First hit (no ``done`` flag): show a page sending the user to Constellab,
-       which polls this same route until the login completes.
-    2. Poll hits: check the device code; once Constellab returns a token, resolve
-       the identity to a lab user and redirect back to the MCP client with the
-       authorization code.
+    Responds with a 302 back to the MCP client, so it must be reached by a real
+    browser navigation (not fetch).
     """
     login_state = request.query_params.get("login_state")
-    constellab_auth_url = request.query_params.get("constellab_auth_url")
+    code = request.query_params.get("code")
 
-    if not login_state:
-        return HTMLResponse(_error_page("Missing login state. Please restart the login."), 400)
-
-    pending = _get_provider().get_pending_login(login_state)
-    if pending is None:
-        return HTMLResponse(_error_page("This login session expired. Please retry."), 400)
-
-    # Phase 1: hand the user to Constellab and start polling.
-    if request.query_params.get("poll") != "1":
-        return HTMLResponse(_login_page(constellab_auth_url or "", login_state))
-
-    # Phase 2: has the user finished logging in on Constellab?
-    try:
-        constellab_token = ConstellabLoginService.poll_for_token(pending.device_code)
-    except ConstellabLoginError as err:
-        return HTMLResponse(_error_page(str(err)), 400)
-
-    if constellab_token is None:
-        # Still waiting: the page keeps polling.
-        return HTMLResponse(_waiting_page(), 202)
-
-    try:
-        email = ConstellabLoginService.get_email_from_token(constellab_token)
-    except ConstellabLoginError as err:
-        return HTMLResponse(_error_page(str(err)), 400)
-
-    user = _resolve_lab_user(email)
-    if user is None:
-        Logger.info(f"MCP OAuth: refused login for '{email}' (no active lab account)")
+    if not login_state or not code:
         return HTMLResponse(
-            _error_page(
-                f"The Constellab account '{email}' has no active account on this lab. "
-                "Ask a lab administrator for access."
-            ),
-            403,
+            _error_page("This authorization link is incomplete. Please start again from your client."),
+            400,
         )
+
+    # Consumes the code: it cannot be replayed.
+    try:
+        auth_context = AuthorizationService.check_unique_code(code)
+    except Exception:
+        Logger.info("MCP OAuth: consent refused (invalid or already-used code)")
+        return HTMLResponse(
+            _error_page("This authorization link has expired or was already used. Please try again."),
+            400,
+        )
+
+    user = auth_context.get_user()
 
     try:
         redirect_url = _get_provider().complete_authorization(login_state, user)
-    except Exception as err:
-        return HTMLResponse(_error_page(str(err)), 400)
+    except Exception:
+        return HTMLResponse(
+            _error_page("This authorization request expired. Please start again from your client."),
+            400,
+        )
 
-    Logger.info(f"MCP OAuth: authorized '{email}'")
+    Logger.info(f"MCP OAuth: authorized '{user.email}'")
     return RedirectResponse(redirect_url, status_code=302)
-
-
-def _login_page(constellab_auth_url: str, login_state: str) -> str:
-    """Page that opens the Constellab login and polls until it completes."""
-    return f"""
-    <html><head><title>Connect to the lab</title></head>
-    <body style="font-family: sans-serif; max-width: 40rem; margin: 4rem auto;">
-      <h2>Connecting to the lab</h2>
-      <p>Log in with your Constellab account in the window that just opened.</p>
-      <p>If nothing happened,
-         <a href="{constellab_auth_url}" target="_blank" rel="noopener">open the login page</a>.</p>
-      <p id="status">Waiting for you to finish logging in...</p>
-      <script>
-        window.open("{constellab_auth_url}", "_blank", "noopener");
-        async function poll() {{
-          const res = await fetch(
-            "?poll=1&login_state={login_state}", {{ redirect: "follow" }});
-          if (res.redirected) {{ window.location.href = res.url; return; }}
-          if (res.status === 202) {{ setTimeout(poll, 3000); return; }}
-          document.body.innerHTML = await res.text();
-        }}
-        setTimeout(poll, 3000);
-      </script>
-    </body></html>
-    """
-
-
-def _waiting_page() -> str:
-    return "<p>Waiting for you to finish logging in...</p>"
 
 
 def _error_page(message: str) -> str:
     return f"""
-    <html><head><title>Login failed</title></head>
+    <html><head><title>Authorization failed</title></head>
     <body style="font-family: sans-serif; max-width: 40rem; margin: 4rem auto;">
-      <h2>Login failed</h2>
+      <h2>Authorization failed</h2>
       <p>{message}</p>
     </body></html>
     """
@@ -231,8 +195,8 @@ def mount_mcp_app(main_app: FastAPI) -> None:
 
     mcp_url = _get_mcp_url()
 
-    oauth_provider = ConstellabOAuthProvider(
-        callback_url=_get_callback_url(),
+    oauth_provider = LabOAuthProvider(
+        consent_page_url=_get_consent_page_url(),
         resource_url=mcp_url,
     )
 

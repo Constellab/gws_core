@@ -1,36 +1,37 @@
 """OAuth authorization server for the lab's MCP endpoint.
 
-Why the lab issues its own tokens
----------------------------------
-The MCP tools run **inside the lab** against the lab's databases, so they need a
-**lab JWT** -- the token :class:`JWTService` signs with the lab's ``secret_key``
-and every lab route already validates. The Constellab community token obtained by
-``gws community login`` is a *different* token from a *different* issuer
-(``api.constellab.community``); the lab would reject it.
+The lab authorizes MCP clients entirely on its own: no Space, no Community, no
+password, and the browser never leaves the lab's own domains. The tools run
+**inside the lab** against its databases, so the token they need is a **lab JWT**
+-- the one :class:`JWTService` signs with the lab's ``secret_key`` and every lab
+route already validates::
 
-So Constellab is used for the **identity** step (prove, in a browser, who you
-are), and the lab mints the **resource token** for MCP. This is the standard
-shape the MCP SDK documents as the "3rd Party OAuth" flow::
+    +--------+     +-------------+     +-------------------+
+    | Claude | --> | MCP server  | --> | lab front-end     |
+    | (local)|     | (lab API)   |     | consent page      |
+    +--------+     +-------------+     +-------------------+
 
-    +--------+     +------------+     +-------------------+
-    | Claude | --> | MCP Server | --> | Constellab        |
-    | (local)|     | (the lab)  |     | (identity)        |
-    +--------+     +------------+     +-------------------+
+The user is already logged into the lab front-end, so identity needs no new
+credential: the consent page proves who they are with a single-use code from
+``UniqueCodeService`` (the same bridge the lab uses for ``login-temp-access``,
+needed because the front-end and API sit on different sub-domains and the session
+cookie is ``samesite=strict``).
 
 What we implement vs. what the SDK does
 ---------------------------------------
 The SDK's ``create_auth_routes`` serves the whole OAuth surface -- discovery
 documents, ``/register`` (DCR), ``/authorize``, ``/token``, PKCE verification and
-redirect_uri validation -- driven by the provider below. This class only supplies
-the Constellab-specific behaviour:
+redirect_uri validation -- driven by the provider below. This class supplies only
+the lab-specific behaviour:
 
-- ``authorize``    -> start the Constellab device-code login, return its URL
-- the callback     -> exchange the device code, map the identity to a lab user,
-                      mint an authorization code, redirect back to the client
-- ``exchange_*``   -> mint the lab JWT as the OAuth access token
+- ``authorize``               -> point the browser at the lab's consent page
+- ``complete_authorization``  -> once consent is given, mint an authorization code
+                                 and redirect back to the client
+- ``exchange_*``              -> mint the lab JWT as the OAuth access token
 
-State (clients, pending logins, codes) is kept **in memory**: it is short-lived
-and a lab restart simply forces a re-login.
+Registered clients are persisted (see :mod:`mcp_oauth_client`). The rest of the
+state (pending logins, authorization codes, refresh tokens) is in memory: it is
+short-lived, and losing it on a restart only costs a login retry.
 """
 
 import secrets
@@ -49,7 +50,6 @@ from mcp.server.auth.provider import (
 from mcp.shared.auth import OAuthClientInformationFull, OAuthToken
 
 from gws_core.core.utils.logger import Logger
-from gws_core.mcp.mcp_constellab_login import ConstellabLoginService
 from gws_core.mcp.mcp_oauth_client import McpOAuthClient
 from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.jwt_service import JWTService
@@ -70,9 +70,8 @@ REFRESH_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60
 
 @dataclass
 class _PendingLogin:
-    """A browser login started by /authorize and not yet completed by the callback."""
+    """An authorization opened by /authorize, awaiting the user's consent."""
 
-    device_code: str
     params: AuthorizationParams
     client_id: str
     created_at: float = field(default_factory=time.time)
@@ -81,19 +80,19 @@ class _PendingLogin:
         return time.time() - self.created_at > PENDING_LOGIN_TTL_SECONDS
 
 
-class ConstellabOAuthProvider(
+class LabOAuthProvider(
     OAuthAuthorizationServerProvider[AuthorizationCode, RefreshToken, AccessToken]
 ):
-    """Authorization server bridging MCP clients to Constellab identity.
+    """Authorization server for the lab's MCP endpoint.
 
-    :param callback_url: Absolute URL of the lab route that finishes the
-        Constellab leg of the flow (see ``mcp_controller``).
+    :param consent_page_url: Absolute URL of the lab front-end's consent page,
+        where the user approves the client (see ``mcp_controller``).
     :param resource_url: The canonical MCP resource URL, echoed back on issued
         access tokens as the RFC 8707 resource indicator.
     """
 
-    def __init__(self, callback_url: str, resource_url: str) -> None:
-        self._callback_url = callback_url
+    def __init__(self, consent_page_url: str, resource_url: str) -> None:
+        self._consent_page_url = consent_page_url
         self._resource_url = resource_url
 
         # Registered clients live in the DB (see McpOAuthClient): a client caches
@@ -126,41 +125,33 @@ class ConstellabOAuthProvider(
         Logger.debug(f"MCP OAuth: registered client '{client_info.client_id}'")
 
     # ------------------------------------------------------------------ #
-    #  Authorization: hand the user off to Constellab
+    #  Authorization: hand the user to the lab's own consent page
     # ------------------------------------------------------------------ #
 
     async def authorize(
         self, client: OAuthClientInformationFull, params: AuthorizationParams
     ) -> str:
-        """Start a Constellab browser login and return the URL to redirect to.
+        """Return the URL of the lab's consent page for this authorization.
 
         The MCP client's OAuth parameters (PKCE challenge, redirect_uri, state)
-        are stashed against an opaque ``login_state`` so the callback can finish
-        the flow. The SDK verifies the PKCE challenge later, at /token.
+        are stashed against an opaque ``login_state``, which is the only thing
+        handed to the front-end. The SDK verifies the PKCE challenge later, at
+        /token.
         """
-        device_code, auth_url = ConstellabLoginService.request_device_code()
-
         login_state = secrets.token_urlsafe(32)
         self._pending_logins[login_state] = _PendingLogin(
-            device_code=device_code,
             params=params,
             client_id=client.client_id,
         )
         self._prune_pending_logins()
 
-        # Constellab redirects/returns to our callback, which carries login_state
-        # so we can recover the MCP client's request.
-        return construct_redirect_uri(
-            self._callback_url,
-            constellab_auth_url=auth_url,
-            login_state=login_state,
-        )
+        return construct_redirect_uri(self._consent_page_url, login_state=login_state)
 
     def complete_authorization(self, login_state: str, user: User) -> str:
         """Finish the flow for ``login_state``: mint a code, return the client redirect.
 
-        Called by the callback route once the Constellab identity has been
-        resolved to a lab :class:`User`.
+        Called by the consent route once the user has approved and been
+        identified as a lab :class:`User`.
 
         :param login_state: The opaque state issued by :meth:`authorize`.
         :param user: The authenticated lab user.

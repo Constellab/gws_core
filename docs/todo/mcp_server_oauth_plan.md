@@ -23,6 +23,14 @@ A remote MCP breaks both assumptions:
 2. **Identity**: every request now arrives from an untrusted network and must carry proof of who
    the caller is, then run as that user.
 
+> **Superseded (identity step).** The flow below originally used the Constellab
+> `/cli-auth` device flow for identity, which redirected the user to
+> `constellab.community`. It now authorizes **entirely within the lab**: `/authorize`
+> redirects to a lab front-end consent page, which proves identity with a
+> single-use `UniqueCodeService` code. No Space, no Community, no password. See
+> "Consent flow" below and `mcp_consent_frontend_spec.md`. Everything about the
+> token model (the lab mints its own JWT) is unchanged, and is *why* this works.
+
 ## Key architectural fact (drove the auth design)
 
 The lab **already is** an OAuth-style resource server:
@@ -194,6 +202,27 @@ auto-refreshes the token. No manual token pasting.
    - a **community** token (not a lab JWT) → 401 (proves the resource-token separation)
    - write statement (`UPDATE ...`) → blocked by `assert_read_only`
    - token of an inactive user → rejected
+
+## Consent flow (current design)
+
+```
+Claude -> GET /mcp/authorize            (lab stashes PKCE/state, mints login_state)
+       -> 302 <FRONT_URL>/mcp-consent?login_state=...        [front-end page]
+             user is already logged into the lab front-end
+             on "Allow": GET /core-api/user/mcp-consent-code -> {"code": ...}  (60s, single-use)
+       -> GET /mcp-auth/consent?login_state=...&code=...     [lab API]
+             check_unique_code(code) -> User -> complete_authorization()
+       -> 302 back to the client with the OAuth code
+Claude -> POST /mcp/token -> lab JWT
+```
+
+**Why the one-time code:** the front-end (`dev-lab.*`) and the API (`glab-dev.*`) are
+different sub-domains and the lab session cookie is `samesite=strict`, so the cookie is
+never sent to the API and cannot identify the user there. `UniqueCodeService` is the
+bridge the lab already uses for `login-temp-access`.
+
+This removed the whole `mcp_constellab_login` module and, with it, the `email`-claim
+risk: identity is now a lab `User` object, never a parsed foreign token.
 
 ## Discovery paths: two SDK gaps to know about
 

@@ -11,6 +11,7 @@ from gws_core.user.auth_context import AuthContext, AuthContextUser
 from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 from ..core_controller import core_app
@@ -81,6 +82,35 @@ def dev_login(code: str) -> Response:
     """
 
     return DevEnvService.dev_get_check_user(code)
+
+
+@core_app.get(
+    "/user/mcp-consent-code",
+    tags=["User"],
+    summary="Generate a one-time code authorizing an MCP client",
+)
+def generate_mcp_consent_code(
+    auth_context: AuthContext = Depends(AuthorizationService.check_user_access_token),
+) -> dict:
+    """Mint a single-use code proving who the caller is, for the MCP consent flow.
+
+    Called by the lab front-end's consent page (see
+    ``docs/todo/mcp_consent_frontend_spec.md``) when the user clicks "Allow". The
+    page then hands the code to ``/mcp-auth/consent`` on the API domain, which
+    consumes it to identify the user.
+
+    The code exists only because the front-end and the API sit on different
+    sub-domains: the lab session cookie is ``samesite=strict`` and is therefore
+    never sent to the API, so the session cannot identify the user there. This is
+    the same bridge ``login-temp-access`` uses.
+
+    It is single-use and short-lived (60s) because, for its lifetime, it is enough
+    to authorize an external client to act as this user.
+    """
+    if not isinstance(auth_context, AuthContextUser):
+        raise UnauthorizedException("Only users can authorize an MCP client")
+
+    return {"code": UniqueCodeService.generate_code(auth_context.get_user().id, {}, 60)}
 
 
 @core_app.get(
