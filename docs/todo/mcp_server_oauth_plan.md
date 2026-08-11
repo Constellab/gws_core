@@ -195,6 +195,24 @@ auto-refreshes the token. No manual token pasting.
    - write statement (`UPDATE ...`) → blocked by `assert_read_only`
    - token of an inactive user → rejected
 
+## Discovery paths: two SDK gaps to know about
+
+Both were found by running the flow, not by reading the SDK, and both 404 the login
+before the browser ever opens:
+
+1. **Metadata must be served from the domain root.** RFC 9728 / 8414 put the
+   well-known documents at the *host root*, but the SDK's routes live inside the
+   MCP app, which the lab mounts at ``/mcp/``. They are therefore re-registered on
+   the root app (``_add_well_known_routes``).
+2. **Our issuer has a path (``https://<lab>/mcp``).** RFC 8414 §3.1 then requires the
+   client to insert the well-known segment *between host and path* and fetch
+   ``/.well-known/oauth-authorization-server/mcp`` -- which Claude does. The SDK
+   hardcodes the bare ``/.well-known/oauth-authorization-server`` regardless of the
+   issuer, so the two disagree. (Note the SDK *is* path-aware for the
+   protected-resource URL via ``build_resource_metadata_url`` -- the asymmetry is
+   the trap.) Both paths are now served; see
+   ``_authorization_server_metadata_paths``.
+
 ## Open questions / risks
 
 - **DCR support**: if implementing full Dynamic Client Registration proves heavy, a pre-registered
