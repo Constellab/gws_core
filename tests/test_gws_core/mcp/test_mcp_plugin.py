@@ -4,6 +4,7 @@ import zipfile
 from io import BytesIO
 from unittest import TestCase, mock
 
+from gws_core.brick.brick_dto import BrickInfo
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.utils.settings import Settings
@@ -29,8 +30,9 @@ from gws_core.mcp.plugin_service import PluginService
 from gws_core.mcp.plugin_skills import inject_lab_name
 from mcp.types import Icon, ToolAnnotations
 
-# A brick name no installed brick can collide with, so a test never removes real tools.
+# Brick names no installed brick can collide with, so a test never removes real tools.
 FAKE_BRICK = "gws_fake_plugin_brick"
+OTHER_FAKE_BRICK = "gws_other_fake_plugin_brick"
 
 LAB_ID = "3f7a9c2e-4b1d-4c9a-9d2e-000000000000"
 
@@ -381,6 +383,161 @@ class TestArchive(_PluginTestCase):
 
         self.assertIn("gws_core_db_list", skill)
         self.assertIn("gws_core_db_query", skill)
+
+
+# test_mcp_plugin
+class TestBrickSkills(_PluginTestCase):
+    """Whose skills reach the archive, and what a change to one of them moves.
+
+    Skills follow the tools: a brick ships them alongside its declarations, so what the
+    registry does to a brick's tools -- serve them, or drop them all -- must happen to
+    its skills too.
+    """
+
+    SKILL = "---\nname: track-things\ndescription: Track things.\n---\nCall the tool.\n"
+
+    def setUp(self):
+        super().setUp()
+        self.addCleanup(McpRegistry.unregister_brick, OTHER_FAKE_BRICK)
+
+        # Fake bricks, on disk, resolved by name the way an installed brick would be.
+        self.brick_paths: dict[str, str] = {}
+        real_get_brick_info = BrickHelper.get_brick_info
+
+        def get_brick_info(obj):
+            if isinstance(obj, str) and obj in self.brick_paths:
+                return BrickInfo(
+                    path=self.brick_paths[obj],
+                    name=obj,
+                    version="1.0.0",
+                    repo_type="git",
+                    repo_commit="",
+                    parent_name=None,
+                    error=None,
+                )
+            return real_get_brick_info(obj)
+
+        patcher = mock.patch.object(BrickHelper, "get_brick_info", side_effect=get_brick_info)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def a_brick_shipping(self, brick_name: str, skills: dict[str, dict[str, str]]) -> str:
+        """Write a brick's ``claude-plugin/skills/`` folder on disk.
+
+        :param skills: skill folder name -> file path (relative to the skill folder) ->
+            content. A folder with no ``SKILL.md`` is written as asked, so a test can
+            check it is not served.
+        :return: The brick's root folder.
+        """
+        brick_path = self.brick_paths.setdefault(brick_name, Settings.make_temp_dir())
+
+        for folder_name, files in skills.items():
+            for relative_path, content in files.items():
+                file_path = os.path.join(
+                    brick_path, "claude-plugin", "skills", folder_name, relative_path
+                )
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+                with open(file_path, "w", encoding="utf-8") as file:
+                    file.write(content)
+
+        return brick_path
+
+    def a_contributing_brick(self, brick_name: str, skills: dict[str, dict[str, str]]) -> str:
+        """A brick that declares a tool *and* ships skills -- the ordinary case."""
+        brick_path = self.a_brick_shipping(brick_name, skills)
+        McpRegistry._register(a_tool, brick_name=brick_name, name="do_something")
+        return brick_path
+
+    def test_a_contributing_brick_ships_its_skills(self):
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+
+        generated = self.generate()
+
+        self.assertIn(
+            f"skills/{FAKE_BRICK}/track-things/SKILL.md", self.archive_files(generated.archive)
+        )
+        self.assertIn(
+            f"./skills/{FAKE_BRICK}/track-things",
+            self.plugin_manifest(generated.archive)["skills"],
+        )
+
+    def test_a_brick_in_error_ships_none(self):
+        """Its tools are dropped whole, and a skill driving tools nobody serves would
+        only tell the model to call something that does not exist."""
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+
+        # What BrickService does when a brick's import fails part-way.
+        McpRegistry.unregister_brick(FAKE_BRICK)
+
+        self.assertNotIn(FAKE_BRICK, json.dumps(self.plugin_manifest(self.generate().archive)))
+
+    def test_a_brick_declaring_no_tool_ships_none(self):
+        """Skills come with the tools they drive: a brick contributing nothing to the
+        server contributes nothing to the plugin either."""
+        self.a_brick_shipping(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+
+        self.assertNotIn(FAKE_BRICK, json.dumps(self.plugin_manifest(self.generate().archive)))
+
+    def test_two_bricks_may_ship_a_skill_of_the_same_name(self):
+        """Which is why each brick gets its own sub-folder in the archive."""
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+        self.a_contributing_brick(OTHER_FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+
+        files = self.archive_files(self.generate().archive)
+
+        self.assertIn(f"skills/{FAKE_BRICK}/track-things/SKILL.md", files)
+        self.assertIn(f"skills/{OTHER_FAKE_BRICK}/track-things/SKILL.md", files)
+
+    def test_a_skill_folder_travels_whole(self):
+        """A skill may be more than one file; only SKILL.md is rewritten."""
+        reference = "# Queries\n\nSELECT 1\n"
+        self.a_contributing_brick(
+            FAKE_BRICK,
+            {"track-things": {"SKILL.md": self.SKILL, "references/queries.md": reference}},
+        )
+
+        files = self.archive_files(self.generate().archive)
+
+        self.assertEqual(
+            files[f"skills/{FAKE_BRICK}/track-things/references/queries.md"].decode("utf-8"),
+            reference,
+        )
+
+    def test_a_folder_with_no_skill_file_is_not_shipped(self):
+        """Claude Code would not load it either, so it is left out with a warning."""
+        self.a_contributing_brick(FAKE_BRICK, {"not-a-skill": {"README.md": "# Notes\n"}})
+
+        files = self.archive_files(self.generate().archive)
+
+        self.assertNotIn(f"skills/{FAKE_BRICK}/not-a-skill/README.md", files)
+
+    def test_the_lab_name_is_injected_into_a_brick_skill(self):
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+
+        files = self.archive_files(self.generate(name="Mon Lab").archive)
+        skill = files[f"skills/{FAKE_BRICK}/track-things/SKILL.md"].decode("utf-8")
+
+        self.assertIn("Mon Lab", skill)
+        self.assertIn("Track things.", skill)
+
+    def test_editing_a_skill_changes_the_version(self):
+        """Otherwise the edit sits in the lab and no installed client ever pulls it."""
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+        before = self.generate().version
+
+        self.a_brick_shipping(
+            FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL + "\nOne more line.\n"}}
+        )
+
+        self.assertNotEqual(self.generate().version, before)
+
+    def test_adding_a_skill_changes_the_version(self):
+        self.a_contributing_brick(FAKE_BRICK, {"track-things": {"SKILL.md": self.SKILL}})
+        before = self.generate().version
+
+        self.a_brick_shipping(FAKE_BRICK, {"track-others": {"SKILL.md": self.SKILL}})
+
+        self.assertNotEqual(self.generate().version, before)
 
 
 # test_mcp_plugin

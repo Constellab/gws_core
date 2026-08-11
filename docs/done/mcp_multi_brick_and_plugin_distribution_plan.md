@@ -182,8 +182,12 @@ brick root (F1).
 
 ## Work items
 
-Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 4, 6, 7) is **done**
-— issue #105.
+Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D (items 3, 4, 6, 7) is **done**
+— issue #105, which carried section E (the bricks' skills) with it, since the archive could not be
+assembled without deciding what goes in it. Issue #106 closed on that state: it verified each of
+its criteria against the code and added the missing coverage of *whose* skills are collected — a
+brick in error, a brick declaring no tool, two bricks shipping a skill of the same name, and a
+skill edit moving the version.
 
 1. ~~**`McpRegistry`** — registry + decorator, brick prefixing, `meta` merge, filtering of bricks
    in error. Modelled on `ApiRegistry`.~~ `src/gws_core/mcp/mcp_registry.py`.
