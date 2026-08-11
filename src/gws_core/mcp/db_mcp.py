@@ -25,6 +25,7 @@ from typing import Any
 from mcp.server.auth.provider import OAuthAuthorizationServerProvider
 from mcp.server.auth.settings import AuthSettings
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 from gws_core.core.db.db_query_service import DbQueryError, DbQueryService
 
@@ -39,6 +40,38 @@ INSTRUCTIONS = (
     '  db_query(sql="DESCRIBE invest_investor", db="gws_invest")\n'
     '  db_query(sql="SELECT * FROM invest_investor", db="gws_invest")'
 )
+
+
+def _build_transport_security(allowed_hosts: list[str] | None) -> TransportSecuritySettings:
+    """Configure the SDK's DNS-rebinding protection for the lab's own host.
+
+    The SDK defaults to ``enable_dns_rebinding_protection=True`` with an **empty**
+    ``allowed_hosts``, which rejects every request that is not to localhost with
+    ``421 Invalid Host header``. That default suits a server bound to a loopback
+    port; the lab is served on its own domain, so the domain must be declared or
+    no client can ever connect.
+
+    The protection is kept on (it stops a malicious page from pointing a rebound
+    DNS name at the lab) and simply told the truth about where the lab lives.
+
+    :param allowed_hosts: Host headers to accept, without scheme. ``None`` or empty
+        turns the protection off, for deployments where the host is not knowable.
+    """
+    if not allowed_hosts:
+        return TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
+    # Accept the host with or without an explicit port.
+    hosts = [host for entry in allowed_hosts for host in (entry, f"{entry}:*")]
+
+    return TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=hosts,
+        # Browsers never call this API directly (an MCP client is not a page), so
+        # requests legitimately carry no Origin. Listing the same hosts keeps a
+        # browser-based client working without widening what is accepted.
+        allowed_origins=[f"https://{entry}" for entry in allowed_hosts]
+        + [f"http://{entry}" for entry in allowed_hosts],
+    )
 
 
 def db_list() -> list[str]:
@@ -78,6 +111,7 @@ def db_query(
 def build_mcp_server(
     auth_provider: OAuthAuthorizationServerProvider,
     auth_settings: AuthSettings,
+    allowed_hosts: list[str] | None = None,
 ) -> FastMCP:
     """Build the MCP server with its tools and authentication wired in.
 
@@ -91,6 +125,8 @@ def build_mcp_server(
 
     :param auth_provider: The OAuth provider issuing and verifying tokens.
     :param auth_settings: The OAuth settings (issuer / resource URLs, DCR).
+    :param allowed_hosts: Host headers this server answers to (see
+        :func:`_build_transport_security`). Defaults to no host restriction.
     :return: The configured MCP server.
     """
     mcp = FastMCP(
@@ -98,6 +134,7 @@ def build_mcp_server(
         instructions=INSTRUCTIONS,
         auth_server_provider=auth_provider,
         auth=auth_settings,
+        transport_security=_build_transport_security(allowed_hosts),
     )
 
     mcp.add_tool(

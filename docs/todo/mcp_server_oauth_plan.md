@@ -224,6 +224,22 @@ bridge the lab already uses for `login-temp-access`.
 This removed the whole `mcp_constellab_login` module and, with it, the `email`-claim
 risk: identity is now a lab `User` object, never a parsed foreign token.
 
+## Transport security: the SDK locks out non-localhost hosts by default
+
+`TransportSecuritySettings` defaults to `enable_dns_rebinding_protection=True` with an
+**empty** `allowed_hosts`, which rejects every Host it was not told about with
+`421 Invalid Host header`. That default fits a server on a loopback port; a lab served
+on its own domain must declare that domain or **no client can ever connect** — the
+symptom is an authenticated client that then fails immediately
+(`Auth: ✔ authenticated` + `HTTP 421`).
+
+The protection is kept enabled and simply told the lab's real host, derived from the
+configured lab URL (`_get_allowed_hosts` / `_build_transport_security`). A reverse proxy
+that rewrites `Host` would need its value added too.
+
+Note it sits **inside** the session manager, behind `RequireAuthMiddleware`: an
+anonymous request to a bad host is answered `401` before the Host is ever inspected.
+
 ## Discovery paths: two SDK gaps to know about
 
 Both were found by running the flow, not by reading the SDK, and both 404 the login

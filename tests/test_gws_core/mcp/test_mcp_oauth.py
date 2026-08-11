@@ -17,7 +17,8 @@ from mcp.server.auth.settings import AuthSettings, ClientRegistrationOptions
 from pydantic import AnyHttpUrl
 from starlette.testclient import TestClient
 
-MCP_URL = "https://lab.example.com/mcp"
+LAB_HOST = "lab.example.com"
+MCP_URL = f"https://{LAB_HOST}/mcp"
 CONSENT_PAGE_URL = "https://dev-lab.example.com/mcp-consent"
 CLIENT_REDIRECT = "http://localhost:33418/callback"
 
@@ -47,7 +48,11 @@ def _build_client(provider: LabOAuthProvider) -> TestClient:
         resource_server_url=MCP_URL,
         client_registration_options=ClientRegistrationOptions(enabled=True),
     )
-    server = build_mcp_server(auth_provider=provider, auth_settings=auth_settings)
+    server = build_mcp_server(
+        auth_provider=provider,
+        auth_settings=auth_settings,
+        allowed_hosts=[LAB_HOST],
+    )
     server.settings.streamable_http_path = "/"
 
     @asynccontextmanager
@@ -155,6 +160,57 @@ class TestMcpOAuthDiscovery(_McpOAuthTestCase):
         bare = self.client.get("/.well-known/oauth-authorization-server").json()
 
         self.assertEqual(with_path, bare)
+
+
+# test_mcp_oauth
+class TestMcpTransportSecurity(_McpOAuthTestCase):
+    """DNS-rebinding protection must not lock out the lab's own domain."""
+
+    def _call_with_host(self, host: str):
+        """An authenticated call: transport security sits behind the auth
+        middleware, so an anonymous request is 401'd before the Host is read."""
+        user = CurrentUserService.get_and_check_current_user()
+        token = JWTService.create_jwt(user.id)[len(JWTService.AUTH_SCHEME) :]
+
+        return self.client.post(
+            "/mcp/",
+            json={"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            headers={
+                "Host": host,
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/json, text/event-stream",
+            },
+        )
+
+    def test_a_request_to_the_labs_own_host_is_accepted(self):
+        """Regression: the SDK defaults to rebinding protection with an EMPTY
+        allowed_hosts, so every non-localhost Host got 421 "Invalid Host header"
+        -- the client authenticated fine, then could not connect at all."""
+        self.assertNotEqual(self._call_with_host(LAB_HOST).status_code, 421)
+
+    def test_a_request_to_an_unknown_host_is_refused(self):
+        """The protection is configured, not disabled: other hosts stay rejected."""
+        self.assertEqual(self._call_with_host("evil.example.com").status_code, 421)
+
+    def test_the_host_may_carry_a_port(self):
+        self.assertNotEqual(self._call_with_host(f"{LAB_HOST}:3000").status_code, 421)
+
+
+# test_mcp_oauth
+class TestAllowedHosts(TestCase):
+    """Which Host headers the lab declares to the SDK."""
+
+    def test_the_host_is_taken_from_the_lab_url(self):
+        self.assertEqual(
+            mcp_controller._get_allowed_hosts("https://glab-dev.rio.gencovery.io/mcp"),
+            ["glab-dev.rio.gencovery.io"],
+        )
+
+    def test_a_port_in_the_lab_url_is_kept(self):
+        self.assertEqual(
+            mcp_controller._get_allowed_hosts("http://localhost:3000/mcp"),
+            ["localhost:3000"],
+        )
 
 
 # test_mcp_oauth
