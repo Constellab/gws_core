@@ -5,6 +5,12 @@
 > events, soft references) and connects to
 > [app_discovery_and_activation_plan.md](app_discovery_and_activation_plan.md) (à-la-carte apps,
 > the `DocumentSource` provider pattern it sketches for the Search app).
+>
+> ⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md)**, which introduces **option C**
+> (a shared folder *grants* read access) and changes this plan on five points: the index `UNIQUE`
+> constraint, new `source_type`/`source_id`/`scope_source` columns, the meaning of `folder_id`, the
+> `IndexedDocumentModel` upsert, and — most importantly — the claim that the index is fully
+> rebuildable from providers. Each is flagged inline below with "**Amended by shared_folders_plan**".
 
 ## Purpose
 
@@ -93,6 +99,12 @@ Dropping the whole index loses nothing: it is rebuilt by asking every provider t
 That property is what makes the whole design safe, and it is what makes deactivating an app
 clean: deactivate = delete its index rows; reactivate = re-enumerate.
 
+⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md) — this no longer holds for shared
+rows.** Rows with `scope_source = 'SHARED'` cannot be produced by any app's `enumerate()`, because no
+app knows about sharing; their source of truth is `gws_shared_folder_item`. **A rebuild that only
+replays providers would erase every share in the lab.** The rebuild procedure must re-project the
+shares table as well. Everything else in this section stands.
+
 ```
 gws_document_index                          the real data lives here
 ├── (NOTE, abc-123, "Rapport mars")      →  gws_note.id = abc-123
@@ -150,6 +162,10 @@ without hierarchy), or later an explicit **collection** object referencing docum
 is by construction the intersection of the members' access. A collection is more honest than a folder,
 because the name does not promise an organisation. Neither is built now; tags cover the need.
 
+⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md)**: under option C this is no longer
+given up. A folder entry carries its own title, so mixed-origin documents can be gathered *and*
+renamed for the recipient — which is what the deliverable use case actually needs.
+
 ### Alternative considered: option B — drive folders hold references to any document
 
 Kept for the internal discussion. Under option B, a drive folder contains *index entries* rather than
@@ -175,6 +191,29 @@ classification, not storage.
 If option B is chosen, the four bullets above are requirements, not details, and the "one folder per
 document" simplification also becomes questionable: filing one document under two roots would give it
 two perimeters, contradicting the "exactly one perimeter tag" rule.
+
+### Option C — the shared folder *grants* access (see shared_folders_plan.md)
+
+Detailed in [shared_folders_plan.md](shared_folders_plan.md); summarised here so the three options can
+be compared in one place.
+
+Options A and B both assume **the folder classifies, the app authorizes** — filing a document into a
+shared folder gives nobody access. Option C inverts that: **filing grants `READ`**, creating a second
+access path alongside the owning app's (`app_access OR shared_access`, capped at read).
+
+- ✅ **Objection 2 to option B does not apply.** A granting folder shows the same contents to every
+  member, so the "folder that differs per viewer" problem disappears — C is *better* than A on this
+  criterion, not worse.
+- ✅ **Objection 1 does not apply either.** Nothing is filed automatically: a human deliberately shares
+  a handful of objects. No app is asked to place its 50 generated resources, so the volume argument is
+  moot.
+- ✅ Covers the **mixed-origin deliverable** use case this plan gives up under option A (see "What is
+  given up"), because a folder entry carries its own title.
+- ⚠️ It introduces the platform's **first second access path**, and with it the folder entry as an
+  object of its own (own id, own title, own tags, borrowed content).
+- ⚠️ It requires the schema and rebuildability amendments flagged in this document.
+
+**Do not reject C by assimilation to B** — they differ on exactly the point that made B unacceptable.
 
 ### Drive sharing: root folders only (settled, V1)
 
@@ -258,6 +297,10 @@ class ProjectDocument(IndexedDocumentModel):
 
 This is the pattern already used by `ModelWithUser` (fills `created_by`/`last_modified_by`) and
 `ModelWithFolder`. A third mixin of the same family.
+
+⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md)**: the mixin's upsert must target the
+`scope_source = 'OWNER'` row only. An upsert keyed on `(entity_type, entity_id)` alone would overwrite
+or duplicate the entity's share rows on every save.
 
 The provider is then only needed for what the mixin cannot do: **rebuilding** the index,
 **entities that cannot inherit the mixin** (`ResourceModel` already inherits three base classes,
@@ -417,9 +460,17 @@ gws_document_index(
     id,
 
     -- identity: soft reference, NO FK. Same keys as EntityTag → taggable for free
-    entity_type, entity_id,              -- UNIQUE (entity_type, entity_id)
+    -- ⚠ Amended by shared_folders_plan: this identifies THIS ROW, not the referenced entity.
+    -- On a SHARED row it is (FOLDER_ITEM, <entry id>) so the entry is taggable independently.
+    entity_type, entity_id,
+
+    -- ⚠ Added by shared_folders_plan: the referenced entity. NULL on an OWNER row.
+    source_type NULL, source_id NULL,    -- UNIQUE (source_type, source_id, access_scope)
+    scope_source,                        -- 'OWNER' | 'SHARED' (see below: required, not cosmetic)
 
     -- what the user sees and searches
+    -- on a SHARED row, title is the ENTRY's own title, independent from the source's and never
+    -- synced; the source title is deliberately NOT searchable through the entry
     title,
     mime_type NULL, extension NULL, size NULL,
 
@@ -428,6 +479,8 @@ gws_document_index(
     origin_id NULL, origin_entity_type NULL,
 
     -- drive classification (NOT SpaceFolder)
+    -- ⚠ Amended by shared_folders_plan: no longer meaningful only for owner_app = "DRIVE";
+    -- it is set on every SHARED row (the folder the entry sits in)
     folder_id NULL,
 
     -- access control
@@ -459,7 +512,9 @@ gws_document_content(document_id, content_preview, content_text)
 Indexes:
 
 ```
-UNIQUE (entity_type, entity_id)
+UNIQUE (entity_type, entity_id)         -- ⚠ amended: identity of the row
+UNIQUE (source_type, source_id, access_scope)   -- ⚠ added: one entry per source per root scope
+INDEX  (source_type, source_id)         -- ⚠ added: find every row referencing an entity
 INDEX  (owner_app, access_scope)        -- the security filter, on every query
 INDEX  (title)
 INDEX  (entity_type, last_modified_at)  -- per-app listing, most recent first
@@ -737,41 +792,47 @@ document; it is listed here because the index cannot start without it.
 
 ## Points to settle
 
-1. **Drive scope: option A vs option B** — option A (drive owns only its own files) is written above as
-   the preferred solution; option B is documented alongside it for the internal discussion. **This is
-   the one decision still to validate**, and it changes the drive's UI and the meaning of `folder_id`,
-   not the index or the scope mechanism.
+1. **Drive scope: option A vs option B vs option C** — option A (drive owns only its own files) is
+   written above as the preferred solution; option B is documented alongside it; **option C**
+   (the shared folder grants read access, see [shared_folders_plan.md](shared_folders_plan.md)) was
+   added afterwards and is the one being pursued. **This is the one decision still to validate**, and
+   it changes the drive's UI and the meaning of `folder_id`; under option C it also changes the index
+   schema, but not the scope mechanism itself.
 2. **Multi-folder filing.** One folder per document to start; a link table if the need appears. Under
    option A this is a minor drive feature; under option B, filing one document under two roots would
-   give it two perimeters, contradicting the "exactly one perimeter tag" rule.
-2. **Named groups.** Root sharing lists individual users in V1 because named groups do not exist.
+   give it two perimeters, contradicting the "exactly one perimeter tag" rule. Under option C it is
+   natural: two folders means two entries, each with its own scope and title.
+3. **Named groups.** Root sharing lists individual users in V1 because named groups do not exist.
    Anything richer (per-folder sharing, org-wide shares) needs them first — a core-level decision
    beyond this plan.
-3. **Full-text content.** Phase 2. MariaDB `FULLTEXT` for exact search, or delegation to
+4. **Full-text content.** Phase 2. MariaDB `FULLTEXT` for exact search, or delegation to
    `gws_search` for semantic search — `open_content()` is the only hook needed either way.
-4. **Scope volume.** Watch the number of scopes per user; the design assumes membership in tens,
+5. **Scope volume.** Watch the number of scopes per user; the design assumes membership in tens,
    not thousands, of projects. A hierarchical scope (`org:X/project:abc`, enabling
-   `LIKE 'org:X/%'`) is the escape hatch if that assumption breaks.
-5. **UI for partially visible folders** — *moot under option A* (a drive folder holds only drive files,
+   `LIKE 'org:X/%'`) is the escape hatch if that assumption breaks. Under option C, shared folders add
+   one scope per root a user belongs to — same order of magnitude, but worth counting together.
+6. **UI for partially visible folders** — *moot under option A* (a drive folder holds only drive files,
    all sharing one scope, so it looks the same to everyone who can open it). Becomes a requirement if
-   option B is chosen: warn at filing time and show an owner chip per item.
-6. **Structured entities: same table or a sibling?** `is_document` as a discriminant is assumed here,
+   option B is chosen: warn at filing time and show an owner chip per item. *Also moot under option C*,
+   for the same reason as A: a granting folder shows the same contents to every member.
+7. **Structured entities: same table or a sibling?** `is_document` as a discriminant is assumed here,
    which keeps search and scoping shared. But a task is not a document and has no business in a drive
-   folder — revisit if the drive UI gets complicated.
-7. **RAG deletion window.** A document deleted from the drive stays queryable until the deletion
+   folder — revisit if the drive UI gets complicated. Under option C a task *can* legitimately sit in a
+   shared folder, which weakens the argument for a sibling table.
+8. **RAG deletion window.** A document deleted from the drive stays queryable until the deletion
    event lands. Acceptable for a stale document; not for one deleted *because* it was confidential.
    Event-driven deletion closes this, but the failure mode should be documented rather than assumed
    away.
-8. **Multi-lab workspaces (unexplored).** The activation plan allows a workspace to span several
+9. **Multi-lab workspaces (unexplored).** The activation plan allows a workspace to span several
    datalabs, with soft references and registries resolved over a lab-to-lab transport
    (`app_discovery_and_activation_plan.md:336-351`). A **per-lab** index does not answer "all my
    documents" at workspace scale — that likely needs a workspace-level aggregation, exactly like the
    capabilities view. Not addressed by this plan, and the only open point that could change the index's
    *shape* rather than its details. Worth a dedicated pass if multi-lab is a near-term goal.
-9. **One DB vs one DB per module (split plan point 12).** In the per-module option, `gws_document_index`
-   sits in the core DB while referencing entities in other DBs — consistent with its no-FK design, but
-   the `folder_id` reference and the `gws_entity_tag` join need verification in that scenario. Not done.
-10. **Expected volume (unmeasured).** The whole design assumes tens of scopes per user; 10k vs 10M
+10. **One DB vs one DB per module (split plan point 12).** In the per-module option, `gws_document_index`
+    sits in the core DB while referencing entities in other DBs — consistent with its no-FK design, but
+    the `folder_id` reference and the `gws_entity_tag` join need verification in that scenario. Not done.
+11. **Expected volume (unmeasured).** The whole design assumes tens of scopes per user; 10k vs 10M
     documents also changes indexing and full-text choices. No measurement exists yet.
 
 ### Deferred to other refactors (not blocking this plan)
@@ -780,6 +841,9 @@ document; it is listed here because the index cannot start without it.
   resource makes document search noisy, indexing only file-backed ones excludes things users consider
   deliverables. **Decided during the `gws_workflow` app refactor**, when the workflow provider is
   written. Suggested default meanwhile: filter on file-backed and/or `flagged`, configurable.
+  ⚠️ **Amended by [shared_folders_plan.md](shared_folders_plan.md)**: under option C a share *is* an
+  index row, so an entity must be indexable to be shareable. This is no longer only about search noise
+  — **it gates what can be shared**, which promotes the decision out of "deferred".
 - **`RichTextFileService`'s fate** — replacing it with drive files is the most invasive change in this
   plan (data migration + persisted rich text blocks referencing bare `filename`s + `gws_project`
   already using the service), and the only one that makes note attachments genuinely searchable.
@@ -806,7 +870,8 @@ works against existing labs.
 4. **Access scopes** — perimeter tag, `access_scope`, `gws_user_scope`, fail-closed search
    builder. Needed as soon as a second app with a real perimeter (`gws_project`) is indexed.
 5. **Drive** — folders, upload, filing. Builds on the index; the index is useful without it, the
-   reverse is not true.
+   reverse is not true. Under option C this step merges with steps 3–4 of
+   [shared_folders_plan.md](shared_folders_plan.md), which shares the same folder tables.
 6. **Other providers** — Note, ProjectDocument.
 7. **RAG integration** — the single `document_index` provider in `gws_ai_toolkit`, the chunk
    deletion/metadata-update queue, and the two triggers (content vs perimeter) with SQL verification of

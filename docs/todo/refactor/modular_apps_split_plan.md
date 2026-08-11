@@ -31,6 +31,9 @@ The canonical example — *a note embedding a resource view*: `gws_workflow` reg
   scopes. **It amends this plan**: it merges points 1+2 into a single entity-type registry, settles the
   `origin_type` vocabulary, adds a third file storage to points 7 and 8, and defers two of its own
   decisions to the `gws_workflow` and `gws_note` app refactors.
+- [shared_folders_plan.md](shared_folders_plan.md) — sharing any entity into folders, and the unified
+  per-object rights model (`EntityAccessProvider`, `Permission`). **It amends the document plan**
+  (option C, index schema, rebuildability) and answers half of point 17 below.
 - [ai_agent_chat_plan.md](ai_agent_chat_plan.md) — the lab AI agent (MCP tools), which the document
   plan relies on for querying structured entities in SQL.
 
@@ -246,3 +249,5 @@ Every existing brick imports from `gws_core` (`from gws_core import File, Table,
 ### 17. Core modules that reference domain entities (`share/`, `space/`, `community/`, `external_lab/`)
 
 These modules stay in the core in the current plan but know about domain entities: `ShareLink` is entity-bound, the Space sync sends scenarios/notes, `external_lab` imports resources (`IMPORTED_FROM_LAB`). That is a reverse core→app dependency, forbidden by the golden rule. **How to handle them is still to define** — likely the same registry treatment (shareable entity types, sync providers registered by each app), or moving some of them into their owning app; to settle module by module.
+
+**Partially answered for internal sharing**: [shared_folders_plan.md](shared_folders_plan.md) gives the registry treatment this point calls for — each app registers an `EntityAccessProvider` (owner scopes, entity scope, `can_share`), and the core never learns what a project or a note is. Note that this is *internal* sharing (granting lab users access); `ShareLink` is *outbound* sharing (public links) and stays a separate concern — the two should not be merged.
