@@ -502,6 +502,9 @@ from .lab.lab_model.lab_model_param import LabModelParam as LabModelParam
 from .lab.monitor.monitor import Monitor as Monitor
 from .lab.monitor.monitor_service import MonitorService as MonitorService
 
+# MCP
+from .mcp.mcp_registry import McpRegistry as McpRegistry
+
 # Model
 from .model.event.base_event import BaseEvent as BaseEvent
 from .model.event.event import Event as Event

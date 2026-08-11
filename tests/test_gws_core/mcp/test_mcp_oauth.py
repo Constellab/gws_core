@@ -7,7 +7,7 @@ from unittest import TestCase
 
 from fastapi import FastAPI
 from gws_core.mcp import mcp_controller
-from gws_core.mcp.db_mcp import build_mcp_server
+from gws_core.mcp.mcp_server_builder import build_mcp_server
 from gws_core.oauth import oauth_controller
 from gws_core.oauth.oauth_provider import LabOAuthProvider
 from gws_core.oauth.oauth_service import OAuthService

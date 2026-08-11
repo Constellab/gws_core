@@ -11,6 +11,7 @@ from gws_core.brick.brick_settings import BrickSettings
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
+from gws_core.mcp.mcp_registry import McpRegistry
 from gws_core.model.typing import Typing
 from gws_core.model.typing_manager import TypingManager
 
@@ -193,6 +194,19 @@ class BrickService:
                 # typings whose module never finished importing. Drop those orphaned
                 # typings so they don't break the later typing initialization.
                 TypingManager.unregister_unresolvable_typings(brick_name)
+                # same reasoning for the MCP tools declared before the failing module:
+                # half a brick's tools is a set no version of the brick ever served, so
+                # the whole brick is dropped from the MCP server.
+                dropped_tools = McpRegistry.unregister_brick(brick_name)
+                if dropped_tools:
+                    BrickLogService.log_brick_message(
+                        brick_name=brick_name,
+                        message=(
+                            "The following MCP tools are not served because the brick did "
+                            f"not load completely: {', '.join(dropped_tools)}."
+                        ),
+                        status="CRITICAL",
+                    )
                 # stop the brick load and go to next brick
                 break
 

@@ -38,7 +38,7 @@ from starlette.routing import Route
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.lab.api_registry import ApiRegistry
-from gws_core.mcp.db_mcp import build_mcp_server
+from gws_core.mcp.mcp_server_builder import build_mcp_server
 from gws_core.oauth.oauth_provider import LabOAuthProvider
 from gws_core.oauth.oauth_service import OAuthService
 

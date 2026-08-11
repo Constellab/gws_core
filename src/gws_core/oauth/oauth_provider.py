@@ -22,9 +22,11 @@ cookie is ``samesite=strict``).
 .. warning::
    **Tokens are currently unscoped**: an issued token is a full lab session, able
    to do anything its user can, whatever the consent screen said the client wanted.
-   That is tolerable while the only consumer is the read-only MCP endpoint, but any
-   second consumer -- and certainly any third-party client -- needs real scopes
-   first. The plumbing is ready for them: ``scopes`` is carried end to end
+   What stands in for scopes today is that each MCP tool checks the calling user's
+   rights itself (see :mod:`gws_core.mcp.mcp_registry`) -- authentication is not
+   authorization. Any consumer that cannot make that check for itself, and certainly
+   any third-party client, needs real scopes first. The plumbing is ready for them:
+   ``scopes`` is carried end to end
    (``AuthorizationParams`` -> ``AuthorizationCode`` -> ``AccessToken``) and
    :meth:`_mint_lab_token` is the single place that turns a grant into a token.
    :meth:`JWTService.create_app_jwt` already shows how the lab mints a *bounded*

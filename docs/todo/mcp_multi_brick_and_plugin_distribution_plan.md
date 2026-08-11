@@ -182,20 +182,25 @@ brick root (F1).
 
 ## Work items
 
-1. **`McpRegistry`** — registry + decorator, brick prefixing, `meta` merge, filtering of bricks in
-   error. Modelled on `ApiRegistry`.
-2. **`build_mcp_server` consumes the registry** instead of adding two tools inline; server
-   `instructions` generated from the contributing bricks.
+Section A (items 1, 2, 5) is **done** — issue #104. Section B/C/D/E (items 3, 4, 6) is issue #105.
+
+1. ~~**`McpRegistry`** — registry + decorator, brick prefixing, `meta` merge, filtering of bricks
+   in error. Modelled on `ApiRegistry`.~~ `src/gws_core/mcp/mcp_registry.py`.
+2. ~~**`build_mcp_server` consumes the registry** instead of adding two tools inline; server
+   `instructions` generated from the contributing bricks.~~ Moved out of `db_mcp.py` into
+   `src/gws_core/mcp/mcp_server_builder.py`, which is now the only consumer of the registry.
 3. **Plugin generator** — manifest (identity, version, `renames`, MCP server URL) + deterministic
    archive assembly + in-memory cache.
 4. **Distribution routes** — `marketplace.json` and the versioned archive, public, mounted only
    when MCP is enabled, 404 on version mismatch.
-5. **`gws_core` as a contributor** — move `db_list` / `db_query` onto the registry with their
-   annotations; rewrite `query-lab-db`.
+5. ~~**`gws_core` as a contributor** — move `db_list` / `db_query` onto the registry with their
+   annotations~~; rewrite `query-lab-db` (the skill does not exist in the repo yet — it comes
+   with item 3, which is what collects skills into the archive).
 6. **Identity persistence** — name resolution, suffix rule, history in `Settings`.
-7. **Docs** — brick author guide (declare a tool, ship a skill, the public-content rule), and the
-   page on the public repo explaining the per-lab command with the Claude Code ≥ 2.1.224
-   prerequisite next to it.
+7. **Docs** — ~~brick author guide (declare a tool, choose annotations, authorization is the
+   brick's job): `docs/mcp_brick_tools.md`~~. Still to write, with item 3: shipping a skill, the
+   public-content rule, and the page on the public repo explaining the per-lab command with the
+   Claude Code ≥ 2.1.224 prerequisite next to it.
 
 ## To verify during implementation
 
