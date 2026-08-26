@@ -18,7 +18,7 @@ class RichTextBlockHeaderLevel(Enum):
             return cls.HEADER_1
         if level == 1:
             return cls.HEADER_1
-        elif level == 2:
+        elif level == 2:  # noqa: PLR2004
             return cls.HEADER_2
         else:
             return cls.HEADER_3

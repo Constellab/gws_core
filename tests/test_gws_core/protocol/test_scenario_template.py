@@ -5,6 +5,7 @@ from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.param_types import ParamSpecDTO, ParamSpecType
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import OutputSpec
@@ -147,7 +148,7 @@ class TestScenarioTemplate(BaseTestCase):
         ScenarioTemplateService.delete(template.id)
 
         # check that the template is deleted
-        with self.assertRaises(Exception):
+        with self.assertRaises(NotFoundException):
             ScenarioTemplateService.get_by_id_and_check(template.id)
 
     def test_dynamic_io(self):
@@ -176,10 +177,8 @@ class TestScenarioTemplate(BaseTestCase):
         protocol.add_connector(source_2 >> "resource", process << keys[1])
 
         # connect all dynamic output to a output
-        i = 0
-        for output_port in process.get_model().outputs.ports.keys():
+        for i, output_port in enumerate(process.get_model().outputs.ports):
             protocol.add_output(f"target_{i}", process >> output_port)
-            i += 1
 
         # create a template
         template = ProtocolService.create_scenario_template_from_id(

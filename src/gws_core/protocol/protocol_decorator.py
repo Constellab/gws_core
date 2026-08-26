@@ -6,6 +6,7 @@ from gws_core.model.typing_style import TypingStyle
 
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_gws_typing_class
+from ..model.typing_registration import TypingRegistration
 from ..protocol.protocol import Protocol
 
 
@@ -51,15 +52,17 @@ def protocol_decorator(
             return protocol_class
 
         register_gws_typing_class(
-            object_class=protocol_class,
-            object_type="PROTOCOL",
-            unique_name=unique_name,
-            object_sub_type="PROTOCOL",
-            human_name=human_name,
-            short_description=short_description,
-            hide=hide,
-            style=style,
-            deprecated=deprecated,
+            TypingRegistration(
+                object_class=protocol_class,
+                object_type="PROTOCOL",
+                unique_name=unique_name,
+                object_sub_type="PROTOCOL",
+                human_name=human_name,
+                short_description=short_description,
+                hide=hide,
+                style=style,
+                deprecated=deprecated,
+            )
         )
 
         return protocol_class

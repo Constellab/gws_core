@@ -189,6 +189,21 @@ class SettingsLoader:
         brick_module.repo_type = "git" if git_commit else "pip"
         self._save_brick(brick_module)
 
+        self._load_brick_environment(brick_settings, brick_path, brick_name)
+
+    def _load_brick_environment(
+        self, brick_settings: BrickSettings, brick_path: str, brick_name: str
+    ) -> None:
+        """Load the git packages, the pip packages and the brick dependencies declared in the
+        environment section of the settings file of a brick.
+
+        :param brick_settings: parsed settings of the brick
+        :type brick_settings: BrickSettings
+        :param brick_path: path to the brick folder
+        :type brick_path: str
+        :param brick_name: name of the brick, used as parent name of its dependencies
+        :type brick_name: str
+        """
         # loads git packages
         if brick_settings.environment and brick_settings.environment.git:
             self._load_git_dependencies(brick_settings.environment.git)

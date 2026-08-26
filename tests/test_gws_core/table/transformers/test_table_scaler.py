@@ -3,6 +3,7 @@ from unittest import TestCase
 from gws_core import Table, TableScalerHelper
 from gws_core.impl.table.helper.dataframe_scaler_helper import DataframeScalerHelper
 from pandas import DataFrame
+from pandas.testing import assert_frame_equal
 
 
 # test_table_scaler
@@ -29,7 +30,9 @@ class TestTableScaler(TestCase):
         )
 
         result = DataframeScalerHelper.scale(df, "log")
-        self.assertTrue(result.equals(expected_df))
+        # compared with a tolerance, not bit for bit: numpy's log is allowed to differ
+        # from the libm value these constants were written from by one ulp.
+        assert_frame_equal(result, expected_df)
 
     def test_df_scale_by_columns(self):
         # Test unit

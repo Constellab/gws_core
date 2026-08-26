@@ -10,6 +10,9 @@ from gws_core.impl.table.table import Table
 
 from ....core.utils.utils import Utils
 
+# An operation table holds at least an operation name column and a value column
+MIN_OPERATION_TABLE_COLUMNS = 2
+
 
 class TableOperationUnknownColumnOption(Enum):
     """Options for unknown column in operation"""
@@ -116,7 +119,7 @@ class TableOperationHelper:
         """
         operations: list[str] = []
 
-        if operation_df.shape[1] < 2:
+        if operation_df.shape[1] < MIN_OPERATION_TABLE_COLUMNS:
             raise Exception("The operation table must have at least 2 columns")
 
         # check operation_name_column

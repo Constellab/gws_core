@@ -372,7 +372,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         task_model: TaskModel | None = None,
         port_name: str | None = None,
         flagged: bool | None = None,
-        id: str | None = None,
+        id_: str | None = None,
     ) -> ResourceModel:
         """Create a new ResourceModel from a resource
 
@@ -383,8 +383,8 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
 
         resource_model: ResourceModel = ResourceModel()
-        if id is not None:
-            resource_model.id = id
+        if id_ is not None:
+            resource_model.id = id_
         resource_model.origin = resource.__origin__ or origin
 
         # If the origin is not uploaded, then the scenario and the task must be provided
@@ -522,7 +522,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         port_name: str | None = None,
         flagged: bool | None = None,
         skip_children: bool = False,
-        id: str | None = None,
+        id_: str | None = None,
     ) -> ResourceModel:
         """Create the ResourceModel from the Resource and save it"""
         # Handle specific case of ResourceSet, it saves all the sub-resources
@@ -540,7 +540,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
             task_model=task_model,
             port_name=port_name,
             flagged=flagged,
-            id=id,
+            id_=id_,
         ).save_full()
 
         # Update the parent of the children resources to this resource
@@ -788,7 +788,7 @@ class ResourceModel(ModelWithUser, ModelWithFolder, NavigableEntity):
         return NavigableEntityType.RESOURCE
 
     def is_application(self) -> bool:
-        from gws_core.apps.app_resource import AppResource
+        from gws_core.apps.app_resource import AppResource  # noqa: PLC0415
 
         resource_type = self.get_resource_type()
         if resource_type is not None:

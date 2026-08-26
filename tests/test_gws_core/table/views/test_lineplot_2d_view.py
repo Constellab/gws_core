@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
-from gws_core.extra import TableLinePlot2DView
+from gws_core.impl.table.view.table_lineplot_2d_view import TableLinePlot2DView
 from gws_core.impl.table.view.table_selection import Serie2d
 from gws_core.test.data_provider import DataProvider
 

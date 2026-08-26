@@ -35,11 +35,7 @@ class StreamlitOpenAiChat:
         :return: StreamlitOpenAiChat instance loaded from session or newly created
         :rtype: StreamlitOpenAiChat
         """
-        chat: OpenAiChat
-        if key in st.session_state:
-            chat = st.session_state.get(key)
-        else:
-            chat = OpenAiChat(system_prompt)
+        chat: OpenAiChat = st.session_state.get(key) if key in st.session_state else OpenAiChat(system_prompt)
 
         return StreamlitOpenAiChat(chat, key)
 

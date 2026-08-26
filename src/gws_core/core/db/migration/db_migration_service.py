@@ -77,7 +77,7 @@ class DbMigrationService:
 
             try:
                 brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
-            except:
+            except Exception:
                 Logger.error(
                     f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'"
                 )

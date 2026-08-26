@@ -40,7 +40,7 @@ class BaseTableView(View):
         self._check_and_set_data(table)
 
     def _check_and_set_data(self, table: Table):
-        from ..table import Table
+        from ..table import Table  # noqa: PLC0415
 
         if table is None:
             raise BadRequestException("The provided table cannot be None")
@@ -79,13 +79,13 @@ class BaseTableView(View):
 
         return values
 
-    def get_dataframe_from_coords(self, range: CellRange) -> DataFrame:
+    def get_dataframe_from_coords(self, cell_range: CellRange) -> DataFrame:
         """Get a dataframe from a single range"""
         df = self._table.get_data()
 
         return df.iloc[
-            range.get_from().row : range.get_to().row + 1,
-            range.get_from().column : range.get_to().column + 1,
+            cell_range.get_from().row : cell_range.get_to().row + 1,
+            cell_range.get_from().column : cell_range.get_to().column + 1,
         ]
 
     def get_values_from_selection_range(self, selection_range: TableSelection) -> list[Any]:
@@ -163,8 +163,8 @@ class BaseTableView(View):
                 column_name = selection_range.selection[0]
                 column_index = self._table.get_column_index_from_name(column_name)
             else:
-                range: CellRange = selection_range.selection[0]
-                column_index = range.get_from().column
+                cell_range: CellRange = selection_range.selection[0]
+                column_index = cell_range.get_from().column
 
             return self._table.get_column_tags(from_index=column_index, to_index=column_index)
 

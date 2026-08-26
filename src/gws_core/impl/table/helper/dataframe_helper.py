@@ -14,6 +14,9 @@ class DataframeHelper:
     CSV_DELIMITERS: list[str] = ["\t", ",", ";"]
     DEFAULT_CSV_DELIMITER = ","
 
+    # Below this length a csv string has too few characters to guess its delimiter
+    MIN_CSV_LENGTH_FOR_DELIMITER_DETECTION = 10
+
     @staticmethod
     def detect_csv_delimiter(csv_str: str) -> str:
         """
@@ -21,7 +24,7 @@ class DataframeHelper:
 
         By default, the delimiter is comma.
         """
-        if csv_str is None or len(csv_str) < 10:
+        if csv_str is None or len(csv_str) < DataframeHelper.MIN_CSV_LENGTH_FOR_DELIMITER_DETECTION:
             return None
 
         max_delimiter: str = DataframeHelper.DEFAULT_CSV_DELIMITER

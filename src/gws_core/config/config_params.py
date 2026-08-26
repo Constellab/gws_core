@@ -67,7 +67,7 @@ class ConfigParams(ConfigParamsDict):
         :rtype: OutputSpecs
         """
 
-        from .config import Config
+        from .config import Config  # noqa: PLC0415
 
         if not self.__config_model_id__:
             return

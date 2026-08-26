@@ -1,4 +1,5 @@
 import os
+from http import HTTPStatus
 from multiprocessing import Process
 from time import sleep
 
@@ -15,6 +16,9 @@ class TestStartUvicornApp:
 
     process: Process | None = None
 
+    # Number of 1-second health-check attempts before giving up on the server start
+    MAX_HEALTH_CHECK_ATTEMPTS = 10
+
     def enter(self):
         self.__enter__()
 
@@ -24,7 +28,7 @@ class TestStartUvicornApp:
     def __enter__(self):
         # Per-worker port so parallel pytest-xdist runs don't fight for 3000.
         # Set by conftest.py; defaults to 3000 for single-process runs.
-        port = int(os.environ.get("GWS_TEST_API_PORT", 3000))
+        port = int(os.environ.get("GWS_TEST_API_PORT", "3000"))
         self.process = Process(target=App.start_uvicorn_app, args=(port,))
         self.process.start()
 
@@ -34,10 +38,10 @@ class TestStartUvicornApp:
 
         # Wait for the server to start
         i = 0
-        while i < 10:
+        while i < self.MAX_HEALTH_CHECK_ATTEMPTS:
             try:
                 response = requests.get(health_check_route, timeout=1)
-                if response.status_code == 200:
+                if response.status_code == HTTPStatus.OK:
                     return
             except Exception:
                 pass

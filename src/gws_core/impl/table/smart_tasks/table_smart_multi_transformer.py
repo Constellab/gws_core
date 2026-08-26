@@ -43,13 +43,11 @@ There are {len(self.tables)} dataframes in the list.
     def build_code_inputs(self) -> dict:
         # get the table
         dataframes: list[DataFrame] = []
-        i = 0
-        for resource in self.tables:
+        for i, resource in enumerate(self.tables):
             if isinstance(resource, Table):
                 dataframes.append(resource.get_data())
             else:
                 raise Exception(f"Resource n°{i} is not a DataFrame")
-            i += 1
 
         # pass the dataframe as input
         return {"source": dataframes}

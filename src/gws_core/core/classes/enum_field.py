@@ -12,7 +12,7 @@ class EnumField(CharField):
     """
 
     def __init__(self, *args: Any, choices: type, max_length: int = 255, **kwargs: Any) -> None:
-        super().__init__(max_length=max_length, *args, **kwargs)
+        super().__init__(*args, max_length=max_length, **kwargs)
         self.choices = choices
 
     def db_value(self, value: Any) -> Any:

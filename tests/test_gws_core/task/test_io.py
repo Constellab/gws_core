@@ -305,7 +305,7 @@ class TestIO(BaseTestCase):
         )
 
         # Test that you can't plug a Person to a Superman
-        with self.assertRaises(Exception):
+        with self.assertRaises(ImcompatiblePortsException):
             Connector(jump, fly, "jump_person_out", "superman")
 
         # Test that you can plug a subclass of Person to a Superman

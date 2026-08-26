@@ -163,8 +163,8 @@ class NoteTemplateService:
     ################################################# GET ########################################
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> NoteTemplate:
-        return NoteTemplate.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> NoteTemplate:
+        return NoteTemplate.get_by_id_and_check(id_)
 
     @classmethod
     def search(

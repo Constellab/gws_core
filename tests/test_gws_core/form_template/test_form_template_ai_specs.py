@@ -160,13 +160,15 @@ class TestFormTemplateAiSpecs(BaseTestCase):
         )
         content_before = FormTemplateVersion.get_by_id(version_id).content
         # An unknown param type the deserializer cannot build.
-        with patch(_GPT_TARGET, return_value=json.dumps({"bad": {"type": "not_a_real_type"}})):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_specs(
-                    template.id,
-                    version_id,
-                    GenerateTemplateSpecsDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"bad": {"type": "not_a_real_type"}})),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_specs(
+                template.id,
+                version_id,
+                GenerateTemplateSpecsDTO(description="x"),
+            )
         self.assertEqual(
             FormTemplateVersion.get_by_id(version_id).content, content_before
         )
@@ -184,13 +186,15 @@ class TestFormTemplateAiSpecs(BaseTestCase):
                 "b": ComputedParam(expression="@a + 1"),
             }
         ).to_json_dict()
-        with patch(_GPT_TARGET, return_value=json.dumps(cyclic)):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_specs(
-                    template.id,
-                    version_id,
-                    GenerateTemplateSpecsDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps(cyclic)),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_specs(
+                template.id,
+                version_id,
+                GenerateTemplateSpecsDTO(description="x"),
+            )
         self.assertEqual(
             FormTemplateVersion.get_by_id(version_id).content, content_before
         )
@@ -201,23 +205,27 @@ class TestFormTemplateAiSpecs(BaseTestCase):
 
     def test_invalid_json_raises(self):
         template, version_id = self._empty_template()
-        with patch(_GPT_TARGET, return_value="this is not json"):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_specs(
-                    template.id,
-                    version_id,
-                    GenerateTemplateSpecsDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value="this is not json"),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_specs(
+                template.id,
+                version_id,
+                GenerateTemplateSpecsDTO(description="x"),
+            )
 
     def test_non_object_json_raises(self):
         template, version_id = self._empty_template()
-        with patch(_GPT_TARGET, return_value=json.dumps([1, 2, 3])):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_specs(
-                    template.id,
-                    version_id,
-                    GenerateTemplateSpecsDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps([1, 2, 3])),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_specs(
+                template.id,
+                version_id,
+                GenerateTemplateSpecsDTO(description="x"),
+            )
 
     def test_empty_description_raises(self):
         template, version_id = self._empty_template()
@@ -233,13 +241,15 @@ class TestFormTemplateAiSpecs(BaseTestCase):
             ConfigSpecs({"name": StrParam()})
         )
         FormTemplateService.publish_version(template.id, version_id)
-        with patch(_GPT_TARGET, return_value=json.dumps({})):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_specs(
-                    template.id,
-                    version_id,
-                    GenerateTemplateSpecsDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({})),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_specs(
+                template.id,
+                version_id,
+                GenerateTemplateSpecsDTO(description="x"),
+            )
 
     # ------------------------------------------------------------------ #
     # helpers
@@ -420,13 +430,15 @@ class TestFormTemplateAiField(BaseTestCase):
 
     def test_missing_spec_raises(self):
         template, version_id = self._make()
-        with patch(_GPT_TARGET, return_value=json.dumps({"field_key": "mass"})):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_template_field(
-                    template.id,
-                    version_id,
-                    GenerateTemplateFieldDTO(description="x"),
-                )
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"field_key": "mass"})),
+            self.assertRaises(BadRequestException),
+        ):
+            FormTemplateAiService.generate_template_field(
+                template.id,
+                version_id,
+                GenerateTemplateFieldDTO(description="x"),
+            )
 
     def test_invalid_spec_type_raises(self):
         template, version_id = self._make()

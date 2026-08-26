@@ -19,7 +19,7 @@ class LayoutPageState(rx.State):
             self.is_loading = True
 
         # Simulate async operation (e.g., API call, data processing)
-        import asyncio
+        import asyncio  # noqa: PLC0415
 
         await asyncio.sleep(3)
 

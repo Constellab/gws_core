@@ -12,7 +12,9 @@ def _select_by_coords(
     return input_df.iloc[from_row_id:to_row_id, from_column_id:to_column_id]
 
 
-def dataframe_paginated(
+# the last params are a passthrough to st.dataframe: keeping them explicit gives
+# app developers the same signature (and autocompletion) as the streamlit function
+def dataframe_paginated(  # noqa: PLR0913
     dataframe: DataFrame,
     paginate_rows: bool = True,
     row_page_size_options: list[int] | None = None,

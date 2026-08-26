@@ -265,7 +265,7 @@ class Typing(Model):
         """Return all the visible typing name of a type."""
         return (
             cls.select()
-            .where((cls.object_type == object_type) & (cls.hide == False))
+            .where((cls.object_type == object_type) & (cls.hide == False))  # noqa: E712 - peewee query expression, the operator builds SQL
             .order_by(cls.human_name)
         )
 
@@ -276,7 +276,7 @@ class Typing(Model):
             cls.select()
             .where(
                 (cls.object_type == object_type)
-                & (cls.hide == False)
+                & (cls.hide == False)  # noqa: E712 - peewee query expression, the operator builds SQL
                 & (cls.unique_name.contains(name) | cls.human_name.contains(name))
             )
             .order_by(cls.human_name)

@@ -13,7 +13,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_params import ConfigParams
-from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs

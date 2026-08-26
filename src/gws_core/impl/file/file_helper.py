@@ -10,6 +10,21 @@ from fastapi.responses import FileResponse
 
 PathType = str | Path
 
+# A compound extension like ".tar.gz" is made of the last 2 suffixes of the path
+COMPOUND_EXTENSION_SUFFIX_COUNT = 2
+
+# Codepoints below 32 are the ASCII control characters
+FIRST_PRINTABLE_ASCII_CODE = 32
+
+# Most filesystems reject file names longer than this
+MAX_FILE_NAME_LENGTH = 255
+
+# A file is considered binary when more than this ratio of its sampled bytes are non-text
+BINARY_CONTENT_RATIO_THRESHOLD = 0.30
+
+# Number of bytes in the next file size unit (B -> KB -> MB ...)
+BYTES_PER_SIZE_UNIT = 1024.0
+
 
 class FileHelper:
     """
@@ -100,8 +115,8 @@ class FileHelper:
             return None
 
         # Handle compound extensions with .tar - only take the last 2 suffixes
-        if len(suffixes) >= 2 and suffixes[-2].lower() == ".tar":
-            extension = "".join(suffixes[-2:]).lstrip(".")
+        if len(suffixes) >= COMPOUND_EXTENSION_SUFFIX_COUNT and suffixes[-2].lower() == ".tar":
+            extension = "".join(suffixes[-COMPOUND_EXTENSION_SUFFIX_COUNT:]).lstrip(".")
         else:
             extension = suffixes[-1]
 
@@ -501,7 +516,7 @@ class FileHelper:
             return ""
 
         # Remove null bytes and control characters
-        name = "".join(char for char in name if ord(char) >= 32)
+        name = "".join(char for char in name if ord(char) >= FIRST_PRINTABLE_ASCII_CODE)
 
         # Keep only safe characters first - alphanumeric, hyphens, underscores, dots, and forward slashes
         name = sub(r"[^a-zA-Z0-9-_/.]", "", name)
@@ -539,8 +554,8 @@ class FileHelper:
             name = f"{base_name}.{extension}"
 
         # Limit length to prevent filesystem issues
-        if len(name) > 255:
-            name = name[:255]
+        if len(name) > MAX_FILE_NAME_LENGTH:
+            name = name[:MAX_FILE_NAME_LENGTH]
 
         return name
 
@@ -573,7 +588,7 @@ class FileHelper:
         # Bytes that are typically found in text files: printable ASCII + common whitespace
         text_bytes = bytes(range(32, 127)) + b"\n\r\t\f\b"
         non_text = sum(1 for byte in sample if byte not in text_bytes)
-        return (non_text / len(sample)) > 0.30
+        return (non_text / len(sample)) > BINARY_CONTENT_RATIO_THRESHOLD
 
     @classmethod
     def detect_file_encoding(cls, file_path: PathType, default_encoding: str = "utf-8") -> str:
@@ -729,9 +744,9 @@ class FileHelper:
         prefix = "-" if size < 0 else ""
         size = abs(size)
         for unit in ["B", "KB", "MB", "GB", "TB", "PB"]:
-            if size < 1024.0:
+            if size < BYTES_PER_SIZE_UNIT:
                 return f"{prefix}{size:.1f} {unit}"
-            size /= 1024.0
+            size /= BYTES_PER_SIZE_UNIT
         return f"{prefix}{size:.1f} EB"
 
     @staticmethod

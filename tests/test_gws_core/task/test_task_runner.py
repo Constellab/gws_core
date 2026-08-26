@@ -17,8 +17,8 @@ from gws_core import (
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.io_exception import (
-    InvalidInputsException,
-    InvalidOutputsException,
+    InvalidInputsError,
+    InvalidOutputsError,
     MissingInputResourcesException,
 )
 from gws_core.io.io_spec import InputSpec, OutputSpec
@@ -99,23 +99,23 @@ class TestTaskRunner(TestCase):
     def test_wrong_output(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerOutputError)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_missing_output(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerOutputMissing)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_invalid_resource_ouptut(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerInvalidResource)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_invalid_input(self):
         task_tester: TaskRunner = TaskRunner(RobotMove, {}, {"robot": JSONDict()})
 
-        with self.assertRaises(InvalidInputsException):
+        with self.assertRaises(InvalidInputsError):
             task_tester.run()

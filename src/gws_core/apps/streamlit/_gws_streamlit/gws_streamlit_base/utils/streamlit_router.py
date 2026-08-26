@@ -66,7 +66,7 @@ class StreamlitRouter:
         return streamlit_page
 
     def run(self):
-        streamlit_pages = [page for page in self.pages.values()]
+        streamlit_pages = list(self.pages.values())
         hidden_pages = [page.url_path for page in streamlit_pages if page.hidden]
         self._hide_pages_from_sidebar(hidden_pages)
 

@@ -2,6 +2,7 @@ from gws_core import BaseTestCase, Config, FloatParam, ProcessFactory
 from gws_core.config.config_exceptions import MissingConfigsException
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.robot.robot_tasks import RobotMove
 
 
@@ -62,8 +63,8 @@ class TestConfig(BaseTestCase):
     def test_param_visibility(self):
         float_1 = FloatParam(default_value=1, visibility="protected")
         float_2 = FloatParam(optional=True, visibility="private")
-        self.assertRaises(Exception, FloatParam, visibility="protected")
-        self.assertRaises(Exception, FloatParam, visibility="wrong")
+        self.assertRaises(BadRequestException, FloatParam, visibility="protected")
+        self.assertRaises(BadRequestException, FloatParam, visibility="wrong")
 
         # Test that the config private are not returned in json
         config = Config()

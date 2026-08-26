@@ -32,7 +32,7 @@ class ScenarioTemplateFactory:
             scenario_template_dto = ScenarioTemplateExportDTO.from_json(template_dict)
         except Exception as e:
             Logger.error(f"Error while reading the scenario template file: {e}")
-            raise BadRequestException(f"The scenario template file is not valid : {e}")
+            raise BadRequestException(f"The scenario template file is not valid : {e}") from e
         return cls.from_export_dto(scenario_template_dto)
 
     @classmethod
@@ -43,7 +43,9 @@ class ScenarioTemplateFactory:
 
         except Exception as e:
             Logger.error(f"The scenario template file is not valid a valid json: {e}")
-            raise BadRequestException(f"The scenario template file is not valid a valid json: {e}")
+            raise BadRequestException(
+                f"The scenario template file is not valid a valid json: {e}"
+            ) from e
 
         return cls.from_export_dto_dict(dict_)
 

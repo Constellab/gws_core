@@ -2,6 +2,7 @@ from typing import cast
 
 from gws_core import BaseTestCase
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.impl.robot.robot_protocol import RobotSimpleTravel
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.model.typing import Typing
@@ -184,7 +185,7 @@ class TestTriggeredJobService(BaseTestCase):
         TriggeredJobService.delete(job_id)
 
         # Verify deletion
-        with self.assertRaises(Exception):
+        with self.assertRaises(NotFoundException):
             TriggeredJobModel.get_by_id_and_check(job_id)
 
     def test_get_all_jobs(self):

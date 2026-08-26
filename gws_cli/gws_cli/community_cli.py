@@ -23,7 +23,7 @@ def login(
         CommunityCliService.run_login_flow(force=force)
     except KeyboardInterrupt:
         typer.echo("\nLogin cancelled.")
-        raise typer.Exit(0)
+        raise typer.Exit(0) from None
 
 
 @app.command("logout", help="Remove stored authentication credentials")

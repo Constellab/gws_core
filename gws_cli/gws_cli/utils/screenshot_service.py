@@ -1,3 +1,4 @@
+import importlib.util
 import os
 import subprocess
 import sys
@@ -21,11 +22,9 @@ class ScreenshotService:
         Check if playwright is installed and install it if not.
         Returns True if playwright is available, False otherwise.
         """
-        try:
-            import playwright
-
+        if importlib.util.find_spec("playwright") is not None:
             typer.echo("Playwright is already installed.")
-        except ImportError:
+        else:
             typer.echo("Playwright not found. Installing playwright...")
             try:
                 # Install playwright package
@@ -110,7 +109,7 @@ class ScreenshotService:
             return 1
 
         try:
-            from playwright.sync_api import sync_playwright
+            from playwright.sync_api import sync_playwright  # noqa: PLC0415
         except ImportError:
             typer.echo("Failed to import playwright after installation.", err=True)
             return 1

@@ -18,18 +18,18 @@ class CallChartTable(BaseModelDTO):
 
 
 @core_app.post(
-    "/resource-table/{id}/call-chart",
+    "/resource-table/{id_}/call-chart",
     tags=["Resource"],
     summary="Call a chart view on a table view",
 )
 def call_chart_on_table(
-    id: str,
+    id_: str,
     call_chart_table: CallChartTable,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> CallViewResultDTO:
     """Method to call a chart on a table from the table view"""
     return ResourceTableService.call_table_chart(
-        resource_id=id,
+        resource_id=id_,
         table_view_name=call_chart_table.table_view_name,
         table_config_values=call_chart_table.table_config_values,
         chart_type=call_chart_table.chart_type,

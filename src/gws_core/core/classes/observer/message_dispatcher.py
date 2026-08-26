@@ -10,6 +10,9 @@ from gws_core.progress_bar.progress_bar import ProgressBar
 from .dispatched_message import DispatchedMessage
 from .message_observer import MessageObserver, ProgressBarMessageObserver
 
+# A progress message carries a percentage, so its value must be between 0 and 100
+MAX_PROGRESS_VALUE = 100
+
 
 class MessageDispatcher:
     """Class to dispatch messages to observers. It has a built in
@@ -91,7 +94,7 @@ class MessageDispatcher:
         """
 
         if not isinstance(progress_bar, ProgressBar):
-            Exception("Only a progress bar can be attached")
+            raise Exception("Only a progress bar can be attached")
         observer = ProgressBarMessageObserver(progress_bar)
         self.attach(observer)
         return observer
@@ -153,7 +156,7 @@ class MessageDispatcher:
                 value_str = prefix[9:]  # Remove "PROGRESS:" prefix
                 progress_value = float(value_str)
                 # Verify the progress value is between 0 and 100
-                if 0 <= progress_value <= 100:
+                if 0 <= progress_value <= MAX_PROGRESS_VALUE:
                     self._build_and_notify_message(content, MessageLevel.PROGRESS, progress_value)
                     return
                 # Invalid progress value, treat as info message

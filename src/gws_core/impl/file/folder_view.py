@@ -37,7 +37,7 @@ class LocalFolderView(View):
         self._path = dir_path
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        from gws_core.impl.file.fs_node_model import FSNodeModel
+        from gws_core.impl.file.fs_node_model import FSNodeModel  # noqa: PLC0415
 
         nodes_models = FSNodeModel.path_start_with(self._path)
 

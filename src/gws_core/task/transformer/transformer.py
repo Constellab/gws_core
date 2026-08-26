@@ -8,7 +8,11 @@ from gws_core.core.utils.utils import Utils
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
-from gws_core.task.converter.converter import Converter, decorate_converter
+from gws_core.task.converter.converter import (
+    Converter,
+    ConverterRegistration,
+    decorate_converter,
+)
 
 from ...resource.resource import Resource
 from ..task_decorator import task_decorator
@@ -59,17 +63,19 @@ def transformer_decorator(
         task_class.output_specs = OutputSpecs({"resource": resource_type})
 
         decorate_converter(
-            task_class=task_class,
-            unique_name=unique_name,
-            task_type="TRANSFORMER",
-            source_type=resource_type,
-            target_type=resource_type,
-            related_resource=resource_type,
-            human_name=human_name,
-            short_description=short_description,
-            hide=hide,
-            style=style,
-            deprecated=deprecated,
+            ConverterRegistration(
+                task_class=task_class,
+                unique_name=unique_name,
+                task_type="TRANSFORMER",
+                source_type=resource_type,
+                target_type=resource_type,
+                related_resource=resource_type,
+                human_name=human_name,
+                short_description=short_description,
+                hide=hide,
+                style=style,
+                deprecated=deprecated,
+            )
         )
 
         return task_class

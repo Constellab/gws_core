@@ -1,3 +1,4 @@
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.folder.space_folder import SpaceFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextDTO
@@ -65,7 +66,7 @@ class TestNote(BaseTestCase):
         self.assertEqual(len(notes), 0)
 
         # Try to validate note_2, but there should be an error because the scenario is not validated
-        self.assertRaises(Exception, NoteService._validate, note_2.id)
+        self.assertRaises(BadRequestException, NoteService._validate, note_2.id)
         scenario_2.is_validated = True
         scenario_2.folder = folder
         scenario_2.save()
@@ -74,7 +75,7 @@ class TestNote(BaseTestCase):
         self.assertTrue(note_2.is_validated)
 
         # Try to update note_2
-        self.assertRaises(Exception, NoteService.update_content, note_2.id, {})
+        self.assertRaises(BadRequestException, NoteService.update_content, note_2.id, {})
 
         # Add exp 1 on note 1 to delete it afterward
         NoteService.add_scenario(note.id, scenario.id)
@@ -154,7 +155,7 @@ class TestNote(BaseTestCase):
         # verify that the note was automatically associated with the scenario
         self.assertEqual(NoteScenario.find_by_pk(scenario.get_model().id, note.id).count(), 1)
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(BadRequestException):
             # Check that we cannot remove the scenario because of the view
             NoteService.remove_scenario(note.id, scenario.get_model().id)
 

@@ -50,7 +50,8 @@ class TestFolderResource(BaseTestCase):
 
         sub_file = folder.create_empty_file_if_not_exist("test.txt")
         # write test to sub file
-        open(sub_file, "w", encoding="UTF-8").write("test")
+        with open(sub_file, "w", encoding="UTF-8") as f:
+            f.write("test")
         folder.create_dir_if_not_exist("sub_dir")
 
         list_ = folder.list_dir()
@@ -100,7 +101,8 @@ class TestFolderResource(BaseTestCase):
         sub_file_path = folder.create_empty_file_if_not_exist("test.txt")
 
         # write test to sub file
-        open(sub_file_path, "w", encoding="UTF-8").write("test")
+        with open(sub_file_path, "w", encoding="UTF-8") as f:
+            f.write("test")
 
         # save folder
         folder_model = ResourceModel.save_from_resource(folder, origin=ResourceOrigin.UPLOADED)
@@ -137,7 +139,8 @@ class TestFolderResource(BaseTestCase):
         folder: Folder = Folder(temp)
         sub_file_path = folder.create_empty_file_if_not_exist("test.txt")
         # write test to sub file
-        open(sub_file_path, "w", encoding="UTF-8").write("test")
+        with open(sub_file_path, "w", encoding="UTF-8") as f:
+            f.write("test")
 
         # Call exporter to zip
         task_runner = TaskRunner(FolderExporter, inputs={"source": folder})

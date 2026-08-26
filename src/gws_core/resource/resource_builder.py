@@ -280,7 +280,7 @@ class ResourceZipBuilder(ResourceBuilder):
                     resource,
                     origin=ResourceOrigin.IMPORTED_FROM_LAB,
                     skip_children=True,
-                    id=resolved_id,
+                    id_=resolved_id,
                 )
 
         except Exception as err:

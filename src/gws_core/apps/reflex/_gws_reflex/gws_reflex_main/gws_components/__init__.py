@@ -44,7 +44,7 @@ from .reflex_select_resource_2_component.reflex_select_resource_2_component impo
 )
 
 
-def __load_plugins__():
+def _load_plugins():
     """Ensure the gws_plugin is available for the components.
 
     In the normal flow the plugin was already installed by ReflexProcess (in the server
@@ -52,11 +52,11 @@ def __load_plugins__():
     self-heals (install from the immutable store) if the app folder copy is missing or
     stale — safe under concurrency, see AppPluginDownloader.
     """
-    from ..reflex_plugin import ReflexPlugin
+    from ..reflex_plugin import ReflexPlugin  # noqa: PLC0415
 
     reflex_component = ReflexPlugin()
     reflex_component.install_package()
 
 
 # Load plugins when this module is imported
-__load_plugins__()
+_load_plugins()

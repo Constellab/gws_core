@@ -226,9 +226,9 @@ class Compress:
         :param multi_entry_only: If True, exclude compressors that cannot bundle
             multiple files/directories (e.g. GzipCompress).
         """
-        from .gzip_compress import GzipCompress
-        from .tar_compress import TarCompress, TarGzCompress
-        from .zip_compress import ZipCompress
+        from .gzip_compress import GzipCompress  # noqa: PLC0415
+        from .tar_compress import TarCompress, TarGzCompress  # noqa: PLC0415
+        from .zip_compress import ZipCompress  # noqa: PLC0415
 
         classes: list[type[Compress]] = [TarGzCompress, TarCompress, ZipCompress, GzipCompress]
         if multi_entry_only:

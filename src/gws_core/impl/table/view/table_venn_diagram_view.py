@@ -17,6 +17,10 @@ if TYPE_CHECKING:
 
 DEFAULT_NUMBER_OF_COLUMNS = 3
 
+# A venn diagram is only drawable for 2 to 4 series (including)
+MIN_VENN_SERIES = 2
+MAX_VENN_SERIES = 4
+
 
 class TableVennDiagramView(BaseTableView):
     """
@@ -59,7 +63,7 @@ class TableVennDiagramView(BaseTableView):
     def data_to_dict(self, params: ConfigParams) -> dict:
         series: list[Serie1d] = Serie1d.from_list(params.get_value("series"))
 
-        if len(series) < 2 or len(series) > 4:
+        if not MIN_VENN_SERIES <= len(series) <= MAX_VENN_SERIES:
             raise BadRequestException(
                 "The venn diagram only supports from 2 to 4 series (including)"
             )

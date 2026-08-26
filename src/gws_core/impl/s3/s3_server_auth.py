@@ -42,7 +42,7 @@ class S3ServerAuth:
             s3_header = cls._parse_authorization_header(authorization_header)
         except Exception as err:
             Logger.error(f"Error while parsing header: {err}")
-            raise ForbiddenException("Authorization header is invalid")
+            raise ForbiddenException("Authorization header is invalid") from None
 
         if not s3_header.access_key_id:
             raise ForbiddenException("Access key id is missing")
@@ -61,7 +61,7 @@ class S3ServerAuth:
             )
         except Exception as err:
             Logger.error(f"Error while building signature: {err}")
-            raise ForbiddenException("Signature is invalid")
+            raise ForbiddenException("Signature is invalid") from None
 
         # check the signature (it checks the secret key)
         if expected_signature != s3_header.signature:

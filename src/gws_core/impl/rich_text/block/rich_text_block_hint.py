@@ -14,7 +14,7 @@ class RichTextBlockHint(RichTextBlockDataBase):
     """Object representing a hint block in a rich text"""
 
     content: str
-    hintType: RichTextBlockHintType = "info"
+    hintType: RichTextBlockHintType = "info"  # noqa: N815
 
     def to_markdown(self) -> str:
         """Convert the hint to markdown

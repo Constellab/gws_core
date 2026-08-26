@@ -68,9 +68,10 @@ class ScenarioArchiveZipper:
         :return: Path to the generated archive file.
         """
         # Lazy imports to avoid circular dependencies
-        from gws_core.scenario.scenario_service import ScenarioService
-        from gws_core.scenario.task.scenario_downloader_base import ScenarioDownloaderBase
-
+        from gws_core.scenario.scenario_service import ScenarioService  # noqa: PLC0415
+        from gws_core.scenario.task.scenario_downloader_base import (  # noqa: PLC0415
+            ScenarioDownloaderBase,
+        )
         scenario_export = ScenarioService.export_scenario(self._scenario_id)
 
         # Resolve resource mode

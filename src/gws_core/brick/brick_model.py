@@ -90,7 +90,7 @@ class BrickModel(Model):
     def find_by_name(cls, name: str) -> "BrickModel":
         try:
             return cls.get(cls.name == name)
-        except:
+        except Exception:
             return None
 
     @classmethod

@@ -87,11 +87,8 @@ class ScatterPlot2DView(View):
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
-        if x is None:
-            x = list(range(0, len(y)))
-        else:
-            # Convert y to float
-            x = NumericHelper.list_to_float(x)
+        # Convert x to float
+        x = list(range(0, len(y))) if x is None else NumericHelper.list_to_float(x)
 
         # Convert y to float
         y = NumericHelper.list_to_float(y)

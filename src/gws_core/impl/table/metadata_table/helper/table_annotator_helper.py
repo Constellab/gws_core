@@ -167,7 +167,7 @@ class TableAnnotatorHelper:
             dataframe = metadata_table.get_data().set_index(metadata_table.get_column_names()[0])
 
         # dataframe as dict of tags where key = id and value = tags for the id
-        dict = dataframe.to_dict("index")
+        tags_by_id = dataframe.to_dict("index")
 
         # force the key to be a string
-        return {str(id_): tags for id_, tags in dict.items()}
+        return {str(id_): tags for id_, tags in tags_by_id.items()}

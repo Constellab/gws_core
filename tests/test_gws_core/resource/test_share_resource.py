@@ -71,8 +71,8 @@ def get_table() -> Table:
 
 
 def get_file() -> File:
-    dir = Settings.get_instance().make_temp_dir()
-    file_path = os.path.join(dir, "test.txt")
+    temp_dir = Settings.get_instance().make_temp_dir()
+    file_path = os.path.join(temp_dir, "test.txt")
     with open(file_path, "w", encoding="UTF-8") as f:
         f.write("test")
     return File(file_path)

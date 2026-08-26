@@ -1087,7 +1087,10 @@ class TestRoutes(_PluginTestCase):
 
     def test_a_lab_with_mcp_off_says_so_and_names_nothing(self):
         """It must not record a plugin name it never served."""
-        info = PluginService.get_plugin_info()
+        # forced off rather than left to the environment: a lab running with the MCP
+        # server on would otherwise take another branch entirely.
+        with mock.patch.object(Settings, "is_mcp_server_enabled", return_value=False):
+            info = PluginService.get_plugin_info()
 
         self.assertEqual(info.status, ClaudePluginStatus.MCP_DISABLED)
         self.assertIsNone(info.plugin_name)

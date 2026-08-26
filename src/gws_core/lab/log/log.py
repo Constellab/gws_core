@@ -49,6 +49,9 @@ class LogLine:
     OLD_SCENARIO_TEXT = "[SCENARIO]"
     OLD_SEPARATOR = " - "
 
+    # An old format log line is "LEVEL - DATE - MESSAGE", so at least 3 parts
+    OLD_FORMAT_MIN_PARTS = 3
+
     def __init__(self, line_str: str) -> None:
         if line_str is None or len(line_str) == 0:
             raise ValueError("line_str is empty")
@@ -101,7 +104,7 @@ class LogLine:
         self.context = LogContext.MAIN
         self.context_id = None
 
-        if len(logs_parts) >= 3:
+        if len(logs_parts) >= self.OLD_FORMAT_MIN_PARTS:
             self.level = cast(MessageType, logs_parts[0])
 
             self.init_old_date(logs_parts[1])

@@ -159,7 +159,7 @@ class TestParamSpec(TestCase):
         self.assertTrue(param_2.additional_info["multiple"])
 
     def test_select_param_from_enum(self):
-        from enum import Enum
+        from enum import Enum  # noqa: PLC0415
 
         class _Color(Enum):
             RED = "red"
@@ -306,7 +306,7 @@ class TestParamSpec(TestCase):
             DateParam(min_value=12345, optional=True)
 
     def test_date_param_load_from_dto_validates_bounds(self):
-        from gws_core.config.param.param_types import ParamSpecDTO
+        from gws_core.config.param.param_types import ParamSpecDTO  # noqa: PLC0415
 
         # a DTO carrying a malformed min_value should be rejected by load_from_dto
         # when validate=True (strict-write path used by callers that are about
@@ -362,7 +362,7 @@ class TestParamSpec(TestCase):
         still load so that read-modify-write operations (delete a field, reorder
         fields, view the form) keep working even when stored data is malformed.
         """
-        from gws_core.config.param.param_types import ParamSpecDTO
+        from gws_core.config.param.param_types import ParamSpecDTO  # noqa: PLC0415
 
         bad_dto = ParamSpecDTO(
             type=ParamSpecType.DATE,

@@ -11,6 +11,7 @@ from gws_core.resource.resource import Resource
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
+from ..model.typing_registration import TypingRegistration
 from .task import Task
 from .task_typing import TaskSubType
 
@@ -63,43 +64,20 @@ def task_decorator(
     return decorator
 
 
-def decorate_task(
-    task_class: type[Task],
-    unique_name: str,
-    task_type: TaskSubType,
-    related_resource: type[Resource] | None = None,
-    human_name: str = "",
-    short_description: str = "",
-    hide: bool = False,
-    style: TypingStyle | None = None,
-    deprecated: TypingDeprecated | None = None,
-):
-    """Method to decorate a task"""
-    if not Utils.issubclass(task_class, Task):
-        BrickLogService.log_brick_error(
-            task_class,
-            f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task",
-        )
-        return
+def _check_task_specs(task_class: type[Task]) -> list[TypingErrorDTO] | None:
+    """Check and normalize the input, output and config specs of a task class.
 
-    if related_resource and not Utils.issubclass(related_resource, Resource):
-        BrickLogService.log_brick_error(
-            task_class, f"The task {unique_name} has a related object which is not a resource."
-        )
-        return
+    Definition errors are collected (not raised): the task is still registered, but marked
+    as errored so it appears as broken and can't run.
 
-    if not Utils.value_is_in_literal(task_type, TaskSubType):
-        BrickLogService.log_brick_error(
-            task_class,
-            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}",
-        )
-        return
-
-    # Definition errors are collected (not raised): the task is still
-    # registered, but marked as errored so it appears as broken and can't run.
+    :param task_class: task class being decorated
+    :type task_class: type[Task]
+    :return: the list of definition errors (possibly empty), or None if the specs could not be
+             checked at all, meaning the task must not be registered
+    :rtype: list[TypingErrorDTO] | None
+    """
     definition_errors: list[TypingErrorDTO] = []
 
-    # Check the input, output and config specs
     try:
         task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
         task_class.output_specs = IOSpecsHelper.check_output_specs(
@@ -158,6 +136,48 @@ def decorate_task(
         BrickLogService.log_brick_error(
             task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}"
         )
+        return None
+
+    return definition_errors
+
+
+def decorate_task(
+    task_class: type[Task],
+    unique_name: str,
+    task_type: TaskSubType,
+    related_resource: type[Resource] | None = None,
+    human_name: str = "",
+    short_description: str = "",
+    hide: bool = False,
+    style: TypingStyle | None = None,
+    deprecated: TypingDeprecated | None = None,
+):
+    """Method to decorate a task"""
+    if not Utils.issubclass(task_class, Task):
+        BrickLogService.log_brick_error(
+            task_class,
+            f"The task_decorator is used on the class: {task_class.__name__} and this class is not a sub class of Task",
+        )
+        return
+
+    if related_resource and not Utils.issubclass(related_resource, Resource):
+        BrickLogService.log_brick_error(
+            task_class, f"The task {unique_name} has a related object which is not a resource."
+        )
+        return
+
+    if not Utils.value_is_in_literal(task_type, TaskSubType):
+        BrickLogService.log_brick_error(
+            task_class,
+            f"The task_type '{task_type}' for the task is invalid: {task_class.__name__}. Available values: {Utils.get_literal_values(TaskSubType)}",
+        )
+        return
+
+    # Definition errors are collected (not raised): the task is still
+    # registered, but marked as errored so it appears as broken and can't run.
+    # Check the input, output and config specs
+    definition_errors = _check_task_specs(task_class)
+    if definition_errors is None:
         return
 
     # Set the default style if not defined
@@ -169,17 +189,19 @@ def decorate_task(
     related_resource_typing_name = related_resource.get_typing_name() if related_resource else None
 
     register_gws_typing_class(
-        object_class=task_class,
-        object_type="TASK",
-        unique_name=unique_name,
-        object_sub_type=task_type,
-        human_name=human_name,
-        short_description=short_description,
-        hide=hide,
-        style=style,
-        related_model_typing_name=related_resource_typing_name,
-        deprecated=deprecated,
-        definition_errors=definition_errors or None,
+        TypingRegistration(
+            object_class=task_class,
+            object_type="TASK",
+            unique_name=unique_name,
+            object_sub_type=task_type,
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            related_model_typing_name=related_resource_typing_name,
+            deprecated=deprecated,
+            definition_errors=definition_errors or None,
+        )
     )
 
 

@@ -60,6 +60,15 @@ class TestTable(TestCase):
             column_tags=column_tags,
         )
 
+        self._assert_select_by_indexes(table)
+        self._assert_select_by_names(table)
+        self._assert_select_by_tags(table)
+
+    def _assert_select_by_indexes(self, table: Table) -> None:
+        """Check the selection of rows and columns by their positions.
+
+        :param table: the 3x3 table built by ``test_table_select``
+        """
         # ------------------------------------------------------------
         # Select by row positions
         # ------------------------------------------------------------
@@ -105,6 +114,11 @@ class TestTable(TestCase):
         sub_table = table.select_by_column_indexes([0, 2, 0])
         self.assertEqual(sub_table.column_names, ["London", "Beijin"])
 
+    def _assert_select_by_names(self, table: Table) -> None:
+        """Check the selection of rows and columns by their names.
+
+        :param table: the 3x3 table built by ``test_table_select``
+        """
         # ------------------------------------------------------------
         # Select by row names
         # ------------------------------------------------------------
@@ -154,6 +168,11 @@ class TestTable(TestCase):
         self.assertEqual(sub_table.column_names, ["London", "Lisboa", "Beijin"])
         self.assertEqual(sub_table.row_names, ["Tokyo"])
 
+    def _assert_select_by_tags(self, table: Table) -> None:
+        """Check the selection of rows and columns by their tags.
+
+        :param table: the 3x3 table built by ``test_table_select``
+        """
         # ------------------------------------------------------------
         # Select by column tags
         # ------------------------------------------------------------

@@ -71,9 +71,11 @@ raise Exception('This is not working')
             tester.run()
         except Exception:
             error = True
-            # check that the error of the snippet is the same as the one raised
+            # check that the error of the snippet is the same as the one raised.
+            # the snippet traceback reaches the logs through stderr, which the shell proxy
+            # dispatches as a warning (the failure itself is the exit-code error message).
             self.assertTrue(
-                logger.has_message_containing("This is not working", level=MessageLevel.ERROR)
+                logger.has_message_containing("This is not working", level=MessageLevel.WARNING)
             )
 
         self.assertTrue(error)

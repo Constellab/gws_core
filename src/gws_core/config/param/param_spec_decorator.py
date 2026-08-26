@@ -32,7 +32,7 @@ def param_spec_decorator(
     """
 
     def decorator(param_class: type[ParamSpec]):
-        from gws_core.config.param.param_spec import ParamSpec
+        from gws_core.config.param.param_spec import ParamSpec  # noqa: PLC0415
 
         if not issubclass(param_class, ParamSpec):
             raise Exception("The param decorator can only be used on a ParamSpec child class")

@@ -126,12 +126,12 @@ class ResourceService:
     ############################# GET RESOURCE MODEL ###########################
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> ResourceModel:
-        return ResourceModel.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> ResourceModel:
+        return ResourceModel.get_by_id_and_check(id_)
 
     @classmethod
-    def get_resource_children(cls, id: str) -> list[ResourceModel]:
-        resource_model: ResourceModel = cls.get_by_id_and_check(id)
+    def get_resource_children(cls, id_: str) -> list[ResourceModel]:
+        resource_model: ResourceModel = cls.get_by_id_and_check(id_)
 
         resource: Resource = resource_model.get_resource()
 
@@ -235,7 +235,7 @@ class ResourceService:
         view = cls.call_view_on_resource_model(
             resource_model, view_name, config_values, save_view_config
         ).view
-        if view.type in list(map(lambda x: x.value, exluded_views_in_note)):
+        if view.type in [x.value for x in exluded_views_in_note]:
             raise BadRequestException(
                 f"View '{view_name}' is not supported to be exported as a file."
             )
@@ -341,18 +341,18 @@ class ResourceService:
             "include_not_flagged"
         )
         if include_non_output is None or not include_non_output.value:
-            search_builder.add_expression(ResourceModel.flagged == True)
+            search_builder.add_expression(ResourceModel.flagged == True)  # noqa: E712 - peewee query expression, the operator builds SQL
         search.remove_filter_criteria("include_not_flagged")
 
         # Handle 'column_tags'
         column_tags: SearchFilterCriteria | None = search.get_filter_criteria("column_tags")
         column_tags_filter_function: Callable[[ResourceModel], bool] | None = None
         if column_tags is not None and column_tags.value:
-            column_tags_filter_function = (
-                lambda table_resource_model: cls.check_column_tags(
-                    table_resource_model, column_tags.value
-                )
-            )
+
+            def filter_by_column_tags(table_resource_model: ResourceModel) -> bool:
+                return cls.check_column_tags(table_resource_model, column_tags.value)
+
+            column_tags_filter_function = filter_by_column_tags
             search.remove_filter_criteria("column_tags")
 
         pagination = search_builder.add_search_params(search).search_page(
@@ -375,7 +375,7 @@ class ResourceService:
             "include_not_flagged"
         )
         if include_non_output is None or not include_non_output.value:
-            search_builder.add_expression(ResourceModel.flagged == True)
+            search_builder.add_expression(ResourceModel.flagged == True)  # noqa: E712 - peewee query expression, the operator builds SQL
         search.remove_filter_criteria("include_not_flagged")
 
         search_builder.add_search_params(search)

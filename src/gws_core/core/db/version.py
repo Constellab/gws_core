@@ -2,13 +2,17 @@ from math import isnan
 
 from numpy import Infinity
 
+# A version is "major.minor.patch", optionally followed by a sub patch
+VERSION_PARTS_COUNT = 3
+VERSION_PARTS_COUNT_WITH_SUB_PATCH = 4
+
 
 class Version:
     """Object that represent a version like : 1.2.0
 
-    :raises VersionInvalidException: [description]
-    :raises VersionInvalidException: [description]
-    :raises VersionInvalidException: [description]
+    :raises VersionInvalidError: [description]
+    :raises VersionInvalidError: [description]
+    :raises VersionInvalidError: [description]
     """
 
     major: int
@@ -24,8 +28,8 @@ class Version:
         try:
             versions = version.split(".")
 
-            if len(versions) != 3 and len(versions) != 4:
-                raise VersionInvalidException(version)
+            if len(versions) not in (VERSION_PARTS_COUNT, VERSION_PARTS_COUNT_WITH_SUB_PATCH):
+                raise VersionInvalidError(version)
 
             main_version_str = version
             sub_patch: int | None = None
@@ -36,7 +40,7 @@ class Version:
 
                 sub_patch = int(sub_patch_str)
                 if isnan(sub_patch):
-                    raise VersionInvalidException(version)
+                    raise VersionInvalidError(version)
 
             # retrieve main version
             main_versions = main_version_str.split(".")
@@ -45,15 +49,15 @@ class Version:
             patch = int(main_versions[2])
 
             if isnan(major) or major < 0 or isnan(minor) or minor < 0 or isnan(patch) or patch < 0:
-                raise VersionInvalidException(version)
+                raise VersionInvalidError(version)
 
             self.major = major
             self.minor = minor
             self.patch = patch
             self.sub_patch = sub_patch
 
-        except:
-            raise VersionInvalidException(version)
+        except Exception as err:
+            raise VersionInvalidError(version) from err
 
     def __eq__(self, other) -> bool:
         if other is None or not isinstance(other, Version):
@@ -125,6 +129,6 @@ class Version:
         return str(self)
 
 
-class VersionInvalidException(Exception):
+class VersionInvalidError(Exception):
     def __init__(self, str_version: str) -> None:
         super().__init__(f"Version '{str_version}' invalid. Must be formatted like '1.2.0'")

@@ -40,7 +40,7 @@ class NavigableEntityType(Enum):
         return human_name
 
     def convert_to_tag_entity_type(self):
-        from gws_core.tag.tag_entity_type import TagEntityType
+        from gws_core.tag.tag_entity_type import TagEntityType  # noqa: PLC0415
 
         if self == NavigableEntityType.SCENARIO:
             return TagEntityType.SCENARIO

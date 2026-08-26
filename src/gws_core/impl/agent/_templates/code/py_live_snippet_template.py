@@ -12,9 +12,9 @@
 from gws_core import Table
 
 # access task method to log a messages
-self.log_info_message("Transposing table")
+self.log_info_message("Transposing table")  # noqa: F821
 # Transpose the input table
-table: Table = sources[0].transpose()
+table: Table = sources[0].transpose()  # noqa: F821
 
 # set the new table a output or the agent
 targets = [table]

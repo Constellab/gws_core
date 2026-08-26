@@ -16,11 +16,11 @@ class HnRepoType(str, Enum):
 
 
 class HnBrickVersionInfoDTO(BaseModelDTO):
-    brickName: str
-    brickVersion: str
-    repoType: HnRepoType
-    repositoryUrl: str
-    technicalInfo: dict[str, Any] | None = None
+    brickName: str  # noqa: N815
+    brickVersion: str  # noqa: N815
+    repoType: HnRepoType  # noqa: N815
+    repositoryUrl: str  # noqa: N815
+    technicalInfo: dict[str, Any] | None = None  # noqa: N815
 
 
 class HnNode(BaseModelDTO):
@@ -34,8 +34,8 @@ class HnNode(BaseModelDTO):
     name: str | None = None
     order: int
     path: str | None = None
-    completePath: str | None = None
-    parentId: str | None = None
+    completePath: str | None = None  # noqa: N815
+    parentId: str | None = None  # noqa: N815
     children: list["HnNode"] | None = None
 
 
@@ -103,9 +103,9 @@ class CommunityCreateAgentDTO(BaseModelDTO):
 
 
 class CommunityGetAgentsBody(BaseModelDTO):
-    spacesFilter: list[str] = []
-    titleFilter: str = ""
-    personalOnly: bool = False
+    spacesFilter: list[str] = []  # noqa: N815
+    titleFilter: str = ""  # noqa: N815
+    personalOnly: bool = False  # noqa: N815
 
 
 class CommunityAgentVersionCreateResDTO(BaseModelDTO):
@@ -133,9 +133,9 @@ class CommunityTagKeyDTO(BaseModelDTO):
 
 
 class CommunityGetTagKeysBody(BaseModelDTO):
-    spacesFilter: list[str] = []
-    labelFilter: str = ""
-    personalOnly: bool = False
+    spacesFilter: list[str] = []  # noqa: N815
+    labelFilter: str = ""  # noqa: N815
+    personalOnly: bool = False  # noqa: N815
 
 
 class CommunityTagValueDTO(BaseModelDTO):
@@ -158,7 +158,7 @@ class CommunityRagflowAskResponseDTO(BaseModelDTO):
 class CommunityUserDTO(BaseModelDTO):
     id: str
     alias: str
-    userCode: str
+    userCode: str  # noqa: N815
     photo: str | None = None
 
 
@@ -166,14 +166,14 @@ class CommunityDocumentationDTO(BaseModelDTO):
     """Response from the GET /documentation/:id endpoint."""
 
     id: str
-    createdAt: datetime
-    createdBy: CommunityUserDTO
-    lastModifiedAt: datetime
-    lastModifiedBy: CommunityUserDTO
+    createdAt: datetime  # noqa: N815
+    createdBy: CommunityUserDTO  # noqa: N815
+    lastModifiedAt: datetime  # noqa: N815
+    lastModifiedBy: CommunityUserDTO  # noqa: N815
     title: str
     content: RichTextDTO
     path: str
-    completePath: str
+    completePath: str  # noqa: N815
     order: int
 
 
@@ -187,12 +187,12 @@ class CommunityCreateDocResponseDTO(BaseModelDTO):
 
     id: str
     title: str
-    createdAt: datetime
-    createdBy: CommunityUserDTO
-    lastModifiedAt: datetime
-    lastModifiedBy: CommunityUserDTO
+    createdAt: datetime  # noqa: N815
+    createdBy: CommunityUserDTO  # noqa: N815
+    lastModifiedAt: datetime  # noqa: N815
+    lastModifiedBy: CommunityUserDTO  # noqa: N815
     path: str
-    completePath: str
+    completePath: str  # noqa: N815
     order: int
     content: RichTextDTO | None = None
     folder: dict | None = None

@@ -11,29 +11,29 @@ from ..user.authorization_service import AuthorizationService
 from .task_service import TaskService
 
 
-@core_app.get("/task/{id}", tags=["Task"], summary="Get a task")
-def get_a_task(id: str, _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
+@core_app.get("/task/{id_}", tags=["Task"], summary="Get a task")
+def get_a_task(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> ProcessDTO:
     """
     Retrieve a task
 
     - **type**: the type of the task (Default is `gws_core.task.task_model.Task`)
-    - **id**: the id of the task
+    - **id_**: the id of the task
     """
 
-    return TaskService.get_task_by_id(id=id).to_dto()
+    return TaskService.get_task_by_id(id_=id_).to_dto()
 
 
 # TODO CHECK WHAT TO DO WITH THIS
-@core_app.post("/task/{id}/fix", tags=["Task"], summary="Fix a task")
-def fix_a_task(id: str, _=Depends(AuthorizationService.check_user_access_token)) -> None:
+@core_app.post("/task/{id_}/fix", tags=["Task"], summary="Fix a task")
+def fix_a_task(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> None:
     """
     Fix a task
 
     - **type**: the type of the task (Default is `gws_core.task.task_model.Task`)
-    - **id**: the id of the task
+    - **id_**: the id of the task
     """
 
-    protocol: ProtocolModel = ProtocolModel.get_by_id_and_check(id)
+    protocol: ProtocolModel = ProtocolModel.get_by_id_and_check(id_)
     fix_protocol(protocol)
 
 

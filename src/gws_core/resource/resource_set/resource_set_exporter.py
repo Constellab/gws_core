@@ -73,11 +73,11 @@ class ResourceSetExporter(ResourceExporter):
         temp_dir = self.create_tmp_dir()
         zip_path = os.path.join(temp_dir, f"{source.name or 'export'}.zip")
 
-        zip = ZipCompress(zip_path)
+        zip_compress = ZipCompress(zip_path)
 
         for file in fs_nodes:
-            zip.add_fs_node(file.path, file.get_default_name())
+            zip_compress.add_fs_node(file.path, file.get_default_name())
 
-        zip.close()
+        zip_compress.close()
 
         return File(zip_path)

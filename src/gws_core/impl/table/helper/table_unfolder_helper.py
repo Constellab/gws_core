@@ -72,10 +72,9 @@ class TableUnfolderHelper:
 
             tag_values = "_".join(tags.values())
 
-            row_index = 0
             complete_tags: list[dict] = []
             sub_table_row_tags: list[dict] = sub_table.get_row_tags()
-            for _, row in df.iterrows():
+            for row_index, (_, row) in enumerate(df.iterrows()):
                 name = f"{row.name}_{tag_values}"
 
                 # if the new row have fewer column than dataframe, append NaN
@@ -97,7 +96,6 @@ class TableUnfolderHelper:
                     tag_key_row_original_name: row.name,
                 }
                 complete_tags.append(complete_tag)
-                row_index += 1
 
             row_tags.extend(complete_tags)
 

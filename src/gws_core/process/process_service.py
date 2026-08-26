@@ -154,7 +154,7 @@ class ProcessService:
             Logger.debug("Check to send run stats to Community")
             stats = list(
                 ProcessRunStatModel.select()
-                .where(ProcessRunStatModel.sync_with_community == False)
+                .where(ProcessRunStatModel.sync_with_community == False)  # noqa: E712 - peewee query expression, the operator builds SQL
                 .order_by(ProcessRunStatModel.created_at.asc())
             )
             if len(stats) > 0:

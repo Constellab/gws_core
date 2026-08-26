@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Literal, Union
+from typing import Any, Literal
 
 from pydantic import field_validator, model_validator
 from typing_extensions import TypedDict
@@ -132,16 +132,16 @@ class SpaceDocumentDTO(BaseModelDTO):
     id: str
     name: str
     size: int
-    mimeType: str
+    mimeType: str  # noqa: N815
     type: Literal["UPLOADED_DOCUMENT", "CONSTELLAB_DOCUMENT"]
 
 
-SpaceHierarchyObjectType = Union[
+SpaceHierarchyObjectType = (
     Literal[
         "FOLDER", "DOCUMENT", "CONSTELLAB_DOCUMENT", "NOTE", "SCENARIO", "RESOURCE", "APPLICATION"
-    ],
-    str,  # Allow any string value,if a new type is added in space
-]
+    ]
+    | str  # Allow any string value,if a new type is added in space
+)
 
 
 class SpaceHierarchyObjectDTO(BaseModelDTO):
@@ -149,10 +149,10 @@ class SpaceHierarchyObjectDTO(BaseModelDTO):
 
     id: str
     name: str
-    objectType: SpaceHierarchyObjectType
-    parentId: str | None = None
-    documentSize: int | None = None
-    lastModifiedAt: datetime
+    objectType: SpaceHierarchyObjectType  # noqa: N815
+    parentId: str | None = None  # noqa: N815
+    documentSize: int | None = None  # noqa: N815
+    lastModifiedAt: datetime  # noqa: N815
 
 
 class SpaceGroupType(str, Enum):

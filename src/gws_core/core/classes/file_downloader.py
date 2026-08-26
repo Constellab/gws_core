@@ -11,6 +11,9 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
+# Only log the download progress once it advanced by at least this ratio (3%)
+PROGRESS_LOG_STEP = 0.03
+
 
 class FileDownloader:
     """Class to downloader external files. for now it only supports http(s) protocol.
@@ -151,7 +154,7 @@ class FileDownloader:
                             progress = downloaded_size / total_size
 
                             # if the progress is less than 3% more than the previous log, do not display the progress
-                            if progress - last_progress_logged > 0.03:
+                            if progress - last_progress_logged > PROGRESS_LOG_STEP:
                                 # calculate remaining time
                                 remaining_time = (time.time() - started_at) / (
                                     downloaded_size / total_size

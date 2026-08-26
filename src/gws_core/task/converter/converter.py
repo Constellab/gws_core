@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from dataclasses import dataclass
 from typing import final
 
 from gws_core.brick.brick_log_service import BrickLogService
@@ -20,20 +21,64 @@ from ...task.task_runner import TaskRunner
 from ...task.task_typing import TaskSubType
 
 
-def decorate_converter(
-    task_class: type["Converter"],
-    unique_name: str,
-    task_type: TaskSubType,
-    source_type: type[Resource] = Resource,
-    target_type: type[Resource] = Resource,
-    related_resource: type[Resource] | None = None,
-    human_name: str = "",
-    short_description: str = "",
-    hide: bool = False,
-    style: TypingStyle | None = None,
-    output_sub_class: bool = False,
-    deprecated: TypingDeprecated | None = None,
-) -> None:
+@dataclass
+class ConverterRegistration:
+    """Description of a converter (importer, exporter, transformer...) to register.
+
+    These values travel together from the converter decorators down to decorate_task,
+    so they are grouped in a single object instead of being forwarded one by one.
+
+    :param task_class: converter class to register
+    :type task_class: type[Converter]
+    :param unique_name: a unique name for this task in the brick. Only 1 task in the current brick can have this name.
+                        //!\\ DO NOT MODIFIED THIS NAME ONCE IS DEFINED //!\\
+    :type unique_name: str
+    :param task_type: sub type of the converter task (IMPORTER, EXPORTER, TRANSFORMER...)
+    :type task_type: TaskSubType
+    :param source_type: type of the resource taken as input, defaults to Resource
+    :type source_type: type[Resource]
+    :param target_type: type of the resource returned as output, defaults to Resource
+    :type target_type: type[Resource]
+    :param related_resource: resource this converter is related to, defaults to None
+    :type related_resource: type[Resource] | None
+    :param human_name: name used in the interface. If empty, it is generated from the unique_name
+    :type human_name: str
+    :param short_description: description used in the interface. Must not be longer than 255 caracters
+    :type short_description: str
+    :param hide: Only the task with hide=False will be available in the interface, other will be hidden, defaults to False
+    :type hide: bool
+    :param style: style of the task. If not provided, takes the style of the main resource type, defaults to None
+    :type style: TypingStyle | None
+    :param output_sub_class: if True, the output supports sub classes of target_type, defaults to False
+    :type output_sub_class: bool
+    :param deprecated: object to tell that the object is deprecated. See TypingDeprecated for more info, defaults to None
+    :type deprecated: TypingDeprecated | None
+    """
+
+    task_class: type["Converter"]
+    unique_name: str
+    task_type: TaskSubType
+    source_type: type[Resource] = Resource
+    target_type: type[Resource] = Resource
+    related_resource: type[Resource] | None = None
+    human_name: str = ""
+    short_description: str = ""
+    hide: bool = False
+    style: TypingStyle | None = None
+    output_sub_class: bool = False
+    deprecated: TypingDeprecated | None = None
+
+
+def decorate_converter(registration: ConverterRegistration) -> None:
+    """Register a converter from its description.
+
+    :param registration: description of the converter to register
+    :type registration: ConverterRegistration
+    """
+    task_class = registration.task_class
+    source_type = registration.source_type
+    target_type = registration.target_type
+
     if not Utils.issubclass(task_class, Converter):
         BrickLogService.log_brick_error(
             task_class,
@@ -50,10 +95,15 @@ def decorate_converter(
     # force the input and output specs
     task_class.input_specs = InputSpecs({Converter.input_name: InputSpec(source_type)})
     task_class.output_specs = OutputSpecs(
-        {Converter.output_name: OutputSpec(target_type, sub_class=output_sub_class)}
+        {
+            Converter.output_name: OutputSpec(
+                target_type, sub_class=registration.output_sub_class
+            )
+        }
     )
 
-    main_resource_type = target_type if task_type == "IMPORTER" else source_type
+    main_resource_type = target_type if registration.task_type == "IMPORTER" else source_type
+    style = registration.style
     if not style:
         # for the importer, takes the destination type
         style = get_converter_default_style(main_resource_type)
@@ -63,14 +113,14 @@ def decorate_converter(
     # register the task and set the human_name and short_description dynamically based on resource
     decorate_task(
         task_class=task_class,
-        unique_name=unique_name,
-        human_name=human_name,
-        related_resource=related_resource,
-        task_type=task_type,
-        short_description=short_description,
-        hide=hide,
+        unique_name=registration.unique_name,
+        human_name=registration.human_name,
+        related_resource=registration.related_resource,
+        task_type=registration.task_type,
+        short_description=registration.short_description,
+        hide=registration.hide,
         style=style,
-        deprecated=deprecated,
+        deprecated=registration.deprecated,
     )
 
 

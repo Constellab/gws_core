@@ -24,12 +24,8 @@ fill_nan_param = SelectParam(
 
 
 def get_fill_nan_value(fill_nan_option: str) -> Any:
-    if fill_nan_option == "NaN":
-        return NaN
-    elif fill_nan_option == "Empty":
-        return None
-    elif fill_nan_option == "0":
-        return 0
+    fill_nan_values: dict[str, Any] = {"NaN": NaN, "Empty": None, "0": 0}
+    return fill_nan_values.get(fill_nan_option)
 
 
 @task_decorator(

@@ -358,7 +358,7 @@ class Table(Resource):
 
         try:
             return self._data.columns.values.tolist()
-        except:
+        except Exception:
             return None
 
     def get_column_names(self, from_index: int | None = None, to_index: int | None = None) -> list[str]:
@@ -727,7 +727,7 @@ class Table(Resource):
 
             index_union.extend(index_instersect)
 
-        index_union = sorted(list(set(index_union)))
+        index_union = sorted(set(index_union))
         return index_union
 
     ######################################## COLUMN TAGS ########################################
@@ -1789,8 +1789,8 @@ class Table(Resource):
         View one or several columns as 2D-line plots
         TODO to improve
         """
-        from gws_core.impl.table.smart_tasks.table_smart_plotly import SmartPlotly
-        from gws_core.task.task_runner import TaskRunner
+        from gws_core.impl.table.smart_tasks.table_smart_plotly import SmartPlotly  # noqa: PLC0415
+        from gws_core.task.task_runner import TaskRunner  # noqa: PLC0415
 
         task_runner = TaskRunner(SmartPlotly, inputs={"source": self}, params=params)
 

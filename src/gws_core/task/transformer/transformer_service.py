@@ -1,6 +1,5 @@
-
-from gws_core.task.plug.input_task import InputTask as InputTask
-from gws_core.task.plug.output_task import OutputTask as OutputTask
+from gws_core.task.plug.input_task import InputTask
+from gws_core.task.plug.output_task import OutputTask
 from gws_core.task.transformer.transformer import Transformer
 
 from ...core.exception.exceptions.bad_request_exception import BadRequestException

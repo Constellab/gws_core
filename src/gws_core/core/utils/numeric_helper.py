@@ -46,7 +46,7 @@ class NumericHelper:
     def to_float(value: Any, default_value: Any = None) -> float | None:
         """Convert any to float. If NaN, inf or not convertible to float, returns default_value"""
 
-        if value == inf or value == -inf:
+        if value in (inf, -inf):
             return default_value
 
         try:
@@ -54,7 +54,7 @@ class NumericHelper:
             if isnan(result):
                 return default_value
             return result
-        except:
+        except Exception:
             return default_value
 
     @staticmethod
@@ -83,7 +83,7 @@ class NumericHelper:
             if isnan(result):
                 return default_value
             return result
-        except:
+        except Exception:
             return default_value
 
     @staticmethod
@@ -92,7 +92,7 @@ class NumericHelper:
         try:
             int(value)
             return True
-        except:
+        except Exception:
             return False
 
     @staticmethod
@@ -101,5 +101,5 @@ class NumericHelper:
         try:
             float(value)
             return True
-        except:
+        except Exception:
             return False

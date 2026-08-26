@@ -96,7 +96,7 @@ class TestDynamicPorts(BaseTestCase):
         )
         ProtocolService.add_input_resource_to_process_input(
             protocol.id, resource_model.id, process_model.instance_name, port_name
-        ).process
+        )
 
         protocol = protocol.refresh()
         self.assertEqual(len(protocol.connectors), 1)

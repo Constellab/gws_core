@@ -61,7 +61,7 @@ class FSNodeModel(Model):
         return cls.path.endswith(extension)
 
     def get_resource_model(self) -> "ResourceModel":
-        from gws_core.resource.resource_model import ResourceModel
+        from gws_core.resource.resource_model import ResourceModel  # noqa: PLC0415
 
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 

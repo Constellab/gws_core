@@ -6,12 +6,14 @@ from gws_core import ResourceModel
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.apps.streamlit.agents.streamlit_pipenv_agent import StreamlitPipenvAgent
 from gws_core.community.community_dto import CommunityAgentVersionDTO
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
 from gws_core.process.process_model import ProcessModel
+from gws_core.protocol.protocol_exception import IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.protocol.protocol_service import ProtocolService
@@ -286,7 +288,7 @@ class TestProtocolService(BaseTestCase):
         )
 
         # the "robot" outerface is connected to p5 in the parent -> deletion must still be blocked
-        with self.assertRaises(Exception):
+        with self.assertRaises(IOFaceConnectedToTheParentDeleteException):
             ProtocolService.delete_outerface_of_protocol_id(sub_protocol.get_model().id, "robot")
 
         # add a fresh, unconnected outerface from p4, then delete it on the finished sub protocol
@@ -362,8 +364,6 @@ class TestProtocolService(BaseTestCase):
         sub_protocol.add_task(RobotMove, "mover")
         # expose the inner task input as an interface of the sub protocol
         sub_protocol.add_interface("robot", "mover", "robot")
-
-        sub_id = sub_protocol.get_model().id
 
         # at parent level, attach the resource to the sub protocol interface input port
         ProtocolService.add_input_resource_to_process_input(
@@ -456,7 +456,7 @@ class TestProtocolService(BaseTestCase):
         scenario.refresh()
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p0.refresh()
             if p0.get_model().is_finished:
                 break
@@ -471,7 +471,7 @@ class TestProtocolService(BaseTestCase):
         ProtocolService.run_process(protocol_id, "p1")
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p1.refresh()
             if p1.get_model().is_finished:
                 break
@@ -482,7 +482,7 @@ class TestProtocolService(BaseTestCase):
         self.assertTrue(p1.get_model().is_success)
 
         # Test run process p4 which shoud not be runable
-        with self.assertRaises(Exception):
+        with self.assertRaises(BadRequestException):
             ProtocolService.run_process(protocol_id, "p3")
 
     def test_run_protocol_propagates_started_to_parent(self):
@@ -640,7 +640,7 @@ class TestProtocolService(BaseTestCase):
         ProtocolService.run_process(protocol_id, process_model.instance_name)
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p0.refresh()
             if p0.get_model().is_finished:
                 break

@@ -205,7 +205,7 @@ class CondaShellProxy(BaseEnvShell):
             env_creation_info: VEnvCreationInfo = cls.get_creation_info(folder_path)
 
             return env_creation_info.env_type in ["conda", "mamba"]
-        except:
+        except Exception:
             return False
 
     def _list_packages(self) -> dict[str, str]:

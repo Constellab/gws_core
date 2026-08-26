@@ -1,7 +1,12 @@
+import logging
 import traceback
 from collections.abc import AsyncGenerator, Callable
 
 import reflex as rx
+
+# Standard-library logger: this module cannot import gws_core (it runs in virtual-env
+# apps), so the GWS Logger is unavailable. Output lands in the app process stdout/stderr.
+_logger = logging.getLogger(__name__)
 
 ConfirmDialogAction = Callable[[], AsyncGenerator]
 
@@ -130,11 +135,9 @@ class ConfirmDialogState(rx.State):
             async for event in self._action():
                 yield event
         except Exception as e:
-            # TODO to improve, this should use the Logger but
-            # gws_core package is not available here
-            print(f"Error in confirm_action: {e}")
-            # print the exception for debugging
-            traceback.print_exc()
+            _logger.error("Error in confirm_action: %s", e)
+            # log the exception stack trace for debugging
+            _logger.debug("%s", traceback.format_exc())
             yield rx.toast.error(str(e))
             return
         finally:

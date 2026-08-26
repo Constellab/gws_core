@@ -76,7 +76,7 @@ Note: the `dev_config.json` simulate configuration values that would normally be
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
 - Do not use state_auto_setters, it is deprecated. Define setters explicitly for state attributes that need them.
 - Error handling: `register_gws_reflex_app` installs a global backend exception handler that turns any exception raised in an `@rx.event` into a toast. So most of the time, DO NOT wrap state logic in try/except just to display an error, and do not keep an error field in the state. Instead:
-   - For a user-facing error (validation, business rule), `raise ReflexAppException("message")` (from `gws_reflex_base`); it is shown as an error toast (use `ReflexAppException(msg, show_as="info")` for an info toast). gws_core `BaseHTTPException` is toasted the same way.
+   - For a user-facing error (validation, business rule), `raise ReflexAppError("message")` (from `gws_reflex_base`); it is shown as an error toast (use `ReflexAppError(msg, show_as="info")` for an info toast). gws_core `BaseHTTPException` is toasted the same way.
    - For unexpected errors, let them propagate: the handler logs the stack trace and shows a generic toast (the full message in dev mode).
    - Only use try/except when you genuinely need to recover and continue, not merely to surface the error.
 - Dialogs should close when clicking outside by default. Add `on_interact_outside=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`.
@@ -153,7 +153,7 @@ class MainState(rx.State):
 
 `main_component(*contents)` (from `gws_reflex_main`) wraps a page's content and is what runs the app's initialization: on mount it triggers the main state's auth flow (the `gws_code` → JWT exchange) and shows a spinner until it completes, then renders `contents`. `get_current_user()` / `get_resources()` / `authenticate_user()` only resolve once this has run.
 
-- **Every page must render its content through `main_component`.** A page that skips it (e.g. an index page that only does `rx.box(on_mount=rx.redirect(...))`) never runs the auth init, so any page it leads to loads before a user is resolved and raises `ReflexAppException("User not authenticated")`. Wrap the redirect too:
+- **Every page must render its content through `main_component`.** A page that skips it (e.g. an index page that only does `rx.box(on_mount=rx.redirect(...))`) never runs the auth init, so any page it leads to loads before a user is resolved and raises `ReflexAppError("User not authenticated")`. Wrap the redirect too:
 
 ```python
 @rx.page(route="/")

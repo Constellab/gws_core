@@ -33,6 +33,9 @@ class RichTextObjectType(str, Enum):
 
 
 class RichTextBlock(BaseModelDTO):
+    # `type` mirrors the persisted EditorJS block schema, so it cannot be renamed.
+    # The A003 below are the builtin `type[...]` in annotations, unambiguous here
+    # because the field is annotation-only and never bound in the class namespace.
     id: str
     type: str
     data: dict
@@ -54,10 +57,10 @@ class RichTextBlock(BaseModelDTO):
     def get_data(self) -> RichTextBlockDataBase: ...
 
     @overload
-    def get_data(self, data_type: type[RichTextBlockDataT]) -> RichTextBlockDataT: ...
+    def get_data(self, data_type: type[RichTextBlockDataT]) -> RichTextBlockDataT: ...  # noqa: A003
     def get_data(
         self,
-        data_type: type[RichTextBlockDataT] | None = None,
+        data_type: type[RichTextBlockDataT] | None = None,  # noqa: A003
     ) -> RichTextBlockDataT | RichTextBlockDataBase:
         # Get the block type string value
         block_typing_name = self.type
@@ -140,7 +143,7 @@ class RichTextBlock(BaseModelDTO):
 
 class RichTextDTO(BaseModelDTO):
     version: int = RICH_TEXT_CURRENT_VERSION
-    editorVersion: str = RICH_TEXT_EDITORJS_VERSION
+    editorVersion: str = RICH_TEXT_EDITORJS_VERSION  # noqa: N815
     blocks: list[RichTextBlock]
 
     @staticmethod

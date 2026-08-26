@@ -122,10 +122,7 @@ class LocalFileStore(FileStore):
 
     def get_node_by_path(self, node_path: str | None = None, node_type: type[FSNode] | None = None) -> FSNode:
         if node_type is None:
-            if FileHelper.is_file(node_path):
-                node_type = File
-            else:
-                node_type = Folder
+            node_type = File if FileHelper.is_file(node_path) else Folder
 
         if not isclass(node_type) or not issubclass(node_type, FSNode):
             raise BadRequestException(f"The path type '{str(node_type)}' is not a FsNode class")

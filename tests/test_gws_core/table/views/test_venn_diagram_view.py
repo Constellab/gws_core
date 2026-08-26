@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from gws_core import ViewTester
-from gws_core.extra import TableVennDiagramView
+from gws_core.impl.table.view.table_venn_diagram_view import TableVennDiagramView
 from gws_core.impl.table.table import Table
 from gws_core.impl.table.view.table_selection import Serie1d
 from pandas import DataFrame

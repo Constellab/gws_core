@@ -79,8 +79,9 @@ class TriggeredJobModel(ModelWithUser):
 
     def get_last_run(self) -> "TriggeredJobRunModel | None":
         """Get the last run of this job"""
-        from gws_core.triggered_job.triggered_job_run_model import TriggeredJobRunModel
-
+        from gws_core.triggered_job.triggered_job_run_model import (  # noqa: PLC0415
+            TriggeredJobRunModel,
+        )
         return (
             TriggeredJobRunModel.select()
             .where(TriggeredJobRunModel.triggered_job == self)
@@ -121,7 +122,7 @@ class TriggeredJobModel(ModelWithUser):
         """Get all active CRON jobs that should run (next_run_at <= now)"""
         return list(
             cls.select().where(
-                (cls.is_active == True)
+                (cls.is_active == True)  # noqa: E712 - peewee query expression, the operator builds SQL
                 & (cls.trigger_type == TriggerType.CRON)
                 & (cls.next_run_at <= now)
                 & (cls.next_run_at.is_null(False))
@@ -144,7 +145,7 @@ class TriggeredJobModel(ModelWithUser):
     @classmethod
     def get_all_active_jobs(cls) -> list["TriggeredJobModel"]:
         """Get all active jobs"""
-        return list(cls.select().where(cls.is_active == True))
+        return list(cls.select().where(cls.is_active == True))  # noqa: E712 - peewee query expression, the operator builds SQL
 
     @classmethod
     @GwsCoreDbManager.transaction()
@@ -153,8 +154,9 @@ class TriggeredJobModel(ModelWithUser):
         job = cls.get_by_id_and_check(id_)
 
         # Delete associated runs first
-        from gws_core.triggered_job.triggered_job_run_model import TriggeredJobRunModel
-
+        from gws_core.triggered_job.triggered_job_run_model import (  # noqa: PLC0415
+            TriggeredJobRunModel,
+        )
         TriggeredJobRunModel.delete().where(TriggeredJobRunModel.triggered_job == job).execute()
 
         job.delete_instance()

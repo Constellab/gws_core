@@ -1,10 +1,8 @@
 import json
-import os
 
 from gws_core import JSONDict
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.json_helper import JSONHelper
-from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONExporter, JSONImporter
 from gws_core.test.base_test_case_light import BaseTestCaseLight
@@ -37,13 +35,12 @@ class TestJson(BaseTestCaseLight):
         dict_ = {"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")}
 
         json_dict = JSONDict(dict_)
-        file_path = os.path.join(Settings.make_temp_dir(), "test_exporter.json")
 
         file: File = JSONExporter.call(json_dict)
 
         json_ = {}
-        with open(file.path, encoding="utf-8") as file_path:
-            json_ = json.load(file_path)
+        with open(file.path, encoding="utf-8") as json_file:
+            json_ = json.load(json_file)
 
         self.assertEqual(json_, {"hello": 123, "numpy": None, "inf": None, "a": "hello"})
 

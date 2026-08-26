@@ -146,7 +146,7 @@ class FileStore(Model):
 
     @classmethod
     def get_default_instance(cls) -> "FileStore":
-        from .local_file_store import LocalFileStore
+        from .local_file_store import LocalFileStore  # noqa: PLC0415
 
         return LocalFileStore.get_default_instance()
 

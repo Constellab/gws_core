@@ -48,7 +48,7 @@ class TableAxisTags(SerializableObjectJson):
         try:
             self._tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         except Exception as err:
-            raise Exception(f"The tags are not valid. Please check. Error message: {err}")
+            raise Exception(f"The tags are not valid. Please check. Error message: {err}") from err
 
     def remove_tags_at(self, index: int) -> None:
         self._check_tag_index(index)

@@ -118,21 +118,27 @@ class TestFormAiFill(BaseTestCase):
 
     def test_invalid_json_raises_bad_request(self):
         form = self._scalar_form()
-        with patch(_GPT_TARGET, return_value="this is not json"):
-            with self.assertRaises(BadRequestException):
-                FormAiFillService.fill_values_from_text(form.id, "...", {})
+        with (
+            patch(_GPT_TARGET, return_value="this is not json"),
+            self.assertRaises(BadRequestException),
+        ):
+            FormAiFillService.fill_values_from_text(form.id, "...", {})
 
     def test_non_object_json_raises_bad_request(self):
         form = self._scalar_form()
-        with patch(_GPT_TARGET, return_value=json.dumps([1, 2, 3])):
-            with self.assertRaises(BadRequestException):
-                FormAiFillService.fill_values_from_text(form.id, "...", {})
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps([1, 2, 3])),
+            self.assertRaises(BadRequestException),
+        ):
+            FormAiFillService.fill_values_from_text(form.id, "...", {})
 
     def test_invalid_value_type_raises_bad_request(self):
         form = self._scalar_form()
-        with patch(_GPT_TARGET, return_value=json.dumps({"mass": "not a float"})):
-            with self.assertRaises(BadRequestException):
-                FormAiFillService.fill_values_from_text(form.id, "...", {})
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"mass": "not a float"})),
+            self.assertRaises(BadRequestException),
+        ):
+            FormAiFillService.fill_values_from_text(form.id, "...", {})
 
     def test_empty_text_raises_bad_request(self):
         form = self._scalar_form()

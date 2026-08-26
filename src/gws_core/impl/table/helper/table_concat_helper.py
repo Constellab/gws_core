@@ -54,10 +54,7 @@ class TableConcatHelper:
                 concat_df = table.get_data()
                 row_tags = table.get_row_tags()
 
-                if (
-                    column_tags_option == "merge from first table"
-                    or column_tags_option == "keep first"
-                ):
+                if column_tags_option in ("merge from first table", "keep first"):
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
                 temp_df = concat([concat_df, table.get_data()])

@@ -135,7 +135,7 @@ class ViewConfig(ModelWithUser, NavigableEntity):
     @classmethod
     def get_by_resource_and_favorite(cls, resource_model_id: str) -> ModelSelect:
         return ViewConfig.select().where(
-            (ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True)
+            (ViewConfig.resource_model == resource_model_id) & (ViewConfig.is_favorite == True)  # noqa: E712 - peewee query expression, the operator builds SQL
         )
 
     @classmethod

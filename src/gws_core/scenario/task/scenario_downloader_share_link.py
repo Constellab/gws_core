@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import requests
 
 from gws_core.config.config_params import ConfigParams, ConfigParamsDict
@@ -93,7 +95,7 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
 
         response = requests.get(self._link, timeout=60)
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise Exception("Error while getting information of the resource: " + response.text)
 
         try:
@@ -127,7 +129,7 @@ class ScenarioDownloaderShareLink(ScenarioDownloaderBase):
                 )
             )
 
-            if response.status_code != 200:
+            if response.status_code != HTTPStatus.OK:
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text
                 )

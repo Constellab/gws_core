@@ -22,11 +22,7 @@ class ExternalSpaceFolder(BaseModelDTO):
         if self.children is None:
             return False
 
-        for child in self.children:
-            if child.folder_exist(folder_id):
-                return True
-
-        return False
+        return any(child.folder_exist(folder_id) for child in self.children)
 
 
 class ExternalSpaceFolders(BaseModelDTO):
@@ -34,11 +30,7 @@ class ExternalSpaceFolders(BaseModelDTO):
 
     def folder_exist(self, folder_id: str) -> bool:
         """Check if a folder exist in the tree"""
-        for root_folder in self.folders:
-            if root_folder.folder_exist(folder_id):
-                return True
-
-        return False
+        return any(root_folder.folder_exist(folder_id) for root_folder in self.folders)
 
 
 class SpaceFolderDTO(ModelDTO):

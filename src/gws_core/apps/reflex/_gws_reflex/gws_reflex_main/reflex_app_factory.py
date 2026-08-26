@@ -3,7 +3,7 @@ Helper function to apply GWS standard configuration to Reflex applications.
 """
 
 import reflex as rx
-from gws_reflex_base import ReflexAppException, ReflexMainStateBaseFactory
+from gws_reflex_base import ReflexAppError, ReflexMainStateBaseFactory
 from gws_reflex_base import add_unauthorized_page as _add_unauthorized_page
 from reflex.app import default_backend_exception_handler, default_frontend_exception_handler
 
@@ -27,7 +27,7 @@ def default_gws_backend_handler(
 ) -> rx.event.EventSpec | None:
     """Default backend exception handler for GWS apps.
 
-    Expected exceptions (``ReflexAppException`` raised by the base state, and
+    Expected exceptions (``ReflexAppError`` raised by the base state, and
     ``BaseHTTPException`` raised by gws_core code) are shown as a toast with their
     message. Unexpected errors are logged and shown as a generic message.
 
@@ -36,7 +36,7 @@ def default_gws_backend_handler(
     :return: Event spec to show error toast
     :rtype: Optional[rx.event.EventSpec]
     """
-    if isinstance(exception, ReflexAppException):
+    if isinstance(exception, ReflexAppError):
         if exception.show_as == "info":
             return rx.toast.info(exception.detail, position="top-center")
         return rx.toast.error(exception.detail, position="top-center")

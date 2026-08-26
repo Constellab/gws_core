@@ -385,4 +385,4 @@ class TriggeredJobService:
         try:
             croniter(cron_expression)
         except Exception as e:
-            raise BadRequestException(f"Invalid cron expression: {e}")
+            raise BadRequestException(f"Invalid cron expression: {e}") from e

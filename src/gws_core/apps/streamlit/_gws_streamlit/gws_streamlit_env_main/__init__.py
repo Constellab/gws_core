@@ -3,7 +3,7 @@ Can be imported as: from gws_streamlit_env_main import register_gws_streamlit_en
 """
 
 # Re-export everything from base
-from gws_streamlit_base import *
+from gws_streamlit_base import *  # noqa: F403
 
 # Env-specific exports
 from .gws_streamlit_env_main_state import StreamlitEnvMainState as StreamlitEnvMainState

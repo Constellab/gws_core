@@ -1,4 +1,4 @@
-from gws_core import File, Paginator, Resource, ResourceImporter, Text, importer_decorator
+from gws_core import File, Resource, ResourceImporter, Text, importer_decorator
 from gws_core.core.classes.paginator import Paginator
 from gws_core.core.classes.search_builder import SearchFilterCriteria, SearchOperator, SearchParams
 from gws_core.impl.text.text_tasks import TextImporter

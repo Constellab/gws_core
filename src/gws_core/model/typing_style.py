@@ -18,6 +18,13 @@ class TypingIconColor(Enum):
 TYPING_DEFAULT_BACKGROUND_COLOR = "#c7c8cc"
 TYPING_DEFAULT_ICON_COLOR = TypingIconColor.BLACK
 
+# Length of a hex color code, including the leading '#' (ex: '#c7c8cc')
+HEX_COLOR_LENGTH = 7
+
+# Perceived brightness (0-255) above which a color is considered light,
+# and therefore needs a black icon to stay readable
+BRIGHTNESS_CONTRAST_THRESHOLD = 125
+
 
 class TypingStyle(BaseModelDTO):
     icon_technical_name: str | None = None
@@ -196,7 +203,7 @@ class TypingStyle(BaseModelDTO):
     @staticmethod
     def check_background_color(background_color: str | None) -> str | None:
         if background_color and (
-            not background_color.startswith("#") or len(background_color) != 7
+            not background_color.startswith("#") or len(background_color) != HEX_COLOR_LENGTH
         ):
             Logger.error(f"Invalid background color '{background_color}'. Must be a hex color code")
             return None
@@ -215,4 +222,6 @@ class TypingStyle(BaseModelDTO):
             return TypingIconColor.WHITE
         r, g, b = int(color[1:3], 16), int(color[3:5], 16), int(color[5:7], 16)
         brightness = (r * 299 + g * 587 + b * 114) / 1000
-        return TypingIconColor.BLACK if brightness > 125 else TypingIconColor.WHITE
+        if brightness > BRIGHTNESS_CONTRAST_THRESHOLD:
+            return TypingIconColor.BLACK
+        return TypingIconColor.WHITE

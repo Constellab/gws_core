@@ -247,7 +247,7 @@ class ShellProxy(BaseTyping):
         except Exception as err:
             Logger.log_exception_stack_trace(err)
             self._message_dispatcher.notify_error_message(str(err))
-            raise Exception(f"The shell process has failed. Error {err}.")
+            raise Exception(f"The shell process has failed. Error {err}.") from err
 
     def _manage_run_output(self, proc: subprocess.Popen, loggers: list[ShellIO]) -> None:
         """Manage real-time reading of stdout and stderr from a running process.
@@ -410,7 +410,7 @@ class ShellProxy(BaseTyping):
             return output
         except Exception as err:
             Logger.log_exception_stack_trace(err)
-            raise Exception(f"The shell process has failed. Error {err}.")
+            raise Exception(f"The shell process has failed. Error {err}.") from err
 
     def _check_shell_mode(self, cmd: list | str, shell_mode: bool | None = False) -> bool:
         """Check if the command can be run before running it.

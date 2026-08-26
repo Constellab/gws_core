@@ -8,6 +8,8 @@ from gws_core import (
     ScenarioProxy,
     TaskProxy,
 )
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.impl.robot.robot_protocol import RobotSuperTravelProto, RobotTravelProto
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
@@ -112,9 +114,9 @@ class TestScenarioProxy(BaseTestCase):
 
         # Test removing the process
         super_travel.delete_process("sub_travel")
-        self.assertRaises(Exception, super_travel.get_process, "sub_travel")
+        self.assertRaises(BadRequestException, super_travel.get_process, "sub_travel")
         # Test also that the process of sub_travel was delete form DB
-        self.assertRaises(Exception, TaskProxy.get_by_id, move_1.get_model().id)
+        self.assertRaises(NotFoundException, TaskProxy.get_by_id, move_1.get_model().id)
 
         # Test info in protocol model
         self._test_super_travel_after_remove(super_travel_model)
@@ -130,18 +132,18 @@ class TestScenarioProxy(BaseTestCase):
         :type protocol_model: ProtocolModel
         """
         # Test thath the sub process was deleted
-        self.assertRaises(Exception, super_travel_model.get_process, "sub_travel")
+        self.assertRaises(BadRequestException, super_travel_model.get_process, "sub_travel")
 
         # Test that the connectors were deleted
         self.assertEqual(len(super_travel_model.connectors), 0)
 
         # Test that the interface and input are delete
-        self.assertRaises(Exception, super_travel_model.interfaces.__getitem__, "robot")
-        self.assertRaises(Exception, super_travel_model.inputs.get_port, "robot")
+        self.assertRaises(KeyError, super_travel_model.interfaces.__getitem__, "robot")
+        self.assertRaises(BadRequestException, super_travel_model.inputs.get_port, "robot")
 
         # Test that the outerface and output
-        self.assertRaises(Exception, super_travel_model.outerfaces.__getitem__, "robot")
-        self.assertRaises(Exception, super_travel_model.outputs.get_port, "robot")
+        self.assertRaises(KeyError, super_travel_model.outerfaces.__getitem__, "robot")
+        self.assertRaises(BadRequestException, super_travel_model.outputs.get_port, "robot")
 
     def test_add_resources_to_dynamic_input(self):
         """Test the add_resources_to_dynamic_input method with ResourceStacker task"""

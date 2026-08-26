@@ -8,6 +8,36 @@ from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.core.utils.reflector_types import MethodDoc
 
 
+def _build_parameters_table_data(method_doc: MethodDoc) -> dict:
+    """
+    Build the table data (one column per field) describing the arguments of a method.
+
+    :param method_doc: The MethodDoc object containing the documentation
+    :return: a dict with the 'Parameter', 'Type' and 'Description' columns
+    """
+    # Create a table for parameters using dictionary format
+    parameter_names = []
+    types = []
+    descriptions = []
+
+    for arg in method_doc.args:
+        # Get description from docstring
+        arg_description = method_doc.get_arg_description(arg.arg_name)
+        if not arg_description:
+            arg_description = "No description provided"
+
+        # Build the description with default value if present
+        description_text = arg_description
+        if arg.arg_default_value:
+            description_text += f" (default: `{arg.arg_default_value}`)"
+
+        parameter_names.append(f"`{arg.arg_name}`")
+        types.append(f"`{arg.arg_type}`")
+        descriptions.append(description_text)
+
+    return {"Parameter": parameter_names, "Type": types, "Description": descriptions}
+
+
 def render_method_doc(
     method_doc: MethodDoc,
     title: str | None = None,
@@ -43,30 +73,9 @@ def render_method_doc(
     # Parameters table
     if show_parameters:
         if len(method_doc.args) > 0:
-            # Create a table for parameters using dictionary format
-            parameter_names = []
-            types = []
-            descriptions = []
-
-            for arg in method_doc.args:
-                # Get description from docstring
-                arg_description = method_doc.get_arg_description(arg.arg_name)
-                if not arg_description:
-                    arg_description = "No description provided"
-
-                # Build the description with default value if present
-                description_text = arg_description
-                if arg.arg_default_value:
-                    description_text += f" (default: `{arg.arg_default_value}`)"
-
-                parameter_names.append(f"`{arg.arg_name}`")
-                types.append(f"`{arg.arg_type}`")
-                descriptions.append(description_text)
-
             # Display using st.table with dictionary format
-            table_data = {"Parameter": parameter_names, "Type": types, "Description": descriptions}
-            st.table(table_data)
-        elif show_parameters:
+            st.table(_build_parameters_table_data(method_doc))
+        else:
             st.text("No parameters.")
 
     # Return type

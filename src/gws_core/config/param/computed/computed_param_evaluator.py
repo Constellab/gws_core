@@ -12,6 +12,9 @@ from simpleeval import (
     SimpleEval,
 )
 
+# stdev() is undefined for a single value, it needs at least two.
+MIN_STDDEV_VALUES = 2
+
 # Internal function names the rewriter injects; never written by users.
 _PARAMSET_AGG_FUNC_NAME = "__paramset_agg__"
 _IF_FUNC_NAME = "__cp_if__"
@@ -110,8 +113,27 @@ class ConfigSpecsEvaluator:
         self._assert_only_sigil_field_refs(expression)
         rewritten = _rewrite_expression(expression)
 
-        rows = paramset_rows or {}
-        outer = outer_scope or {}
+        functions = self._build_runtime_functions(paramset_rows or {}, outer_scope or {})
+        evaluator = SimpleEval(names=scope, functions=functions)
+
+        return self._eval_rewritten(evaluator, rewritten)
+
+    def _build_runtime_functions(
+        self,
+        rows: dict[str, list[dict[str, Any]]],
+        outer: dict[str, Any],
+    ) -> dict[str, Callable[..., Any]]:
+        """Build the function table handed to simpleeval for one evaluation.
+
+        It is the whitelisted function table plus the three internal functions
+        the rewriter injects: the ParamSet aggregate resolver (bound to `rows`),
+        the outer-scope reference resolver (bound to `outer`) and `if`.
+
+        :param rows: paramset_key -> list of row dicts, resolving
+            `@key[].field` aggregate sugar.
+        :param outer: enclosing-scope identifier -> value map, resolving
+            `@@name` references.
+        """
 
         def _paramset_agg(paramset_key: str, field: str) -> list[Any]:
             if paramset_key not in rows:
@@ -125,27 +147,36 @@ class ConfigSpecsEvaluator:
                 raise ComputedParamEvaluationError(f"Unknown outer field '@@{name}'")
             return outer[name]
 
-        functions = {
+        return {
             **self._functions,
             _PARAMSET_AGG_FUNC_NAME: _paramset_agg,
             _IF_FUNC_NAME: _if,
             _OUTER_REF_FUNC_NAME: _outer_ref,
         }
 
-        evaluator = SimpleEval(names=scope, functions=functions)
+    @classmethod
+    def _eval_rewritten(cls, evaluator: SimpleEval, rewritten: str) -> Any:
+        """Run an already-rewritten expression and map every simpleeval /
+        runtime failure to a ComputedParamEvaluationError carrying a
+        human-readable message.
 
+        :param evaluator: the SimpleEval instance holding the names and
+            functions of this evaluation.
+        :param rewritten: the lowered expression (no `@` sigils left).
+        :raises ComputedParamEvaluationError: on any evaluation failure.
+        """
         try:
             return evaluator.eval(rewritten)
         except ZeroDivisionError as err:
             raise ComputedParamEvaluationError("Division by zero") from err
         except NameNotDefined as err:
-            name = self._safe_name(err)
+            name = cls._safe_name(err)
             raise ComputedParamEvaluationError(
                 f"Unknown name '{name}'. Field references must be written as @{name}."
             ) from err
         except FunctionNotDefined as err:
             raise ComputedParamEvaluationError(
-                f"Function not allowed: {self._safe_name(err)}"
+                f"Function not allowed: {cls._safe_name(err)}"
             ) from err
         except InvalidExpression as err:
             raise ComputedParamEvaluationError(f"Invalid expression: {err}") from err
@@ -382,7 +413,7 @@ def _safe_median(*args: Any) -> Any:
 
 def _safe_stddev(*args: Any) -> Any:
     items = _flatten_numeric_args(args)
-    if len(items) < 2:
+    if len(items) < MIN_STDDEV_VALUES:
         raise ComputedParamEvaluationError("stddev() requires at least two values")
     return stdev(items)
 

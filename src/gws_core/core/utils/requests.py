@@ -1,9 +1,10 @@
 import os
 import re
 import sys
-from logging import Logger
 
 import requests
+
+from gws_core.core.utils.logger import Logger
 
 
 class Requests:
@@ -29,16 +30,17 @@ class Requests:
         Logger.info("Request class is deprecated, please use FileDownloader instead")
 
         dest_file_path = os.path.join(dest_dir, dest_filename)
-        print(f"Downloading {url} to {dest_file_path} ...")
+        Logger.info(f"Downloading {url} to {dest_file_path} ...")
 
         if os.path.exists(dest_file_path):
-            print(f"Data {dest_file_path} already exists")
+            Logger.info(f"Data {dest_file_path} already exists")
             return None
 
-        if dest_file_path.endswith(".zip"):
-            if os.path.exists(re.sub(r"\.zip$", "", dest_file_path)):
-                print(f"Unzipped data {dest_file_path} already exists")
-                return None
+        if dest_file_path.endswith(".zip") and os.path.exists(
+            re.sub(r"\.zip$", "", dest_file_path)
+        ):
+            Logger.info(f"Unzipped data {dest_file_path} already exists")
+            return None
 
         if not os.path.exists(dest_dir):
             os.makedirs(dest_dir)

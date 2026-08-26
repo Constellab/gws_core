@@ -110,6 +110,6 @@ class PlotlyResource(Resource):
             with open(path, encoding="utf-8") as file:
                 dict_ = json.load(file)
         except Exception as e:
-            raise Exception(f"Error while reading the json file {path}. {str(e)}")
+            raise Exception(f"Error while reading the json file {path}. {str(e)}") from e
 
         return PlotlyResource.from_dict(dict_)

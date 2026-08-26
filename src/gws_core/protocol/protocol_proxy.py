@@ -225,7 +225,7 @@ class ProtocolProxy(ProcessProxy):
         :rtype: List[IProcess]
         """
         process_proxies: dict[str, ProcessProxy] = {}
-        for process_instance_name in self._process_model.processes.keys():
+        for process_instance_name in self._process_model.processes:
             process_proxies[process_instance_name] = self.get_process(process_instance_name)
 
         return process_proxies
@@ -815,6 +815,6 @@ class ProtocolProxy(ProcessProxy):
         ############################################### CLASS METHODS ####################################
 
     @classmethod
-    def get_by_id(cls, id: str) -> "ProtocolProxy":
-        protocol_model: ProtocolModel = ProtocolService.get_by_id_and_check(id)
+    def get_by_id(cls, id_: str) -> "ProtocolProxy":
+        protocol_model: ProtocolModel = ProtocolService.get_by_id_and_check(id_)
         return ProtocolProxy(protocol_model)

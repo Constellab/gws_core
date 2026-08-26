@@ -4,7 +4,7 @@ from pydantic import ConfigDict
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.logger import Logger
-from gws_core.io.io_exception import InvalidInputsException, MissingInputResourcesException
+from gws_core.io.io_exception import InvalidInputsError, MissingInputResourcesException
 from gws_core.io.io_spec import InputSpec, IOSpec, IOSpecDTO, OutputSpec
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_factory import ResourceFactory
@@ -147,7 +147,7 @@ class InputSpecs(IOSpecs):
             raise MissingInputResourcesException(port_names=missing_resource)
 
         if invalid_input_text and len(invalid_input_text) > 0:
-            raise InvalidInputsException(invalid_input_text)
+            raise InvalidInputsError(invalid_input_text)
 
         return TaskInputs(self._transform_input_resources(input_dict))
 

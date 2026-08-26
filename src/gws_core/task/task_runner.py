@@ -12,7 +12,7 @@ from gws_core.core.classes.observer.message_observer import (
 from gws_core.core.utils.logger import Logger
 
 from ..config.config_params import ConfigParams
-from ..io.io_exception import InvalidOutputsException
+from ..io.io_exception import InvalidOutputsError
 from ..io.io_specs import InputSpecs, OutputSpecs
 from ..progress_bar.progress_bar import ProgressBar
 from ..resource.resource import Resource
@@ -204,7 +204,7 @@ class TaskRunner:
         self._outputs = result.outputs or {}
 
         if result.error and len(result.error) > 0:
-            raise InvalidOutputsException(result.error)
+            raise InvalidOutputsError(result.error)
 
         return self._outputs
 

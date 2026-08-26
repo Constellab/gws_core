@@ -1,3 +1,4 @@
+import logging
 import traceback
 from abc import abstractmethod
 from collections.abc import AsyncGenerator
@@ -5,6 +6,10 @@ from collections.abc import AsyncGenerator
 import reflex as rx
 
 from .reflex_dialog_components import dialog_header
+
+# Standard-library logger: this module cannot import gws_core (it runs in virtual-env
+# apps), so the GWS Logger is unavailable. Output lands in the app process stdout/stderr.
+_logger = logging.getLogger(__name__)
 
 
 class FormDialogState(rx.State, mixin=True):
@@ -96,11 +101,9 @@ class FormDialogState(rx.State, mixin=True):
                 async for event in self._create(form_data):
                     yield event
         except Exception as e:
-            # TODO to improve, this should use the Logger but
-            # gws_core package is not available here
-            print(f"Error in submit_form: {e}")
-            # print the exception for debugging
-            traceback.print_exc()
+            _logger.error("Error in submit_form: %s", e)
+            # log the exception stack trace for debugging
+            _logger.debug("%s", traceback.format_exc())
             yield rx.toast.error(str(e))
             return
         finally:

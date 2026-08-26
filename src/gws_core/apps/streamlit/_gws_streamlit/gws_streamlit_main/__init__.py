@@ -3,7 +3,7 @@ Can be imported as: from gws_streamlit_main import StreamlitAppState
 """
 
 # Re-export everything from base
-from gws_streamlit_base import *
+from gws_streamlit_base import *  # noqa: F403
 
 # Components
 from .components.streamlit_class_doc_component import class_doc_component as class_doc_component

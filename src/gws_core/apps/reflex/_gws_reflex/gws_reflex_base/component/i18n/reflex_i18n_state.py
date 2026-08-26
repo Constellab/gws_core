@@ -6,7 +6,7 @@ gives a single source of truth for the active language across the whole app.
 
 Two resolution entry points:
 
-- Backend (event handlers, raised ``ReflexAppException``, logs): fetch the state and call
+- Backend (event handlers, raised ``ReflexAppError``, logs): fetch the state and call
   its :meth:`I18nState.tr` — ``(await self.get_state(I18nState)).tr("key")`` — which returns
   a plain ``str`` using the shared ``lang``.
 - UI (component tree): :func:`~gws_reflex_base.translate`, a reactive var backed by the

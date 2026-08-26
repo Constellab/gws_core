@@ -15,6 +15,7 @@ from gws_core import (
     task_decorator,
 )
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.core.utils.logger import Logger
 from gws_core.impl.robot.robot_resource import RobotFood
 from gws_core.impl.robot.robot_tasks import (
     RobotCreate,
@@ -103,7 +104,7 @@ class RobotWaitFood(Task):
     config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        print("Wait food", flush=True)
+        Logger.info("Wait food")
         time.sleep(3)
         return {"food": inputs["food"]}
 

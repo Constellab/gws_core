@@ -205,11 +205,11 @@ def synchronize_users(_=Depends(AuthorizationService.check_user_access_token)) -
     UserService.synchronize_all_space_users()
 
 
-@core_app.get("/user/{id}", tags=["User"])
+@core_app.get("/user/{id_}", tags=["User"])
 def get_by_id_and_check(
-    id: str, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> UserDTO:
-    return UserService.get_by_id_and_check(id).to_dto()
+    return UserService.get_by_id_and_check(id_).to_dto()
 
 
 @core_app.get("/user/name-search/{name}", tags=["User"])

@@ -4,6 +4,7 @@ from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase
 from gws_core.model.typing_register_decorator import register_gws_typing_class
+from gws_core.model.typing_registration import TypingRegistration
 
 
 def rich_text_block_decorator(
@@ -50,14 +51,16 @@ def rich_text_block_decorator(
             return data_class
 
         register_gws_typing_class(
-            object_class=data_class,
-            object_type="RICH_TEXT_BLOCK",
-            unique_name=unique_name,
-            human_name=human_name,
-            short_description=short_description,
-            hide=hide,
-            style=None,
-            object_sub_type=unique_name,  # Use the block type as sub_type for lookup
+            TypingRegistration(
+                object_class=data_class,
+                object_type="RICH_TEXT_BLOCK",
+                unique_name=unique_name,
+                human_name=human_name,
+                short_description=short_description,
+                hide=hide,
+                style=None,
+                object_sub_type=unique_name,  # Use the block type as sub_type for lookup
+            )
         )
         return data_class
 

@@ -1,5 +1,6 @@
 from unittest import TestCase
 
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.utils import Utils
 
 from .test_helper import TestHelper
@@ -27,7 +28,7 @@ class BaseTestCaseLight(TestCase):
     def setUpClass(cls):
         if cls._class_setted_up:
             return
-        print(
+        Logger.info(
             f"************** Running test file '{cls.__module__}', class '{cls.__name__}' **************"
         )
         if not cls.init_before_each_test:
@@ -40,7 +41,7 @@ class BaseTestCaseLight(TestCase):
             return
         if not cls.init_before_each_test:
             cls.clear_after_test()
-        print(
+        Logger.info(
             f"************** End of test file '{cls.__module__}', class '{cls.__name__}' **************"
         )
         cls._class_teared_down = True
@@ -65,9 +66,9 @@ class BaseTestCaseLight(TestCase):
     @classmethod
     def print(cls, text: str):
         """
-        Print test title
+        Log a test title
         """
-        print(f"---- Test: {text} ----")
+        Logger.info(f"---- Test: {text} ----")
 
     @classmethod
     def assert_json(

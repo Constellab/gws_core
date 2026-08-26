@@ -48,7 +48,7 @@ from ..user.user_credentials_dto import UserCredentials2Fa, UserCredentialsDTO
 class ExternalCheckCredentialResponse(BaseModelDTO):
     status: Literal["OK", "2FA_REQUIRED"]
     user: UserSpace | None = None
-    twoFAUrlCode: str | None = None
+    twoFAUrlCode: str | None = None  # noqa: N815
 
 
 class SpaceService(SpaceServiceBase):

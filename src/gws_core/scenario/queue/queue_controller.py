@@ -17,12 +17,12 @@ def get_the_scenario_queue(_=Depends(AuthorizationService.check_user_access_toke
     return [job.to_dto() for job in queue_job]
 
 
-@core_app.delete("/queue/scenario/{id}", tags=["Queue"], summary="Get the queue of scenarios")
+@core_app.delete("/queue/scenario/{id_}", tags=["Queue"], summary="Get the queue of scenarios")
 def remove_scenario_from_queue(
-    id: str, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> ScenarioDTO:
     """
     Remove a scenario from the queue
     """
 
-    return QueueService.remove_scenario_from_queue(id).to_dto()
+    return QueueService.remove_scenario_from_queue(id_).to_dto()

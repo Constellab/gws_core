@@ -18,8 +18,8 @@ class RichTextBlockFigure(RichTextBlockDataBase):
     caption: str | None = None
     width: int
     height: int
-    naturalWidth: int
-    naturalHeight: int
+    naturalWidth: int  # noqa: N815
+    naturalHeight: int  # noqa: N815
 
     def to_markdown(self) -> str:
         """Convert the figure to markdown

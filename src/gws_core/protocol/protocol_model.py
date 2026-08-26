@@ -391,7 +391,7 @@ class ProtocolModel(ProcessModel):
         return self._processes
 
     def get_processes_from_db(self) -> dict[str, ProcessModel]:
-        from gws_core.task.task_model import TaskModel
+        from gws_core.task.task_model import TaskModel  # noqa: PLC0415
 
         protocols: list[ProcessModel] = list(ProtocolModel.get_by_parent_protocol_id(self.id))
         tasks: list[ProcessModel] = list(TaskModel.get_by_parent_protocol_id(self.id))

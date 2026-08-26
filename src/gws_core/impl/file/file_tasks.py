@@ -12,7 +12,6 @@ from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...config.param.param_spec import StrParam
 from ...impl.file.file import File
-from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs

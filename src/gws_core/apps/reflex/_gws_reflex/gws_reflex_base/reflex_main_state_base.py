@@ -9,7 +9,7 @@ import reflex as rx
 from typing_extensions import TypedDict
 
 from .reflex_code_exchange import exchange_code_for_jwt, validate_jwt_for_user
-from .reflex_exception import ReflexAppException
+from .reflex_exception import ReflexAppError
 
 UNAUTHORIZED_ROUTE = "/unauthorized"
 APP_CONFIG_FILENAME = "app_config.json"
@@ -282,7 +282,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         if not os.path.exists(app_config_path):
             # Logger.warning(f"App config file not found at {app_config_path}")
             # return {}
-            raise ReflexAppException(f"App config file not found at {app_config_path}")
+            raise ReflexAppError(f"App config file not found at {app_config_path}")
 
         try:
             app_config: dict
@@ -294,12 +294,12 @@ class ReflexMainStateBase(rx.State, mixin=True):
             return app_config
 
         except Exception as e:
-            raise ReflexAppException(f"Error reading app config file: {e}")
+            raise ReflexAppError(f"Error reading app config file: {e}") from e
 
     def _get_app_config_file_path(self) -> str:
         config_file_path = os.environ.get("GWS_APP_CONFIG_FILE_PATH")
         if not config_file_path:
-            raise ReflexAppException(
+            raise ReflexAppError(
                 "GWS_APP_CONFIG_FILE_PATH environment variable is not set in production mode"
             )
 
@@ -316,7 +316,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
 
         app_id = os.environ.get("GWS_APP_ID")
         if not app_id:
-            raise ReflexAppException("GWS_APP_ID environment variable is not set")
+            raise ReflexAppError("GWS_APP_ID environment variable is not set")
         return app_id
 
     async def _check_user_token(
@@ -424,7 +424,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
         In dev mode there is no gateway, so this stays an exception: a dev app failing auth is a
         configuration problem the developer should see, not something to bounce.
 
-        :raises ReflexAppException: when bouncing is impossible (dev mode, unknown gateway address,
+        :raises ReflexAppError: when bouncing is impossible (dev mode, unknown gateway address,
             no host) or when the visitor already came back from the gateway unauthenticated.
         :return: the ``EventSpec`` navigating the browser to the gateway. The caller must return it
             to Reflex -- an ``EventSpec`` that is not returned is never executed.
@@ -438,14 +438,14 @@ class ReflexMainStateBase(rx.State, mixin=True):
                 "comes from the '%s' entry of the app config file.",
                 self.DEV_MODE_USER_ACCESS_TOKEN_KEY,
             )
-            raise ReflexAppException("User not authenticated")
+            raise ReflexAppError("User not authenticated")
 
         if not lab_api_url:
             _logger.warning(
                 "[gws-auth] Not redirecting to the lab login: GWS_LAB_API_URL is not set in the "
                 "app environment, so the gateway address is unknown."
             )
-            raise ReflexAppException("User not authenticated")
+            raise ReflexAppError("User not authenticated")
 
         host = self._resolve_request_host()
         if not host:
@@ -455,7 +455,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
                 "(neither router.url.netloc nor a Host header), so the resolver cannot map it "
                 "back to an app key."
             )
-            raise ReflexAppException("User not authenticated")
+            raise ReflexAppError("User not authenticated")
 
         query_params = self.get_query_params()
         # Either home of the marker is enough: the query param is dropped whenever the front does not
@@ -471,7 +471,7 @@ class ReflexMainStateBase(rx.State, mixin=True):
                 self.get_app_id(),
                 host,
             )
-            raise ReflexAppException("User not authenticated")
+            raise ReflexAppError("User not authenticated")
 
         path = self.router.url.path or "/"
 

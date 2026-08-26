@@ -103,7 +103,7 @@ class Config(ModelWithUser):
             try:
                 value = self.get_spec(param_name).validate(value)
             except Exception as err:
-                raise InvalidParamValueException(param_name, value, str(err))
+                raise InvalidParamValueException(param_name, value, str(err)) from err
 
         if "values" not in self.data:
             self.data["values"] = {}

@@ -156,7 +156,7 @@ class View:
         # check that the view type is valid
         try:
             StringHelper.to_enum(ViewType, json_["type"])
-        except:
+        except Exception:
             return False
 
         return True

@@ -184,10 +184,10 @@ class Migration0310(BrickMigration):
                 task_model.save()
 
         # Update orders in tag models and set lowercase tag names
-        tag_models: list[TagKeyModel] = list(TagKeyModel.select())
-
-        order = 0
         raise Exception("This migration is not supported anymore")
+        # tag_models: List[TagKeyModel] = list(TagKeyModel.select())
+
+        # order = 0
         # for tag_model in tag_models:
         #     tag_model.order = order
         #     order += 1
@@ -238,7 +238,7 @@ class Migration0312(BrickMigration):
 )
 class Migration0313(BrickMigration):
     @classmethod
-    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:  # noqa: C901
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.flagged)
         sql_migrator.add_column_if_not_exists(ResourceModel, ResourceModel.generated_by_port_name)
         sql_migrator.add_column_if_not_exists(Scenario, Scenario.validated_at)
@@ -327,13 +327,13 @@ class Migration0315(BrickMigration):
         sql_migrator.add_column_if_not_exists(Note, Note.last_sync_by)
         sql_migrator.migrate()
 
-        scenarios: list[Scenario] = list(Scenario.select().where(Scenario.is_validated == True))
+        scenarios: list[Scenario] = list(Scenario.select().where(Scenario.is_validated == True))  # noqa: E712 - peewee query expression, the operator builds SQL
         for scenario in scenarios:
             scenario.last_sync_at = scenario.last_modified_at
             scenario.last_sync_by = scenario.last_modified_by
             scenario.save()
 
-        notes: list[Note] = list(Note.select().where(Note.is_validated == True))
+        notes: list[Note] = list(Note.select().where(Note.is_validated == True))  # noqa: E712 - peewee query expression, the operator builds SQL
         for note in notes:
             note.last_sync_at = note.last_modified_at
             note.last_sync_by = note.last_modified_by
@@ -1200,7 +1200,7 @@ class Migration0105(BrickMigration):
             agent.config.save(skip_hook=True)
 
     @classmethod
-    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:
+    def migrate(cls, sql_migrator: SqlMigrator, from_version: Version, to_version: Version) -> None:  # noqa: C901, PLR0912, PLR0915
         process_models: list[ProcessModel] = list(TaskModel.select()) + list(ProtocolModel.select())
         for process_model in process_models:
             if process_model.process_typing_name in [
@@ -1434,7 +1434,7 @@ class Migration0150(BrickMigration):
 
         # Migrate label based on the key
         tag_keys: list[TagKeyModel] = list(
-            TagKeyModel.select().where((TagKeyModel.label == None) | (TagKeyModel.label == ""))
+            TagKeyModel.select().where((TagKeyModel.label == None) | (TagKeyModel.label == ""))  # noqa: E711 - peewee query expression, the operator builds SQL
         )
         for tag_key in tag_keys:
             tag_key.label = tag_key.key.replace("_", " ").capitalize()
@@ -1562,16 +1562,16 @@ class Migration0180(BrickMigration):
             has_error = False
 
             # loop thourgh all files and folders in source_dir and move them to dest_dir
-            for item in os.listdir(source_dir):
+            for node_name in os.listdir(source_dir):
                 try:
-                    source_path = os.path.join(source_dir, item)
+                    source_path = os.path.join(source_dir, node_name)
                     # Find the fsnode model object by path
                     fsnode: FSNode = (
                         FSNodeModel.select().where(FSNodeModel.path == source_path).first()
                     )
 
                     if fsnode:
-                        result = local_file_store.add_node_from_path(source_path, item)
+                        result = local_file_store.add_node_from_path(source_path, node_name)
                         if result:
                             fsnode.path = result.path
                             fsnode.file_store_id = local_file_store.id

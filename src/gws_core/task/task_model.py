@@ -28,7 +28,7 @@ from ..core.exception.exceptions.bad_request_exception import BadRequestExceptio
 from ..core.exception.gws_exceptions import GWSException
 from ..core.utils.logger import Logger
 from ..core.utils.reflector_helper import ReflectorHelper
-from ..io.io_exception import InvalidOutputsException
+from ..io.io_exception import InvalidOutputsError
 from ..io.port import Port
 from ..process.process_exception import CheckBeforeTaskStopException, ProcessRunException
 from ..process.process_model import ProcessModel
@@ -126,7 +126,7 @@ class TaskModel(ProcessModel):
         """
         Reset the process
         """
-        from gws_core.task.task_input_model import TaskInputModel
+        from gws_core.task.task_input_model import TaskInputModel  # noqa: PLC0415
 
         process = super().reset()
 
@@ -241,7 +241,7 @@ class TaskModel(ProcessModel):
         """Method run just before the task run to save the input resource for this task.
         this will allow to know what resource this task uses as input
         """
-        from .task_input_model import TaskInputModel
+        from .task_input_model import TaskInputModel  # noqa: PLC0415
 
         for port_name, port in self.inputs.ports.items():
             resource_model = port.get_resource_model()
@@ -275,7 +275,7 @@ class TaskModel(ProcessModel):
             # Run the task task
             task_runner.run()
 
-        except InvalidOutputsException as err:
+        except InvalidOutputsError as err:
             # Save the valid resources
             self._save_outputs(task_runner.get_outputs())
             raise err

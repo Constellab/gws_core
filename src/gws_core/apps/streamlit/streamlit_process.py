@@ -137,7 +137,7 @@ class StreamlitProcess(AppProcess):
         return env_dict
 
     def _get_streamlit_package_path(self) -> str:
-        import streamlit
+        import streamlit  # noqa: PLC0415
 
         return os.path.dirname(streamlit.__file__)
 

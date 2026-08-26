@@ -10,7 +10,7 @@ from gws_core.test.test_helper import TestHelper
 # test_scenario_search
 class TestScenarioSearch(BaseTestCase):
     def test_search(self):
-        scenario_1 = ScenarioService.create_scenario(title="My first scenario title world")
+        ScenarioService.create_scenario(title="My first scenario title world")
 
         scenario_2: Scenario = ScenarioService.create_scenario(title="The second one world")
         scenario_2.mark_as_success()

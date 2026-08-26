@@ -6,6 +6,8 @@ from time import sleep, time
 
 import boto3
 import requests
+from botocore.exceptions import ClientError
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.credentials.credentials import Credentials
 from gws_core.credentials.credentials_service import CredentialsService
@@ -90,12 +92,12 @@ class TestS3Server(BaseTestCase):
 
         # test wrong access key
         s3_client = self._create_client(access_key_id="wrong_access_key", secret_key=secret_key)
-        with self.assertRaises(Exception):
+        with self.assertRaises(ClientError):
             s3_client.create_bucket(Bucket=bucket_name)
 
         # test wrong secret key
         s3_client = self._create_client(access_key_id=access_key, secret_key="wrong_secret_key")
-        with self.assertRaises(Exception):
+        with self.assertRaises(ClientError):
             s3_client.create_bucket(Bucket=bucket_name)
 
     def _test_datahub_s3(self, folder_id: str):
@@ -294,20 +296,20 @@ class TestS3Server(BaseTestCase):
 
         #  wait for the api to be ready
         while True:
-            print("Waiting for s3 server to be ready...")
+            Logger.info("Waiting for s3 server to be ready...")
             sleep(1)
 
             # make an http request to the server
             try:
                 response = requests.get(f"{self.S3_BASE_URL}/health-check", timeout=1000)
-                if response.status_code == 200:
+                if response.status_code == 200:  # noqa: PLR2004
                     break
             except Exception as err:
-                print(err)
+                Logger.info(str(err))
 
             count += 1
 
-            if count >= 15:
+            if count >= 15:  # noqa: PLR2004
                 self._stop_s3_server(proc)
                 raise Exception("Timeout while starting s3 server")
 

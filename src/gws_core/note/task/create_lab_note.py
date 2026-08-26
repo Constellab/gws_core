@@ -48,10 +48,7 @@ class CreateLabNote(Task):
         title: str = params["title"]
 
         if not title:
-            if template:
-                title = template.title
-            else:
-                title = "New generated note"
+            title = template.title if template else "New generated note"
         note_dto = NoteSaveDTO(title=title, template_id=template.id if template else None)
 
         note = NoteService.create(note_dto)

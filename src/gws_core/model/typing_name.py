@@ -26,9 +26,9 @@ class TypingNameObj:
 
     def get_model_type(self) -> type[Model]:
         # set import here to avoid circular import
-        from gws_core.protocol.protocol_model import ProtocolModel
-        from gws_core.resource.resource_model import ResourceModel
-        from gws_core.task.task_model import TaskModel
+        from gws_core.protocol.protocol_model import ProtocolModel  # noqa: PLC0415
+        from gws_core.resource.resource_model import ResourceModel  # noqa: PLC0415
+        from gws_core.task.task_model import TaskModel  # noqa: PLC0415
 
         if self.object_type == "TASK":
             return TaskModel
@@ -46,8 +46,8 @@ class TypingNameObj:
             return TypingNameObj(
                 object_type=cast(TypingObjectType, parts[0]), brick_name=parts[1], unique_name=parts[2]
             )
-        except:
-            raise BadRequestException(f"The typing name '{typing_name}' is invalid")
+        except Exception as err:
+            raise BadRequestException(f"The typing name '{typing_name}' is invalid") from err
 
     # Simple method to build the typing name  = object_type.brick.unique_name
     @staticmethod

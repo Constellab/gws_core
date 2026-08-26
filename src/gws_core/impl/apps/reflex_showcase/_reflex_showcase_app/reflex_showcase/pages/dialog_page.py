@@ -93,7 +93,6 @@ class ExampleFormDialogState(FormDialogState, rx.State):
         # Validate form data
         name = form_data.get("name", "").strip()
         email = form_data.get("email", "").strip()
-        message = form_data.get("message", "").strip()
 
         if not name:
             yield rx.toast.error("Name is required")

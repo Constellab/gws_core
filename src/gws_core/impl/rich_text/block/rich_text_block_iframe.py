@@ -7,7 +7,7 @@ from gws_core.impl.rich_text.block.rich_text_block_decorator import rich_text_bl
 
 @rich_text_block_decorator(RichTextBlockTypeStandard.IFRAME.value)
 class RichTextBlockIframe(RichTextBlockDataBase):
-    iframeHeight: int
+    iframeHeight: int  # noqa: N815
     url: str
 
     def to_markdown(self) -> str:

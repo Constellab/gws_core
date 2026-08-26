@@ -62,7 +62,7 @@ class SpaceFrontService:
             return self.get_lab_note_url(object_id)
         elif object_type == "SCENARIO":
             return self.get_scenario_url(object_id)
-        elif object_type == "RESOURCE" or object_type == "APPLICATION":
+        elif object_type in {"RESOURCE", "APPLICATION"}:
             return self.get_resource_url(object_id)
         else:
             raise ValueError(f"Unsupported object type: {object_type}")

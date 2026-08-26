@@ -84,7 +84,7 @@ class PlotlyScatterplot(PlotlyTask):
             if i == "":
                 params[key] = None
         if params["label_columns"] is not None:
-            labels = dict(zip(params["label_columns"], params["label_text"]))
+            labels = dict(zip(params["label_columns"], params["label_text"], strict=False))
         else:
             labels = None
 

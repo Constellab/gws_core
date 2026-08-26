@@ -9,28 +9,28 @@ from gws_core.user.authorization_service import AuthorizationService
 
 
 @core_app.post(
-    "/task-generator/from-agent/{id}",
+    "/task-generator/from-agent/{id_}",
     tags=["Task generator"],
     summary="generate task code from agent",
 )
 def generate_task_code_from_agent(
-    id: str, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> StreamingResponse:
-    code = AgentFactory.generate_task_code_from_agent_id(id)
+    code = AgentFactory.generate_task_code_from_agent_id(id_)
 
     # create a file response
     return ResponseHelper.create_file_response_from_str(code, "task_code.py")
 
 
 @core_app.post(
-    "/task-generator/agent-file/{id}",
+    "/task-generator/agent-file/{id_}",
     tags=["Task generator"],
     summary="generate agent task file from agent",
 )
 def generate_agent_file_from_agent(
-    id: str, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> StreamingResponse:
-    code: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(id)
+    code: CommunityAgentFileDTO = AgentFactory.generate_agent_file_from_agent_id(id_)
 
     # create a file response
     return ResponseHelper.create_file_response_from_object(code, "agent_file.json")

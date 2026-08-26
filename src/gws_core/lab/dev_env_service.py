@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from requests.models import Response as ApiResponse
 from starlette.responses import Response
 
@@ -61,9 +63,9 @@ class DevEnvService:
             raise BadRequestException(
                 detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                 unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name,
-            )
+            ) from err
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise BadRequestException(
                 detail=GWSException.ERROR_DURING_DEV_LOGIN.value,
                 unique_code=GWSException.ERROR_DURING_DEV_LOGIN.name,

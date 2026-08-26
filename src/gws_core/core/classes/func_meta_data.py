@@ -60,7 +60,7 @@ class FuncArgsMetaData:
 
     def all_args_have_default(self) -> bool:
         for arg_name, arg in self.args.items():
-            if arg_name == "self" or arg_name == "cls":
+            if arg_name in {"self", "cls"}:
                 continue
             if not arg.has_default_value():
                 return False

@@ -46,6 +46,31 @@ def _generate_reflex_app_task(snake_case_name: str, app_folder: str, env_type: s
     )
 
 
+def _run_reflex_init(name: str, snake_case_name: str, reflex_app_folder: str) -> None:
+    """Run the ``reflex init`` command to generate the base Reflex app.
+
+    :param name: The original name of the app, used in the progress message
+    :param snake_case_name: The snake_case name of the app, passed to ``reflex init``
+    :param reflex_app_folder: The folder in which the reflex app is generated
+    :raises typer.Abort: if the reflex init command fails
+    """
+    typer.echo(f"Generating Reflex app '{name}'...")
+    shell = ShellProxy(working_dir=reflex_app_folder)
+    shell.attach_observer(TyperMessageObserver())
+    result = shell.run(
+        ["reflex", "init", "--name", snake_case_name, "--template", "blank"],
+        dispatch_stdout=True,
+        dispatch_stderr=True,
+    )
+
+    if result != 0:
+        typer.echo(
+            f"Failed to generate Reflex app. Command 'reflex init --name {snake_case_name}' returned {result}",
+            err=True,
+        )
+        raise typer.Abort()
+
+
 def generate_reflex_app(name: str, is_enterprise: bool, env_type: str = "NONE") -> str:
     """Method to create a new reflex app with the given name.
 
@@ -76,21 +101,7 @@ def generate_reflex_app(name: str, is_enterprise: bool, env_type: str = "NONE") 
 
     try:
         # Run the reflex init command to generate the base app
-        typer.echo(f"Generating Reflex app '{name}'...")
-        shell = ShellProxy(working_dir=reflex_app_folder)
-        shell.attach_observer(TyperMessageObserver())
-        result = shell.run(
-            ["reflex", "init", "--name", snake_case_name, "--template", "blank"],
-            dispatch_stdout=True,
-            dispatch_stderr=True,
-        )
-
-        if result != 0:
-            typer.echo(
-                f"Failed to generate Reflex app. Command 'reflex init --name {snake_case_name}' returned {result}",
-                err=True,
-            )
-            raise typer.Abort()
+        _run_reflex_init(name, snake_case_name, reflex_app_folder)
 
         # Replace the rxconfig.py file with our template
         template_rxconfig_path = os.path.join(TEMPLATE_FOLDER, "rxconfig.py")

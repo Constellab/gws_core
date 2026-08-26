@@ -10,7 +10,7 @@ import reflex as rx
 def _init_reflex(config: rx.Config) -> None:
     """Initialize Reflex environment after config is created to avoid circular imports."""
     # Import inside the function to avoid circular import
-    from gws_reflex_base import ReflexInit, get_theme
+    from gws_reflex_base import ReflexInit, get_theme  # noqa: PLC0415
 
     # Call init but ignore the return value since we already got api_url
     ReflexInit.init()

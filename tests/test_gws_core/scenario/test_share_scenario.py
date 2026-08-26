@@ -22,6 +22,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.lab.lab_model.lab_model import LabModel
+from gws_core.process.process_model import ProcessModel
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
@@ -341,6 +342,58 @@ class ShareScenarioTestSetup:
 
         initial_resource_set = cast(ResourceSet, initial_resource_set_model.get_resource())
 
+        new_robot_1_model, new_robot_2_model = self._assert_imported_resource_set_robots(
+            new_scenario,
+            new_move,
+            new_generator_process,
+            new_resource_set_model,
+            new_resource_set,
+            initial_resource_set,
+        )
+
+        self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
+
+        if not output_only:
+            self._assert_imported_shared_resources(
+                new_scenario,
+                new_source_output,
+                new_move_resource_1,
+                new_resource_set_model,
+                initial_resource_set_model,
+                initial_resource_set,
+                new_robot_1_model,
+                new_robot_2_model,
+            )
+        self._tc.assertTrue(
+            TaskInputModel.select()
+            .where(
+                (TaskInputModel.scenario == new_scenario.id)
+                & (TaskInputModel.task_model == new_output_process.id)
+                & (TaskInputModel.port_name == OutputTask.input_name)
+                & (TaskInputModel.resource_model == new_resource_set_model.id)
+            )
+            .exists()
+        )
+
+    def _assert_imported_resource_set_robots(
+        self,
+        new_scenario: Scenario,
+        new_move: TaskModel,
+        new_generator_process: ProcessModel,
+        new_resource_set_model: ResourceModel,
+        new_resource_set: ResourceSet,
+        initial_resource_set: ResourceSet,
+    ) -> tuple[ResourceModel, ResourceModel]:
+        """Check the two robots contained in the imported resource set.
+
+        :param new_scenario: the imported scenario
+        :param new_move: the imported move task, which generated the first robot
+        :param new_generator_process: the imported process which generated the resource set
+        :param new_resource_set_model: the imported resource set model
+        :param new_resource_set: the imported resource set resource
+        :param initial_resource_set: the resource set of the original scenario
+        :return: the imported models of 'Robot 1' and 'Robot 2'
+        """
         new_robot_1_model = ResourceModel.get_by_id_and_check(
             new_resource_set.get_resource("Robot 1").get_model_id()
         )
@@ -368,29 +421,7 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
         self._tc.assertEqual(new_robot_2_model.generated_by_port_name, "set")
 
-        self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
-
-        if not output_only:
-            self._assert_imported_shared_resources(
-                new_scenario,
-                new_source_output,
-                new_move_resource_1,
-                new_resource_set_model,
-                initial_resource_set_model,
-                initial_resource_set,
-                new_robot_1_model,
-                new_robot_2_model,
-            )
-        self._tc.assertTrue(
-            TaskInputModel.select()
-            .where(
-                (TaskInputModel.scenario == new_scenario.id)
-                & (TaskInputModel.task_model == new_output_process.id)
-                & (TaskInputModel.port_name == OutputTask.input_name)
-                & (TaskInputModel.resource_model == new_resource_set_model.id)
-            )
-            .exists()
-        )
+        return new_robot_1_model, new_robot_2_model
 
     def _assert_imported_shared_resources(
         self,

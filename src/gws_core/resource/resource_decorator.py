@@ -8,6 +8,7 @@ from gws_core.model.typing_style import TypingStyle
 
 from ..core.utils.utils import Utils
 from ..model.typing_register_decorator import register_gws_typing_class
+from ..model.typing_registration import TypingRegistration
 from ..resource.resource import Resource
 
 
@@ -88,15 +89,17 @@ def decorate_resource(
         style.copy_from_style(get_resource_default_style(resource_class))
 
     register_gws_typing_class(
-        object_class=resource_class,
-        object_type="RESOURCE",
-        unique_name=unique_name,
-        human_name=human_name,
-        short_description=short_description,
-        hide=hide,
-        style=style,
-        object_sub_type="RESOURCE",
-        deprecated=deprecated,
+        TypingRegistration(
+            object_class=resource_class,
+            object_type="RESOURCE",
+            unique_name=unique_name,
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            object_sub_type="RESOURCE",
+            deprecated=deprecated,
+        )
     )
 
 

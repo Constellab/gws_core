@@ -518,7 +518,7 @@ class ParamSet(ParamSpec):
 
     @classmethod
     def load_from_dto(cls, spec_dto: ParamSpecDTO, validate: bool = False) -> "ParamSet":
-        from .param_spec_helper import ParamSpecHelper
+        from .param_spec_helper import ParamSpecHelper  # noqa: PLC0415
 
         # Defer default-value validation: the base class would validate it before
         # the bounds/specs below are set (i.e. against a half-built ParamSet), and

@@ -9,5 +9,5 @@ class UserCredentialsDTO(BaseModelDTO):
 
 
 class UserCredentials2Fa(BaseModelDTO):
-    twoFAUrlCode: str
-    twoFACode: str
+    twoFAUrlCode: str  # noqa: N815
+    twoFACode: str  # noqa: N815

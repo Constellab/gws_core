@@ -118,7 +118,7 @@ class TestNoteFormReconciliation(BaseTestCase):
 
     def test_listener_is_registered_on_note_content_updated_event(self):
         listeners = EventDispatcher.get_instance().get_registered_listeners()
-        names = {type(l).__name__ for l in listeners}
+        names = {type(listener).__name__ for listener in listeners}
         self.assertIn("NoteFormJoinListener", names)
         self.assertIn("FormNoteCascadeListener", names)
 

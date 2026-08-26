@@ -205,10 +205,7 @@ class DateParam(ParamSpec):
         if isinstance(value, datetime):
             parsed: date | datetime = value if include_time else value.date()
         elif isinstance(value, date):
-            if include_time:
-                parsed = datetime(value.year, value.month, value.day)
-            else:
-                parsed = value
+            parsed = datetime(value.year, value.month, value.day) if include_time else value
         elif isinstance(value, str):
             try:
                 if include_time:

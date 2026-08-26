@@ -733,7 +733,7 @@ class NoteResource(ResourceSet):
         try:
             image = Image.open(figure_file.path)
         except Exception:
-            raise Exception(f"The file {figure_file.path} is not an image")
+            raise Exception(f"The file {figure_file.path} is not an image") from None
 
         extension = figure_file.extension
         if not extension:

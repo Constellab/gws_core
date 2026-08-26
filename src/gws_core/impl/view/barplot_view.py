@@ -82,10 +82,7 @@ class BarPlotView(View):
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
-        if x is None:
-            x = self.generate_range(len(y))
-        else:
-            x = NumericHelper.list_to_float(x)
+        x = self.generate_range(len(y)) if x is None else NumericHelper.list_to_float(x)
 
         y = NumericHelper.list_to_float(y)
 

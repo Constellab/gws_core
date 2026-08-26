@@ -18,6 +18,10 @@ TEMPLATE_ENV_FOLDER = os.path.join(os.path.dirname(__file__), "_template_env")
 # App code files specific to virtual environment apps, they override the default app code
 TEMPLATE_ENV_APP_OVERLAY_FOLDER = os.path.join(TEMPLATE_ENV_FOLDER, "app_overlay")
 GENERATE_APP_TEMPLATE_NAME = "generate_app_template.txt"
+# The app entrypoint is shipped as a .txt file because it holds a "{{folderAppName}}"
+# placeholder in an import statement, which is not valid python. It is renamed to
+# main.py once copied in the generated app.
+MAIN_TEMPLATE_NAME = "main_template.txt"
 
 
 def _generate_streamlit_app_task(snake_case_name: str, app_folder: str, env_type: str) -> None:
@@ -91,7 +95,9 @@ def generate_streamlit_app(name: str, env_type: str = "NONE") -> str:
         env_file_path=dev_env_file_path,
     )
 
+    # Rename the app entrypoint template to its final python file name
     main_destination = os.path.join(streamlit_app_folder, "main.py")
+    os.rename(os.path.join(streamlit_app_folder, MAIN_TEMPLATE_NAME), main_destination)
     AppGenerator.replace_vars_in_file(snack_case_name, main_destination, "streamlit")
 
     try:

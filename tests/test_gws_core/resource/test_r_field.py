@@ -13,6 +13,7 @@ from gws_core import (
     SerializableRField,
     StrRField,
 )
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
 from numpy import NaN
@@ -47,8 +48,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize("3"), 3)
         self.assertEqual(r_field.deserialize(None), -1)
 
-        self.assertRaises(Exception, r_field.serialize, "tt")
-        self.assertRaises(Exception, r_field.deserialize, "tt")
+        self.assertRaises(BadRequestException, r_field.serialize, "tt")
+        self.assertRaises(BadRequestException, r_field.deserialize, "tt")
 
     def test_float_r_field(self):
         r_field = FloatRField(-1.1)
@@ -62,8 +63,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize("3.1"), 3.1)
         self.assertEqual(r_field.deserialize(None), -1.1)
 
-        self.assertRaises(Exception, r_field.serialize, "tt")
-        self.assertRaises(Exception, r_field.deserialize, "tt")
+        self.assertRaises(BadRequestException, r_field.serialize, "tt")
+        self.assertRaises(BadRequestException, r_field.deserialize, "tt")
 
     def test_bool_r_field(self):
         r_field = BoolRField(False)
@@ -75,8 +76,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize(True), True)
         self.assertEqual(r_field.deserialize(None), False)
 
-        self.assertRaises(Exception, r_field.serialize, "tt")
-        self.assertRaises(Exception, r_field.deserialize, "tt")
+        self.assertRaises(BadRequestException, r_field.serialize, "tt")
+        self.assertRaises(BadRequestException, r_field.deserialize, "tt")
 
     def test_str_r_field(self):
         r_field = StrRField(default_value="")
@@ -88,8 +89,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize("AAA"), "AAA")
         self.assertEqual(r_field.deserialize(None), "")
 
-        self.assertRaises(Exception, r_field.serialize, ["tt"])
-        self.assertRaises(Exception, r_field.deserialize, ["tt"])
+        self.assertRaises(BadRequestException, r_field.serialize, ["tt"])
+        self.assertRaises(BadRequestException, r_field.deserialize, ["tt"])
 
     def test_dict_r_field(self):
         default_value = {"test": 12}
@@ -106,8 +107,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize({"test": 12}), {"test": 12})
         self.assertEqual(r_field.deserialize(None), {"test": 12})
 
-        self.assertRaises(Exception, r_field.serialize, "tt")
-        self.assertRaises(Exception, r_field.deserialize, "tt")
+        self.assertRaises(BadRequestException, r_field.serialize, "tt")
+        self.assertRaises(BadRequestException, r_field.deserialize, "tt")
 
     def test_list_r_field(self):
         default_value = [1, 2]
@@ -123,8 +124,8 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.deserialize([1, 2]), [1, 2])
         self.assertEqual(r_field.deserialize(None), default_value)
 
-        self.assertRaises(Exception, r_field.serialize, "tt")
-        self.assertRaises(Exception, r_field.deserialize, "tt")
+        self.assertRaises(BadRequestException, r_field.serialize, "tt")
+        self.assertRaises(BadRequestException, r_field.deserialize, "tt")
 
     def test_dataframe_r_field(self):
         r_field = DataFrameRField()

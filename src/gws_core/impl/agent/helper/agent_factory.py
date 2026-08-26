@@ -64,9 +64,7 @@ class AgentFactory:
 
         params: dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
         params_spec: DynamicParam = task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
-        for param_name in params:
-            param_value = params[param_name]
-
+        for param_name, param_value in params.items():
             param_type: ParamSpec = params_spec.specs.get_spec(param_name)
             param_type.default_value = param_value
 
@@ -90,7 +88,7 @@ class AgentFactory:
             )
             params_values = task.config.get_value("params")
             if not with_value:
-                for key in params_values.keys():
+                for key in params_values:
                     params_values[key] = None
             params = {"specs": specs, "values": params_values}
         env = ""

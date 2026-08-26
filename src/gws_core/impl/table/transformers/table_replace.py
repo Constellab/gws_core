@@ -98,7 +98,7 @@ class TableReplace(Transformer):
 
     def convert_search_value(self, param_value: str) -> Any:
         """Handle specific values like NaN and None, and tries to convert to float"""
-        if param_value == "NaN" or param_value == "None":
+        if param_value in ("NaN", "None"):
             return NaN
         else:
             # try to convert to float

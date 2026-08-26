@@ -38,13 +38,11 @@ class TestKVStore(TestCase):
         keys = ["city", "name"]
         values = ["Tokyo", "Musk"]
 
-        index = 0
-        for key in s1:
+        for index, key in enumerate(s1):
             self.assertEqual(key, keys[index])
-            index += 1
 
         index = 0
-        for key in s1.keys():
+        for key in s1.keys():  # noqa: SIM118 - the test exercises the .keys() API itself
             self.assertEqual(key, keys[index])
             index += 1
 

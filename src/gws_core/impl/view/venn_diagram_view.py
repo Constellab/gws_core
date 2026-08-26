@@ -62,7 +62,7 @@ class VennDiagramView(View):
                 for key2, val2 in bag.items():
                     if key1 == key2:
                         continue
-                    columns = list(set([*val1["group_names"], *val2["group_names"]]))
+                    columns = list({*val1["group_names"], *val2["group_names"]})
                     skip = False
                     for c in columns:
                         if c not in group_names:
@@ -73,8 +73,8 @@ class VennDiagramView(View):
                     columns.sort()
                     joined_key = "_".join(columns)
                     if joined_key not in bag:
-                        inter1 = set([str(k) for k in val1["data"]])
-                        inter2 = set([str(k) for k in val2["data"]])
+                        inter1 = {str(k) for k in val1["data"]}
+                        inter2 = {str(k) for k in val2["data"]}
                         bag_copy[joined_key] = {
                             "group_names": columns,
                             "data": inter1.intersection(inter2),

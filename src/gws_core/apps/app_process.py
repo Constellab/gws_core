@@ -505,7 +505,7 @@ class AppProcess:
                 f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
-        from gws_core.apps.apps_manager import AppsManager
+        from gws_core.apps.apps_manager import AppsManager  # noqa: PLC0415
 
         # Baked into the app URL before the app has started; use the longer validity so the code
         # survives a cold frontend build (Reflex can take minutes) before the app exchanges it.

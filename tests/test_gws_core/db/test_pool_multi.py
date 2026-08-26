@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from gws_core.core.db.pool_db import PoolDb
 from gws_core.core.model.model import Model
-from peewee import CharField
+from peewee import CharField, PeeweeException
 
 
 class PoolMultiTable(Model):
@@ -40,7 +40,8 @@ class TestPoolMulti(TestCase):
         self._working_pool()
 
         list(PoolMultiTable.select())
-        self.assertRaises(Exception, self._not_working_pool)
+        with self.assertRaises(PeeweeException):
+            self._not_working_pool()
 
     def _working_pool(self):
         i = 0

@@ -78,7 +78,7 @@ class TaskTyping(Typing):
 
     def importer_extension_is_supported(self, extension: str) -> bool:
         """Function that works only for IMPORTERS. It returns True if the extension is supported by the importer"""
-        from ..task.converter.importer import ResourceImporter
+        from ..task.converter.importer import ResourceImporter  # noqa: PLC0415
 
         type_: type[ResourceImporter] = self.get_type()
 
@@ -106,7 +106,7 @@ class TaskTyping(Typing):
             task_typing.output_specs = model_t.output_specs.to_dto()
             task_typing.config_specs = model_t.config_specs.to_dto()
 
-            from ..task.converter.importer import ResourceImporter
+            from ..task.converter.importer import ResourceImporter  # noqa: PLC0415
 
             if Utils.issubclass(model_t, ResourceImporter):
                 importer_t: type[ResourceImporter] = model_t

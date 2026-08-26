@@ -1,3 +1,4 @@
+import contextlib
 import json
 import os
 import time
@@ -303,10 +304,8 @@ class LocalS3ServerService(AbstractS3Service):
     def delete_objects(self, keys: list[str]) -> None:
         """Delete multiple objects"""
         for key in keys:
-            try:
+            with contextlib.suppress(S3ServerNoSuchKey):
                 self.delete_object(key)
-            except S3ServerNoSuchKey:
-                pass
 
     def head_object(self, key: str) -> dict:
         """Head an object from the bucket"""
@@ -480,11 +479,9 @@ class LocalS3ServerService(AbstractS3Service):
             # Remove temp directory if empty
             temp_dir = upload_info.get("temp_dir")
             if temp_dir and path.exists(temp_dir):
-                try:
+                # Ignore OSError: directory not empty, leave it
+                with contextlib.suppress(OSError):
                     os.rmdir(temp_dir)
-                except OSError:
-                    # Directory not empty, leave it
-                    pass
         except Exception:
             # Don't let cleanup errors break normal operations
             pass

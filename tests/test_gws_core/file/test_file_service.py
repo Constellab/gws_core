@@ -19,7 +19,7 @@ class TestFileService(BaseTestCase):
         file_types: list[ResourceTyping] = FsNodeService.get_file_types()
 
         # Check that there is at least 2 files type, File and SubFileService
-        self.assertTrue(len(file_types) >= 2)
+        self.assertTrue(len(file_types) >= 2)  # noqa: PLR2004
 
         # Check that the File and SubFileService type exists
         self.assertIsNotNone(next(filter(lambda file: File == file.get_type(), file_types), None))
@@ -101,7 +101,7 @@ class TestFileService(BaseTestCase):
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(content)
 
-        spooled_file = SpooledTemporaryFile()
+        spooled_file = SpooledTemporaryFile()  # noqa: SIM115 - handed to UploadFile, must stay open
 
         # Open the source file for reading
         with open(file_path, "rb") as source_file:

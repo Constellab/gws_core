@@ -207,9 +207,6 @@ class AICodeService(ABC):
             # Clean up existing skills
             self._clean_existing_skills(target_dir)
 
-            # Generate plugin manifest if supported
-            self._generate_plugin_manifest(target_dir)
-
             # Process each skill from SKILL_FRONTMATTER
             for frontmatter_config in AICodeService.SKILL_FRONTMATTER:
                 self._write_skill(target_dir, frontmatter_config)
@@ -242,13 +239,6 @@ class AICodeService(ABC):
             for skill_dir in skills_dir.glob("gws-*"):
                 if skill_dir.is_dir():
                     shutil.rmtree(skill_dir)
-
-    def _generate_plugin_manifest(self, target_dir: Path) -> None:
-        """Generate plugin manifest file. Override in subclasses that support plugins.
-
-        Args:
-            target_dir: The plugin root directory
-        """
 
     def _resolve_placeholders(self, content: str) -> str:
         """Substitute dynamic placeholders in skill content at generation time.

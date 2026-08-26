@@ -12,6 +12,6 @@ class TaskProxy(ProcessProxy):
     ############################################### CLASS METHODS ####################################
 
     @classmethod
-    def get_by_id(cls, id: str) -> "TaskProxy":
-        task_model: TaskModel = TaskService.get_task_by_id(id)
+    def get_by_id(cls, id_: str) -> "TaskProxy":
+        task_model: TaskModel = TaskService.get_task_by_id(id_)
         return TaskProxy(task_model)

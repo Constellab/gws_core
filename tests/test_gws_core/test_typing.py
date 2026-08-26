@@ -151,7 +151,7 @@ class TestTyping(BaseTestCase):
         paginator: Paginator[Typing] = TypingService.search(search_params)
         self.assertTrue(paginator.page_info.number_of_items_per_page > 0)
         # Check that there is no Hide element
-        self.assertEqual(len([x for x in paginator.results if x.hide == True]), 0)
+        self.assertEqual(len([x for x in paginator.results if x.hide]), 0)
 
         # Search on text
         search_params.set_filters_criteria(

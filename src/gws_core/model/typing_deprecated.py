@@ -15,5 +15,5 @@ class TypingDeprecated(BaseModelDTO):
         try:
             Version(self.deprecated_since)
             return True
-        except:
+        except Exception:
             return False

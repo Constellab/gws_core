@@ -11,6 +11,9 @@ from ..core.exception.exceptions.base_http_exception import BaseHTTPException
 from .user import User
 from .user_group import UserGroup
 
+# Number of words in a searched name that is made of a firstname and a lastname
+FIRSTNAME_LASTNAME_PARTS = 2
+
 
 class UserService:
     @classmethod
@@ -154,7 +157,7 @@ class UserService:
             return Paginator(model_select, page=page, nb_of_items_per_page=number_of_items_per_page)
 
         # if there are 2 words, search by lastname and firstname
-        elif len(name_parts) == 2:
+        elif len(name_parts) == FIRSTNAME_LASTNAME_PARTS:
             model_select = User.search_by_firstname_and_lastname(name_parts[0], name_parts[1])
 
             paginator = Paginator(

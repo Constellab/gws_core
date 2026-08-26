@@ -1,5 +1,6 @@
 import json
 import tempfile
+from http import HTTPStatus
 from io import BufferedReader
 from typing import Any
 
@@ -192,7 +193,9 @@ class ExternalApiService:
         """
         Handle the response of an HTTP request
         """
-        if raise_exception_if_error and (response.status_code < 200 or response.status_code >= 300):
+        if raise_exception_if_error and not (
+            HTTPStatus.OK <= response.status_code < HTTPStatus.MULTIPLE_CHOICES
+        ):
             cls.raise_error_from_response(response)
         return response
 
@@ -201,9 +204,11 @@ class ExternalApiService:
         json_: dict | None = None
         try:
             json_ = response.json()
-        except Exception:
+        except Exception as err:
             # otherwise raise the default exception
-            raise BaseHTTPException(http_status_code=response.status_code, detail=response.text)
+            raise BaseHTTPException(
+                http_status_code=response.status_code, detail=response.text
+            ) from err
 
         # if this is a constellab know error
         if (

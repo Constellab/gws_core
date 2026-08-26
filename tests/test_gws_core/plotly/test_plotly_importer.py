@@ -14,9 +14,9 @@ class TestPlotlyImporter(TestCase):
 
         figure = px.scatter(dataframe, x="A", y="B")
 
-        plotlyResource = PlotlyResource(figure)
+        plotly_resource = PlotlyResource(figure)
 
-        result_path: File = PlotlyExporter.call(plotlyResource)
+        result_path: File = PlotlyExporter.call(plotly_resource)
 
         self.assertTrue(result_path.path.endswith(".json"))
         self.assertTrue(result_path.exists())
@@ -25,4 +25,4 @@ class TestPlotlyImporter(TestCase):
         imported_resource = PlotlyImporter.call(result_path)
 
         self.assertIsInstance(imported_resource, PlotlyResource)
-        self.assertTrue(plotlyResource.equals(imported_resource))
+        self.assertTrue(plotly_resource.equals(imported_resource))

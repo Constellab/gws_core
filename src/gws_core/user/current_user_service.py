@@ -132,8 +132,8 @@ class CurrentUserService:
     def check_is_sysuser(cls):
         try:
             user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: sysuser required")
+        except Exception as e:
+            raise UnauthorizedException(detail="Unauthorized: sysuser required") from e
 
         if not user.is_sysuser:
             raise UnauthorizedException(detail="Unauthorized: sysuser required")
@@ -142,8 +142,8 @@ class CurrentUserService:
     def check_is_admin(cls):
         try:
             user = CurrentUserService.get_and_check_current_user()
-        except:
-            raise UnauthorizedException(detail="Unauthorized: admin required")
+        except Exception as e:
+            raise UnauthorizedException(detail="Unauthorized: admin required") from e
 
         if not user.is_admin:
             raise UnauthorizedException(detail="Unauthorized: admin required")

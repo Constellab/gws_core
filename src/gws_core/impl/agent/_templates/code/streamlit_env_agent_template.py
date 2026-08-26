@@ -9,8 +9,8 @@ from pandas import DataFrame, read_csv
 st.title("App example")
 
 # show a table from file_path which is a csv file full width
-if source_paths:
-    df: DataFrame = read_csv(source_paths[0], header=0, index_col=0, sep=",")
+if source_paths:  # noqa: F821
+    df: DataFrame = read_csv(source_paths[0], header=0, index_col=0, sep=",")  # noqa: F821
 
     # show the dataframe
     st.dataframe(df)

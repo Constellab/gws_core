@@ -8,6 +8,36 @@ from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.core.utils.reflector_types import MethodDoc
 
 
+def _build_parameter_rows(func_doc: MethodDoc) -> list[rx.Component]:
+    """
+    Build one table row per argument of the documented function.
+
+    :param func_doc: documentation of the function
+    :return: the list of table rows (name, type, description)
+    """
+    parameter_rows = []
+    for arg in func_doc.args:
+        # Get description from docstring
+        arg_description = func_doc.get_arg_description(arg.arg_name)
+        if not arg_description:
+            arg_description = "No description provided"
+
+        # Build the description with default value if present
+        description_text = arg_description
+        if arg.arg_default_value:
+            description_text += f" (default: {arg.arg_default_value})"
+
+        parameter_rows.append(
+            rx.table.row(
+                rx.table.cell(rx.code(arg.arg_name)),
+                rx.table.cell(rx.code(arg.arg_type)),
+                rx.table.cell(description_text),
+            )
+        )
+
+    return parameter_rows
+
+
 def doc_component(
     func: Callable,
     title: str | None = None,
@@ -53,26 +83,6 @@ def doc_component(
 
     # Parameters table
     if show_parameters and len(func_doc.args) > 0:
-        parameter_rows = []
-        for arg in func_doc.args:
-            # Get description from docstring
-            arg_description = func_doc.get_arg_description(arg.arg_name)
-            if not arg_description:
-                arg_description = "No description provided"
-
-            # Build the description with default value if present
-            description_text = arg_description
-            if arg.arg_default_value:
-                description_text += f" (default: {arg.arg_default_value})"
-
-            parameter_rows.append(
-                rx.table.row(
-                    rx.table.cell(rx.code(arg.arg_name)),
-                    rx.table.cell(rx.code(arg.arg_type)),
-                    rx.table.cell(description_text),
-                )
-            )
-
         elements.append(
             rx.table.root(
                 rx.table.header(
@@ -82,7 +92,7 @@ def doc_component(
                         rx.table.column_header_cell("Description"),
                     ),
                 ),
-                rx.table.body(*parameter_rows),
+                rx.table.body(*_build_parameter_rows(func_doc)),
                 width="100%",
                 margin_bottom="1em",
             )

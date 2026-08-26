@@ -86,7 +86,7 @@ def code_migration(version: str, short_description: str) -> Callable[[type[CodeM
 def _ensure_migrations_imported() -> None:
     """Import every module in the ``migrations`` package so each ``@code_migration`` runs."""
     # imported lazily to avoid a circular import at module load time
-    from gws_cli.code_migration import migrations
+    from gws_cli.code_migration import migrations  # noqa: PLC0415
 
     for module_info in pkgutil.iter_modules(migrations.__path__, migrations.__name__ + "."):
         importlib.import_module(module_info.name)

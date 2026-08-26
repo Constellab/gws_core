@@ -47,10 +47,7 @@ class DataframeFilterHelper:
             new_df = cls._filter_by_axis_names(
                 data, axis, filter_["name"], filter_.get("is_regex", False)
             )
-            if dataframe is None:
-                dataframe = new_df
-            else:
-                dataframe = dataframe.combine_first(new_df)
+            dataframe = new_df if dataframe is None else dataframe.combine_first(new_df)
 
         return dataframe
 

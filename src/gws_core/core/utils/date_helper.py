@@ -1,5 +1,9 @@
 from datetime import date, datetime, timedelta, timezone
 
+SECONDS_PER_MINUTE = 60
+MINUTES_PER_HOUR = 60
+HOURS_PER_DAY = 24
+
 
 class DateHelper:
     MAX_DATE = datetime.max.replace(tzinfo=timezone.utc)
@@ -21,8 +25,8 @@ class DateHelper:
         return datetime.fromtimestamp(utc_milliseconds / 1000, tz=timezone.utc)
 
     @staticmethod
-    def from_str(date_str: str, format: str) -> datetime:
-        return datetime.strptime(date_str, format)
+    def from_str(date_str: str, date_format: str) -> datetime:
+        return datetime.strptime(date_str, date_format)
 
     @staticmethod
     def from_iso_str(date_str: str) -> datetime:
@@ -58,25 +62,25 @@ class DateHelper:
     def get_duration_pretty_text(duration_in_seconds: float) -> str:
         """Return a string representing the duration in a human readable way."""
         duration_in_seconds = abs(duration_in_seconds)
-        if duration_in_seconds < 60:
+        if duration_in_seconds < SECONDS_PER_MINUTE:
             return f"{duration_in_seconds:.0f} secs"
 
-        duration_in_minutes = duration_in_seconds // 60
-        if duration_in_minutes < 60:
-            rest_in_seconds = duration_in_seconds % 60
+        duration_in_minutes = duration_in_seconds // SECONDS_PER_MINUTE
+        if duration_in_minutes < MINUTES_PER_HOUR:
+            rest_in_seconds = duration_in_seconds % SECONDS_PER_MINUTE
             if rest_in_seconds > 0:
                 return f"{duration_in_minutes:.0f} mins, {rest_in_seconds:.0f} secs"
             return f"{duration_in_minutes:.0f} mins"
 
-        duration_in_hours = duration_in_minutes / 60
-        if duration_in_hours < 24:
-            rest_in_minutes = duration_in_minutes % 60
+        duration_in_hours = duration_in_minutes / MINUTES_PER_HOUR
+        if duration_in_hours < HOURS_PER_DAY:
+            rest_in_minutes = duration_in_minutes % MINUTES_PER_HOUR
             if rest_in_minutes > 0:
                 return f"{duration_in_hours:.0f} hours, {rest_in_minutes:.0f} mins"
             return f"{duration_in_hours:.0f} hours"
 
-        duration_in_days = duration_in_hours / 24
-        rest_in_hours = duration_in_hours % 24
+        duration_in_days = duration_in_hours / HOURS_PER_DAY
+        rest_in_hours = duration_in_hours % HOURS_PER_DAY
         if rest_in_hours > 0:
             return f"{duration_in_days:.0f} days, {rest_in_hours:.0f} hours"
         return f"{duration_in_days:.0f} days"

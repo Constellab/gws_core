@@ -41,7 +41,7 @@ class OutputTask(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         if params.get_value("flag_resource", False):
             # mark the resource to show in list as it is an output
-            from gws_core.resource.resource_model import ResourceModel
+            from gws_core.resource.resource_model import ResourceModel  # noqa: PLC0415
 
             resource: Resource = inputs.get(OutputTask.input_name)
             resource_model: ResourceModel = ResourceModel.get_by_id_and_check(

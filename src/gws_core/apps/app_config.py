@@ -8,6 +8,7 @@ from gws_core.core.model.base_typing import BaseTyping
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.shell.shell_proxy import ShellProxy
 from gws_core.model.typing_register_decorator import register_gws_typing_class
+from gws_core.model.typing_registration import TypingRegistration
 from gws_core.model.typing_style import TypingStyle
 
 
@@ -104,13 +105,15 @@ def _decorate_app(
         return
 
     register_gws_typing_class(
-        object_class=app_class,
-        object_type="APP",
-        unique_name=unique_name,
-        object_sub_type=app_type.value,
-        human_name=human_name,
-        short_description=short_description,
-        hide=True,
-        style=TypingStyle.default_task(),
-        deprecated=None,
+        TypingRegistration(
+            object_class=app_class,
+            object_type="APP",
+            unique_name=unique_name,
+            object_sub_type=app_type.value,
+            human_name=human_name,
+            short_description=short_description,
+            hide=True,
+            style=TypingStyle.default_task(),
+            deprecated=None,
+        )
     )

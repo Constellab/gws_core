@@ -27,8 +27,8 @@ class AuthenticationService:
 
         try:
             user = UserService.get_user_by_email(credentials.email)
-        except:
-            raise WrongCredentialsException()
+        except Exception as e:
+            raise WrongCredentialsException() from e
 
         if user is None:
             raise WrongCredentialsException()

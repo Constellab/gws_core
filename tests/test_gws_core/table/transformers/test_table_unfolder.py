@@ -123,4 +123,4 @@ class TestTableUnfolder(TestCase):
 
         # Should have 1 row and multiple columns after unfolding
         self.assertEqual(result.get_data().shape[0], 1)
-        self.assertTrue(result.get_data().shape[1] > 2)
+        self.assertTrue(result.get_data().shape[1] > 2)  # noqa: PLR2004
