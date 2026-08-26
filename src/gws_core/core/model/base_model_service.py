@@ -28,10 +28,12 @@ class BaseModelService:
         :return: [description]
         :rtype: List[Type[BaseModel]]
         """
-        if not getattr(cls, "__model_types", None):
-            cls.__model_types: list[type[BaseModel]] = BaseModel.inheritors()
+        model_types: list[type[BaseModel]] | None = getattr(cls, "__model_types", None)
+        if not model_types:
+            model_types = BaseModel.inheritors()
+            cls.__model_types = model_types
 
-        return cls.__model_types
+        return model_types
 
     @classmethod
     def create_all_tables(cls):

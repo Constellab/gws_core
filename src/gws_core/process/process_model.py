@@ -71,30 +71,30 @@ class ProcessModel(ModelWithUser):
     scenario: TypedForeignKeyField[Scenario] = TypedForeignKeyField(
         Scenario, index=True, backref="+"
     )
-    instance_name = TypedCharField()
-    config = TypedForeignKeyField(Config, backref="+")
-    progress_bar = TypedForeignKeyField(ProgressBar, backref="+")
-    process_typing_name = TypedCharField()
+    instance_name: TypedCharField = TypedCharField()
+    config: TypedForeignKeyField[Config] = TypedForeignKeyField(Config, backref="+")
+    progress_bar: TypedForeignKeyField[ProgressBar] = TypedForeignKeyField(ProgressBar, backref="+")
+    process_typing_name: TypedCharField = TypedCharField()
     # version of the brick when the process was created
-    brick_version_on_create = TypedCharField(max_length=50)
+    brick_version_on_create: TypedCharField = TypedCharField(max_length=50)
     # version of the brick when the process was run
-    brick_version_on_run = NullableCharField(max_length=50)
-    run_by = NullableForeignKeyField(User, backref="+")
-    run_by_lab = NullableForeignKeyField(LabModel, backref="+")
+    brick_version_on_run: NullableCharField = NullableCharField(max_length=50)
+    run_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
+    run_by_lab: NullableForeignKeyField[LabModel] = NullableForeignKeyField(LabModel, backref="+")
     status: TypedEnumField[ProcessStatus] = TypedEnumField(
         choices=ProcessStatus, default=ProcessStatus.DRAFT
     )
-    error_info = NullableJSONField()
+    error_info: NullableJSONField = NullableJSONField()
 
-    started_at = NullableDateTimeUTC(with_milliseconds=True)
-    ended_at = NullableDateTimeUTC(with_milliseconds=True)
+    started_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
+    ended_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = TypedJSONField()
-    is_archived = TypedBooleanField(default=False, index=True)
-    style = TypedBaseDTOField(TypingStyle)
+    data: TypedJSONField = TypedJSONField()
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
+    style: TypedBaseDTOField[TypingStyle] = TypedBaseDTOField(TypingStyle)
 
     # name of the process set by the user
-    name = TypedCharField()
+    name: TypedCharField = TypedCharField()
 
     scenario_id: str
 
@@ -826,4 +826,4 @@ class ProcessModel(ModelWithUser):
         :return: The list of processes
         :rtype: list[ProcessModel]
         """
-        return cls.select().where(cls.parent_protocol_id == parent_protocol_id)
+        return list(cls.select().where(cls.parent_protocol_id == parent_protocol_id))

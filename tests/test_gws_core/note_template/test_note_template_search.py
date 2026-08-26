@@ -1,6 +1,10 @@
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (
+    SearchFilterCriteria,
+    SearchOperator,
+    SearchParams,
+)
 from gws_core.form_template.form_template_dto import (
     CreateFormTemplateDTO,
     FormTemplateVersionStatus,
@@ -33,11 +37,11 @@ class TestNoteTemplateSearch(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {
-                    "key": "form_template_id",
-                    "operator": "EQ",
-                    "value": version.template_id,
-                }
+                SearchFilterCriteria(
+                    key="form_template_id",
+                    operator=SearchOperator.EQ,
+                    value=version.template_id,
+                )
             ]
         )
         page = NoteTemplateService.search(params)

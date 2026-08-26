@@ -56,6 +56,7 @@ class TestFormTagPropagation(BaseTestCase):
             tags = EntityTagList.find_by_entity(TagEntityType.FORM, form_id)
             entity_tag = tags.get_tag(tag)
             self.assertIsNotNone(entity_tag, f"tag missing on form {form_id}")
+            assert entity_tag is not None
             simple = entity_tag.to_simple_tag()
             self.assertTrue(
                 simple.origins.has_origin(TagOriginType.FORM_TEMPLATE_PROPAGATED, template_id)

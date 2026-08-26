@@ -10,7 +10,6 @@ from gws_core import (
     Protocol,
     ProtocolModel,
     Resource,
-    ResourceModel,
     Scenario,
     ScenarioService,
     Task,
@@ -158,7 +157,7 @@ class Log(Task):
     config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        same_person = inputs.get("person")
+        same_person = inputs.get_resource("person", Person)
         same_person.set_as_reference()
         return {"samePerson": same_person, "otherPerson": inputs.get("person")}
 
@@ -320,17 +319,20 @@ class TestIO(BaseTestCase):
 
         scenario = ScenarioRunService.run_scenario(scenario)
 
-        person1: ResourceModel = (
+        person1 = (
             scenario.protocol_model.get_process("create")
             .out_port("create_person_out")
             .get_resource_model()
         )
-        same_person: ResourceModel = (
+        assert person1 is not None
+        same_person = (
             scenario.protocol_model.get_process("log").out_port("samePerson").get_resource_model()
         )
-        other_erson: ResourceModel = (
+        assert same_person is not None
+        other_erson = (
             scenario.protocol_model.get_process("log").out_port("otherPerson").get_resource_model()
         )
+        assert other_erson is not None
 
         self.assertEqual(person1.id, same_person.id)
         self.assertNotEqual(person1, other_erson.id)

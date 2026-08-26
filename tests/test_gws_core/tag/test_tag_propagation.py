@@ -34,7 +34,7 @@ class TagRobot(Task):
     output_specs = OutputSpecs({"robot": OutputSpec(Robot)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot: Robot = inputs["robot"]
+        robot = inputs.get_resource("robot", Robot)
         robot.tags.add_tag(Tag("robot_tag_propagable", "robot_value", is_propagable=True))
         robot.tags.add_tag(Tag("robot_tag_not_propagable", "robot_value", is_propagable=False))
         return {"robot": robot}
@@ -110,7 +110,7 @@ class TestTagPropagation(BaseTestCase):
         eat.refresh()
 
         # Check that the first output has the tag of first input + exp + 2 tag from task
-        first_output = tag_robot.get_output("robot")
+        first_output = tag_robot.get_output("robot", Robot)
         self.assertEqual(len(first_output.tags.get_tags()), 5)
 
         # Check that the inputs tags were propagated
@@ -120,7 +120,7 @@ class TestTagPropagation(BaseTestCase):
 
         # Check tag scenario is propagated and values
         output_tag_exp = first_output.tags.get_tag(tag_exp.key, tag_exp.value)
-        self.assertIsNotNone(output_tag_exp)
+        assert output_tag_exp is not None
         self.assertTrue(output_tag_exp.is_propagable)
         self.assertEqual(output_tag_exp.origins.count_origins(), 1)
         self.assertTrue(
@@ -138,7 +138,7 @@ class TestTagPropagation(BaseTestCase):
         )
 
         # Check that the second output has the tag of all the inputs + exp
-        second_output = eat.get_output("robot")
+        second_output = eat.get_output("robot", Robot)
         self.assertEqual(len(second_output.tags.get_tags()), 5)
         self.assertTrue(second_output.tags.has_tag(tag_a))
         self.assertTrue(second_output.tags.has_tag(tag_a_1))
@@ -170,7 +170,7 @@ class TestTagPropagation(BaseTestCase):
 
         # Check detail of propagated tag
         output_tag_a = output_resource.tags.get_tag(tag_a.key, tag_a.value)
-        self.assertIsNotNone(output_tag_a)
+        assert output_tag_a is not None
         self.assertTrue(output_tag_a.is_propagable)
         self.assertEqual(output_tag_a.origins.count_origins(), 1)
         self.assertTrue(
@@ -194,7 +194,7 @@ class TestTagPropagation(BaseTestCase):
         ouput_tag_task_propagable = output_resource.tags.get_tag(
             task_tag_propagable.key, task_tag_propagable.value
         )
-        self.assertIsNotNone(ouput_tag_task_propagable)
+        assert ouput_tag_task_propagable is not None
         self.assertTrue(ouput_tag_task_propagable.is_propagable)
         self.assertEqual(ouput_tag_task_propagable.origins.count_origins(), 1)
         self.assertTrue(
@@ -204,7 +204,7 @@ class TestTagPropagation(BaseTestCase):
         ouput_tag_task_not_propagable = output_resource.tags.get_tag(
             task_tag_not_propagable.key, task_tag_not_propagable.value
         )
-        self.assertIsNotNone(ouput_tag_task_not_propagable)
+        assert ouput_tag_task_not_propagable is not None
         self.assertFalse(ouput_tag_task_not_propagable.is_propagable)
         self.assertEqual(ouput_tag_task_not_propagable.origins.count_origins(), 1)
         self.assertTrue(
@@ -232,17 +232,22 @@ class TestTagPropagation(BaseTestCase):
 
         # Check that the first output has the tag of first input + exp + 2 tag from task
         resource_model = tag_robot.get_output_resource_model("robot")
+        assert resource_model is not None
 
         # generate a view from this resource
         view_result = ResourceService.get_and_call_view_on_resource_model(
             resource_model.id, "view_as_json", {}, True
         )
+        view_config = view_result.view_config
+        assert view_config is not None
 
         # Check that the tags are propagated
-        view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_result.view_config.id)
+        view_tags = EntityTagList.find_by_entity(TagEntityType.VIEW, view_config.id)
         self.assertEqual(len(view_tags.get_tags()), 1)
         self.assertTrue(view_tags.has_tag(propagable_tag))
-        tag = view_tags.get_tag(propagable_tag).to_simple_tag()
+        view_tag = view_tags.get_tag(propagable_tag)
+        assert view_tag is not None
+        tag = view_tag.to_simple_tag()
         self.assertTrue(tag.is_propagable)
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(
@@ -253,19 +258,21 @@ class TestTagPropagation(BaseTestCase):
         note = NoteService.create(NoteSaveDTO(title="test_note"))
 
         NoteService.add_scenario(note.id, scenario_id)
-        NoteService.add_view_to_content(note.id, view_result.view_config.id)
+        NoteService.add_view_to_content(note.id, view_config.id)
 
         # Check that the tags are propagated
         note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
         self.assertEqual(len(note_tags.get_tags()), 1)
         self.assertTrue(note_tags.has_tag(propagable_tag))
-        tag = note_tags.get_tag(propagable_tag).to_simple_tag()
+        note_tag = note_tags.get_tag(propagable_tag)
+        assert note_tag is not None
+        tag = note_tag.to_simple_tag()
         self.assertTrue(tag.is_propagable)
 
         # it should have 2 origin, the view and the scenario
         self.assertEqual(tag.origins.count_origins(), 2)
         self.assertTrue(
-            tag.origins.has_origin(TagOriginType.VIEW_PROPAGATED, view_result.view_config.id)
+            tag.origins.has_origin(TagOriginType.VIEW_PROPAGATED, view_config.id)
         )
         self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, scenario_id))
 
@@ -274,7 +281,9 @@ class TestTagPropagation(BaseTestCase):
 
         note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, note.id)
         self.assertEqual(len(note_tags.get_tags()), 1)
-        tag = note_tags.get_tag(propagable_tag).to_simple_tag()
+        note_tag = note_tags.get_tag(propagable_tag)
+        assert note_tag is not None
+        tag = note_tag.to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 1)
         self.assertTrue(tag.origins.has_origin(TagOriginType.SCENARIO_PROPAGATED, scenario_id))
 
@@ -291,6 +300,7 @@ class TestTagPropagation(BaseTestCase):
         create_robot = i_protocol.add_process(RobotCreate, "create")
         i_scenario.run()
         exp_1_output = create_robot.refresh().get_output_resource_model("robot")
+        assert exp_1_output is not None
         exp_1 = i_scenario.get_model()
 
         i_scenario_2: ScenarioProxy = ScenarioProxy()
@@ -299,6 +309,7 @@ class TestTagPropagation(BaseTestCase):
         i_protocol_2.add_resource("source", exp_1_output.id, move_robot << "robot")
         i_scenario_2.run()
         exp_2_output = move_robot.refresh().get_output_resource_model("robot")
+        assert exp_2_output is not None
         exp_2 = i_scenario_2.get_model()
 
         # generate a view from this resource
@@ -306,6 +317,7 @@ class TestTagPropagation(BaseTestCase):
             exp_2_output.id, "view_as_json", {}, True
         )
         exp_2_output_view = view_result.view_config
+        assert exp_2_output_view is not None
 
         # generate a note and add the view
         exp_2_note = NoteService.create(NoteSaveDTO(title="test_note"))
@@ -342,13 +354,15 @@ class TestTagPropagation(BaseTestCase):
         TagService.add_tags_to_entity_and_propagate(TagEntityType.SCENARIO, exp_2.id, [new_tag_2])
 
         # check that exp1 does not have the tag
-        exp_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, exp_1)
+        exp_tags = EntityTagList.find_by_entity(TagEntityType.SCENARIO, exp_1.id)
         self.assertEqual(exp_tags.has_tag(new_tag_2), False)
 
         # check that the note has the tag with 2 origins (view and exp2)
         note_tags = EntityTagList.find_by_entity(TagEntityType.NOTE, exp_2_note.id)
         self.assertEqual(note_tags.has_tag(new_tag_2), True)
-        tag = note_tags.get_tag(new_tag_2).to_simple_tag()
+        note_tag = note_tags.get_tag(new_tag_2)
+        assert note_tag is not None
+        tag = note_tag.to_simple_tag()
         self.assertEqual(tag.origins.count_origins(), 2)
 
         # Delete propagated tag 1
@@ -414,5 +428,7 @@ class TestTagPropagation(BaseTestCase):
         self.assertEqual(note_tags.has_tag(tag), should_exist)
 
         if should_exist:
-            tag = note_tags.get_tag(tag).to_simple_tag()
+            note_tag = note_tags.get_tag(tag)
+            assert note_tag is not None
+            tag = note_tag.to_simple_tag()
             self.assertEqual(tag.origins.count_origins(), note_origin_count)

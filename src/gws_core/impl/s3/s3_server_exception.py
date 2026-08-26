@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from gws_core.core.utils.xml_helper import XMLHelper
 
@@ -6,11 +7,16 @@ from gws_core.core.utils.xml_helper import XMLHelper
 class S3ServerException(HTTPException):
     code: str
     message: str
-    key: str
-    bucket_name: str
+    key: str | None
+    bucket_name: str | None
 
     def __init__(
-        self, status_code: int, code: str, message: str, bucket_name: str, key: str | None = None
+        self,
+        status_code: int,
+        code: str,
+        message: str,
+        bucket_name: str | None,
+        key: str | None = None,
     ) -> None:
         super().__init__(status_code=status_code, detail=message)
         self.code = code
@@ -20,7 +26,7 @@ class S3ServerException(HTTPException):
 
     @staticmethod
     def from_http_exception(
-        exc: HTTPException, bucket_name: str | None = None, key: str | None = None
+        exc: StarletteHTTPException, bucket_name: str | None = None, key: str | None = None
     ) -> "S3ServerException":
         return S3ServerException(
             status_code=exc.status_code,

@@ -19,12 +19,12 @@ from .credentials_type import (
 
 @final
 class Credentials(ModelWithUser):
-    name = TypedCharField(max_length=255, unique=True)
-    type = TypedCharField(max_length=255)
+    name: TypedCharField = TypedCharField(max_length=255, unique=True)
+    type: TypedCharField = TypedCharField(max_length=255)
 
-    description = NullableTextField()
+    description: NullableTextField = NullableTextField()
 
-    data = NullableJSONField()
+    data: NullableJSONField = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

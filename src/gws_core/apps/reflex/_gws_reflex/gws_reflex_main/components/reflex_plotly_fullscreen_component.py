@@ -1,6 +1,9 @@
+from typing import cast
+
 import plotly.graph_objects as go
 import reflex as rx
 from gws_reflex_base import dialog_header
+from reflex.vars.object import ObjectVar
 
 
 class PlotlyFullscreenState(rx.State):
@@ -18,6 +21,7 @@ class PlotlyFullscreenState(rx.State):
     # use a dict to avoid errors with go.Figure serialization in Reflex state
     message: dict | None = None
 
+    @rx.event
     def open_dialog(self, message: dict):
         """Open the fullscreen dialog with the given figure.
 
@@ -27,11 +31,13 @@ class PlotlyFullscreenState(rx.State):
         self.message = message
         self.is_dialog_open = True
 
+    @rx.event
     def close_dialog(self):
         """Close the fullscreen dialog and clear the current figure."""
         self.is_dialog_open = False
         self.message = None
 
+    @rx.event
     def set_is_dialog_open(self, is_open: bool):
         """Set the dialog open state.
 
@@ -52,13 +58,17 @@ def plotly_fullscreen_dialog() -> rx.Component:
     Returns:
         rx.Component: A dialog component with fullscreen Plotly display
     """
+    # accessed on the class, the state var is a Var: the None of its declared type is a
+    # state value and never reaches the subscripts below (rx.cond guards them client side)
+    message = cast(ObjectVar[dict], PlotlyFullscreenState.message)
+
     return rx.dialog.root(
         rx.dialog.content(
             rx.vstack(
                 dialog_header(
                     title=rx.cond(
-                        PlotlyFullscreenState.message,
-                        PlotlyFullscreenState.message["plot_name"],
+                        message,
+                        message["plot_name"],
                         "Chart",
                     ),
                     close=PlotlyFullscreenState.close_dialog,
@@ -67,8 +77,8 @@ def plotly_fullscreen_dialog() -> rx.Component:
                 rx.box(
                     rx.plotly(
                         data=rx.cond(
-                            PlotlyFullscreenState.message["figure"],
-                            PlotlyFullscreenState.message["figure"],
+                            message["figure"],
+                            message["figure"],
                             go.Figure(),
                         ),
                         width="100%",

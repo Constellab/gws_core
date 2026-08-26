@@ -5,6 +5,7 @@ from io import IOBase
 from pathlib import Path
 from tempfile import SpooledTemporaryFile
 from time import time
+from typing import cast
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.logger import Logger
@@ -27,7 +28,7 @@ class LocalFileStore(FileStore):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         if not self.path:
-            self.data["path"] = os.path.join(self.get_base_dir(), self.id)
+            cast(dict, self.data)["path"] = os.path.join(self.get_base_dir(), self.id)
 
     def add_node_from_path(
         self, source_path: str, dest_name: str | None = None, node_type: type[FSNode] | None = None
@@ -74,12 +75,12 @@ class LocalFileStore(FileStore):
 
         dest_file_path = self.generate_new_node_path(dest_file_name)
 
-        self._init_dir(FileHelper.get_dir(dest_file_path))
+        self._init_dir(str(FileHelper.get_dir(dest_file_path)))
 
         with open(dest_file_path, "wb") as buffer:
             shutil.copyfileobj(source_file, buffer)
 
-        return self.get_node_by_path(node_path=dest_file_path, node_type=file_type)
+        return cast(File, self.get_node_by_path(node_path=dest_file_path, node_type=file_type))
 
     @classmethod
     def check_disk_has_enough_space(cls, file_size: float) -> None:
@@ -120,7 +121,7 @@ class LocalFileStore(FileStore):
             if not os.path.exists(dir_):
                 raise BadRequestException(f"Cannot create directory '{dir_}'")
 
-    def get_node_by_path(self, node_path: str | None = None, node_type: type[FSNode] | None = None) -> FSNode:
+    def get_node_by_path(self, node_path: str, node_type: type[FSNode] | None = None) -> FSNode:
         if node_type is None:
             node_type = File if FileHelper.is_file(node_path) else Folder
 
@@ -181,7 +182,7 @@ class LocalFileStore(FileStore):
 
     @classmethod
     def get_default_instance(cls) -> "LocalFileStore":
-        file_store: FileStore = cls.select().order_by(cls.created_at).first()
+        file_store = cls.select().order_by(cls.created_at).first()
         if file_store is None:
             file_store = cls()
             file_store.save()
@@ -225,7 +226,7 @@ class LocalFileStore(FileStore):
         settings = Settings.get_instance()
         if not settings.is_dev_mode() and not settings.is_test:
             raise BadRequestException("Only allowed in dev and test mode")
-        file_store_list: list[FileStore] = cls.select()
+        file_store_list = cls.select()
         for file_store in file_store_list:
             file_store.delete_instance()
 

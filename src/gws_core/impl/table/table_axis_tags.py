@@ -6,7 +6,7 @@ from gws_core.tag.tag_helper import TagHelper
 
 
 class TableAxisTags(SerializableObjectJson):
-    _tags: list[dict[str, str]] | None = None
+    _tags: list[dict[str, str]]
 
     def __init__(self, tags: list[dict[str, str]] | None = None):
         super().__init__()

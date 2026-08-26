@@ -52,6 +52,7 @@ class I18nDemoState(rx.State):
 
     name: str = "Ada"
 
+    @rx.event
     def set_name(self, value: str):
         self.name = value
 

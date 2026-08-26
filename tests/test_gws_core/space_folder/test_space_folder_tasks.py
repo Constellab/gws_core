@@ -29,7 +29,7 @@ class TestSpaceFolderParam(BaseTestCase):
         task_runner = TaskRunner(SelectSpaceFolder, params={"space_folder": space_folder.id})
         result = task_runner.run()
 
-        space_folder_resource: SpaceFolderResource = result["space_folder"]
-        self.assertIsInstance(space_folder_resource, SpaceFolderResource)
+        space_folder_resource = result["space_folder"]
+        assert isinstance(space_folder_resource, SpaceFolderResource)
         self.assertEqual(space_folder_resource.space_folder_id, space_folder.id)
         self.assertEqual(space_folder_resource.get_space_folder().name, "Test 2")

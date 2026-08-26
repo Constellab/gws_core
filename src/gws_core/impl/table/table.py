@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -120,7 +120,7 @@ class Table(Resource):
 
     def _set_data(
         self,
-        data: DataFrame | np.ndarray | None = None,
+        data: DataFrame | Series | np.ndarray | list | None = None,
         row_names=None,
         column_names=None,
         row_tags: list[dict[str, str]] | None = None,
@@ -186,10 +186,11 @@ class Table(Resource):
         :return: True if the column exists, False otherwise.
         :rtype: bool
         """
+        column_names = self.column_names or []
         if case_sensitive:
-            return name in self.column_names
+            return name in column_names
         else:
-            lower_names = [x.lower() for x in self.column_names]
+            lower_names = [x.lower() for x in column_names]
             return name.lower() in lower_names
 
     def check_column_exists(self, name: str, case_sensitive: bool = True):
@@ -237,7 +238,7 @@ class Table(Resource):
         """
         self.check_column_exists(column_name)
 
-        dataframe = self._data[[column_name]]
+        dataframe = cast(DataFrame, self._data[[column_name]])
         if skip_nan:
             dataframe.dropna(inplace=True)
         return dataframe
@@ -283,7 +284,7 @@ class Table(Resource):
         if index is None:
             self._data[name] = data
         else:
-            self._data.insert(index, name, data)
+            self._data.insert(index, name, cast(Any, data))
 
         self._column_tags.insert_new_empty_tags(index)
 
@@ -428,7 +429,7 @@ class Table(Resource):
         """
 
         self.check_column_exists(column_name)
-        return self._data.columns.get_loc(column_name)
+        return cast(int, self._data.columns.get_loc(column_name))
 
     def generate_new_column_name(self, name: str) -> str:
         """
@@ -442,7 +443,7 @@ class Table(Resource):
         :rtype: str
         """
         return Utils.generate_unique_str_for_list(
-            self.column_names, DataframeHelper.format_header_name(name)
+            self.column_names or [], DataframeHelper.format_header_name(name)
         )
 
     ############################################# ROWS #############################################
@@ -541,7 +542,7 @@ class Table(Resource):
         if index is None:
             self._data.loc[name] = data
         else:
-            self._data.insert(index, name, data)
+            self._data.insert(index, name, cast(Any, data))
 
         self._row_tags.insert_new_empty_tags(index)
 
@@ -628,7 +629,7 @@ class Table(Resource):
         :rtype: int
         """
         self.check_row_exists(row_name)
-        return self._data.index.get_loc(row_name)
+        return cast(int, self._data.index.get_loc(row_name))
 
     @property
     def nb_rows(self) -> int:
@@ -861,7 +862,7 @@ class Table(Resource):
         """
 
         # reduce the number of columns to retrieve
-        data: DataFrame | None = None
+        data: DataFrame
         if from_index is not None or to_index is not None:
             data = self._data.iloc[:, from_index:to_index]
         else:
@@ -869,7 +870,8 @@ class Table(Resource):
 
         column_infos: list[TableColumnInfo] = []
         for column in data:
-            column_infos.append(self.get_column_info(column))
+            # column names of a Table are always strings (see DataframeHelper.format_header_names)
+            column_infos.append(self.get_column_info(cast(str, column)))
         return column_infos
 
     def get_column_info(self, column_name: str) -> TableColumnInfo:
@@ -914,7 +916,7 @@ class Table(Resource):
         :param source_table: source table to copy tags from
         :type table: Table
         """
-        for column_name in self.column_names:
+        for column_name in self.column_names or []:
             if source_table.column_exists(column_name):
                 self.set_column_tags_by_name(
                     column_name, source_table.get_column_tags_by_name(column_name)
@@ -1100,7 +1102,7 @@ class Table(Resource):
         """
 
         # reduce the data to the requested rows
-        data: DataFrame | None = None
+        data: DataFrame
         if from_index is not None or to_index is not None:
             data = self._data.iloc[from_index:to_index, :]
         else:
@@ -1108,7 +1110,7 @@ class Table(Resource):
 
         rows_info: list[TableHeaderInfo] = []
         for _, row in data.iterrows():
-            rows_info.append(self.get_row_info(row.name))
+            rows_info.append(self.get_row_info(cast(str, row.name)))
 
         return rows_info
 
@@ -1236,7 +1238,7 @@ class Table(Resource):
         """
         data = DataframeFilterHelper.filter_by_axis_names(self._data, "row", filters)
 
-        return self.create_sub_table_filtered_by_rows(data)
+        return self.create_sub_table_filtered_by_rows(cast(DataFrame, data))
 
     def select_by_column_names(self, filters: list[DataframeFilterName]) -> "Table":
         """
@@ -1250,7 +1252,7 @@ class Table(Resource):
 
         data = DataframeFilterHelper.filter_by_axis_names(self._data, "column", filters)
 
-        return self.create_sub_table_filtered_by_columns(data)
+        return self.create_sub_table_filtered_by_columns(cast(DataFrame, data))
 
     def select_by_coords(
         self, from_row_id: int, from_column_id: int, to_row_id: int, to_column_id: int
@@ -1399,7 +1401,9 @@ class Table(Resource):
 
         column_tags = self.get_column_tags()
         selected_col_tags = [
-            column_tags[i] for i, name in enumerate(self.column_names) if name in data.columns
+            column_tags[i]
+            for i, name in enumerate(self.column_names or [])
+            if name in data.columns
         ]
 
         return self.create_sub_table(data, self.get_row_tags(), selected_col_tags)
@@ -1446,7 +1450,11 @@ class Table(Resource):
         :rtype: Table
         """
 
-        indexes = [self._data.index.get_loc(k) for k in filtered_df.index if k in self._data.index]
+        indexes = [
+            cast(int, self._data.index.get_loc(k))
+            for k in filtered_df.index
+            if k in self._data.index
+        ]
 
         # get the row tags for the filtered rows
         row_tags = self._row_tags.get_tags_at_indexes(indexes)
@@ -1467,7 +1475,9 @@ class Table(Resource):
         """
 
         indexes = [
-            self._data.columns.get_loc(k) for k in filtered_df.columns if k in self._data.columns
+            cast(int, self._data.columns.get_loc(k))
+            for k in filtered_df.columns
+            if k in self._data.columns
         ]
 
         # get the column tags for the filtered columns
@@ -1526,7 +1536,7 @@ class Table(Resource):
         return self._data.tail(nrows)
 
     @property
-    def shape(self) -> tuple[int]:
+    def shape(self) -> tuple[int, int]:
         """
         Returns the shape of the table.
 
@@ -1621,14 +1631,14 @@ class Table(Resource):
         """
         return self._data.to_csv()
 
-    def to_json(self) -> dict:
+    def to_json(self) -> str:
         """
         Returns the table as a json string.
 
         :return: The table as a json string
-        :rtype: dict
+        :rtype: str
         """
-        return self._data.to_json()
+        return cast(str, self._data.to_json())
 
     ################################################# AI #################################################
     def get_ai_description(self) -> str:
@@ -1795,7 +1805,7 @@ class Table(Resource):
         task_runner = TaskRunner(SmartPlotly, inputs={"source": self}, params=params)
 
         output = task_runner.run()
-        plotly_resource: PlotlyResource = output["target"]
+        plotly_resource = cast(PlotlyResource, output["target"])
         return plotly_resource.default_view(ConfigParams())
 
     # @view(view_type=LinePlot3DView, human_name='LinePlot3D', short_description='View columns as 3D-line plots')
@@ -1817,7 +1827,14 @@ class Table(Resource):
     ############################## CLASS METHODS ###########################
 
     @classmethod
-    def from_dict(cls, data: dict, orient="index", dtype=None, columns=None) -> "Table":
-        dataframe = DataFrame.from_dict(data, orient, dtype, columns)
+    def from_dict(
+        cls,
+        data: dict,
+        orient: Literal["columns", "index", "tight"] = "index",
+        dtype=None,
+        columns=None,
+    ) -> "Table":
+        # cast: pandas overloads from_dict per orient literal, so a union is not resolvable
+        dataframe = DataFrame.from_dict(data, cast(Any, orient), dtype, columns)
         res = cls(data=dataframe)
         return res

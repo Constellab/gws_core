@@ -141,7 +141,7 @@ def _render_task_runner():
             on_change=lambda: _import_file_to_table(key),
         )
 
-        imported_table: Table = st.session_state.get("imported_table")
+        imported_table: Table | None = st.session_state.get("imported_table")
         if imported_table is None:
             st.write("No table imported yet.")
         else:

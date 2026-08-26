@@ -44,7 +44,9 @@ class TestFormTemplateAiSpecs(BaseTestCase):
                 "mass": FloatParam(human_name="Mass"),
             }
         ).to_json_dict()
-        content_before = FormTemplateVersion.get_by_id(version_id).content
+        version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
+        content_before = version.content
         with patch(_GPT_TARGET, return_value=json.dumps(ai_specs)):
             result = FormTemplateAiService.generate_template_specs(
                 template.id,
@@ -55,9 +57,9 @@ class TestFormTemplateAiSpecs(BaseTestCase):
         self.assertIn("full_name", result.specs)
         self.assertIn("mass", result.specs)
         # ...and nothing was written to the draft.
-        self.assertEqual(
-            FormTemplateVersion.get_by_id(version_id).content, content_before
-        )
+        reloaded = FormTemplateVersion.get_by_id(version_id)
+        assert reloaded is not None
+        self.assertEqual(reloaded.content, content_before)
 
     def test_modify_returns_full_set(self):
         template, version_id = self._template_with_specs(
@@ -158,7 +160,9 @@ class TestFormTemplateAiSpecs(BaseTestCase):
         template, version_id = self._template_with_specs(
             ConfigSpecs({"keep": StrParam(human_name="Keep")})
         )
-        content_before = FormTemplateVersion.get_by_id(version_id).content
+        version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
+        content_before = version.content
         # An unknown param type the deserializer cannot build.
         with (
             patch(_GPT_TARGET, return_value=json.dumps({"bad": {"type": "not_a_real_type"}})),
@@ -169,15 +173,17 @@ class TestFormTemplateAiSpecs(BaseTestCase):
                 version_id,
                 GenerateTemplateSpecsDTO(description="x"),
             )
-        self.assertEqual(
-            FormTemplateVersion.get_by_id(version_id).content, content_before
-        )
+        reloaded = FormTemplateVersion.get_by_id(version_id)
+        assert reloaded is not None
+        self.assertEqual(reloaded.content, content_before)
 
     def test_computed_cycle_raises_and_leaves_draft_unchanged(self):
         template, version_id = self._template_with_specs(
             ConfigSpecs({"keep": FloatParam(human_name="Keep")})
         )
-        content_before = FormTemplateVersion.get_by_id(version_id).content
+        version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
+        content_before = version.content
         # Two computed params referencing each other -> cycle, caught by
         # check_config_specs().
         cyclic = ConfigSpecs(
@@ -195,9 +201,9 @@ class TestFormTemplateAiSpecs(BaseTestCase):
                 version_id,
                 GenerateTemplateSpecsDTO(description="x"),
             )
-        self.assertEqual(
-            FormTemplateVersion.get_by_id(version_id).content, content_before
-        )
+        reloaded = FormTemplateVersion.get_by_id(version_id)
+        assert reloaded is not None
+        self.assertEqual(reloaded.content, content_before)
 
     # ------------------------------------------------------------------ #
     # hard input errors -> raise
@@ -262,7 +268,9 @@ class TestFormTemplateAiSpecs(BaseTestCase):
     def _template_with_specs(self, specs: ConfigSpecs) -> tuple[FormTemplate, str]:
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         version_id = self._draft_id(template)
-        FormTemplateVersion.get_by_id(version_id).update_specs(specs)
+        version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
+        version.update_specs(specs)
         return template, version_id
 
     def _draft_id(self, template: FormTemplate) -> str:
@@ -280,7 +288,7 @@ class TestFormTemplateAiSpecs(BaseTestCase):
 class TestFormTemplateAiField(BaseTestCase):
     """Single-field AI generation (generate_template_field) — no DB write."""
 
-    def _make(self, specs: ConfigSpecs = None) -> tuple[FormTemplate, str]:
+    def _make(self, specs: ConfigSpecs | None = None) -> tuple[FormTemplate, str]:
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         version_id = (
             FormTemplateVersion.select()
@@ -292,7 +300,9 @@ class TestFormTemplateAiField(BaseTestCase):
             .id
         )
         if specs is not None:
-            FormTemplateVersion.get_by_id(version_id).update_specs(specs)
+            version = FormTemplateVersion.get_by_id(version_id)
+            assert version is not None
+            version.update_specs(specs)
         return template, version_id
 
     def _field_response(self, field_key: str, spec) -> str:
@@ -320,7 +330,9 @@ class TestFormTemplateAiField(BaseTestCase):
         template, version_id = self._make(
             ConfigSpecs({"existing": StrParam(human_name="Existing")})
         )
-        content_before = FormTemplateVersion.get_by_id(version_id).content
+        version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
+        content_before = version.content
         with patch(
             _GPT_TARGET,
             return_value=self._field_response("mass", FloatParam(human_name="Mass")),
@@ -330,9 +342,9 @@ class TestFormTemplateAiField(BaseTestCase):
                 version_id,
                 GenerateTemplateFieldDTO(description="a mass"),
             )
-        self.assertEqual(
-            FormTemplateVersion.get_by_id(version_id).content, content_before
-        )
+        reloaded = FormTemplateVersion.get_by_id(version_id)
+        assert reloaded is not None
+        self.assertEqual(reloaded.content, content_before)
 
     def test_other_fields_sent_as_context_excluding_edited(self):
         template, version_id = self._make(

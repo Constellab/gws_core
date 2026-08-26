@@ -13,6 +13,7 @@ lives in :mod:`..reflex_mantine.mantine_base`; this module only declares the
 can still be forwarded through ``props``.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 import reflex as rx
@@ -98,7 +99,7 @@ class SelectComponent(MantineBaseComponent):
 
 def select_component(
     *,
-    data: Var[list[str | dict]] | list[str | dict],
+    data: Var[list[str | dict]] | Sequence[str | dict],
     value: Var[str] | str | None = None,
     on_change: rx.EventHandler | Any | None = None,
     label: str | None = None,

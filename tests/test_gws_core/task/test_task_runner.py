@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import (
@@ -21,7 +22,7 @@ from gws_core.io.io_exception import (
     InvalidOutputsError,
     MissingInputResourcesException,
 )
-from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec import OutputSpec
 
 
 @task_decorator("TaskRunnerProgress")
@@ -29,11 +30,12 @@ class TaskRunnerProgress(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.log_info_message("Hello")
         self.update_progress_value(50, "Hello 50%")
+        return {}
 
 
 @task_decorator("TaskRunnerOutputError")
 class TaskRunnerOutputError(Task):
-    output_specs: OutputSpecs = OutputSpecs({"test": InputSpec(Table)})
+    output_specs: OutputSpecs = OutputSpecs({"test": OutputSpec(Table)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {"test": JSONDict()}
@@ -72,7 +74,7 @@ class TestTaskRunner(TestCase):
 
         output: TaskOutputs = task_tester.run()
 
-        robot: Robot = output["robot"]
+        robot = cast(Robot, output["robot"])
         self.assertEqual(robot.position, [0, -10])
 
     def test_missing_input(self):

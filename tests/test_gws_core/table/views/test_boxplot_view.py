@@ -2,7 +2,6 @@ from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
 from gws_core.impl.table.view.table_boxplot_view import TableBoxPlotView
-from gws_core.impl.table.view.table_selection import Serie1d
 from gws_core.test.data_provider import DataProvider
 
 
@@ -16,7 +15,7 @@ class TestTableBoxPlotView(TestCase):
 
         # 1 series :
         # first : y = petal_length
-        series: list[Serie1d] = [
+        series = [
             {"name": "first", "y": {"type": "columns", "selection": ["petal_length"]}}
         ]
         view_dto = tester.to_dto({"series": series})

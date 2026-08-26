@@ -16,8 +16,8 @@ class ModelWithUser(Model):
     """
 
     # set null=True because otherwise the attribute can't be None, peewee prevents it
-    created_by = TypedForeignKeyField(User, backref="+")
-    last_modified_by = TypedForeignKeyField(User, backref="+")
+    created_by: TypedForeignKeyField[User] = TypedForeignKeyField(User, backref="+")
+    last_modified_by: TypedForeignKeyField[User] = TypedForeignKeyField(User, backref="+")
 
     def _before_insert(self) -> None:
         super()._before_insert()

@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 import numpy
 from pandas import DataFrame
@@ -94,7 +94,7 @@ class HistogramView(View):
         if nbins is None or nbins <= 0:
             nbins = 10
 
-        data = NumericHelper.list_to_float(data, remove_none=True)
+        data = cast(list[float], NumericHelper.list_to_float(data, remove_none=True))
 
         density = self.mode == "DENSITY"
 
@@ -110,6 +110,9 @@ class HistogramView(View):
         """
         Add series of raw data from a dataframe. The values are flattened by column
         """
+        if dataframe is None:
+            raise BadRequestException("The dataframe is required")
+
         if dataframe.shape[0] != 1 and dataframe.shape[1] != 1:
             raise BadRequestException("The data must be row or column vector")
         return self.add_data(DataframeHelper.flatten_dataframe_by_column(dataframe), name=name)

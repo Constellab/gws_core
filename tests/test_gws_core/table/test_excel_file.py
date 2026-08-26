@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.impl.file.file import File
 from gws_core.impl.table.table import Table
@@ -27,7 +29,7 @@ class TextExcelFile(BaseTestCaseLight):
 
         outputs = task_runner.run()
 
-        table: Table = outputs[TableImporter.output_name]
+        table = cast(Table, outputs[TableImporter.output_name])
 
         self.assertIsNotNone(table)
         expected_df = DataFrame(

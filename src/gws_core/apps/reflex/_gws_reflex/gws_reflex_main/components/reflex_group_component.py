@@ -1,8 +1,9 @@
-from typing import Literal
+from typing import Literal, cast
 
 import reflex as rx
 
 from gws_core.space.space_dto import SpaceGroupDTO
+from gws_core.user.user_dto import UserDTO
 
 from .reflex_user_components import user_inline_component
 
@@ -37,8 +38,8 @@ def group_inline_component(
 
     return rx.cond(
         group.user,
-        # If user exists, show user inline component
-        user_inline_component(group.user, size),
+        # If user exists, show user inline component (rx.cond guards it client side)
+        user_inline_component(cast(UserDTO, group.user), size),
         # Otherwise show people icon with group label
         rx.hstack(
             rx.icon(

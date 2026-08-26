@@ -26,11 +26,11 @@ class LabConfigModel(BaseModel):
 
     LAB_CONFIG_VERSION = 1
 
-    id = TypedCharField(primary_key=True, max_length=36)
-    created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    version = TypedIntegerField()  # version of the config
-    brick_versions = TypedJSONField()
-    hash = TypedCharField()
+    id: TypedCharField = TypedCharField(primary_key=True, max_length=36)
+    created_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
+    version: TypedIntegerField = TypedIntegerField()  # version of the config
+    brick_versions: TypedJSONField = TypedJSONField()
+    hash: TypedCharField = TypedCharField()
 
     _current_config: Optional["LabConfigModel"] = None
 

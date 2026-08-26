@@ -1,3 +1,4 @@
+import builtins
 from enum import Enum
 from typing import TypeVar, overload
 
@@ -34,8 +35,8 @@ class RichTextObjectType(str, Enum):
 
 class RichTextBlock(BaseModelDTO):
     # `type` mirrors the persisted EditorJS block schema, so it cannot be renamed.
-    # The A003 below are the builtin `type[...]` in annotations, unambiguous here
-    # because the field is annotation-only and never bound in the class namespace.
+    # Because it shadows the builtin in the class scope, the annotations below use
+    # `builtins.type[...]` to refer to the builtin explicitly.
     id: str
     type: str
     data: dict
@@ -57,10 +58,10 @@ class RichTextBlock(BaseModelDTO):
     def get_data(self) -> RichTextBlockDataBase: ...
 
     @overload
-    def get_data(self, data_type: type[RichTextBlockDataT]) -> RichTextBlockDataT: ...  # noqa: A003
+    def get_data(self, data_type: builtins.type[RichTextBlockDataT]) -> RichTextBlockDataT: ...
     def get_data(
         self,
-        data_type: type[RichTextBlockDataT] | None = None,  # noqa: A003
+        data_type: builtins.type[RichTextBlockDataT] | None = None,
     ) -> RichTextBlockDataT | RichTextBlockDataBase:
         # Get the block type string value
         block_typing_name = self.type

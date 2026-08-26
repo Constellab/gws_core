@@ -24,7 +24,7 @@ class Text(Resource):
         super().__init__()
         self.set_data(data)
 
-    def set_data(self, data: str) -> None:
+    def set_data(self, data: str | None) -> None:
         if data is None:
             data = ""
 

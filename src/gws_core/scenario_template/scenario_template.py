@@ -1,5 +1,7 @@
 
 
+from typing import cast
+
 from gws_core.core.model.typed_db_field import NullableJSONField, TypedCharField, TypedIntegerField
 from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
@@ -22,13 +24,13 @@ class ScenarioTemplate(ModelWithUser):
 
     CURRENT_VERSION = 3
 
-    name = TypedCharField(max_length=255)
+    name: TypedCharField = TypedCharField(max_length=255)
 
-    description = NullableRichTextDbField()
+    description: NullableRichTextDbField = NullableRichTextDbField()
 
     # version number of the scenario template
-    version = TypedIntegerField(default=1)
-    data = NullableJSONField()
+    version: TypedIntegerField = TypedIntegerField(default=1)
+    data: NullableJSONField = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -37,7 +39,7 @@ class ScenarioTemplate(ModelWithUser):
             self.data = {}
 
     def get_template(self) -> ProtocolGraphConfigDTO:
-        return ProtocolGraphConfigDTO.from_json(self.data)
+        return ProtocolGraphConfigDTO.from_json(cast(dict, self.data))
 
     def set_template(self, template: ProtocolGraphConfigDTO):
         self.data = template.to_json_dict()

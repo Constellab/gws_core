@@ -1,0 +1,7 @@
+{
+    "apiBaseUrl": "http://localhost:3000",
+    "baseHref": "external/gws_plugin",
+    "spaceApiUrl": "http://host.docker.internal:3001",
+    "communityFrontUrl": "https://constellab.community",
+    "communityApiUrl": "https://api.constellab.community"
+}

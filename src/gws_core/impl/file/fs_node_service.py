@@ -1,11 +1,11 @@
 import os
 import shutil
 from pathlib import Path
+from typing import BinaryIO, cast
 
 from fastapi import File as FastAPIFile
 from fastapi import UploadFile
 from fastapi.responses import FileResponse
-from typing_extensions import Buffer
 
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.exception.gws_exceptions import GWSException
@@ -75,7 +75,7 @@ class FsNodeService:
         temp_dir = Settings.make_temp_dir()
         # create the file in the temp dir
         file_path = cls.create_tmp_file(
-            upload_file.file, os.path.join(temp_dir, upload_file.filename)
+            upload_file.file, os.path.join(temp_dir, cast(str, upload_file.filename))
         )
 
         file: File = file_type(file_path)
@@ -99,7 +99,7 @@ class FsNodeService:
             FileHelper.delete_dir(temp_dir)
 
     @classmethod
-    def create_tmp_file(cls, upload_file: Buffer, file_path: str) -> str:
+    def create_tmp_file(cls, upload_file: BinaryIO, file_path: str) -> str:
         # create parent dir if not exist
         FileHelper.create_dir_if_not_exist(FileHelper.get_dir(file_path))
 
@@ -133,12 +133,14 @@ class FsNodeService:
 
         try:
             # retrieve the folder name
-            path: Path = FileHelper.get_path(files[0].filename)
+            path: Path = FileHelper.get_path(cast(str, files[0].filename))
             folder_name: str = path.parts[0]
 
             # Add all the file under the create folder
             for file in files:
-                cls.create_tmp_file(file.file, os.path.join(temp_dir, file.filename))
+                cls.create_tmp_file(
+                    file.file, os.path.join(temp_dir, cast(str, file.filename))
+                )
 
             folder: Folder = folder_type(os.path.join(temp_dir, folder_name))
             try:

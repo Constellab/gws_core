@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Literal
+from typing import Literal, cast
 
 import typer
 from gws_core import (
@@ -75,7 +75,7 @@ class AppCli:
 
     def _load_env(self) -> None:
         # Load env_type from config
-        env_type: EnvType = self._config.env_type
+        env_type: EnvType = cast(EnvType, self._config.env_type)
         if not env_type:
             env_type = "NONE"
 

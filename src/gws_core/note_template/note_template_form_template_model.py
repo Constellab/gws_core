@@ -21,13 +21,13 @@ class NoteTemplateFormTemplateModel(BaseModel):
     when the family-level question suffices.
     """
 
-    note_template = TypedForeignKeyField(
+    note_template: TypedForeignKeyField[NoteTemplate] = TypedForeignKeyField(
         NoteTemplate, null=False, index=True, on_delete="CASCADE"
     )
-    form_template_version = TypedForeignKeyField(
+    form_template_version: TypedForeignKeyField[FormTemplateVersion] = TypedForeignKeyField(
         FormTemplateVersion, null=False, index=True, on_delete="RESTRICT"
     )
-    form_template = TypedForeignKeyField(
+    form_template: TypedForeignKeyField[FormTemplate] = TypedForeignKeyField(
         FormTemplate, null=False, index=True, on_delete="RESTRICT"
     )
 

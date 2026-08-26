@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from gws_core.brick.brick_helper import BrickHelper
 from gws_core.code.task_generator import TaskGenerator
@@ -63,7 +63,7 @@ class AgentFactory:
             count = count + 1
 
         params: dict[str, Any] = task.config.get_value(PyAgent.CONFIG_PARAMS_NAME)
-        params_spec: DynamicParam = task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        params_spec = cast(DynamicParam, task.config.get_spec(PyAgent.CONFIG_PARAMS_NAME))
         for param_name, param_value in params.items():
             param_type: ParamSpec = params_spec.specs.get_spec(param_name)
             param_type.default_value = param_value

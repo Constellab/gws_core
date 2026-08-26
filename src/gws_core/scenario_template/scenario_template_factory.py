@@ -1,4 +1,5 @@
 from json import loads
+from typing import cast
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
@@ -81,7 +82,9 @@ class ScenarioTemplateFactory:
             )
 
         if version == 1:
-            scenario_template["data"] = cls.migrate_data_from_1_to_3(scenario_template.get("data"))
+            scenario_template["data"] = cls.migrate_data_from_1_to_3(
+                cast(dict, scenario_template.get("data"))
+            )
 
         scenario_template["version"] = ScenarioTemplate.CURRENT_VERSION
         return scenario_template

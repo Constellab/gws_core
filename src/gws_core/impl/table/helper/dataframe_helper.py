@@ -1,3 +1,4 @@
+from collections.abc import Iterable
 from re import sub
 from typing import Any
 
@@ -18,7 +19,7 @@ class DataframeHelper:
     MIN_CSV_LENGTH_FOR_DELIMITER_DETECTION = 10
 
     @staticmethod
-    def detect_csv_delimiter(csv_str: str) -> str:
+    def detect_csv_delimiter(csv_str: str) -> str | None:
         """
         Method to guess the delimiter of a csv string based on delimiter count.
 
@@ -152,7 +153,7 @@ class DataframeHelper:
         return cls.rename_duplicate_column_and_row_names(data)
 
     @classmethod
-    def format_header_names(cls, names: list[Any], strict: bool = False) -> list[str]:
+    def format_header_names(cls, names: Iterable[Any], strict: bool = False) -> list[str]:
         """Format the names of a row or a column with the following rules:
         - convert to string
 

@@ -18,7 +18,7 @@ class Version:
     major: int
     minor: int
     patch: int
-    sub_patch: int
+    sub_patch: int | None
 
     def __init__(self, version: str):
         self._init_from_str(version)
@@ -118,7 +118,7 @@ class Version:
         """return True if the version has a sub_patch"""
         return self.sub_patch is not None
 
-    def get_sub_patch_as_number(self) -> int:
+    def get_sub_patch_as_number(self) -> float:
         """return the sub_patch as a number.
         In there is no sub patch, return infinity so the beta version are always before real version
         """

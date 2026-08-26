@@ -21,7 +21,7 @@ from gws_core.tag.tag_key_model import TagKeyModel
 class TagValueModel(Model):
     """Table to store all the existing tag values"""
 
-    tag_key = TypedForeignKeyField(
+    tag_key: TypedForeignKeyField[TagKeyModel] = TypedForeignKeyField(
         TagKeyModel,
         index=True,
         on_delete="CASCADE",
@@ -31,15 +31,15 @@ class TagValueModel(Model):
     )
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = TypedCharField(collation="utf8mb4_bin")
+    tag_value: TypedCharField = TypedCharField(collation="utf8mb4_bin")
 
-    is_community_tag_value = TypedBooleanField(default=False)
+    is_community_tag_value: TypedBooleanField = TypedBooleanField(default=False)
 
-    short_description = NullableCharField(default=None)
+    short_description: NullableCharField = NullableCharField(default=None)
 
-    additional_infos = NullableJSONField()
+    additional_infos: NullableJSONField = NullableJSONField()
 
-    deprecated = TypedBooleanField(default=False)
+    deprecated: TypedBooleanField = TypedBooleanField(default=False)
 
     def get_tag_value(self) -> TagValueType:
         return self.tag_key.convert_str_value_to_type(self.tag_value)

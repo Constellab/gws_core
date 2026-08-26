@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import final
+from typing import cast, final
 
 from peewee import Tuple
 from typing_extensions import TypedDict
@@ -268,7 +268,7 @@ class Protocol(Process):
 
     @classmethod
     @final
-    def get_output_specs(cls) -> OutputSpec:
+    def get_output_specs(cls) -> OutputSpecs:
         """Get the input specs of the protocol"""
         protocol: Protocol = cls.instantiate_protocol()
         return protocol.get_output_specs_self()
@@ -282,8 +282,9 @@ class Protocol(Process):
             process_spec = self.get_process_spec(interface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            input_specs[name] = process_spec.process_type.get_input_specs().get_spec(
-                interface["port_name"]
+            input_specs[name] = cast(
+                InputSpec,
+                process_spec.process_type.get_input_specs().get_spec(interface["port_name"]),
             )
 
         return InputSpecs(input_specs)
@@ -297,8 +298,9 @@ class Protocol(Process):
             process_spec = self.get_process_spec(outerface["process_instance_name"])
 
             # retrieve the corresponding input spec
-            output_specs[name] = process_spec.process_type.get_output_specs().get_spec(
-                outerface["port_name"]
+            output_specs[name] = cast(
+                OutputSpec,
+                process_spec.process_type.get_output_specs().get_spec(outerface["port_name"]),
             )
 
         return OutputSpecs(output_specs)

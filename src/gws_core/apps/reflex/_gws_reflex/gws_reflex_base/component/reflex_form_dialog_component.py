@@ -51,7 +51,7 @@ class FormDialogState(rx.State, mixin=True):
         """
 
     @abstractmethod
-    async def _create(self, form_data: dict) -> AsyncGenerator:
+    def _create(self, form_data: dict) -> AsyncGenerator:
         """Create a new item with the provided form data.
 
         This method must be implemented by subclasses to handle the actual
@@ -65,7 +65,7 @@ class FormDialogState(rx.State, mixin=True):
         """
 
     @abstractmethod
-    async def _update(self, form_data: dict) -> AsyncGenerator:
+    def _update(self, form_data: dict) -> AsyncGenerator:
         """Update an existing item with the provided form data.
 
         This method must be implemented by subclasses to handle the actual

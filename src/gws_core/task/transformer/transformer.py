@@ -1,10 +1,11 @@
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import final
+from typing import Generic, TypeVar, cast, final
 
 from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.utils import Utils
+from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_deprecated import TypingDeprecated
 from gws_core.model.typing_style import TypingStyle
@@ -59,8 +60,8 @@ def transformer_decorator(
             return task_class
 
         # Force the input and output specs
-        task_class.input_specs = InputSpecs({"resource": resource_type})
-        task_class.output_specs = OutputSpecs({"resource": resource_type})
+        task_class.input_specs = InputSpecs({"resource": InputSpec(resource_type)})
+        task_class.output_specs = OutputSpecs({"resource": OutputSpec(resource_type)})
 
         decorate_converter(
             ConverterRegistration(
@@ -83,13 +84,23 @@ def transformer_decorator(
     return decorator
 
 
+ResourceType = TypeVar("ResourceType", bound=Resource)
+
+
 @task_decorator("Transformer", hide=True)
-class Transformer(Converter):
+class Transformer(Converter, Generic[ResourceType]):
+    """Task that transforms a resource into a resource of the same type.
+
+    Parameterize it with the transformed resource type so that the ``transform``
+    signature of the sub class is checked against it:
+    ``class MyTransformer(Transformer[Table])``.
+    """
+
     @final
     def convert(
         self, source: Resource, params: ConfigParams, target_type: type[Resource]
     ) -> Resource:
-        target: Resource = self.transform(source, params)
+        target: Resource = self.transform(cast(ResourceType, source), params)
 
         # copy the source name if the target name is not set
         if target.name is None:
@@ -99,13 +110,13 @@ class Transformer(Converter):
         return target
 
     @abstractmethod
-    def transform(self, source: Resource, params: ConfigParams) -> Resource:
+    def transform(self, source: ResourceType, params: ConfigParams) -> ResourceType:
         """Override this method to write the Transformer code
 
         :param source: resource to modifify, the source object can be directly modify as this is already a new copy
-        :type source: Resource
+        :type source: ResourceType
         :param params: params for the transform
         :type params: ConfigParams
         :return: [description]
-        :rtype: Resource
+        :rtype: ResourceType
         """

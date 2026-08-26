@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 from gws_core.core.utils.logger import Logger
@@ -71,7 +71,7 @@ class ReflectorHelper:
             - Works with both functions and methods
         """
 
-        parameters: dict[str, inspect.Parameter] = inspect.signature(func).parameters
+        parameters: Mapping[str, inspect.Parameter] = inspect.signature(func).parameters
 
         arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
 
@@ -261,7 +261,7 @@ class ReflectorHelper:
             if not callable(func):
                 return None
 
-            method_type: str = MethodDocType.BASICMETHOD
+            method_type: str | None = MethodDocType.BASICMETHOD
             if func_name is None:
                 func_name = func.__name__
 

@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -47,6 +49,6 @@ class Switch2(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         index = params.get_value("index")
-        resource = inputs[f"resource_{index}"]
+        resource = cast(Resource, inputs[f"resource_{index}"])
         resource.set_as_reference()
         return {"resource": resource}

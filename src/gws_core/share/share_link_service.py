@@ -196,7 +196,7 @@ class ShareLinkService:
         if not clean_expired_links and not clean_invalid_links:
             return
 
-        links: list[ShareLink] = ShareLink.select()
+        links: list[ShareLink] = list(ShareLink.select())
 
         for link in links:
             if (

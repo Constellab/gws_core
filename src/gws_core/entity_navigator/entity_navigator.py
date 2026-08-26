@@ -739,7 +739,11 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
         task_input_models: set[TaskInputModel] = set(
             TaskInputModel.get_by_resource_models(self._get_entities_ids())
         )
-        return {task_input.task_model for task_input in task_input_models}
+        return {
+            task_input.task_model
+            for task_input in task_input_models
+            if task_input.task_model is not None
+        }
 
     def get_next_scenarios(self) -> "EntityNavigatorScenario":
         """Return all the scenarios that use the resource in a source task or as input of a task
@@ -800,7 +804,11 @@ class EntityNavigatorResource(EntityNavigator[ResourceModel]):
             TaskInputModel.get_by_task_models(task_model_ids)
         )
 
-        resources = {task_input.resource_model for task_input in task_input_model}
+        resources = {
+            task_input.resource_model
+            for task_input in task_input_model
+            if task_input.resource_model is not None
+        }
 
         return EntityNavigatorResource(resources)
 

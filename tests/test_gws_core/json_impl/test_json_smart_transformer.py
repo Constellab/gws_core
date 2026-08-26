@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core.impl.agent.py_agent import PyAgent
@@ -49,7 +50,7 @@ target['scores'] = filtered_scores```""",
         outputs = tester.run()
 
         # check the result table and tags
-        target: JSONDict = outputs["target"]
+        target = cast(JSONDict, outputs["target"])
         self.assertIsInstance(target, JSONDict)
 
         expected_json = JSONDict(
@@ -62,7 +63,7 @@ target['scores'] = filtered_scores```""",
 
         # check the generated code
         # Try to execute the code in a python agent
-        code: Text = outputs["generated_code"]
+        code = cast(Text, outputs["generated_code"])
 
         tester = TaskRunner(
             task_type=PyAgent,
@@ -74,5 +75,5 @@ target['scores'] = filtered_scores```""",
         outputs = tester.run()
 
         # check the result are the same
-        target_2: JSONDict = outputs["target"]
+        target_2 = cast(JSONDict, outputs["target"])
         self.assertTrue(target.equals(target_2))

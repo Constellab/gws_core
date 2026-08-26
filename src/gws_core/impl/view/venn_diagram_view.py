@@ -45,10 +45,17 @@ class VennDiagramView(View):
     _type: ViewType = ViewType.VENN_DIAGRAM
     _title: str = "Venn Diagram"
 
+    def _get_groups(self) -> dict[str, set]:
+        """Return the groups of the diagram, raise if no group was added"""
+        if self._groups is None:
+            raise BadRequestException("The groups are required, use add_group to add them")
+        return self._groups
+
     def _compute_sections(self):
-        group_names = list(self._groups.keys())
+        groups = self._get_groups()
+        group_names = list(groups.keys())
         bag = {}
-        for key, data in self._groups.items():
+        for key, data in groups.items():
             bag[key] = {
                 "group_names": [key],
                 "data": data,  # dropna

@@ -3,11 +3,12 @@ from unittest import TestCase
 
 from gws_core.core.db.pool_db import PoolDb
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import TypedCharField
 from peewee import CharField, PeeweeException
 
 
 class PoolMultiTable(Model):
-    id = CharField(primary_key=True, max_length=36)
+    id = TypedCharField(primary_key=True, max_length=36)
     text = CharField()
 
     class Meta:

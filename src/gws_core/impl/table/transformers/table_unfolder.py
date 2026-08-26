@@ -13,7 +13,7 @@ from gws_core.task.transformer.transformer import Transformer, transformer_decor
     resource_type=Table,
     short_description="Unfold table rows based on tags",
 )
-class TableRowTagUnfolder(Transformer):
+class TableRowTagUnfolder(Transformer[Table]):
     """
     Transformer to unfold table rows based on provided tags.
 
@@ -82,8 +82,8 @@ class TableRowTagUnfolder(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get("filters"):
-            table = table.select_by_column_names(params.get("filters"))
+        if params.get_value("filters"):
+            table = table.select_by_column_names(params.get_value("filters"))
 
         keys = params["tag_keys"]
         tag_key_column_name = params["tag_key_column_name"]
@@ -97,7 +97,7 @@ class TableRowTagUnfolder(Transformer):
     resource_type=Table,
     short_description="Unfold table columns based on tags",
 )
-class TableColumnTagUnfolder(Transformer):
+class TableColumnTagUnfolder(Transformer[Table]):
     """
     Transformer to unfold table columns based on provided tags.
 
@@ -133,8 +133,8 @@ class TableColumnTagUnfolder(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get("filters"):
-            table = table.select_by_row_names(params.get("filters"))
+        if params.get_value("filters"):
+            table = table.select_by_row_names(params.get_value("filters"))
 
         keys = params["tag_keys"]
         tag_key_row_name = params["tag_key_row_name"]
@@ -148,7 +148,7 @@ class TableColumnTagUnfolder(Transformer):
     resource_type=Table,
     short_description="Unfold table rows based on row names",
 )
-class TableRowUnfolder(Transformer):
+class TableRowUnfolder(Transformer[Table]):
     """
     Transformer to unfold table columns based on provided row names.
 
@@ -181,8 +181,8 @@ class TableRowUnfolder(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get("filters"):
-            table = table.select_by_column_names(params.get("filters"))
+        if params.get_value("filters"):
+            table = table.select_by_column_names(params.get_value("filters"))
 
         rows = params["rows"]
         tag_key_column_name = params["tag_key_column_name"]
@@ -197,7 +197,7 @@ class TableRowUnfolder(Transformer):
     resource_type=Table,
     short_description="Unfold table columns based on column names",
 )
-class TableColumnUnfolder(Transformer):
+class TableColumnUnfolder(Transformer[Table]):
     """
     Transformer to unfold table rows based on provided column names.
 
@@ -230,8 +230,8 @@ class TableColumnUnfolder(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         table: Table = source
 
-        if params.get("filters"):
-            table = table.select_by_row_names(params.get("filters"))
+        if params.get_value("filters"):
+            table = table.select_by_row_names(params.get_value("filters"))
 
         columns = params["columns"]
         tag_key_row_name = params["tag_key_row_name"]

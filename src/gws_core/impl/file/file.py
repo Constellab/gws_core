@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, AnyStr
+from typing import Any, AnyStr, cast
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -253,7 +253,7 @@ class File(FSNode):
         human_name="View as JSON",
         short_description="View the complete resource as json",
     )
-    def view_as_json(self, params: ConfigParams) -> JSONView:
+    def view_as_json(self, params: ConfigParams) -> JSONView | SimpleTextView:
         self.check_if_exists()
         # if the file is not readable,don't open the file and return the main view
         if not self.is_readable():
@@ -279,7 +279,7 @@ class File(FSNode):
     )
     def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
         self.check_if_exists()
-        return self.get_view_by_lines(params.get("line_number"))
+        return self.get_view_by_lines(params.get_value("line_number"))
 
     @view(
         view_type=View,
@@ -292,7 +292,7 @@ class File(FSNode):
     )
     def default_view(self, params: ConfigParams) -> View:
         self.check_if_exists()
-        return self.get_default_view(params.get("line_number"))
+        return self.get_default_view(params.get_value("line_number"))
 
     def get_default_view(self, page: int = 1) -> View:
         """
@@ -331,11 +331,15 @@ class File(FSNode):
         :rtype: View | None
         """
         if self.is_image():
-            return ImageView.from_file_model_id(self.get_model_id(), self.name, self.uid)
+            return ImageView.from_file_model_id(
+                cast(str, self.get_model_id()), cast(str, self.name), self.uid
+            )
         if self.is_audio():
             return AudioView.from_local_file(self.path)
         if self.extension in ["html", "pdf"] or self.is_video():
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
+            return IFrameView.from_file_model_id(
+                cast(str, self.get_model_id()), cast(str, self.name), self.uid
+            )
         if self.extension == "md":
             return MarkdownView(self.read())
 

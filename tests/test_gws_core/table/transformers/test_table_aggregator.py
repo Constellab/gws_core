@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import DataframeAggregatorHelper, Table, TaskRunner
@@ -44,7 +45,7 @@ class TestTableAggregator(TestCase):
         task_runner = TaskRunner(TableColumnAggregator, {"function": "sum"})
         task_runner.set_input("source", table)
         task_runner.run()
-        result: Table = task_runner.get_output("target")
+        result = cast(Table, task_runner.get_output("target"))
 
         expected_result = Table(DataFrame({"A": [3], "B": [18]}))
         self.assertTrue(result.get_data().equals(expected_result.get_data()))

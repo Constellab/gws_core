@@ -1,8 +1,9 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import Table, TableScalerHelper
 from gws_core.impl.table.helper.dataframe_scaler_helper import DataframeScalerHelper
-from pandas import DataFrame
+from pandas import DataFrame, Series
 from pandas.testing import assert_frame_equal
 
 
@@ -54,12 +55,12 @@ class TestTableScaler(TestCase):
 
         result = DataframeScalerHelper.scale_by_columns(df, func="standard")
         # mean of the result should be 0
-        mean_result = result.mean().round(3)
+        mean_result = cast(Series, result.mean()).round(3)
         self.assertEqual(mean_result.iloc[0], 0.0)
         self.assertEqual(mean_result.iloc[1], -0.0)
 
         # standard of the result should be 1
-        std_result = result.std().round(3)
+        std_result = cast(Series, result.std()).round(3)
         self.assertEqual(std_result.iloc[0], 1.0)
         self.assertEqual(std_result.iloc[1], 1.0)
 
@@ -83,20 +84,20 @@ class TestTableScaler(TestCase):
 
         result = DataframeScalerHelper.scale_by_rows(df, func="standard")
         # mean of the result should be 0
-        mean_result = result.mean(axis=1).round(3)
+        mean_result = cast(Series, result.mean(axis=1)).round(3)
         self.assertEqual(mean_result[0], -0.0)
         self.assertEqual(mean_result[1], -0.0)
 
         # standard of the result should be 1
-        std_result = result.std(axis=1).round(3)
+        std_result = cast(Series, result.std(axis=1)).round(3)
         self.assertEqual(std_result[0], 1.0)
         self.assertEqual(std_result[1], 1.0)
 
     def test_table_scale(self):
         df = DataFrame({"A": [1, 2], "B": [32, 16]})
 
-        row_tags = [{"ROW": 1}, {"ROW": 2}]
-        column_tags = [{"COLUMN": 1}, {"COLUMN": 2}]
+        row_tags = [{"ROW": "1"}, {"ROW": "2"}]
+        column_tags = [{"COLUMN": "1"}, {"COLUMN": "2"}]
         table = Table(df, row_tags=row_tags, column_tags=column_tags)
 
         result = TableScalerHelper.scale(table, func="log2")

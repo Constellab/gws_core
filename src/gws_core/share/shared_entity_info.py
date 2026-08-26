@@ -16,22 +16,22 @@ class SharedEntityInfo(Model):
     It stores the destination of the entity if the entity was exported to an external source.
     """
 
-    share_mode = TypedEnumField(choices=SharedEntityMode)
+    share_mode: TypedEnumField[SharedEntityMode] = TypedEnumField(choices=SharedEntityMode)
 
     # FK to LabModel — replaces lab_id, lab_name, space_id, space_name
-    lab = TypedForeignKeyField(LabModel, backref="+")
+    lab: TypedForeignKeyField[LabModel] = TypedForeignKeyField(LabModel, backref="+")
 
     # FK to User — the user from the external lab who shared/received the entity.
     # If the user doesn't exist locally, import them as inactive.
-    user = TypedForeignKeyField(User, backref="+")
+    user: TypedForeignKeyField[User] = TypedForeignKeyField(User, backref="+")
 
     # Current lab user who created the share link (SENT) or imported the entity (RECEIVED)
-    created_by = TypedForeignKeyField(User, backref="+")
+    created_by: TypedForeignKeyField[User] = TypedForeignKeyField(User, backref="+")
 
     # The entity ID on the *other* lab:
     # RECEIVED: original entity ID from the source lab (before local ID remapping)
     # SENT: entity ID assigned by the receiving lab
-    external_id = TypedCharField(max_length=36)
+    external_id: TypedCharField = TypedCharField(max_length=36)
 
     # override on children classes
     entity: TypedForeignKeyField

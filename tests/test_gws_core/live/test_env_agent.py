@@ -9,7 +9,7 @@ from gws_core.impl.agent.py_pipenv_agent import PyPipenvAgent
 from gws_core.impl.agent.r_conda_agent import RCondaAgent
 from gws_core.impl.agent.r_mamba_agent import RMambaAgent
 from gws_core.impl.file.file_helper import FileHelper
-from pandas import DataFrame, read_csv
+from pandas import DataFrame, Index, read_csv
 
 
 # test_env_agent
@@ -33,7 +33,7 @@ class TestEnvAgent(TestCase):
         """Test the default env agent config template to be sure it is valid"""
 
         # create a csv file
-        data = DataFrame({"col1": [0, 1], "col2": [0, 2]}, index=["a", "b"])
+        data = DataFrame({"col1": [0, 1], "col2": [0, 2]}, index=Index(["a", "b"]))
         temp_dir = Settings.make_temp_dir()
         source = os.path.join(temp_dir, "source.csv")
         data.to_csv(source, index=True)
@@ -44,9 +44,9 @@ class TestEnvAgent(TestCase):
 
         outputs = tester.run()
 
-        target: File = outputs["target"]
+        target = outputs["target"]
 
-        self.assertTrue(isinstance(target, File))
+        assert isinstance(target, File)
         target_data: DataFrame = read_csv(target.path, header=0, index_col=0, sep=",")
 
         self.assertTrue(target_data.T.equals(data))

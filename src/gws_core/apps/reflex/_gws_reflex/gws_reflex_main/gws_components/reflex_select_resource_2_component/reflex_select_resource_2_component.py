@@ -1,5 +1,6 @@
 import reflex as rx
 from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
+from reflex.event import EventCallback
 from reflex.vars import Var
 
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -56,7 +57,7 @@ class SelectResource2Component(rx.Component):
 
 def select_resource_2_component(
     input_data: SelectResourceInputDTO | Var[SelectResourceInputDTO],
-    output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+    output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | EventCallback | None = None,
     fallback_to_system_user: bool = False,
     **kwargs,
 ):

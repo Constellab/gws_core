@@ -14,6 +14,7 @@ from gws_core.folder.space_folder import SpaceFolder
 from gws_core.folder.space_folder_service import SpaceFolderService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.file_helper import FileHelper
+from gws_core.impl.file.fs_node_model import FSNodeModel
 from gws_core.impl.s3.abstract_s3_service import AbstractS3Service
 from gws_core.impl.s3.s3_server_context import S3ServerContext
 from gws_core.impl.s3.s3_server_dto import S3GetTagResponse, S3UpdateTagRequest
@@ -210,13 +211,14 @@ class DataHubS3ServerService(AbstractS3Service):
             resource_model.save()
 
             # update other tags
-            self.update_object_tags_dict(key, tags)
+            self.update_object_tags_dict(key, tags or {})
 
     def get_object(self, key: str) -> FileResponse:
         """Get an object from the bucket"""
         resource: ResourceModel = self._get_object_and_check(key)
+        fs_node_model = self._get_fs_node_model_and_check(resource, key)
 
-        return FileHelper.create_file_response(resource.fs_node_model.path)
+        return FileHelper.create_file_response(fs_node_model.path)
 
     def delete_object(self, key: str) -> None:
         """Delete an object from the bucket"""
@@ -267,9 +269,10 @@ class DataHubS3ServerService(AbstractS3Service):
     def head_object(self, key: str) -> dict:
         """Head an object from the bucket"""
         resource = self._get_object_and_check(key)
+        fs_node_model = self._get_fs_node_model_and_check(resource, key)
         return {
-            "Content-Length": str(resource.fs_node_model.size),
-            "Content-Type": FileHelper.get_mime(resource.fs_node_model.path),
+            "Content-Length": str(fs_node_model.size),
+            "Content-Type": FileHelper.get_mime(fs_node_model.path),
             "Last-Modified": DateHelper.to_rfc7231_str(resource.last_modified_at),
         }
 
@@ -287,7 +290,22 @@ class DataHubS3ServerService(AbstractS3Service):
 
         return resource
 
-    def _get_and_check_folder_bucket(self, folder_tag: str) -> SpaceFolder:
+    def _get_fs_node_model_and_check(
+        self, resource: ResourceModel, key: str | None = None
+    ) -> FSNodeModel:
+        """Get the file node of a resource and check that it exists"""
+        if not resource.fs_node_model:
+            raise S3ServerException(
+                status_code=500,
+                code="invalid_object",
+                message="Object is not a file",
+                bucket_name=self.bucket_name,
+                key=key,
+            )
+
+        return resource.fs_node_model
+
+    def _get_and_check_folder_bucket(self, folder_tag: str | None) -> SpaceFolder:
         """Get a folder bucket"""
 
         if not folder_tag:
@@ -337,11 +355,12 @@ class DataHubS3ServerService(AbstractS3Service):
                 message="Resource has no key tag",
                 bucket_name="",
             )
+        fs_node_model = self._get_fs_node_model_and_check(resource)
         return {
             "Key": entity_tag.tag_value,
             "LastModified": DateHelper.to_iso_str(resource.last_modified_at),
             "ETag": "",
-            "Size": resource.fs_node_model.size,
+            "Size": fs_node_model.size,
             "Owner": {"ID": "", "DisplayName": "lab"},
             "StorageClass": "STANDARD",
         }
@@ -435,7 +454,7 @@ class DataHubS3ServerService(AbstractS3Service):
         resource.save()
 
     def _update_resource_from_tags(
-        self, resource: ResourceModel, tags: dict[str, str]
+        self, resource: ResourceModel, tags: dict[str, str] | None
     ) -> ResourceModel:
         """Update a resource from the tags"""
         if tags and tags.get(self.FOLDER_TAG_NAME):
@@ -496,7 +515,7 @@ class DataHubS3ServerService(AbstractS3Service):
     ##################################################### OTHER METHODS #####################################################
 
     @staticmethod
-    def convert_query_param_string_to_dict(query_param: str) -> dict:
+    def convert_query_param_string_to_dict(query_param: str | None) -> dict:
         """
         Convert a query parameter string to a dictionary
 

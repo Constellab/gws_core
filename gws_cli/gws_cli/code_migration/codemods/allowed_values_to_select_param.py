@@ -194,9 +194,9 @@ class _ImportFixer(cst.CSTTransformer):
         return cst.ImportFrom(module=self._dotted_module(SELECT_PARAM_MODULE), names=alias)
 
     @staticmethod
-    def _dotted_module(dotted: str) -> cst.BaseExpression:
+    def _dotted_module(dotted: str) -> cst.Attribute | cst.Name:
         parts = dotted.split(".")
-        node: cst.BaseExpression = cst.Name(parts[0])
+        node: cst.Attribute | cst.Name = cst.Name(parts[0])
         for part in parts[1:]:
             node = cst.Attribute(value=node, attr=cst.Name(part))
         return node

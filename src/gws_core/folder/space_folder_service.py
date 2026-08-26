@@ -87,7 +87,7 @@ class SpaceFolderService:
 
     @classmethod
     def _synchronize_space_folder(
-        cls, external_folder: ExternalSpaceFolder, parent: ExternalSpaceFolder
+        cls, external_folder: ExternalSpaceFolder, parent: SpaceFolder | None
     ) -> None:
         """Method that synchronize a folder from space into the lab"""
 

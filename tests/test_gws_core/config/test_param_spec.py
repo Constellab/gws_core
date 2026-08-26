@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from typing import cast
 from unittest import TestCase
 
 from gws_core import DateParam, IntParam, ParamSet, SelectParam, StrParam
@@ -70,8 +71,9 @@ class TestParamSpec(TestCase):
             max_number_of_occurrences=3,
         )
 
-        param_2: ParamSet = ParamSpecHelper.create_param_spec_from_json(param.to_dto())
+        param_2 = ParamSpecHelper.create_param_spec_from_dto(param.to_dto())
         self.assertIsInstance(param_2, ParamSet)
+        assert isinstance(param_2, ParamSet)
         self.assertEqual(param_2.max_number_of_occurrences, 3)
         self.assertIsInstance(param_2.param_set.get_spec("str"), StrParam)
         self.assertIsInstance(param_2.param_set.get_spec("int"), IntParam)
@@ -114,7 +116,7 @@ class TestParamSpec(TestCase):
             param.validate("zzz")
 
         # round trip
-        param_2 = ParamSpecHelper.create_param_spec_from_json(spec_dto)
+        param_2 = ParamSpecHelper.create_param_spec_from_dto(spec_dto)
         self.assertIsInstance(param_2, SelectParam)
         self.assertEqual(param_2.additional_info, param.additional_info)
 
@@ -154,8 +156,9 @@ class TestParamSpec(TestCase):
         with self.assertRaises(BadRequestException):
             param.validate("a")
 
-        param_2 = ParamSpecHelper.create_param_spec_from_json(param.to_dto())
+        param_2 = ParamSpecHelper.create_param_spec_from_dto(param.to_dto())
         self.assertIsInstance(param_2, SelectParam)
+        assert param_2.additional_info is not None
         self.assertTrue(param_2.additional_info["multiple"])
 
     def test_select_param_from_enum(self):
@@ -219,7 +222,7 @@ class TestParamSpec(TestCase):
             param.validate(123)
 
         # round trip via the registry
-        param_2 = ParamSpecHelper.create_param_spec_from_json(spec_dto)
+        param_2 = ParamSpecHelper.create_param_spec_from_dto(spec_dto)
         self.assertIsInstance(param_2, DateParam)
         self.assertEqual(param_2.additional_info, param.additional_info)
         self.assertEqual(param_2.default_value, param.default_value)
@@ -257,8 +260,9 @@ class TestParamSpec(TestCase):
             param.validate("not-a-date")
 
         # round trip preserves include_time
-        param_2 = ParamSpecHelper.create_param_spec_from_json(param.to_dto())
+        param_2 = ParamSpecHelper.create_param_spec_from_dto(param.to_dto())
         self.assertIsInstance(param_2, DateParam)
+        assert param_2.additional_info is not None
         self.assertTrue(param_2.additional_info["include_time"])
 
     def test_date_param_build(self):
@@ -303,7 +307,7 @@ class TestParamSpec(TestCase):
         with self.assertRaises(BadRequestException):
             DateParam(max_value="2030-13-99", optional=True)
         with self.assertRaises(BadRequestException):
-            DateParam(min_value=12345, optional=True)
+            DateParam(min_value=cast(str, 12345), optional=True)
 
     def test_date_param_load_from_dto_validates_bounds(self):
         from gws_core.config.param.param_types import ParamSpecDTO  # noqa: PLC0415

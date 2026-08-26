@@ -1,6 +1,10 @@
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (
+    SearchFilterCriteria,
+    SearchOperator,
+    SearchParams,
+)
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -114,7 +118,11 @@ class TestFormTemplateCrud(BaseTestCase):
         FormTemplateService.create(CreateFormTemplateDTO(name="beta"))
 
         params = SearchParams(
-            filtersCriteria=[{"key": "name", "operator": "CONTAINS", "value": "alph"}]
+            filtersCriteria=[
+                SearchFilterCriteria(
+                    key="name", operator=SearchOperator.CONTAINS, value="alph"
+                )
+            ]
         )
         page = FormTemplateService.search(params)
         ids = [t.id for t in page.results]
@@ -131,7 +139,11 @@ class TestFormTemplateCrud(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {"key": "tags", "operator": "EQ", "value": [{"key": "env", "value": "prod"}]}
+                SearchFilterCriteria(
+                    key="tags",
+                    operator=SearchOperator.EQ,
+                    value=[{"key": "env", "value": "prod"}],
+                )
             ]
         )
         page = FormTemplateService.search(params)

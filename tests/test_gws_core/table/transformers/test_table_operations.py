@@ -5,25 +5,25 @@ from gws_core.impl.table.helper.table_operation_helper import (
     TableOperationHelper,
     TableOperationUnknownColumnOption,
 )
-from pandas import DataFrame, isna
+from pandas import DataFrame, Index, isna
 
 
 # test_table_operations
 class TestTableOperations(TestCase):
     def test_table_column_operations(self):
         row_tags = [{"Name": "R0"}, {"Name": "R1"}, {"Name": "R2"}]
-        dataframe = DataFrame({"A": [1, 2, 3], "B": [10, 8, 6]}, index=["R0", "R1", "R2"])
+        dataframe = DataFrame({"A": [1, 2, 3], "B": [10, 8, 6]}, index=Index(["R0", "R1", "R2"]))
 
         table = Table(data=dataframe, row_tags=row_tags)
 
         result_table = TableOperationHelper.column_operations(table, ["A + B"], False)
-        expected_df = DataFrame({"Result": [11, 10, 9]}, index=["R0", "R1", "R2"])
+        expected_df = DataFrame({"Result": [11, 10, 9]}, index=Index(["R0", "R1", "R2"]))
         expected_table = Table(data=expected_df, row_tags=row_tags)
         self.assertTrue(result_table.equals(expected_table))
 
         result_table = TableOperationHelper.column_operations(table, ["A + B"], True)
         expected_result = DataFrame(
-            {"Result": [11, 10, 9], "A": [1, 2, 3], "B": [10, 8, 6]}, index=["R0", "R1", "R2"]
+            {"Result": [11, 10, 9], "A": [1, 2, 3], "B": [10, 8, 6]}, index=Index(["R0", "R1", "R2"])
         )
         self.assertTrue(result_table.get_data().equals(expected_result))
 

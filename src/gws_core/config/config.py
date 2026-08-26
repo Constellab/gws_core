@@ -1,4 +1,4 @@
-from typing import Any, final
+from typing import Any, cast, final
 
 from gws_core.config.config_dto import ConfigDTO, ConfigSimpleDTO
 from gws_core.core.model.typed_db_field import NullableJSONField
@@ -18,7 +18,7 @@ class Config(ModelWithUser):
     a collection of parameters
     """
 
-    data = NullableJSONField()
+    data: NullableJSONField = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -26,14 +26,28 @@ class Config(ModelWithUser):
         if not self.is_saved():
             self.data = {"specs": {}, "values": {}}
 
+    def _get_data(self) -> dict:
+        """
+        Returns the raw config data.
+
+        The ``data`` column is nullable in database but is always set for a Config
+        (initialized in the constructor and never cleared), the cast only tells the
+        type checker so.
+
+        :return: The raw config data
+        :rtype: `dict`
+        """
+
+        return cast(dict, self.data)
+
     ########################################## SPEC #####################################
 
     def get_specs(self) -> ConfigSpecs:
-        return ConfigSpecs.from_json(self.data["specs"])
+        return ConfigSpecs.from_json(self._get_data()["specs"])
 
     def set_specs(self, specs: ConfigSpecs) -> None:
         specs.check_config_specs()
-        self.data["specs"] = specs.to_json_dict(skip_private=False)
+        self._get_data()["specs"] = specs.to_json_dict(skip_private=False)
 
     def update_spec(self, name, spec: ParamSpec) -> None:
         specs = self.get_specs()
@@ -56,12 +70,12 @@ class Config(ModelWithUser):
         :rtype: `bool`
         """
 
-        return name in self.data.get("specs", {})
+        return name in self._get_data().get("specs", {})
 
     ########################################## VALUE #####################################
 
     def get_values(self) -> ConfigParamsDict:
-        return self.data["values"]
+        return self._get_data()["values"]
 
     def get_value(self, param_name: str) -> Any:
         """
@@ -73,7 +87,7 @@ class Config(ModelWithUser):
         :rtype: `str`, `int`, `float`, `bool`
         """
         default = self.get_spec(param_name).get_default_value()
-        return self.data.get("values", {}).get(param_name, default)
+        return self._get_data().get("values", {}).get(param_name, default)
 
     def get_and_check_values(self) -> ConfigParamsDict:
         """
@@ -105,10 +119,11 @@ class Config(ModelWithUser):
             except Exception as err:
                 raise InvalidParamValueException(param_name, value, str(err)) from err
 
-        if "values" not in self.data:
-            self.data["values"] = {}
+        data = self._get_data()
+        if "values" not in data:
+            data["values"] = {}
 
-        self.data["values"][param_name] = value
+        data["values"][param_name] = value
 
     def set_values(self, values: ConfigParamsDict):
         """
@@ -127,13 +142,14 @@ class Config(ModelWithUser):
         :rtype: `bool`
         """
 
-        return name in self.data["values"] and self.data["values"][name] is not None
+        values = self._get_data()["values"]
+        return name in values and values[name] is not None
 
     def mandatory_values_are_set(self) -> bool:
         return self.get_specs().mandatory_values_are_set(self.get_values())
 
     def _clear_values(self):
-        self.data["values"] = {}
+        self._get_data()["values"] = {}
 
     def to_dto(self) -> ConfigDTO:
         specs = self.to_specs_dto()

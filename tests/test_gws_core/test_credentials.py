@@ -26,6 +26,7 @@ class TestCredentials(BaseTestCase):
         self.assertEqual(first_credentials.name, save_dto.name)
         self.assertEqual(first_credentials.type, save_dto.type)
         self.assertEqual(first_credentials.description, save_dto.description)
+        assert first_credentials.data is not None
         self.assert_json(first_credentials.data, save_dto.data)
 
         save_dto.name = "test2"

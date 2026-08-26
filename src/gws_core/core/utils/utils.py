@@ -40,7 +40,7 @@ class Utils:
         return dirs, files
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> type[Any] | None:
+    def get_model_type(cls, type_str: str) -> type[Any] | None:
         """
         Get the type of a registered model using its litteral type
 
@@ -131,7 +131,7 @@ class Utils:
         :return: [description]
         :rtype: List[Type]
         """
-        mro: list[type] = inspect.getmro(class_)
+        mro: tuple[type, ...] = inspect.getmro(class_)
         parents: list[type] = []
         for parent_type in mro:
             if max_parent is None or issubclass(parent_type, max_parent):

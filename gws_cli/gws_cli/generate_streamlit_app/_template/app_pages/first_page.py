@@ -1,9 +1,11 @@
+from typing import cast
+
 import streamlit as st
 from state import State
 
 
 def _on_change_value():
-    State.set_value(st.session_state.get("first_page_input"))
+    State.set_value(cast(str, st.session_state.get("first_page_input")))
 
 
 def render_first_page():

@@ -116,7 +116,9 @@ class SmartPlot(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         chat: OpenAiChat = params.get_value("prompt")
 
-        smart_plotly = AITableGeneratePlotImage(inputs["source"], chat, self.message_dispatcher)
+        smart_plotly = AITableGeneratePlotImage(
+            inputs.get_resource("source", Table), chat, self.message_dispatcher
+        )
         file: File = smart_plotly.run()
 
         # save the new config with the new prompt

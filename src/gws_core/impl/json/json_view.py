@@ -28,7 +28,7 @@ class JSONView(View):
         super().__init__()
         self.set_data(data)
 
-    def set_data(self, data: dict):
+    def set_data(self, data: dict | None):
         if data is None:
             data = {}
         if not isinstance(data, (dict, list, bool, str, int, float)):

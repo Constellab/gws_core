@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false, reportAssignmentType=false
 from brick_skeleton.table_factor import TableFactor
 from gws_core import BaseTestCase, Table, TaskRunner
 from pandas import DataFrame

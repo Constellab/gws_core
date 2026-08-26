@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import MessageLevel, ProgressBar
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.test.base_test_case import BaseTestCase
@@ -42,7 +44,7 @@ class TestProgressBar(BaseTestCase):
 
     def test_get_paginated(self):
         progress_bar: ProgressBar = ProgressBar()
-        progress_bar.data["messages"] = [
+        cast(dict, progress_bar.data)["messages"] = [
             {"type": "SUCCESS", "text": "Hello1", "datetime": "2021-01-01T00:00:00"},
             {"type": "SUCCESS", "text": "Hello2", "datetime": "2021-01-02T00:00:01"},
             {"type": "SUCCESS", "text": "Hello3", "datetime": "2021-01-03T00:00:01"},

@@ -1,6 +1,9 @@
 
+from typing import cast
+
 from pandas import DataFrame
 
+from gws_core.core.exception.exceptions import BadRequestException
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.resource.view.view_types import ViewType
 
@@ -74,7 +77,9 @@ class StackedBarPlotView(BarPlotView):
         """
 
         if self._normalize:
-            y = NumericHelper.list_to_float(y, default_value=0)
+            if not isinstance(y, list):
+                raise BadRequestException("The y-data is required and must be a list of float")
+            y = cast(list[float], NumericHelper.list_to_float(y, default_value=0))
             if self._series_sums is None:
                 self._series_sums = DataFrame(y)
             else:

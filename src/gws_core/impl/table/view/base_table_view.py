@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from pandas import DataFrame
 from typing_extensions import TypedDict
@@ -65,7 +65,7 @@ class BaseTableView(View):
     def get_dataframe_from_columns(self, column_names: list[str]) -> DataFrame:
         """Extract a new dataframe"""
         self.check_column_names(column_names)
-        return self._table.get_data()[column_names]
+        return cast(DataFrame, self._table.get_data()[column_names])
 
     def get_values_from_coords(self, ranges: list[CellRange]) -> list[Any]:
         """Get flattened values from a list of ranges"""
@@ -92,21 +92,21 @@ class BaseTableView(View):
         """Get table flattened value form a SelectionRange"""
 
         if selection_range.is_range_selection():
-            return self.get_values_from_coords(selection_range.selection)
+            return self.get_values_from_coords(cast(list[CellRange], selection_range.selection))
         else:
             # columns selection
-            return self.get_values_from_columns(selection_range.selection)
+            return self.get_values_from_columns(cast(list[str], selection_range.selection))
 
     def get_row_tags_from_selection_range(
         self, selection_range: TableSelection
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, str]] | None:
         if selection_range.is_range_selection():
-            return self.get_row_tags_from_coords(selection_range.selection)
+            return self.get_row_tags_from_coords(cast(list[CellRange], selection_range.selection))
         else:
             # columns selection
             return self.get_row_tags()
 
-    def get_row_tags_from_coords(self, ranges: list[CellRange]) -> list[dict[str, str]]:
+    def get_row_tags_from_coords(self, ranges: list[CellRange]) -> list[dict[str, str]] | None:
         tags: list[dict[str, str]] = []
 
         for coord in ranges:
@@ -156,14 +156,14 @@ class BaseTableView(View):
 
     def get_single_column_tags_from_selection_range(
         self, selection_range: TableSelection
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, str]] | None:
         if selection_range.is_single_column():
             column_index: int
             if selection_range.is_column_selection():
-                column_name = selection_range.selection[0]
+                column_name = cast(str, selection_range.selection[0])
                 column_index = self._table.get_column_index_from_name(column_name)
             else:
-                cell_range: CellRange = selection_range.selection[0]
+                cell_range = cast(CellRange, selection_range.selection[0])
                 column_index = cell_range.get_from().column
 
             return self._table.get_column_tags(from_index=column_index, to_index=column_index)
@@ -182,7 +182,7 @@ class BaseTableView(View):
                 return self.get_table().get_row_names()
             else:
                 # otherwise, take the first serie row selection as they all have the same selection
-                cell_range: list[CellRange] = serie_list.series[0].y.selection
+                cell_range = cast(list[CellRange], serie_list.series[0].y.selection)
 
                 x_tick_labels = []
                 # retrieve all the row names based on the row selection

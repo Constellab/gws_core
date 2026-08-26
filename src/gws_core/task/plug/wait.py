@@ -1,4 +1,5 @@
 import time
+from typing import cast
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -50,7 +51,7 @@ class Wait(Task):
             self.update_progress_value((current_time / waiting_time) * 100, "Waiting 1 sec")
             time.sleep(1)
 
-        resource = inputs["resource"]
+        resource = cast(Resource, inputs["resource"])
         resource.set_as_reference()
         return {"resource": resource}
 
@@ -95,6 +96,6 @@ class ShellWait(Task):
         shell_proxy.run(f"sleep {waiting_time}", shell_mode=True)
 
         # return the input resource as output
-        resource = inputs["resource"]
+        resource = cast(Resource, inputs["resource"])
         resource.set_as_reference()
         return {"resource": resource}

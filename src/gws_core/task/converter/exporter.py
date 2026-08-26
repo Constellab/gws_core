@@ -2,7 +2,7 @@ import os
 import traceback
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import final
+from typing import cast, final
 
 from typing_extensions import TypedDict
 
@@ -145,7 +145,9 @@ class ResourceExporter(Converter):
 
         result: FSNode
         try:
-            result = self.export_to_path(source, temp_dir, params, target_type)
+            result = self.export_to_path(
+                source, temp_dir, params, cast(type[FSNode], target_type)
+            )
         except Exception as err:
             raise Exception(
                 f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, error : {err}"

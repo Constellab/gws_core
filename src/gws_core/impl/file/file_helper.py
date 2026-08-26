@@ -606,7 +606,7 @@ class FileHelper:
         if not cls.exists_on_os(file_path):
             return default_encoding
 
-        encoding_result = from_path(file_path)
+        encoding_result = from_path(Path(file_path))
         best_encoding = encoding_result.best()
         if best_encoding:
             return best_encoding.encoding

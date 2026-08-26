@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import final
+from typing import cast, final
 
 from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_params import ConfigParamsDict
@@ -149,7 +149,7 @@ class Converter(Task):
     @final
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # retrieve resource
-        resource: Resource = inputs.get(Converter.input_name)
+        resource: Resource = cast(Resource, inputs.get(Converter.input_name))
 
         # call convert method
         target: Resource = self.convert(resource, params, self.get_target_type())
@@ -197,7 +197,7 @@ class Converter(Task):
 
     @final
     @classmethod
-    def get_source_type(cls) -> tuple[type[Resource]]:
+    def get_source_type(cls) -> tuple[type[Resource], ...]:
         """Get the type of the input source
 
         :return: [description]
@@ -254,4 +254,4 @@ class ConverterRunner:
         self._task_runner.set_input(Converter.input_name, resource)
 
     def get_output(self) -> Resource:
-        return self._task_runner.get_output(Converter.output_name)
+        return cast(Resource, self._task_runner.get_output(Converter.output_name))

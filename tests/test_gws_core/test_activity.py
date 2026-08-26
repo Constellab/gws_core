@@ -20,7 +20,7 @@ class TestActivity(BaseTestCase):
 
         last_activity = ActivityService.get_last_activity()
 
-        self.assertIsNotNone(last_activity)
+        assert last_activity is not None
         self.assertEqual(last_activity.activity_type, ActivityType.DELETE)
         self.assertEqual(last_activity.object_type, ActivityObjectType.SCENARIO)
         self.assertEqual(last_activity.object_id, "test")

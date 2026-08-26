@@ -43,7 +43,7 @@ class MergeNoteResources(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # prepare the input
-        resource_list: ResourceList = inputs["source"]
+        resource_list = inputs.get_resource("source", ResourceList)
 
         note_resource = NoteResource()
 

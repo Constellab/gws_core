@@ -14,7 +14,11 @@ import json
 from typing import Any, NoReturn
 
 import typer
-from gws_core.core.classes.search_builder import SearchOperator, SearchParams
+from gws_core.core.classes.search_builder import (
+    SearchOperator,
+    SearchParams,
+    SearchSortCriteria,
+)
 
 
 def fail(message: str) -> NoReturn:
@@ -109,6 +113,6 @@ def build_search_params(filters: str | None, sort: str | None) -> SearchParams:
 
     sort_criteria = parse_json_list(sort, "--sort")
     if sort_criteria:
-        params.sortsCriteria = sort_criteria
+        params.sortsCriteria = SearchSortCriteria.from_json_list(sort_criteria)
 
     return params

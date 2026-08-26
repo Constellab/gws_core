@@ -43,7 +43,7 @@ class TestFile(BaseTestCase):
         temp_file = FileHelper.create_empty_file_if_not_exist(
             os.path.join(tmp_dir, "test_attr.txt")
         )
-        file: File = File(temp_file)
+        file: File = File(str(temp_file))
         self.assertEqual(file.get_default_name(), "test_attr.txt")
         self.assertEqual(file.get_base_name(), "test_attr.txt")
         self.assertEqual(file.extension, "txt")
@@ -58,10 +58,11 @@ class TestFile(BaseTestCase):
         file_model: ResourceModel = FsNodeService.create_fs_node_model(fs_node=file_1)
 
         self.assertTrue(file_model.is_saved())
+        assert file_model.fs_node_model is not None
         self.assertEqual(file_model.fs_node_model.path, file_1.path)
 
-        file_2: File = file_model.get_resource()
-        file_3: File = file_model.get_resource()
+        file_2: File = file_model.get_resource(resource_type=File)
+        file_3: File = file_model.get_resource(resource_type=File)
         self.assertEqual(file_1, file_2)
         self.assertEqual(file_2, file_3)
 
@@ -82,15 +83,17 @@ class TestFile(BaseTestCase):
         scenario.run()
 
         process: ProcessProxy = scenario.get_protocol().get_process("create_file")
-        file: File = process.get_output("file")
+        file: File = process.get_output("file", resource_type=File)
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         self.assertTrue(file_store.node_exists(file))
         self.assertEqual(file.read(), "Hello")
 
         # Check that the file model is saved and correct
-        file_model: ResourceModel = process._process_model.out_port("file").get_resource_model()
+        file_model = process._process_model.out_port("file").get_resource_model()
+        assert file_model is not None
         self.assertTrue(file_model.is_saved())
+        assert file_model.fs_node_model is not None
         self.assertEqual(file.path, file_model.fs_node_model.path)
 
         # Test delete
@@ -112,6 +115,7 @@ class TestFile(BaseTestCase):
         resource_to_delete = FsNodeService.create_fs_node_model(File(file_path))
 
         file_store: FileStore = LocalFileStore.get_default_instance()
+        assert resource_to_delete.fs_node_model is not None
         self.assertTrue(file_store.node_path_exists(resource_to_delete.fs_node_model.path))
 
         # delete the file manually
@@ -123,6 +127,7 @@ class TestFile(BaseTestCase):
         new_resource = FsNodeService.create_fs_node_model(File(new_file))
 
         # new file should be in the store
+        assert new_resource.fs_node_model is not None
         self.assertTrue(file_store.node_path_exists(new_resource.fs_node_model.path))
 
         # old resource should be marked as content deleted

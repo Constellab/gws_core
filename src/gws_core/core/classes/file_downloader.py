@@ -20,7 +20,7 @@ class FileDownloader:
     If a message dispatcher is provided, it will automatically log the download progress and the time it took to download the file.
     """
 
-    message_dispatcher: MessageDispatcher
+    message_dispatcher: MessageDispatcher | None
     destination_folder: str
 
     def __init__(self, destination_folder: str, message_dispatcher: MessageDispatcher | None = None):
@@ -136,12 +136,14 @@ class FileDownloader:
                 downloaded_size = 0
                 total_size = None
 
+                content_length = response.headers.get("content-length")
+
                 with open(destination_path, "wb") as file:
-                    if response.headers.get("content-length") is None:
+                    if content_length is None:
                         file.write(response.content)
                     else:
                         # download the file in chunks with a progress bar
-                        total_size = int(response.headers.get("content-length"))
+                        total_size = int(content_length)
                         last_progress_logged = 0.0
 
                         # convert a to int and if it fails, use None
@@ -261,7 +263,7 @@ class FileDownloader:
             self.message_dispatcher.notify_error_message(message)
 
     def _extract_filename_from_header(
-        self, content_disposition: str, url: str, content_type: str
+        self, content_disposition: str | None, url: str, content_type: str | None
     ) -> str:
         """
         Extract the filename from a header

@@ -134,8 +134,10 @@ class SqlMigrator:
         :param new_field_name: The new name of the field
         :type new_field_name: str
         """
-        resource_models: list[ResourceModel] = ResourceModel.select().where(
-            ResourceModel.resource_typing_name == resource_typing_name
+        resource_models: list[ResourceModel] = list(
+            ResourceModel.select().where(
+                ResourceModel.resource_typing_name == resource_typing_name
+            )
         )
 
         for resource_model in resource_models:
@@ -157,6 +159,8 @@ class SqlMigrator:
         """
 
         kv_store = resource_model.get_kv_store()
+        if kv_store is None:
+            raise Exception(f"The resource '{resource_model.id}' has no kv store")
 
         if old_field_name in kv_store:
             old_field = kv_store.get(old_field_name)
@@ -206,6 +210,9 @@ class SqlMigrator:
         :type value: Any
         """
         kv_store = resource_model.get_kv_store()
+        if kv_store is None:
+            raise Exception(f"The resource '{resource_model.id}' has no kv store")
+
         kv_store._lock = False
         kv_store[field_name] = value
         kv_store._lock = True

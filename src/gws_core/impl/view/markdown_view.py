@@ -17,7 +17,7 @@ class MarkdownView(View):
     """
 
     _type: ViewType = ViewType.MARKDOWN
-    _markdown: str
+    _markdown: str | None
 
     def __init__(self, markdown: str | None = None):
         super().__init__()

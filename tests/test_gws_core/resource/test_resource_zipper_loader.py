@@ -37,6 +37,7 @@ class TestResourceZipperLoader(BaseTestCase):
         loaded_table: Table = cast(Table, loaded_resource)
         self.assertEqual(loaded_table.nb_rows, 3)
         self.assertEqual(loaded_table.nb_columns, 2)
+        assert loaded_table.column_names is not None
         self.assertEqual(list(loaded_table.column_names), ["col_a", "col_b"])
         self.assertEqual(loaded_table.get_column_data("col_a"), [1, 2, 3])
         self.assertEqual(loaded_table.get_column_data("col_b"), [4, 5, 6])
@@ -85,11 +86,13 @@ class TestResourceZipperLoader(BaseTestCase):
         loaded_table_1: Table = cast(Table, loaded_set.get_resource("table_1"))
         self.assertIsInstance(loaded_table_1, Table)
         self.assertEqual(loaded_table_1.nb_rows, 2)
+        assert loaded_table_1.column_names is not None
         self.assertEqual(list(loaded_table_1.column_names), ["x"])
         self.assertEqual(loaded_table_1.get_column_data("x"), [10, 20])
 
         loaded_table_2: Table = cast(Table, loaded_set.get_resource("table_2"))
         self.assertIsInstance(loaded_table_2, Table)
         self.assertEqual(loaded_table_2.nb_rows, 3)
+        assert loaded_table_2.column_names is not None
         self.assertEqual(list(loaded_table_2.column_names), ["y"])
         self.assertEqual(loaded_table_2.get_column_data("y"), [30, 40, 50])

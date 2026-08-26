@@ -3,7 +3,7 @@ from unittest import TestCase
 from gws_core import Table, TableUnfolderHelper
 from gws_core.test.base_test_case import BaseTestCase
 from numpy import NaN
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table_unfolder
@@ -78,7 +78,7 @@ class TestTableUnfolder(TestCase):
 
         # check the unfolding
         expected_result = Table(
-            DataFrame({0: [1, 2, 10, 8], 1: [6, 4, 3, 4]}, index=["a_M", "b_M", "a_F", "b_F"])
+            DataFrame({0: [1, 2, 10, 8], 1: [6, 4, 3, 4]}, index=Index(["a_M", "b_M", "a_F", "b_F"]))
         )
         self.assertTrue(result.get_data().equals(expected_result.get_data()))
 

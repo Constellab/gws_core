@@ -1,3 +1,4 @@
+# pyright: reportUndefinedVariable=false
 # This is a template for a streamlit agent.
 # This generates an app with one dataframe as input. Then the user can select 2 columns to plot a scatter plot.
 

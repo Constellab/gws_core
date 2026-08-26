@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 import plotly.express as px
@@ -16,7 +17,7 @@ class TestPlotlyImporter(TestCase):
 
         plotly_resource = PlotlyResource(figure)
 
-        result_path: File = PlotlyExporter.call(plotly_resource)
+        result_path = cast(File, PlotlyExporter.call(plotly_resource))
 
         self.assertTrue(result_path.path.endswith(".json"))
         self.assertTrue(result_path.exists())

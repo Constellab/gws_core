@@ -16,7 +16,7 @@ class FileStore(Model):
     FileStore class
     """
 
-    data = NullableJSONField()
+    data: NullableJSONField = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -105,7 +105,7 @@ class FileStore(Model):
 
     @abstractmethod
     def get_node_by_path(
-        self, node_path: str | None = None, node_type: type[FSNode] | None = None
+        self, node_path: str, node_type: type[FSNode] | None = None
     ) -> FSNode:
         """Get a node by its path
 
@@ -134,7 +134,7 @@ class FileStore(Model):
         Get path (or url) of the store
         """
 
-        return self.data.get("path", "")
+        return cast(dict, self.data).get("path", "")
 
     @path.setter
     def path(self, path: str) -> None:
@@ -142,7 +142,7 @@ class FileStore(Model):
         Set the path (or url) of the store
         """
 
-        self.data["path"] = path
+        cast(dict, self.data)["path"] = path
 
     @classmethod
     def get_default_instance(cls) -> "FileStore":
@@ -150,6 +150,11 @@ class FileStore(Model):
 
         return LocalFileStore.get_default_instance()
 
-    class Meta:
+    class _FileStoreMeta:
         table_name = "gws_file_store"
         is_table = True
+
+    # Declared as a plain `type` so that sub models can define their own `Meta`
+    # (the peewee convention) without it being reported as an incompatible
+    # override. See BaseModel for details.
+    Meta: type = _FileStoreMeta

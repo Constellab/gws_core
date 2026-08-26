@@ -1,4 +1,4 @@
-from typing import Literal, final
+from typing import Literal, cast, final
 
 from peewee import Expression, ModelSelect
 
@@ -21,7 +21,7 @@ class TaskTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type = NullableCharField(max_length=20)
+    object_sub_type: NullableCharField = NullableCharField(max_length=20)
 
     _object_type: TypingObjectType = "TASK"
 
@@ -74,13 +74,13 @@ class TaskTyping(Typing):
 
     @classmethod
     def get_by_brick(cls, brick_name: str) -> list["TaskTyping"]:
-        return cls.get_by_type_and_brick(cls._object_type, brick_name)
+        return list(cls.get_by_type_and_brick(cls._object_type, brick_name))
 
     def importer_extension_is_supported(self, extension: str) -> bool:
         """Function that works only for IMPORTERS. It returns True if the extension is supported by the importer"""
         from ..task.converter.importer import ResourceImporter  # noqa: PLC0415
 
-        type_: type[ResourceImporter] = self.get_type()
+        type_: type[ResourceImporter] | None = self.get_type()
 
         if type_ is None or not Utils.issubclass(type_, ResourceImporter):
             return False
@@ -99,7 +99,7 @@ class TaskTyping(Typing):
         )
 
         # retrieve the task python type
-        model_t: type[Task] = self.get_type()
+        model_t: type[Task] | None = self.get_type()
 
         if model_t:
             task_typing.input_specs = model_t.input_specs.to_dto()
@@ -109,7 +109,9 @@ class TaskTyping(Typing):
             from ..task.converter.importer import ResourceImporter  # noqa: PLC0415
 
             if Utils.issubclass(model_t, ResourceImporter):
-                importer_t: type[ResourceImporter] = model_t
+                importer_t: type[ResourceImporter] = cast(
+                    type[ResourceImporter], model_t
+                )
                 task_typing.additional_data = {
                     "supported_extensions": importer_t.__supported_extensions__
                 }

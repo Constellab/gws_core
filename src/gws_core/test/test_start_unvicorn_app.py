@@ -52,7 +52,8 @@ class TestStartUvicornApp:
 
     def __exit__(self, exc_type, exc_value, traceback):
         # force kill the thread
-        self.process.terminate()
+        if self.process is not None:
+            self.process.terminate()
 
         # raise the exception if exists
         if exc_value:

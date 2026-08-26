@@ -1,5 +1,6 @@
 import time
 import unittest
+from typing import cast
 
 
 class TimingTestResult(unittest.TextTestResult):
@@ -30,7 +31,7 @@ class TimingTextTestRunner(unittest.TextTestRunner):
         self.durations = durations
 
     def run(self, test):
-        result: TimingTestResult = super().run(test)
+        result = cast(TimingTestResult, super().run(test))
         if result.timings:
             slowest = sorted(result.timings, key=lambda item: item[1], reverse=True)[
                 : self.durations

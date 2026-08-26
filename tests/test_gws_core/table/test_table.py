@@ -1,8 +1,9 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import Table
 from gws_core.core.utils.utils import Utils
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table
@@ -10,7 +11,7 @@ class TestTable(TestCase):
     def test_table(self):
         table: Table = Table(data=[[1, 2, 3]], column_names=["a", "b", "c"], row_names=["r0"])
 
-        expected_df = DataFrame({"a": [1], "b": [2], "c": [3]}, index=["r0"])
+        expected_df = DataFrame({"a": [1], "b": [2], "c": [3]}, index=Index(["r0"]))
         self.assertTrue(table.get_data().equals(expected_df))
         self.assertEqual(table.column_names, ["a", "b", "c"])
         self.assertEqual(table.row_names, ["r0"])
@@ -36,7 +37,7 @@ class TestTable(TestCase):
         self.assertEqual(sub_table.get_column_tags(), [{"b": "4"}])
 
         # Simulate the filter by row 1 & 2
-        sub_dataframe = DataFrame({"A": [1, 2], "B": [4, 5]}, index=["0", "1"])
+        sub_dataframe = DataFrame({"A": [1, 2], "B": [4, 5]}, index=Index(["0", "1"]))
 
         sub_table = table.create_sub_table_filtered_by_rows(sub_dataframe)
         self.assertTrue(sub_table.get_data().equals(sub_dataframe.copy()))
@@ -341,6 +342,7 @@ class TestTable(TestCase):
         table = Table(DataFrame({"A": [1, 2], "B": [4, 5]}))
 
         table.set_column_name("A", "C")
+        assert table.column_names is not None
         self.assertEqual(table.column_names[0], "C")
 
         table.set_all_column_names(["D", "E"])
@@ -351,7 +353,7 @@ class TestTable(TestCase):
         table = Table(
             DataFrame({"0": [1, 2], "1": [4, 5], "2": [4, 5]}),
             row_names=["r0", "r0"],
-            column_names=["A", "A", 1],
+            column_names=cast(list[str], ["A", "A", 1]),
         )
 
         self.assertEqual(table.row_names, ["r0", "r0_1"])
@@ -361,7 +363,7 @@ class TestTable(TestCase):
         table = Table(
             DataFrame({"0": [1, 2], "1": [4, 5], "2": [4, 5], "3": [4, 5]}),
             row_names=["r0", "r0"],
-            column_names=["A", "A", 1, "9é [a].-SUPER"],
+            column_names=cast(list[str], ["A", "A", 1, "9é [a].-SUPER"]),
             strict_format_header_names=True,
         )
 

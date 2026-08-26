@@ -13,7 +13,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Scales the numeric values of the table",
 )
-class TableScaler(Transformer):
+class TableScaler(Transformer[Table]):
     """
     Transformer to apply one scalling function to all numerical values of the table.
 
@@ -46,7 +46,7 @@ axis_scale_param = SelectParam(
     resource_type=Table,
     short_description="Scales the numeric values of the table along the row axis",
 )
-class TableRowScaler(Transformer):
+class TableRowScaler(Transformer[Table]):
     """
     Transformer to apply one scalling function to all numerical values of the table along the row axis.
 
@@ -67,7 +67,7 @@ class TableRowScaler(Transformer):
     resource_type=Table,
     short_description="Scales the numeric values of the table along the column axis",
 )
-class TableColumnScaler(Transformer):
+class TableColumnScaler(Transformer[Table]):
     """
     Transformer to apply one scalling functions to all numerical values of the table along the column axis.
 

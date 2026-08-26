@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import Table, TableReplace
@@ -11,7 +12,7 @@ from pandas import DataFrame
 class TestTableReplace(TestCase):
     def _run_replace(self, table: Table, config: ConfigParamsDict) -> Table:
         task_runner = TaskRunner(TableReplace, config, inputs={TableReplace.input_name: table})
-        return task_runner.run()[TableReplace.output_name]
+        return cast(Table, task_runner.run()[TableReplace.output_name])
 
     def test_table_replace(self):
         initial_df = DataFrame({"A": [1, 2], "B": ["Hello", "Bonjour"]})
@@ -28,7 +29,7 @@ class TestTableReplace(TestCase):
             },
         )
 
-        expected_result: DataFrame = Table(DataFrame({"A": [1, 2], "B": ["Text", "Text 2"]}))
+        expected_result: Table = Table(DataFrame({"A": [1, 2], "B": ["Text", "Text 2"]}))
         self.assertTrue(result.equals(expected_result))
 
         # Text multiple string to replace using regex
@@ -45,7 +46,7 @@ class TestTableReplace(TestCase):
             },
         )
 
-        expected_result_2: DataFrame = Table(DataFrame({"A": [1, 2], "B": ["Text", "Text"]}))
+        expected_result_2: Table = Table(DataFrame({"A": [1, 2], "B": ["Text", "Text"]}))
         self.assertTrue(result.equals(expected_result_2))
 
         # Text number replace
@@ -58,7 +59,7 @@ class TestTableReplace(TestCase):
             },
         )
 
-        expected_result_3: DataFrame = Table(
+        expected_result_3: Table = Table(
             DataFrame({"A": ["Text", 2], "B": ["Hello", "Bonjour"]})
         )
         self.assertTrue(result.equals(expected_result_3))
@@ -77,5 +78,5 @@ class TestTableReplace(TestCase):
             },
         )
 
-        expected_result: DataFrame = Table(DataFrame({"A": ["Hello", "Hello", "Bonjour"]}))
+        expected_result: Table = Table(DataFrame({"A": ["Hello", "Hello", "Bonjour"]}))
         self.assertTrue(result.equals(expected_result))

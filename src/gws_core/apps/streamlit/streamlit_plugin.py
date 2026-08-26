@@ -276,8 +276,8 @@ class StreamlitPlugin(AppPluginDownloader):
         if body_obj.content:
             body_content_soup = BeautifulSoup(body_obj.content, "html.parser")
             for element in body_content_soup.children:
-                # Skip empty or whitespace-only text nodes
-                if hasattr(element, "name") and element.name is None and not str(element).strip():
+                # Skip empty or whitespace-only text nodes (a text node is not a Tag)
+                if not isinstance(element, Tag) and not str(element).strip():
                     continue
                 body.append(element)
 

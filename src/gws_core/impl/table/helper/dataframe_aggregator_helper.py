@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, cast
 
-from pandas import DataFrame
+from pandas import DataFrame, Series
 
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
@@ -47,7 +47,7 @@ class DataframeAggregatorHelper:
 
         numeric_dataframe: DataFrame = DataframeHelper.nanify_none_number(data)
 
-        aggregated_data: DataFrame
+        aggregated_data: Series | float | int
         if func == "mean":
             aggregated_data = data.mean(axis=axis_num, numeric_only=True, skipna=skip_nan)
         elif func == "std":
@@ -65,9 +65,9 @@ class DataframeAggregatorHelper:
                 axis=axis_num, numeric_only=True, skipna=skip_nan
             )
 
-        if direction == "vertical":
-            aggregated_data = aggregated_data.to_frame().T
-        else:
-            aggregated_data = aggregated_data.to_frame()
+        aggregated_series = cast(Series, aggregated_data)
 
-        return aggregated_data
+        if direction == "vertical":
+            return aggregated_series.to_frame().T
+
+        return aggregated_series.to_frame()

@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core.impl.agent.py_agent import PyAgent
@@ -51,13 +52,13 @@ plt.savefig(output_path)```""",
         outputs = tester.run()
 
         # check the result table and tags
-        target: File = outputs["target"]
+        target = cast(File, outputs["target"])
         self.assertTrue(target.is_image())
         self.assertTrue(target.exists())
 
         # check the generated code
         # Try to execute the code in a python agent
-        code: Text = outputs["generated_code"]
+        code = cast(Text, outputs["generated_code"])
 
         tester = TaskRunner(
             task_type=PyAgent,
@@ -69,6 +70,6 @@ plt.savefig(output_path)```""",
         outputs = tester.run()
 
         # check the result table and tags
-        target_2: File = outputs["target"]
+        target_2 = cast(File, outputs["target"])
         self.assertTrue(target_2.is_image())
         self.assertTrue(target_2.exists())

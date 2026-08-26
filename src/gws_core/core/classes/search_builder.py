@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Generic
+from typing import Any, Generic, cast
 
 from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
@@ -350,7 +350,9 @@ class SearchBuilder(Generic[ModelType]):
         elif operator == SearchOperator.END_WITH:
             return field.endswith(value)
         elif operator == SearchOperator.MATCH:
-            return Match((field), value, modifier="IN BOOLEAN MODE")
+            # Match returns a NodeList, which peewee accepts wherever an
+            # Expression is expected
+            return cast(Expression, Match((field), value, modifier="IN BOOLEAN MODE"))
 
         return None
 

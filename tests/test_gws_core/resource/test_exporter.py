@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import File
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.json.json_dict import JSONDict
@@ -29,6 +31,6 @@ class TestExporter(BaseTestCase):
             resource_model.id, JSONExporter.get_typing_name(), {}
         )
 
-        file: File = file_model.get_resource()
+        file = cast(File, file_model.get_resource())
         self.assertTrue(FileHelper.exists_on_os(file.path))
         self.assertEqual(file.read(), '{"hello": "nice"}')

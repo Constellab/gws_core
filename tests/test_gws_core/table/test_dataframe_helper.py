@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
 from numpy import NaN
-from pandas import NA, DataFrame
+from pandas import NA, DataFrame, Index
 
 
 # test_dataframe_helper
@@ -44,21 +44,21 @@ class TestTableConcat(TestCase):
         self.assertTrue(result.equals(DataFrame({"F1": [True, False], "F2": [False, True]})))
 
     def test_rename_duplicate_column_names(self):
-        df = DataFrame([[1, 2, 3, 4, 5, 6]], columns=["A", "B", "A", "B", "A", "A_1"])
+        df = DataFrame([[1, 2, 3, 4, 5, 6]], columns=Index(["A", "B", "A", "B", "A", "A_1"]))
 
         result = DataframeHelper.rename_duplicate_column_names(df)
         expected_result = DataFrame(
-            [[1, 2, 3, 4, 5, 6]], columns=["A", "B", "A_1", "B_1", "A_2", "A_3"]
+            [[1, 2, 3, 4, 5, 6]], columns=Index(["A", "B", "A_1", "B_1", "A_2", "A_3"])
         )
 
         self.assertTrue(result.equals(expected_result))
 
     def test_rename_duplicate_row_names(self):
-        df = DataFrame([1, 2, 3, 4, 5, 6], index=["A", "B", "A", "B", "A", "A_1"])
+        df = DataFrame([1, 2, 3, 4, 5, 6], index=Index(["A", "B", "A", "B", "A", "A_1"]))
 
         result = DataframeHelper.rename_duplicate_row_names(df)
         expected_result = DataFrame(
-            [1, 2, 3, 4, 5, 6], index=["A", "B", "A_1", "B_1", "A_2", "A_3"]
+            [1, 2, 3, 4, 5, 6], index=Index(["A", "B", "A_1", "B_1", "A_2", "A_3"])
         )
 
         self.assertTrue(result.equals(expected_result))

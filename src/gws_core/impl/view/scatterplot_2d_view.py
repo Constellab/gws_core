@@ -88,20 +88,20 @@ class ScatterPlot2DView(View):
             raise BadRequestException("The y-data is required and must be a list of float")
 
         # Convert x to float
-        x = list(range(0, len(y))) if x is None else NumericHelper.list_to_float(x)
+        x_values = list(range(0, len(y))) if x is None else NumericHelper.list_to_float(x)
 
         # Convert y to float
-        y = NumericHelper.list_to_float(y)
+        y_values = NumericHelper.list_to_float(y)
 
         if tags is not None:
-            if not isinstance(tags, list) or len(tags) != len(x):
+            if not isinstance(tags, list) or len(tags) != len(x_values):
                 raise BadRequestException(
                     "The tags must be a list of length equal to the length of x"
                 )
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append(
             {
-                "data": {"x": x, "y": y, "tags": tags},
+                "data": {"x": x_values, "y": y_values, "tags": tags},
                 "name": name,
                 "x_name": x_name,
                 "y_name": y_name,

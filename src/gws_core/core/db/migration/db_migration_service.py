@@ -84,6 +84,8 @@ class DbMigrationService:
                 continue
 
             brick_name = brick_info.name
+            if brick_info.version is None:
+                raise Exception(f"Brick '{brick_name}' has no version")
             current_brick_version = Version(brick_info.version)
             migration_version = migration_obj.version
 

@@ -49,6 +49,7 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.0}]}),
         )
+        assert result.values is not None
         density_cell = result.values["samples"][0]["density"]
         self.assertIsNone(density_cell["value"])
         self.assertIsNotNone(density_cell["errors"])
@@ -65,6 +66,7 @@ class TestFormComputedValues(BaseTestCase):
         )
         form = self._make_form_from_specs(specs)
         result = FormService.save(form.id, SaveFormDTO(values={}))
+        assert result.values is not None
         doubled = result.values["doubled"]
         self.assertIsNone(doubled["value"])
         self.assertIsNone(doubled["errors"])
@@ -78,6 +80,7 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0}]}),
         )
+        assert result.values is not None
         density_cell = result.values["samples"][0]["density"]
         self.assertIsNone(density_cell["value"])
         self.assertIsNone(density_cell["errors"])
@@ -98,6 +101,7 @@ class TestFormComputedValues(BaseTestCase):
         )
         form = self._make_form_from_specs(specs)
         result = FormService.save(form.id, SaveFormDTO(values={"samples": []}))
+        assert result.values is not None
         avg = result.values["avg_mass"]
         self.assertIsNone(avg["value"])
         self.assertIsNotNone(avg["errors"])
@@ -116,6 +120,7 @@ class TestFormComputedValues(BaseTestCase):
         )
         form = self._make_form_from_specs(specs)
         result = FormService.save(form.id, SaveFormDTO(values={"samples": [{"mass": 1.0}]}))
+        assert result.values is not None
         cell = result.values["all_masses"]
         self.assertIsNone(cell["value"])
         self.assertIsNotNone(cell["errors"])
@@ -126,6 +131,7 @@ class TestFormComputedValues(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 2.0, "volume": 1.0}]}),
         )
+        assert result.values is not None
         self.assertEqual(
             result.values["samples"][0]["density"],
             {"value": 2.0, "errors": None},
@@ -162,7 +168,9 @@ class TestFormComputedValues(BaseTestCase):
             SaveFormDTO(values={"samples": [{"mass": 1.0, "volume": 0.5}]}),
         )
         # Update the user input — total_mass should change from 1.0 to 3.0.
-        rows = Form.get_by_id(form.id).values["samples"]
+        saved_form = Form.get_by_id(form.id)
+        assert saved_form is not None and saved_form.values is not None
+        rows = saved_form.values["samples"]
         rows[0]["mass"] = 3.0
         FormService.save(form.id, SaveFormDTO(values={"samples": rows}))
 
@@ -195,7 +203,9 @@ class TestFormComputedValues(BaseTestCase):
         )
         # Re-read storage (scalar shape) for the next save — the response
         # wraps computed cells, but storage stays scalar.
-        rows = Form.get_by_id(form.id).values["samples"]
+        saved_form = Form.get_by_id(form.id)
+        assert saved_form is not None and saved_form.values is not None
+        rows = saved_form.values["samples"]
         item_id = rows[0]["__item_id"]
 
         # First save: row added as a unit; density rides along inside the
@@ -243,12 +253,16 @@ class TestFormComputedValues(BaseTestCase):
             ),
         )
         # Re-edit on the SUBMITTED form.
-        rows = Form.get_by_id(form.id).values["samples"]
+        submitted_form = Form.get_by_id(form.id)
+        assert submitted_form is not None and submitted_form.values is not None
+        rows = submitted_form.values["samples"]
         rows[0]["mass"] = 4.0  # density 2.0 -> 8.0; total_mass 1.0 -> 4.0
         result = FormService.save(form.id, SaveFormDTO(values={"samples": rows}))
 
         # Status sticks (Phase 3 invariant) AND computed values are fresh.
         reloaded = Form.get_by_id(form.id)
+        assert reloaded is not None and reloaded.values is not None
+        assert result.values is not None
         self.assertEqual(reloaded.status, FormStatus.SUBMITTED)
         self.assertEqual(
             result.values["samples"][0]["density"],

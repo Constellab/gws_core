@@ -15,10 +15,10 @@ class Activity(Model):
     (User) Activity class
     """
 
-    user = TypedForeignKeyField(User)
-    activity_type = TypedEnumField(choices=ActivityType)
-    object_type = TypedEnumField(choices=ActivityObjectType)
-    object_id = TypedCharField(max_length=36)
+    user: TypedForeignKeyField[User] = TypedForeignKeyField(User)
+    activity_type: TypedEnumField[ActivityType] = TypedEnumField(choices=ActivityType)
+    object_type: TypedEnumField[ActivityObjectType] = TypedEnumField(choices=ActivityObjectType)
+    object_id: TypedCharField = TypedCharField(max_length=36)
 
     # For add of update activity, if the last activity or same type is less than ACTIVITY_MERGE_MAX_TIME seconds,
     # the activity will be updated

@@ -100,7 +100,7 @@ class AppTester:
         task_runner = TaskRunner(
             task_type=generate_task_type,
             params=config_values,
-            inputs=input_resources,
+            inputs=cast("dict[str, Resource | None] | None", input_resources),
         )
 
         task_runner.run()
@@ -196,7 +196,9 @@ class AppTester:
             # start the app
             app_resource.default_view(ConfigParams())
 
-            app_process = AppsManager.find_app_by_resource_model_id(app_resource.get_model_id())
+            app_process = AppsManager.find_app_by_resource_model_id(
+                cast(str, app_resource.get_model_id())
+            )
 
             if app_process is None:
                 test_case.fail("No app process found")

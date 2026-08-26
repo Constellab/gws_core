@@ -1,3 +1,5 @@
+from typing import cast
+
 import reflex as rx
 from gws_reflex_main import ReflexMainState, main_component, register_gws_reflex_app
 
@@ -15,16 +17,18 @@ class State(rx.State):
         if not await main_state.check_authentication():
             return "Unauthorized"
         resources = await main_state.get_resources()
-        return resources[0].name if resources else "No resource"
+        if not resources:
+            return "No resource"
+        return resources[0].name or "No resource"
 
     @rx.var
-    async def get_param_name(self) -> str | None:
+    async def get_param_name(self) -> str:
         """
         Get a parameter from the app configuration.
         This route is not secured, so it can be accessed without authentication.
         """
         main_state = await self.get_state(ReflexMainState)
-        return await main_state.get_param("param_name", "default_value")
+        return cast(str, await main_state.get_param("param_name", "default_value"))
 
     @rx.event
     def increment(self):

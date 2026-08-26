@@ -70,7 +70,7 @@ class RobotsGeneratorShare(Task):
     output_specs: OutputSpecs = OutputSpecs({"set": OutputSpec(ResourceSet)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot_1 = inputs.get("robot")
+        robot_1 = inputs.get_resource("robot", Robot)
         robot_2 = Robot.empty()
         robot_2.age = 99
         robot_2.name = "Robot 2"
@@ -166,15 +166,21 @@ class ShareScenarioTestSetup:
         return cast(TaskModel, self.initial_protocol_model.get_process("output"))
 
     def get_initial_source_resource(self) -> ResourceModel:
-        return (
+        resource_model = (
             self.get_initial_source_process().out_port(InputTask.output_name).get_resource_model()
         )
+        assert resource_model is not None
+        return resource_model
 
     def get_initial_move_resource(self) -> ResourceModel:
-        return self.get_initial_move_process().out_port("robot").get_resource_model()
+        resource_model = self.get_initial_move_process().out_port("robot").get_resource_model()
+        assert resource_model is not None
+        return resource_model
 
     def get_initial_resource_set(self) -> ResourceModel:
-        return self.get_initial_generate_process().out_port("set").get_resource_model()
+        resource_model = self.get_initial_generate_process().out_port("set").get_resource_model()
+        assert resource_model is not None
+        return resource_model
 
     def _check_id(self, imported_id: str, original_id: str) -> None:
         """Assert that imported_id equals or differs from original_id depending on create_mode."""
@@ -192,6 +198,7 @@ class ShareScenarioTestSetup:
     ) -> None:
         self._check_id(new_scenario.id, self.initial_scenario_model.id)
         self._tc.assertEqual(new_scenario.title, self.initial_scenario_model.title)
+        assert new_scenario.folder is not None
         self._tc.assertEqual(new_scenario.folder.id, self.initial_folder.id)
         self._tc.assertEqual(new_scenario.status, self.initial_scenario_model.status)
         self._tc.assertEqual(new_scenario.creation_type, ScenarioCreationType.IMPORTED)
@@ -271,7 +278,7 @@ class ShareScenarioTestSetup:
     ) -> None:
         # Check the source resource
         new_source_output = new_source.out_port(InputTask.output_name).get_resource_model()
-        self._tc.assertIsNotNone(new_source_output)
+        assert new_source_output is not None
         self._check_id(new_source_output.id, self.get_initial_source_resource().id)
         self._tc.assertIsNone(new_source_output.scenario)
         self._tc.assertEqual(new_source_output.origin, ResourceOrigin.IMPORTED_FROM_LAB)
@@ -287,13 +294,17 @@ class ShareScenarioTestSetup:
         )
         new_move_resource_1 = new_move_process.out_port("robot").get_resource_model()
         initial_resource_1 = self.get_initial_move_resource()
-        self._tc.assertIsNotNone(new_move_resource_1)
+        assert new_move_resource_1 is not None
         self._check_id(new_move_resource_1.id, initial_resource_1.id)
+        assert new_move_resource_1.scenario is not None
         self._tc.assertEqual(new_move_resource_1.scenario.id, new_scenario.id)
         self._tc.assertEqual(new_move_resource_1.origin, ResourceOrigin.IMPORTED_FROM_LAB)
+        assert new_move_resource_1.task_model is not None
         self._tc.assertEqual(
             new_move_resource_1.task_model.id, new_protocol_model.get_process("move").id
         )
+        assert new_move_resource_1.folder is not None
+        assert new_scenario.folder is not None
         self._tc.assertEqual(new_move_resource_1.folder.id, new_scenario.folder.id)
         self._tc.assertFalse(new_move_resource_1.flagged)
         self._tc.assertEqual(
@@ -315,7 +326,7 @@ class ShareScenarioTestSetup:
         initial_resource_set_model = self.get_initial_resource_set()
         new_generator_process = new_protocol_model.get_process("generate")
         new_resource_set_model = new_generator_process.out_port("set").get_resource_model()
-        self._tc.assertIsNotNone(new_resource_set_model)
+        assert new_resource_set_model is not None
         self._check_id(new_resource_set_model.id, initial_resource_set_model.id)
         self._tc.assertTrue(new_resource_set_model.flagged)
 
@@ -324,7 +335,8 @@ class ShareScenarioTestSetup:
         output_resource_set_model = new_output_process.in_port(
             OutputTask.input_name
         ).get_resource_model()
-        new_resource_set: ResourceSet = output_resource_set_model.get_resource()
+        assert output_resource_set_model is not None
+        new_resource_set = cast(ResourceSet, output_resource_set_model.get_resource())
         self._tc.assertIsInstance(new_resource_set, ResourceSet)
         self._tc.assertEqual(len(new_resource_set.get_resources()), 2)
 
@@ -394,30 +406,34 @@ class ShareScenarioTestSetup:
         :param initial_resource_set: the resource set of the original scenario
         :return: the imported models of 'Robot 1' and 'Robot 2'
         """
-        new_robot_1_model = ResourceModel.get_by_id_and_check(
-            new_resource_set.get_resource("Robot 1").get_model_id()
-        )
-        self._check_id(
-            new_robot_1_model.id, initial_resource_set.get_resource("Robot 1").get_model_id()
-        )
+        new_robot_1_id = new_resource_set.get_resource("Robot 1").get_model_id()
+        assert new_robot_1_id is not None
+        new_robot_1_model = ResourceModel.get_by_id_and_check(new_robot_1_id)
+        initial_robot_1_id = initial_resource_set.get_resource("Robot 1").get_model_id()
+        assert initial_robot_1_id is not None
+        self._check_id(new_robot_1_model.id, initial_robot_1_id)
         # verify that the robot 1 is the output of the move
-        self._tc.assertEqual(
-            new_robot_1_model.id, new_move.out_port("robot").get_resource_model().id
-        )
+        new_move_output = new_move.out_port("robot").get_resource_model()
+        assert new_move_output is not None
+        self._tc.assertEqual(new_robot_1_model.id, new_move_output.id)
+        assert new_robot_1_model.scenario is not None
         self._tc.assertEqual(new_robot_1_model.scenario.id, new_scenario.id)
+        assert new_robot_1_model.task_model is not None
         self._tc.assertEqual(new_robot_1_model.task_model.id, new_move.get_id())
         self._tc.assertEqual(new_robot_1_model.generated_by_port_name, "robot")
         # The first robot should not be associated directly with resource set because it is created before
         self._tc.assertIsNone(new_robot_1_model.parent_resource_id)
 
-        new_robot_2_model = ResourceModel.get_by_id_and_check(
-            new_resource_set.get_resource("Robot 2").get_model_id()
-        )
-        self._check_id(
-            new_robot_2_model.id, initial_resource_set.get_resource("Robot 2").get_model_id()
-        )
+        new_robot_2_id = new_resource_set.get_resource("Robot 2").get_model_id()
+        assert new_robot_2_id is not None
+        new_robot_2_model = ResourceModel.get_by_id_and_check(new_robot_2_id)
+        initial_robot_2_id = initial_resource_set.get_resource("Robot 2").get_model_id()
+        assert initial_robot_2_id is not None
+        self._check_id(new_robot_2_model.id, initial_robot_2_id)
         self._tc.assertEqual(new_robot_2_model.parent_resource_id, new_resource_set_model.id)
+        assert new_robot_2_model.scenario is not None
         self._tc.assertEqual(new_robot_2_model.scenario.id, new_scenario.id)
+        assert new_robot_2_model.task_model is not None
         self._tc.assertEqual(new_robot_2_model.task_model.id, new_generator_process.id)
         self._tc.assertEqual(new_robot_2_model.generated_by_port_name, "set")
 
@@ -479,7 +495,7 @@ class ShareScenarioTestSetup:
         self._tc.assertEqual(TaskInputModel.get_by_scenario(new_scenario.id).count(), 3)
 
         # the source task should be configured event if the source resource is not imported
-        new_source: TaskModel = new_protocol.get_process("source")
+        new_source = cast(TaskModel, new_protocol.get_process("source"))
         self._tc.assertIsNotNone(new_source.source_config_id)
         self._tc.assertIsNotNone(new_source.out_port(InputTask.output_name).get_resource_model())
 
@@ -593,6 +609,7 @@ class TestShareScenario(BaseTestCase):
         output_resource_model = (
             setup.get_initial_output_process().in_port(OutputTask.input_name).get_resource_model()
         )
+        assert output_resource_model is not None
         output_zip_paths = {}
         zipper = ResourceZipper(current_user)
         zipper.add_resource_model(output_resource_model.id)
@@ -704,7 +721,7 @@ class TestShareScenario(BaseTestCase):
         )
         zip_outputs = zip_runner.run()
 
-        archive_file: File = zip_outputs["archive"]
+        archive_file = cast(File, zip_outputs["archive"])
         self.assertIsInstance(archive_file, File)
         self.assertTrue(os.path.exists(archive_file.path))
         self.assertTrue(TarCompress.is_tar_file(archive_file.path))
@@ -722,7 +739,7 @@ class TestShareScenario(BaseTestCase):
         )
         load_outputs = load_runner.run()
 
-        loaded_scenario_resource: ScenarioResource = load_outputs["scenario"]
+        loaded_scenario_resource = cast(ScenarioResource, load_outputs["scenario"])
         self.assertIsInstance(loaded_scenario_resource, ScenarioResource)
 
         new_scenario = loaded_scenario_resource.get_scenario()

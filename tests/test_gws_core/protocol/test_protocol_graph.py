@@ -31,9 +31,12 @@ class TestProtocolGraph(BaseTestCase):
         scenario.run()
 
         output_model = output_task.refresh().get_input_resource_model(OutputTask.input_name)
+        assert output_model is not None
 
         scenario_dto = scenario.refresh().get_model().export_protocol()
-        protocol_graph = ProtocolGraph(scenario_dto.data.graph)
+        graph_dto = scenario_dto.data.graph
+        assert graph_dto is not None
+        protocol_graph = ProtocolGraph(graph_dto)
 
         # Test the protocol graph
         self.assertEqual(protocol_graph.get_input_resource_ids(), {resource_model.id})
@@ -64,7 +67,9 @@ class TestProtocolGraph(BaseTestCase):
         protocol.add_output("output", sub_proto >> "robot")
 
         scenario_dto = scenario.refresh().get_model().export_protocol()
-        protocol_graph = ProtocolGraph(scenario_dto.data.graph)
+        graph_dto = scenario_dto.data.graph
+        assert graph_dto is not None
+        protocol_graph = ProtocolGraph(graph_dto)
 
         # All tasks are DRAFT, so p0's input resource should be collected
         # (p0 receives the input resource on its "robot" input port)
@@ -74,7 +79,9 @@ class TestProtocolGraph(BaseTestCase):
         # Now run the scenario — all tasks become SUCCESS
         scenario.run()
         scenario_dto_after_run = scenario.refresh().get_model().export_protocol()
-        protocol_graph_after_run = ProtocolGraph(scenario_dto_after_run.data.graph)
+        graph_dto_after_run = scenario_dto_after_run.data.graph
+        assert graph_dto_after_run is not None
+        protocol_graph_after_run = ProtocolGraph(graph_dto_after_run)
 
         # After a successful run, no tasks are in DRAFT, so the result should be empty
         draft_input_ids_after_run = protocol_graph_after_run.get_input_resource_ids_of_draft_tasks()
@@ -99,6 +106,7 @@ class TestProtocolGraph(BaseTestCase):
 
         scenario_dto = scenario.refresh().get_model().export_protocol()
         graph_dto = scenario_dto.data.graph
+        assert graph_dto is not None
 
         # Simulate a partially run scenario: set p1 back to DRAFT
         graph_dto.nodes["p1"].status = ProcessStatus.DRAFT.value

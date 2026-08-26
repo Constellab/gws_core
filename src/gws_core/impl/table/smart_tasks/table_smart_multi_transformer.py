@@ -65,7 +65,7 @@ There are {len(self.tables)} dataframes in the list.
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
 
     def build_output(self, code_outputs: dict) -> list[Table]:
-        output: list[DataFrame] = code_outputs.get("target")
+        output: list[DataFrame] | None = code_outputs.get("target")
 
         if output is None:
             raise Exception("The code did not generate any output")

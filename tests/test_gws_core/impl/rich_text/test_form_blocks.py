@@ -36,7 +36,7 @@ class TestFormBlocks(BaseTestCase):
         block = RichTextBlock.from_data(data)
         self.assertEqual(block.type, "formTemplate")
         resolved = block.get_data()
-        self.assertIsInstance(resolved, RichTextBlockFormTemplate)
+        assert isinstance(resolved, RichTextBlockFormTemplate)
         self.assertEqual(resolved.form_template_id, "tpl-1")
 
     # ---------------- RichTextBlockForm ---------------- #
@@ -66,7 +66,7 @@ class TestFormBlocks(BaseTestCase):
         block = RichTextBlock.from_data(data)
         self.assertEqual(block.type, "form")
         resolved = block.get_data()
-        self.assertIsInstance(resolved, RichTextBlockForm)
+        assert isinstance(resolved, RichTextBlockForm)
         self.assertEqual(resolved.form_id, "form-1")
         self.assertTrue(resolved.is_owner)
 

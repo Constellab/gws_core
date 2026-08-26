@@ -1,3 +1,4 @@
+from gws_core.apps.app_nginx_service import AppNginxRedirectServiceInfo
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.core.utils.settings import Settings
@@ -54,6 +55,7 @@ class TestReflexApp(BaseTestCase):
 
         # the backend service host is id-only, but its CORS allow-list includes the custom front
         back_service = process._get_cloud_back_nginx_services()
+        assert isinstance(back_service, AppNginxRedirectServiceInfo)
         self.assertEqual(
             back_service.server_name, self._expected_host("resource-model-id", "-back")
         )

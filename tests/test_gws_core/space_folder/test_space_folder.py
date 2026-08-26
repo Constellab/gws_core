@@ -65,6 +65,7 @@ class TestFolder(BaseTestCase):
         self.assertFalse(any(folder_tree.name == "Work package 1" for folder_tree in folder_trees))
 
         # Test another synchronization to delete the Work package 2 folder and verify that the other folder were not changed
+        assert space_folder.children is not None
         space_folder.children = space_folder.children[:1]
         SpaceFolderService.synchronize_space_folder(space_folder)
         self.assertEqual(SpaceFolder.select().count(), all_folders_count - 1)
@@ -227,6 +228,7 @@ class TestFolder(BaseTestCase):
         self.assertEqual(root_3.children[0].id, "caf61803-70e5-4ac3-9adb-53a35f65a2f6")
 
         scenario = scenario.refresh()
+        assert scenario.folder is not None
         self.assertEqual(scenario.folder.id, "caf61803-70e5-4ac3-9adb-53a35f65a2f6")
         # clea scenario to allow folder deletion
         scenario.folder = None

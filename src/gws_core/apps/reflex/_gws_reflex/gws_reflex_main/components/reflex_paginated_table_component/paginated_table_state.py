@@ -108,7 +108,9 @@ class PaginatedTableState(rx.State, mixin=True):
             return []
         rows = []
         for _, row in df.iterrows():
-            rows.append({str(col): ("" if pd.isna(row[col]) else row[col]) for col in df.columns})
+            rows.append(
+                {str(col): ("" if bool(pd.isna(row[col])) else row[col]) for col in df.columns}
+            )
         return rows
 
     async def refresh(self):

@@ -85,7 +85,7 @@ class GenerateResourceSet(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # Get the input robot
-        robot = inputs.get("robot")
+        robot = inputs.get_resource("robot", Robot)
 
         # create a simple resource
         table = get_table()
@@ -109,7 +109,7 @@ class GenerateResourceList(Task):
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         # Get the input robot
-        robot = inputs.get("robot")
+        robot = inputs.get_resource("robot", Robot)
 
         # create a simple resource
         table = get_table()
@@ -244,6 +244,7 @@ class ShareResourceTestSetup:
         self._tc.assertEqual(len(tags.get_tags()), 1)
         self._tc.assertTrue(new_table.tags.has_tag(Tag("resource_tag", "resource_tag_value")))
         tag = new_table.tags.get_tag("resource_tag", "resource_tag_value")
+        assert tag is not None
         self._tc.assertTrue(tag.origins.has_origin(TagOriginType.USER, "test"))
         self._tc.assertIsNotNone(tag.origins.get_origins()[0].external_lab_origin_id)
 
@@ -288,7 +289,8 @@ class ShareResourceTestSetup:
         self._assert_new_resource_model(new_resource_model, self.original_resource_model)
         self._tc.assertIsNotNone(new_resource_model.fs_node_model)
 
-        resource: File = new_resource_model.get_resource()
+        resource = cast(File, new_resource_model.get_resource())
+        assert resource.name is not None
         self._tc.assertTrue(resource.name.startswith("test"))
         self._tc.assertEqual("test", resource.read())
 
@@ -305,23 +307,27 @@ class ShareResourceTestSetup:
         )
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process("generate_resource_set")
-        resource_model_id = i_process.get_output_resource_model("resource_set").id
+        output_resource_model = i_process.get_output_resource_model("resource_set")
+        assert output_resource_model is not None
+        resource_model_id = output_resource_model.id
 
         self.original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
-        self._original_resource_set: ResourceSet = self.original_resource_model.get_resource()
+        self._original_resource_set: ResourceSet = cast(
+            ResourceSet, self.original_resource_model.get_resource()
+        )
 
         zip_path = self._zip_resource(self.original_resource_model.id)
 
         # store the children resource models
         self._children_resource_models = {
             "robot": ResourceModel.get_by_id_and_check(
-                self._original_resource_set.get_resource("robot").get_model_id()
+                self._original_resource_set.get_resource("robot").get_and_check_model_id()
             ),
             "table": ResourceModel.get_by_id_and_check(
-                self._original_resource_set.get_resource("table").get_model_id()
+                self._original_resource_set.get_resource("table").get_and_check_model_id()
             ),
             "file": ResourceModel.get_by_id_and_check(
-                self._original_resource_set.get_resource("file").get_model_id()
+                self._original_resource_set.get_resource("file").get_and_check_model_id()
             ),
         }
 
@@ -333,36 +339,36 @@ class ShareResourceTestSetup:
         """Assert that a resource set was imported correctly."""
         self._assert_new_resource_model(new_resource_model, self.original_resource_model)
 
-        resource_set: ResourceSet = new_resource_model.get_resource()
+        resource_set = cast(ResourceSet, new_resource_model.get_resource())
         self._tc.assertIsInstance(resource_set, ResourceSet)
         self._tc.assertEqual(3, len(resource_set))
 
         # check the robot
-        robot: Robot = resource_set.get_resource("robot")
+        robot = cast(Robot, resource_set.get_resource("robot"))
         self._tc.assertIsNotNone(robot)
-        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_and_check_model_id())
         # The robot should not have the parent resource model id
         self._assert_new_child_resource_model(
             robot_model, self._children_resource_models["robot"], None
         )
 
-        original_robot: Robot = self._original_resource_set.get_resource("robot")
-        self._check_id(robot.get_model_id(), original_robot.get_model_id())
+        original_robot = cast(Robot, self._original_resource_set.get_resource("robot"))
+        self._check_id(robot.get_and_check_model_id(), original_robot.get_and_check_model_id())
         self._tc.assertEqual(original_robot.age, robot.age)
 
         # check the table
-        table: Table = resource_set.get_resource("table")
+        table = cast(Table, resource_set.get_resource("table"))
         self._tc.assertIsNotNone(table)
-        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        table_model = ResourceModel.get_by_id_and_check(table.get_and_check_model_id())
         self._assert_new_child_resource_model(
             table_model, self._children_resource_models["table"], new_resource_model.id
         )
         self._tc.assertTrue(table.equals(get_table()))
 
         # check the file
-        file: File = resource_set.get_resource("file")
+        file = cast(File, resource_set.get_resource("file"))
         self._tc.assertIsNotNone(file)
-        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        file_model = ResourceModel.get_by_id_and_check(file.get_and_check_model_id())
         self._assert_new_child_resource_model(
             file_model, self._children_resource_models["file"], new_resource_model.id
         )
@@ -394,20 +400,24 @@ class ShareResourceTestSetup:
         )
         i_scenario.run()
         i_process = i_scenario.get_protocol().get_process("generate_resource_list")
-        resource_model_id = i_process.get_output_resource_model("resource_list").id
+        output_resource_model = i_process.get_output_resource_model("resource_list")
+        assert output_resource_model is not None
+        resource_model_id = output_resource_model.id
 
         self.original_resource_model = ResourceService.get_by_id_and_check(resource_model_id)
-        self._original_resource_list: ResourceList = self.original_resource_model.get_resource()
+        self._original_resource_list: ResourceList = cast(
+            ResourceList, self.original_resource_model.get_resource()
+        )
 
         self._children_resource_models = {
             "robot": ResourceModel.get_by_id_and_check(
-                self._original_resource_list[0].get_model_id()
+                self._original_resource_list[0].get_and_check_model_id()
             ),
             "table": ResourceModel.get_by_id_and_check(
-                self._original_resource_list[1].get_model_id()
+                self._original_resource_list[1].get_and_check_model_id()
             ),
             "file": ResourceModel.get_by_id_and_check(
-                self._original_resource_list[2].get_model_id()
+                self._original_resource_list[2].get_and_check_model_id()
             ),
         }
 
@@ -420,35 +430,35 @@ class ShareResourceTestSetup:
         """Assert that a resource list was imported correctly."""
         self._assert_new_resource_model(new_resource_model, self.original_resource_model)
 
-        resource_list: ResourceList = new_resource_model.get_resource()
+        resource_list = cast(ResourceList, new_resource_model.get_resource())
         self._tc.assertIsInstance(resource_list, ResourceList)
         self._tc.assertEqual(3, len(resource_list))
 
         # check the robot
-        robot: Robot = resource_list[0]
+        robot = cast(Robot, resource_list[0])
         self._tc.assertIsNotNone(robot)
-        robot_model = ResourceModel.get_by_id_and_check(robot.get_model_id())
+        robot_model = ResourceModel.get_by_id_and_check(robot.get_and_check_model_id())
         # The robot should not have the parent resource model id
         self._assert_new_child_resource_model(
             robot_model, self._children_resource_models["robot"], None
         )
-        original_robot: Robot = self._original_resource_list[0]
-        self._check_id(robot.get_model_id(), original_robot.get_model_id())
+        original_robot = cast(Robot, self._original_resource_list[0])
+        self._check_id(robot.get_and_check_model_id(), original_robot.get_and_check_model_id())
         self._tc.assertEqual(original_robot.age, robot.age)
 
         # check the table
-        table: Table = resource_list[1]
+        table = cast(Table, resource_list[1])
         self._tc.assertIsNotNone(table)
-        table_model = ResourceModel.get_by_id_and_check(table.get_model_id())
+        table_model = ResourceModel.get_by_id_and_check(table.get_and_check_model_id())
         self._assert_new_child_resource_model(
             table_model, self._children_resource_models["table"], new_resource_model.id
         )
         self._tc.assertTrue(table.equals(get_table()))
 
         # check the file
-        file: File = resource_list[2]
+        file = cast(File, resource_list[2])
         self._tc.assertIsNotNone(file)
-        file_model = ResourceModel.get_by_id_and_check(file.get_model_id())
+        file_model = ResourceModel.get_by_id_and_check(file.get_and_check_model_id())
         self._assert_new_child_resource_model(
             file_model, self._children_resource_models["file"], new_resource_model.id
         )
@@ -517,7 +527,7 @@ class TestShareResource(BaseTestCase):
         # check that there is only one resource
         self.assertTrue(len(share_entity_info.entity_object), 1)
 
-        new_table: Table = new_resource_model.get_resource()
+        new_table = cast(Table, new_resource_model.get_resource())
 
         # Check the tags
         tags = EntityTagList.find_by_entity(TagEntityType.RESOURCE, new_resource_model.id)
@@ -529,6 +539,7 @@ class TestShareResource(BaseTestCase):
         self.assertEqual(new_table.name, "MyTestName")
         self.assertTrue(new_table.tags.has_tag(Tag("resource_tag", "resource_tag_value")))
         tag = new_table.tags.get_tag("resource_tag", "resource_tag_value")
+        assert tag is not None
         self.assertTrue(tag.origins.has_origin(TagOriginType.USER, "test"))
         self.assertIsNotNone(tag.origins.get_origins()[0].external_lab_origin_id)
 

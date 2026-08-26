@@ -116,10 +116,10 @@ class TableColumnMassOperations(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        table: Table = inputs["table"]
-        operation_table: Table = inputs["operation_table"]
+        table = inputs.get_resource("table", Table)
+        operation_table = inputs.get_resource("operation_table", Table)
 
-        unknown_column_option: str = params.get("unknown_column_option")
+        unknown_column_option: str = params.get_value("unknown_column_option")
         option: TableOperationUnknownColumnOption = StringHelper.to_enum(
             TableOperationUnknownColumnOption, unknown_column_option
         )
@@ -127,9 +127,9 @@ class TableColumnMassOperations(Task):
         result = TableOperationHelper.column_mass_operations(
             table,
             operation_table.get_data(),
-            operation_name_column=params.get("name_column"),
-            operation_calculations_column=params.get("calculations_column"),
+            operation_name_column=params.get_value("name_column"),
+            operation_calculations_column=params.get_value("calculations_column"),
             replace_unknown_column=option,
-            keep_original_columns=params.get("keep_original_columns"),
+            keep_original_columns=params.get_value("keep_original_columns"),
         )
         return {"target": result}

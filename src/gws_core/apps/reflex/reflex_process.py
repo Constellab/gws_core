@@ -89,7 +89,7 @@ class ReflexProcess(AppProcess):
             return self._start_prod_process(app, shell_proxy)
 
     def _start_dev_process(
-        self, app: AppInstance, shell_proxy: ShellProxy
+        self, app: ReflexApp, shell_proxy: ShellProxy
     ) -> AppProcessStartResult:
         """Start reflex in dev mode with standard 'reflex run' command"""
         cmd = [

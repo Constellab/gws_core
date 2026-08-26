@@ -11,10 +11,11 @@ class ReflexAuthUser:
         self.auth_context = auth_context
 
     def __enter__(self) -> User:
-        if CurrentUserService.get_current_user() is None:
+        current_user = CurrentUserService.get_current_user()
+        if current_user is None:
             CurrentUserService.set_auth_context(self.auth_context)
         else:
-            if CurrentUserService.get_current_user().id != self.auth_context.user.id:
+            if current_user.id != self.auth_context.user.id:
                 raise Exception("The user in the context is different from the current user")
             self.was_already_authenticated = True
 

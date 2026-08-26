@@ -25,7 +25,7 @@ class TestReflexFrontBuildCache(TestCase):
     cache: ReflexFrontBuildCache
 
     def setUp(self) -> None:
-        self.cache = ReflexFrontBuildCache(ReflexShowcaseApp, ReflexProcess.BACKEND_PATH)
+        self.cache = ReflexFrontBuildCache(ReflexShowcaseApp(), ReflexProcess.BACKEND_PATH)
         FileHelper.delete_dir(self.cache.get_app_cache_dir())
         self.temp_dir = Settings.make_temp_dir()
 
@@ -41,6 +41,7 @@ class TestReflexFrontBuildCache(TestCase):
 
         self.assertTrue(self.cache.store_build(build_folder))
         cached_path = self.cache.get_cached_build_path()
+        assert cached_path is not None
         self.assertEqual(cached_path, self.cache.get_entry_path())
         # entry key contains the brick version
         self.assertIn(str(ReflexShowcaseApp.get_brick_version()), os.path.basename(cached_path))

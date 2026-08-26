@@ -25,7 +25,8 @@ class NoteTemplateResource(Resource):
 
     def __init__(self, note_template_id: str | None = None):
         super().__init__()
-        self.note_template_id = note_template_id
+        if note_template_id is not None:
+            self.note_template_id = note_template_id
 
     def get_content(self) -> RichText:
         if self._content is None:

@@ -26,16 +26,18 @@ class SysProc:
         self._use_process_group = use_process_group
 
     def get_process(self) -> Process:
+        if self._process is None:
+            raise BadRequestException("The system process is not defined")
         return self._process
 
     def is_alive(self) -> bool:
-        return self._process.is_running()
+        return self.get_process().is_running()
 
     def is_zombie(self) -> bool:
-        return self._process.status() == "zombie"
+        return self.get_process().status() == "zombie"
 
     def kill(self):
-        self._process.kill()
+        self.get_process().kill()
 
     def kill_with_children(self):
         """Kill the process and all its children.
@@ -54,8 +56,9 @@ class SysProc:
 
     def _kill_process_group(self):
         """Kill the entire process group: SIGTERM first, then SIGKILL after a short wait."""
+        process = self.get_process()
         try:
-            pgid = os.getpgid(self._process.pid)
+            pgid = os.getpgid(process.pid)
         except (ProcessLookupError, OSError):
             # Process already gone
             return
@@ -69,7 +72,7 @@ class SysProc:
         # Wait up to 5 seconds for processes to terminate gracefully
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
-            if not self._process.is_running():
+            if not process.is_running():
                 return
             time.sleep(0.2)
 
@@ -83,19 +86,19 @@ class SysProc:
         :return: _description_
         :rtype: List[Process]
         """
-        return self._process.children(recursive=True)
+        return self.get_process().children(recursive=True)
 
     def stats(self) -> dict:
         """
         Get process statistics
         """
-        return self._process.as_dict()
+        return self.get_process().as_dict()
 
     def wait(self, timeout=None):
         """
         Wait for a process PID to terminate
         """
-        self._process.wait(timeout=timeout)
+        self.get_process().wait(timeout=timeout)
 
     @property
     def pid(self) -> int:

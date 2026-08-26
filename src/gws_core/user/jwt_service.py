@@ -28,7 +28,7 @@ class JWTService:
 
     AUTH_SCHEME = "Bearer "
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2  # 2 days
+    ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 2  # 2 days
 
     _secret: str | None = None
 

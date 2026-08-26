@@ -1,10 +1,11 @@
 from enum import Enum
-from typing import Annotated
+from typing import Annotated, cast
 
 import typer
 from gws_core.apps.reflex.reflex_app import ReflexApp
 from gws_core.apps.reflex.reflex_compiler import ReflexCompiler
 from gws_core.apps.reflex.reflex_process import ReflexProcess
+from gws_core.impl.file.folder import Folder
 
 from gws_cli.app_cli import AppCli
 from gws_cli.generate_reflex_app.generate_reflex_app import generate_reflex_app
@@ -33,7 +34,7 @@ def run_dev(
 
     reflex_app = ReflexApp(ReflexProcess.DEV_MODE_APP_ID, "main", shell_proxy)
     reflex_app.set_dev_mode()
-    reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
+    reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), cast(Folder, None))
     reflex_app.set_is_enterprise(app_cli.is_reflex_enterprise())
 
     app_cli.start_app(reflex_app, ctx)
@@ -62,7 +63,7 @@ def compile_app(
 
     reflex_app = ReflexApp(ReflexProcess.DEV_MODE_APP_ID, "main", shell_proxy)
     reflex_app.set_dev_mode()
-    reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), None)
+    reflex_app.set_app_static_folder(app_cli.get_app_dir_path(), cast(Folder, None))
     reflex_app.set_is_enterprise(app_cli.is_reflex_enterprise())
     # The params are compiled into the app's computed vars, so they are forwarded. The
     # config's source_ids and dev_user_email are not: resolving them needs the database.

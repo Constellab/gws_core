@@ -13,7 +13,7 @@ class Requests:
     """
 
     @staticmethod
-    def download(url: str, dest_dir: str, dest_filename: str) -> str:
+    def download(url: str, dest_dir: str, dest_filename: str) -> str | None:
         """
         Download a file
 
@@ -23,8 +23,8 @@ class Requests:
         :type dest_dir: `str`
         :param dest_filename: Name of the downloaded file
         :type dest_filename: `str`
-        :return: The path of the downloaed file
-        :rtype: `str`
+        :return: The path of the downloaed file, or None if it already exists
+        :rtype: `Optional[str]`
         """
 
         Logger.info("Request class is deprecated, please use FileDownloader instead")

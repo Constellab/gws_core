@@ -29,19 +29,19 @@ from ..resource_model import ResourceModel
 
 
 class ViewConfig(ModelWithUser, NavigableEntity):
-    title = TypedCharField()
-    view_type = TypedEnumField(choices=ViewType)
-    view_name = TypedCharField()
-    config = NullableForeignKeyField(Config, backref="+")
+    title: TypedCharField = TypedCharField()
+    view_type: TypedEnumField[ViewType] = TypedEnumField(choices=ViewType)
+    view_name: TypedCharField = TypedCharField()
+    config: NullableForeignKeyField[Config] = NullableForeignKeyField(Config, backref="+")
 
-    scenario = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
-    resource_model = TypedForeignKeyField(
+    scenario: NullableForeignKeyField[Scenario] = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
+    resource_model: TypedForeignKeyField[ResourceModel] = TypedForeignKeyField(
         ResourceModel, index=True, on_delete="CASCADE"
     )
 
-    is_favorite = TypedBooleanField(default=False)
+    is_favorite: TypedBooleanField = TypedBooleanField(default=False)
 
-    style = NullableBaseDTOField(TypingStyle)
+    style: NullableBaseDTOField[TypingStyle] = NullableBaseDTOField(TypingStyle)
 
     def to_dto(self) -> ViewConfigDTO:
         return ViewConfigDTO(

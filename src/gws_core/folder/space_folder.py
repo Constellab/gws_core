@@ -6,10 +6,11 @@ from gws_core.folder.space_folder_dto import SpaceFolderDTO, SpaceFolderTreeDTO
 
 
 class SpaceFolder(Model):
-    name = TypedCharField(max_length=100)
+    name: TypedCharField = TypedCharField(max_length=100)
     parent = NullableForeignKeyField["SpaceFolder"]("self", backref="children", on_delete="CASCADE")
 
-    children: list["SpaceFolder"]
+    # peewee backref of the `parent` field: a lazy query of the direct children
+    children: ModelSelect
 
     def to_dto(self) -> SpaceFolderDTO:
         return SpaceFolderDTO(

@@ -16,9 +16,9 @@ class FormTemplate(ModelWithUser, NavigableEntity):
     """Family record for a versioned form schema. Tags and high-level metadata
     live here; schema content lives in FormTemplateVersion."""
 
-    name = TypedCharField(max_length=255)
-    description = NullableTextField()
-    is_archived = TypedBooleanField(default=False, index=True)
+    name: TypedCharField = TypedCharField(max_length=255)
+    description: NullableTextField = NullableTextField()
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
 
     def archive(self, archive: bool) -> "FormTemplate":
         if self.is_archived == archive:

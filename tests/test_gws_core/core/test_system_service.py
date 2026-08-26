@@ -28,15 +28,18 @@ class TestSystemService(BaseTestCase):
         resource_model = ResourceModel.save_from_resource(table, origin=ResourceOrigin.UPLOADED)
 
         # check that the resource kvstore exists
-        kv_store = KVStore(resource_model.kv_store_path)
+        kv_store_path = resource_model.kv_store_path
+        assert kv_store_path is not None
+        kv_store = KVStore(kv_store_path)
         self.assertTrue(FileHelper.exists_on_os(kv_store.full_file_path))
 
         # create a file resource
         test_file_path = FileHelper.create_empty_file_if_not_exist(
             os.path.join(temp_dir, "test_file_1.txt")
         )
-        new_file: File = File(test_file_path)
+        new_file: File = File(str(test_file_path))
         file_model = FsNodeService.create_fs_node_model(new_file)
+        assert file_model.fs_node_model is not None
         self.assertTrue(FileHelper.exists_on_os(file_model.fs_node_model.path))
 
         # call garbage collector, skipping test folder deletion to test if filestore and kvstore clean works
@@ -49,7 +52,7 @@ class TestSystemService(BaseTestCase):
         self.assertFalse(FileHelper.exists_on_os(unused_file))
 
         # check that the resource kvstore still exists
-        kv_store = KVStore(resource_model.kv_store_path)
+        kv_store = KVStore(kv_store_path)
         self.assertTrue(FileHelper.exists_on_os(kv_store.full_file_path))
 
         # check that the unused file in filestore has been deleted

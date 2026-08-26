@@ -1,4 +1,5 @@
 from inspect import isclass
+from typing import cast
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -7,7 +8,6 @@ from gws_core.core.utils.logger import Logger
 from gws_core.io.io_spec import IOSpecDTO
 from gws_core.protocol.protocol_spec import ConnectorSpec
 from gws_core.protocol.protocol_update import ProtocolUpdate
-from gws_core.resource.resource import Resource
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
@@ -17,6 +17,7 @@ from ..process.process import Process
 from ..process.process_model import ProcessModel
 from ..process.process_proxy import ProcessProxy, ProcessWithPort
 from ..task.task import Task
+from ..task.task_model import TaskModel
 from ..task.task_proxy import TaskProxy
 from .protocol import Protocol
 from .protocol_model import ProtocolModel
@@ -74,14 +75,14 @@ class ProtocolProxy(ProcessProxy):
             config_params=config_params,
         )
 
-        return TaskProxy(protocol_update.process)
+        return TaskProxy(cast(TaskModel, protocol_update.process))
 
     def add_empty_protocol(self, instance_name: str | None = None) -> "ProtocolProxy":
         """Add an empty protocol to this protocol"""
         protocol_update: ProtocolUpdate = ProtocolService.add_empty_protocol_to_protocol(
             self._process_model, instance_name
         )
-        return ProtocolProxy(protocol_update.process)
+        return ProtocolProxy(cast(ProtocolModel, protocol_update.process))
 
     def add_protocol(
         self,
@@ -97,7 +98,7 @@ class ProtocolProxy(ProcessProxy):
             config_params=config_params,
         )
 
-        return ProtocolProxy(protocol_update.process)
+        return ProtocolProxy(cast(ProtocolModel, protocol_update.process))
 
     def has_process(self, instance_name: str) -> bool:
         return instance_name in self._process_model.processes
@@ -116,7 +117,7 @@ class ProtocolProxy(ProcessProxy):
         if isinstance(process, ProtocolModel):
             return ProtocolProxy(process)
         else:
-            return TaskProxy(process)
+            return TaskProxy(cast(TaskModel, process))
 
     def get_protocol(self, instance_name: str) -> "ProtocolProxy":
         """Retrieve a sub-protocol in this protocol. Raises if the process is a task."""
@@ -153,7 +154,7 @@ class ProtocolProxy(ProcessProxy):
         if isinstance(process, ProtocolModel):
             return ProtocolProxy(process)
         else:
-            return TaskProxy(process)
+            return TaskProxy(cast(TaskModel, process))
 
     def get_processes_by_type(self, process_type: type[Process]) -> list[ProcessProxy]:
         """retreive a protocol or a task in this protocol by type
@@ -175,7 +176,7 @@ class ProtocolProxy(ProcessProxy):
             if isinstance(process, ProtocolModel):
                 process_proxies.append(ProtocolProxy(process))
             else:
-                process_proxies.append(TaskProxy(process))
+                process_proxies.append(TaskProxy(cast(TaskModel, process)))
 
         return process_proxies
 
@@ -237,20 +238,28 @@ class ProtocolProxy(ProcessProxy):
 
         return next_processes
 
-    def get_input(self, name):
-        return self.get_input_resource_model(name).get_resource()
+    def get_input_resource_model(self, name: str) -> ResourceModel | None:
+        """retrieve the resource model of the protocol input
 
-    def get_input_resource_model(self, name) -> ResourceModel:
+        :param name: name of the input
+        :type name: str
+        :return: resource model of the input, None if the input is empty
+        :rtype: ResourceModel | None
+        """
         if self.has_parent_protocol():
             return super().get_input_resource_model(name)
 
         input_task: ProcessProxy = self.get_process(name)
         return input_task.get_output_resource_model(InputTask.output_name)
 
-    def get_output(self, name) -> Resource:
-        return self.get_output_resource_model(name).get_resource()
+    def get_output_resource_model(self, name: str) -> ResourceModel | None:
+        """retrieve the resource model of the protocol output
 
-    def get_output_resource_model(self, name) -> ResourceModel:
+        :param name: name of the output
+        :type name: str
+        :return: resource model of the output, None if the output is empty
+        :rtype: ResourceModel | None
+        """
         if self.has_parent_protocol():
             return super().get_output_resource_model(name)
 
@@ -313,7 +322,7 @@ class ProtocolProxy(ProcessProxy):
         Exemple : protocol.delete_connector('sub_proto','robot_i')
         """
         ProtocolService.delete_connector_of_protocol(
-            self._process_model, to_process_name, to_port_name
+            self._process_model.id, to_process_name, to_port_name
         )
 
         ####################################### INTERFACE & OUTERFACE #########################################
@@ -605,7 +614,10 @@ class ProtocolProxy(ProcessProxy):
     ############################################### Specific processes ####################################
 
     def add_resource(
-        self, instance_name: str | None, resource_model_id: str, in_port: ProcessWithPort = None
+        self,
+        instance_name: str | None,
+        resource_model_id: str,
+        in_port: ProcessWithPort | None = None,
     ) -> TaskProxy:
         """Add a resource to the protocol and connected it to the in_port
         :param instance_name: instance name of the task
@@ -618,7 +630,7 @@ class ProtocolProxy(ProcessProxy):
         :rtype: ITask
         """
         config = {InputTask.config_name: resource_model_id} if resource_model_id else {}
-        source: ProcessProxy = self.add_process(InputTask, instance_name, config)
+        source: TaskProxy = self.add_task(InputTask, instance_name, config)
 
         if in_port:
             self.add_connector(source >> InputTask.output_name, in_port)
@@ -704,7 +716,7 @@ class ProtocolProxy(ProcessProxy):
         :return: [description]
         :rtype: ITask
         """
-        output_task = self.add_process(
+        output_task = self.add_task(
             OutputTask, instance_name, {OutputTask.flag_config_name: flag_resource}
         )
         self.add_connector(out_port, output_task << OutputTask.input_name)

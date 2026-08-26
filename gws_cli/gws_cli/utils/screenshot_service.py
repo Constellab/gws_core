@@ -1,3 +1,4 @@
+# pyright: reportMissingImports=false
 import importlib.util
 import os
 import subprocess
@@ -87,7 +88,7 @@ class ScreenshotService:
     def take_screenshot(
         url: str = "http://localhost:8511",
         route: str = "/",
-        output_path: str = None,
+        output_path: str | None = None,
         save_console_logs: bool = True,
         headless: bool = True,
     ) -> int:

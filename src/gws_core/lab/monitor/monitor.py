@@ -29,40 +29,40 @@ class Monitor(Model):
     """
 
     # CPU
-    cpu_count = TypedFloatField()
-    cpu_percent = TypedFloatField()
+    cpu_count: TypedFloatField = TypedFloatField()
+    cpu_percent: TypedFloatField = TypedFloatField()
 
     # Disk
-    disk_total = TypedFloatField()
-    disk_usage_used = TypedFloatField()
-    disk_usage_free = TypedFloatField()
-    disk_usage_percent = TypedFloatField()
+    disk_total: TypedFloatField = TypedFloatField()
+    disk_usage_used: TypedFloatField = TypedFloatField()
+    disk_usage_free: TypedFloatField = TypedFloatField()
+    disk_usage_percent: TypedFloatField = TypedFloatField()
 
     # Swap Memory
-    swap_memory_total = TypedFloatField()
-    swap_memory_used = TypedFloatField()
-    swap_memory_free = TypedFloatField()
-    swap_memory_percent = TypedFloatField()
+    swap_memory_total: TypedFloatField = TypedFloatField()
+    swap_memory_used: TypedFloatField = TypedFloatField()
+    swap_memory_free: TypedFloatField = TypedFloatField()
+    swap_memory_percent: TypedFloatField = TypedFloatField()
 
     # Network
-    net_io_bytes_sent = TypedFloatField()
-    net_io_bytes_recv = TypedFloatField()
+    net_io_bytes_sent: TypedFloatField = TypedFloatField()
+    net_io_bytes_recv: TypedFloatField = TypedFloatField()
 
     # Ram
-    ram_usage_total = TypedFloatField(default=0)
-    ram_usage_used = TypedFloatField(default=0)
-    ram_usage_free = TypedFloatField(default=0)
-    ram_usage_percent = TypedFloatField(default=0)
+    ram_usage_total: TypedFloatField = TypedFloatField(default=0)
+    ram_usage_used: TypedFloatField = TypedFloatField(default=0)
+    ram_usage_free: TypedFloatField = TypedFloatField(default=0)
+    ram_usage_percent: TypedFloatField = TypedFloatField(default=0)
 
     # Gpu
-    gpu_percent = TypedFloatField(default=0)
-    gpu_temperature = TypedFloatField(default=0)
-    gpu_memory_total = TypedFloatField(default=0)
-    gpu_memory_used = TypedFloatField(default=0)
-    gpu_memory_free = TypedFloatField(default=0)
-    gpu_memory_percent = TypedFloatField(default=0)
+    gpu_percent: TypedFloatField = TypedFloatField(default=0)
+    gpu_temperature: TypedFloatField = TypedFloatField(default=0)
+    gpu_memory_total: TypedFloatField = TypedFloatField(default=0)
+    gpu_memory_used: TypedFloatField = TypedFloatField(default=0)
+    gpu_memory_free: TypedFloatField = TypedFloatField(default=0)
+    gpu_memory_percent: TypedFloatField = TypedFloatField(default=0)
 
-    data = NullableJSONField()
+    data: NullableJSONField = NullableJSONField()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -78,7 +78,7 @@ class Monitor(Model):
         monitor = Monitor()
 
         # CPU
-        monitor.cpu_count = psutil.cpu_count()
+        monitor.cpu_count = psutil.cpu_count() or 0
         monitor.cpu_percent = psutil.cpu_percent(interval=None)
 
         # All CPU

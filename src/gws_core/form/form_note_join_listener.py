@@ -51,7 +51,7 @@ def _form_blocks_to_join_state(
     rich_text = RichText(content)
     result: dict[str, bool] = {}
     for block in rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM):
-        data: RichTextBlockForm = block.get_data()
+        data: RichTextBlockForm = block.get_data(RichTextBlockForm)
         if data.form_id in result:
             result[data.form_id] = result[data.form_id] or data.is_owner
         else:

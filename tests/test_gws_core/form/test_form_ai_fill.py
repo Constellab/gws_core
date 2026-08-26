@@ -39,17 +39,22 @@ class TestFormAiFill(BaseTestCase):
 
     def test_fill_from_text_returns_complete_values_without_persisting(self):
         form = self._scalar_form()
-        values_before = Form.get_by_id(form.id).values
+        form_before = Form.get_by_id(form.id)
+        assert form_before is not None
+        values_before = form_before.values
         with patch(_GPT_TARGET, return_value=json.dumps({"name": "Alice", "mass": 1.5})):
             result = FormAiFillService.fill_values_from_text(
                 form.id, "set name to Alice and mass to 1.5", {}
             )
+        assert result.values is not None
         self.assertEqual(result.values["name"], "Alice")
         self.assertEqual(result.values["mass"], 1.5)
         self.assertIn("name", result.specs)
         # The form itself must not have been modified (still the create-time
         # defaults, which fill_values_from_text returns but never persists).
-        self.assertEqual(Form.get_by_id(form.id).values, values_before)
+        form_after = Form.get_by_id(form.id)
+        assert form_after is not None
+        self.assertEqual(form_after.values, values_before)
 
     def test_current_values_are_sent_to_the_ai(self):
         form = self._scalar_form()
@@ -73,6 +78,7 @@ class TestFormAiFill(BaseTestCase):
         fenced = "```json\n" + json.dumps({"name": "Alice"}) + "\n```"
         with patch(_GPT_TARGET, return_value=fenced):
             result = FormAiFillService.fill_values_from_text(form.id, "name Alice", {})
+        assert result.values is not None
         self.assertEqual(result.values["name"], "Alice")
 
     def test_compute_pipeline_runs(self):
@@ -80,6 +86,7 @@ class TestFormAiFill(BaseTestCase):
         ai_values = {"samples": [{"mass": 1.0, "volume": 0.5}]}
         with patch(_GPT_TARGET, return_value=json.dumps(ai_values)):
             result = FormAiFillService.fill_values_from_text(form.id, "one sample", {})
+        assert result.values is not None
         self.assertEqual(
             result.values["samples"][0]["density"], {"value": 2.0, "errors": None}
         )
@@ -90,6 +97,7 @@ class TestFormAiFill(BaseTestCase):
         ai_values = {"samples": [{"mass": 1.0, "volume": 0.5}]}
         with patch(_GPT_TARGET, return_value=json.dumps(ai_values)):
             result = FormAiFillService.fill_values_from_text(form.id, "one sample", {})
+        assert result.values is not None
         rows = result.values["samples"]
         self.assertEqual(len(rows), 1)
         self.assertIn("__item_id", rows[0])
@@ -103,12 +111,14 @@ class TestFormAiFill(BaseTestCase):
         with patch(_GPT_TARGET, return_value=json.dumps(ai_values)):
             result = FormAiFillService.fill_values_from_text(form.id, "...", {})
         # The evaluator wins.
+        assert result.values is not None
         self.assertEqual(result.values["total_mass"], {"value": 1.0, "errors": None})
 
     def test_unknown_key_from_ai_is_ignored(self):
         form = self._scalar_form()
         with patch(_GPT_TARGET, return_value=json.dumps({"name": "Alice", "bogus": 1})):
             result = FormAiFillService.fill_values_from_text(form.id, "...", {})
+        assert result.values is not None
         self.assertEqual(result.values["name"], "Alice")
         self.assertNotIn("bogus", result.values)
 

@@ -16,9 +16,9 @@ class TestAgent(BaseTestCase):
         )
 
         outputs = tester.run()
-        table: Table = outputs["target"]
+        table = outputs["target"]
 
-        self.assertTrue(isinstance(table, Table))
+        assert isinstance(table, Table)
 
         expected_table = Table(data.T)
         self.assertTrue(table.equals(expected_table))
@@ -51,9 +51,9 @@ targets = [df]
         )
 
         outputs = tester.run()
-        table: Table = outputs["target"]
+        table = outputs["target"]
 
-        self.assertTrue(isinstance(table, Table))
+        assert isinstance(table, Table)
 
         expected_table = Table(DataFrame({"col1": [1, 2], "col2": [0, 4]}))
         self.assertTrue(table.equals(expected_table))

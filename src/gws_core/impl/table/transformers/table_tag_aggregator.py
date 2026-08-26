@@ -12,7 +12,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Aggregate data along row tag keys",
 )
-class TableRowTagAggregator(Transformer):
+class TableRowTagAggregator(Transformer[Table]):
     """
     Aggregate row of a table by tag values.
     Provide a list of tag keys and a function to aggregate the rows.
@@ -49,7 +49,7 @@ class TableRowTagAggregator(Transformer):
     resource_type=Table,
     short_description="Group data along column tag keys",
 )
-class TableColumnTagAggregator(Transformer):
+class TableColumnTagAggregator(Transformer[Table]):
     """
     Aggregate column of a table by tag values.
     Provide a list of tag keys and a function to aggregate the columns.

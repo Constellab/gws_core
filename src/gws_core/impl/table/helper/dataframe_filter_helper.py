@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from pandas import DataFrame, Index, api
 from typing_extensions import NotRequired, TypedDict
@@ -57,7 +57,9 @@ class DataframeFilterHelper:
     ):
         filtered_dataframe = cls.filter_by_axis_names(data, axis, filters)
 
-        ax_index: Index = filtered_dataframe.index if axis == "row" else filtered_dataframe.columns
+        # filters is never empty, so filter_by_axis_names always returns a dataframe
+        checked_dataframe = cast(DataFrame, filtered_dataframe)
+        ax_index: Index = checked_dataframe.index if axis == "row" else checked_dataframe.columns
 
         # delete the filtered rows/columns from the data
         return data.drop(labels=ax_index, axis=0 if axis == "row" else 1)
@@ -87,10 +89,11 @@ class DataframeFilterHelper:
             ax_index: Index = data.index if axis == "row" else data.columns
 
             # if the index is only numeric value (default) we must convert values to int to compare
+            items: list[str] | list[int] = value
             if api.types.is_numeric_dtype(ax_index):
-                value = [int(i) for i in value]
+                items = [int(i) for i in value]
 
-            return data.filter(items=value, axis=ax)
+            return data.filter(items=items, axis=ax)
 
     @classmethod
     def get_filter_param_set(

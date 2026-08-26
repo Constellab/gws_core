@@ -77,7 +77,7 @@ class TestNoteFormReconciliation(BaseTestCase):
         block = RichTextBlock.from_data(
             RichTextBlockForm(form_id=form.id, is_owner=True)
         )
-        rich_text = RichText.create_rich_text_dto([block.to_json_dict()])
+        rich_text = RichText.create_rich_text_dto([block])
         # Mutate via the dispatcher contract — note content must accept
         # this through update_content; the validator allows existing
         # form_ids.

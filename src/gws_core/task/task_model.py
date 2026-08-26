@@ -1,5 +1,5 @@
 from traceback import format_exc
-from typing import Any
+from typing import TYPE_CHECKING, Any, cast
 
 from peewee import ModelSelect
 
@@ -38,6 +38,9 @@ from ..resource.resource_r_field import ResourceRField
 from ..task.task_io import TaskOutputs
 from .task import CheckBeforeTaskResult, Task
 from .task_runner import TaskRunner
+
+if TYPE_CHECKING:
+    from ..protocol.protocol_model import ProtocolModel
 
 
 class TaskModel(ProcessModel):
@@ -260,7 +263,7 @@ class TaskModel(ProcessModel):
             input_resource.scenario = self.scenario
             input_resource.task_model = self
 
-            parent = self.parent_protocol
+            parent = cast("ProtocolModel", self.parent_protocol)
             input_resource.protocol_model = parent
             input_resource.port_name = port_name
             input_resource.is_interface = parent.port_is_interface(self.instance_name, port_name)

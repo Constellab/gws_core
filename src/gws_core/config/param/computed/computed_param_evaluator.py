@@ -178,10 +178,11 @@ class ConfigSpecsEvaluator:
             raise ComputedParamEvaluationError(
                 f"Function not allowed: {cls._safe_name(err)}"
             ) from err
-        except InvalidExpression as err:
-            raise ComputedParamEvaluationError(f"Invalid expression: {err}") from err
+        # NumberTooHigh is a subclass of InvalidExpression, it must be caught first
         except NumberTooHigh as err:
             raise ComputedParamEvaluationError(f"Number too high: {err}") from err
+        except InvalidExpression as err:
+            raise ComputedParamEvaluationError(f"Invalid expression: {err}") from err
         except (TypeError, ValueError) as err:
             raise ComputedParamEvaluationError(str(err)) from err
 

@@ -1,5 +1,6 @@
 import importlib
 import importlib.metadata
+import importlib.util
 import pathlib
 import sys
 
@@ -49,6 +50,8 @@ class PackageHelper:
             path = pathlib.Path(file_path)
             module_name = StringHelper.slugify(path.stem, snakefy=True, to_lower=True)
         spec = importlib.util.spec_from_file_location(module_name, location=file_path)
+        if spec is None or spec.loader is None:
+            raise ValueError(f"The module '{module_name}' could not be loaded from '{file_path}'")
         module = importlib.util.module_from_spec(spec)
         sys.modules[module_name] = module
         spec.loader.exec_module(module)
@@ -61,6 +64,8 @@ class PackageHelper:
             return sys.modules[module_name]
 
         spec = importlib.util.find_spec(module_name, package=package)
+        if spec is None or spec.loader is None:
+            raise ValueError(f"The module '{module_name}' could not be found")
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
         sys.modules[module_name] = module

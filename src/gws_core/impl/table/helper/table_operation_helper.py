@@ -1,8 +1,9 @@
 from enum import Enum
 from re import search, split, sub
+from typing import cast
 
 from numpy import NaN
-from pandas import DataFrame, option_context
+from pandas import DataFrame, Series, option_context
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
@@ -39,7 +40,7 @@ class TableOperationHelper:
             raise Exception("The operations must be a list")
 
         clean_operations: list[str] = []
-        column_names = source.column_names
+        column_names = source.column_names or []
         for operation in operations:
             if "=" in operation:
                 clean_operations.append(operation)
@@ -68,13 +69,13 @@ class TableOperationHelper:
             index = 0
             for column in eval_dataframe:
                 if not result_table.column_exists(column):
-                    result_table.add_column(column, eval_dataframe[column], index)
+                    result_table.add_column(column, cast(Series, eval_dataframe[column]), index)
                     index += 1
         else:
             result_table = Table()
             for column in eval_dataframe:
                 if column not in dataframe:
-                    result_table.add_column(column, eval_dataframe[column])
+                    result_table.add_column(column, cast(Series, eval_dataframe[column]))
 
             # set the row names as the table was created empty
             result_table.set_all_row_names(source.row_names)
@@ -177,7 +178,7 @@ class TableOperationHelper:
                 continue
 
             # check if the column name exist and if not, replace it with '0'
-            if column_name not in table.column_names:
+            if column_name not in (table.column_names or []):
                 return True
 
         return False
@@ -199,7 +200,7 @@ class TableOperationHelper:
                 continue
 
             # check if the column name exist and if not, replace it with '0'
-            if column_name not in table.column_names:
+            if column_name not in (table.column_names or []):
                 # replace the column name with '0' using \b to word delimiter
                 clean_operation = sub(rf"\b{column_name}\b", "0", clean_operation)
 
@@ -208,7 +209,7 @@ class TableOperationHelper:
 
         # Check for division by zero patterns
         if TableOperationHelper._division_by_literal_zero(clean_operation):
-            return float("inf")
+            return str(float("inf"))
 
         return clean_operation
 

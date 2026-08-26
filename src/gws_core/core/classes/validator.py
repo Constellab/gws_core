@@ -160,8 +160,8 @@ class NumericValidator(Validator):
     def __init__(
         self,
         type_: type = float,
-        min_value: float = -math.inf,
-        max_value: float = math.inf,
+        min_value: float | None = -math.inf,
+        max_value: float | None = math.inf,
         include_min: bool = False,
         include_max: bool = False,
         allowed_values: list | None = None,

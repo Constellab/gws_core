@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import cast
 
 from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_specs import ConfigSpecs
@@ -93,7 +94,9 @@ def _check_task_specs(task_class: type[Task]) -> list[TypingErrorDTO] | None:
                 f"{task_class.input_specs.invalid_reason}",
             )
             definition_errors.append(
-                TypingErrorDTO(source="input", message=task_class.input_specs.invalid_reason)
+                TypingErrorDTO(
+                    source="input", message=cast(str, task_class.input_specs.invalid_reason)
+                )
             )
         if not task_class.output_specs.is_valid:
             BrickLogService.log_brick_error(
@@ -102,7 +105,9 @@ def _check_task_specs(task_class: type[Task]) -> list[TypingErrorDTO] | None:
                 f"{task_class.output_specs.invalid_reason}",
             )
             definition_errors.append(
-                TypingErrorDTO(source="output", message=task_class.output_specs.invalid_reason)
+                TypingErrorDTO(
+                    source="output", message=cast(str, task_class.output_specs.invalid_reason)
+                )
             )
 
         # check the config specs
@@ -126,7 +131,7 @@ def _check_task_specs(task_class: type[Task]) -> list[TypingErrorDTO] | None:
             )
             definition_errors.append(
                 TypingErrorDTO(
-                    source="config", message=task_class.config_specs.invalid_reason
+                    source="config", message=cast(str, task_class.config_specs.invalid_reason)
                 )
             )
         else:

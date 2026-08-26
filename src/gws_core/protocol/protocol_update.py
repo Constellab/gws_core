@@ -20,7 +20,7 @@ class ProtocolUpdate:
     ioface: IOface | None
     protocol: ProtocolModel
     # set of sub protocols that have been updated
-    sub_protocols: set[ProtocolModel] | None
+    sub_protocols: set[ProtocolModel]
 
     protocol_updated: bool
 

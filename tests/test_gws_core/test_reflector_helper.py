@@ -4,6 +4,7 @@ Tests one method per test function, with multiple docstring formats tested for e
 """
 
 import unittest
+from typing import cast
 
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.core.utils.reflector_types import (
@@ -215,7 +216,9 @@ class TestReflectorHelper(unittest.TestCase):
         """Test set_object_has_metadata method."""
 
         class MetaObj:
-            pass
+            # declared only for the type checker: the attribute is created at runtime by
+            # set_object_has_metadata, an annotation alone sets nothing on the class
+            new_meta: str
 
         obj = MetaObj()
         ReflectorHelper.set_object_has_metadata(obj, "new_meta", "new_value")
@@ -249,6 +252,7 @@ class TestReflectorHelper(unittest.TestCase):
         method_doc = ReflectorHelper.get_func_doc(RestStyleClass.rest_method, RestStyleClass)
 
         self.assertIsInstance(method_doc, MethodDoc)
+        assert method_doc is not None
         self.assertEqual(method_doc.name, "rest_method")
         self.assertEqual(method_doc.method_type, MethodDocType.BASICMETHOD)
         self.assertIsNotNone(method_doc.doc)
@@ -259,11 +263,11 @@ class TestReflectorHelper(unittest.TestCase):
 
         # Test docstring parsing - ReST format
         arg_desc = method_doc.get_arg_description("name")
-        self.assertIsNotNone(arg_desc)
+        assert arg_desc is not None
         self.assertIn("name", arg_desc.lower())
 
         return_desc = method_doc.get_return_description()
-        self.assertIsNotNone(return_desc)
+        assert return_desc is not None
         self.assertIn("result", return_desc.lower())
 
     def test_get_func_doc_google_style(self):
@@ -271,6 +275,7 @@ class TestReflectorHelper(unittest.TestCase):
         method_doc = ReflectorHelper.get_func_doc(GoogleStyleClass.google_method, GoogleStyleClass)
 
         self.assertIsInstance(method_doc, MethodDoc)
+        assert method_doc is not None
         self.assertEqual(method_doc.name, "google_method")
         self.assertIsNotNone(method_doc.doc)
         self.assertEqual(len(method_doc.args), 2)
@@ -279,11 +284,11 @@ class TestReflectorHelper(unittest.TestCase):
 
         # Test docstring parsing - Google format
         arg_desc = method_doc.get_arg_description("items")
-        self.assertIsNotNone(arg_desc)
+        assert arg_desc is not None
         self.assertIn("items", arg_desc.lower())
 
         return_desc = method_doc.get_return_description()
-        self.assertIsNotNone(return_desc)
+        assert return_desc is not None
         self.assertIn("mapping", return_desc.lower())
 
     def test_get_func_doc_numpy_style(self):
@@ -291,6 +296,7 @@ class TestReflectorHelper(unittest.TestCase):
         method_doc = ReflectorHelper.get_func_doc(NumpyStyleClass.numpy_method, NumpyStyleClass)
 
         self.assertIsInstance(method_doc, MethodDoc)
+        assert method_doc is not None
         self.assertEqual(method_doc.name, "numpy_method")
         self.assertIsNotNone(method_doc.doc)
         self.assertEqual(len(method_doc.args), 2)
@@ -299,11 +305,11 @@ class TestReflectorHelper(unittest.TestCase):
 
         # Test docstring parsing - NumPy format
         arg_desc = method_doc.get_arg_description("matrix")
-        self.assertIsNotNone(arg_desc)
+        assert arg_desc is not None
         self.assertIn("matrix", arg_desc.lower())
 
         return_desc = method_doc.get_return_description()
-        self.assertIsNotNone(return_desc)
+        assert return_desc is not None
         self.assertIn("matrix", return_desc.lower())
 
     def test_get_func_doc_with_method_types(self):
@@ -312,12 +318,14 @@ class TestReflectorHelper(unittest.TestCase):
         classmethod_doc = ReflectorHelper.get_func_doc(
             RestStyleClass.class_method_example, RestStyleClass
         )
+        assert classmethod_doc is not None
         self.assertEqual(classmethod_doc.method_type, MethodDocType.CLASSMETHOD)
 
         # Test staticmethod
         staticmethod_doc = ReflectorHelper.get_func_doc(
             RestStyleClass.static_method_example, RestStyleClass
         )
+        assert staticmethod_doc is not None
         self.assertEqual(staticmethod_doc.method_type, MethodDocType.STATICMETHOD)
 
     def test_get_all_public_args(self):
@@ -325,6 +333,7 @@ class TestReflectorHelper(unittest.TestCase):
         variables = ReflectorHelper.get_all_public_args(ReflectorHelperClass)
 
         self.assertIsInstance(variables, dict)
+        assert variables is not None
         self.assertIn("property_str", variables)
         self.assertIn("property_int", variables)
         self.assertNotIn("_private_property", variables)
@@ -332,7 +341,7 @@ class TestReflectorHelper(unittest.TestCase):
         self.assertEqual(variables["property_int"], "int")
 
         # Test with non-class
-        result = ReflectorHelper.get_all_public_args("not a class")
+        result = ReflectorHelper.get_all_public_args(cast(type, "not a class"))
         self.assertIsNone(result)
 
     def test_get_public_args(self):
@@ -380,14 +389,16 @@ class TestReflectorHelper(unittest.TestCase):
         class_doc = ReflectorHelper.get_class_docs(RestStyleClass)
 
         self.assertIsInstance(class_doc, ClassicClassDocDTO)
+        assert class_doc is not None
         self.assertEqual(class_doc.name, "RestStyleClass")
         self.assertIsNotNone(class_doc.doc)
         self.assertIsInstance(class_doc.methods, list)
+        assert class_doc.methods is not None
         self.assertTrue(len(class_doc.methods) > 0)
         self.assertIsInstance(class_doc.variables, dict)
 
         # Test with non-class
-        result = ReflectorHelper.get_class_docs("not a class")
+        result = ReflectorHelper.get_class_docs(cast(type, "not a class"))
         self.assertIsNone(result)
 
     def test_get_cleaned_doc_string(self):
@@ -404,7 +415,7 @@ class TestReflectorHelper(unittest.TestCase):
 
         cleaned_doc = ReflectorHelper.get_cleaned_doc_string(DocClass)
 
-        self.assertIsNotNone(cleaned_doc)
+        assert cleaned_doc is not None
         self.assertIn("Test class documentation", cleaned_doc)
         # Check that # header is converted to ## header
         self.assertIn("## This is a header", cleaned_doc)

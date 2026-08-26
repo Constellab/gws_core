@@ -1,5 +1,4 @@
-from fastapi import Depends, Request
-from fastapi.params import Query
+from fastapi import Depends, Query, Request
 from fastapi.responses import Response
 
 from gws_core.core.utils.response_helper import ResponseHelper
@@ -253,7 +252,7 @@ async def _upload_object(request: Request, key: str, service: AbstractS3Service)
     return Response(status_code=200, headers=response_headers)
 
 
-def _extract_x_amz_meta_mtime(request: Request) -> float:
+def _extract_x_amz_meta_mtime(request: Request) -> float | None:
     """Extract x-amz-meta-mtime header as a float."""
     mtime_header = request.headers.get("x-amz-meta-mtime")
     if mtime_header:

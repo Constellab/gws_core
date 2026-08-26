@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     ProcessFactory,
@@ -235,7 +237,9 @@ class TestProcessFactory(BaseTestCase):
 
         # Verify the recreated model has the dynamic param with correct value
         self.assertIsInstance(recreated_model, TaskModel)
-        dynamic_param: DynamicParam = recreated_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        dynamic_param = cast(
+            DynamicParam, recreated_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        )
         self.assertIsInstance(dynamic_param, DynamicParam)
         self.assertTrue(dynamic_param.specs.has_spec("my_int"))
         self.assertEqual(recreated_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)["my_int"], 10)

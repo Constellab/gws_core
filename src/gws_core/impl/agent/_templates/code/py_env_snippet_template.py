@@ -1,3 +1,4 @@
+# pyright: reportUndefinedVariable=false
 # This is a snippet template for a Python agent.
 import pandas
 

@@ -1,5 +1,6 @@
 import os
 from tempfile import SpooledTemporaryFile
+from typing import BinaryIO, cast
 
 from fastapi import UploadFile
 from gws_core import BaseTestCase, File, Folder, FsNodeService, ResourceTyping, resource_decorator
@@ -16,7 +17,7 @@ class SubFileService(File):
 # test_file_service
 class TestFileService(BaseTestCase):
     def test_get_file_types(self):
-        file_types: list[ResourceTyping] = FsNodeService.get_file_types()
+        file_types: list[FileTyping] = FsNodeService.get_file_types()
 
         # Check that there is at least 2 files type, File and SubFileService
         self.assertTrue(len(file_types) >= 2)  # noqa: PLR2004
@@ -24,7 +25,7 @@ class TestFileService(BaseTestCase):
         # Check that the File and SubFileService type exists
         self.assertIsNotNone(next(filter(lambda file: File == file.get_type(), file_types), None))
 
-        sub_file_type: FileTyping = next(
+        sub_file_type = next(
             filter(lambda file: SubFileService == file.get_type(), file_types), None
         )
         self.assertIsNotNone(sub_file_type)
@@ -40,7 +41,7 @@ class TestFileService(BaseTestCase):
         self.assertIsNotNone(next(filter(lambda file: Folder == file.get_type(), file_types), None))
 
     def test_upload_download_file(self):
-        upload_file: UploadFile = None
+        upload_file: UploadFile | None = None
 
         try:
             upload_file = self._create_upload_file("test.txt", "test")
@@ -70,6 +71,7 @@ class TestFileService(BaseTestCase):
             # Upload the folder
             folder_model = FsNodeService.upload_folder(Folder.get_typing_name(), uploaded_files)
 
+            assert folder_model.fs_node_model is not None
             folder_model_path = folder_model.fs_node_model.path
             self.assertEqual(folder_model.resource_typing_name, Folder.get_typing_name())
             self.assertTrue(FileHelper.is_dir(folder_model_path))
@@ -110,4 +112,4 @@ class TestFileService(BaseTestCase):
 
         # You can now work with spooled_file, which contains the content of the original file
         spooled_file.seek(0)  # Reset the file pointer to the beginning
-        return UploadFile(file=spooled_file, filename=file_name)
+        return UploadFile(file=cast(BinaryIO, spooled_file), filename=file_name)

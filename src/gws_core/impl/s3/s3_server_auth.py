@@ -1,4 +1,6 @@
 
+from typing import cast
+
 import botocore.auth
 import botocore.credentials
 from botocore.awsrequest import AWSRequest
@@ -73,7 +75,7 @@ class S3ServerAuth:
         if isinstance(s3_credentials, CredentialsDataS3LabServer):
             return LocalS3ServerService(s3_credentials.bucket, s3_credentials.bucket_local_path)
         elif isinstance(s3_credentials, CredentialsDataS3):
-            return DataHubS3ServerService(s3_credentials.bucket)
+            return DataHubS3ServerService(cast(str, s3_credentials.bucket))
         else:
             raise ForbiddenException("Access denied")
 
@@ -103,7 +105,9 @@ class S3ServerAuth:
         """Build the signature for the request to check if it is valid"""
         # Create a botocore.auth.HmacV1 instance
         # Create SigV4Auth instance
-        credentials = botocore.credentials.Credentials(header.access_key_id, secret_key)
+        credentials = botocore.credentials.Credentials(
+            cast(str, header.access_key_id), secret_key
+        )
         auth = botocore.auth.SigV4Auth(credentials, header.service_name, header.region_name)
 
         # Create a simulated request with the headers that are included in the signature

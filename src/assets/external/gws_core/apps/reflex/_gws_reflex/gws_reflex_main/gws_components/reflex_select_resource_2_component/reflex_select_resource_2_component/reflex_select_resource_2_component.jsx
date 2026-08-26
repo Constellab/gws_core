@@ -1,0 +1,1 @@
+/lab/user/bricks/gws_core/src/gws_core/apps/reflex/_gws_reflex/gws_reflex_main/gws_components/reflex_select_resource_2_component/reflex_select_resource_2_component.jsx

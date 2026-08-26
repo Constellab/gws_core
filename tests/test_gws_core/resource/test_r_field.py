@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     BoolRField,
@@ -157,11 +159,12 @@ class TestRField(BaseTestCase):
         resource_model = ResourceModel.save_from_resource(
             Robot.empty(), origin=ResourceOrigin.UPLOADED
         )
-        robot: Robot = resource_model.get_resource()
+        robot = cast(Robot, resource_model.get_resource())
 
         r_field = ResourceRField()
         resource_serialized = r_field.serialize(robot)
-        resource_deserilized: Robot = r_field.deserialize(resource_serialized)
+        assert resource_serialized is not None
+        resource_deserilized = cast(Robot, r_field.deserialize(resource_serialized))
 
         self.assertEqual(robot.get_model_id(), resource_deserilized.get_model_id())
         self.assertEqual(robot.age, resource_deserilized.age)

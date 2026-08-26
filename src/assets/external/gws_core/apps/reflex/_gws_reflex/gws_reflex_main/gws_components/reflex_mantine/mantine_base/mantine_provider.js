@@ -1,0 +1,1 @@
+/lab/user/bricks/gws_core/src/gws_core/apps/reflex/_gws_reflex/gws_reflex_main/gws_components/reflex_mantine/mantine_provider.js

@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from typing import cast
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
@@ -46,7 +47,8 @@ class ProtocolGraphFactory:
         for key, process in protocol.processes.items():
             if isinstance(process, ProtocolModel):
                 self._create_protocol_model_from_graph_recur(
-                    protocol=process, graph=graph.nodes[key].graph
+                    protocol=process,
+                    graph=cast(ProtocolGraphConfigDTO, graph.nodes[key].graph),
                 )
 
         # Init connectors afterward because its needs the child to init correctly
@@ -138,7 +140,7 @@ class ProtocolGraphFactoryFromConfig(ProtocolGraphFactory):
         )
 
         return self._create_protocol_model_from_graph_recur(
-            protocol, self.protocol_config_dto.graph
+            protocol, cast(ProtocolGraphConfigDTO, self.protocol_config_dto.graph)
         )
 
     def instantiate_process(self, process_dto: ProcessConfigDTO) -> ProcessModel:

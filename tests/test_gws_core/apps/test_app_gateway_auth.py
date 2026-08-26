@@ -131,6 +131,7 @@ class TestAppGatewayAuth(BaseTestCase):
 
         self.assertEqual(result.user_id, user.id)
         self.assertIsNotNone(result.renewed_jwt)
+        assert result.renewed_jwt is not None
         # the replacement is a usable app token for the same user and app
         self.assertEqual(JWTService.check_app_access_token(result.renewed_jwt, app_id), user.id)
 

@@ -12,7 +12,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Operations on columns for a table",
 )
-class TableColumnOperations(Transformer):
+class TableColumnOperations(Transformer[Table]):
     """
 
     This task allows you to do mathematical operation on a Table column.

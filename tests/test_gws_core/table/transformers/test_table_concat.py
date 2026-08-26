@@ -4,7 +4,7 @@ from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.test.base_test_case import BaseTestCase
 from numpy import NaN
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table_concat
@@ -31,7 +31,7 @@ class TestTableConcat(TestCase):
                 "F3": [NaN, NaN, 9.0, 8.0],
                 "F4": [NaN, NaN, "n1", "n2"],
             },
-            index=["0", "1", "0_1", "1_1"],
+            index=Index(["0", "1", "0_1", "1_1"]),
         )
         expected_row_tags = [{"id": "1"}, {"id": "2"}, {"id": "3"}, {"id": "4"}]
         self.assertTrue(DataFrame.equals(result.get_data(), expected_df))
@@ -58,10 +58,10 @@ class TestTableConcat(TestCase):
         BaseTestCase.assert_json(result.get_column_tags(), expected_column_tags)
 
     def test_table_column_concat_helper(self):
-        df_1: DataFrame = DataFrame({"1": [1, 2], "2": ["A2", "B2"]}, index=["A", "B"])
+        df_1: DataFrame = DataFrame({"1": [1, 2], "2": ["A2", "B2"]}, index=Index(["A", "B"]))
         table_1 = Table(df_1)
 
-        df_2: DataFrame = DataFrame({"3": ["A3", "C3"], "4": ["A4", "C4"]}, index=["A", "C"])
+        df_2: DataFrame = DataFrame({"3": ["A3", "C3"], "4": ["A4", "C4"]}, index=Index(["A", "C"]))
         table_2 = Table(df_2)
 
         result: Table = TableConcatHelper.concat_table_columns(
@@ -75,7 +75,7 @@ class TestTableConcat(TestCase):
                 "3": ["A3", NaN, "C3"],
                 "4": ["A4", NaN, "C4"],
             },
-            index=["A", "B", "C"],
+            index=Index(["A", "B", "C"]),
         )
 
         self.assertTrue(DataFrame.equals(result.get_data(), expected_df))

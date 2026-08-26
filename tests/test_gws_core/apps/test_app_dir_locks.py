@@ -1,12 +1,14 @@
 import os
 import threading
 import time
+from typing import cast
 from unittest import TestCase
 from unittest.mock import MagicMock
 
 from gws_core.apps.app_dir_locks import AppDirLocks
 from gws_core.apps.reflex.reflex_process import ReflexProcess
 from gws_core.core.utils.settings import Settings
+from gws_core.impl.shell.shell_proxy import ShellProxy
 
 
 # test_app_dir_locks
@@ -52,7 +54,7 @@ class TestAppDirLocks(TestCase):
 
         def build():
             try:
-                result = process._build_frontend(None, {}, app)
+                result = process._build_frontend(cast(ShellProxy, None), {}, app)
                 if result != "/fake/build/path":
                     errors.append(Exception(f"unexpected result {result}"))
             except Exception as e:

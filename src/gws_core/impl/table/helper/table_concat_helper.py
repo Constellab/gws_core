@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 from numpy import NaN
 from pandas import DataFrame, concat, isna
@@ -58,7 +58,7 @@ class TableConcatHelper:
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
                 temp_df = concat([concat_df, table.get_data()])
-                row_tags = row_tags + table.get_row_tags()
+                row_tags = cast(list[dict], row_tags) + table.get_row_tags()
 
                 if column_tags_option == "merge from first table":
                     current_table = Table(concat_df, column_tags=column_tags)
@@ -66,8 +66,12 @@ class TableConcatHelper:
 
                 concat_df = temp_df
 
+        # the tables list is never empty, so concat_df was set in the loop
+        concat_df = cast(DataFrame, concat_df)
+
         # add empty tag for each new column
         if column_tags_option == "keep first":
+            column_tags = cast(list[dict], column_tags)
             tag_count = len(column_tags)
             dataframe_column_count = len(concat_df.columns)
             while tag_count < dataframe_column_count:

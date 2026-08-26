@@ -1,5 +1,5 @@
 import json
-from typing import Literal
+from typing import Literal, cast
 
 from fastapi.responses import JSONResponse
 
@@ -47,4 +47,5 @@ class ExceptionResponse(JSONResponse):
         )
 
     def get_json_body(self) -> dict:
-        return json.loads(self.body.decode("utf8").replace("'", '"'))
+        body = cast(bytes, self.body)
+        return json.loads(body.decode("utf8").replace("'", '"'))

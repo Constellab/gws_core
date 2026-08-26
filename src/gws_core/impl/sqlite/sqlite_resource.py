@@ -51,11 +51,11 @@ class SqliteResource(File):
         return table_view
 
     @view(view_type=View, hide=True)
-    def view_as_json(self, params: ConfigParams) -> View:
+    def view_as_json(self, params: ConfigParams) -> View | None:
         pass
 
     @view(view_type=View, hide=True)
-    def view_content_as_str(self, params: ConfigParams) -> View:
+    def view_content_as_str(self, params: ConfigParams) -> View | None:
         pass
 
     @view(

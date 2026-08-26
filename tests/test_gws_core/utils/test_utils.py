@@ -13,7 +13,8 @@ class SubString(str):
 # test_utils
 class TestUtils(TestCase):
     def test_get_model_type(self):
-        model_type: type[Model] = Utils.get_model_type(Model.full_classname())
+        model_type = Utils.get_model_type(Model.full_classname())
+        assert model_type is not None
 
         self.assertEqual(model_type, Model)
 

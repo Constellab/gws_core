@@ -51,8 +51,8 @@ class ConfigMapping(TypedDict):
 
 
 class ProcessSpec:
-    instance_name: str | None = None
-    process_type: type[Process] | None = None
+    instance_name: str
+    process_type: type[Process]
 
     _config: ConfigParamsDict
 

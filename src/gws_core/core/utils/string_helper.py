@@ -2,7 +2,8 @@ import random
 import re
 import string
 import uuid
-from typing import Any
+from enum import Enum
+from typing import Any, cast
 
 from slugify import slugify as _slugify
 from unidecode import unidecode
@@ -112,7 +113,7 @@ class StringHelper:
         return enum_class(str_value)
 
     @staticmethod
-    def get_enum_values(enum_class: type) -> list:
+    def get_enum_values(enum_class: type[Enum]) -> list:
         """Get all the values of an enum"""
         return [e.value for e in enum_class]
 
@@ -139,4 +140,4 @@ class StringHelper:
         if str_ is None:
             return None
 
-        return unidecode(str_)
+        return cast(str, unidecode(str_))

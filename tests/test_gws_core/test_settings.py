@@ -33,6 +33,7 @@ class TestSettings(TestCase):
         settings = Settings.get_instance()
 
         pandas = settings.get_pip_package("pandas")
+        assert pandas is not None
         self.assertEqual(pandas.name, "pandas")
         self.assertTrue(pandas.version and pandas.version != "")
 

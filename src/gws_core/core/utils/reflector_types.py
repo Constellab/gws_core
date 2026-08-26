@@ -72,11 +72,11 @@ class MethodDoc(BaseModelDTO):
             pass
         return None
 
-    def get_doc_without_args(self) -> str:
+    def get_doc_without_args(self) -> str | None:
         """Method to extract the description of the method without the arguments nor the return value
 
         :return: description of the method
-        :rtype: str
+        :rtype: Optional[str]
         """
         if not self.doc:
             return None

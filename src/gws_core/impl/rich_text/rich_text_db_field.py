@@ -15,14 +15,14 @@ class RichTextDbField(TextField):
     JSON_FIELD_TEXT_TYPE = "LONGTEXT"
     field_type = JSON_FIELD_TEXT_TYPE
 
-    def db_value(self, value: RichTextDTO) -> str:
+    def db_value(self, value: RichTextDTO | None) -> str | None:
         if value is not None:
             if not isinstance(value, RichTextDTO):
                 raise ValueError(f"Value must be a RichTextDTO instance, got {type(value)}")
             return value.to_json_str()
         return None
 
-    def python_value(self, value: str) -> RichTextDTO:
+    def python_value(self, value: str | None) -> RichTextDTO | None:
         if value is not None and value != "":
             json_value = loads(value)
 

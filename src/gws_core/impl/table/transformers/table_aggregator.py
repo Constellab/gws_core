@@ -12,7 +12,7 @@ from ..helper.dataframe_aggregator_helper import DataframeAggregatorHelper
     resource_type=Table,
     short_description="Aggregate the table along the column axis",
 )
-class TableColumnAggregator(Transformer):
+class TableColumnAggregator(Transformer[Table]):
     """
     Transformer to aggregate the numerical values of table along the column axis.
 
@@ -51,7 +51,7 @@ class TableColumnAggregator(Transformer):
     resource_type=Table,
     short_description="Aggregate the table along the row axis",
 )
-class TableRowAggregator(Transformer):
+class TableRowAggregator(Transformer[Table]):
     """
     Transformer to aggregate the numerical values of table along the row axis.
 

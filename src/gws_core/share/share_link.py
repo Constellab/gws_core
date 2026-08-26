@@ -23,15 +23,15 @@ from gws_core.user.unique_code_service import (
 
 
 class ShareLink(ModelWithUser):
-    entity_id = TypedCharField(max_length=36)
+    entity_id: TypedCharField = TypedCharField(max_length=36)
 
-    entity_type = TypedEnumField(choices=ShareLinkEntityType)
+    entity_type: TypedEnumField[ShareLinkEntityType] = TypedEnumField(choices=ShareLinkEntityType)
 
-    valid_until = NullableDateTimeUTC()
+    valid_until: NullableDateTimeUTC = NullableDateTimeUTC()
 
-    token = TypedCharField(max_length=100, unique=True)
+    token: TypedCharField = TypedCharField(max_length=100, unique=True)
 
-    link_type = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
+    link_type: TypedEnumField[ShareLinkType] = TypedEnumField(choices=ShareLinkType, default=ShareLinkType.PUBLIC)
 
     # Lifetime of a single-use space access code (was ShareLinkService.SPACE_ACCESS_DURATION_SECONDS).
     SPACE_ACCESS_DURATION_SECONDS = 60 * 60  # 1 hour

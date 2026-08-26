@@ -1035,7 +1035,8 @@ class TestRoutes(_PluginTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            json.loads(response.body), PluginGenerator.get_generated().marketplace_manifest
+            json.loads(bytes(response.body)),
+            PluginGenerator.get_generated().marketplace_manifest,
         )
 
     def test_the_archive_route_serves_the_zip_under_its_versioned_name(self):
@@ -1171,7 +1172,7 @@ class TestRoutes(_PluginTestCase):
         ]:
             self.assertEqual(response.status_code, 200)
             self.assertEqual(response.media_type, "text/plain; charset=utf-8")
-            self.assertTrue(response.body.decode("utf-8").startswith(marker))
+            self.assertTrue(bytes(response.body).decode("utf-8").startswith(marker))
 
     def test_the_install_scripts_name_the_version_they_install(self):
         """Which is why they are not cached: re-downloading one is how a developer moves to
@@ -1179,7 +1180,7 @@ class TestRoutes(_PluginTestCase):
         generated = PluginGenerator.get_generated()
 
         for response in [get_dev_install_script_posix(), get_dev_install_script_windows()]:
-            self.assertIn(generated.version, response.body.decode("utf-8"))
+            self.assertIn(generated.version, bytes(response.body).decode("utf-8"))
             self.assertEqual(response.headers["Cache-Control"], "no-cache")
 
     def test_the_script_names_are_not_swallowed_by_the_archive_route(self):

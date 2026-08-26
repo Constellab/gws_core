@@ -22,7 +22,7 @@ class DataProvider:
     def get_new_empty_file(cls) -> File:
         temp_dir = Settings.make_temp_dir()
         file_path = FileHelper.create_empty_file_if_not_exist(os.path.join(temp_dir, "empty.txt"))
-        return File(file_path)
+        return File(str(file_path))
 
     @classmethod
     def get_iris_table(cls, keep_variety: bool = True) -> Table:

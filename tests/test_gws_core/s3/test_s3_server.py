@@ -42,7 +42,8 @@ class TestS3Server(BaseTestCase):
     # Per-worker S3 port so parallel runs don't fight for the same socket.
     # Offset from 4000 to avoid collision with uvicorn on 300N (same worker).
     _worker = os.environ.get("PYTEST_XDIST_WORKER") or os.environ.get("GWS_TEST_WORKER_ID", "")
-    _worker_num = int(re.search(r"(\d+)$", _worker).group(1)) if re.search(r"(\d+)$", _worker) else 0
+    _worker_match = re.search(r"(\d+)$", _worker)
+    _worker_num = int(_worker_match.group(1)) if _worker_match else 0
     S3_PORT = 4000 + _worker_num
     S3_BASE_URL = f"http://localhost:{S3_PORT}"
 
@@ -118,11 +119,14 @@ class TestS3Server(BaseTestCase):
         self.assertEqual(len(resources), 1)
         self.assertEqual(resources[0].origin, ResourceOrigin.S3_FOLDER_STORAGE)
         self.assertEqual(resources[0].name, "test.py")
+        assert resources[0].folder is not None
         self.assertEqual(resources[0].folder.id, folder_id)
 
         # test list objects
         result = s3_client.list_objects_v2(Bucket=DataHubS3ServerService.FOLDERS_BUCKET_NAME)
+        assert "Contents" in result
         self.assertEqual(len(result["Contents"]), 1)
+        assert "Key" in result["Contents"][0]
         self.assertEqual(result["Contents"][0]["Key"], key)
 
         # test list with wrong prefix
@@ -166,7 +170,9 @@ class TestS3Server(BaseTestCase):
 
         # test list objects
         result = s3_client.list_objects_v2(Bucket=self.BASIC_BUCKET_NAME)
+        assert "Contents" in result
         self.assertEqual(len(result["Contents"]), 1)
+        assert "Key" in result["Contents"][0]
         self.assertEqual(result["Contents"][0]["Key"], key)
 
         # test list with wrong prefix
@@ -186,7 +192,9 @@ class TestS3Server(BaseTestCase):
             self.CURRENT_FILE_ABSPATH, Bucket=self.BASIC_BUCKET_NAME, Key="zzz.py"
         )
         result = s3_client.list_objects_v2(Bucket=self.BASIC_BUCKET_NAME, MaxKeys=1)
+        assert "Contents" in result
         self.assertEqual(len(result["Contents"]), 1)
+        assert "Key" in result["Contents"][0]
         self.assertEqual(result["Contents"][0]["Key"], "test.py")
         self.assertTrue("NextContinuationToken" in result)
         result = s3_client.list_objects_v2(
@@ -194,7 +202,9 @@ class TestS3Server(BaseTestCase):
             MaxKeys=1,
             ContinuationToken=result["NextContinuationToken"],
         )
+        assert "Contents" in result
         self.assertEqual(len(result["Contents"]), 1)
+        assert "Key" in result["Contents"][0]
         self.assertEqual(result["Contents"][0]["Key"], "zzz.py")
 
         # test delete file

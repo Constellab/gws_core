@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
@@ -53,7 +55,7 @@ def update_title(
 def update_content(
     doc_id: str, content: RichTextDTO, _=Depends(AuthorizationService.check_user_access_token)
 ) -> RichTextDTO:
-    return NoteTemplateService.update_content(doc_id, content).content
+    return cast(RichTextDTO, NoteTemplateService.update_content(doc_id, content).content)
 
 
 @core_app.post(
@@ -96,7 +98,7 @@ def get_by_id(id_: str, _=Depends(AuthorizationService.check_user_access_token))
     response_model=None,
 )
 def get_content(id_: str, _=Depends(AuthorizationService.check_user_access_token)) -> RichTextDTO:
-    return NoteTemplateService.get_by_id_and_check(id_).content
+    return cast(RichTextDTO, NoteTemplateService.get_by_id_and_check(id_).content)
 
 
 @core_app.post(

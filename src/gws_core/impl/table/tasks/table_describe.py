@@ -55,7 +55,7 @@ class TableDescribe(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        dataframe = pd.DataFrame(inputs["input_table"].get_data())
+        dataframe = pd.DataFrame(inputs.get_resource("input_table", Table).get_data())
 
         tiles = {
             "quartiles": [0.25, 0.5, 0.75],

@@ -3,7 +3,8 @@ from typing import Any, Literal
 
 import streamlit as st
 from pandas import DataFrame
-from streamlit.elements.arrow import ColumnConfigMappingInput, SelectionMode
+from streamlit.elements.arrow import SelectionMode
+from streamlit.elements.lib.column_config_utils import ColumnConfigMappingInput
 
 
 def _select_by_coords(

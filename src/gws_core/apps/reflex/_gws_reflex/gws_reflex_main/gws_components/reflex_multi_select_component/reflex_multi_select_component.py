@@ -12,6 +12,7 @@ lives in :mod:`..reflex_mantine.mantine_base`; this module only declares the
 forwarded through ``props``.
 """
 
+from collections.abc import Sequence
 from typing import Any
 
 import reflex as rx
@@ -73,7 +74,7 @@ class MultiSelectComponent(MantineBaseComponent):
 
 def multi_select_component(
     *,
-    data: Var[list[str | dict]] | list[str | dict],
+    data: Var[list[str | dict]] | Sequence[str | dict],
     value: Var[list[str]] | list[str],
     on_change: rx.EventHandler | Any | None = None,
     label: str | None = None,

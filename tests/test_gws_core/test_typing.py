@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     File,
@@ -74,29 +76,33 @@ class TestTyping(BaseTestCase):
         """Test a get from a type and test convertion to json of a type that
         has mulitple spec and an optional spec
         """
-        eat_type: TaskTyping = TaskTyping.get_by_model_type(RobotEat)
+        eat_type: TaskTyping = cast(TaskTyping, TaskTyping.get_by_model_type(RobotEat))
 
         self.assertEqual(eat_type.get_type(), RobotEat)
 
         eat_json = eat_type.to_full_dto()
 
-        self.assertIsNotNone(eat_json.input_specs)
+        assert eat_json.input_specs is not None
         self.assertIsNotNone(eat_json.input_specs.specs)
         self.assertIsNotNone(eat_json.input_specs.specs["robot"])
         self.assertIsNotNone(eat_json.input_specs.specs["food"])
 
     def test_protocol_type(self):
-        world_travel: ProtocolTyping = ProtocolTyping.get_by_model_type(RobotTravelProto)
+        world_travel: ProtocolTyping = cast(
+            ProtocolTyping, ProtocolTyping.get_by_model_type(RobotTravelProto)
+        )
 
         self.assertEqual(world_travel.get_type(), RobotTravelProto)
 
         world_travel_json = world_travel.to_full_dto()
 
+        assert world_travel_json.input_specs is not None
+        assert world_travel_json.output_specs is not None
         self.assertIsNotNone(world_travel_json.input_specs.specs["travel_int"])
         self.assertIsNotNone(world_travel_json.output_specs.specs["travel_out"])
 
     def test_resource_type(self):
-        robot: ResourceTyping = ResourceTyping.get_by_model_type(Robot)
+        robot: ResourceTyping = cast(ResourceTyping, ResourceTyping.get_by_model_type(Robot))
 
         self.assertEqual(robot.get_type(), Robot)
 
@@ -116,7 +122,9 @@ class TestTyping(BaseTestCase):
         """Test the get of task typing by related resource"""
 
         # find task typings related to Table
-        typings: list[Typing] = TaskTyping.get_by_related_resource(SubFileTyping, "TRANSFORMER")
+        typings: list[TaskTyping] = TaskTyping.get_by_related_resource(
+            SubFileTyping, "TRANSFORMER"
+        )
 
         # Check that we found the FileTransformer
         self.assertEqual(len([x for x in typings if x.unique_name == "FileTransformer"]), 1)

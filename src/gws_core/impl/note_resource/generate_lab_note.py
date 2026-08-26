@@ -44,7 +44,7 @@ class GenerateLabNote(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        note_resource: NoteResource = inputs["note"]
+        note_resource = inputs.get_resource("note", NoteResource)
 
         note = note_resource.export_as_lab_note(params["title"], self.get_scenario_id())
 

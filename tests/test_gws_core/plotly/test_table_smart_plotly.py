@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core.impl.agent.py_agent import PyAgent
@@ -44,12 +45,12 @@ target = px.scatter(source, x="A", y="B")```""",
         outputs = tester.run()
 
         # check the result table and tags
-        target: PlotlyResource = outputs["target"]
+        target = cast(PlotlyResource, outputs["target"])
         self.assertIsInstance(target, PlotlyResource)
 
         # check the generated code
         # Try to execute the code in a python agent
-        code: Text = outputs["generated_code"]
+        code = cast(Text, outputs["generated_code"])
 
         tester = TaskRunner(
             task_type=PyAgent,
@@ -61,5 +62,5 @@ target = px.scatter(source, x="A", y="B")```""",
         outputs = tester.run()
 
         # check the result are the same
-        target_2: PlotlyResource = outputs["target"]
+        target_2 = cast(PlotlyResource, outputs["target"])
         self.assertTrue(target.equals(target_2))

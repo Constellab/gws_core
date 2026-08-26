@@ -14,7 +14,7 @@ tag_key_param = StrParam(human_name="Tag key", short_description="Tag key to ext
     human_name="Extract row tags to new column",
     short_description="Extract row tags values to a new column",
 )
-class TableRowTagToColumnExtractor(Transformer):
+class TableRowTagToColumnExtractor(Transformer[Table]):
     """
 
     Transformer to extract values of tags into in new columns that are appended to the end of the table.
@@ -72,7 +72,7 @@ class TableRowTagToColumnExtractor(Transformer):
     human_name="Extract column tags to new row",
     short_description="Extract column tags values to a new row",
 )
-class TableColumnTagToRowExtractor(Transformer):
+class TableColumnTagToRowExtractor(Transformer[Table]):
     """
     Transformer to extract values of tags into in new rows that are appended to the end of the table.
 
@@ -133,7 +133,7 @@ class TableColumnTagToRowExtractor(Transformer):
     human_name="Extract column values to row tags",
     short_description="Extract the values of 1 or more columns to row tags",
 )
-class TableColumnValuesToRowTagExtractor(Transformer):
+class TableColumnValuesToRowTagExtractor(Transformer[Table]):
     """
     Transformer to extract values of columns into in row tags.
 
@@ -193,7 +193,7 @@ class TableColumnValuesToRowTagExtractor(Transformer):
     human_name="Extract row values to column tags",
     short_description="Extract the values of 1 or more rows to column tags",
 )
-class TableRowValuesToColumnTagExtractor(Transformer):
+class TableRowValuesToColumnTagExtractor(Transformer[Table]):
     """
     Transformer to extract values of rows into in column tags.
 

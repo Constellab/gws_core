@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import BaseTestCase
 from gws_core.apps.app_dto import AppStopPolicy
 from gws_core.apps.app_resource_action_plugin import AppResourceActionPlugin
@@ -28,7 +30,7 @@ class TestAppResourceActionPlugin(BaseTestCase):
         )
         self.assertEqual(len(actions), 2)
         button = actions[0]
-        self.assertIsInstance(button, EntityActionButtonDTO)
+        assert isinstance(button, EntityActionButtonDTO)
         self.assertEqual(button.text, "Disable auto-stop")
         self.assertEqual(
             button.action_name,
@@ -55,14 +57,14 @@ class TestAppResourceActionPlugin(BaseTestCase):
             EntityActionType.RESOURCE, app_model.id
         )
         subdomain_button = actions[1]
-        self.assertIsInstance(subdomain_button, EntityActionButtonDTO)
+        assert isinstance(subdomain_button, EntityActionButtonDTO)
         self.assertEqual(subdomain_button.text, "Set custom subdomain")
         self.assertEqual(
             subdomain_button.action_name,
             f"{_PLUGIN_ID}.{AppResourceActionPlugin.SET_CUSTOM_SUBDOMAIN}",
         )
         # the form carries the current subdomain as the field default value
-        self.assertIsNotNone(subdomain_button.config_specs)
+        assert subdomain_button.config_specs is not None
         subdomain_spec = subdomain_button.config_specs[
             AppResourceActionPlugin.SUBDOMAIN_PARAM
         ]
@@ -78,7 +80,8 @@ class TestAppResourceActionPlugin(BaseTestCase):
             {AppResourceActionPlugin.SUBDOMAIN_PARAM: "my-executed-app"},
         )
         reloaded = ResourceModel.get_by_id_and_check(app_model.id)
-        self.assertEqual(reloaded.get_resource().get_custom_subdomain(), "my-executed-app")
+        reloaded_app = cast(StreamlitResource, reloaded.get_resource())
+        self.assertEqual(reloaded_app.get_custom_subdomain(), "my-executed-app")
 
         # an empty value clears the subdomain
         EntityActionService.execute_entity_action(
@@ -87,7 +90,8 @@ class TestAppResourceActionPlugin(BaseTestCase):
             {AppResourceActionPlugin.SUBDOMAIN_PARAM: ""},
         )
         reloaded = ResourceModel.get_by_id_and_check(app_model.id)
-        self.assertIsNone(reloaded.get_resource().get_custom_subdomain())
+        reloaded_app = cast(StreamlitResource, reloaded.get_resource())
+        self.assertIsNone(reloaded_app.get_custom_subdomain())
 
     def test_no_button_for_non_app_resource(self):
         # a non-app resource gets no action
@@ -108,7 +112,8 @@ class TestAppResourceActionPlugin(BaseTestCase):
             f"{_PLUGIN_ID}.{AppResourceActionPlugin.DISABLE_AUTO_STOP}",
         )
         reloaded = ResourceModel.get_by_id_and_check(app_model.id)
-        self.assertEqual(reloaded.get_resource().get_stop_policy(), AppStopPolicy.MANUAL)
+        reloaded_app = cast(StreamlitResource, reloaded.get_resource())
+        self.assertEqual(reloaded_app.get_stop_policy(), AppStopPolicy.MANUAL)
 
         # enable auto-stop -> policy becomes AUTO again
         EntityActionService.execute_entity_action(
@@ -116,4 +121,5 @@ class TestAppResourceActionPlugin(BaseTestCase):
             f"{_PLUGIN_ID}.{AppResourceActionPlugin.ENABLE_AUTO_STOP}",
         )
         reloaded = ResourceModel.get_by_id_and_check(app_model.id)
-        self.assertEqual(reloaded.get_resource().get_stop_policy(), AppStopPolicy.AUTO)
+        reloaded_app = cast(StreamlitResource, reloaded.get_resource())
+        self.assertEqual(reloaded_app.get_stop_policy(), AppStopPolicy.AUTO)

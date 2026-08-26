@@ -442,6 +442,7 @@ class TestRichText(BaseTestCase):
 
         found = rt.get_block_by_id(block_a.id)
         self.assertIsNotNone(found)
+        assert found is not None
         self.assertEqual(found.data["text"], "A")
 
         self.assertIsNone(rt.get_block_by_id("non_existent"))

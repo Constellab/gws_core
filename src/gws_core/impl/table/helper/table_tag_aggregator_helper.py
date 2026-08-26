@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Literal, cast
 
-from pandas import DataFrame, concat
+from pandas import DataFrame, Index, Series, concat
 
 from ....core.exception.exceptions import BadRequestException
 from ....core.utils.utils import Utils
@@ -50,7 +50,7 @@ class TableTagAggregatorHelper:
         row_positions = DataFrame(
             range(0, tag_dataframe.shape[0]),
             index=table.get_data().index,
-            columns=["row_positions"],
+            columns=Index(["row_positions"]),
         )
 
         df = concat(
@@ -107,7 +107,7 @@ class TableTagAggregatorHelper:
         column_positions = DataFrame(
             range(0, tag_dataframe.shape[1]),
             columns=table.get_data().columns,
-            index=["column_positions"],
+            index=Index(["column_positions"]),
         )
 
         df = concat(
@@ -150,14 +150,18 @@ class TableTagAggregatorHelper:
             aggregate_df: DataFrame
 
             if func == "mean":
-                aggregate_df = filtered_table.get_data().mean(axis=axis, skipna=True).to_frame()
+                aggregate_df = cast(
+                    Series, filtered_table.get_data().mean(axis=axis, skipna=True)
+                ).to_frame()
             elif func == "median":
-                aggregate_df = filtered_table.get_data().median(axis=axis, skipna=True).to_frame()
+                aggregate_df = cast(
+                    Series, filtered_table.get_data().median(axis=axis, skipna=True)
+                ).to_frame()
             elif func == "sum":
                 aggregate_df = filtered_table.get_data().sum(axis=axis, skipna=True).to_frame()
             df_list[val] = aggregate_df.T if is_row_axis(axis) else aggregate_df
 
-        df: DataFrame = concat(list(df_list.values()), axis=axis)
+        df: DataFrame = cast(DataFrame, concat(list(df_list.values()), axis=axis))
 
         # Create an array of tag where each key is the key the one tag per value
         aggregate_tags = [{key: val} for val in all_tag_values]

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 
 class CellCoord:
@@ -70,7 +70,7 @@ class TableSelection:
         if self.type == "columns":
             return len(self.selection) == 1
         else:
-            ranges: list[CellRange] = self.selection
+            ranges = cast(list[CellRange], self.selection)
 
             column: int | None = None
 
@@ -95,8 +95,8 @@ class TableSelection:
             return True
 
         # if both are range selection we check that they are in the same row
-        ranges: list[CellRange] = self.selection
-        other_ranges: list[CellRange] = other.selection
+        ranges = cast(list[CellRange], self.selection)
+        other_ranges = cast(list[CellRange], other.selection)
 
         if len(ranges) != len(other_ranges):
             return False
@@ -114,7 +114,7 @@ class TableSelection:
         :rtype: Optional[str]
         """
         if self.type == "columns":
-            return " ".join(self.selection)
+            return " ".join(cast(list[str], self.selection))
         else:
             return None
 

@@ -6,7 +6,7 @@ from gws_core.folder.space_folder import SpaceFolder
 
 
 class ModelWithFolder(PeeweeModel):
-    folder = NullableForeignKeyField(SpaceFolder)
+    folder: NullableForeignKeyField[SpaceFolder] = NullableForeignKeyField(SpaceFolder)
 
     @classmethod
     def clear_folder(cls, folders: list[SpaceFolder]) -> None:

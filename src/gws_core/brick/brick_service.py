@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import os
 import traceback
 from time import time
@@ -267,7 +268,7 @@ class BrickService:
         """Get the folder of the brick source code"""
         spec = importlib.util.find_spec(brick_name)
 
-        if spec is not None:
+        if spec is not None and spec.origin is not None:
             return os.path.dirname(spec.origin)
         else:
             raise Exception(f"Cannot find brick '{brick_name}'")

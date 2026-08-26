@@ -1,7 +1,10 @@
 """Multi-select component demo page for the Reflex showcase app."""
 
+from typing import cast
+
 import reflex as rx
 from gws_reflex_main.gws_components import multi_select_component
+from reflex.vars import ArrayVar
 
 from ..components import example_tabs, page_layout
 
@@ -49,7 +52,7 @@ def multi_select_page() -> rx.Component:
         ),
         rx.text(
             "Selected: ",
-            MultiSelectPageState.selected_fruits.join(", "),
+            cast(ArrayVar, MultiSelectPageState.selected_fruits).join(", "),
             size="2",
             color="gray",
         ),
@@ -101,7 +104,7 @@ multi_select_component(
         ),
         rx.text(
             "Selected values: ",
-            MultiSelectPageState.selected_colors.join(", "),
+            cast(ArrayVar, MultiSelectPageState.selected_colors).join(", "),
             size="2",
             color="gray",
         ),

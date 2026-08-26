@@ -6,7 +6,7 @@ import threading
 from collections.abc import Callable
 from enum import Enum
 from functools import partial
-from typing import IO, Any
+from typing import IO, Any, cast
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.classes.observer.message_observer import MessageObserver
@@ -339,7 +339,9 @@ class ShellProxy(BaseTyping):
 
         # Start a daemon thread to read and dispatch stdout/stderr
         if dispatch_stdout or dispatch_stderr:
-            proc = sys_proc.get_process()
+            # the process is a psutil.Popen, which proxies the attributes of the
+            # underlying subprocess.Popen (stdout, stderr, ...)
+            proc = cast(subprocess.Popen, sys_proc.get_process())
             # tag every output line of this process with its pid so interleaved output
             # from concurrent commands stays attributable
             proc_dispatcher = self._create_process_dispatcher(proc.pid)

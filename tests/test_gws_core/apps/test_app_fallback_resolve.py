@@ -1,6 +1,8 @@
 import asyncio
 import os
 import sys
+from collections.abc import Callable, Coroutine
+from typing import Any, cast
 
 from gws_core import BaseTestCase
 from gws_core.apps import app_gateway_constants
@@ -22,6 +24,14 @@ sys.path.insert(
 )
 
 from gws_reflex_base.reflex_main_state_base import ReflexMainStateBase  # noqa: E402
+
+# `on_main_component_mount` is decorated with `@rx.event`, so on the class it is an EventCallback
+# descriptor rather than the coroutine function. Calling it unbound is what these tests need, so go
+# through the real callable.
+_on_main_component_mount = cast(
+    Callable[[object], Coroutine[Any, Any, object]],
+    ReflexMainStateBase.on_main_component_mount,
+)
 
 
 class _FakeMainState:
@@ -104,7 +114,7 @@ class TestAppFallbackResolve(BaseTestCase):
         redirect = object()
         state = _FakeMainState(on_load_result=redirect)
 
-        result = asyncio.run(ReflexMainStateBase.on_main_component_mount(state))
+        result = asyncio.run(_on_main_component_mount(state))
 
         self.assertIs(result, redirect)
         # the page is leaving: rendering the app content to an unauthenticated visitor is not allowed
@@ -118,14 +128,14 @@ class TestAppFallbackResolve(BaseTestCase):
         """
         state = _FakeMainState(on_load_result=None, initializes=False)
 
-        self.assertIsNone(asyncio.run(ReflexMainStateBase.on_main_component_mount(state)))
+        self.assertIsNone(asyncio.run(_on_main_component_mount(state)))
         self.assertFalse(state.main_component_initialized)
 
     def test_on_main_component_mount_initializes_after_a_successful_load(self):
         """The normal path still flips the flag that reveals the app content."""
         state = _FakeMainState(on_load_result=None, initializes=True)
 
-        self.assertIsNone(asyncio.run(ReflexMainStateBase.on_main_component_mount(state)))
+        self.assertIsNone(asyncio.run(_on_main_component_mount(state)))
         self.assertTrue(state.main_component_initialized)
 
     def test_app_key_from_host_strips_reflex_back_suffix(self):

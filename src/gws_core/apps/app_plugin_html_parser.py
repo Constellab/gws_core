@@ -79,6 +79,29 @@ class AppPluginHtmlParser:
         """
         self.relative_path_prefix = relative_path_prefix
 
+    def _get_str_attribute(self, tag: Tag, name: str) -> str:
+        """
+        Read a tag attribute as a string.
+
+        BeautifulSoup types an attribute value as ``str | list[str] | None`` because
+        multi-valued attributes (``rel``, ``class``...) are parsed as lists. The
+        attributes read here (``href``, ``src``) are always single-valued.
+
+        Args:
+            tag: The tag to read the attribute from
+            name: The name of the attribute
+
+        Returns:
+            The attribute value, or an empty string if the attribute is not set
+        """
+        value = tag.get(name)
+
+        if value is None:
+            return ""
+        if isinstance(value, list):
+            return " ".join(value)
+        return value
+
     def is_relative_path(self, path: str) -> bool:
         """
         Check if a path is relative (not absolute URL).
@@ -161,7 +184,7 @@ class AppPluginHtmlParser:
             if link_tag.parent and link_tag.parent.name == "noscript":
                 continue
 
-            original_href = link_tag.get("href", "")
+            original_href = self._get_str_attribute(link_tag, "href")
 
             # Only include relative paths
             if not self.is_relative_path(original_href):
@@ -200,7 +223,7 @@ class AppPluginHtmlParser:
             if rel_str == "stylesheet":
                 continue
 
-            original_href = link_tag.get("href", "")
+            original_href = self._get_str_attribute(link_tag, "href")
 
             # Only include relative paths
             if not self.is_relative_path(original_href):
@@ -231,7 +254,7 @@ class AppPluginHtmlParser:
         """
         body_scripts = []
         for script_tag in body_copy.find_all("script"):
-            src = script_tag.get("src")
+            src = self._get_str_attribute(script_tag, "src")
 
             # Skip inline scripts
             if not src:
@@ -262,13 +285,15 @@ class AppPluginHtmlParser:
         """
         # Process all remaining href attributes
         for element in body_copy.find_all(href=True):
-            if self.is_relative_path(element["href"]):
-                element["href"] = self.replace_relative_path(element["href"])
+            href = self._get_str_attribute(element, "href")
+            if self.is_relative_path(href):
+                element["href"] = self.replace_relative_path(href)
 
         # Process all remaining src attributes
         for element in body_copy.find_all(src=True):
-            if self.is_relative_path(element["src"]):
-                element["src"] = self.replace_relative_path(element["src"])
+            src = self._get_str_attribute(element, "src")
+            if self.is_relative_path(src):
+                element["src"] = self.replace_relative_path(src)
 
     def _extract_body(self, soup: BeautifulSoup) -> HtmlBody:
         """
@@ -285,6 +310,8 @@ class AppPluginHtmlParser:
 
         # Clone the body to avoid modifying the original
         body_copy = BeautifulSoup(str(soup.body), "html.parser").body
+        if body_copy is None:
+            return HtmlBody(links=[], scripts=[], content="", attributes={})
 
         # Remove noscript tags
         for noscript in body_copy.find_all("noscript"):

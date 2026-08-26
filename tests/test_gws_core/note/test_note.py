@@ -36,6 +36,7 @@ class TestNote(BaseTestCase):
         )
         NoteService.update_content(note.id, content)
         note = note.refresh()
+        assert note.content is not None
         self.assertEqual(len(note.content.blocks), 1)
 
         scenario = ScenarioService.create_scenario()
@@ -94,6 +95,7 @@ class TestNote(BaseTestCase):
         )
 
         # simulate the rich text with resource id
+        assert view_result.view_config is not None
         rich_text_resource_view = view_result.view_config.to_rich_text_resource_view()
         block = RichText.create_block("1", rich_text_resource_view)
 
@@ -132,6 +134,7 @@ class TestNote(BaseTestCase):
 
         i_process = scenario.get_protocol().get_process("create")
         robot_model = i_process.get_output_resource_model("robot")
+        assert robot_model is not None
 
         # create a view config
         result = ResourceService.call_view_on_resource_model(
@@ -140,6 +143,7 @@ class TestNote(BaseTestCase):
 
         note = NoteService.create(NoteSaveDTO(title="Test note"))
         # add the view to the note
+        assert result.view_config is not None
         NoteService.add_view_to_content(note.id, result.view_config.id)
 
         # Retrieve the note rich text
@@ -193,4 +197,6 @@ class TestNote(BaseTestCase):
             {"id": "4", "type": "paragraph", "data": {"text": "End note"}},
         ]
 
-        self.assert_json(note_rich_text.to_dto_json_dict().get("blocks"), expected_blocks, ["id"])
+        actual_blocks = note_rich_text.to_dto_json_dict().get("blocks")
+        assert actual_blocks is not None
+        self.assert_json(actual_blocks, expected_blocks, ["id"])

@@ -1,3 +1,4 @@
+# pyright: reportUndefinedVariable=false
 # This is a snippet template for a python agent.
 # This code is executed in the same context as the run method of a Task.
 # This mean you can import brick or packages and call method of the Task object.

@@ -69,11 +69,12 @@ class ReflexApp(AppInstance):
         """
         return self._front_app_build_folder if self._front_app_build_folder else None
 
-    def get_app_config(self) -> AppConfig:
+    def get_app_config(self) -> AppConfig | None:
         """Get the app config for this app instance.
+        It is None for a static folder app, which carries its code per resource.
 
-        :return: _description_
-        :rtype: AppConfig
+        :return: The app config, or None if the app runs from a static folder
+        :rtype: AppConfig | None
         """
         return self._app_config
 
@@ -86,6 +87,8 @@ class ReflexApp(AppInstance):
         """Get the directory where the app will be generated"""
         if self._app_config:
             return self._app_config.get_app_folder_path()
+        if self._app_static_folder is None:
+            raise Exception("App folder path is not set")
         return self._app_static_folder
 
     def get_app_type(self) -> AppType:

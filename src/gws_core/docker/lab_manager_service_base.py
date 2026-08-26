@@ -57,7 +57,7 @@ class LabManagerServiceBase:
             + Settings.get_space_api_key()
         }
 
-        user: User = CurrentUserService.get_current_user()
+        user: User | None = CurrentUserService.get_current_user()
 
         if user:
             headers[self.USER_ID_HEADER_KEY] = user.id

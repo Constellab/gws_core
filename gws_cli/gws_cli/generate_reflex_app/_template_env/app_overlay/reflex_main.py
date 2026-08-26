@@ -1,3 +1,5 @@
+from typing import cast
+
 import reflex as rx
 from gws_reflex_base import main_component
 from gws_reflex_env_main import ReflexMainStateEnv, register_gws_reflex_env_app
@@ -17,10 +19,10 @@ class State(rx.State):
         return await main_state.get_source_paths()
 
     @rx.var
-    async def get_param_name(self) -> str | None:
+    async def get_param_name(self) -> str:
         """Get a parameter from the app configuration."""
         main_state = await self.get_state(ReflexMainStateEnv)
-        return await main_state.get_param("param_name", "default_value")
+        return cast(str, await main_state.get_param("param_name", "default_value"))
 
     @rx.event
     def increment(self):

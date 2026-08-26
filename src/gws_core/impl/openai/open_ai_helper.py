@@ -1,4 +1,4 @@
-from openai import OpenAI
+from openai import OpenAI, omit
 
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
@@ -39,7 +39,7 @@ class OpenAiHelper:
         return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
 
     @classmethod
-    def get_package_version_context(cls, pip_package_names: list[str]) -> str:
+    def get_package_version_context(cls, pip_package_names: list[str] | None = None) -> str:
         """
         Method to improve the context by giving the version of the provided pip packages
         installed in the lab.
@@ -106,7 +106,7 @@ class OpenAiHelper:
             transcription = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
-                prompt=prompt,
+                prompt=prompt if prompt is not None else omit,
             )
 
         return transcription.text

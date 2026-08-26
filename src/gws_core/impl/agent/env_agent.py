@@ -74,7 +74,7 @@ class EnvAgent(Task):
         log_stdout = params.get_value(self.LOG_STDOUT_CONFIG_NAME)
 
         # build the source path
-        source_paths = self.get_source_path(inputs.get("source"))
+        source_paths = self.get_source_path(inputs.get_resource("source", ResourceList))
 
         self.shell_proxy = self._create_shell_proxy(env)
 

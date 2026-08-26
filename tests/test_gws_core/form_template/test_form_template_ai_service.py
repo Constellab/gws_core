@@ -86,6 +86,7 @@ class TestFormTemplateAiService(BaseTestCase):
             )
         self.assertEqual(result.expression, "@mass / @bogus")
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("bogus", result.validation.error)
 
     def test_aggregate_inside_paramset_is_invalid(self):
@@ -100,6 +101,7 @@ class TestFormTemplateAiService(BaseTestCase):
                 ),
             )
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("aggregate", result.validation.error)
 
     def test_syntax_error_returns_invalid(self):
@@ -111,6 +113,7 @@ class TestFormTemplateAiService(BaseTestCase):
                 GenerateComputedParamDTO(description="broken"),
             )
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("Invalid expression", result.validation.error)
 
     # ------------------------------------------------------------------ #
@@ -255,6 +258,7 @@ class TestFormTemplateAiService(BaseTestCase):
         # The version is left as DRAFT — the editor's natural state when authoring.
         template, version_id = self._template_with_scalars()
         version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
         self.assertEqual(version.status, FormTemplateVersionStatus.DRAFT)
         with patch(_GPT_TARGET, return_value="@mass + @volume"):
             result = FormTemplateAiService.generate_computed_param_expression(

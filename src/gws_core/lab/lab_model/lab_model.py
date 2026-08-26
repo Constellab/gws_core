@@ -20,14 +20,14 @@ from gws_core.lab.lab_model.lab_enums import LabEnvironment, LabMode
 class LabModel(Model):
     """Model representing a lab (local or external)."""
 
-    lab_id = TypedCharField(max_length=36)
-    name = TypedCharField()
-    mode = TypedEnumField(choices=LabMode)
-    environment = TypedEnumField(choices=LabEnvironment)
-    domain = NullableCharField()
-    space_id = NullableCharField()
-    space_name = NullableCharField()
-    credentials = NullableForeignKeyField(
+    lab_id: TypedCharField = TypedCharField(max_length=36)
+    name: TypedCharField = TypedCharField()
+    mode: TypedEnumField[LabMode] = TypedEnumField(choices=LabMode)
+    environment: TypedEnumField[LabEnvironment] = TypedEnumField(choices=LabEnvironment)
+    domain: NullableCharField = NullableCharField()
+    space_id: NullableCharField = NullableCharField()
+    space_name: NullableCharField = NullableCharField()
+    credentials: NullableForeignKeyField[Credentials] = NullableForeignKeyField(
         Credentials, backref="+", on_delete="SET NULL"
     )
 

@@ -16,7 +16,15 @@ from gws_core.resource.resource_service import ResourceService
 from gws_core.resource.view_config.view_config import ViewConfig
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_proxy import ScenarioProxy
+from gws_core.task.task_proxy import TaskProxy
 from gws_core.test.base_test_case import BaseTestCase
+
+
+def _output_resource_model(task: TaskProxy, port_name: str) -> ResourceModel:
+    """Return the resource model of a task output port, failing if the port is empty."""
+    resource_model = task.get_output_resource_model(port_name)
+    assert resource_model is not None
+    return resource_model
 
 
 # test_entity_navigator.py
@@ -75,8 +83,8 @@ class TestEntityNavigator(BaseTestCase):
         create_robot.refresh()
         move_robot_1.refresh()
 
-        robot_1 = create_robot.get_output_resource_model("robot")
-        robot_2 = move_robot_1.get_output_resource_model("robot")
+        robot_1 = _output_resource_model(create_robot, "robot")
+        robot_2 = _output_resource_model(move_robot_1, "robot")
 
         # second scenario Input -> RobotMove
         scenario_2 = ScenarioProxy(title="Scenario 2")
@@ -94,10 +102,10 @@ class TestEntityNavigator(BaseTestCase):
         self.scenario_1 = scenario_1.get_model()
         self.scenario_2 = scenario_2.get_model()
 
-        self.scenario_1_resource_1 = create_robot.get_output_resource_model("robot")
-        self.scenario_1_resource_2 = move_robot_1.get_output_resource_model("robot")
-        self.scenario_2_resource_1 = move_robot_2.get_output_resource_model("robot")
-        self.scenario_2_resource_2 = move_robot_3.get_output_resource_model("robot")
+        self.scenario_1_resource_1 = _output_resource_model(create_robot, "robot")
+        self.scenario_1_resource_2 = _output_resource_model(move_robot_1, "robot")
+        self.scenario_2_resource_1 = _output_resource_model(move_robot_2, "robot")
+        self.scenario_2_resource_2 = _output_resource_model(move_robot_3, "robot")
 
         # third scenario scenario_2_resource_2 -> RobotMove
         scenario_3 = ScenarioProxy(title="Scenario 3")
@@ -111,7 +119,7 @@ class TestEntityNavigator(BaseTestCase):
         move_robot_4.refresh()
 
         self.scenario_3 = scenario_3.get_model()
-        self.scenario_3_resource_1 = move_robot_4.get_output_resource_model("robot")
+        self.scenario_3_resource_1 = _output_resource_model(move_robot_4, "robot")
 
         # fourth scenario uses resources from both scenario_1 and scenario_2
         # This tests the edge case where a scenario is reachable at multiple depths.
@@ -132,12 +140,13 @@ class TestEntityNavigator(BaseTestCase):
         move_robot_5.refresh()
 
         self.scenario_4 = scenario_4.get_model()
-        self.scenario_4_resource_1 = move_robot_5.get_output_resource_model("robot")
+        self.scenario_4_resource_1 = _output_resource_model(move_robot_5, "robot")
 
     def _create_views(self):
         view_result = ResourceService.call_view_on_resource_model(
             self.scenario_1_resource_1, "view_as_json", {}, True
         )
+        assert view_result.view_config is not None
         self.scenario_1_resource_1_view_1 = view_result.view_config
 
     def _create_note(self):

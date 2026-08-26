@@ -222,7 +222,7 @@ The generated JSON must validate this schema.
     @classmethod
     def _append_transcription_to_rich_text(
         cls, rich_text: RichText, transcription: TranscriptionOutput
-    ) -> RichTextBlock:
+    ) -> RichTextBlock | None:
         """Convert a text to a rich text block
 
         :param text: text

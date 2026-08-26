@@ -140,8 +140,10 @@ class StreamlitResource(AppResource):
     @classmethod
     def migrate_streamlit_resources(cls) -> None:
         """method to migrate streamlit resources to use the app config class"""
-        resource_models: list[ResourceModel] = ResourceModel.select().where(
-            ResourceModel.resource_typing_name == cls.get_typing_name()
+        resource_models: list[ResourceModel] = list(
+            ResourceModel.select().where(
+                ResourceModel.resource_typing_name == cls.get_typing_name()
+            )
         )
 
         for resource_model in resource_models:

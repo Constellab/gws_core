@@ -162,7 +162,7 @@ class TableSmartTransformer(Task):
         chat: OpenAiChat = params.get_value("prompt")
 
         ai_transformer = AITableTransformer(
-            inputs["source"],
+            inputs.get_resource("source", Table),
             chat,
             params.get_value("keep_columns_tags"),
             params.get_value("keep_rows_tags"),

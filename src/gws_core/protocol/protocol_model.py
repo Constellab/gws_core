@@ -32,7 +32,7 @@ from .protocol_layout import ProtocolLayout
 
 
 class ProtocolModel(ProcessModel):
-    layout = TypedSerializableDBField(object_type=ProtocolLayout, default=ProtocolLayout)
+    layout: TypedSerializableDBField[ProtocolLayout] = TypedSerializableDBField(object_type=ProtocolLayout, default=ProtocolLayout)
 
     # For lazy loading, True when processes, interfazces and outerfaces are loaded
     # True by default when creating a new protoco

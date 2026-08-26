@@ -18,7 +18,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Replace values in a table with other values",
 )
-class TableReplace(Transformer):
+class TableReplace(Transformer[Table]):
     """
     You can provided multiple values to replace. It also supports regex. If multiple values are provided,
     there are replaced sequentially, so the second replace can rewrite the first replace.
@@ -66,7 +66,7 @@ class TableReplace(Transformer):
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()
-        replace_values: list[dict] = params.get("replace_values")
+        replace_values: list[dict] = params.get_value("replace_values")
 
         for param in replace_values:
             is_regex: bool = bool(param["is_regex"])

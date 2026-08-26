@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from numpy import NaN
 
@@ -107,11 +107,13 @@ class TableRowConcat(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource_list: ResourceList = inputs["source"]
+        resource_list = inputs.get_resource("source", ResourceList)
         fill_nan_value = get_fill_nan_value(params["fill_nan"])
 
         result = TableConcatHelper.concat_table_rows(
-            resource_list.to_list(), params["column_tags_options"], fill_nan_value
+            cast(list[Table], resource_list.to_list()),
+            params["column_tags_options"],
+            fill_nan_value,
         )
 
         return {"table": result}
@@ -196,11 +198,13 @@ class TableColumnConcat(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        resource_list: ResourceList = inputs["source"]
+        resource_list = inputs.get_resource("source", ResourceList)
         fill_nan_value = get_fill_nan_value(params["fill_nan"])
 
         result = TableConcatHelper.concat_table_columns(
-            resource_list.to_list(), params["row_tags_options"], fill_nan_value
+            cast(list[Table], resource_list.to_list()),
+            params["row_tags_options"],
+            fill_nan_value,
         )
 
         return {"table": result}

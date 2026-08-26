@@ -9,6 +9,7 @@ from requests.models import Response
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.service.external_api_service import FormData
+from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.folder.space_folder_dto import (
     ExternalSpaceCreateFolder,
@@ -124,6 +125,7 @@ class TestMockSpaceService(SpaceService):
             name=save_scenario_dto.scenario.title,
             objectType="SCENARIO",
             parentId=folder_id,
+            lastModifiedAt=DateHelper.now_utc(),
         )
 
     def delete_scenario(self, folder_id: str, scenario_id: str) -> None:
@@ -147,7 +149,11 @@ class TestMockSpaceService(SpaceService):
     ) -> SpaceHierarchyObjectDTO:
         """Mock save_note"""
         return SpaceHierarchyObjectDTO(
-            id=note.note.id, name=note.note.title, objectType="NOTE", parentId=folder_id
+            id=note.note.id,
+            name=note.note.title,
+            objectType="NOTE",
+            parentId=folder_id,
+            lastModifiedAt=DateHelper.now_utc(),
         )
 
     def delete_lab_note(self, folder_id: str, note_id: str) -> None:
@@ -190,6 +196,7 @@ class TestMockSpaceService(SpaceService):
             name=resource_dto.name,
             objectType="RESOURCE",
             parentId=folder_id,
+            lastModifiedAt=DateHelper.now_utc(),
         )
 
     # ==================== FOLDER ====================
@@ -203,10 +210,6 @@ class TestMockSpaceService(SpaceService):
         return ExternalSpaceFolder(
             id=id_,
             name="Mock Root Folder",
-            code="MOCK_FOLDER",
-            tags=[],
-            starting_date=None,
-            ending_date=None,
             children=[],
         )
 

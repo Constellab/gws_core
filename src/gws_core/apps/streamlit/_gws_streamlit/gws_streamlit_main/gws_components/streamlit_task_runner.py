@@ -196,8 +196,10 @@ class StreamlitTaskRunner:
         config_values: ConfigParamsDict | None = None,
         inputs: dict[str, Resource] | None = None,
     ) -> TaskOutputs:
-        # run the task
-        task_runner = TaskRunner(self.task_type, params=config_values, inputs=inputs)
+        # run the task. TaskRunner accepts optional resources per input, copy the dict
+        # so the wider value type does not leak back to the caller
+        task_inputs: dict[str, Resource | None] | None = dict(inputs) if inputs is not None else None
+        task_runner = TaskRunner(self.task_type, params=config_values, inputs=task_inputs)
 
         try:
             return task_runner.run()

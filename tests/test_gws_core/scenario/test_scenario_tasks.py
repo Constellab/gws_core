@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.scenario.scenario import Scenario
 from gws_core.scenario.scenario_service import ScenarioService
@@ -28,7 +30,7 @@ class TestScenarioTasks(BaseTestCase):
         task_runner = TaskRunner(SelectScenario, params={"scenario": scenario.id})
         result = task_runner.run()
 
-        scenario_resource: ScenarioResource = result["scenario"]
+        scenario_resource = cast(ScenarioResource, result["scenario"])
         self.assertIsInstance(scenario_resource, ScenarioResource)
         self.assertEqual(scenario_resource.scenario_id, scenario.id)
         self.assertEqual(scenario_resource.get_scenario().title, "test 2")

@@ -55,7 +55,7 @@ class ResourceUploaderS3(Task):
         bucket_name = params.get_value("s3_bucket")
 
         self.log_info_message("Zipping resource")
-        resource: Resource = inputs["resource"]
+        resource = inputs.get_resource("resource", Resource)
         resource_zipper = ResourceZipper(CurrentUserService.get_and_check_current_user())
         resource_zipper.add_resource(resource)
         self.zip_file_path = resource_zipper.close_zip()

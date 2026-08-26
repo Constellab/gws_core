@@ -37,7 +37,7 @@ class FormBlockRule(RichTextBlockRule):
         return {RichTextHostContext.NOTE}
 
     def validate_new_block(self, block: RichTextBlock) -> None:
-        form_block: RichTextBlockForm = block.get_data()
+        form_block: RichTextBlockForm = block.get_data(RichTextBlockForm)
         if Form.get_by_id(form_block.form_id) is None:
             raise BadRequestException(
                 f"FORM block references unknown form_id: {form_block.form_id}"
@@ -57,7 +57,7 @@ class FormTemplateBlockRule(RichTextBlockRule):
         return {RichTextHostContext.NOTE_TEMPLATE}
 
     def validate_new_block(self, block: RichTextBlock) -> None:
-        ft_block: RichTextBlockFormTemplate = block.get_data()
+        ft_block: RichTextBlockFormTemplate = block.get_data(RichTextBlockFormTemplate)
 
         # Unpinned block: no version chosen yet. Only check the template
         # exists; the concrete version is resolved at Note instantiation

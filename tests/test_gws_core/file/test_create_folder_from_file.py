@@ -51,7 +51,8 @@ class TestCreateFolderFromFile(BaseTestCaseLight):
 
         outputs = task_runner.run()
 
-        folder_result: Folder = outputs.get("folder")
+        folder_result = outputs.get("folder")
+        assert isinstance(folder_result, Folder)
 
         self.assertEqual(folder_result.get_base_name(), "new_folder")
 

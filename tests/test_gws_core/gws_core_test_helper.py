@@ -9,10 +9,12 @@ class GWSCoreTestHelper:
 
     @classmethod
     def get_small_data_table(cls, index=1) -> Table:
-        return TableImporter.call(
+        table = TableImporter.call(
             File(cls.get_small_data_file_path(index)),
             {
                 "index_column": 0,
                 "header": 0,
             },
         )
+        assert isinstance(table, Table)
+        return table

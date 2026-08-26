@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core.impl.openai.open_ai_types import OpenAiChatDict
@@ -65,7 +66,7 @@ for df in source:
         outputs = tester.run()
 
         # check the result table and tags
-        target: ResourceList = outputs["target"]
+        target = cast(ResourceList, outputs["target"])
         self.assertEqual(len(target), 2)
 
         # check the first table
