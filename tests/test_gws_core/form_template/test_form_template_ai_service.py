@@ -224,13 +224,12 @@ class TestFormTemplateAiService(BaseTestCase):
 
     def test_empty_ai_response_raises_bad_request(self):
         template, version_id = self._template_with_scalars()
-        with patch(_GPT_TARGET, return_value="   "):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_computed_param_expression(
-                    template.id,
-                    version_id,
-                    GenerateComputedParamDTO(description="density"),
-                )
+        with patch(_GPT_TARGET, return_value="   "), self.assertRaises(BadRequestException):
+            FormTemplateAiService.generate_computed_param_expression(
+                template.id,
+                version_id,
+                GenerateComputedParamDTO(description="density"),
+            )
 
     def test_unknown_param_set_key_raises_bad_request(self):
         template, version_id = self._template_with_scalars()

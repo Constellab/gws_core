@@ -1,4 +1,3 @@
-from time import sleep
 
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.config.param.param_types import ParamSpecDTO

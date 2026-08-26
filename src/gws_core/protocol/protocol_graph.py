@@ -1,6 +1,6 @@
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.process.process_types import ProcessStatus
-from gws_core.protocol.protocol_dto import ProcessConfigDTO, ProtocolGraphConfigDTO
+from gws_core.protocol.protocol_dto import ProtocolGraphConfigDTO
 from gws_core.task.plug.input_task import InputTask
 from gws_core.task.plug.output_task import OutputTask
 

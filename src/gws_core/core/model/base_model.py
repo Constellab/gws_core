@@ -1,5 +1,5 @@
 from typing import Any
-from typing_extensions import Self
+
 from peewee import (
     ColumnMetadata,
     DatabaseProxy,
@@ -8,6 +8,7 @@ from peewee import (
     ModelSelect,
 )
 from peewee import Model as PeeweeModel
+from typing_extensions import Self
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager

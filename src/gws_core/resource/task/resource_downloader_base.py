@@ -15,11 +15,9 @@ from gws_core.resource.resource import Resource
 from gws_core.resource.resource_builder import ResourceZipBuilder
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_loader import ResourceLoader
-from gws_core.share.shared_dto import SharedEntityMode, ShareEntityCreateMode
-from gws_core.share.shared_resource import SharedResource
+from gws_core.share.shared_dto import ShareEntityCreateMode
 from gws_core.task.task import Task
 from gws_core.task.task_io import TaskInputs, TaskOutputs
-from gws_core.user.current_user_service import CurrentUserService
 
 
 class ResourceDownloaderBase(Task):

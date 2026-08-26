@@ -6,7 +6,6 @@ import reflex as rx
 from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserDTO
 
-
 DEFAULT_USER_COLOR = "#6C63FF"
 
 

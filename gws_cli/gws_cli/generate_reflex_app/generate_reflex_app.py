@@ -4,8 +4,11 @@ import shutil
 import typer
 from gws_core import FileHelper, ShellProxy
 
-from gws_cli.utils.app_env_generator import (build_env_template_vars,
-                                             copy_env_file, validate_env_type)
+from gws_cli.utils.app_env_generator import (
+    build_env_template_vars,
+    copy_env_file,
+    validate_env_type,
+)
 from gws_cli.utils.app_generator import AppGenerator
 from gws_cli.utils.cli_utils import CLIUtils
 from gws_cli.utils.dev_config_generator import create_dev_config_json

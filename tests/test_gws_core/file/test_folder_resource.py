@@ -15,13 +15,13 @@ from gws_core import (
     task_decorator,
 )
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_task import FolderExporter
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_runner import TaskRunner
 

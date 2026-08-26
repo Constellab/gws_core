@@ -1,6 +1,5 @@
 import json
 import os
-from datetime import datetime
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.compress.compress import Compress

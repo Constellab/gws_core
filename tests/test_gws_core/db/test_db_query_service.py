@@ -57,9 +57,8 @@ class TestDbQueryServiceValidation(TestCase):
 
     def test_assert_read_only_rejects_empty(self):
         for sql in ["", "   ", ";", "-- only a comment", "/* block */"]:
-            with self.subTest(sql=sql):
-                with self.assertRaises(DbQueryError):
-                    DbQueryService.assert_read_only(sql)
+            with self.subTest(sql=sql), self.assertRaises(DbQueryError):
+                DbQueryService.assert_read_only(sql)
 
     def test_assert_read_only_rejects_write_statements(self):
         for sql in [
@@ -72,9 +71,8 @@ class TestDbQueryServiceValidation(TestCase):
             "TRUNCATE foo",
             "SET @x = 1",
         ]:
-            with self.subTest(sql=sql):
-                with self.assertRaises(DbQueryError):
-                    DbQueryService.assert_read_only(sql)
+            with self.subTest(sql=sql), self.assertRaises(DbQueryError):
+                DbQueryService.assert_read_only(sql)
 
     def test_assert_read_only_rejects_stacked_statements(self):
         with self.assertRaises(DbQueryError):

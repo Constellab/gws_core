@@ -8,7 +8,6 @@ from gws_core.form.form import Form
 from gws_core.form.form_dto import (
     CreateFormDTO,
     FormChangeAction,
-    FormStatus,
     SaveFormDTO,
 )
 from gws_core.form.form_save_event import FormSaveEvent

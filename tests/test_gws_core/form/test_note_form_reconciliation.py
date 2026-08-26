@@ -13,7 +13,6 @@ from gws_core.form_template.form_template_dto import (
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextBlock
@@ -23,7 +22,6 @@ from gws_core.note.note_dto import (
     InsertNewFormBlockDTO,
     NoteSaveDTO,
 )
-from gws_core.note.note_events import NoteContentUpdatedEvent
 from gws_core.note.note_form_model import NoteFormModel
 from gws_core.note.note_service import NoteService
 from gws_core.test.base_test_case import BaseTestCase

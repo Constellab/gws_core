@@ -1,8 +1,8 @@
 """Tests for EventDispatcher sync/async listener routing."""
 
+import time
 from dataclasses import dataclass
 from typing import Literal
-import time
 
 from gws_core.model.event.base_event import BaseEvent
 from gws_core.model.event.event_dispatcher import EventDispatcher

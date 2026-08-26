@@ -13,7 +13,6 @@ import os
 import traceback
 
 import typer
-
 from gws_core.brick.brick_settings import BrickSettings
 from gws_core.core.db.version import Version
 
@@ -122,7 +121,7 @@ def compute_changes(
     for path in iter_python_files(root_dir):
         rel_path = os.path.relpath(path, base)
         try:
-            with open(path, "r", encoding="utf-8") as fp:
+            with open(path, encoding="utf-8") as fp:
                 original = fp.read()
         except OSError as err:
             summary.errors.append((rel_path, f"could not read file: {err}"))

@@ -13,7 +13,6 @@ from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorFormTemplate,
 )
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
-from gws_core.form.form import Form
 from gws_core.form.form_dto import CreateFormDTO
 from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template_dto import (

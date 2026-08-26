@@ -1,11 +1,10 @@
 import os
 
-from PIL import Image
-
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.rich_text.rich_text_file_service import RichTextFileService
 from gws_core.impl.rich_text.rich_text_types import RichTextObjectType
 from gws_core.test.base_test_case_light import BaseTestCaseLight
+from PIL import Image
 
 # test_rich_text_file_service
 

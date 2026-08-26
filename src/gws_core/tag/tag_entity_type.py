@@ -20,10 +20,10 @@ class TagEntityType(Enum):
         from gws_core.form.form import Form
         from gws_core.form_template.form_template import FormTemplate
         from gws_core.note.note import Note
+        from gws_core.note_template.note_template import NoteTemplate
         from gws_core.resource.resource_model import ResourceModel
         from gws_core.resource.view_config.view_config import ViewConfig
         from gws_core.scenario.scenario import Scenario
-        from gws_core.note_template.note_template import NoteTemplate
         from gws_core.scenario_template.scenario_template import ScenarioTemplate
 
         if self == TagEntityType.SCENARIO:

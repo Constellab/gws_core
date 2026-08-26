@@ -14,7 +14,6 @@ evaluator-level coverage and Phase 3's happy-path coverage:
   search infra; tests document and skip until JSON-key filtering exists.
 """
 
-import unittest
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.computed.computed_param import ComputedParam
