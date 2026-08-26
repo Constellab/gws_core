@@ -68,9 +68,12 @@ class AICodeService(ABC):
             argument_hint="path to Snakefile or description of workflow to convert",
         ),
         SkillFrontmatter(
-            filename="code-review-instructions.md",
-            description="Instructions for reviewing code",
-            argument_hint="description of code review request",
+            filename="code-review.md",
+            description=(
+                "Review the Python changed in a brick, then gate it on ruff and "
+                "pyright being clean on every line the change touched"
+            ),
+            argument_hint="fixed point to review against (commit, branch, or HEAD)",
         ),
         SkillFrontmatter(
             filename="update-doc-json.md",
