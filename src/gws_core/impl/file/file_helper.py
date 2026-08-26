@@ -611,7 +611,9 @@ class FileHelper:
         shutil.copyfile(source_path, destination_path)
 
     @classmethod
-    def copy_dir(cls, source_path: PathType, destination_path: PathType) -> None:
+    def copy_dir(
+        cls, source_path: PathType, destination_path: PathType, dirs_exist_ok: bool = False
+    ) -> None:
         """
         Copy a directory from source to destination
 
@@ -619,11 +621,16 @@ class FileHelper:
         :type source_path: PathType
         :param destination_path: destination directory path
         :type destination_path: PathType
+        :param dirs_exist_ok: if True, merge into destination_path when it already exists
+                              instead of raising FileExistsError, defaults to False
+        :type dirs_exist_ok: bool
         """
-        shutil.copytree(source_path, destination_path)
+        shutil.copytree(source_path, destination_path, dirs_exist_ok=dirs_exist_ok)
 
     @classmethod
-    def copy_node(cls, source_path: PathType, destination_path: PathType) -> None:
+    def copy_node(
+        cls, source_path: PathType, destination_path: PathType, dirs_exist_ok: bool = False
+    ) -> None:
         """
         Copy a file or a directory from source to destination
 
@@ -631,9 +638,12 @@ class FileHelper:
         :type source_path: PathType
         :param destination_path: destination file or directory path
         :type destination_path: PathType
+        :param dirs_exist_ok: if True and source_path is a directory, merge into
+                              destination_path when it already exists, defaults to False
+        :type dirs_exist_ok: bool
         """
         if cls.is_dir(source_path):
-            cls.copy_dir(source_path, destination_path)
+            cls.copy_dir(source_path, destination_path, dirs_exist_ok=dirs_exist_ok)
         else:
             cls.copy_file(source_path, destination_path)
 
@@ -651,7 +661,9 @@ class FileHelper:
         """
         for child in os.listdir(cls.get_path(source_dir_path)):
             cls.copy_node(
-                os.path.join(source_dir_path, child), os.path.join(destination_dir_path, child)
+                os.path.join(source_dir_path, child),
+                os.path.join(destination_dir_path, child),
+                dirs_exist_ok=True,
             )
 
     @classmethod
