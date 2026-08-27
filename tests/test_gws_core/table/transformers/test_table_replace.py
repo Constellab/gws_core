@@ -4,7 +4,7 @@ from unittest import TestCase
 from gws_core import Table, TableReplace
 from gws_core.config.config_params import ConfigParamsDict
 from gws_core.task.task_runner import TaskRunner
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame
 
 
@@ -65,7 +65,7 @@ class TestTableReplace(TestCase):
         self.assertTrue(result.equals(expected_result_3))
 
     def test_replace_none(self):
-        initial_df = DataFrame({"A": [None, NaN, "Bonjour"]})
+        initial_df = DataFrame({"A": [None, nan, "Bonjour"]})
         table = Table(data=initial_df)
 
         # Replace None

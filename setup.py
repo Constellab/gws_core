@@ -65,7 +65,7 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.10",
+    python_requires=">=3.13",
     cmdclass={
         "install": InstallHook,
     },

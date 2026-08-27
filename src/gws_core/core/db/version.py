@@ -1,6 +1,6 @@
 from math import isnan
 
-from numpy import Infinity
+from numpy import inf
 
 # A version is "major.minor.patch", optionally followed by a sub patch
 VERSION_PARTS_COUNT = 3
@@ -122,7 +122,7 @@ class Version:
         """return the sub_patch as a number.
         In there is no sub patch, return infinity so the beta version are always before real version
         """
-        return Infinity if self.sub_patch is None else self.sub_patch
+        return inf if self.sub_patch is None else self.sub_patch
 
     def to_string(self) -> str:
         """return the version as a string"""

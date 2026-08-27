@@ -2,7 +2,7 @@ from enum import Enum
 from re import search, split, sub
 from typing import cast
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, Series, option_context
 
 from gws_core.core.utils.numeric_helper import NumericHelper
@@ -57,7 +57,7 @@ class TableOperationHelper:
 
         eval_dataframe: DataFrame = dataframe.eval(str_operation, engine="python")
         with option_context("future.no_silent_downcasting", True):
-            eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN).infer_objects(copy=False)
+            eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, nan).infer_objects(copy=False)
         result_table: Table
 
         # if the result is append to the dataframe

@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from numpy import NaN
+from numpy import nan
 from pandas import NA, DataFrame, Index
 
 
@@ -17,10 +17,10 @@ class TestTableConcat(TestCase):
         self.assertEqual(DataframeHelper.flatten_dataframe_by_column(df), [1, 2, 7, 1])
 
     def test_dataframe_to_float(self):
-        df = DataFrame({"F1": ["1", 2], "F2": ["NA", NaN]})
+        df = DataFrame({"F1": ["1", 2], "F2": ["NA", nan]})
         self.assertTrue(
             DataframeHelper.dataframe_to_float(df).equals(
-                DataFrame({"F1": [1.0, 2.0], "F2": [NaN, NaN]})
+                DataFrame({"F1": [1.0, 2.0], "F2": [nan, nan]})
             )
         )
 
@@ -64,9 +64,9 @@ class TestTableConcat(TestCase):
         self.assertTrue(result.equals(expected_result))
 
     def test_nanify_none_numeric(self):
-        df = DataFrame({"F1": ["1", 2, None, NaN, NA]})
+        df = DataFrame({"F1": ["1", 2, None, nan, NA]})
 
         result = DataframeHelper.nanify_none_number(df)
-        expected_result = DataFrame({"F1": [NaN, 2.0, NaN, NaN, NaN]})
+        expected_result = DataFrame({"F1": [nan, 2.0, nan, nan, nan]})
 
         self.assertTrue(result.equals(expected_result))

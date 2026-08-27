@@ -4,7 +4,7 @@ from unittest import TestCase
 from gws_core import DataframeAggregatorHelper, Table, TaskRunner
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.transformers.table_aggregator import TableColumnAggregator
-from numpy import NaN
+from numpy import nan
 from pandas import NA, DataFrame
 
 
@@ -20,7 +20,7 @@ class TestTableAggregator(TestCase):
         self.assertTrue(dataframe.equals(expected_df))
 
         # test with string and NaN in the dataframe
-        df_with_str = DataFrame({"A": [1, 2, 3, "OK"], "B": [10, None, NaN, NA]})
+        df_with_str = DataFrame({"A": [1, 2, 3, "OK"], "B": [10, None, nan, NA]})
 
         dataframe = DataframeAggregatorHelper.aggregate(
             data=df_with_str, direction="vertical", func="sum"

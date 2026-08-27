@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, Index, concat
 
 from gws_core.tag.tag_helper import TagHelper
@@ -81,7 +81,7 @@ class TableUnfolderHelper:
                 values: list[Any] = row.values.tolist()
                 column_diff = len(dataframe.columns) - len(values)
                 if column_diff > 0:
-                    values.extend([NaN] * column_diff)
+                    values.extend([nan] * column_diff)
 
                 row_df = DataFrame([values], index=Index([name]))
 

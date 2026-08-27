@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from re import sub
 from typing import Any
 
-from numpy import NaN, inf
+from numpy import inf, nan
 from numpy.ma import masked
 from pandas import DataFrame
 
@@ -55,10 +55,10 @@ class DataframeHelper:
     @staticmethod
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
         """Convert all element of a dataframe to float, if element is not convertible, is sets NaN"""
-        return dataframe.map(lambda x: NumericHelper.to_float(x, NaN), na_action="ignore")
+        return dataframe.map(lambda x: NumericHelper.to_float(x, nan), na_action="ignore")
 
     @classmethod
-    def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
+    def replace_inf(cls, data: DataFrame, value=nan) -> DataFrame:
         return data.replace([inf, -inf], value)
 
     @classmethod
@@ -66,7 +66,7 @@ class DataframeHelper:
         """
         Convert all weird values (like NaN, inf, masked) to value to be able to convert to json
         """
-        data: DataFrame = dataframe.replace({NaN: value})
+        data: DataFrame = dataframe.replace({nan: value})
         # replace masked value by value
         data = data.map(lambda x: value if x is masked else x, na_action="ignore")
         return cls.replace_inf(data, value)
@@ -74,12 +74,12 @@ class DataframeHelper:
     @classmethod
     def nanify_none_number(cls, data: DataFrame) -> DataFrame:
         """Convert all not numeric element to NaN"""
-        return data.map(lambda x: x if isinstance(x, (float, int)) else NaN)
+        return data.map(lambda x: x if isinstance(x, (float, int)) else nan)
 
     @classmethod
     def nanify_none_str(cls, data: DataFrame) -> DataFrame:
         """Convert all not string element to NaN"""
-        return data.map(lambda x: x if isinstance(x, str) else NaN)
+        return data.map(lambda x: x if isinstance(x, str) else nan)
 
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:

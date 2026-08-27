@@ -1,6 +1,6 @@
 from typing import Any, Literal, cast
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, concat, isna
 
 from gws_core.core.utils.utils import Utils
@@ -23,7 +23,7 @@ class TableConcatHelper:
         cls,
         tables: list[Table],
         column_tags_option: TableConcatOppositeTagOption = "ignore",
-        fill_nan: Any = NaN,
+        fill_nan: Any = nan,
     ) -> Table:
         """Concatenate two tables along the rows.
         The total number of rows will be the sum of the two tables. The total number of columns will depend if the two table
@@ -81,7 +81,7 @@ class TableConcatHelper:
         # fill empty values based on fill_empty
         # do nothing for NaN, it is already NaN
         if fill_nan is None:
-            concat_df.replace({NaN: None}, inplace=True)
+            concat_df.replace({nan: None}, inplace=True)
         elif isna(fill_nan):
             pass
         else:
@@ -94,7 +94,7 @@ class TableConcatHelper:
         cls,
         tables: list[Table],
         row_tags_option: TableConcatOppositeTagOption = "ignore",
-        fill_nan: Any = NaN,
+        fill_nan: Any = nan,
     ) -> Table:
         """Concatenate two tables along the columns.
         The total number of columns will be the sum of the two tables. The total number of rows will depend if the two table

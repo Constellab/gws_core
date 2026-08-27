@@ -1,7 +1,7 @@
 import time
 from abc import abstractmethod
 
-from numpy import Infinity
+from numpy import inf
 
 from gws_core.core.classes.observer.message_dispatcher import MessageDispatcher
 from gws_core.core.model.model_dto import BaseModelDTO
@@ -133,7 +133,7 @@ class ScenarioWaiter:
         count = 0
         consecutive_get_error = 0
 
-        max_refresh = refresh_interval_max_count if refresh_interval_max_count > 0 else Infinity
+        max_refresh = refresh_interval_max_count if refresh_interval_max_count > 0 else inf
         while count < max_refresh:
             count += 1
 
