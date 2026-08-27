@@ -432,10 +432,26 @@ class AppPluginDownloader:
             raise FileNotFoundError(f"The folder for json env {json_dir} does not exist.")
 
         json_file_path = os.path.join(json_dir, self.ENVIRONMENT_JSON_FILE_NAME)
+        content = json.dumps(dict_, indent=4)
+
+        # Nothing to do when the content is unchanged. This matters beyond saving a
+        # write: the file lives under the app's `assets` folder, which reflex watches
+        # in dev mode. The plugin version check runs at every app module import, so
+        # rewriting the file there would retrigger the very hot reload that caused the
+        # import, and the app would rebuild in a loop.
+        if os.path.isfile(json_file_path):
+            try:
+                with open(json_file_path, encoding="utf-8") as json_file:
+                    if json_file.read() == content:
+                        return
+            except OSError:
+                # unreadable file: fall through and rewrite it
+                pass
+
         # write to a temp file then rename so a concurrent reader never sees a partial file
         tmp_file_path = f"{json_file_path}.tmp-{os.getpid()}"
         with open(tmp_file_path, "w", encoding="utf-8") as json_file:
-            json.dump(dict_, json_file, indent=4)
+            json_file.write(content)
         os.replace(tmp_file_path, json_file_path)
 
     def uninstall_package(self) -> None:
