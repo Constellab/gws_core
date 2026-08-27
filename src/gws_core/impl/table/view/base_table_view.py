@@ -120,7 +120,8 @@ class BaseTableView(View):
 
         return tags
 
-    def get_row_tags(self) -> list[dict[str, str]]:
+    def get_row_tags(self) -> list[dict[str, str]] | None:
+        """Return the row tags of the table, or None if all the tags are empty"""
         return self._table.get_row_tags(none_if_empty=True)
 
         # def get_tags_from_selection_range(self, selection_range: TableSelection) -> List[Dict[str, str]]:

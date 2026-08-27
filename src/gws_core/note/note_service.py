@@ -771,11 +771,9 @@ class NoteService:
     ) -> Paginator[Note]:
         query = NoteViewModel.get_by_resource(resource_id)
 
-        paginator: Paginator[NoteViewModel] = Paginator(
-            query, page=page, nb_of_items_per_page=number_of_items_per_page
-        )
+        paginator = Paginator(query, page=page, nb_of_items_per_page=number_of_items_per_page)
 
-        return paginator.map_result(lambda x: x.note)
+        return paginator.map_result(lambda note_view: note_view.note)
 
     ################################################# Resource View ########################################
 
@@ -941,7 +939,11 @@ class NoteService:
             for note in notes:
                 # check if the note is already in the lab
                 lab_note = Note.get_by_id(note.id)
-                if lab_note is not None and lab_note.folder.id != note.folder_id:
+                if (
+                    lab_note is not None
+                    and lab_note.folder is not None
+                    and lab_note.folder.id != note.folder_id
+                ):
                     folder = SpaceFolder.get_by_id(note.folder_id)
 
                     if folder:

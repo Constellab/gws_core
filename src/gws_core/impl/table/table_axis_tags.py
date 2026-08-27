@@ -56,8 +56,11 @@ class TableAxisTags(SerializableObjectJson):
 
     def get_tags_between(
         self, from_index: int | None = None, to_index: int | None = None, none_if_empty: bool = False
-    ) -> list[dict[str, str]]:
-        """Get the tags between the given indexes. It includes the to_index"""
+    ) -> list[dict[str, str]] | None:
+        """Get the tags between the given indexes. It includes the to_index.
+
+        Return None if `none_if_empty` is True and all the tags are empty.
+        """
         if none_if_empty and self.all_tag_are_empty():
             return None
 

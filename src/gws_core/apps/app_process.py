@@ -78,7 +78,7 @@ class AppProcess:
     _start_lock: Lock
 
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 30
+    CHECK_RUNNING_INTERVAL: int = 30
 
     # timeout in second to wait for the main app to start
     START_APP_TIMEOUT = 30

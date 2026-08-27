@@ -62,7 +62,7 @@ class DataframeFilterHelper:
         ax_index: Index = checked_dataframe.index if axis == "row" else checked_dataframe.columns
 
         # delete the filtered rows/columns from the data
-        return data.drop(labels=ax_index, axis=0 if axis == "row" else 1)
+        return data.drop(labels=ax_index.tolist(), axis=0 if axis == "row" else 1)
 
     @classmethod
     def _filter_by_axis_names(
@@ -146,7 +146,6 @@ class DataframeFilterHelper:
     @classmethod
     def convert_tags_params_to_tag_list(cls, tags: dict | list[dict]) -> list[dict]:
         """Convert a tag params from the get_tags_param_set to a list of tags"""
-        if isinstance(tags, str):
-            tags = [tags]
+        tag_list: list[dict] = tags if isinstance(tags, list) else [tags]
 
-        return [tag["tags"] for tag in tags]
+        return [tag["tags"] for tag in tag_list]

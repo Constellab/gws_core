@@ -97,7 +97,9 @@ class AppManager:
 
         # Init plotly color, use the default plotly color
         # Force this init because it is overriden when importing streamlit
-        px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly
+        # plotly.express.PxDefaults is untyped: pyright infers color_discrete_sequence as None
+        # from its `self.color_discrete_sequence = None` initialization, but it accepts a color list
+        px.defaults.color_discrete_sequence = px.colors.qualitative.Plotly  # type: ignore[reportAttributeAccessIssue]
 
         cls.gws_env_initialized = True
 

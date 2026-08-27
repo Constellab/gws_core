@@ -95,8 +95,8 @@ class TableOperationHelper:
     def column_mass_operations(
         table: Table,
         operation_df: DataFrame,
-        operation_name_column: str | None = None,
-        operation_calculations_column: str | None = None,
+        operation_name_column: str | int | None = None,
+        operation_calculations_column: str | int | None = None,
         replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
         keep_original_columns: bool = False,
     ) -> Table:
@@ -106,10 +106,10 @@ class TableOperationHelper:
         :type table: Table
         :param operation_df: _description_
         :type operation_df: DataFrame
-        :param operation_name_column: name of the column that contains the operations' names(takes first column if none), defaults to None
-        :type operation_name_column: str, optional
-        :param operation_column: name of the column that contains operation (takes second column if none), defaults to None
-        :type operation_column: str, optional
+        :param operation_name_column: name of the column (or its index) that contains the operations' names(takes first column if none), defaults to None
+        :type operation_name_column: str | int, optional
+        :param operation_column: name of the column (or its index) that contains operation (takes second column if none), defaults to None
+        :type operation_column: str | int, optional
         :param replace_unknown_column: Option to handle unknown columns, defaults to False
         :type replace_unknown_column: TableOperationUnknownColumnOption, optional
         :param keep_original_columns: If True, the original columns used for the calculations are added at the end of the table.

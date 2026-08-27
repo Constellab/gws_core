@@ -722,7 +722,8 @@ def update_process_style(
 
 
 class CreateScenarioTemplate(BaseModelDTO):
-    name: str | None = None
+    # the name is mandatory, it is stored in a non-nullable column of the scenario template
+    name: str
     description: RichTextDTO | None = None
 
 

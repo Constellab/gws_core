@@ -69,7 +69,10 @@ class BrickModel(Model):
         return BrickHelper.get_brick_info_and_check(self.name)
 
     def get_version(self) -> str:
-        return self.get_brick_info().version
+        brick_info = self.get_brick_info()
+        if not brick_info.version:
+            raise Exception(f"Brick '{brick_info.name}' has no version")
+        return brick_info.version
 
     def to_dto(self) -> BrickDTO:
         brick_dto = BrickDTO(
@@ -104,7 +107,7 @@ class BrickModel(Model):
     ################################################## CLASS METHODS ##################################################
 
     @classmethod
-    def find_by_name(cls, name: str) -> "BrickModel":
+    def find_by_name(cls, name: str) -> "BrickModel | None":
         try:
             return cls.get(cls.name == name)
         except Exception:

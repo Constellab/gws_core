@@ -58,7 +58,7 @@ class ScatterPlot2DView(View):
 
     def add_series(
         self,
-        x: list[float],
+        x: list[float] | None,
         y: list[float],
         name: str | None = None,
         x_name: str | None = None,
@@ -68,8 +68,8 @@ class ScatterPlot2DView(View):
         """
         Add a series of points to plot
 
-        :params x: The x-axis positions of points
-        :type x: list of float
+        :params x: The x-axis positions of points. If None, the indexes of `y` are used
+        :type x: list of float, optional
         :params y: The y-axis magnitudes of points
         :type y: list of float
         :params name: [optional] The name of the serie

@@ -66,9 +66,8 @@ class ProtocolLayout(SerializableObject):
         if outerface_name in self.outerface_layouts:
             del self.outerface_layouts[outerface_name]
 
-    def get_process(self, instance_name: str) -> ProcessLayoutDTO:
-        if instance_name not in self.process_layouts:
-            return None
+    def get_process(self, instance_name: str) -> ProcessLayoutDTO | None:
+        """Return the layout of a process, or None if the process has no layout."""
         return self.process_layouts.get(instance_name)
 
     @classmethod

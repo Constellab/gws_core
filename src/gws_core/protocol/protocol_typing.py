@@ -33,7 +33,7 @@ class ProtocolTyping(Typing):
         cls, graph: dict, human_name: str, short_description: str | None = None
     ) -> "ProtocolTyping":
         # retrieve the protocol typing to copy info from it
-        protocol_typing: Typing = Typing.get_by_object_type(Protocol)
+        protocol_typing: Typing = Typing.get_by_model_type(Protocol)
 
         typing = ProtocolTyping(
             model_type=protocol_typing.model_type,

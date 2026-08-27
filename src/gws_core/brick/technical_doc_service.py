@@ -25,6 +25,9 @@ class TechnicalDocService:
 
         brick_info = BrickHelper.get_brick_info_and_check(brick_name)
 
+        if not brick_info.version:
+            raise Exception(f"Brick '{brick_info.name}' has no version")
+
         # each typing class builds its own full DTO subclass (see Typing.to_full_dto overrides)
         resources = cast(
             list[ResourceTypingDTO], cls.export_typing_technical_doc(brick_name, ResourceTyping)

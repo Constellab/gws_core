@@ -8,7 +8,7 @@ class ExpressionBuilder:
     :rtype: [type]
     """
 
-    _expression: Expression
+    _expression: Expression | None
 
     def __init__(self, expression: Expression | None = None) -> None:
         self._expression = expression
@@ -19,5 +19,5 @@ class ExpressionBuilder:
         else:
             self._expression = expression
 
-    def build(self) -> Expression:
+    def build(self) -> Expression | None:
         return self._expression

@@ -73,7 +73,7 @@ class BrickLogService:
     def _log_brick_message(cls, brick_message: WaitingMessage) -> None:
         cls._log_message(brick_message)
 
-        brick_model: BrickModel = BrickModel.find_by_name(brick_message.brick_name)
+        brick_model: BrickModel | None = BrickModel.find_by_name(brick_message.brick_name)
 
         if not brick_model:
             Logger.error(

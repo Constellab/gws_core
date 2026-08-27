@@ -25,7 +25,9 @@ class TestProtocolLayout(BaseTestCase):
         )
         protocol_model = protocol_model.refresh()
         layout: ProtocolLayout = protocol_model.layout
-        self.assert_json(layout.get_process("robot_create").to_json_dict(), {"x": 10, "y": 10})
+        create_layout = layout.get_process("robot_create")
+        assert create_layout is not None
+        self.assert_json(create_layout.to_json_dict(), {"x": 10, "y": 10})
 
         # define ans save a layout
         dict_layout = ProtocolLayoutDTO(

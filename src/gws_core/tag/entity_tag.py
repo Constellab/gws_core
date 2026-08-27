@@ -183,8 +183,10 @@ class EntityTag(Model):
 
     ###################################### SELECT ######################################
     @classmethod
-    def get_search_tag_expression(cls, tags: list[Tag]) -> Expression:
-        """Get the filter expresion for a search in tags column"""
+    def get_search_tag_expression(cls, tags: list[Tag]) -> Expression | None:
+        """Get the filter expresion for a search in tags column.
+
+        Return None if no expression was built (empty tag list)."""
         query_builder: ExpressionBuilder = ExpressionBuilder()
         for tag in tags:
             if tag.value:

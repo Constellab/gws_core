@@ -75,7 +75,8 @@ class FSNodeModel(Model):
     def to_dto(self) -> FsNodeModelDTO:
         return FsNodeModelDTO(
             id=self.id,
-            size=self.size,
+            # the size column is nullable (legacy nodes), default it to 0 for the DTO
+            size=self.size or 0,
             is_file=FileHelper.is_file(self.path),
             name=FileHelper.get_node_name(self.path),
             path=self.path,

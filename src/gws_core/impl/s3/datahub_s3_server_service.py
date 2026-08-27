@@ -73,7 +73,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
         with S3ServerContext(self.bucket_name):
             search_builder = self._get_s3_expression_builder(prefix=prefix)
-            search_builder.add_ordering(ResourceModel.name)
+            search_builder.add_ordering(ResourceModel.name.asc())
 
             resources = search_builder.build_search()
 
@@ -81,7 +81,7 @@ class DataHubS3ServerService(AbstractS3Service):
 
             return {
                 "Name": self.bucket_name,
-                "Prefix": prefix,
+                "Prefix": prefix or "",
                 "MaxKeys": max_keys,
                 "IsTruncated": False,
                 "Contents": bucket_objects,
@@ -356,7 +356,11 @@ class DataHubS3ServerService(AbstractS3Service):
                 bucket_name="",
             )
         fs_node_model = self._get_fs_node_model_and_check(resource)
-        return {
+        # mypy_boto3_s3's ObjectTypeDef describes the response *parsed by the boto3 client*
+        # (LastModified as a datetime, Size as a required int). Here we build the body of the
+        # S3 XML response served by this lab, where LastModified must be an ISO string and Size
+        # is null when the file size is unknown.
+        return {  # type: ignore[reportReturnType]
             "Key": entity_tag.tag_value,
             "LastModified": DateHelper.to_iso_str(resource.last_modified_at),
             "ETag": "",

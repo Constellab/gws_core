@@ -61,7 +61,7 @@ class BrickService:
 
     @classmethod
     def _init_brick_model(cls, brick_info: BrickInfo) -> BrickModel:
-        brick_model: BrickModel = cls._get_brick_model(brick_info.name)
+        brick_model: BrickModel | None = cls._get_brick_model(brick_info.name)
 
         if brick_model is None:
             brick_model = BrickModel()
@@ -72,7 +72,7 @@ class BrickService:
         return brick_model.save()
 
     @classmethod
-    def _get_brick_model(cls, brick_name: str) -> BrickModel:
+    def _get_brick_model(cls, brick_name: str) -> BrickModel | None:
         return BrickModel.find_by_name(brick_name)
 
     @classmethod
@@ -80,7 +80,7 @@ class BrickService:
         return list(BrickModel.select().order_by(BrickModel.name))
 
     @classmethod
-    def get_brick_model(cls, name: str) -> BrickModel:
+    def get_brick_model(cls, name: str) -> BrickModel | None:
         return BrickModel.find_by_name(name)
 
     @classmethod

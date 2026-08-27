@@ -125,14 +125,15 @@ class ProcessService:
         """Get progress bar messages with pagination."""
         progress_bar = cls._get_process_progress_bar(process_type, process_id)
 
-        messages = progress_bar.get_messages_paginated(nb_of_messages=20, before_date=from_datetime)
+        messages = progress_bar.get_messages_paginated(
+            nb_of_messages=nb_of_messages, before_date=from_datetime
+        )
 
+        # messages are ordered from the most recent to the oldest
         return ProgressBarMessagesBetweenDatesDTO(
-            from_datatime=messages[-1].datetime if messages else None,
-            to_datatime=messages[0].datetime if messages else None,
-            messages=progress_bar.get_messages_paginated(
-                nb_of_messages=nb_of_messages, before_date=from_datetime
-            ),
+            from_datatime=messages[-1].get_datetime() if messages else None,
+            to_datatime=messages[0].get_datetime() if messages else None,
+            messages=messages,
         )
 
     @classmethod

@@ -300,7 +300,7 @@ class SearchBuilder(Generic[ModelType]):
 
     def _get_expression(
         self, operator: SearchOperator, field: Field, value: Any
-    ) -> Expression:
+    ) -> Expression | None:
         """Build the peewee expression matching the operator.
 
         Dispatches to the per-family builders below. Returns None when the

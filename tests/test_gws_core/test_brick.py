@@ -31,5 +31,6 @@ class TestBrick(BaseTestCase):
         BrickLogService.log_brick_message_from_obj(Task, "Test message", "ERROR")
 
         brick_model = BrickService.get_brick_model("gws_core")
+        assert brick_model is not None
         self.assertEqual(brick_model.status, "ERROR")
         self.assertTrue(len(brick_model.get_messages()) > 0)

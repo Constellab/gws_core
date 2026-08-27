@@ -29,7 +29,7 @@ class VulcanoPlotView(ScatterPlot2DView):
 
     def add_series(
         self,
-        x: list[float],
+        x: list[float] | None,
         y: list[float],
         name: str | None = None,
         x_name: str | None = None,

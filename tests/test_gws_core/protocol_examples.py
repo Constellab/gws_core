@@ -75,8 +75,8 @@ class SubProtocolTest(Protocol):
             ]
         )
 
-        (self.add_interface("robot", p1, "robot"),)
-        (self.add_outerface("robot", p2, "robot"),)
+        self.add_interface("robot", p1, "robot")
+        self.add_outerface("robot", p2, "robot")
 
 
 @protocol_decorator("NestedProtocolTest")

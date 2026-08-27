@@ -163,7 +163,10 @@ class EnvAgent(Task):
 
         resource_list = ResourceList()
         for path in target_paths:
-            resource_list.add_resource(self._resolve_target_path(path, working_dir))
+            resource = self._resolve_target_path(path, working_dir)
+            # null or empty target paths are ignored
+            if resource is not None:
+                resource_list.add_resource(resource)
 
         return resource_list
 

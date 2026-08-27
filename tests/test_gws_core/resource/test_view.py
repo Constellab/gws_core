@@ -98,7 +98,7 @@ class ResourceViewTestOveride(ResourceViewTestOverideParent):
     @view(view_type=TextView, hide=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """Disable the view"""
-        pass
+        raise NotImplementedError("This view is disabled")
 
 
 # test_view

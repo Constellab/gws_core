@@ -1,4 +1,4 @@
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, overload
 
 import numpy as np
 from pandas import DataFrame, Series
@@ -820,9 +820,26 @@ class Table(Resource):
 
         self._column_tags = TableAxisTags(tags)
 
+    @overload
+    def get_column_tags(
+        self,
+        from_index: int | None = None,
+        to_index: int | None = None,
+        none_if_empty: Literal[False] = False,
+    ) -> list[dict[str, str]]: ...
+
+    @overload
+    def get_column_tags(
+        self,
+        from_index: int | None = None,
+        to_index: int | None = None,
+        *,
+        none_if_empty: Literal[True],
+    ) -> list[dict[str, str]] | None: ...
+
     def get_column_tags(
         self, from_index: int | None = None, to_index: int | None = None, none_if_empty: bool = False
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, str]] | None:
         """
         Get the tags of multiple columns by index
 
@@ -830,10 +847,10 @@ class Table(Resource):
         :type from_index: int, optional
         :param to_index: end index of the columns to retrieve, to_index is included, defaults to None
         :type to_index: int, optional
-        :param none_if_empty: if true, return None if no tags are found, defaults to False
+        :param none_if_empty: if true, return None if all the tags are empty, defaults to False
         :type none_if_empty: bool, optional
         :return: The list of tags
-        :rtype: List[Dict[str, str]]
+        :rtype: List[Dict[str, str]] | None
         """
 
         return self._column_tags.get_tags_between(from_index, to_index, none_if_empty)
@@ -1060,12 +1077,29 @@ class Table(Resource):
 
         self._row_tags = TableAxisTags(tags)
 
+    @overload
+    def get_row_tags(
+        self,
+        from_index: int | None = None,
+        to_index: int | None = None,
+        none_if_empty: Literal[False] = False,
+    ) -> list[dict[str, str]]: ...
+
+    @overload
+    def get_row_tags(
+        self,
+        from_index: int | None = None,
+        to_index: int | None = None,
+        *,
+        none_if_empty: Literal[True],
+    ) -> list[dict[str, str]] | None: ...
+
     def get_row_tags(
         self,
         from_index: int | None = None,
         to_index: int | None = None,
         none_if_empty: bool = False,
-    ) -> list[dict[str, str]]:
+    ) -> list[dict[str, str]] | None:
         """
         Get the tags of multiple rows by index
 
@@ -1073,10 +1107,10 @@ class Table(Resource):
         :type from_index: int, optional
         :param to_index: end index of the rows to retrieve, to_index is included, defaults to None
         :type to_index: int, optional
-        :param none_if_empty: if true, return None if no tags are found, defaults to False
+        :param none_if_empty: if true, return None if all the tags are empty, defaults to False
         :type none_if_empty: bool, optional
         :return: The list of tags
-        :rtype: List[Dict[str, str]]
+        :rtype: List[Dict[str, str]] | None
         """
         return self._row_tags.get_tags_between(from_index, to_index, none_if_empty)
 
