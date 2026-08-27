@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-from numpy import NaN
+from numpy import nan
 
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -24,7 +24,7 @@ fill_nan_param = SelectParam(
 
 
 def get_fill_nan_value(fill_nan_option: str) -> Any:
-    fill_nan_values: dict[str, Any] = {"NaN": NaN, "Empty": None, "0": 0}
+    fill_nan_values: dict[str, Any] = {"NaN": nan, "Empty": None, "0": 0}
     return fill_nan_values.get(fill_nan_option)
 
 

@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
@@ -89,7 +89,7 @@ class TableReplace(Transformer[Table]):
     def convert_replace_value(self, param_value: str) -> Any:
         """Handle specific values like NaN and None, and tries to convert to float"""
         if param_value == "NaN":
-            return NaN
+            return nan
         elif param_value == "None":
             return None
         else:
@@ -99,7 +99,7 @@ class TableReplace(Transformer[Table]):
     def convert_search_value(self, param_value: str) -> Any:
         """Handle specific values like NaN and None, and tries to convert to float"""
         if param_value in ("NaN", "None"):
-            return NaN
+            return nan
         else:
             # try to convert to float
             return NumericHelper.to_float(param_value, param_value)

@@ -28,6 +28,14 @@ class KVStore(dict[str, Any]):
 
     FILE_NAME = "store"
 
+    # shelve delegates the file creation to dbm, and each dbm backend names the store
+    # file differently: dbm.sqlite3 (the default since Python 3.13) and dbm.gnu use the
+    # store path as is, while dbm.ndbm (the default before, so the one that wrote the
+    # stores of the labs updated to Python 3.13) appends ".db" and dbm.dumb ".dat".
+    # These suffixes are looked up on the disk, the path without suffix being the
+    # fallback, so a store is found whatever the backend that created it.
+    FILE_SUFFIXES = (".db", ".pag", ".dat")
+
     # When true the KVStore can't be update (but read), it a modification happens, it
     # copies the file before updating the data
     # It create a copy of the current file to _lock_copy_file_path
@@ -60,19 +68,23 @@ class KVStore(dict[str, Any]):
         :rtype: str
         """
 
-        return os.path.dirname(self.full_file_path)
+        return os.path.dirname(self._full_file_path)
 
     @property
     def full_file_path(self) -> str:
         """
         Path of DB file the KVStore object
 
+        The suffix of the file depends on the dbm backend used by shelve (see
+        FILE_SUFFIXES), so it is resolved on the disk. When the store does not exist
+        yet, the path without suffix is returned.
+
         :return: The connectiotn path
         :rtype: str
         :rtype: str
         """
 
-        return self._full_file_path + ".db"
+        return self._resolve_file_path(self._full_file_path)
 
     def get_full_path_without_extension(self) -> str:
         return self._full_file_path
@@ -250,9 +262,25 @@ class KVStore(dict[str, Any]):
     def get_full_file_path(cls, file_name: str, with_extension: bool = True) -> str:
         full_path: str = os.path.join(cls.get_base_dir(), file_name, cls.FILE_NAME)
         if with_extension:
-            full_path += ".db"
+            return cls._resolve_file_path(full_path)
 
         return full_path
+
+    @classmethod
+    def _resolve_file_path(cls, path_without_suffix: str) -> str:
+        """Return the path of the store file on the disk for a path without suffix.
+
+        :param path_without_suffix: The store path, without the dbm backend suffix
+        :type path_without_suffix: str
+        :return: The path of the existing store file, or the path without suffix if
+                 the store does not exist yet
+        :rtype: str
+        """
+        for suffix in cls.FILE_SUFFIXES:
+            if FileHelper.exists_on_os(path_without_suffix + suffix):
+                return path_without_suffix + suffix
+
+        return path_without_suffix
 
     @classmethod
     def from_filename(cls, file_name: str) -> "KVStore":

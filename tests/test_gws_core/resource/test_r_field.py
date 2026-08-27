@@ -18,7 +18,7 @@ from gws_core import (
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.resource.resource_dto import ResourceOrigin
-from numpy import NaN
+from numpy import nan
 from pandas.core.frame import DataFrame
 
 
@@ -104,7 +104,7 @@ class TestRField(BaseTestCase):
         self.assertEqual(r_field.get_default_value(), {"test": 12})
         self.assertEqual(r_field.serialize({"test": 12}), {"test": 12})
         self.assertEqual(r_field.serialize(None), {"test": 12})
-        self.assertEqual(r_field.serialize({"test": NaN}), {"test": None})
+        self.assertEqual(r_field.serialize({"test": nan}), {"test": None})
 
         self.assertEqual(r_field.deserialize({"test": 12}), {"test": 12})
         self.assertEqual(r_field.deserialize(None), {"test": 12})

@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from gws_core import Table, TableUnfolderHelper
 from gws_core.test.base_test_case import BaseTestCase
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, Index
 
 
@@ -47,10 +47,10 @@ class TestTableUnfolder(TestCase):
         expected_result = Table(
             DataFrame(
                 {
-                    "A_M_10": [1, NaN],
-                    "B_M_10": [10, NaN],
-                    "A_M_20": [4, NaN],
-                    "B_M_20": [4, NaN],
+                    "A_M_10": [1, nan],
+                    "B_M_10": [10, nan],
+                    "A_M_20": [4, nan],
+                    "B_M_20": [4, nan],
                     "A_F_10": [2.0, 3.0],
                     "B_F_10": [8.0, 6.0],
                 }

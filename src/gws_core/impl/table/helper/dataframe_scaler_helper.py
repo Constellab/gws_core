@@ -57,7 +57,7 @@ class DataframeScalerHelper:
                     int,
                 ),
             )
-            else numpy.NaN
+            else numpy.nan
         )
 
     @staticmethod
@@ -71,7 +71,7 @@ class DataframeScalerHelper:
                     int,
                 ),
             )
-            else numpy.NaN
+            else numpy.nan
         )
 
     @staticmethod
@@ -85,7 +85,7 @@ class DataframeScalerHelper:
                     int,
                 ),
             )
-            else numpy.NaN
+            else numpy.nan
         )
 
     @classmethod

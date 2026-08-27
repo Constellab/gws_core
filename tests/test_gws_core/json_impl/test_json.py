@@ -8,7 +8,7 @@ from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONExporter, JSONImporter
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 from gws_core.test.data_provider import DataProvider
-from numpy import NaN, inf
+from numpy import inf, nan
 
 
 class ATest:
@@ -33,7 +33,7 @@ class TestJson(BaseTestCaseLight):
         self.assertEqual(json_, json_dict.data)
 
     def test_exporter(self):
-        dict_ = {"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")}
+        dict_ = {"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")}
 
         json_dict = JSONDict(dict_)
 
@@ -48,7 +48,7 @@ class TestJson(BaseTestCaseLight):
     def test_dict_to_json(self):
         self.assertEqual(
             JSONHelper.convert_dict_to_json(
-                {"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")}
+                {"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")}
             ),
             {"hello": 123, "numpy": None, "inf": None, "a": "hello"},
         )
@@ -56,7 +56,7 @@ class TestJson(BaseTestCaseLight):
         self.assertEqual(JSONHelper.convert_dict_to_json(cast(dict, "dict_")), "dict_")
         self.assertEqual(JSONHelper.convert_dict_to_json(cast(dict, 12)), 12)
 
-        dict_ = JSONDict({"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")})
+        dict_ = JSONDict({"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")})
         self.assertEqual(
             dict_.default_view(ConfigParams()).data_to_dict(ConfigParams()),
             {"hello": 123, "numpy": None, "inf": None, "a": "hello"},

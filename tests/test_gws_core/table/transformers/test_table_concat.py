@@ -3,7 +3,7 @@ from unittest import TestCase
 from gws_core.impl.table.helper.table_concat_helper import TableConcatHelper
 from gws_core.impl.table.table import Table
 from gws_core.test.base_test_case import BaseTestCase
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, Index
 
 
@@ -21,15 +21,15 @@ class TestTableConcat(TestCase):
         table_2 = Table(df_2, row_tags=row_tags_2, column_tags=column_tags_2)
 
         result: Table = TableConcatHelper.concat_table_rows(
-            [table_1, table_2], column_tags_option="ignore", fill_nan=NaN
+            [table_1, table_2], column_tags_option="ignore", fill_nan=nan
         )
 
         expected_df = DataFrame(
             {
                 "F1": [1, 2, 4, 5],
-                "F2": [7.0, 1.0, NaN, NaN],
-                "F3": [NaN, NaN, 9.0, 8.0],
-                "F4": [NaN, NaN, "n1", "n2"],
+                "F2": [7.0, 1.0, nan, nan],
+                "F3": [nan, nan, 9.0, 8.0],
+                "F4": [nan, nan, "n1", "n2"],
             },
             index=Index(["0", "1", "0_1", "1_1"]),
         )
@@ -65,15 +65,15 @@ class TestTableConcat(TestCase):
         table_2 = Table(df_2)
 
         result: Table = TableConcatHelper.concat_table_columns(
-            [table_1, table_2], row_tags_option="ignore", fill_nan=NaN
+            [table_1, table_2], row_tags_option="ignore", fill_nan=nan
         )
 
         expected_df = DataFrame(
             {
-                "1": [1, 2, NaN],
-                "2": ["A2", "B2", NaN],
-                "3": ["A3", NaN, "C3"],
-                "4": ["A4", NaN, "C4"],
+                "1": [1, 2, nan],
+                "2": ["A2", "B2", nan],
+                "3": ["A3", nan, "C3"],
+                "4": ["A4", nan, "C4"],
             },
             index=Index(["A", "B", "C"]),
         )

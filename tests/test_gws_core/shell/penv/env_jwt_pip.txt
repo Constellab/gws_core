@@ -5,6 +5,3 @@ name = "pypi"
 
 [packages]
 pyjwt = "==2.7.0"
-
-[requires]
-python_version = "3.10"
