@@ -48,7 +48,7 @@ Learn about the data lab here : [Overview](https://constellab.community/bricks/g
 
 This section is for users who want to install the brick manually. It can also be used to install the brick manually in the Constellab Codelab.
 
-We recommend installing using Ubuntu 22.04 with python 3.10.
+We recommend installing using Ubuntu 24.04 with python 3.13 (see `pyproject.toml` for the supported range).
 
 Required packages are listed in the ```settings.json``` file, for now the packages must be installed manually.
 
