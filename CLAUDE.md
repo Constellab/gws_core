@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+**Cross-repo work**: read `docs/architecture/platform-map.md` in the `monorepo-back` repository (checked out on the host, not inside this container) when a change spans repositories, when cutting a release, or when a cross-repo inconsistency looks like a bug — it holds the version chain, the release ordering, and the deliberate oddities.
+
 ## Development Commands
 
 ### Server Management
@@ -9,22 +11,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Start server with debug logging: `gws server run --log-level=DEBUG`
 
 ### Testing
-- Run all tests: `gws server test all`
+- Run all tests: `gws server test all --parallel`
 - Run specific test: `gws server test [TEST_FILE_NAME]` (without `.py` extension)
-- Tests are located in `tests/test_gws_core/` directory
+- Tests live in `tests/test_gws_core/`
+
+**Always pass `--parallel`** when running all tests or several files at once — it runs them via
+pytest-xdist, each worker on its own test DB schema. A single file gains nothing from it. Control
+the worker count with `--workers` / `-n` (default `reserved`: all CPUs minus 2).
+
+`gws server test-all --brick-name <name>` is a different command: it runs several *bricks*
+sequentially, each in a fresh subprocess.
 
 ### Development Apps
 - Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
 - Run Reflex app in dev mode: `gws reflex run [CONFIG_FILE_PATH]`
+- Check a Reflex app compiles: `gws reflex compile [CONFIG_FILE_PATH]`
+
+`gws reflex compile` is how you verify a Reflex app after changing it — much faster than starting
+the app, and it needs no database. Exit code 0 means it builds (not that it runs correctly with
+real data). Start the app only when the user asks, or to investigate runtime behaviour.
+
+When creating, modifying or debugging a Reflex app, invoke the `gws-reflex-app-developer` skill
+first; for Streamlit, `gws-streamlit-app-developer`.
 
 ### CLI Structure
-The main CLI entry point is `gws_cli/gws_cli/main_cli.py` which provides commands for:
-- `server`: Server operations (run, test, execute scenarios/processes)
-- `brick`: Generate and manage bricks
-- `task`: Generate task classes
-- `streamlit`: Generate and run Streamlit applications
-- `reflex`: Generate and run Reflex applications
-- `dev-env`: Manage development environment (reset data)
+The main CLI entry point is `gws_cli/gws_cli/main_cli.py`. Run `gws --help` for the current group
+list; it also covers `db`, `resource`, `scenario`, `community`, `claude`, `copilot` and `utils`
+beyond `server`, `brick`, `task`, `streamlit`, `reflex` and `dev-env`.
 
 ## Architecture Overview
 
