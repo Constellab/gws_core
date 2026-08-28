@@ -1,4 +1,5 @@
 import os
+from typing import cast
 from unittest import TestCase
 
 import numpy
@@ -12,7 +13,7 @@ from ..gws_core_test_helper import GWSCoreTestHelper
 class TestTableImporter(TestCase):
     def test_table_import_1(self):
         file_path = GWSCoreTestHelper.get_small_data_file_path(1)
-        table: Table = TableImporter.call(File(file_path))
+        table = cast(Table, TableImporter.call(File(file_path)))
         df = pandas.read_table(file_path)
 
         self.assertTrue(numpy.array_equal(df.to_numpy(), table.get_data().to_numpy()))
@@ -23,7 +24,7 @@ class TestTableImporter(TestCase):
         """Test import with weird caracters and #"""
 
         file_path = GWSCoreTestHelper.get_small_data_file_path(2)
-        table: Table = TableImporter.call(File(file_path), params={"comment": ""})
+        table = cast(Table, TableImporter.call(File(file_path), params={"comment": ""}))
 
         df = table.get_data()
         self.assertEqual(df["A"].iloc[0], "#")
@@ -37,7 +38,7 @@ class TestTableImporter(TestCase):
         )
         self.assertTrue(os.path.exists(file_path))
         outputs = tester.run()
-        table: Table = outputs["target"]
+        table = cast(Table, outputs["target"])
         df = pandas.read_table(file_path)
         self.assertTrue(numpy.array_equal(df.to_numpy(), table.get_data().to_numpy()))
 
@@ -45,7 +46,7 @@ class TestTableImporter(TestCase):
         table.set_comments("This is a table")
         tester = TaskRunner(params={}, inputs={"source": table}, task_type=TableExporter)
         outputs = tester.run()
-        file_: File = outputs["target"]
+        file_ = cast(File, outputs["target"])
 
         with open(file_.path, encoding="utf-8") as fp:
             text = fp.read()

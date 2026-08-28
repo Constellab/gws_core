@@ -496,4 +496,4 @@ class PlotlyTask(Task):
     }
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        pass
+        return {}

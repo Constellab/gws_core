@@ -20,7 +20,7 @@ class ProtocolBuildException(BadRequestException):
         instance_name: str | None,
         parent_instance_name: str | None,
         exception_detail: str,
-        unique_code: str,
+        unique_code: str | None,
         exception: Exception,
     ) -> None:
         self.original_exception = exception

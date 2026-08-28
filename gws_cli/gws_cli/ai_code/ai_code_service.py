@@ -68,9 +68,12 @@ class AICodeService(ABC):
             argument_hint="path to Snakefile or description of workflow to convert",
         ),
         SkillFrontmatter(
-            filename="code-review-instructions.md",
-            description="Instructions for reviewing code",
-            argument_hint="description of code review request",
+            filename="code-review.md",
+            description=(
+                "Review the Python changed in a brick, then gate it on ruff and "
+                "pyright being clean on every line the change touched"
+            ),
+            argument_hint="fixed point to review against (commit, branch, or HEAD)",
         ),
         SkillFrontmatter(
             filename="update-doc-json.md",
@@ -96,6 +99,14 @@ class AICodeService(ABC):
             filename="faq.md",
             description="Save a diagnosed and fixed error to the developer FAQ on the Community",
             argument_hint="the error to save (defaults to the one just debugged)",
+        ),
+        SkillFrontmatter(
+            filename="dc-dashboard-component-builder.md",
+            description=(
+                "Create or extend a dc-dashboard-components Angular component usable from "
+                "Reflex and/or Streamlit apps, including its release via GitHub tag"
+            ),
+            argument_hint="component name and what it should do (reflex, streamlit, or both)",
         ),
     ]
 
@@ -196,9 +207,6 @@ class AICodeService(ABC):
             # Clean up existing skills
             self._clean_existing_skills(target_dir)
 
-            # Generate plugin manifest if supported
-            self._generate_plugin_manifest(target_dir)
-
             # Process each skill from SKILL_FRONTMATTER
             for frontmatter_config in AICodeService.SKILL_FRONTMATTER:
                 self._write_skill(target_dir, frontmatter_config)
@@ -231,13 +239,6 @@ class AICodeService(ABC):
             for skill_dir in skills_dir.glob("gws-*"):
                 if skill_dir.is_dir():
                     shutil.rmtree(skill_dir)
-
-    def _generate_plugin_manifest(self, target_dir: Path) -> None:
-        """Generate plugin manifest file. Override in subclasses that support plugins.
-
-        Args:
-            target_dir: The plugin root directory
-        """
 
     def _resolve_placeholders(self, content: str) -> str:
         """Substitute dynamic placeholders in skill content at generation time.

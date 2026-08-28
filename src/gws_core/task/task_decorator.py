@@ -1,4 +1,5 @@
 from collections.abc import Callable
+from typing import cast
 
 from gws_core.brick.brick_log_service import BrickLogService
 from gws_core.config.config_specs import ConfigSpecs
@@ -11,6 +12,7 @@ from gws_core.resource.resource import Resource
 from ..core.utils.utils import Utils
 from ..io.io_spec_helper import IOSpecsHelper
 from ..model.typing_register_decorator import register_gws_typing_class
+from ..model.typing_registration import TypingRegistration
 from .task import Task
 from .task_typing import TaskSubType
 
@@ -63,6 +65,87 @@ def task_decorator(
     return decorator
 
 
+def _check_task_specs(task_class: type[Task]) -> list[TypingErrorDTO] | None:
+    """Check and normalize the input, output and config specs of a task class.
+
+    Definition errors are collected (not raised): the task is still registered, but marked
+    as errored so it appears as broken and can't run.
+
+    :param task_class: task class being decorated
+    :type task_class: type[Task]
+    :return: the list of definition errors (possibly empty), or None if the specs could not be
+             checked at all, meaning the task must not be registered
+    :rtype: list[TypingErrorDTO] | None
+    """
+    definition_errors: list[TypingErrorDTO] = []
+
+    try:
+        task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
+        task_class.output_specs = IOSpecsHelper.check_output_specs(
+            task_class.output_specs, task_class
+        )
+
+        # IOSpecs construction never raises on an invalid spec; it records the
+        # problem instead. Register the task anyway, marked as errored.
+        if not task_class.input_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid input specs for task {task_class.__name__}: "
+                f"{task_class.input_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(
+                    source="input", message=cast(str, task_class.input_specs.invalid_reason)
+                )
+            )
+        if not task_class.output_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid output specs for task {task_class.__name__}: "
+                f"{task_class.output_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(
+                    source="output", message=cast(str, task_class.output_specs.invalid_reason)
+                )
+            )
+
+        # check the config specs
+        if isinstance(task_class.config_specs, dict):
+            # TODO for now this is just a warning
+            BrickLogService.log_brick_warning(
+                task_class,
+                f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
+            )
+
+            task_class.config_specs = ConfigSpecs(task_class.config_specs)
+
+        # ConfigSpecs construction never raises on an invalid param key; it
+        # records the problem instead. Register the task anyway, marked as
+        # errored, so a single bad config doesn't break the brick load.
+        if not task_class.config_specs.is_valid:
+            BrickLogService.log_brick_error(
+                task_class,
+                f"Invalid config specs for task {task_class.__name__}: "
+                f"{task_class.config_specs.invalid_reason}",
+            )
+            definition_errors.append(
+                TypingErrorDTO(
+                    source="config", message=cast(str, task_class.config_specs.invalid_reason)
+                )
+            )
+        else:
+            task_class.config_specs.check_config_specs()
+
+    except Exception as err:
+        BrickLogService.log_brick_error(
+            task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}"
+        )
+        return None
+
+    return definition_errors
+
+
 def decorate_task(
     task_class: type[Task],
     unique_name: str,
@@ -97,67 +180,9 @@ def decorate_task(
 
     # Definition errors are collected (not raised): the task is still
     # registered, but marked as errored so it appears as broken and can't run.
-    definition_errors: list[TypingErrorDTO] = []
-
     # Check the input, output and config specs
-    try:
-        task_class.input_specs = IOSpecsHelper.check_input_specs(task_class.input_specs, task_class)
-        task_class.output_specs = IOSpecsHelper.check_output_specs(
-            task_class.output_specs, task_class
-        )
-
-        # IOSpecs construction never raises on an invalid spec; it records the
-        # problem instead. Register the task anyway, marked as errored.
-        if not task_class.input_specs.is_valid:
-            BrickLogService.log_brick_error(
-                task_class,
-                f"Invalid input specs for task {task_class.__name__}: "
-                f"{task_class.input_specs.invalid_reason}",
-            )
-            definition_errors.append(
-                TypingErrorDTO(source="input", message=task_class.input_specs.invalid_reason)
-            )
-        if not task_class.output_specs.is_valid:
-            BrickLogService.log_brick_error(
-                task_class,
-                f"Invalid output specs for task {task_class.__name__}: "
-                f"{task_class.output_specs.invalid_reason}",
-            )
-            definition_errors.append(
-                TypingErrorDTO(source="output", message=task_class.output_specs.invalid_reason)
-            )
-
-        # check the config specs
-        if isinstance(task_class.config_specs, dict):
-            # TODO for now this is just a warning
-            BrickLogService.log_brick_warning(
-                task_class,
-                f"The config specs of task {task_class.__name__} must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
-            )
-
-            task_class.config_specs = ConfigSpecs(task_class.config_specs)
-
-        # ConfigSpecs construction never raises on an invalid param key; it
-        # records the problem instead. Register the task anyway, marked as
-        # errored, so a single bad config doesn't break the brick load.
-        if not task_class.config_specs.is_valid:
-            BrickLogService.log_brick_error(
-                task_class,
-                f"Invalid config specs for task {task_class.__name__}: "
-                f"{task_class.config_specs.invalid_reason}",
-            )
-            definition_errors.append(
-                TypingErrorDTO(
-                    source="config", message=task_class.config_specs.invalid_reason
-                )
-            )
-        else:
-            task_class.config_specs.check_config_specs()
-
-    except Exception as err:
-        BrickLogService.log_brick_error(
-            task_class, f"Invalid specs for the task : {task_class.__name__}. {str(err)}"
-        )
+    definition_errors = _check_task_specs(task_class)
+    if definition_errors is None:
         return
 
     # Set the default style if not defined
@@ -169,17 +194,19 @@ def decorate_task(
     related_resource_typing_name = related_resource.get_typing_name() if related_resource else None
 
     register_gws_typing_class(
-        object_class=task_class,
-        object_type="TASK",
-        unique_name=unique_name,
-        object_sub_type=task_type,
-        human_name=human_name,
-        short_description=short_description,
-        hide=hide,
-        style=style,
-        related_model_typing_name=related_resource_typing_name,
-        deprecated=deprecated,
-        definition_errors=definition_errors or None,
+        TypingRegistration(
+            object_class=task_class,
+            object_type="TASK",
+            unique_name=unique_name,
+            object_sub_type=task_type,
+            human_name=human_name,
+            short_description=short_description,
+            hide=hide,
+            style=style,
+            related_model_typing_name=related_resource_typing_name,
+            deprecated=deprecated,
+            definition_errors=definition_errors or None,
+        )
     )
 
 

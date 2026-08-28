@@ -4,6 +4,7 @@ import os
 import time
 import webbrowser
 from dataclasses import dataclass
+from http import HTTPStatus
 from pathlib import Path
 
 import requests
@@ -35,6 +36,9 @@ class TokenInfo:
 class CommunityCliService:
     GWS_CLI_CONFIG_DIR = Path.home() / ".gws"
     GWS_CLI_CREDENTIALS_FILE = GWS_CLI_CONFIG_DIR / "credentials.json"
+
+    # Base64 strings are decoded in blocks of 4 characters, so padding is computed modulo 4
+    BASE64_BLOCK_SIZE = 4
 
     POLL_INTERVAL_SECONDS = 5
     POLL_TIMEOUT_SECONDS = 600  # 10 minutes
@@ -198,7 +202,7 @@ class CommunityCliService:
                 "Cannot reach the Community server. Please check your connection."
             ) from err
 
-        if response.status_code < 200 or response.status_code >= 300:
+        if not HTTPStatus.OK <= response.status_code < HTTPStatus.MULTIPLE_CHOICES:
             raise Exception(f"Failed to request authorization code (HTTP {response.status_code}).")
 
         try:
@@ -220,14 +224,50 @@ class CommunityCliService:
         try:
             payload_b64 = token.split(".")[1]
             # Add padding if needed
-            padding = 4 - len(payload_b64) % 4
-            if padding != 4:
+            padding = (
+                CommunityCliService.BASE64_BLOCK_SIZE
+                - len(payload_b64) % CommunityCliService.BASE64_BLOCK_SIZE
+            )
+            if padding != CommunityCliService.BASE64_BLOCK_SIZE:
                 payload_b64 += "=" * padding
             payload = json.loads(base64.urlsafe_b64decode(payload_b64))
             exp = payload.get("exp")
             return float(exp) if exp is not None else None
         except Exception:
             return None
+
+    @staticmethod
+    def _raise_on_authorization_failure(text: str, denied_keywords: tuple[str, ...]) -> None:
+        """Raise the matching authorization error when the server text reports a failure.
+
+        :param text: lower-cased status or message reported by the Community server
+        :param denied_keywords: keywords meaning the authorization was denied
+        :raises AuthorizationExpiredError: If the text reports an expired code
+        :raises AuthorizationDeniedError: If the text reports a denied authorization
+        """
+        if "expired" in text:
+            raise AuthorizationExpiredError()
+        if any(keyword in text for keyword in denied_keywords):
+            raise AuthorizationDeniedError()
+
+    @staticmethod
+    def _extract_token_expiration(data: dict, access_token: str) -> float | None:
+        """Compute the token expiration timestamp from the response body or the JWT payload.
+
+        :param data: the parsed JSON body of the poll response
+        :param access_token: the access token returned by the server
+        :return: the expiration timestamp, or None if it cannot be determined
+        """
+        if "expiresAt" in data:
+            return float(data["expiresAt"])
+        if "expires_at" in data:
+            return float(data["expires_at"])
+        if "expiresIn" in data:
+            return time.time() + float(data["expiresIn"])
+        if "expires_in" in data:
+            return time.time() + float(data["expires_in"])
+        # Fallback: decode the JWT to extract the exp claim
+        return CommunityCliService._extract_jwt_expiration(access_token)
 
     @staticmethod
     def _parse_poll_response(response: requests.Response) -> TokenInfo | None:
@@ -237,9 +277,9 @@ class CommunityCliService:
         :raises AuthorizationExpiredError: If the code has expired
         :raises AuthorizationDeniedError: If the authorization was denied
         """
-        if response.status_code == 410:
+        if response.status_code == HTTPStatus.GONE:
             raise AuthorizationExpiredError()
-        if response.status_code == 409:
+        if response.status_code == HTTPStatus.CONFLICT:
             raise AuthorizationDeniedError()
 
         try:
@@ -251,19 +291,15 @@ class CommunityCliService:
             return None
 
         # Check status field from response body
-        status = data.get("status", "").lower()
-        if "expired" in status:
-            raise AuthorizationExpiredError()
-        if "denied" in status or "refused" in status:
-            raise AuthorizationDeniedError()
+        CommunityCliService._raise_on_authorization_failure(
+            data.get("status", "").lower(), ("denied", "refused")
+        )
 
         # Check for error HTTP codes with message fallback
-        if response.status_code < 200 or response.status_code >= 300:
-            message = data.get("message", "").lower()
-            if "expired" in message:
-                raise AuthorizationExpiredError()
-            if "denied" in message or "already" in message:
-                raise AuthorizationDeniedError()
+        if not HTTPStatus.OK <= response.status_code < HTTPStatus.MULTIPLE_CHOICES:
+            CommunityCliService._raise_on_authorization_failure(
+                data.get("message", "").lower(), ("denied", "already")
+            )
             return None
 
         # Success: extract token
@@ -272,18 +308,7 @@ class CommunityCliService:
             return None
 
         # Extract expiration: from response fields or from JWT payload
-        expires_at: float | None = None
-        if "expiresAt" in data:
-            expires_at = float(data["expiresAt"])
-        elif "expires_at" in data:
-            expires_at = float(data["expires_at"])
-        elif "expiresIn" in data:
-            expires_at = time.time() + float(data["expiresIn"])
-        elif "expires_in" in data:
-            expires_at = time.time() + float(data["expires_in"])
-        else:
-            # Fallback: decode the JWT to extract the exp claim
-            expires_at = CommunityCliService._extract_jwt_expiration(access_token)
+        expires_at = CommunityCliService._extract_token_expiration(data, access_token)
 
         return TokenInfo(access_token=access_token, expires_at=expires_at)
 
@@ -358,7 +383,7 @@ class CommunityCliService:
             code, auth_url = CommunityCliService.request_device_code()
         except Exception as e:
             typer.echo(str(e), err=True)
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         # Step 2: Open browser
         # Use authUrl from the backend if available, otherwise build it
@@ -384,12 +409,12 @@ class CommunityCliService:
                 "The authorization code has expired. Run `gws community login` to try again.",
                 err=True,
             )
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
         except AuthorizationDeniedError:
             typer.echo(
                 "Authorization was denied. Run `gws community login` to try again.", err=True
             )
-            raise typer.Exit(1)
+            raise typer.Exit(1) from None
 
         # Step 4: Save token with domain and expiration
         CommunityCliService.save_credentials(

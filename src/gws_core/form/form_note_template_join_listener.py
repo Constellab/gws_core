@@ -69,7 +69,7 @@ def _form_template_blocks_to_join_state(
     for block in rich_text.get_blocks_by_type(
         RichTextBlockTypeStandard.FORM_TEMPLATE
     ):
-        data: RichTextBlockFormTemplate = block.get_data()
+        data: RichTextBlockFormTemplate = block.get_data(RichTextBlockFormTemplate)
         if data.form_template_version_id is None:
             # Unpinned block — no version to join on yet (resolved at
             # Note instantiation time).

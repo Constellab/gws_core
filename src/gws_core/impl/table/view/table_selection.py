@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
 
 class CellCoord:
@@ -70,7 +70,7 @@ class TableSelection:
         if self.type == "columns":
             return len(self.selection) == 1
         else:
-            ranges: list[CellRange] = self.selection
+            ranges = cast(list[CellRange], self.selection)
 
             column: int | None = None
 
@@ -95,18 +95,17 @@ class TableSelection:
             return True
 
         # if both are range selection we check that they are in the same row
-        ranges: list[CellRange] = self.selection
-        other_ranges: list[CellRange] = other.selection
+        ranges = cast(list[CellRange], self.selection)
+        other_ranges = cast(list[CellRange], other.selection)
 
         if len(ranges) != len(other_ranges):
             return False
 
-        for i in range(len(ranges)):
-            # check that for each range the from and to rows are the same
-            if not ranges[i].is_same_rows(other_ranges[i]):
-                return False
-
-        return True
+        # check that for each range the from and to rows are the same
+        return all(
+            range_.is_same_rows(other_range)
+            for range_, other_range in zip(ranges, other_ranges, strict=True)
+        )
 
     def get_name(self) -> str | None:
         """Method to return a possible name of the selection (only if selection by columns)
@@ -115,7 +114,7 @@ class TableSelection:
         :rtype: Optional[str]
         """
         if self.type == "columns":
-            return " ".join(self.selection)
+            return " ".join(cast(list[str], self.selection))
         else:
             return None
 
@@ -186,17 +185,13 @@ class Serie1dList:
     def all_y_series_have_same_row_selection(self) -> bool:
         first_serie = self.series[0]
 
-        for serie in self.series[1:]:
-            if not first_serie.y.is_same_row_selection(serie.y):
-                return False
-
-        return True
+        return all(first_serie.y.is_same_row_selection(serie.y) for serie in self.series[1:])
 
     def all_y_are_column_selection(self) -> bool:
-        return all([serie.y_is_column_selection() for serie in self.series])
+        return all(serie.y_is_column_selection() for serie in self.series)
 
     def all_y_are_range_selection(self) -> bool:
-        return all([serie.y.is_range_selection() for serie in self.series])
+        return all(serie.y.is_range_selection() for serie in self.series)
 
     def __len__(self) -> int:
         return len(self.series)

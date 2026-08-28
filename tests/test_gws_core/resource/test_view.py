@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     ConfigParams,
@@ -96,7 +98,7 @@ class ResourceViewTestOveride(ResourceViewTestOverideParent):
     @view(view_type=TextView, hide=True)
     def view_as_json(self, params: ConfigParams) -> JSONView:
         """Disable the view"""
-        pass
+        raise NotImplementedError("This view is disabled")
 
 
 # test_view
@@ -136,11 +138,13 @@ class TestView(BaseTestCase):
 
         # Test get default view
         default_view = ViewHelper.get_default_view_of_resource_type(ResourceViewTestSub)
+        assert default_view is not None
         self.assertEqual(default_view.method_name, "sub_view_test")
 
     def test_default_view(self):
         # Test get default view
         default_view = ViewHelper.get_default_view_of_resource_type(ResourceViewTestSub)
+        assert default_view is not None
         self.assertEqual(default_view.method_name, "sub_view_test")
 
     def test_complete_call_view(self):
@@ -151,7 +155,7 @@ class TestView(BaseTestCase):
             "sub_view_test",
             {"test_str_param": "Bonjour ", "test_any_param": "12", "page": 1, "page_size": 5000},
         )
-        view: TextView = view_runner.generate_view()
+        view = cast(TextView, view_runner.generate_view())
 
         self.assertEqual(view._type, TextView._type)
         self.assertEqual(view._data, "Bonjour 12")
@@ -210,7 +214,7 @@ class TestView(BaseTestCase):
 
         # re-call the view from the view config
         view_result_2 = ResourceService.call_view_from_view_config(view_config.id)
-        self.assert_json(view_result.view, view_result_2.view)
+        self.assert_json(cast(dict, view_result.view), cast(dict, view_result_2.view))
 
         # Check that the view is listed in the views to delete
         views_to_delete = ViewConfigService.get_old_views_to_delete()

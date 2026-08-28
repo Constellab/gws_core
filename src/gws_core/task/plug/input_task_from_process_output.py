@@ -60,10 +60,10 @@ class InputTaskFromProcessOutput(Task):
     __enable_in_sub_protocol__: bool = False
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        process_model: ProcessModel = TaskModel.get_by_id(params["process_model_id"])
+        process_model: ProcessModel | None = TaskModel.get_by_id(params["process_model_id"])
 
         if not process_model:
-            process_model: ProtocolModel = ProtocolModel.get_by_id(params["process_model_id"])
+            process_model = ProtocolModel.get_by_id(params["process_model_id"])
 
         if not process_model:
             raise Exception(f"Process not found with id {params['process_model_id']}")

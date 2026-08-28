@@ -66,8 +66,10 @@ def _export_with_remapped_ids(
 
     # Remap process IDs for processes that should be matched
     if process_id_map:
+        graph = package.protocol.data.graph
+        assert graph is not None
         for instance_name, target_id in process_id_map.items():
-            node = package.protocol.data.graph.nodes.get(instance_name)
+            node = graph.nodes.get(instance_name)
             if node:
                 node.id = target_id
 

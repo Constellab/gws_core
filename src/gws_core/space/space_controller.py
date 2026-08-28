@@ -119,7 +119,7 @@ def get_user(id_: str, _=Depends(AuthSpace.check_space_api_key_and_user)) -> Use
     - **id_**: the user id_
     """
 
-    return UserService.get_user_by_id(id_).to_full_dto()
+    return UserService.get_by_id_and_check(id_).to_full_dto()
 
 
 @space_app.post("/user", tags=["User management"])

@@ -19,7 +19,8 @@ class TestRobotMove(TestCase):
         outputs = runner.run()
 
         # retrieve the robot output
-        robot_output: Robot = outputs["robot"]
+        robot_output = outputs["robot"]
+        assert isinstance(robot_output, Robot)
 
         # check the robot position, y should be -3 as he went south
         self.assertEqual(robot_output.position, [0, -3])

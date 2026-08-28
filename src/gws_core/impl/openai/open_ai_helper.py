@@ -1,4 +1,7 @@
-from openai import OpenAI
+from typing import cast
+
+from openai import OpenAI, omit
+from openai.types.chat import ChatCompletionMessageParam
 
 from gws_core.core.utils.settings import Settings
 from gws_core.core.utils.utils import Utils
@@ -22,9 +25,19 @@ class OpenAiHelper:
         """
         client = OpenAI(api_key=Settings.get_open_ai_api_key())
 
-        response = client.chat.completions.create(model="gpt-5.4", messages=chat_messages)
+        # OpenAiChatMessage is structurally compatible with the system/user/assistant members of
+        # openai's ChatCompletionMessageParam union, but a single TypedDict cannot be assigned to a
+        # union of TypedDicts each pinning "role" to one literal, hence the cast.
+        response = client.chat.completions.create(
+            model="gpt-5.4", messages=cast(list[ChatCompletionMessageParam], chat_messages)
+        )
 
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+
+        if content is None:
+            raise Exception("The AI response is empty.")
+
+        return content
 
     @classmethod
     def get_code_context(cls, pip_package_names: list[str] | None = None) -> str:
@@ -39,7 +52,7 @@ class OpenAiHelper:
         return f"{packages_context}\n{OpenAiHelper.generate_code_rules}"
 
     @classmethod
-    def get_package_version_context(cls, pip_package_names: list[str]) -> str:
+    def get_package_version_context(cls, pip_package_names: list[str] | None = None) -> str:
         """
         Method to improve the context by giving the version of the provided pip packages
         installed in the lab.
@@ -106,7 +119,7 @@ class OpenAiHelper:
             transcription = client.audio.transcriptions.create(
                 model="whisper-1",
                 file=audio_file,
-                prompt=prompt,
+                prompt=prompt if prompt is not None else omit,
             )
 
         return transcription.text

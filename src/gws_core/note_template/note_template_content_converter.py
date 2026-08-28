@@ -68,7 +68,7 @@ class NoteTemplateContentConverter:
             RichTextBlockTypeStandard.FORM_TEMPLATE
         )
         for block in ft_blocks:
-            ft_data: RichTextBlockFormTemplate = block.get_data()
+            ft_data: RichTextBlockFormTemplate = block.get_data(RichTextBlockFormTemplate)
             resolved_version = cls._resolve_form_template_version(ft_data)
             form = FormService.create(
                 CreateFormDTO(template_version_id=resolved_version.id)

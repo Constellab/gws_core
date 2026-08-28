@@ -4,6 +4,7 @@ from typing import Literal, cast
 from gws_core.core.utils.reflector_types import MethodDoc
 from gws_core.core.utils.utils import Utils
 from gws_core.model.typing_dto import TypingDTO
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_typing_dto import ResourceTypingDTO, ResourceTypingMethodDTO
 
 from ..core.utils.reflector_helper import ReflectorHelper
@@ -52,7 +53,9 @@ class ResourceTyping(Typing):
         )
 
         # Get view methods to exclude them from funcs
-        views_methods: list[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(type_)
+        views_methods: list[ResourceViewMetaData] = ViewHelper.get_views_of_resource_type(
+            cast(type[Resource], type_)
+        )
         views_methods_dto = [m.to_dto() for m in views_methods]
         view_method_names = [v.method_name for v in views_methods]
 
@@ -64,9 +67,14 @@ class ResourceTyping(Typing):
             views=views_methods_dto if len(views_methods_dto) > 0 else None,
         )
 
-    class Meta:
+    class _ResourceTypingMeta:
         is_table = False
         table_name = "gws_typing"
+
+    # Declared as a plain `type` so that sub models can define their own `Meta`
+    # (the peewee convention) without it being reported as an incompatible
+    # override. See BaseModel for details.
+    Meta: type = _ResourceTypingMeta
 
 
 class FileTyping(ResourceTyping):

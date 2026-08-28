@@ -3,7 +3,6 @@ import io
 from unittest.mock import patch
 
 from fastapi import UploadFile
-
 from gws_core.impl.openai.open_ai_transcription_service import OpenAiTranscriptionService
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 

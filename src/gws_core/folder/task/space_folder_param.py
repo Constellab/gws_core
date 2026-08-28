@@ -46,7 +46,7 @@ class SpaceFolderParam(ParamSpec):
     def get_param_spec_type(cls) -> ParamSpecType:
         return ParamSpecType.SPACE_FOLDER
 
-    def build(self, value: Any) -> SpaceFolder:
+    def build(self, value: Any) -> SpaceFolder | None:
         if not value:
             return None
 

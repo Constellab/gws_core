@@ -14,7 +14,7 @@ class AppView(View):
 
     _type: ViewType = ViewType.APP
 
-    data: CreateAppAsyncResultDTO | None = None
+    data: CreateAppAsyncResultDTO
 
     def __init__(self, data: CreateAppAsyncResultDTO):
         super().__init__()

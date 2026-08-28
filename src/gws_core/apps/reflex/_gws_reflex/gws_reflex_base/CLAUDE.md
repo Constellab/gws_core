@@ -60,14 +60,14 @@ Single standalone state holding the active language (`reflex_i18n_state.py`). Sh
     - `multiline_ellipsis_css(lines, max_width="100%")`: Returns CSS styles dict for multiline text ellipsis truncation
 - **reflex_main_utils.py**
   - `default_gws_env_frontend_handler(exception)`: Frontend exception handler for virtual environment apps (logs with the standard library, not the GWS Logger)
-  - `default_gws_env_backend_handler(exception)`: Backend exception handler for virtual environment apps (shows a toast for `ReflexAppException`, a generic message otherwise)
+  - `default_gws_env_backend_handler(exception)`: Backend exception handler for virtual environment apps (shows a toast for `ReflexAppError`, a generic message otherwise)
 
 ---
 
 ## Exceptions
 
 - **reflex_exception.py**
-  - `ReflexAppException`: Expected exception raised by a Reflex app. This is the **gws_core-free** counterpart of gws_core's `BadRequestException` — `gws_reflex_base` must not import `gws_core` since it is loaded by virtual environment apps where `gws_core` is not installed. The backend exception handler catches it to show a clean toast. Constructor: `ReflexAppException(detail, show_as="error")` where `show_as` is `"error"` or `"info"`.
+  - `ReflexAppError`: Expected exception raised by a Reflex app. This is the **gws_core-free** counterpart of gws_core's `BadRequestException` — `gws_reflex_base` must not import `gws_core` since it is loaded by virtual environment apps where `gws_core` is not installed. The backend exception handler catches it to show a clean toast. Constructor: `ReflexAppError(detail, show_as="error")` where `show_as` is `"error"` or `"info"`.
   - `ReflexExceptionShowMode`: `Literal["error", "info"]` type for the `show_as` argument.
 
 ---

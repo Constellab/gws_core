@@ -62,7 +62,7 @@ class StatuslineService:
     def _set_statusline_in_settings(cls, settings_path: Path, command: str) -> None:
         """Set the statusLine config in a settings.json, preserving other keys."""
         if settings_path.exists():
-            with open(settings_path, "r") as f:
+            with open(settings_path) as f:
                 settings = json.load(f)
         else:
             settings = {}
@@ -83,7 +83,7 @@ class StatuslineService:
         if not settings_path.exists():
             return False
 
-        with open(settings_path, "r") as f:
+        with open(settings_path) as f:
             settings = json.load(f)
 
         if "statusLine" not in settings:

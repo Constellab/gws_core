@@ -167,7 +167,9 @@ class EntityNavigatorService:
         # reset all the error processes
         error_tasks = protocol_model.get_error_tasks()
         for task in error_tasks:
-            ProtocolService.reset_process_of_protocol(task.parent_protocol, task.instance_name)
+            ProtocolService.reset_process_of_protocol(
+                cast(ProtocolModel, task.parent_protocol), task.instance_name
+            )
 
         protocol_model.refresh_status()
 

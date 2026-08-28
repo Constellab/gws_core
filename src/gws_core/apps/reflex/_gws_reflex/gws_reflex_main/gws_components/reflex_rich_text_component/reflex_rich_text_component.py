@@ -1,6 +1,7 @@
 import reflex as rx
 from attr import dataclass
 from gws_reflex_main.reflex_user_auth import ReflexUserAuthInfo
+from reflex.event import EventCallback
 from reflex.vars import Var
 
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockDataBase
@@ -95,10 +96,10 @@ class RichTextComponent(rx.Component):
 
 def rich_text_component(  # noqa: PLR0913 the params mirror the component's props
     placeholder: str | None = None,
-    value: RichTextDTO | None = None,
+    value: RichTextDTO | Var[RichTextDTO] | None = None,
     disabled: bool | None = None,
     change_event_debounce_time: int | None = None,
-    output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,
+    output_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | EventCallback | None = None,
     custom_style: dict | None = None,
     custom_tools_config: RichTextCustomBlocksConfig | None = None,
     custom_tools_event: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | None = None,

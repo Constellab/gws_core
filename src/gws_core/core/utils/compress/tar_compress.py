@@ -67,15 +67,25 @@ class TarCompress(Compress):
             if self._use_sudo:
                 # -n: never prompt for a password (fail fast if sudoers isn't configured).
                 cmd = ["sudo", "-n", *cmd]
-            subprocess.run(cmd, check=True)
+            self._run_tar(cmd, "tar create", self.destination_file_path)
         finally:
             shutil.rmtree(self._staging_dir, ignore_errors=True)
         return self.destination_file_path
 
     @classmethod
     def decompress(cls, file_path: str, destination_folder: str) -> None:
-        """Uncompress a tar archive into destination_folder."""
+        """Uncompress a tar archive into destination_folder.
+
+        No integrity pre-check is done: unlike a zip, a tar has no index that could be
+        validated cheaply, and `tar -t` on a compressed archive decompresses the whole
+        stream — roughly doubling the cost of an extraction, which is prohibitive on
+        large archives. A truncated archive is instead caught by the size check in
+        FileDownloader (at download time, where it can be retried) and, failing that,
+        reported by `_run_tar` when the extraction hits the end of the stream. Note that
+        such a failure can leave a partially-populated destination.
+        """
         os.makedirs(destination_folder, exist_ok=True)
+
         cmd = [
             "tar",
             "-x",
@@ -85,7 +95,25 @@ class TarCompress(Compress):
             "-C",
             destination_folder,
         ]
-        subprocess.run(cmd, check=True)
+        cls._run_tar(cmd, "tar extract", file_path)
+
+    @staticmethod
+    def _run_tar(cmd: list[str], action: str, file_path: str) -> None:
+        """Run a tar command, surfacing its output in the raised error.
+
+        `tar` signals a corrupt archive and a failed write (quota, permissions, I/O
+        error) through its exit code alone; without its output the caller cannot tell
+        them apart. stdout is merged in because the decompressor invoked via -I (pigz)
+        reports there, while tar itself reports on stderr.
+        """
+        try:
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT, text=True)
+        except subprocess.CalledProcessError as e:
+            raise RuntimeError(
+                f"{action} failed on '{file_path}' (exit {e.returncode}): "
+                f"{(e.stdout or '').strip()}"
+            ) from e
 
     @classmethod
     def can_uncompress_file(cls, file_path: str) -> bool:

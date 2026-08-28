@@ -113,8 +113,8 @@ class Validator:
     def _from_str(self, str_value: str) -> Any:
         try:
             return json.loads(str_value)
-        except:
-            raise BadRequestException(f"Invalid value {str_value}")
+        except Exception as err:
+            raise BadRequestException(f"Invalid value {str_value}") from err
 
 
 class BoolValidator(Validator):
@@ -128,8 +128,8 @@ class BoolValidator(Validator):
         * `validator.validate(True) -> True`
         * `validator.validate('true') -> True`
         * `validator.validate('false') -> False`
-        * `validator.validate('foo') -> ValueError`
-        * `validator.validate(4) -> ValueError`
+        * `validator.validate('foo') -> BadRequestException`
+        * `validator.validate(4) -> BadRequestException`
     """
 
     def __init__(self):
@@ -147,9 +147,9 @@ class NumericValidator(Validator):
         * `validator.validate('3') -> 3`
         * `validator.validate(3) -> 3)`
         * `validator.validate(3.0) -> 3`
-        * `validator.validate('false') -> ValueError`
-        * `validator.validate('true') -> ValueError`
-        * `validator.validate('foo') -> ValueError`
+        * `validator.validate('false') -> BadRequestException`
+        * `validator.validate('true') -> BadRequestException`
+        * `validator.validate('foo') -> BadRequestException`
     """
 
     _min_value: float | None = None
@@ -160,8 +160,8 @@ class NumericValidator(Validator):
     def __init__(
         self,
         type_: type = float,
-        min_value: float = -math.inf,
-        max_value: float = math.inf,
+        min_value: float | None = -math.inf,
+        max_value: float | None = math.inf,
         include_min: bool = False,
         include_max: bool = False,
         allowed_values: list | None = None,
@@ -239,9 +239,9 @@ class IntValidator(NumericValidator):
         * `validator.validate('3') -> 3`
         * `validator.validate(3) -> 3)`
         * `validator.validate(3.0) -> 3`
-        * `validator.validate('false') -> ValueError`
-        * `validator.validate('true') -> ValueError`
-        * `validator.validate('foo') -> ValueError`
+        * `validator.validate('false') -> BadRequestException`
+        * `validator.validate('true') -> BadRequestException`
+        * `validator.validate('foo') -> BadRequestException`
     """
 
     def __init__(
@@ -277,12 +277,12 @@ class FloatValidator(NumericValidator):
         * `validator.validate(math.inf) -> math.inf`
         * `validator.validate('Infinity') -> math.inf`
         * `validator.validate('-Infinity') -> -math.nan`
-        * `validator.validate('false') -> ValueError`
-        * `validator.validate('true') -> ValueError`
-        * `validator.validate('foo') -> ValueError`
-        * `validator.validate('inf') -> ValueError`
-        * `validator.validate('infinity') -> ValueError`
-        * `validator.validate('nan') -> ValueError`
+        * `validator.validate('false') -> BadRequestException`
+        * `validator.validate('true') -> BadRequestException`
+        * `validator.validate('foo') -> BadRequestException`
+        * `validator.validate('inf') -> BadRequestException`
+        * `validator.validate('infinity') -> BadRequestException`
+        * `validator.validate('nan') -> BadRequestException`
     """
 
     def __init__(
@@ -314,8 +314,8 @@ class StrValidator(Validator):
         * Let `validator = StrValidator()` then
             * `validator.validate('foo') -> 'foo'`
             * `validator.validate('false') -> 'false'`
-            * `validator.validate(5) -> ValueError`
-            * `validator.validate(True) -> ValueError`
+            * `validator.validate(5) -> BadRequestException`
+            * `validator.validate(True) -> BadRequestException`
     """
 
     _min_length: int = -1
@@ -400,11 +400,11 @@ class ListValidator(Validator):
         * `validator.validate('[5.5,3]') -> [5.5,3]`
         * `validator.validate('[5.5,3,["foo","bar"]]') -> [5.5,3,["foo","bar"]]`
         * `validator.validate('[5.5,3,{"foo":1.2}]') -> [5.5,3,{"foo":1.2}]`
-        * `validator.validate('foo') -> ValueError`
-        * `validator.validate(True) -> ValueError`
-        * `validator.validate('false') -> ValueError`
-        * `validator.validate('5.5') -> ValueError`
-        * `validator.validate('{"foo":1.2}') -> ValueError`
+        * `validator.validate('foo') -> BadRequestException`
+        * `validator.validate(True) -> BadRequestException`
+        * `validator.validate('false') -> BadRequestException`
+        * `validator.validate('5.5') -> BadRequestException`
+        * `validator.validate('{"foo":1.2}') -> BadRequestException`
     """
 
     min_number_of_occurrences: int | None = -1
@@ -458,12 +458,12 @@ class DictValidator(Validator):
     Usage: Let `validator = DictValidator()`, then
         * `validator.validate('{"foo":0.5}') -> {"foo":0.5}`
         * `validator.validate('{"foo":0.5,"bar":[1,2,3]}') -> {"foo":0.5,"bar":[1,2,3]}`
-        * `validator.validate('foo') -> ValueError`
-        * `validator.validate('True) -> ValueError`
-        * `validator.validate(''false') -> ValueError`
-        * `validator.validate(''5.5') -> ValueError`
-        * `validator.validate('[5.5,3]') -> ValueError`
-        * `validator.validate([5.5,3]) -> ValueError`
+        * `validator.validate('foo') -> BadRequestException`
+        * `validator.validate('True) -> BadRequestException`
+        * `validator.validate(''false') -> BadRequestException`
+        * `validator.validate(''5.5') -> BadRequestException`
+        * `validator.validate('[5.5,3]') -> BadRequestException`
+        * `validator.validate([5.5,3]) -> BadRequestException`
     """
 
     def __init__(self):

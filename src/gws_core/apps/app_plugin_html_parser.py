@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 @dataclass
@@ -79,6 +79,29 @@ class AppPluginHtmlParser:
         """
         self.relative_path_prefix = relative_path_prefix
 
+    def _get_str_attribute(self, tag: Tag, name: str) -> str:
+        """
+        Read a tag attribute as a string.
+
+        BeautifulSoup types an attribute value as ``str | list[str] | None`` because
+        multi-valued attributes (``rel``, ``class``...) are parsed as lists. The
+        attributes read here (``href``, ``src``) are always single-valued.
+
+        Args:
+            tag: The tag to read the attribute from
+            name: The name of the attribute
+
+        Returns:
+            The attribute value, or an empty string if the attribute is not set
+        """
+        value = tag.get(name)
+
+        if value is None:
+            return ""
+        if isinstance(value, list):
+            return " ".join(value)
+        return value
+
     def is_relative_path(self, path: str) -> bool:
         """
         Check if a path is relative (not absolute URL).
@@ -93,10 +116,7 @@ class AppPluginHtmlParser:
             return False
 
         # Absolute URLs start with http://, https://, //, mailto:, #, etc.
-        if path.startswith(("http://", "https://", "//", "mailto:", "#", "data:", "javascript:")):
-            return False
-
-        return True
+        return not path.startswith(("http://", "https://", "//", "mailto:", "#", "data:", "javascript:"))
 
     def replace_relative_path(self, original_path: str) -> str:
         """
@@ -164,7 +184,7 @@ class AppPluginHtmlParser:
             if link_tag.parent and link_tag.parent.name == "noscript":
                 continue
 
-            original_href = link_tag.get("href", "")
+            original_href = self._get_str_attribute(link_tag, "href")
 
             # Only include relative paths
             if not self.is_relative_path(original_href):
@@ -177,27 +197,19 @@ class AppPluginHtmlParser:
 
         return styles
 
-    def _extract_body(self, soup: BeautifulSoup) -> HtmlBody:
+    def _extract_body_links(self, body_copy: Tag) -> list[HtmlLink]:
         """
-        Extract body content from the HTML, separating links and external scripts.
+        Extract the relative link tags from the body and remove them from it.
+
+        Stylesheets are left in place (they belong to the head) and links with an
+        absolute path are removed without being collected.
 
         Args:
-            soup: BeautifulSoup parsed HTML
+            body_copy: the body tag to extract the links from (modified in place)
 
         Returns:
-            HtmlBody object with separated components
+            List of HtmlLink objects (only non stylesheet relative links)
         """
-        if not soup.body:
-            return HtmlBody(links=[], scripts=[], content="", attributes={})
-
-        # Clone the body to avoid modifying the original
-        body_copy = BeautifulSoup(str(soup.body), "html.parser").body
-
-        # Remove noscript tags
-        for noscript in body_copy.find_all("noscript"):
-            noscript.decompose()
-
-        # Extract links from body (only relative paths)
         body_links = []
         for link_tag in body_copy.find_all("link"):
             rel = link_tag.get("rel")
@@ -211,7 +223,7 @@ class AppPluginHtmlParser:
             if rel_str == "stylesheet":
                 continue
 
-            original_href = link_tag.get("href", "")
+            original_href = self._get_str_attribute(link_tag, "href")
 
             # Only include relative paths
             if not self.is_relative_path(original_href):
@@ -226,10 +238,23 @@ class AppPluginHtmlParser:
             # Remove the link tag from body_copy
             link_tag.decompose()
 
-        # Extract only external scripts from body (only relative paths)
+        return body_links
+
+    def _extract_body_scripts(self, body_copy: Tag) -> list[HtmlScript]:
+        """
+        Extract the relative external script tags from the body and remove them from it.
+
+        Inline scripts and scripts with an absolute path are removed without being collected.
+
+        Args:
+            body_copy: the body tag to extract the scripts from (modified in place)
+
+        Returns:
+            List of HtmlScript objects (only external relative scripts)
+        """
         body_scripts = []
         for script_tag in body_copy.find_all("script"):
-            src = script_tag.get("src")
+            src = self._get_str_attribute(script_tag, "src")
 
             # Skip inline scripts
             if not src:
@@ -249,21 +274,63 @@ class AppPluginHtmlParser:
             # Remove the script tag from body_copy
             script_tag.decompose()
 
+        return body_scripts
+
+    def _process_remaining_body_paths(self, body_copy: Tag) -> None:
+        """
+        Rewrite the remaining relative href and src attributes of the body elements.
+
+        Args:
+            body_copy: the body tag to process (modified in place)
+        """
         # Process all remaining href attributes
         for element in body_copy.find_all(href=True):
-            if self.is_relative_path(element["href"]):
-                element["href"] = self.replace_relative_path(element["href"])
+            href = self._get_str_attribute(element, "href")
+            if self.is_relative_path(href):
+                element["href"] = self.replace_relative_path(href)
 
         # Process all remaining src attributes
         for element in body_copy.find_all(src=True):
-            if self.is_relative_path(element["src"]):
-                element["src"] = self.replace_relative_path(element["src"])
+            src = self._get_str_attribute(element, "src")
+            if self.is_relative_path(src):
+                element["src"] = self.replace_relative_path(src)
+
+    def _extract_body(self, soup: BeautifulSoup) -> HtmlBody:
+        """
+        Extract body content from the HTML, separating links and external scripts.
+
+        Args:
+            soup: BeautifulSoup parsed HTML
+
+        Returns:
+            HtmlBody object with separated components
+        """
+        if not soup.body:
+            return HtmlBody(links=[], scripts=[], content="", attributes={})
+
+        # Clone the body to avoid modifying the original
+        body_copy = BeautifulSoup(str(soup.body), "html.parser").body
+        if body_copy is None:
+            return HtmlBody(links=[], scripts=[], content="", attributes={})
+
+        # Remove noscript tags
+        for noscript in body_copy.find_all("noscript"):
+            noscript.decompose()
+
+        # Extract links from body (only relative paths)
+        body_links = self._extract_body_links(body_copy)
+
+        # Extract only external scripts from body (only relative paths)
+        body_scripts = self._extract_body_scripts(body_copy)
+
+        # Process all remaining href and src attributes
+        self._process_remaining_body_paths(body_copy)
 
         # Get the inner HTML (body content without the body tag itself, and without links/scripts)
         body_content = "".join(str(child) for child in body_copy.children)
 
         # Extract body attributes
-        body_attributes = {k: v for k, v in soup.body.attrs.items()}
+        body_attributes = dict(soup.body.attrs)
 
         return HtmlBody(
             links=body_links, scripts=body_scripts, content=body_content, attributes=body_attributes

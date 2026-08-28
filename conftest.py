@@ -39,9 +39,9 @@ def _init_gws_env_for_tests() -> None:
         load_dotenv(env_test_file)
 
     # Import lazily so dotenv vars are applied before gws_core reads them.
-    from gws_core.core.utils.settings import Settings
-    from gws_core.manage import AppManager
-    from gws_core.settings_loader import SettingsLoader
+    from gws_core.core.utils.settings import Settings  # noqa: PLC0415
+    from gws_core.manage import AppManager  # noqa: PLC0415
+    from gws_core.settings_loader import SettingsLoader  # noqa: PLC0415
 
     # Each worker binds its own uvicorn port so integration tests
     # (share scenario, streamlit, reflex) don't fight for port 3000.

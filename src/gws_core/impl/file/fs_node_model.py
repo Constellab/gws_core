@@ -26,10 +26,10 @@ class FSNodeModel(Model):
     :type Model: [type]
     """
 
-    path = TypedCharField(max_length=1024)
-    file_store_id = TypedForeignKeyIdField(FileStore)
-    size = NullableBigIntegerField()
-    is_symbolic_link = TypedBooleanField(default=False)
+    path: TypedCharField = TypedCharField(max_length=1024)
+    file_store_id: TypedForeignKeyIdField = TypedForeignKeyIdField(FileStore)
+    size: NullableBigIntegerField = NullableBigIntegerField()
+    is_symbolic_link: TypedBooleanField = TypedBooleanField(default=False)
 
     def delete_instance(self, *args, **kwargs):
         result = super().delete_instance(*args, **kwargs)
@@ -61,7 +61,7 @@ class FSNodeModel(Model):
         return cls.path.endswith(extension)
 
     def get_resource_model(self) -> "ResourceModel":
-        from gws_core.resource.resource_model import ResourceModel
+        from gws_core.resource.resource_model import ResourceModel  # noqa: PLC0415
 
         return ResourceModel.get(ResourceModel.fs_node_model == self)
 
@@ -75,7 +75,8 @@ class FSNodeModel(Model):
     def to_dto(self) -> FsNodeModelDTO:
         return FsNodeModelDTO(
             id=self.id,
-            size=self.size,
+            # the size column is nullable (legacy nodes), default it to 0 for the DTO
+            size=self.size or 0,
             is_file=FileHelper.is_file(self.path),
             name=FileHelper.get_node_name(self.path),
             path=self.path,

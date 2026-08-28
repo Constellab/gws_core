@@ -11,9 +11,9 @@ from gws_core.tag.tag_entity_type import TagEntityType
 
 @final
 class NoteTemplate(ModelWithUser):
-    title = TypedCharField()
+    title: TypedCharField = TypedCharField()
 
-    content = NullableRichTextDbField()
+    content: NullableRichTextDbField = NullableRichTextDbField()
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)

@@ -10,6 +10,21 @@ from fastapi.responses import FileResponse
 
 PathType = str | Path
 
+# A compound extension like ".tar.gz" is made of the last 2 suffixes of the path
+COMPOUND_EXTENSION_SUFFIX_COUNT = 2
+
+# Codepoints below 32 are the ASCII control characters
+FIRST_PRINTABLE_ASCII_CODE = 32
+
+# Most filesystems reject file names longer than this
+MAX_FILE_NAME_LENGTH = 255
+
+# A file is considered binary when more than this ratio of its sampled bytes are non-text
+BINARY_CONTENT_RATIO_THRESHOLD = 0.30
+
+# Number of bytes in the next file size unit (B -> KB -> MB ...)
+BYTES_PER_SIZE_UNIT = 1024.0
+
 
 class FileHelper:
     """
@@ -100,8 +115,8 @@ class FileHelper:
             return None
 
         # Handle compound extensions with .tar - only take the last 2 suffixes
-        if len(suffixes) >= 2 and suffixes[-2].lower() == ".tar":
-            extension = "".join(suffixes[-2:]).lstrip(".")
+        if len(suffixes) >= COMPOUND_EXTENSION_SUFFIX_COUNT and suffixes[-2].lower() == ".tar":
+            extension = "".join(suffixes[-COMPOUND_EXTENSION_SUFFIX_COUNT:]).lstrip(".")
         else:
             extension = suffixes[-1]
 
@@ -501,7 +516,7 @@ class FileHelper:
             return ""
 
         # Remove null bytes and control characters
-        name = "".join(char for char in name if ord(char) >= 32)
+        name = "".join(char for char in name if ord(char) >= FIRST_PRINTABLE_ASCII_CODE)
 
         # Keep only safe characters first - alphanumeric, hyphens, underscores, dots, and forward slashes
         name = sub(r"[^a-zA-Z0-9-_/.]", "", name)
@@ -539,8 +554,8 @@ class FileHelper:
             name = f"{base_name}.{extension}"
 
         # Limit length to prevent filesystem issues
-        if len(name) > 255:
-            name = name[:255]
+        if len(name) > MAX_FILE_NAME_LENGTH:
+            name = name[:MAX_FILE_NAME_LENGTH]
 
         return name
 
@@ -573,7 +588,7 @@ class FileHelper:
         # Bytes that are typically found in text files: printable ASCII + common whitespace
         text_bytes = bytes(range(32, 127)) + b"\n\r\t\f\b"
         non_text = sum(1 for byte in sample if byte not in text_bytes)
-        return (non_text / len(sample)) > 0.30
+        return (non_text / len(sample)) > BINARY_CONTENT_RATIO_THRESHOLD
 
     @classmethod
     def detect_file_encoding(cls, file_path: PathType, default_encoding: str = "utf-8") -> str:
@@ -591,7 +606,7 @@ class FileHelper:
         if not cls.exists_on_os(file_path):
             return default_encoding
 
-        encoding_result = from_path(file_path)
+        encoding_result = from_path(Path(file_path))
         best_encoding = encoding_result.best()
         if best_encoding:
             return best_encoding.encoding
@@ -611,7 +626,9 @@ class FileHelper:
         shutil.copyfile(source_path, destination_path)
 
     @classmethod
-    def copy_dir(cls, source_path: PathType, destination_path: PathType) -> None:
+    def copy_dir(
+        cls, source_path: PathType, destination_path: PathType, dirs_exist_ok: bool = False
+    ) -> None:
         """
         Copy a directory from source to destination
 
@@ -619,11 +636,16 @@ class FileHelper:
         :type source_path: PathType
         :param destination_path: destination directory path
         :type destination_path: PathType
+        :param dirs_exist_ok: if True, merge into destination_path when it already exists
+                              instead of raising FileExistsError, defaults to False
+        :type dirs_exist_ok: bool
         """
-        shutil.copytree(source_path, destination_path)
+        shutil.copytree(source_path, destination_path, dirs_exist_ok=dirs_exist_ok)
 
     @classmethod
-    def copy_node(cls, source_path: PathType, destination_path: PathType) -> None:
+    def copy_node(
+        cls, source_path: PathType, destination_path: PathType, dirs_exist_ok: bool = False
+    ) -> None:
         """
         Copy a file or a directory from source to destination
 
@@ -631,9 +653,12 @@ class FileHelper:
         :type source_path: PathType
         :param destination_path: destination file or directory path
         :type destination_path: PathType
+        :param dirs_exist_ok: if True and source_path is a directory, merge into
+                              destination_path when it already exists, defaults to False
+        :type dirs_exist_ok: bool
         """
         if cls.is_dir(source_path):
-            cls.copy_dir(source_path, destination_path)
+            cls.copy_dir(source_path, destination_path, dirs_exist_ok=dirs_exist_ok)
         else:
             cls.copy_file(source_path, destination_path)
 
@@ -651,7 +676,9 @@ class FileHelper:
         """
         for child in os.listdir(cls.get_path(source_dir_path)):
             cls.copy_node(
-                os.path.join(source_dir_path, child), os.path.join(destination_dir_path, child)
+                os.path.join(source_dir_path, child),
+                os.path.join(destination_dir_path, child),
+                dirs_exist_ok=True,
             )
 
     @classmethod
@@ -717,9 +744,9 @@ class FileHelper:
         prefix = "-" if size < 0 else ""
         size = abs(size)
         for unit in ["B", "KB", "MB", "GB", "TB", "PB"]:
-            if size < 1024.0:
+            if size < BYTES_PER_SIZE_UNIT:
                 return f"{prefix}{size:.1f} {unit}"
-            size /= 1024.0
+            size /= BYTES_PER_SIZE_UNIT
         return f"{prefix}{size:.1f} EB"
 
     @staticmethod

@@ -76,7 +76,7 @@ class TestEntityAction(BaseTestCase):
     def test_namespacing(self):
         action = EntityAction.button(action_name="do_something", text="Do something")
         dto = action.to_dto("my_brick.my_plugin")
-        self.assertIsInstance(dto, EntityActionButtonDTO)
+        assert isinstance(dto, EntityActionButtonDTO)
         self.assertEqual(dto.action_name, "my_brick.my_plugin.do_something")
 
     def test_get_actions(self):
@@ -89,17 +89,19 @@ class TestEntityAction(BaseTestCase):
             EntityActionType.RESOURCE, resource_model.id
         )
         self.assertEqual(len(actions), 2)
-        self.assertIsInstance(actions[0], EntityActionButtonDTO)
-        self.assertEqual(actions[0].action_name,
+        plain_button = actions[0]
+        assert isinstance(plain_button, EntityActionButtonDTO)
+        self.assertEqual(plain_button.action_name,
                          f"{_DUMMY_PLUGIN_ID}.do_something")
 
         # the plain button has no form
-        self.assertIsNone(actions[0].config_specs)
+        self.assertIsNone(plain_button.config_specs)
 
         # the second button carries the serialized config specs for the front
         button_with_form = actions[1]
+        assert isinstance(button_with_form, EntityActionButtonDTO)
         self.assertEqual(button_with_form.action_name, f"{_DUMMY_PLUGIN_ID}.act")
-        self.assertIsNotNone(button_with_form.config_specs)
+        assert button_with_form.config_specs is not None
         self.assertIn("threshold", button_with_form.config_specs)
         self.assertIsInstance(button_with_form.config_specs["threshold"], ParamSpecDTO)
 

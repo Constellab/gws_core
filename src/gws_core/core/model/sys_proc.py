@@ -26,16 +26,18 @@ class SysProc:
         self._use_process_group = use_process_group
 
     def get_process(self) -> Process:
+        if self._process is None:
+            raise BadRequestException("The system process is not defined")
         return self._process
 
     def is_alive(self) -> bool:
-        return self._process.is_running()
+        return self.get_process().is_running()
 
     def is_zombie(self) -> bool:
-        return self._process.status() == "zombie"
+        return self.get_process().status() == "zombie"
 
     def kill(self):
-        self._process.kill()
+        self.get_process().kill()
 
     def kill_with_children(self):
         """Kill the process and all its children.
@@ -54,8 +56,9 @@ class SysProc:
 
     def _kill_process_group(self):
         """Kill the entire process group: SIGTERM first, then SIGKILL after a short wait."""
+        process = self.get_process()
         try:
-            pgid = os.getpgid(self._process.pid)
+            pgid = os.getpgid(process.pid)
         except (ProcessLookupError, OSError):
             # Process already gone
             return
@@ -69,7 +72,7 @@ class SysProc:
         # Wait up to 5 seconds for processes to terminate gracefully
         deadline = time.monotonic() + 5
         while time.monotonic() < deadline:
-            if not self._process.is_running():
+            if not process.is_running():
                 return
             time.sleep(0.2)
 
@@ -83,19 +86,19 @@ class SysProc:
         :return: _description_
         :rtype: List[Process]
         """
-        return self._process.children(recursive=True)
+        return self.get_process().children(recursive=True)
 
     def stats(self) -> dict:
         """
         Get process statistics
         """
-        return self._process.as_dict()
+        return self.get_process().as_dict()
 
     def wait(self, timeout=None):
         """
         Wait for a process PID to terminate
         """
-        self._process.wait(timeout=timeout)
+        self.get_process().wait(timeout=timeout)
 
     @property
     def pid(self) -> int:
@@ -118,6 +121,105 @@ class SysProc:
         return SysProc(Process(pid))
 
     @staticmethod
+    def get_listening_pids_on_port(port: int) -> list[int]:
+        """Return the PIDs of every process holding a LISTEN socket on `port`.
+
+        More than one PID is not normal for an app port: it means several processes share the
+        socket via SO_REUSEPORT (which the app server sets), so the kernel load-balances
+        connections between them. For a stateful app that silently splits users across processes.
+
+        Iterates per process rather than using ``psutil.net_connections()``: with SO_REUSEPORT
+        the global call reports both sockets but attributes them to the *same* pid, which hides
+        the very duplication this method exists to detect. Walking processes attributes each
+        socket to its real owner.
+
+        Processes the OS refuses to inspect are skipped. That is the norm rather than an anomaly on
+        Linux (a non-root process cannot read another user's sockets), so the count is only logged at
+        debug level -- but it is logged, because an empty result may mean "port is free" or "the
+        holder was invisible to us".
+        """
+        pids: list[int] = []
+        inaccessible = 0
+        for proc in psutil.process_iter(["pid"]):
+            try:
+                connections = proc.net_connections(kind="inet")
+            except psutil.AccessDenied:
+                inaccessible += 1
+                continue
+            except (psutil.NoSuchProcess, psutil.ZombieProcess):
+                continue
+
+            for conn in connections:
+                if (
+                    conn.status == psutil.CONN_LISTEN
+                    and conn.laddr
+                    and conn.laddr.port == port
+                    and proc.pid not in pids
+                ):
+                    pids.append(proc.pid)
+
+        if not pids and inaccessible:
+            Logger.debug(
+                f"No process found listening on port {port}, but the sockets of {inaccessible} "
+                "process(es) could not be enumerated (permission denied)"
+            )
+        return pids
+
+    @staticmethod
+    def group_pids_by_process_tree(pids: list[int]) -> list[list[int]]:
+        """Group the given pids by process tree, so related processes count as one.
+
+        A forked child inherits its parent's file descriptors, so a server that binds then forks a
+        worker shows up as several pids holding the same listening socket. Those are one app, not a
+        duplicate. Grouping them makes "how many independent processes are here" answerable: one
+        group means one app, several groups means several independent starts.
+
+        Two pids are related when one descends from the other. Full ancestry is deliberately *not*
+        intersected: every process on the machine shares init (and two duplicate starts share the
+        lab server that spawned both), so shared ancestry would collapse everything into one group
+        and never detect anything. The flip side is that two sibling workers whose listening parent
+        is missing from `pids` -- it exited, or the OS refused to inspect it -- land in separate
+        groups and read as a duplicate. Acceptable for a diagnostic: over-reporting is safer than
+        hiding a real duplicate.
+
+        :param pids: the pids to group
+        :return: one list of pids per independent process tree
+        """
+        ancestors_by_pid = {pid: SysProc._ancestors_of(pid) for pid in pids}
+
+        groups: list[list[int]] = []
+        for pid in pids:
+            ancestors = ancestors_by_pid[pid]
+            # every group holding a relative of this pid: they are all one tree, so merge them all
+            # rather than joining the first match (the pids may arrive child-before-parent)
+            related = [
+                group
+                for group in groups
+                if any(
+                    other in ancestors or pid in ancestors_by_pid[other] for other in group
+                )
+            ]
+            if not related:
+                groups.append([pid])
+                continue
+
+            merged = [pid]
+            for group in related:
+                merged.extend(group)
+            groups = [group for group in groups if group not in related]
+            groups.append(merged)
+
+        return groups
+
+    @staticmethod
+    def _ancestors_of(pid: int) -> set[int]:
+        """Return `pid` plus the pids of all its ancestors (empty-safe)."""
+        ancestors: set[int] = {pid}
+        with contextlib.suppress(psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            ancestors.update(parent.pid for parent in psutil.Process(pid).parents())
+        return ancestors
+
+    @staticmethod
     def kill_process_on_port(port: int) -> list[int]:
         """Find any process with a LISTEN socket on `port` and kill its entire process group.
 
@@ -126,27 +228,14 @@ class SysProc:
         Reflex where the listener's parent would otherwise respawn a replacement
         between our kill and the next bind attempt.
 
-        Returns the list of PIDs that were targeted (may be empty).
-        If the OS denies access to enumerate sockets, logs a warning and returns [].
-        """
-        try:
-            connections = psutil.net_connections(kind="inet")
-        except psutil.AccessDenied:
-            Logger.warning(
-                "Cannot enumerate listening sockets (permission denied) — skipping port pre-clean"
-            )
-            return []
+        Listeners are looked up with `get_listening_pids_on_port`, which walks processes one by one:
+        `psutil.net_connections()` attributes every socket sharing a port via SO_REUSEPORT to the
+        same pid, so it would leave the other holder alive and the new app would end up sharing the
+        port with it.
 
-        offender_pids: list[int] = []
-        for conn in connections:
-            if (
-                conn.status == psutil.CONN_LISTEN
-                and conn.laddr
-                and conn.laddr.port == port
-                and conn.pid is not None
-                and conn.pid not in offender_pids
-            ):
-                offender_pids.append(conn.pid)
+        Returns the list of PIDs that were targeted (may be empty).
+        """
+        offender_pids = SysProc.get_listening_pids_on_port(port)
 
         killed_pgids: set[int] = set()
         killed_pids: list[int] = []

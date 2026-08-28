@@ -6,6 +6,7 @@ from fastapi.responses import StreamingResponse
 
 from gws_core.config.param.param_types import ParamSpecDTO
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
+from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.response_helper import ResponseHelper
 from gws_core.entity_navigator.entity_navigator_dto import ImpactResultDTO
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
@@ -655,7 +656,9 @@ def update_dynamic_input_port_of_process(
     io_spec: IOSpecDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ProtocolUpdateDTO:
-    print(process_name, port_name, io_spec)
+    Logger.debug(
+        f"update_dynamic_input_port_of_process: {process_name}, {port_name}, {io_spec}"
+    )
     with update_lock:
         return ProtocolService.update_dynamic_input_port_of_process(
             id_, process_name, port_name, io_spec
@@ -719,7 +722,8 @@ def update_process_style(
 
 
 class CreateScenarioTemplate(BaseModelDTO):
-    name: str | None = None
+    # the name is mandatory, it is stored in a non-nullable column of the scenario template
+    name: str
     description: RichTextDTO | None = None
 
 

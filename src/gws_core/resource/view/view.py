@@ -132,8 +132,12 @@ class View:
             data=self.data_to_dict(params),
         )
 
-    def data_to_dict(self, params: ConfigParams) -> dict:
-        """Convert to dictionary"""
+    def data_to_dict(self, params: ConfigParams) -> Any:
+        """Convert the view data to a json serializable object.
+
+        Most of the views return a dict but some of them (like the ResourcesListView) return a list,
+        this is why the return type is Any (it matches the ``data`` attribute of the ViewDTO).
+        """
         return {}
 
     @classmethod
@@ -156,7 +160,7 @@ class View:
         # check that the view type is valid
         try:
             StringHelper.to_enum(ViewType, json_["type"])
-        except:
+        except Exception:
             return False
 
         return True

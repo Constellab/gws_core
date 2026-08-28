@@ -397,9 +397,9 @@ class TestRichText(BaseTestCase):
         self.assertEqual(rt.get_block_at_index(1).data["text"], "B")
 
         # Invalid index raises
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.insert_block_at_index(-1, block_b)
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.insert_block_at_index(100, block_b)
 
     def test_remove_block_at_index(self):
@@ -431,9 +431,9 @@ class TestRichText(BaseTestCase):
         block = rt.get_block_at_index(0)
         self.assertEqual(block.data["text"], "A")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.get_block_at_index(-1)
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.get_block_at_index(5)
 
     def test_get_block_by_id(self):
@@ -442,6 +442,7 @@ class TestRichText(BaseTestCase):
 
         found = rt.get_block_by_id(block_a.id)
         self.assertIsNotNone(found)
+        assert found is not None
         self.assertEqual(found.data["text"], "A")
 
         self.assertIsNone(rt.get_block_by_id("non_existent"))
@@ -482,7 +483,7 @@ class TestRichText(BaseTestCase):
         self.assertEqual(rt.get_block_at_index(2).id, block_c.id)
 
         # Non-existent after_block_id raises
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.insert_block_after_id("non_existent", block_b)
 
     def test_insert_multiple_blocks_after_id(self):
@@ -505,7 +506,7 @@ class TestRichText(BaseTestCase):
         self.assertEqual(len(rt.get_blocks()), 4)
 
         # Non-existent after_block_id raises
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.insert_multiple_blocks_after_id("non_existent", [block_b])
 
     def test_move_block(self):
@@ -527,12 +528,16 @@ class TestRichText(BaseTestCase):
         self.assertEqual(rt.get_block_at_index(2).id, block_b.id)
 
         # Non-existent block_id raises
-        with self.assertRaises(Exception):
+        with self.assertRaises(ValueError):
             rt.move_block("non_existent")
 
-        # Non-existent after_block_id raises
-        with self.assertRaises(Exception):
+        # Non-existent after_block_id raises without losing the moved block
+        with self.assertRaises(ValueError):
             rt.move_block(block_a.id, after_block_id="non_existent")
+        self.assertEqual(len(rt.get_blocks()), 3)
+        self.assertEqual(rt.get_block_at_index(0).id, block_c.id)
+        self.assertEqual(rt.get_block_at_index(1).id, block_a.id)
+        self.assertEqual(rt.get_block_at_index(2).id, block_b.id)
 
     # ===================== Filtering & querying =====================
 

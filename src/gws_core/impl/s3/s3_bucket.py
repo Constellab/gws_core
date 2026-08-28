@@ -9,6 +9,9 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
+# Only log the transfer progress once it advanced by at least this many percent
+PROGRESS_LOG_STEP_PERCENT = 3
+
 
 class S3BucketActionProgress(TypedDict):
     transfered_bytes: int
@@ -148,7 +151,7 @@ class S3Bucket:
         progress = int(action_progress["transfered_bytes"] / total_size * 100)
 
         # log progress every 3%
-        if progress - action_progress["last_progress"] > 3:
+        if progress - action_progress["last_progress"] > PROGRESS_LOG_STEP_PERCENT:
             action_progress["last_progress"] = progress
             transfered_str = FileHelper.get_file_size_pretty_text(
                 action_progress["transfered_bytes"]

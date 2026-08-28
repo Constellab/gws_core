@@ -5,6 +5,8 @@ from gws_core.apps.app_dto import AppProcessStatus
 from gws_core.apps.app_process import AppProcess
 from gws_core.apps.app_resource import AppResource
 from gws_core.apps.apps_manager import AppsManager
+from gws_core.apps.reflex.reflex_app import ReflexApp
+from gws_core.apps.reflex.reflex_compiler import ReflexCompiler
 from gws_core.config.config_params import ConfigParams
 from gws_core.resource.resource import Resource
 from gws_core.resource.resource_dto import ResourceOrigin
@@ -27,6 +29,9 @@ class AppTester:
 
     Usage with an existing AppResource:
         AppTester.test_app(self, app_resource)
+
+    For a much faster, Reflex-only check that the app builds (no process start, no health
+    check, no database), use test_app_compiles / test_app_compiles_from_task instead.
     """
 
     @staticmethod
@@ -95,7 +100,7 @@ class AppTester:
         task_runner = TaskRunner(
             task_type=generate_task_type,
             params=config_values,
-            inputs=input_resources,
+            inputs=cast("dict[str, Resource | None] | None", input_resources),
         )
 
         task_runner.run()
@@ -108,6 +113,74 @@ class AppTester:
         app_resource = cast(AppResource, resource_model.get_resource())
 
         AppTester.test_app(test_case, app_resource)
+
+    @staticmethod
+    def test_app_compiles_from_task(
+        test_case: TestCase,
+        generate_task_type: type[Task],
+        app_output_name: str,
+        input_resources: dict[str, Resource] | None = None,
+        config_values: dict | None = None,
+    ) -> None:
+        """Run a task to generate a Reflex AppResource, then check that it compiles.
+
+        This is a much faster alternative to test_app_from_task: it only checks that the
+        app builds (imports, pages, computed vars), without starting a process, opening a
+        port, or hitting a health check. It needs no database and does not verify that the
+        app behaves correctly with real data. Streamlit apps have no compile step, so this
+        only supports Reflex apps.
+
+        :param test_case: The unittest.TestCase instance (used for assertions).
+        :param generate_task_type: The task class that generates the AppResource.
+        :param app_output_name: The name of the task output port that produces the AppResource.
+        :param input_resources: Optional dict mapping input port names to resources.
+            Resources will be saved as ResourceModels and connected as sources.
+        :param config_values: Optional dict of config param values to set on the task.
+        """
+
+        scenario_proxy = ScenarioProxy()
+        protocol_proxy = scenario_proxy.get_protocol()
+        generate_task = protocol_proxy.add_task(generate_task_type, "generate")
+
+        if input_resources:
+            for port_name, resource in input_resources.items():
+                resource_model = ResourceModel.save_from_resource(
+                    resource, origin=ResourceOrigin.UPLOADED
+                )
+                protocol_proxy.add_source(
+                    port_name, resource_model.id, generate_task.get_input_port(port_name)
+                )
+
+        if config_values:
+            generate_task.set_config_params(config_values)
+
+        scenario_proxy.run()
+
+        generate_task = generate_task.refresh()
+        app_resource = cast(AppResource, generate_task.get_output(app_output_name))
+
+        AppTester.test_app_compiles(test_case, app_resource)
+
+    @staticmethod
+    def test_app_compiles(test_case: TestCase, app_resource: AppResource) -> None:
+        """Check that a Reflex AppResource compiles, without starting it.
+
+        :param test_case: The unittest.TestCase instance (used for assertions).
+        :param app_resource: The Reflex app resource to compile. Must already be saved as a
+            ResourceModel.
+        """
+        app_instance = app_resource.build_app_instance()
+
+        if not isinstance(app_instance, ReflexApp):
+            test_case.fail(
+                "test_app_compiles only supports Reflex apps "
+                "(no compile step exists for Streamlit)."
+            )
+
+        exit_code = ReflexCompiler(app_instance, app_instance.get_shell_proxy()).compile()
+        test_case.assertEqual(
+            exit_code, 0, "App compilation failed, check the logs above for details."
+        )
 
     @staticmethod
     def test_app(test_case: TestCase, app_resource: AppResource) -> None:
@@ -123,7 +196,9 @@ class AppTester:
             # start the app
             app_resource.default_view(ConfigParams())
 
-            app_process = AppsManager.find_app_by_resource_model_id(app_resource.get_model_id())
+            app_process = AppsManager.find_app_by_resource_model_id(
+                cast(str, app_resource.get_model_id())
+            )
 
             if app_process is None:
                 test_case.fail("No app process found")

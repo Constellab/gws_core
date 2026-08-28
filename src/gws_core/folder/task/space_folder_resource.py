@@ -29,7 +29,8 @@ class SpaceFolderResource(Resource):
 
     def __init__(self, space_folder_id: str | None = None):
         super().__init__()
-        self.space_folder_id = space_folder_id
+        if space_folder_id is not None:
+            self.space_folder_id = space_folder_id
 
     def get_space_folder(self) -> SpaceFolder:
         if self._space_folder is None:

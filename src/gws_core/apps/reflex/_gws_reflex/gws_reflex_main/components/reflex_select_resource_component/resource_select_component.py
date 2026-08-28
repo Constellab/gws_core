@@ -1,9 +1,14 @@
 """Resource selection component with search dialog."""
 
+from typing import cast
+
 import reflex as rx
 from gws_reflex_base import dialog_header
+from reflex.vars.sequence import ArrayVar
 
+from gws_core.model.typing_dto import TypingRefDTO
 from gws_core.resource.resource_dto import ResourceModelDTO
+from gws_core.scenario.scenario_dto import ScenarioSimpleDTO
 
 from ..reflex_user_components import user_profile_picture
 from .resource_select_state import ResourceSelectState
@@ -126,7 +131,13 @@ def _resource_table_row(
                     resource.scenario,
                     rx.hstack(
                         rx.icon("circle-arrow-right", size=12, color="gray"),
-                        rx.text(resource.scenario.title, size="1", color="gray"),
+                        # the optional fields are read through reactive vars, rx.cond
+                        # guards them client side so the None never reaches the access
+                        rx.text(
+                            cast(ScenarioSimpleDTO, resource.scenario).title,
+                            size="1",
+                            color="gray",
+                        ),
                         spacing="1",
                         align_items="center",
                     ),
@@ -139,7 +150,11 @@ def _resource_table_row(
         ),
         rx.table.cell(
             rx.text(
-                rx.cond(resource.resource_type, resource.resource_type.human_name, ""),
+                rx.cond(
+                    resource.resource_type,
+                    cast(TypingRefDTO, resource.resource_type).human_name,
+                    "",
+                ),
                 size="2",
                 color="gray",
             ),
@@ -184,7 +199,7 @@ def _resource_table(state: type[ResourceSelectState]) -> rx.Component:
         ),
         # Table with results
         rx.cond(
-            state.resources.length() > 0,
+            cast(ArrayVar, state.resources).length() > 0,
             # Results table with load more button inside scroll area
             rx.scroll_area(
                 rx.vstack(

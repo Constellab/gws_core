@@ -1,3 +1,4 @@
+from typing import cast
 
 from gws_core import BaseTestCase, File, IntRField, ListRField, ResourceModel, StrRField
 from gws_core.impl.robot.robot_resource import Robot
@@ -12,16 +13,16 @@ from gws_core.scenario.scenario_proxy import ScenarioProxy
 
 @resource_decorator(unique_name="ResourceFieldsTest")
 class ResourceFieldsTest(Resource):
-    age: int = IntRField()
-    position: list[float] = ListRField()
+    age = IntRField()
+    position = ListRField()
 
     long_str = StrRField()
 
 
 @resource_decorator(unique_name="ResourceFieldsFileTest")
 class ResourceFieldsFileTest(File):
-    age: int = IntRField()
-    position: list[float] = ListRField()
+    age = IntRField()
+    position = ListRField()
 
     long_str = StrRField()
 
@@ -36,14 +37,15 @@ class TestResource(BaseTestCase):
         create: ProcessProxy = i_scenario.get_protocol().get_process("create")
 
         # Check that the resource model was generated
-        resource_model: ResourceModel = create.get_output_resource_model("robot")
+        resource_model = create.get_output_resource_model("robot")
+        assert resource_model is not None
         self.assertIsNotNone(resource_model.id)
         self.assertTrue(isinstance(resource_model, ResourceModel))
         self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)
         self.assertEqual(resource_model.generated_by_port_name, "robot")
 
         # Check that the resource is a Robot
-        robot: Robot = resource_model.get_resource()
+        robot = cast(Robot, resource_model.get_resource())
         self.assertTrue(isinstance(robot, Robot))
 
         # Check the to_json
@@ -60,11 +62,12 @@ class TestResource(BaseTestCase):
             resource, origin=ResourceOrigin.UPLOADED
         )
 
+        assert resource_model.data is not None
         self.assertEqual(len(resource_model.data), 2)
         self.assertIsNotNone(resource_model.kv_store_path)
 
         # generate the resource from the resource model and check its values
-        new_resource: ResourceFieldsTest = resource_model.get_resource(new_instance=True)
+        new_resource = cast(ResourceFieldsTest, resource_model.get_resource(new_instance=True))
 
         self.assertEqual(new_resource.age, 12)
         self.assertEqual(new_resource.long_str, "Hello world")
@@ -98,7 +101,7 @@ class TestResource(BaseTestCase):
         )
 
         # Reload the resource from the model
-        saved_resource: ResourceFieldsTest = resource_model.get_resource(new_instance=True)
+        saved_resource = cast(ResourceFieldsTest, resource_model.get_resource(new_instance=True))
         self.assertEqual(saved_resource.age, 12)
         self.assertEqual(saved_resource.long_str, "Hello world")
         self.assertEqual(saved_resource.position, [5, 2])
@@ -113,7 +116,9 @@ class TestResource(BaseTestCase):
 
         # Reload from DB to verify persistence
         db_resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
-        reloaded_resource: ResourceFieldsTest = db_resource_model.get_resource(new_instance=True)
+        reloaded_resource = cast(
+            ResourceFieldsTest, db_resource_model.get_resource(new_instance=True)
+        )
 
         self.assertEqual(reloaded_resource.age, 99)
         self.assertEqual(reloaded_resource.long_str, "Updated value")
@@ -127,8 +132,9 @@ class TestResource(BaseTestCase):
 
         db_resource: ResourceModel = ResourceModel.get_by_id_and_check(resource_model.id)
 
-        robot_db: Robot = db_resource.get_resource()
-        technical_info: TechnicalInfo = robot_db.technical_info.get("key")
+        robot_db = cast(Robot, db_resource.get_resource())
+        technical_info = robot_db.technical_info.get("key")
+        assert technical_info is not None
         self.assertEqual(technical_info.key, "key")
         self.assertEqual(technical_info.value, "value")
         self.assertEqual(technical_info.short_description, "description")

@@ -6,7 +6,11 @@ test_form_save_events.py.
 """
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
-from gws_core.core.classes.search_builder import SearchParams
+from gws_core.core.classes.search_builder import (
+    SearchFilterCriteria,
+    SearchOperator,
+    SearchParams,
+)
 from gws_core.core.exception.exceptions.bad_request_exception import (
     BadRequestException,
 )
@@ -152,7 +156,11 @@ class TestFormCrud(BaseTestCase):
         form = self._make_form()
         params = SearchParams(
             filtersCriteria=[
-                {"key": "status", "operator": "EQ", "value": FormStatus.DRAFT.value}
+                SearchFilterCriteria(
+                    key="status",
+                    operator=SearchOperator.EQ,
+                    value=FormStatus.DRAFT.value,
+                )
             ]
         )
         page = FormService.search(params)
@@ -168,7 +176,11 @@ class TestFormCrud(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {"key": "template_id", "operator": "EQ", "value": version.template_id}
+                SearchFilterCriteria(
+                    key="template_id",
+                    operator=SearchOperator.EQ,
+                    value=version.template_id,
+                )
             ]
         )
         page = FormService.search(params)
@@ -180,7 +192,11 @@ class TestFormCrud(BaseTestCase):
         form = self._make_form(name="findable")
         self._make_form(name="other")
         params = SearchParams(
-            filtersCriteria=[{"key": "name", "operator": "CONTAINS", "value": "find"}]
+            filtersCriteria=[
+                SearchFilterCriteria(
+                    key="name", operator=SearchOperator.CONTAINS, value="find"
+                )
+            ]
         )
         page = FormService.search(params)
         ids = [f.id for f in page.results]
@@ -196,11 +212,11 @@ class TestFormCrud(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {
-                    "key": "tags",
-                    "operator": "EQ",
-                    "value": [{"key": "env", "value": "qa"}],
-                }
+                SearchFilterCriteria(
+                    key="tags",
+                    operator=SearchOperator.EQ,
+                    value=[{"key": "env", "value": "qa"}],
+                )
             ]
         )
         page = FormService.search(params)

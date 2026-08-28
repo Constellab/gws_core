@@ -2,8 +2,8 @@ from unittest import TestCase
 
 from gws_core import Table, TableUnfolderHelper
 from gws_core.test.base_test_case import BaseTestCase
-from numpy import NaN
-from pandas import DataFrame
+from numpy import nan
+from pandas import DataFrame, Index
 
 
 # test_table_unfolder
@@ -47,10 +47,10 @@ class TestTableUnfolder(TestCase):
         expected_result = Table(
             DataFrame(
                 {
-                    "A_M_10": [1, NaN],
-                    "B_M_10": [10, NaN],
-                    "A_M_20": [4, NaN],
-                    "B_M_20": [4, NaN],
+                    "A_M_10": [1, nan],
+                    "B_M_10": [10, nan],
+                    "A_M_20": [4, nan],
+                    "B_M_20": [4, nan],
                     "A_F_10": [2.0, 3.0],
                     "B_F_10": [8.0, 6.0],
                 }
@@ -78,7 +78,7 @@ class TestTableUnfolder(TestCase):
 
         # check the unfolding
         expected_result = Table(
-            DataFrame({0: [1, 2, 10, 8], 1: [6, 4, 3, 4]}, index=["a_M", "b_M", "a_F", "b_F"])
+            DataFrame({0: [1, 2, 10, 8], 1: [6, 4, 3, 4]}, index=Index(["a_M", "b_M", "a_F", "b_F"]))
         )
         self.assertTrue(result.get_data().equals(expected_result.get_data()))
 
@@ -123,4 +123,4 @@ class TestTableUnfolder(TestCase):
 
         # Should have 1 row and multiple columns after unfolding
         self.assertEqual(result.get_data().shape[0], 1)
-        self.assertTrue(result.get_data().shape[1] > 2)
+        self.assertTrue(result.get_data().shape[1] > 2)  # noqa: PLR2004

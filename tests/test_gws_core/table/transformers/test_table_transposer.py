@@ -1,13 +1,13 @@
 from unittest import TestCase
 
 from gws_core import Table
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table_transposer
 class TestTableTransposer(TestCase):
     def test(self):
-        initial_df = DataFrame({"A": range(1, 5), "B": [10, 0, 6, 4]}, index=["0", "1", "2", "3"])
+        initial_df = DataFrame({"A": range(1, 5), "B": [10, 0, 6, 4]}, index=Index(["0", "1", "2", "3"]))
 
         table = Table(data=initial_df)
         row_tags = [

@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from gws_core import ConfigParams, transformer_decorator
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -40,7 +42,7 @@ class TestTaskTransformer(BaseTestCase):
         self.assertEqual(resource_model.origin, ResourceOrigin.GENERATED)
 
         # retrieve robot and check age
-        robot: Robot = resource_model.get_resource()
+        robot = cast(Robot, resource_model.get_resource())
         self.assertEqual(robot.age, age_config)
 
     def test_call_transformers(self):
@@ -53,6 +55,6 @@ class TestTaskTransformer(BaseTestCase):
 
         # create a robot resource
         robot = Robot.empty()
-        new_robot: Robot = TransformerService.call_transformers(robot, transformers)
+        new_robot = cast(Robot, TransformerService.call_transformers(robot, transformers))
 
         self.assertEqual(new_robot.age, age_config)

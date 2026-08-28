@@ -11,13 +11,16 @@ from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 
+# Only log the download progress once it advanced by at least this ratio (3%)
+PROGRESS_LOG_STEP = 0.03
+
 
 class FileDownloader:
     """Class to downloader external files. for now it only supports http(s) protocol.
     If a message dispatcher is provided, it will automatically log the download progress and the time it took to download the file.
     """
 
-    message_dispatcher: MessageDispatcher
+    message_dispatcher: MessageDispatcher | None
     destination_folder: str
 
     def __init__(self, destination_folder: str, message_dispatcher: MessageDispatcher | None = None):
@@ -130,12 +133,17 @@ class FileDownloader:
 
                 destination_path = os.path.join(destination_folder, filename)
 
+                downloaded_size = 0
+                total_size = None
+
+                content_length = response.headers.get("content-length")
+
                 with open(destination_path, "wb") as file:
-                    if response.headers.get("content-length") is None:
+                    if content_length is None:
                         file.write(response.content)
                     else:
                         # download the file in chunks with a progress bar
-                        total_size = int(response.headers.get("content-length"))
+                        total_size = int(content_length)
                         last_progress_logged = 0.0
 
                         # convert a to int and if it fails, use None
@@ -148,7 +156,7 @@ class FileDownloader:
                             progress = downloaded_size / total_size
 
                             # if the progress is less than 3% more than the previous log, do not display the progress
-                            if progress - last_progress_logged > 0.03:
+                            if progress - last_progress_logged > PROGRESS_LOG_STEP:
                                 # calculate remaining time
                                 remaining_time = (time.time() - started_at) / (
                                     downloaded_size / total_size
@@ -156,6 +164,17 @@ class FileDownloader:
 
                                 self._dispatch_progress(total_size, downloaded_size, remaining_time)
                                 last_progress_logged = progress
+
+                # A connection cut mid-transfer ends iter_content without raising, so the
+                # file is silently short. Caught here (rather than by whoever consumes the
+                # file later) because this is the layer that knows the expected size and
+                # where the download can be retried.
+                if total_size is not None and downloaded_size != total_size:
+                    raise Exception(
+                        f"Incomplete download from {url}: got {downloaded_size} bytes, "
+                        f"expected {total_size} (content-length). The connection was "
+                        "likely interrupted."
+                    )
 
         except Exception as exc:
             self._dispatch_error(f"Error downloading from {url} : {exc}")
@@ -244,7 +263,7 @@ class FileDownloader:
             self.message_dispatcher.notify_error_message(message)
 
     def _extract_filename_from_header(
-        self, content_disposition: str, url: str, content_type: str
+        self, content_disposition: str | None, url: str, content_type: str | None
     ) -> str:
         """
         Extract the filename from a header

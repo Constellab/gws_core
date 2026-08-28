@@ -1,24 +1,44 @@
 import atexit
 import contextlib
+import logging
 import os
+import subprocess
+import threading
 from typing import Optional
+from urllib.parse import urlsplit
 
-from gws_core.apps.app_nginx_service import AppNginxServiceInfo
-from gws_core.core.classes.observer.message_observer import LoggerMessageObserver
+from gws_core.apps import app_gateway_constants
+from gws_core.apps.app_nginx_service import (
+    AppNginxRedirectServiceInfo,
+    AppNginxServiceInfo,
+)
+from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.utils.logger import Logger
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
-from gws_core.impl.shell.shell_proxy import ShellProxy
 
 
 class AppNginxManager:
     """Singleton to manage the nginx service to run apps.
     It handles the registration of services, generation of nginx configuration,
     and starting/stopping the nginx server.
+
+    All operations that touch the shared state (the services dict, the config file on
+    disk and the running nginx) are serialized by a re-entrant lock: registrations come
+    from one thread per app start/stop, and an unsynchronized generate+reload lets nginx
+    read a half-written config (`pread() returned only N bytes`, `no "events" section`).
     """
 
     _instance: Optional["AppNginxManager"] = None
+    _instance_lock = threading.Lock()
     _services: dict[str, AppNginxServiceInfo]
+
+    # Serializes generate-config + reload/start/stop across threads. RLock because
+    # `start_or_reload` -> `nginx_is_running` -> `stop(force=True)` can nest.
+    _lock: threading.RLock
+
+    # atexit handler must be registered only once (it used to stack per start)
+    _atexit_registered: bool = False
 
     _NGINX_CONF_FILENAME = "nginx.conf"
 
@@ -56,11 +76,35 @@ http {
     # Fix for long server names
     server_names_hash_bucket_size 128;
 
-    # Default server block to handle unmatched requests
+    # Fallback server block for hosts that match no running app.
+    #
+    # An app's nginx block only exists while it runs (see unregister_services), so a shared app
+    # URL for a *stopped* app would otherwise hit a dead port and get no HTTP response at all --
+    # nothing the app itself could ever recover from. This block keeps such URLs answering: it
+    # hands the request to the core-api resolver, which maps the host back to an app key and
+    # redirects to the Angular gateway (auth guard + cold-start + progress UI).
+    #
+    # This is `default_server`, so it only ever catches hosts no specific server block claims --
+    # a running app's own block always wins on exact server_name match.
     server {
 		listen [APP_EXTERNAL_PORT] default_server;
 		server_name _;
-		return 444;  # Close connection without response
+
+		location = /[APP_FALLBACK_PATH] {
+			# Literal loopback host and no variables in proxy_pass: a hostname or any $var forces
+			# runtime DNS resolution, which needs a `resolver` directive we do not configure
+			# (502 "no resolver defined"). Mirrors _to_loopback_upstream in app_nginx_service.py.
+			proxy_pass [APP_FALLBACK_URL];
+			proxy_set_header Host [APP_FALLBACK_HOST];
+			proxy_set_header X-Forwarded-Host $host;
+			proxy_pass_request_body off;
+		}
+
+		location / {
+			# Preserve the original host and the full original URI (path + query) so the gateway
+			# can send the user to the deep link they actually opened, not just the app root.
+			return 302 /[APP_FALLBACK_PATH]?host=$host&target=$request_uri;
+		}
 	}
 
     # This will be replaced with the actual server blocks
@@ -71,44 +115,70 @@ http {
 
     def __init__(self):
         self._services = {}
+        self._lock = threading.RLock()
 
     @classmethod
     def get_instance(cls) -> "AppNginxManager":
         """Get the global nginx manager instance"""
         if not cls._instance:
-            cls._instance = cls()
+            with cls._instance_lock:
+                if not cls._instance:
+                    cls._instance = cls()
         return cls._instance
 
     @classmethod
     def init(cls) -> None:
-        """Initialize the NginxManager instance"""
+        """Start nginx at lab boot, serving only the fallback block.
+
+        No app is registered yet at this point, so nginx comes up with just the fallback
+        `default_server`. That is the point: a shared URL of a **stopped** app must resolve (and
+        cold-start the app through the gateway) without waiting for some other app to be launched
+        first. Previously this stopped nginx at boot and nothing brought it back until the first app
+        started, so such URLs hit a dead port for the whole idle period.
+
+        A leftover nginx from a previous, uncleanly-stopped run is restarted rather than left as is,
+        so it picks up the freshly generated config.
+        """
         nginx_manager = cls.get_instance()
         if nginx_manager.nginx_is_running():
-            Logger.info("Nginx is running, stopping it.")
+            Logger.info("Nginx is running, stopping it before restarting with a fresh config.")
             nginx_manager.stop()
+
+        # Boot must not be fatal: another process may already serve the app port (a concurrently
+        # running lab server, or an nginx this manager cannot see because it owns a different PID
+        # file). Apps still work in that case -- they register into the config and reload -- so log
+        # and continue instead of taking the whole lab boot down over the fallback block.
+        try:
+            nginx_manager.start_or_reload()
+        except Exception as exception:
+            Logger.error(
+                "Could not start nginx at boot; shared URLs of stopped apps will not resolve "
+                f"until an app starts. Cause: {exception}"
+            )
 
     def register_services(self, services: list[AppNginxServiceInfo]) -> None:
         """Register a service and update nginx configuration"""
-        for service in services:
-            self._services[service.service_id] = service
-            Logger.debug(
-                f"Registered service: {service.service_id}, server name {service.server_name}"
-            )
+        with self._lock:
+            for service in services:
+                self._services[service.service_id] = service
+                Logger.debug(
+                    f"Registered service: {service.service_id}, server name {service.server_name}"
+                )
 
-        self.start_or_reload()
+            self.start_or_reload()
 
     def unregister_services(self, service_ids: list[str]) -> None:
         """Unregister a service and update nginx configuration"""
-        for service_id in service_ids:
-            if service_id in self._services:
-                del self._services[service_id]
-                Logger.debug(f"Unregistered service: {service_id}")
+        with self._lock:
+            for service_id in service_ids:
+                if service_id in self._services:
+                    del self._services[service_id]
+                    Logger.debug(f"Unregistered service: {service_id}")
 
-        if self._services:
+            # Reload even when no services are left: nginx must keep listening so the fallback
+            # `default_server` block can still answer shared URLs of stopped apps (and cold-start
+            # them via the gateway). Stopping here would make those URLs fail at the network layer.
             self.start_or_reload()
-        else:
-            # if no services left, stop nginx
-            self.stop()
 
     def get_services(self) -> list[AppNginxServiceInfo]:
         """Get all registered services"""
@@ -118,33 +188,51 @@ http {
         """Get a specific service by name"""
         return self._services.get(name)
 
-    def start_or_reload(self):
-        """Start nginx if not already started"""
-        if not self._services:
-            self.stop()
+    def start_or_reload(self) -> None:
+        """Start nginx if not already started, otherwise reload its configuration.
 
-        # Generate initial empty config
-        self._generate_nginx_config()
+        Runs with zero registered services too: the generated config always contains the fallback
+        `default_server` block, which must stay reachable so shared URLs of stopped apps resolve.
 
-        if self.nginx_is_running():
-            Logger.debug("Nginx already started, reloading configuration")
-            self._reload_nginx()
-            return True
+        Held under the lock so the config that gets reloaded is the config that was just
+        generated, and so two threads cannot both decide nginx is stopped and start it twice.
+        """
+        with self._lock:
+            self._generate_nginx_config()
 
-        # Start nginx
-        self._start_nginx()
-        atexit.register(self.stop)
+            if self.nginx_is_running():
+                Logger.debug("Nginx already started, reloading configuration")
+                self._reload_nginx()
+                return
+
+            # Start nginx
+            self._start_nginx()
+            if not AppNginxManager._atexit_registered:
+                AppNginxManager._atexit_registered = True
+                atexit.register(self._stop_at_exit)
+
+    def _stop_at_exit(self) -> None:
+        """Stop nginx from the atexit hook.
+
+        At interpreter exit the console stream may already be closed (e.g. by pytest),
+        so logging errors are silenced instead of being printed as '--- Logging error ---'.
+        """
+        logging.raiseExceptions = False
+        self.stop()
 
     def stop(self, force: bool = False) -> None:
         """Stop nginx"""
-        if not force and not self.nginx_is_running():
-            return
+        with self._lock:
+            if not force and not self.nginx_is_running():
+                return
 
-        result = self._run_nginx_command(["-s", "stop"])
-        if result == 0:
-            Logger.info("Nginx stopped successfully")
-        else:
-            Logger.error("Failed to stop nginx")
+            result = self._run_nginx_command(["-s", "stop"])
+            if result.returncode == 0:
+                Logger.info("Nginx stopped successfully")
+            else:
+                Logger.error(
+                    f"Failed to stop nginx (exit {result.returncode}): {result.stderr.strip()}"
+                )
 
     def nginx_is_running(self) -> bool:
         """Check if nginx is running"""
@@ -184,46 +272,76 @@ http {
             return False
 
     def _generate_nginx_config(self):
-        """Generate nginx configuration for all services"""
+        """Generate nginx configuration for all services.
+
+        The config is written to a temp file then renamed onto the live path: `os.replace`
+        is atomic within a filesystem, so nginx always reads either the whole old file or
+        the whole new one — never a truncated prefix.
+        """
         config_content = self._build_nginx_config()
         config_path = self.get_nginx_config_file_path()
+        tmp_path = f"{config_path}.tmp-{os.getpid()}-{threading.get_ident()}"
 
         try:
-            with open(config_path, "w", encoding="utf-8") as f:
+            with open(tmp_path, "w", encoding="utf-8") as f:
                 f.write(config_content)
+            os.replace(tmp_path, config_path)
             Logger.info(f"Generated nginx config: {config_path}")
 
         except Exception as e:
-            raise Exception(f"Failed to write nginx config to {config_path}: {e}")
+            with contextlib.suppress(OSError):
+                os.remove(tmp_path)
+            raise Exception(f"Failed to write nginx config to {config_path}: {e}") from e
 
     def _reload_nginx(self):
         """Reload nginx configuration"""
         # nginx is running, reload it
         result = self._run_nginx_command(["-s", "reload"])
-        if result == 0:
+        if result.returncode == 0:
             Logger.debug("Nginx configuration reloaded successfully")
         else:
-            Logger.error("Failed to reload nginx configuration")
+            Logger.error(
+                f"Failed to reload nginx configuration (exit {result.returncode}): "
+                f"{result.stderr.strip()}"
+            )
 
     def _start_nginx(self):
         """Start nginx daemon"""
+        # In test mode only: free the (test-scoped) port from leftovers of previous
+        # killed test runs before binding. Safe because the test port band is never
+        # used by a real lab nginx (see Settings.get_app_external_port).
+        if Settings.get_instance().is_test:
+            killed = SysProc.kill_process_on_port(Settings.get_app_external_port())
+            if killed:
+                Logger.warning(
+                    f"Killed leftover process(es) {killed} holding the test app port "
+                    f"{Settings.get_app_external_port()} before starting nginx"
+                )
+
         # Test configuration first
         test_result = self._run_nginx_command(["-t"])
-        if test_result != 0:
-            raise Exception("Nginx configuration test failed")
+        if test_result.returncode != 0:
+            raise Exception(
+                f"Nginx configuration test failed (exit {test_result.returncode}): "
+                f"{test_result.stderr.strip()}"
+            )
 
         # Start nginx
         result = self._run_nginx_command([])
-        if result != 0:
-            raise Exception("Failed to start nginx")
+        if result.returncode != 0:
+            raise Exception(
+                f"Failed to start nginx (exit {result.returncode}): {result.stderr.strip()}"
+            )
 
         Logger.info("Nginx started successfully")
 
     def _build_nginx_config(self) -> str:
-        """Build nginx configuration content"""
-        if not self._services:
-            return "# No services registered\n"
+        """Build nginx configuration content.
 
+        Always renders the full template, even with zero registered services: the template holds
+        the fallback `default_server` block that answers shared URLs of stopped apps. Returning a
+        bare comment here (as this used to) would drop that block and leave such URLs dead.
+        """
         config_lines = []
 
         for service in self._services.values():
@@ -248,30 +366,64 @@ http {
         nginx_config = nginx_config.replace(
             "[APP_EXTERNAL_PORT]", str(Settings.get_app_external_port())
         )
+
+        # Fallback block: resolver URL is rewritten to loopback for the same reason as the
+        # gws-login location (no variables/hostnames in proxy_pass, else nginx needs a `resolver`).
+        fallback_url = AppNginxRedirectServiceInfo._to_loopback_upstream(
+            self._get_fallback_resolver_url()
+        )
+        nginx_config = nginx_config.replace(
+            "[APP_FALLBACK_PATH]", app_gateway_constants.APP_FALLBACK_PATH
+        )
+        nginx_config = nginx_config.replace("[APP_FALLBACK_URL]", fallback_url)
+        # Host must be the resolver's own host, not $host: a host-routing edge proxy would
+        # otherwise send this back into the app host instead of core-api.
+        nginx_config = nginx_config.replace(
+            "[APP_FALLBACK_HOST]", urlsplit(fallback_url).netloc
+        )
         return nginx_config
+
+    @staticmethod
+    def _get_fallback_resolver_url() -> str:
+        """Core-api URL the nginx fallback block proxies to.
+
+        Maps an app host back to an app key and redirects to the Angular gateway. Not app-specific
+        (unlike the nginx-login URL): one resolver serves every unmatched host.
+        """
+        return (
+            f"{Settings.get_lab_api_url()}/{Settings.core_api_route_path()}"
+            f"/apps/{app_gateway_constants.APP_FALLBACK_ENDPOINT_SEGMENT}"
+        )
 
     def get_nginx_config_file_path(self) -> str:
         """Get the path to the generated nginx config file"""
         return os.path.join(self.get_nginx_config_dir(), self._NGINX_CONF_FILENAME)
 
-    def _get_shell_proxy(self) -> ShellProxy:
-        """Get the ShellProxy instance for this manager"""
-        shell_proxy = ShellProxy(self.get_nginx_config_dir())
-        shell_proxy.attach_observer(LoggerMessageObserver())
-        return shell_proxy
+    def _run_nginx_command(self, args: list[str]) -> subprocess.CompletedProcess:
+        """Run nginx command with -c option always set.
 
-    def _run_nginx_command(self, args: list[str]) -> int:
-        """Run nginx command with -c option always set
+        Output is captured and returned to the caller so the log level can be chosen
+        from the exit code: nginx writes informational output (e.g. successful `-t`
+        results) to stderr, which must not be logged as ERROR on success.
 
         Args:
             args: List of nginx arguments (e.g., ['-s', 'reload'])
 
         Returns:
-            Exit code from the command
+            The completed process (returncode, stdout, stderr)
         """
-        shell_proxy = self._get_shell_proxy()
         command = ["nginx", "-c", self.get_nginx_config_file_path()] + args
-        return shell_proxy.run(command)
+        Logger.debug(f"Running nginx command: {command}")
+        result = subprocess.run(
+            command,
+            cwd=self.get_nginx_config_dir(),
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0 and result.stderr.strip():
+            Logger.debug(f"nginx output: {result.stderr.strip()}")
+        return result
 
     def get_nginx_access_log_path(self) -> str:
         """Get the path to the nginx access log file"""

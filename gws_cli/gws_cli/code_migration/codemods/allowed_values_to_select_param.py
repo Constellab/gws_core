@@ -78,7 +78,7 @@ class _CallRewriter(cst.CSTTransformer):
         self.skipped_calls: list[str] = []
         self.changed = False
 
-    def leave_Call(self, original_node: cst.Call, updated_node: cst.Call) -> cst.BaseExpression:
+    def leave_Call(self, original_node: cst.Call, updated_node: cst.Call) -> cst.BaseExpression:  # noqa: N802
         func = updated_node.func
         if not (isinstance(func, cst.Name) and func.value in DEPRECATED_PARAM_CLASSES):
             return updated_node
@@ -117,19 +117,19 @@ class _NameCollector(cst.CSTVisitor):
         self.used_names: set[str] = set()
         self._in_import = 0
 
-    def visit_Import(self, node: cst.Import) -> None:
+    def visit_Import(self, node: cst.Import) -> None:  # noqa: N802
         self._in_import += 1
 
-    def leave_Import(self, original_node: cst.Import) -> None:
+    def leave_Import(self, original_node: cst.Import) -> None:  # noqa: N802
         self._in_import -= 1
 
-    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:  # noqa: N802
         self._in_import += 1
 
-    def leave_ImportFrom(self, original_node: cst.ImportFrom) -> None:
+    def leave_ImportFrom(self, original_node: cst.ImportFrom) -> None:  # noqa: N802
         self._in_import -= 1
 
-    def visit_Name(self, node: cst.Name) -> None:
+    def visit_Name(self, node: cst.Name) -> None:  # noqa: N802
         if self._in_import == 0:
             self.used_names.add(node.value)
 
@@ -145,13 +145,13 @@ class _ImportFixer(cst.CSTTransformer):
         # import matches its relative-import depth (e.g. `....config.param.select_param`)
         self._param_spec_relative_dots: tuple[cst.Dot, ...] | None = None
 
-    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:
+    def visit_ImportFrom(self, node: cst.ImportFrom) -> None:  # noqa: N802
         if _import_targets_select_param(node) and not isinstance(node.names, cst.ImportStar):
             for alias in node.names:
                 if m.matches(alias.name, m.Name(SELECT_PARAM_NAME)):
                     self._select_param_already_imported = True
 
-    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:
+    def leave_Module(self, original_node: cst.Module, updated_node: cst.Module) -> cst.Module:  # noqa: N802
         new_body: list[cst.BaseStatement] = []
         # index (in new_body) right after the last `config.param.*` import line, or
         # where a fully-removed `param_spec` import used to be - that's where we put
@@ -194,9 +194,9 @@ class _ImportFixer(cst.CSTTransformer):
         return cst.ImportFrom(module=self._dotted_module(SELECT_PARAM_MODULE), names=alias)
 
     @staticmethod
-    def _dotted_module(dotted: str) -> cst.BaseExpression:
+    def _dotted_module(dotted: str) -> cst.Attribute | cst.Name:
         parts = dotted.split(".")
-        node: cst.BaseExpression = cst.Name(parts[0])
+        node: cst.Attribute | cst.Name = cst.Name(parts[0])
         for part in parts[1:]:
             node = cst.Attribute(value=node, attr=cst.Name(part))
         return node

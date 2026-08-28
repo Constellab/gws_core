@@ -1,6 +1,6 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.impl.rich_text.block.rich_text_block import (
@@ -62,7 +62,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
                 if self.get_variable_json_attribute() not in tag.attrs:
                     continue
                 # read the json data attribute and convert it to a dict
-                json_data = tag[self.get_variable_json_attribute()]
+                json_data = cast(str, tag[self.get_variable_json_attribute()])
                 variable_data: RichTextVariableData = RichTextVariableData.from_json_str(json_data)
 
                 if variable_data.name.strip() == parameter_name.strip():
@@ -97,7 +97,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
                 if self.get_variable_json_attribute() not in tag.attrs:
                     continue
                 # read the json data attribute and convert it to a dict
-                json_data = tag[self.get_variable_json_attribute()]
+                json_data = cast(str, tag[self.get_variable_json_attribute()])
                 variable_data: RichTextVariableData = RichTextVariableData.from_json_str(json_data)
 
                 if variable_data.name.strip() == variable_name.strip():
@@ -110,7 +110,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
 
         return None
 
-    def get_elements_before_as_str(self, target_element: BeautifulSoup) -> str:
+    def get_elements_before_as_str(self, target_element: Tag) -> str:
         result: str = ""
         current_element = target_element.previous_sibling
         while current_element is not None:
@@ -118,7 +118,7 @@ class RichTextBlockParagraph(RichTextBlockDataBase):
             current_element = current_element.previous_sibling
         return result
 
-    def get_elements_after_as_str(self, target_element: BeautifulSoup) -> str:
+    def get_elements_after_as_str(self, target_element: Tag) -> str:
         result: str = ""
         current_element = target_element.next_sibling
         while current_element is not None:

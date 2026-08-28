@@ -84,8 +84,8 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         scenario always has a main protocol. The orphan case should not happen
         in normal usage.
         """
-        from ..process.process_factory import ProcessFactory
-        from ..protocol.protocol_model import ProtocolModel
+        from ..process.process_factory import ProcessFactory  # noqa: PLC0415
+        from ..protocol.protocol_model import ProtocolModel  # noqa: PLC0415
 
         if self._protocol is None:
             self._protocol = ProtocolModel.get_or_none(
@@ -113,7 +113,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         """
         Returns child process models.
         """
-        from ..task.task_model import TaskModel
+        from ..task.task_model import TaskModel  # noqa: PLC0415
 
         if not self.is_saved():
             return []
@@ -139,7 +139,7 @@ class Scenario(ModelWithUser, ModelWithFolder, NavigableEntity):
         return self.title
 
     def get_running_tasks(self) -> list[TaskModel]:
-        from ..task.task_model import TaskModel
+        from ..task.task_model import TaskModel  # noqa: PLC0415
 
         return list(
             TaskModel.select().where(

@@ -26,11 +26,11 @@ class LabConfigModel(BaseModel):
 
     LAB_CONFIG_VERSION = 1
 
-    id = TypedCharField(primary_key=True, max_length=36)
-    created_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    version = TypedIntegerField()  # version of the config
-    brick_versions = TypedJSONField()
-    hash = TypedCharField()
+    id: TypedCharField = TypedCharField(primary_key=True, max_length=36)
+    created_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
+    version: TypedIntegerField = TypedIntegerField()  # version of the config
+    brick_versions: TypedJSONField = TypedJSONField()
+    hash: TypedCharField = TypedCharField()
 
     _current_config: Optional["LabConfigModel"] = None
 
@@ -72,19 +72,19 @@ class LabConfigModel(BaseModel):
 
     @classmethod
     def create_config_if_not_exits(cls, brick_versions: list[BrickVersion]) -> "LabConfigModel":
-        hash = cls._hash_versions(brick_versions)
-        lab_config = cls._find_by_hash(hash)
+        config_hash = cls._hash_versions(brick_versions)
+        lab_config = cls._find_by_hash(config_hash)
 
         if lab_config is not None:
             return lab_config
 
-        return cls._create(hash, brick_versions)
+        return cls._create(config_hash, brick_versions)
 
     @classmethod
-    def _create(cls, hash: str, brick_versions: list[BrickVersion]) -> "LabConfigModel":
+    def _create(cls, config_hash: str, brick_versions: list[BrickVersion]) -> "LabConfigModel":
         lab_config = LabConfigModel()
         lab_config.id = StringHelper.generate_uuid()
-        lab_config.hash = hash
+        lab_config.hash = config_hash
         lab_config.brick_versions = [
             brick_version.to_json_dict() for brick_version in brick_versions
         ]
@@ -93,9 +93,11 @@ class LabConfigModel(BaseModel):
         return lab_config.save(force_insert=True)
 
     @classmethod
-    def _find_by_hash(cls, hash: str) -> Optional["LabConfigModel"]:
+    def _find_by_hash(cls, config_hash: str) -> Optional["LabConfigModel"]:
         return (
-            cls.select().where((cls.hash == hash) & (cls.version == cls.LAB_CONFIG_VERSION)).first()
+            cls.select()
+            .where((cls.hash == config_hash) & (cls.version == cls.LAB_CONFIG_VERSION))
+            .first()
         )
 
     @classmethod

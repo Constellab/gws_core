@@ -1,7 +1,7 @@
 from typing import Any
 
-from numpy import NaN
-from pandas import DataFrame, concat
+from numpy import nan
+from pandas import DataFrame, Index, concat
 
 from gws_core.tag.tag_helper import TagHelper
 
@@ -63,28 +63,27 @@ class TableUnfolderHelper:
         dataframe = DataFrame()
         row_tags = []
 
-        for tags in all_tag_combinations:
-            sub_table = table.select_by_column_tags([tags])
+        for tag_combination in all_tag_combinations:
+            sub_table = table.select_by_column_tags([tag_combination])
             df = sub_table.get_data()
 
             if df.empty:
                 continue
 
-            tag_values = "_".join(tags.values())
+            tag_values = "_".join(tag_combination.values())
 
-            row_index = 0
             complete_tags: list[dict] = []
             sub_table_row_tags: list[dict] = sub_table.get_row_tags()
-            for _, row in df.iterrows():
+            for row_index, (_, row) in enumerate(df.iterrows()):
                 name = f"{row.name}_{tag_values}"
 
                 # if the new row have fewer column than dataframe, append NaN
                 values: list[Any] = row.values.tolist()
                 column_diff = len(dataframe.columns) - len(values)
                 if column_diff > 0:
-                    values.extend([NaN] * column_diff)
+                    values.extend([nan] * column_diff)
 
-                row_df = DataFrame([values], index=[name])
+                row_df = DataFrame([values], index=Index([name]))
 
                 dataframe = concat([dataframe, row_df], sort=True)
 
@@ -93,11 +92,10 @@ class TableUnfolderHelper:
                 # append tags that are used to unfold and append the row name as tag
                 complete_tag = {
                     **sub_table_row_tags[row_index],
-                    **tags,
+                    **tag_combination,
                     tag_key_row_original_name: row.name,
                 }
                 complete_tags.append(complete_tag)
-                row_index += 1
 
             row_tags.extend(complete_tags)
 

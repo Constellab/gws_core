@@ -1,4 +1,4 @@
-from typing import Any, final
+from typing import Any, cast, final
 
 from peewee import CompositeKey, ModelSelect
 
@@ -19,6 +19,7 @@ from gws_core.folder.model_with_folder import ModelWithFolder
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_db_field import NullableRichTextDbField
 from gws_core.impl.rich_text.rich_text_modification import RichTextModificationsDTO
+from gws_core.impl.rich_text.rich_text_types import RichTextDTO
 from gws_core.note.note_dto import NoteDTO, NoteFullDTO
 from gws_core.tag.entity_tag_list import EntityTagList
 from gws_core.tag.tag_entity_type import TagEntityType
@@ -34,25 +35,25 @@ from ..scenario.scenario import Scenario
 
 @final
 class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
-    title = TypedCharField()
+    title: TypedCharField = TypedCharField()
 
-    content = NullableRichTextDbField()
+    content: NullableRichTextDbField = NullableRichTextDbField()
 
-    folder = NullableForeignKeyField(SpaceFolder)
+    folder: NullableForeignKeyField[SpaceFolder] = NullableForeignKeyField(SpaceFolder)
 
-    lab_config = NullableForeignKeyField(LabConfigModel)
+    lab_config: NullableForeignKeyField[LabConfigModel] = NullableForeignKeyField(LabConfigModel)
 
-    is_validated = TypedBooleanField(default=False)
-    validated_at = NullableDateTimeUTC()
-    validated_by = NullableForeignKeyField(User, backref="+")
+    is_validated: TypedBooleanField = TypedBooleanField(default=False)
+    validated_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    validated_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
     # Date of the last synchronisation with space, null if never synchronised
-    last_sync_at = NullableDateTimeUTC()
-    last_sync_by = NullableForeignKeyField(User, backref="+")
+    last_sync_at: NullableDateTimeUTC = NullableDateTimeUTC()
+    last_sync_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
 
-    is_archived = TypedBooleanField(default=False, index=True)
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
 
-    modifications = NullableBaseDTOField(RichTextModificationsDTO)
+    modifications: NullableBaseDTOField[RichTextModificationsDTO] = NullableBaseDTOField(RichTextModificationsDTO)
 
     def get_content_as_rich_text(self) -> RichText:
         return RichText(self.content)
@@ -104,7 +105,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
             last_sync_at=self.last_sync_at,
             last_sync_by=self.last_sync_by.to_dto() if self.last_sync_by else None,
             is_archived=self.is_archived,
-            content=self.content,
+            content=cast(RichTextDTO, self.content),
             modifications=self.modifications,
         )
 
@@ -132,7 +133,7 @@ class Note(ModelWithUser, ModelWithFolder, NavigableEntity):
     @GwsCoreDbManager.transaction()
     def delete_instance(self, *args, **kwargs) -> Any:
         result = super().delete_instance(*args, **kwargs)
-        EntityTagList.delete_by_entity(TagEntityType.VIEW, self.id)
+        EntityTagList.delete_by_entity(TagEntityType.NOTE, self.id)
         return result
 
     @classmethod
@@ -164,8 +165,8 @@ class NoteScenario(BaseModel):
     :rtype: [type]
     """
 
-    scenario = TypedForeignKeyField(Scenario, on_delete="CASCADE")
-    note = TypedForeignKeyField(Note, on_delete="CASCADE")
+    scenario: TypedForeignKeyField[Scenario] = TypedForeignKeyField(Scenario, on_delete="CASCADE")
+    note: TypedForeignKeyField[Note] = TypedForeignKeyField(Note, on_delete="CASCADE")
 
     ############################################# CLASS METHODS ########################################
 

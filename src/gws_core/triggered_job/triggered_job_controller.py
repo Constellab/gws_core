@@ -13,7 +13,6 @@ from gws_core.user.authorization_service import AuthorizationService
 
 from ..core_controller import core_app
 
-
 # ========================== CREATE ==========================
 
 @core_app.post("/triggered-jobs/from-process", tags=["Triggered Jobs"])

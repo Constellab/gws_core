@@ -1,7 +1,8 @@
+from collections.abc import Iterable
 from re import sub
 from typing import Any
 
-from numpy import NaN, inf
+from numpy import inf, nan
 from numpy.ma import masked
 from pandas import DataFrame
 
@@ -14,14 +15,17 @@ class DataframeHelper:
     CSV_DELIMITERS: list[str] = ["\t", ",", ";"]
     DEFAULT_CSV_DELIMITER = ","
 
+    # Below this length a csv string has too few characters to guess its delimiter
+    MIN_CSV_LENGTH_FOR_DELIMITER_DETECTION = 10
+
     @staticmethod
-    def detect_csv_delimiter(csv_str: str) -> str:
+    def detect_csv_delimiter(csv_str: str) -> str | None:
         """
         Method to guess the delimiter of a csv string based on delimiter count.
 
         By default, the delimiter is comma.
         """
-        if csv_str is None or len(csv_str) < 10:
+        if csv_str is None or len(csv_str) < DataframeHelper.MIN_CSV_LENGTH_FOR_DELIMITER_DETECTION:
             return None
 
         max_delimiter: str = DataframeHelper.DEFAULT_CSV_DELIMITER
@@ -51,10 +55,10 @@ class DataframeHelper:
     @staticmethod
     def dataframe_to_float(dataframe: DataFrame) -> DataFrame:
         """Convert all element of a dataframe to float, if element is not convertible, is sets NaN"""
-        return dataframe.map(lambda x: NumericHelper.to_float(x, NaN), na_action="ignore")
+        return dataframe.map(lambda x: NumericHelper.to_float(x, nan), na_action="ignore")
 
     @classmethod
-    def replace_inf(cls, data: DataFrame, value=NaN) -> DataFrame:
+    def replace_inf(cls, data: DataFrame, value=nan) -> DataFrame:
         return data.replace([inf, -inf], value)
 
     @classmethod
@@ -62,7 +66,7 @@ class DataframeHelper:
         """
         Convert all weird values (like NaN, inf, masked) to value to be able to convert to json
         """
-        data: DataFrame = dataframe.replace({NaN: value})
+        data: DataFrame = dataframe.replace({nan: value})
         # replace masked value by value
         data = data.map(lambda x: value if x is masked else x, na_action="ignore")
         return cls.replace_inf(data, value)
@@ -70,12 +74,12 @@ class DataframeHelper:
     @classmethod
     def nanify_none_number(cls, data: DataFrame) -> DataFrame:
         """Convert all not numeric element to NaN"""
-        return data.map(lambda x: x if isinstance(x, (float, int)) else NaN)
+        return data.map(lambda x: x if isinstance(x, (float, int)) else nan)
 
     @classmethod
     def nanify_none_str(cls, data: DataFrame) -> DataFrame:
         """Convert all not string element to NaN"""
-        return data.map(lambda x: x if isinstance(x, str) else NaN)
+        return data.map(lambda x: x if isinstance(x, str) else nan)
 
     @classmethod
     def contains(cls, data: DataFrame, value: Any) -> DataFrame:
@@ -149,7 +153,7 @@ class DataframeHelper:
         return cls.rename_duplicate_column_and_row_names(data)
 
     @classmethod
-    def format_header_names(cls, names: list[Any], strict: bool = False) -> list[str]:
+    def format_header_names(cls, names: Iterable[Any], strict: bool = False) -> list[str]:
         """Format the names of a row or a column with the following rules:
         - convert to string
 

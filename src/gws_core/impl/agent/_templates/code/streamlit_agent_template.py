@@ -1,3 +1,4 @@
+# pyright: reportUndefinedVariable=false
 # This is a template for a streamlit agent.
 # This generates an app with one dataframe as input. Then the user can select 2 columns to plot a scatter plot.
 
@@ -9,8 +10,8 @@ from pandas import DataFrame
 st.title("App example")
 
 # show a table from file_path which is a csv file full width
-if sources:
-    df: DataFrame = sources[0].get_data()
+if sources:  # noqa: F821
+    df: DataFrame = sources[0].get_data()  # noqa: F821
 
     # show the dataframe
     st.dataframe(df)

@@ -27,7 +27,8 @@ class LabNoteResource(Resource):
 
     def __init__(self, note_id: str | None = None):
         super().__init__()
-        self.note_id = note_id
+        if note_id is not None:
+            self.note_id = note_id
 
     def get_content(self) -> RichText:
         if self._content is None:
@@ -60,9 +61,20 @@ class LabNoteResource(Resource):
         caption: str | None = None,
         variable_name: str | None = None,
     ) -> None:
+        resource_model_id = resource.get_model_id()
+
+        if not resource_model_id:
+            raise ValueError(
+                f"The resource '{resource.name}' was not saved in the database, "
+                "it can't be used to generate a view"
+            )
+
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource.get_model_id(), view_method_name, config_values, True
+            resource_model_id, view_method_name, config_values or {}, True
         )
+
+        if not view_result.view_config:
+            raise ValueError("The view config is missing")
 
         rich_text: RichText = self.get_content()
         rich_text.add_resource_view(

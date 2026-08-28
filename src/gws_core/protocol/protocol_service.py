@@ -1041,50 +1041,58 @@ class ProtocolService:
         return cls.add_community_agent_version_to_protocol_id(protocol_id, community_agent_version)
 
     @classmethod
-    @GwsCoreDbManager.transaction()
-    def add_community_agent_version_to_protocol_id(
-        cls, protocol_id: str, community_agent_version: CommunityAgentVersionDTO
-    ) -> ProtocolUpdate:
-        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+    def _build_community_agent_config_params(
+        cls, agent_type: type, community_agent_version: CommunityAgentVersionDTO
+    ) -> ConfigParamsDict:
+        """Build the config params dict of a community agent version depending on the agent type.
 
-        process_typing: Typing = TypingManager.get_typing_from_name_and_check(
-            community_agent_version.type
-        )
-
-        agent_type = process_typing.get_and_check_type()
-
+        :param agent_type: type of the agent task to instantiate
+        :type agent_type: type
+        :param community_agent_version: community agent version holding the code, params and env
+        :type community_agent_version: CommunityAgentVersionDTO
+        :raises BadRequestException: if the agent type is not a supported agent
+        :return: the config params dict to use to create the process
+        :rtype: ConfigParamsDict
+        """
         params = {}
         if community_agent_version.params:
             params = community_agent_version.params["values"]
 
-        # Build the config params dict with specs values
-        config_params: ConfigParamsDict
         if issubclass(agent_type, PyAgent):
-            config_params = agent_type.build_config_params_dict(
+            return agent_type.build_config_params_dict(
                 code=community_agent_version.code, params=params
             )
-        elif issubclass(agent_type, EnvAgent) or issubclass(agent_type, StreamlitEnvAgent):
-            config_params = agent_type.build_config_params_dict(
+        if issubclass(agent_type, EnvAgent) or issubclass(agent_type, StreamlitEnvAgent):
+            return agent_type.build_config_params_dict(
                 code=community_agent_version.code,
                 params=params,
                 env=community_agent_version.environment,
             )
-        elif issubclass(agent_type, StreamlitAgent):
-            config_params = agent_type.build_config_params_dict(
+        if issubclass(agent_type, StreamlitAgent):
+            return agent_type.build_config_params_dict(
                 code=community_agent_version.code, params=params
             )
-        else:
-            raise BadRequestException("The agent type is not supported")
 
-        # create the process and add it to the protocol
-        process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
-            task_type=process_typing.get_and_check_type(),
-            config_params=config_params,
-            community_agent_version_id=community_agent_version.id,
-            name=community_agent_version.agent.title,
-            style=community_agent_version.style,
-        )
+        raise BadRequestException("The agent type is not supported")
 
+    @classmethod
+    def _configure_community_agent_process_config(
+        cls,
+        process_model: ProcessModel,
+        agent_type: type,
+        community_agent_version: CommunityAgentVersionDTO,
+    ) -> None:
+        """Fill the dynamic param specs of a newly created community agent process and
+        hide the 'code' (and 'env' for env agents) config specs.
+
+        :param process_model: process model created from the community agent version
+        :type process_model: ProcessModel
+        :param agent_type: type of the agent task
+        :type agent_type: type
+        :param community_agent_version: community agent version holding the params specs
+        :type community_agent_version: CommunityAgentVersionDTO
+        :raises BadRequestException: if the community agent version has no params specs
+        """
         # Get the dynamic param of the newly created agent process model
         dynamic_param_spec: DynamicParam = cls._get_process_dynamic_param_spec(
             process_model=process_model, config_spec_name=EnvAgent.PARAMS_CONFIG_NAME
@@ -1113,15 +1121,28 @@ class ProtocolService:
             config_env_spec.visibility = "private"
             process_model.config.update_spec(EnvAgent.ENV_CONFIG_NAME, config_env_spec)
 
-        protocol_update = cls.add_process_model_to_protocol(
-            protocol_model=protocol_model, process_model=process_model
-        )
+    @classmethod
+    def _reset_community_agent_dynamic_ports(
+        cls,
+        protocol_id: str,
+        process_model: ProcessModel,
+        community_agent_version: CommunityAgentVersionDTO,
+        protocol_update: ProtocolUpdate,
+    ) -> ProtocolUpdate:
+        """Replace the dynamic input and output ports of a community agent process by the ones
+        declared in the community agent version.
 
-        if protocol_update.process is None:
-            raise BadRequestException("The process was not added to the protocol")
-
-        process_model = protocol_update.process
-
+        :param protocol_id: id of the protocol containing the process
+        :type protocol_id: str
+        :param process_model: process model added to the protocol
+        :type process_model: ProcessModel
+        :param community_agent_version: community agent version holding the io specs
+        :type community_agent_version: CommunityAgentVersionDTO
+        :param protocol_update: protocol update to enrich with the port updates
+        :type protocol_update: ProtocolUpdate
+        :return: the last protocol update
+        :rtype: ProtocolUpdate
+        """
         if process_model.inputs.is_dynamic:
             for port in list(process_model.inputs.ports.keys()):
                 protocol_update = cls.delete_dynamic_input_port_of_process(
@@ -1147,6 +1168,50 @@ class ProtocolService:
                     )
 
         return protocol_update
+
+    @classmethod
+    @GwsCoreDbManager.transaction()
+    def add_community_agent_version_to_protocol_id(
+        cls, protocol_id: str, community_agent_version: CommunityAgentVersionDTO
+    ) -> ProtocolUpdate:
+        protocol_model: ProtocolModel = ProtocolModel.get_by_id_and_check(protocol_id)
+
+        process_typing: Typing = TypingManager.get_typing_from_name_and_check(
+            community_agent_version.type
+        )
+
+        agent_type = process_typing.get_and_check_type()
+
+        # Build the config params dict with specs values
+        config_params: ConfigParamsDict = cls._build_community_agent_config_params(
+            agent_type, community_agent_version
+        )
+
+        # create the process and add it to the protocol
+        process_model: ProcessModel = ProcessFactory.create_task_model_from_type(
+            task_type=process_typing.get_and_check_type(),
+            config_params=config_params,
+            community_agent_version_id=community_agent_version.id,
+            name=community_agent_version.agent.title,
+            style=community_agent_version.style,
+        )
+
+        cls._configure_community_agent_process_config(
+            process_model, agent_type, community_agent_version
+        )
+
+        protocol_update = cls.add_process_model_to_protocol(
+            protocol_model=protocol_model, process_model=process_model
+        )
+
+        if protocol_update.process is None:
+            raise BadRequestException("The process was not added to the protocol")
+
+        process_model = protocol_update.process
+
+        return cls._reset_community_agent_dynamic_ports(
+            protocol_id, process_model, community_agent_version, protocol_update
+        )
 
     @classmethod
     @GwsCoreDbManager.transaction()

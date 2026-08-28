@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import CheckBeforeTaskResult, InputTask, ResourceModel, TaskOutputs, TaskRunner
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
@@ -23,7 +25,7 @@ class TestPlug(BaseTestCase):
 
         outputs: TaskOutputs = task_tester.run()
 
-        robot_o: Robot = outputs["resource"]
+        robot_o = cast(Robot, outputs["resource"])
         self.assertEqual(robot_o.get_model_id(), robot_model.id)
 
     def test_output(self):
@@ -37,8 +39,10 @@ class TestPlug(BaseTestCase):
         i_scenario.run()
 
         # check that the resource used in the output was marked as output
-        resource = create.refresh().get_output("robot")
-        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource.get_model_id())
+        resource = create.refresh().get_output("robot", Robot)
+        resource_id = resource.get_model_id()
+        assert resource_id is not None
+        resource_model: ResourceModel = ResourceModel.get_by_id_and_check(resource_id)
         self.assertEqual(resource_model.flagged, True)
 
     def test_switch(self):
@@ -51,14 +55,16 @@ class TestPlug(BaseTestCase):
 
         # check that the task is not ready
         result: CheckBeforeTaskResult = task_tester.check_before_run()
+        assert "result" in result
         self.assertFalse(result["result"])
 
         # check that the task is ready
         task_tester.set_input("resource_2", robot_2)
         result: CheckBeforeTaskResult = task_tester.check_before_run()
+        assert "result" in result
         self.assertTrue(result["result"])
 
         outputs: TaskOutputs = task_tester.run()
 
-        robot_o: Robot = outputs["resource"]
+        robot_o = cast(Robot, outputs["resource"])
         self.assertEqual(robot_o, robot_2)

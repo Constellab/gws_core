@@ -106,7 +106,7 @@ class JsonSmartTransformer(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         chat: OpenAiChat = params.get_value("prompt")
 
-        json_dict: JSONDict = inputs["source"]
+        json_dict = inputs.get_resource("source", JSONDict)
 
         json_transformer = AIJsonTransformer(json_dict.get_data(), chat, self.message_dispatcher)
         result: dict = json_transformer.run()

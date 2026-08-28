@@ -32,7 +32,7 @@ class TestFileDownloader(TestCase):
         # there should be at least 3 message, 1 for the download start, 1 for the download end
         # and 1 for the progress bar
         message_dispatcher.force_dispatch_waiting_messages()
-        self.assertTrue(len(message_obs.messages) > 2)
+        self.assertTrue(len(message_obs.messages) > 2)  # noqa: PLR2004
 
         # clean up
         FileHelper.delete_dir(destination_folder)
@@ -73,7 +73,7 @@ class TestFileDownloader(TestCase):
         # there should be at least 3 message, 1 for the download start, 1 for the download end
         # and 1 for the progress bar
         message_dispatcher.force_dispatch_waiting_messages()
-        self.assertTrue(len(message_obs.messages) > 2)
+        self.assertTrue(len(message_obs.messages) > 2)  # noqa: PLR2004
 
         # clean up
         FileHelper.delete_dir(destination_folder)

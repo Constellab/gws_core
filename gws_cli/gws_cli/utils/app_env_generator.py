@@ -87,7 +87,7 @@ def apply_env_app_overlay(overlay_folder: str, dest_folder: str) -> None:
 
     A virtual environment app cannot load ``gws_core``, so it must import from
     ``gws_streamlit_env_main`` / ``gws_reflex_env_main`` instead. This copies the
-    env specific app code (e.g. ``main.py`` and ``app_pages/first_page.py``) over
+    env specific app code (e.g. ``main_template.txt`` and ``reflex_main.py``) over
     the default app code.
 
     :param overlay_folder: folder holding the env specific app code files

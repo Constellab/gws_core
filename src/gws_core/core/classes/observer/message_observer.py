@@ -69,19 +69,23 @@ class BasicMessageObserver(MessageObserver):
 
 
 class LoggerMessageObserver(MessageObserver):
-    """Observer to log dispatched message to the logger"""
+    """Observer to log dispatched message to the logger.
+
+    The message's context_id (stamped at notify time) is forwarded so the log record
+    stays attributed to its app even when the dispatch runs on a timer thread.
+    """
 
     def update(self, messages: list[DispatchedMessage]) -> None:
         for message in messages:
             if message.status == MessageLevel.ERROR:
-                Logger.error(message.message)
+                Logger.error(message.message, context_id=message.context_id)
             elif message.status == MessageLevel.WARNING:
-                Logger.warning(message.message)
+                Logger.warning(message.message, context_id=message.context_id)
             elif message.status == MessageLevel.INFO:
-                Logger.info(message.message)
+                Logger.info(message.message, context_id=message.context_id)
             elif message.status == MessageLevel.DEBUG:
-                Logger.debug(message.message)
+                Logger.debug(message.message, context_id=message.context_id)
             elif message.status == MessageLevel.PROGRESS:
-                Logger.progress(message.message)
+                Logger.progress(message.message, context_id=message.context_id)
             else:
-                Logger.info(message.message)
+                Logger.info(message.message, context_id=message.context_id)

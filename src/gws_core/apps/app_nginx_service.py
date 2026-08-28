@@ -195,9 +195,18 @@ server {{
 
 
 class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
-    """Service to serve a built reflex front app"""
+    """Service to serve a built reflex front app.
+
+    When ``backend_port``/``backend_path`` are set, the block also proxies
+    ``<backend_path>/`` to the app's backend with the prefix stripped, so the
+    backend is reachable same-origin on the front host. New builds bake their
+    endpoint URLs under that prefix (no per-instance host in the bundle); old
+    builds keep using the absolute ``-back`` host, which stays registered.
+    """
 
     front_folder_path: str
+    backend_port: int | None
+    backend_path: str | None
 
     def __init__(
         self,
@@ -205,14 +214,56 @@ class AppNginxReflexFrontServerServiceInfo(AppNginxServiceInfo):
         source_port: int,
         server_name: str | list[str],
         front_folder_path: str,
+        backend_port: int | None = None,
+        backend_path: str | None = None,
     ):
         super().__init__(service_id, source_port, server_name)
         self.front_folder_path = front_folder_path
+        self.backend_port = backend_port
+        self.backend_path = backend_path
+
+    def _build_backend_location(self) -> str:
+        """Build the same-origin backend proxy location (empty when not configured).
+
+        ``^~`` makes this prefix win over the regex asset location below (a backend
+        path like ``{prefix}/foo.js`` must reach the backend, not the static server).
+        The prefix is passed through UNSTRIPPED (no URI part on ``proxy_pass``): the
+        backend runs with the same ``backend_path`` and mounts its endpoints — and,
+        critically, its socket.io namespace, which is negotiated inside the websocket
+        payload and cannot be rewritten by nginx — under that prefix.
+        ``127.0.0.1`` instead of ``localhost`` avoids nginx's DNS resolver (see
+        _to_loopback_upstream).
+        """
+        if self.backend_port is None or not self.backend_path:
+            return ""
+        prefix = self.backend_path.rstrip("/")
+        return f"""
+        location ^~ {prefix}/ {{
+            proxy_pass http://127.0.0.1:{self.backend_port};
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+
+            # WebSocket support (reflex event socket)
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            proxy_set_header Origin "";
+            proxy_buffering off;
+
+            # Timeout settings
+            proxy_connect_timeout 60s;
+            proxy_send_timeout 60s;
+            proxy_read_timeout 300s;
+        }}
+"""
 
     def get_nginx_service_config(
         self,
     ) -> str:
         """Generate nginx configuration block for serving the front-end of this service"""
+        backend_location = self._build_backend_location()
         return rf"""
 server {{
         listen {self.source_port};
@@ -220,7 +271,7 @@ server {{
 
         root {self.front_folder_path};
         index index.html;
-
+{backend_location}
         # Handle client-side routing
         location / {{
             try_files $uri $uri/ /index.html;

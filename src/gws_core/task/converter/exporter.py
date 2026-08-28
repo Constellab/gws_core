@@ -2,7 +2,7 @@ import os
 import traceback
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import final
+from typing import cast, final
 
 from typing_extensions import TypedDict
 
@@ -23,7 +23,7 @@ from ...impl.file.file import File
 from ...impl.file.fs_node import FSNode
 from ...resource.resource import Resource
 from ...task.task_decorator import task_decorator
-from .converter import Converter, decorate_converter
+from .converter import Converter, ConverterRegistration, decorate_converter
 
 EXPORT_TO_PATH_META_DATA_ATTRIBUTE = "_import_from_path_meta_data"
 
@@ -98,17 +98,19 @@ def exporter_decorator(
 
             # register the task
             decorate_converter(
-                task_class=task_class,
-                unique_name=unique_name,
-                task_type="EXPORTER",
-                source_type=source_type,
-                target_type=target_type,
-                related_resource=source_type,
-                human_name=human_name_computed,
-                short_description=short_description_computed,
-                hide=hide,
-                style=style,
-                deprecated=deprecated,
+                ConverterRegistration(
+                    task_class=task_class,
+                    unique_name=unique_name,
+                    task_type="EXPORTER",
+                    source_type=source_type,
+                    target_type=target_type,
+                    related_resource=source_type,
+                    human_name=human_name_computed,
+                    short_description=short_description_computed,
+                    hide=hide,
+                    style=style,
+                    deprecated=deprecated,
+                )
             )
         except Exception as err:
             traceback.print_stack()
@@ -143,11 +145,13 @@ class ResourceExporter(Converter):
 
         result: FSNode
         try:
-            result = self.export_to_path(source, temp_dir, params, target_type)
+            result = self.export_to_path(
+                source, temp_dir, params, cast(type[FSNode], target_type)
+            )
         except Exception as err:
             raise Exception(
                 f"Cannot export the resource '{source.name}' using exporter '{self.get_typing_name()}' to a file, error : {err}"
-            )
+            ) from err
 
         if not isinstance(result, FSNode):
             raise Exception(

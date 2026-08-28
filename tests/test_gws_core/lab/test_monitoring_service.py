@@ -21,7 +21,7 @@ class TestMonitoringService(BaseTestCase):
             self.assertIsNotNone(folder.path)
             # If no error, size should be a positive int
             if folder.error is None:
-                self.assertIsNotNone(folder.size)
+                assert folder.size is not None
                 self.assertGreaterEqual(folder.size, 0)
 
         # Check that known folders are present (user and bricks should always exist)

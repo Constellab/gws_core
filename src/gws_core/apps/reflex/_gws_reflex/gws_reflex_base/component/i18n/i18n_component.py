@@ -16,7 +16,7 @@ This module stays free of any ``gws_core`` import (virtual environment apps comp
 """
 
 from collections.abc import Mapping
-from typing import Any
+from typing import Any, Literal, cast
 
 import reflex as rx
 
@@ -45,16 +45,18 @@ def translate(key: str, data: Mapping[str, Any] | None = None):
     :type data: Mapping[str, Any] | None
     :return: a reactive Reflex var resolving to the translated text
     """
-    text = I18nState.t[key]
+    # .to(str) only re-types the var (same generated JS), so the string ops below type check
+    text = I18nState.t[key].to(str)
     if data:
         # Reflex string vars support ``.replace``; chain one per placeholder so the result
         # stays reactive even when a value is itself a var. Reflex's ``.replace`` requires a
         # string operand, so coerce plain non-string values (a var is passed through as-is).
+        # ``.to(str)`` only re-types the resulting var (same generated JS) so the next
+        # ``.replace`` in the chain keeps type checking.
         for name, value in data.items():
             replacement = value if isinstance(value, rx.Var) else str(value)
-            text = text.replace("{{" + name + "}}", replacement).replace(
-                "{{ " + name + " }}", replacement
-            )
+            text = text.replace("{{" + name + "}}", replacement).to(str)
+            text = text.replace("{{ " + name + " }}", replacement).to(str)
     return text
 
 
@@ -121,7 +123,7 @@ toast_tr = _ToastTr()
 
 def language_toggle_component(
     languages: list[tuple[str, str]] | None = None,
-    size: str = "1",
+    size: Literal["1", "2", "3"] = "1",
     **kwargs,
 ) -> rx.Component:
     """Render a segmented control to switch the active language.
@@ -132,7 +134,7 @@ def language_toggle_component(
         :data:`~gws_reflex_base.reflex_i18n.SUPPORTED_LANGS` (``[("fr", "FR"), ("en", "EN")]``)
     :type languages: list[tuple[str, str]] | None
     :param size: segmented control size ("1", "2" or "3"), defaults to "1"
-    :type size: str
+    :type size: Literal["1", "2", "3"]
     :param kwargs: extra props forwarded to ``rx.segmented_control.root``
     :return: the language toggle component
     :rtype: rx.Component
@@ -145,7 +147,8 @@ def language_toggle_component(
         ],
         value=I18nState.lang,
         # segmented_control emits the selected value; forward it explicitly to set_lang.
-        on_change=lambda value: I18nState.set_lang(value),
+        # its on_change is typed for the multi-select variant, the single one emits a string.
+        on_change=lambda value: I18nState.set_lang(cast(rx.Var[str], value)),
         size=size,
         **kwargs,
     )

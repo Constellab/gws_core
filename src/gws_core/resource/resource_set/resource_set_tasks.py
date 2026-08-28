@@ -61,8 +61,7 @@ class ResourceStacker(Task):
 
         resource_set: ResourceSet = ResourceSet()
 
-        i = 0
-        for resource in resource_list:
+        for i, resource in enumerate(resource_list):
             if resource is not None:
                 if isinstance(resource, ResourceListBase):
                     # prevent nesting resource sets
@@ -79,7 +78,6 @@ class ResourceStacker(Task):
                     )
                     self.log_info_message(f"Adding resource {str(i + 1)} with key '{resource_key}'")
                     resource_set.add_resource(resource, resource_key, create_new_resource=False)
-            i += 1
 
         if len(resource_set) == 0:
             raise Exception("No resource found in the input")

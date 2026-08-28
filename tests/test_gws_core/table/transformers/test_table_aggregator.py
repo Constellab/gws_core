@@ -1,9 +1,10 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import DataframeAggregatorHelper, Table, TaskRunner
 from gws_core.core.utils.utils import Utils
 from gws_core.impl.table.transformers.table_aggregator import TableColumnAggregator
-from numpy import NaN
+from numpy import nan
 from pandas import NA, DataFrame
 
 
@@ -19,7 +20,7 @@ class TestTableAggregator(TestCase):
         self.assertTrue(dataframe.equals(expected_df))
 
         # test with string and NaN in the dataframe
-        df_with_str = DataFrame({"A": [1, 2, 3, "OK"], "B": [10, None, NaN, NA]})
+        df_with_str = DataFrame({"A": [1, 2, 3, "OK"], "B": [10, None, nan, NA]})
 
         dataframe = DataframeAggregatorHelper.aggregate(
             data=df_with_str, direction="vertical", func="sum"
@@ -44,7 +45,7 @@ class TestTableAggregator(TestCase):
         task_runner = TaskRunner(TableColumnAggregator, {"function": "sum"})
         task_runner.set_input("source", table)
         task_runner.run()
-        result: Table = task_runner.get_output("target")
+        result = cast(Table, task_runner.get_output("target"))
 
         expected_result = Table(DataFrame({"A": [3], "B": [18]}))
         self.assertTrue(result.get_data().equals(expected_result.get_data()))

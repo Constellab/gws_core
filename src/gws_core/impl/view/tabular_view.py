@@ -58,7 +58,7 @@ class TabularView(View):
 
     _type: ViewType = ViewType.TABULAR
 
-    _table: Table | None = None
+    _table: Table
 
     # btyg set table not optional
     def __init__(

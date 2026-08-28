@@ -1,3 +1,5 @@
+from typing import cast
+
 import reflex as rx
 
 # Map of file extensions (uppercase) to display colors
@@ -51,10 +53,14 @@ def _match_extension_color(extension: rx.Var[str]) -> rx.Var[str]:
     :param extension: The uppercase extension string (e.g. "PDF", "CSV")
     :return: The color hex string as a reactive Var
     """
-    return rx.match(
-        extension,
-        *((ext, color) for ext, color in _EXTENSION_COLORS.items()),
-        _DEFAULT_EXTENSION_COLOR,
+    # every case is a plain string, so rx.match builds a Var and not a Component
+    return cast(
+        rx.Var[str],
+        rx.match(
+            extension,
+            *((ext, color) for ext, color in _EXTENSION_COLORS.items()),
+            _DEFAULT_EXTENSION_COLOR,
+        ),
     )
 
 

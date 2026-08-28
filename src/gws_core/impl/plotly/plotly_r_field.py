@@ -1,5 +1,5 @@
 from json import loads
-from typing import Any
+from typing import Any, cast
 
 import plotly.graph_objs as go
 
@@ -28,4 +28,4 @@ class PlotlyRField(BaseRField[go.Figure]):
             return None
         # use to_json instead of to_dict because to_dict is not serializable
         # to_json returns a string so we need to convert it to a dict
-        return loads(figure.to_json())
+        return loads(cast(str, figure.to_json()))

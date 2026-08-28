@@ -77,13 +77,15 @@ class DbMigrationService:
 
             try:
                 brick_info = BrickHelper.get_brick_info_and_check(migration_obj.brick_migration)
-            except:
+            except Exception:
                 Logger.error(
                     f"Can't retrieve brick information for migration class : '{str(migration_obj.brick_migration)}'"
                 )
                 continue
 
             brick_name = brick_info.name
+            if brick_info.version is None:
+                raise Exception(f"Brick '{brick_name}' has no version")
             current_brick_version = Version(brick_info.version)
             migration_version = migration_obj.version
 

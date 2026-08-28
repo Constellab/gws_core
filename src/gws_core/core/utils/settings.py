@@ -48,6 +48,12 @@ class Settings:
 
     SETTINGS_NAME = "settings.json"
 
+    # Env var that gates the MCP FastAPI surface. Named constant (other env keys in
+    # this file are inline literals) because it is a cross-repo contract: lab-manager
+    # writes the same key. GWS_ prefix per the convention for gws-specific vars
+    # (GWS_MONITOR_*). See lab-manager MCP_SERVER_ENABLED_KEY.
+    MCP_SERVER_ENABLED_ENV_VAR = "GWS_MCP_SERVER_ENABLED"
+
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_LOG = 30  # seconds
     DEFAULT_GWS_MONITOR_TICK_INTERVAL_CLEANUP = 60 * 60 * 24  # 24 hours
     DEFAULT_GWS_MONITOR_LOG_MAX_LINES = 86400  # 1 month of log with 1 log every 30 seconds
@@ -56,6 +62,11 @@ class Settings:
     # Width of the per-worker port band for parallel tests (front/back fit in 2 ports;
     # 10 leaves headroom for future per-app ports without colliding with the next worker).
     APP_EXTERNAL_PORT_WORKER_STRIDE = 10
+    # Shift applied to the whole port range in test mode, so the test nginx + app ports
+    # never collide with a real (or leftover) lab nginx running on the same machine.
+    # Large enough that no realistic number of xdist worker bands reaches back into
+    # the production range.
+    APP_EXTERNAL_PORT_TEST_OFFSET = 1000
 
     def __init__(self, data: dict):
         self.data = data
@@ -124,6 +135,12 @@ class Settings:
     @classmethod
     def is_dev_mode(cls) -> bool:
         return not cls.is_prod_mode()
+
+    @classmethod
+    def is_mcp_server_enabled(cls) -> bool:
+        # Default OFF. Strict "true" match (mirrors is_prod_mode); the value is
+        # machine-written by lab-manager, so leniency buys nothing.
+        return os.environ.get(cls.MCP_SERVER_ENABLED_ENV_VAR, "false") == "true"
 
     @classmethod
     def get_lab_mode(cls) -> LabMode:
@@ -494,14 +511,20 @@ class Settings:
     def get_app_external_port(cls) -> int:
         """Returns the port where all the external request to app are sent.
 
-        Under pytest-xdist, each worker is assigned its own port band so parallel
-        reflex/streamlit tests don't fight for the same nginx + app ports. The
-        ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
-        the first worker (``gw0``) / non-xdist runs — the per-worker stride is
-        still applied on top, otherwise every worker would collide on it.
+        In test mode the whole range is shifted by ``APP_EXTERNAL_PORT_TEST_OFFSET``
+        so tests never fight with a real (or leftover) lab nginx bound to the
+        production port on the same machine.
+
+        Under pytest-xdist, each worker is additionally assigned its own port band so
+        parallel reflex/streamlit tests don't fight for the same nginx + app ports.
+        The ``APP_EXTERNAL_PORT`` env var (when set) only fixes the *base* port for
+        the first worker (``gw0``) / non-xdist runs — the test offset and per-worker
+        stride are still applied on top, otherwise every worker would collide on it.
         """
         external_port = os.environ.get("APP_EXTERNAL_PORT")
         base_port = int(external_port) if external_port is not None else cls.APP_EXTERNAL_PORT_DEFAULT
+        if cls.get_instance().is_test:
+            base_port += cls.APP_EXTERNAL_PORT_TEST_OFFSET
         return base_port + cls.get_test_worker_offset() * cls.APP_EXTERNAL_PORT_WORKER_STRIDE
 
     @classmethod

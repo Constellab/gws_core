@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from typing_extensions import TypedDict
 
@@ -10,6 +10,7 @@ from ....config.config_params import ConfigParams
 from ....config.param.param_spec import DictParam
 from ....resource.view.view_types import ViewType
 from ...view.heatmap_view import HeatmapView
+from ..table_types import TableHeaderInfo
 from .base_table_view import BaseTableView
 from .table_selection import CellRange, Serie1d, TableSelection
 
@@ -58,12 +59,12 @@ class TableHeatmapView(BaseTableView):
     _type: ViewType = ViewType.HEATMAP
 
     def data_to_dict(self, params: ConfigParams) -> dict:
-        serie: Serie1d = Serie1d.from_dict(params.get("serie"))
+        serie: Serie1d = Serie1d.from_dict(params.get_value("serie"))
 
         table: Table
 
         if serie.y.type == "range":
-            cell_range: CellRange = serie.y.selection[0]
+            cell_range = cast(CellRange, serie.y.selection[0])
             # extract a dataframe from the first selection of the range, ignore the rest
             table = self._table.select_by_coords(
                 from_row_id=cell_range.get_from().row,
@@ -72,7 +73,7 @@ class TableHeatmapView(BaseTableView):
                 to_column_id=cell_range.get_to().column,
             )
         else:
-            column_names = serie.y.selection
+            column_names = cast(list[str], serie.y.selection)
             table = self._table.select_by_column_names([{"name": column_names}])
 
         table.get_columns_info()
@@ -84,6 +85,6 @@ class TableHeatmapView(BaseTableView):
         view.set_data(
             data=table.get_data(),
             rows_info=table.get_rows_info(),
-            columns_info=table.get_columns_info(),
+            columns_info=cast(list[TableHeaderInfo], table.get_columns_info()),
         )
         return view.data_to_dict(params)

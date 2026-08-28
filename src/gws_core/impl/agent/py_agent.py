@@ -58,7 +58,7 @@ class PyAgent(Task):
 
         working_dir = self.create_tmp_dir()
 
-        resource_list: ResourceList = inputs.get("source")
+        resource_list = inputs.get_resource("source", ResourceList)
 
         # execute the live code
         init_globals = {

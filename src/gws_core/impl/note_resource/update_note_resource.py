@@ -46,7 +46,7 @@ class UpdatNoteResource(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        note_resource: NoteResource = inputs["note"]
+        note_resource = inputs.get_resource("note", NoteResource)
         section_title: str = params["section_title"]
         note_param: RichText = params["note"]
 

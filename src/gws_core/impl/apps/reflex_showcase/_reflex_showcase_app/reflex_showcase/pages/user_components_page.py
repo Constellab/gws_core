@@ -1,5 +1,7 @@
 """User components demo page for the Reflex showcase app."""
 
+from typing import cast
+
 import reflex as rx
 from gws_core import UserDTO
 from gws_reflex_main import (
@@ -59,12 +61,12 @@ def user_components_page() -> rx.Component:
     example1_component = rx.vstack(
         rx.heading("Normal Size", size="4", margin_bottom="0.5em"),
         rx.hstack(
-            user_profile_picture(UserComponentsPageState.first_user, size="normal"),
+            user_profile_picture(cast(UserDTO, UserComponentsPageState.first_user), size="normal"),
             spacing="4",
         ),
         rx.heading("Small Size", size="4", margin_top="1em", margin_bottom="0.5em"),
         rx.hstack(
-            user_profile_picture(UserComponentsPageState.first_user, size="small"),
+            user_profile_picture(cast(UserDTO, UserComponentsPageState.first_user), size="small"),
             spacing="4",
         ),
         align="start",
@@ -90,13 +92,13 @@ user_profile_picture(user, size="small")   # 24px"""
     example2_component = rx.vstack(
         rx.heading("Normal Size", size="4", margin_bottom="0.5em"),
         rx.vstack(
-            user_inline_component(UserComponentsPageState.first_user, size="normal"),
+            user_inline_component(cast(UserDTO, UserComponentsPageState.first_user), size="normal"),
             spacing="3",
             align="start",
         ),
         rx.heading("Small Size", size="4", margin_top="1em", margin_bottom="0.5em"),
         rx.vstack(
-            user_inline_component(UserComponentsPageState.first_user, size="small"),
+            user_inline_component(cast(UserDTO, UserComponentsPageState.first_user), size="small"),
             spacing="3",
             align="start",
         ),

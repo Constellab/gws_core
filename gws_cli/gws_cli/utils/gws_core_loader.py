@@ -36,6 +36,8 @@ def load_gws_core():
         # If you choose to perform the actual import ...
         module = importlib.util.module_from_spec(spec)
         sys.modules[gws_core_package] = module
+        if spec.loader is None:
+            raise Exception(f"Cannot load the {gws_core_package} package: its spec has no loader")
         spec.loader.exec_module(module)
         LocalLogger.info(f"{gws_core_package} has been imported from pip packages")
 

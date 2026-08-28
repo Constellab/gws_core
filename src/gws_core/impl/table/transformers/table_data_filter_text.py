@@ -29,7 +29,7 @@ value_param = StrParam(
     resource_type=Table,
     short_description="Filters the table columns based on values of one or multiple rows with text comparator",
 )
-class TableColumnDataTextFilter(Transformer):
+class TableColumnDataTextFilter(Transformer[Table]):
     """
         For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
 
@@ -65,7 +65,7 @@ class TableColumnDataTextFilter(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
-        for text_params in params.get("text_filter"):
+        for text_params in params.get_value("text_filter"):
             data = DataframeDataFilterHelper.filter_columns_text(
                 data=data,
                 row_name_regex=text_params["row_name_regex"],
@@ -82,7 +82,7 @@ class TableColumnDataTextFilter(Transformer):
     resource_type=Table,
     short_description="Filters the table rows based on values of one or multiple columns with text comparator",
 )
-class TableRowDataTextFilter(Transformer):
+class TableRowDataTextFilter(Transformer[Table]):
     """
     For earch filters, the system will keep the rows where the value in the column provided by the parameter ```Column name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of columns as the input table.
 
@@ -123,10 +123,10 @@ class TableRowDataTextFilter(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
-        if params.get("stringify_table"):
+        if params.get_value("stringify_table"):
             data = DataframeHelper.stringify(data)
 
-        for text_params in params.get("text_filter"):
+        for text_params in params.get_value("text_filter"):
             data = DataframeDataFilterHelper.filter_rows_text(
                 data=data,
                 column_name_regex=text_params["column_name_regex"],

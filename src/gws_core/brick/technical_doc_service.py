@@ -1,14 +1,18 @@
 import inspect
 import sys
+from collections.abc import Sequence
+from typing import cast
 
 from gws_core.brick.technical_doc_dto import TechnicalDocDTO
 from gws_core.core.utils.reflector_helper import ReflectorHelper
 from gws_core.core.utils.reflector_types import ClassicClassDocDTO
 from gws_core.model.typing_dto import TypingFullDTO, TypingStatus
+from gws_core.protocol.protocol_dto import ProtocolTypingFullDTO
 from gws_core.protocol.protocol_typing import ProtocolTyping
+from gws_core.resource.resource_typing_dto import ResourceTypingDTO
+from gws_core.task.task_dto import TaskTypingDTO
 
 from ..model.typing import Typing
-from ..resource.resource import Resource
 from ..resource.resource_typing import ResourceTyping
 from ..task.task_typing import TaskTyping
 from .brick_helper import BrickHelper
@@ -21,9 +25,20 @@ class TechnicalDocService:
 
         brick_info = BrickHelper.get_brick_info_and_check(brick_name)
 
-        resources = cls.export_typing_technical_doc(brick_name, ResourceTyping)
-        tasks = cls.export_typing_technical_doc(brick_name, TaskTyping)
-        protocols = cls.export_typing_technical_doc(brick_name, ProtocolTyping)
+        if not brick_info.version:
+            raise Exception(f"Brick '{brick_info.name}' has no version")
+
+        # each typing class builds its own full DTO subclass (see Typing.to_full_dto overrides)
+        resources = cast(
+            list[ResourceTypingDTO], cls.export_typing_technical_doc(brick_name, ResourceTyping)
+        )
+        tasks = cast(
+            list[TaskTypingDTO], cls.export_typing_technical_doc(brick_name, TaskTyping)
+        )
+        protocols = cast(
+            list[ProtocolTypingFullDTO],
+            cls.export_typing_technical_doc(brick_name, ProtocolTyping),
+        )
 
         # Get all the classes of the brick except the resources, tasks and protocols
         other_classes = cls.export_other_classes_technical_doc(
@@ -57,15 +72,15 @@ class TechnicalDocService:
         return json_list
 
     @classmethod
-    def _get_typing_technical_doc(cls, typing: Typing) -> TypingFullDTO:
-        type_: type[Resource] = typing.get_type()
+    def _get_typing_technical_doc(cls, typing: Typing) -> TypingFullDTO | None:
+        type_: type | None = typing.get_type()
         if type_ is None:
             return None
         return typing.to_full_dto()
 
     @classmethod
     def export_other_classes_technical_doc(
-        cls, brick_name: str, resources_tasks_protocols: list[TypingFullDTO]
+        cls, brick_name: str, resources_tasks_protocols: Sequence[TypingFullDTO]
     ) -> list[ClassicClassDocDTO]:
         other_classes: list[ClassicClassDocDTO] = []
 
@@ -88,7 +103,8 @@ class TechnicalDocService:
                     ok = False
                     break
             if ok:
-                doc: ClassicClassDocDTO = ReflectorHelper.get_class_docs(obj)
+                # obj comes from getmembers filtered on isclass, get_class_docs never returns None
+                doc = cast(ClassicClassDocDTO, ReflectorHelper.get_class_docs(obj))
                 other_classes.append(doc)
 
         return other_classes

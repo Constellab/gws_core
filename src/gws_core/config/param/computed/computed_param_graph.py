@@ -11,6 +11,7 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 
 if TYPE_CHECKING:
     from gws_core.config.config_specs import ConfigSpecs
+    from gws_core.config.param.computed.computed_param import ComputedParam
 
 
 class ComputedParamGraphChecker:
@@ -57,17 +58,7 @@ class ComputedParamGraphChecker:
         if deps:
             # Only computed-on-computed edges can form a (same-scope) cycle.
             computed_only_deps = {k: {d for d in v if d in deps} for k, v in deps.items()}
-            in_degree = {k: len(v) for k, v in computed_only_deps.items()}
-            ready = [k for k, n in in_degree.items() if n == 0]
-            resolved: set[str] = set()
-            while ready:
-                node = ready.pop()
-                resolved.add(node)
-                for other, other_deps in computed_only_deps.items():
-                    if node in other_deps and other not in resolved:
-                        in_degree[other] -= 1
-                        if in_degree[other] == 0:
-                            ready.append(other)
+            resolved = cls._resolve_dependencies(computed_only_deps)
 
             if len(resolved) != len(computed_only_deps):
                 unresolved = sorted(set(computed_only_deps.keys()) - resolved)
@@ -94,7 +85,7 @@ class ComputedParamGraphChecker:
         """Return computed_key -> same-scope referenced keys, raising on
         unknown refs (same-scope or outer-scope).
         """
-        from gws_core.config.param.computed.computed_param import ComputedParam
+        from gws_core.config.param.computed.computed_param import ComputedParam  # noqa: PLC0415
 
         deps: dict[str, set[str]] = {}
         for key, spec in specs.specs.items():
@@ -145,7 +136,48 @@ class ComputedParamGraphChecker:
         ComputedParam field, not per row — formulas are identical across rows).
         Edges run in the "depends on" direction.
         """
-        from gws_core.config.param.computed.computed_param import ComputedParam
+        outer_computed, inner_computed = cls._collect_computed_specs(specs)
+
+        nodes: set[str] = set(outer_computed)
+        for psk, inners in inner_computed.items():
+            for fld in inners:
+                nodes.add(cls._inner_node(psk, fld))
+
+        if len(nodes) <= 1:
+            return
+
+        depends = cls._build_cross_scope_depends(outer_computed, inner_computed, nodes)
+        resolved = cls._resolve_dependencies(depends)
+
+        if len(resolved) != len(depends):
+            unresolved = sorted(set(depends) - resolved)
+            raise BadRequestException(
+                "Cycle detected across ComputedParam scopes among: "
+                + ", ".join(unresolved)
+            )
+
+    @staticmethod
+    def _inner_node(paramset_key: str, inner_key: str) -> str:
+        """Name of the graph node standing for one inner ComputedParam field.
+
+        There is one node per inner field, not per row, because the formula is
+        identical across the rows of a ParamSet.
+        """
+        return f"{paramset_key}[].{inner_key}"
+
+    @staticmethod
+    def _collect_computed_specs(
+        specs: ConfigSpecs,
+    ) -> tuple[dict[str, ComputedParam], dict[str, dict[str, ComputedParam]]]:
+        """Collect every ComputedParam of `specs`, split by scope.
+
+        :return: a tuple ``(outer_computed, inner_computed)`` where
+            ``outer_computed`` maps an outer key to its ComputedParam and
+            ``inner_computed`` maps a ParamSet key to its own
+            inner_key -> ComputedParam map. ParamSets holding no ComputedParam
+            are dropped to keep the graph small.
+        """
+        from gws_core.config.param.computed.computed_param import ComputedParam  # noqa: PLC0415
 
         outer_computed: dict[str, ComputedParam] = {
             k: s for k, s in specs.specs.items() if isinstance(s, ComputedParam)
@@ -161,21 +193,38 @@ class ComputedParamGraphChecker:
         }
         # Drop ParamSets with no inner ComputedParams to keep the graph small.
         inner_computed = {k: v for k, v in inner_computed.items() if v}
+        return outer_computed, inner_computed
 
-        def inner_node(psk: str, fld: str) -> str:
-            return f"{psk}[].{fld}"
+    @classmethod
+    def _build_cross_scope_depends(
+        cls,
+        outer_computed: dict[str, ComputedParam],
+        inner_computed: dict[str, dict[str, ComputedParam]],
+        nodes: set[str],
+    ) -> dict[str, set[str]]:
+        """Build the unified cross-scope dependency graph.
 
-        nodes: set[str] = set(outer_computed)
-        for psk, inners in inner_computed.items():
-            for fld in inners:
-                nodes.add(inner_node(psk, fld))
+        ``depends[X]`` is the set of nodes X depends on (they must resolve
+        first). Node names are outer keys, or ``<paramset>[].<inner>`` for
+        inner ComputedParams (see :meth:`_inner_node`).
 
-        if len(nodes) <= 1:
-            return
-
-        # depends[X] = set of nodes X depends on (must resolve first).
+        :param outer_computed: outer key -> ComputedParam
+        :param inner_computed: ParamSet key -> (inner key -> ComputedParam)
+        :param nodes: every node of the graph, used to seed empty dep sets
+        """
         depends: dict[str, set[str]] = {n: set() for n in nodes}
+        cls._add_outer_dependencies(depends, outer_computed, inner_computed)
+        cls._add_inner_dependencies(depends, outer_computed, inner_computed)
+        return depends
 
+    @classmethod
+    def _add_outer_dependencies(
+        cls,
+        depends: dict[str, set[str]],
+        outer_computed: dict[str, ComputedParam],
+        inner_computed: dict[str, dict[str, ComputedParam]],
+    ) -> None:
+        """Add the dependencies of every outer ComputedParam into `depends`."""
         for key, spec in outer_computed.items():
             expr = spec.expression
             # Outer-to-outer same-scope deps.
@@ -187,21 +236,39 @@ class ComputedParamGraphChecker:
             # field is itself a ComputedParam it must resolve first.
             for psk in ConfigSpecsEvaluator.referenced_paramset_keys(expr):
                 for fld in inner_computed.get(psk, {}):
-                    depends[key].add(inner_node(psk, fld))
+                    depends[key].add(cls._inner_node(psk, fld))
 
+    @classmethod
+    def _add_inner_dependencies(
+        cls,
+        depends: dict[str, set[str]],
+        outer_computed: dict[str, ComputedParam],
+        inner_computed: dict[str, dict[str, ComputedParam]],
+    ) -> None:
+        """Add the dependencies of every per-row ComputedParam into `depends`."""
         for psk, inners in inner_computed.items():
             for fld, spec in inners.items():
-                node = inner_node(psk, fld)
+                node = cls._inner_node(psk, fld)
                 expr = spec.expression
                 # Inner-to-inner same-scope deps (within the same ParamSet).
                 for ref in ConfigSpecsEvaluator.extract_referenced_keys(expr):
                     if ref in inners and ref != fld:
-                        depends[node].add(inner_node(psk, ref))
+                        depends[node].add(cls._inner_node(psk, ref))
                 # Inner-to-outer deps via @@name.
                 for ref in ConfigSpecsEvaluator.extract_referenced_outer_keys(expr):
                     if ref in outer_computed:
                         depends[node].add(ref)
 
+    @staticmethod
+    def _resolve_dependencies(depends: dict[str, set[str]]) -> set[str]:
+        """Run Kahn's algorithm over a "depends on" graph.
+
+        :param depends: node -> set of nodes it depends on. Dependencies that
+            are not themselves nodes of `depends` are ignored (they can never
+            be part of a cycle).
+        :return: the set of nodes that could be resolved. When it is smaller
+            than `depends`, the remaining nodes form (or feed into) a cycle.
+        """
         in_degree = {n: len(d) for n, d in depends.items()}
         ready = [n for n, deg in in_degree.items() if deg == 0]
         resolved: set[str] = set()
@@ -213,10 +280,4 @@ class ComputedParamGraphChecker:
                     in_degree[other] -= 1
                     if in_degree[other] == 0:
                         ready.append(other)
-
-        if len(resolved) != len(depends):
-            unresolved = sorted(set(depends) - resolved)
-            raise BadRequestException(
-                "Cycle detected across ComputedParam scopes among: "
-                + ", ".join(unresolved)
-            )
+        return resolved

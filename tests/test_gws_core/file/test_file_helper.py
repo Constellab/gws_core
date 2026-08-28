@@ -1,3 +1,5 @@
+import os
+from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from gws_core.impl.file.file_helper import FileHelper
@@ -82,3 +84,30 @@ class TestFileHelper(TestCase):
 
         # Test no extension
         self.assertEqual(FileHelper.get_name_without_extension("noextension"), "noextension")
+
+    def test_copy_dir_content_to_dir_merges_existing_sub_dir(self):
+        """Copying content into a dir must merge sub-dirs that already exist there,
+        not raise FileExistsError (the notebook template copy relied on this)."""
+        with TemporaryDirectory() as source, TemporaryDirectory() as destination:
+            os.makedirs(os.path.join(source, "sub"))
+            with open(os.path.join(source, "sub", "new.txt"), "w", encoding="utf-8") as file:
+                file.write("new")
+
+            # the sub dir already exists in the destination, holding another file
+            os.makedirs(os.path.join(destination, "sub"))
+            with open(os.path.join(destination, "sub", "kept.txt"), "w", encoding="utf-8") as file:
+                file.write("kept")
+
+            FileHelper.copy_dir_content_to_dir(source, destination)
+
+            self.assertTrue(os.path.exists(os.path.join(destination, "sub", "new.txt")))
+            self.assertTrue(os.path.exists(os.path.join(destination, "sub", "kept.txt")))
+
+    def test_copy_dir_refuses_existing_destination_by_default(self):
+        """copy_dir stays strict by default: the reflex build cache relies on a
+        clean copy into a staging path that must not already exist."""
+        with TemporaryDirectory() as source, TemporaryDirectory() as destination:
+            with self.assertRaises(FileExistsError):
+                FileHelper.copy_dir(source, destination)
+
+            FileHelper.copy_dir(source, destination, dirs_exist_ok=True)

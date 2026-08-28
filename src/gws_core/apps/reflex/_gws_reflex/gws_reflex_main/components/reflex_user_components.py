@@ -1,11 +1,10 @@
 from datetime import datetime
-from typing import Literal
+from typing import Literal, cast
 
 import reflex as rx
 
 from gws_core.space.space_service import SpaceService
 from gws_core.user.user_dto import UserDTO
-
 
 DEFAULT_USER_COLOR = "#6C63FF"
 
@@ -45,7 +44,7 @@ def get_user_color_mapping() -> dict[str, str]:
     }
 
 
-def _user_color(first_name_initial: str) -> rx.Component:
+def _user_color(first_name_initial: str) -> rx.Var[str]:
     """Generate a consistent pretty color based on the user's first name initial.
 
     Uses rx.match to map the first letter to a curated color, ensuring
@@ -55,10 +54,14 @@ def _user_color(first_name_initial: str) -> rx.Component:
     :return: HSL color string (as a reactive Var)
     """
     color_mapping = get_user_color_mapping()
-    return rx.match(
-        first_name_initial,
-        *((letter, color) for letter, color in color_mapping.items()),
-        DEFAULT_USER_COLOR,
+    # every case is a plain string, so rx.match builds a Var and not a Component
+    return cast(
+        rx.Var[str],
+        rx.match(
+            first_name_initial,
+            *((letter, color) for letter, color in color_mapping.items()),
+            DEFAULT_USER_COLOR,
+        ),
     )
 
 
@@ -83,7 +86,8 @@ def user_profile_picture(
         user.photo,
         # If photo exists, show image
         rx.image(
-            src=SpaceService.get_user_profile_picture_url(user.photo),
+            # rx.cond guards the branch client side, the photo is set when it renders
+            src=SpaceService.get_user_profile_picture_url(cast(str, user.photo)),
             width=pixel_size,
             height=pixel_size,
             border_radius="50%",

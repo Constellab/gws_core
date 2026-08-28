@@ -57,7 +57,7 @@ class NoteContentConverter:
         """
         form_blocks = rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM)
         for block in form_blocks:
-            form_data: RichTextBlockForm = block.get_data()
+            form_data: RichTextBlockForm = block.get_data(RichTextBlockForm)
             form_template_id = cls._resolve_form_template_id(form_data.form_id)
             if form_template_id is None:
                 rich_text.remove_block_by_id(block.id)

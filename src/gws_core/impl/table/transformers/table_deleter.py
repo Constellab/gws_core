@@ -17,7 +17,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Delete table rows by name",
 )
-class TableRowsDeleter(Transformer):
+class TableRowsDeleter(Transformer[Table]):
     """
     Delete rows of a table by name. Multiple row names can be provided.
 
@@ -29,7 +29,7 @@ class TableRowsDeleter(Transformer):
     )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.filter_out_by_row_names(params.get("filters"))
+        return source.filter_out_by_row_names(params.get_value("filters"))
 
 
 @transformer_decorator(
@@ -37,7 +37,7 @@ class TableRowsDeleter(Transformer):
     resource_type=Table,
     short_description="Delete table columns by name",
 )
-class TableColumnsDeleter(Transformer):
+class TableColumnsDeleter(Transformer[Table]):
     """
     Delete columns of a table by name. Multiple column names can be provided.
 
@@ -51,7 +51,7 @@ class TableColumnsDeleter(Transformer):
     )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.filter_out_by_column_names(params.get("filters"))
+        return source.filter_out_by_column_names(params.get_value("filters"))
 
 
 # ####################################################################
@@ -66,7 +66,7 @@ class TableColumnsDeleter(Transformer):
     resource_type=Table,
     short_description="Delete table rows by tags",
 )
-class TableRowTagsDeleter(Transformer):
+class TableRowTagsDeleter(Transformer[Table]):
     """
     Delete rows of the table that are tags with the provided tags. Multiple row tags can be provided.
 
@@ -87,7 +87,9 @@ class TableRowTagsDeleter(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("row")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(
+            params.get_value("tags")
+        )
         return source.filter_out_by_tags("index", tags)
 
 
@@ -96,7 +98,7 @@ class TableRowTagsDeleter(Transformer):
     resource_type=Table,
     short_description="Delete table columns by tags",
 )
-class TableColumnTagsDeleter(Transformer):
+class TableColumnTagsDeleter(Transformer[Table]):
     """
     Delete columns of the table that are tags with the provided tags. Multiple column tags can be provided.
 
@@ -117,5 +119,7 @@ class TableColumnTagsDeleter(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("column")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(
+            params.get_value("tags")
+        )
         return source.filter_out_by_tags("columns", tags)

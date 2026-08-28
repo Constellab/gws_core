@@ -1,5 +1,5 @@
 from typing import Any
-from typing_extensions import Self
+
 from peewee import (
     ColumnMetadata,
     DatabaseProxy,
@@ -8,6 +8,7 @@ from peewee import (
     ModelSelect,
 )
 from peewee import Model as PeeweeModel
+from typing_extensions import Self
 
 from gws_core.core.db.abstract_db_manager import AbstractDbManager
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
@@ -203,8 +204,14 @@ class BaseModel(Base, PeeweeModel):
 
         return self
 
-    class Meta:
+    class _BaseMeta:
         db_manager = GwsCoreDbManager.get_instance()
         is_table: bool = False
         database = db_manager.db
         legacy_table_names = False
+
+    # Declared as a plain `type` so that sub models can define their own `Meta`
+    # (the peewee convention) without it being reported as an incompatible
+    # override: peewee only reads the attributes declared directly on each Meta
+    # class, the other options are inherited from the parent model's _meta.
+    Meta: type = _BaseMeta

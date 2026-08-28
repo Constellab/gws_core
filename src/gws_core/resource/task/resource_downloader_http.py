@@ -1,3 +1,4 @@
+from http import HTTPStatus
 from typing import Literal, cast
 
 from requests.models import Response
@@ -134,7 +135,7 @@ class ResourceDownloaderHttp(ResourceDownloaderBase):
                 )
             )
 
-            if response.status_code != 200:
+            if response.status_code != HTTPStatus.OK:
                 self.log_error_message(
                     "Error while marking the resource as received: " + response.text
                 )

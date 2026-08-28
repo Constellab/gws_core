@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core.impl.agent.py_agent import PyAgent
@@ -42,14 +43,14 @@ class TestTableSmartTransformer(TestCase):
         outputs = tester.run()
 
         # check the result table and tags
-        target: Table = outputs["target"]
+        target = cast(Table, outputs["target"])
         expected_df = DataFrame({"B": [8, 6, 4, 9]})
         expected_table: Table = Table(expected_df, column_tags=[{"name": "B"}])
         self.assertTrue(target.equals(expected_table))
 
         # check the generated code
         # Try to execute the code in a python agent
-        code: Text = outputs["generated_code"]
+        code = cast(Text, outputs["generated_code"])
 
         tester = TaskRunner(
             task_type=PyAgent,
@@ -62,5 +63,5 @@ class TestTableSmartTransformer(TestCase):
         outputs = tester.run()
 
         # check the result table and tags
-        target_2: Table = outputs["target"]
+        target_2 = cast(Table, outputs["target"])
         self.assertTrue(target_2.equals(expected_table))

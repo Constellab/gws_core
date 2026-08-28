@@ -33,9 +33,10 @@ class Viewer(Task):
     config_specs = ConfigSpecs({"resource_typing_name": StrParam(), "view_config": DictParam()})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        from gws_core.resource.resource_service import ResourceService
-        from gws_core.resource.view_config.view_config_service import ViewConfigService
-
+        from gws_core.resource.resource_service import ResourceService  # noqa: PLC0415
+        from gws_core.resource.view_config.view_config_service import (  # noqa: PLC0415
+            ViewConfigService,
+        )
         resource: Resource = inputs.get_resource("resource", Resource)
 
         config_resource_type: type[Resource] = TypingManager.get_and_check_type_from_name(

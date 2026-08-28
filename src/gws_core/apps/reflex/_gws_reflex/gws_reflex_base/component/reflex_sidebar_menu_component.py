@@ -25,7 +25,7 @@ def sidebar_header_component(
     :return: The sidebar header component
     :rtype: rx.Component
     """
-    title_section = [rx.heading(title, size="4", line_height="1em")]
+    title_section: list[rx.Component] = [rx.heading(title, size="4", line_height="1em")]
     if subtitle:
         title_section.append(
             rx.text(subtitle, size="1", color="var(--gray-9)", line_height="1em"),

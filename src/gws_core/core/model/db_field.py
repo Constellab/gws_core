@@ -89,6 +89,8 @@ class BaseDTOField(TextField):
 
     def python_value(self, value):
         if value is not None:
+            if self.dto_type is None:
+                raise Exception("The dto_type of the field is not defined")
             return self.dto_type.from_json_str(value)
         return None
 
@@ -128,4 +130,6 @@ class SerializableDBField(TextField):
         return value.serialize()
 
     def python_value(self, value: str) -> SerializableObject:
+        if self.object_type is None:
+            raise Exception("The object_type of the field is not defined")
         return self.object_type.deserialize(value)

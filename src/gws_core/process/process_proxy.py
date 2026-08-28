@@ -46,7 +46,7 @@ class ProcessProxy:
         """return the parent protocol of this process.
         If this is the main protocol (the one linked to the scenario), it returns None
         """
-        from ..protocol.protocol_proxy import ProtocolProxy
+        from ..protocol.protocol_proxy import ProtocolProxy  # noqa: PLC0415
 
         if self._process_model.parent_protocol is None:
             raise Exception(f"The process '{self.instance_name}' does not have a parent protocol")

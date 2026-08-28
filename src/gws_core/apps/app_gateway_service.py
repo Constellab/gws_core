@@ -11,6 +11,9 @@ from gws_core.apps.apps_manager import AppsManager
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
+from gws_core.core.service.front_service import FrontService
+from gws_core.core.utils.logger import Logger
+from gws_core.core.utils.settings import Settings
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.user.authorization_service import AuthorizationService
 from gws_core.user.user import User
@@ -30,9 +33,118 @@ class AppGatewayService:
     # low-level consumers (AppProcess, nginx service) can import them without a circular dependency
     # on this service. Re-exported here as class attributes for convenience.
     APP_JWT_COOKIE_NAME = _consts.APP_JWT_COOKIE_NAME
+    APP_JWT_COOKIE_MAX_AGE_SECONDS = _consts.APP_JWT_COOKIE_MAX_AGE_SECONDS
     GWS_CODE_QUERY_PARAM = _consts.GWS_CODE_QUERY_PARAM
     GWS_LOGIN_PATH = _consts.GWS_LOGIN_PATH
     NGINX_LOGIN_ENDPOINT_SEGMENT = _consts.NGINX_LOGIN_ENDPOINT_SEGMENT
+    APP_FALLBACK_PATH = _consts.APP_FALLBACK_PATH
+    APP_FALLBACK_ENDPOINT_SEGMENT = _consts.APP_FALLBACK_ENDPOINT_SEGMENT
+
+    # Suffix of the Reflex state/websocket backend host ("…-back"). Stripped when mapping a host
+    # back to an app key: both the front and backend hosts belong to the same app.
+    _REFLEX_BACK_HOST_SUFFIX = "-back"
+
+    @classmethod
+    def app_key_from_host(cls, host: str) -> str | None:
+        """Map an app host name back to its stable app key, inverting AppProcess._build_host_name.
+
+        Used by the nginx fallback resolver: a host that matches no running app block still needs
+        to be traced back to an app so the browser can be sent to the gateway.
+
+        Handled host shapes (the port, if any, is ignored)::
+
+            local/desktop : {segment}.localhost
+            prod          : {app_sub_domain}-{segment}.{virtual_host}
+
+        A trailing ``-back`` (the Reflex backend host) is stripped, so both hosts of a Reflex app
+        resolve to the same key.
+
+        :param host: the requested host, with or without a port
+        :return: the app key (resource model id or custom subdomain), or None if the host does not
+            look like an app host at all
+        """
+        # drop the port and normalise: host names are case-insensitive
+        hostname = host.split(":", 1)[0].strip().lower()
+        if not hostname:
+            return None
+
+        if Settings.is_local_or_desktop_env():
+            suffix = ".localhost"
+            if not hostname.endswith(suffix):
+                return None
+            segment = hostname[: -len(suffix)]
+        else:
+            virtual_host = Settings.get_virtual_host().lower()
+            sub_domain = Settings.get_app_sub_domain().lower()
+            host_suffix = f".{virtual_host}"
+            sub_domain_prefix = f"{sub_domain}-"
+            if not hostname.endswith(host_suffix):
+                return None
+            segment = hostname[: -len(host_suffix)]
+            if not segment.startswith(sub_domain_prefix):
+                return None
+            segment = segment[len(sub_domain_prefix) :]
+
+        # the Reflex backend host is the same app as its front host
+        if segment.endswith(cls._REFLEX_BACK_HOST_SUFFIX):
+            segment = segment[: -len(cls._REFLEX_BACK_HOST_SUFFIX)]
+
+        return segment or None
+
+    @classmethod
+    def build_fallback_redirect_url(cls, host: str, target: str | None) -> str:
+        """Build the gateway URL a request for a non-running app host is redirected to.
+
+        Deliberately does **not** start the app or resolve a user: this runs for unauthenticated
+        requests, so starting anything here would make a bare URL an app-start primitive. The
+        gateway it points at owns the auth guard, the cold-start and the progress UI.
+
+        When the host maps to no app, this returns the gateway's **error** URL rather than raising.
+        The resolver is reached by a top-level browser navigation, so an API exception would render
+        the raw JSON error envelope to a human. The error URL carries no app key, so the page shows
+        a terminal message and never tries to start anything — the failure stays legible instead of
+        bouncing into a gateway that would retry and fail confusingly.
+
+        :param host: the originally requested app host
+        :param target: the original path+query, carried so a shared deep link is not lost
+        :return: the front gateway URL to redirect to (app URL, or the error URL)
+        """
+        front_service = FrontService()
+
+        app_key = cls.app_key_from_host(host)
+        if not app_key:
+            # not shaped like an app host at all: a mistyped or foreign URL
+            Logger.info(f"App fallback: host '{host}' is not an app host")
+            return front_service.get_app_gateway_error_url(_consts.GATEWAY_ERROR_INVALID_HOST)
+
+        try:
+            app_resource = cls.resolve_app_resource(app_key)
+        except (NotFoundException, BadRequestException):
+            # well-formed key, but the app is gone (deleted) or the resource is not an app
+            Logger.info(f"App fallback: no app for key '{app_key}'")
+            return front_service.get_app_gateway_error_url(_consts.GATEWAY_ERROR_APP_NOT_FOUND)
+
+        app_url = front_service.get_app_gateway_url(
+            app_resource.get_and_check_model_id(), redirect_to=cls._sanitize_redirect_target(target)
+        )
+        Logger.debug(
+            f"App fallback: host '{host}' maps to app key '{app_key}', redirecting to '{app_url}'"
+        )
+        return app_url
+
+    @staticmethod
+    def _sanitize_redirect_target(target: str | None) -> str | None:
+        """Keep only a safe in-app path from the requested target.
+
+        The value reaches us from an untrusted URL, so anything that could send the user to another
+        origin is dropped: it must be a single-slash-prefixed path (``//host`` and absolute URLs are
+        rejected). The fallback path itself is dropped to avoid redirect loops.
+        """
+        if not target or not target.startswith("/") or target.startswith("//"):
+            return None
+        if target.lstrip("/").startswith(_consts.APP_FALLBACK_PATH):
+            return None
+        return target
 
     @classmethod
     def resolve_app_resource(cls, app_key: str) -> AppResource:

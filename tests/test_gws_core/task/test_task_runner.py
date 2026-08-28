@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 from gws_core import (
@@ -17,11 +18,11 @@ from gws_core import (
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotMove
 from gws_core.io.io_exception import (
-    InvalidInputsException,
-    InvalidOutputsException,
+    InvalidInputsError,
+    InvalidOutputsError,
     MissingInputResourcesException,
 )
-from gws_core.io.io_spec import InputSpec, OutputSpec
+from gws_core.io.io_spec import OutputSpec
 
 
 @task_decorator("TaskRunnerProgress")
@@ -29,11 +30,12 @@ class TaskRunnerProgress(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         self.log_info_message("Hello")
         self.update_progress_value(50, "Hello 50%")
+        return {}
 
 
 @task_decorator("TaskRunnerOutputError")
 class TaskRunnerOutputError(Task):
-    output_specs: OutputSpecs = OutputSpecs({"test": InputSpec(Table)})
+    output_specs: OutputSpecs = OutputSpecs({"test": OutputSpec(Table)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {"test": JSONDict()}
@@ -72,7 +74,7 @@ class TestTaskRunner(TestCase):
 
         output: TaskOutputs = task_tester.run()
 
-        robot: Robot = output["robot"]
+        robot = cast(Robot, output["robot"])
         self.assertEqual(robot.position, [0, -10])
 
     def test_missing_input(self):
@@ -99,23 +101,23 @@ class TestTaskRunner(TestCase):
     def test_wrong_output(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerOutputError)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_missing_output(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerOutputMissing)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_invalid_resource_ouptut(self):
         task_tester: TaskRunner = TaskRunner(TaskRunnerInvalidResource)
 
-        with self.assertRaises(InvalidOutputsException):
+        with self.assertRaises(InvalidOutputsError):
             task_tester.run()
 
     def test_invalid_input(self):
         task_tester: TaskRunner = TaskRunner(RobotMove, {}, {"robot": JSONDict()})
 
-        with self.assertRaises(InvalidInputsException):
+        with self.assertRaises(InvalidInputsError):
             task_tester.run()

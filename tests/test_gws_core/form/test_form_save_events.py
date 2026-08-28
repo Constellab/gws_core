@@ -8,7 +8,6 @@ from gws_core.form.form import Form
 from gws_core.form.form_dto import (
     CreateFormDTO,
     FormChangeAction,
-    FormStatus,
     SaveFormDTO,
 )
 from gws_core.form.form_save_event import FormSaveEvent
@@ -47,7 +46,9 @@ class TestFormSaveEvents(BaseTestCase):
         form = self._scalar_form()
         FormService.save(form.id, SaveFormDTO(values={"name": "Alice"}))
 
-        same_values = Form.get_by_id(form.id).values
+        saved_form = Form.get_by_id(form.id)
+        assert saved_form is not None and saved_form.values is not None
+        same_values = saved_form.values
         FormService.save(form.id, SaveFormDTO(values=same_values))
 
         events = list(FormSaveEvent.select().where(FormSaveEvent.form == form.id))
@@ -84,6 +85,7 @@ class TestFormSaveEvents(BaseTestCase):
             form.id,
             SaveFormDTO(values={"samples": [{"mass": 1.0}, {"mass": 2.0}]}),
         )
+        assert result.values is not None
         rows = result.values["samples"]
         # remove the first row
         FormService.save(

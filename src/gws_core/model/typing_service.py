@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Literal, cast
 
 from gws_core.core.classes.paginator import Paginator
@@ -104,9 +103,9 @@ class TypingService:
         ]
 
         # filter the pagination task input
-        filter_function: Callable[[Typing], bool] = lambda t: filter_typing_by_specs(
-            t, resource_types, check_io
-        )
+        def filter_function(t: Typing) -> bool:
+            return filter_typing_by_specs(t, resource_types, check_io)
+
         pagination.filter(filter_function, number_of_items_per_page // 2)
 
         return pagination
@@ -138,9 +137,9 @@ class TypingService:
 
         # filter the pagination by extension manually after the search
         if extension and not ignore_file_extension:
-            filter_function: Callable[[Typing], bool] = (
-                lambda t: cast(TaskTyping, t).importer_extension_is_supported(extension)
-            )
+
+            def filter_function(t: Typing) -> bool:
+                return cast(TaskTyping, t).importer_extension_is_supported(extension)
 
             pagination.filter(filter_function, number_of_items_per_page // 2)
 
@@ -205,11 +204,9 @@ class TypingService:
 
     @classmethod
     def _get_typing_type_from_obj_type(cls, object_type: TypingObjectType) -> type[Typing]:
-        if object_type == "TASK":
-            return TaskTyping
-        elif object_type == "PROTOCOL":
-            return ProtocolTyping
-        elif object_type == "RESOURCE":
-            return ResourceTyping
-        else:
-            return Typing
+        typing_types: dict[str, type[Typing]] = {
+            "TASK": TaskTyping,
+            "PROTOCOL": ProtocolTyping,
+            "RESOURCE": ResourceTyping,
+        }
+        return typing_types.get(object_type, Typing)

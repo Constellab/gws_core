@@ -13,7 +13,6 @@ from gws_core.form_template.form_template_dto import (
 )
 from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
-from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
 from gws_core.impl.rich_text.rich_text import RichText
 from gws_core.impl.rich_text.rich_text_types import RichTextBlock
@@ -23,7 +22,6 @@ from gws_core.note.note_dto import (
     InsertNewFormBlockDTO,
     NoteSaveDTO,
 )
-from gws_core.note.note_events import NoteContentUpdatedEvent
 from gws_core.note.note_form_model import NoteFormModel
 from gws_core.note.note_service import NoteService
 from gws_core.test.base_test_case import BaseTestCase
@@ -79,7 +77,7 @@ class TestNoteFormReconciliation(BaseTestCase):
         block = RichTextBlock.from_data(
             RichTextBlockForm(form_id=form.id, is_owner=True)
         )
-        rich_text = RichText.create_rich_text_dto([block.to_json_dict()])
+        rich_text = RichText.create_rich_text_dto([block])
         # Mutate via the dispatcher contract — note content must accept
         # this through update_content; the validator allows existing
         # form_ids.
@@ -120,7 +118,7 @@ class TestNoteFormReconciliation(BaseTestCase):
 
     def test_listener_is_registered_on_note_content_updated_event(self):
         listeners = EventDispatcher.get_instance().get_registered_listeners()
-        names = {type(l).__name__ for l in listeners}
+        names = {type(listener).__name__ for listener in listeners}
         self.assertIn("NoteFormJoinListener", names)
         self.assertIn("FormNoteCascadeListener", names)
 

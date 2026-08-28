@@ -64,6 +64,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         result = self._validate(template, version_id, "@mass / @volume")
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("volume", result.error)
 
     def test_self_cycle_when_editing_existing_computed(self):
@@ -78,6 +79,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         result = self._validate(template, version_id, "@density + 1", key="density")
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("Cycle", result.error)
 
     def test_transitive_cycle_when_editing_existing_computed(self):
@@ -93,6 +95,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         result = self._validate(template, version_id, "@a + 1", key="density")
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("Cycle", result.error)
 
     def test_syntax_error(self):
@@ -101,6 +104,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         result = self._validate(template, version_id, "@a +")
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("Invalid expression", result.error)
 
     def test_empty_expression(self):
@@ -154,6 +158,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
             template, version_id, "sum(@samples[].mass)", param_set_key="samples"
         )
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("aggregate", result.error)
 
     def test_param_set_key_not_a_paramset(self):
@@ -205,6 +210,7 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
             param_set_key="samples",
         )
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("nope", result.error)
 
     def test_outer_ref_rejected_at_outer_scope(self):
@@ -218,4 +224,5 @@ class TestFormTemplateComputedParamValidate(BaseTestCase):
         )
         result = self._validate(template, version_id, "@factor + @@other")
         self.assertFalse(result.valid)
+        assert result.error is not None
         self.assertIn("@@", result.error)

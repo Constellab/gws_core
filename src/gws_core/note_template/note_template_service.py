@@ -163,14 +163,14 @@ class NoteTemplateService:
     ################################################# GET ########################################
 
     @classmethod
-    def get_by_id_and_check(cls, id: str) -> NoteTemplate:
-        return NoteTemplate.get_by_id_and_check(id)
+    def get_by_id_and_check(cls, id_: str) -> NoteTemplate:
+        return NoteTemplate.get_by_id_and_check(id_)
 
     @classmethod
     def search(
         cls, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[NoteTemplate]:
-        search_builder: SearchBuilder = NoteTemplateSearchBuilder()
+        search_builder: SearchBuilder[NoteTemplate] = NoteTemplateSearchBuilder()
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)
 

@@ -23,17 +23,17 @@ class TaskInputModel(BaseModel):
     :rtype: [type]
     """
 
-    scenario = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
-    task_model = NullableForeignKeyField(TaskModel, index=True, on_delete="CASCADE")
-    protocol_model = NullableForeignKeyField(
+    scenario: NullableForeignKeyField[Scenario] = NullableForeignKeyField(Scenario, index=True, on_delete="CASCADE")
+    task_model: NullableForeignKeyField[TaskModel] = NullableForeignKeyField(TaskModel, index=True, on_delete="CASCADE")
+    protocol_model: NullableForeignKeyField[ProtocolModel] = NullableForeignKeyField(
         ProtocolModel, index=True, on_delete="CASCADE"
     )
-    resource_model = NullableForeignKeyField(
+    resource_model: NullableForeignKeyField[ResourceModel] = NullableForeignKeyField(
         ResourceModel, index=True, on_delete="CASCADE"
     )
 
-    port_name = TypedCharField()
-    is_interface = TypedBooleanField()
+    port_name: TypedCharField = TypedCharField()
+    is_interface: TypedBooleanField = TypedBooleanField()
 
     @classmethod
     def get_by_resource_model(cls, resource_model_id: str) -> ModelSelect:

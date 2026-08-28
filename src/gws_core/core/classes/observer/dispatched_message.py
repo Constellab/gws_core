@@ -6,11 +6,21 @@ class DispatchedMessage:
     status: MessageLevel
     message: str
     progress: float | None = None
+    # id of the app/scenario the message relates to, stamped at notify time (the
+    # dispatch itself can happen later, on a timer thread that has no context)
+    context_id: str | None = None
 
-    def __init__(self, status: MessageLevel, message: str, progress: float | None = None):
+    def __init__(
+        self,
+        status: MessageLevel,
+        message: str,
+        progress: float | None = None,
+        context_id: str | None = None,
+    ):
         self.status = status
         self.message = message
         self.progress = progress
+        self.context_id = context_id
 
     @staticmethod
     def create_success_message(message: str) -> "DispatchedMessage":

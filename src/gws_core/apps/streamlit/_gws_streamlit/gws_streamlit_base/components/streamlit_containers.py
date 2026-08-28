@@ -26,7 +26,7 @@ class StreamlitGridCell:
         """
         self.col_span = col_span
         self.row_span = row_span
-        self.style = style
+        self.style = style or ""
 
 
 class StreamlitContainers:

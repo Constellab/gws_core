@@ -169,6 +169,7 @@ class TestNoteResource(BaseTestCase):
             note.get_content().get_block_at_index(3).is_type(RichTextBlockTypeStandard.FILE_VIEW)
         )
 
+        assert note.note_id is not None
         note_db = Note.get_by_id_and_check(note.note_id)
         self.assertIsNotNone(note_db)
 

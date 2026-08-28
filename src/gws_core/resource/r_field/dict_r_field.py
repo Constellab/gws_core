@@ -131,10 +131,10 @@ class DictRField(PrimitiveRField[dict[K, V]], Generic[K, V]):
             return {}
         try:
             return JSONHelper.convert_dict_to_json(self._default_value)
-        except:
+        except Exception as e:
             raise BadRequestException(
                 "Incorrect default value for DictRField. The default value must be a json like dictionary"
-            )
+            ) from e
 
     def serialize(self, r_field_value: Any) -> Any:
         """Serialize the dictionary value for storage.

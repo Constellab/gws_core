@@ -18,7 +18,7 @@ class IFrameView(View):
     """
 
     _type: ViewType = ViewType.IFRAME
-    _src: str
+    _src: str | None
 
     def __init__(self, src: str | None = None):
         super().__init__()

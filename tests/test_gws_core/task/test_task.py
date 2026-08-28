@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import cast
 
 from gws_core import (
@@ -19,6 +18,7 @@ from gws_core import (
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate
 from gws_core.resource.resource_dto import ResourceOrigin
+from gws_core.scenario.scenario_exception import ScenarioRunException
 from gws_core.scenario.scenario_proxy import ScenarioProxy
 from gws_core.scenario.scenario_run_service import ScenarioRunService
 from gws_core.task.plug.input_task import InputTask
@@ -29,7 +29,6 @@ from ..protocol_examples import SimpleProtocolTest
 
 @task_decorator(unique_name="RunAfterTask")
 class RunAfterTask(Task):
-    @abstractmethod
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         return {}
 
@@ -124,7 +123,7 @@ class TestTask(BaseTestCase):
         )
         self.assertTrue(isinstance(res, ResourceModel))
 
-        self.assertTrue(len(cast(dict, p0.progress_bar.data)["messages"]) >= 2)
+        self.assertTrue(len(cast(dict, p0.progress_bar.data)["messages"]) >= 2)  # noqa: PLR2004
 
         scenario.to_dto()
 
@@ -136,7 +135,7 @@ class TestTask(BaseTestCase):
         scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(RunAfterTask, "run")
 
-        with self.assertRaises(Exception):
+        with self.assertRaises(ScenarioRunException):
             scenario.run()
 
     def test_input_task(self):

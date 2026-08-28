@@ -3,14 +3,18 @@ from fastapi import Depends
 from fastapi.responses import RedirectResponse
 from starlette.responses import JSONResponse, Response
 
+from gws_core.core.exception.exceptions.not_found_exception import NotFoundException
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.model.model_dto import PageDTO
 from gws_core.core.service.front_service import FrontService
 from gws_core.lab.dev_env_service import DevEnvService
+from gws_core.oauth.oauth_dto import OAuthConsentDetailsDTO
+from gws_core.oauth.oauth_service import OAuthService
 from gws_core.user.auth_context import AuthContext, AuthContextUser
 from gws_core.user.authentication_service import AuthenticationService
 from gws_core.user.current_user_service import CurrentUserService
 from gws_core.user.jwt_service import JWTService
+from gws_core.user.unique_code_service import UniqueCodeService
 from gws_core.user.user_dto import UserDTO, UserFullDTO
 
 from ..core_controller import core_app
@@ -84,6 +88,68 @@ def dev_login(code: str) -> Response:
 
 
 @core_app.get(
+    "/user/oauth-consent-details",
+    tags=["User"],
+    summary="Describe what an OAuth authorization request would grant",
+)
+async def get_oauth_consent_details(
+    login_state: str,
+    auth_context: AuthContext = Depends(AuthorizationService.check_user_access_token),
+) -> OAuthConsentDetailsDTO:
+    """Tell the consent page what it is asking the user to approve.
+
+    The page renders this rather than hardcoding copy: only the backend knows which
+    client is asking and what a token actually grants it, so the wording cannot
+    drift from what is really issued (see ``LabOAuthProvider._describe_access``).
+
+    Returns 404 when the request is unknown or expired: there is then nothing valid
+    to consent to, and the page must not show a consent screen.
+
+    :param login_state: The opaque state the lab put on the consent page's URL.
+    """
+    if not isinstance(auth_context, AuthContextUser):
+        raise UnauthorizedException("Only users can authorize a client")
+
+    details = await OAuthService.get_provider().get_consent_details(
+        login_state, auth_context.get_user()
+    )
+
+    if details is None:
+        raise NotFoundException("This authorization request has expired or is unknown.")
+
+    return details
+
+
+@core_app.get(
+    "/user/oauth-consent-code",
+    tags=["User"],
+    summary="Generate a one-time code authorizing an OAuth client",
+)
+def generate_oauth_consent_code(
+    auth_context: AuthContext = Depends(AuthorizationService.check_user_access_token),
+) -> dict:
+    """Mint a single-use code proving who the caller is, for the OAuth consent flow.
+
+    Called by the lab front-end's consent page (see
+    ``docs/todo/oauth_consent_frontend_spec.md``) when the user clicks "Allow". The
+    page then hands the code to ``/oauth-auth/consent`` on the API domain, which
+    consumes it to identify the user.
+
+    The code exists only because the front-end and the API sit on different
+    sub-domains: the lab session cookie is ``samesite=strict`` and is therefore
+    never sent to the API, so the session cannot identify the user there. This is
+    the same bridge ``login-temp-access`` uses.
+
+    It is single-use and short-lived (60s) because, for its lifetime, it is enough
+    to authorize an external client to act as this user.
+    """
+    if not isinstance(auth_context, AuthContextUser):
+        raise UnauthorizedException("Only users can authorize an OAuth client")
+
+    return {"code": UniqueCodeService.generate_code(auth_context.get_user().id, {}, 60)}
+
+
+@core_app.get(
     "/dev-login-unique-code/generate",
     tags=["User"],
     summary="Generate a temp unique code to login to the dev lab",
@@ -139,11 +205,11 @@ def synchronize_users(_=Depends(AuthorizationService.check_user_access_token)) -
     UserService.synchronize_all_space_users()
 
 
-@core_app.get("/user/{id}", tags=["User"])
+@core_app.get("/user/{id_}", tags=["User"])
 def get_by_id_and_check(
-    id: str, _=Depends(AuthorizationService.check_user_access_token)
+    id_: str, _=Depends(AuthorizationService.check_user_access_token)
 ) -> UserDTO:
-    return UserService.get_by_id_and_check(id).to_dto()
+    return UserService.get_by_id_and_check(id_).to_dto()
 
 
 @core_app.get("/user/name-search/{name}", tags=["User"])

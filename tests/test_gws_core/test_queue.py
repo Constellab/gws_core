@@ -87,6 +87,6 @@ class TestQueue(BaseTestCase):
         # Wait until the queue is clear and there is not scenario that is running
         while Job.queue_length() > 0 or Scenario.count_running_or_queued_scenarios() > 0:
             time.sleep(5)
-            if wait_count >= 10:
+            if wait_count >= 10:  # noqa: PLR2004
                 raise Exception("The scenario queue is not empty")
             wait_count += 1

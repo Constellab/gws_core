@@ -31,7 +31,7 @@ from .component.reflex_sidebar_menu_component import (
 from .component.reflex_sidebar_menu_component import (
     sidebar_menu_component as sidebar_menu_component,
 )
-from .reflex_exception import ReflexAppException as ReflexAppException
+from .reflex_exception import ReflexAppError as ReflexAppError
 from .reflex_exception import ReflexExceptionShowMode as ReflexExceptionShowMode
 from .reflex_init import ReflexInit as ReflexInit
 from .reflex_main_state_base import ReflexConfigDTO as ReflexConfigDTO

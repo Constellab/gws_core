@@ -1,6 +1,8 @@
 import inspect
 import re
 
+from typing_extensions import Self
+
 from ..utils.string_helper import StringHelper
 
 
@@ -48,9 +50,12 @@ class Base:
         :rtype: `str`
         """
 
-        module = inspect.getmodule(cls).__name__
+        module = inspect.getmodule(cls)
+        if module is None:
+            raise Exception(f"Cannot retrieve the module of the class '{cls.__name__}'")
+
         name = cls.__name__
-        full_name = module + "." + name
+        full_name = module.__name__ + "." + name
 
         if slugify:
             full_name = StringHelper.slugify(full_name, to_lower=True, snakefy=False)
@@ -60,8 +65,10 @@ class Base:
         return full_name
 
     @classmethod
-    def inheritors(cls) -> list[type["Base"]]:
+    def inheritors(cls) -> list[type[Self]]:
         """Get all the classes that inherit this class"""
-        return set(cls.__subclasses__()).union(
-            [s for c in cls.__subclasses__() for s in c.inheritors()]
+        return list(
+            set(cls.__subclasses__()).union(
+                [s for c in cls.__subclasses__() for s in c.inheritors()]
+            )
         )

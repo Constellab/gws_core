@@ -1,5 +1,6 @@
 import time
 import unittest
+from typing import cast
 
 
 class TimingTestResult(unittest.TextTestResult):
@@ -10,11 +11,11 @@ class TimingTestResult(unittest.TextTestResult):
         self.timings: list[tuple[str, float]] = []
         self._start_time: float = 0.0
 
-    def startTest(self, test: unittest.TestCase) -> None:
+    def startTest(self, test: unittest.TestCase) -> None:  # noqa: N802
         self._start_time = time.perf_counter()
         super().startTest(test)
 
-    def stopTest(self, test: unittest.TestCase) -> None:
+    def stopTest(self, test: unittest.TestCase) -> None:  # noqa: N802
         elapsed = time.perf_counter() - self._start_time
         self.timings.append((test.id(), elapsed))
         super().stopTest(test)
@@ -30,7 +31,7 @@ class TimingTextTestRunner(unittest.TextTestRunner):
         self.durations = durations
 
     def run(self, test):
-        result: TimingTestResult = super().run(test)
+        result = cast(TimingTestResult, super().run(test))
         if result.timings:
             slowest = sorted(result.timings, key=lambda item: item[1], reverse=True)[
                 : self.durations

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Any, Union
+from typing import Any
 
 from fastapi.encoders import jsonable_encoder
 
@@ -12,7 +12,7 @@ from gws_core.user.user import User
 
 MAX_TAG_LENGTH = 1000
 
-TagValueType = Union[str, int, float, datetime]
+TagValueType = str | int | float | datetime
 
 
 class TagOrigin:
@@ -150,7 +150,7 @@ class TagOrigins:
                 origin.external_lab_origin_id = external_lab_origin_id
 
     def to_json(self) -> list[dict]:
-        return jsonable_encoder([origin for origin in self.to_dto()])
+        return jsonable_encoder(list(self.to_dto()))
 
     def to_dto(self) -> list[TagOriginDTO]:
         return [origin.to_dto() for origin in self._origins]

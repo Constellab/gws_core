@@ -2,7 +2,8 @@ from gws_core import BaseTestCase
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.db.migration.brick_migrator import BrickMigration, BrickMigrator, MigrationObject
 from gws_core.core.db.migration.sql_migrator import SqlMigrator
-from gws_core.core.db.version import Version, VersionInvalidException
+from gws_core.core.db.version import Version, VersionInvalidError
+from gws_core.core.exception.exceptions import BadRequestException
 
 
 class MigrationTest(BrickMigration):
@@ -42,16 +43,16 @@ class TestMigration(BaseTestCase):
         sorted_version.sort()
         self.assertEqual(sorted_version, [version_4, version, version_3, version_6, version_5])
 
-        with self.assertRaises(VersionInvalidException):
+        with self.assertRaises(VersionInvalidError):
             Version("1.2")
 
-        with self.assertRaises(VersionInvalidException):
+        with self.assertRaises(VersionInvalidError):
             Version("1.-2.0")
 
-        with self.assertRaises(VersionInvalidException):
+        with self.assertRaises(VersionInvalidError):
             Version("1.2.a")
 
-        with self.assertRaises(VersionInvalidException):
+        with self.assertRaises(VersionInvalidError):
             Version("1.2.2-beta.a")
 
     def test_brick_migrator(self):
@@ -78,7 +79,7 @@ class TestMigration(BaseTestCase):
         self.assertEqual(to_migrate[2].version, Version("2.0.1"))
 
         # Append a version that already exists
-        with self.assertRaises(Exception):
+        with self.assertRaises(BadRequestException):
             brick_migrator.append_migration(migration_v120)
 
         # Check that the migrate worked

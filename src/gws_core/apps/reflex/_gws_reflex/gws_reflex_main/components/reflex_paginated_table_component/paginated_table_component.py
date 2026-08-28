@@ -5,6 +5,8 @@ Provides :func:`pagination_controls` for prev/next/page-size UI bound to a
 which wraps a caller-provided grid component together with those controls.
 """
 
+from typing import cast
+
 import reflex as rx
 
 from .paginated_table_state import PAGE_SIZE_OPTIONS, PaginatedTableState
@@ -19,8 +21,10 @@ def pagination_controls(state_cls: type[PaginatedTableState]) -> rx.Component:
             rx.text("Rows per page", size="1", color="var(--gray-a10)"),
             rx.select(
                 [str(n) for n in PAGE_SIZE_OPTIONS],
-                value=state_cls.page_size.to_string(),
-                on_change=state_cls.set_page_size,
+                # accessed on the class, a state var is a Var and the event a handler,
+                # which the annotations of the state class do not express
+                value=cast(rx.Var[int], state_cls.page_size).to_string(),
+                on_change=cast(rx.EventHandler, state_cls.set_page_size),
                 size="1",
             ),
             spacing="2",

@@ -7,8 +7,8 @@ from gws_core.impl.openai.open_ai_types import AiChatMessage
 
 
 class StreamlitOpenAiChat:
-    chat: OpenAiChat | None = None
-    key: str | None = None
+    chat: OpenAiChat
+    key: str
 
     def __init__(self, chat: OpenAiChat, key: str) -> None:
         """Initialize the StreamlitOpenAiChat.
@@ -35,11 +35,9 @@ class StreamlitOpenAiChat:
         :return: StreamlitOpenAiChat instance loaded from session or newly created
         :rtype: StreamlitOpenAiChat
         """
-        chat: OpenAiChat
-        if key in st.session_state:
-            chat = st.session_state.get(key)
-        else:
-            chat = OpenAiChat(system_prompt)
+        chat: OpenAiChat = (
+            st.session_state[key] if key in st.session_state else OpenAiChat(system_prompt)
+        )
 
         return StreamlitOpenAiChat(chat, key)
 
@@ -61,8 +59,12 @@ class StreamlitOpenAiChat:
 
         :return: The last message in the chat
         :rtype: AiChatMessage
+        :raises ValueError: If the chat has no message
         """
-        return self.chat.get_last_message()
+        last_message = self.chat.get_last_message()
+        if last_message is None:
+            raise ValueError("The chat has no message")
+        return last_message
 
     def add_user_message(self, message: str) -> None:
         """Add a user message to the chat and save to session state.

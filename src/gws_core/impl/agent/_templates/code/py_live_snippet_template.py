@@ -1,3 +1,4 @@
+# pyright: reportUndefinedVariable=false
 # This is a snippet template for a python agent.
 # This code is executed in the same context as the run method of a Task.
 # This mean you can import brick or packages and call method of the Task object.
@@ -12,9 +13,9 @@
 from gws_core import Table
 
 # access task method to log a messages
-self.log_info_message("Transposing table")
+self.log_info_message("Transposing table")  # noqa: F821
 # Transpose the input table
-table: Table = sources[0].transpose()
+table: Table = sources[0].transpose()  # noqa: F821
 
 # set the new table a output or the agent
 targets = [table]

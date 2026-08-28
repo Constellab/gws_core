@@ -1,3 +1,5 @@
+from typing import cast
+
 from peewee import Expression
 from typing_extensions import Self
 
@@ -71,7 +73,7 @@ class EntityWithTagSearchBuilder(SearchBuilder[ModelType]):
 
             # value_format = tag_model.value_format
 
-        entity_alias: type[EntityTag] = EntityTag.alias()
+        entity_alias = cast(type[EntityTag], EntityTag.alias())
 
         self.add_join(
             entity_alias,
@@ -94,7 +96,7 @@ class EntityWithTagSearchBuilder(SearchBuilder[ModelType]):
 
     def add_tag_key_filter(self, tag_key: str) -> Self:
         """Add a tag key filter to the search builder"""
-        entity_alias: type[EntityTag] = EntityTag.alias()
+        entity_alias = cast(type[EntityTag], EntityTag.alias())
         self.add_join(
             entity_alias,
             on=(

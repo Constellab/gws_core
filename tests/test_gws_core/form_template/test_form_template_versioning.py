@@ -55,6 +55,7 @@ class TestFormTemplateVersioning(BaseTestCase):
             ParamSpecDTO.from_json(StrParam(human_name="foo").to_dto().to_json_dict()),
         )
         updated = FormTemplateService.get_version(template.id, draft.id)
+        assert updated.content is not None
         self.assertIn("foo", updated.content)
 
     def test_update_rejected_on_non_draft(self):
@@ -198,8 +199,10 @@ class TestFormTemplateVersioning(BaseTestCase):
         keys = list(updated.get_content().specs.keys())
         self.assertEqual(keys, ["x", "y", "z"])
         # persisted
+        reloaded = FormTemplateVersion.get_by_id(draft.id)
+        assert reloaded is not None
         self.assertEqual(
-            list(FormTemplateVersion.get_by_id(draft.id).get_content().specs.keys()),
+            list(reloaded.get_content().specs.keys()),
             ["x", "y", "z"],
         )
 
@@ -215,7 +218,9 @@ class TestFormTemplateVersioning(BaseTestCase):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))
         draft = self._get_draft(template)
         draft.update_specs(_str_specs(["keep"]))
-        content_before = FormTemplateVersion.get_by_id(draft.id).content
+        draft_version = FormTemplateVersion.get_by_id(draft.id)
+        assert draft_version is not None
+        content_before = draft_version.content
 
         # cyclic computed params -> check_config_specs fails
         cyclic = ConfigSpecs(
@@ -227,9 +232,9 @@ class TestFormTemplateVersioning(BaseTestCase):
         with self.assertRaises(BadRequestException):
             FormTemplateService.override_specs(template.id, draft.id, cyclic)
         # draft untouched
-        self.assertEqual(
-            FormTemplateVersion.get_by_id(draft.id).content, content_before
-        )
+        reloaded = FormTemplateVersion.get_by_id(draft.id)
+        assert reloaded is not None
+        self.assertEqual(reloaded.content, content_before)
 
     def test_create_field_rejects_too_long_key(self):
         template = FormTemplateService.create(CreateFormTemplateDTO(name="X"))

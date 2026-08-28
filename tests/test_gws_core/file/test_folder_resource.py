@@ -15,13 +15,13 @@ from gws_core import (
     task_decorator,
 )
 from gws_core.config.config_specs import ConfigSpecs
+from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.file.file import File
 from gws_core.impl.file.folder_task import FolderExporter
 from gws_core.impl.file.local_file_store import LocalFileStore
 from gws_core.impl.text.text_view import SimpleTextView
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
-from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.task.converter.converter_service import ConverterService
 from gws_core.task.task_runner import TaskRunner
 
@@ -50,7 +50,8 @@ class TestFolderResource(BaseTestCase):
 
         sub_file = folder.create_empty_file_if_not_exist("test.txt")
         # write test to sub file
-        open(sub_file, "w", encoding="UTF-8").write("test")
+        with open(sub_file, "w", encoding="UTF-8") as f:
+            f.write("test")
         folder.create_dir_if_not_exist("sub_dir")
 
         list_ = folder.list_dir()
@@ -66,8 +67,8 @@ class TestFolderResource(BaseTestCase):
         self.assertIsNotNone(view_dto.data)
 
         # Test sub file view
-        result: SimpleTextView = folder.view_sub_file(ConfigParams({"sub_file_path": "test.txt"}))
-        self.assertTrue(isinstance(result, SimpleTextView))
+        result = folder.view_sub_file(ConfigParams({"sub_file_path": "test.txt"}))
+        assert isinstance(result, SimpleTextView)
         self.assertEqual(result._data.text, "test")
 
         # Test creating a sub file and sub folder directly
@@ -83,14 +84,16 @@ class TestFolderResource(BaseTestCase):
         scenario.run()
 
         process = scenario.get_protocol().get_process("create_folder")
-        folder: Folder = process.get_output("folder")
+        folder: Folder = process.get_output("folder", resource_type=Folder)
 
         file_store: LocalFileStore = LocalFileStore.get_default_instance()
         self.assertTrue(file_store.node_exists(folder))
 
         # Check that the file model is saved and correct
-        file_model: ResourceModel = process._process_model.out_port("folder").get_resource_model()
+        file_model = process._process_model.out_port("folder").get_resource_model()
+        assert file_model is not None
         self.assertTrue(file_model.is_saved())
+        assert file_model.fs_node_model is not None
         self.assertEqual(folder.path, file_model.fs_node_model.path)
 
     def test_file_extractor(self):
@@ -100,7 +103,8 @@ class TestFolderResource(BaseTestCase):
         sub_file_path = folder.create_empty_file_if_not_exist("test.txt")
 
         # write test to sub file
-        open(sub_file_path, "w", encoding="UTF-8").write("test")
+        with open(sub_file_path, "w", encoding="UTF-8") as f:
+            f.write("test")
 
         # save folder
         folder_model = ResourceModel.save_from_resource(folder, origin=ResourceOrigin.UPLOADED)
@@ -113,22 +117,25 @@ class TestFolderResource(BaseTestCase):
         )
 
         # Check that the file was extracted from folder
+        assert sub_file_model.fs_node_model is not None
+        assert folder_model.fs_node_model is not None
         self.assertEqual(sub_file_model.fs_node_model.is_symbolic_link, True)
         self.assertEqual(
             os.path.join(folder_model.fs_node_model.path, "test.txt"),
             sub_file_model.fs_node_model.path,
         )
 
-        sub_file: File = sub_file_model.get_resource()
+        sub_file: File = sub_file_model.get_resource(resource_type=File)
         self.assertTrue(isinstance(sub_file, File))
         self.assertEqual(sub_file.read(), "test")
 
         # Delete the scenario and resource and check that the file still exists (because it is a symbolic link)
+        assert sub_file_model.scenario is not None
         EntityNavigatorService.reset_scenario(sub_file_model.scenario.id)
 
         self.assertFalse(ResourceModel.get_by_id(sub_file_model.id))
         # reload the folder
-        folder = folder_model.get_resource(new_instance=True)
+        folder = folder_model.get_resource(new_instance=True, resource_type=Folder)
         self.assertTrue(folder.exists())
         self.assertTrue(folder.has_node("test.txt"))
 
@@ -137,13 +144,14 @@ class TestFolderResource(BaseTestCase):
         folder: Folder = Folder(temp)
         sub_file_path = folder.create_empty_file_if_not_exist("test.txt")
         # write test to sub file
-        open(sub_file_path, "w", encoding="UTF-8").write("test")
+        with open(sub_file_path, "w", encoding="UTF-8") as f:
+            f.write("test")
 
         # Call exporter to zip
         task_runner = TaskRunner(FolderExporter, inputs={"source": folder})
         result = task_runner.run()
-        target: File = result["target"]
-        self.assertTrue(isinstance(target, File))
+        target = result["target"]
+        assert isinstance(target, File)
         self.assertEqual(target.extension, "zip")
 
         # Call exporter to tar.gz
@@ -152,5 +160,5 @@ class TestFolderResource(BaseTestCase):
         )
         result = task_runner.run()
         target = result["target"]
-        self.assertTrue(isinstance(target, File))
+        assert isinstance(target, File)
         self.assertEqual(target.extension, "tar.gz")

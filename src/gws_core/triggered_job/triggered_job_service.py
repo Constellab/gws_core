@@ -1,4 +1,5 @@
 import traceback
+from typing import cast
 
 from croniter import croniter
 
@@ -239,10 +240,11 @@ class TriggeredJobService:
 
         if job.uses_process_typing():
             # Create from Task or Protocol typing
-            process_class = job.process_typing.get_type()
+            process_typing = cast(Typing, job.process_typing)
+            process_class = process_typing.get_type()
             if process_class is None:
                 raise BadRequestException(
-                    f"Could not load class for typing '{job.process_typing.typing_name}'"
+                    f"Could not load class for typing '{process_typing.typing_name}'"
                 )
 
             if Utils.issubclass(process_class, Protocol):
@@ -342,8 +344,8 @@ class TriggeredJobService:
             id=job.id,
             created_at=job.created_at,
             last_modified_at=job.last_modified_at,
-            created_by=job.created_by.to_dto() if job.created_by else None,
-            last_modified_by=job.last_modified_by.to_dto() if job.last_modified_by else None,
+            created_by=job.created_by.to_dto(),
+            last_modified_by=job.last_modified_by.to_dto(),
             name=job.name,
             description=job.description,
             trigger_type=job.trigger_type,
@@ -385,4 +387,4 @@ class TriggeredJobService:
         try:
             croniter(cron_expression)
         except Exception as e:
-            raise BadRequestException(f"Invalid cron expression: {e}")
+            raise BadRequestException(f"Invalid cron expression: {e}") from e

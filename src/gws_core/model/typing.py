@@ -43,24 +43,24 @@ class Typing(Model):
     """
 
     # Full python type of the model
-    model_type = TypedCharField(max_length=511)
-    brick = TypedCharField(max_length=50)
-    brick_version = TypedCharField(max_length=50, default="")
-    unique_name = TypedCharField(column_name="model_name")
-    object_type = TypedCharField(max_length=20)
-    human_name = TypedCharField(max_length=255)
-    short_description = TypedCharField()
-    deprecated_since = NullableCharField(max_length=50)
-    deprecated_message = NullableCharField(max_length=255)
-    hide = TypedBooleanField(default=False)
-    style = NullableBaseDTOField(TypingStyle)
+    model_type: TypedCharField = TypedCharField(max_length=511)
+    brick: TypedCharField = TypedCharField(max_length=50)
+    brick_version: TypedCharField = TypedCharField(max_length=50, default="")
+    unique_name: TypedCharField = TypedCharField(column_name="model_name")
+    object_type: TypedCharField = TypedCharField(max_length=20)
+    human_name: TypedCharField = TypedCharField(max_length=255)
+    short_description: TypedCharField = TypedCharField()
+    deprecated_since: NullableCharField = NullableCharField(max_length=50)
+    deprecated_message: NullableCharField = NullableCharField(max_length=255)
+    hide: TypedBooleanField = TypedBooleanField(default=False)
+    style: NullableBaseDTOField[TypingStyle] = NullableBaseDTOField(TypingStyle)
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type = NullableCharField(max_length=20)
+    object_sub_type: NullableCharField = NullableCharField(max_length=20)
     # For process, this is a linked resource to the model (useful for IMPORTER, TRANFORMERS...)
-    related_model_typing_name = NullableCharField(index=True)
+    related_model_typing_name: NullableCharField = NullableCharField(index=True)
 
-    data = TypedJSONField()
+    data: TypedJSONField = TypedJSONField()
 
     # List of errors in the typing definition (invalid config/input/output spec).
     # Stored as a JSON list of TypingErrorDTO dicts. A non-empty list
@@ -265,7 +265,7 @@ class Typing(Model):
         """Return all the visible typing name of a type."""
         return (
             cls.select()
-            .where((cls.object_type == object_type) & (cls.hide == False))
+            .where((cls.object_type == object_type) & (cls.hide == False))  # noqa: E712 - peewee query expression, the operator builds SQL
             .order_by(cls.human_name)
         )
 
@@ -276,7 +276,7 @@ class Typing(Model):
             cls.select()
             .where(
                 (cls.object_type == object_type)
-                & (cls.hide == False)
+                & (cls.hide == False)  # noqa: E712 - peewee query expression, the operator builds SQL
                 & (cls.unique_name.contains(name) | cls.human_name.contains(name))
             )
             .order_by(cls.human_name)
@@ -337,8 +337,13 @@ class Typing(Model):
     def typing_name_is_protocol(typing_name: str) -> bool:
         return typing_name.startswith("PROTOCOL")
 
-    class Meta:
+    class _TypingMeta:
         # Unique constrains on brick, model_name and object_type
         table_name = "gws_typing"
         is_table = True
         indexes = ((("brick", "model_name", "object_type"), True),)
+
+    # Declared as a plain `type` so that sub models can define their own `Meta`
+    # (the peewee convention) without it being reported as an incompatible
+    # override. See BaseModel for details.
+    Meta: type = _TypingMeta

@@ -13,7 +13,6 @@ from gws_core.entity_navigator.entity_navigator import (
     EntityNavigatorFormTemplate,
 )
 from gws_core.entity_navigator.entity_navigator_type import NavigableEntityType
-from gws_core.form.form import Form
 from gws_core.form.form_dto import CreateFormDTO
 from gws_core.form.form_service import FormService
 from gws_core.form_template.form_template_dto import (
@@ -57,6 +56,7 @@ class TestFormTagPropagation(BaseTestCase):
             tags = EntityTagList.find_by_entity(TagEntityType.FORM, form_id)
             entity_tag = tags.get_tag(tag)
             self.assertIsNotNone(entity_tag, f"tag missing on form {form_id}")
+            assert entity_tag is not None
             simple = entity_tag.to_simple_tag()
             self.assertTrue(
                 simple.origins.has_origin(TagOriginType.FORM_TEMPLATE_PROPAGATED, template_id)

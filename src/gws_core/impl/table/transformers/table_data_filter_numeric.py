@@ -28,7 +28,7 @@ value_param = FloatParam(
     resource_type=Table,
     short_description="Filters the table columns based on values of one or multiple rows with numeric comparator",
 )
-class TableColumnDataNumericFilter(Transformer):
+class TableColumnDataNumericFilter(Transformer[Table]):
     """
     For earch filters, the system will keep the columns where the value in the row provided by the parameter ```Row name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of rows as the input table.
 
@@ -64,7 +64,7 @@ class TableColumnDataNumericFilter(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
-        for numeric_params in params.get("numeric_filter"):
+        for numeric_params in params.get_value("numeric_filter"):
             data = DataframeDataFilterHelper.filter_columns_numeric(
                 data=data,
                 row_name_regex=numeric_params["row_name_regex"],
@@ -81,7 +81,7 @@ class TableColumnDataNumericFilter(Transformer):
     resource_type=Table,
     short_description="Filters the table rows based on values of one or multiple columns with numeric comparator",
 )
-class TableRowDataNumericFilter(Transformer):
+class TableRowDataNumericFilter(Transformer[Table]):
     """
     For earch filters, the system will keep the rows where the value in the column provided by the parameter ```Column name``` validated condition (the ```comparator``` with the ```value``` parameter).The result table will have the same number of columns as the input table.
 
@@ -117,7 +117,7 @@ class TableRowDataNumericFilter(Transformer):
     def transform(self, source: Table, params: ConfigParams) -> Table:
         data: DataFrame = source.get_data()
 
-        for numeric_params in params.get("numeric_filter"):
+        for numeric_params in params.get_value("numeric_filter"):
             data = DataframeDataFilterHelper.filter_rows_numeric(
                 data=data,
                 column_name_regex=numeric_params["column_name_regex"],

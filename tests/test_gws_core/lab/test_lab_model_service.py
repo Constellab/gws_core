@@ -48,7 +48,7 @@ class TestLabModelService(BaseTestCase):
         credentials = cast(CredentialsDataLab, result.credentials_data)
         self.assertIsNotNone(credentials)
         self.assertIsNotNone(credentials.api_key)
-        self.assertTrue(len(credentials.api_key) >= 20)
+        self.assertTrue(len(credentials.api_key) >= 20)  # noqa: PLR2004
 
         # Verify LabModel exists in DB
         lab = cast(LabModel, LabModel.get_by_lab_id_and_mode("test-lab-123", LabMode.PROD))
@@ -129,7 +129,7 @@ class TestLabModelService(BaseTestCase):
         credentials = cast(CredentialsDataLab, result2.credentials_data)
         self.assertIsNotNone(credentials)
         self.assertIsNotNone(credentials.api_key)
-        self.assertTrue(len(credentials.api_key) >= 20)
+        self.assertTrue(len(credentials.api_key) >= 20)  # noqa: PLR2004
 
         # Verify the remote lab still has the same credentials object in DB
         lab = cast(LabModel, LabModel.get_by_lab_id_and_mode("creds-test-lab", LabMode.PROD))

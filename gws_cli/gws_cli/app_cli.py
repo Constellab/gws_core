@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Literal
+from typing import Literal, cast
 
 import typer
 from gws_core import (
@@ -66,16 +66,16 @@ class AppCli:
                 self._config = AppDevConfig.from_json(config_dict)
             except json.JSONDecodeError as e:
                 typer.echo(f"Error parsing config file '{config_file_path}': {e}", err=True)
-                raise typer.Abort()
+                raise typer.Abort() from None
             except Exception as e:
                 typer.echo(
                     f"Unexpected error reading config file '{config_file_path}': {e}", err=True
                 )
-                raise typer.Abort()
+                raise typer.Abort() from None
 
     def _load_env(self) -> None:
         # Load env_type from config
-        env_type: EnvType = self._config.env_type
+        env_type: EnvType = cast(EnvType, self._config.env_type)
         if not env_type:
             env_type = "NONE"
 
@@ -228,6 +228,9 @@ class AppCli:
                     err=True,
                 )
                 raise typer.Abort()
+
+    def get_params(self) -> dict:
+        return self._config.params or {}
 
     def is_reflex_enterprise(self) -> bool:
         return self._config.is_reflex_enterprise

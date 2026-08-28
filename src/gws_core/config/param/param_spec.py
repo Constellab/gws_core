@@ -370,7 +370,7 @@ class StrParam(ParamSpec):
             short_description=short_description,
         )
 
-    def validate(self, value: Any) -> str:
+    def validate(self, value: Any) -> str | None:
         if value is None:
             return value
 
@@ -450,7 +450,7 @@ class TextParam(ParamSpec):
             short_description=short_description,
         )
 
-    def validate(self, value: Any) -> str:
+    def validate(self, value: Any) -> str | None:
         if value is None:
             return value
 
@@ -570,7 +570,7 @@ class DictParam(ParamSpec):
             short_description=short_description,
         )
 
-    def validate(self, value: Any) -> dict:
+    def validate(self, value: Any) -> dict | None:
         if value is None:
             return value
 
@@ -616,7 +616,7 @@ class ListParam(ParamSpec):
             short_description=short_description,
         )
 
-    def validate(self, value: Any) -> list:
+    def validate(self, value: Any) -> list | None:
         if value is None:
             return value
 
@@ -711,7 +711,7 @@ class NumericParam(ParamSpec):
 class IntParam(NumericParam):
     """int param"""
 
-    def validate(self, value: Any) -> int:
+    def validate(self, value: Any) -> int | None:
         if value is None:
             return value
 
@@ -747,7 +747,7 @@ class IntParam(NumericParam):
 class FloatParam(NumericParam):
     """float param"""
 
-    def validate(self, value: Any) -> float:
+    def validate(self, value: Any) -> float | None:
         if value is None:
             return value
 

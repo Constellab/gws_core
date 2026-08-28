@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 
 from pandas import DataFrame
 
@@ -14,6 +14,7 @@ from gws_core.io.dynamic_io import DynamicInputs, DynamicOutputs
 from gws_core.io.io_spec import InputSpec, OutputSpec
 from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.model.typing_style import TypingStyle
+from gws_core.resource.resource import Resource
 from gws_core.resource.resource_set.resource_list import ResourceList
 from gws_core.task.task import Task
 from gws_core.task.task_decorator import task_decorator
@@ -43,13 +44,11 @@ There are {len(self.tables)} dataframes in the list.
     def build_code_inputs(self) -> dict:
         # get the table
         dataframes: list[DataFrame] = []
-        i = 0
-        for resource in self.tables:
+        for i, resource in enumerate(self.tables):
             if isinstance(resource, Table):
                 dataframes.append(resource.get_data())
             else:
                 raise Exception(f"Resource n°{i} is not a DataFrame")
-            i += 1
 
         # pass the dataframe as input
         return {"source": dataframes}
@@ -61,13 +60,13 @@ There are {len(self.tables)} dataframes in the list.
         return OpenAiHelper.describe_outputs_text_for_context("'target' (type 'List[DataFrame]')")
 
     def get_code_expected_output_types(self) -> dict[str, type]:
-        pass
+        return {"target": list}
 
     def get_available_package_names(self) -> list[str]:
         return [GwsCorePackages.PANDAS, GwsCorePackages.NUMPY, GwsCorePackages.PLOTLY]
 
     def build_output(self, code_outputs: dict) -> list[Table]:
-        output: list[DataFrame] = code_outputs.get("target")
+        output: list[DataFrame] | None = code_outputs.get("target")
 
         if output is None:
             raise Exception("The code did not generate any output")
@@ -132,7 +131,11 @@ class MultiTableSmartTransformer(Task):
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
         chat: OpenAiChat = params.get_value("prompt")
 
-        ai_tables = AIMultiTableTransformer(inputs["source"], chat, self.message_dispatcher)
+        source: ResourceList = inputs.get_resource("source", ResourceList)
+        # the input spec only accepts tables, so the resources are all tables
+        tables = cast(list[Table], source.get_resources())
+
+        ai_tables = AIMultiTableTransformer(tables, chat, self.message_dispatcher)
         result: list[Table] = ai_tables.run()
 
         # save the new config with the new prompt
@@ -144,4 +147,4 @@ class MultiTableSmartTransformer(Task):
 {ai_tables.generate_agent_code()}
 ##################### AGENT CODE ###################""")
 
-        return {"target": ResourceList(result)}
+        return {"target": ResourceList(cast(list[Resource], result))}

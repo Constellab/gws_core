@@ -139,8 +139,8 @@ class BrickCliService:
         :param brick_path: Path to the brick folder
         :type brick_path: str
         """
-        from gws_core.core.db.db_manager_service import DbManagerService
-        from gws_core.model.typing_manager import TypingManager
+        from gws_core.core.db.db_manager_service import DbManagerService  # noqa: PLC0415
+        from gws_core.model.typing_manager import TypingManager  # noqa: PLC0415
 
         brick_settings = BrickService.read_brick_settings(brick_path)
         if brick_settings is None:

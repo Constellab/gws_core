@@ -1,9 +1,8 @@
 from unittest import TestCase
 
 from gws_core import ViewTester
-from gws_core.extra import TableVennDiagramView
 from gws_core.impl.table.table import Table
-from gws_core.impl.table.view.table_selection import Serie1d
+from gws_core.impl.table.view.table_venn_diagram_view import TableVennDiagramView
 from pandas import DataFrame
 
 
@@ -36,7 +35,7 @@ class TestVennDiagrammView(TestCase):
         # 2 series :
         # first : y = A
         # second : y = B
-        series: list[Serie1d] = [
+        series = [
             {"name": "first", "y": {"type": "columns", "selection": ["A"]}},
             {"name": "second", "y": {"type": "columns", "selection": ["B"]}},
         ]
@@ -45,7 +44,7 @@ class TestVennDiagrammView(TestCase):
         self.assertEqual(len(view_dto.data["sections"]), 3)
 
         # 4 series :
-        series: list[Serie1d] = [
+        series = [
             {"name": "first", "y": {"type": "columns", "selection": ["A"]}},
             {"name": "second", "y": {"type": "columns", "selection": ["B"]}},
             {"name": "third", "y": {"type": "columns", "selection": ["D"]}},

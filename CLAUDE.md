@@ -101,3 +101,17 @@ Dependencies are managed via `settings.json` rather than traditional requirement
 - Use the existing typing system and decorators when creating new tasks/resources
 - Follow the established patterns for database models and services
 - New implementations go in `src/gws_core/impl/`
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in the `Constellab/gws_core` GitHub Issues, managed via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage roles, using their default label strings. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: one `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.

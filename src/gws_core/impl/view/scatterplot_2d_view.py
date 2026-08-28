@@ -58,7 +58,7 @@ class ScatterPlot2DView(View):
 
     def add_series(
         self,
-        x: list[float],
+        x: list[float] | None,
         y: list[float],
         name: str | None = None,
         x_name: str | None = None,
@@ -68,8 +68,8 @@ class ScatterPlot2DView(View):
         """
         Add a series of points to plot
 
-        :params x: The x-axis positions of points
-        :type x: list of float
+        :params x: The x-axis positions of points. If None, the indexes of `y` are used
+        :type x: list of float, optional
         :params y: The y-axis magnitudes of points
         :type y: list of float
         :params name: [optional] The name of the serie
@@ -87,24 +87,21 @@ class ScatterPlot2DView(View):
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
-        if x is None:
-            x = list(range(0, len(y)))
-        else:
-            # Convert y to float
-            x = NumericHelper.list_to_float(x)
+        # Convert x to float
+        x_values = list(range(0, len(y))) if x is None else NumericHelper.list_to_float(x)
 
         # Convert y to float
-        y = NumericHelper.list_to_float(y)
+        y_values = NumericHelper.list_to_float(y)
 
         if tags is not None:
-            if not isinstance(tags, list) or len(tags) != len(x):
+            if not isinstance(tags, list) or len(tags) != len(x_values):
                 raise BadRequestException(
                     "The tags must be a list of length equal to the length of x"
                 )
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append(
             {
-                "data": {"x": x, "y": y, "tags": tags},
+                "data": {"x": x_values, "y": y_values, "tags": tags},
                 "name": name,
                 "x_name": x_name,
                 "y_name": y_name,

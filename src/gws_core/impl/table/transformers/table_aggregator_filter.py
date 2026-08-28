@@ -37,7 +37,7 @@ value_param = FloatParam(
     resource_type=Table,
     short_description="Filters the table columns based aggregation value",
 )
-class TableColumnAggregatorFilter(Transformer):
+class TableColumnAggregatorFilter(Transformer[Table]):
     """
     Filter the table columns using comparator on the aggregation of the values of the columns.
 
@@ -88,7 +88,7 @@ class TableColumnAggregatorFilter(Transformer):
     resource_type=Table,
     short_description="Filters the table rows based aggregation value",
 )
-class TableRowAggregatorFilter(Transformer):
+class TableRowAggregatorFilter(Transformer[Table]):
     """
     Filter the table rows using comparator on the aggregation of the values of the rows.
 

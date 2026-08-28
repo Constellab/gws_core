@@ -206,14 +206,9 @@ class ScenarioBuilder:
         saved_models_by_id: dict[str, ResourceModel] = {}
 
         # Save all protocol input resources first
-        for resource_model_id in protocol_model.get_input_resource_model_ids():
-            resource_builder = resource_dto_builders.get(resource_model_id)
-            if resource_builder is None:
-                raise Exception(
-                    f"Protocol input resource with id '{resource_model_id}' not found in resource builders. "
-                    "All protocol input resources must have a corresponding builder to ensure they are saved before the scenario and protocol."
-                )
-            self._save_builder_and_collect(resource_builder, saved_models_by_id)
+        self._save_protocol_input_resources(
+            protocol_model, resource_dto_builders, saved_models_by_id
+        )
 
         scenario.save()
 
@@ -230,6 +225,68 @@ class ScenarioBuilder:
             self._log_info("Skipping scenario tags")
 
         # Save all the TaskInputModel and remaining resources in the correct order
+        self._save_task_output_resources(
+            protocol_model, resource_dto_builders, saved_models_by_id
+        )
+
+        # Create the shared entity info
+        self._log_info("Storing the scenario origin info")
+        SharedScenario.mark_as_received(
+            scenario.id,
+            self._origin,
+            CurrentUserService.get_and_check_current_user(),
+            external_id=self._scenario_info.scenario.id,
+        )
+
+        return scenario
+
+    def _save_protocol_input_resources(
+        self,
+        protocol_model: ProtocolModel,
+        resource_dto_builders: dict[str, ResourceDtoBuilder],
+        saved_models_by_id: dict[str, ResourceModel],
+    ) -> None:
+        """Save the shell resource models of every protocol input resource.
+
+        They must be saved before the scenario and the protocol so the protocol
+        graph can reference them.
+
+        :param protocol_model: protocol model holding the input resource ids
+        :type protocol_model: ProtocolModel
+        :param resource_dto_builders: resource builders indexed by new resource model id
+        :type resource_dto_builders: dict[str, ResourceDtoBuilder]
+        :param saved_models_by_id: map of already saved resource models, updated in place
+        :type saved_models_by_id: dict[str, ResourceModel]
+        :raises Exception: if an input resource has no corresponding builder
+        """
+        for resource_model_id in protocol_model.get_input_resource_model_ids():
+            resource_builder = resource_dto_builders.get(resource_model_id)
+            if resource_builder is None:
+                raise Exception(
+                    f"Protocol input resource with id '{resource_model_id}' not found in resource builders. "
+                    "All protocol input resources must have a corresponding builder to ensure they are saved before the scenario and protocol."
+                )
+            self._save_builder_and_collect(resource_builder, saved_models_by_id)
+
+    def _save_task_output_resources(
+        self,
+        protocol_model: ProtocolModel,
+        resource_dto_builders: dict[str, ResourceDtoBuilder],
+        saved_models_by_id: dict[str, ResourceModel],
+    ) -> None:
+        """Save the remaining output resources of every task and their TaskInputModel records.
+
+        Processes are walked in execution order so that a resource is always saved
+        before the task input record that references it.
+
+        :param protocol_model: protocol model holding the processes
+        :type protocol_model: ProtocolModel
+        :param resource_dto_builders: resource builders indexed by new resource model id
+        :type resource_dto_builders: dict[str, ResourceDtoBuilder]
+        :param saved_models_by_id: map of already saved resource models, updated in place
+        :type saved_models_by_id: dict[str, ResourceModel]
+        :raises Exception: if an output resource has no corresponding builder
+        """
         for process_model in protocol_model.get_all_processes_flatten_sort_by_start_date():
             if isinstance(process_model, TaskModel):
                 for port in process_model.outputs.ports.values():
@@ -243,17 +300,6 @@ class ScenarioBuilder:
                             )
                         self._save_builder_and_collect(resource_builder, saved_models_by_id)
                 process_model.save_input_resources()
-
-        # Create the shared entity info
-        self._log_info("Storing the scenario origin info")
-        SharedScenario.mark_as_received(
-            scenario.id,
-            self._origin,
-            CurrentUserService.get_and_check_current_user(),
-            external_id=self._scenario_info.scenario.id,
-        )
-
-        return scenario
 
     def _update_scenario(
         self,

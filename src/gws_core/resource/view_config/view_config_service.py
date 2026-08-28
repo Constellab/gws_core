@@ -102,7 +102,7 @@ class ViewConfigService:
         return list(
             ViewConfig.select()
             .left_outer_join(NoteViewModel)
-            .where((ViewConfig.is_favorite == False) & (NoteViewModel.note.is_null(True)))
+            .where((ViewConfig.is_favorite == False) & (NoteViewModel.note.is_null(True)))  # noqa: E712 - peewee query expression, the operator builds SQL
             .order_by(ViewConfig.last_modified_at.asc())
             .limit(100)
         )
@@ -133,7 +133,7 @@ class ViewConfigService:
     def search_by_note(
         cls, note_id: str, search: SearchParams, page: int = 0, number_of_items_per_page: int = 20
     ) -> Paginator[ViewConfig]:
-        from ...note.note_service import NoteService
+        from ...note.note_service import NoteService  # noqa: PLC0415
 
         search_builder: ViewConfigSearchBuilder = ViewConfigSearchBuilder()
 
@@ -157,7 +157,7 @@ class ViewConfigService:
     ) -> Paginator[ViewConfig]:
         # # if the include not favorite is not checked, filter favorite
         if not search.get_filter_criteria_value("include_not_favorite"):
-            search_builder.add_expression(ViewConfig.is_favorite == True)
+            search_builder.add_expression(ViewConfig.is_favorite == True)  # noqa: E712 - peewee query expression, the operator builds SQL
         search.remove_filter_criteria("include_not_favorite")
 
         return search_builder.add_search_params(search).search_page(page, number_of_items_per_page)

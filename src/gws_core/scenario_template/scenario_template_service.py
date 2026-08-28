@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi import UploadFile
 
 from gws_core.core.classes.paginator import Paginator
@@ -80,7 +82,7 @@ class ScenarioTemplateService:
                 f"Multiple scenario templates found with tag {tag_key}={tag_value}"
             )
 
-        return templates[0]
+        return cast(ScenarioTemplate, templates[0])
 
     @classmethod
     def delete(cls, id_: str) -> None:

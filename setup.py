@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from subprocess import check_call
+from typing import cast
 
 import setuptools
 from setuptools.command.install import install
@@ -22,7 +23,7 @@ class InstallHook(install):
     """Installation hooks (for production mode)."""
 
     def _run_install(self, what):
-        cwd = os.path.join(self.install_lib, name)
+        cwd = os.path.join(cast(str, self.install_lib), name)
         script_path = os.path.join(cwd, ".hooks", f"{what}-install.sh")
         if os.path.exists(script_path):
             check_call(["bash", script_path], cwd=cwd)
@@ -64,7 +65,7 @@ setuptools.setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
-    python_requires=">=3.10",
+    python_requires=">=3.13",
     cmdclass={
         "install": InstallHook,
     },

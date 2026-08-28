@@ -17,7 +17,7 @@ from ...core.utils.utils import Utils
 from ...impl.file.fs_node import FSNode
 from ...resource.resource import Resource
 from ..task_decorator import task_decorator
-from .converter import Converter, decorate_converter
+from .converter import Converter, ConverterRegistration, decorate_converter
 
 
 def importer_decorator(
@@ -87,18 +87,20 @@ def importer_decorator(
 
             # register the task
             decorate_converter(
-                task_class=task_class,
-                unique_name=unique_name,
-                task_type="IMPORTER",
-                source_type=source_type,
-                target_type=target_type,
-                related_resource=source_type,
-                human_name=human_name_computed,
-                short_description=short_description_computed,
-                hide=hide,
-                style=style,
-                output_sub_class=output_sub_class,
-                deprecated=deprecated,
+                ConverterRegistration(
+                    task_class=task_class,
+                    unique_name=unique_name,
+                    task_type="IMPORTER",
+                    source_type=source_type,
+                    target_type=target_type,
+                    related_resource=source_type,
+                    human_name=human_name_computed,
+                    short_description=short_description_computed,
+                    hide=hide,
+                    style=style,
+                    output_sub_class=output_sub_class,
+                    deprecated=deprecated,
+                )
             )
         except Exception as err:
             traceback.print_stack()

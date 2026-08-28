@@ -82,20 +82,17 @@ class BarPlotView(View):
         if not isinstance(y, list):
             raise BadRequestException("The y-data is required and must be a list of float")
 
-        if x is None:
-            x = self.generate_range(len(y))
-        else:
-            x = NumericHelper.list_to_float(x)
+        x_values = self.generate_range(len(y)) if x is None else NumericHelper.list_to_float(x)
 
-        y = NumericHelper.list_to_float(y)
+        y_values = NumericHelper.list_to_float(y)
 
         if tags is not None:
-            if not isinstance(tags, list) or len(tags) != len(x):
+            if not isinstance(tags, list) or len(tags) != len(x_values):
                 raise BadRequestException("The tags must a list of length equal to the length of x")
             tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         self._series.append(
             {
-                "data": {"x": x, "y": y, "tags": tags},
+                "data": {"x": x_values, "y": y_values, "tags": tags},
                 "name": name,
             }
         )

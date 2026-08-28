@@ -74,7 +74,7 @@ class EnvAgent(Task):
         log_stdout = params.get_value(self.LOG_STDOUT_CONFIG_NAME)
 
         # build the source path
-        source_paths = self.get_source_path(inputs.get("source"))
+        source_paths = self.get_source_path(inputs.get_resource("source", ResourceList))
 
         self.shell_proxy = self._create_shell_proxy(env)
 
@@ -163,7 +163,10 @@ class EnvAgent(Task):
 
         resource_list = ResourceList()
         for path in target_paths:
-            resource_list.add_resource(self._resolve_target_path(path, working_dir))
+            resource = self._resolve_target_path(path, working_dir)
+            # null or empty target paths are ignored
+            if resource is not None:
+                resource_list.add_resource(resource)
 
         return resource_list
 

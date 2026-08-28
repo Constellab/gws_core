@@ -17,7 +17,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Select table rows by name",
 )
-class TableRowSelector(Transformer):
+class TableRowSelector(Transformer[Table]):
     """
     Select part of a table using row names. Multiple row names can be provided.
 
@@ -29,7 +29,7 @@ class TableRowSelector(Transformer):
     )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_row_names(params.get("filters"))
+        return source.select_by_row_names(params.get_value("filters"))
 
 
 @transformer_decorator(
@@ -37,7 +37,7 @@ class TableRowSelector(Transformer):
     resource_type=Table,
     short_description="Select table columns by name",
 )
-class TableColumnSelector(Transformer):
+class TableColumnSelector(Transformer[Table]):
     """
     Select part of a table using column names. Multiple column names can be provided.
 
@@ -49,7 +49,7 @@ class TableColumnSelector(Transformer):
     )
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        return source.select_by_column_names(params.get("filters"))
+        return source.select_by_column_names(params.get_value("filters"))
 
 
 # ####################################################################
@@ -64,7 +64,7 @@ class TableColumnSelector(Transformer):
     resource_type=Table,
     short_description="Select table rows by tags",
 )
-class TableRowTagsSelector(Transformer):
+class TableRowTagsSelector(Transformer[Table]):
     """
     Select part of a table using row tags. Multiple row tags can be provided.
 
@@ -85,7 +85,9 @@ class TableRowTagsSelector(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("row")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(
+            params.get_value("tags")
+        )
         return source.select_by_row_tags(tags)
 
 
@@ -94,7 +96,7 @@ class TableRowTagsSelector(Transformer):
     resource_type=Table,
     short_description="Select table column by tags",
 )
-class TableColumnTagsSelector(Transformer):
+class TableColumnTagsSelector(Transformer[Table]):
     """
     Select part of a table using column tags. Multiple column tags can be provided.
 
@@ -115,5 +117,7 @@ class TableColumnTagsSelector(Transformer):
     config_specs = ConfigSpecs({"tags": DataframeFilterHelper.get_tags_param_set("column")})
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
-        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(params.get("tags"))
+        tags: list[dict] = DataframeFilterHelper.convert_tags_params_to_tag_list(
+            params.get_value("tags")
+        )
         return source.select_by_column_tags(tags)

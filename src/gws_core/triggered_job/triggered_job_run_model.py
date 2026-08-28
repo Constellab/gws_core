@@ -24,28 +24,28 @@ class TriggeredJobRunModel(Model):
     """
 
     # Reference to the parent job
-    triggered_job = TypedForeignKeyField(
+    triggered_job: TypedForeignKeyField[TriggeredJobModel] = TypedForeignKeyField(
         TriggeredJobModel, backref="runs", on_delete="CASCADE"
     )
 
     # How the job was triggered
-    trigger = TypedEnumField(choices=JobRunTrigger)
+    trigger: TypedEnumField[JobRunTrigger] = TypedEnumField(choices=JobRunTrigger)
 
     # The scenario that was created and executed
-    scenario = NullableForeignKeyField(
+    scenario: NullableForeignKeyField[Scenario] = NullableForeignKeyField(
         Scenario, backref="triggered_job_runs", on_delete="SET NULL"
     )
 
     # Timing
-    started_at = TypedDateTimeUTC(default=DateHelper.now_utc)
-    ended_at = NullableDateTimeUTC()
+    started_at: TypedDateTimeUTC = TypedDateTimeUTC(default=DateHelper.now_utc)
+    ended_at: NullableDateTimeUTC = NullableDateTimeUTC()
 
     # Execution status
-    status = TypedEnumField(choices=JobStatus)
+    status: TypedEnumField[JobStatus] = TypedEnumField(choices=JobStatus)
 
     # Error information if status is ERROR
     # Format: {"message": str, "stacktrace": str}
-    error_info = NullableJSONField()
+    error_info: NullableJSONField = NullableJSONField()
 
     class Meta:
         table_name = "gws_triggered_job_run"

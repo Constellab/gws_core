@@ -286,7 +286,7 @@ class NoteResource(ResourceSet):
         resource = self.get_resource(resource_key)
 
         view_result: CallViewResult = ResourceService.get_and_call_view_on_resource_model(
-            resource.get_model_id(), view_name, config, False
+            resource.get_and_check_model_id(), view_name, config, False
         )
 
         return view_result.to_dto()
@@ -351,12 +351,16 @@ class NoteResource(ResourceSet):
         if not file.is_image():
             raise ValueError("The file must be an image")
 
+        extension = file.extension
+        if not extension:
+            raise ValueError("The file must have an extension")
+
         if create_new_resource:
-            file.name = (title or f"file_{len(self)}") + "." + file.extension
+            file.name = (title or f"file_{len(self)}") + "." + extension
 
         image = Image.open(file.path)
 
-        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{file.extension}"
+        filename = f"{StringHelper.generate_uuid()}_{str(DateHelper.now_utc_as_milliseconds())}.{extension}"
         figure_data = RichTextBlockFigure(
             filename=filename,
             width=image.size[0],
@@ -504,14 +508,14 @@ class NoteResource(ResourceSet):
         """
         return self._rich_text.get_block_at_index(index)
 
-    def get_block_by_id(self, block_id: str) -> RichTextBlock:
+    def get_block_by_id(self, block_id: str) -> RichTextBlock | None:
         """
         Get the block by id
 
         :param block_id: id of the block
         :type block_id: str
-        :return: the block
-        :rtype: RichTextBlock
+        :return: the block, or None if no block has this id
+        :rtype: RichTextBlock | None
         """
         return self._rich_text.get_block_by_id(block_id)
 
@@ -733,7 +737,7 @@ class NoteResource(ResourceSet):
         try:
             image = Image.open(figure_file.path)
         except Exception:
-            raise Exception(f"The file {figure_file.path} is not an image")
+            raise Exception(f"The file {figure_file.path} is not an image") from None
 
         extension = figure_file.extension
         if not extension:

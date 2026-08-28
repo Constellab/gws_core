@@ -24,23 +24,23 @@ from gws_core.tag.tag_value_model import TagValueModel
 class EntityTag(Model):
     """Table to store the tags of all entities"""
 
-    tag_key = TypedCharField()
+    tag_key: TypedCharField = TypedCharField()
 
     # use utf8mb4_bin collation to ensure case-sensitive comparison
-    tag_value = TypedCharField(collation="utf8mb4_bin")
+    tag_value: TypedCharField = TypedCharField(collation="utf8mb4_bin")
 
-    value_format = TypedEnumField(
+    value_format: TypedEnumField[TagValueFormat] = TypedEnumField(
         choices=TagValueFormat, default=TagValueFormat.STRING
     )
 
     # to override in child classes
-    entity_id = TypedCharField(max_length=36)
+    entity_id: TypedCharField = TypedCharField(max_length=36)
 
-    entity_type = TypedEnumField(choices=TagEntityType)
+    entity_type: TypedEnumField[TagEntityType] = TypedEnumField(choices=TagEntityType)
 
-    origins = TypedJSONField()
+    origins: TypedJSONField = TypedJSONField()
 
-    is_propagable = TypedBooleanField(default=False)
+    is_propagable: TypedBooleanField = TypedBooleanField(default=False)
 
     def get_tag_value(self) -> TagValueType:
         return Tag.convert_value_to_type(self.tag_value, self.value_format)
@@ -183,8 +183,10 @@ class EntityTag(Model):
 
     ###################################### SELECT ######################################
     @classmethod
-    def get_search_tag_expression(cls, tags: list[Tag]) -> Expression:
-        """Get the filter expresion for a search in tags column"""
+    def get_search_tag_expression(cls, tags: list[Tag]) -> Expression | None:
+        """Get the filter expresion for a search in tags column.
+
+        Return None if no expression was built (empty tag list)."""
         query_builder: ExpressionBuilder = ExpressionBuilder()
         for tag in tags:
             if tag.value:

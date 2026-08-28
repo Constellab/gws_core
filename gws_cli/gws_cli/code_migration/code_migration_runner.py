@@ -13,7 +13,6 @@ import os
 import traceback
 
 import typer
-
 from gws_core.brick.brick_settings import BrickSettings
 from gws_core.core.db.version import Version
 
@@ -122,7 +121,7 @@ def compute_changes(
     for path in iter_python_files(root_dir):
         rel_path = os.path.relpath(path, base)
         try:
-            with open(path, "r", encoding="utf-8") as fp:
+            with open(path, encoding="utf-8") as fp:
                 original = fp.read()
         except OSError as err:
             summary.errors.append((rel_path, f"could not read file: {err}"))
@@ -171,6 +170,47 @@ def _apply_all(summary: CodemodRunSummary) -> int:
 # ---------------------------------------------------------------------------- #
 
 
+def _resolve_src_dir(brick_dir: str) -> str:
+    """Return the brick's ``src`` directory, aborting when it does not exist."""
+    src_dir = os.path.join(brick_dir, "src")
+    if not os.path.isdir(src_dir):
+        typer.echo(f"Error: no 'src' directory found in {brick_dir}", err=True)
+        raise typer.Exit(1)
+    return src_dir
+
+
+def _report_errors_and_warnings(summary: CodemodRunSummary) -> None:
+    """Print the files that could not be processed and the migrations left to do by hand."""
+    if summary.errors:
+        typer.echo("\nErrors (these files were left unchanged):", err=True)
+        for path, tb in summary.errors:
+            typer.echo(f"  - {path}:\n{tb}", err=True)
+
+    if summary.warnings:
+        typer.echo("\nManual migration required (not handled automatically):")
+        for path, warning in summary.warnings:
+            typer.echo(f"  - {path}: {warning}")
+
+
+def _print_pending_changes(summary: CodemodRunSummary) -> None:
+    """Print the list of files that would be updated, with their change count."""
+    typer.echo(
+        f"\n{len(summary.changes)} file(s) would be updated "
+        f"({summary.total_converted} change(s) total):"
+    )
+    for change in summary.changes:
+        typer.echo(f"  - {change.display_path} ({change.converted_count} change(s))")
+
+
+def _print_dry_run_diffs(summary: CodemodRunSummary) -> None:
+    """Print the full unified diff of every pending change (dry run output)."""
+    for change in summary.changes:
+        typer.echo("")
+        typer.echo(f"--- {change.display_path} ---")
+        typer.echo(change.unified_diff().rstrip("\n"))
+    typer.echo(f"\n(dry run - no files written; {len(summary.changes)} file(s) would change)")
+
+
 def run_code_migration(
     brick_dir: str,
     migration: type[CodeMigration],
@@ -186,10 +226,7 @@ def run_code_migration(
 
     Raises ``typer.Exit(1)`` on error.
     """
-    src_dir = os.path.join(brick_dir, "src")
-    if not os.path.isdir(src_dir):
-        typer.echo(f"Error: no 'src' directory found in {brick_dir}", err=True)
-        raise typer.Exit(1)
+    src_dir = _resolve_src_dir(brick_dir)
 
     typer.echo(f"\n>>> Code migration {migration.version}")
     typer.echo(f"    {migration.short_description}")
@@ -197,15 +234,7 @@ def run_code_migration(
 
     summary = compute_changes(src_dir, migration.get_codemods(), display_base=brick_dir)
 
-    if summary.errors:
-        typer.echo("\nErrors (these files were left unchanged):", err=True)
-        for path, tb in summary.errors:
-            typer.echo(f"  - {path}:\n{tb}", err=True)
-
-    if summary.warnings:
-        typer.echo("\nManual migration required (not handled automatically):")
-        for path, warning in summary.warnings:
-            typer.echo(f"  - {path}: {warning}")
+    _report_errors_and_warnings(summary)
 
     if not summary.changes:
         typer.echo("\nNothing to change.")
@@ -213,19 +242,10 @@ def run_code_migration(
             raise typer.Exit(1)
         return
 
-    typer.echo(
-        f"\n{len(summary.changes)} file(s) would be updated "
-        f"({summary.total_converted} change(s) total):"
-    )
-    for change in summary.changes:
-        typer.echo(f"  - {change.display_path} ({change.converted_count} change(s))")
+    _print_pending_changes(summary)
 
     if dry_run:
-        for change in summary.changes:
-            typer.echo("")
-            typer.echo(f"--- {change.display_path} ---")
-            typer.echo(change.unified_diff().rstrip("\n"))
-        typer.echo(f"\n(dry run - no files written; {len(summary.changes)} file(s) would change)")
+        _print_dry_run_diffs(summary)
         if summary.errors:
             raise typer.Exit(1)
         return

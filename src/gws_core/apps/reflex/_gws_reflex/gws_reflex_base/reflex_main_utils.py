@@ -3,7 +3,7 @@ import traceback
 import reflex as rx
 
 from .component.reflex_confirm_dialog_component import confirm_dialog
-from .reflex_exception import ReflexAppException
+from .reflex_exception import ReflexAppError
 from .reflex_main_state_base import (
     UNAUTHORIZED_ROUTE,
     ReflexMainStateBase,
@@ -92,7 +92,7 @@ def default_gws_env_frontend_handler(exception: Exception) -> None:
 def default_gws_env_backend_handler(exception: Exception) -> rx.event.EventSpec | None:
     """Default backend exception handler for GWS virtual environment apps.
 
-    Expected ``ReflexAppException`` errors are shown as a toast with their message.
+    Expected ``ReflexAppError`` errors are shown as a toast with their message.
     Unexpected errors are logged and shown as a generic message (or the full message
     in dev mode).
 
@@ -101,7 +101,7 @@ def default_gws_env_backend_handler(exception: Exception) -> rx.event.EventSpec 
     :return: Event spec to show an error toast
     :rtype: rx.event.EventSpec | None
     """
-    if isinstance(exception, ReflexAppException):
+    if isinstance(exception, ReflexAppError):
         if exception.show_as == "info":
             return rx.toast.info(exception.detail, position="top-center")
         return rx.toast.error(exception.detail, position="top-center")

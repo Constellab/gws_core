@@ -1,4 +1,6 @@
 
+from typing import cast
+
 from gws_core.impl.robot.robot_protocol import CreateSimpleRobot, MoveSimpleRobot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.process.process_model import ProcessModel
@@ -50,16 +52,20 @@ class TestTaskInputModel(BaseTestCase):
         ################################ CHECK TASK INPUT ################################
         # Check if the Input resource was set
         output: ProcessModel = scenario._scenario.protocol_model.get_process("output")
+        output_resource_model = output.inputs.get_resource_model("resource")
+        assert output_resource_model is not None
         task_inputs: list[TaskInputModel] = list(
-            TaskInputModel.get_by_resource_model(output.inputs.get_resource_model("resource").id)
+            TaskInputModel.get_by_resource_model(output_resource_model.id)
         )
         self.assertEqual(len(task_inputs), 1)
         self.assertEqual(task_inputs[0].is_interface, False)
         self.assertEqual(task_inputs[0].port_name, "resource")
 
         # Check the TaskInput with a sub process and a resource that is an interface
-        sub_travel: ProtocolModel = scenario._scenario.protocol_model.get_process("sub_travel")
-        sub_move: TaskModel = sub_travel.get_process("move")
+        sub_travel = cast(
+            ProtocolModel, scenario._scenario.protocol_model.get_process("sub_travel")
+        )
+        sub_move = cast(TaskModel, sub_travel.get_process("move"))
         task_inputs = list(TaskInputModel.get_by_task_model(sub_move.id))
         self.assertEqual(len(task_inputs), 1)
         self.assertEqual(task_inputs[0].is_interface, True)
@@ -73,7 +79,9 @@ class TestTaskInputModel(BaseTestCase):
         scenario_2.run()
 
         task_input: TaskInputModel = TaskInputModel.get_by_scenario(scenario_1._scenario.id).first()
-        self.assertIsNotNone(task_input)
+        assert task_input is not None
+        assert task_input.resource_model is not None
+        assert task_input.task_model is not None
         self.assertEqual(TaskInputModel.get_by_scenario(scenario_1._scenario.id).count(), 1)
         self.assertEqual(
             TaskInputModel.get_by_resource_model(task_input.resource_model.id).count(), 1
@@ -90,4 +98,5 @@ class TestTaskInputModel(BaseTestCase):
         task_input = TaskInputModel.get_other_scenarios(
             [task_input.resource_model.id], scenario_1._scenario.id
         ).first()
+        assert task_input.scenario is not None
         self.assertEqual(task_input.scenario.id, scenario_3._scenario.id)

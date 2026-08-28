@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import requests
 
 from gws_core.core.classes.file_downloader import FileDownloader
@@ -130,7 +132,7 @@ class LabShareResourceDownloader(ResourceDownloader):
 
         response = requests.get(self.resource_info_url, timeout=60)
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise Exception("Error while getting information of the resource: " + response.text)
         shared_entity_info = ShareResourceInfoReponseDTO.from_json(response.json())
 
@@ -192,7 +194,7 @@ class LabShareZipRouteDownloader(ResourceDownloader):
 
         response = requests.post(url, headers=self.headers, timeout=60 * 30)
 
-        if response.status_code != 200:
+        if response.status_code != HTTPStatus.OK:
             raise Exception("Error while zipping the resource: " + response.text)
 
         zip_response = ShareResourceZippedResponseDTO.from_json(response.json())

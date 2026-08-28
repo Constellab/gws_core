@@ -29,7 +29,8 @@ class TestUser(BaseTestCase):
         )
         UserService.create_or_update_user_dto(user_dto)
 
-        user_db: User = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
+        user_db = UserService.get_user_by_id("06866542-f089-46dc-b57f-a11e25a23aa5")
+        assert user_db is not None
 
         self.assertEqual(user_db.email, "test_mail@gencovery.com")
         self.assertEqual(user_db.first_name, "Firstname test")

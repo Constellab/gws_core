@@ -1,8 +1,9 @@
+# pyright: reportUndefinedVariable=false
 # This is a snippet template for a Python agent.
 import pandas
 
 # Do the job here ...
-data = pandas.read_csv(source_paths[0], header=0, index_col=0, sep=",")
+data = pandas.read_csv(source_paths[0], header=0, index_col=0, sep=",")  # noqa: F821
 
 # transform the data
 result = data.transpose()

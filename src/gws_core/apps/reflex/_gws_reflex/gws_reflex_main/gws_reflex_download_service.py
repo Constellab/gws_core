@@ -168,6 +168,10 @@ class ReflexDownloadService:
     @classmethod
     def _backend_download_url(cls, token: str) -> str:
         # Read lazily so launchers that set the var after import still work.
-        # GWS_REFLEX_API_URL is set by gws_core's reflex_process launcher.
+        # GWS_REFLEX_API_URL is set by gws_core's reflex_process launcher. The URL is
+        # generated server-side at runtime (never baked into the shared frontend
+        # build), so the instance's absolute -back URL is fine here. Note the route is
+        # served by the api_transformer, which reflex mounts at root — it is NOT under
+        # REFLEX_BACKEND_PATH like the reflex endpoints.
         backend_url = (os.environ.get("GWS_REFLEX_API_URL") or "").rstrip("/")
         return f"{backend_url}{cls.ROUTE_PREFIX}/{quote(token)}"

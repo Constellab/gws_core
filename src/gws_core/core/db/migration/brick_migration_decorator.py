@@ -43,7 +43,7 @@ def brick_migration(
 
         try:
             version_obj = Version(version)
-        except:
+        except Exception:
             BrickLogService.log_brick_error(
                 class_,
                 f"The version '{version}' used in brick_migration decorator on class '{class_.__name__}' is invalid",

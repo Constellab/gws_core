@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     ConfigParams,
@@ -27,7 +29,7 @@ from gws_core.test.data_provider import DataProvider
 
 @resource_decorator(unique_name="ForSearch")
 class ForSearch(Resource):
-    searchable_text: str = RField(storage=RFieldStorage.DATABASE)
+    searchable_text: str = cast(str, RField(storage=RFieldStorage.DATABASE))
 
     @classmethod
     def create(cls, text) -> "ForSearch":
@@ -75,7 +77,7 @@ class TestResourceModel(BaseTestCase):
         # Create a scenario and a task
         scenario: ScenarioProxy = ScenarioProxy()
         scenario.get_protocol().add_process(ForSearchCreate, "facto")
-        task: TaskProxy = scenario.get_protocol().get_process("facto")
+        task: TaskProxy = scenario.get_protocol().get_task("facto")
 
         self._create_resource(
             "this is information about a great banana",
@@ -171,7 +173,7 @@ class TestResourceModel(BaseTestCase):
         return SearchFilterCriteria(key="data", operator=SearchOperator.MATCH, value=value)
 
     def _create_resource(
-        self, text: str, origin: ResourceOrigin, task: TaskModel = None
+        self, text: str, origin: ResourceOrigin, task: TaskModel | None = None
     ) -> ResourceModel:
         for_search: ForSearch = ForSearch.create(text)
         resource_model = ResourceModel.from_resource(for_search, origin=ResourceOrigin.UPLOADED)

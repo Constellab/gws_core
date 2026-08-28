@@ -20,7 +20,7 @@ class ProtocolTyping(Typing):
     """
 
     # Sub type of the object, types will be differents based on object type
-    object_sub_type = NullableCharField(max_length=20)
+    object_sub_type: NullableCharField = NullableCharField(max_length=20)
 
     _object_type: TypingObjectType = "PROTOCOL"
 
@@ -33,7 +33,7 @@ class ProtocolTyping(Typing):
         cls, graph: dict, human_name: str, short_description: str | None = None
     ) -> "ProtocolTyping":
         # retrieve the protocol typing to copy info from it
-        protocol_typing: Typing = Typing.get_by_object_type(Protocol)
+        protocol_typing: Typing = Typing.get_by_model_type(Protocol)
 
         typing = ProtocolTyping(
             model_type=protocol_typing.model_type,
@@ -58,7 +58,7 @@ class ProtocolTyping(Typing):
         )
 
         # retrieve the task python type
-        model_t: type[Protocol] = self.get_type()
+        model_t: type[Protocol] | None = self.get_type()
 
         if self.object_sub_type == "PROTOCOL" and model_t:
             protocol: Protocol = model_t.instantiate_protocol()

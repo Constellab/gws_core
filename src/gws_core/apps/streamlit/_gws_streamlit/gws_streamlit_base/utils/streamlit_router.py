@@ -23,7 +23,7 @@ class StreamlitRouter:
     :rtype: _type_
     """
 
-    pages: dict[str, StreamlitPage] | None = None
+    pages: dict[str, StreamlitPage]
 
     SESSION_KEY = "__gws_streamlit_router__"
 
@@ -58,7 +58,11 @@ class StreamlitRouter:
         """
 
         page_ = st.Page(page_function, title=title, icon=icon, url_path=url_path, default=default)
-        streamlit_page = StreamlitPage(page=page_, url_path=url_path, hidden=hide_from_sidebar)
+        # use the url path resolved by streamlit, it is derived from the function name when
+        # no url_path is provided
+        streamlit_page = StreamlitPage(
+            page=page_, url_path=page_.url_path, hidden=hide_from_sidebar
+        )
         self.pages[page_.url_path] = streamlit_page
 
         # save the page in the session state
@@ -66,7 +70,7 @@ class StreamlitRouter:
         return streamlit_page
 
     def run(self):
-        streamlit_pages = [page for page in self.pages.values()]
+        streamlit_pages = list(self.pages.values())
         hidden_pages = [page.url_path for page in streamlit_pages if page.hidden]
         self._hide_pages_from_sidebar(hidden_pages)
 

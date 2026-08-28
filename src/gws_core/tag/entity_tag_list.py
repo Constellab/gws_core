@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.tag.entity_tag import EntityTag
@@ -67,7 +69,7 @@ class EntityTagList:
         """Return the value of the first tag with the given key, or default if not found."""
         tag = self.get_first_tag_by_key(tag_key)
         if tag is not None:
-            return tag.get_tag_value()
+            return cast(str, tag.get_tag_value())
         return default
 
     def has_tag_key(self, tag_key: str) -> bool:

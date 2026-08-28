@@ -7,7 +7,7 @@ from .shared_entity_info import SharedEntityInfo
 
 
 class SharedResource(SharedEntityInfo):
-    entity = TypedForeignKeyField(ResourceModel, backref="+", on_delete="CASCADE")
+    entity: TypedForeignKeyField[ResourceModel] = TypedForeignKeyField(ResourceModel, backref="+", on_delete="CASCADE")
 
     def get_external_object_url(self) -> str | None:
         """Build the URL of the external resource on the other lab."""

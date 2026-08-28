@@ -1,6 +1,6 @@
 from collections.abc import Callable
 from enum import Enum
-from typing import Any, Generic
+from typing import Any, Generic, cast
 
 from peewee import Expression, Field, FloatField, IntegerField, ModelSelect, Ordering
 from playhouse.mysql_ext import Match
@@ -53,7 +53,7 @@ class SearchFilterCriteria(BaseModelDTO):
 class SearchSortCriteria(BaseModelDTO):
     key: str
     direction: SearchDirection
-    nullManagement: SearchOrderNullOption | None = SearchOrderNullOption.LAST
+    nullManagement: SearchOrderNullOption | None = SearchOrderNullOption.LAST  # noqa: N815
 
 
 class SearchJoin(BaseModelDTO):
@@ -70,8 +70,8 @@ class SearchParams(BaseModelDTO):
     :type TypedDict: [type]
     """
 
-    filtersCriteria: list[SearchFilterCriteria] = []
-    sortsCriteria: list[SearchSortCriteria] | None = []
+    filtersCriteria: list[SearchFilterCriteria] = []  # noqa: N815
+    sortsCriteria: list[SearchSortCriteria] | None = []  # noqa: N815
 
     def add_filter_criteria(
         self, key: str, operator: SearchOperator, value: Any
@@ -300,7 +300,28 @@ class SearchBuilder(Generic[ModelType]):
 
     def _get_expression(
         self, operator: SearchOperator, field: Field, value: Any
-    ) -> Expression:
+    ) -> Expression | None:
+        """Build the peewee expression matching the operator.
+
+        Dispatches to the per-family builders below. Returns None when the
+        operator is not handled by any of them (same as before: an unknown
+        operator produced no expression).
+        """
+        expression = self._get_comparison_expression(operator, field, value)
+
+        if expression is None:
+            expression = self._get_text_expression(operator, field, value)
+
+        if expression is None:
+            expression = self._get_set_expression(operator, field, value)
+
+        return expression
+
+    def _get_comparison_expression(
+        self, operator: SearchOperator, field: Field, value: Any
+    ) -> Expression | None:
+        """Build the expression of a scalar comparison operator
+        (EQ, NEQ, LT, LE, GT, GE). Returns None for any other operator."""
         if operator == SearchOperator.EQ:
             return field == value
         elif operator == SearchOperator.NEQ:
@@ -313,13 +334,35 @@ class SearchBuilder(Generic[ModelType]):
             return field > value
         elif operator == SearchOperator.GE:
             return field >= value
-        elif operator == SearchOperator.CONTAINS:
+
+        return None
+
+    def _get_text_expression(
+        self, operator: SearchOperator, field: Field, value: Any
+    ) -> Expression | None:
+        """Build the expression of a text operator
+        (CONTAINS, START_WITH, END_WITH, MATCH). Returns None for any other
+        operator."""
+        if operator == SearchOperator.CONTAINS:
             return field.contains(value)
         elif operator == SearchOperator.START_WITH:
             return field.startswith(value)
         elif operator == SearchOperator.END_WITH:
             return field.endswith(value)
-        elif operator == SearchOperator.IN:
+        elif operator == SearchOperator.MATCH:
+            # Match returns a NodeList, which peewee accepts wherever an
+            # Expression is expected
+            return cast(Expression, Match((field), value, modifier="IN BOOLEAN MODE"))
+
+        return None
+
+    def _get_set_expression(
+        self, operator: SearchOperator, field: Field, value: Any
+    ) -> Expression | None:
+        """Build the expression of a set / nullity / range operator
+        (IN, NOT_IN, NULL, NOT_NULL, BETWEEN). Returns None for any other
+        operator."""
+        if operator == SearchOperator.IN:
             return field.in_(value)
         elif operator == SearchOperator.NOT_IN:
             return field.not_in(value)
@@ -327,7 +370,7 @@ class SearchBuilder(Generic[ModelType]):
             return field.is_null(True)
         elif operator == SearchOperator.NOT_NULL:
             return field.is_null(False)
-        elif operator == SearchOperator.MATCH:
-            return Match((field), value, modifier="IN BOOLEAN MODE")
         elif operator == SearchOperator.BETWEEN:
             return field.between(value[0], value[1])
+
+        return None

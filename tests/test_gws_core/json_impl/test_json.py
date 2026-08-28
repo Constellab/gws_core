@@ -1,19 +1,18 @@
 import json
-import os
+from typing import cast
 
 from gws_core import JSONDict
 from gws_core.config.config_params import ConfigParams
 from gws_core.core.utils.json_helper import JSONHelper
-from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file import File
 from gws_core.impl.json.json_tasks import JSONExporter, JSONImporter
 from gws_core.test.base_test_case_light import BaseTestCaseLight
 from gws_core.test.data_provider import DataProvider
-from numpy import NaN, inf
+from numpy import inf, nan
 
 
 class ATest:
-    a_test: str = None
+    a_test: str
 
     def __init__(self, a_test: str) -> None:
         self.a_test = a_test
@@ -26,7 +25,7 @@ class ATest:
 class TestJson(BaseTestCaseLight):
     def test_importer(self):
         file_path = DataProvider.get_test_data_path("sample.json")
-        json_dict: JSONDict = JSONImporter.call(File(file_path))
+        json_dict = cast(JSONDict, JSONImporter.call(File(file_path)))
         json_ = {}
         with open(file_path, encoding="utf-8") as file_path:
             json_ = json.load(file_path)
@@ -34,31 +33,30 @@ class TestJson(BaseTestCaseLight):
         self.assertEqual(json_, json_dict.data)
 
     def test_exporter(self):
-        dict_ = {"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")}
+        dict_ = {"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")}
 
         json_dict = JSONDict(dict_)
-        file_path = os.path.join(Settings.make_temp_dir(), "test_exporter.json")
 
-        file: File = JSONExporter.call(json_dict)
+        file = cast(File, JSONExporter.call(json_dict))
 
         json_ = {}
-        with open(file.path, encoding="utf-8") as file_path:
-            json_ = json.load(file_path)
+        with open(file.path, encoding="utf-8") as json_file:
+            json_ = json.load(json_file)
 
         self.assertEqual(json_, {"hello": 123, "numpy": None, "inf": None, "a": "hello"})
 
     def test_dict_to_json(self):
         self.assertEqual(
             JSONHelper.convert_dict_to_json(
-                {"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")}
+                {"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")}
             ),
             {"hello": 123, "numpy": None, "inf": None, "a": "hello"},
         )
 
-        self.assertEqual(JSONHelper.convert_dict_to_json("dict_"), "dict_")
-        self.assertEqual(JSONHelper.convert_dict_to_json(12), 12)
+        self.assertEqual(JSONHelper.convert_dict_to_json(cast(dict, "dict_")), "dict_")
+        self.assertEqual(JSONHelper.convert_dict_to_json(cast(dict, 12)), 12)
 
-        dict_ = JSONDict({"hello": 123, "numpy": NaN, "inf": inf, "a": ATest(a_test="hello")})
+        dict_ = JSONDict({"hello": 123, "numpy": nan, "inf": inf, "a": ATest(a_test="hello")})
         self.assertEqual(
             dict_.default_view(ConfigParams()).data_to_dict(ConfigParams()),
             {"hello": 123, "numpy": None, "inf": None, "a": "hello"},

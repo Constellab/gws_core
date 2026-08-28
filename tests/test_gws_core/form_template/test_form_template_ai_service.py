@@ -86,6 +86,7 @@ class TestFormTemplateAiService(BaseTestCase):
             )
         self.assertEqual(result.expression, "@mass / @bogus")
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("bogus", result.validation.error)
 
     def test_aggregate_inside_paramset_is_invalid(self):
@@ -100,6 +101,7 @@ class TestFormTemplateAiService(BaseTestCase):
                 ),
             )
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("aggregate", result.validation.error)
 
     def test_syntax_error_returns_invalid(self):
@@ -111,6 +113,7 @@ class TestFormTemplateAiService(BaseTestCase):
                 GenerateComputedParamDTO(description="broken"),
             )
         self.assertFalse(result.validation.valid)
+        assert result.validation.error is not None
         self.assertIn("Invalid expression", result.validation.error)
 
     # ------------------------------------------------------------------ #
@@ -224,40 +227,38 @@ class TestFormTemplateAiService(BaseTestCase):
 
     def test_empty_ai_response_raises_bad_request(self):
         template, version_id = self._template_with_scalars()
-        with patch(_GPT_TARGET, return_value="   "):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_computed_param_expression(
-                    template.id,
-                    version_id,
-                    GenerateComputedParamDTO(description="density"),
-                )
+        with patch(_GPT_TARGET, return_value="   "), self.assertRaises(BadRequestException):
+            FormTemplateAiService.generate_computed_param_expression(
+                template.id,
+                version_id,
+                GenerateComputedParamDTO(description="density"),
+            )
 
     def test_unknown_param_set_key_raises_bad_request(self):
         template, version_id = self._template_with_scalars()
-        with patch(_GPT_TARGET, return_value="@mass"):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_computed_param_expression(
-                    template.id,
-                    version_id,
-                    GenerateComputedParamDTO(
-                        description="x", param_set_key="not_a_paramset"
-                    ),
-                )
+        with patch(_GPT_TARGET, return_value="@mass"), self.assertRaises(BadRequestException):
+            FormTemplateAiService.generate_computed_param_expression(
+                template.id,
+                version_id,
+                GenerateComputedParamDTO(
+                    description="x", param_set_key="not_a_paramset"
+                ),
+            )
 
     def test_param_set_key_that_is_not_a_paramset_raises(self):
         template, version_id = self._template_with_scalars()
-        with patch(_GPT_TARGET, return_value="@mass"):
-            with self.assertRaises(BadRequestException):
-                FormTemplateAiService.generate_computed_param_expression(
-                    template.id,
-                    version_id,
-                    GenerateComputedParamDTO(description="x", param_set_key="mass"),
-                )
+        with patch(_GPT_TARGET, return_value="@mass"), self.assertRaises(BadRequestException):
+            FormTemplateAiService.generate_computed_param_expression(
+                template.id,
+                version_id,
+                GenerateComputedParamDTO(description="x", param_set_key="mass"),
+            )
 
     def test_works_on_draft_version(self):
         # The version is left as DRAFT — the editor's natural state when authoring.
         template, version_id = self._template_with_scalars()
         version = FormTemplateVersion.get_by_id(version_id)
+        assert version is not None
         self.assertEqual(version.status, FormTemplateVersionStatus.DRAFT)
         with patch(_GPT_TARGET, return_value="@mass + @volume"):
             result = FormTemplateAiService.generate_computed_param_expression(

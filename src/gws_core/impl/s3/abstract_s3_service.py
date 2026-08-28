@@ -80,7 +80,7 @@ class AbstractS3Service(ABC):
         """Abort a multipart upload and clean up temp files"""
 
     @staticmethod
-    def convert_query_param_string_to_dict(query_param: str) -> dict:
+    def convert_query_param_string_to_dict(query_param: str | None) -> dict:
         """Convert a query parameter string to a dictionary"""
         if not query_param:
             return {}

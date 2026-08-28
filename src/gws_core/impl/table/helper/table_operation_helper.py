@@ -1,14 +1,18 @@
 from enum import Enum
 from re import search, split, sub
+from typing import cast
 
-from numpy import NaN
-from pandas import DataFrame, option_context
+from numpy import nan
+from pandas import DataFrame, Series, option_context
 
 from gws_core.core.utils.numeric_helper import NumericHelper
 from gws_core.core.utils.string_helper import StringHelper
 from gws_core.impl.table.table import Table
 
 from ....core.utils.utils import Utils
+
+# An operation table holds at least an operation name column and a value column
+MIN_OPERATION_TABLE_COLUMNS = 2
 
 
 class TableOperationUnknownColumnOption(Enum):
@@ -36,7 +40,7 @@ class TableOperationHelper:
             raise Exception("The operations must be a list")
 
         clean_operations: list[str] = []
-        column_names = source.column_names
+        column_names = source.column_names or []
         for operation in operations:
             if "=" in operation:
                 clean_operations.append(operation)
@@ -53,7 +57,7 @@ class TableOperationHelper:
 
         eval_dataframe: DataFrame = dataframe.eval(str_operation, engine="python")
         with option_context("future.no_silent_downcasting", True):
-            eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, NaN).infer_objects(copy=False)
+            eval_dataframe = eval_dataframe.replace(TableOperationHelper._NaN_str, nan).infer_objects(copy=False)
         result_table: Table
 
         # if the result is append to the dataframe
@@ -65,13 +69,13 @@ class TableOperationHelper:
             index = 0
             for column in eval_dataframe:
                 if not result_table.column_exists(column):
-                    result_table.add_column(column, eval_dataframe[column], index)
+                    result_table.add_column(column, cast(Series, eval_dataframe[column]), index)
                     index += 1
         else:
             result_table = Table()
             for column in eval_dataframe:
                 if column not in dataframe:
-                    result_table.add_column(column, eval_dataframe[column])
+                    result_table.add_column(column, cast(Series, eval_dataframe[column]))
 
             # set the row names as the table was created empty
             result_table.set_all_row_names(source.row_names)
@@ -91,8 +95,8 @@ class TableOperationHelper:
     def column_mass_operations(
         table: Table,
         operation_df: DataFrame,
-        operation_name_column: str | None = None,
-        operation_calculations_column: str | None = None,
+        operation_name_column: str | int | None = None,
+        operation_calculations_column: str | int | None = None,
         replace_unknown_column: TableOperationUnknownColumnOption = TableOperationUnknownColumnOption.SET_RESULT_TO_NAN,
         keep_original_columns: bool = False,
     ) -> Table:
@@ -102,10 +106,10 @@ class TableOperationHelper:
         :type table: Table
         :param operation_df: _description_
         :type operation_df: DataFrame
-        :param operation_name_column: name of the column that contains the operations' names(takes first column if none), defaults to None
-        :type operation_name_column: str, optional
-        :param operation_column: name of the column that contains operation (takes second column if none), defaults to None
-        :type operation_column: str, optional
+        :param operation_name_column: name of the column (or its index) that contains the operations' names(takes first column if none), defaults to None
+        :type operation_name_column: str | int, optional
+        :param operation_column: name of the column (or its index) that contains operation (takes second column if none), defaults to None
+        :type operation_column: str | int, optional
         :param replace_unknown_column: Option to handle unknown columns, defaults to False
         :type replace_unknown_column: TableOperationUnknownColumnOption, optional
         :param keep_original_columns: If True, the original columns used for the calculations are added at the end of the table.
@@ -116,7 +120,7 @@ class TableOperationHelper:
         """
         operations: list[str] = []
 
-        if operation_df.shape[1] < 2:
+        if operation_df.shape[1] < MIN_OPERATION_TABLE_COLUMNS:
             raise Exception("The operation table must have at least 2 columns")
 
         # check operation_name_column
@@ -174,7 +178,7 @@ class TableOperationHelper:
                 continue
 
             # check if the column name exist and if not, replace it with '0'
-            if column_name not in table.column_names:
+            if column_name not in (table.column_names or []):
                 return True
 
         return False
@@ -196,7 +200,7 @@ class TableOperationHelper:
                 continue
 
             # check if the column name exist and if not, replace it with '0'
-            if column_name not in table.column_names:
+            if column_name not in (table.column_names or []):
                 # replace the column name with '0' using \b to word delimiter
                 clean_operation = sub(rf"\b{column_name}\b", "0", clean_operation)
 
@@ -205,7 +209,7 @@ class TableOperationHelper:
 
         # Check for division by zero patterns
         if TableOperationHelper._division_by_literal_zero(clean_operation):
-            return float("inf")
+            return str(float("inf"))
 
         return clean_operation
 

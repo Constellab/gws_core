@@ -1,6 +1,6 @@
 import json
 import os
-from typing import Any, AnyStr
+from typing import Any, AnyStr, cast
 
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import IntParam
@@ -20,6 +20,41 @@ from ...resource.view.view import View
 from ...resource.view.view_decorator import view
 from ..text.text_view import SimpleTextView, TextView, TextViewData
 from .fs_node import FSNode
+
+_ICON_BY_EXTENSION: dict[str, str] = {
+    # tabular files
+    "csv": "csv_file_icon",
+    "xls": "csv_file_icon",
+    "xlsx": "csv_file_icon",
+    # images
+    "jpeg": "image",
+    "jpg": "image",
+    "png": "image",
+    "gif": "image",
+    "svg": "image",
+    # audio
+    "mp3": "audiotrack",
+    "wav": "audiotrack",
+    "flac": "audiotrack",
+    "aac": "audiotrack",
+    "ogg": "audiotrack",
+    "wma": "audiotrack",
+    "m4a": "audiotrack",
+    "aiff": "audiotrack",
+    "alac": "audiotrack",
+    # documents
+    "txt": "txt_file_icon",
+    "pdf": "pdf_file_icon",
+    "doc": "docx_file_icon",
+    "docx": "docx_file_icon",
+    "json": "json_file_icon",
+    "ppt": "pptx_file_icon",
+    "pptx": "pptx_file_icon",
+    # others
+    "zip": "zip_file_icon",
+    "py": "py_file_icon",
+}
+"""Icon name to use for each known (lower case) file extension"""
 
 
 @resource_decorator("File", human_name="File", style=TypingStyle.material_icon("description"))
@@ -218,7 +253,7 @@ class File(FSNode):
         human_name="View as JSON",
         short_description="View the complete resource as json",
     )
-    def view_as_json(self, params: ConfigParams) -> JSONView:
+    def view_as_json(self, params: ConfigParams) -> JSONView | SimpleTextView:
         self.check_if_exists()
         # if the file is not readable,don't open the file and return the main view
         if not self.is_readable():
@@ -228,7 +263,7 @@ class File(FSNode):
         try:
             json_: Any = json.loads(content)
             return JSONView(json_)
-        except:
+        except Exception:
             pass
 
         # rollback to string view if not convertible to json
@@ -244,7 +279,7 @@ class File(FSNode):
     )
     def view_content_as_str(self, params: ConfigParams) -> SimpleTextView:
         self.check_if_exists()
-        return self.get_view_by_lines(params.get("line_number"))
+        return self.get_view_by_lines(params.get_value("line_number"))
 
     @view(
         view_type=View,
@@ -257,7 +292,7 @@ class File(FSNode):
     )
     def default_view(self, params: ConfigParams) -> View:
         self.check_if_exists()
-        return self.get_default_view(params.get("line_number"))
+        return self.get_default_view(params.get_value("line_number"))
 
     def get_default_view(self, page: int = 1) -> View:
         """
@@ -270,40 +305,65 @@ class File(FSNode):
         """
         if page is None:
             page = 1
+
         # specific extension
-        if self.is_image():
-            return ImageView.from_file_model_id(self.get_model_id(), self.name, self.uid)
-        if self.is_audio():
-            return AudioView.from_local_file(self.path)
-        if self.extension == "html":
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
-        if self.extension == "pdf":
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
-        if self.is_video():
-            return IFrameView.from_file_model_id(self.get_model_id(), self.name, self.uid)
-        if self.extension == "md":
-            return MarkdownView(self.read())
+        file_type_view = self._get_view_from_file_type()
+        if file_type_view is not None:
+            return file_type_view
 
         # if the file is not readable, don't open the file and return the main view
         if not self.is_readable():
             return TextView("This file is not readable, please import or download it to view it")
 
         if self.is_json():
-            try:
-                # try to load the json
-                json_: Any = json.loads(self.read())
-
-                # If the json, is a json of a view
-                if View.json_is_from_view(json_):
-                    return AnyView(json_)
-
-                # return content as json
-                return JSONView(json_)
-            except:
-                pass
+            json_view = self._get_view_from_json_content()
+            if json_view is not None:
+                return json_view
 
         # In the worse case, return the file content as string
         return self.get_view_by_lines(page)
+
+    def _get_view_from_file_type(self) -> View | None:
+        """
+        Get the view dedicated to the type of the file (image, audio, video, html, pdf, markdown).
+
+        :return: the view matching the file type, None if the file type has no dedicated view
+        :rtype: View | None
+        """
+        if self.is_image():
+            return ImageView.from_file_model_id(
+                cast(str, self.get_model_id()), cast(str, self.name), self.uid
+            )
+        if self.is_audio():
+            return AudioView.from_local_file(self.path)
+        if self.extension in ["html", "pdf"] or self.is_video():
+            return IFrameView.from_file_model_id(
+                cast(str, self.get_model_id()), cast(str, self.name), self.uid
+            )
+        if self.extension == "md":
+            return MarkdownView(self.read())
+
+        return None
+
+    def _get_view_from_json_content(self) -> View | None:
+        """
+        Get the view of the file content parsed as json.
+
+        :return: the view of the json content, None if the content is not a valid json
+        :rtype: View | None
+        """
+        try:
+            # try to load the json
+            json_: Any = json.loads(self.read())
+
+            # If the json, is a json of a view
+            if View.json_is_from_view(json_):
+                return AnyView(json_)
+
+            # return content as json
+            return JSONView(json_)
+        except Exception:
+            return None
 
     def get_view_by_lines(self, start_line: int = 1) -> SimpleTextView:
         end_line = start_line + self.TEXT_VIEW_NB_LINES - 1
@@ -337,27 +397,4 @@ class File(FSNode):
         if not extension:
             return None
 
-        extension = extension.lower()
-
-        if extension in ["csv", "xls", "xlsx"]:
-            return "csv_file_icon"
-        if extension in ["jpeg", "jpg", "png", "gif", "svg"]:
-            return "image"
-        if extension in ["mp3", "wav", "flac", "aac", "ogg", "wma", "m4a", "aiff", "alac"]:
-            return "audiotrack"
-        if extension == "txt":
-            return "txt_file_icon"
-        if extension == "pdf":
-            return "pdf_file_icon"
-        if extension in ["doc", "docx"]:
-            return "docx_file_icon"
-        if extension == "json":
-            return "json_file_icon"
-        if extension in ["ppt", "pptx"]:
-            return "pptx_file_icon"
-        if extension == "zip":
-            return "zip_file_icon"
-        if extension == "py":
-            return "py_file_icon"
-
-        return None
+        return _ICON_BY_EXTENSION.get(extension.lower())

@@ -16,11 +16,7 @@ from gws_core.form_template.form_template_service import FormTemplateService
 from gws_core.form_template.form_template_version import FormTemplateVersion
 from gws_core.impl.rich_text.block.rich_text_block import RichTextBlockTypeStandard
 from gws_core.impl.rich_text.block.rich_text_block_form import RichTextBlockForm
-from gws_core.impl.rich_text.block.rich_text_block_form_template import (
-    RichTextBlockFormTemplate,
-)
 from gws_core.impl.rich_text.rich_text import RichText
-from gws_core.impl.rich_text.rich_text_types import RichTextBlock
 from gws_core.note.note_dto import NoteInsertTemplateDTO, NoteSaveDTO
 from gws_core.note.note_form_model import NoteFormModel
 from gws_core.note.note_service import NoteService
@@ -55,7 +51,7 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
         form_blocks = rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM)
         self.assertEqual(len(form_blocks), 1)
 
-        data: RichTextBlockForm = form_blocks[0].get_data()
+        data = form_blocks[0].get_data(RichTextBlockForm)
         self.assertTrue(data.is_owner)
         new_form = Form.get_by_id_and_check(data.form_id)
         self.assertEqual(new_form.status, FormStatus.DRAFT)
@@ -81,7 +77,7 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
         rich_text = note.get_content_as_rich_text()
         form_blocks = rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM)
         self.assertEqual(len(form_blocks), 2)
-        ids = {b.get_data().form_id for b in form_blocks}
+        ids = {b.get_data(RichTextBlockForm).form_id for b in form_blocks}
         self.assertEqual(len(ids), 2)
         self.assertEqual(len(NoteFormModel.get_by_note(note.id)), 2)
 
@@ -124,7 +120,7 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
         rich_text = note.refresh().get_content_as_rich_text()
         form_blocks = rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM)
         self.assertEqual(len(form_blocks), 1)
-        self.assertTrue(form_blocks[0].get_data().is_owner)
+        self.assertTrue(form_blocks[0].get_data(RichTextBlockForm).is_owner)
         self.assertEqual(len(NoteFormModel.get_by_note(note.id)), 1)
 
     def test_archived_version_falls_back_to_current_published(self):
@@ -152,7 +148,9 @@ class TestNoteTemplateFormInstantiation(BaseTestCase):
         rich_text = note.get_content_as_rich_text()
         form_blocks = rich_text.get_blocks_by_type(RichTextBlockTypeStandard.FORM)
         self.assertEqual(len(form_blocks), 1)
-        new_form = Form.get_by_id_and_check(form_blocks[0].get_data().form_id)
+        new_form = Form.get_by_id_and_check(
+            form_blocks[0].get_data(RichTextBlockForm).form_id
+        )
         self.assertEqual(new_form.template_version_id, v2.id)
 
     def test_archived_with_no_published_aborts(self):

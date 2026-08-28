@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from gws_core import DataframeFilterHelper
 from gws_core.impl.table.helper.dataframe_data_filter_helper import DataframeDataFilterHelper
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table_filter_helper
@@ -15,13 +15,14 @@ class TestTableFilterHelper(TestCase):
                 "City": [8, 6, 4, 2],
                 "Weight": [8, 6, 4, 2],
             },
-            index=["Luc", "Lea", "Mickeal", "Fred"],
+            index=Index(["Luc", "Lea", "Mickeal", "Fred"]),
         )
 
         # filter by row name
-        result: DataFrame = DataframeFilterHelper.filter_by_axis_names(
+        result = DataframeFilterHelper.filter_by_axis_names(
             data=initial_df, axis="row", filters=[{"name": "L.*", "is_regex": True}]
         )
+        assert result is not None
         self.assertEqual(result.index.tolist(), ["Luc", "Lea"])
         self.assertEqual(result.columns.tolist(), ["Age", "Sex", "City", "Weight"])
 
@@ -29,6 +30,7 @@ class TestTableFilterHelper(TestCase):
         result = DataframeFilterHelper.filter_by_axis_names(
             data=initial_df, axis="column", filters=[{"name": "Cit.*", "is_regex": True}]
         )
+        assert result is not None
         self.assertEqual(result.index.tolist(), ["Luc", "Lea", "Mickeal", "Fred"])
         self.assertEqual(result.columns.tolist(), ["City"])
 
@@ -55,7 +57,7 @@ class TestTableFilterHelper(TestCase):
             data=initial_df, func="sum", comp=">=", value=8
         )
 
-        expected_result = DataFrame({"A": [1, 2], "B": [8, 6]}, index=[0, 1])
+        expected_result = DataFrame({"A": [1, 2], "B": [8, 6]}, index=Index([0, 1]))
         self.assertTrue(result.equals(expected_result))
 
     def test_table_filter_numeric_data(self):
@@ -65,14 +67,14 @@ class TestTableFilterHelper(TestCase):
         result = DataframeDataFilterHelper.filter_rows_numeric(
             data=initial_df, column_name_regex="A", comp=">=", value=3
         )
-        expected_result = DataFrame({"A": [3.0, 4.0], "B": [4.0, 2.0]}, index=[2.0, 3.0])
+        expected_result = DataFrame({"A": [3.0, 4.0], "B": [4.0, 2.0]}, index=Index([2.0, 3.0]))
         self.assertTrue(result.equals(expected_result))
 
         # filter rows where A and B columns are >= 3
         result = DataframeDataFilterHelper.filter_rows_numeric(
             data=initial_df, column_name_regex="*", comp=">=", value=3
         )
-        expected_result = DataFrame({"A": [3.0], "B": [4.0]}, index=[2])
+        expected_result = DataFrame({"A": [3.0], "B": [4.0]}, index=Index([2]))
         self.assertTrue(result.equals(expected_result))
 
         # filter columns where first row value is >= 3
@@ -91,7 +93,7 @@ class TestTableFilterHelper(TestCase):
         result = DataframeDataFilterHelper.filter_rows_text(
             data=initial_df, column_name_regex="A", comp="=", value="b"
         )
-        expected_result = DataFrame({"A": ["b"], "B": ["nice"]}, index=[1])
+        expected_result = DataFrame({"A": ["b"], "B": ["nice"]}, index=Index([1]))
         self.assertTrue(result.equals(expected_result))
 
         # filter rows where B columns value contains e
@@ -99,7 +101,7 @@ class TestTableFilterHelper(TestCase):
             data=initial_df, column_name_regex="B", comp="contains", value="e"
         )
         expected_result = DataFrame(
-            {"A": ["a", "b", "d"], "B": ["hello", "nice", "house"]}, index=[0, 1, 3]
+            {"A": ["a", "b", "d"], "B": ["hello", "nice", "house"]}, index=Index([0, 1, 3])
         )
         self.assertTrue(result.equals(expected_result))
 

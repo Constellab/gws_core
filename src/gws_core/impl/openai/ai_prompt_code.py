@@ -43,8 +43,8 @@ class AIPromptCode:
     PROMPT_PY_INTRO = "You are a developer assistant that generate code in python."
     PROMPT_R_INTRO = "You are a developer assistant that generate code in R."
 
-    chat: OpenAiChat | None = None
-    message_dispatcher: MessageDispatcher | None = None
+    chat: OpenAiChat
+    message_dispatcher: MessageDispatcher
 
     def __init__(self, chat: OpenAiChat, message_dispatcher: MessageDispatcher | None = None):
         self.chat = chat

@@ -76,11 +76,24 @@ Note: the `dev_config.json` simulate configuration values that would normally be
    - If you need to pass a custom argument, use `on_click=lambda: MyState.my_event(arg1, arg2)` or `on_click=lambda e: MyState.my_event(e, arg1, arg2)`.
 - Do not use state_auto_setters, it is deprecated. Define setters explicitly for state attributes that need them.
 - Error handling: `register_gws_reflex_app` installs a global backend exception handler that turns any exception raised in an `@rx.event` into a toast. So most of the time, DO NOT wrap state logic in try/except just to display an error, and do not keep an error field in the state. Instead:
-   - For a user-facing error (validation, business rule), `raise ReflexAppException("message")` (from `gws_reflex_base`); it is shown as an error toast (use `ReflexAppException(msg, show_as="info")` for an info toast). gws_core `BaseHTTPException` is toasted the same way.
+   - For a user-facing error (validation, business rule), `raise ReflexAppError("message")` (from `gws_reflex_base`); it is shown as an error toast (use `ReflexAppError(msg, show_as="info")` for an info toast). gws_core `BaseHTTPException` is toasted the same way.
    - For unexpected errors, let them propagate: the handler logs the stack trace and shows a generic toast (the full message in dev mode).
    - Only use try/except when you genuinely need to recover and continue, not merely to surface the error.
 - Dialogs should close when clicking outside by default. Add `on_interact_outside=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`.
 - Dialogs should close on Escape key by default. Add `on_escape_key_down=state.close_dialog` (or equivalent close handler) to `rx.dialog.content`. For `rx.alert_dialog`, this is already the default behavior.
+
+### Clickable table rows (navigate to a link on click)
+- To make a whole `rx.table.row` open a link, put a `style` dict with a `:hover` background and `cursor: pointer` on the row itself, plus a row-level `on_click` that redirects:
+  ```python
+  rx.table.row(
+      rx.table.cell(...),
+      rx.table.cell(...),
+      style={":hover": {"background_color": "var(--gray-3)"}, "cursor": "pointer"},
+      on_click=lambda: rx.redirect(f"/items/{item.id}"),
+  )
+  ```
+- Any interactive element inside that row (a menu, a button) must stop the click from bubbling to the row, or it will also navigate. Add `on_click=lambda: rx.stop_propagation` on the wrapping element (e.g. `rx.menu.content`), or pass `on_click=[rx.stop_propagation, real_handler]` on a single button.
+- Do not add row hover/click to a row whose action isn't navigation (e.g. a row that only downloads a file or opens a menu) — reserve this pattern for rows that open another page.
 
 ### GWS Core custom Reflex Components
 - Leverage the custom components and widgets provided by the `gws_reflex_main` module. More details in the `${GWS_CORE_SRC}/apps/reflex/_gws_reflex/gws_reflex_main/CLAUDE.md` file.
@@ -136,6 +149,21 @@ class MainState(rx.State):
 - `async check_authentication() -> bool`: Validates current authentication status
 - `is_dev_mode() -> bool`: Checks if running in development mode
 
+### `main_component` — the app init gate
+
+`main_component(*contents)` (from `gws_reflex_main`) wraps a page's content and is what runs the app's initialization: on mount it triggers the main state's auth flow (the `gws_code` → JWT exchange) and shows a spinner until it completes, then renders `contents`. `get_current_user()` / `get_resources()` / `authenticate_user()` only resolve once this has run.
+
+- **Every page must render its content through `main_component`.** A page that skips it (e.g. an index page that only does `rx.box(on_mount=rx.redirect(...))`) never runs the auth init, so any page it leads to loads before a user is resolved and raises `ReflexAppError("User not authenticated")`. Wrap the redirect too:
+
+```python
+@rx.page(route="/")
+def index() -> rx.Component:
+    # main_component so auth init runs before we navigate
+    return main_component(rx.box(on_mount=rx.redirect("/projects")))
+```
+
+- It also injects the GWS theme CSS (`include_theme_css=True` by default) and the shared confirm dialog. Call it once per page, at the top of the returned tree.
+
 ### Authentication: `AUTHENTICATED` vs `PUBLIC`
 
 An app has one access mode, chosen on the app resource when the task builds it:
@@ -163,7 +191,26 @@ Both modes behave the same in dev mode (`gws reflex run`): `AUTHENTICATED` fakes
 
 Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_LAUNCH_AND_AUTH.md`.
 
+### Compiling the App (check it builds)
+- To check that the app compiles without starting it: `gws reflex compile [DEV_CONFIG_FILE_PATH]`
+- **This is how you verify the app still works after modifying app code — use it instead of
+  starting the app.** It is much faster and it catches syntax errors, bad imports, invalid component
+  usage and broken computed vars (`@rx.var`), because the compile imports the app modules and
+  prerenders the pages.
+- Exit code is 0 on success (prints `App compiled successfully.`) and 1 on failure, with the
+  Python traceback pointing at the offending file and line.
+- It needs no database and no lab environment: the compile runs in build mode with a throwaway app
+  config, so it works even when the lab manager is unreachable.
+- Consequences of that isolation, so do not misread a successful compile: no resource is loaded
+  (`source_ids` is ignored) and no user is authenticated, so it proves the app **builds** rather
+  than that it behaves correctly with real data.
+- Add `--no-dry` to keep the generated `.web` output instead of discarding it (rarely needed).
+- Unrelated brick-loading errors from other bricks may appear in the logs; only the final
+  `App compiled successfully.` / `App compilation FAILED` line and the exit code decide the result.
+
 ### Running and Debugging the App
+- Only run the app if the user explicitly asks for it, or to investigate runtime behaviour a compile
+  cannot reveal. To simply check your changes are valid, use `gws reflex compile` above instead.
 - To run the app locally: `gws reflex run [DEV_CONFIG_FILE_PATH]` 
 - The app is available once the following log is print : `Running app in dev mode{env_txt}, DO NOT USE IN PRODUCTION. You can access the app at {url}`
 - During app start, check the console for any errors or warnings
@@ -171,15 +218,7 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
 - During development:
   - You can keep the app running to leverage hot reloading
   - Code changes will automatically refresh
-- Important: After completing all development work or capturing screenshots, terminate the app process
-
-### Test app in browser
-- ONLY IF THE USER EXPLICITLY REQUEST IT
-- To take a screen shot of the app and check browser console, use the `gws utils screenshot --url=[URL]` (in root folder of project) script.
-- The dev app must be running to use the screenshot utility, you can find the front url in the console logs of the app run process
-- The screenshot command print the path to the screenshot and console logs file
-- When taking a screenshot, check the logs of app (backend) run process to see if there are any errors. 
-- Optionally specify a route: `gws utils screenshot --route [ROUTE]` like `/config`
+- Important: After completing all development work, terminate the app process
 
 ## Development Workflow
 
@@ -195,11 +234,11 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
    - Integrate with GWS Core resources and tasks
    - Polish UI and add error handling
 
-4. **Test Thoroughly**: Run the application in development mode and verify all functionality works as expected.
+4. **Verify it compiles**: Run `gws reflex compile [DEV_CONFIG_FILE_PATH]` and fix every compile
+   error. This is how you check the app still works after your changes — do NOT start the app to
+   verify it.
 
-5. **Screen and Debug**: If necessary, use the screenshot utility to capture the app state and check for console errors.
-
-6. **Document**: Provide clear documentation on how to run and use the application.
+5. **Document**: Provide clear documentation on how to run and use the application.
 
 ## When to Seek Clarification
 
@@ -212,8 +251,10 @@ Full design (grants, cookies, gateway, nginx): `gws_core/src/gws_core/apps/APP_L
 ## Quality Assurance
 
 Before considering your work complete:
-- Verify the application runs without errors in development mode
-- Verify that state management and event handlers work correctly across interactions
+- Verify the app compiles: `gws reflex compile [DEV_CONFIG_FILE_PATH]` must exit 0. This is the
+  verification step — do not start the app to check your work.
+- Only run the app (`gws reflex run`) if the user explicitly asks for it, or if you need to
+  investigate runtime behaviour that a compile cannot reveal.
 
 ## Task
 

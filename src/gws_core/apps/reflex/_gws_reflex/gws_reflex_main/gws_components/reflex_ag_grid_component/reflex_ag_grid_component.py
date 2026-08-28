@@ -20,6 +20,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Literal
 
 import reflex as rx
+from reflex.event import EventCallback
 from reflex.vars.base import Var
 from reflex.vars.object import ObjectVar
 
@@ -223,7 +224,7 @@ def ag_grid_component(  # noqa: PLR0913 - a component factory legitimately forwa
     theme: AgGridTheme = _DEFAULT_THEME,
     enterprise: bool = False,
     cell_selection: Var[bool | dict] | bool | dict | None = None,
-    on_cell_selection_changed: rx.EventHandler | None = None,
+    on_cell_selection_changed: rx.EventHandler | EventCallback | None = None,
     auto_size_strategy: Var[dict | None] | dict | None = None,
     row_height: int | None = None,
     header_height: int | None = None,

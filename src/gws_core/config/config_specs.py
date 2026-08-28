@@ -1,7 +1,7 @@
 import copy
 import re
 from dataclasses import dataclass, field
-from typing import Any, ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
 from gws_core.config.config_change_dto import ConfigChangeAction, ConfigChangeEntry
 from gws_core.config.config_exceptions import MissingConfigsException, UnkownParamException
@@ -11,6 +11,9 @@ from gws_core.core.exception.exceptions.bad_request_exception import BadRequestE
 
 from .param.param_spec import ParamSpec
 from .param.param_types import ParamSpecDTO
+
+if TYPE_CHECKING:
+    from .param.param_set import ParamSet
 
 
 @dataclass
@@ -239,7 +242,7 @@ class ConfigSpecs:
         Empty list means all mandatories are set. Used by the form save flow
         to surface a precise list of what is missing on the SUBMITTED gate.
         """
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         if not self.specs:
             return []
@@ -252,20 +255,40 @@ class ConfigSpecs:
             value = (param_values or {}).get(key)
             display_name = spec.human_name or key
             if isinstance(spec, ParamSet) and spec.param_set is not None:
-                if not spec.optional and not value:
-                    missing.append(display_name)
-                    continue
-                if not isinstance(value, list):
-                    continue
-                for row_index, row in enumerate(value):
-                    if not isinstance(row, dict):
-                        continue
-                    for inner_missing in spec.param_set.get_missing_mandatory_paths(row):
-                        missing.append(f"{display_name}[{row_index}].{inner_missing}")
+                missing.extend(self._get_missing_paramset_paths(spec, display_name, value))
                 continue
             if not spec.optional and value is None:
                 missing.append(display_name)
 
+        return missing
+
+    @staticmethod
+    def _get_missing_paramset_paths(
+        spec: "ParamSet", display_name: str, value: Any
+    ) -> list[str]:
+        """Return the missing mandatory paths of a single ParamSet spec.
+
+        Recurses into the inner ConfigSpecs of every row of ``value``, prefixing
+        each inner path with ``<display_name>[<row_index>].``. A mandatory but
+        empty ParamSet yields its own display name instead (the whole set is
+        missing, so listing its inner fields would be noise).
+
+        :param spec: the ParamSet spec (its ``param_set`` must not be None)
+        :param display_name: human name of the ParamSet, used as path prefix
+        :param value: the submitted value for that ParamSet (expected: a list
+            of row dicts; anything else yields no missing path)
+        """
+        if not spec.optional and not value:
+            return [display_name]
+        if not isinstance(value, list):
+            return []
+
+        missing: list[str] = []
+        for row_index, row in enumerate(value):
+            if not isinstance(row, dict):
+                continue
+            for inner_missing in spec.param_set.get_missing_mandatory_paths(row):
+                missing.append(f"{display_name}[{row_index}].{inner_missing}")
         return missing
 
     def check_config_specs(self) -> None:
@@ -289,7 +312,7 @@ class ConfigSpecs:
                 )
         self._check_keys_recursive()
 
-        from gws_core.config.param.computed.computed_param_graph import (
+        from gws_core.config.param.computed.computed_param_graph import (  # noqa: PLC0415
             ComputedParamGraphChecker,
         )
 
@@ -298,7 +321,7 @@ class ConfigSpecs:
     def _check_keys_recursive(self) -> None:
         """Validate every spec key (shape + length), recursing into ParamSet
         inner specs. Raises on the first invalid key."""
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         for key, item in self.specs.items():
             key_error = self._spec_key_error(key)
@@ -400,7 +423,7 @@ class ConfigSpecs:
         Thin delegator to ComputedParamResolver.compute_all — see that method
         for the full contract.
         """
-        from gws_core.config.param.computed.computed_param_resolver import (
+        from gws_core.config.param.computed.computed_param_resolver import (  # noqa: PLC0415
             ComputedParamResolver,
         )
 
@@ -419,7 +442,7 @@ class ConfigSpecs:
         """
         # ParamSet imported lazily: param_set.py imports ConfigSpecs at its
         # module top, so a top-level import here would form a cycle.
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         if not values:
             return {} if values is None else values
@@ -469,7 +492,7 @@ class ConfigSpecs:
         if not values:
             return ValidateValuesResult(values={} if values is None else values)
 
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         result: ConfigParamsDict = {}
         errors: dict[str, str] = {}
@@ -524,7 +547,7 @@ class ConfigSpecs:
         keys into messages a user can read; the same shape is also handy for
         any other UI that needs a label for a stored field path.
         """
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         match = self._FIELD_KEY_RE.match(field_key)
         if match:
@@ -591,7 +614,7 @@ class ConfigSpecs:
         """
         # ParamSet imported lazily: param_set.py imports ConfigSpecs at its
         # module top, so a top-level import here would form a cycle.
-        from .param.param_set import ParamSet
+        from .param.param_set import ParamSet  # noqa: PLC0415
 
         old = old or {}
         new = new or {}

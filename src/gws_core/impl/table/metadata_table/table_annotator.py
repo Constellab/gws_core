@@ -88,8 +88,8 @@ class TableRowAnnotator(Task):
             self.log_info_message("Using metadata table first column as reference for annotation")
 
         table: Table = TableAnnotatorHelper.annotate_rows(
-            inputs["sample_table"],
-            inputs["metadata_table"],
+            inputs.get_resource("sample_table", Table),
+            inputs.get_resource("metadata_table", Table),
             reference_column,
             metadata_ref_column,
             use_table_row_names_as_ref,
@@ -175,8 +175,8 @@ class TableColumnAnnotator(Task):
             self.log_info_message("Using metadata table first column as reference for annotation")
 
         table: Table = TableAnnotatorHelper.annotate_columns(
-            inputs["sample_table"],
-            inputs["metadata_table"],
+            inputs.get_resource("sample_table", Table),
+            inputs.get_resource("metadata_table", Table),
             reference_row,
             metadata_ref_column,
             use_table_column_names_as_ref,

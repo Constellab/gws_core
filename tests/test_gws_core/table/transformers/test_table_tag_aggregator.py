@@ -2,7 +2,7 @@ from unittest import TestCase
 
 from gws_core import Table, TableTagAggregatorHelper
 from gws_core.test.base_test_case import BaseTestCase
-from pandas import DataFrame
+from pandas import DataFrame, Index
 
 
 # test_table_tag_aggregator
@@ -40,7 +40,7 @@ class TestTableTagAggregator(TestCase):
         )
 
         experted_table = DataFrame(
-            {"F1": [3.0, 2.0], "F2": [4.5, 8.5], "F3": [1.5, 3.0]}, index=["F", "M"]
+            {"F1": [3.0, 2.0], "F2": [4.5, 8.5], "F3": [1.5, 3.0]}, index=Index(["F", "M"])
         )
         self.assertTrue(experted_table.equals(grouped_table.get_data()))
         # check that the column tags are not affected
@@ -55,7 +55,7 @@ class TestTableTagAggregator(TestCase):
         )
 
         experted_table = Table(
-            DataFrame({"A": [8, 3, 13, 12], "B": [2, 1, 4, 2]}, index=[0, 1, 2, 3])
+            DataFrame({"A": [8, 3, 13, 12], "B": [2, 1, 4, 2]}, index=Index([0, 1, 2, 3]))
         )
         self.assertTrue(experted_table.get_data().equals(grouped_table.get_data()))
         BaseTestCase.assert_json(grouped_table.get_column_tags(), [{"group": "A"}, {"group": "B"}])

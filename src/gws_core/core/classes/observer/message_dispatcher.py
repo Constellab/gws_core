@@ -1,13 +1,17 @@
 import time
 import traceback
-from threading import Timer
+from threading import Lock, Timer
 from typing import Optional
 
 from gws_core.core.classes.observer.message_level import MessageLevel
+from gws_core.core.utils.app_log_context import AppLogContext
 from gws_core.progress_bar.progress_bar import ProgressBar
 
 from .dispatched_message import DispatchedMessage
 from .message_observer import MessageObserver, ProgressBarMessageObserver
+
+# A progress message carries a percentage, so its value must be between 0 and 100
+MAX_PROGRESS_VALUE = 100
 
 
 class MessageDispatcher:
@@ -43,7 +47,11 @@ class MessageDispatcher:
     # store the timer to prevent to save the progress bar too often
     _waiting_dispatch_timer: Timer | None = None
     # store the thread when is it executing (after the timer and before it is finished)
-    _running_dispatch_timers: list[Timer] = []
+    _running_dispatch_timers: list[Timer]
+
+    # guards _waiting_messages, _waiting_dispatch_timer and _running_dispatch_timers:
+    # they are mutated both by notifying threads and by the dispatch Timer thread
+    _buffer_lock: Lock
 
     # when set, the message dispatcher will forward the message to the parent dispatcher
     # after prefix and log level modification
@@ -59,6 +67,8 @@ class MessageDispatcher:
     ):
         self._observers = []
         self._waiting_messages = []
+        self._running_dispatch_timers = []
+        self._buffer_lock = Lock()
         self.interval_time_merging_message = interval_time_merging_message
         self.interval_time_dispatched_buffer = interval_time_dispatched_buffer
         self.message_level = log_level
@@ -84,7 +94,7 @@ class MessageDispatcher:
         """
 
         if not isinstance(progress_bar, ProgressBar):
-            Exception("Only a progress bar can be attached")
+            raise Exception("Only a progress bar can be attached")
         observer = ProgressBarMessageObserver(progress_bar)
         self.attach(observer)
         return observer
@@ -146,7 +156,7 @@ class MessageDispatcher:
                 value_str = prefix[9:]  # Remove "PROGRESS:" prefix
                 progress_value = float(value_str)
                 # Verify the progress value is between 0 and 100
-                if 0 <= progress_value <= 100:
+                if 0 <= progress_value <= MAX_PROGRESS_VALUE:
                     self._build_and_notify_message(content, MessageLevel.PROGRESS, progress_value)
                     return
                 # Invalid progress value, treat as info message
@@ -243,6 +253,11 @@ class MessageDispatcher:
         if message.status.get_int_value() < self.message_level.get_int_value():
             return
 
+        # stamp the message with the current app context now: the actual dispatch may
+        # happen later on a timer thread that has no context
+        if message.context_id is None:
+            message.context_id = AppLogContext.get_context_id()
+
         # if there is a parent dispatcher, we forward the message to it
         if self._parent_dispatcher is not None:
             self._parent_dispatcher.notify_message(message)
@@ -250,7 +265,8 @@ class MessageDispatcher:
 
         # if there is no dispatched time, then directly dispatch the message
         if self.interval_time_dispatched_buffer == 0:
-            self._waiting_messages.append(message)
+            with self._buffer_lock:
+                self._waiting_messages.append(message)
             self._dispatch_waiting_messages()
             return
 
@@ -259,28 +275,30 @@ class MessageDispatcher:
 
         current_time = time.perf_counter()
 
-        # time difference shorter than min_time_merge, we merge messages
-        if current_time - self._last_notify_time < self.interval_time_merging_message:
-            # if there is already a waiting message and the last message type is the same,
-            # merge the messages
-            if (
-                len(self._waiting_messages) > 0
-                and self._waiting_messages[-1].status == message.status
-            ):
-                last_message = self._waiting_messages[-1]
-                last_message.message += "\n" + message.message
-                last_message.progress = message.progress
-            # if there is no waiting message or the last message type is different, add the message
+        with self._buffer_lock:
+            # time difference shorter than min_time_merge, we merge messages
+            if current_time - self._last_notify_time < self.interval_time_merging_message:
+                # if there is already a waiting message and the last message type is the same,
+                # merge the messages
+                if (
+                    len(self._waiting_messages) > 0
+                    and self._waiting_messages[-1].status == message.status
+                ):
+                    last_message = self._waiting_messages[-1]
+                    last_message.message += "\n" + message.message
+                    last_message.progress = message.progress
+                # if there is no waiting message or the last message type is different, add the message
+                else:
+                    self._waiting_messages.append(message)
+            # add the message to the waiting list and launche a timer to dispatch the message
             else:
                 self._waiting_messages.append(message)
-        # add the message to the waiting list and launche a timer to dispatch the message
-        else:
-            self._waiting_messages.append(message)
 
-        self._launch_dispatch_timer()
+            self._launch_dispatch_timer()
         self._last_notify_time = time.perf_counter()
 
     # launch a timer to dispatch the message after a delay
+    # (called with _buffer_lock held)
     def _launch_dispatch_timer(self):
         if self._waiting_dispatch_timer is None:
             self._waiting_dispatch_timer = Timer(
@@ -289,38 +307,43 @@ class MessageDispatcher:
             self._waiting_dispatch_timer.start()
 
     def _dispatch_waiting_messages_after_timer(self):
-        #  set the waiting dispatch timer as the current dispatch timer
-        current_dispatch_timer = self._waiting_dispatch_timer
-        if current_dispatch_timer is not None:
-            self._running_dispatch_timers.append(current_dispatch_timer)
-        # clear the waiting dispatch timer
-        self._waiting_dispatch_timer = None
+        with self._buffer_lock:
+            #  set the waiting dispatch timer as the current dispatch timer
+            current_dispatch_timer = self._waiting_dispatch_timer
+            if current_dispatch_timer is not None:
+                self._running_dispatch_timers.append(current_dispatch_timer)
+            # clear the waiting dispatch timer
+            self._waiting_dispatch_timer = None
 
         self._dispatch_waiting_messages()
 
         if current_dispatch_timer is not None:
             # remove the running dispatch timer
-            self._running_dispatch_timers.remove(current_dispatch_timer)
+            with self._buffer_lock:
+                self._running_dispatch_timers.remove(current_dispatch_timer)
 
     def _dispatch_waiting_messages(self):
         # directly copy and clear the array because the observer update can take some times
-        messages = self._waiting_messages.copy()
-        self._waiting_messages.clear()
+        with self._buffer_lock:
+            messages = self._waiting_messages.copy()
+            self._waiting_messages.clear()
         if len(messages) > 0:
             for observer in self._observers:
                 observer.update(messages)
 
     def force_dispatch_waiting_messages(self):
-        # if there is a waiting dispatch timer, cancel it
-        if self._waiting_dispatch_timer:
-            self._waiting_dispatch_timer.cancel()
-            self._waiting_dispatch_timer = None
+        with self._buffer_lock:
+            # if there is a waiting dispatch timer, cancel it
+            if self._waiting_dispatch_timer:
+                self._waiting_dispatch_timer.cancel()
+                self._waiting_dispatch_timer = None
 
-        # wait for all the running dispatch timer to finish
-        # because the dispatch_waiting_messages can take some times
-        if len(self._running_dispatch_timers) > 0:
-            for timer in self._running_dispatch_timers:
-                timer.join()
+            # wait for all the running dispatch timer to finish
+            # because the dispatch_waiting_messages can take some times
+            running_timers = self._running_dispatch_timers.copy()
+
+        for timer in running_timers:
+            timer.join()
 
         self._dispatch_waiting_messages()
 

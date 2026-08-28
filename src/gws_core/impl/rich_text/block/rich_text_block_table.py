@@ -10,7 +10,7 @@ class RichTextBlockTable(RichTextBlockDataBase):
     """Object representing a table block in a rich text"""
 
     content: list[list[str]]
-    withHeadings: bool = False
+    withHeadings: bool = False  # noqa: N815
     stretched: bool = False
 
     def to_markdown(self) -> str:

@@ -9,4 +9,5 @@ class TestNoteTemplate(BaseTestCase):
         note_template = NoteTemplateService.create_empty("title")
         self.assertEqual(note_template.title, "title")
         self.assertIsInstance(note_template.content, RichTextDTO)
+        assert note_template.content is not None
         self.assertEqual(note_template.content.blocks, [])

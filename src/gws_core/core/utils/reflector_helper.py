@@ -1,5 +1,5 @@
 import inspect
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from typing import Any, cast
 
 from gws_core.core.utils.logger import Logger
@@ -71,7 +71,7 @@ class ReflectorHelper:
             - Works with both functions and methods
         """
 
-        parameters: dict[str, inspect.Parameter] = inspect.signature(func).parameters
+        parameters: Mapping[str, inspect.Parameter] = inspect.signature(func).parameters
 
         arguments: FuncArgsMetaData = FuncArgsMetaData(func.__name__)
 
@@ -237,10 +237,7 @@ class ReflectorHelper:
             if isinstance(arg_default_value, str) and len(arg_default_value) == 0:
                 arg_default_value = "''"
             if not isinstance(arg_default_value, str):
-                if arg_default_value is None:
-                    arg_default_value = ""
-                else:
-                    arg_default_value = str(arg_default_value)
+                arg_default_value = "" if arg_default_value is None else str(arg_default_value)
 
             arguments_json.append(
                 MethodArgDoc(
@@ -264,7 +261,7 @@ class ReflectorHelper:
             if not callable(func):
                 return None
 
-            method_type: str = MethodDocType.BASICMETHOD
+            method_type: str | None = MethodDocType.BASICMETHOD
             if func_name is None:
                 func_name = func.__name__
 
@@ -372,7 +369,7 @@ class ReflectorHelper:
         variables = cast(dict, arr_variables[0])
         try:
             vars_keys = sorted(
-                [i for i in variables.keys() if i[0] != "_"]
+                [i for i in variables if i[0] != "_"]
             )  # get the sorted keys of public variables
             res: dict[str, str] = {}
             for k in vars_keys:
@@ -381,7 +378,7 @@ class ReflectorHelper:
                 else:
                     res.update({k: str(variables[k])})
             return res
-        except:
+        except Exception:
             Logger.error(f"Error while getting public args of {class_}")
             return {}
 
@@ -445,11 +442,7 @@ class ReflectorHelper:
         variables = cls.get_all_public_args(type_)
         methods = cls.get_class_public_methods_doc(type_, include_init=True)
 
-        name: str | None = None
-        if not hasattr(type_, "__name__"):
-            name = str(type_)
-        else:
-            name = type_.__name__
+        name: str | None = type_.__name__ if hasattr(type_, "__name__") else str(type_)
 
         doc = cls.get_cleaned_doc_string(type_)
         return ClassicClassDocDTO(name=name, doc=doc, methods=methods, variables=variables)

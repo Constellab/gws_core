@@ -6,7 +6,7 @@ from gws_core.tag.tag_helper import TagHelper
 
 
 class TableAxisTags(SerializableObjectJson):
-    _tags: list[dict[str, str]] | None = None
+    _tags: list[dict[str, str]]
 
     def __init__(self, tags: list[dict[str, str]] | None = None):
         super().__init__()
@@ -48,7 +48,7 @@ class TableAxisTags(SerializableObjectJson):
         try:
             self._tags = [{str(k): str(v) for k, v in t.items()} for t in tags]
         except Exception as err:
-            raise Exception(f"The tags are not valid. Please check. Error message: {err}")
+            raise Exception(f"The tags are not valid. Please check. Error message: {err}") from err
 
     def remove_tags_at(self, index: int) -> None:
         self._check_tag_index(index)
@@ -56,8 +56,11 @@ class TableAxisTags(SerializableObjectJson):
 
     def get_tags_between(
         self, from_index: int | None = None, to_index: int | None = None, none_if_empty: bool = False
-    ) -> list[dict[str, str]]:
-        """Get the tags between the given indexes. It includes the to_index"""
+    ) -> list[dict[str, str]] | None:
+        """Get the tags between the given indexes. It includes the to_index.
+
+        Return None if `none_if_empty` is True and all the tags are empty.
+        """
         if none_if_empty and self.all_tag_are_empty():
             return None
 

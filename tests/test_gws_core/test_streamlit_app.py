@@ -119,6 +119,6 @@ class TestStreamlitApp(BaseTestCase):
 
         # re-setting the same value on the original (persisted) app, which already owns the
         # subdomain, is allowed (the uniqueness check skips the app itself)
-        reloaded = first_model.get_resource()
+        reloaded = first_model.get_resource(resource_type=StreamlitResource)
         reloaded.set_custom_subdomain("app-hello-world")
         self.assertEqual(reloaded.get_custom_subdomain(), "app-hello-world")

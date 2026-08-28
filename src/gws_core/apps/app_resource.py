@@ -465,7 +465,7 @@ class AppResource(ResourceList):
     )
     def default_view(self, _: ConfigParams) -> AppView:
         """This view generates the app and returns a AppView."""
-        from gws_core.apps.apps_manager import AppsManager
+        from gws_core.apps.apps_manager import AppsManager  # noqa: PLC0415
 
         app = self.build_app_instance()
 

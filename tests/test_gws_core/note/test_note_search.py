@@ -54,7 +54,9 @@ class TestNoteSearch(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {"key": "form_id", "operator": "EQ", "value": form.id}
+                SearchFilterCriteria(
+                    key="form_id", operator=SearchOperator.EQ, value=form.id
+                )
             ]
         )
         page = NoteService.search(params)
@@ -81,11 +83,11 @@ class TestNoteSearch(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {
-                    "key": "form_template_id",
-                    "operator": "EQ",
-                    "value": version.template_id,
-                }
+                SearchFilterCriteria(
+                    key="form_template_id",
+                    operator=SearchOperator.EQ,
+                    value=version.template_id,
+                )
             ]
         )
         page = NoteService.search(params)
@@ -110,11 +112,11 @@ class TestNoteSearch(BaseTestCase):
 
         params = SearchParams(
             filtersCriteria=[
-                {
-                    "key": "form_template_id",
-                    "operator": "EQ",
-                    "value": version.template_id,
-                }
+                SearchFilterCriteria(
+                    key="form_template_id",
+                    operator=SearchOperator.EQ,
+                    value=version.template_id,
+                )
             ]
         )
         page = NoteService.search(params)

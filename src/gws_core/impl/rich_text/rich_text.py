@@ -70,7 +70,7 @@ class RichText(SerializableObjectJson):
             rich_text_dto = self.create_rich_text_dto([])
         else:
             if not isinstance(rich_text_dto, RichTextDTO):
-                raise Exception("The rich text content is not valid")
+                raise ValueError("The rich text content is not valid")
 
             # create a copy of the DTO so the rich text manipulation doesn't affect the original DTO
             rich_text_dto = rich_text_dto.model_copy(deep=True)
@@ -110,7 +110,7 @@ class RichText(SerializableObjectJson):
         """Insert an element in the rich text content at the given index"""
 
         if index < 0 or index > len(self.get_blocks()):
-            raise Exception("The index is not valid")
+            raise ValueError("The index is not valid")
 
         self.blocks.insert(index, block)
 
@@ -127,13 +127,13 @@ class RichText(SerializableObjectJson):
     def replace_block_at_index(self, index: int, block: RichTextBlock) -> None:
         """Replace a block at the given index"""
         if index < 0 or index >= len(self.get_blocks()):
-            raise Exception("The index is not valid")
+            raise ValueError("The index is not valid")
         self.blocks[index] = block
 
     def get_block_at_index(self, index: int) -> RichTextBlock:
         """Get the block at the given index"""
         if index < 0 or index >= len(self.get_blocks()):
-            raise Exception("The index is not valid")
+            raise ValueError("The index is not valid")
         return self.blocks[index]
 
     def replace_block_by_id(self, block_id: str, block: RichTextBlock) -> None:
@@ -176,7 +176,7 @@ class RichText(SerializableObjectJson):
         """
         index = self.get_block_index_by_id(after_block_id)
         if index < 0:
-            raise Exception(f"Block with id '{after_block_id}' not found")
+            raise ValueError(f"Block with id '{after_block_id}' not found")
         self.insert_block_at_index(index + 1, block)
 
     def insert_multiple_blocks_after_id(
@@ -192,7 +192,7 @@ class RichText(SerializableObjectJson):
         """
         index = self.get_block_index_by_id(after_block_id)
         if index < 0:
-            raise Exception(f"Block with id '{after_block_id}' not found")
+            raise ValueError(f"Block with id '{after_block_id}' not found")
         for i, block in enumerate(blocks):
             self.insert_block_at_index(index + 1 + i, block)
 
@@ -206,17 +206,25 @@ class RichText(SerializableObjectJson):
         """
         block_index = self.get_block_index_by_id(block_id)
         if block_index < 0:
-            raise Exception(f"Block with id '{block_id}' not found")
+            raise ValueError(f"Block with id '{block_id}' not found")
+
+        # validate the target before removing anything, otherwise a failed move
+        # would leave the rich text with the moved block deleted
+        if after_block_id is not None and self.get_block_index_by_id(after_block_id) < 0:
+            raise ValueError(f"Block with id '{after_block_id}' not found")
 
         block = self.remove_block_at_index(block_index)
 
         if after_block_id is None:
             self.insert_block_at_index(0, block)
         else:
+            # the index is recomputed after the removal because it may have shifted
             target_index = self.get_block_index_by_id(after_block_id)
             if target_index < 0:
-                raise Exception(f"Block with id '{after_block_id}' not found")
-            self.insert_block_at_index(target_index + 1, block)
+                # after_block_id was the moved block itself: leave it where it was
+                self.insert_block_at_index(block_index, block)
+            else:
+                self.insert_block_at_index(target_index + 1, block)
 
     ##################################### PARAMETER  #########################################
 

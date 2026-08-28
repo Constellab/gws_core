@@ -1,6 +1,7 @@
 from typing import Any, Generic, TypeVar
 
 import reflex as rx
+from reflex.event import EventCallback
 from reflex.vars import Var
 
 from gws_core.core.model.model_dto import BaseModelDTO, PageDTO
@@ -89,10 +90,10 @@ class InputSearchComponent(rx.Component):
 
 
 def input_search_component(
-    search_result: Var[PageDTO[InputSearchResultDTO] | None],
-    selected_item: Var[Any | None],
-    item_selected: rx.EventHandler[rx.event.passthrough_event_spec(dict)],
-    search_trigger: rx.EventHandler[rx.event.passthrough_event_spec(dict)],
+    search_result: Var[PageDTO[InputSearchResultDTO] | None] | PageDTO[InputSearchResultDTO] | None,
+    selected_item: Var[Any | None] | Any,
+    item_selected: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | EventCallback,
+    search_trigger: rx.EventHandler[rx.event.passthrough_event_spec(dict)] | EventCallback,
     placeholder: str | None = None,
     required: bool | None = None,
     min_input_search_length: int = 2,

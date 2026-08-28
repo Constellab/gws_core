@@ -100,8 +100,8 @@ INFO - 2022-12-02 09:26:46.906581 - first - log day 2
         self.assertEqual(result.logs[2].message, "Day 2")
 
         # get next page
-        result = LogService.get_logs_between_dates(
-            result.get_next_page_date(), to_date, nb_of_lines=3
-        )
+        next_page_date = result.get_next_page_date()
+        assert next_page_date is not None
+        result = LogService.get_logs_between_dates(next_page_date, to_date, nb_of_lines=3)
         self.assertEqual(len(result.logs), 1)
         self.assertEqual(result.logs[0].message, "first - log day 2")

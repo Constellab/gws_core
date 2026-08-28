@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core import (
     BaseTestCase,
     ProcessFactory,
@@ -6,6 +8,7 @@ from gws_core import (
     Table,
     TaskModel,
 )
+from gws_core.config.config_exceptions import ProcessConfigException
 from gws_core.config.param.dynamic_param import DynamicParam
 from gws_core.config.param.param_spec import IntParam
 from gws_core.impl.agent.py_agent import PyAgent
@@ -18,7 +21,7 @@ from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.plug.input_task import InputTask
 
-from ..protocol_examples import SimpleProtocolTest, NestedProtocolTest
+from ..protocol_examples import NestedProtocolTest, SimpleProtocolTest
 
 
 # test_process_factory
@@ -58,7 +61,7 @@ class TestProcessFactory(BaseTestCase):
 
     def test_create_task_model_with_invalid_config_params(self):
         """Test that invalid config params raise an exception."""
-        with self.assertRaises(Exception):
+        with self.assertRaises(ProcessConfigException):
             ProcessFactory.create_task_model_from_type(
                 task_type=RobotMove, config_params={"nonexistent_param": "value"}
             )
@@ -234,7 +237,9 @@ class TestProcessFactory(BaseTestCase):
 
         # Verify the recreated model has the dynamic param with correct value
         self.assertIsInstance(recreated_model, TaskModel)
-        dynamic_param: DynamicParam = recreated_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        dynamic_param = cast(
+            DynamicParam, recreated_model.config.get_spec(PyAgent.CONFIG_PARAMS_NAME)
+        )
         self.assertIsInstance(dynamic_param, DynamicParam)
         self.assertTrue(dynamic_param.specs.has_spec("my_int"))
         self.assertEqual(recreated_model.config.get_value(PyAgent.CONFIG_PARAMS_NAME)["my_int"], 10)

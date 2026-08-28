@@ -1,3 +1,5 @@
+from contextlib import suppress
+
 from gws_core.config.config import Config
 from gws_core.core.db.gws_core_db_manager import GwsCoreDbManager
 from gws_core.test.base_test_case import BaseTestCase
@@ -13,18 +15,14 @@ class TestTransaction(BaseTestCase):
 
         # test the transaction did not saved when there is an exception
         config = Config()
-        try:
+        with suppress(BaseException):
             self._create_config_error(config)
-        except:
-            pass
         self.assertIsNone(Config.get_by_id(config.id))
 
         # test the transaction did save even if there is an error because the nested option is one
         config = Config()
-        try:
+        with suppress(BaseException):
             self._create_config_error_nested(config)
-        except:
-            pass
         self.assertIsNotNone(Config.get_by_id(config.id))
 
     @GwsCoreDbManager.transaction()

@@ -6,6 +6,35 @@ import streamlit as st
 from gws_streamlit_main import class_doc_component, method_doc_component
 
 
+def _render_documentation(
+    doc_func: Callable | list[Callable] | None,
+    doc_class: type | list[type] | None,
+) -> None:
+    """
+    Render the documentation of the provided functions and classes.
+
+    :param doc_func: Optional function or list of functions to document
+    :param doc_class: Optional class or list of classes to document
+    """
+    # Render function documentation
+    if doc_func is not None:
+        # Convert func to list if it's a single callable
+        func_list = doc_func if isinstance(doc_func, list) else [doc_func]
+
+        # Render documentation for each function
+        for f in func_list:
+            method_doc_component(func=f)
+
+    # Render class documentation
+    if doc_class is not None:
+        # Convert class to list if it's a single type
+        class_list = doc_class if isinstance(doc_class, list) else [doc_class]
+
+        # Render documentation for each class
+        for cls in class_list:
+            class_doc_component(class_type=cls)
+
+
 def example_tabs(
     example_function: Callable | None = None,
     code: str | None = None,
@@ -70,20 +99,4 @@ def example_tabs(
     # API tab (if applicable)
     if doc_func is not None or doc_class is not None:
         with tabs[tab_index]:
-            # Render function documentation
-            if doc_func is not None:
-                # Convert func to list if it's a single callable
-                func_list = doc_func if isinstance(doc_func, list) else [doc_func]
-
-                # Render documentation for each function
-                for f in func_list:
-                    method_doc_component(func=f)
-
-            # Render class documentation
-            if doc_class is not None:
-                # Convert class to list if it's a single type
-                class_list = doc_class if isinstance(doc_class, list) else [doc_class]
-
-                # Render documentation for each class
-                for cls in class_list:
-                    class_doc_component(class_type=cls)
+            _render_documentation(doc_func, doc_class)

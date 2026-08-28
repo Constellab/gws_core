@@ -40,7 +40,7 @@ class Utils:
         return dirs, files
 
     @classmethod
-    def get_model_type(cls, type_str: str = None) -> type[Any] | None:
+    def get_model_type(cls, type_str: str) -> type[Any] | None:
         """
         Get the type of a registered model using its litteral type
 
@@ -71,10 +71,7 @@ class Utils:
 
         module = sys.modules[module_name]
 
-        if not hasattr(module, function_name):
-            return False
-
-        return True
+        return hasattr(module, function_name)
 
     @classmethod
     def _extract_module_name(cls, type_str: str) -> tuple[str, str]:
@@ -134,7 +131,7 @@ class Utils:
         :return: [description]
         :rtype: List[Type]
         """
-        mro: list[type] = inspect.getmro(class_)
+        mro: tuple[type, ...] = inspect.getmro(class_)
         parents: list[type] = []
         for parent_type in mro:
             if max_parent is None or issubclass(parent_type, max_parent):
@@ -157,10 +154,9 @@ class Utils:
         # so i we have A, A, A_1, this will store A_1: A and the final result will be A, A_1, A_2
         new_items: dict[str, str] = {}
 
-        for item in list_:
+        for original_item in list_:
             # if the item is equal to an already transformed item, we use the original item
-            if item in new_items:
-                item = new_items[item]
+            item = new_items.get(original_item, original_item)
 
             if item in seen:
                 seen[item] += 1
@@ -200,10 +196,7 @@ class Utils:
             return True
 
         if isinstance(obj, list):
-            for item in obj:
-                if not Utils.is_json(item):
-                    return False
-            return True
+            return all(Utils.is_json(item) for item in obj)
 
         if isinstance(obj, dict):
             for key, value in obj.items():
@@ -241,48 +234,90 @@ class Utils:
     ) -> str | None:
         # handle list
         if isinstance(json_1, list):
-            if not isinstance(json_2, list):
-                return f"The second object is not a list for key '{cumulated_key}'."
-
-            if len(json_1) != len(json_2):
-                return f"Length of array different for key '{cumulated_key}'."
-
-            for index, value in enumerate(json_1):
-                result = Utils._json_equals_recur(
-                    value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]"
-                )
-
-                if result is not None:
-                    return result
-
-            return None
+            return Utils._json_list_equals_recur(
+                json_1, json_2, ignore_keys, cumulated_key
+            )
 
         # Handle dict
         if isinstance(json_1, dict):
-            if not isinstance(json_1, dict):
-                return f"The seconde object is not a dict for key '{cumulated_key}'."
-
-            if len(json_1) != len(json_2):
-                return f"Length of object different for key '{cumulated_key}'."
-
-            for key, value in json_1.items():
-                if ignore_keys and key in ignore_keys:
-                    continue
-
-                if key not in json_2:
-                    return f"Key '{cumulated_key}' missing in second json."
-
-                result = Utils._json_equals_recur(
-                    value, json_2[key], ignore_keys, f"{cumulated_key}.{key}"
-                )
-                if result is not None:
-                    return result
-
-            return None
+            return Utils._json_dict_equals_recur(
+                json_1, json_2, ignore_keys, cumulated_key
+            )
 
         # Handle primitive value
         if json_1 != json_2:
             return f"Values differents for key '{cumulated_key}'. First: '{json_1}'. Second: '{json_2}'"
+
+        return None
+
+    @staticmethod
+    def _json_list_equals_recur(
+        json_1: list,
+        json_2: dict | list,
+        ignore_keys: list[str] | None,
+        cumulated_key: str,
+    ) -> str | None:
+        """Compare a list against another json value.
+
+        Returns None when both are equivalent lists, otherwise the first
+        difference found, described as a human readable message.
+
+        :param json_1: the reference list
+        :param json_2: the object to compare it with
+        :param ignore_keys: dict keys ignored anywhere in the recursion
+        :param cumulated_key: path of the current value, used in messages
+        """
+        if not isinstance(json_2, list):
+            return f"The second object is not a list for key '{cumulated_key}'."
+
+        if len(json_1) != len(json_2):
+            return f"Length of array different for key '{cumulated_key}'."
+
+        for index, value in enumerate(json_1):
+            result = Utils._json_equals_recur(
+                value, json_2[index], ignore_keys, f"{cumulated_key}[{index}]"
+            )
+
+            if result is not None:
+                return result
+
+        return None
+
+    @staticmethod
+    def _json_dict_equals_recur(
+        json_1: dict,
+        json_2: dict | list,
+        ignore_keys: list[str] | None,
+        cumulated_key: str,
+    ) -> str | None:
+        """Compare a dict against another json value.
+
+        Returns None when both are equivalent dicts, otherwise the first
+        difference found, described as a human readable message.
+
+        :param json_1: the reference dict
+        :param json_2: the object to compare it with
+        :param ignore_keys: dict keys ignored anywhere in the recursion
+        :param cumulated_key: path of the current value, used in messages
+        """
+        if not isinstance(json_2, dict):
+            return f"The second object is not a dict for key '{cumulated_key}'."
+
+        if len(json_1) != len(json_2):
+            return f"Length of object different for key '{cumulated_key}'."
+
+        for key, value in json_1.items():
+            if ignore_keys and key in ignore_keys:
+                continue
+
+            if key not in json_2:
+                return f"Key '{cumulated_key}' missing in second json."
+
+            result = Utils._json_equals_recur(
+                value, json_2[key], ignore_keys, f"{cumulated_key}.{key}"
+            )
+            if result is not None:
+                return result
 
         return None
 

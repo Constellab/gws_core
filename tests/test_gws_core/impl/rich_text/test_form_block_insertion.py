@@ -55,12 +55,13 @@ class TestFormBlockInsertion(BaseTestCase):
             InsertFormTemplateBlockDTO(form_template_version_id=version.id),
         )
 
+        assert updated.content is not None
         ft_blocks = [
             b for b in updated.content.blocks
             if b.is_type(RichTextBlockTypeStandard.FORM_TEMPLATE)
         ]
         self.assertEqual(len(ft_blocks), 1)
-        data = ft_blocks[0].get_data()
+        data = ft_blocks[0].get_data(RichTextBlockFormTemplate)
         self.assertEqual(data.form_template_version_id, version.id)
         self.assertEqual(data.form_template_id, version.template_id)
 
@@ -102,6 +103,7 @@ class TestFormBlockInsertion(BaseTestCase):
 
         # Re-saving the same content should still succeed.
         nt = NoteTemplateService.get_by_id_and_check(note_template.id)
+        assert nt.content is not None
         NoteTemplateService.update_content(note_template.id, nt.content)
 
     # ------------------------------------------------------------------ #
@@ -117,12 +119,13 @@ class TestFormBlockInsertion(BaseTestCase):
             InsertNewFormBlockDTO(template_version_id=version.id),
         )
 
+        assert updated.content is not None
         form_blocks = [
             b for b in updated.content.blocks
             if b.is_type(RichTextBlockTypeStandard.FORM)
         ]
         self.assertEqual(len(form_blocks), 1)
-        data: RichTextBlockForm = form_blocks[0].get_data()
+        data = form_blocks[0].get_data(RichTextBlockForm)
         self.assertTrue(data.is_owner)
         # The referenced form actually exists.
         self.assertIsNotNone(Form.get_by_id(data.form_id))
@@ -143,12 +146,13 @@ class TestFormBlockInsertion(BaseTestCase):
         # No new Form was created.
         self.assertEqual(before_count, after_count)
 
+        assert updated.content is not None
         form_blocks = [
             b for b in updated.content.blocks
             if b.is_type(RichTextBlockTypeStandard.FORM)
         ]
         self.assertEqual(len(form_blocks), 1)
-        data: RichTextBlockForm = form_blocks[0].get_data()
+        data = form_blocks[0].get_data(RichTextBlockForm)
         self.assertFalse(data.is_owner)
         self.assertEqual(data.form_id, existing_form.id)
 
@@ -177,12 +181,14 @@ class TestFormBlockInsertion(BaseTestCase):
 
         a = NoteService.get_by_id_and_check(note_a.id)
         b = NoteService.get_by_id_and_check(note_b.id)
+        assert a.content is not None
+        assert b.content is not None
         a_form_id = next(
-            blk.get_data().form_id for blk in a.content.blocks
+            blk.get_data(RichTextBlockForm).form_id for blk in a.content.blocks
             if blk.is_type(RichTextBlockTypeStandard.FORM)
         )
         b_form_id = next(
-            blk.get_data().form_id for blk in b.content.blocks
+            blk.get_data(RichTextBlockForm).form_id for blk in b.content.blocks
             if blk.is_type(RichTextBlockTypeStandard.FORM)
         )
         self.assertEqual(a_form_id, b_form_id)
@@ -191,6 +197,7 @@ class TestFormBlockInsertion(BaseTestCase):
     def test_position_param_inserts_at_index(self):
         version = self._published_version()
         note = NoteService.create(NoteSaveDTO(title="n"))
+        assert note.content is not None
         first_block_count = len(note.content.blocks)
 
         # Insert at position 0 — should land at the very start.
@@ -198,6 +205,7 @@ class TestFormBlockInsertion(BaseTestCase):
             note.id,
             InsertNewFormBlockDTO(template_version_id=version.id, position=0),
         )
+        assert updated.content is not None
         self.assertEqual(len(updated.content.blocks), first_block_count + 1)
         self.assertTrue(updated.content.blocks[0].is_type(RichTextBlockTypeStandard.FORM))
 
@@ -243,6 +251,7 @@ class TestFormBlockInsertion(BaseTestCase):
         )
 
         # Re-save the same content; validator should pass.
+        assert note.content is not None
         NoteService.update_content(note.id, note.content)
 
     # ------------------------------------------------------------------ #

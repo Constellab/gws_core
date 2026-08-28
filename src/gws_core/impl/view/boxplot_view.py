@@ -80,8 +80,8 @@ class BoxPlotView(View):
         if data is None or not isinstance(data, list):
             raise BadRequestException("The data is required and must be an array of float")
 
-        data = DataFrame(data)
-        self.add_data_from_dataframe(DataFrame(data), name, tags)
+        dataframe = DataFrame(data)
+        self.add_data_from_dataframe(DataFrame(dataframe), name, tags)
 
     def add_data_from_dataframe(
         self, data: DataFrame | None = None, name: str | None = None, tags: list[dict[str, str]] | None = None
@@ -92,11 +92,10 @@ class BoxPlotView(View):
         if not self._series:
             self._series = []
 
-        if tags is not None:
-            if not isinstance(tags, list) or len(tags) != data.shape[1]:
-                raise BadRequestException(
-                    "The tags must a list of length equal to the number of columns in data"
-                )
+        if tags is not None and (not isinstance(tags, list) or len(tags) != data.shape[1]):
+            raise BadRequestException(
+                "The tags must a list of length equal to the number of columns in data"
+            )
 
         data = DataframeHelper.dataframe_to_float(data)
 
@@ -111,14 +110,14 @@ class BoxPlotView(View):
         lower_whisker = quantile[0, :]
         upper_whisker = quantile[4, :]
 
-        x = list(range(0, data.shape[1]))
+        x: list[float] = [float(index) for index in range(0, data.shape[1])]
         self.add_series(
             x=x,
             median=median,
             q1=q1.tolist(),
             q3=q3.tolist(),
-            min=ymin,
-            max=ymax,
+            min_=ymin,
+            max_=ymax,
             lower_whisker=lower_whisker.tolist(),
             upper_whisker=upper_whisker.tolist(),
             name=name,
@@ -131,8 +130,8 @@ class BoxPlotView(View):
         median: list[float] | None = None,
         q1: list[float] | None = None,
         q3: list[float] | None = None,
-        min: list[float] | None = None,
-        max: list[float] | None = None,
+        min_: list[float] | None = None,
+        max_: list[float] | None = None,
         lower_whisker: list[float] | None = None,
         upper_whisker: list[float] | None = None,
         name: str | None = None,
@@ -150,10 +149,10 @@ class BoxPlotView(View):
         :type q1: list of float
         :params q3: The third quartile
         :type q3: list of float
-        :params min: The min values
-        :type min: list of float
-        :params max: The max values
-        :type max: list of float
+        :params min_: The min values
+        :type min_: list of float
+        :params max_: The max values
+        :type max_: list of float
         :params lower_whisker: The lower_whisker values
         :type lower_whisker: list of float
         :params upper_whisker: The upper_whisker values
@@ -179,6 +178,9 @@ class BoxPlotView(View):
             raise BadRequestException(
                 "The upper_whisker data is required and must be a list of float"
             )
+        x = self._check_data_is_list(x, "x")
+        min_ = self._check_data_is_list(min_, "min_")
+        max_ = self._check_data_is_list(max_, "max_")
 
         if tags is not None:
             if not isinstance(tags, list) or len(tags) != len(x):
@@ -191,8 +193,8 @@ class BoxPlotView(View):
                     "median": self._clean_nan(median),
                     "q1": self._clean_nan(q1),
                     "q3": self._clean_nan(q3),
-                    "min": self._clean_nan(min),
-                    "max": self._clean_nan(max),
+                    "min": self._clean_nan(min_),
+                    "max": self._clean_nan(max_),
                     "lower_whisker": self._clean_nan(lower_whisker),
                     "upper_whisker": self._clean_nan(upper_whisker),
                     "tags": tags,
@@ -208,6 +210,15 @@ class BoxPlotView(View):
             "x_tick_labels": self.x_tick_labels,
             "series": self._series,
         }
+
+    @staticmethod
+    def _check_data_is_list(data: list[float] | None, data_name: str) -> list[float]:
+        """Check that the data is a list of float and return it, raise otherwise"""
+        if (data is None) or not isinstance(data, list):
+            raise BadRequestException(
+                f"The {data_name} data is required and must be a list of float"
+            )
+        return data
 
     def _clean_nan(self, data: list[float]):
         return ["" if math.isnan(x) else float(x) for x in data]

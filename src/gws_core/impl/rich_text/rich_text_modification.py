@@ -28,14 +28,14 @@ class RichTextBlockModificationDTO(BaseModelDTO):
 
     id: str
     time: datetime
-    blockId: str
-    blockType: str
+    blockId: str  # noqa: N815
+    blockType: str  # noqa: N815
     differences: list[RichTextModificationDifferenceDTO] | None = None
-    blockValue: dict[str, Any] | None = None
+    blockValue: dict[str, Any] | None = None  # noqa: N815
     type: RichTextModificationType
     index: int
-    oldIndex: int | None = None
-    userId: str
+    oldIndex: int | None = None  # noqa: N815
+    userId: str  # noqa: N815
 
 
 class RichTextModificationUserDTO(BaseModelDTO):
@@ -72,7 +72,7 @@ class RichTextAggregateDTO(BaseModelDTO):
     """
 
     version: int
-    richText: RichTextDTO
+    richText: RichTextDTO  # noqa: N815
     modifications: Any | None = None
 
     @classmethod

@@ -28,7 +28,7 @@ class JWTService:
 
     AUTH_SCHEME = "Bearer "
     ALGORITHM = "HS256"
-    ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 * 24 * 2  # 2 days
+    ACCESS_TOKEN_EXPIRE_SECONDS: int = 60 * 60 * 24 * 2  # 2 days
 
     _secret: str | None = None
 
@@ -126,6 +126,31 @@ class JWTService:
             raise InvalidTokenException()
 
         return user_id
+
+    @classmethod
+    def app_token_needs_refresh(cls, token: str) -> bool:
+        """Whether an app-scoped token is past half its lifetime and should be re-minted.
+
+        Enables *sliding* app sessions: an app re-validates its stored token on every page load, so
+        renewing it there keeps an actively-used app logged in indefinitely, while an idle one still
+        expires on schedule. Without this the token dies a fixed 2 days after the handoff and the
+        user is bounced mid-session.
+
+        Halfway is the usual trade-off: frequent enough that any active session renews well before
+        expiry, rare enough that most validations stay read-only.
+
+        :param token: the app-scoped token (with or without the ``Bearer `` prefix)
+        :return: True when the token is valid but more than half-expired; False if it is not
+            decodable (the caller's own validation reports that).
+        """
+        try:
+            payload = cls._decode(token)
+            expiry_timestamp = payload["exp"]
+        except Exception:
+            return False
+
+        remaining_seconds = expiry_timestamp - DateHelper.now_utc().timestamp()
+        return remaining_seconds < cls.get_token_duration_in_seconds() / 2
 
     @classmethod
     def get_token_duration_in_seconds(cls) -> int:

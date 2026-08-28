@@ -8,6 +8,7 @@ from gws_core.model.typing_style import TypingStyle
 from ....config.config_params import ConfigParams
 from ....task.task_decorator import task_decorator
 from ....task.task_io import TaskInputs, TaskOutputs
+from ...table.table import Table
 from ..plotly_resource import PlotlyResource
 from .plotly_task import PlotlyTask
 
@@ -51,12 +52,12 @@ class PlotlyBarplot(PlotlyTask):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        dataframe = pd.DataFrame(inputs["input_table"].get_data())
+        dataframe = pd.DataFrame(inputs.get_resource("input_table", Table).get_data())
         for key, i in params.items():
             if i == "":
                 params[key] = None
         if params["label_columns"] is not None:
-            labels = dict(zip(params["label_columns"], params["label_text"]))
+            labels = dict(zip(params["label_columns"], params["label_text"], strict=False))
         else:
             labels = None
 

@@ -7,7 +7,7 @@ from .shared_entity_info import SharedEntityInfo
 
 
 class SharedScenario(SharedEntityInfo):
-    entity = TypedForeignKeyField(Scenario, backref="+", on_delete="CASCADE")
+    entity: TypedForeignKeyField[Scenario] = TypedForeignKeyField(Scenario, backref="+", on_delete="CASCADE")
 
     def get_external_object_url(self) -> str | None:
         """Build the URL of the external scenario on the other lab."""

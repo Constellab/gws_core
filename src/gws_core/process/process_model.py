@@ -30,6 +30,7 @@ from gws_core.model.typing import Typing
 from gws_core.model.typing_dto import SimpleTypingDTO, TypingStatus
 from gws_core.model.typing_style import TypingStyle
 from gws_core.process.process_dto import ProcessDTO
+from gws_core.process_run_stat.process_run_stat_dto import ProcessRunStatCreateDTO
 from gws_core.process_run_stat.process_run_stat_model import ProcessRunStatModel
 from gws_core.progress_bar.progress_bar_dto import ProgressBarMessageDTO
 from gws_core.protocol.protocol_dto import ProcessConfigDTO
@@ -70,30 +71,30 @@ class ProcessModel(ModelWithUser):
     scenario: TypedForeignKeyField[Scenario] = TypedForeignKeyField(
         Scenario, index=True, backref="+"
     )
-    instance_name = TypedCharField()
-    config = TypedForeignKeyField(Config, backref="+")
-    progress_bar = TypedForeignKeyField(ProgressBar, backref="+")
-    process_typing_name = TypedCharField()
+    instance_name: TypedCharField = TypedCharField()
+    config: TypedForeignKeyField[Config] = TypedForeignKeyField(Config, backref="+")
+    progress_bar: TypedForeignKeyField[ProgressBar] = TypedForeignKeyField(ProgressBar, backref="+")
+    process_typing_name: TypedCharField = TypedCharField()
     # version of the brick when the process was created
-    brick_version_on_create = TypedCharField(max_length=50)
+    brick_version_on_create: TypedCharField = TypedCharField(max_length=50)
     # version of the brick when the process was run
-    brick_version_on_run = NullableCharField(max_length=50)
-    run_by = NullableForeignKeyField(User, backref="+")
-    run_by_lab = NullableForeignKeyField(LabModel, backref="+")
+    brick_version_on_run: NullableCharField = NullableCharField(max_length=50)
+    run_by: NullableForeignKeyField[User] = NullableForeignKeyField(User, backref="+")
+    run_by_lab: NullableForeignKeyField[LabModel] = NullableForeignKeyField(LabModel, backref="+")
     status: TypedEnumField[ProcessStatus] = TypedEnumField(
         choices=ProcessStatus, default=ProcessStatus.DRAFT
     )
-    error_info = NullableJSONField()
+    error_info: NullableJSONField = NullableJSONField()
 
-    started_at = NullableDateTimeUTC(with_milliseconds=True)
-    ended_at = NullableDateTimeUTC(with_milliseconds=True)
+    started_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
+    ended_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = TypedJSONField()
-    is_archived = TypedBooleanField(default=False, index=True)
-    style = TypedBaseDTOField(TypingStyle)
+    data: TypedJSONField = TypedJSONField()
+    is_archived: TypedBooleanField = TypedBooleanField(default=False, index=True)
+    style: TypedBaseDTOField[TypingStyle] = TypedBaseDTOField(TypingStyle)
 
     # name of the process set by the user
-    name = TypedCharField()
+    name: TypedCharField = TypedCharField()
 
     scenario_id: str
 
@@ -147,7 +148,7 @@ class ProcessModel(ModelWithUser):
     @property
     def parent_protocol(self) -> ProtocolModel | None:
         if not self._parent_protocol and self.parent_protocol_id:
-            from ..protocol.protocol_model import ProtocolModel
+            from ..protocol.protocol_model import ProtocolModel  # noqa: PLC0415
 
             self._parent_protocol = ProtocolModel.get_by_id(self.parent_protocol_id)
 
@@ -797,18 +798,20 @@ class ProcessModel(ModelWithUser):
 
             error_info = self.get_error_info()
             ProcessRunStatModel.create_stat(
-                process_typing_name=self.process_typing_name,
-                status=self.status.value,
-                started_at=self.started_at,
-                ended_at=self.ended_at,
-                elapsed_time=self.progress_bar.get_elapsed_time(),
-                brick_version_on_run=self.brick_version_on_run,
-                brick_version_on_create=self.brick_version_on_create,
-                config_value=self.config.get_values(),
-                lab_env="DEV" if Settings.get_instance().is_dev_mode() else "PROD",
-                executed_by=CurrentUserService().get_and_check_current_user().id,
-                error_info=error_info.to_json_dict() if error_info else None,
-                community_agent_version_id=self.get_community_agent_version_id(),
+                ProcessRunStatCreateDTO(
+                    process_typing_name=self.process_typing_name,
+                    status=self.status.value,
+                    started_at=self.started_at,
+                    ended_at=self.ended_at,
+                    elapsed_time=self.progress_bar.get_elapsed_time(),
+                    brick_version_on_run=self.brick_version_on_run,
+                    brick_version_on_create=self.brick_version_on_create,
+                    config_value=self.config.get_values(),
+                    lab_env="DEV" if Settings.get_instance().is_dev_mode() else "PROD",
+                    executed_by=CurrentUserService().get_and_check_current_user().id,
+                    error_info=error_info.to_json_dict() if error_info else None,
+                    community_agent_version_id=self.get_community_agent_version_id(),
+                )
             )
         except Exception:
             Logger.error(f"Error: cannot save the run stat of the process '{self.instance_name}'")
@@ -823,4 +826,4 @@ class ProcessModel(ModelWithUser):
         :return: The list of processes
         :rtype: list[ProcessModel]
         """
-        return cls.select().where(cls.parent_protocol_id == parent_protocol_id)
+        return list(cls.select().where(cls.parent_protocol_id == parent_protocol_id))

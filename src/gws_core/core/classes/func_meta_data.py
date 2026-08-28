@@ -12,8 +12,10 @@ class FuncArgMetaData:
     """
 
     arg_name: str
-    default_value: Any | EmptyClass
-    type_: type | EmptyClass
+    # may hold the EmptyClass marker when the argument has no default value
+    default_value: Any
+    # may hold the EmptyClass marker when the argument is not annotated
+    type_: type
 
     def __init__(self, arg_name: str, default_value: Any, type_: type) -> None:
         self.arg_name = arg_name
@@ -60,7 +62,7 @@ class FuncArgsMetaData:
 
     def all_args_have_default(self) -> bool:
         for arg_name, arg in self.args.items():
-            if arg_name == "self" or arg_name == "cls":
+            if arg_name in {"self", "cls"}:
                 continue
             if not arg.has_default_value():
                 return False

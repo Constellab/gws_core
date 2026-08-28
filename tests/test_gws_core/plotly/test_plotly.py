@@ -25,7 +25,11 @@ class TestPlotly(TestCase):
         deserialized_figure = r_field.deserialize(serialized_figure)
 
         self.assertIsInstance(deserialized_figure, go.Figure)
-        Utils.assert_json_equals(loads(figure.to_json()), loads(deserialized_figure.to_json()))
+        figure_json = figure.to_json()
+        deserialized_figure_json = deserialized_figure.to_json()
+        assert figure_json is not None
+        assert deserialized_figure_json is not None
+        Utils.assert_json_equals(loads(figure_json), loads(deserialized_figure_json))
 
     def test_plotly_view(self):
         dataframe = DataFrame({"A": [1, 2, 3], "B": [4, 5, 6]})

@@ -96,7 +96,7 @@ def download_progress_bar(
 def get_messages(
     process_type: ProcessType,
     _id: str,
-    nb_of_messages: int | None = 20,
+    nb_of_messages: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ProgressBarMessagesBetweenDatesDTO:
     """Get last progress bar messages"""
@@ -113,7 +113,7 @@ def get_messages_from_date(
     process_type: ProcessType,
     _id: str,
     from_datetime: datetime | None,
-    nb_of_messages: int | None = 20,
+    nb_of_messages: int = 20,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> ProgressBarMessagesBetweenDatesDTO:
     """Get progress bar messages older than a given date"""

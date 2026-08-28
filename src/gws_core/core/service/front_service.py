@@ -1,5 +1,7 @@
 from typing import Literal
+from urllib.parse import urlencode
 
+from gws_core.apps import app_gateway_constants
 from gws_core.core.model.model_dto import BaseModelDTO
 from gws_core.core.utils.settings import Settings
 
@@ -139,7 +141,24 @@ class FrontService:
             url += "&hide_header=true"
         return url
 
-    def get_app_gateway_url(self, app_key: str, code: str | None = None) -> str:
+    def get_app_gateway_error_url(self, error: str) -> str:
+        """Gateway page URL that renders a terminal error instead of opening an app.
+
+        Used by the nginx fallback resolver, which is reached by a top-level browser navigation: an
+        API exception there would render the raw JSON error envelope to a human. Redirecting here
+        instead reuses the gateway's styled, translated error UI.
+
+        No app key is included — there is no app to open, and the page must not attempt to start
+        one. Its `appKey` route param is optional for exactly this case.
+
+        :param error: one of the ``app_gateway_constants.GATEWAY_ERROR_*`` values
+        """
+        query = urlencode({app_gateway_constants.GATEWAY_ERROR_QUERY_PARAM: error})
+        return f"{self._lab_url}/open/app?{query}"
+
+    def get_app_gateway_url(
+        self, app_key: str, code: str | None = None, redirect_to: str | None = None
+    ) -> str:
         """Stable, bookmarkable launcher URL for an app.
 
         This is a **front** (Angular) route ``{front}/open/app/{app_key}``: it owns the
@@ -150,12 +169,22 @@ class FrontService:
         When a one-time ``code`` is provided (e.g. issued for a space open), it is carried as
         ``?code=`` so the front can start the app without an existing lab session.
 
+        When ``redirect_to`` is provided (an in-app path such as ``/config``), it is carried so the
+        gateway can land the user on the deep link they originally opened instead of the app root.
+        This is what makes a shared deep link survive the trip through the gateway.
+
         :param app_key: stable app key (resource model id or custom subdomain)
         :param code: optional one-time access code to authenticate the caller
+        :param redirect_to: optional in-app path to land on after the handoff
         """
         url = f"{self._lab_url}/open/app/{app_key}"
+        query_params = {}
         if code:
-            url += f"?code={code}"
+            query_params["code"] = code
+        if redirect_to:
+            query_params[app_gateway_constants.REDIRECT_TO_QUERY_PARAM] = redirect_to
+        if query_params:
+            url += f"?{urlencode(query_params)}"
         return url
 
     ############################################### OTHER URLS ###############################################

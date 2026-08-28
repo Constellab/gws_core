@@ -5,6 +5,7 @@ from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
 from gws_core.config.param.param_spec import StrParam
 from gws_core.config.param.select_param import SelectParam
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.impl.file.file import File
 from gws_core.io.io_spec import OutputSpec
 from gws_core.io.io_specs import OutputSpecs
@@ -56,7 +57,6 @@ class GenerateTechnicalDocMarkdown(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        result: str | None = None
         brick_name: str = params["brick_name"]
         object_type: str = params["object_type"]
         separator: str = params["separator"]
@@ -71,6 +71,8 @@ class GenerateTechnicalDocMarkdown(Task):
             result = TechnicalDocService.generate_resources_technical_doc_as_md(
                 brick_name, separator
             )
+        else:
+            raise BadRequestException(f"Unknown object type '{object_type}'")
 
         file_name = f"{brick_name}_{object_type}_technical_doc.md"
 

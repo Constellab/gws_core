@@ -1,12 +1,10 @@
-from gws_core import File, Paginator, Resource, ResourceImporter, Text, importer_decorator
-from gws_core.core.classes.paginator import Paginator
+from gws_core import File, Resource, ResourceImporter, Text, importer_decorator
 from gws_core.core.classes.search_builder import SearchFilterCriteria, SearchOperator, SearchParams
 from gws_core.impl.text.text_tasks import TextImporter
 from gws_core.model.typing_service import TypingService
 from gws_core.resource.resource_dto import ResourceOrigin
 from gws_core.resource.resource_model import ResourceModel
 from gws_core.task.converter.converter_service import ConverterService
-from gws_core.task.task_typing import TaskTyping
 from gws_core.test.base_test_case import BaseTestCase
 from gws_core.test.data_provider import DataProvider
 
@@ -21,7 +19,7 @@ class ImporterResourceTest(ResourceImporter):
 # test_importer
 class TestImporter(BaseTestCase):
     def test_get_import_specs(self):
-        importers: Paginator[TaskTyping] = TypingService.search_importers(
+        importers = TypingService.search_importers(
             File.get_typing_name(), "weirdformatfile", SearchParams(), 0, 1000
         )
 

@@ -1,6 +1,6 @@
-from typing import Any, Literal
+from typing import Any, Literal, cast
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame, concat, isna
 
 from gws_core.core.utils.utils import Utils
@@ -23,7 +23,7 @@ class TableConcatHelper:
         cls,
         tables: list[Table],
         column_tags_option: TableConcatOppositeTagOption = "ignore",
-        fill_nan: Any = NaN,
+        fill_nan: Any = nan,
     ) -> Table:
         """Concatenate two tables along the rows.
         The total number of rows will be the sum of the two tables. The total number of columns will depend if the two table
@@ -54,14 +54,11 @@ class TableConcatHelper:
                 concat_df = table.get_data()
                 row_tags = table.get_row_tags()
 
-                if (
-                    column_tags_option == "merge from first table"
-                    or column_tags_option == "keep first"
-                ):
+                if column_tags_option in ("merge from first table", "keep first"):
                     column_tags = cls._get_column_tags(concat_df, table)
             else:
                 temp_df = concat([concat_df, table.get_data()])
-                row_tags = row_tags + table.get_row_tags()
+                row_tags = cast(list[dict], row_tags) + table.get_row_tags()
 
                 if column_tags_option == "merge from first table":
                     current_table = Table(concat_df, column_tags=column_tags)
@@ -69,8 +66,12 @@ class TableConcatHelper:
 
                 concat_df = temp_df
 
+        # the tables list is never empty, so concat_df was set in the loop
+        concat_df = cast(DataFrame, concat_df)
+
         # add empty tag for each new column
         if column_tags_option == "keep first":
+            column_tags = cast(list[dict], column_tags)
             tag_count = len(column_tags)
             dataframe_column_count = len(concat_df.columns)
             while tag_count < dataframe_column_count:
@@ -80,7 +81,7 @@ class TableConcatHelper:
         # fill empty values based on fill_empty
         # do nothing for NaN, it is already NaN
         if fill_nan is None:
-            concat_df.replace({NaN: None}, inplace=True)
+            concat_df.replace({nan: None}, inplace=True)
         elif isna(fill_nan):
             pass
         else:
@@ -93,7 +94,7 @@ class TableConcatHelper:
         cls,
         tables: list[Table],
         row_tags_option: TableConcatOppositeTagOption = "ignore",
-        fill_nan: Any = NaN,
+        fill_nan: Any = nan,
     ) -> Table:
         """Concatenate two tables along the columns.
         The total number of columns will be the sum of the two tables. The total number of rows will depend if the two table

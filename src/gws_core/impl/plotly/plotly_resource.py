@@ -1,4 +1,5 @@
 import json
+from typing import cast
 
 import plotly.graph_objs as go
 
@@ -34,7 +35,7 @@ class PlotlyResource(Resource):
 
     def __init__(self, figure: go.Figure | None = None):
         super().__init__()
-        self.figure = figure
+        self.figure = cast(go.Figure, figure)
 
     def get_figure(self) -> go.Figure:
         return self.figure
@@ -104,12 +105,10 @@ class PlotlyResource(Resource):
 
     @classmethod
     def from_json_file(cls, path: str) -> "PlotlyResource":
-        dict_: dict | None = None
-
         try:
             with open(path, encoding="utf-8") as file:
                 dict_ = json.load(file)
         except Exception as e:
-            raise Exception(f"Error while reading the json file {path}. {str(e)}")
+            raise Exception(f"Error while reading the json file {path}. {str(e)}") from e
 
         return PlotlyResource.from_dict(dict_)

@@ -37,108 +37,80 @@ class ViewType(Enum):
         """Return the default typing style for the view type"""
 
         style: TypingStyle
-        if self == ViewType.VIEW:
+        icon_style = _VIEW_TYPE_MATERIAL_ICON_STYLES.get(self)
+        if icon_style is None:
+            # view types without a dedicated material icon fallback on the default view style
             style = TypingStyle.default_view()
-        elif self == ViewType.JSON:
-            style = TypingStyle.material_icon("data_object", background_color="#f6995c")
-        elif self == ViewType.TEXT:
-            style = TypingStyle.material_icon("text_snippet", background_color="#e4debe")
-        elif self == ViewType.TABLE or self == ViewType.TABULAR:
-            style = TypingStyle.material_icon("table_chart", background_color="#79ac78")
-        elif self == ViewType.FOLDER:
-            style = TypingStyle.material_icon("folder", background_color="#7b9dd2")
-        elif self == ViewType.SCATTER_PLOT_2D:
-            style = TypingStyle.material_icon("scatter_plot")
-        elif self == ViewType.VULCANO_PLOT:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.LINE_PLOT_2D:
-            style = TypingStyle.material_icon("ssid_chart")
-        elif self == ViewType.BAR_PLOT:
-            style = TypingStyle.material_icon("bar_chart")
-        elif self == ViewType.STACKED_BAR_PLOT:
-            style = TypingStyle.material_icon("stacked_bar_chart")
-        elif self == ViewType.HISTOGRAM:
-            style = TypingStyle.material_icon("bar_chart")
-        elif self == ViewType.BOX_PLOT or self == ViewType.HEATMAP or self == ViewType.VENN_DIAGRAM:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.RESOURCES_LIST_VIEW:
-            style = TypingStyle.material_icon("format_list_bulleted", background_color="#496989")
-        elif self == ViewType.EMPTY or self == ViewType.MULTI_VIEWS:
-            style = TypingStyle.material_icon("assessment")
-        elif self == ViewType.NETWORK:
-            style = TypingStyle.material_icon("hub", background_color="#627254")
-        elif self == ViewType.IMAGE:
-            style = TypingStyle.material_icon("image")
-        elif self == ViewType.MARKDOWN:
-            style = TypingStyle.material_icon("computer")
-        elif self == ViewType.PLOTLY:
-            style = TypingStyle.material_icon("analytics", background_color="#496989")
-        elif self == ViewType.RICH_TEXT:
-            style = TypingStyle.material_icon("text_snippet", background_color="#f6f193")
-        elif self == ViewType.APP:
-            style = TypingStyle.material_icon("dashboard", background_color="#ff4b4b")
-        elif self == ViewType.AUDIO:
-            style = TypingStyle.material_icon("volume_up", background_color="#f6995c")
         else:
-            style = TypingStyle.default_view()
+            icon_name, background_color = icon_style
+            style = TypingStyle.material_icon(icon_name, background_color=background_color)
 
         style.fill_empty_values()
         return style
 
     def get_human_name(self) -> str:
         """Return the name of the view type"""
-        if self == ViewType.VIEW:
-            return "View"
-        elif self == ViewType.JSON:
-            return "JSON"
-        elif self == ViewType.TEXT:
-            return "Text"
-        elif self == ViewType.TABLE or self == ViewType.TABULAR:
-            return "Table"
-        elif self == ViewType.FOLDER:
-            return "Folder"
-        elif self == ViewType.SCATTER_PLOT_2D:
-            return "Scatter plot 2D"
-        elif self == ViewType.VULCANO_PLOT:
-            return "Vulcano plot"
-        elif self == ViewType.LINE_PLOT_2D:
-            return "Line plot 2D"
-        elif self == ViewType.BAR_PLOT:
-            return "Bar plot"
-        elif self == ViewType.STACKED_BAR_PLOT:
-            return "Stacked bar plot"
-        elif self == ViewType.HISTOGRAM:
-            return "Histogram"
-        elif self == ViewType.BOX_PLOT:
-            return "Box plot"
-        elif self == ViewType.HEATMAP:
-            return "Heatmap"
-        elif self == ViewType.VENN_DIAGRAM:
-            return "Venn diagram"
-        elif self == ViewType.RESOURCES_LIST_VIEW:
-            return "Resources list"
-        elif self == ViewType.EMPTY:
-            return "Empty"
-        elif self == ViewType.MULTI_VIEWS:
-            return "Multi views"
-        elif self == ViewType.NETWORK:
-            return "Network"
-        elif self == ViewType.IMAGE:
-            return "Image"
-        elif self == ViewType.IFRAME:
-            return "Iframe"
-        elif self == ViewType.MARKDOWN:
-            return "Markdown"
-        elif self == ViewType.PLOTLY:
-            return "Plotly"
-        elif self == ViewType.RICH_TEXT:
-            return "Rich text"
-        elif self == ViewType.APP:
-            return "App"
-        elif self == ViewType.AUDIO:
-            return "Audio"
-        else:
-            return "Unknown"
+        return _VIEW_TYPE_HUMAN_NAMES.get(self, "Unknown")
+
+
+# Material icon (icon name, background color) used to build the default typing style of a view type.
+# View types absent from this mapping (VIEW, IFRAME) use TypingStyle.default_view().
+_VIEW_TYPE_MATERIAL_ICON_STYLES: dict[ViewType, tuple[str, str | None]] = {
+    ViewType.JSON: ("data_object", "#f6995c"),
+    ViewType.TEXT: ("text_snippet", "#e4debe"),
+    ViewType.TABLE: ("table_chart", "#79ac78"),
+    ViewType.TABULAR: ("table_chart", "#79ac78"),
+    ViewType.FOLDER: ("folder", "#7b9dd2"),
+    ViewType.SCATTER_PLOT_2D: ("scatter_plot", None),
+    ViewType.VULCANO_PLOT: ("assessment", None),
+    ViewType.LINE_PLOT_2D: ("ssid_chart", None),
+    ViewType.BAR_PLOT: ("bar_chart", None),
+    ViewType.STACKED_BAR_PLOT: ("stacked_bar_chart", None),
+    ViewType.HISTOGRAM: ("bar_chart", None),
+    ViewType.BOX_PLOT: ("assessment", None),
+    ViewType.HEATMAP: ("assessment", None),
+    ViewType.VENN_DIAGRAM: ("assessment", None),
+    ViewType.RESOURCES_LIST_VIEW: ("format_list_bulleted", "#496989"),
+    ViewType.EMPTY: ("assessment", None),
+    ViewType.MULTI_VIEWS: ("assessment", None),
+    ViewType.NETWORK: ("hub", "#627254"),
+    ViewType.IMAGE: ("image", None),
+    ViewType.MARKDOWN: ("computer", None),
+    ViewType.PLOTLY: ("analytics", "#496989"),
+    ViewType.RICH_TEXT: ("text_snippet", "#f6f193"),
+    ViewType.APP: ("dashboard", "#ff4b4b"),
+    ViewType.AUDIO: ("volume_up", "#f6995c"),
+}
+
+# Human readable name of each view type. Unmapped view types are named 'Unknown'.
+_VIEW_TYPE_HUMAN_NAMES: dict[ViewType, str] = {
+    ViewType.VIEW: "View",
+    ViewType.JSON: "JSON",
+    ViewType.TEXT: "Text",
+    ViewType.TABLE: "Table",
+    ViewType.TABULAR: "Table",
+    ViewType.FOLDER: "Folder",
+    ViewType.SCATTER_PLOT_2D: "Scatter plot 2D",
+    ViewType.VULCANO_PLOT: "Vulcano plot",
+    ViewType.LINE_PLOT_2D: "Line plot 2D",
+    ViewType.BAR_PLOT: "Bar plot",
+    ViewType.STACKED_BAR_PLOT: "Stacked bar plot",
+    ViewType.HISTOGRAM: "Histogram",
+    ViewType.BOX_PLOT: "Box plot",
+    ViewType.HEATMAP: "Heatmap",
+    ViewType.VENN_DIAGRAM: "Venn diagram",
+    ViewType.RESOURCES_LIST_VIEW: "Resources list",
+    ViewType.EMPTY: "Empty",
+    ViewType.MULTI_VIEWS: "Multi views",
+    ViewType.NETWORK: "Network",
+    ViewType.IMAGE: "Image",
+    ViewType.IFRAME: "Iframe",
+    ViewType.MARKDOWN: "Markdown",
+    ViewType.PLOTLY: "Plotly",
+    ViewType.RICH_TEXT: "Rich text",
+    ViewType.APP: "App",
+    ViewType.AUDIO: "Audio",
+}
 
 
 # List of view type that cannot be used in a note

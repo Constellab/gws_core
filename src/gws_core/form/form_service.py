@@ -32,6 +32,9 @@ from gws_core.user.activity.activity_dto import ActivityObjectType, ActivityType
 from gws_core.user.activity.activity_service import ActivityService
 from gws_core.user.current_user_service import CurrentUserService
 
+# Max number of referencing notes named in the "cannot delete form" error message
+MAX_REFERENCING_NOTES_LISTED = 5
+
 
 class FormService:
     """CRUD + save flow for Form. See form_feature.md §3.3, §8, §9.2."""
@@ -363,8 +366,14 @@ class FormService:
         """
         referencing_rows = list(NoteFormModel.get_by_form(form_id))
         if referencing_rows:
-            note_titles = [row.note.title for row in referencing_rows[:5]]
-            suffix = f" (and {len(referencing_rows) - 5} more)" if len(referencing_rows) > 5 else ""
+            note_titles = [
+                row.note.title for row in referencing_rows[:MAX_REFERENCING_NOTES_LISTED]
+            ]
+            suffix = (
+                f" (and {len(referencing_rows) - MAX_REFERENCING_NOTES_LISTED} more)"
+                if len(referencing_rows) > MAX_REFERENCING_NOTES_LISTED
+                else ""
+            )
             raise BadRequestException(
                 "Cannot delete form: still referenced by note(s): "
                 f"{', '.join(note_titles)}{suffix}. "

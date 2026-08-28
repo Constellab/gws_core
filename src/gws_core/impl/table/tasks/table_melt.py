@@ -74,7 +74,7 @@ class TableMelt(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        dataframe = pd.DataFrame(inputs["input_table"].get_data())
+        dataframe = pd.DataFrame(inputs.get_resource("input_table", Table).get_data())
         for key, i in params.items():
             if i == "":
                 params[key] = None

@@ -1,5 +1,7 @@
 """Home page for the Reflex showcase app."""
 
+from typing import cast
+
 import reflex as rx
 from gws_reflex_main import ReflexMainState
 
@@ -20,7 +22,7 @@ class HomePageState(rx.State):
         if not await main_state.check_authentication():
             return "Unauthorized"
         resources = await main_state.get_resources()
-        return resources[0].name if resources else "No resource"
+        return cast(str, resources[0].name) if resources else "No resource"
 
     @rx.var
     async def get_param_name(self) -> str | None:
@@ -45,7 +47,7 @@ def home_page() -> rx.Component:
     # Resource access example
     resource_access_example = rx.box(
         rx.text("Input resource name: " + HomePageState.get_resource_name),
-        rx.text("Parameter value: " + HomePageState.get_param_name),
+        rx.text("Parameter value: " + cast(str, HomePageState.get_param_name)),
     )
 
     resource_access_code = """import reflex as rx
@@ -77,7 +79,10 @@ rx.box(
 
     # Authentication example
     authentication_example = rx.box(
-        rx.text("Current user: " + HomePageState.get_current_user_name, margin_bottom="0.5em"),
+        rx.text(
+            "Current user: " + cast(str, HomePageState.get_current_user_name),
+            margin_bottom="0.5em",
+        ),
     )
 
     authentication_code = """import reflex as rx

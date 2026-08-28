@@ -1,3 +1,5 @@
+from typing import cast
+
 from fastapi.param_functions import Depends
 
 from gws_core.core.model.model_dto import PageDTO
@@ -59,7 +61,7 @@ def update_folder(
 def update_content(
     note_id: str, content: RichTextDTO, _=Depends(AuthorizationService.check_user_access_token)
 ) -> RichTextDTO:
-    return NoteService.update_content(note_id, content).content
+    return cast(RichTextDTO, NoteService.update_content(note_id, content).content)
 
 
 @core_app.put(
@@ -72,7 +74,7 @@ def insert_template(
     data: NoteInsertTemplateDTO,
     _=Depends(AuthorizationService.check_user_access_token),
 ) -> RichTextDTO:
-    return NoteService.insert_template(note_id, data).content
+    return cast(RichTextDTO, NoteService.insert_template(note_id, data).content)
 
 
 @core_app.post(

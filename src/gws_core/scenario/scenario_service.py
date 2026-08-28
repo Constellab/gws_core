@@ -403,7 +403,7 @@ class ScenarioService:
         :rtype: ResourceModel | None
         """
         # Local import to avoid a circular import (ScenarioProxy imports ScenarioService).
-        from gws_core.scenario.scenario_proxy import ScenarioProxy
+        from gws_core.scenario.scenario_proxy import ScenarioProxy  # noqa: PLC0415
 
         scenario = cls.get_by_id_and_check(id_)
         # If the scenario is running or in error, there is no available output.
@@ -640,7 +640,7 @@ class ScenarioService:
         :param resource_mode: Which resources to include (e.g. "Auto", "Inputs and outputs", "All").
         :return: Path to the generated archive tar file.
         """
-        from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper
+        from gws_core.scenario.scenario_archive_zipper import ScenarioArchiveZipper  # noqa: PLC0415
 
         user = CurrentUserService.get_and_check_current_user()
         zipper = ScenarioArchiveZipper(scenario_id, resource_mode, user)  # type: ignore

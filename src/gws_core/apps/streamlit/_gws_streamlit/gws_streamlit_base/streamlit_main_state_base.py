@@ -70,7 +70,7 @@ class StreamlitMainStateBase(ABC):
             st.session_state["__gws_bootstrap_config__"] = config
 
             # 3. Check authentication (sets user in session_state)
-            cls._check_authentication(config)
+            cls._check_authentication(cast(StreamlitAppConfig, config))
 
             # 4. Post-initialization hook for subclasses
             cls._post_initialize()

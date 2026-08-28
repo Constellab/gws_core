@@ -6,12 +6,14 @@ from gws_core import ResourceModel
 from gws_core.apps.streamlit.agents.streamlit_agent import StreamlitAgent
 from gws_core.apps.streamlit.agents.streamlit_pipenv_agent import StreamlitPipenvAgent
 from gws_core.community.community_dto import CommunityAgentVersionDTO
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.entity_navigator.entity_navigator_service import EntityNavigatorService
 from gws_core.impl.agent.py_agent import PyAgent
 from gws_core.impl.robot.robot_resource import Robot
 from gws_core.impl.robot.robot_tasks import RobotCreate, RobotMove
 from gws_core.io.connector import Connector
 from gws_core.process.process_model import ProcessModel
+from gws_core.protocol.protocol_exception import IOFaceConnectedToTheParentDeleteException
 from gws_core.protocol.protocol_model import ProtocolModel
 from gws_core.protocol.protocol_proxy import ProtocolProxy
 from gws_core.protocol.protocol_service import ProtocolService
@@ -254,6 +256,7 @@ class TestProtocolService(BaseTestCase):
         update = ProtocolService.add_outerface_to_protocol_id(
             sub_protocol.get_model().id, "p4", "robot"
         )
+        assert update.ioface is not None
         outerface_name = update.ioface.name
 
         sub_protocol = sub_protocol.refresh()
@@ -267,7 +270,7 @@ class TestProtocolService(BaseTestCase):
 
         # the new outerface carries the already-computed resource (auto-propagated)
         outerface_resource = sub_protocol.get_model().outputs.get_resource_model(outerface_name)
-        self.assertIsNotNone(outerface_resource)
+        assert outerface_resource is not None
         self.assertEqual(outerface_resource.id, kept_resource.id)
 
     def test_delete_outerface_of_finished_sub_protocol(self):
@@ -286,13 +289,14 @@ class TestProtocolService(BaseTestCase):
         )
 
         # the "robot" outerface is connected to p5 in the parent -> deletion must still be blocked
-        with self.assertRaises(Exception):
+        with self.assertRaises(IOFaceConnectedToTheParentDeleteException):
             ProtocolService.delete_outerface_of_protocol_id(sub_protocol.get_model().id, "robot")
 
         # add a fresh, unconnected outerface from p4, then delete it on the finished sub protocol
         update = ProtocolService.add_outerface_to_protocol_id(
             sub_protocol.get_model().id, "p4", "robot"
         )
+        assert update.ioface is not None
         new_outerface_name = update.ioface.name
 
         ProtocolService.delete_outerface_of_protocol_id(
@@ -326,6 +330,7 @@ class TestProtocolService(BaseTestCase):
         update = ProtocolService.add_interface_to_protocol_id(
             sub_protocol.get_model().id, "p3", "robot"
         )
+        assert update.ioface is not None
         interface_name = update.ioface.name
 
         sub_protocol = sub_protocol.refresh()
@@ -337,7 +342,7 @@ class TestProtocolService(BaseTestCase):
 
         # the new interface carries the already-computed input resource (auto-propagated)
         interface_resource = sub_protocol.get_model().inputs.get_resource_model(interface_name)
-        self.assertIsNotNone(interface_resource)
+        assert interface_resource is not None
         self.assertEqual(interface_resource.id, exposed_resource.id)
 
     def test_attach_input_to_sub_protocol_interface_propagates_to_inner_task(self):
@@ -363,8 +368,6 @@ class TestProtocolService(BaseTestCase):
         # expose the inner task input as an interface of the sub protocol
         sub_protocol.add_interface("robot", "mover", "robot")
 
-        sub_id = sub_protocol.get_model().id
-
         # at parent level, attach the resource to the sub protocol interface input port
         ProtocolService.add_input_resource_to_process_input(
             main_protocol.get_model().id, robot_resource.id, sub_protocol.instance_name, "robot"
@@ -374,16 +377,15 @@ class TestProtocolService(BaseTestCase):
 
         # parent level : the resource IS on the sub protocol input port
         sub_input_resource = sub_protocol.get_model().inputs.get_resource_model("robot")
-        self.assertIsNotNone(sub_input_resource)
+        assert sub_input_resource is not None
         self.assertEqual(sub_input_resource.id, robot_resource.id)
 
         # BUG : inside the sub protocol the interface must propagate to the inner task input
         inner_input_resource = (
             sub_protocol.refresh().get_process("mover").get_input_resource_model("robot")
         )
-        self.assertIsNotNone(
-            inner_input_resource,
-            "The inner task input was not set: the interface resource was not propagated down",
+        assert inner_input_resource is not None, (
+            "The inner task input was not set: the interface resource was not propagated down"
         )
         self.assertEqual(inner_input_resource.id, robot_resource.id)
 
@@ -424,15 +426,14 @@ class TestProtocolService(BaseTestCase):
 
         # after reset the source auto-runs and the resource is back on the sub protocol input
         sub_input_resource = sub_protocol.get_model().inputs.get_resource_model("robot")
-        self.assertIsNotNone(sub_input_resource)
+        assert sub_input_resource is not None
 
         # BUG : the interface must be re-propagated down to the inner task on reset
         inner_input_resource = (
             sub_protocol.refresh().get_process("mover").get_input_resource_model("robot")
         )
-        self.assertIsNotNone(
-            inner_input_resource,
-            "After reset the inner task input was not set: interface was not propagated down",
+        assert inner_input_resource is not None, (
+            "After reset the inner task input was not set: interface was not propagated down"
         )
         self.assertEqual(inner_input_resource.id, sub_input_resource.id)
         self.assertTrue(
@@ -456,7 +457,7 @@ class TestProtocolService(BaseTestCase):
         scenario.refresh()
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p0.refresh()
             if p0.get_model().is_finished:
                 break
@@ -471,7 +472,7 @@ class TestProtocolService(BaseTestCase):
         ProtocolService.run_process(protocol_id, "p1")
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p1.refresh()
             if p1.get_model().is_finished:
                 break
@@ -482,7 +483,7 @@ class TestProtocolService(BaseTestCase):
         self.assertTrue(p1.get_model().is_success)
 
         # Test run process p4 which shoud not be runable
-        with self.assertRaises(Exception):
+        with self.assertRaises(BadRequestException):
             ProtocolService.run_process(protocol_id, "p3")
 
     def test_run_protocol_propagates_started_to_parent(self):
@@ -581,11 +582,11 @@ class TestProtocolService(BaseTestCase):
 
         sub_model = ProtocolModel.get_by_id_and_check(sub_process.id)
         inner_resource = sub_model.get_process("creator").out_port("robot").get_resource_model()
-        self.assertIsNotNone(inner_resource)
+        assert inner_resource is not None
 
         # the outerface propagated the resource to the sub-protocol output (already works)
         sub_output_resource = sub_model.outputs.get_resource_model("robot")
-        self.assertIsNotNone(sub_output_resource)
+        assert sub_output_resource is not None
         self.assertEqual(sub_output_resource.id, inner_resource.id)
 
         # BUG : the parent connector must propagate the sub-protocol output to the downstream task
@@ -593,10 +594,9 @@ class TestProtocolService(BaseTestCase):
         root_reloaded = ProtocolModel.get_by_id_and_check(root_protocol_id)
         downstream_model = root_reloaded.get_process("downstream")
         downstream_input_resource = downstream_model.in_port("robot").get_resource_model()
-        self.assertIsNotNone(
-            downstream_input_resource,
+        assert downstream_input_resource is not None, (
             "The downstream task input was not set: the parent connector did not propagate "
-            "the sub-protocol output",
+            "the sub-protocol output"
         )
         self.assertEqual(downstream_input_resource.id, inner_resource.id)
         self.assertTrue(downstream_model.inputs.is_ready)
@@ -640,7 +640,7 @@ class TestProtocolService(BaseTestCase):
         ProtocolService.run_process(protocol_id, process_model.instance_name)
 
         count = 0
-        while count < 30:
+        while count < 30:  # noqa: PLR2004
             p0.refresh()
             if p0.get_model().is_finished:
                 break

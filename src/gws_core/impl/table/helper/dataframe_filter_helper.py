@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, cast
 
 from pandas import DataFrame, Index, api
 from typing_extensions import NotRequired, TypedDict
@@ -47,10 +47,7 @@ class DataframeFilterHelper:
             new_df = cls._filter_by_axis_names(
                 data, axis, filter_["name"], filter_.get("is_regex", False)
             )
-            if dataframe is None:
-                dataframe = new_df
-            else:
-                dataframe = dataframe.combine_first(new_df)
+            dataframe = new_df if dataframe is None else dataframe.combine_first(new_df)
 
         return dataframe
 
@@ -60,10 +57,12 @@ class DataframeFilterHelper:
     ):
         filtered_dataframe = cls.filter_by_axis_names(data, axis, filters)
 
-        ax_index: Index = filtered_dataframe.index if axis == "row" else filtered_dataframe.columns
+        # filters is never empty, so filter_by_axis_names always returns a dataframe
+        checked_dataframe = cast(DataFrame, filtered_dataframe)
+        ax_index: Index = checked_dataframe.index if axis == "row" else checked_dataframe.columns
 
         # delete the filtered rows/columns from the data
-        return data.drop(labels=ax_index, axis=0 if axis == "row" else 1)
+        return data.drop(labels=ax_index.tolist(), axis=0 if axis == "row" else 1)
 
     @classmethod
     def _filter_by_axis_names(
@@ -90,10 +89,11 @@ class DataframeFilterHelper:
             ax_index: Index = data.index if axis == "row" else data.columns
 
             # if the index is only numeric value (default) we must convert values to int to compare
+            items: list[str] | list[int] = value
             if api.types.is_numeric_dtype(ax_index):
-                value = [int(i) for i in value]
+                items = [int(i) for i in value]
 
-            return data.filter(items=value, axis=ax)
+            return data.filter(items=items, axis=ax)
 
     @classmethod
     def get_filter_param_set(
@@ -146,7 +146,6 @@ class DataframeFilterHelper:
     @classmethod
     def convert_tags_params_to_tag_list(cls, tags: dict | list[dict]) -> list[dict]:
         """Convert a tag params from the get_tags_param_set to a list of tags"""
-        if isinstance(tags, str):
-            tags = [tags]
+        tag_list: list[dict] = tags if isinstance(tags, list) else [tags]
 
-        return [tag["tags"] for tag in tags]
+        return [tag["tags"] for tag in tag_list]

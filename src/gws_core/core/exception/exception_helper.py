@@ -4,7 +4,9 @@ from types import ModuleType, TracebackType
 
 class ExceptionHelper:
     @staticmethod
-    def filter_traceback(traceback: TracebackType, module_type: ModuleType) -> list[FrameSummary]:
+    def filter_traceback(
+        traceback: TracebackType | None, module_type: ModuleType
+    ) -> list[FrameSummary]:
         """Method to filter the traceback only keep frame after the last frame of module_type"""
         tb_frames = extract_tb(traceback)
         tb_frames.reverse()

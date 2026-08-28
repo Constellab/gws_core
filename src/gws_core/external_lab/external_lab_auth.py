@@ -49,7 +49,9 @@ class ExternalLabAuth:
 
     @classmethod
     def _get_and_check_api_key(cls, request: Request) -> str:
-        header_authorization: str = request.headers.get(ExternalLabAuth.API_KEY_HEADER_NAME)
+        header_authorization: str | None = request.headers.get(
+            ExternalLabAuth.API_KEY_HEADER_NAME
+        )
         header_scheme, header_param = get_authorization_scheme_param(header_authorization)
 
         if header_scheme.lower() == ExternalLabAuth.API_KEY_HEADER_PREFIX:

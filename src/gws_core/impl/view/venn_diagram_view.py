@@ -45,10 +45,17 @@ class VennDiagramView(View):
     _type: ViewType = ViewType.VENN_DIAGRAM
     _title: str = "Venn Diagram"
 
+    def _get_groups(self) -> dict[str, set]:
+        """Return the groups of the diagram, raise if no group was added"""
+        if self._groups is None:
+            raise BadRequestException("The groups are required, use add_group to add them")
+        return self._groups
+
     def _compute_sections(self):
-        group_names = list(self._groups.keys())
+        groups = self._get_groups()
+        group_names = list(groups.keys())
         bag = {}
-        for key, data in self._groups.items():
+        for key, data in groups.items():
             bag[key] = {
                 "group_names": [key],
                 "data": data,  # dropna
@@ -62,7 +69,7 @@ class VennDiagramView(View):
                 for key2, val2 in bag.items():
                     if key1 == key2:
                         continue
-                    columns = list(set([*val1["group_names"], *val2["group_names"]]))
+                    columns = list({*val1["group_names"], *val2["group_names"]})
                     skip = False
                     for c in columns:
                         if c not in group_names:
@@ -73,8 +80,8 @@ class VennDiagramView(View):
                     columns.sort()
                     joined_key = "_".join(columns)
                     if joined_key not in bag:
-                        inter1 = set([str(k) for k in val1["data"]])
-                        inter2 = set([str(k) for k in val2["data"]])
+                        inter1 = {str(k) for k in val1["data"]}
+                        inter2 = {str(k) for k in val2["data"]}
                         bag_copy[joined_key] = {
                             "group_names": columns,
                             "data": inter1.intersection(inter2),

@@ -1,8 +1,8 @@
 from unittest import TestCase
 
 from gws_core.impl.table.helper.dataframe_helper import DataframeHelper
-from numpy import NaN
-from pandas import NA, DataFrame
+from numpy import nan
+from pandas import NA, DataFrame, Index
 
 
 # test_dataframe_helper
@@ -13,14 +13,14 @@ class TestTableConcat(TestCase):
 
     def test_flatten_dataframe_by_column(self):
         df = DataFrame({"F1": [1, 2], "F2": [7, 1]})
-        a = df.style.format(thousands=" ", precision=1)
+        df.style.format(thousands=" ", precision=1)
         self.assertEqual(DataframeHelper.flatten_dataframe_by_column(df), [1, 2, 7, 1])
 
     def test_dataframe_to_float(self):
-        df = DataFrame({"F1": ["1", 2], "F2": ["NA", NaN]})
+        df = DataFrame({"F1": ["1", 2], "F2": ["NA", nan]})
         self.assertTrue(
             DataframeHelper.dataframe_to_float(df).equals(
-                DataFrame({"F1": [1.0, 2.0], "F2": [NaN, NaN]})
+                DataFrame({"F1": [1.0, 2.0], "F2": [nan, nan]})
             )
         )
 
@@ -44,29 +44,29 @@ class TestTableConcat(TestCase):
         self.assertTrue(result.equals(DataFrame({"F1": [True, False], "F2": [False, True]})))
 
     def test_rename_duplicate_column_names(self):
-        df = DataFrame([[1, 2, 3, 4, 5, 6]], columns=["A", "B", "A", "B", "A", "A_1"])
+        df = DataFrame([[1, 2, 3, 4, 5, 6]], columns=Index(["A", "B", "A", "B", "A", "A_1"]))
 
         result = DataframeHelper.rename_duplicate_column_names(df)
         expected_result = DataFrame(
-            [[1, 2, 3, 4, 5, 6]], columns=["A", "B", "A_1", "B_1", "A_2", "A_3"]
+            [[1, 2, 3, 4, 5, 6]], columns=Index(["A", "B", "A_1", "B_1", "A_2", "A_3"])
         )
 
         self.assertTrue(result.equals(expected_result))
 
     def test_rename_duplicate_row_names(self):
-        df = DataFrame([1, 2, 3, 4, 5, 6], index=["A", "B", "A", "B", "A", "A_1"])
+        df = DataFrame([1, 2, 3, 4, 5, 6], index=Index(["A", "B", "A", "B", "A", "A_1"]))
 
         result = DataframeHelper.rename_duplicate_row_names(df)
         expected_result = DataFrame(
-            [1, 2, 3, 4, 5, 6], index=["A", "B", "A_1", "B_1", "A_2", "A_3"]
+            [1, 2, 3, 4, 5, 6], index=Index(["A", "B", "A_1", "B_1", "A_2", "A_3"])
         )
 
         self.assertTrue(result.equals(expected_result))
 
     def test_nanify_none_numeric(self):
-        df = DataFrame({"F1": ["1", 2, None, NaN, NA]})
+        df = DataFrame({"F1": ["1", 2, None, nan, NA]})
 
         result = DataframeHelper.nanify_none_number(df)
-        expected_result = DataFrame({"F1": [NaN, 2.0, NaN, NaN, NaN]})
+        expected_result = DataFrame({"F1": [nan, 2.0, nan, nan, nan]})
 
         self.assertTrue(result.equals(expected_result))

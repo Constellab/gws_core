@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import final
+from typing import cast, final
 
 from fastapi.encoders import jsonable_encoder
 
@@ -29,17 +29,17 @@ class ProgressBar(Model):
     ProgressBar class
     """
 
-    process_id = TypedCharField(index=True, unique=True)
-    process_typing_name = TypedCharField()
+    process_id: TypedCharField = TypedCharField(index=True, unique=True)
+    process_typing_name: TypedCharField = TypedCharField()
 
-    current_value = TypedFloatField(default=0.0)
-    started_at = NullableDateTimeUTC(with_milliseconds=True)
-    ended_at = NullableDateTimeUTC(with_milliseconds=True)
+    current_value: TypedFloatField = TypedFloatField(default=0.0)
+    started_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
+    ended_at: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
 
-    elapsed_time = NullableFloatField()
-    second_start = NullableDateTimeUTC(with_milliseconds=True)
+    elapsed_time: NullableFloatField = NullableFloatField()
+    second_start: NullableDateTimeUTC = NullableDateTimeUTC(with_milliseconds=True)
 
-    data = NullableJSONField()
+    data: NullableJSONField = NullableJSONField()
 
     _MAX_VALUE = 100.0
     _MIN_VALUE = 0.0
@@ -150,7 +150,9 @@ class ProgressBar(Model):
             message_content = self._check_message_length(message.message)
 
             if message.type == MessageLevel.PROGRESS:
-                self._update_progress(value=message.progress, message=message_content)
+                self._update_progress(
+                    value=cast(float, message.progress), message=message_content
+                )
             else:
                 self._add_message(message_content, message.type)
 
@@ -175,7 +177,7 @@ class ProgressBar(Model):
         progress_bar_message = ProgressBarMessageDTO(
             type=type_, text=message, datetime=dtime, progress=progress
         )
-        self.data["messages"].append(progress_bar_message.to_json_dict())
+        cast(dict, self.data)["messages"].append(progress_bar_message.to_json_dict())
 
     def start(self):
         if self.is_started:
@@ -224,7 +226,7 @@ class ProgressBar(Model):
             self._add_message(message, MessageLevel.PROGRESS, value)
 
     def get_messages(self) -> list[ProgressBarMessageDTO]:
-        return ProgressBarMessageDTO.from_json_list(self.data["messages"])
+        return ProgressBarMessageDTO.from_json_list(cast(dict, self.data)["messages"])
 
     def get_last_message(self) -> ProgressBarMessageDTO | None:
         messages = self.get_messages()

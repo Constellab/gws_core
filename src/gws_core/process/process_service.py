@@ -1,7 +1,7 @@
 import threading
 import time
 from datetime import datetime, timedelta
-from typing import Literal
+from typing import Literal, cast
 
 import schedule
 
@@ -56,7 +56,9 @@ class ProcessService:
             start_date = from_page_date
         else:
             # add a margin of 2 seconds to avoid missing the first log lines and the last log lines
-            start_date = process_model.started_at - timedelta(seconds=cls.LOG_SECOND_MARGIN)
+            start_date = cast(datetime, process_model.started_at) - timedelta(
+                seconds=cls.LOG_SECOND_MARGIN
+            )
         end_date = (process_model.ended_at or DateHelper.now_utc()) + timedelta(
             seconds=cls.LOG_SECOND_MARGIN
         )
@@ -76,7 +78,7 @@ class ProcessService:
         if process_model.status == ProcessStatus.DRAFT:
             raise BadRequestException("Can't get monitor of a process in draft status")
 
-        from_date = process_model.started_at
+        from_date = cast(datetime, process_model.started_at)
         to_date = process_model.ended_at or DateHelper.now_utc()
         return MonitorService.get_monitor_data_graphics_between_dates(
             from_date, to_date, utc_number=timezone_number
@@ -86,8 +88,8 @@ class ProcessService:
     def get_and_check_process_model(
         cls, process_type: ProcessType, process_id: str
     ) -> ProcessModel:
-        process_type: type[ProcessModel] = cls._get_class_from_type(process_type)
-        return process_type.get_by_id_and_check(process_id)
+        process_model_type: type[ProcessModel] = cls._get_class_from_type(process_type)
+        return process_model_type.get_by_id_and_check(process_id)
 
     @classmethod
     def _get_class_from_type(cls, process_type: ProcessType) -> type[ProcessModel]:
@@ -123,14 +125,15 @@ class ProcessService:
         """Get progress bar messages with pagination."""
         progress_bar = cls._get_process_progress_bar(process_type, process_id)
 
-        messages = progress_bar.get_messages_paginated(nb_of_messages=20, before_date=from_datetime)
+        messages = progress_bar.get_messages_paginated(
+            nb_of_messages=nb_of_messages, before_date=from_datetime
+        )
 
+        # messages are ordered from the most recent to the oldest
         return ProgressBarMessagesBetweenDatesDTO(
-            from_datatime=messages[-1].datetime if messages else None,
-            to_datatime=messages[0].datetime if messages else None,
-            messages=progress_bar.get_messages_paginated(
-                nb_of_messages=nb_of_messages, before_date=from_datetime
-            ),
+            from_datatime=messages[-1].get_datetime() if messages else None,
+            to_datatime=messages[0].get_datetime() if messages else None,
+            messages=messages,
         )
 
     @classmethod
@@ -154,7 +157,7 @@ class ProcessService:
             Logger.debug("Check to send run stats to Community")
             stats = list(
                 ProcessRunStatModel.select()
-                .where(ProcessRunStatModel.sync_with_community == False)
+                .where(ProcessRunStatModel.sync_with_community == False)  # noqa: E712 - peewee query expression, the operator builds SQL
                 .order_by(ProcessRunStatModel.created_at.asc())
             )
             if len(stats) > 0:

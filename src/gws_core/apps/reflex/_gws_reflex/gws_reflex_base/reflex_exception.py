@@ -1,7 +1,7 @@
 """Exception used by the Reflex base module.
 
 This module must stay free of any ``gws_core`` (or ``fastapi``) import: it is loaded
-by virtual environment apps where ``gws_core`` is not installed. ``ReflexAppException``
+by virtual environment apps where ``gws_core`` is not installed. ``ReflexAppError``
 is the gws_core-free counterpart of ``gws_core``'s ``BadRequestException``, so the same
 error handling works in both normal and virtual environment apps.
 """
@@ -12,7 +12,7 @@ from typing import Literal
 ReflexExceptionShowMode = Literal["error", "info"]
 
 
-class ReflexAppException(Exception):
+class ReflexAppError(Exception):
     """Expected exception raised by a Reflex app.
 
     This is the gws_core-free exception used inside ``gws_reflex_base`` so that the

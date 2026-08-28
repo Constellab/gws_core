@@ -22,20 +22,20 @@ from ..core.model.model import Model
 
 
 class TagKeyModel(Model):
-    key = TypedCharField(unique=True)
-    order = TypedIntegerField(default=0)
+    key: TypedCharField = TypedCharField(unique=True)
+    order: TypedIntegerField = TypedIntegerField(default=0)
 
-    value_format = TypedEnumField(choices=TagValueFormat, default=TagValueFormat.STRING)
+    value_format: TypedEnumField[TagValueFormat] = TypedEnumField(choices=TagValueFormat, default=TagValueFormat.STRING)
 
-    label = NullableCharField()
+    label: NullableCharField = NullableCharField()
 
-    description = NullableRichTextDbField()
+    description: NullableRichTextDbField = NullableRichTextDbField()
 
-    is_community_tag = TypedBooleanField(default=False)
+    is_community_tag: TypedBooleanField = TypedBooleanField(default=False)
 
-    deprecated = TypedBooleanField(default=False)
+    deprecated: TypedBooleanField = TypedBooleanField(default=False)
 
-    additional_infos_specs = NullableJSONField()
+    additional_infos_specs: NullableJSONField = NullableJSONField()
 
     def convert_str_value_to_type(self, value: str) -> TagValueType:
         return Tag.convert_value_to_type(value, self.value_format)

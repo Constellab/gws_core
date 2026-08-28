@@ -12,7 +12,6 @@ from ...config.config_params import ConfigParams
 from ...config.config_specs import ConfigSpecs
 from ...config.param.param_spec import StrParam
 from ...impl.file.file import File
-from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -51,18 +50,20 @@ class FsNodeExtractor(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        path: str = params.get("fs_node_path")
+        path: str = params.get_value("fs_node_path")
 
-        folder: Folder = inputs["source"]
+        folder = inputs.get_resource("source", Folder)
 
         full_path = os.path.join(folder.path, path)
 
         _type: type[FSNode]
 
         # if the typing name was provided
-        if params.get("fs_node_typing_name"):
+        if params.get_value("fs_node_typing_name"):
             # retrieve resource type
-            _type = TypingManager.get_and_check_type_from_name(params.get("fs_node_typing_name"))
+            _type = TypingManager.get_and_check_type_from_name(
+                params.get_value("fs_node_typing_name")
+            )
 
             if not Utils.issubclass(_type, FSNode):
                 raise Exception("The provided type is not a sub type of FSNode")

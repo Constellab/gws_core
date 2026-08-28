@@ -1,3 +1,4 @@
+# pyright: reportAssignmentType=false
 from gws_core import (
     ConfigParams,
     InputSpec,

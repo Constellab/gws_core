@@ -95,7 +95,7 @@ class BrickMigrator:
     def append_migration(self, migration_obj: MigrationObject) -> None:
         """Append a migration object to the list of migrations for this brick."""
         if self.has_migration_version(migration_obj.version):
-            raise Exception(
+            raise BadRequestException(
                 f"Error on migrator for brick '{self.brick_name}'. The migration version '{str(migration_obj.version)}' was already registered. "
             )
 
@@ -186,7 +186,7 @@ class BrickMigrator:
         return migration_objects[0] if len(migration_objects) > 0 else None
 
     def get_migration_versions(self, version: Version) -> list[MigrationObject]:
-        return list([x for x in self._migration_objects if x.version == version])
+        return [x for x in self._migration_objects if x.version == version]
 
     def get_migration_objects(self) -> list[MigrationObject]:
         migration_object = [*self._migration_objects]

@@ -2,6 +2,7 @@ import os
 from unittest import TestCase
 
 from gws_core import File
+from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.settings import Settings
 from gws_core.impl.file.file_helper import FileHelper
 from gws_core.impl.file.file_store import FileStore
@@ -29,7 +30,7 @@ class TestLocalFileStore(TestCase):
         self.assertFalse(FileHelper.exists_on_os(tmp_path))
 
         # Try to add a node that is already in the store
-        with self.assertRaises(Exception):
+        with self.assertRaises(BadRequestException):
             file_store.add_file_from_path(file.path)
 
         # Add a file with the same name

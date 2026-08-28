@@ -3,7 +3,7 @@ import os
 import time
 from abc import abstractmethod
 from datetime import datetime
-from threading import Thread
+from threading import Lock, Thread, current_thread
 
 import psutil
 
@@ -22,6 +22,7 @@ from gws_core.apps.app_nginx_service import AppNginxServiceInfo
 from gws_core.core.exception.exceptions.unauthorized_exception import UnauthorizedException
 from gws_core.core.model.sys_proc import SysProc
 from gws_core.core.service.front_service import FrontService, FrontTheme
+from gws_core.core.utils.app_log_context import AppLogContext
 from gws_core.core.utils.date_helper import DateHelper
 from gws_core.core.utils.execution_context import ExecutionContext
 from gws_core.core.utils.logger import Logger
@@ -70,8 +71,14 @@ class AppProcess:
     _started_at: datetime | None
     _started_by: User | None
 
+    # Guards the STOPPED -> STARTING transition in start_app_async. Without it the check-then-act on
+    # _status is not atomic: two near-simultaneous callers both observe STOPPED and both spawn a
+    # process. The app server sets SO_REUSEPORT, so the second one binds successfully instead of
+    # failing, and the two processes then split users between them (see _warn_if_port_shared).
+    _start_lock: Lock
+
     # interval in second to check if the app is still used
-    CHECK_RUNNING_INTERVAL = 30
+    CHECK_RUNNING_INTERVAL: int = 30
 
     # timeout in second to wait for the main app to start
     START_APP_TIMEOUT = 30
@@ -111,6 +118,7 @@ class AppProcess:
 
         self._check_is_running = False
         self._current_no_connection_check = 0
+        self._start_lock = Lock()
         # User access tokens: maps user_access_token -> user_id
         self._user_access_tokens: dict[str, str] = {}
         self._started_at = None
@@ -185,13 +193,27 @@ class AppProcess:
         The app will be generated on first start if not already done.
         """
 
-        if self._status != AppProcessStatus.STOPPED:
-            return
-
         if self._app is None:
             raise Exception("No app set for this process")
 
-        self.set_status(AppProcessStatus.STARTING, "Starting app...")
+        # Log the caller/thread so a start is attributable in the logs.
+        Logger.debug(
+            f"[app-lifecycle] start_app_async requested for app {self._app.resource_model_id} "
+            f"(status={self._status.value}, thread={current_thread().name}, "
+            f"ports={self.get_ports()})"
+        )
+
+        # Claim the start under the lock: reading _status and moving it to STARTING must be atomic,
+        # otherwise two concurrent callers both see STOPPED and both spawn a process.
+        with self._start_lock:
+            if self._status != AppProcessStatus.STOPPED:
+                Logger.debug(
+                    f"[app-lifecycle] start_app_async ignored for app {self._app.resource_model_id}:"
+                    f" status is {self._status.value}, not STOPPED"
+                )
+                return
+
+            self.set_status(AppProcessStatus.STARTING, "Starting app...")
 
         self._kill_process_on_ports()
 
@@ -213,8 +235,25 @@ class AppProcess:
                 Logger.warning(
                     f"Killed process(es) {killed} using port {port} for app {self._app.resource_model_id}"
                 )
+            # The kill above is fire-and-forget: it does not wait for the process to die or for
+            # the port to be released. Report who still holds the port right after, so a start
+            # that races an outgoing process is visible instead of silently producing a second
+            # listener (the app server sets SO_REUSEPORT, so a late bind succeeds rather than
+            # failing with "address already in use").
+            remaining = SysProc.get_listening_pids_on_port(port)
+            if remaining:
+                Logger.warning(
+                    f"[app-lifecycle] Port {port} is still held by pid(s) {remaining} right after "
+                    f"the pre-start clean for app {self._app.resource_model_id}. Starting anyway "
+                    f"may result in two processes sharing the port (SO_REUSEPORT)."
+                )
+            else:
+                Logger.debug(f"[app-lifecycle] Port {port} is free before starting the app")
 
     def _start_app_and_watch(self) -> None:
+        # attribute every log record of this start (build, plugin install, nginx
+        # registration, subprocess output) to the app
+        AppLogContext.set_context_id(self._app.resource_model_id)
         try:
             self._started_at = datetime.now()
             self._started_by = CurrentUserService.get_current_user() or User.get_and_check_sysuser()
@@ -233,11 +272,44 @@ class AppProcess:
 
             self.set_status(AppProcessStatus.RUNNING, "App running successfully")
 
+            self._warn_if_port_shared()
+
             self.start_check_running()
         except Exception as e:
-            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}")
+            Logger.error(f"Error while starting app {self._app.resource_model_id}: {e}", exception=e)
             self.stop_process()
             raise e
+
+    def _warn_if_port_shared(self) -> None:
+        """Log an error if two *unrelated* processes listen on any of the app's ports.
+
+        The app server sets SO_REUSEPORT, so a duplicate start does not fail to bind: both
+        processes listen and the kernel load-balances between them. Each Reflex process keeps
+        its own in-memory state, so a user's connections get split across two processes that do
+        not share authentication -- the single-use handoff code is exchanged by one of them and
+        the other stays unauthenticated. Detect it explicitly rather than letting it surface as
+        intermittent "User not authenticated".
+
+        Processes of the *same* tree are expected and must not be reported: `reflex run` forks
+        a server worker, and the child inherits the parent's listening socket, so both show up
+        as holding the port. Only processes from two independent starts are a problem, so pids
+        of one tree are collapsed into a single entry.
+        """
+        for port in self.get_ports():
+            pids = SysProc.get_listening_pids_on_port(port)
+            trees = SysProc.group_pids_by_process_tree(pids)
+            if len(trees) > 1:
+                Logger.error(
+                    f"[app-lifecycle] Port {port} of app {self._app.resource_model_id} is shared by "
+                    f"{len(trees)} unrelated process trees (pids={pids}). They do not share "
+                    f"state, so users will be randomly split between them and authentication will "
+                    f"appear to fail intermittently. This indicates a duplicate app start."
+                )
+            else:
+                Logger.debug(
+                    f"[app-lifecycle] Port {port} of app {self._app.resource_model_id} "
+                    f"is held by pids={pids}"
+                )
 
     def wait_main_app_health_check(self) -> None:
         # wait until ping http://localhost:8080/healthz  returns 200
@@ -276,6 +348,9 @@ class AppProcess:
         """Kill the process and the app"""
         if self.is_stopped():
             return
+
+        # attribute the stop operation logs (nginx unregistration...) to the app
+        AppLogContext.set_context_id(self._app.resource_model_id)
 
         Logger.debug("Killing the app")
         if self._process is not None:
@@ -430,7 +505,7 @@ class AppProcess:
                 f"The user could not be authenticated for app access mode {self._app.access_mode.value}"
             )
 
-        from gws_core.apps.apps_manager import AppsManager
+        from gws_core.apps.apps_manager import AppsManager  # noqa: PLC0415
 
         # Baked into the app URL before the app has started; use the longer validity so the code
         # survives a cold frontend build (Reflex can take minutes) before the app exchanges it.
@@ -688,8 +763,9 @@ class AppProcess:
         if self.is_stopped() or not self._services:
             return
 
-        self._refresh_custom_subdomain_services()
-        AppNginxManager.get_instance().register_services(self._services)
+        with AppLogContext.use(self._app.resource_model_id):
+            self._refresh_custom_subdomain_services()
+            AppNginxManager.get_instance().register_services(self._services)
 
     def _refresh_custom_subdomain_services(self) -> None:
         """Update the registered nginx service objects in place for the current custom subdomain.

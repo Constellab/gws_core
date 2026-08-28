@@ -77,24 +77,24 @@ class Model(BaseModel, PeeweeModel):
         return hash(type(self).__name__ + self.id)
 
     @classmethod
-    def get_by_id(cls: type[ModelType], id: str) -> ModelType | None:
-        return cls.get_or_none(cls.id == id)
+    def get_by_id(cls: type[ModelType], id_: str) -> ModelType | None:
+        return cls.get_or_none(cls.id == id_)
 
     @classmethod
     def get_by_ids(cls: type[ModelType], ids: list[str]) -> list[ModelType]:
         return list(cls.select().where(cls.id.in_(ids)))
 
     @classmethod
-    def get_by_id_and_check(cls: type[ModelType], id: str) -> ModelType:
+    def get_by_id_and_check(cls: type[ModelType], id_: str) -> ModelType:
         """Get by ID and throw 404 error if object not found
 
-        :param id: The ID of the model
-        :type id: str
+        :param id_: The ID of the model
+        :type id_: str
         :return: The model instance
         :rtype: ModelType
         """
         try:
-            return cls.get(cls.id == id)
+            return cls.get(cls.id == id_)
         except DoesNotExist as e:
             raise NotFoundException(
                 detail=GWSException.OBJECT_ID_NOT_FOUND.value,

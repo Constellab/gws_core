@@ -14,6 +14,99 @@ from .view_meta_data import ResourceViewMetaData
 VIEW_META_DATA_ATTRIBUTE = "_view_mata_data"
 
 
+def _normalize_view_specs(
+    func: Callable,
+    specs: ConfigSpecs,
+    view_type: type[View],
+    func_name: str,
+) -> ConfigSpecs:
+    """Convert the deprecated dict config specs of a @view decorator into a ConfigSpecs object
+    and check that the result is a valid ConfigSpecs.
+
+    :param func: decorated view method, used to log the deprecation warning on the right brick
+    :type func: Callable
+    :param specs: config specs provided to the @view decorator
+    :type specs: ConfigSpecs
+    :param view_type: type of the view returned by the decorated method
+    :type view_type: type[View]
+    :param func_name: name of the decorated method, used in the error messages
+    :type func_name: str
+    :raises Exception: if the specs are neither a dict nor a ConfigSpecs object
+    :return: the config specs as a ConfigSpecs object
+    :rtype: ConfigSpecs
+    """
+    if isinstance(specs, dict):
+        # TODO for now this is just a warning
+        BrickLogService.log_brick_warning(
+            func,
+            f"View error. The config specs of the view (method: '{func_name}', view type: '{view_type}') must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
+        )
+
+        specs = ConfigSpecs(specs)
+
+    if not isinstance(specs, ConfigSpecs):
+        raise Exception(
+            f"View error. The config specs of the view (method: '{func_name}', view type: '{view_type}') must be an ConfigSpecs object"
+        )
+
+    return specs
+
+
+def _check_default_view_specs(func_name: str, specs: ConfigSpecs, hide: bool) -> None:
+    """Check the constraints that apply to a view marked as default : it can't be hidden and
+    all its config specs must be optional.
+
+    :param func_name: name of the decorated method, used in the error messages
+    :type func_name: str
+    :param specs: config specs of the view
+    :type specs: ConfigSpecs
+    :param hide: whether the view is marked as hidden
+    :type hide: bool
+    :raises Exception: if the default view is hidden or has at least one mandatory spec
+    """
+    if hide:
+        raise Exception(
+            f"View error. The @view of method '{func_name}' is mark as default and hide. The default view can't be hidden"
+        )
+
+    if not specs.all_config_are_optional():
+        mandatory_spec_names = [
+            spec_name
+            for spec_name, spec in specs.specs.items()
+            if not spec.optional
+        ]
+        raise Exception(
+            f"View error. The @view of method '{func_name}' is mark as default but the spec(s) '{', '.join(mandatory_spec_names)}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value"
+        )
+
+
+def _check_specs_override_view_specs(
+    func_name: str, view_type: type[View], specs: ConfigSpecs
+) -> None:
+    """Check that each method config spec that overrides a spec of the view type is compatible
+    with it (the method spec must be an instance of the view spec type).
+
+    :param func_name: name of the decorated method, used in the error messages
+    :type func_name: str
+    :param view_type: type of the view returned by the decorated method
+    :type view_type: type[View]
+    :param specs: config specs declared on the method
+    :type specs: ConfigSpecs
+    :raises Exception: if a method spec overrides a view spec with an incompatible type
+    """
+    view_specs = view_type._specs.specs
+    if len(specs.specs) > 0 and len(view_specs) > 0:
+        for spec_name, method_spec in specs.specs.items():
+            # if the method spec overide the view spec
+            if spec_name in view_specs:
+                view_spec: ParamSpec = view_specs[spec_name]
+                # the method spec must be a sub class of the view spec
+                if not isinstance(method_spec, type(view_spec)):
+                    raise Exception(
+                        f"View error. The @view decorator of the method '{func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible"
+                    )
+
+
 def _decorator_view(
     func: Callable,
     view_type: type[View],
@@ -44,36 +137,11 @@ def _decorator_view(
                 f"View error. The view type '{view_type}' of the @view of method '{func_args.func_name}' is not a sub type of View"
             )
 
-        if isinstance(specs, dict):
-            # TODO for now this is just a warning
-            BrickLogService.log_brick_warning(
-                func,
-                f"View error. The config specs of the view (method: '{func_args.func_name}', view type: '{view_type}') must be an ConfigSpecs object and not a dict. The dict support will be removed in the future",
-            )
-
-            specs = ConfigSpecs(specs)
-
-        if not isinstance(specs, ConfigSpecs):
-            raise Exception(
-                f"View error. The config specs of the view (method: '{func_args.func_name}', view type: '{view_type}') must be an ConfigSpecs object"
-            )
+        specs = _normalize_view_specs(func, specs, view_type, func_args.func_name)
 
         # if the view is mark as default, all the parameters must be optional
         if default_view:
-            if hide:
-                raise Exception(
-                    f"View error. The @view of method '{func_args.func_name}' is mark as default and hide. The default view can't be hidden"
-                )
-
-            if not specs.all_config_are_optional():
-                mandatory_spec_names = [
-                    spec_name
-                    for spec_name, spec in specs.specs.items()
-                    if not spec.optional
-                ]
-                raise Exception(
-                    f"View error. The @view of method '{func_args.func_name}' is mark as default but the spec(s) '{', '.join(mandatory_spec_names)}' is mandatory. If the view is mark as default, all the view specs must be optional or have a default value"
-                )
+            _check_default_view_specs(func_args.func_name, specs, hide)
 
         # # Check that the function arg matches the view specs and the type are the same
         # for arg_name in func_args.get_named_args().keys():
@@ -101,17 +169,7 @@ def _decorator_view(
         specs.check_config_specs()
 
         # If method spec overides view spec, check the type
-        view_specs = view_type._specs.specs
-        if len(specs.specs) > 0 and len(view_specs) > 0:
-            for spec_name, method_spec in specs.specs.items():
-                # if the method spec overide the view spec
-                if spec_name in view_specs:
-                    view_spec: ParamSpec = view_specs[spec_name]
-                    # the method spec must be a sub class of the view spec
-                    if not isinstance(method_spec, type(view_spec)):
-                        raise Exception(
-                            f"View error. The @view decorator of the method '{func_args.func_name}' has a spec called '{spec_name}' that overide the spec of the view '{view_type}' but the types are imcompatible"
-                        )
+        _check_specs_override_view_specs(func_args.func_name, view_type, specs)
 
         # Create the meta data object
         view_meta_data: ResourceViewMetaData = ResourceViewMetaData(

@@ -11,8 +11,8 @@ from .note import Note
 class NoteViewModel(BaseModel):
     """Model to store which views are used in notes"""
 
-    note = TypedForeignKeyField(Note, index=True, on_delete="CASCADE")
-    view = TypedForeignKeyField(ViewConfig, index=True, on_delete="RESTRICT")
+    note: TypedForeignKeyField[Note] = TypedForeignKeyField(Note, index=True, on_delete="CASCADE")
+    view: TypedForeignKeyField[ViewConfig] = TypedForeignKeyField(ViewConfig, index=True, on_delete="RESTRICT")
 
     @classmethod
     def get_by_note(cls, note_id: str) -> list["NoteViewModel"]:

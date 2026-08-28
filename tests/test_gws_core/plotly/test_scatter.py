@@ -1,3 +1,4 @@
+from typing import cast
 from unittest import TestCase
 
 import pandas as pd
@@ -32,7 +33,7 @@ class TestPlotlyScatterplot(TestCase):
         )
 
         outputs = runner.run()
-        plot_output: PlotlyResource = outputs["output_plot"]
+        plot_output = cast(PlotlyResource, outputs["output_plot"])
         expected_output = px.scatter(
             data_frame=df, x="x", y="y", color="z", size="x", title="title", log_x=True, log_y=False
         )

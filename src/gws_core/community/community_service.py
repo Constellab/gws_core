@@ -9,7 +9,6 @@ from gws_core.tag.tag_dto import ShareTagMode
 from ..core.service.external_api_service import ExternalApiService
 from ..core.utils.settings import Settings
 from ..user.current_user_service import CurrentUserService
-from ..user.user import User
 from .community_dto import (
     CommunityAgentDTO,
     CommunityAgentFileDTO,

@@ -57,7 +57,7 @@ class RobotMove(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot: Robot = inputs["robot"]
+        robot = inputs.get_resource("robot", Robot)
         robot.move(
             direction=params.get_value("direction"), moving_step=params.get_value("moving_step")
         )
@@ -78,11 +78,11 @@ class RobotEat(Task):
     config_specs = ConfigSpecs({"food_weight": FloatParam(default_value=3.14)})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot: Robot = inputs["robot"]
+        robot = inputs.get_resource("robot", Robot)
 
         multiplicator: int = 1
         if inputs.has_resource("food"):
-            food: RobotFood = inputs["food"]
+            food = inputs.get_resource("food", RobotFood)
             multiplicator = food.multiplicator
 
         robot.weight += params.get_value("food_weight") * multiplicator
@@ -139,7 +139,7 @@ class RobotAdd(Task):
     config_specs = ConfigSpecs({})
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        robot: Robot = inputs["robot"]
+        robot = inputs.get_resource("robot", Robot)
         mega = MegaRobot.from_robot(robot)
         return {"mega_robot": mega}
 

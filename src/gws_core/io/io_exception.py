@@ -81,11 +81,11 @@ class ImcompatiblePortsException(BadRequestException):
         )
 
 
-class InvalidInputsException(Exception):
+class InvalidInputsError(Exception):
     pass
 
 
-class InvalidOutputsException(Exception):
+class InvalidOutputsError(Exception):
     pass
 
 

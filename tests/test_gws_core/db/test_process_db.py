@@ -2,11 +2,12 @@ from unittest import TestCase
 
 from gws_core.core.db.process_db import ProcessDb
 from gws_core.core.model.model import Model
+from gws_core.core.model.typed_db_field import TypedCharField
 from peewee import CharField
 
 
 class ProcessDbTable(Model):
-    id = CharField(primary_key=True, max_length=36)
+    id = TypedCharField(primary_key=True, max_length=36)
     text = CharField()
 
     class Meta:
@@ -58,6 +59,7 @@ class TestProcessDb(TestCase):
 
         # Verify the content of the new record
         new_record = ProcessDbTable.get_by_id("new_record")
+        assert new_record is not None
         self.assertEqual(new_record.text, "processed_new_record")
 
     def test_multiple_process_db(self):
@@ -84,4 +86,5 @@ class TestProcessDb(TestCase):
         # Verify each record exists
         for i in range(0, 5):
             record = ProcessDbTable.get_by_id(f"process_{i}")
+            assert record is not None
             self.assertEqual(record.text, f"processed_process_{i}")

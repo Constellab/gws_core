@@ -1,6 +1,6 @@
 from typing import Any
 
-from numpy import NaN
+from numpy import nan
 from pandas import DataFrame
 
 from gws_core.config.config_params import ConfigParams
@@ -18,7 +18,7 @@ from ..table import Table
     resource_type=Table,
     short_description="Replace values in a table with other values",
 )
-class TableReplace(Transformer):
+class TableReplace(Transformer[Table]):
     """
     You can provided multiple values to replace. It also supports regex. If multiple values are provided,
     there are replaced sequentially, so the second replace can rewrite the first replace.
@@ -66,7 +66,7 @@ class TableReplace(Transformer):
 
     def transform(self, source: Table, params: ConfigParams) -> Table:
         dataframe: DataFrame = source.get_data()
-        replace_values: list[dict] = params.get("replace_values")
+        replace_values: list[dict] = params.get_value("replace_values")
 
         for param in replace_values:
             is_regex: bool = bool(param["is_regex"])
@@ -89,7 +89,7 @@ class TableReplace(Transformer):
     def convert_replace_value(self, param_value: str) -> Any:
         """Handle specific values like NaN and None, and tries to convert to float"""
         if param_value == "NaN":
-            return NaN
+            return nan
         elif param_value == "None":
             return None
         else:
@@ -98,8 +98,8 @@ class TableReplace(Transformer):
 
     def convert_search_value(self, param_value: str) -> Any:
         """Handle specific values like NaN and None, and tries to convert to float"""
-        if param_value == "NaN" or param_value == "None":
-            return NaN
+        if param_value in ("NaN", "None"):
+            return nan
         else:
             # try to convert to float
             return NumericHelper.to_float(param_value, param_value)

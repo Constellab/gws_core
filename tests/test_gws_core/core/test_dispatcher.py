@@ -72,6 +72,29 @@ class TestDispatcher(BaseTestCase):
         dispatcher.notify_info_message("message 1")
         self.assertEqual(len(observer.messages), 1)
 
+    def _assert_dispatched_message(
+        self,
+        observer: BasicMessageObserver,
+        expected_count: int,
+        message: str,
+        status: str,
+        progress: float | None = None,
+    ) -> None:
+        """Check the number of dispatched messages and the content of the last one.
+
+        :param observer: the observer attached to the dispatcher
+        :param expected_count: expected total number of dispatched messages
+        :param message: expected message text of the last dispatched message
+        :param status: expected status of the last dispatched message
+        :param progress: expected progress of the last dispatched message, None to skip the check
+        """
+        self.assertEqual(len(observer.messages), expected_count)
+        last_message = observer.messages[expected_count - 1]
+        self.assertEqual(last_message.message, message)
+        self.assertEqual(last_message.status, status)
+        if progress is not None:
+            self.assertEqual(last_message.progress, progress)
+
     def test_notify_message_with_format(self):
         """Test the notify_message_with_format method with various formats."""
 
@@ -83,87 +106,56 @@ class TestDispatcher(BaseTestCase):
 
         # Test INFO format
         dispatcher.notify_message_with_format("[INFO] This is an info message")
-        self.assertEqual(len(observer.messages), 1)
-        self.assertEqual(observer.messages[0].message, "This is an info message")
-        self.assertEqual(observer.messages[0].status, "INFO")
+        self._assert_dispatched_message(observer, 1, "This is an info message", "INFO")
 
         # Test WARNING format
         dispatcher.notify_message_with_format("[WARNING] This is a warning")
-        self.assertEqual(len(observer.messages), 2)
-        self.assertEqual(observer.messages[1].message, "This is a warning")
-        self.assertEqual(observer.messages[1].status, "WARNING")
+        self._assert_dispatched_message(observer, 2, "This is a warning", "WARNING")
 
         # Test ERROR format
         dispatcher.notify_message_with_format("[ERROR] This is an error")
-        self.assertEqual(len(observer.messages), 3)
-        self.assertEqual(observer.messages[2].message, "This is an error")
-        self.assertEqual(observer.messages[2].status, "ERROR")
+        self._assert_dispatched_message(observer, 3, "This is an error", "ERROR")
 
         # Test SUCCESS format
         dispatcher.notify_message_with_format("[SUCCESS] Operation successful")
-        self.assertEqual(len(observer.messages), 4)
-        self.assertEqual(observer.messages[3].message, "Operation successful")
-        self.assertEqual(observer.messages[3].status, "SUCCESS")
+        self._assert_dispatched_message(observer, 4, "Operation successful", "SUCCESS")
 
         # Test DEBUG format
         dispatcher.notify_message_with_format("[DEBUG] Debug information")
-        self.assertEqual(len(observer.messages), 5)
-        self.assertEqual(observer.messages[4].message, "Debug information")
-        self.assertEqual(observer.messages[4].status, "DEBUG")
+        self._assert_dispatched_message(observer, 5, "Debug information", "DEBUG")
 
         # Test PROGRESS format with integer value
         dispatcher.notify_message_with_format("[PROGRESS:50] Half way done")
-        self.assertEqual(len(observer.messages), 6)
-        self.assertEqual(observer.messages[5].message, "Half way done")
-        self.assertEqual(observer.messages[5].status, "PROGRESS")
-        self.assertEqual(observer.messages[5].progress, 50.0)
+        self._assert_dispatched_message(observer, 6, "Half way done", "PROGRESS", 50.0)
 
         # Test PROGRESS format with float value
         dispatcher.notify_message_with_format("[PROGRESS:75.5] Almost complete")
-        self.assertEqual(len(observer.messages), 7)
-        self.assertEqual(observer.messages[6].message, "Almost complete")
-        self.assertEqual(observer.messages[6].status, "PROGRESS")
-        self.assertEqual(observer.messages[6].progress, 75.5)
+        self._assert_dispatched_message(observer, 7, "Almost complete", "PROGRESS", 75.5)
 
         # Test PROGRESS format with no message
         dispatcher.notify_message_with_format("[PROGRESS:100]")
-        self.assertEqual(len(observer.messages), 8)
-        self.assertEqual(observer.messages[7].message, "")
-        self.assertEqual(observer.messages[7].status, "PROGRESS")
-        self.assertEqual(observer.messages[7].progress, 100.0)
+        self._assert_dispatched_message(observer, 8, "", "PROGRESS", 100.0)
 
         # Test message without format prefix (defaults to INFO)
         dispatcher.notify_message_with_format("Regular message without prefix")
-        self.assertEqual(len(observer.messages), 9)
-        self.assertEqual(observer.messages[8].message, "Regular message without prefix")
-        self.assertEqual(observer.messages[8].status, "INFO")
+        self._assert_dispatched_message(observer, 9, "Regular message without prefix", "INFO")
 
         # Test invalid PROGRESS value (> 100) - should be treated as INFO
         dispatcher.notify_message_with_format("[PROGRESS:150] Invalid progress")
-        self.assertEqual(len(observer.messages), 10)
-        self.assertEqual(observer.messages[9].message, "[PROGRESS:150] Invalid progress")
-        self.assertEqual(observer.messages[9].status, "INFO")
+        self._assert_dispatched_message(observer, 10, "[PROGRESS:150] Invalid progress", "INFO")
 
         # Test invalid PROGRESS value (< 0) - should be treated as INFO
         dispatcher.notify_message_with_format("[PROGRESS:-10] Negative progress")
-        self.assertEqual(len(observer.messages), 11)
-        self.assertEqual(observer.messages[10].message, "[PROGRESS:-10] Negative progress")
-        self.assertEqual(observer.messages[10].status, "INFO")
+        self._assert_dispatched_message(observer, 11, "[PROGRESS:-10] Negative progress", "INFO")
 
         # Test invalid PROGRESS format (non-numeric) - should be treated as INFO
         dispatcher.notify_message_with_format("[PROGRESS:abc] Invalid number")
-        self.assertEqual(len(observer.messages), 12)
-        self.assertEqual(observer.messages[11].message, "[PROGRESS:abc] Invalid number")
-        self.assertEqual(observer.messages[11].status, "INFO")
+        self._assert_dispatched_message(observer, 12, "[PROGRESS:abc] Invalid number", "INFO")
 
         # Test unknown prefix - should be treated as INFO with original message
         dispatcher.notify_message_with_format("[UNKNOWN] Unknown message type")
-        self.assertEqual(len(observer.messages), 13)
-        self.assertEqual(observer.messages[12].message, "[UNKNOWN] Unknown message type")
-        self.assertEqual(observer.messages[12].status, "INFO")
+        self._assert_dispatched_message(observer, 13, "[UNKNOWN] Unknown message type", "INFO")
 
         # Test message with no closing bracket - should be treated as INFO
         dispatcher.notify_message_with_format("[INFO No closing bracket")
-        self.assertEqual(len(observer.messages), 14)
-        self.assertEqual(observer.messages[13].message, "[INFO No closing bracket")
-        self.assertEqual(observer.messages[13].status, "INFO")
+        self._assert_dispatched_message(observer, 14, "[INFO No closing bracket", "INFO")

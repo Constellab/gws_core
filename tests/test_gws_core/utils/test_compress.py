@@ -88,7 +88,7 @@ class TestCompress(TestCase):
         # Compress and check
         compress_folder = os.path.join(temp_dir, "zipped.gz")
         compress = GzipCompress(compress_folder)
-        compress.add_file(json_path)
+        compress.add_file(str(json_path))
         compress.close()
         self.assertTrue(FileHelper.exists_on_os(compress_folder))
 

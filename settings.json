@@ -1,12 +1,12 @@
 {
     "name": "gws_core",
     "author": "Gencovery",
-    "version": "0.23.9",
+    "version": "0.23.10",
     "variables": {
         "testdata_dir": "${CURRENT_DIR}/tests/testdata"
     },
     "technical_info": {
-        "FRONT_VERSION": "2.10.1",
+        "FRONT_VERSION": "2.10.3",
         "GLAB_VERSION": "2.18.0"
     },
     "environment": {
@@ -47,6 +47,10 @@
                         "version": "2.10.1"
                     },
                     {
+                        "name": "mcp",
+                        "version": "1.28.1"
+                    },
+                    {
                         "name": "pymysql",
                         "version": "1.1.2"
                     },
@@ -68,7 +72,7 @@
                     },
                     {
                         "name": "numpy",
-                        "version": "1.26.4"
+                        "version": "2.4.6"
                     },
                     {
                         "name": "pandas",
@@ -92,7 +96,7 @@
                     },
                     {
                         "name": "openai",
-                        "version": "2.2.0"
+                        "version": "2.53.0"
                     },
                     {
                         "name": "typing_extensions",

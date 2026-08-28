@@ -1,4 +1,5 @@
 from json import loads
+from typing import cast
 
 from gws_core.core.exception.exceptions.bad_request_exception import BadRequestException
 from gws_core.core.utils.logger import Logger
@@ -32,7 +33,7 @@ class ScenarioTemplateFactory:
             scenario_template_dto = ScenarioTemplateExportDTO.from_json(template_dict)
         except Exception as e:
             Logger.error(f"Error while reading the scenario template file: {e}")
-            raise BadRequestException(f"The scenario template file is not valid : {e}")
+            raise BadRequestException(f"The scenario template file is not valid : {e}") from e
         return cls.from_export_dto(scenario_template_dto)
 
     @classmethod
@@ -43,7 +44,9 @@ class ScenarioTemplateFactory:
 
         except Exception as e:
             Logger.error(f"The scenario template file is not valid a valid json: {e}")
-            raise BadRequestException(f"The scenario template file is not valid a valid json: {e}")
+            raise BadRequestException(
+                f"The scenario template file is not valid a valid json: {e}"
+            ) from e
 
         return cls.from_export_dto_dict(dict_)
 
@@ -79,7 +82,9 @@ class ScenarioTemplateFactory:
             )
 
         if version == 1:
-            scenario_template["data"] = cls.migrate_data_from_1_to_3(scenario_template.get("data"))
+            scenario_template["data"] = cls.migrate_data_from_1_to_3(
+                cast(dict, scenario_template.get("data"))
+            )
 
         scenario_template["version"] = ScenarioTemplate.CURRENT_VERSION
         return scenario_template

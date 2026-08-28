@@ -7,14 +7,17 @@ class SidebarState(rx.State):
     show_left_sidebar: bool = False
     show_right_sidebar: bool = False
 
+    @rx.event
     def toggle_left_sidebar(self):
         """Toggle the visibility of the left sidebar."""
         self.show_left_sidebar = not self.show_left_sidebar
 
+    @rx.event
     def set_left_sidebar_open(self, is_open: bool):
         """Set the left sidebar visibility to a specific value."""
         self.show_left_sidebar = is_open
 
+    @rx.event
     def toggle_right_sidebar(self):
         """Toggle the visibility of the right sidebar."""
         self.show_right_sidebar = not self.show_right_sidebar
@@ -199,13 +202,13 @@ def _create_mobile_menu_button() -> rx.Component:
 
 
 def _create_right_sidebar(
-    right_sidebar_content: rx.Component,
+    right_sidebar_content: rx.Component | None,
     right_sidebar_width: str,
 ) -> rx.Component:
     """Create the desktop right sidebar.
 
     :param right_sidebar_content: The content to display in the right sidebar
-    :type right_sidebar_content: rx.Component
+    :type right_sidebar_content: rx.Component | None
     :param right_sidebar_width: The width of the right sidebar
     :type right_sidebar_width: str
     :return: The right sidebar component
@@ -231,13 +234,13 @@ def _create_right_sidebar(
 
 
 def _create_right_sidebar_mobile_overlay(
-    right_sidebar_content: rx.Component,
+    right_sidebar_content: rx.Component | None,
     right_sidebar_width: str,
 ) -> rx.Component:
     """Create the mobile right sidebar overlay (slides in from the right).
 
     :param right_sidebar_content: The content to display in the right sidebar
-    :type right_sidebar_content: rx.Component
+    :type right_sidebar_content: rx.Component | None
     :param right_sidebar_width: The width of the right sidebar
     :type right_sidebar_width: str
     :return: The mobile right sidebar overlay component

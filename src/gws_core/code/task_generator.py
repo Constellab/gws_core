@@ -18,13 +18,13 @@ class TaskGenerator:
 
     class_name: str = ""
 
-    inputs_specs: dict[str, type[Resource]] | None = None
-    outputs_specs: dict[str, type[Resource]] | None = None
-    config_specs: ConfigSpecs | None = None
+    inputs_specs: dict[str, type[Resource]]
+    outputs_specs: dict[str, type[Resource]]
+    config_specs: ConfigSpecs
 
-    run_method_content: str | None = None
-    custom_imports: list[str] | None = None
-    gws_core_additional_imports: set[str] | None = None
+    run_method_content: str
+    custom_imports: list[str]
+    gws_core_additional_imports: set[str]
 
     _TASK_OUTPUTS_TYPE = "TaskOutputs"
 

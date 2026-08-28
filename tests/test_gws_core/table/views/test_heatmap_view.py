@@ -1,8 +1,7 @@
 from unittest import TestCase
 
 from gws_core import ViewTester, ViewType
-from gws_core.extra import TableHeatmapView
-from gws_core.impl.table.view.table_selection import Serie1d
+from gws_core.impl.table.view.table_heatmap_view import TableHeatmapView
 from gws_core.test.data_provider import DataProvider
 
 
@@ -15,7 +14,7 @@ class TestTableHeatmapView(TestCase):
         tester = ViewTester(view=TableHeatmapView(table))
 
         # 1 series with all columns
-        serie: Serie1d = {
+        serie = {
             "name": "first",
             "y": {
                 "type": "columns",

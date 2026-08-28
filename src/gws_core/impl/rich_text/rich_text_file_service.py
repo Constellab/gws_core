@@ -67,7 +67,7 @@ class RichTextFileService:
         try:
             image = Image.open(file.file)
         except Exception:
-            raise BadRequestException("The uploaded file is not an image")
+            raise BadRequestException("The uploaded file is not an image") from None
 
         # generate a file name
         # when the file data was set (like pasted from clipboard), the content type is 'application/octet-stream'

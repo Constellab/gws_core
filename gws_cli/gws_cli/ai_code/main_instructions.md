@@ -20,18 +20,29 @@ Each brick has its own `CLAUDE.md` for brick-specific guidance.
 - Start server with debug logging: `gws server run --log-level=DEBUG`
 
 ### Testing
-- **Run all tests**: `gws server test all`
+- **Run all tests**: `gws server test all --parallel`
 - **Run specific test**: `gws server test [TEST_FILE_NAME]` (without `.py` extension, run from the brick directory)
 - Tests are located in each brick's `tests/` directory
 - Example: `cd bricks/gws_ai_toolkit && gws server test test_table_copilot`
-- **Run tests in parallel**: add `--parallel` to run via pytest-xdist. Each worker gets its own test DB schema.
-  - Example: `gws server test all --parallel`
-  - Control the worker count with `--workers` / `-n` (default `auto`, one worker per CPU); only takes effect with `--parallel`.
+- **Always add `--parallel` when running all tests or several test files at once** — it runs them via pytest-xdist, which is much faster. Each worker gets its own test DB schema.
+  - Example (all tests): `gws server test all --parallel`
+  - Example (several files): `gws server test test_table test_view --parallel`
+  - A single test file does not need `--parallel` (one file, one worker — no gain).
+- Control the worker count with `--workers` / `-n`; only takes effect with `--parallel`.
+  - Default is `reserved`: all available CPUs minus 2 (minimum 1), leaving 2 CPUs free for the rest of the machine.
+  - Pass `auto` for one worker per CPU, or an explicit number to pin it.
   - Example: `gws server test all --parallel -n 4`
 
 ### Development Apps
 - Run Streamlit app in dev mode: `gws streamlit run [CONFIG_FILE_PATH]`
 - Run Reflex app in dev mode: `gws reflex run [CONFIG_FILE_PATH]`
+- Check a Reflex app compiles (without starting it): `gws reflex compile [CONFIG_FILE_PATH]`
+  - **This is how you verify a Reflex app still works after changing its code — use it instead of
+    starting the app.** Much faster, and needs no database. Exit code 0 = compiles, 1 = failed
+    (the traceback shows the offending file and line).
+  - Only run the app (`gws reflex run`) if the user explicitly asks for it, or to investigate
+    runtime behaviour a compile cannot reveal.
+  - A successful compile proves the app builds, not that it runs correctly with real data.
 - **When creating, modifying, or debugging any Reflex app code, FIRST invoke the `gws-reflex-app-developer` skill** to load the global Reflex rules.
 - **When creating, modifying, or debugging any Streamlit app code, FIRST invoke the `gws-streamlit-app-developer` skill** for the equivalent Streamlit rules.
 

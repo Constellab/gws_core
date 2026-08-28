@@ -84,9 +84,11 @@ class TestConfigSpecsAiService(BaseTestCaseLight):
         self.assertEqual(payload["description"], "tweak")
 
     def test_generate_specs_invalid_raises(self):
-        with patch(_GPT_TARGET, return_value=json.dumps({"bad": {"type": "nope"}})):
-            with self.assertRaises(BadRequestException):
-                ConfigSpecsAiService.generate_specs(ConfigSpecs(), "x")
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"bad": {"type": "nope"}})),
+            self.assertRaises(BadRequestException),
+        ):
+            ConfigSpecsAiService.generate_specs(ConfigSpecs(), "x")
 
     def test_generate_specs_empty_description_raises(self):
         with self.assertRaises(BadRequestException):
@@ -305,14 +307,18 @@ class TestConfigSpecsAiService(BaseTestCaseLight):
         self.assertIsInstance(spec, ParamSet)
 
     def test_generate_field_invalid_key_raises(self):
-        with patch(_GPT_TARGET, return_value=json.dumps({"field_key": "9bad", "spec": ConfigSpecs({"t": FloatParam()}).to_json_dict()["t"]})):
-            with self.assertRaises(BadRequestException):
-                ConfigSpecsAiService.generate_field(ConfigSpecs(), "x")
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"field_key": "9bad", "spec": ConfigSpecs({"t": FloatParam()}).to_json_dict()["t"]})),
+            self.assertRaises(BadRequestException),
+        ):
+            ConfigSpecsAiService.generate_field(ConfigSpecs(), "x")
 
     def test_generate_field_missing_spec_raises(self):
-        with patch(_GPT_TARGET, return_value=json.dumps({"field_key": "mass"})):
-            with self.assertRaises(BadRequestException):
-                ConfigSpecsAiService.generate_field(ConfigSpecs(), "x")
+        with (
+            patch(_GPT_TARGET, return_value=json.dumps({"field_key": "mass"})),
+            self.assertRaises(BadRequestException),
+        ):
+            ConfigSpecsAiService.generate_field(ConfigSpecs(), "x")
 
     def test_generate_field_empty_description_raises(self):
         with self.assertRaises(BadRequestException):

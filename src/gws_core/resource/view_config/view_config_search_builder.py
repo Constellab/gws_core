@@ -31,9 +31,8 @@ class ViewConfigSearchBuilder(EntityWithTagSearchBuilder[ViewConfig]):
                 Scenario.select().where(Scenario.folder.in_(filter_.value))
             )
             return ViewConfig.scenario.in_(scenarios)
-        elif filter_.key == "view_type":
-            # consider table and tabular the same
-            if ViewType.TABLE.value == filter_.value:
-                filter_.value = [ViewType.TABLE.value, ViewType.TABULAR.value]
-                filter_.operator = SearchOperator.IN
+        # consider table and tabular the same
+        elif filter_.key == "view_type" and ViewType.TABLE.value == filter_.value:
+            filter_.value = [ViewType.TABLE.value, ViewType.TABULAR.value]
+            filter_.operator = SearchOperator.IN
         return super().convert_filter_to_expression(filter_)

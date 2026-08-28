@@ -1,3 +1,5 @@
+from typing import cast
+
 from gws_core.brick.brick_service import BrickService
 from gws_core.config.config_params import ConfigParams
 from gws_core.config.config_specs import ConfigSpecs
@@ -159,7 +161,7 @@ class StartDockerComposeTask(Task):
         unique_name: str = params.get_value("unique_name")
 
         # Get YAML content from file input or config parameter
-        yaml_file: File = inputs.get("yaml_file")
+        yaml_file = cast(File | None, inputs.get("yaml_file"))
         if yaml_file is not None:
             # Use file content
             yaml_config = yaml_file.read()

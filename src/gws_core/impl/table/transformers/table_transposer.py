@@ -12,7 +12,7 @@ from ...table.table import Table
     short_description="Transposes the table",
     style=TypingStyle.material_icon("pivot_table_chart"),
 )
-class TableTransposer(Transformer):
+class TableTransposer(Transformer[Table]):
     """
     Transformer to transpose the table (switch columns and lines).
 

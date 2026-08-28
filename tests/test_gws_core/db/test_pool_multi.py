@@ -3,11 +3,12 @@ from unittest import TestCase
 
 from gws_core.core.db.pool_db import PoolDb
 from gws_core.core.model.model import Model
-from peewee import CharField
+from gws_core.core.model.typed_db_field import TypedCharField
+from peewee import CharField, PeeweeException
 
 
 class PoolMultiTable(Model):
-    id = CharField(primary_key=True, max_length=36)
+    id = TypedCharField(primary_key=True, max_length=36)
     text = CharField()
 
     class Meta:
@@ -40,7 +41,8 @@ class TestPoolMulti(TestCase):
         self._working_pool()
 
         list(PoolMultiTable.select())
-        self.assertRaises(Exception, self._not_working_pool)
+        with self.assertRaises(PeeweeException):
+            self._not_working_pool()
 
     def _working_pool(self):
         i = 0

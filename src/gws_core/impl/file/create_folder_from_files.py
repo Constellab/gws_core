@@ -13,7 +13,6 @@ from gws_core.io.io_specs import InputSpecs, OutputSpecs
 from gws_core.resource.resource_set.resource_list import ResourceList
 
 from ...config.config_params import ConfigParams
-from ...io.io_specs import InputSpecs, OutputSpecs
 from ...task.task import Task
 from ...task.task_decorator import task_decorator
 from ...task.task_io import TaskInputs, TaskOutputs
@@ -68,7 +67,7 @@ class CreateFolderFromFiles(Task):
     )
 
     def run(self, params: ConfigParams, inputs: TaskInputs) -> TaskOutputs:
-        temp_dir: str | None = None
+        temp_dir: str
 
         # get the folder name from the config or generate a temp folder
         folder_name = params.get_value("folder_name")
@@ -81,14 +80,14 @@ class CreateFolderFromFiles(Task):
         configs: list[dict] = params.get_value("filenames")
 
         i = 0
-        resource_list: ResourceList = inputs["source"]
+        resource_list = inputs.get_resource("source", ResourceList)
         for resource in resource_list.get_resources():
             if not isinstance(resource, FSNode):
                 self.log_error_message(f"Resource {i} is not a file nor a folder")
                 continue
 
             # retrive the node name from config or use the base name
-            node_name: str | None = None
+            node_name: str
             if len(configs) > i and configs[i] and configs[i]["filename"]:
                 node_name = configs[i]["filename"]
             else:

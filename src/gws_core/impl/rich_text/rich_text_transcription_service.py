@@ -18,6 +18,25 @@ class TranscriptionOutput(BaseModelDTO):
     data: dict
 
 
+class TranscriptionParagraphData(BaseModelDTO):
+    """Data of a 'paragraph' transcription block"""
+
+    text: str
+
+
+class TranscriptionTitleData(BaseModelDTO):
+    """Data of a 'title' transcription block"""
+
+    text: str
+    level: int = 1
+
+
+class TranscriptionFormulaData(BaseModelDTO):
+    """Data of a 'formula' transcription block"""
+
+    formula: str
+
+
 class RichTextTranscriptionService:
     """Service to transcribe an audio file to a rich text"""
 
@@ -222,7 +241,7 @@ The generated JSON must validate this schema.
     @classmethod
     def _append_transcription_to_rich_text(
         cls, rich_text: RichText, transcription: TranscriptionOutput
-    ) -> RichTextBlock:
+    ) -> RichTextBlock | None:
         """Convert a text to a rich text block
 
         :param text: text
@@ -232,15 +251,18 @@ The generated JSON must validate this schema.
         """
 
         if transcription.type == "paragraph":
-            return rich_text.add_paragraph(transcription.data.get("text"))
+            paragraph_data = TranscriptionParagraphData.from_json(transcription.data)
+            return rich_text.add_paragraph(paragraph_data.text)
         elif transcription.type == "title":
+            title_data = TranscriptionTitleData.from_json(transcription.data)
             return rich_text.add_header(
-                transcription.data.get("text"),
-                RichTextBlockHeaderLevel.from_int(transcription.data.get("level", 1)),
+                title_data.text,
+                RichTextBlockHeaderLevel.from_int(title_data.level),
             )
         elif transcription.type == "list":
             return rich_text.add_list(RichTextBlockList.from_json(transcription.data))
         elif transcription.type == "formula":
-            return rich_text.add_formula(transcription.data.get("formula"))
+            formula_data = TranscriptionFormulaData.from_json(transcription.data)
+            return rich_text.add_formula(formula_data.formula)
         else:
             return None
